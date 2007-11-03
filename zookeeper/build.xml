@@ -10,7 +10,6 @@
     <property name="src_generated.dir" value="${build.dir}/java/generated" />
     <property name="build.classes" value="${build.dir}/classes" />
     <property name="config.dir" value="${basedir}/java/config" />
-    <property name="lib.dir" value="${basedir}/java/lib" />
     <property name="build.docs" value="${build.dir}/docs" />
     <property name="build.javadoc" value="${build.docs}/api" />
 
@@ -33,9 +32,6 @@
     <target name="jute">
         <mkdir dir="${build.classes}" />
         <javac srcdir="${src.dir}" destdir="${build.classes}" target="1.5" source="1.5" includes="com/yahoo/jute/**" debug="on">
-            <classpath>
-                <fileset dir="${lib.dir}" />
-            </classpath>
         </javac>
     </target>
 
@@ -49,9 +45,6 @@
             </classpath>
         </java>
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" target="1.5" source="1.5" debug="on">
-            <classpath>
-                <fileset dir="${lib.dir}" />
-            </classpath>
         </javac>
     </target>
 
@@ -60,9 +53,6 @@
         <javac srcdir="${src.dir}" destdir="${build.classes}" target="1.5" source="1.5" debug="on">
             <classpath>
                 <fileset dir="${build.classes}" />
-            </classpath>
-            <classpath>
-                <fileset dir="${lib.dir}" />
             </classpath>
         </javac>
         <copy todir="${build.classes}">
@@ -80,9 +70,6 @@
               <include name="*.jar"/>
            </fileset>
          </classpath>
-         <classpath>
-           <fileset dir="${lib.dir}"/>
-         </classpath>
       </javac>
     </target>
 
@@ -94,12 +81,6 @@
         <javadoc packagenames="com.yahoo.*" destdir="${build.javadoc}" author="true" version="true" use="true" windowtitle="${Name} ${version} API" doctitle="${Name} ${version} API" bottom="Copyright &amp;copy; ${year} Yahoo Inc.">
             <packageset dir="${src.dir}" />
             <link href="${javadoc.link.java}" />
-            <classpath>
-                <fileset dir="${lib.dir}">
-                    <include name="**/*.jar" />
-                </fileset>
-                <pathelement path="${build.classes}" />
-            </classpath>
         </javadoc>
     </target>
 
@@ -114,15 +95,10 @@
         </jar>
     </target>
 
-    <target name="cleanswig">
-      <subant target="clean">
-        <fileset file="c/swig/build.xml"/>
-      </subant>
-     </target>
     <!-- ====================================================== -->
     <!-- Clean.  Delete the build files, and their directories  -->
     <!-- ====================================================== -->
-    <target name="clean" depends="cleanswig">
+    <target name="clean">
         <delete dir="${build.dir}" />
         <delete file="${jar.name}" />
     </target>
@@ -130,14 +106,13 @@
     <!-- ====================================================== -->
     <!-- Run unit tests                                         -->
     <!-- ====================================================== -->
-    <target name="test" depends="jar, compileswig, compile-test">
+    <target name="test" depends="jar, compile-test">
         <delete dir="${test.log.dir}" />
         <delete dir="${test.tmp.dir}" />
         <mkdir dir="${test.log.dir}" />
         <mkdir dir="${test.tmp.dir}" />
         <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no" fork="yes" maxmemory="512m" dir="${basedir}" timeout="${test.timeout}" errorProperty="tests.failed" failureProperty="tests.failed">
             <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
-            <sysproperty key="java.library.path" value="${basedir}/c/swig"/>
 	    <classpath>
                 <pathelement path="${build.testclasses}" />
             </classpath>
@@ -146,9 +121,6 @@
                  <include name="*.jar"/>
                </fileset>
             </classpath>
-            <classpath>
-              <fileset dir="${lib.dir}"/>
-             </classpath>
 
             <formatter type="${test.junit.output.format}" />
             <batchtest todir="${test.log.dir}" unless="testcase">
@@ -175,11 +147,6 @@
         <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" classpath="${findbugs.home}/lib/findbugs-ant.jar" />
         <mkdir dir="${findbugs.out.dir}" />
         <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
-            <auxClasspath>
-                <fileset dir="${lib.dir}">
-                    <include name="**/*.jar" />
-                </fileset>
-            </auxClasspath>
             <sourcePath path="${src.dir}" />
             <class location="${basedir}/zookeeper.jar" />
         </findbugs>
