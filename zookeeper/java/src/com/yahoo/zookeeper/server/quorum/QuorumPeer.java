@@ -474,11 +474,11 @@ public class QuorumPeer extends Thread {
                 ZooLog.logError("tickTime is not set");
                 System.exit(2);
             }
-            if (initLimit == 0) {
+            if (servers.size() > 1 && initLimit == 0) {
                 ZooLog.logError("initLimit is not set");
                 System.exit(2);
             }
-            if (syncLimit == 0) {
+            if (servers.size() > 1 && syncLimit == 0) {
                 ZooLog.logError("syncLimit is not set");
                 System.exit(2);
             }
