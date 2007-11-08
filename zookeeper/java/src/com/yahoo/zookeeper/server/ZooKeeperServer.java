@@ -95,7 +95,7 @@ public class ZooKeeperServer implements SessionExpirer {
             // so rather than spawning another thread, we will just call
             // run() in this thread.
             ZooKeeperServer zk = new ZooKeeperServer(new File(args[1]),
-                    new File(args[1]));
+                    new File(args[1]), 3000);
             zk.startup();
             NIOServerCnxn.Factory t = new NIOServerCnxn.Factory(port);
             t.setZooKeeperServer(zk);
@@ -137,9 +137,10 @@ public class ZooKeeperServer implements SessionExpirer {
      *                the directory to put the data
      * @throws IOException
      */
-    public ZooKeeperServer(File dataDir, File dataLogDir) throws IOException {
+    public ZooKeeperServer(File dataDir, File dataLogDir, int tickTime) throws IOException {
         this.dataDir = dataDir;
         this.dataLogDir = dataLogDir;
+        this.tickTime = tickTime;
         if (!dataDir.isDirectory()) {
             throw new IOException("data directory does not exist");
         }
@@ -179,29 +180,73 @@ public class ZooKeeperServer implements SessionExpirer {
         return zxid;
     }
 
+    static public long isValidSnapshot(File f) throws IOException {
+        long zxid = getZxidFromName(f.getName(), "snapshot");
+        if (zxid == -1)
+            return -1;
+    
+        // Check for a valid snapshot
+        RandomAccessFile raf = new RandomAccessFile(f, "r");
+        try {
+            raf.seek(raf.length() - 5);
+            byte bytes[] = new byte[5];
+            raf.read(bytes);
+            ByteBuffer bb = ByteBuffer.wrap(bytes);
+            int len = bb.getInt();
+            byte b = bb.get();
+            if (len != 1 || b != '/') {
+                ZooLog.logWarn("Invalid snapshot " + f + " len = " + len
+                        + " byte = " + (b & 0xff));
+                return -1;
+            }
+        } finally {
+            raf.close();
+        }
+    
+        return zxid;
+    }
+    
+    static File[] getLogFiles(File logDir,long snapshotZxid){
+        List<File> files = Arrays.asList(logDir.listFiles());
+        Collections.sort(files, new Comparator<File>() {
+            public int compare(File o1, File o2) {
+                long z1 = getZxidFromName(o1.getName(), "log");
+                long z2 = getZxidFromName(o2.getName(), "log");
+                return z1 < z2 ? -1 : (z1 > z2 ? 1 : 0);
+            }
+        });
+        // Find the log file that starts before or at the same time as the
+        // zxid of the snapshot
+        long logZxid = 0;
+        for (File f : files) {
+            long fzxid = getZxidFromName(f.getName(), "log");
+            if (fzxid > snapshotZxid) {
+                continue;
+            }
+            if (fzxid > logZxid) {
+                logZxid = fzxid;
+            }
+        }
+        List<File> v=new ArrayList<File>(5);
+        // Apply the logs
+        for (File f : files) {
+            long fzxid = getZxidFromName(f.getName(), "log");
+            if (fzxid < logZxid) {
+                continue;
+            }
+            v.add(f);
+        }
+        return v.toArray(new File[0]);
+    }
+    
     public void loadData() throws IOException, FileNotFoundException,
             SyncFailedException, InterruptedException {
         long highestZxid = 0;
         for (File f : dataDir.listFiles()) {
-            long zxid = getZxidFromName(f.getName(), "snapshot");
-            if (zxid != -1) {
-                // Check for a valid snapshot
-                RandomAccessFile raf = new RandomAccessFile(f, "r");
-                try {
-                    raf.seek(raf.length() - 5);
-                    byte bytes[] = new byte[5];
-                    raf.read(bytes);
-                    ByteBuffer bb = ByteBuffer.wrap(bytes);
-                    int len = bb.getInt();
-                    byte b = bb.get();
-                    if (len != 1 || b != '/') {
-                        ZooLog.logWarn("Skipping " + f + " len = " + len
-                                + " byte = " + (b & 0xff));
-                        continue;
-                    }
-                } finally {
-                    raf.close();
-                }
+            long zxid = isValidSnapshot(f);
+            if (zxid == -1) {
+                ZooLog.logWarn("Skipping " + f);
+                continue;
             }
             if (zxid > highestZxid) {
                 highestZxid = zxid;
@@ -218,32 +263,9 @@ public class ZooKeeperServer implements SessionExpirer {
             loadData(BinaryInputArchive.getArchive(fis));
             fis.close();
             dataTree.lastProcessedZxid = highestZxid;
-            List<File> files = Arrays.asList(dataLogDir.listFiles());
-            Collections.sort(files, new Comparator<File>() {
-                public int compare(File o1, File o2) {
-                    long z1 = getZxidFromName(o1.getName(), "log");
-                    long z2 = getZxidFromName(o2.getName(), "log");
-                    return z1 < z2 ? -1 : (z1 > z2 ? 1 : 0);
-                }
-            });
-            // Find the log file that starts before or at the same time as the
-            // zxid of the snapshot
-            long logZxid = 0;
-            for (File f : files) {
-                long fzxid = getZxidFromName(f.getName(), "log");
-                if (fzxid > snapShotZxid) {
-                    continue;
-                }
-                if (fzxid > logZxid) {
-                    logZxid = fzxid;
-                }
-            }
+            File[] files=getLogFiles(dataLogDir,snapShotZxid);
             // Apply the logs
             for (File f : files) {
-                long fzxid = getZxidFromName(f.getName(), "log");
-                if (fzxid < logZxid) {
-                    continue;
-                }
                 ZooLog.logWarn("Processing log file: " + f);
                 FileInputStream logStream = new FileInputStream(f);
                 highestZxid = playLog(BinaryInputArchive.getArchive(logStream));
