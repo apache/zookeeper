@@ -70,6 +70,11 @@
               <include name="*.jar"/>
            </fileset>
          </classpath>
+         <classpath>
+           <fileset dir="${basedir}/java/lib">
+             <include name="*.jar"/>
+           </fileset>
+         </classpath>
       </javac>
     </target>
 
