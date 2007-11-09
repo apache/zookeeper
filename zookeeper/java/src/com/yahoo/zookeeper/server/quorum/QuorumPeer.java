@@ -505,7 +505,7 @@ public class QuorumPeer extends Thread {
                 self.join();
             } else {
                 int port = clientPort;
-                ZooKeeperServer zk = new ZooKeeperServer(dataDir, dataLogDir);
+                ZooKeeperServer zk = new ZooKeeperServer(dataDir, dataLogDir, tickTime);
                 zk.startup();
                 NIOServerCnxn.Factory t = new NIOServerCnxn.Factory(port);
                 t.setZooKeeperServer(zk);

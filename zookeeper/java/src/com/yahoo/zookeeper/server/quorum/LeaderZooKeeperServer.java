@@ -45,7 +45,7 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
      */
     LeaderZooKeeperServer(long serverId, File dataDir, File dataLogDir,
             Leader leader) throws IOException {
-        super(dataDir, dataLogDir);
+        super(dataDir, dataLogDir, leader.self.tickTime);
         this.serverId = serverId;
         this.leader = leader;
     }

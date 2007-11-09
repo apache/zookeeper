@@ -54,7 +54,7 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
      */
     FollowerZooKeeperServer(long serverId, File dataDir, File dataLogDir,
             Follower follower) throws IOException {
-        super(dataDir, dataLogDir);
+        super(dataDir, dataLogDir, follower.self.tickTime);
         this.serverId = serverId;
         this.follower = follower;
     }
