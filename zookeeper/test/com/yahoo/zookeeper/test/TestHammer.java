@@ -1,4 +1,3 @@
-package com.yahoo.zookeeper.test;
 
 import java.io.IOException;
 
@@ -8,7 +7,7 @@ import com.yahoo.zookeeper.AsyncCallback.VoidCallback;
 import com.yahoo.zookeeper.ZooDefs.CreateFlags;
 import com.yahoo.zookeeper.ZooDefs.Ids;
 
-public class CreateHammerTest implements VoidCallback {
+public class TestHammer implements VoidCallback {
 
     /**
      * @param args
@@ -30,7 +29,7 @@ public class CreateHammerTest implements VoidCallback {
                 try {
                     String name = zk.create("/testFile-", new byte[16], Ids.OPEN_ACL_UNSAFE,
                         CreateFlags.EPHEMERAL|CreateFlags.SEQUENCE);
-                    zk.delete(name, -1, new CreateHammerTest(), null);
+                    zk.delete(name, -1, new TestHammer(), null);
                 } catch(Exception e) {
                     i--;
                     e.printStackTrace();
