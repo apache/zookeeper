@@ -9,7 +9,7 @@
     <property name="build.dir" value="${basedir}/build" />
     <property name="src_generated.dir" value="${build.dir}/java/generated" />
     <property name="build.classes" value="${build.dir}/classes" />
-    <property name="config.dir" value="${basedir}/java/config" />
+    <property name="config.dir" value="${basedir}/test/config" />
     <property name="build.docs" value="${build.dir}/docs" />
     <property name="build.javadoc" value="${build.docs}/api" />
 
