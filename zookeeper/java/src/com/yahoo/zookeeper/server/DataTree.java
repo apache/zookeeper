@@ -411,7 +411,7 @@ public class DataTree {
                 try {
                     deleteNode(path);
                     ZooLog.logTextTraceMessage("Deleting ephemeral node "
-                            + path + " for session " + session,
+                            + path + " for session " + Long.toHexString(session),
                             ZooLog.SESSION_TRACE_MASK);
                 } catch (KeeperException e) {
                     ZooLog.logException(e);
