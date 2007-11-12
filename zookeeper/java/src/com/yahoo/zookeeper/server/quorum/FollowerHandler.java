@@ -264,7 +264,7 @@ public class FollowerHandler extends Thread {
                     int type = bb.getInt();
                     bb = bb.slice();
                     leader.zk.submitRequest(null, sessionId, type, cxid, bb,
-                            null);
+                            qp.getAuthinfo());
                     break;
                 default:
                 }
