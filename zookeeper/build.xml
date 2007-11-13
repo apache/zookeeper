@@ -93,7 +93,9 @@
     <!-- Make zookeeper.jar                                     -->
     <!-- ====================================================== -->
     <target name="jar" depends="compile">
-        <jar jarfile="${jar.name}" basedir="${build.classes}"> 
+        <jar jarfile="${jar.name}"> 
+            <fileset file="LICENSE" />
+            <fileset dir="${build.classes}"/> 
             <manifest>
                 <attribute name="Main-Class" value="com.yahoo.zookeeper.server.quorum.QuorumPeer" />
             </manifest>
