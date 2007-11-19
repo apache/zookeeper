@@ -135,6 +135,8 @@ public class JRecord extends JCompType {
 					c.write("        for(i=0;i<v->count; i++) {\n");
 					c.write("            deallocate_"+JRecord.extractMethodSuffix(jvType)+"(&v->data[i]);\n");
 					c.write("        }\n");
+					c.write("        free(v->data);\n");
+					c.write("        v->data = 0;\n");
 					c.write("    }\n");
 					c.write("    return 0;\n");
 					c.write("}\n");

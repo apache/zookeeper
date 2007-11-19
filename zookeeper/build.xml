@@ -8,6 +8,7 @@
     <property name="src.dir" value="${basedir}/java/src" />
     <property name="build.dir" value="${basedir}/build" />
     <property name="src_generated.dir" value="${build.dir}/java/generated" />
+    <property name="csrc_generated.dir" value="${build.dir}/c/generated" />
     <property name="build.classes" value="${build.dir}/classes" />
     <property name="config.dir" value="${basedir}/test/config" />
     <property name="build.docs" value="${build.dir}/docs" />
@@ -38,12 +39,23 @@
     <target name="compile_jute" depends="jute">
         <mkdir dir="${build.classes}" />
         <mkdir dir="${src_generated.dir}" />
+	<mkdir dir="${csrc_generated.dir}" />
         <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
-            <arg value="../../../zookeeper.jute" />
+            <arg value="-l" />
+	    <arg value="java" />
+	    <arg value="../../../zookeeper.jute" /> 
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
         </java>
+	<java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
+	    <arg value="-l" />
+	    <arg value="c" />
+	    <arg value="../../../zookeeper.jute" />
+	    <classpath>
+	        <pathelement path="${build.classes}" />
+	    </classpath>
+         </java>
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" target="1.5" source="1.5" debug="on">
         </javac>
     </target>
