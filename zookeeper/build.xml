@@ -7,8 +7,8 @@
 
     <property name="src.dir" value="${basedir}/java/src" />
     <property name="build.dir" value="${basedir}/build" />
-    <property name="src_generated.dir" value="${build.dir}/java/generated" />
-    <property name="csrc_generated.dir" value="${build.dir}/c/generated" />
+    <property name="src_generated.dir" value="${basedir}/java/generated" />
+    <property name="csrc_generated.dir" value="${basedir}/c/generated" />
     <property name="build.classes" value="${build.dir}/classes" />
     <property name="config.dir" value="${basedir}/test/config" />
     <property name="build.docs" value="${build.dir}/docs" />
@@ -43,7 +43,7 @@
         <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
             <arg value="-l" />
 	    <arg value="java" />
-	    <arg value="../../../zookeeper.jute" /> 
+	    <arg value="../../zookeeper.jute" /> 
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
@@ -51,7 +51,7 @@
 	<java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
 	    <arg value="-l" />
 	    <arg value="c" />
-	    <arg value="../../../zookeeper.jute" />
+	    <arg value="../../zookeeper.jute" />
 	    <classpath>
 	        <pathelement path="${build.classes}" />
 	    </classpath>
