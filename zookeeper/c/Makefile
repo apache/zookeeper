@@ -19,7 +19,7 @@ zookeeper_mt.o:	src/zookeeper.c Makefile include/*.h ${JUTE_C}/* src/*.h
 zookeeper_st.o:	src/zookeeper.c Makefile include/*.h ${JUTE_C}/*
 	${cc} ${ldflags} -I${JUTE_C} -Iinclude/ -o $@ -c $<
 
-zookeeper.jute.o: ../build/c/generated/*
+zookeeper.jute.o: ${JUTE_C}/*
 	${cc} ${ldflags} -I${JUTE_C} -Iinclude/ -o $@ -c $<
 
 %.o:	src/%.c Makefile include/*.h
