@@ -119,6 +119,8 @@
     <!-- ====================================================== -->
     <target name="clean">
         <delete dir="${build.dir}" />
+        <delete dir="${src_generated.dir}" />
+        <delete dir="${csrc_generated.dir}" />
         <delete file="${jar.name}" />
     </target>
 
