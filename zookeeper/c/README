@@ -32,7 +32,7 @@ need to follow the steps outlined below. If you're building from a project sourc
 downloaded from Source Forge please skip to step 3.
 1) do a "ant compile_jute" from the zookeeper top level directory (.../trunk/zookeeper).
    This will create a directory named "generated" under zookeeper/c. 
-2) change directory to the zookeeper/c and do a "auroreconf -i" to bootstrap 
+2) change directory to the zookeeper/c and do a "autoreconf -i" to bootstrap 
    autoconf, automake and libtool. Please make sure you have autoconf version 2.59
    or greater installed. Skip to step 4.
 3) unzip/untar the source tarball and cd to the zookeeper-x.x.x/ directory
