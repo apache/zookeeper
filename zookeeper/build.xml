@@ -2,7 +2,7 @@
 
     <property name="Name" value="ZooKeeper" />
     <property name="name" value="zookeeper" />
-    <property name="version" value="0.1-dev" />
+    <property name="version" value="1.0.0" />
     <property name="year" value="2007" />
 
     <property name="src.dir" value="${basedir}/java/src" />
@@ -20,7 +20,7 @@
     <property name="test.log.dir" value="${test.build.dir}/logs" />
     <property name="test.tmp.dir" value="${test.build.dir}/tmp" />
     <property name="test.output" value="no" />
-    <property name="jar.name" value="zookeeper.jar" />
+    <property name="jar.name" value="zookeeper-${version}.jar" />
     <property name="test.timeout" value="900000" />
     <property name="test.junit.output.format" value="plain" />
 
