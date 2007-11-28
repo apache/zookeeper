@@ -20,29 +20,32 @@ Sync and Async APIs can be mixed and matched within the same application.
 
 The package includes two shared libraries: zookeeper_st and zookeeper_mt. The former
 only provides the Async API and is not thread-safe. The only reason this library
-exists is to support the platforms were pthread library is not available or not stable
-enough (i.e. FreeBSD 4.x). In all other cases the applications will be better off by
-linking against zookeeper_mt as it includes support both Sync and Async API.
+exists is to support the platforms were pthread library is not available or unstable 
+(i.e. FreeBSD 4.x). In all other cases the application developers are advised to link
+against zookeeper_mt as it includes support for both Sync and Async API.
 
 
 INSTALLATION
 
-If you're building the client from a check-out from SourceForge repository, you
-need to
+If you're building the client from a check-out from Source Forge repository, you
+need to follow the steps outlined below. If you're building from a project source package 
+downloaded from Source Forge please skip to step 3.
 1) do a "ant compile_jute" from the zookeeper top level directory (.../trunk/zookeeper).
    This will create a directory named "generated" under zookeeper/c. 
 2) change directory to the zookeeper/c and do a "auroreconf -i" to bootstrap 
    autoconf, automake and libtool. Please make sure you have autoconf version 2.59
-   or greater installed.
-3) do a "./configure [OPTIONS]" to generate the makefile. See INSTALL for general information
-   about running configure. Additionally, the configure supports the following options:
+   or greater installed. Skip to step 4.
+3) unzip/untar the source tarball and cd to the zookeeper-x.x.x/ directory
+4) do a "./configure [OPTIONS]" to generate the makefile. See INSTALL for general 
+   information about running configure. Additionally, the configure supports 
+   the following options:
    --enable-debug     enables optimization and enables debug info compiler options,
                       disabled by default
    --without-syncapi  disables Sync API support; zookeeper_mt library won't be built,
                       enabled by default
    --disable-static   do not build static libraries, enabled by default
    --disable-shared   do not build shared libraries, enabled by default
-4) do a "make" or "make install" to build the libraries and install them.
+5) do a "make" or "make install" to build the libraries and install them.
  
 
 USING THE CLIENT
@@ -56,7 +59,7 @@ but you could also use cli_st (singlethreaded, built against zookeeper_st librar
 $ cli_mt zookeeper_host:9876
 
 This is a client application that gives you a shell for executing simple zookeeper
-command. Once succesully started and connected to the server it displays a shell prompt. 
+commands. Once succesully started and connected to the server it displays a shell prompt. 
 You can now enter zookeeper commands. For example, to create a node:
 
 > create /my_new_node
