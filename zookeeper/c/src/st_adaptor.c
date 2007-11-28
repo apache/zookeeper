@@ -16,6 +16,7 @@
 
 #define BUILD_LIB
 #include "zk_adaptor.h"
+#include <stdlib.h>
 
 void lock_buffer_list(buffer_head_t *l)
 {
