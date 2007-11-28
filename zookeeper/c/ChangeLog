@@ -1,0 +1,8 @@
+2007-11-27 Andrew Kornev <akornev@users.sourceforge.net>
+
+	* configure.ac and Makefile.am added support for GNU autotools
+	
+	* recordio.c/.h updated jute IO routines to use bit-explicit integer types
+	  (int32_t vs. int, and int64_t vs. long long)
+	  
+	* README rough draft

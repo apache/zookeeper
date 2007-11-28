@@ -1,0 +1,83 @@
+                     Zookeeper C client library 
+
+
+This package provides a C client interface to Zookeeper server. For general
+information about Zookeeper please see http://zookeeper.wiki.sourceforge.net/.
+The homepage for this project is http://sourceforge.net/projects/zookeeper/.
+
+
+OVERVIEW
+
+The client supports two types of APIs -- synchronous and asynchronous.
+
+Asynchronous API provides non-blocking operations with completion callbacks and 
+relies on the application to implement event multiplexing on its behalf.
+
+On the other hand, Synchronous API provides a blocking flavor of zookeeper operations 
+and runs its own event loop in a separate thread.
+
+Sync and Async APIs can be mixed and matched within the same application.
+
+The package includes two shared libraries: zookeeper_st and zookeeper_mt. The former
+only provides the Async API and is not thread-safe. The only reason this library
+exists is to support the platforms were pthread library is not available or not stable
+enough (i.e. FreeBSD 4.x). In all other cases the applications will be better off by
+linking against zookeeper_mt as it includes support both Sync and Async API.
+
+
+INSTALLATION
+
+If you're building the client from a check-out from SourceForge repository, you
+need to
+1) do a "ant compile_jute" from the zookeeper top level directory (.../trunk/zookeeper).
+   This will create a directory named "generated" under zookeeper/c. 
+2) change directory to the zookeeper/c and do a "auroreconf -i" to bootstrap 
+   autoconf, automake and libtool. Please make sure you have autoconf version 2.59
+   or greater installed.
+3) do a "./configure [OPTIONS]" to generate the makefile. See INSTALL for general information
+   about running configure. Additionally, the configure supports the following options:
+   --enable-debug     enables optimization and enables debug info compiler options,
+                      disabled by default
+   --without-syncapi  disables Sync API support; zookeeper_mt library won't be built,
+                      enabled by default
+   --disable-static   do not build static libraries, enabled by default
+   --disable-shared   do not build shared libraries, enabled by default
+4) do a "make" or "make install" to build the libraries and install them.
+ 
+
+USING THE CLIENT
+
+You can test your client by running a zookeeper server (see instructions on 
+the project wiki page on how to run it) and connecting to it using one of 
+the cli applications that were built as part of the installation procedure.
+cli_mt (multithreaded, built against zookeeper_mt library) is shown in this example, 
+but you could also use cli_st (singlethreaded, built against zookeeper_st library):
+
+$ cli_mt zookeeper_host:9876
+
+This is a client application that gives you a shell for executing simple zookeeper
+command. Once succesully started and connected to the server it displays a shell prompt. 
+You can now enter zookeeper commands. For example, to create a node:
+
+> create /my_new_node
+
+To verify that the node's been created:
+
+> ls /
+
+You should see a list of node who are children of the root node "/".
+(TODO: document all the cli commands)
+
+In order to be able to use the zookeeper API in your application you have to
+1) remember to include zookeeper header 
+   #include <zookeeper/zookeeper.h>
+2) use -DTHREADED compiler option to enable Sync API; in this case you should
+   be linking your code against zookeeper_mt library
+
+Please take a look at cli.c to understand how to use the two API types. 
+(TODO: some kind of short tutorial would be helpful, I guess)
+
+
+SUPPORT
+
+For questions, please email <zookeeper-user@lists.sourceforge.net>
