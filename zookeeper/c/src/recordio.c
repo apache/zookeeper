@@ -17,6 +17,9 @@
 #include <recordio.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <netinet/in.h>
 
 void deallocate_String(char **s)
 {
@@ -33,8 +36,8 @@ void deallocate_Buffer(struct buffer *b)
 }
 
 struct buff_struct {
-    int len;
-    int off;
+    int32_t len;
+    int32_t off;
     char *buffer;
 };
 
@@ -44,7 +47,7 @@ static int resize_buffer(struct buff_struct *s, int newlen)
     while (s->len < newlen) {
         s->len *= 2;
     }
-    buffer = realloc(s->buffer, s->len);
+    buffer = (char*)realloc(s->buffer, s->len);
     if (!buffer) {
         s->buffer = 0;
         return -ENOMEM;
@@ -61,10 +64,10 @@ int oa_end_record(struct oarchive *oa, const char *tag)
 {
     return 0;
 }
-int oa_serialize_int(struct oarchive *oa, const char *tag, const int *d)
+int oa_serialize_int(struct oarchive *oa, const char *tag, const int32_t *d)
 {
     struct buff_struct *priv = oa->priv;
-    int i = htonl(*d);
+    int32_t i = htonl(*d);
     if ((priv->len - priv->off) < sizeof(i)) {
         int rc = resize_buffer(priv, priv->len + sizeof(i));
         if (rc < 0) return rc;
@@ -75,7 +78,6 @@ int oa_serialize_int(struct oarchive *oa, const char *tag, const int *d)
 }
 int64_t htonll(int64_t v)
 {
-    //int64_t orig_v = v;
     int i = 0;
     char *s = (char *)&v;
     if (htonl(1) == 1) {
@@ -87,13 +89,12 @@ int64_t htonll(int64_t v)
         s[8-i-1] = tmp;
     }
 
-    //fprintf(stderr, "input to htonll: %lld, output to htonll: %lld\n", orig_v, v);
     return v;
 }
 
-int oa_serialize_long(struct oarchive *oa, const char *tag, const long long *d)
+int oa_serialize_long(struct oarchive *oa, const char *tag, const int64_t *d)
 {
-    const long long i = htonll(*d);
+    const int64_t i = htonll(*d);
     struct buff_struct *priv = oa->priv;
     if ((priv->len - priv->off) < sizeof(i)) {
         int rc = resize_buffer(priv, priv->len + sizeof(i));
@@ -103,7 +104,7 @@ int oa_serialize_long(struct oarchive *oa, const char *tag, const long long *d)
     priv->off+=sizeof(i);
     return 0;
 }
-int oa_start_vector(struct oarchive *oa, const char *tag, const int *count)
+int oa_start_vector(struct oarchive *oa, const char *tag, const int32_t *count)
 {
     return oa_serialize_int(oa, tag, count);
 }
@@ -111,7 +112,7 @@ int oa_end_vector(struct oarchive *oa, const char *tag)
 {
     return 0;
 }
-int oa_serialize_bool(struct oarchive *oa, const char *name, const int *i)
+int oa_serialize_bool(struct oarchive *oa, const char *name, const int32_t *i)
 {
     //return oa_serialize_int(oa, name, i);
     struct buff_struct *priv = oa->priv;
@@ -124,7 +125,7 @@ int oa_serialize_bool(struct oarchive *oa, const char *name, const int *i)
     priv->off++;
     return 0;
 }
-static const int negone = -1;
+static const int32_t negone = -1;
 int oa_serialize_buffer(struct oarchive *oa, const char *name,
         const struct buffer *b)
 {
@@ -148,7 +149,7 @@ int oa_serialize_buffer(struct oarchive *oa, const char *name,
 int oa_serialize_string(struct oarchive *oa, const char *name, char **s)
 {
     struct buff_struct *priv = oa->priv;
-    int len;
+    int32_t len;
     int rc;
     if (!*s) {
         oa_serialize_int(oa, "len", &negone);
@@ -175,7 +176,7 @@ int ia_end_record(struct iarchive *ia, const char *tag)
 {
     return 0;
 }
-int ia_deserialize_int(struct iarchive *ia, const char *tag, int *count)
+int ia_deserialize_int(struct iarchive *ia, const char *tag, int32_t *count)
 {
     struct buff_struct *priv = ia->priv;
     if ((priv->len - priv->off) < sizeof(*count)) {
@@ -187,10 +188,10 @@ int ia_deserialize_int(struct iarchive *ia, const char *tag, int *count)
     return 0;
 }
 
-int ia_deserialize_long(struct iarchive *ia, const char *tag, long long *count)
+int ia_deserialize_long(struct iarchive *ia, const char *tag, int64_t *count)
 {
     struct buff_struct *priv = ia->priv;
-    long long v = 0;
+    int64_t v = 0;
     if ((priv->len - priv->off) < sizeof(*count)) {
         return -E2BIG;
     }
@@ -200,7 +201,7 @@ int ia_deserialize_long(struct iarchive *ia, const char *tag, long long *count)
     *count = v;
     return 0;
 }
-int ia_start_vector(struct iarchive *ia, const char *tag, int *count)
+int ia_start_vector(struct iarchive *ia, const char *tag, int32_t *count)
 {
     return ia_deserialize_int(ia, tag, count);
 }
@@ -208,7 +209,7 @@ int ia_end_vector(struct iarchive *ia, const char *tag)
 {
     return 0;
 }
-int ia_deserialize_bool(struct iarchive *ia, const char *name, int *v)
+int ia_deserialize_bool(struct iarchive *ia, const char *name, int32_t *v)
 {
     struct buff_struct *priv = ia->priv;
     //fprintf(stderr, "Deserializing bool %d\n", priv->off);
@@ -242,7 +243,7 @@ int ia_deserialize_buffer(struct iarchive *ia, const char *name,
 int ia_deserialize_string(struct iarchive *ia, const char *name, char **s)
 {
     struct buff_struct *priv = ia->priv;
-    int len;
+    int32_t len;
     int rc = ia_deserialize_int(ia, "len", &len);
     if (rc < 0)
         return rc;
