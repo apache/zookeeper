@@ -1,3 +1,4 @@
+Release 1.0.0
 2007-11-27 Andrew Kornev <akornev@users.sourceforge.net>
 
 	* configure.ac and Makefile.am added support for GNU autotools
