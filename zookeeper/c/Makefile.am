@@ -5,6 +5,7 @@ AM_CFLAGS = -Wall -Werror
 LIB_LDFLAGS = -no-undefined -version-info 1
 
 pkginclude_HEADERS = include/zookeeper.h include/recordio.h generated/zookeeper.jute.h
+EXTRA_DIST=LICENSE
 
 lib_LTLIBRARIES = libzookeeper_st.la
 
