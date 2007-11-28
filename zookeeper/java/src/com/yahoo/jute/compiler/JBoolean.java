@@ -26,7 +26,7 @@ public class JBoolean extends JType {
     
     /** Creates a new instance of JBoolean */
     public JBoolean() {
-        super("int", "bool", "boolean", "Bool", "Boolean", "toBoolean");
+        super("int32_t", "bool", "boolean", "Bool", "Boolean", "toBoolean");
     }
     
     public String getSignature() {

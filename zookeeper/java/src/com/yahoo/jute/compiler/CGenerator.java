@@ -62,9 +62,10 @@ class CGenerator {
         h.write("#include \"recordio.h\"\n");
         for (Iterator i = mInclFiles.iterator(); i.hasNext();) {
             JFile f = (JFile) i.next();
-            h.write("#include \""+f.getName()+".hh\"\n");
+            h.write("#include \""+f.getName()+".h\"\n");
         }
-        c.write("#include \""+mName+".h\"\n");
+        c.write("#include <stdlib.h>\n"); // need it for calloc() & free()
+        c.write("#include \""+mName+".h\"\n\n");
         
         for (Iterator i = mRecList.iterator(); i.hasNext();) {
             JRecord jr = (JRecord) i.next();
