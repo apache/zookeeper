@@ -15,6 +15,11 @@
  */
  
 #define BUILD_LIB
+
+#if defined(__CYGWIN__)
+#define USE_IPV6
+#endif
+
 #include <zookeeper.h>
 #include <zookeeper.jute.h>
 #include <proto.h>
@@ -28,6 +33,7 @@
 #include <poll.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h>
 #include <unistd.h>
@@ -51,7 +57,7 @@ const int CONNECTED_STATE = 3;
 static __attribute__ ((unused)) const char* state2String(int state){
     switch(state){
     case 0:
-        return "INITIALIZED_STATE";
+        return "CLOSED_STATE";
     case 1 /*CONNECTING_STATE*/:
         return "CONNECTING_STATE";
     case 2 /*ASSOCIATING_STATE*/:
@@ -342,12 +348,14 @@ int getaddrs(zhandle_t *zh)
 				memset(&addr4->sin_zero, 0, sizeof(addr4->sin_zero));
 				memcpy(&addr4->sin_addr, *ptr, he->h_length);
 				zh->addrs_count++;
+#if defined(AF_INET6)
 			} else if (addr->sa_family == AF_INET6) {
 				addr6->sin6_port = htons(port);
 				addr6->sin6_scope_id = 0;
 				addr6->sin6_flowinfo = 0;
 				memcpy(&addr6->sin6_addr, *ptr, he->h_length);
 				zh->addrs_count++;
+#endif
 			} else {
 				LOG_WARN(("skipping unknown address family %x for %s", 
 				        addr->sa_family, zh->hostname)); 
@@ -1082,12 +1090,13 @@ static int check_events(zhandle_t *zh, int events)
             if (zh->input_buffer != &zh->primer_buffer) {
                 queue_buffer(&zh->to_process, zh->input_buffer, 0);
             } else  {
+                int64_t oldid,newid;
 				//deserialize
 				deserialize_prime_response(&zh->primer_storage, zh->primer_buffer.buffer);
 				/* We are processing the primer_buffer, so we need to finish
                  * the connection handshake */
-                int64_t oldid = zh->client_id.client_id;
-                int64_t newid = zh->primer_storage.sessionId;
+                oldid = zh->client_id.client_id;
+                newid = zh->primer_storage.sessionId;
                 if (oldid != 0 && oldid != newid) {
                     zh->state = EXPIRED_SESSION_STATE;
 					errno = ESTALE;
@@ -2009,11 +2018,13 @@ static const char* format_endpoint_info(const struct sockaddr* ep)
 
     inaddr=&((struct sockaddr_in*)ep)->sin_addr;
     port=((struct sockaddr_in*)ep)->sin_port;
+#if defined(AF_INET6)
     if(ep->sa_family==AF_INET6){
     	inaddr=&((struct sockaddr_in6*)ep)->sin6_addr;
     	port=((struct sockaddr_in6*)ep)->sin6_port;
     }
-
+#endif
+    
     inet_ntop(ep->sa_family,inaddr,addrstr,sizeof(addrstr)-1);
     sprintf(buf,"%s:%d",addrstr,ntohs(port));
     return buf;

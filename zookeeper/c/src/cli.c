@@ -23,6 +23,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <time.h>
+#include <errno.h>
 
 #ifdef YCA
 #include <yca/yca.h>
@@ -39,11 +40,6 @@ static int to_send=0;
 static int sent=0;
 static int recvd=0;
 
-int64_t ntohll(int64_t le)
-{
-	return le;
-}
-
 static int shutdownThisThing=0;
 
 void watcher(void *v, int type, int state, const char *path)
@@ -54,7 +50,7 @@ void watcher(void *v, int type, int state, const char *path)
 			const clientid_t *id = zoo_client_id(zh);
 			if (myid.client_id == 0|| myid.client_id != id->client_id) {
 				myid = *id;
-				fprintf(stderr, "Got a new id: %llx\n", _LL_CAST_ ntohll(myid.client_id));
+				fprintf(stderr, "Got a new id: %llx\n", _LL_CAST_ myid.client_id);
 				if (clientIdFile) {
 					FILE *fh = fopen(clientIdFile, "w");
 					if (!fh) {
@@ -94,9 +90,10 @@ void dumpStat(const struct Stat *stat)
 	"\tmtime=%s\tmzxid=%llx\n"
 	"\tversion=%x\taversion=%x\n"
 	"\tephemeralOwner = %llx\n",
-	ctime_r(&tctime, tctimes), _LL_CAST_ stat->czxid, ctime_r(&tmtime, tmtimes), _LL_CAST_ stat->mzxid,
-	stat->version, stat->aversion,
-	_LL_CAST_ ntohll(stat->ephemeralOwner));
+	ctime_r(&tctime, tctimes), _LL_CAST_ stat->czxid, ctime_r(&tmtime, tmtimes),
+	_LL_CAST_ stat->mzxid,
+	(unsigned int)stat->version, (unsigned int)stat->aversion,
+	_LL_CAST_ stat->ephemeralOwner);
 }
 
 void my_string_completion(int rc, const char *name, const void *data)
