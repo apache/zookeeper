@@ -1,0 +1,6 @@
+Release 1.0.0
+2007-11-27 Andrew Kornev <akornev@users.sourceforge.net>
+
+	* Updated the jute compiler to emit int32_t vs int in the generated C code
+	
+	* Changed release numbering scheme to match that of the C client
