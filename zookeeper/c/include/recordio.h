@@ -16,18 +16,14 @@
 #ifndef __RECORDIO_H__
 #define __RECORDIO_H__
 
-#include <stdlib.h>
 #include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <errno.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct buffer {
-    int len;
+    int32_t len;
     char *buff;
 };
 
@@ -37,11 +33,11 @@ void deallocate_vector(void *d);
 struct iarchive {
     int (*start_record)(struct iarchive *ia, const char *tag);
     int (*end_record)(struct iarchive *ia, const char *tag);
-    int (*start_vector)(struct iarchive *ia, const char *tag, int *count);
+    int (*start_vector)(struct iarchive *ia, const char *tag, int32_t *count);
     int (*end_vector)(struct iarchive *ia, const char *tag);
-    int (*deserialize_Bool)(struct iarchive *ia, const char *name, int *);
-    int (*deserialize_Int)(struct iarchive *ia, const char *name, int *);
-    int (*deserialize_Long)(struct iarchive *ia, const char *name, long long *);
+    int (*deserialize_Bool)(struct iarchive *ia, const char *name, int32_t *);
+    int (*deserialize_Int)(struct iarchive *ia, const char *name, int32_t *);
+    int (*deserialize_Long)(struct iarchive *ia, const char *name, int64_t *);
     int (*deserialize_Buffer)(struct iarchive *ia, const char *name,
             struct buffer *);
     int (*deserialize_String)(struct iarchive *ia, const char *name, char **);
@@ -50,12 +46,12 @@ struct iarchive {
 struct oarchive {
     int (*start_record)(struct oarchive *oa, const char *tag);
     int (*end_record)(struct oarchive *oa, const char *tag);
-    int (*start_vector)(struct oarchive *oa, const char *tag, const int *count);
+    int (*start_vector)(struct oarchive *oa, const char *tag, const int32_t *count);
     int (*end_vector)(struct oarchive *oa, const char *tag);
-    int (*serialize_Bool)(struct oarchive *oa, const char *name, const int *);
-    int (*serialize_Int)(struct oarchive *oa, const char *name, const int *);
+    int (*serialize_Bool)(struct oarchive *oa, const char *name, const int32_t *);
+    int (*serialize_Int)(struct oarchive *oa, const char *name, const int32_t *);
     int (*serialize_Long)(struct oarchive *oa, const char *name,
-            const long long *);
+            const int64_t *);
     int (*serialize_Buffer)(struct oarchive *oa, const char *name,
             const struct buffer *);
     int (*serialize_String)(struct oarchive *oa, const char *name, char **);
