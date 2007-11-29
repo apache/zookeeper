@@ -79,11 +79,9 @@ public class AsyncTest extends TestCase implements Watcher, StringCallback, Void
             notifyAll();
         }
 
-        @Override
         public void process(WatcherEvent event) {
         }
 
-        @Override
         public void processResult(int rc, String path, Object ctx, String name) {
             try {
                 decOut();
@@ -93,7 +91,6 @@ public class AsyncTest extends TestCase implements Watcher, StringCallback, Void
             }
         }
 
-        @Override
         public void processResult(int rc, String path, Object ctx) {
         }
     }

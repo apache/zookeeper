@@ -1,20 +1,15 @@
 package com.yahoo.zookeeper.test;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -24,14 +19,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.ZooDefs;
-import com.yahoo.zookeeper.ZooKeeper;
 import com.yahoo.zookeeper.AsyncCallback.DataCallback;
 import com.yahoo.zookeeper.AsyncCallback.StatCallback;
+import com.yahoo.zookeeper.KeeperException;
+import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.ZooDefs.CreateFlags;
 import com.yahoo.zookeeper.ZooDefs.Ids;
+import com.yahoo.zookeeper.ZooKeeper;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 
@@ -41,7 +35,7 @@ public class GenerateLoad {
     static Set<SlaveThread> slaves = Collections
             .synchronizedSet(new HashSet<SlaveThread>());
 
-    static HashMap<Long, Long> totalByTime = new HashMap<Long, Long>();
+    static Map<Long, Long> totalByTime = new HashMap<Long, Long>();
 
     static long currentInterval;
 
@@ -89,12 +83,10 @@ public class GenerateLoad {
             start();
         }
 
-        @SuppressWarnings("deprecation")
         public void run() {
             try {
                 System.out.println("Connected to " + s);
-                DataInputStream is = new DataInputStream(
-                        new BufferedInputStream(s.getInputStream()));
+                BufferedReader is = new BufferedReader(new InputStreamReader(s.getInputStream()));
                 String result;
                 while ((result = is.readLine()) != null) {
                     String timePercentCount[] = result.split(" ");
@@ -194,8 +186,11 @@ public class GenerateLoad {
                         }
                         total += count;
                         number++;
-                        Date date = new Date(lastInterval * INTERVAL);
-                        String report = lastInterval + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTimeInMillis(lastInterval * INTERVAL);
+                        String report = lastInterval + " " + calendar.get(Calendar.HOUR_OF_DAY)
+                                                           + ":" + calendar.get(Calendar.MINUTE)
+                                                           + ":" + calendar.get(Calendar.SECOND)
                                 + " "
                                 + percentage
                                 + "% "
@@ -244,7 +239,7 @@ public class GenerateLoad {
     
         static int errors;
       
-        static Object statSync = new Object();
+        static final Object statSync = new Object();
         
         static int finished;
         
@@ -321,7 +316,6 @@ public class GenerateLoad {
             }
         }
 
-        @Override
         public void process(WatcherEvent event) {
             System.err.println(event);
             synchronized(this) {
@@ -344,7 +338,6 @@ public class GenerateLoad {
             }
         }
 
-        @Override
         public void processResult(int rc, String path, Object ctx, byte[] data,
                 Stat stat) {
             decOutstanding();
@@ -361,7 +354,6 @@ public class GenerateLoad {
 
         }
 
-        @Override
         public void processResult(int rc, String path, Object ctx, Stat stat) {
             decOutstanding();
             synchronized(statSync) {
@@ -423,7 +415,7 @@ public class GenerateLoad {
                 ss = new ServerSocket(port);
                 new AcceptorThread();
                 new ReporterThread();
-                DataInputStream is = new DataInputStream(System.in);
+                BufferedReader is = new BufferedReader(new InputStreamReader(System.in));
                 String line;
                 while ((line = is.readLine()) != null) {
                     try {
@@ -464,7 +456,7 @@ public class GenerateLoad {
                         .parseInt(hostPort[1]));
                 new ZooKeeperThread();
                 new SenderThread();
-                DataInputStream is = new DataInputStream(s.getInputStream());
+                BufferedReader is = new BufferedReader(new InputStreamReader(s.getInputStream()));
                 String line;
                 while((line = is.readLine()) != null) {
                     percentage = Integer.parseInt(line);
