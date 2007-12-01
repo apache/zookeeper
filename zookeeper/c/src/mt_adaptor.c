@@ -18,7 +18,11 @@
 #endif
 
 #define BUILD_LIB
+
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include "zk_adaptor.h"
 #include <stdlib.h>
 #include <stdio.h>
