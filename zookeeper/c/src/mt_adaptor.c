@@ -54,6 +54,7 @@ struct sync_completion *alloc_sync_completion(void)
     struct sync_completion *sc = (struct sync_completion*)calloc(1, sizeof(struct sync_completion));
     if (sc) {
        pthread_cond_init(&sc->cond, 0); 
+       pthread_mutex_init(&sc->lock, 0);
     }
     return sc;
 }
@@ -69,7 +70,11 @@ int wait_sync_completion(struct sync_completion *sc)
 
 void free_sync_completion(struct sync_completion *sc)
 {
-    free(sc);
+    if (sc) {
+        pthread_mutex_destroy(&sc->lock);
+        pthread_cond_destroy(&sc->cond);
+        free(sc);
+    }
 }
 
 void notify_sync_completion(struct sync_completion *sc)
