@@ -217,6 +217,10 @@ int startsWith(const char *line, const char *prefix)
 void processline(char *line)
 {
 	int rc;
+	int async = (line[0] == 'a');
+	if (async) {
+	  line++;
+	} 
 	if (startsWith(line, "get ")) {
 		line += 4;
 		if (line[0] != '/') {
@@ -242,8 +246,12 @@ void processline(char *line)
 		}
 		*ptr = '\0';
 		ptr++;
-		rc = zoo_aset(zh, line, ptr, strlen(ptr), -1, my_stat_completion,
+		if (async) {
+		    rc = zoo_aset(zh, line, ptr, strlen(ptr), -1, my_stat_completion,
 				strdup(line));
+		} else {
+		    rc = zoo_set(zh, line, ptr, strlen(ptr), -1);
+		}
 		if (rc) {
 			fprintf(stderr, "Error %d for %s\n", rc, line);
 		}
@@ -289,7 +297,11 @@ void processline(char *line)
 			fprintf(stderr, "Path must start with /, found: %s\n", line);
 			return;
 		}
-		rc = zoo_adelete(zh, line, -1, my_void_completion, strdup(line));
+		if (async) {
+		    rc = zoo_adelete(zh, line, -1, my_void_completion, strdup(line));
+		} else {
+		    rc = zoo_delete(zh, line, -1); 
+		}
 		if (rc) {
 			fprintf(stderr, "Error %d for %s\n", rc, line);
 		}
