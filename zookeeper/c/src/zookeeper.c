@@ -1320,9 +1320,9 @@ int zookeeper_process(zhandle_t *zh, int events)
                 close_buffer_iarchive(&ia);
                 free_buffer(bptr);
                 print_completion_queue(zh);
-				LOG_ERROR(("xid %x disappeared!", hdr.xid));
-		    	return api_epilog(zh,ZRUNTIMEINCONSISTENCY);
-			}
+                LOG_ERROR(("xid %x disappeared!", hdr.xid));
+                return api_epilog(zh,ZRUNTIMEINCONSISTENCY);
+            }
             if (cptr->c.void_result != SYNCHRONOUS_MARKER) {
                 cptr->buffer = bptr;
                 queue_completion(&zh->completions_to_process, cptr, 0);
@@ -1332,80 +1332,76 @@ int zookeeper_process(zhandle_t *zh, int events)
                 struct sync_completion
                         *sc = (struct sync_completion*)cptr->data;
                 sc->rc = rc;
-            switch(cptr->completion_type) {
-            case COMPLETION_DATA:
-                if (rc==0) {
-                        struct GetDataResponse res;
-                        int len;
-                	LOG_DEBUG(("Calling COMPLETION_DATA rc=%d",rc));
-                        deserialize_GetDataResponse(ia, "reply", &res);
-                        if (res.data.len <= sc->u.data.buff_len) {
-                            len = res.data.len;
-                        } else {
-                            len = sc->u.data.buff_len;
+                sc->hdr = hdr;
+                switch(cptr->completion_type) {
+                case COMPLETION_DATA:
+                    if (rc==0) {
+                            struct GetDataResponse res;
+                            int len;
+                    	LOG_DEBUG(("Calling COMPLETION_DATA rc=%d",rc));
+                            deserialize_GetDataResponse(ia, "reply", &res);
+                            if (res.data.len <= sc->u.data.buff_len) {
+                                len = res.data.len;
+                            } else {
+                                len = sc->u.data.buff_len;
+                            }
+                            sc->u.data.buff_len = len;
+                            memcpy(sc->u.data.buffer, res.data.buff, len);
+                            sc->u.data.stat = res.stat;
+                            deallocate_GetDataResponse(&res);
+                    }
+                    break;
+                case COMPLETION_STAT:
+                        if (rc == 0) {
+                            struct SetDataResponse res;
+                    LOG_DEBUG(("Calling COMPLETION_STAT rc=%d",rc));
+                            deserialize_SetDataResponse(ia, "reply", &res);
+                            sc->u.stat = res.stat;
+                            deallocate_SetDataResponse(&res);
                         }
-                        sc->u.data.buff_len = len;
-                        memcpy(sc->u.data.buffer, res.data.buff, len);
-                        sc->u.data.stat = res.stat;
-                        deallocate_GetDataResponse(&res);
+                    break;
+                case COMPLETION_STRINGLIST:
+                        if (rc == 0) {
+                            struct GetChildrenResponse res;
+                    LOG_DEBUG(("Calling COMPLETION_STRINGLIST rc=%d",rc));
+                            deserialize_GetChildrenResponse(ia, "reply", &res);
+                            sc->u.strs = res.children;
+                            /* We don't deallocate since we are passing it back */
+                            // deallocate_GetChildrenResponse(&res);
+                        }
+                    break;
+                case COMPLETION_STRING:
+                        if (rc == 0) {
+                            struct CreateResponse res;
+                            int len;
+                    LOG_DEBUG(("Calling COMPLETION_STRING rc=%d",rc));
+                            deserialize_CreateResponse(ia, "reply", &res);
+                            if (sc->u.str.str_len > strlen(res.path)) {
+                                len = strlen(res.path);
+                            } else {
+                                len = sc->u.str.str_len;
+                            }
+                            memcpy(sc->u.str.str, res.path, len);
+                            sc->u.str.str[len] = '\0';
+                            deallocate_CreateResponse(&res);
+                        }
+                    break;
+                case COMPLETION_ACLLIST:
+                        if (rc == 0) {
+                            struct GetACLResponse res;
+                    LOG_DEBUG(("Calling COMPLETION_ACLLIST rc=%d",rc));
+                            deserialize_GetACLResponse(ia, "reply", &res);
+                            cptr->c.acl_result(rc, &res.acl, &res.stat, cptr->data);
+                            sc->u.acl.acl = res.acl;
+                            sc->u.acl.stat = res.stat;
+                            /* We don't deallocate since we are passing it back */
+                            //deallocate_GetACLResponse(&res);
+                        }
+                    break;
+                case COMPLETION_VOID:
+                    LOG_DEBUG(("Calling COMPLETION_VOID rc=%d",rc));
+                    break;
                 }
-                break;
-            case COMPLETION_STAT:
-                    if (rc == 0) {
-                        struct SetDataResponse res;
-                LOG_DEBUG(("Calling COMPLETION_STAT rc=%d",rc));
-                        deserialize_SetDataResponse(ia, "reply", &res);
-                        sc->u.stat = res.stat;
-                        deallocate_SetDataResponse(&res);
-                    }
-                break;
-            case COMPLETION_STRINGLIST:
-                    if (rc == 0) {
-                        struct GetChildrenResponse res;
-                LOG_DEBUG(("Calling COMPLETION_STRINGLIST rc=%d",rc));
-                        deserialize_GetChildrenResponse(ia, "reply", &res);
-                        sc->u.strs = res.children;
-                        /* We don't deallocate since we are passing it back */
-                        // deallocate_GetChildrenResponse(&res);
-                    }
-                break;
-            case COMPLETION_STRING:
-                    if (rc == 0) {
-                        struct CreateResponse res;
-                        int len;
-                LOG_DEBUG(("Calling COMPLETION_STRING rc=%d",rc));
-                        deserialize_CreateResponse(ia, "reply", &res);
-                        if (sc->u.str.str_len > strlen(res.path)) {
-                            len = strlen(res.path);
-                        } else {
-                            len = sc->u.str.str_len;
-                        }
-                        memcpy(sc->u.str.str, res.path, len);
-                        sc->u.str.str[len] = '\0';
-                        deallocate_CreateResponse(&res);
-                    }
-                break;
-            case COMPLETION_ACLLIST:
-                    if (rc == 0) {
-                        struct GetACLResponse res;
-                LOG_DEBUG(("Calling COMPLETION_ACLLIST rc=%d",rc));
-                        deserialize_GetACLResponse(ia, "reply", &res);
-                        cptr->c.acl_result(rc, &res.acl, &res.stat, cptr->data);
-                        sc->u.acl.acl = res.acl;
-                        sc->u.acl.stat = res.stat;
-                        /* We don't deallocate since we are passing it back */
-                        //deallocate_GetACLResponse(&res);
-                    }
-                break;
-            case COMPLETION_VOID:
-                LOG_DEBUG(("Calling COMPLETION_VOID rc=%d",rc));
-            	if (hdr.xid == PING_XID) {
-            		// We want to skip the ping
-                } else {
-                	cptr->c.void_result(rc, cptr->data);
-            	}
-                break;
-            }
                 sc->complete = 1;
                 notify_sync_completion(sc);
                 free_buffer(bptr);
@@ -2060,7 +2056,7 @@ int zoo_create(zhandle_t *zh, const char *path, const char *value,
     }
     sc->u.str.str = realpath;
     sc->u.str.str_len = max_realpath_len;
-    zoo_acreate(zh, path, value, valuelen, acl, flags, SYNCHRONOUS_MARKER, &sc);
+    zoo_acreate(zh, path, value, valuelen, acl, flags, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
     rc = sc->hdr.err;
     free_sync_completion(sc);
@@ -2074,7 +2070,7 @@ int zoo_delete(zhandle_t *zh, const char *path, int version)
     if (!sc) {
         return ZSYSTEMERROR;
     }
-    zoo_adelete(zh, path, version, SYNCHRONOUS_MARKER, &sc);
+    zoo_adelete(zh, path, version, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
     rc = sc->hdr.err;
     free_sync_completion(sc);
@@ -2088,7 +2084,7 @@ int zoo_exists(zhandle_t *zh, const char *path, int watch, struct Stat *stat)
     if (!sc) {
         return ZSYSTEMERROR;
     }
-    zoo_aexists(zh, path, watch, SYNCHRONOUS_MARKER, &sc);
+    zoo_aexists(zh, path, watch, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
     rc = sc->hdr.err;
     if (rc == 0&& stat) {
@@ -2108,7 +2104,7 @@ int zoo_get(zhandle_t *zh, const char *path, int watch, char *buffer,
     }
     sc->u.data.buffer = buffer;
     sc->u.data.buff_len = buffer_len;
-    zoo_aget(zh, path, watch, SYNCHRONOUS_MARKER, &sc);
+    zoo_aget(zh, path, watch, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
     rc = sc->hdr.err;
     if (rc == 0&& stat) {
@@ -2127,7 +2123,7 @@ int zoo_set(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     if (!sc) {
         return ZSYSTEMERROR;
     }
-    zoo_aset(zh, path, buffer, buflen, version, SYNCHRONOUS_MARKER, &sc);
+    zoo_aset(zh, path, buffer, buflen, version, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
     rc = sc->hdr.err;
     free_sync_completion(sc);
@@ -2142,7 +2138,7 @@ int zoo_get_children(zhandle_t *zh, const char *path, int watch,
     if (!sc) {
         return ZSYSTEMERROR;
     }
-    zoo_aget_children(zh, path, watch, SYNCHRONOUS_MARKER, &sc);
+    zoo_aget_children(zh, path, watch, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
     rc = sc->hdr.err;
     if (rc == 0) {
@@ -2164,7 +2160,7 @@ int zoo_get_acl(zhandle_t *zh, const char *path, struct ACL_vector *acl,
     if (!sc) {
         return ZSYSTEMERROR;
     }
-    zoo_aget_acl(zh, path, SYNCHRONOUS_MARKER, &sc);
+    zoo_aget_acl(zh, path, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
     rc = sc->hdr.err;
     if (rc == 0&& stat) {
@@ -2190,7 +2186,7 @@ int zoo_set_acl(zhandle_t *zh, const char *path, int version,
         return ZSYSTEMERROR;
     }
     zoo_aset_acl(zh, path, version, (struct ACL_vector*)acl,
-            SYNCHRONOUS_MARKER, &sc);
+            SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
     rc = sc->hdr.err;
     free_sync_completion(sc);
