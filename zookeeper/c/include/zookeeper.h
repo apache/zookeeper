@@ -264,9 +264,14 @@ ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
  * After this call, the client session will no longer be valid. The function
  * will flush any outstanding send requests before return. As a result it may 
  * block.
+ *
+ * This method should only be called only once on a zookeeper handle. Calling
+ * twice will cause undefined (and probably undesirable behavior).
+ *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \return a result code. Regardless of the error code returned, the zhandle 
  * will be destroyed and all resources freed. 
+ *
  * ZOK - success
  * ZBADARGUMENTS - invalid input parameters
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory

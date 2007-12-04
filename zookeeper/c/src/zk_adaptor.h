@@ -156,6 +156,8 @@ void notify_sync_completion(struct sync_completion *sc);
 int adaptor_send_queue(zhandle_t *zh, int timeout);
 int process_async(int outstanding_sync);
 void process_completions(zhandle_t *zh);
+void api_prolog(zhandle_t* zh);
+int api_epilog(zhandle_t *zh, int rc);
 #ifdef THREADED
 #else
 

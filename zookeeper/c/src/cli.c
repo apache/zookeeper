@@ -214,6 +214,8 @@ int startsWith(const char *line, const char *prefix)
 	return strncmp(line, prefix, len) == 0;
 }
 
+static const char *hostPort;
+
 void processline(char *line)
 {
 	int rc;
@@ -317,6 +319,9 @@ void processline(char *line)
 		}
 	} else if (strcmp(line, "myid") == 0) {
 		printf("session Id = %llx\n", _LL_CAST_ zoo_client_id(zh)->client_id);
+        } else if (strcmp(line, "reinit") == 0) {
+		zookeeper_close(zh);
+	        zh = zookeeper_init(hostPort, watcher, 10000, &myid);
 	} else if (startsWith(line, "quit")) {
 		fprintf(stderr, "Quitting...\n");
 		shutdownThisThing=1;
@@ -370,7 +375,8 @@ int main(int argc, char **argv)
 	strcpy(p,"dummy");
 #endif
 	zoo_deterministic_conn_order(1);  // enable deterministic order
-	zh = zookeeper_init(argv[1], watcher, 10000, &myid);
+        hostPort = argv[1];
+	zh = zookeeper_init(hostPort, watcher, 10000, &myid);
 	if (!zh) {
 		return errno;
 	}

@@ -148,8 +148,6 @@ static int add_completion(zhandle_t *zh, int xid, int completion_type,
         const void *dc, const void *data, int add_to_front);
 static void dispatch_events_till_ready(zhandle_t *zh, 
 	    struct blocking_retv *ready) __attribute__ ((unused));
-static void api_prolog(zhandle_t* zh);
-static int api_epilog(zhandle_t *zh, int rc);
 int flush_send_queue(zhandle_t*zh, int timeout);
 static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
 	const char* format,...);
@@ -1123,12 +1121,12 @@ static int check_events(zhandle_t *zh, int events)
 	return ZOK;
 }
 
-static void api_prolog(zhandle_t* zh)
+void api_prolog(zhandle_t* zh)
 {
     inc_nesting_level(&zh->nesting,1); 
 }
 
-static int api_epilog(zhandle_t *zh,int rc)
+int api_epilog(zhandle_t *zh,int rc)
 {
 	if(inc_nesting_level(&zh->nesting,-1)==0 && zh->close_requested!=0)
 		zookeeper_close(zh);
@@ -1551,7 +1549,8 @@ int zookeeper_close(zhandle_t *zh)
         return ZBADARGUMENTS;
     
     if (inc_nesting_level(&zh->nesting,0)!=0) {
-		zh->close_requested=1;
+        zh->close_requested=1;
+    	adaptor_finish(zh);
         return ZOK;
     }
     if (is_unrecoverable(zh)||zh->fd==-1){
@@ -1579,7 +1578,6 @@ int zookeeper_close(zhandle_t *zh)
      * (but reasonable) number of milliseconds since we want the call to block*/
     rc=adaptor_send_queue(zh, 3000);
 finish:
-    adaptor_finish(zh);
     destroy(zh);
     return rc;
 }
