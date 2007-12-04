@@ -104,7 +104,9 @@ int adaptor_init(zhandle_t *zh)
         return -1;
     }
     zh->adaptor_priv = adaptor_threads;
+    api_prolog(zh);
     pthread_create(&adaptor_threads->io, 0, do_io, zh);
+    api_prolog(zh);
     pthread_create(&adaptor_threads->completion, 0, do_completion, zh);
     return 0;
 }
@@ -190,6 +192,7 @@ void *do_io(void *v)
         }
         result = zookeeper_process(zh, interest);
     }
+    api_epilog(zh, 0);
     return 0;
 }
 
@@ -204,6 +207,7 @@ void *do_completion(void *v)
         pthread_mutex_unlock(&zh->completions_to_process.lock);
         process_completions(zh);
     }
+    api_epilog(zh, 0);
     return 0;
 }
 
