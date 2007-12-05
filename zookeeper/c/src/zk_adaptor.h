@@ -65,7 +65,6 @@ struct sync_completion {
         } acl;
         struct String_vector strs;
     } u;
-    struct ReplyHeader hdr;
     int complete;
 #ifdef THREADED
     pthread_cond_t cond;

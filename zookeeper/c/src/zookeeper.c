@@ -671,7 +671,13 @@ void free_completions(zhandle_t *zh,int callCompletion,int rc)
         completion_list_t *cptr = tmp_list.head;
         
         tmp_list.head = cptr->next;
-        if (callCompletion) {
+        if (cptr->c.data_result == SYNCHRONOUS_MARKER) {
+            struct sync_completion
+                        *sc = (struct sync_completion*)cptr->data;
+            sc->complete = 1;
+            sc->rc = rc;
+            notify_sync_completion(sc);
+        } else if (callCompletion) {
 			switch (cptr->completion_type) {
 			case COMPLETION_DATA:
                 LOG_DEBUG(("Calling COMPLETION_DATA rc=%d",rc));
@@ -1330,7 +1336,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                 struct sync_completion
                         *sc = (struct sync_completion*)cptr->data;
                 sc->rc = rc;
-                sc->hdr = hdr;
+                //sc->hdr = hdr;
                 switch(cptr->completion_type) {
                 case COMPLETION_DATA:
                     if (rc==0) {
@@ -2056,7 +2062,7 @@ int zoo_create(zhandle_t *zh, const char *path, const char *value,
     sc->u.str.str_len = max_realpath_len;
     zoo_acreate(zh, path, value, valuelen, acl, flags, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
-    rc = sc->hdr.err;
+    rc = sc->rc;
     free_sync_completion(sc);
     return rc;
 }
@@ -2070,7 +2076,7 @@ int zoo_delete(zhandle_t *zh, const char *path, int version)
     }
     zoo_adelete(zh, path, version, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
-    rc = sc->hdr.err;
+    rc = sc->rc;
     free_sync_completion(sc);
     return rc;
 }
@@ -2084,7 +2090,7 @@ int zoo_exists(zhandle_t *zh, const char *path, int watch, struct Stat *stat)
     }
     zoo_aexists(zh, path, watch, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
-    rc = sc->hdr.err;
+    rc = sc->rc;
     if (rc == 0&& stat) {
         *stat = sc->u.stat;
     }
@@ -2104,7 +2110,7 @@ int zoo_get(zhandle_t *zh, const char *path, int watch, char *buffer,
     sc->u.data.buff_len = buffer_len;
     zoo_aget(zh, path, watch, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
-    rc = sc->hdr.err;
+    rc = sc->rc;
     if (rc == 0&& stat) {
         *stat = sc->u.data.stat;
         rc = sc->u.data.buff_len;
@@ -2123,7 +2129,7 @@ int zoo_set(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     }
     zoo_aset(zh, path, buffer, buflen, version, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
-    rc = sc->hdr.err;
+    rc = sc->rc;
     free_sync_completion(sc);
     return rc;
 }
@@ -2138,7 +2144,7 @@ int zoo_get_children(zhandle_t *zh, const char *path, int watch,
     }
     zoo_aget_children(zh, path, watch, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
-    rc = sc->hdr.err;
+    rc = sc->rc;
     if (rc == 0) {
         if (strings) {
             *strings = sc->u.strs;
@@ -2160,7 +2166,7 @@ int zoo_get_acl(zhandle_t *zh, const char *path, struct ACL_vector *acl,
     }
     zoo_aget_acl(zh, path, SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
-    rc = sc->hdr.err;
+    rc = sc->rc;
     if (rc == 0&& stat) {
         *stat = sc->u.acl.stat;
     }
@@ -2186,7 +2192,7 @@ int zoo_set_acl(zhandle_t *zh, const char *path, int version,
     zoo_aset_acl(zh, path, version, (struct ACL_vector*)acl,
             SYNCHRONOUS_MARKER, sc);
     wait_sync_completion(sc);
-    rc = sc->hdr.err;
+    rc = sc->rc;
     free_sync_completion(sc);
     return rc;
 }
