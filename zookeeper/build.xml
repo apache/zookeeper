@@ -2,7 +2,7 @@
 
     <property name="Name" value="ZooKeeper" />
     <property name="name" value="zookeeper" />
-    <property name="version" value="1.0.0" />
+    <property name="version" value="dev" />
     <property name="year" value="2007" />
 
     <property name="src.dir" value="${basedir}/java/src" />
@@ -169,7 +169,7 @@
         <mkdir dir="${findbugs.out.dir}" />
         <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
             <sourcePath path="${src.dir}" />
-            <class location="${basedir}/zookeeper.jar" />
+            <class location="${basedir}/${jar.name}" />
         </findbugs>
         <xslt style="${findbugs.home}/src/xsl/default.xsl" in="${findbugs.report.xmlfile}" out="${findbugs.report.htmlfile}" />
     </target>
