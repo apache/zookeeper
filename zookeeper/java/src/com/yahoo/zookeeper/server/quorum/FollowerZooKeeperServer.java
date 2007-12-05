@@ -122,7 +122,17 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
         Request request = pendingTxns.remove();
         commitProcessor.commit(request);
     }
-
+    
+    public void sync(){
+    	if(commitProcessor.pendingSyncs.size() ==0){
+    		ZooLog.logWarn("Not expecting a sync.");
+    		return;
+    	}
+    	    	
+    	commitProcessor.commit(commitProcessor.pendingSyncs.remove());
+    }
+    	     
+    	 
     @Override
     public int getGlobalOutstandingLimit() {
         return super.getGlobalOutstandingLimit()

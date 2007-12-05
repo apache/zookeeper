@@ -648,6 +648,28 @@ ZOOAPI int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
         strings_completion_t completion, const void *data);
 
 /**
+ * \brief Flush leader channel.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the name of the node. Expressed as a file name with slashes
+ * separating ancestors of the node.
+ * \param completion the routine to invoke when the request completes. The completion
+ * will be triggered with one of the following codes passed in as the rc argument:
+ * ZOK operation completed succesfully
+ * ZNONODE the node does not exist.
+ * ZNOAUTH the client does not have permission.
+ * \param data the data that will be passed to the completion routine when
+ * the function completes.
+ * \return ZOK on success or one of the following errcodes on failure:
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+
+ZOOAPI int zoo_async(zhandle_t *zh, const char *path, string_completion_t completion, const void *data);
+
+
+/**
  * \brief gets the acl associated with a node.
  * 
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init

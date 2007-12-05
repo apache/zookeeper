@@ -307,6 +307,16 @@ void processline(char *line)
 		if (rc) {
 			fprintf(stderr, "Error %d for %s\n", rc, line);
 		}
+       } else if (startsWith(line, "sync ")){
+               line += 5;
+               if (line[0] != '/') {
+                       fprintf(stderr, "Path must start with /, found: %s\n", line);
+                       return;
+               }
+               rc = zoo_async(zh, line, my_string_completion, strdup(line));
+               if (rc) {
+                 fprintf(stderr, "Error %d for %s\n", rc, line);
+               }
 	} else if (startsWith(line, "exists ")) {
 		line += 7;
 		if (line[0] != '/') {

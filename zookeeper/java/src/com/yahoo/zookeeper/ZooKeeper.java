@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2008, Yahoo! Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,6 +49,8 @@ import com.yahoo.zookeeper.proto.SetACLRequest;
 import com.yahoo.zookeeper.proto.SetACLResponse;
 import com.yahoo.zookeeper.proto.SetDataRequest;
 import com.yahoo.zookeeper.proto.SetDataResponse;
+import com.yahoo.zookeeper.proto.SyncRequest;
+import com.yahoo.zookeeper.proto.SyncResponse;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.DataTree;
 
@@ -653,6 +655,21 @@ public class ZooKeeper {
                         ctx);
     }
 
+    /**
+     * Asynchronous sync. Flushes channel between process and leader.
+     * 
+     * @see #sync(String)
+     */
+    public void sync(String path, VoidCallback cb, Object ctx){
+    	RequestHeader h = new RequestHeader();
+    	h.setType(ZooDefs.OpCode.sync);
+    	SyncRequest request = new SyncRequest();
+    	SyncResponse response = new SyncResponse();
+    	request.setPath(path);
+    	cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, path, ctx);
+    	System.out.println("Sending sync!");
+    }
+    
     public States getState() {
         return state;
     }
@@ -669,6 +686,7 @@ public class ZooKeeper {
         System.err.println("\tgetAcl path");
         System.err.println("\tsetAcl path acl");
         System.err.println("\tstat path [watch]");
+        System.err.println("\tsync path");
     }
 
     static private class MyWatcher implements Watcher {

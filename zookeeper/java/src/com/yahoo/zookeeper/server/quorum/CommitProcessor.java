@@ -41,6 +41,11 @@ public class CommitProcessor extends Thread implements RequestProcessor {
      */
     LinkedList<Request> committedRequests = new LinkedList<Request>();
 
+    /*
+     * Pending sync requests
+     */
+    LinkedList<Request> pendingSyncs = new LinkedList<Request>();
+    
     RequestProcessor nextProcessor;
 
     public CommitProcessor(RequestProcessor nextProcessor) {
@@ -114,6 +119,10 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                         case OpCode.closeSession:
                             nextPending = request;
                             break;
+                        case OpCode.sync:
+                        	nextPending = request;
+                        	pendingSyncs.add(request);
+                        	break;
                         default:
                             toProcess.add(request);
                         }

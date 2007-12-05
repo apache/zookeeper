@@ -23,6 +23,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -32,6 +33,7 @@ import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.RequestProcessor;
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
+import com.yahoo.zookeeper.ZooDefs.OpCode;
 
 /**
  * This class has the control logic for the Leader.
@@ -58,7 +60,13 @@ public class Leader {
 
     // list of followers that are ready to follow (i.e synced with the leader)
     public HashSet<FollowerHandler> forwardingFollowers = new HashSet<FollowerHandler>();
-
+    
+    //Pending sync requests
+    public HashMap<Long,Request> pendingSyncs = new HashMap<Long,Request>();
+               
+    //Map sync request to FollowerHandler
+    public HashMap<Long,FollowerHandler> syncHandler = new HashMap<Long,FollowerHandler>();
+       
     /**
      * Adds follower to the leader.
      * 
@@ -149,6 +157,12 @@ public class Leader {
      */
     final static int REVALIDATE = 6;
 
+    /**
+     * This message is a reply to a synchronize command flushing the pipe
+     * between the leader and the follower.
+     */
+    final static int SYNC = 7;
+     
     private ConcurrentLinkedQueue<Proposal> outstandingProposals = new ConcurrentLinkedQueue<Proposal>();
 
     ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<Proposal>();
@@ -321,7 +335,7 @@ public class Leader {
                 p.ackCount++;
                 // ZooLog.logException(new RuntimeException(), "Count for " +
                 // Long.toHexString(zxid) + " is " + p.ackCount);
-                if (p.ackCount > self.quorumPeers.size() / 2) {
+                if (p.ackCount > self.quorumPeers.size() / 2){
                     if (!first) {
                         ZooLog.logError("Commiting " + Long.toHexString(zxid)
                                 + " from " + followerAddr + " not first!");
@@ -429,6 +443,12 @@ public class Leader {
         lastCommitted = zxid;
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
         sendPacket(qp);
+               
+        if(pendingSyncs.containsKey(zxid)){
+        	sendSync(syncHandler.get(pendingSyncs.get(zxid).sessionId), pendingSyncs.get(zxid));
+        	syncHandler.remove(pendingSyncs.get(zxid));
+        	pendingSyncs.remove(zxid);
+        }
     }
 
     long lastProposed;
@@ -440,20 +460,23 @@ public class Leader {
      * @return the proposal that is queued to send to all the members
      */
     public Proposal propose(Request request) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        try {
-            request.hdr.serialize(boa, "hdr");
-            if (request.txn != null) {
-                request.txn.serialize(boa, "txn");
-            }
-            baos.close();
-        } catch (IOException e) {
-            // This really should be impossible
-            ZooLog.logException(e);
-        }
-        QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, baos
+    	
+    	
+    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    	BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+    	try {
+    		request.hdr.serialize(boa, "hdr");
+    		if (request.txn != null) {
+    			request.txn.serialize(boa, "txn");
+    		}
+    		baos.close();
+    	} catch (IOException e) {
+    		// This really should be impossible
+    		ZooLog.logException(e);
+    	}
+    	QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, baos
                 .toByteArray(), null);
+    	
         Proposal p = new Proposal();
         p.packet = pp;
         p.request = request;
@@ -464,7 +487,48 @@ public class Leader {
         }
         return p;
     }
-
+            
+    /**
+     * Process sync requests
+     * 
+     * @param QuorumPacket p
+     * @return void
+     */
+    
+    public void processSync(Request r){
+    	if(outstandingProposals.isEmpty()){
+    		ZooLog.logWarn("No outstanding proposal");
+    		sendSync(syncHandler.get(r.sessionId), r);
+    			syncHandler.remove(r.sessionId);
+    	}
+    	else{
+    		pendingSyncs.put(lastProposed, r);
+    	}
+    }
+        
+    /**
+     * Set FollowerHandler for sync.
+     * 
+     * @param QuorumPacket p
+     * @return void
+     */
+        
+    synchronized public void setSyncHandler(FollowerHandler f, long s){
+    	syncHandler.put(s, f);
+    }
+            
+    /**
+     * Sends a sync message to the appropriate server
+     * 
+     * @param request
+     * @return void
+     */
+            
+    public void sendSync(FollowerHandler f, Request r){
+    	QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
+    	f.queuePacket(qp);
+    }
+                
     /**
      * lets the leader know that a follower is capable of following and is done
      * syncing
