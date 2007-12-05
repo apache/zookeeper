@@ -104,6 +104,12 @@ int adaptor_init(zhandle_t *zh)
         return -1;
     }
     zh->adaptor_priv = adaptor_threads;
+    pthread_mutex_init(&zh->to_process.lock,0);
+    pthread_mutex_init(&zh->to_send.lock,0);
+    pthread_mutex_init(&zh->sent_requests.lock,0);
+    pthread_cond_init(&zh->sent_requests.cond,0);
+    pthread_mutex_init(&zh->completions_to_process.lock,0);
+    pthread_cond_init(&zh->completions_to_process.cond,0);
     api_prolog(zh);
     pthread_create(&adaptor_threads->io, 0, do_io, zh);
     api_prolog(zh);
@@ -125,6 +131,12 @@ void adaptor_finish(zhandle_t *zh)
     pthread_mutex_unlock(&zh->completions_to_process.lock);
     pthread_join(adaptor_threads->io, 0);
     pthread_join(adaptor_threads->completion, 0);
+    pthread_mutex_destroy(&zh->to_process.lock);
+    pthread_mutex_destroy(&zh->to_send.lock);
+    pthread_mutex_destroy(&zh->sent_requests.lock);
+    pthread_cond_destroy(&zh->sent_requests.cond);
+    pthread_mutex_destroy(&zh->completions_to_process.lock);
+    pthread_cond_destroy(&zh->completions_to_process.cond);
 }
 
 int adaptor_send_queue(zhandle_t *zh, int timeout)
