@@ -30,6 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.Record;
+import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.txn.TxnHeader;
@@ -227,6 +228,13 @@ public class FollowerHandler extends Thread {
                 }
                 ZooLog.logQuorumPacket('i', qp, traceMask);
                 tickOfLastAck = leader.self.tick;
+                
+                                
+                ByteBuffer bb;
+                long sessionId;
+                int cxid;
+                int type;
+                
                 switch (qp.getType()) {
                 case Leader.ACK:
                     leader.processAck(qp.getZxid(), s.getLocalSocketAddress());
@@ -258,11 +266,14 @@ public class FollowerHandler extends Thread {
                     queuedPackets.add(qp);
                     break;
                 case Leader.REQUEST:
-                    ByteBuffer bb = ByteBuffer.wrap(qp.getData());
-                    long sessionId = bb.getLong();
-                    int cxid = bb.getInt();
-                    int type = bb.getInt();
+                    bb = ByteBuffer.wrap(qp.getData());
+                    sessionId = bb.getLong();
+                    cxid = bb.getInt();
+                    type = bb.getInt();
                     bb = bb.slice();
+                    if(type == OpCode.sync){
+                    	leader.setSyncHandler(this, sessionId);
+                    }
                     leader.zk.submitRequest(null, sessionId, type, cxid, bb,
                             qp.getAuthinfo());
                     break;

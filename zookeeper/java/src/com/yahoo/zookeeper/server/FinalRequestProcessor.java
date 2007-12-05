@@ -36,6 +36,8 @@ import com.yahoo.zookeeper.proto.GetChildrenRequest;
 import com.yahoo.zookeeper.proto.GetChildrenResponse;
 import com.yahoo.zookeeper.proto.GetDataRequest;
 import com.yahoo.zookeeper.proto.GetDataResponse;
+import com.yahoo.zookeeper.proto.SyncRequest;
+import com.yahoo.zookeeper.proto.SyncResponse;
 import com.yahoo.zookeeper.proto.ReplyHeader;
 import com.yahoo.zookeeper.proto.SetACLResponse;
 import com.yahoo.zookeeper.proto.SetDataResponse;
@@ -141,6 +143,12 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.closeSession:
                 err = rc.err;
                 break;
+            case OpCode.sync:
+            	SyncRequest syncRequest = new SyncRequest();
+            	ZooKeeperServer.byteBuffer2Record(request.request,
+            			syncRequest);
+            	rsp = new SyncResponse(syncRequest.getPath());
+            	break;
             case OpCode.exists:
                 // TODO we need to figure out the security requirement for this!
                 ExistsRequest existsRequest = new ExistsRequest();

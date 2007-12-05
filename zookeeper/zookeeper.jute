@@ -88,6 +88,12 @@ module com.yahoo.zookeeper.proto {
         ustring path;
         int max;
     }
+	class SyncRequest {
+        ustring path;
+    }
+    class SyncResponse {
+        ustring path;
+    }
     class GetACLRequest {
         ustring path;
     }

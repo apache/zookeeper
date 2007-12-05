@@ -1771,6 +1771,35 @@ int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
 
+int zoo_async(zhandle_t *zh, const char *path,
+        string_completion_t completion, const void *data)
+{
+    struct oarchive *oa;
+    struct RequestHeader h = { .xid = get_xid(), .type = SYNC_OP};
+    struct SyncRequest req;
+    int rc;
+
+    if (zh==0)
+        return ZBADARGUMENTS;
+    if (is_unrecoverable(zh))
+        return ZINVALIDSTATE;
+    oa = create_buffer_oarchive();
+    req.path = (char*)path;
+    rc = serialize_RequestHeader(oa, "header", &h);
+    rc = rc < 0 ? rc : serialize_SyncRequest(oa, "req", &req);
+    rc = rc < 0 ? rc : add_string_completion(zh, h.xid, completion, data);
+    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
+            get_buffer_len(oa));
+    /* We queued the buffer, so don't free it */
+    close_buffer_oarchive(&oa, 0);
+
+    LOG_DEBUG(("Sending zoo_sync() request to %s",format_current_endpoint_info(zh)));
+    /* make a best (non-blocking) effort to send the requests asap */
+    adaptor_send_queue(zh, 0);
+    return (rc < 0)?ZMARSHALLINGERROR:ZOK;
+}
+
+
 int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
         const void *data)
 {

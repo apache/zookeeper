@@ -36,6 +36,7 @@ import com.yahoo.zookeeper.proto.CreateRequest;
 import com.yahoo.zookeeper.proto.DeleteRequest;
 import com.yahoo.zookeeper.proto.SetACLRequest;
 import com.yahoo.zookeeper.proto.SetDataRequest;
+import com.yahoo.zookeeper.proto.SyncRequest;
 import com.yahoo.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import com.yahoo.zookeeper.server.auth.AuthenticationProvider;
 import com.yahoo.zookeeper.txn.CreateSessionTxn;
@@ -335,6 +336,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 ZooLog.logWarn("Processed session termination request for id: "
                         + Long.toHexString(request.sessionId));
                 break;
+            case OpCode.sync:
             case OpCode.exists:
             case OpCode.getData:
             case OpCode.getACL:

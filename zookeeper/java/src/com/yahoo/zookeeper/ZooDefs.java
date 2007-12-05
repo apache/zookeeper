@@ -41,6 +41,8 @@ public class ZooDefs {
         public final int setACL = 7;
 
         public final int getChildren = 8;
+        
+        public final int sync = 9;
 
         public final int ping = 11;
 

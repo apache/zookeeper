@@ -16,6 +16,7 @@
 
 package com.yahoo.zookeeper.server.quorum;
 
+import com.yahoo.zookeeper.ZooDefs;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.RequestProcessor;
 import com.yahoo.zookeeper.server.SyncRequestProcessor;
@@ -43,12 +44,25 @@ public class ProposalRequestProcessor implements RequestProcessor {
         // ZooLog.logWarn("Ack>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = " + request.sessionId);
         // request.addRQRec(">prop");
-        nextProcessor.processRequest(request);
-        if (request.hdr != null) {
-            // We need to sync and get consensus on any transactions
-            zks.leader.propose(request);
-            syncProcessor.processRequest(request);
-        }
+    	    	
+    	
+    	if(request.type == ZooDefs.OpCode.sync){
+    		if(zks.leader.syncHandler.containsKey(request.sessionId)){
+    			zks.leader.processSync(request);
+    		}
+    		else{
+    			nextProcessor.processRequest(request);
+    			zks.commitProcessor.commit(request);
+    		}
+    	}
+    	else{
+    		nextProcessor.processRequest(request);
+    		if (request.hdr != null) {
+    			// We need to sync and get consensus on any transactions
+    			zks.leader.propose(request);
+    			syncProcessor.processRequest(request);
+    		}
+    	}
     }
 
     public void shutdown() {

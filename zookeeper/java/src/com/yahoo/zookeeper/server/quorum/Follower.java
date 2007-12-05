@@ -37,6 +37,7 @@ import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.InputArchive;
 import com.yahoo.jute.OutputArchive;
 import com.yahoo.jute.Record;
+import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.ServerCnxn;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
@@ -225,6 +226,10 @@ public class Follower {
                     }
                     ZooLog.logTextTraceMessage("Session " + sessionId
                             + " is valid: " + valid, ZooLog.SESSION_TRACE_MASK);
+                    break;
+                case Leader.SYNC:
+                	zk.sync();
+                	break;
                 }
             }
         } catch (IOException e) {
@@ -298,6 +303,15 @@ public class Follower {
         oa.close();
         QuorumPacket qp = new QuorumPacket(Leader.REQUEST, -1, baos
                 .toByteArray(), request.authInfo);
+//        QuorumPacket qp;
+//        if(request.type == OpCode.sync){
+//        	qp = new QuorumPacket(Leader.SYNC, -1, baos
+//        			.toByteArray(), request.authInfo);
+//        }	
+//        else{
+//        qp = new QuorumPacket(Leader.REQUEST, -1, baos
+//        		.toByteArray(), request.authInfo);
+//        }
         writePacket(qp);
     }
 

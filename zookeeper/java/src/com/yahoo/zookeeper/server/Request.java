@@ -88,6 +88,7 @@ public class Request {
         case OpCode.exists:
         case OpCode.getData:
         case OpCode.setData:
+        case OpCode.sync:
         case OpCode.getACL:
         case OpCode.setACL:
         case OpCode.getChildren:
@@ -113,6 +114,8 @@ public class Request {
             return "getDate";
         case OpCode.setData:
             return "setData";
+        case OpCode.sync:
+          	return "sync:";
         case OpCode.getACL:
             return "getACL";
         case OpCode.setACL:
