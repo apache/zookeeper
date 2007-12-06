@@ -384,8 +384,9 @@ int main(int argc, char **argv)
 #else
 	strcpy(p,"dummy");
 #endif
+	//zoo_set_debug_level(LOG_LEVEL_DEBUG);
 	zoo_deterministic_conn_order(1);  // enable deterministic order
-        hostPort = argv[1];
+    hostPort = argv[1];
 	zh = zookeeper_init(hostPort, watcher, 10000, &myid);
 	if (!zh) {
 		return errno;
@@ -407,6 +408,7 @@ int main(int argc, char **argv)
         rc = read(0, buffer+bufoff, len);
         if (rc <= 0) {
             fprintf(stderr, "bye\n");
+            shutdownThisThing=1;
             break;
         }
         bufoff += rc;

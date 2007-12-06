@@ -17,7 +17,9 @@
 #define THREADED
 #endif
 
-#define BUILD_LIB
+#ifndef DLL_EXPORT
+#  define USE_STATIC_LIB
+#endif
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -213,7 +215,7 @@ void *do_completion(void *v)
     zhandle_t *zh = v;
     while(zh->state >= 0) {
         pthread_mutex_lock(&zh->completions_to_process.lock);
-                while(!zh->completions_to_process.head && zh->state >= 0) {
+        while(!zh->completions_to_process.head && zh->state >= 0) {
             pthread_cond_wait(&zh->completions_to_process.cond, &zh->completions_to_process.lock);
         }
         pthread_mutex_unlock(&zh->completions_to_process.lock);

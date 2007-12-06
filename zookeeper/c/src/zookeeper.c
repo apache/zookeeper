@@ -14,7 +14,9 @@
  * limitations under the License.
  */
  
-#define BUILD_LIB
+#ifndef DLL_EXPORT
+#  define USE_STATIC_LIB
+#endif
 
 #if defined(__CYGWIN__)
 #define USE_IPV6
@@ -24,6 +26,7 @@
 #include <zookeeper.jute.h>
 #include <proto.h>
 #include "zk_adaptor.h"
+#include "zk_log.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -40,8 +43,6 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <stdarg.h>
-
-#define LOGSTREAM stderr
 
 const int ZOOKEEPER_WRITE = 1 << 0;
 const int ZOOKEEPER_READ = 1 << 1;
@@ -151,26 +152,11 @@ static void dispatch_events_till_ready(zhandle_t *zh,
 int flush_send_queue(zhandle_t*zh, int timeout);
 static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
 	const char* format,...);
-static void log_message(ZooLogLevel curLevel, int line,const char* funcName,
-	const char* message);
-static const char* format_log_message(const char* format,...);
 static void cleanup_bufs(zhandle_t *zh,int callCompletion,int rc);
 
 static int disable_conn_permute=0; // permute enabled by default
 
-static ZooLogLevel logLevel=LOG_LEVEL_INFO;
-
-#define LOG_ERROR(x) \
-    log_message(LOG_LEVEL_DEBUG,__LINE__,__func__,format_log_message x)
-#define LOG_WARN(x) if(logLevel>=LOG_LEVEL_WARN) \
-    log_message(LOG_LEVEL_WARN,__LINE__,__func__,format_log_message x)
-#define LOG_INFO(x) if(logLevel>=LOG_LEVEL_INFO) \
-    log_message(LOG_LEVEL_INFO,__LINE__,__func__,format_log_message x)
-#define LOG_DEBUG(x) if(logLevel==LOG_LEVEL_DEBUG) \
-    log_message(LOG_LEVEL_DEBUG,__LINE__,__func__,format_log_message x)
-
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
-
     
 typedef struct _completion_list {
     int xid;
@@ -756,38 +742,6 @@ static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
 	return rc;
 }
 
-const char* time_now(){
-    static char now_str[128];
-    struct timeval tv;
-    
-    gettimeofday(&tv,0);
-    //sprintf(now_str,"%ld.%03d",tv.tv_sec,(int)(tv.tv_usec/1000));
-    sprintf(now_str,"%ld.%03d.%03d",tv.tv_sec,(int)(tv.tv_usec/1000),(int)(tv.tv_usec%1000));
-    return now_str;
-}
-
-static void log_message(ZooLogLevel curLevel,int line,const char* funcName,
-	const char* message)
-{
-    static const char* dbgLevelStr[]={"ZOO_INVALID","ZOO_ERROR","ZOO_WARN",
-            "ZOO_INFO","ZOO_DEBUG"};
-    static pid_t pid=0;
-    if(pid==0)pid=getpid();
-    fprintf(LOGSTREAM, "%s:%d:%s@%s@%d: %s\n", time_now(),pid,
-            dbgLevelStr[curLevel],funcName,line,message);
-    fflush(LOGSTREAM);
-}
-
-static const char* format_log_message(const char* format,...)
-{
-    static char buf[2048];
-    va_list va;
-    va_start(va,format);
-    vsnprintf(buf, sizeof(buf)-1,format,va);
-    va_end(va); 
-    return buf;
-}
-
 static void auth_completion_func(int rc, zhandle_t* zh)
 {
 	if(zh==NULL)
@@ -1328,10 +1282,14 @@ int zookeeper_process(zhandle_t *zh, int events)
                 return api_epilog(zh,ZRUNTIMEINCONSISTENCY);
             }
             if (cptr->c.void_result != SYNCHRONOUS_MARKER) {
-                cptr->buffer = bptr;
-                queue_completion(&zh->completions_to_process, cptr, 0);
-            } else if (hdr.xid == PING_XID) {
-                // Nothing to do with a ping response
+                if(hdr.xid == PING_XID){
+                    // Nothing to do with a ping response
+                    free_buffer(bptr);
+                    free(cptr);
+                } else { 
+                    cptr->buffer = bptr;
+                    queue_completion(&zh->completions_to_process, cptr, 0);
+                }
             } else {
                 struct sync_completion
                         *sc = (struct sync_completion*)cptr->data;
@@ -2059,15 +2017,14 @@ static const char* format_endpoint_info(const struct sockaddr* ep)
     return buf;
 }
 
-static const char* format_current_endpoint_info(zhandle_t* zh){
+static const char* format_current_endpoint_info(zhandle_t* zh)
+{
     return format_endpoint_info(&zh->addrs[zh->connect_index]);
 }
 
 void zoo_set_debug_level(ZooLogLevel level)
 {
-    if(level<LOG_LEVEL_ERROR)level=LOG_LEVEL_ERROR;
-    if(level>LOG_LEVEL_DEBUG)level=LOG_LEVEL_DEBUG;
-    logLevel=level;
+    setCurrentLogLevel(level);
 }
 
 void zoo_deterministic_conn_order(int yesOrNo)
