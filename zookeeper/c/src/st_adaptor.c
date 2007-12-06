@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-#define BUILD_LIB
+#ifndef DLL_EXPORT
+#  define USE_STATIC_LIB
+#endif
+
 #include "zk_adaptor.h"
 #include <stdlib.h>
 

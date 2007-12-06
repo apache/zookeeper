@@ -11,7 +11,8 @@ lib_LTLIBRARIES = libzookeeper_st.la
 
 COMMON_SRC = src/zookeeper.c include/zookeeper.h \
 	src/recordio.c include/recordio.h include/proto.h \
-	src/zk_adaptor.h generated/zookeeper.jute.c
+	src/zk_adaptor.h generated/zookeeper.jute.c \
+	src/zk_log.h src/zk_log.c
 	
 libzookeeper_st_la_SOURCES = $(COMMON_SRC) src/st_adaptor.c
 libzookeeper_st_la_LDFLAGS = $(LIB_LDFLAGS)
