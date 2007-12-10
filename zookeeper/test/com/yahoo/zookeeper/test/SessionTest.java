@@ -18,6 +18,35 @@ public class SessionTest extends TestCase implements Watcher {
     static File baseTest = new File(System.getProperty("build.test.dir",
             "build"));
 
+    /**
+     * this test checks to see if the sessionid that was created for the 
+     * first zookeeper client can be reused for the second one immidiately 
+     * after the first client closes and the new client resues them.
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws KeeperException
+     */
+    public void testSessionReuse() throws IOException, InterruptedException,
+            KeeperException {
+        File tmpDir = File.createTempFile("test", ".junit", baseTest);
+        tmpDir = new File(tmpDir + ".dir");
+        tmpDir.mkdirs();
+        ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(33299);
+        f.startup(zs);
+        Thread.sleep(4000);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:33299", 3000, this);
+        
+        long sessionId = zk.getSessionId();
+        byte[] passwd = zk.getSessionPasswd();
+        zk.close();
+        zk = new ZooKeeper("127.0.0.1:33299", 3000, this, sessionId, passwd);
+        assertEquals(sessionId, zk.getSessionId());
+        zk.close();
+        zs.shutdown();
+        f.shutdown();
+        
+    }
     @Test
     public void testSession() throws IOException, InterruptedException,
             KeeperException {
