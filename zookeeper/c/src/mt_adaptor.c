@@ -193,6 +193,7 @@ void *do_io(void *v)
     FD_ZERO(&efds);
     while(zh->state >= 0) {
         int result;
+        int maxfd;
         zookeeper_interest(zh, &fd, &interest, &tv);
         if (fd != -1) {
             if (interest&ZOOKEEPER_READ) {
@@ -207,7 +208,8 @@ void *do_io(void *v)
             }
         }
         FD_SET(adaptor_threads->self_pipe[0],&rfds);
-        int maxfd=adaptor_threads->self_pipe[0]>fd ? adaptor_threads->self_pipe[0] : fd;
+
+        maxfd=adaptor_threads->self_pipe[0]>fd ? adaptor_threads->self_pipe[0] : fd;
         result = select(maxfd+1, &rfds, &wfds, &efds, &tv);
         interest = 0;
         if (fd != -1) {
