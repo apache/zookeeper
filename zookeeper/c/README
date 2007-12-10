@@ -46,7 +46,10 @@ downloaded from Source Forge please skip to step 3.
    --disable-static   do not build static libraries, enabled by default
    --disable-shared   do not build shared libraries, enabled by default
 5) do a "make" or "make install" to build the libraries and install them.
- 
+6) to generate doxygen documentation do a "make doxygen-doc". All documentations will be 
+   placed to a new subfolder named docs. By default only HTML documentation is generated.
+   For information on other document formats please use "./configure --help"
+
 
 USING THE CLIENT
 
