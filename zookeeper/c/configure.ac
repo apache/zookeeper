@@ -8,6 +8,19 @@ AC_CONFIG_SRCDIR([src/zookeeper.c])
 AC_CHECK_FILES([generated/zookeeper.jute.c generated/zookeeper.jute.h],[],
 	[AC_MSG_ERROR([jute files are missing! Please run "ant compile_jute" while in the zookeeper top level directory.])
 ])
+
+# initialize Doxygen support
+DX_HTML_FEATURE(ON)
+DX_CHM_FEATURE(OFF)
+DX_CHI_FEATURE(OFF)
+DX_MAN_FEATURE(OFF)
+DX_RTF_FEATURE(OFF)
+DX_XML_FEATURE(OFF)
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
+DX_INIT_DOXYGEN([zookeeper],[c-doc.Doxyfile],[docs])
+
+# initialize automake
 AM_INIT_AUTOMAKE([-Wall foreign])
 #AM_INIT_AUTOMAKE
 AC_CONFIG_HEADER([config.h])

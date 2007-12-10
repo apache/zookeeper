@@ -1,3 +1,5 @@
+# need this for Doxygen integration
+include $(top_srcdir)/aminclude.am
 
 AM_CPPFLAGS = -Iinclude -Igenerated
 AM_CFLAGS = -Wall -Werror
@@ -35,3 +37,6 @@ cli_mt_SOURCES = src/cli.c
 cli_mt_LDADD = libzookeeper_mt.la
 cli_mt_CFLAGS = -DTHREADED
 endif
+
+clean-local:
+	$(RM) $(DX_CLEANFILES)
