@@ -32,7 +32,9 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <sys/select.h>
+#include <errno.h>
 
+#include <fcntl.h>
 
 void lock_buffer_list(buffer_head_t *l)
 {
@@ -55,7 +57,7 @@ struct sync_completion *alloc_sync_completion(void)
 {
     struct sync_completion *sc = (struct sync_completion*)calloc(1, sizeof(struct sync_completion));
     if (sc) {
-       pthread_cond_init(&sc->cond, 0); 
+       pthread_cond_init(&sc->cond, 0);
        pthread_mutex_init(&sc->lock, 0);
     }
     return sc;
@@ -94,17 +96,33 @@ int process_async(int outstanding_sync)
 struct adaptor_threads {
     pthread_t io;
     pthread_t completion;
+    int self_pipe[2];
 };
 
 void *do_io(void *);
 void *do_completion(void *);
 
+static int set_nonblock(int fd){
+    long l = fcntl(fd, F_GETFL);
+    if(l & O_NONBLOCK) return 0;
+    return fcntl(fd, F_SETFL, l | O_NONBLOCK);
+}
+
 int adaptor_init(zhandle_t *zh)
 {
-    struct adaptor_threads *adaptor_threads = calloc(1, sizeof(*adaptor_threads)); 
+    struct adaptor_threads *adaptor_threads = calloc(1, sizeof(*adaptor_threads));
     if (!adaptor_threads) {
         return -1;
     }
+
+    /* We use a pipe for interrupting select() */
+    if(pipe(adaptor_threads->self_pipe)==-1) {
+        printf("Can't make a pipe %d\n",errno);
+        return -1;
+    }
+    set_nonblock(adaptor_threads->self_pipe[1]);
+    set_nonblock(adaptor_threads->self_pipe[0]);
+
     zh->adaptor_priv = adaptor_threads;
     pthread_mutex_init(&zh->to_process.lock,0);
     pthread_mutex_init(&zh->to_send.lock,0);
@@ -122,12 +140,12 @@ int adaptor_init(zhandle_t *zh)
 void adaptor_finish(zhandle_t *zh)
 {
     struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
-      
+
     if (zh->state >= 0) {
         fprintf(stderr, "Forcibly setting state to CLOSED\n");
         zh->state = -1;
     }
-    pthread_kill(adaptor_threads->io, SIGUSR1);
+    adaptor_send_queue(zh,0); // wake up selector
     pthread_mutex_lock(&zh->completions_to_process.lock);
     pthread_cond_broadcast(&zh->completions_to_process.cond);
     pthread_mutex_unlock(&zh->completions_to_process.lock);
@@ -139,23 +157,25 @@ void adaptor_finish(zhandle_t *zh)
     pthread_cond_destroy(&zh->sent_requests.cond);
     pthread_mutex_destroy(&zh->completions_to_process.lock);
     pthread_cond_destroy(&zh->completions_to_process.cond);
+    close(adaptor_threads->self_pipe[0]);
+    close(adaptor_threads->self_pipe[1]);
+    free(adaptor_threads);
+    zh->adaptor_priv=0;
 }
 
 int adaptor_send_queue(zhandle_t *zh, int timeout)
 {
     struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
-    pthread_kill(adaptor_threads->io, SIGUSR1);
+    char c=0;
+    write(adaptor_threads->self_pipe[1], &c, 1);
     return 0;
 }
-
-static void nothing(int num) {}
 
 /* These two are declared here because we will run the event loop
  * and not the client */
 int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
         struct timeval *tv);
 int zookeeper_process(zhandle_t *zh, int events);
-
 
 void *do_io(void *v)
 {
@@ -166,14 +186,8 @@ void *do_io(void *v)
     fd_set rfds;
     fd_set wfds;
     fd_set efds;
-    sigset_t nosigusr1;
-    sigset_t sigusr1;
-    struct timespec timeout;
-    sigemptyset(&nosigusr1);
-    sigaddset(&nosigusr1, SIGUSR1);
-    sigemptyset(&sigusr1);
-    pthread_sigmask(SIG_SETMASK, &nosigusr1, 0);
-    signal(SIGUSR1, nothing);
+    struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
+
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
     FD_ZERO(&efds);
@@ -192,9 +206,9 @@ void *do_io(void *v)
                     FD_CLR(fd, &wfds);
             }
         }
-        timeout.tv_sec = tv.tv_sec;
-        timeout.tv_nsec = tv.tv_usec*1000;
-        result = pselect((fd == -1 ? 0 : fd+1), &rfds, &wfds, &efds, &timeout, &sigusr1);
+        FD_SET(adaptor_threads->self_pipe[0],&rfds);
+        int maxfd=adaptor_threads->self_pipe[0]>fd ? adaptor_threads->self_pipe[0] : fd;
+        result = select(maxfd+1, &rfds, &wfds, &efds, &tv);
         interest = 0;
         if (fd != -1) {
             if (FD_ISSET(fd, &rfds)) {
@@ -203,6 +217,11 @@ void *do_io(void *v)
             if (FD_ISSET(fd, &wfds)) {
                 interest |= ZOOKEEPER_WRITE;
             }
+        }
+        if(FD_ISSET(adaptor_threads->self_pipe[0],&rfds)){
+            // flush the pipe
+            char b[128];
+            while(read(adaptor_threads->self_pipe[0],b,sizeof(b))==sizeof(b)){}
         }
         result = zookeeper_process(zh, interest);
     }
