@@ -313,6 +313,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 int to = request.request.getInt();
                 txn = new CreateSessionTxn(to);
                 request.request.rewind();
+                zks.sessionTracker.addSession(request.sessionId, to);
                 break;
             case OpCode.closeSession:
                 txnHeader = new TxnHeader(request.sessionId, request.cxid, zks
