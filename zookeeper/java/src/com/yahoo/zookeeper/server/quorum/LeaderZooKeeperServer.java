@@ -22,6 +22,7 @@ import java.io.IOException;
 import com.yahoo.zookeeper.server.FinalRequestProcessor;
 import com.yahoo.zookeeper.server.PrepRequestProcessor;
 import com.yahoo.zookeeper.server.RequestProcessor;
+import com.yahoo.zookeeper.server.SessionTrackerImpl;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
 
 /**
@@ -65,6 +66,12 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
         return super.getGlobalOutstandingLimit()
                 / (leader.self.quorumPeers.size() - 1);
     }
+    
+    protected void createSessionTracker() {
+        sessionTracker = new SessionTrackerImpl(this, sessionsWithTimeouts,
+                tickTime, this.serverId);
+    }
+
 
     public boolean touch(long sess, int to) {
         return sessionTracker.touchSession(sess, to);

@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.server.SessionTracker;
+import com.yahoo.zookeeper.server.SessionTrackerImpl;
 
 /**
  * This is really just a shell of a SessionTracker that tracks session activity
@@ -30,17 +31,22 @@ public class FollowerSessionTracker implements SessionTracker {
     SessionExpirer expirer;
 
     HashMap<Long, Integer> touchTable = new HashMap<Long, Integer>();
-
+    long serverId = 1;
+    long nextSessionId=0;
+    
     private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
 
+    
     /**
      * 
      */
     public FollowerSessionTracker(SessionExpirer expirer,
-            ConcurrentHashMap<Long, Integer> sessionsWithTimeouts) {
+            ConcurrentHashMap<Long, Integer> sessionsWithTimeouts, long id) {
         this.expirer = expirer;
         this.sessionsWithTimeouts = sessionsWithTimeouts;
-        nextSessionId ^= expirer.getServerId() << 24;
+        this.serverId = id;
+        nextSessionId = SessionTrackerImpl.initializeNextSession(this.serverId);
+        
     }
 
     synchronized public void removeSession(long sessionId) {
@@ -67,7 +73,6 @@ public class FollowerSessionTracker implements SessionTracker {
         return oldTouchTable;
     }
 
-    long nextSessionId = System.currentTimeMillis() << 24;
 
     synchronized public long createSession(int sessionTimeout) {
         return (nextSessionId++);

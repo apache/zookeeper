@@ -69,7 +69,7 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
  */
 public class ZooKeeperServer implements SessionExpirer {
-    int tickTime = 3000;
+    protected int tickTime = 3000;
 
     HashMap<String, AuthenticationProvider> authenticationProviders = new HashMap<String, AuthenticationProvider>();
 
@@ -516,7 +516,7 @@ public class ZooKeeperServer implements SessionExpirer {
 
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, sessionsWithTimeouts,
-                tickTime);
+                tickTime, 1);
     }
 
     protected boolean running;
