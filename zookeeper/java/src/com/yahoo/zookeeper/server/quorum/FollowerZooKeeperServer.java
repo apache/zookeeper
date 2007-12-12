@@ -60,7 +60,7 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
     }
 
     protected void createSessionTracker() {
-        sessionTracker = new FollowerSessionTracker(this, sessionsWithTimeouts);
+        sessionTracker = new FollowerSessionTracker(this, sessionsWithTimeouts, this.serverId);
     }
 
     protected void setupRequestProcessors() {

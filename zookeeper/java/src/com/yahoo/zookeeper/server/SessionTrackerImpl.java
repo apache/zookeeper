@@ -37,7 +37,8 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
     HashMap<Long, SessionSet> sessionSets = new HashMap<Long, SessionSet>();
 
     ConcurrentHashMap<Long, Integer> sessionsWithTimeout;
-
+    long nextSessionId = 0;
+    long serverId;
     long nextExpirationTime;
 
     int expirationInterval;
@@ -52,7 +53,14 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
         long sessionId;
     }
-
+    
+    public static long initializeNextSession(long id) {
+    	long nextSid = 0;
+    	nextSid = (System.currentTimeMillis() << 24) >> 8;
+    	nextSid =  nextSid | (id <<56);
+    	return nextSid;
+    }
+    
     static class SessionSet {
         long expireTime;
 
@@ -67,12 +75,14 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
     }
 
     public SessionTrackerImpl(SessionExpirer expirer,
-            ConcurrentHashMap<Long, Integer> sessionsWithTimeout, int tickTime) {
+            ConcurrentHashMap<Long, Integer> sessionsWithTimeout, int tickTime, long sid) {
         super("SessionTracker");
         this.expirer = expirer;
         this.expirationInterval = tickTime;
         this.sessionsWithTimeout = sessionsWithTimeout;
         nextExpirationTime = roundToInterval(System.currentTimeMillis());
+        this.serverId = sid;
+        this.nextSessionId = initializeNextSession(sid);
         for (long id : sessionsWithTimeout.keySet()) {
             addSession(id, sessionsWithTimeout.get(id));
         }
@@ -174,8 +184,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
                 ZooLog.textTraceMask);
     }
 
-    long nextSessionId = System.currentTimeMillis() << 24;
-
+   
     synchronized public long createSession(int sessionTimeout) {
         addSession(nextSessionId, sessionTimeout);
         return nextSessionId++;
