@@ -103,7 +103,6 @@ public class QuorumPeer extends Thread {
     public enum ServerState {
         LOOKING, FOLLOWING, LEADING;
     }
-
     /**
      * The servers that make up the cluster
      */
@@ -113,6 +112,14 @@ public class QuorumPeer extends Thread {
      * My id
      */
     long myid;
+
+
+    /**
+     * get the id of this quorum peer.
+     */
+    public long getId() {
+    	return myid;
+    }
 
     /**
      * This is who I think the leader currently is.
