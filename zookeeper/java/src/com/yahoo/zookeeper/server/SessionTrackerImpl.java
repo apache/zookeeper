@@ -58,7 +58,6 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
     	long nextSid = 0;
     	nextSid = (System.currentTimeMillis() << 24) >> 8;
     	nextSid =  nextSid | (id <<56);
-    	ZooLog.logWarn("printing the initiailzied next session with id " +  id + " next id " + Long.toHexString(nextSid));
     	return nextSid;
     }
     
