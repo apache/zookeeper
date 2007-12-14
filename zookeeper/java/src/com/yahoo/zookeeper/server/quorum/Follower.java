@@ -146,14 +146,22 @@ public class Follower {
             qp.setZxid(sentLastZxid);
             writePacket(qp);
             readPacket(qp);
+            long newLeaderZxid = qp.getZxid();
+            
             if (qp.getType() != Leader.NEWLEADER) {
                 ZooLog.logError("First packet should have been NEWLEADER");
                 throw new IOException("First packet should have been NEWLEADER");
             }
             zk = new FollowerZooKeeperServer(self.getId(), self.dataDir,
                     self.dataLogDir, this);
+            readPacket(qp);
             synchronized (zk) {
-                if (qp.getZxid() != sentLastZxid) {
+                if (qp.getType() == Leader.DIFF) {
+                    ZooLog.logWarn("Getting a diff from the leader!");
+                    zk.loadData();
+                }
+                else if (qp.getType() == Leader.SNAP) {
+                    ZooLog.logWarn("Getting a snapshot from leader");
                     // The leader is going to dump the database
                     zk.loadData(leaderIs);
                     String signature = leaderIs.readString("signature");
@@ -161,12 +169,21 @@ public class Follower {
                         ZooLog.logError("Missing signature. Got " + signature);
                         throw new IOException("Missing signature");
                     }
-                } else {
+                } else if (qp.getType() == Leader.TRUNC) {
+                    //we need to truncate the log to the lastzxid of the leader
+                    ZooLog.logWarn("Truncating log to get in sync with the leader " 
+                            + Long.toHexString(qp.getZxid()));
+                    zk.truncateLog(qp.getZxid());
                     zk.loadData();
                 }
-                zk.dataTree.lastProcessedZxid = qp.getZxid();
+                else {
+                    ZooLog.logError("Got unexpected packet from leader " 
+                            + qp.getType() + " exiting ... " );
+                    System.exit(13);
+                }
+                zk.dataTree.lastProcessedZxid = newLeaderZxid;
             }
-            ack.setZxid(qp.getZxid() & ~0xffffffffL);
+            ack.setZxid(newLeaderZxid & ~0xffffffffL);
             writePacket(ack);
             sock.setSoTimeout(self.tickTime * self.syncLimit);
             zk.startup();
@@ -274,7 +291,7 @@ public class Follower {
         QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos
                 .toByteArray(), null);
         pendingRevalidations.put(clientId, cnxn);
-        ZooLog.logTextTraceMessage("To validate session " + clientId,
+        ZooLog.logTextTraceMessage("To validate session " + Long.toHexString(clientId),
                 ZooLog.SESSION_TRACE_MASK);
         writePacket(qp);
     }

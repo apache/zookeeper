@@ -33,6 +33,7 @@ import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
+import com.yahoo.zookeeper.server.quorum.Leader.Proposal;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
 /**
@@ -186,12 +187,61 @@ public class FollowerHandler extends Thread {
                 return;
             }
             long peerLastZxid = qp.getZxid();
+            int packetToSend = Leader.SNAP;
+            boolean logTxns = true;
+          
+            long zxidToSend = 0;
+            // we are sending the diff
+            synchronized(leader.zk.committedLog) {
+                if (leader.zk.committedLog.size() != 0) {
+                    if ((leader.zk.maxCommittedLog >= peerLastZxid) 
+                            && (leader.zk.minCommittedLog <= peerLastZxid)) {
+                        packetToSend = Leader.DIFF;
+                        zxidToSend = leader.zk.maxCommittedLog;
+                        for (Proposal propose: leader.zk.committedLog) {
+                            if (propose.packet.getZxid() > peerLastZxid) {
+                                queuePacket(propose.packet);
+                                QuorumPacket qcommit = new QuorumPacket(Leader.COMMIT, propose.packet.getZxid(),
+                                        null, null);
+                                queuePacket(qcommit);
+                              
+                            }
+                        }
+                    }
+                }
+                else {
+                    logTxns = false;
+                }            }
             long leaderLastZxid = leader.startForwarding(this, peerLastZxid);
             QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
                     leaderLastZxid, null, null);
             oa.writeRecord(newLeaderQP, "packet");
-            if (leaderLastZxid != peerLastZxid) {
-                ZooLog.logWarn("sending Snapshot");
+            bufferedOutput.flush();
+            // a special case when both the ids are the same
+            if (peerLastZxid == leaderLastZxid) {
+                packetToSend = Leader.DIFF;
+                zxidToSend = leaderLastZxid;
+            }
+            //check if we decided to send a diff or we need to send a truncate
+            // we avoid using epochs for truncating because epochs make things 
+            // complicated. Two epochs might have the last 32 bits as same.
+            // only if we know that there is a committed zxid in the queue that
+            // is less than the one the peer has we send a trunc else to make
+            // things simple we just send sanpshot.
+            if (logTxns && (peerLastZxid > leader.zk.maxCommittedLog)) {
+                // this is the only case that we are sure that
+                // we can ask the follower to truncate the log
+                packetToSend = Leader.TRUNC;
+                zxidToSend = leader.zk.maxCommittedLog;
+                
+            }
+            oa.writeRecord(new QuorumPacket(packetToSend, zxidToSend, null, null), "packet");
+            bufferedOutput.flush();
+            // only if we are not truncating or fast sycning
+            if (packetToSend == Leader.SNAP) {
+                ZooLog.logWarn("Sending snapshot last zxid of peer is " 
+                        + Long.toHexString(peerLastZxid) + " " + " zxid of leader is " 
+                        + Long.toHexString(leaderLastZxid));
                 // Dump data to follower
                 leader.zk.snapshot(oa);
                 oa.writeString("BenWasHere", "signature");
@@ -326,7 +376,7 @@ public class FollowerHandler extends Thread {
     void queuePacket(QuorumPacket p) {
         queuedPackets.add(p);
     }
-
+    
     public boolean synced() {
         return isAlive()
                 && tickOfLastAck >= leader.self.tick - leader.self.syncLimit;

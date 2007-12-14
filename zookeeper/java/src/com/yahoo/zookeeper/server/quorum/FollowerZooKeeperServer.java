@@ -139,6 +139,14 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
                 / (follower.self.quorumPeers.size() - 1);
     }
 
+    /**
+     * Do not do anything in the follower.
+     */
+    @Override
+    public void addCommittedProposal(Request r) {
+    	//do nothing
+    }
+    
     public void shutdown() {
         try {
             super.shutdown();
@@ -153,5 +161,4 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
             ZooLog.logException(e);
         }
     }
-
 }

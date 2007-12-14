@@ -100,6 +100,26 @@ public class Request {
         }
     }
 
+    static boolean isQuorum(int type) {
+        switch (type) {
+        case OpCode.exists:
+        case OpCode.getACL:
+        case OpCode.getChildren:
+        case OpCode.getData:
+            return false;
+        case OpCode.error:
+        case OpCode.closeSession:
+        case OpCode.create:
+        case OpCode.createSession:
+        case OpCode.delete:
+        case OpCode.setACL:
+        case OpCode.setData:
+            return true;
+        default:
+            return false;
+        }
+    }
+    
     static String op2String(int op) {
         switch (op) {
         case OpCode.notification:
