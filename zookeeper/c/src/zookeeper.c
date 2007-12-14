@@ -398,7 +398,7 @@ watcher_fn zoo_set_watcher(zhandle_t *zh,watcher_fn newFn)
  * Create a zookeeper handle associated with the given host and port.
  */
 zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
-  int recv_timeout, const clientid_t *clientid)
+  int recv_timeout, const clientid_t *clientid, void *context, int flags)
 {
     int errnosave;
 	zhandle_t *zh = calloc(1, sizeof(*zh));
@@ -407,7 +407,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
 	}
 	zh->fd = -1;
     zh->state = 0;
-    zh->context = NULL;
+    zh->context = context;
     zh->recv_timeout = recv_timeout;
     if (watcher) {
 	   zh->watcher = watcher;

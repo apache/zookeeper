@@ -331,7 +331,7 @@ void processline(char *line)
 		printf("session Id = %llx\n", _LL_CAST_ zoo_client_id(zh)->client_id);
         } else if (strcmp(line, "reinit") == 0) {
 		zookeeper_close(zh);
-	        zh = zookeeper_init(hostPort, watcher, 10000, &myid);
+	        zh = zookeeper_init(hostPort, watcher, 10000, &myid, 0, 0);
 	} else if (startsWith(line, "quit")) {
 		fprintf(stderr, "Quitting...\n");
 		shutdownThisThing=1;
@@ -387,7 +387,7 @@ int main(int argc, char **argv)
 	//zoo_set_debug_level(LOG_LEVEL_DEBUG);
 	zoo_deterministic_conn_order(1);  // enable deterministic order
     hostPort = argv[1];
-	zh = zookeeper_init(hostPort, watcher, 10000, &myid);
+	zh = zookeeper_init(hostPort, watcher, 10000, &myid, 0, 0);
 	if (!zh) {
 		return errno;
 	}

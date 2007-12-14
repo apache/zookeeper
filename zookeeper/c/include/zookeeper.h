@@ -249,14 +249,15 @@ typedef void (*watcher_fn)(void *, int type, int state, const char *path);
  *   session. If the session timed out or the id is invalid, a new
  *   session will be automatically generated. Clients should check the actual
  *   session id by calling \ref zoo_client_id. 
- * \param passwd the password of a previously established session. Pass 0 if
- *   reconnecting to a previous session. 
+ * \param context the context object that will be passed to the watcher callback
+ *   function. The object is not used by zookeeper internally and can be null.
+ * \param flags reserved for future use. Should be set to zero.
  * \return a pointer to the opaque zhandle structure. If it fails to create 
  * a new zhandle the function returns NULL and the errno variable 
  * indicates the reason.
  */
 ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
-  int recv_timeout, const clientid_t *clientid);
+  int recv_timeout, const clientid_t *clientid, void *context, int flags);
 
 /**
  * \brief close the zookeeper handle and free up any resources.
