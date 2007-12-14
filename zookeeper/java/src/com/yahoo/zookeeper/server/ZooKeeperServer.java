@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2008, Yahoo! Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 package com.yahoo.zookeeper.server;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.SyncFailedException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,6 +57,9 @@ import com.yahoo.zookeeper.server.auth.AuthenticationProvider;
 import com.yahoo.zookeeper.server.auth.DigestAuthenticationProvider;
 import com.yahoo.zookeeper.server.auth.HostAuthenticationProvider;
 import com.yahoo.zookeeper.server.auth.IPAuthenticationProvider;
+import com.yahoo.zookeeper.server.quorum.Leader;
+import com.yahoo.zookeeper.server.quorum.QuorumPacket;
+import com.yahoo.zookeeper.server.quorum.Leader.Proposal;
 import com.yahoo.zookeeper.txn.CreateSessionTxn;
 import com.yahoo.zookeeper.txn.CreateTxn;
 import com.yahoo.zookeeper.txn.DeleteTxn;
@@ -70,6 +75,11 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  */
 public class ZooKeeperServer implements SessionExpirer {
     protected int tickTime = 3000;
+
+    public static final int commitLogCount = 500;
+    public int commitLogBuffer = 700;
+    public LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
+    public long minCommittedLog, maxCommittedLog;
 
     HashMap<String, AuthenticationProvider> authenticationProviders = new HashMap<String, AuthenticationProvider>();
 
@@ -354,12 +364,59 @@ public class ZooKeeperServer implements SessionExpirer {
                 default:
                     dataTree.processTxn(hdr, txn);
                 }
+                Request r = new Request(null, 0, 
+                        hdr.getCxid(),  hdr.getType(), 
+                        null,null);
+                r.txn = txn;
+                r.hdr = hdr;
+                r.zxid = hdr.getZxid();
+                addCommittedProposal(r);
             }
         } catch (EOFException e) {
         }
         return highestZxid;
     }
+    
+    /** 
+     * maintains a list of last 500 or so committed requests. 
+     * This is used for fast follower synchronization. 
+     * @param r committed request
+     */
 
+    public void addCommittedProposal(Request request){
+        synchronized(committedLog) {
+            if (committedLog.size() > commitLogCount) {
+                committedLog.removeFirst();
+                minCommittedLog = 
+                    committedLog.getFirst().packet.getZxid();
+            }
+            if (committedLog.size() == 0) {
+                minCommittedLog = request.zxid;
+                maxCommittedLog = request.zxid;
+            }
+            
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+            try {
+                request.hdr.serialize(boa, "hdr");
+                if (request.txn != null) {
+                    request.txn.serialize(boa, "txn");
+                }
+                baos.close();
+            } catch (IOException e) {
+                // This really should be impossible
+                ZooLog.logException(e);
+            }
+            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, baos
+                    .toByteArray(), null);
+            Proposal p = new Proposal();
+            p.packet = pp;
+            p.request = request;
+            committedLog.add(p);
+            maxCommittedLog = p.packet.getZxid();
+        }
+    }
+    
     static public Record deserializeTxn(InputArchive ia, TxnHeader hdr)
             throws IOException {
         hdr.deserialize(ia, "hdr");
@@ -392,6 +449,64 @@ public class ZooKeeperServer implements SessionExpirer {
             txn.deserialize(ia, "txn");
         }
         return txn;
+    }
+
+    public void truncateLog(long finalZxid) throws IOException {
+    	long highestZxid = 0;
+        for (File f : dataDir.listFiles()) {
+            long zxid = isValidSnapshot(f);
+            if (zxid == -1) {
+                ZooLog.logWarn("Skipping " + f);
+                continue;
+            }
+            if (zxid > highestZxid) {
+                highestZxid = zxid;
+            }
+        }
+        File[] files = getLogFiles(dataLogDir, highestZxid);
+        boolean truncated = false;
+        for (File f: files) {
+            FileInputStream fin = new FileInputStream(f);
+            InputArchive ia = BinaryInputArchive.getArchive(fin);
+            FileChannel fchan = fin.getChannel();
+            try {
+                while (true) {
+                    byte[] bytes = ia.readBuffer("txtEntry");
+                    if (bytes.length == 0) {
+                        throw new EOFException();
+                    }
+                    InputArchive iab = BinaryInputArchive.getArchive(
+                            new ByteArrayInputStream(bytes));
+                    TxnHeader hdr = new TxnHeader();
+                    Record txn = deserializeTxn(iab, hdr);
+                    if (ia.readByte("EOF") != 'B') {
+                        throw new EOFException();
+                    }
+                    if (hdr.getZxid() == finalZxid) {
+                        //this is where we need to truncate
+                        
+                        long pos = fchan.position();
+                        fin.close();
+                        FileOutputStream fout = new FileOutputStream(f);
+                        FileChannel fchanOut = fout.getChannel();
+                        fchanOut.truncate(pos);                     
+                        truncated = true;
+                        break;
+                    }
+                }
+            } catch(EOFException eof){
+            }   
+            if (truncated == true) {
+                break;
+            }
+        }
+        if (truncated == false) {
+            //not able to truncate the log
+            ZooLog.logError("Not able to truncate the log " + 
+                    Long.toHexString(finalZxid));
+            System.exit(13);
+        }
+     
     }
 
     public void snapshot(BinaryOutputArchive oa) throws IOException,
@@ -537,7 +652,9 @@ public class ZooKeeperServer implements SessionExpirer {
         if (firstProcessor != null) {
             firstProcessor.shutdown();
         }
-        dataTree.clear();
+        if (dataTree != null) {
+            dataTree.clear();
+        }
     }
 
     /**
@@ -717,6 +834,7 @@ public class ZooKeeperServer implements SessionExpirer {
         return limit;
     }
 
+    
     public void setServerCnxnFactory(Factory factory) {
         this.serverCnxnFactory = factory;
     }

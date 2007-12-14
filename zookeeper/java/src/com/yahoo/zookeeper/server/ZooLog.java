@@ -271,11 +271,15 @@ public class ZooLog {
 
     static public void logQuorumPacket(char direction, QuorumPacket qp,
             long traceMask) {
-        if (!doLog(traceMask)) {
+        return;
+        /*
+         * 
+         if (!doLog(traceMask)) {
             return;
         }
         logTextTraceMessage(direction + " "
                 + FollowerHandler.packetToString(qp), traceMask);
+        */
     }
 
     public static void logTextTraceMessage(String text, long traceMask) {

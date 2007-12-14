@@ -42,6 +42,7 @@ import com.yahoo.zookeeper.proto.ReplyHeader;
 import com.yahoo.zookeeper.proto.SetACLResponse;
 import com.yahoo.zookeeper.proto.SetDataResponse;
 import com.yahoo.zookeeper.server.DataTree.ProcessTxnResult;
+import com.yahoo.zookeeper.server.NIOServerCnxn.Factory;
 import com.yahoo.zookeeper.txn.CreateSessionTxn;
 import com.yahoo.zookeeper.txn.ErrorTxn;
 
@@ -102,11 +103,21 @@ public class FinalRequestProcessor implements RequestProcessor {
                     zks.sessionTracker.removeSession(request.sessionId);
                 }
             }
+            // do not add non quorum packets to the queue.
+            if (Request.isQuorum(request.type)) {
+                zks.addCommittedProposal(request);
+            }
         }
 
         if (request.hdr != null && request.hdr.getType() == OpCode.closeSession) {
-            zks.getServerCnxnFactory().closeSession(request.sessionId);
+            Factory scxn = zks.getServerCnxnFactory();
+            // this might be possible since
+            // we might just be playing diffs from the leader
+            if (scxn != null) {
+                scxn.closeSession(request.sessionId);
+            }
         }
+        
         if (request.cnxn == null) {
             return;
         }

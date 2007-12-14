@@ -406,7 +406,10 @@ public class ClientCnxn {
                 throw new IOException("Nothing in the queue, but got "
                         + r.getXid());
             }
-            Packet p = pendingQueue.remove();
+            Packet p = null;
+            synchronized(pendingQueue) {
+                p = pendingQueue.remove();
+            }
             /*
              * Since requests are processed in order, we better get a response
              * to the first request!

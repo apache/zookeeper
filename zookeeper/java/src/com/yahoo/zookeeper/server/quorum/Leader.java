@@ -31,6 +31,7 @@ import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.zookeeper.server.FinalRequestProcessor;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.RequestProcessor;
+import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
 import com.yahoo.zookeeper.ZooDefs.OpCode;
@@ -107,6 +108,21 @@ public class Leader {
     }
 
     /**
+     * This message is for follower to expect diff
+     */
+    final static int DIFF = 13;
+    
+    /**
+     * This is for follower to truncate its logs 
+     */
+    final static int TRUNC = 14;
+    
+    /**
+     * This is for follower to download the snapshots
+     */
+    final static int SNAP = 15;
+    
+    /**
      * This message type is sent by the leader to indicate it's zxid and if
      * needed, its database.
      */
@@ -133,7 +149,7 @@ public class Leader {
     /**
      * This message type is sent by a leader to propose a mutation.
      */
-    final static int PROPOSAL = 2;
+    public final static int PROPOSAL = 2;
 
     /**
      * This message type is sent by a follower after it has synced a proposal.
