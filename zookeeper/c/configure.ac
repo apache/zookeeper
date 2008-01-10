@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],1.0.0,[zookeeper-user@lists.sourceforge.net],[zookeeper])
+AC_INIT([zookeeper C client],1.1.0,[zookeeper-user@lists.sourceforge.net],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
 AC_CHECK_FILES([generated/zookeeper.jute.c generated/zookeeper.jute.h],[],
 	[AC_MSG_ERROR([jute files are missing! Please run "ant compile_jute" while in the zookeeper top level directory.])
@@ -22,10 +22,10 @@ DX_INIT_DOXYGEN([zookeeper],[c-doc.Doxyfile],[docs])
 
 # initialize automake
 AM_INIT_AUTOMAKE([-Wall foreign])
-#AM_INIT_AUTOMAKE
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
+AM_PATH_CPPUNIT(1.10.2)
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_INSTALL
@@ -36,8 +36,8 @@ AC_PROG_LIBTOOL
 
 AC_ARG_ENABLE([debug],
  [AS_HELP_STRING([--enable-debug],[enable debug build [default=no]])],
- [CFLAGS="-g -O0"],[CFLAGS="-O2"])
-
+ [CFLAGS="-g -O0";CXXFLAGS="-g -O0"],[CFLAGS="-O2";CXXFLAGS="-O2"])
+ 
 AC_ARG_WITH([syncapi],
  [AS_HELP_STRING([--with-syncapi],[build with support for SyncAPI [default=yes]])],
  [],[with_syncapi=yes])
@@ -64,8 +64,6 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
-#AC_TYPE_INT32_T -- this macro only available in autoconf 2.61
-#AC_TYPE_INT64_T -- this macro only available in autoconf 2.61
 AC_TYPE_PID_T
 AC_HEADER_TIME
 
