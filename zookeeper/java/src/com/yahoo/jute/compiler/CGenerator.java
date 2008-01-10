@@ -64,6 +64,9 @@ class CGenerator {
             JFile f = (JFile) i.next();
             h.write("#include \""+f.getName()+".h\"\n");
         }
+        // required for compilation from C++
+        h.write("\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n");
+
         c.write("#include <stdlib.h>\n"); // need it for calloc() & free()
         c.write("#include \""+mName+".h\"\n\n");
         
@@ -72,6 +75,7 @@ class CGenerator {
             jr.genCCode(h, c);
         }
         
+        h.write("\n#ifdef __cplusplus\n}\n#endif\n\n");
         h.write("#endif //"+mName.toUpperCase().replace('.','_')+"__\n");
         
         h.close();
