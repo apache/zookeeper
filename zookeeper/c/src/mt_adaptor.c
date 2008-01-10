@@ -26,6 +26,8 @@
 #endif
 
 #include "zk_adaptor.h"
+#include "zk_log.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -33,8 +35,8 @@
 #include <signal.h>
 #include <sys/select.h>
 #include <errno.h>
-
 #include <fcntl.h>
+#include <assert.h>
 
 void lock_buffer_list(buffer_head_t *l)
 {
@@ -93,11 +95,6 @@ int process_async(int outstanding_sync)
 {
     return 0;
 }
-struct adaptor_threads {
-    pthread_t io;
-    pthread_t completion;
-    int self_pipe[2];
-};
 
 void *do_io(void *);
 void *do_completion(void *);
@@ -108,16 +105,59 @@ static int set_nonblock(int fd){
     return fcntl(fd, F_SETFL, l | O_NONBLOCK);
 }
 
+void wait_for_others(zhandle_t* zh)
+{
+    struct adaptor_threads* adaptor=zh->adaptor_priv;
+    pthread_mutex_lock(&adaptor->lock);
+    while(adaptor->threadsToWait>0) 
+        pthread_cond_wait(&adaptor->cond,&adaptor->lock);
+    pthread_mutex_unlock(&adaptor->lock);    
+}
+
+void notify_thread_ready(zhandle_t* zh)
+{
+    struct adaptor_threads* adaptor=zh->adaptor_priv;
+    pthread_mutex_lock(&adaptor->lock);
+    adaptor->threadsToWait--;
+    pthread_cond_broadcast(&adaptor->cond);
+    while(adaptor->threadsToWait>0) 
+        pthread_cond_wait(&adaptor->cond,&adaptor->lock);
+    pthread_mutex_unlock(&adaptor->lock);
+}
+
+
+void start_threads(zhandle_t* zh)
+{
+    struct adaptor_threads* adaptor=zh->adaptor_priv;
+    pthread_cond_init(&adaptor->cond,0);
+    pthread_mutex_init(&adaptor->lock,0);
+    adaptor->threadsToWait=2;  // wait for 2 threads before opening the barrier
+    
+    // use api_prolog() to make sure zhandle doesn't get destroyed
+    // while initialization is in progress
+    api_prolog(zh);
+    LOG_DEBUG(("starting threads..."));
+    int rc=pthread_create(&adaptor->io, 0, do_io, zh);
+    assert("pthread_create() failed for the IO thread"&&!rc);
+    rc=pthread_create(&adaptor->completion, 0, do_completion, zh);
+    assert("pthread_create() failed for the completion thread"&&!rc);
+    wait_for_others(zh);
+    api_epilog(zh, 0);    
+}
+
 int adaptor_init(zhandle_t *zh)
 {
+    pthread_mutexattr_t recursive_mx_attr;
     struct adaptor_threads *adaptor_threads = calloc(1, sizeof(*adaptor_threads));
     if (!adaptor_threads) {
+        LOG_ERROR(("Out of memory"));
         return -1;
     }
 
     /* We use a pipe for interrupting select() */
     if(pipe(adaptor_threads->self_pipe)==-1) {
-        printf("Can't make a pipe %d\n",errno);
+        LOG_ERROR(("Can't make a pipe %d",errno));
+        free(adaptor_threads);
         return -1;
     }
     set_nonblock(adaptor_threads->self_pipe[1]);
@@ -125,50 +165,83 @@ int adaptor_init(zhandle_t *zh)
 
     zh->adaptor_priv = adaptor_threads;
     pthread_mutex_init(&zh->to_process.lock,0);
-    pthread_mutex_init(&zh->to_send.lock,0);
+    pthread_mutex_init(&adaptor_threads->zh_lock,0);
+    // to_send must be recursive mutex    
+    pthread_mutexattr_init(&recursive_mx_attr);
+    pthread_mutexattr_settype(&recursive_mx_attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&zh->to_send.lock,&recursive_mx_attr);
+    pthread_mutexattr_destroy(&recursive_mx_attr);
+    
     pthread_mutex_init(&zh->sent_requests.lock,0);
     pthread_cond_init(&zh->sent_requests.cond,0);
     pthread_mutex_init(&zh->completions_to_process.lock,0);
     pthread_cond_init(&zh->completions_to_process.cond,0);
-    api_prolog(zh);
-    pthread_create(&adaptor_threads->io, 0, do_io, zh);
-    api_prolog(zh);
-    pthread_create(&adaptor_threads->completion, 0, do_completion, zh);
+    start_threads(zh);
     return 0;
 }
 
 void adaptor_finish(zhandle_t *zh)
 {
-    struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
-
-    if (zh->state >= 0) {
-        fprintf(stderr, "Forcibly setting state to CLOSED\n");
-        zh->state = -1;
+    struct adaptor_threads *adaptor_threads;
+    // make sure zh doesn't get destroyed until after we're done here
+    api_prolog(zh); 
+    adaptor_threads = zh->adaptor_priv;
+    if(adaptor_threads==0) {
+        api_epilog(zh,0);
+        return;
     }
-    adaptor_send_queue(zh,0); // wake up selector
-    pthread_mutex_lock(&zh->completions_to_process.lock);
-    pthread_cond_broadcast(&zh->completions_to_process.cond);
-    pthread_mutex_unlock(&zh->completions_to_process.lock);
-    pthread_join(adaptor_threads->io, 0);
-    pthread_join(adaptor_threads->completion, 0);
+
+    if(!pthread_equal(adaptor_threads->io,pthread_self())){
+        wakeup_io_thread(zh);
+        pthread_join(adaptor_threads->io, 0);
+    }else
+        pthread_detach(adaptor_threads->io);
+    
+    if(!pthread_equal(adaptor_threads->completion,pthread_self())){
+        pthread_mutex_lock(&zh->completions_to_process.lock);
+        pthread_cond_broadcast(&zh->completions_to_process.cond);
+        pthread_mutex_unlock(&zh->completions_to_process.lock);
+        pthread_join(adaptor_threads->completion, 0);
+    }else
+        pthread_detach(adaptor_threads->completion);
+    
+    api_epilog(zh,0);
+}
+
+void adaptor_destroy(zhandle_t *zh)
+{
+    struct adaptor_threads *adaptor = zh->adaptor_priv;
+    if(adaptor==0) return;
+    
+    pthread_cond_destroy(&adaptor->cond);
+    pthread_mutex_destroy(&adaptor->lock);
     pthread_mutex_destroy(&zh->to_process.lock);
     pthread_mutex_destroy(&zh->to_send.lock);
     pthread_mutex_destroy(&zh->sent_requests.lock);
     pthread_cond_destroy(&zh->sent_requests.cond);
     pthread_mutex_destroy(&zh->completions_to_process.lock);
     pthread_cond_destroy(&zh->completions_to_process.cond);
-    close(adaptor_threads->self_pipe[0]);
-    close(adaptor_threads->self_pipe[1]);
-    free(adaptor_threads);
+    pthread_mutex_destroy(&adaptor->zh_lock);
+    close(adaptor->self_pipe[0]);
+    close(adaptor->self_pipe[1]);
+    free(adaptor);
     zh->adaptor_priv=0;
+}
+
+int wakeup_io_thread(zhandle_t *zh)
+{
+    struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
+    char c=0;
+    return write(adaptor_threads->self_pipe[1],&c,1)==1? ZOK: ZSYSTEMERROR;    
 }
 
 int adaptor_send_queue(zhandle_t *zh, int timeout)
 {
-    struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
-    char c=0;
-    write(adaptor_threads->self_pipe[1], &c, 1);
-    return 0;
+    if(!zh->close_requested)
+        return wakeup_io_thread(zh);
+    // don't rely on the IO thread to send the messages if the app has
+    // requested to close 
+    return flush_send_queue(zh, timeout);
 }
 
 /* These two are declared here because we will run the event loop
@@ -185,32 +258,29 @@ void *do_io(void *v)
     struct timeval tv;
     fd_set rfds;
     fd_set wfds;
-    fd_set efds;
     struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
 
-    FD_ZERO(&rfds);
-    FD_ZERO(&wfds);
-    FD_ZERO(&efds);
-    while(zh->state >= 0) {
+    api_prolog(zh);
+    notify_thread_ready(zh);
+    LOG_DEBUG(("started IO thread"));
+    while(!zh->close_requested) {
         int result;
         int maxfd;
+        FD_ZERO(&rfds);
+        FD_ZERO(&wfds);
         zookeeper_interest(zh, &fd, &interest, &tv);
         if (fd != -1) {
             if (interest&ZOOKEEPER_READ) {
                     FD_SET(fd, &rfds);
-            } else {
-                    FD_CLR(fd, &rfds);
             }
             if (interest&ZOOKEEPER_WRITE) {
                     FD_SET(fd, &wfds);
-            } else {
-                    FD_CLR(fd, &wfds);
             }
         }
         FD_SET(adaptor_threads->self_pipe[0],&rfds);
 
         maxfd=adaptor_threads->self_pipe[0]>fd ? adaptor_threads->self_pipe[0] : fd;
-        result = select(maxfd+1, &rfds, &wfds, &efds, &tv);
+        result = select(maxfd+1, &rfds, &wfds, 0, &tv);
         interest = 0;
         if (fd != -1) {
             if (FD_ISSET(fd, &rfds)) {
@@ -226,32 +296,73 @@ void *do_io(void *v)
             while(read(adaptor_threads->self_pipe[0],b,sizeof(b))==sizeof(b)){}
         }
         result = zookeeper_process(zh, interest);
+        // TODO: check the current state of the zhandle and terminate 
+        //       if it is_unrecoverable()
     }
-    api_epilog(zh, 0);
+    api_epilog(zh, 0);    
+    LOG_DEBUG(("IO thread terminated"));
     return 0;
 }
 
 void *do_completion(void *v)
 {
     zhandle_t *zh = v;
-    while(zh->state >= 0) {
+    api_prolog(zh);
+    notify_thread_ready(zh);
+    LOG_DEBUG(("started completion thread"));
+    while(!zh->close_requested) {
         pthread_mutex_lock(&zh->completions_to_process.lock);
-        while(!zh->completions_to_process.head && zh->state >= 0) {
+        while(!zh->completions_to_process.head && !zh->close_requested) {
             pthread_cond_wait(&zh->completions_to_process.cond, &zh->completions_to_process.lock);
         }
         pthread_mutex_unlock(&zh->completions_to_process.lock);
         process_completions(zh);
     }
-    api_epilog(zh, 0);
+    api_epilog(zh, 0);    
+    LOG_DEBUG(("completion thread terminated"));
     return 0;
 }
 
-int inc_nesting_level(nesting_level_t* nl,int i)
+int32_t inc_ref_counter(zhandle_t* zh,int i)
 {
-    int v;
-    pthread_mutex_lock(&nl->lock);
-    nl->level+=(i<0?-1:(i>0?1:0));
-    v=nl->level;
-    pthread_mutex_unlock(&nl->lock);
+    int incr=(i<0?-1:(i>0?1:0));
+    // fetch_and_add implements atomic post-increment
+    int v=fetch_and_add(&zh->ref_counter,incr);
+    // inc_ref_counter wants pre-increment
+    v+=incr;   // simulate pre-increment
     return v;
+}
+
+int32_t fetch_and_add(volatile int32_t* operand, int incr)
+{
+    int32_t result;
+    asm __volatile__(
+         "lock xaddl %0,%1\n"
+         : "=r"(result), "=m"(*(int *)operand)
+         : "0"(incr)
+         : "memory");
+   return result;
+}
+
+int32_t get_xid()
+{
+    static int32_t xid = -1;
+    if (xid == -1) {
+        xid = time(0);
+    }
+    return fetch_and_add(&xid,1);
+}
+
+void enter_critical(zhandle_t* zh)
+{
+    struct adaptor_threads *adaptor = zh->adaptor_priv;
+    if(adaptor)
+        pthread_mutex_lock(&adaptor->zh_lock);
+}
+
+void leave_critical(zhandle_t* zh)
+{
+    struct adaptor_threads *adaptor = zh->adaptor_priv;
+    if(adaptor)
+        pthread_mutex_unlock(&adaptor->zh_lock);    
 }

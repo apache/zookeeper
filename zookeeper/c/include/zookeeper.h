@@ -233,7 +233,7 @@ typedef struct {
  * Programs wishing to receive events from ZooKeeper need to implement a method 
  * with this signature and pass a pointer to the method to \ref zookeeper_init.
  */
-typedef void (*watcher_fn)(void *, int type, int state, const char *path);
+typedef void (*watcher_fn)(zhandle_t *, int type, int state, const char *path);
 
 /**
  * \brief create a handle to used communicate with zookeeper.
@@ -868,7 +868,10 @@ ZOOAPI int zoo_exists(zhandle_t *zh, const char *path, int watch, struct Stat *s
  * separating ancestors of the node.
  * \param watch if nonzero, a watch will be set at the server to notify 
  * the client if the node changes.
- * \param stat the return value of stat for the path.
+ * \param buffer the buffer holding the node data returned by the server
+ * \param buffer_len is the size of the buffer pointed to by the buffer parameter.
+ * It'll be set to the actual data length upon return.
+ * \param stat if not NULL, will hold the value of stat for the path on return.
  * \return return value of the function call.
  * ZOK operation completed succesfully
  * ZNONODE the node does not exist.
@@ -879,7 +882,7 @@ ZOOAPI int zoo_exists(zhandle_t *zh, const char *path, int watch, struct Stat *s
  */
 
 ZOOAPI int zoo_get(zhandle_t *zh, const char *path, int watch, char *buffer,   
-                   int buffer_len, struct Stat *stat);
+                   int* buffer_len, struct Stat *stat);
 
 
 /**

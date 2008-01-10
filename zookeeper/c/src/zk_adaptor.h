@@ -21,6 +21,11 @@
 #include <pthread.h>
 #endif
 #include "zookeeper.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _buffer_list;
 struct _completion_list;
 
@@ -90,26 +95,41 @@ typedef struct _buffer_list {
     struct _buffer_list *next;
 } buffer_list_t;
 
-typedef struct _nesting_level {
-    int level;
+/* the size of connect request */
+#define HANDSHAKE_REQ_SIZE 44
+/* connect request */
+struct connect_req {
+    int32_t protocolVersion;
+    int64_t lastZxidSeen;
+    int32_t timeOut;
+    int64_t sessionId;
+    int32_t passwd_len;
+    char passwd[16];
+};
+
+/* the connect response */
+struct prime_struct {
+    int32_t len;
+    int32_t protocolVersion;
+    int32_t timeOut;
+    int64_t sessionId;
+    int32_t passwd_len;
+    char passwd[16];
+}; 
+
 #ifdef THREADED
-    pthread_mutex_t lock;
+/* this is used by mt_adaptor internally for thread management */
+struct adaptor_threads {
+     pthread_t io;
+     pthread_t completion;
+     int threadsToWait;         // barrier
+     pthread_cond_t cond;       // barrier's conditional
+     pthread_mutex_t lock;      // ... and a lock
+     pthread_mutex_t zh_lock;   // critical section lock
+     int self_pipe[2];
+};
 #endif
-} nesting_level_t;
-
-int inc_nesting_level(nesting_level_t* nl,int i);
-
-typedef enum {TOP_LEVEL=0, NESTED=1, CLOSE_REQUESTED=2} nested_state;
-
- struct prime_struct {
-     int32_t len;
-     int32_t protocolVersion;
-     int32_t timeOut;
-     int64_t sessionId;
-     int32_t passwd_len;
-     char passwd[16];
- }; /* the connect response */
-
+ 
 /**
  * This structure represents the connection to zookeeper.
  */
@@ -135,19 +155,20 @@ struct _zhandle {
     struct _buffer_list primer_buffer; /* The buffer used for the handshake at the start of a connection */
     struct prime_struct primer_storage; /* the connect response */
     char primer_storage_buffer[40]; /* the true size of primer_storage */
-    int state;
+    volatile int state;
     void *context;
     struct _auth_info auth; /* authentication data */
     /* zookeeper_close is not reentrant because it de-allocates the zhandler. 
      * This guard variable is used to defer the destruction of zhandle till 
      * right before top-level API call returns to the caller */
-    nesting_level_t nesting;
-    int close_requested;
+    int32_t ref_counter;
+    volatile int close_requested;
     void *adaptor_priv;
 };
 
 int adaptor_init(zhandle_t *zh);
 void adaptor_finish(zhandle_t *zh);
+void adaptor_destroy(zhandle_t *zh);
 struct sync_completion *alloc_sync_completion(void);
 int wait_sync_completion(struct sync_completion *sc);
 void free_sync_completion(struct sync_completion *sc);
@@ -155,11 +176,24 @@ void notify_sync_completion(struct sync_completion *sc);
 int adaptor_send_queue(zhandle_t *zh, int timeout);
 int process_async(int outstanding_sync);
 void process_completions(zhandle_t *zh);
+// critical section guards
+void enter_critical(zhandle_t* zh);
+void leave_critical(zhandle_t* zh);
+// zhandle object reference counting
 void api_prolog(zhandle_t* zh);
 int api_epilog(zhandle_t *zh, int rc);
-#ifdef THREADED
-#else
+int32_t get_xid();
+// returns the new value of the ref counter
+int32_t inc_ref_counter(zhandle_t* zh,int i);
 
+#ifdef THREADED
+// atomic post-increment
+int32_t fetch_and_add(volatile int32_t* operand, int incr);
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /*ZK_ADAPTOR_H_*/
 

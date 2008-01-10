@@ -20,6 +20,7 @@
 
 #include "zk_adaptor.h"
 #include <stdlib.h>
+#include <time.h>
 
 void lock_buffer_list(buffer_head_t *l)
 {
@@ -61,8 +62,9 @@ int adaptor_init(zhandle_t *zh)
     return 0;
 }
 
-void adaptor_finish(zhandle_t *zh)
-{}
+void adaptor_finish(zhandle_t *zh){}
+
+void adaptor_destroy(zhandle_t *zh){}
 
 int flush_send_queue(zhandle_t *, int);
 
@@ -71,8 +73,19 @@ int adaptor_send_queue(zhandle_t *zh, int timeout)
     return flush_send_queue(zh, timeout);
 }
 
-int inc_nesting_level(nesting_level_t* nl,int i)
+int32_t inc_ref_counter(zhandle_t* zh,int i)
 {
-    nl->level+=(i<0?-1:(i>0?1:0));
-    return nl->level;
+    zh->ref_counter+=(i<0?-1:(i>0?1:0));
+    return zh->ref_counter;
 }
+
+int32_t get_xid()
+{
+    static int32_t xid = -1;
+    if (xid == -1) {
+        xid = time(0);
+    }
+    return xid++;
+}
+void enter_critical(zhandle_t* zh){}
+void leave_critical(zhandle_t* zh){}
