@@ -1,0 +1,93 @@
+#include <string>
+#include <cppunit/TestRunner.h>
+#include <cppunit/CompilerOutputter.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/TextTestProgressListener.h>
+#include <cppunit/BriefTestProgressListener.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <stdexcept>
+#include <cppunit/Exception.h>
+#include <cppunit/TestFailure.h>
+#include <cppunit/XmlOutputter.h>
+#include <fstream>
+
+using namespace std;
+
+CPPUNIT_NS_BEGIN
+
+class EclipseOutputter: public CompilerOutputter
+{
+public:
+  EclipseOutputter(TestResultCollector *result,ostream &stream):
+        CompilerOutputter(result,stream,"%p:%l: "),stream_(stream)
+    {
+    }
+    virtual void printFailedTestName( TestFailure *failure ){}
+    virtual void printFailureMessage( TestFailure *failure )
+    {
+      stream_<<": ";
+      Message msg = failure->thrownException()->message();
+      stream_<< msg.shortDescription();
+
+      string text;
+      for(int i=0; i<msg.detailCount();i++){
+          text+=msg.detailAt(i);
+          if(i+1!=msg.detailCount())
+              text+=", ";
+      }
+      if(text.length()!=0)
+          stream_ <<" ["<<text<<"]";
+      stream_<<"\n";
+    }
+    ostream& stream_;
+};
+
+CPPUNIT_NS_END
+
+int main( int argc, char* argv[] ) { 
+   // if command line contains "-ide" then this is the post build check
+   // => the output must be in the compiler error format.
+   //bool selfTest = (argc > 1) && (std::string("-ide") == argv[1]);
+   std::string testPath = (argc > 1) ? std::string(argv[1]) : std::string("");
+
+   // Create the event manager and test controller
+   CPPUNIT_NS::TestResult controller;
+   // Add a listener that colllects test result
+   CPPUNIT_NS::TestResultCollector result;
+   controller.addListener( &result );
+   
+   // Add a listener that print dots as test run.
+//   CPPUNIT_NS::TextTestProgressListener progress;
+   CPPUNIT_NS::BriefTestProgressListener progress;
+   controller.addListener( &progress );
+ 
+   CPPUNIT_NS::TestRunner runner;
+   runner.addTest( CPPUNIT_NS::TestFactoryRegistry::getRegistry().makeTest() );
+ 
+   try
+   {
+     cout << "Running "  <<  testPath;
+     runner.run( controller, testPath );
+
+     cout<<endl;
+
+     // Print test in a compiler compatible format.
+     CPPUNIT_NS::EclipseOutputter outputter( &result,cout);
+     outputter.write(); 
+
+ // Uncomment this for XML output
+     std::ofstream file( "tests.xml" );
+     CPPUNIT_NS::XmlOutputter xml( &result, file );
+     xml.setStyleSheet( "report.xsl" );
+     xml.write();
+     file.close();
+   }
+   catch ( std::invalid_argument &e )  // Test path not resolved
+   {
+     cout<<"\nERROR: "<<e.what()<<endl;
+     return 0;
+   }
+
+   return result.wasSuccessful() ? 0 : 1;
+ }

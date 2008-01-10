@@ -1,0 +1,2 @@
+-Wl,--wrap -Wl,pthread_mutex_lock
+-Wl,--wrap -Wl,pthread_mutex_unlock
