@@ -277,8 +277,12 @@ void processline(char *line) {
             return;
         }
         fprintf(stderr, "Creating [%s] node\n", line);
-        rc = zoo_acreate(zh, line, "new", 3, &OPEN_ACL_UNSAFE, flags,
+        struct ACL _CREATE_ONLY_ACL_ACL[] = {{PERM_CREATE, ANYONE_ID_UNSAFE}};
+        struct ACL_vector CREATE_ONLY_ACL = {1,_CREATE_ONLY_ACL_ACL};
+        rc = zoo_acreate(zh, line, "new", 3, &CREATE_ONLY_ACL, flags,
                 my_string_completion, strdup(line));
+//        rc = zoo_acreate(zh, line, "new", 3, &OPEN_ACL_UNSAFE, flags,
+//                my_string_completion, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
