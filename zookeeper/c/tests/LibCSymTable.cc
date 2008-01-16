@@ -47,6 +47,7 @@ LibCSymTable::LibCSymTable()
     LOAD_SYM(send);
     LOAD_SYM(recv);
     LOAD_SYM(select);
+    LOAD_SYM(poll);
     LOAD_SYM(gettimeofday);
 #ifdef THREADED
     LOAD_SYM(pthread_create);

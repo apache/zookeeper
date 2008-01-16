@@ -23,6 +23,7 @@
 #include <stddef.h>
 #include <dlfcn.h>
 #include <cassert>
+#include <poll.h>
 
 #ifdef THREADED
 #include <pthread.h>
@@ -68,6 +69,7 @@ struct LibCSymTable
     DECLARE_SYM(ssize_t,send,(int,const void*,size_t,int));
     DECLARE_SYM(ssize_t,recv,(int,const void*,size_t,int));
     DECLARE_SYM(int,select,(int,fd_set*,fd_set*,fd_set*,struct timeval*));
+    DECLARE_SYM(int,poll,(struct pollfd*,nfds_t,int));
     DECLARE_SYM(int,gettimeofday,(struct timeval*,GETTIMEOFDAY_ARG2_TYPE));
 #ifdef THREADED
     DECLARE_SYM(int,pthread_create,(pthread_t *, const pthread_attr_t *,
