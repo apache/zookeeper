@@ -104,12 +104,12 @@ const int PERM_WRITE = 1 << 1;
 const int PERM_CREATE = 1 << 2;
 const int PERM_DELETE = 1 << 3;
 const int PERM_ADMIN = 1 << 4;
-const int PERM_ALL = 0x3f;
+const int PERM_ALL = 0x1f;
 struct Id ANYONE_ID_UNSAFE = {"world", "anyone"};
 struct Id AUTH_IDS = {"auth", ""};
-struct ACL _OPEN_ACL_UNSAFE_ACL[] = {{0x1f, {"world", "anyone"}}};
-struct ACL _READ_ACL_UNSAFE_ACL[] = {{0x1f, {"world", "anyone"}}};
-struct ACL _CREATOR_ALL_ACL_ACL[] = {{0x1f, {"auth", ""}}};
+static struct ACL _OPEN_ACL_UNSAFE_ACL[] = {{0x1f, {"world", "anyone"}}};
+static struct ACL _READ_ACL_UNSAFE_ACL[] = {{0x01, {"world", "anyone"}}};
+static struct ACL _CREATOR_ALL_ACL_ACL[] = {{0x1f, {"auth", ""}}};
 struct ACL_vector OPEN_ACL_UNSAFE = { 1, _OPEN_ACL_UNSAFE_ACL};
 struct ACL_vector READ_ACL_UNSAFE = { 1, _READ_ACL_UNSAFE_ACL};
 struct ACL_vector CREATOR_ALL_ACL = { 1, _CREATOR_ALL_ACL_ACL};
@@ -955,8 +955,8 @@ static struct timeval get_timeval(int interval)
                     LOG_ERROR(("failed to marchall request (zk retcode=%d)",rc));
                     return api_epilog(zh,ZMARSHALLINGERROR);
                 }
-                LOG_DEBUG(("Sending PING to %s (exceeded idle by %dms)",
-                	format_current_endpoint_info(zh),-to));
+//                LOG_DEBUG(("Sending PING to %s (exceeded idle by %dms)",
+//                	format_current_endpoint_info(zh),-to));
                 to = zh->recv_timeout/3;
             }
 		} else {
@@ -1953,11 +1953,6 @@ static const char* format_endpoint_info(const struct sockaddr* ep)
 static const char* format_current_endpoint_info(zhandle_t* zh)
 {
     return format_endpoint_info(&zh->addrs[zh->connect_index]);
-}
-
-void zoo_set_debug_level(ZooLogLevel level)
-{
-    setCurrentLogLevel(level);
 }
 
 void zoo_deterministic_conn_order(int yesOrNo)
