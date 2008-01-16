@@ -163,7 +163,9 @@ private:
 class ZookeeperServer: public Mock_socket
 {
 public:
-    ZookeeperServer():serverDownSkipCount_(-1),sessionExpired(false){
+    ZookeeperServer():
+        serverDownSkipCount_(-1),sessionExpired(false),connectionLost(false)
+    {
         connectReturns=-1;
         connectErrno=EWOULDBLOCK;        
     }
@@ -181,8 +183,9 @@ public:
     // connection handling
     // what to do when the handshake request comes in?
     int serverDownSkipCount_;
-    // this will cause getsockopt(zh->fd,SOL_SOCKET,SO_ERROR,&error,&len) call fail
-    // after skipCount dropped to zero
+    // this will cause getsockopt(zh->fd,SOL_SOCKET,SO_ERROR,&error,&len) return 
+    // a failure after skipCount dropped to zero, thus simulating a server down 
+    // condition
     // passing skipCount==-1 will make every connect attempt succeed
     void setServerDown(int skipCount=0){ 
         serverDownSkipCount_=skipCount;
@@ -203,6 +206,11 @@ public:
     // the client throw SESSION_EXPIRED
     bool sessionExpired;
     void returnSessionExpired(){ sessionExpired=true; }
+    
+    // this is a trigger that gets reset back to false
+    // next recv call will return 0 length, thus simulating a connecton loss
+    bool connectionLost;
+    void setConnectionLost() {connectionLost=true;}
     
     // recv
     typedef std::pair<Response*,int> Element;
@@ -239,7 +247,7 @@ public:
     // send operation doesn't try to match request to the response
     ResponseList respQueue;
     mutable Mutex respQMx;
-    ZookeeperServer& addSendResponse(Response* resp, int errnum=0){
+    ZookeeperServer& addOperationResponse(Response* resp, int errnum=0){
         synchronized(respQMx);
         respQueue.push_back(Element(resp,errnum));
         return *this;

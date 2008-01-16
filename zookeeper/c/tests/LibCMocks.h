@@ -291,6 +291,49 @@ public:
 };
 
 // *****************************************************************************
+// poll
+// the last element of the pollfd array is expected to be test FD
+class Mock_poll: public Mock
+{
+public:
+    Mock_poll(Mock_socket* s,int fd):sock(s),
+        callReturns(1),myFD(fd),timeout(50)
+    {
+        mock_=this;
+    }
+    ~Mock_poll(){mock_=0;}
+    
+    Mock_socket* sock;
+    int callReturns;
+    int myFD;
+    int timeout; //in millis
+    virtual int call(struct pollfd *fds, nfds_t nfds, int to) {
+        pollfd* myPoll=0;
+        if(fds[nfds-1].fd==myFD)
+            myPoll=&fds[nfds-1];
+        bool isWritableRequested=false;
+        if(myPoll!=0){
+            isWritableRequested=myPoll->events&POLLOUT;
+            nfds--;
+        }
+        LIBC_SYMBOLS.poll(fds,nfds,(!isWritableRequested&&!isFDReadable())?timeout:0);
+        if(myPoll!=0){
+            // myFD is always writable if requested
+            myPoll->revents=isWritableRequested?POLLOUT:0;
+            // myFD is only readable if the socket has anything to read
+            myPoll->revents|=isFDReadable()?POLLIN:0;
+        }
+        return callReturns;
+    }
+
+    virtual bool isFDReadable() const {
+        return sock->hasMoreRecv();
+    }
+    
+    static Mock_poll* mock_;
+};
+
+// *****************************************************************************
 // gettimeofday
 class Mock_gettimeofday: public Mock
 {

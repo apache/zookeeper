@@ -130,9 +130,14 @@ string ZooGetResponse::toString() const{
 // Zookeeper server simulator
 // 
 ssize_t ZookeeperServer::callRecv(int s,void *buf,size_t len,int flags){
+    if(connectionLost){
+        recvReturnBuffer.erase();
+        return 0;
+    }
     // done transmitting the current buffer?
     if(recvReturnBuffer.size()==0){
         synchronized(recvQMx);
+        if(recvQueue.empty()) assert("Invalid recv call (empty recv queue)"&&false);
         Element& el=recvQueue.front();
         if(el.first!=0){
             recvReturnBuffer=el.first->toString();
@@ -170,8 +175,8 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
         synchronized(respQMx);
         if(respQueue.empty())
             return;
-       e=respQueue.front();
-       respQueue.pop_front();
+        e=respQueue.front();
+        respQueue.pop_front();
     }
     e.first->setXID(rh.xid);
     addRecvResponse(e);

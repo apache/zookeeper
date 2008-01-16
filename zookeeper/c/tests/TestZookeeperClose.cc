@@ -109,8 +109,7 @@ public:
         CPPUNIT_ASSERT(zh!=0);
 
         Mock_socket sockMock;
-        const int MY_FD=100;
-        sockMock.socketReturns=MY_FD;
+        sockMock.socketReturns=ZookeeperServer::FD;
         sockMock.connectReturns=-1;
         sockMock.connectErrno=EWOULDBLOCK;
         
@@ -191,6 +190,7 @@ public:
     }
     void testCloseUnconnected1()
     {
+        //zoo_set_debug_level(LOG_LEVEL_DEBUG);
         for(int i=0; i<100;i++){
             zh=zookeeper_init("localhost:2121",watcher,10000,0,0,0); 
             CPPUNIT_ASSERT(zh!=0);
@@ -208,7 +208,7 @@ public:
 
         for(int i=0;i<500;i++){
             ZookeeperServer zkServer;
-            Mock_select selMock(&zkServer,ZookeeperServer::FD);
+            Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
             // use a checked version of pthread calls
             CheckedPthread threadMock;
             // do not actually free the memory while in zookeeper_close()
@@ -272,12 +272,12 @@ public:
         // frozen time -- no timeouts and no pings
         Mock_gettimeofday timeMock;
         
-        for(int i=0;i<500;i++){
+        for(int i=0;i<100;i++){
             ZookeeperServer zkServer;
             // make the server return a non-matching session id
             zkServer.returnSessionExpired();
             
-            Mock_select selMock(&zkServer,ZookeeperServer::FD);
+            Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
             // use a checked version of pthread calls
             CheckedPthread threadMock;
             // do not actually free the memory while in zookeeper_close()

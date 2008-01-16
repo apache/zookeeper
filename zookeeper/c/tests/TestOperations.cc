@@ -31,8 +31,8 @@ using namespace std;
 class Zookeeper_operations : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Zookeeper_operations);
+    CPPUNIT_TEST(testOperationsAndDisconnectConcurrently1);
     CPPUNIT_TEST(testConcurrentOperations1);
-    //CPPUNIT_TEST(testOperationsAndCloseConcurrently1);
     CPPUNIT_TEST_SUITE_END();
     zhandle_t *zh;
 
@@ -55,7 +55,7 @@ public:
     {
         
     }
-    void testOperationsAndCloseConcurrently1()
+    void testOperationsAndDisconnectConcurrently1()
     {
         
     }
@@ -166,7 +166,7 @@ public:
             for(i=0;i<REPS;i++){
                 char buf;
                 int size=sizeof(buf);
-                svr_->addSendResponse(new ZooGetResponse("1",1));
+                svr_->addOperationResponse(new ZooGetResponse("1",1));
                 rc_=zoo_get(zh_,"/x/y/z",0,&buf,&size,0);
                 if(rc_!=ZOK){
                     break;
@@ -187,7 +187,7 @@ public:
         Mock_gettimeofday timeMock;
         
         ZookeeperServer zkServer;
-        Mock_select selMock(&zkServer,ZookeeperServer::FD);
+        Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
         // must call zookeeper_close() while all the mocks are in the scope!
         CloseFinally guard(&zh);
         
@@ -235,17 +235,17 @@ public:
         VALIDATE_JOB(j9);
         VALIDATE_JOB(j10);
     }
-    class TestGetWithCloseJob: public TestJob{
+    class TestGetWithDisconnectJob: public TestJob{
     public:
         static const int REPS=3000;
-        TestGetWithCloseJob(ZookeeperServer* svr,zhandle_t* zh)
+        TestGetWithDisconnectJob(ZookeeperServer* svr,zhandle_t* zh)
             :svr_(svr),zh_(zh),rc_(ZAPIERROR){}
         virtual void run(){
             int i;
             for(i=0;i<REPS;i++){
                 char buf;
                 int size=sizeof(buf);                
-                svr_->addSendResponse(new ZooGetResponse("1",1));
+                svr_->addOperationResponse(new ZooGetResponse("1",1));
                 rc_=zoo_get(zh_,"/x/y/z",0,&buf,&size,0);
                 if(rc_!=ZOK){
                     break;
@@ -254,21 +254,21 @@ public:
             //TEST_TRACE(("Finished %d iterations",i));
         }
         virtual void validate(const char* file, int line) const{
-            CPPUNIT_ASSERT_EQUAL_MESSAGE_LOC("ZOK != rc",ZOK,rc_,file,line);
+            CPPUNIT_ASSERT_EQUAL_MESSAGE_LOC("ZOK != rc",ZCONNECTIONLOSS,rc_,file,line);
         }
         ZookeeperServer* svr_;
         zhandle_t* zh_;
         int rc_;
     };
 
-    void testOperationsAndCloseConcurrently1()
+    void testOperationsAndDisconnectConcurrently1()
     {
-        for(int counter=0; counter<1; counter++){
+        for(int counter=0; counter<500; counter++){
             // frozen time -- no timeouts and no pings
             Mock_gettimeofday timeMock;
             
             ZookeeperServer zkServer;
-            Mock_select selMock(&zkServer,ZookeeperServer::FD);
+            Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
             // must call zookeeper_close() while all the mocks are in the scope!
             CloseFinally guard(&zh);
             
@@ -278,8 +278,47 @@ public:
             while(zh->state!=CONNECTED_STATE)
                 millisleep(2);
             
-            TestGetWithCloseJob j1(&zkServer,zh);
+            const int THREAD_COUNT=10;
+            CountDownLatch startLatch(THREAD_COUNT);
+            CountDownLatch endLatch(THREAD_COUNT);
 
+            TestGetWithDisconnectJob j1(&zkServer,zh);
+            j1.start(0,&endLatch);
+            TestGetWithDisconnectJob j2(&zkServer,zh);
+            j2.start(0,&endLatch);
+            TestGetWithDisconnectJob j3(&zkServer,zh);
+            j3.start(0,&endLatch);
+            TestGetWithDisconnectJob j4(&zkServer,zh);
+            j4.start(0,&endLatch);
+            TestGetWithDisconnectJob j5(&zkServer,zh);
+            j5.start(0,&endLatch);
+            TestGetWithDisconnectJob j6(&zkServer,zh);
+            j6.start(0,&endLatch);
+            TestGetWithDisconnectJob j7(&zkServer,zh);
+            j7.start(0,&endLatch);
+            TestGetWithDisconnectJob j8(&zkServer,zh);
+            j8.start(0,&endLatch);
+            TestGetWithDisconnectJob j9(&zkServer,zh);
+            j9.start(0,&endLatch);
+            TestGetWithDisconnectJob j10(&zkServer,zh);
+            j10.start(0,&endLatch);
+            millisleep(5);
+            // reconnect attempts will start failing immediately
+            zkServer.setServerDown(0);
+            // next recv call will return 0
+            zkServer.setConnectionLost();
+            endLatch.await();
+            // validate test results
+            VALIDATE_JOB(j1);
+            VALIDATE_JOB(j2);
+            VALIDATE_JOB(j3);
+            VALIDATE_JOB(j4);
+            VALIDATE_JOB(j5);
+            VALIDATE_JOB(j6);
+            VALIDATE_JOB(j7);
+            VALIDATE_JOB(j8);
+            VALIDATE_JOB(j9);
+            VALIDATE_JOB(j10);
         }
         
     }

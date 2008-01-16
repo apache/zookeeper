@@ -286,6 +286,16 @@ int select(int nfds,fd_set *rfds,fd_set *wfds,fd_set *efds,struct timeval *timeo
 Mock_select* Mock_select::mock_=0;
 
 // *****************************************************************************
+// poll
+Mock_poll* Mock_poll::mock_=0;
+int poll(struct pollfd *fds, nfds_t nfds, int timeout){
+    if (!Mock_poll::mock_)
+        return LIBC_SYMBOLS.poll(fds,nfds,timeout);
+    return Mock_poll::mock_->call(fds,nfds,timeout);        
+    
+}
+
+// *****************************************************************************
 // gettimeofday
 int gettimeofday(struct timeval *tp, GETTIMEOFDAY_ARG2_TYPE tzp){
     if (!Mock_gettimeofday::mock_)
