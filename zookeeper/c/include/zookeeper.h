@@ -18,6 +18,7 @@
 #define ZOOKEEPER_H_
 
 #include <sys/time.h>
+#include <stdio.h>
 #include "recordio.h"
 #include "zookeeper.jute.h"
 
@@ -110,9 +111,6 @@ extern ZOOAPI const int PERM_ALL;
 extern ZOOAPI struct Id ANYONE_ID_UNSAFE;
 extern ZOOAPI struct Id AUTH_IDS;
 
-extern ZOOAPI struct ACL _OPEN_ACL_UNSAFE_ACL[];
-extern ZOOAPI struct ACL _READ_ACL_UNSAFE_ACL[];
-extern ZOOAPI struct ACL _CREATOR_ALL_ACL_ACL[];
 extern ZOOAPI struct ACL_vector OPEN_ACL_UNSAFE;
 extern ZOOAPI struct ACL_vector READ_ACL_UNSAFE;
 extern ZOOAPI struct ACL_vector CREATOR_ALL_ACL;
@@ -768,6 +766,15 @@ ZOOAPI int is_unrecoverable(zhandle_t *zh);
  * \brief sets the debugging level for the library 
  */
 ZOOAPI void zoo_set_debug_level(ZooLogLevel logLevel);
+
+/**
+ * \brief sets the stream to be used by the library for logging 
+ * 
+ * The zookeeper library uses stderr as its default log stream. Application
+ * must make sure the stream is writable. Passing in NULL resets the stream 
+ * to its default value (stderr).
+ */
+ZOOAPI void zoo_set_log_stream(FILE* logStream);
 
 /**
  * \brief enable/disable quorum endpoint order randomization

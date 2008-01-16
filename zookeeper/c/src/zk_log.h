@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 extern ZOOAPI ZooLogLevel logLevel;
-#define LOGSTREAM stderr
+#define LOGSTREAM getLogStream()
 
 #define LOG_ERROR(x) if(logLevel>=LOG_LEVEL_ERROR) \
     log_message(LOG_LEVEL_ERROR,__LINE__,__func__,format_log_message x)
@@ -35,12 +35,12 @@ extern ZOOAPI ZooLogLevel logLevel;
 #define LOG_DEBUG(x) if(logLevel==LOG_LEVEL_DEBUG) \
     log_message(LOG_LEVEL_DEBUG,__LINE__,__func__,format_log_message x)
 
-void setCurrentLogLevel(ZooLogLevel level);
-
 void log_message(ZooLogLevel curLevel, int line,const char* funcName,
     const char* message);
 
 const char* format_log_message(const char* format,...);
+
+FILE* getLogStream();
 
 #ifdef __cplusplus
 }

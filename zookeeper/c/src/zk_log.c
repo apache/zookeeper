@@ -19,7 +19,6 @@
 #endif
 
 #include "zk_log.h"
-#include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
 
@@ -76,6 +75,17 @@ char* get_format_log_buffer(){
 
 ZooLogLevel logLevel=LOG_LEVEL_INFO;
 
+static FILE* logStream=0;
+FILE* getLogStream(){
+    if(logStream==0)
+        logStream=stderr;
+    return logStream;
+}
+
+void zoo_set_log_stream(FILE* stream){
+    logStream=stream;
+}
+
 static const char* time_now(){
     struct timeval tv;
     char* now_str=get_time_buffer();
@@ -118,7 +128,7 @@ const char* format_log_message(const char* format,...)
     return buf;
 }
 
-void setCurrentLogLevel(ZooLogLevel level)
+void zoo_set_debug_level(ZooLogLevel level)
 {
     if(level==0){
         // disable logging (unit tests do this)
@@ -129,3 +139,4 @@ void setCurrentLogLevel(ZooLogLevel level)
     if(level>LOG_LEVEL_DEBUG)level=LOG_LEVEL_DEBUG;
     logLevel=level;
 }
+
