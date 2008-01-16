@@ -33,7 +33,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <signal.h>
-#include <sys/select.h>
+#include <poll.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <assert.h>
@@ -253,49 +253,42 @@ int zookeeper_process(zhandle_t *zh, int events);
 void *do_io(void *v)
 {
     zhandle_t *zh = (zhandle_t*)v;
-    int fd;
-    int interest;
-    struct timeval tv;
-    fd_set rfds;
-    fd_set wfds;
+    struct pollfd fds[2];
     struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
 
     api_prolog(zh);
     notify_thread_ready(zh);
     LOG_DEBUG(("started IO thread"));
+    fds[0].fd=adaptor_threads->self_pipe[0];
+    fds[0].events=POLLIN;
     while(!zh->close_requested) {
-        int result;
-        int maxfd;
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
+        struct timeval tv;
+        int fd;
+        int interest;
+        int timeout;
+        int maxfd=1;
+        
         zookeeper_interest(zh, &fd, &interest, &tv);
         if (fd != -1) {
-            if (interest&ZOOKEEPER_READ) {
-                    FD_SET(fd, &rfds);
-            }
-            if (interest&ZOOKEEPER_WRITE) {
-                    FD_SET(fd, &wfds);
-            }
+            fds[1].fd=fd;
+            fds[1].events=(interest&ZOOKEEPER_READ)?POLLIN:0;
+            fds[1].events|=(interest&ZOOKEEPER_WRITE)?POLLOUT:0;
+            maxfd=2;
         }
-        FD_SET(adaptor_threads->self_pipe[0],&rfds);
-
-        maxfd=adaptor_threads->self_pipe[0]>fd ? adaptor_threads->self_pipe[0] : fd;
-        result = select(maxfd+1, &rfds, &wfds, 0, &tv);
-        interest = 0;
+        timeout=tv.tv_sec * 1000 + (tv.tv_usec/1000);
+        
+        poll(fds,maxfd,timeout);
         if (fd != -1) {
-            if (FD_ISSET(fd, &rfds)) {
-                interest |= ZOOKEEPER_READ;
-            }
-            if (FD_ISSET(fd, &wfds)) {
-                interest |= ZOOKEEPER_WRITE;
-            }
+            interest=(fds[1].revents&POLLIN)?ZOOKEEPER_READ:0;
+            interest|=((fds[1].revents&POLLOUT)||(fds[1].revents&POLLHUP))?ZOOKEEPER_WRITE:0;
         }
-        if(FD_ISSET(adaptor_threads->self_pipe[0],&rfds)){
+        if(fds[0].revents&POLLIN){
             // flush the pipe
             char b[128];
             while(read(adaptor_threads->self_pipe[0],b,sizeof(b))==sizeof(b)){}
         }
-        result = zookeeper_process(zh, interest);
+        // dispatch zookeeper events
+        zookeeper_process(zh, interest);
         // TODO: check the current state of the zhandle and terminate 
         //       if it is_unrecoverable()
     }
