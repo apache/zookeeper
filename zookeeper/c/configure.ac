@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],1.1.0,[zookeeper-user@lists.sourceforge.net],[zookeeper])
+AC_INIT([zookeeper C client],1.1.2,[zookeeper-user@lists.sourceforge.net],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
 AC_CHECK_FILES([generated/zookeeper.jute.c generated/zookeeper.jute.h],[],
 	[AC_MSG_ERROR([jute files are missing! Please run "ant compile_jute" while in the zookeeper top level directory.])
@@ -36,7 +36,7 @@ AC_PROG_LIBTOOL
 
 AC_ARG_ENABLE([debug],
  [AS_HELP_STRING([--enable-debug],[enable debug build [default=no]])],
- [CFLAGS="-g -O0";CXXFLAGS="-g -O0"],[CFLAGS="-O2";CXXFLAGS="-O2"])
+ [CFLAGS="-ggdb -O0";CXXFLAGS="-ggdb -O0"],[CFLAGS="-O2";CXXFLAGS="-O2"])
  
 AC_ARG_WITH([syncapi],
  [AS_HELP_STRING([--with-syncapi],[build with support for SyncAPI [default=yes]])],

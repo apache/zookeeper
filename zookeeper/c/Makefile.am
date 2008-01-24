@@ -55,7 +55,7 @@ EXTRA_DIST+=$(wildcard tests/*.cc) $(wildcard tests/*.h) \
 	tests/wrappers.opt tests/wrappers-mt.opt
 
 TEST_SOURCES = tests/TestDriver.cc tests/LibCMocks.cc tests/LibCSymTable.cc \
-	tests/MocksBase.cc  tests/ZKMocks.cc tests/Util.cc \
+	tests/MocksBase.cc  tests/ZKMocks.cc tests/Util.cc tests/ThreadingUtil.cc \
 	tests/TestOperations.cc tests/TestZookeeperInit.cc tests/TestZookeeperClose.cc
 
 SYMBOL_WRAPPERS=$(shell cat tests/wrappers.opt)
