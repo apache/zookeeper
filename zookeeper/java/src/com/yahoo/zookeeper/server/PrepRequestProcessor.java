@@ -373,6 +373,12 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         nextProcessor.processRequest(request);
     }
 
+    /**
+     * 
+     * @param authInfo list of ACL IDs associated with the client connection
+     * @param acl list of ACLs being assigned to the node (create or setACL operation)
+     * @return
+     */
     private boolean fixupACL(ArrayList<Id> authInfo, ArrayList<ACL> acl) {
         if (skipACL) {
             return true;
