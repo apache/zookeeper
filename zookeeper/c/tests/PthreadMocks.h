@@ -21,12 +21,10 @@
 #include <string.h>
 #include <errno.h>
 
-#include "src/zk_adaptor.h"
-#include "src/zk_log.h"
-
 #include "Util.h"
 #include "MocksBase.h"
 #include "LibCSymTable.h"
+#include "ThreadingUtil.h"
 
 // an ABC for pthreads
 class MockPthreadsBase: public Mock

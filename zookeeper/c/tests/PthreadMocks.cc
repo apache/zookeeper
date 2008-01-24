@@ -15,11 +15,12 @@
  */
 
 #include "PthreadMocks.h"
-#include "LibCSymTable.h"
-#include "Util.h"
 
 MockPthreadsBase* MockPthreadsBase::mock_=0;
 
+#undef USING_DUMA
+
+#ifndef USING_DUMA
 int pthread_cond_broadcast (pthread_cond_t *c){
     if(!MockPthreadsBase::mock_)
         return LIBC_SYMBOLS.pthread_cond_broadcast(c);
@@ -95,6 +96,7 @@ DECLARE_WRAPPER(int,pthread_mutex_unlock,(pthread_mutex_t *m)){
         return CALL_REAL(pthread_mutex_unlock,(m));
     return MockPthreadsBase::mock_->pthread_mutex_unlock(m);
 }
+#endif
 
 CheckedPthread::ThreadMap CheckedPthread::tmap_;
 CheckedPthread::MutexMap CheckedPthread::mmap_;

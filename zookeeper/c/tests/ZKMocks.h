@@ -17,19 +17,21 @@
 #ifndef ZKMOCKS_H_
 #define ZKMOCKS_H_
 
-#include <zookeeper.h>
-#include "src/zk_adaptor.h"
-
-#include "MocksBase.h"
 #include "Util.h"
 #include "LibCMocks.h"
+#include "MocksBase.h"
 
 struct CloseFinally{
     CloseFinally(zhandle_t** zh):zh_(zh){}
     ~CloseFinally(){
-        if(zh_==0)return;
-        zookeeper_close(*zh_);
+        execute();
+    }
+    int execute(){
+        if(zh_==0)return ZOK;
+        zhandle_t* lzh=*zh_;
         *zh_=0;
+        disarm();
+        return zookeeper_close(lzh);
     }
     void disarm(){zh_=0;}
     zhandle_t ** zh_;
@@ -72,6 +74,24 @@ public:
     }
 
     static Mock_flush_send_queue* mock_;
+};
+
+// *****************************************************************************
+// get_xid
+
+class Mock_get_xid: public Mock
+{
+public:
+    static const int32_t XID=123456;
+    Mock_get_xid(int retValue=XID):callReturns(retValue){mock_=this;}
+    ~Mock_get_xid(){mock_=0;}
+    
+    int callReturns;
+    virtual int call(){
+        return callReturns;
+    }
+
+    static Mock_get_xid* mock_;
 };
 
 // *****************************************************************************
@@ -143,8 +163,8 @@ public:
 class ZooGetResponse: public Response
 {
 public:
-    ZooGetResponse(char* data, int len,int rc=ZOK,const Stat& stat=NodeStat())
-        :xid_(0),data_(data,len),rc_(rc),stat_(stat)
+    ZooGetResponse(char* data, int len,int32_t xid=0,int rc=ZOK,const Stat& stat=NodeStat())
+        :xid_(xid),data_(data,len),rc_(rc),stat_(stat)
     {
     }
     virtual std::string toString() const;
@@ -238,11 +258,10 @@ public:
             delete recvQueue[i].first;
         recvQueue.clear();
     }
+
     virtual ssize_t callRecv(int s,void *buf,size_t len,int flags);
-    virtual bool hasMoreRecv() const{
-        synchronized(recvQMx);
-        return recvQueue.size()!=0;
-    }
+    AtomicInt recvHasMore;
+    virtual bool hasMoreRecv() const;
     
     // send operation doesn't try to match request to the response
     ResponseList respQueue;
@@ -259,6 +278,7 @@ public:
         respQueue.clear();
     }
     virtual void notifyBufferSent(const std::string& buffer);
+    //Mock_get_xid mockXid;
 };
 
 #endif /*ZKMOCKS_H_*/

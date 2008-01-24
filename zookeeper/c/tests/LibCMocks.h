@@ -25,7 +25,7 @@
 
 #include "MocksBase.h"
 #include "LibCSymTable.h"
-#include "Util.h"
+#include "ThreadingUtil.h"
 
 // *****************************************************************************
 // gethostbyname
