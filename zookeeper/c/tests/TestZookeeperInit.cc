@@ -15,6 +15,7 @@
  */
 
 #include <cppunit/extensions/HelperMacros.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <errno.h>
 
