@@ -307,7 +307,7 @@ public:
     int callReturns;
     int myFD;
     int timeout; //in millis
-    virtual int call(struct pollfd *fds, nfds_t nfds, int to) {
+    virtual int call(struct pollfd *fds, POLL_NFDS_TYPE nfds, int to) {
         pollfd* myPoll=0;
         if(fds[nfds-1].fd==myFD)
             myPoll=&fds[nfds-1];

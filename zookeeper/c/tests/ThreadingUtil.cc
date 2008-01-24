@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <stdint.h>
+#include <sys/types.h>
 #include "ThreadingUtil.h"
 #include "LibCSymTable.h"
 
@@ -48,7 +48,7 @@ int32_t atomic_post_incr(volatile int32_t* operand, int32_t incr)
     int32_t result;
     __asm__ __volatile__(
          "lock xaddl %0,%1\n"
-         : "=r"(result), "=m"(*(int32_t *)operand)
+         : "=r"(result), "=m"(*operand)
          : "0"(incr)
          : "memory");
    return result;
@@ -57,7 +57,7 @@ int32_t atomic_fetch_store(volatile int32_t *ptr, int32_t value)
 {
     int32_t result;
     __asm__ __volatile__("lock xchgl %0,%1\n"
-                          : "=r"(result), "=m"(*(int32_t *)ptr)
+                          : "=r"(result), "=m"(*ptr)
                           : "0"(value)
                           : "memory");
    return result; 

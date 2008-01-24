@@ -45,10 +45,15 @@ downloaded from Source Forge please skip to step 3.
                       enabled by default
    --disable-static   do not build static libraries, enabled by default
    --disable-shared   do not build shared libraries, enabled by default
-5) do a "make" or "make install" to build the libraries and install them.
+5) do a "make" or "make install" to build the libraries and install them. 
+   Alternatively, you can also build and run a unit test suite (and you probably should). 
+   Please make sure you have cppunit-1.10.x or higher installed before you execute step 4. 
+   Once ./configure has finished, do a "make run-check". It will build the libraries, 
+   build the tests and run them.
 6) to generate doxygen documentation do a "make doxygen-doc". All documentations will be 
    placed to a new subfolder named docs. By default only HTML documentation is generated.
    For information on other document formats please use "./configure --help"
+   
 
 
 USING THE CLIENT

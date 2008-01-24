@@ -235,7 +235,7 @@ public:
 
     class TestConcurrentOpWithDisconnectJob: public TestGetDataJob{
     public:
-        static const int REPS=500;
+        static const int REPS=1000;
         TestConcurrentOpWithDisconnectJob(ZookeeperServer* svr,zhandle_t* zh):
             TestGetDataJob(svr,zh,REPS){}
         virtual void validate(const char* file, int line) const{
