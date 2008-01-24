@@ -20,6 +20,8 @@
 #include <map>
 
 #include <zookeeper.h>
+#include "src/zk_log.h"
+#include "src/zk_adaptor.h"
 
 // number of elements in array
 #define COUNTOF(array) sizeof(array)/sizeof(array[0])
@@ -57,40 +59,6 @@ struct TypeOp<T*>{
     typedef T* ArgT;
     typedef typename TypeOp<T>::BareT BareT;
 };
-
-// *****************************************************************************
-// Threading primitives
-
-#ifdef THREADED
-class Mutex{
-public:
-    Mutex();
-    ~Mutex();
-    void acquire();
-    void release();
-private:
-    Mutex(const Mutex&);
-    Mutex& operator=(const Mutex&);
-    struct Impl;
-    Impl* impl_;
-};
-
-class MTLock{
-public:
-    MTLock(Mutex& m):m_(m){m.acquire();}
-    ~MTLock(){m_.release();}
-    Mutex& m_;
-};
-#define synchronized(m) MTLock __lock(m)
-#else 
-// single THREADED
-class Mutex{
-public:
-    void acquire(){}
-    void release(){}
-};
-#define synchronized(m)
-#endif
 
 // *****************************************************************************
 // Container utilities

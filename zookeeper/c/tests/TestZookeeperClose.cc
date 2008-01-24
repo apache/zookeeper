@@ -16,12 +16,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <zookeeper.h>
-#include "src/zk_adaptor.h"
-
-#include "LibCMocks.h"
 #include "ZKMocks.h"
-#include "Util.h"
 
 #ifdef THREADED
 #include "PthreadMocks.h"
@@ -190,7 +185,6 @@ public:
     }
     void testCloseUnconnected1()
     {
-        //zoo_set_debug_level(LOG_LEVEL_DEBUG);
         for(int i=0; i<100;i++){
             zh=zookeeper_init("localhost:2121",watcher,10000,0,0,0); 
             CPPUNIT_ASSERT(zh!=0);

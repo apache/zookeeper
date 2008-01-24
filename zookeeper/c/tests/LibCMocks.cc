@@ -19,9 +19,10 @@
 #include <iostream>
 #include <stdarg.h>
 
-#include "LibCMocks.h"
-#include "LibCSymTable.h"
 #include "Util.h"
+#include "LibCMocks.h"
+
+#undef USING_DUMA
 
 using namespace std;
 
@@ -117,32 +118,39 @@ Mock_gethostbyname::HostEntry& Mock_gethostbyname::HostEntry::addAddress(
 
 // *****************************************************************************
 // calloc
-
+#ifndef USING_DUMA
 DECLARE_WRAPPER(void*,calloc,(size_t p1, size_t p2)){
     if(!Mock_calloc::mock_)
         return CALL_REAL(calloc,(p1,p2));
     return Mock_calloc::mock_->call(p1,p2);
 }
-
-Mock_calloc* Mock_calloc::mock_=0;
+#endif
 
 void* Mock_calloc::call(size_t p1, size_t p2){
+#ifndef USING_DUMA
     if(counter++ ==callsBeforeFailure){
         counter=0;
         errno=errnoOnFailure;
         return 0;
     }
     return CALL_REAL(calloc,(p1,p2));
+#else
+    return 0;
+#endif
 }
+
+Mock_calloc* Mock_calloc::mock_=0;
 
 // *****************************************************************************
 // realloc
 
+#ifndef USING_DUMA
 void* realloc(void* p, size_t s){
     if(!Mock_realloc::mock_)
         return LIBC_SYMBOLS.realloc(p,s);
     return Mock_realloc::mock_->call(p,s);
 }
+#endif
 
 Mock_realloc* Mock_realloc::mock_=0;
 
@@ -179,12 +187,15 @@ int Mock_random::call(){
 
 // *****************************************************************************
 // free
+#ifndef USING_DUMA
 DECLARE_WRAPPER(void,free,(void* p)){
     if(Mock_free_noop::mock_ && !Mock_free_noop::mock_->nested)
         Mock_free_noop::mock_->call(p);
     else
         CALL_REAL(free,(p));
 }
+#endif
+
 void Mock_free_noop::call(void* p){
     // on cygwin libc++ is linked statically
     // push_back() may call free(), hence the nesting guards
@@ -195,9 +206,11 @@ void Mock_free_noop::call(void* p){
     nested--;
 }
 void Mock_free_noop::freeRequested(){
+#ifndef USING_DUMA
     synchronized(mx);
     for(unsigned i=0; i<requested.size();i++)
         CALL_REAL(free,(requested[i]));
+#endif
 }
 
 int Mock_free_noop::getFreeCount(void* p){

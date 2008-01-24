@@ -17,11 +17,10 @@
 #include <arpa/inet.h>  // for htonl
 #include <memory>
 
-#include "ZKMocks.h"
-#include "Util.h"
-
 #include <zookeeper.jute.h>
 #include <proto.h>
+
+#include "ZKMocks.h"
 
 using namespace std;
 
@@ -73,6 +72,18 @@ Mock_flush_send_queue* Mock_flush_send_queue::mock_=0;
 
 //******************************************************************************
 //
+DECLARE_WRAPPER(int32_t,get_xid,())
+{
+    if(!Mock_get_xid::mock_)
+        return CALL_REAL(get_xid,());
+    return Mock_get_xid::mock_->call();
+}
+
+Mock_get_xid* Mock_get_xid::mock_=0;
+
+
+//******************************************************************************
+//
 DECLARE_WRAPPER(int,adaptor_init,(zhandle_t* zh))
 {
     if(!GetZHandleBeforInitReturned::mock_)
@@ -113,22 +124,28 @@ string ZooGetResponse::toString() const{
     serialize_ReplyHeader(oa, "hdr", &h);
     
     GetDataResponse resp;
+	char buf[1024];
+    assert("GetDataResponse is too long"&&data_.size()<=sizeof(buf));
     resp.data.len=data_.size();
-    resp.data.buff=(char*)malloc(data_.size());
+    resp.data.buff=buf;
     data_.copy(resp.data.buff, data_.size());
     resp.stat=stat_;
     serialize_GetDataResponse(oa, "reply", &resp);
     int32_t len=htonl(get_buffer_len(oa));
-    string buf((char*)&len,sizeof(len));
-    buf.append(get_buffer(oa),get_buffer_len(oa));
+    string res((char*)&len,sizeof(len));
+    res.append(get_buffer(oa),get_buffer_len(oa));
     
     close_buffer_oarchive(&oa,1);
-    return buf;
+    return res;
 }
 
 //******************************************************************************
 // Zookeeper server simulator
 // 
+bool ZookeeperServer::hasMoreRecv() const{
+  return recvHasMore.get()!=0;
+}
+
 ssize_t ZookeeperServer::callRecv(int s,void *buf,size_t len,int flags){
     if(connectionLost){
         recvReturnBuffer.erase();
@@ -136,6 +153,12 @@ ssize_t ZookeeperServer::callRecv(int s,void *buf,size_t len,int flags){
     }
     // done transmitting the current buffer?
     if(recvReturnBuffer.size()==0){
+        --recvHasMore;
+        if(recvQueue.empty()){ 
+		    static const string cannedResp(ZooGetResponse("1",1,Mock_get_xid::XID).toString());
+            recvReturnBuffer=cannedResp;
+            return Mock_socket::callRecv(s,buf,len,flags);
+        }
         synchronized(recvQMx);
         if(recvQueue.empty()) assert("Invalid recv call (empty recv queue)"&&false);
         Element& el=recvQueue.front();
@@ -157,6 +180,7 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
             // handle the handshake
             int64_t sessId=sessionExpired?req->sessionId+1:req->sessionId;
             sessionExpired=false;
+			++recvHasMore;
             addRecvResponse(new HandshakeResponse(sessId));            
             return;
         }
@@ -167,9 +191,11 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
     RequestHeader rh;
     deserialize_RequestHeader(ia,"hdr",&rh);
     close_buffer_iarchive(&ia);
-    if(rh.type==CLOSE_OP)
+    if(rh.type==CLOSE_OP){
         return; // no reply for close requests
+    }
     // get the next response from the response queue and append it to the receive list
+    ++recvHasMore;
     Element e;
     {
         synchronized(respQMx);

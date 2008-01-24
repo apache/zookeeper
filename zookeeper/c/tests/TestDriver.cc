@@ -93,11 +93,13 @@ int main( int argc, char* argv[] ) {
      outputter.write(); 
 
  // Uncomment this for XML output
+#ifdef ENABLE_XML_OUTPUT
      std::ofstream file( "tests.xml" );
      CPPUNIT_NS::XmlOutputter xml( &result, file );
      xml.setStyleSheet( "report.xsl" );
      xml.write();
      file.close();
+#endif
    }
    catch ( std::invalid_argument &e )  // Test path not resolved
    {

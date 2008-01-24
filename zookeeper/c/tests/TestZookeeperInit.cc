@@ -15,15 +15,12 @@
  */
 
 #include <cppunit/extensions/HelperMacros.h>
-
-#include <zookeeper.h>
-#include "src/zk_adaptor.h"
-
 #include <netinet/in.h>
 #include <errno.h>
 
-#include "LibCMocks.h"
 #include "Util.h"
+#include "LibCMocks.h"
+
 #ifdef THREADED
 #include "PthreadMocks.h"
 #else
