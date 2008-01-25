@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <unistd.h>
 
 void lock_buffer_list(buffer_head_t *l)
 {
@@ -98,6 +99,7 @@ int process_async(int outstanding_sync)
 
 void *do_io(void *);
 void *do_completion(void *);
+int wakeup_io_thread(zhandle_t *zh);
 
 static int set_nonblock(int fd){
     long l = fcntl(fd, F_GETFL);

@@ -176,6 +176,8 @@ void notify_sync_completion(struct sync_completion *sc);
 int adaptor_send_queue(zhandle_t *zh, int timeout);
 int process_async(int outstanding_sync);
 void process_completions(zhandle_t *zh);
+int flush_send_queue(zhandle_t*zh, int timeout);
+
 // critical section guards
 void enter_critical(zhandle_t* zh);
 void leave_critical(zhandle_t* zh);

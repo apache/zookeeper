@@ -130,7 +130,6 @@ static const char* format_endpoint_info(const struct sockaddr* ep);
 static const char* format_current_endpoint_info(zhandle_t* zh);
 static int add_completion(zhandle_t *zh, int xid, int completion_type, 
         const void *dc, const void *data, int add_to_front);
-int flush_send_queue(zhandle_t*zh, int timeout);
 static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
     const char* format,...);
 static void cleanup_bufs(zhandle_t *zh,int callCompletion,int rc);
