@@ -741,6 +741,12 @@ public class ClientCnxn {
                 }
                 pendingQueue.clear();
             }
+            synchronized (outgoingQueue) {
+                for (Packet p : outgoingQueue) {
+                    conLossPacket(p);
+                }
+                outgoingQueue.clear();
+            }
         }
 
         public void close() {
