@@ -1,6 +1,29 @@
+Release 1.1.0
+2008-01-28 Andrew Kornev <akornev@users.sourceforge.net>
+
+    * breed: [1875540] Make sure java client aborts the outgoing packets when 
+      a connection closes.
+      
+    * Jute compiler: emit the #ifdef extern "C" guards in the generated .jute.h
+    
+    * mahadevkonar: [1844561] fast sync between the leader and the follower.
+    
+    * mahadevkonar: [1849444] fixed session id generation routine to generate 
+      unique session ids.
+      
+    * breed: [1845696] fixed a race condition in the quorum server where it 
+      is possible that a create session request can be committed and applied 
+      at a follower before it is applied at the leader.
+      
+    * breed: [1841938] implemented the sync operation to flush updates pedning 
+      on the Leader.
+      
+    * vlarsen: [1835834] fixed a few compiler warnings, removed some @Override 
+      annotations used with interfaces.
+    
 Release 1.0.0
 2007-11-27 Andrew Kornev <akornev@users.sourceforge.net>
 
-	* Updated the jute compiler to emit int32_t vs int in the generated C code
-	
-	* Changed release numbering scheme to match that of the C client
+    * Updated the jute compiler to emit int32_t vs int in the generated C code
+    
+    * Changed release numbering scheme to match that of the C client
