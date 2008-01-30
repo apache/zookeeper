@@ -347,7 +347,7 @@ public class ZooKeeperServer implements SessionExpirer {
                             ((CreateSessionTxn) txn).getTimeOut());
                     ZooLog.logTextTraceMessage(
                             "playLog --- create session in log: "
-                                    + hdr.getClientId() + " with timeout: "
+                                    + Long.toHexString(hdr.getClientId()) + " with timeout: "
                                     + ((CreateSessionTxn) txn).getTimeOut(),
                             ZooLog.SESSION_TRACE_MASK);
                     // give dataTree a chance to sync its lastProcessedZxid
@@ -357,7 +357,7 @@ public class ZooKeeperServer implements SessionExpirer {
                     sessionsWithTimeouts.remove(hdr.getClientId());
                     ZooLog.logTextTraceMessage(
                             "playLog --- close session in log: "
-                                    + hdr.getClientId(),
+                                    + Long.toHexString(hdr.getClientId()),
                             ZooLog.SESSION_TRACE_MASK);
                     dataTree.processTxn(hdr, txn);
                     break;

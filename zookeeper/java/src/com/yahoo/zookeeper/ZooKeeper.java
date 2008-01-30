@@ -667,7 +667,6 @@ public class ZooKeeper {
     	SyncResponse response = new SyncResponse();
     	request.setPath(path);
     	cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, path, ctx);
-    	System.out.println("Sending sync!");
     }
     
     public States getState() {
