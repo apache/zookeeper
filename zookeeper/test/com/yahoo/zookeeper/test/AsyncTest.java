@@ -45,7 +45,7 @@ public class AsyncTest extends TestCase implements Watcher, StringCallback, Void
     @After
     protected void tearDown() throws Exception {
         qt.tearDown();
-    	ZooLog.logError("Clent test shutdown");
+    	ZooLog.logError("Client test shutdown");
         if (f != null) {
             f.shutdown();
         }

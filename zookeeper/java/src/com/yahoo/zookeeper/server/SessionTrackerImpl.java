@@ -142,7 +142,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     synchronized public boolean touchSession(long sessionId, int timeout) {
         ZooLog.logTextTraceMessage("SessionTrackerImpl --- Touch session: "
-                + sessionId + " with timeout " + timeout,
+                + Long.toHexString(sessionId) + " with timeout " + timeout,
                 ZooLog.CLIENT_PING_TRACE_MASK);
         Session s = sessionsById.get(sessionId);
         if (s == null) {
@@ -172,7 +172,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         Session s = sessionsById.remove(sessionId);
         sessionsWithTimeout.remove(sessionId);
         ZooLog.logTextTraceMessage("SessionTrackerImpl --- Removing "
-                + sessionId, ZooLog.SESSION_TRACE_MASK);
+                + Long.toHexString(sessionId), ZooLog.SESSION_TRACE_MASK);
         if (s != null) {
             sessionSets.get(s.tickTime).sessions.remove(s);
         }
@@ -195,11 +195,11 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         if (sessionsById.get(id) == null) {
             Session s = new Session(id, 0);
             sessionsById.put(id, s);
-            ZooLog.logTextTraceMessage("SessionTrackerImpl --- Adding " + id
+            ZooLog.logTextTraceMessage("SessionTrackerImpl --- Adding " + Long.toHexString(id)
                     + " " + sessionTimeout, ZooLog.SESSION_TRACE_MASK);
         } else {
             ZooLog.logTextTraceMessage(
-                    "SessionTrackerImpl --- Existing session " + id + " "
+                    "SessionTrackerImpl --- Existing session " + Long.toHexString(id) + " "
                             + sessionTimeout, ZooLog.SESSION_TRACE_MASK);
         }
         touchSession(id, sessionTimeout);
