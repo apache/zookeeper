@@ -18,10 +18,10 @@
 #define UTIL_H_
 
 #include <map>
+#include <vector>
+#include <string>
 
-#include <zookeeper.h>
 #include "src/zk_log.h"
-#include "src/zk_adaptor.h"
 
 // number of elements in array
 #define COUNTOF(array) sizeof(array)/sizeof(array[0])
@@ -36,6 +36,8 @@
 // must include "src/zk_log.h" to be able to use this macro
 #define TEST_TRACE(x) \
     log_message(LOG_LEVEL_DEBUG,__LINE__,__func__,format_log_message x)
+
+extern const std::string EMPTY_STRING;
 
 // *****************************************************************************
 // A bit of wizardry to get to the bare type from a reference or a pointer 
@@ -85,21 +87,48 @@ bool getValue(const std::map<K,V>& map,const K& k,V& v){
 
 // *****************************************************************************
 // misc utils
-void millisleep(int ms);
 
+// millisecond sleep
+void millisleep(int ms);
+// evaluate given predicate until it returns true or the timeout 
+// (in millis) has expired
+template<class Predicate>
+int ensureCondition(const Predicate& p,int timeout){
+    int elapsed=0;
+    while(!p() && elapsed<timeout){
+        millisleep(2);
+        elapsed+=2;
+    }
+    return elapsed;
+};
 
 // *****************************************************************************
-// Abstract watcher action
-class WatcherAction{
+// test global configuration data 
+class TestConfig{
+    typedef std::vector<std::string> CmdLineOptList;
 public:
-    virtual ~WatcherAction(){}
-    
-    virtual void onSessionExpired(zhandle_t*) =0;
-    // TODO: add the rest of the events
+    typedef CmdLineOptList::const_iterator const_iterator;
+    TestConfig(){}
+    ~TestConfig(){}
+    void addConfigFromCmdLine(int argc, char* argv[]){
+        if(argc>=2)
+            testName_=argv[1];
+        for(int i=2; i<argc;++i)
+            cmdOpts_.push_back(argv[i]);
+    }
+    const_iterator getExtraOptBegin() const {return cmdOpts_.begin();}
+    const_iterator getExtraOptEnd() const {return cmdOpts_.end();}
+    size_t getExtraOptCount() const {
+        return cmdOpts_.size();
+    }
+    const std::string& getTestName() const {
+        return testName_=="all"?EMPTY_STRING:testName_;
+    }
+private:
+    CmdLineOptList cmdOpts_;
+    std::string testName_;
 };
-// zh->context is a pointer to a WatcherAction instance
-// based on the event type and state, the watcher calls a specific watcher 
-// action method
-void activeWatcher(zhandle_t *zh, int type, int state, const char *path);
+
+extern TestConfig globalTestConfig;
 
 #endif /*UTIL_H_*/

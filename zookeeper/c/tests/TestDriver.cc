@@ -28,6 +28,8 @@
 #include <cppunit/XmlOutputter.h>
 #include <fstream>
 
+#include "Util.h"
+
 using namespace std;
 
 CPPUNIT_NS_BEGIN
@@ -65,7 +67,7 @@ int main( int argc, char* argv[] ) {
    // if command line contains "-ide" then this is the post build check
    // => the output must be in the compiler error format.
    //bool selfTest = (argc > 1) && (std::string("-ide") == argv[1]);
-   std::string testPath = (argc > 1) ? std::string(argv[1]) : std::string("");
+   globalTestConfig.addConfigFromCmdLine(argc,argv);
 
    // Create the event manager and test controller
    CPPUNIT_NS::TestResult controller;
@@ -73,7 +75,7 @@ int main( int argc, char* argv[] ) {
    CPPUNIT_NS::TestResultCollector result;
    controller.addListener( &result );
    
-   // Add a listener that print dots as test run.
+   // Add a listener that print dots as tests run.
 //   CPPUNIT_NS::TextTestProgressListener progress;
    CPPUNIT_NS::BriefTestProgressListener progress;
    controller.addListener( &progress );
@@ -83,9 +85,8 @@ int main( int argc, char* argv[] ) {
  
    try
    {
-     cout << "Running "  <<  testPath;
-     runner.run( controller, testPath );
-
+     cout << "Running "  <<  globalTestConfig.getTestName();
+     runner.run( controller, globalTestConfig.getTestName());
      cout<<endl;
 
      // Print test in a compiler compatible format.

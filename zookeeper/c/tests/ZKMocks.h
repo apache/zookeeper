@@ -17,10 +17,96 @@
 #ifndef ZKMOCKS_H_
 #define ZKMOCKS_H_
 
+#include <zookeeper.h>
+#include "src/zk_adaptor.h"
+
 #include "Util.h"
 #include "LibCMocks.h"
 #include "MocksBase.h"
 
+// *****************************************************************************
+// Abstract watcher action
+struct SyncedBoolCondition;
+
+class WatcherAction{
+public:
+    WatcherAction():triggered_(false){}
+    virtual ~WatcherAction(){}
+    
+    virtual void onSessionExpired(zhandle_t*){}
+    virtual void onNodeValueChanged(zhandle_t*,const char* path){}
+    
+    SyncedBoolCondition isWatcherTriggered() const;
+    void setWatcherTriggered(){
+        synchronized(mx_);
+        triggered_=true;
+    }
+
+protected:
+    mutable Mutex mx_;
+    bool triggered_;
+};
+// zh->context is a pointer to a WatcherAction instance
+// based on the event type and state, the watcher calls a specific watcher 
+// action method
+void activeWatcher(zhandle_t *zh, int type, int state, const char *path);
+
+// *****************************************************************************
+// a set of async completion signatures
+class AsyncCompletion{
+public:
+    virtual ~AsyncCompletion(){}
+    virtual void aclCompl(int rc, ACL_vector *acl,Stat *stat){}
+    virtual void dataCompl(int rc, const char *value, int len, const Stat *stat){}
+    virtual void statCompl(int rc, const Stat *stat){}
+    virtual void stringCompl(int rc, const char *value){}
+    virtual void stringsCompl(int rc,const String_vector *strings){}
+    virtual void voidCompl(int rc){}
+};
+void asyncCompletion(int rc, ACL_vector *acl,Stat *stat, const void *data);
+void asyncCompletion(int rc, const char *value, int len, const Stat *stat, 
+        const void *data);
+void asyncCompletion(int rc, const Stat *stat, const void *data);
+void asyncCompletion(int rc, const char *value, const void *data);
+void asyncCompletion(int rc,const String_vector *strings, const void *data);
+void asyncCompletion(int rc, const void *data);
+
+// *****************************************************************************
+// some common predicates to use with ensureCondition():
+// checks if the connection is established
+struct ClientConnected{
+    ClientConnected(zhandle_t* zh):zh_(zh){}
+    bool operator()() const{
+        return zoo_state(zh_)==CONNECTED_STATE;
+    }
+    zhandle_t* zh_;
+};
+// check in the session expired
+struct SessionExpired{
+    SessionExpired(zhandle_t* zh):zh_(zh){}
+    bool operator()() const{
+        return zoo_state(zh_)==EXPIRED_SESSION_STATE;
+    }
+    zhandle_t* zh_;
+};
+// checks if the IO thread has stopped; CheckedPthread must be active
+struct IOThreadStopped{
+    IOThreadStopped(zhandle_t* zh):zh_(zh){}
+    bool operator()() const;
+    zhandle_t* zh_;
+};
+
+struct SyncedBoolCondition{
+    SyncedBoolCondition(const bool& cond,Mutex& mx):cond_(cond),mx_(mx){}
+    bool operator()() const{
+        synchronized(mx_);
+        return cond_;
+    }
+    const bool& cond_;
+    Mutex& mx_;
+};
+// *****************************************************************************
+// make sure to call zookeeper_close() even in presence of exceptions 
 struct CloseFinally{
     CloseFinally(zhandle_t** zh):zh_(zh){}
     ~CloseFinally(){
@@ -46,8 +132,13 @@ struct TestClientId: clientid_t{
     }
 };
 
+// *****************************************************************************
+// special client id recongnized by the ZK server simulator 
 extern TestClientId testClientId;
+#define TEST_CLIENT_ID &testClientId
 
+// *****************************************************************************
+//
 struct HandshakeRequest: public connect_req
 {
     static HandshakeRequest* parse(const std::string& buf);
@@ -95,25 +186,6 @@ public:
 };
 
 // *****************************************************************************
-// There is a problem with the existing Sync API: a watcher can be called before
-// the init function returned. It makes it impossible to set the watcher context
-// properly, if you want to use the zhandle in the watcher. 
-// This class is a dirty trick to get the newly allocated zhandle_t pointer 
-// before zoookeeper_init returned. 
-
-class GetZHandleBeforInitReturned: public Mock
-{
-public:
-    GetZHandleBeforInitReturned():ptr(0){mock_=this;}
-    ~GetZHandleBeforInitReturned(){mock_=0;}
-    
-    zhandle_t* ptr;
-    virtual int call(zhandle_t *zh);
-
-    static GetZHandleBeforInitReturned* mock_;
-};
-
-// *****************************************************************************
 // a zookeeper Stat wrapper
 struct NodeStat: public Stat
 {
@@ -127,6 +199,9 @@ struct NodeStat: public Stat
         aversion=0;
         ephemeralOwner=0;
     }
+    NodeStat(const Stat& other){
+        memcpy(this,&other,sizeof(*this));
+    }
 };
 
 // *****************************************************************************
@@ -136,7 +211,7 @@ class Response
 public:
     virtual ~Response(){}
     
-    virtual void setXID(int32_t xid) =0;
+    virtual void setXID(int32_t xid){}
     virtual std::string toString() const =0;
 };
 
@@ -156,7 +231,6 @@ public:
     int32_t passwd_len;
     char passwd[16];
     virtual std::string toString() const ;
-    virtual void setXID(int32_t xid) {/* no-op */}
 };
 
 // zoo_get() response
@@ -175,6 +249,19 @@ private:
     std::string data_;
     int rc_;
     Stat stat_;
+};
+
+// watcher znode event
+class ZNodeEvent: public Response
+{
+public:
+    ZNodeEvent(int type,const char* path):type_(type),path_(path){}
+    
+    virtual std::string toString() const;
+    
+private:
+    int type_;
+    std::string path_;
 };
 
 // ****************************************************************************
@@ -237,30 +324,34 @@ public:
     typedef std::deque<Element> ResponseList;
     ResponseList recvQueue;
     mutable Mutex recvQMx;
+    AtomicInt recvHasMore;
     ZookeeperServer& addRecvResponse(Response* resp, int errnum=0){
         synchronized(recvQMx);
         recvQueue.push_back(Element(resp,errnum));
+        ++recvHasMore;
         return *this;
     }
     ZookeeperServer& addRecvResponse(int errnum){
         synchronized(recvQMx);
         recvQueue.push_back(Element(0,errnum));
+        ++recvHasMore;
         return *this;
     }
     ZookeeperServer& addRecvResponse(const Element& e){
         synchronized(recvQMx);
         recvQueue.push_back(e);
+        ++recvHasMore;
         return *this;
     }
     void clearRecvQueue(){
         synchronized(recvQMx);
+        recvHasMore=0;
         for(unsigned i=0; i<recvQueue.size();i++)
             delete recvQueue[i].first;
         recvQueue.clear();
     }
 
     virtual ssize_t callRecv(int s,void *buf,size_t len,int flags);
-    AtomicInt recvHasMore;
     virtual bool hasMoreRecv() const;
     
     // send operation doesn't try to match request to the response
@@ -277,8 +368,8 @@ public:
             delete respQueue[i].first;
         respQueue.clear();
     }
+    AtomicInt closeSent;
     virtual void notifyBufferSent(const std::string& buffer);
-    //Mock_get_xid mockXid;
 };
 
 #endif /*ZKMOCKS_H_*/

@@ -16,18 +16,13 @@
 
 #include "Util.h"
 
+const std::string EMPTY_STRING;
+
+TestConfig globalTestConfig;
+
 void millisleep(int ms){
     timespec ts;
     ts.tv_sec=ms/1000;
     ts.tv_nsec=(ms%1000)*1000000; // to nanoseconds
     nanosleep(&ts,0);
-}
-
-void activeWatcher(zhandle_t *zh, int type, int state, const char *path){
-    if(zh==0 || zoo_get_context(zh)==0) return;
-    WatcherAction* action=(WatcherAction*)zoo_get_context(zh);
-        
-    if(type==SESSION_EVENT && state==EXPIRED_SESSION_STATE)
-        action->onSessionExpired(zh);
-    // TODO: implement for the rest of the event types
 }

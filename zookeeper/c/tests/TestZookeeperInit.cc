@@ -21,6 +21,7 @@
 
 #include "Util.h"
 #include "LibCMocks.h"
+#include "ZKMocks.h"
 
 #ifdef THREADED
 #include "PthreadMocks.h"
