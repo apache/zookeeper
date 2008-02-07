@@ -17,6 +17,8 @@
 #ifndef THREADINGUTIL_H_
 #define THREADINGUTIL_H_
 
+#include <vector>
+
 #ifdef THREADED
 #include "pthread.h"
 #endif
@@ -37,6 +39,10 @@ public:
     // assigment
     AtomicInt& operator=(const AtomicInt& lhs){
         atomic_fetch_store(&v_,lhs);
+        return *this;
+    }
+    AtomicInt& operator=(int32_t i){
+        atomic_fetch_store(&v_,i);
         return *this;
     }
     // pre-increment
@@ -70,6 +76,9 @@ private:
 
 #ifdef THREADED
 // ****************************************************************************
+#define VALIDATE_JOBS(jm) jm.validateJobs(__FILE__,__LINE__)
+#define VALIDATE_JOB(j) j.validate(__FILE__,__LINE__)
+
 class Mutex{
 public:
     Mutex();
@@ -96,7 +105,7 @@ public:
 class Latch {
 public:
     virtual ~Latch() {}
-    virtual void await() =0;
+    virtual void await() const =0;
     virtual void signalAndWait() =0;
     virtual void signal() =0;
 };
@@ -119,7 +128,7 @@ public:
         pthread_mutex_destroy(&mut_);
     }
 
-    virtual void await() {
+    virtual void await() const {
         pthread_mutex_lock(&mut_);
         awaitImpl();
         pthread_mutex_unlock(&mut_);
@@ -136,7 +145,7 @@ public:
         pthread_mutex_unlock(&mut_);
     }
 private:
-    void awaitImpl() {
+    void awaitImpl() const{
         while(count_!=0)
         pthread_cond_wait(&cond_,&mut_);
     }
@@ -147,11 +156,9 @@ private:
         }
     }
     int count_;
-    pthread_mutex_t mut_;
-    pthread_cond_t cond_;
+    mutable pthread_mutex_t mut_;
+    mutable pthread_cond_t cond_;
 };
-
-#define VALIDATE_JOB(j) j.validate(__FILE__,__LINE__)
 
 class TestJob {
 public:
@@ -160,6 +167,7 @@ public:
     virtual ~TestJob() {
         join();
     }
+    virtual TestJob* clone() const =0;
 
     virtual void run() =0;
     virtual void validate(const char* file, int line) const =0;
@@ -201,6 +209,42 @@ private:
     Latch* endLatch_;
     pthread_t thread_;
 };
+
+class TestJobManager {
+    typedef std::vector<TestJob*> JobList;
+public:
+    TestJobManager(const TestJob& tj,int threadCount=1):
+        startLatch_(threadCount),endLatch_(threadCount)
+    {
+        for(int i=0;i<threadCount;++i)
+            jobs_.push_back(tj.clone());
+    }
+    virtual ~TestJobManager(){
+        for(unsigned  i=0;i<jobs_.size();++i)
+            delete jobs_[i];
+    }
+    
+    virtual void startAllJobs() {
+        for(unsigned i=0;i<jobs_.size();++i)
+            jobs_[i]->start(&startLatch_,&endLatch_);
+    }
+    virtual void startJobsImmediately() {
+        for(unsigned i=0;i<jobs_.size();++i)
+            jobs_[i]->start(0,&endLatch_);
+    }
+    virtual void wait() const {
+        endLatch_.await();
+    }
+    virtual void validateJobs(const char* file, int line) const{
+        for(unsigned i=0;i<jobs_.size();++i)
+            jobs_[i]->validate(file,line);        
+    }
+private:
+    JobList jobs_;
+    CountDownLatch startLatch_;
+    CountDownLatch endLatch_;
+};
+
 #else // THREADED
 // single THREADED
 class Mutex{

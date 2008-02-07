@@ -21,6 +21,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "src/zk_adaptor.h"
+
 #include "Util.h"
 #include "MocksBase.h"
 #include "LibCSymTable.h"
@@ -237,11 +239,37 @@ public:
     }
 };
 
+struct ThreadInfo{
+    typedef enum {RUNNING,TERMINATED} ThreadState;
+    
+    ThreadInfo():
+        destructionCounter_(0),invalidAccessCounter_(0),state_(RUNNING)
+    {
+    }
+    
+    ThreadInfo& incDestroyed() {
+        destructionCounter_++;
+        return *this;
+    }
+    ThreadInfo& incInvalidAccess(){
+        invalidAccessCounter_++;
+        return *this;
+    }
+    ThreadInfo& setTerminated(){
+        state_=TERMINATED;
+        return *this;
+    }
+    int destructionCounter_;
+    int invalidAccessCounter_;
+    ThreadState state_;
+};
+
 class CheckedPthread: public MockPthreadsBase
 {
     // first => destruction counter
     // second => invalid access counter
-    typedef std::pair<int,int> Entry;
+    //typedef std::pair<int,int> Entry;
+    typedef ThreadInfo Entry;
     typedef std::map<pthread_t,Entry> ThreadMap;
     static ThreadMap tmap_;
     static ThreadMap& getMap(const TypeOp<pthread_t>::BareT&){return tmap_;}
@@ -260,9 +288,9 @@ class CheckedPthread: public MockPthreadsBase
         Entry e;
         synchronized(mx);
         if(getValue(getMap(Type()),t,e)){
-            putValue(getMap(Type()),t,Entry(e.first+1,e.second));
+            putValue(getMap(Type()),t,Entry(e).incDestroyed());
         }else{
-            putValue(getMap(Type()),t,Entry(1,0));
+            putValue(getMap(Type()),t,Entry().incDestroyed());
         }
     }
     template<class T>
@@ -271,17 +299,22 @@ class CheckedPthread: public MockPthreadsBase
         Entry e;
         synchronized(mx);
         if(!getValue(getMap(Type()),t,e))
-            putValue(getMap(Type()),t,Entry(0,0));
+            putValue(getMap(Type()),t,Entry());
     }
     template<class T>
     static void checkAccessed(T& t){
         typedef typename TypeOp<T>::BareT Type;
         Entry e;
         synchronized(mx);
-        if(getValue(getMap(Type()),t,e) && e.first>0)
-            putValue(getMap(Type()),t,Entry(e.first,e.second+1));
+        if(getValue(getMap(Type()),t,e) && e.destructionCounter_>0)
+            putValue(getMap(Type()),t,Entry(e).incInvalidAccess());
     }
-
+    static void setTerminated(pthread_t t){
+        Entry e;
+        synchronized(mx);
+        if(getValue(tmap_,t,e))
+            putValue(tmap_,t,Entry(e).setTerminated());
+    }
 public:
     bool verbose;
     CheckedPthread():verbose(false){
@@ -295,39 +328,58 @@ public:
         typedef typename TypeOp<T>::BareT Type;
         Entry e;
         synchronized(mx);
-        return getValue(getMap(Type()),t,e) && e.first==0;
+        return getValue(getMap(Type()),t,e) && e.destructionCounter_==0;
     }
     template <class T>
     static bool isDestroyed(const T& t){
         typedef typename TypeOp<T>::BareT Type;
         Entry e;
         synchronized(mx);
-        return getValue(getMap(Type()),t,e) && e.first>0;
+        return getValue(getMap(Type()),t,e) && e.destructionCounter_>0;
+    }
+    static bool isTerminated(pthread_t t){
+        Entry e;
+        synchronized(mx);
+        return getValue(tmap_,t,e) && e.state_==ThreadInfo::TERMINATED;        
     }
     template <class T>
     static int getDestroyCounter(const T& t){
         typedef typename TypeOp<T>::BareT Type;
         Entry e;
         synchronized(mx);
-        return getValue(getMap(Type()),t,e)?e.first:-1;
+        return getValue(getMap(Type()),t,e)?e.destructionCounter_:-1;
     }
     template<class T>
     static int getInvalidAccessCounter(const T& t){
         typedef typename TypeOp<T>::BareT Type;
         Entry e;
         synchronized(mx);
-        return getValue(getMap(Type()),t,e)?e.second:-1;
+        return getValue(getMap(Type()),t,e)?e.invalidAccessCounter_:-1;
     }
 
+    struct ThreadContext{
+        typedef void *(*ThreadFunc)(void *);
+        
+        ThreadContext(ThreadFunc func,void* param):func_(func),param_(param){}
+        ThreadFunc func_;
+        void* param_;        
+    };
+    static void* threadFuncWrapper(void* v){
+        ThreadContext* ctx=(ThreadContext*)v;
+        pthread_t t=pthread_self();
+        markCreated(t);
+        void* res=ctx->func_(ctx->param_);
+        setTerminated(pthread_self());
+        delete ctx;
+        return res;
+    }
     virtual int pthread_create(pthread_t * t, const pthread_attr_t *a,
-            void *(*f)(void *), void *d){
-        int ret=LIBC_SYMBOLS.pthread_create(t,a,f,d);
-        if(ret==0)
-            markCreated(*t);
-        if(verbose){
-            log_message(LOG_LEVEL_DEBUG,__LINE__,__func__,
-                    format_log_message("thread created %p",*t));
-        }
+            void *(*f)(void *), void *d)
+    {
+        int ret=LIBC_SYMBOLS.pthread_create(t,a,threadFuncWrapper,
+                new ThreadContext(f,d));
+        if(verbose)
+            TEST_TRACE(("thread created %p",*t));
         return ret;
     }
     virtual int pthread_join(pthread_t t, void ** r){

@@ -17,9 +17,12 @@
 #include <arpa/inet.h>  // for htonl
 #include <memory>
 
-#include <zookeeper.jute.h>
+#include <zookeeper.h>
 #include <proto.h>
 
+#ifdef THREADED
+#include "PthreadMocks.h"
+#endif
 #include "ZKMocks.h"
 
 using namespace std;
@@ -59,6 +62,64 @@ HandshakeRequest* HandshakeRequest::parse(const std::string& buf){
     return 0;
 }
 
+// *****************************************************************************
+// watcher action implementation
+void activeWatcher(zhandle_t *zh, int type, int state, const char *path){
+    if(zh==0 || zoo_get_context(zh)==0) return;
+    WatcherAction* action=(WatcherAction*)zoo_get_context(zh);
+    action->setWatcherTriggered();    
+    
+    if(type==SESSION_EVENT && state==EXPIRED_SESSION_STATE)
+        action->onSessionExpired(zh);
+    if(type==CHANGED_EVENT)
+        action->onNodeValueChanged(zh,path);
+    // TODO: implement for the rest of the event types
+    // ...
+}
+SyncedBoolCondition WatcherAction::isWatcherTriggered() const{
+    return SyncedBoolCondition(triggered_,mx_);
+}
+
+// *****************************************************************************
+// a set of async completion signatures
+void asyncCompletion(int rc, ACL_vector *acl,Stat *stat, const void *data){
+    assert("Completion data is NULL"&&data);
+    static_cast<AsyncCompletion*>((void*)data)->aclCompl(rc,acl,stat);
+}
+void asyncCompletion(int rc, const char *value, int len, const Stat *stat, 
+        const void *data){    
+    assert("Completion data is NULL"&&data);
+    static_cast<AsyncCompletion*>((void*)data)->dataCompl(rc,value,len,stat);    
+}
+void asyncCompletion(int rc, const Stat *stat, const void *data){    
+    assert("Completion data is NULL"&&data);
+    static_cast<AsyncCompletion*>((void*)data)->statCompl(rc,stat);
+}
+void asyncCompletion(int rc, const char *value, const void *data){
+    assert("Completion data is NULL"&&data);
+    static_cast<AsyncCompletion*>((void*)data)->stringCompl(rc,value);
+}
+void asyncCompletion(int rc,const String_vector *strings, const void *data){    
+    assert("Completion data is NULL"&&data);
+    static_cast<AsyncCompletion*>((void*)data)->stringsCompl(rc,strings);
+}
+void asyncCompletion(int rc, const void *data){    
+    assert("Completion data is NULL"&&data);
+    static_cast<AsyncCompletion*>((void*)data)->voidCompl(rc);
+}
+
+// *****************************************************************************
+// a predicate implementation
+bool IOThreadStopped::operator()() const{
+#ifdef THREADED
+    adaptor_threads* adaptor=(adaptor_threads*)zh_->adaptor_priv;
+    return CheckedPthread::isTerminated(adaptor->io);
+#else
+    assert("IOThreadStopped predicate is only for use with THREADED client"&& false);
+    return false;
+#endif
+}
+
 //******************************************************************************
 //
 DECLARE_WRAPPER(int,flush_send_queue,(zhandle_t*zh, int timeout))
@@ -80,23 +141,6 @@ DECLARE_WRAPPER(int32_t,get_xid,())
 }
 
 Mock_get_xid* Mock_get_xid::mock_=0;
-
-
-//******************************************************************************
-//
-DECLARE_WRAPPER(int,adaptor_init,(zhandle_t* zh))
-{
-    if(!GetZHandleBeforInitReturned::mock_)
-        return CALL_REAL(adaptor_init,(zh));
-    return GetZHandleBeforInitReturned::mock_->call(zh);
-}
-
-int GetZHandleBeforInitReturned::call(zhandle_t *zh){
-    ptr=zh;
-    return CALL_REAL(adaptor_init,(zh));
-}
-
-GetZHandleBeforInitReturned* GetZHandleBeforInitReturned::mock_=0;
 
 //******************************************************************************
 //
@@ -139,6 +183,22 @@ string ZooGetResponse::toString() const{
     return res;
 }
 
+string ZNodeEvent::toString() const{
+    oarchive* oa=create_buffer_oarchive();
+    struct WatcherEvent evt = {type_,0,(char*)path_.c_str()};
+    struct ReplyHeader h = {WATCHER_EVENT_XID,0,ZOK };
+    
+    serialize_ReplyHeader(oa, "hdr", &h);
+    serialize_WatcherEvent(oa, "event", &evt);
+    
+    int32_t len=htonl(get_buffer_len(oa));
+    string res((char*)&len,sizeof(len));
+    res.append(get_buffer(oa),get_buffer_len(oa));
+    
+    close_buffer_oarchive(&oa,1);
+    return res;
+}
+
 //******************************************************************************
 // Zookeeper server simulator
 // 
@@ -154,13 +214,13 @@ ssize_t ZookeeperServer::callRecv(int s,void *buf,size_t len,int flags){
     // done transmitting the current buffer?
     if(recvReturnBuffer.size()==0){
         --recvHasMore;
-        if(recvQueue.empty()){ 
-		    static const string cannedResp(ZooGetResponse("1",1,Mock_get_xid::XID).toString());
-            recvReturnBuffer=cannedResp;
-            return Mock_socket::callRecv(s,buf,len,flags);
-        }
+//        if(recvQueue.empty()){ 
+//		    static const string cannedResp(ZooGetResponse("1",1,Mock_get_xid::XID).toString());
+//            recvReturnBuffer=cannedResp;
+//            return Mock_socket::callRecv(s,buf,len,flags);
+//        }
         synchronized(recvQMx);
-        if(recvQueue.empty()) assert("Invalid recv call (empty recv queue)"&&false);
+        assert("Invalid recv call (empty recv queue)"&&!recvQueue.empty());
         Element& el=recvQueue.front();
         if(el.first!=0){
             recvReturnBuffer=el.first->toString();
@@ -180,7 +240,6 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
             // handle the handshake
             int64_t sessId=sessionExpired?req->sessionId+1:req->sessionId;
             sessionExpired=false;
-			++recvHasMore;
             addRecvResponse(new HandshakeResponse(sessId));            
             return;
         }
@@ -192,10 +251,10 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
     deserialize_RequestHeader(ia,"hdr",&rh);
     close_buffer_iarchive(&ia);
     if(rh.type==CLOSE_OP){
+        ++closeSent;
         return; // no reply for close requests
     }
     // get the next response from the response queue and append it to the receive list
-    ++recvHasMore;
     Element e;
     {
         synchronized(respQMx);

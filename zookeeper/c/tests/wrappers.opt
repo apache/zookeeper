@@ -1,5 +1,4 @@
 -Wl,--wrap -Wl,calloc
 -Wl,--wrap -Wl,free
 -Wl,--wrap -Wl,flush_send_queue
--Wl,--wrap -Wl,adaptor_init
 -Wl,--wrap -Wl,get_xid
