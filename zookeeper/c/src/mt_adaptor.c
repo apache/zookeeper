@@ -291,8 +291,10 @@ void *do_io(void *v)
         }
         // dispatch zookeeper events
         zookeeper_process(zh, interest);
-        // TODO: check the current state of the zhandle and terminate 
-        //       if it is_unrecoverable()
+        // check the current state of the zhandle and terminate 
+        // if it is_unrecoverable()
+        if(is_unrecoverable(zh))
+            break;
     }
     api_epilog(zh, 0);    
     LOG_DEBUG(("IO thread terminated"));
@@ -339,7 +341,8 @@ int32_t fetch_and_add(volatile int32_t* operand, int incr)
    return result;
 }
 
-int32_t get_xid()
+// make sure the static xid is initialized before any threads started
+__attribute__((constructor)) int32_t get_xid()
 {
     static int32_t xid = -1;
     if (xid == -1) {
