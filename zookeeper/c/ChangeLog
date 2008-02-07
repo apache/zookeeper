@@ -1,3 +1,22 @@
+Release 1.1.3
+2008-02-07 Andrew Kornev <akornev@users.sourceforge.net>
+
+    * get_xid() is not thread-safe (xid initialization race condition 
+      in the multi-threaded mode).
+    
+    * the I/O thread doesn’t automatically terminate on AUTH_FAILURE and 
+      SESSION_EXPIRED events.
+      
+    * all session events should be processed on the completion thread. 
+    
+    * PING operation doesn’t atomically enqueue the completion and 
+      send buffers like other operations do.
+      
+    * corrected zookeeper_init() doxygen docs.
+    
+    * new unit tests added.
+      
+
 Release 1.1.2
 2008-01-24 Andrew Kornev <akornev@users.sourceforge.net>
 
