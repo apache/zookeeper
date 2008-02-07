@@ -228,8 +228,8 @@ typedef struct {
 /**
  * \brief signature of a watch function.
  * 
- * Programs wishing to receive events from ZooKeeper need to implement a method 
- * with this signature and pass a pointer to the method to \ref zookeeper_init.
+ * Programs wishing to receive events from ZooKeeper need to implement a function 
+ * with this signature and pass a pointer to the function to \ref zookeeper_init.
  */
 typedef void (*watcher_fn)(zhandle_t *, int type, int state, const char *path);
 
@@ -247,8 +247,10 @@ typedef void (*watcher_fn)(zhandle_t *, int type, int state, const char *path);
  *   session. If the session timed out or the id is invalid, a new
  *   session will be automatically generated. Clients should check the actual
  *   session id by calling \ref zoo_client_id. 
- * \param context the context object that will be passed to the watcher callback
- *   function. The object is not used by zookeeper internally and can be null.
+ * \param context the handback object that will be associated with this instance 
+ *   of zhandle_t. Application can access it (for example, in the watcher 
+ *   callback) using \ref zoo_get_context. The object is not used by zookeeper 
+ *   internally and can be null.
  * \param flags reserved for future use. Should be set to zero.
  * \return a pointer to the opaque zhandle structure. If it fails to create 
  * a new zhandle the function returns NULL and the errno variable 
