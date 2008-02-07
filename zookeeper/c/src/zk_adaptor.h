@@ -22,6 +22,11 @@
 #endif
 #include "zookeeper.h"
 
+/* predefined xid's values recognized as special by the server */
+#define WATCHER_EVENT_XID -1 
+#define PING_XID -2
+#define AUTH_XID -4
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -191,6 +196,12 @@ int32_t inc_ref_counter(zhandle_t* zh,int i);
 #ifdef THREADED
 // atomic post-increment
 int32_t fetch_and_add(volatile int32_t* operand, int incr);
+// in mt mode process session event asynchronously by the completion thread
+int queue_session_event(zhandle_t *zh, int state);
+#define PROCESS_SESSION_EVENT(zh,newstate) queue_session_event(zh,newstate)
+#else
+// in single-threaded mode process session event immediately
+#define PROCESS_SESSION_EVENT(zh,newstate) zh->watcher(zh,SESSION_EVENT,newstate,0)
 #endif
 
 #ifdef __cplusplus

@@ -121,10 +121,6 @@ struct ACL_vector CREATOR_ALL_ACL = { 1, _CREATOR_ALL_ACL_ACL};
 #define COMPLETION_ACLLIST 4
 #define COMPLETION_STRING 5
 
-/* predefined xid's values recognized as special by the server */
-#define PING_XID -2
-#define AUTH_XID -4
-
 const char*err2string(int err);
 static const char* format_endpoint_info(const struct sockaddr* ep);
 static const char* format_current_endpoint_info(zhandle_t* zh);
@@ -533,6 +529,7 @@ static int send_buffer(int fd, buffer_list_t *buff)
     int len = buff->len;
     int off = buff->curr_offset;
     int rc = -1;
+    
     if (off < 4) {
         /* we need to send the length at the beginning */
         int nlen = htonl(len);
@@ -694,10 +691,10 @@ static void handle_error(zhandle_t *zh,int rc)
     if (is_unrecoverable(zh)) {
         LOG_DEBUG(("Calling a watcher for a SESSION_EVENT and the state=%s",
                 state2String(zh->state)));
-        zh->watcher(zh, SESSION_EVENT, zh->state, 0);
+        PROCESS_SESSION_EVENT(zh, zh->state);
     } else if (zh->state == CONNECTED_STATE) {
         LOG_DEBUG(("Calling a watcher for a SESSION_EVENT and the state=CONNECTING_STATE"));
-        zh->watcher(zh, SESSION_EVENT, CONNECTING_STATE, 0);
+        PROCESS_SESSION_EVENT(zh, CONNECTING_STATE);
     }
     cleanup_bufs(zh,1,rc);
     zh->fd = -1;
@@ -945,9 +942,11 @@ static struct timeval get_timeval(int interval)
                 struct RequestHeader h = { .xid = PING_XID, .type = PING_OP};
 
                 rc = serialize_RequestHeader(oa, "header", &h);
+                enter_critical(zh);
                 rc = rc < 0 ? rc : add_void_completion(zh, h.xid, 0, 0);
                 rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send,
                         get_buffer(oa), get_buffer_len(oa));
+                leave_critical(zh);
                 close_buffer_oarchive(&oa, 0);
                 if (rc < 0){
                     LOG_ERROR(("failed to marchall request (zk retcode=%d)",rc));
@@ -1046,7 +1045,7 @@ static int check_events(zhandle_t *zh, int events)
                     send_auth_info(zh);
                     LOG_DEBUG(("Calling a watcher for a SESSION_EVENT and the state=CONNECTED_STATE"));
                     zh->input_buffer = 0; // just in case the watcher calls zookeeper_process() again
-                    zh->watcher(zh, SESSION_EVENT, CONNECTED_STATE, 0);
+                    PROCESS_SESSION_EVENT(zh, CONNECTED_STATE);
                 }
             }
             zh->input_buffer = 0;
@@ -1092,6 +1091,49 @@ static completion_list_t* create_completion_entry(int xid, int completion_type,
 static void queue_completion(completion_head_t *list, completion_list_t *c,
         int add_to_front);
 
+#ifdef THREADED
+// IO thread queues session events to be processed by the completion thread
+int queue_session_event(zhandle_t *zh, int state)
+{
+    int rc;
+    struct WatcherEvent evt = { SESSION_EVENT, state, "" };
+    struct ReplyHeader hdr = { WATCHER_EVENT_XID, 0, 0 };
+    struct oarchive *oa;
+    completion_list_t *cptr;
+    
+    if ((oa=create_buffer_oarchive())==NULL) {
+        LOG_ERROR(("out of memory"));
+        goto error;
+    }
+    rc = serialize_ReplyHeader(oa, "hdr", &hdr);
+    rc = rc<0?rc: serialize_WatcherEvent(oa, "event", &evt);
+    if(rc<0){
+        close_buffer_oarchive(&oa, 1);
+        goto error;
+    }
+    if ((cptr=calloc(1,sizeof(*cptr)))==NULL) {
+        LOG_ERROR(("out of memory"));
+        close_buffer_oarchive(&oa, 1);
+        goto error;
+    }
+    cptr->xid = WATCHER_EVENT_XID;
+    cptr->buffer = allocate_buffer(get_buffer(oa), get_buffer_len(oa));
+    cptr->buffer->curr_offset = get_buffer_len(oa);
+    if (!cptr->buffer) {
+        free(cptr);
+        close_buffer_oarchive(&oa, 1);
+        goto error;
+    }
+    /* We queued the buffer, so don't free it */
+    close_buffer_oarchive(&oa, 0);
+    queue_completion(&zh->completions_to_process, cptr, 0);
+    return ZOK;
+error:
+    errno=ENOMEM;
+    return ZSYSTEMERROR;    
+}
+#endif
+
 completion_list_t *dequeue_completion(completion_head_t *list)
 {
     completion_list_t *cptr;
@@ -1119,7 +1161,7 @@ void process_completions(zhandle_t *zh)
         deserialize_ReplyHeader(ia, "hdr", &hdr);
         zh->last_zxid = hdr.zxid;
 
-        if (hdr.xid == -1) {
+        if (hdr.xid == WATCHER_EVENT_XID) {
             int type, state;
             struct WatcherEvent evt;
             deserialize_WatcherEvent(ia, "event", &evt);
@@ -1226,8 +1268,8 @@ int zookeeper_process(zhandle_t *zh, int events)
         deserialize_ReplyHeader(ia, "hdr", &hdr);
         zh->last_zxid = hdr.zxid;
         
-        if (hdr.xid == -1) {
-            completion_list_t *c = create_completion_entry(-1, -1, 0, 0);
+        if (hdr.xid == WATCHER_EVENT_XID) {
+            completion_list_t *c = create_completion_entry(WATCHER_EVENT_XID,-1,0,0);
             c->buffer = bptr;
             queue_completion(&zh->completions_to_process, c, 0);
         } else if(hdr.xid == AUTH_XID){
