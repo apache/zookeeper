@@ -6,6 +6,7 @@
     <property name="year" value="2007" />
 
     <property name="src.dir" value="${basedir}/java/src" />
+    <property name="lib.dir" value="${basedir}/java/lib" />
     <property name="build.dir" value="${basedir}/build" />
     <property name="src_generated.dir" value="${basedir}/java/generated" />
     <property name="csrc_generated.dir" value="${basedir}/c/generated" />
@@ -27,6 +28,13 @@
     <property name="javadoc.link.java" value="http://java.sun.com/j2se/1.5/docs/api/" />
     <property name="javadoc.packages" value="com.yahoo.*" />
 
+    <path id="svnant.classpath">
+        <fileset dir="${lib.dir}/svnant">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>  
+    <typedef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="svnant.classpath" />
+
     <!-- ====================================================== -->
     <!-- Generate and compile the Java files                    -->
     <!-- ====================================================== -->
@@ -39,22 +47,22 @@
     <target name="compile_jute" depends="jute">
         <mkdir dir="${build.classes}" />
         <mkdir dir="${src_generated.dir}" />
-	<mkdir dir="${csrc_generated.dir}" />
+        <mkdir dir="${csrc_generated.dir}" />
         <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
             <arg value="-l" />
-	    <arg value="java" />
-	    <arg value="../../zookeeper.jute" /> 
+        <arg value="java" />
+        <arg value="../../zookeeper.jute" /> 
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
         </java>
-	<java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
-	    <arg value="-l" />
-	    <arg value="c" />
-	    <arg value="../../zookeeper.jute" />
-	    <classpath>
-	        <pathelement path="${build.classes}" />
-	    </classpath>
+    <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
+        <arg value="-l" />
+        <arg value="c" />
+        <arg value="../../zookeeper.jute" />
+        <classpath>
+            <pathelement path="${build.classes}" />
+        </classpath>
          </java>
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" target="1.5" source="1.5" debug="on">
         </javac>
@@ -83,7 +91,7 @@
            </fileset>
          </classpath>
          <classpath>
-           <fileset dir="${basedir}/java/lib">
+           <fileset dir="${lib.dir}">
              <include name="*.jar"/>
            </fileset>
          </classpath>
@@ -105,11 +113,22 @@
     <!-- Make zookeeper.jar                                     -->
     <!-- ====================================================== -->
     <target name="jar" depends="compile">
+        <tstamp/>
+        <svn>
+            <status path="${src.dir}" lastChangedRevisionProperty="lastRevision" />
+        </svn>
+        <exec executable="hostname" outputproperty="host.name"/>
         <jar jarfile="${jar.name}"> 
             <fileset file="LICENSE" />
             <fileset dir="${build.classes}"/> 
             <manifest>
                 <attribute name="Main-Class" value="com.yahoo.zookeeper.server.quorum.QuorumPeer" />
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${TODAY}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="com.yahoo.zookeeper"/>
+                <attribute name="Implementation-Version" value="SVN revision ${lastRevision}"/> 
+                <attribute name="Implementation-Vendor" value="Yahoo! Inc."/>
             </manifest>
         </jar>
     </target>
@@ -134,7 +153,7 @@
         <mkdir dir="${test.tmp.dir}" />
         <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no" fork="yes" maxmemory="512m" dir="${basedir}" timeout="${test.timeout}" errorProperty="tests.failed" failureProperty="tests.failed">
             <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
-	    <classpath>
+        <classpath>
                 <pathelement path="${build.testclasses}" />
             </classpath>
              <classpath>
