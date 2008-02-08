@@ -3,10 +3,10 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],1.1.2,[zookeeper-user@lists.sourceforge.net],[zookeeper])
+AC_INIT([zookeeper C client],1.1.3,[zookeeper-user@lists.sourceforge.net],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
 AC_CHECK_FILES([generated/zookeeper.jute.c generated/zookeeper.jute.h],[],
-	[AC_MSG_ERROR([jute files are missing! Please run "ant compile_jute" while in the zookeeper top level directory.])
+    [AC_MSG_ERROR([jute files are missing! Please run "ant compile_jute" while in the zookeeper top level directory.])
 ])
 
 # initialize Doxygen support
@@ -46,13 +46,13 @@ AC_ARG_WITH([syncapi],
 AC_CHECK_LIB([pthread], [pthread_mutex_lock],[have_pthread=yes],[have_pthread=no])
 
 if test "x$with_syncapi" != xno && test "x$have_pthread" = xno; then
-	AC_MSG_WARN([cannot build SyncAPI -- pthread not found])
-	with_syncapi=no
+    AC_MSG_WARN([cannot build SyncAPI -- pthread not found])
+    with_syncapi=no
 fi
 if test "x$with_syncapi" != xno; then
-	AC_MSG_NOTICE([building with SyncAPI support])
+    AC_MSG_NOTICE([building with SyncAPI support])
 else
-	AC_MSG_NOTICE([building without SyncAPI support])
+    AC_MSG_NOTICE([building without SyncAPI support])
 fi
 
 AM_CONDITIONAL([WANT_SYNCAPI],[test "x$with_syncapi" != xno])
@@ -66,9 +66,9 @@ AC_C_CONST
 AC_C_INLINE
 AC_HEADER_TIME
 AC_CHECK_TYPE([nfds_t],
-	[AC_DEFINE([POLL_NFDS_TYPE],[nfds_t],[poll() second argument type])],
-	[AC_DEFINE([POLL_NFDS_TYPE],[unsigned int],[poll() second argument type])],
-	[#include <poll.h>])
+    [AC_DEFINE([POLL_NFDS_TYPE],[nfds_t],[poll() second argument type])],
+    [AC_DEFINE([POLL_NFDS_TYPE],[unsigned int],[poll() second argument type])],
+    [#include <poll.h>])
 
 # Checks for library functions.
 AC_CHECK_FUNCS([gethostbyname gettimeofday memmove memset poll socket strchr strdup strerror strtol])
