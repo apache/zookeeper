@@ -2,8 +2,8 @@
 
     <property name="Name" value="ZooKeeper" />
     <property name="name" value="zookeeper" />
-    <property name="version" value="dev" />
-    <property name="year" value="2007" />
+    <property name="version" value="1.1.1" />
+    <property name="year" value="2008" />
 
     <property name="src.dir" value="${basedir}/java/src" />
     <property name="lib.dir" value="${basedir}/java/lib" />
@@ -11,9 +11,7 @@
     <property name="src_generated.dir" value="${basedir}/java/generated" />
     <property name="csrc_generated.dir" value="${basedir}/c/generated" />
     <property name="build.classes" value="${build.dir}/classes" />
-    <property name="config.dir" value="${basedir}/test/config" />
-    <property name="build.docs" value="${build.dir}/docs" />
-    <property name="build.javadoc" value="${build.docs}/api" />
+    <property name="jar.name" value="zookeeper-dev.jar" />
 
     <property name="build.testclasses" value="${build.dir}/testclasses"/>
     <property name="test.build.dir" value="${build.dir}/test" />
@@ -21,12 +19,14 @@
     <property name="test.log.dir" value="${test.build.dir}/logs" />
     <property name="test.tmp.dir" value="${test.build.dir}/tmp" />
     <property name="test.output" value="no" />
-    <property name="jar.name" value="zookeeper-${version}.jar" />
     <property name="test.timeout" value="900000" />
     <property name="test.junit.output.format" value="plain" />
+    <property name="config.dir" value="${basedir}/test/config" />
 
     <property name="javadoc.link.java" value="http://java.sun.com/j2se/1.5/docs/api/" />
     <property name="javadoc.packages" value="com.yahoo.*" />
+    <property name="build.docs" value="${build.dir}/docs" />
+    <property name="build.javadoc" value="${build.docs}/api" />
 
     <path id="svnant.classpath">
         <fileset dir="${lib.dir}/svnant">
@@ -38,48 +38,73 @@
     <!-- ====================================================== -->
     <!-- Generate and compile the Java files                    -->
     <!-- ====================================================== -->
-    <target name="jute">
+    <target name="init">    
         <mkdir dir="${build.classes}" />
-        <javac srcdir="${src.dir}" destdir="${build.classes}" target="1.5" source="1.5" includes="com/yahoo/jute/**" debug="on">
-        </javac>
+        <tstamp>
+            <format property="build.time" pattern="MM/dd/yyyy HH:mm zz" timezone="GMT"/>
+        </tstamp>
+    </target>
+    
+    <target name="jute" depends="init">
+        <javac srcdir="${src.dir}" destdir="${build.classes}" target="1.5" 
+            source="1.5" includes="com/yahoo/jute/**" debug="on" />
     </target>
 
     <target name="compile_jute" depends="jute">
-        <mkdir dir="${build.classes}" />
         <mkdir dir="${src_generated.dir}" />
         <mkdir dir="${csrc_generated.dir}" />
         <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
             <arg value="-l" />
-        <arg value="java" />
-        <arg value="../../zookeeper.jute" /> 
+            <arg value="java" />
+            <arg value="../../zookeeper.jute" /> 
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
         </java>
-    <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
-        <arg value="-l" />
-        <arg value="c" />
-        <arg value="../../zookeeper.jute" />
-        <classpath>
-            <pathelement path="${build.classes}" />
-        </classpath>
-         </java>
-        <javac srcdir="${src_generated.dir}" destdir="${build.classes}" target="1.5" source="1.5" debug="on">
-        </javac>
+        
+        <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
+            <arg value="-l" />
+            <arg value="c" />
+            <arg value="../../zookeeper.jute" />
+            <classpath>
+                <pathelement path="${build.classes}" />
+            </classpath>
+        </java>
     </target>
 
-    <target name="compile" depends="compile_jute">
-        <mkdir dir="${build.classes}" />
+    <target name="ver-gen" depends="init">
+        <javac srcdir="${src.dir}" destdir="${build.classes}" target="1.5" 
+            source="1.5" includes="com/yahoo/zookeeper/version/util/**" debug="on" />
+    </target>
+    
+    <target name="version-info" depends="ver-gen">
+        <mkdir dir="${src_generated.dir}" />
+        <svn>
+            <status path="${src.dir}" lastChangedRevisionProperty="lastRevision" />
+        </svn>
+        <java classname="com.yahoo.zookeeper.version.util.VerGen" fork="true" dir="${src_generated.dir}">
+            <arg value="${version}" />
+            <arg value="${lastRevision}" />
+            <arg value="${build.time}" />
+            <classpath>
+                <pathelement path="${build.classes}" />
+            </classpath>
+        </java>
+    </target>
+    
+    <target name="build-generated" depends="compile_jute,version-info" >
+        <javac srcdir="${src_generated.dir}" destdir="${build.classes}" target="1.5" source="1.5" debug="on" />
+    </target>
+    
+    <target name="compile" depends="build-generated">
         <javac srcdir="${src.dir}" destdir="${build.classes}" target="1.5" source="1.5" debug="on">
             <classpath>
                 <fileset dir="${build.classes}" />
             </classpath>
         </javac>
         <copy todir="${build.classes}">
-         <fileset
-            dir="${src.dir}"
-         />
-         </copy>
+            <fileset dir="${src.dir}"/>
+        </copy>
     </target>
 
     <target name="compile-test" depends="jar">
@@ -103,7 +128,9 @@
     <!-- ====================================================== -->
     <target name="javadoc" depends="jar">
         <mkdir dir="${build.javadoc}" />
-        <javadoc packagenames="com.yahoo.*" destdir="${build.javadoc}" author="true" version="true" use="true" windowtitle="${Name} ${version} API" doctitle="${Name} ${version} API" bottom="Copyright &amp;copy; ${year} Yahoo Inc.">
+        <javadoc packagenames="com.yahoo.*" destdir="${build.javadoc}" author="true" version="true" 
+                use="true" windowtitle="${Name} ${version} API" doctitle="${Name} ${version} API" 
+                bottom="Copyright &amp;copy; ${year} Yahoo Inc.">
             <packageset dir="${src.dir}" />
             <link href="${javadoc.link.java}" />
         </javadoc>
@@ -113,10 +140,12 @@
     <!-- Make zookeeper.jar                                     -->
     <!-- ====================================================== -->
     <target name="jar" depends="compile">
-        <tstamp/>
-        <svn>
-            <status path="${src.dir}" lastChangedRevisionProperty="lastRevision" />
-        </svn>
+        <java classname="com.yahoo.zookeeper.Version" fork="true" outputproperty="revision" failonerror="true">
+            <arg value="--revision" />
+            <classpath>
+                <pathelement path="${build.classes}" />
+            </classpath>
+        </java>
         <exec executable="hostname" outputproperty="host.name"/>
         <jar jarfile="${jar.name}"> 
             <fileset file="LICENSE" />
@@ -124,15 +153,21 @@
             <manifest>
                 <attribute name="Main-Class" value="com.yahoo.zookeeper.server.quorum.QuorumPeer" />
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Built-At" value="${TODAY}"/>
+                <attribute name="Built-At" value="${build.time}"/>
                 <attribute name="Built-On" value="${host.name}" />
                 <attribute name="Implementation-Title" value="com.yahoo.zookeeper"/>
-                <attribute name="Implementation-Version" value="SVN revision ${lastRevision}"/> 
+                <attribute name="Implementation-Version" value="${revision}"/> 
                 <attribute name="Implementation-Vendor" value="Yahoo! Inc."/>
             </manifest>
         </jar>
     </target>
 
+    <target name="release">
+        <antcall target="jar">
+            <param name="jar.name" value="zookeeper-${version}.jar" />
+        </antcall>
+    </target>
+    
     <!-- ====================================================== -->
     <!-- Clean.  Delete the build files, and their directories  -->
     <!-- ====================================================== -->
@@ -151,9 +186,11 @@
         <delete dir="${test.tmp.dir}" />
         <mkdir dir="${test.log.dir}" />
         <mkdir dir="${test.tmp.dir}" />
-        <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no" fork="yes" maxmemory="512m" dir="${basedir}" timeout="${test.timeout}" errorProperty="tests.failed" failureProperty="tests.failed">
+        <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no" fork="yes" 
+              maxmemory="512m" dir="${basedir}" timeout="${test.timeout}" errorProperty="tests.failed" 
+              failureProperty="tests.failed">
             <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
-        <classpath>
+            <classpath>
                 <pathelement path="${build.testclasses}" />
             </classpath>
              <classpath>
@@ -184,13 +221,16 @@
         <property name="findbugs.exclude.file" value="${config.dir}/findbugsExcludeFile.xml" />
         <property name="findbugs.report.htmlfile" value="${findbugs.out.dir}/zookeeper-findbugs-report.html" />
         <property name="findbugs.report.xmlfile" value="${findbugs.out.dir}/zookeeper-findbugs-report.xml" />
-        <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" classpath="${findbugs.home}/lib/findbugs-ant.jar" />
+        <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" 
+                classpath="${findbugs.home}/lib/findbugs-ant.jar" />
         <mkdir dir="${findbugs.out.dir}" />
-        <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
+        <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" 
+                outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
             <sourcePath path="${src.dir}" />
             <class location="${basedir}/${jar.name}" />
         </findbugs>
-        <xslt style="${findbugs.home}/src/xsl/default.xsl" in="${findbugs.report.xmlfile}" out="${findbugs.report.htmlfile}" />
+        <xslt style="${findbugs.home}/src/xsl/default.xsl" in="${findbugs.report.xmlfile}" 
+                out="${findbugs.report.htmlfile}" />
     </target>
 
     <target name="check-for-findbugs">
