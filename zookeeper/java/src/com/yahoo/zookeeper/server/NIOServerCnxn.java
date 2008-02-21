@@ -593,7 +593,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 return;
             }
         }
-        if (len < 0 || len > 0xfffff) {
+        if (len < 0 || len > BinaryInputArchive.maxBuffer) {
             throw new IOException("Len error " + len);
         }
         if (zk == null) {

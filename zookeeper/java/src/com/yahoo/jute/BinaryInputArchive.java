@@ -84,10 +84,20 @@ public class BinaryInputArchive implements InputArchive {
     	return new String(b, "UTF8");
     }
     
+    static public final int maxBuffer = determineMaxBuffer();
+    private static int determineMaxBuffer() {
+        String maxBufferString = System.getProperty("jute.maxbuffer");
+        try {
+            return Integer.parseInt(maxBufferString);
+        } catch(Exception e) {
+            return 0xfffff;
+        }
+        
+    }
     public byte[] readBuffer(String tag) throws IOException {
         int len = readInt(tag);
         if (len == -1) return null;
-        if (len < 0 || len > 128*1024) {
+        if (len < 0 || len > maxBuffer) {
             throw new RuntimeException("Unreasonable length = " + len);
         }
         byte[] arr = new byte[len];
