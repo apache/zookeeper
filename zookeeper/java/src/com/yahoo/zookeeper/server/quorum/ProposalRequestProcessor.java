@@ -36,7 +36,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
             RequestProcessor nextProcessor) {
         this.zks = zks;
         this.nextProcessor = nextProcessor;
-        AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.leader);
+        AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.getLeader());
         syncProcessor = new SyncRequestProcessor(zks, ackProcessor);
     }
 
@@ -47,8 +47,8 @@ public class ProposalRequestProcessor implements RequestProcessor {
     	    	
     	
     	if(request.type == ZooDefs.OpCode.sync){
-    		if(zks.leader.syncHandler.containsKey(request.sessionId)){
-    			zks.leader.processSync(request);
+    		if(zks.getLeader().syncHandler.containsKey(request.sessionId)){
+    			zks.getLeader().processSync(request);
     		}
     		else{
     			nextProcessor.processRequest(request);
@@ -59,7 +59,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
     		nextProcessor.processRequest(request);
     		if (request.hdr != null) {
     			// We need to sync and get consensus on any transactions
-    			zks.leader.propose(request);
+    			zks.getLeader().propose(request);
     			syncProcessor.processRequest(request);
     		}
     	}

@@ -16,11 +16,12 @@
 
 package com.yahoo.zookeeper.server.quorum;
 
-import java.io.BufferedReader;
+
+import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.*;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -28,8 +29,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Properties;
-import java.util.Map.Entry;
 
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.InputArchive;
@@ -89,6 +88,12 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * "myid" that contains the server id as an ASCII decimal value.
  */
 public class QuorumPeer extends Thread {
+	/**
+	 * Create an instance of a quorum peer 
+	 */
+	public interface Factory{
+		public QuorumPeer create() throws IOException;
+	}
     public static class QuorumServer {
         public QuorumServer(long id, InetSocketAddress addr) {
             this.id = id;
@@ -107,11 +112,13 @@ public class QuorumPeer extends Thread {
      * The servers that make up the cluster
      */
     ArrayList<QuorumServer> quorumPeers;
-
+    public int getQuorumSize(){
+    	return quorumPeers.size();
+    }
     /**
      * My id
      */
-    long myid;
+    private long myid;
 
 
     /**
@@ -225,12 +232,12 @@ public class QuorumPeer extends Thread {
     /**
      * the directory where the snapshot is stored.
      */
-    File dataDir;
+    private File dataDir;
 
     /**
      * the directory where the logs are stored.
      */
-    File dataLogDir;
+    private File dataLogDir;
 
     int clientPort;
 
@@ -268,10 +275,26 @@ public class QuorumPeer extends Thread {
         }
     }
 
+    public QuorumPeer() throws IOException {
+    	// use quorum peer config to instantiate the class 
+		this(getServers(), new File(getDataDir()), new File(getDataLogDir()),
+				getClientPort(), getElectionAlg(), getServerId(),
+				getTickTime(), getInitLimit(), getSyncLimit());
+	}
     public Follower follower;
 
     public Leader leader;
 
+    protected Follower makeFollower() throws IOException {
+		return new Follower(this, new FollowerZooKeeperServer(dataDir,
+				dataLogDir, this));
+	}
+
+	protected Leader makeLeader() throws IOException {
+		return new Leader(this, new LeaderZooKeeperServer(dataDir, dataLogDir,
+				this));
+	}
+    
     public void run() {
 
         /*
@@ -295,7 +318,7 @@ public class QuorumPeer extends Thread {
             case FOLLOWING:
                 try {
                     ZooLog.logWarn("FOLLOWING");
-                    follower = new Follower(this);
+                    follower = makeFollower();
                     follower.followLeader();
                 } catch (Exception e) {
                     ZooLog.logException(e);
@@ -308,7 +331,7 @@ public class QuorumPeer extends Thread {
             case LEADING:
                 ZooLog.logWarn("LEADING");
                 try {
-                    leader = new Leader(this);
+                    leader = makeLeader();
                     leader.lead();
                     leader = null;
                 } catch (Exception e) {
@@ -399,129 +422,32 @@ public class QuorumPeer extends Thread {
         return zxid;
     }
 
+    public static void runPeer(QuorumPeer.Factory qpFactory) {
+		try {
+			QuorumPeer self = qpFactory.create();
+			self.start();
+			self.join();
+		} catch (Exception e) {
+			ZooLog.logException(e);
+		}
+		System.exit(2);
+	}
+    
     public static void main(String args[]) {
-        try {
-            if (args.length == 2) {
-                ZooKeeperServer.main(args);
-                return;
-            }
-            if (args.length != 1) {
-                System.err.println("USAGE: configFile");
-                System.exit(2);
-                return;
-            }
-            File zooCfgFile = new File(args[0]);
-            if (!zooCfgFile.exists()) {
-                ZooLog.logError(zooCfgFile.toString() + " file is missing");
-                return;
-            }
-            Properties cfg = new Properties();
-            cfg.load(new FileInputStream(zooCfgFile));
-            ArrayList<QuorumServer> servers = new ArrayList<QuorumServer>();
-            File dataDir = null;
-            File dataLogDir = null;
-            int clientPort = 0;
-            int tickTime = 0;
-            int initLimit = 0;
-            int syncLimit = 0;
-            int electionAlg = 0;
-            for (Entry<Object, Object> entry : cfg.entrySet()) {
-                String key = entry.getKey().toString();
-                String value = entry.getValue().toString();
-                if (key.equals("dataDir")) {
-                    dataDir = new File(value);
-                } else if (key.equals("dataLogDir")) {
-                    dataLogDir = new File(value);
-                } else if (key.equals("traceFile")) {
-                    System.setProperty("requestTraceFile", value);
-                } else if (key.equals("clientPort")) {
-                    clientPort = Integer.parseInt(value);
-                } else if (key.equals("tickTime")) {
-                    tickTime = Integer.parseInt(value);
-                } else if (key.equals("initLimit")) {
-                    initLimit = Integer.parseInt(value);
-                } else if (key.equals("syncLimit")) {
-                    syncLimit = Integer.parseInt(value);
-                } else if (key.equals("electionAlg")) {
-                    electionAlg = Integer.parseInt(value);
-                } else if (key.startsWith("server.")) {
-                    int dot = key.indexOf('.');
-                    long sid = Long.parseLong(key.substring(dot + 1));
-                    String parts[] = value.split(":");
-                    if (parts.length != 2) {
-                        ZooLog.logError(value
-                                + " does not have the form host:port");
-                    }
-                    InetSocketAddress addr = new InetSocketAddress(parts[0],
-                            Integer.parseInt(parts[1]));
-                    servers.add(new QuorumServer(sid, addr));
-                } else {
-                    System.setProperty("zookeeper." + key, value);
-                }
-            }
-            if (dataDir == null) {
-                ZooLog.logError("dataDir is not set");
-                System.exit(2);
-            }
-            if (dataLogDir == null) {
-                dataLogDir = dataDir;
-            } else {
-                if (!dataLogDir.isDirectory()) {
-                    ZooLog
-                            .logError("dataLogDir " + dataLogDir
-                                    + " is missing.");
-                    System.exit(2);
-                }
-            }
-            if (clientPort == 0) {
-                ZooLog.logError("clientPort is not set");
-                System.exit(2);
-            }
-            if (tickTime == 0) {
-                ZooLog.logError("tickTime is not set");
-                System.exit(2);
-            }
-            if (servers.size() > 1 && initLimit == 0) {
-                ZooLog.logError("initLimit is not set");
-                System.exit(2);
-            }
-            if (servers.size() > 1 && syncLimit == 0) {
-                ZooLog.logError("syncLimit is not set");
-                System.exit(2);
-            }
-            if (servers.size() > 1) {
-                File myIdFile = new File(dataDir, "myid");
-                if (!myIdFile.exists()) {
-                    ZooLog.logError(myIdFile.toString() + " file is missing");
-                    return;
-                }
-                BufferedReader br = new BufferedReader(new FileReader(myIdFile));
-                String myIdString = br.readLine();
-                long id;
-                try {
-                    id = Long.parseLong(myIdString);
-                } catch (NumberFormatException e) {
-                    ZooLog.logError(myIdString + " is not a number");
-                    System.exit(2);
-                    return; // makes the id not initialized warning go away...
-                }
-                QuorumPeer self = new QuorumPeer(servers, dataDir, dataLogDir,
-                        clientPort, electionAlg, id, tickTime, initLimit,
-                        syncLimit);
-                self.start();
-                self.join();
-            } else {
-                int port = clientPort;
-                ZooKeeperServer zk = new ZooKeeperServer(dataDir, dataLogDir, tickTime);
-                zk.startup();
-                NIOServerCnxn.Factory t = new NIOServerCnxn.Factory(port);
-                t.setZooKeeperServer(zk);
-                t.join();
-                zk.shutdown();
-            }
-        } catch (Exception e) {
-            ZooLog.logException(e);
-        }
-        System.exit(2);
-    }
+		if (args.length == 2) {
+			ZooKeeperServer.main(args);
+			return;
+		}
+		QuorumPeerConfig.parse(args);
+		if (!QuorumPeerConfig.isStandalone()) {
+			runPeer(new QuorumPeer.Factory() {
+				public QuorumPeer create() throws IOException {
+					return new QuorumPeer();
+				}
+			});
+		}else{
+			// there is only server in the quorum -- run as standalone
+			ZooKeeperServer.main(args);
+		}
+	}
 }

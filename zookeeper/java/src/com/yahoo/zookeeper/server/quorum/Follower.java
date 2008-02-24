@@ -37,7 +37,6 @@ import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.InputArchive;
 import com.yahoo.jute.OutputArchive;
 import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.ServerCnxn;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
@@ -51,8 +50,9 @@ public class Follower {
 
     FollowerZooKeeperServer zk;
 
-    Follower(QuorumPeer self) {
+    Follower(QuorumPeer self,FollowerZooKeeperServer zk) {
         this.self = self;
+        this.zk=zk;
     }
 
     private InputArchive leaderIs;
@@ -152,8 +152,6 @@ public class Follower {
                 ZooLog.logError("First packet should have been NEWLEADER");
                 throw new IOException("First packet should have been NEWLEADER");
             }
-            zk = new FollowerZooKeeperServer(self.getId(), self.dataDir,
-                    self.dataLogDir, this);
             readPacket(qp);
             synchronized (zk) {
                 if (qp.getType() == Leader.DIFF) {

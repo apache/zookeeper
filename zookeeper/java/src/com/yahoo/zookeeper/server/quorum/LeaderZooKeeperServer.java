@@ -33,9 +33,7 @@ import com.yahoo.zookeeper.server.ZooKeeperServer;
  * FinalRequestProcessor
  */
 public class LeaderZooKeeperServer extends ZooKeeperServer {
-    Leader leader;
-
-    long serverId;
+    private QuorumPeer self;
 
     CommitProcessor commitProcessor;
 
@@ -44,17 +42,20 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
      * @param dataDir
      * @throws IOException
      */
-    LeaderZooKeeperServer(long serverId, File dataDir, File dataLogDir,
-            Leader leader) throws IOException {
-        super(dataDir, dataLogDir, leader.self.tickTime);
-        this.serverId = serverId;
-        this.leader = leader;
+    LeaderZooKeeperServer(File dataDir, File dataLogDir,
+            QuorumPeer self) throws IOException {
+        super(dataDir, dataLogDir, self.tickTime);
+        this.self = self;
     }
 
+    public Leader getLeader(){
+    	return self.leader;
+    }
+    
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(
-                finalProcessor, leader.toBeApplied);
+                finalProcessor, getLeader().toBeApplied);
         commitProcessor = new CommitProcessor(toBeAppliedProcessor);
         RequestProcessor proposalProcessor = new ProposalRequestProcessor(this,
                 commitProcessor);
@@ -63,13 +64,12 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
 
     @Override
     public int getGlobalOutstandingLimit() {
-        return super.getGlobalOutstandingLimit()
-                / (leader.self.quorumPeers.size() - 1);
+        return super.getGlobalOutstandingLimit() / (self.getQuorumSize() - 1);
     }
     
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, sessionsWithTimeouts,
-                tickTime, this.serverId);
+                tickTime, self.getId());
     }
 
 

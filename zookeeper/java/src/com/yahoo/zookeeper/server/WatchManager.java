@@ -30,6 +30,10 @@ public class WatchManager {
 
     HashMap<Watcher, HashSet<String>> watch2Paths = new HashMap<Watcher, HashSet<String>>();
 
+    synchronized int size(){
+    	return watchTable.size();
+    }
+    
     synchronized void addWatch(String path, Watcher watcher) {
         HashSet<Watcher> list = watchTable.get(path);
         if (list == null) {

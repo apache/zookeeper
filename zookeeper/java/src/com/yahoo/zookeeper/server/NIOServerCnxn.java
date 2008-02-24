@@ -121,7 +121,11 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 this.outstandingLimit = 1;
             }
         }
-
+        
+        public InetSocketAddress getLocalAddress(){
+        	return (InetSocketAddress)ss.socket().getLocalSocketAddress();
+        }
+        
         private void addCnxn(NIOServerCnxn cnxn) {
             synchronized (cnxns) {
                 cnxns.add(cnxn);
