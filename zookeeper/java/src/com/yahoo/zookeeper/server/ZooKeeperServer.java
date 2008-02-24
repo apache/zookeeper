@@ -51,7 +51,6 @@ import com.yahoo.zookeeper.data.ACL;
 import com.yahoo.zookeeper.data.Id;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.RequestHeader;
-import com.yahoo.zookeeper.server.NIOServerCnxn.Factory;
 import com.yahoo.zookeeper.server.SessionTracker.SessionExpirer;
 import com.yahoo.zookeeper.server.auth.AuthenticationProvider;
 import com.yahoo.zookeeper.server.auth.DigestAuthenticationProvider;
@@ -74,7 +73,15 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
  */
 public class ZooKeeperServer implements SessionExpirer {
-    protected int tickTime = 3000;
+	/**
+	 * Create an instance of Zookeeper server 
+	 */
+    public interface Factory {
+    	public ZooKeeperServer create() throws IOException;
+	}
+
+    public static final int DEFAULT_TICK_TIME=3000;
+	protected int tickTime = DEFAULT_TICK_TIME;
 
     public static final int commitLogCount = 500;
     public int commitLogBuffer = 700;
@@ -83,42 +90,38 @@ public class ZooKeeperServer implements SessionExpirer {
 
     HashMap<String, AuthenticationProvider> authenticationProviders = new HashMap<String, AuthenticationProvider>();
 
+    
     /*
      * Start up the ZooKeeper server.
      * 
      * @param args the port and data directory
      */
     public static void main(String[] args) {
-        if (args.length != 2) {
-            System.err.println("USAGE: ZooKeeperServer port datadir\n");
-            System.exit(2);
-        }
-        int port = -1;
-        try {
-            port = Integer.parseInt(args[0]);
-        } catch (NumberFormatException e) {
-            System.err.println(args[0] + " is not a valid port number");
-            System.exit(2);
-        }
+		ServerConfig.parse(args);
+		runStandalone(new Factory() {
+			public ZooKeeperServer create() throws IOException {
+				return new ZooKeeperServer();
+			}
+		});
+	}
+
+    public static void runStandalone(Factory factory){
         try {
             // Note that this thread isn't going to be doing anything else,
             // so rather than spawning another thread, we will just call
             // run() in this thread.
-            ZooKeeperServer zk = new ZooKeeperServer(new File(args[1]),
-                    new File(args[1]), 3000);
+            ZooKeeperServer zk = factory.create();
             zk.startup();
-            NIOServerCnxn.Factory t = new NIOServerCnxn.Factory(port);
+            NIOServerCnxn.Factory t = new NIOServerCnxn.Factory(ServerConfig.getClientPort());
             t.setZooKeeperServer(zk);
             t.join();
             zk.shutdown();
-        } catch (IOException e) {
-            ZooLog.logException(e);
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             ZooLog.logException(e);
         }
-        System.exit(0);
+        System.exit(0);    	
     }
-
+    
     public DataTree dataTree;
 
     protected SessionTracker sessionTracker;
@@ -176,6 +179,15 @@ public class ZooKeeperServer implements SessionExpirer {
                 }
             }
         }
+    }
+    /**
+     * Default constructor, relies on the config for its agrument values 
+     * @throws IOException
+     */
+    public ZooKeeperServer() throws IOException {
+    	this(new File(ServerConfig.getDataDir()), 
+    			new File(ServerConfig.getDataLogDir()), 
+    			DEFAULT_TICK_TIME);
     }
 
     public static long getZxidFromName(String name, String prefix) {
@@ -297,6 +309,12 @@ public class ZooKeeperServer implements SessionExpirer {
         for (long session : deadSessions) {
             killSession(session);
         }
+//        try {
+//			JMXRegistry.register(new com.yahoo.zookeeper.jmx.server.ZooKeeperServer(this));
+//			JMXRegistry.register(new com.yahoo.zookeeper.jmx.server.DataTree(dataTree));
+//		} catch (Exception e) {
+//            ZooLog.logError("Failed to register DataTreeMBean "+e.getMessage());
+//		}
         // Make a clean snapshot
         snapshot();
     }
@@ -304,6 +322,7 @@ public class ZooKeeperServer implements SessionExpirer {
     public void loadData(InputArchive ia) throws IOException {
         sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
         dataTree = new DataTree();
+        
         int count = ia.readInt("count");
         while (count > 0) {
             long id = ia.readLong("id");
@@ -715,7 +734,7 @@ public class ZooKeeperServer implements SessionExpirer {
 
     ArrayList<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
 
-    private Factory serverCnxnFactory;
+    private NIOServerCnxn.Factory serverCnxnFactory;
 
     byte[] generatePasswd(long id) {
         Random r = new Random(id ^ superSecret);
@@ -835,11 +854,11 @@ public class ZooKeeperServer implements SessionExpirer {
     }
 
     
-    public void setServerCnxnFactory(Factory factory) {
+    public void setServerCnxnFactory(NIOServerCnxn.Factory factory) {
         this.serverCnxnFactory = factory;
     }
 
-    public Factory getServerCnxnFactory() {
+    public NIOServerCnxn.Factory getServerCnxnFactory() {
         return this.serverCnxnFactory;
     }
 

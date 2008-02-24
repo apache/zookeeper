@@ -39,42 +39,44 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * A SyncRequestProcessor is also spawn off to log proposals from the leader.
  */
 class FollowerZooKeeperServer extends ZooKeeperServer {
-    Follower follower;
+    private QuorumPeer self;
 
     CommitProcessor commitProcessor;
 
     SyncRequestProcessor syncProcessor;
-
-    long serverId;
 
     /**
      * @param port
      * @param dataDir
      * @throws IOException
      */
-    FollowerZooKeeperServer(long serverId, File dataDir, File dataLogDir,
-            Follower follower) throws IOException {
-        super(dataDir, dataLogDir, follower.self.tickTime);
-        this.serverId = serverId;
-        this.follower = follower;
+    FollowerZooKeeperServer(File dataDir, File dataLogDir,
+            QuorumPeer self) throws IOException {
+        super(dataDir, dataLogDir, self.tickTime);
+        this.self = self;
     }
 
-    protected void createSessionTracker() {
-        sessionTracker = new FollowerSessionTracker(this, sessionsWithTimeouts, this.serverId);
+    public Follower getFollower(){
+    	return self.follower;
     }
+    
+    protected void createSessionTracker() {
+		sessionTracker = new FollowerSessionTracker(this, sessionsWithTimeouts,
+				self.getId());
+	}
 
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         commitProcessor = new CommitProcessor(finalProcessor);
         firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
         syncProcessor = new SyncRequestProcessor(this,
-                new SendAckRequestProcessor(follower));
+                new SendAckRequestProcessor(getFollower()));
     }
 
     @Override
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,
             int sessionTimeout) throws IOException, InterruptedException {
-        follower.validateSession(cnxn, sessionId, sessionTimeout);
+    	getFollower().validateSession(cnxn, sessionId, sessionTimeout);
     }
 
     /**
@@ -89,7 +91,7 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
 
     @Override
     public long getServerId() {
-        return serverId;
+        return self.getId();
     }
 
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<Request>();
@@ -135,8 +137,7 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
     	 
     @Override
     public int getGlobalOutstandingLimit() {
-        return super.getGlobalOutstandingLimit()
-                / (follower.self.quorumPeers.size() - 1);
+        return super.getGlobalOutstandingLimit() / (self.getQuorumSize() - 1);
     }
 
     /**

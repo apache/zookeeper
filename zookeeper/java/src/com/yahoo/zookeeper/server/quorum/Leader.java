@@ -31,10 +31,8 @@ import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.zookeeper.server.FinalRequestProcessor;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.RequestProcessor;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
-import com.yahoo.zookeeper.ZooDefs.OpCode;
 
 /**
  * This class has the control logic for the Leader.
@@ -96,7 +94,7 @@ public class Leader {
 
     ServerSocket ss;
 
-    Leader(QuorumPeer self) throws IOException {
+    Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
         try {
             ss = new ServerSocket(self.myQuorumAddr.getPort());
@@ -105,6 +103,7 @@ public class Leader {
                     + self.myQuorumAddr.getPort());
             throw e;
         }
+        this.zk=zk;
     }
 
     /**
@@ -193,8 +192,6 @@ public class Leader {
      */
     void lead() throws IOException, InterruptedException {
         self.tick = 0;
-        zk = new LeaderZooKeeperServer(self.getId(), self.dataDir,
-                self.dataLogDir, this);
         zk.loadData();
         zk.startup();
         long epoch = self.getLastLoggedZxid() >> 32L;
@@ -294,8 +291,7 @@ public class Leader {
             return;
         }
 
-        ZooLog
-                .logException(new Exception("shutdown Leader! reason: "
+        ZooLog.logException(new Exception("shutdown Leader! reason: "
                         + reason));
         // NIO should not accept conenctions
         self.cnxnFactory.setZooKeeperServer(null);
