@@ -28,35 +28,36 @@ import java.util.Random;
 import java.util.Map.Entry;
 
 import com.yahoo.zookeeper.server.ZooLog;
+import com.yahoo.zookeeper.server.quorum.Vote;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 public class LeaderElection {
-    static public class Vote {
-        public Vote(long id, long zxid) {
-            this.id = id;
-            this.zxid = zxid;
-        }
-
-        public long id;
-
-        public long zxid;
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof Vote)) {
-                return false;
-            }
-            Vote other = (Vote) o;
-            return id == other.id && zxid == other.zxid;
-        }
-
-        @Override
-        public int hashCode() {
-            return (int) (id & zxid);
-        }
-
-    }
+    //static public class Vote {
+    //    public Vote(long id, long zxid) {
+    //        this.id = id;
+    //        this.zxid = zxid;
+    //    }
+    //
+    //    public long id;
+    //
+    //    public long zxid;
+    //
+    //    @Override
+    //    public boolean equals(Object o) {
+    //        if (!(o instanceof Vote)) {
+    //            return false;
+    //        }
+    //        Vote other = (Vote) o;
+    //        return id == other.id && zxid == other.zxid;
+    //    }
+    //
+    //    @Override
+    //    public int hashCode() {
+    //        return (int) (id & zxid);
+    //    }
+    //
+   // }
 
     QuorumPeer self;
 
@@ -166,12 +167,13 @@ public class LeaderElection {
                         continue;
                     }
                     long peerId = responseBuffer.getLong();
-                    server.id = peerId;
-                    Vote vote = new Vote(responseBuffer.getLong(),
+                    //if(server.id != peerId){
+                        Vote vote = new Vote(responseBuffer.getLong(),
                             responseBuffer.getLong());
-                    InetSocketAddress addr = (InetSocketAddress) responsePacket
+                        InetSocketAddress addr = (InetSocketAddress) responsePacket
                             .getSocketAddress();
-                    votes.put(addr, vote);
+                        votes.put(addr, vote);
+                    //}
                 } catch (IOException e) {
                     // Errors are okay, since hosts may be
                     // down
