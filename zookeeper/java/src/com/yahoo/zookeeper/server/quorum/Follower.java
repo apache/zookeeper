@@ -123,15 +123,21 @@ public class Follower {
         try {
             QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
             sock.setSoTimeout(self.tickTime * self.initLimit);
-            for (int tries = 0; tries < 3; tries++) {
+            for (int tries = 0; tries < 5; tries++) {
                 try {
+                    //sock = new Socket();
+                    //sock.setSoTimeout(self.tickTime * self.initLimit);
                     sock.connect(addr, self.tickTime * self.syncLimit);
                     sock.setTcpNoDelay(true);
                     break;
                 } catch (ConnectException e) {
                     ZooLog.logException(e);
-                    if (tries == 2) {
+                    if (tries == 4) {
                         throw e;
+                    }
+                    else{
+                        sock = new Socket();
+                        sock.setSoTimeout(self.tickTime * self.initLimit);
                     }
                 }
                 Thread.sleep(1000);

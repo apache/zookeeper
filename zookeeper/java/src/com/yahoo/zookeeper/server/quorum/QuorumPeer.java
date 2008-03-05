@@ -35,7 +35,7 @@ import com.yahoo.jute.InputArchive;
 import com.yahoo.zookeeper.server.NIOServerCnxn;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
-import com.yahoo.zookeeper.server.quorum.LeaderElection.Vote;
+import com.yahoo.zookeeper.server.quorum.Vote;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
 /**
