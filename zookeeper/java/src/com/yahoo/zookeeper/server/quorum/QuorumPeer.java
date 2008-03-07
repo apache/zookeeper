@@ -36,6 +36,8 @@ import com.yahoo.zookeeper.server.NIOServerCnxn;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.Vote;
+import com.yahoo.zookeeper.server.quorum.FastLeaderElection;
+import com.yahoo.zookeeper.server.quorum.QuorumCnxManager;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
 /**
@@ -242,18 +244,21 @@ public class QuorumPeer extends Thread {
     int clientPort;
 
     int electionAlg;
+    
+    int electionPort;
 
     NIOServerCnxn.Factory cnxnFactory;
 
     public QuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir,
-            File dataLogDir, int clientPort, int electionAlg, long myid,
-            int tickTime, int initLimit, int syncLimit) throws IOException {
+            File dataLogDir, int clientPort, int electionAlg, int electionPort,
+            long myid, int tickTime, int initLimit, int syncLimit) throws IOException {
         super("QuorumPeer");
         this.clientPort = clientPort;
         this.cnxnFactory = new NIOServerCnxn.Factory(clientPort, this);
         this.quorumPeers = quorumPeers;
         this.dataDir = dataDir;
         this.electionAlg = electionAlg;
+        this.electionPort = electionPort;
         this.dataLogDir = dataLogDir;
         this.myid = myid;
         this.tickTime = tickTime;
@@ -278,8 +283,8 @@ public class QuorumPeer extends Thread {
     public QuorumPeer() throws IOException {
     	// use quorum peer config to instantiate the class 
 		this(getServers(), new File(getDataDir()), new File(getDataLogDir()),
-				getClientPort(), getElectionAlg(), getServerId(),
-				getTickTime(), getInitLimit(), getSyncLimit());
+				getClientPort(), getElectionAlg(), getElectionPort(),
+				getServerId(), getTickTime(), getInitLimit(), getSyncLimit());
 	}
     public Follower follower;
 
@@ -300,21 +305,48 @@ public class QuorumPeer extends Thread {
         /*
          * Main loop
          */
+        Election le = null;
+        switch(electionAlg){
+        case 1:
+            le = new AuthFastLeaderElection(this, this.electionPort);
+            break;
+        case 2:
+            le = new AuthFastLeaderElection(this, this.electionPort, true);                break;
+        case 3:
+            le =
+                new FastLeaderElection(this,
+                        new QuorumCnxManager(this.electionPort));
+        }
+
         while (running) {
             switch (state) {
             case LOOKING:
                 try {
                     ZooLog.logWarn("LOOKING");
+                    long init, end, diff;
                     switch (electionAlg) {
+                    // Legacy algorithm
                     case 0:
+                       init = System.currentTimeMillis();
                         currentVote = new LeaderElection(this).lookForLeader();
+                        end = System.currentTimeMillis();
+                        diff = end - init;
+                        ZooLog.logWarn("Leader election latency: " + diff + " " + currentVote.id);
                         break;
-                    }
+                    // All other algorithms
+                    default:
+                        init = System.currentTimeMillis();
+                        if(le != null) currentVote = le.lookForLeader();
+                        end = System.currentTimeMillis();
+                        diff = end - init;
+                        ZooLog.logWarn("Leader election latency: " + diff);
+                        break;
+                    } 
                 } catch (Exception e) {
                     ZooLog.logException(e);
                     state = ServerState.LOOKING;
                 }
-                break;
+                break;            
             case FOLLOWING:
                 try {
                     ZooLog.logWarn("FOLLOWING");
