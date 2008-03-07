@@ -18,6 +18,7 @@ public class QuorumPeerConfig extends ServerConfig {
 	private int initLimit;
 	private int syncLimit;
 	private int electionAlg;
+	private int electionPort;
 	private ArrayList<QuorumServer> servers = null;
 	private long serverId;
 
@@ -49,6 +50,7 @@ public class QuorumPeerConfig extends ServerConfig {
 			int initLimit = 0;
 			int syncLimit = 0;
 			int electionAlg = 0;
+			int electionPort = 0;
 			for (Entry<Object, Object> entry : cfg.entrySet()) {
 				String key = entry.getKey().toString();
 				String value = entry.getValue().toString();
@@ -68,6 +70,8 @@ public class QuorumPeerConfig extends ServerConfig {
 					syncLimit = Integer.parseInt(value);
 				} else if (key.equals("electionAlg")) {
 					electionAlg = Integer.parseInt(value);
+				} else if (key.equals("electionPort")) {
+					electionPort = Integer.parseInt(value);
 				} else if (key.startsWith("server.")) {
 					int dot = key.indexOf('.');
 					long sid = Long.parseLong(key.substring(dot + 1));
@@ -117,6 +121,7 @@ public class QuorumPeerConfig extends ServerConfig {
 			conf.initLimit = initLimit;
 			conf.syncLimit = syncLimit;
 			conf.electionAlg = electionAlg;
+			conf.electionPort = electionPort;
 			conf.servers = servers;
 			if (servers.size() > 1) {
 				File myIdFile = new File(dataDir, "myid");
@@ -164,6 +169,11 @@ public class QuorumPeerConfig extends ServerConfig {
 		return ((QuorumPeerConfig)instance).electionAlg;
 	}
 
+	public static int getElectionPort() {
+		assert instance instanceof QuorumPeerConfig;
+		return ((QuorumPeerConfig)instance).electionPort;
+	}
+	
 	public static ArrayList<QuorumServer> getServers() {
 		assert instance instanceof QuorumPeerConfig;
 		return ((QuorumPeerConfig)instance).servers;
