@@ -18,6 +18,7 @@ package com.yahoo.zookeeper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -235,10 +236,16 @@ public class ClientCnxn {
     }
 
     WatcherEvent eventOfDeath = new WatcherEvent();
-
+    final static UncaughtExceptionHandler uncaughtExceptionHandler = new UncaughtExceptionHandler() {
+        public void uncaughtException(Thread t, Throwable e) {
+            ZooLog.logException(e, "from " + t.getName());
+        }};
+    
+    
     class EventThread extends Thread {
         EventThread() {
             super("EventThread");
+            setUncaughtExceptionHandler(uncaughtExceptionHandler);
             setDaemon(true);
         }
 
@@ -537,6 +544,7 @@ public class ClientCnxn {
         SendThread() {
             super("SendThread");
             zooKeeper.state = States.CONNECTING;
+            setUncaughtExceptionHandler(uncaughtExceptionHandler);
             setDaemon(true);
         }
 

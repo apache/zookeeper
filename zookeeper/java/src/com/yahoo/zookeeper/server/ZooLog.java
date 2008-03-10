@@ -90,7 +90,7 @@ public class ZooLog {
         System.out.flush();
     }
 
-    private static void logException(Exception e, String mess, String location) {
+    private static void logException(Throwable e, String mess, String location) {
         StringWriter sw = new StringWriter();
         sw.append(mess);
         sw.append(": ");
@@ -103,13 +103,13 @@ public class ZooLog {
         logError(sw.toString(), location);
     }
 
-    public static void logException(Exception e, String mess) {
+    public static void logException(Throwable e, String mess) {
         RuntimeException re = new RuntimeException();
         StackTraceElement ste = re.getStackTrace()[1];
         logException(e, mess, stackTrace2Location(ste));
     }
 
-    public static void logException(Exception e) {
+    public static void logException(Throwable e) {
         RuntimeException re = new RuntimeException();
         StackTraceElement ste = re.getStackTrace()[1];
         logException(e, "", stackTrace2Location(ste));
