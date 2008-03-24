@@ -105,7 +105,7 @@ import com.yahoo.zookeeper.server.DataTree;
 public class ZooKeeper {
     Watcher watcher;
 
-    enum States {
+    public enum States {
         CONNECTING, ASSOCIATING, CONNECTED, CLOSED, AUTH_FAILED;
 
         public boolean isAlive() {
