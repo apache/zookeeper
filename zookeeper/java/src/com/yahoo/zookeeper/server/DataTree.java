@@ -85,11 +85,11 @@ public class DataTree {
     }
 
     public int getNodeCount(){
-    	return nodes.size();
+        return nodes.size();
     }
     
     public int getWatchCount(){
-    	return dataWatches.size()+childWatches.size();
+        return dataWatches.size()+childWatches.size();
     }
     /**
      * This is a pointer to the root of the DataTree. It is the source of truth,
@@ -142,7 +142,7 @@ public class DataTree {
      * @return
      * @throws KeeperException
      */
-    private String createNode(String path, byte data[], ArrayList<ACL> acl,
+    public String createNode(String path, byte data[], ArrayList<ACL> acl,
             long ephemeralOwner, long zxid, long time) throws KeeperException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
@@ -179,11 +179,11 @@ public class DataTree {
             }
         }
         dataWatches.triggerWatch(path, Event.EventNodeCreated);
-        childWatches.triggerWatch(parentName, Event.EventNodeChildrenChanged);
+        childWatches.triggerWatch(parentName.equals("")?"/":parentName, Event.EventNodeChildrenChanged);
         return path;
     }
 
-    private void deleteNode(String path) throws KeeperException {
+    public void deleteNode(String path) throws KeeperException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
@@ -213,10 +213,10 @@ public class DataTree {
         ZooLog.logTextTraceMessage("childWatches.triggerWatch " + parentName,
                 ZooLog.EVENT_DELIVERY_TRACE_MASK);
         dataWatches.triggerWatch(path, Event.EventNodeDeleted);
-        childWatches.triggerWatch(parentName, Event.EventNodeChildrenChanged);
+        childWatches.triggerWatch(parentName.equals("")?"/":parentName, Event.EventNodeChildrenChanged);
     }
 
-    private Stat setData(String path, byte data[], int version, long zxid,
+    public Stat setData(String path, byte data[], int version, long zxid,
             long time) throws KeeperException {
         Stat s = new Stat();
         DataNode n = nodes.get(path);
@@ -281,7 +281,7 @@ public class DataTree {
         }
     }
 
-    private Stat setACL(String path, ArrayList<ACL> acl, int version)
+    public Stat setACL(String path, ArrayList<ACL> acl, int version)
             throws KeeperException {
         Stat stat = new Stat();
         DataNode n = nodes.get(path);
