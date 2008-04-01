@@ -25,21 +25,20 @@ import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.DataTree;
+import junit.framework.TestCase;
 
-public class DataTreeTest {
+public class DataTreeTest extends TestCase {
     DataTree dt;
     
-    @Before
     public void setUp() throws Exception {
         dt=new DataTree();
     }
 
-    @After
     public void tearDown() throws Exception {
         dt=null;
     }
 
-    @Test
+   
     public void testRootWatchTriggered() throws Exception {
         class MyWatcher implements Watcher{
             boolean fired=false;
