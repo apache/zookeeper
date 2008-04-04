@@ -28,6 +28,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.Record;
+import com.yahoo.zookeeper.server.util.Profiler;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
 /**
@@ -36,6 +37,7 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * until its log has been synced to disk.
  */
 public class SyncRequestProcessor extends Thread implements RequestProcessor {
+    static final int PADDING_TIMEOUT=1000;
     ZooKeeperServer zks;
 
     LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
@@ -98,6 +100,18 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
 
     LinkedList<FileOutputStream> streamsToFlush = new LinkedList<FileOutputStream>();
 
+    private long padLogFile(FileChannel fc,long fileSize) throws IOException{
+        long position = fc.position();
+        // We pad the file in 1M chunks to avoid syncing to
+        // write the new filesize.
+        if (position + 4096 >= fileSize) {
+            fileSize = fileSize + preAllocSize;
+            fill.position(0);
+            fc.write(fill, fileSize);
+        }
+        return fileSize;
+    }
+
     public void run() {
         try {
             long fileSize = 0;
@@ -143,14 +157,17 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                             logArchive = BinaryOutputArchive
                                     .getArchive(logStream);
                         }
-                        long position = fc.position();
-                        // We pad the file in 1M chunks to avoid syncing to
-                        // write the new filesize.
-                        if (position + 4096 >= fileSize) {
-                            fileSize = fileSize + preAllocSize;
-                            fill.position(0);
-                            fc.write(fill, fileSize);
-                        }
+                        final long fsize=fileSize;
+                        final FileChannel ffc=fc;
+                        fileSize = Profiler.profile(
+                            new Profiler.Operation<Long>() {
+                                public Long execute() throws Exception {
+                                    return SyncRequestProcessor.this
+                                            .padLogFile(ffc, fsize);
+                                }
+                            }, PADDING_TIMEOUT, 
+                            "Logfile padding exceeded time threshold"
+                        );
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         BinaryOutputArchive boa = BinaryOutputArchive
                                 .getArchive(baos);

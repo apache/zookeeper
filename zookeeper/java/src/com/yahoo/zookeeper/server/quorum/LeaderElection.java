@@ -32,33 +32,7 @@ import com.yahoo.zookeeper.server.quorum.Vote;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
 
-public class LeaderElection {
-    //static public class Vote {
-    //    public Vote(long id, long zxid) {
-    //        this.id = id;
-    //        this.zxid = zxid;
-    //    }
-    //
-    //    public long id;
-    //
-    //    public long zxid;
-    //
-    //    @Override
-    //    public boolean equals(Object o) {
-    //        if (!(o instanceof Vote)) {
-    //            return false;
-    //        }
-    //        Vote other = (Vote) o;
-    //        return id == other.id && zxid == other.zxid;
-    //    }
-    //
-    //    @Override
-    //    public int hashCode() {
-    //        return (int) (id & zxid);
-    //    }
-    //
-   // }
-
+public class LeaderElection implements Election  {
     QuorumPeer self;
 
     public LeaderElection(QuorumPeer self) {
@@ -166,7 +140,7 @@ public class LeaderElection {
                                 + " got " + recvedXid);
                         continue;
                     }
-                    long peerId = responseBuffer.getLong();
+                    responseBuffer.getLong();
                     //if(server.id != peerId){
                         Vote vote = new Vote(responseBuffer.getLong(),
                             responseBuffer.getLong());
@@ -186,9 +160,9 @@ public class LeaderElection {
                 if (result.winningCount > (self.quorumPeers.size() / 2)) {
                     self.currentVote = result.winner;
                     s.close();
-                    self.state = (self.currentVote.id == self.getId()) 
-							? ServerState.LEADING: ServerState.FOLLOWING;
-                    if (self.state == ServerState.FOLLOWING) {
+                    self.setPeerState((self.currentVote.id == self.getId()) 
+                            ? ServerState.LEADING: ServerState.FOLLOWING);
+                    if (self.getPeerState() == ServerState.FOLLOWING) {
                         Thread.sleep(100);
                     }
                     return self.currentVote;

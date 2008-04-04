@@ -16,18 +16,16 @@
 
 package com.yahoo.zookeeper.server.quorum;
 
-import java.lang.InterruptedException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.net.SocketAddress;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import com.yahoo.zookeeper.server.ZooLog;
 
@@ -285,7 +283,7 @@ class QuorumCnxManager extends Thread {
         
                 // Reading challenge
                 msgBuffer.position(0);
-                int numBytes = s.read(msgBuffer);
+                s.read(msgBuffer);
         
                 msgBuffer.position(0);
                 newChallenge = msgBuffer.getLong();

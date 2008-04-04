@@ -17,7 +17,16 @@
 package com.yahoo.zookeeper.server.quorum;
 
 
-import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.*;
+import static com.yahoo.zookeeper.server.ServerConfig.getClientPort;
+import static com.yahoo.zookeeper.server.ServerConfig.getDataDir;
+import static com.yahoo.zookeeper.server.ServerConfig.getDataLogDir;
+import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getElectionAlg;
+import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getElectionPort;
+import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getInitLimit;
+import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getServerId;
+import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getServers;
+import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getSyncLimit;
+import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getTickTime;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -29,6 +38,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.InputArchive;
@@ -89,13 +99,15 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * In addition to the zoo.cfg file. There is a file in the data directory called
  * "myid" that contains the server id as an ASCII decimal value.
  */
-public class QuorumPeer extends Thread {
-	/**
-	 * Create an instance of a quorum peer 
-	 */
-	public interface Factory{
-		public QuorumPeer create() throws IOException;
-	}
+public class QuorumPeer extends Thread implements QuorumStats.Provider {
+    /**
+     * Create an instance of a quorum peer 
+     */
+    public interface Factory{
+        public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory) throws IOException;
+        public NIOServerCnxn.Factory createConnectionFactory() throws IOException;
+    }
+    
     public static class QuorumServer {
         public QuorumServer(long id, InetSocketAddress addr) {
             this.id = id;
@@ -115,7 +127,7 @@ public class QuorumPeer extends Thread {
      */
     ArrayList<QuorumServer> quorumPeers;
     public int getQuorumSize(){
-    	return quorumPeers.size();
+        return quorumPeers.size();
     }
     /**
      * My id
@@ -127,7 +139,7 @@ public class QuorumPeer extends Thread {
      * get the id of this quorum peer.
      */
     public long getId() {
-    	return myid;
+        return myid;
     }
 
     /**
@@ -135,7 +147,7 @@ public class QuorumPeer extends Thread {
      */
     volatile Vote currentVote;
 
-    boolean running = true;
+    volatile boolean running = true;
 
     /**
      * The number of milliseconds of each tick
@@ -225,11 +237,23 @@ public class QuorumPeer extends Thread {
         }
     }
 
-    public ServerState state = ServerState.LOOKING;
-
+    private ServerState state = ServerState.LOOKING;
+    
+    public void setPeerState(ServerState newState){
+        state=newState;
+    }
+    
+    public ServerState getPeerState(){
+        return state;
+    }
+    
     DatagramSocket udpSocket;
 
-    InetSocketAddress myQuorumAddr;
+    private InetSocketAddress myQuorumAddr;
+    
+    public InetSocketAddress getQuorumAddress(){
+        return myQuorumAddr;
+    }
 
     /**
      * the directory where the snapshot is stored.
@@ -241,23 +265,19 @@ public class QuorumPeer extends Thread {
      */
     private File dataLogDir;
 
-    int clientPort;
+    Election electionAlg;
 
-    int electionAlg;
-    
     int electionPort;
 
     NIOServerCnxn.Factory cnxnFactory;
 
     public QuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir,
-            File dataLogDir, int clientPort, int electionAlg, int electionPort,
-            long myid, int tickTime, int initLimit, int syncLimit) throws IOException {
+            File dataLogDir, int electionAlg, int electionPort,long myid, int tickTime, 
+            int initLimit, int syncLimit,NIOServerCnxn.Factory cnxnFactory) throws IOException {
         super("QuorumPeer");
-        this.clientPort = clientPort;
-        this.cnxnFactory = new NIOServerCnxn.Factory(clientPort, this);
+        this.cnxnFactory = cnxnFactory;
         this.quorumPeers = quorumPeers;
         this.dataDir = dataDir;
-        this.electionAlg = electionAlg;
         this.electionPort = electionPort;
         this.dataLogDir = dataLogDir;
         this.myid = myid;
@@ -278,99 +298,125 @@ public class QuorumPeer extends Thread {
             udpSocket = new DatagramSocket(myQuorumAddr.getPort());
             new ResponderThread().start();
         }
+        this.electionAlg = createElectionAlgorithm(electionAlg);
+        QuorumStats.getInstance().setStatsProvider(this);
     }
 
-    public QuorumPeer() throws IOException {
-    	// use quorum peer config to instantiate the class 
-		this(getServers(), new File(getDataDir()), new File(getDataLogDir()),
-				getClientPort(), getElectionAlg(), getElectionPort(),
-				getServerId(), getTickTime(), getInitLimit(), getSyncLimit());
-	}
+    /**
+     * This constructor is only used by the existing unit test code.
+     */
+    public QuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir,
+            File dataLogDir, int clientPort, int electionAlg, int electionPort,
+            long myid, int tickTime, int initLimit, int syncLimit) throws IOException {
+        this(quorumPeers,dataDir,dataLogDir,electionAlg,electionPort,myid,tickTime,
+                initLimit,syncLimit,new NIOServerCnxn.Factory(clientPort));
+    }
+    /**
+     *  The constructor uses the quorum peer config to instantiate the class
+     */
+    public QuorumPeer(NIOServerCnxn.Factory cnxnFactory) throws IOException {
+        this(getServers(), new File(getDataDir()), new File(getDataLogDir()),
+                getElectionAlg(), getElectionPort(),getServerId(),getTickTime(), 
+                getInitLimit(), getSyncLimit(),cnxnFactory);
+    }
+    
     public Follower follower;
-
     public Leader leader;
 
-    protected Follower makeFollower() throws IOException {
-		return new Follower(this, new FollowerZooKeeperServer(dataDir,
-				dataLogDir, this));
-	}
+    protected Follower makeFollower(File dataDir,File dataLogDir) throws IOException {
+        return new Follower(this, new FollowerZooKeeperServer(dataDir,
+                dataLogDir, this,new ZooKeeperServer.BasicDataTreeBuilder()));
+    }
 
-	protected Leader makeLeader() throws IOException {
-		return new Leader(this, new LeaderZooKeeperServer(dataDir, dataLogDir,
-				this));
-	}
+    protected Leader makeLeader(File dataDir,File dataLogDir) throws IOException {
+        return new Leader(this, new LeaderZooKeeperServer(dataDir, dataLogDir,
+                this,new ZooKeeperServer.BasicDataTreeBuilder()));
+    }
     
-    public void run() {
-
-        /*
-         * Main loop
-         */
-        Election le = null;
-        switch(electionAlg){
+    private Election createElectionAlgorithm(int electionAlgorithm){
+        Election le=null;
+        //TODO: use a factory rather than a switch
+        switch (electionAlgorithm) {
+        case 0:
+            // will create a new instance for each run of the protocol
+            break;
         case 1:
             le = new AuthFastLeaderElection(this, this.electionPort);
             break;
         case 2:
-            le = new AuthFastLeaderElection(this, this.electionPort, true);                break;
+            le = new AuthFastLeaderElection(this, this.electionPort, true); 
+            break;
         case 3:
-            le =
-                new FastLeaderElection(this,
+            le = new FastLeaderElection(this,
                         new QuorumCnxManager(this.electionPort));
+        default:
+            assert false;
         }
+        return le;       
+    }
+    
+    protected Election makeLEStrategy(){
+        if(electionAlg==null)
+            return new LeaderElection(this);
+        return electionAlg;
+    }
+    
+    synchronized protected void setLeader(Leader newLeader){
+        leader=newLeader;
+    }
 
+    synchronized protected void setFollower(Follower newFollower){
+        follower=newFollower;
+    }
+    
+    synchronized public ZooKeeperServer getActiveServer(){
+        if(leader!=null)
+            return leader.zk;
+        else if(follower!=null)
+            return follower.zk;
+        return null;
+    }
+    
+    public void run() {
+        /*
+         * Main loop
+         */
         while (running) {
             switch (state) {
             case LOOKING:
                 try {
                     ZooLog.logWarn("LOOKING");
-                    long init, end, diff;
-                    switch (electionAlg) {
-                    // Legacy algorithm
-                    case 0:
-                       init = System.currentTimeMillis();
-                        currentVote = new LeaderElection(this).lookForLeader();
-                        end = System.currentTimeMillis();
-                        diff = end - init;
-                        ZooLog.logWarn("Leader election latency: " + diff + " " + currentVote.id);
-                        break;
-                    // All other algorithms
-                    default:
-                        init = System.currentTimeMillis();
-                        if(le != null) currentVote = le.lookForLeader();
-                        end = System.currentTimeMillis();
-                        diff = end - init;
-                        ZooLog.logWarn("Leader election latency: " + diff);
-                        break;
-                    } 
+                    currentVote = makeLEStrategy().lookForLeader();
                 } catch (Exception e) {
                     ZooLog.logException(e);
                     state = ServerState.LOOKING;
                 }
-                break;            
+                break;
             case FOLLOWING:
                 try {
                     ZooLog.logWarn("FOLLOWING");
-                    follower = makeFollower();
+                    setFollower(makeFollower(dataDir,dataLogDir));
                     follower.followLeader();
                 } catch (Exception e) {
                     ZooLog.logException(e);
                 } finally {
                     follower.shutdown();
-                    follower = null;
+                    setFollower(null);
                     state = ServerState.LOOKING;
                 }
                 break;
             case LEADING:
                 ZooLog.logWarn("LEADING");
                 try {
-                    leader = makeLeader();
+                    setLeader(makeLeader(dataDir,dataLogDir));
                     leader.lead();
-                    leader = null;
+                    setLeader(null);
                 } catch (Exception e) {
                     ZooLog.logException(e);
                 } finally {
                     if (leader != null) {
                         leader.shutdown("Forcing shutdown");
+                        setLeader(null);
                     }
                     state = ServerState.LOOKING;
                 }
@@ -455,31 +501,70 @@ public class QuorumPeer extends Thread {
     }
 
     public static void runPeer(QuorumPeer.Factory qpFactory) {
-		try {
-			QuorumPeer self = qpFactory.create();
-			self.start();
-			self.join();
-		} catch (Exception e) {
-			ZooLog.logException(e);
-		}
-		System.exit(2);
-	}
+        try {
+            QuorumStats.registerAsConcrete();
+            QuorumPeer self = qpFactory.create(qpFactory.createConnectionFactory());
+            self.start();
+            self.join();
+        } catch (Exception e) {
+            ZooLog.logException(e);
+        }
+        System.exit(2);
+    }
     
+    public String[] getQuorumPeers() {
+        List<String> l = new ArrayList<String>();
+        synchronized (this) {
+            if (leader != null) {
+                synchronized (leader.followers) {
+                    for (FollowerHandler fh : leader.followers) {
+                        if (fh.s == null)
+                            continue;
+                        String s = fh.s.getRemoteSocketAddress().toString();
+                        if (leader.isFollowerSynced(fh))
+                            s += "*";
+                        l.add(s);
+                    }
+                }
+            } else if (follower != null) {
+                l.add(follower.sock.getRemoteSocketAddress().toString());
+            }
+        }
+        return l.toArray(new String[0]);
+    }
+
+    public String getServerState() {
+        switch (state) {
+        case LOOKING:
+            return QuorumStats.Provider.LOOKING_STATE;
+        case LEADING:
+            return QuorumStats.Provider.LEADING_STATE;
+        case FOLLOWING:
+            return QuorumStats.Provider.FOLLOWING_STATE;
+        }
+        return QuorumStats.Provider.UNKNOWN_STATE;
+    }
+
     public static void main(String args[]) {
-		if (args.length == 2) {
-			ZooKeeperServer.main(args);
-			return;
-		}
-		QuorumPeerConfig.parse(args);
-		if (!QuorumPeerConfig.isStandalone()) {
-			runPeer(new QuorumPeer.Factory() {
-				public QuorumPeer create() throws IOException {
-					return new QuorumPeer();
-				}
-			});
-		}else{
-			// there is only server in the quorum -- run as standalone
-			ZooKeeperServer.main(args);
-		}
-	}
+        if (args.length == 2) {
+            ZooKeeperServer.main(args);
+            return;
+        }
+        QuorumPeerConfig.parse(args);
+        if (!QuorumPeerConfig.isStandalone()) {
+            runPeer(new QuorumPeer.Factory() {
+                public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory) 
+                        throws IOException {
+                    return new QuorumPeer(cnxnFactory);
+                }
+                public NIOServerCnxn.Factory createConnectionFactory()
+                        throws IOException {
+                    return new NIOServerCnxn.Factory(getClientPort());
+                }
+            });
+        }else{
+            // there is only server in the quorum -- run as standalone
+            ZooKeeperServer.main(args);
+        }
+    }
 }

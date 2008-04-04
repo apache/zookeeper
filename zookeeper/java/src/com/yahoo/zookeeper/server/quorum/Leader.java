@@ -22,8 +22,8 @@ import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -32,7 +32,6 @@ import com.yahoo.zookeeper.server.FinalRequestProcessor;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.RequestProcessor;
 import com.yahoo.zookeeper.server.ZooLog;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 /**
  * This class has the control logic for the Leader.
@@ -92,15 +91,21 @@ public class Leader {
         }
     }
 
+    boolean isFollowerSynced(FollowerHandler follower){
+        synchronized (forwardingFollowers) {
+            return forwardingFollowers.contains(follower);
+        }        
+    }
+    
     ServerSocket ss;
 
     Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
         try {
-            ss = new ServerSocket(self.myQuorumAddr.getPort());
+            ss = new ServerSocket(self.getQuorumAddress().getPort());
         } catch (BindException e) {
             ZooLog.logError("Couldn't bind to port "
-                    + self.myQuorumAddr.getPort());
+                    + self.getQuorumAddress().getPort());
             throw e;
         }
         this.zk=zk;
@@ -232,10 +237,9 @@ public class Leader {
                         + " followers, only synced with "
                         + newLeaderProposal.ackCount);
                 if (followers.size() >= self.quorumPeers.size() / 2) {
-                    ZooLog
-                            .logWarn("Enough followers present. Perhaps the initTicks need to be increased.");
+                    ZooLog.logWarn("Enough followers present. "+
+                            "Perhaps the initTicks need to be increased.");
                 }
-                self.state = ServerState.LOOKING;
                 return;
             }
             Thread.sleep(self.tickTime);
@@ -273,8 +277,6 @@ public class Leader {
                         + (self.quorumPeers.size() / 2));
                 // make sure the order is the same!
                 // the leader goes to looking
-                self.state = ServerState.LOOKING;
-
                 return;
             }
             tickSkip = !tickSkip;
@@ -457,9 +459,9 @@ public class Leader {
         sendPacket(qp);
                
         if(pendingSyncs.containsKey(zxid)){
-        	sendSync(syncHandler.get(pendingSyncs.get(zxid).sessionId), pendingSyncs.get(zxid));
-        	syncHandler.remove(pendingSyncs.get(zxid));
-        	pendingSyncs.remove(zxid);
+            sendSync(syncHandler.get(pendingSyncs.get(zxid).sessionId), pendingSyncs.get(zxid));
+            syncHandler.remove(pendingSyncs.get(zxid));
+            pendingSyncs.remove(zxid);
         }
     }
 
@@ -472,23 +474,23 @@ public class Leader {
      * @return the proposal that is queued to send to all the members
      */
     public Proposal propose(Request request) {
-    	
-    	
-    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    	BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-    	try {
-    		request.hdr.serialize(boa, "hdr");
-    		if (request.txn != null) {
-    			request.txn.serialize(boa, "txn");
-    		}
-    		baos.close();
-    	} catch (IOException e) {
-    		// This really should be impossible
-    		ZooLog.logException(e);
-    	}
-    	QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, baos
+        
+        
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        try {
+            request.hdr.serialize(boa, "hdr");
+            if (request.txn != null) {
+                request.txn.serialize(boa, "txn");
+            }
+            baos.close();
+        } catch (IOException e) {
+            // This really should be impossible
+            ZooLog.logException(e);
+        }
+        QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, baos
                 .toByteArray(), null);
-    	
+        
         Proposal p = new Proposal();
         p.packet = pp;
         p.request = request;
@@ -508,14 +510,14 @@ public class Leader {
      */
     
     public void processSync(Request r){
-    	if(outstandingProposals.isEmpty()){
-    		ZooLog.logWarn("No outstanding proposal");
-    		sendSync(syncHandler.get(r.sessionId), r);
-    			syncHandler.remove(r.sessionId);
-    	}
-    	else{
-    		pendingSyncs.put(lastProposed, r);
-    	}
+        if(outstandingProposals.isEmpty()){
+            ZooLog.logWarn("No outstanding proposal");
+            sendSync(syncHandler.get(r.sessionId), r);
+                syncHandler.remove(r.sessionId);
+        }
+        else{
+            pendingSyncs.put(lastProposed, r);
+        }
     }
         
     /**
@@ -526,7 +528,7 @@ public class Leader {
      */
         
     synchronized public void setSyncHandler(FollowerHandler f, long s){
-    	syncHandler.put(s, f);
+        syncHandler.put(s, f);
     }
             
     /**
@@ -537,8 +539,8 @@ public class Leader {
      */
             
     public void sendSync(FollowerHandler f, Request r){
-    	QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
-    	f.queuePacket(qp);
+        QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
+        f.queuePacket(qp);
     }
                 
     /**

@@ -28,7 +28,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-import com.yahoo.zookeeper.server.quorum.FollowerHandler;
 import com.yahoo.zookeeper.server.quorum.QuorumPacket;
 
 /**
@@ -136,6 +135,8 @@ public class ZooLog {
     final static public long SERVER_PING_TRACE_MASK = 1 << 7;
 
     final static public long WARNING_TRACE_MASK = 1 << 8;
+
+    final static public long JMX_TRACE_MASK = 1 << 9;
 
     static long binaryTraceMask = CLIENT_REQUEST_TRACE_MASK
             | SERVER_PACKET_TRACE_MASK | SESSION_TRACE_MASK

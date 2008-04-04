@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.Channel;
@@ -30,6 +29,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -40,6 +40,7 @@ import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.KeeperException;
+import com.yahoo.zookeeper.Version;
 import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.data.Id;
@@ -50,8 +51,7 @@ import com.yahoo.zookeeper.proto.ReplyHeader;
 import com.yahoo.zookeeper.proto.RequestHeader;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.auth.AuthenticationProvider;
-import com.yahoo.zookeeper.server.quorum.FollowerHandler;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer;
+import com.yahoo.zookeeper.server.auth.ProviderRegistry;
 
 /**
  * This class handles communication with clients using NIO. There is one per
@@ -65,31 +65,16 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
         Selector selector = Selector.open();
 
-        int packetsSent;
-
-        int packetsReceived;
+        /**
+         * We use this buffer to do efficient socket I/O. Since there is a single
+         * sender thread per NIOServerCnxn instance, we can use a member variable to
+         * only allocate it once.
+        */
+        ByteBuffer directBuffer = ByteBuffer.allocateDirect(64 * 1024);
 
         HashSet<NIOServerCnxn> cnxns = new HashSet<NIOServerCnxn>();
 
-        QuorumPeer self;
-
-        long avgLatency;
-
-        long maxLatency;
-
-        long minLatency = 99999999;
-
         int outstandingLimit = 1;
-
-        void setStats(long latency, long avg) {
-            this.avgLatency = avg;
-            if (latency < minLatency) {
-                minLatency = latency;
-            }
-            if (latency > maxLatency) {
-                maxLatency = latency;
-            }
-        }
 
         public Factory(int port) throws IOException {
             super("NIOServerCxn.Factory");
@@ -99,11 +84,6 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             ss.configureBlocking(false);
             ss.register(selector, SelectionKey.OP_ACCEPT);
             start();
-        }
-
-        public Factory(int port, QuorumPeer self) throws IOException {
-            this(port);
-            this.self = self;
         }
 
         public void startup(ZooKeeperServer zks) throws IOException,
@@ -123,15 +103,20 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         }
         
         public InetSocketAddress getLocalAddress(){
-        	return (InetSocketAddress)ss.socket().getLocalSocketAddress();
+            return (InetSocketAddress)ss.socket().getLocalSocketAddress();
         }
-        
+
         private void addCnxn(NIOServerCnxn cnxn) {
             synchronized (cnxns) {
                 cnxns.add(cnxn);
             }
         }
 
+        protected NIOServerCnxn createConnection(SocketChannel sock,
+                SelectionKey sk) throws IOException {
+            return new NIOServerCnxn(zks, sock, sk, this);
+        }
+        
         public void run() {
             while (!ss.socket().isClosed()) {
                 try {
@@ -140,15 +125,17 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     synchronized (this) {
                         selected = selector.selectedKeys();
                     }
-                    for (SelectionKey k : selected) {
+                    ArrayList<SelectionKey> selectedList = new ArrayList<SelectionKey>(
+                            selected);
+                    Collections.shuffle(selectedList);
+                    for (SelectionKey k : selectedList) {
                         if ((k.readyOps() & SelectionKey.OP_ACCEPT) != 0) {
                             SocketChannel sc = ((ServerSocketChannel) k
                                     .channel()).accept();
                             sc.configureBlocking(false);
                             SelectionKey sk = sc.register(selector,
                                     SelectionKey.OP_READ);
-                            NIOServerCnxn cnxn = new NIOServerCnxn(zks, sc, sk,
-                                    this);
+                            NIOServerCnxn cnxn = createConnection(sc, sk);
                             sk.attach(cnxn);
                             addCnxn(cnxn);
                         } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
@@ -196,6 +183,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 clear();
                 this.interrupt();
                 this.join();
+            } catch (InterruptedException e) {
             } catch (Exception e) {
                 ZooLog.logException(e);
             }
@@ -246,10 +234,6 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     int sessionTimeout;
 
-    int packetsSent;
-
-    int packetsReceived;
-
     ArrayList<Id> authInfo = new ArrayList<Id>();
 
     LinkedList<Request> outstanding = new LinkedList<Request>();
@@ -288,14 +272,14 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     if (incomingBuffer == lenBuffer) {
                         readLength(k);
                     } else if (!initialized) {
-                        packetsReceived++;
-                        factory.packetsReceived++;
+                        stats.packetsReceived++;
+                        ServerStats.getInstance().incrementPacketsReceived();
                         readConnectRequest();
                         lenBuffer.clear();
                         incomingBuffer = lenBuffer;
                     } else {
-                        packetsReceived++;
-                        factory.packetsReceived++;
+                        stats.packetsReceived++;
+                        ServerStats.getInstance().incrementPacketsReceived();
                         readRequest();
                         lenBuffer.clear();
                         incomingBuffer = lenBuffer;
@@ -309,22 +293,68 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 if (outgoingBuffers.size() > 0) {
                     // ZooLog.logTextTraceMessage("sk " + k + " is valid: " +
                     // k.isValid(), ZooLog.CLIENT_DATA_PACKET_TRACE_MASK);
-                    ByteBuffer bbs[] = outgoingBuffers
-                            .toArray(new ByteBuffer[0]);
-                    // Write as much as we can
-                    long i = sock.write(bbs);
+
+                    /*
+                     * This is going to reset the buffer position to 0 and the
+                     * limit to the size of the buffer, so that we can fill it
+                     * with data from the non-direct buffers that we need to
+                     * send.
+                     */
+                    ByteBuffer directBuffer = factory.directBuffer;
+                    directBuffer.clear();
+
+                    for (ByteBuffer b : outgoingBuffers) {
+                        if (directBuffer.remaining() < b.remaining()) {
+                            /*
+                             * When we call put later, if the directBuffer is to
+                             * small to hold everything, nothing will be copied,
+                             * so we've got to slice the buffer if it's too big.
+                             */
+                            b = (ByteBuffer) b.slice().limit(
+                                    directBuffer.remaining());
+                        }
+                        /*
+                         * put() is going to modify the positions of both
+                         * buffers, put we don't want to change the position of
+                         * the source buffers (we'll do that after the send, if
+                         * needed), so we save and reset the position after the
+                         * copy
+                         */
+                        int p = b.position();
+                        directBuffer.put(b);
+                        b.position(p);
+                        if (directBuffer.remaining() == 0) {
+                            break;
+                        }
+                    }
+                    /*
+                     * Do the flip: limit becomes position, position gets set to
+                     * 0. This sets us up for the write.
+                     */
+                    directBuffer.flip();
+
+                    int sent = sock.write(directBuffer);
                     ByteBuffer bb;
+
                     // Remove the buffers that we have sent
-                    while (outgoingBuffers.size() > 0
-                            && (bb = outgoingBuffers.peek()).remaining() == 0) {
+                    while (outgoingBuffers.size() > 0) {
+                        bb = outgoingBuffers.peek();
                         if (bb == closeConn) {
                             throw new IOException("closing");
                         }
-                        if (bb.remaining() > 0) {
+                        int left = bb.remaining() - sent;
+                        if (left > 0) {
+                            /*
+                             * We only partially sent this buffer, so we update
+                             * the position and exit the loop.
+                             */
+                            bb.position(bb.position() + sent);
                             break;
                         }
-                        packetsSent++;
-                        factory.packetsSent++;
+                        stats.packetsSent++;
+                        /* We've sent the whole buffer, so drop the buffer */
+                        sent -= bb.remaining();
+                        ServerStats.getInstance().incrementPacketsSent();
                         outgoingBuffers.remove();
                     }
                     // ZooLog.logTextTraceMessage("after send,
@@ -340,8 +370,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         sk.interestOps(sk.interestOps()
                                 & (~SelectionKey.OP_WRITE));
                     } else {
-                        sk
-                                .interestOps(sk.interestOps()
+                        sk.interestOps(sk.interestOps()
                                         | SelectionKey.OP_WRITE);
                     }
                 }
@@ -368,7 +397,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             AuthPacket authPacket = new AuthPacket();
             ZooKeeperServer.byteBuffer2Record(incomingBuffer, authPacket);
             String scheme = authPacket.getScheme();
-            AuthenticationProvider ap = zk.authenticationProviders.get(scheme);
+            AuthenticationProvider ap = ProviderRegistry.getProvider(scheme);
             if (ap == null
                     || ap.handleAuthentication(this, authPacket.getAuth()) != KeeperException.Code.Ok) {
                 if (ap == null)
@@ -442,7 +471,6 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             throw new IOException("We are out of date");
         }
         sessionTimeout = connReq.getTimeOut();
-        sessionId = connReq.getSessionId();
         byte passwd[] = connReq.getPasswd();
         if (sessionTimeout < zk.tickTime * 2) {
             sessionTimeout = zk.tickTime * 2;
@@ -453,7 +481,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         // We don't want to receive any packets until we are sure that the
         // session is setup
         disableRecv();
-        if (sessionId != 0) {
+        if (connReq.getSessionId() != 0) {
+            setSessionId(connReq.getSessionId());
             zk.reopenSession(this, sessionId, passwd, sessionTimeout);
             ZooLog.logWarn("Renewing session " + Long.toHexString(sessionId));
         } else {
@@ -532,66 +561,22 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 return;
             } else if (len == statCmd) {
                 StringBuffer sb = new StringBuffer();
-                sb.append("Clients:\n");
-                for (SelectionKey sk : factory.selector.keys()) {
-                    Channel channel = sk.channel();
-                    if (channel instanceof SocketChannel) {
-                        NIOServerCnxn cnxn = (NIOServerCnxn) sk.attachment();
-                        sb.append(" "
-                                + ((SocketChannel) channel).socket()
-                                        .getRemoteSocketAddress() + "["
-                                + Integer.toHexString(sk.interestOps())
-                                + "](queued=" + cnxn.outstandingRequests
-                                + ",recved=" + cnxn.packetsReceived + ",sent="
-                                + cnxn.packetsSent + ")\n");
-                    }
-                }
-                sb.append("\n");
-                sb.append("Latency min/avg/max: " + factory.minLatency + "/"
-                        + factory.avgLatency + "/" + factory.maxLatency + "\n");
-                sb.append("Received: " + factory.packetsReceived + "\n");
-                sb.append("Sent: " + factory.packetsSent + "\n");
-                if (zk != null) {
-                    sb.append("Outstanding: " + zk.getInProcess() + "\n");
-                    sb.append("Zxid: "
-                            + Long.toHexString(zk.dataTree.lastProcessedZxid)
-                            + "\n");
-                }
-                // sb.append("Done: " + ZooKeeperServer.getRequests() + "\n");
-                if (factory.self == null) {
-                    sb.append("Mode: standalone\n");
-                } else {
-                    switch (factory.self.state) {
-                    case LOOKING:
-                        sb.append("Mode: leaderelection\n");
-                        break;
-                    case LEADING:
-                        sb.append("Mode: leading\n");
-                        sb.append("Followers:");
-                        for (FollowerHandler fh : factory.self.leader.followers) {
-                            if (fh.s == null) {
-                                continue;
-                            }
-                            sb.append(" ");
-                            sb.append(fh.s.getRemoteSocketAddress());
-                            if (factory.self.leader.forwardingFollowers
-                                    .contains(fh)) {
-                                sb.append("*");
-                            }
-                        }
-                        sb.append("\n");
-                        break;
-                    case FOLLOWING:
-                        sb.append("Mode: following\n");
-                        sb.append("Leader: ");
-                        Socket s = factory.self.follower.sock;
-                        if (s == null) {
-                            sb.append("not connected\n");
-                        } else {
-                            sb.append(s.getRemoteSocketAddress() + "\n");
+                if(zk!=null){
+                    sb.append("Zookeeper version: ").append(Version.getFullVersion())
+                        .append("\n");
+                    sb.append("Clients:\n");
+                    synchronized(factory.cnxns){
+                        for(NIOServerCnxn c : factory.cnxns){
+                            sb.append(c.getStats().toString());
                         }
                     }
-                }
+                    sb.append("\n");
+                    sb.append(ServerStats.getInstance().toString());
+                    sb.append("Node count: ").append(zk.dataTree.getNodeCount()).
+                        append("\n");
+                }else
+                    sb.append("ZooKeeperServer not running\n");
+
                 sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
@@ -766,7 +751,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         try {
             ConnectResponse rsp = new ConnectResponse(0, valid ? sessionTimeout
                     : 0, valid ? sessionId : 0, // send 0 if session is no
-                                                // longer valid
+                    // longer valid
                     valid ? zk.generatePasswd(sessionId) : new byte[16]);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
@@ -813,7 +798,40 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         return (InetSocketAddress) sock.socket().getRemoteSocketAddress();
     }
 
-    public void setStats(long latency, long avg) {
-        factory.setStats(latency, avg);
+    private class CnxnStats implements ServerCnxn.Stats{
+        long packetsReceived;
+        long packetsSent;
+        
+        /**
+         * The number of requests that have been submitted but not yet responded to.
+         */
+        public long getOutstandingRequests() {
+            return outstandingRequests;
+        }
+        public long getPacketsReceived() {
+            return packetsReceived;
+        }
+        public long getPacketsSent() {
+            return packetsSent;
+        }
+        public String toString(){
+            StringBuilder sb=new StringBuilder();
+            Channel channel = sk.channel();
+            if (channel instanceof SocketChannel) {
+                sb.append(" ").append(((SocketChannel)channel).socket()
+                                .getRemoteSocketAddress())
+                  .append("[").append(Integer.toHexString(sk.interestOps()))
+                  .append("](queued=").append(getOutstandingRequests())
+                  .append(",recved=").append(getPacketsReceived())
+                  .append(",sent=").append(getPacketsSent()).append(")\n");
+            }
+            return sb.toString();
+        }
     }
+
+    private CnxnStats stats=new CnxnStats();
+    public Stats getStats() {
+        return stats;
+    }
+
 }

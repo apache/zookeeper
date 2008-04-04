@@ -120,9 +120,9 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                             nextPending = request;
                             break;
                         case OpCode.sync:
-                        	nextPending = request;
-                        	pendingSyncs.add(request);
-                        	break;
+                            nextPending = request;
+                            pendingSyncs.add(request);
+                            break;
                         default:
                             toProcess.add(request);
                         }

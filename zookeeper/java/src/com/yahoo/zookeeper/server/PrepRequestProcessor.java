@@ -36,9 +36,9 @@ import com.yahoo.zookeeper.proto.CreateRequest;
 import com.yahoo.zookeeper.proto.DeleteRequest;
 import com.yahoo.zookeeper.proto.SetACLRequest;
 import com.yahoo.zookeeper.proto.SetDataRequest;
-import com.yahoo.zookeeper.proto.SyncRequest;
 import com.yahoo.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import com.yahoo.zookeeper.server.auth.AuthenticationProvider;
+import com.yahoo.zookeeper.server.auth.ProviderRegistry;
 import com.yahoo.zookeeper.txn.CreateSessionTxn;
 import com.yahoo.zookeeper.txn.CreateTxn;
 import com.yahoo.zookeeper.txn.DeleteTxn;
@@ -140,7 +140,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         && id.getId().equals("anyone")) {
                     return;
                 }
-                AuthenticationProvider ap = zks.authenticationProviders.get(id
+                AuthenticationProvider ap = ProviderRegistry.getProvider(id
                         .getScheme());
                 if (ap != null) {
                     for (Id authId : ids) {
@@ -354,10 +354,13 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             ZooLog.logWarn("*********************************" + request);
             StringBuffer sb = new StringBuffer();
             ByteBuffer bb = request.request;
-            bb.rewind();
-            while (bb.hasRemaining()) {
-                sb.append(Integer.toHexString(bb.get() & 0xff));
-            }
+            if(bb!=null){
+                bb.rewind();
+                while (bb.hasRemaining()) {
+                    sb.append(Integer.toHexString(bb.get() & 0xff));
+                }
+            }else
+                sb.append("request buffer is null");
             ZooLog.logWarn(sb.toString());
             ZooLog.logException(e);
             if (txnHeader != null) {
@@ -398,8 +401,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     toAdd = new LinkedList<ACL>();
                 }
                 for (Id cid : authInfo) {
-                    AuthenticationProvider ap = zks.authenticationProviders
-                            .get(cid.getScheme());
+                    AuthenticationProvider ap = ProviderRegistry.getProvider(cid.getScheme());
                     if (ap == null) {
                         ZooLog.logError("Missing AuthenticationProvider for "
                                 + cid.getScheme());
@@ -408,7 +410,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     }
                 }
             } else {
-                AuthenticationProvider ap = zks.authenticationProviders.get(id
+                AuthenticationProvider ap = ProviderRegistry.getProvider(id
                         .getScheme());
                 if (ap == null) {
                     return false;

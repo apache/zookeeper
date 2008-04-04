@@ -58,10 +58,6 @@ import com.yahoo.zookeeper.txn.ErrorTxn;
 public class FinalRequestProcessor implements RequestProcessor {
     ZooKeeperServer zks;
 
-    long avg;
-
-    long count;
-
     public FinalRequestProcessor(ZooKeeperServer zks) {
         this.zks = zks;
     }
@@ -155,11 +151,11 @@ public class FinalRequestProcessor implements RequestProcessor {
                 err = rc.err;
                 break;
             case OpCode.sync:
-            	SyncRequest syncRequest = new SyncRequest();
-            	ZooKeeperServer.byteBuffer2Record(request.request,
-            			syncRequest);
-            	rsp = new SyncResponse(syncRequest.getPath());
-            	break;
+                SyncRequest syncRequest = new SyncRequest();
+                ZooKeeperServer.byteBuffer2Record(request.request,
+                        syncRequest);
+                rsp = new SyncResponse(syncRequest.getPath());
+                break;
             case OpCode.exists:
                 // TODO we need to figure out the security requirement for this!
                 ExistsRequest existsRequest = new ExistsRequest();
@@ -229,10 +225,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             err = Code.MarshallingError;
         }
         ReplyHeader hdr = new ReplyHeader(request.cxid, request.zxid, err);
-        long latency = System.currentTimeMillis() - request.createTime;
-        count++;
-        avg += latency;
-        request.cnxn.setStats(latency, (avg / count));
+        ServerStats.getInstance().updateLatency(request.createTime);
         try {
             request.cnxn.sendResponse(hdr, rsp, "response");
         } catch (IOException e) {

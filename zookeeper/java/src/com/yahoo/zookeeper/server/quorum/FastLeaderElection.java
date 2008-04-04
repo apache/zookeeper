@@ -17,23 +17,16 @@
 
 package com.yahoo.zookeeper.server.quorum;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.Random;
 
 import com.yahoo.zookeeper.server.ZooLog;
-import com.yahoo.zookeeper.server.quorum.Election;
-import com.yahoo.zookeeper.server.quorum.Vote;
-import com.yahoo.zookeeper.server.quorum.QuorumCnxManager;
 import com.yahoo.zookeeper.server.quorum.QuorumCnxManager.Message;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -220,7 +213,7 @@ public class FastLeaderElection implements Election {
             			}
 
             			//InetAddress addr = (InetAddress) responsePacket.getSocketAddress();
-            			if(self.state == QuorumPeer.ServerState.LOOKING){
+            			if(self.getPeerState() == QuorumPeer.ServerState.LOOKING){
             				recvqueue.offer(n);
             				if(recvqueue.size() == 0) ZooLog.logWarn("Message: " + n.addr);
             				if((ackstate == QuorumPeer.ServerState.LOOKING)
@@ -229,18 +222,18 @@ public class FastLeaderElection implements Election {
                 						proposedLeader, 
                 						proposedZxid,
                 						logicalclock,
-                						self.state,
+                						self.getPeerState(),
                 						response.addr);
                 				sendqueue.offer(notmsg);
             				}
             			} else { 	           				
             				if((ackstate == QuorumPeer.ServerState.LOOKING) &&
-            						(self.state != QuorumPeer.ServerState.LOOKING)){
+            						(self.getPeerState() != QuorumPeer.ServerState.LOOKING)){
             					ToSend notmsg = new ToSend(ToSend.mType.notification, 
             						self.currentVote.id, 
             						self.currentVote.zxid,
             						logicalclock,
-            						self.state,
+            						self.getPeerState(),
             						response.addr);
             					sendqueue.offer(notmsg);
             				}
@@ -422,7 +415,7 @@ public class FastLeaderElection implements Election {
          * Loop in which we exchange notifications until we find a leader
          */
 
-        while (self.state == ServerState.LOOKING) {
+        while (self.getPeerState() == ServerState.LOOKING) {
             /*
              * Remove next notification from queue, times out after 2 times
              * the termination time
@@ -463,8 +456,8 @@ public class FastLeaderElection implements Election {
 
                 //If have received from all nodes, then terminate
                 if (self.quorumPeers.size() == recvset.size()) {
-                    self.state = (proposedLeader == self.getId()) ? ServerState.LEADING
-                            : ServerState.FOLLOWING;
+                    self.setPeerState((proposedLeader == self.getId()) ? 
+                    		ServerState.LEADING: ServerState.FOLLOWING);
                     leaveInstance();
                     return new Vote(proposedLeader, proposedZxid);
 
@@ -480,8 +473,8 @@ public class FastLeaderElection implements Election {
                         recvqueue.poll();
                     }
                     if (recvqueue.isEmpty()) {
-                        self.state = (proposedLeader == self.getId()) ? ServerState.LEADING
-                                : ServerState.FOLLOWING;
+                        self.setPeerState((proposedLeader == self.getId()) ? 
+                        		ServerState.LEADING: ServerState.FOLLOWING);
                         leaveInstance();
                         return new Vote(proposedLeader,
                                 proposedZxid);
@@ -493,8 +486,8 @@ public class FastLeaderElection implements Election {
 
                 if (termPredicate(outofelection, n.leader, n.zxid)) {
                     
-                    self.state = (n.leader == self.getId()) ? ServerState.LEADING
-                            : ServerState.FOLLOWING;
+                    self.setPeerState((n.leader == self.getId()) ? 
+                    		ServerState.LEADING: ServerState.FOLLOWING);
 
                     leaveInstance();
                     return new Vote(n.leader, n.zxid);
@@ -505,8 +498,8 @@ public class FastLeaderElection implements Election {
 
                 if (termPredicate(outofelection, n.leader, n.zxid)) {
                     
-                    self.state = (n.leader == self.getId()) ? ServerState.LEADING
-                            : ServerState.FOLLOWING;
+                    self.setPeerState((n.leader == self.getId()) ? 
+                    		ServerState.LEADING: ServerState.FOLLOWING);
 
                     leaveInstance();
                     return new Vote(n.leader, n.zxid);
