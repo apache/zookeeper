@@ -14,6 +14,7 @@ import com.yahoo.zookeeper.ZooKeeper;
 import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
+import com.yahoo.zookeeper.server.ServerStats;
 import com.yahoo.zookeeper.server.SyncRequestProcessor;
 import com.yahoo.zookeeper.server.NIOServerCnxn;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
@@ -23,9 +24,15 @@ import com.yahoo.zookeeper.server.ZooKeeperServer;
  * 
  */
 public class RecoveryTest extends TestCase implements Watcher {
-    static File baseTest = new File(System.getProperty("build.test.dir",
+	static File baseTest = new File(System.getProperty("build.test.dir",
             "build"));
-
+    protected void setUp() throws Exception {
+    	ServerStats.registerAsConcrete();
+    }
+	protected void tearDown() throws Exception {
+    	ServerStats.unregister();
+	}
+    
     @Test
     public void testRecovery() throws Exception {
         File tmpDir = File.createTempFile("test", ".junit", baseTest);

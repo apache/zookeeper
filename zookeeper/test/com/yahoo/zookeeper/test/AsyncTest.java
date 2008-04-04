@@ -3,7 +3,9 @@ package com.yahoo.zookeeper.test;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
@@ -23,15 +25,17 @@ import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.NIOServerCnxn;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
 
 public class AsyncTest extends TestCase implements Watcher, StringCallback, VoidCallback, DataCallback {
+	private static final int CONNECTION_TIMEOUT=30000;
     protected static String hostPort = "127.0.0.1:33221";
     LinkedBlockingQueue<WatcherEvent> events = new LinkedBlockingQueue<WatcherEvent>();
     static File baseTest = new File(System.getProperty("build.test.dir", "build"));
     NIOServerCnxn.Factory f = null;
     QuorumTest qt = new QuorumTest();
+    private CountDownLatch clientConnected;
+
     @Before
     protected void setUp() throws Exception {
         qt.setUp();
@@ -49,9 +53,19 @@ public class AsyncTest extends TestCase implements Watcher, StringCallback, Void
         if (f != null) {
             f.shutdown();
         }
+        clientConnected=null;
         ZooLog.logError("Client test shutdown finished");
     }
     
+    private ZooKeeper createClient() throws KeeperException, IOException,InterruptedException{
+        clientConnected=new CountDownLatch(1);
+		ZooKeeper zk = new ZooKeeper(hostPort, 30000, this);
+		if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
+			fail("Unable to connect to server");
+		}
+		return zk;
+    }
+
     boolean bang;
     
     class HammerThread extends Thread implements Watcher, StringCallback, VoidCallback {
@@ -97,75 +111,75 @@ public class AsyncTest extends TestCase implements Watcher, StringCallback, Void
     
     @Test
     public void testHammer() throws Exception {
-        Thread.sleep(1000);
-        bang = true;
-        for(int i = 0; i < 100; i++) {
-            new HammerThread().start();
-        }
-        Thread.sleep(5000);
-        tearDown();
-        bang = false;
-        restart();
-        Thread.sleep(5000);
-        String parts[] = hostPort.split(",");
-        String prevList[] = null;
-        for(String hp: parts) {
-            ZooKeeper zk = new ZooKeeper(hp, 30000, this);
-            String list[] = zk.getChildren("/", false).toArray(new String[0]);
-            if (prevList != null) {
-                assertEquals(prevList.length, list.length);
-                for(int i = 0; i < list.length; i++) {
-                    assertEquals(prevList[i], list[i]);
-                }
-            }
-            prevList = list;
-        }
-    }
+		Thread.sleep(1000);
+		bang = true;
+		for (int i = 0; i < 100; i++) {
+			new HammerThread().start();
+		}
+		Thread.sleep(5000);
+		tearDown();
+		bang = false;
+		restart();
+		Thread.sleep(5000);
+		String parts[] = hostPort.split(",");
+		String prevList[] = null;
+		for (String hp : parts) {
+			ZooKeeper zk = createClient();
+			String list[] = zk.getChildren("/", false).toArray(new String[0]);
+			if (prevList != null) {
+				assertEquals(prevList.length, list.length);
+				for (int i = 0; i < list.length; i++) {
+					assertEquals(prevList[i], list[i]);
+				}
+			}
+			prevList = list;
+		}
+	}
     
     LinkedList<Integer> results = new LinkedList<Integer>();
     @Test
     public void testAsync() throws KeeperException, IOException,
-            InterruptedException {
-        ZooKeeper zk = null;
-            zk = new ZooKeeper(hostPort, 30000, this);
-            zk.addAuthInfo("digest", "ben:passwd".getBytes());
-            zk.create("/ben", new byte[0], Ids.READ_ACL_UNSAFE, 0, this, results);
-            zk.create("/ben/2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
-            zk.delete("/ben", -1, this, results);
-            zk.create("/ben2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
-            zk.getData("/ben2", false, this, results);
-            synchronized(results) {
-                while(results.size() < 5) {
-                    results.wait();
-                }
-            }
-            assertEquals(0, (int)results.get(0));
-            assertEquals(Code.NoAuth, (int)results.get(1));
-            assertEquals(0, (int)results.get(2));
-            assertEquals(0, (int)results.get(3));
-            assertEquals(0, (int)results.get(4));
-            zk.close();
+			InterruptedException {
+		ZooKeeper zk = null;
+		zk = createClient();
+		zk.addAuthInfo("digest", "ben:passwd".getBytes());
+		zk.create("/ben", new byte[0], Ids.READ_ACL_UNSAFE, 0, this, results);
+		zk.create("/ben/2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
+		zk.delete("/ben", -1, this, results);
+		zk.create("/ben2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
+		zk.getData("/ben2", false, this, results);
+		synchronized (results) {
+			while (results.size() < 5) {
+				results.wait();
+			}
+		}
+		assertEquals(0, (int) results.get(0));
+		assertEquals(Code.NoAuth, (int) results.get(1));
+		assertEquals(0, (int) results.get(2));
+		assertEquals(0, (int) results.get(3));
+		assertEquals(0, (int) results.get(4));
+		zk.close();
 
-            zk = new ZooKeeper(hostPort, 30000, this);
-            zk.addAuthInfo("digest", "ben:passwd2".getBytes());
-            try {
-                zk.getData("/ben2", false, new Stat());
-                fail("Should have received a permission error");
-            } catch(KeeperException e) {
-                assertEquals(Code.NoAuth, e.getCode());
-            }
-            zk.close();
+		zk =createClient();
+		zk.addAuthInfo("digest", "ben:passwd2".getBytes());
+		try {
+			zk.getData("/ben2", false, new Stat());
+			fail("Should have received a permission error");
+		} catch (KeeperException e) {
+			assertEquals(Code.NoAuth, e.getCode());
+		}
+		zk.close();
 
-            zk = new ZooKeeper(hostPort, 30000, this);
-            zk.addAuthInfo("digest", "ben:passwd".getBytes());
-            zk.getData("/ben2", false, new Stat());
-            zk.close();
-
-    }
+		zk =createClient();
+		zk.addAuthInfo("digest", "ben:passwd".getBytes());
+		zk.getData("/ben2", false, new Stat());
+		zk.close();
+	}
 
     public void process(WatcherEvent event) {
-        // TODO Auto-generated method stub
-        
+    	if(event.getState()==Event.KeeperStateSyncConnected){
+    		clientConnected.countDown();
+    	}
     }
 
     public void processResult(int rc, String path, Object ctx, String name) {

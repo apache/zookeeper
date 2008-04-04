@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -19,21 +20,25 @@ import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.NIOServerCnxn;
+import com.yahoo.zookeeper.server.ServerStats;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
 
 public class ClientTest extends TestCase implements Watcher {
+	private static final int CONNECTION_TIMEOUT=30000;
     protected static String hostPort = "127.0.0.1:33221";
     LinkedBlockingQueue<WatcherEvent> events = new LinkedBlockingQueue<WatcherEvent>();
     static File baseTest = new File(System.getProperty("build.test.dir", "build"));
     NIOServerCnxn.Factory f = null;
     File tmpDir = null;
-    
+    private CountDownLatch clientConnected;
+
     protected void setUp() throws Exception {
     	ZooLog.logError("Client test setup");
         tmpDir = File.createTempFile("test", ".junit", baseTest);
         tmpDir = new File(tmpDir + ".dir");
         tmpDir.mkdirs();
+    	ServerStats.registerAsConcrete();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         hostPort = "127.0.0.1:33221";
         f = new NIOServerCnxn.Factory(33221);
@@ -50,6 +55,8 @@ public class ClientTest extends TestCase implements Watcher {
         if (f != null) {
             f.shutdown();
         }
+    	ServerStats.unregister();
+        clientConnected=null;
         ZooLog.logError("Client test shutdown finished");
     }
     
@@ -63,12 +70,21 @@ public class ClientTest extends TestCase implements Watcher {
         d.delete();
     }
 
+    private ZooKeeper createClient() throws KeeperException, IOException,InterruptedException{
+        clientConnected=new CountDownLatch(1);
+		ZooKeeper zk = new ZooKeeper(hostPort, 30000, this);
+		if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
+			fail("Unable to connect to server");
+		}
+		return zk;
+    }
+    
     @Test
     public void testClient() throws KeeperException, IOException,
             InterruptedException {
         ZooKeeper zk = null;
         try {
-            zk = new ZooKeeper(hostPort, 30000, this);
+    		zk =createClient();
             //System.out.println("Created client: " + zk.describeCNXN());
             System.out.println("Before create /benwashere");
             zk.create("/benwashere", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
@@ -87,7 +103,7 @@ public class ClientTest extends TestCase implements Watcher {
             zk.close();
             //System.out.println("Closed client: " + zk.describeCNXN());
             Thread.sleep(2000);
-            zk = new ZooKeeper(hostPort, 30000, this);
+            zk = createClient();
             //System.out.println("Created a new client: " + zk.describeCNXN());
             System.out.println("Before delete /");
             
@@ -225,7 +241,7 @@ public class ClientTest extends TestCase implements Watcher {
         File tmpDir = File.createTempFile("test", ".junit", baseTest);
         tmpDir = new File(tmpDir + ".dir");
         tmpDir.mkdirs();
-        ZooKeeper zk = new ZooKeeper(hostPort, 30000, this);
+        ZooKeeper zk = createClient();
         zk.create("/parent", new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
         zk.create("/parent/child", new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
         try {
@@ -253,7 +269,7 @@ public class ClientTest extends TestCase implements Watcher {
             long start = System.currentTimeMillis();
             for (int i = 0; i < threadCount; i++) {
                 Thread.sleep(10);
-                ZooKeeper zk = new ZooKeeper(hostPort, 10000, this);
+                ZooKeeper zk = createClient();
                 String prefix = "/test-" + i;
                 zk.create(prefix, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
                 prefix += "/";
@@ -265,7 +281,7 @@ public class ClientTest extends TestCase implements Watcher {
             }
             System.err.println(new Date() + " Total time "
                     + (System.currentTimeMillis() - start));
-            ZooKeeper zk = new ZooKeeper(hostPort, 10000, this);
+            ZooKeeper zk = createClient();
             ZooLog.logWarn("******************* Connected to ZooKeeper" + new Date());
             for (int i = 0; i < threadCount; i++) {
                 System.err.println("Doing thread: " + i + " " + new Date());
@@ -284,12 +300,15 @@ public class ClientTest extends TestCase implements Watcher {
     }
 
     public void process(WatcherEvent event) {
-       if (event.getType() != Event.EventNone){ 
-         try {
-              events.put(event);
-          } catch (InterruptedException e) {
-              e.printStackTrace();
-          }
-       }
-    }
+		if (event.getState() == Event.KeeperStateSyncConnected) {
+			clientConnected.countDown();
+		}
+		if (event.getType() != Event.EventNone) {
+			try {
+				events.put(event);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }
