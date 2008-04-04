@@ -11,9 +11,9 @@ pkginclude_HEADERS = include/zookeeper.h include/recordio.h generated/zookeeper.
 EXTRA_DIST=LICENSE
 
 COMMON_SRC = src/zookeeper.c include/zookeeper.h \
-	src/recordio.c include/recordio.h include/proto.h \
-	src/zk_adaptor.h generated/zookeeper.jute.c \
-	src/zk_log.h src/zk_log.c
+    src/recordio.c include/recordio.h include/proto.h \
+    src/zk_adaptor.h generated/zookeeper.jute.c \
+    src/zk_log.h src/zk_log.c
 
 noinst_LTLIBRARIES = libzkst.la
 libzkst_la_SOURCES =$(COMMON_SRC) src/st_adaptor.c
@@ -42,21 +42,27 @@ cli_st_SOURCES = src/cli.c
 cli_st_LDADD = libzookeeper_st.la
 
 if WANT_SYNCAPI
-bin_PROGRAMS += cli_mt
+bin_PROGRAMS += cli_mt load_gen
+
 cli_mt_SOURCES = src/cli.c
 cli_mt_LDADD = libzookeeper_mt.la
 cli_mt_CFLAGS = -DTHREADED
+
+load_gen_SOURCES = src/load_gen.c
+load_gen_LDADD = libzookeeper_mt.la
+load_gen_CFLAGS = -DTHREADED
+
 endif
 
 #########################################################################
 # build and run unit tests
 
 EXTRA_DIST+=$(wildcard tests/*.cc) $(wildcard tests/*.h) \
-	tests/wrappers.opt tests/wrappers-mt.opt
+    tests/wrappers.opt tests/wrappers-mt.opt
 
 TEST_SOURCES = tests/TestDriver.cc tests/LibCMocks.cc tests/LibCSymTable.cc \
-	tests/MocksBase.cc  tests/ZKMocks.cc tests/Util.cc tests/ThreadingUtil.cc \
-	tests/TestOperations.cc tests/TestZookeeperInit.cc tests/TestZookeeperClose.cc
+    tests/MocksBase.cc  tests/ZKMocks.cc tests/Util.cc tests/ThreadingUtil.cc \
+    tests/TestOperations.cc tests/TestZookeeperInit.cc tests/TestZookeeperClose.cc
 
 SYMBOL_WRAPPERS=$(shell cat tests/wrappers.opt)
 
