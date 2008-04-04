@@ -320,9 +320,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     new BufferedInputStream(new FileInputStream(f));
                 highestZxid = playLog(BinaryInputArchive.getArchive(logIS));
                 logIS.close();                
-                FileInputStream logStream = new FileInputStream(f);
-                highestZxid = playLog(BinaryInputArchive.getArchive(logStream));
-                logStream.close();
             }
             hzxid = highestZxid;
             ZooLog.logWarn("Snapshot/log data restored");
