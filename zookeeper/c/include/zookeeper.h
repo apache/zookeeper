@@ -89,6 +89,7 @@
 #define ZINVALIDACL             (ZAPIERROR - 14)
 #define ZAUTHFAILED             (ZAPIERROR - 15)
 #define ZCLOSING                (ZAPIERROR - 16)
+#define ZNOTHING                (ZAPIERROR - 17)
 
 #ifdef __cplusplus
 extern "C" {
@@ -336,6 +337,8 @@ ZOOAPI int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
  * ZAUTHFAILED - authentication request failed, e.i. invalid credentials
  * ZRUNTIMEINCONSISTENCY - a server response came out of order
  * ZSYSTEMERROR -- a system (OS) error occured; it's worth checking errno to get details
+ * ZNOTHING -- not an error; simply indicates that there no more data from the server 
+ *              to be processed (when called with ZOOKEEPER_READ flag).
  */
 ZOOAPI int zookeeper_process(zhandle_t *zh, int events);
 #endif

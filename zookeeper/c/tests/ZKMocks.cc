@@ -213,14 +213,12 @@ ssize_t ZookeeperServer::callRecv(int s,void *buf,size_t len,int flags){
     }
     // done transmitting the current buffer?
     if(recvReturnBuffer.size()==0){
-        --recvHasMore;
-//        if(recvQueue.empty()){ 
-//		    static const string cannedResp(ZooGetResponse("1",1,Mock_get_xid::XID).toString());
-//            recvReturnBuffer=cannedResp;
-//            return Mock_socket::callRecv(s,buf,len,flags);
-//        }
         synchronized(recvQMx);
-        assert("Invalid recv call (empty recv queue)"&&!recvQueue.empty());
+        if(recvQueue.empty()){
+            recvErrno=EAGAIN;
+            return Mock_socket::callRecv(s,buf,len,flags);
+        }
+        --recvHasMore;
         Element& el=recvQueue.front();
         if(el.first!=0){
             recvReturnBuffer=el.first->toString();
