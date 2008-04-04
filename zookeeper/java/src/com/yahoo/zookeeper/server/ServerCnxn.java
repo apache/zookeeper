@@ -64,6 +64,12 @@ public interface ServerCnxn extends Watcher {
     public abstract ArrayList<Id> getAuthInfo();
 
     public InetSocketAddress getRemoteAddress();
-
-    public void setStats(long latency, long avgLatency);
+    
+    public interface Stats{
+        public long getOutstandingRequests();
+        public long getPacketsReceived();
+        public long getPacketsSent();
+    }
+    
+    public Stats getStats();
 }

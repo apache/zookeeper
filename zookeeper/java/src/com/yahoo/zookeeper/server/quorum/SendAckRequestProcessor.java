@@ -31,15 +31,15 @@ public class SendAckRequestProcessor implements RequestProcessor {
     }
 
     public void processRequest(Request si) {
-    	if(si.type != OpCode.sync){
-    		QuorumPacket qp = new QuorumPacket(Leader.ACK, si.hdr.getZxid(), null,
+        if(si.type != OpCode.sync){
+            QuorumPacket qp = new QuorumPacket(Leader.ACK, si.hdr.getZxid(), null,
                 null);
-    		try {
-    			follower.writePacket(qp);
-    		} catch (IOException e) {
-    			ZooLog.logException(e);
-    		}
-    	}
+            try {
+                follower.writePacket(qp);
+            } catch (IOException e) {
+                ZooLog.logException(e);
+            }
+        }
     }
 
     public void shutdown() {

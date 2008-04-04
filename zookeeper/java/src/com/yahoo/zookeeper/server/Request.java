@@ -135,7 +135,7 @@ public class Request {
         case OpCode.setData:
             return "setData";
         case OpCode.sync:
-          	return "sync:";
+              return "sync:";
         case OpCode.getACL:
             return "getACL";
         case OpCode.setACL:

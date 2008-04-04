@@ -661,12 +661,12 @@ public class ZooKeeper {
      * @see #sync(String)
      */
     public void sync(String path, VoidCallback cb, Object ctx){
-    	RequestHeader h = new RequestHeader();
-    	h.setType(ZooDefs.OpCode.sync);
-    	SyncRequest request = new SyncRequest();
-    	SyncResponse response = new SyncResponse();
-    	request.setPath(path);
-    	cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, path, ctx);
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.sync);
+        SyncRequest request = new SyncRequest();
+        SyncResponse response = new SyncResponse();
+        request.setPath(path);
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, path, ctx);
     }
     
     public States getState() {

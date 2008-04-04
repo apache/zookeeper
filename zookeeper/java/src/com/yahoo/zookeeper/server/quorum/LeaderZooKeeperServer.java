@@ -43,13 +43,13 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
      * @throws IOException
      */
     LeaderZooKeeperServer(File dataDir, File dataLogDir,
-            QuorumPeer self) throws IOException {
-        super(dataDir, dataLogDir, self.tickTime);
+            QuorumPeer self,DataTreeBuilder treeBuilder) throws IOException {
+        super(dataDir, dataLogDir, self.tickTime,treeBuilder);
         this.self = self;
     }
 
     public Leader getLeader(){
-    	return self.leader;
+        return self.leader;
     }
     
     protected void setupRequestProcessors() {

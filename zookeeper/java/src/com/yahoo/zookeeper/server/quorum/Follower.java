@@ -42,7 +42,6 @@ import com.yahoo.zookeeper.server.ServerCnxn;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
 public class Follower {
@@ -249,11 +248,12 @@ public class Follower {
                             + " is valid: " + valid, ZooLog.SESSION_TRACE_MASK);
                     break;
                 case Leader.SYNC:
-                	zk.sync();
-                	break;
+                    zk.sync();
+                    break;
                 }
             }
         } catch (IOException e) {
+            e.printStackTrace();
             try {
                 sock.close();
             } catch (IOException e1) {
@@ -265,8 +265,6 @@ public class Follower {
                 pendingRevalidations.clear();
                 pendingRevalidations.notifyAll();
             }
-        } finally {
-            self.state = ServerState.LOOKING;
         }
     }
 
@@ -326,12 +324,12 @@ public class Follower {
                 .toByteArray(), request.authInfo);
 //        QuorumPacket qp;
 //        if(request.type == OpCode.sync){
-//        	qp = new QuorumPacket(Leader.SYNC, -1, baos
-//        			.toByteArray(), request.authInfo);
-//        }	
+//            qp = new QuorumPacket(Leader.SYNC, -1, baos
+//                    .toByteArray(), request.authInfo);
+//        }    
 //        else{
 //        qp = new QuorumPacket(Leader.REQUEST, -1, baos
-//        		.toByteArray(), request.authInfo);
+//                .toByteArray(), request.authInfo);
 //        }
         writePacket(qp);
     }
@@ -347,7 +345,6 @@ public class Follower {
     }
 
     public void shutdown() {
-
         // set the zookeeper server to null
         self.cnxnFactory.setZooKeeperServer(null);
         // clear all the connections
@@ -358,7 +355,5 @@ public class Follower {
 
         }
         ZooLog.logException(new Exception("shutdown Follower"));
-        self.state = ServerState.LOOKING;
-
     }
 }

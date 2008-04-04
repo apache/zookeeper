@@ -38,7 +38,7 @@ public class PurgeTxnLog {
      */
     public static void main(String[] args) throws IOException {       
         if(args.length!=1)
-			printUsage();
+            printUsage();
 
         File dataDir=new File(args[0]);
         
@@ -50,9 +50,9 @@ public class PurgeTxnLog {
                 highestZxid = zxid;
             }
         }
-		// found any valid snapshots?
-		if(highestZxid==-1)
-			return;  // no snapshots
+        // found any valid snapshots?
+        if(highestZxid==-1)
+            return;  // no snapshots
 
         // files to exclude from deletion
         Set<File> exc=new HashSet<File>();

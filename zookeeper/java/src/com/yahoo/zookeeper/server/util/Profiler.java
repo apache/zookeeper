@@ -14,32 +14,23 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package com.yahoo.zookeeper.server.util;
 
+import com.yahoo.zookeeper.server.ZooLog;
 
-public class Vote {
-    public Vote(long id, long zxid) {
-        this.id = id;
-        this.zxid = zxid;
+public class Profiler {
+    public interface Operation<T> {
+        public T execute() throws Exception;
     }
 
-    public long id;
-    
-    public long zxid;
-    
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof Vote)) {
-            return false;
+    public static <T> T profile(Operation<T> op, long timeout, String message)
+            throws Exception {
+        long start = System.currentTimeMillis();
+        T res = op.execute();
+        long end = System.currentTimeMillis();
+        if (end - start > timeout) {
+            ZooLog.logError("Elapsed "+(end - start) + " ms: " + message);
         }
-        Vote other = (Vote) o;
-        return id == other.id && zxid == other.zxid;
-
+        return res;
     }
-
-    @Override
-    public int hashCode() {
-        return (int) (id & zxid);
-    }
-
 }

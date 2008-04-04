@@ -265,7 +265,7 @@ public class AuthFastLeaderElection implements Election {
                         // Receive challenge request
                         ToSend c = new ToSend(ToSend.mType.challenge, tag,
                                 self.currentVote.id, self.currentVote.zxid,
-                                logicalclock, self.state,
+                                logicalclock, self.getPeerState(),
                                 (InetSocketAddress) responsePacket
                                         .getSocketAddress());
                         sendqueue.offer(c);
@@ -307,7 +307,7 @@ public class AuthFastLeaderElection implements Election {
                                     ToSend a = new ToSend(ToSend.mType.ack,
                                             tag, self.currentVote.id,
                                             self.currentVote.zxid,
-                                            logicalclock, self.state,
+                                            logicalclock, self.getPeerState(),
                                             (InetSocketAddress) addr);
 
                                     sendqueue.offer(a);
@@ -325,7 +325,7 @@ public class AuthFastLeaderElection implements Election {
 
                             ToSend a = new ToSend(ToSend.mType.ack, tag,
                                     self.currentVote.id, self.currentVote.zxid,
-                                    logicalclock, self.state,
+                                    logicalclock, self.getPeerState(),
                                     (InetSocketAddress) responsePacket
                                             .getSocketAddress());
 
@@ -797,7 +797,7 @@ public class AuthFastLeaderElection implements Election {
          * Loop in which we exchange notifications until we find a leader
          */
 
-        while (self.state == ServerState.LOOKING) {
+        while (self.getPeerState() == ServerState.LOOKING) {
             /*
              * Remove next notification from queue, times out after 2 times the
              * termination time
@@ -836,8 +836,8 @@ public class AuthFastLeaderElection implements Election {
 
                     // If have received from all nodes, then terminate
                     if (self.quorumPeers.size() == recvset.size()) {
-                        self.state = (proposedLeader == self.getId()) ? ServerState.LEADING
-                                : ServerState.FOLLOWING;
+                        self.setPeerState((proposedLeader == self.getId()) ? 
+                                ServerState.LEADING: ServerState.FOLLOWING);
                         // if (self.state == ServerState.FOLLOWING) {
                         // Thread.sleep(100);
                         // }
@@ -862,8 +862,8 @@ public class AuthFastLeaderElection implements Election {
                         if (recvqueue.isEmpty()) {
                             // ZooLog.logWarn("Proposed leader: " +
                             // proposedLeader);
-                            self.state = (proposedLeader == self.getId()) ? ServerState.LEADING
-                                    : ServerState.FOLLOWING;
+                            self.setPeerState((proposedLeader == self.getId()) ? 
+                                    ServerState.LEADING: ServerState.FOLLOWING);
                             // if (self.state == ServerState.FOLLOWING) {
                             // Thread.sleep(100);
                             // }
@@ -878,8 +878,8 @@ public class AuthFastLeaderElection implements Election {
 
                     if (termPredicate(outofelection, n.leader, n.zxid)) {
 
-                        self.state = (n.leader == self.getId()) ? ServerState.LEADING
-                                : ServerState.FOLLOWING;
+                        self.setPeerState((n.leader == self.getId()) ? 
+                                ServerState.LEADING: ServerState.FOLLOWING);
 
                         leaveInstance();
                         return new Vote(n.leader, n.zxid);
@@ -890,8 +890,8 @@ public class AuthFastLeaderElection implements Election {
 
                     if (termPredicate(outofelection, n.leader, n.zxid)) {
 
-                        self.state = (n.leader == self.getId()) ? ServerState.LEADING
-                                : ServerState.FOLLOWING;
+                        self.setPeerState((n.leader == self.getId()) ? 
+                                ServerState.LEADING: ServerState.FOLLOWING);
 
                         leaveInstance();
                         return new Vote(n.leader, n.zxid);

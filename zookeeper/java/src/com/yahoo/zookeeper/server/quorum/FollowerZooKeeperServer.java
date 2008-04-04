@@ -23,8 +23,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.server.FinalRequestProcessor;
-import com.yahoo.zookeeper.server.RequestProcessor;
 import com.yahoo.zookeeper.server.Request;
+import com.yahoo.zookeeper.server.RequestProcessor;
 import com.yahoo.zookeeper.server.ServerCnxn;
 import com.yahoo.zookeeper.server.SyncRequestProcessor;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
@@ -38,7 +38,7 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * 
  * A SyncRequestProcessor is also spawn off to log proposals from the leader.
  */
-class FollowerZooKeeperServer extends ZooKeeperServer {
+public class FollowerZooKeeperServer extends ZooKeeperServer {
     private QuorumPeer self;
 
     CommitProcessor commitProcessor;
@@ -51,19 +51,19 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
      * @throws IOException
      */
     FollowerZooKeeperServer(File dataDir, File dataLogDir,
-            QuorumPeer self) throws IOException {
-        super(dataDir, dataLogDir, self.tickTime);
+            QuorumPeer self,DataTreeBuilder treeBuilder) throws IOException {
+        super(dataDir, dataLogDir, self.tickTime,treeBuilder);
         this.self = self;
     }
 
     public Follower getFollower(){
-    	return self.follower;
+        return self.follower;
     }
     
     protected void createSessionTracker() {
-		sessionTracker = new FollowerSessionTracker(this, sessionsWithTimeouts,
-				self.getId());
-	}
+        sessionTracker = new FollowerSessionTracker(this, sessionsWithTimeouts,
+                self.getId());
+    }
 
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
@@ -76,7 +76,7 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
     @Override
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,
             int sessionTimeout) throws IOException, InterruptedException {
-    	getFollower().validateSession(cnxn, sessionId, sessionTimeout);
+        getFollower().validateSession(cnxn, sessionId, sessionTimeout);
     }
 
     /**
@@ -126,15 +126,15 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
     }
     
     public void sync(){
-    	if(commitProcessor.pendingSyncs.size() ==0){
-    		ZooLog.logWarn("Not expecting a sync.");
-    		return;
-    	}
-    	    	
-    	commitProcessor.commit(commitProcessor.pendingSyncs.remove());
+        if(commitProcessor.pendingSyncs.size() ==0){
+            ZooLog.logWarn("Not expecting a sync.");
+            return;
+        }
+                
+        commitProcessor.commit(commitProcessor.pendingSyncs.remove());
     }
-    	     
-    	 
+             
+         
     @Override
     public int getGlobalOutstandingLimit() {
         return super.getGlobalOutstandingLimit() / (self.getQuorumSize() - 1);
@@ -145,7 +145,7 @@ class FollowerZooKeeperServer extends ZooKeeperServer {
      */
     @Override
     public void addCommittedProposal(Request r) {
-    	//do nothing
+        //do nothing
     }
     
     public void shutdown() {
