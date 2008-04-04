@@ -1049,7 +1049,11 @@ static int check_events(zhandle_t *zh, int events)
                 }
             }
             zh->input_buffer = 0;
-        }             
+        }else{
+            // zookeeper_process was called but there was nothing to read 
+            // from the socket
+            return ZNOTHING;
+        }
     }
     return ZOK;
 }

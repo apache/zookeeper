@@ -102,10 +102,8 @@ public:
         // process the send queue
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
-        rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
-        rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
+        while((rc=zookeeper_process(zh,interest))==ZOK);
+        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
 
         CPPUNIT_ASSERT_EQUAL(ZOK,res1.rc_);
         CPPUNIT_ASSERT_EQUAL(string("1"),res1.value_);
