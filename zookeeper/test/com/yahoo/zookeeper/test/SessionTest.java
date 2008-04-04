@@ -11,6 +11,7 @@ import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.NIOServerCnxn;
+import com.yahoo.zookeeper.server.ServerStats;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
 import junit.framework.TestCase;
 
@@ -18,7 +19,13 @@ public class SessionTest extends TestCase implements Watcher {
     static File baseTest = new File(System.getProperty("build.test.dir",
             "build"));
 
-    /**
+	protected void setUp() throws Exception {
+    	ServerStats.registerAsConcrete();
+	}
+	protected void tearDown() throws Exception {
+		ServerStats.unregister();
+	}
+	/**
      * this test checks to see if the sessionid that was created for the 
      * first zookeeper client can be reused for the second one immidiately 
      * after the first client closes and the new client resues them.

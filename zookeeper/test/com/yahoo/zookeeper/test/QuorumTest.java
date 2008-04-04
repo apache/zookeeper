@@ -10,9 +10,8 @@ import org.junit.Before;
 
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer;
+import com.yahoo.zookeeper.server.quorum.QuorumStats;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-
-import junit.framework.TestCase;
 
 public class QuorumTest extends ClientTest {
     static File baseTest = new File(System.getProperty("build.test.dir", "build"));
@@ -39,6 +38,7 @@ public class QuorumTest extends ClientTest {
         ZooLog.logWarn("Setup finished");
     }
     void startServers() throws IOException, InterruptedException {
+		QuorumStats.registerAsConcrete();
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
@@ -81,5 +81,6 @@ public class QuorumTest extends ClientTest {
         s4.shutdown();
         s5.shutdown();
         Thread.sleep(5000);
+		QuorumStats.unregister();
     }
 }
