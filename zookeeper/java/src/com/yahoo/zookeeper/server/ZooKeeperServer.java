@@ -23,13 +23,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.io.SyncFailedException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -254,18 +252,59 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return zxid;
     }
 
-    static File[] getLogFiles(File logDir, long snapshotZxid) {
-        List<File> files = Arrays.asList(logDir.listFiles());
-        Collections.sort(files, new Comparator<File>() {
-            public int compare(File o1, File o2) {
-                long z1 = getZxidFromName(o1.getName(), "log");
-                long z2 = getZxidFromName(o2.getName(), "log");
-                return z1 < z2 ? -1 : (z1 > z2 ? 1 : 0);
-            }
-        });
+    /**
+     * Compare file file names of form "prefix.version". Sort order result
+     * returned in order of version.
+     */
+    private static class DataDirFileComparator implements Comparator<File> {
+        private String prefix;
+        private boolean ascending;
+        public DataDirFileComparator(String prefix, boolean ascending) {
+            this.prefix = prefix;
+            this.ascending = ascending;
+        }
+        
+        public int compare(File o1, File o2) {
+            long z1 = getZxidFromName(o1.getName(), prefix);
+            long z2 = getZxidFromName(o2.getName(), prefix);
+            int result = z1 < z2 ? -1 : (z1 > z2 ? 1 : 0);
+            return ascending ? result : -result;
+        }        
+    }
+    
+    /**
+     * Sort the list of files. Recency as determined by the version component 
+     * of the file name.
+     * 
+     * @param files array of files
+     * @param prefix files not matching this prefix are assumed to have a 
+     * version = -1)
+     * @param ascending true sorted in ascending order, false results in 
+     * descending order
+     * @return sorted input files
+     */
+    static List<File> 
+        sortDataDir(File[] files, String prefix, boolean ascending) 
+    {
+        List<File> filelist = Arrays.asList(files);
+        Collections.sort(filelist, new DataDirFileComparator(prefix, ascending));
+        return filelist;
+    }
+    
+    /**
+     * Find the log file that starts at, or just before, the snapshot. Return
+     * this and all subsequent logs. Results are ordered by zxid of file, 
+     * ascending order.
+     * 
+     * @param logDirList array of files
+     * @param snapshotZxid return files at, or before this zxid
+     * @return
+     */
+    static File[] getLogFiles(File[] logDirList,long snapshotZxid) {
+        List<File> files = sortDataDir(logDirList, "log", true);
+        long logZxid = 0;
         // Find the log file that starts before or at the same time as the
         // zxid of the snapshot
-        long logZxid = 0;
         for (File f : files) {
             long fzxid = getZxidFromName(f.getName(), "log");
             if (fzxid > snapshotZxid) {
@@ -275,7 +314,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 logZxid = fzxid;
             }
         }
-        List<File> v = new ArrayList<File>(5);
+        List<File> v=new ArrayList<File>(5);
         // Apply the logs
         for (File f : files) {
             long fzxid = getZxidFromName(f.getName(), "log");
@@ -287,46 +326,54 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return v.toArray(new File[0]);
     }
 
-    public void loadData() throws IOException, FileNotFoundException,
-            SyncFailedException, InterruptedException {
-        long highestZxid = 0;
-        for (File f : dataDir.listFiles()) {
-            long zxid = isValidSnapshot(f);
+    /**
+     *  Restore sessions and data
+     */
+    private void loadSnapshotAndLogs() throws IOException {
+        long zxid = -1;
+
+        // Find the most recent snapshot
+        List<File> files = sortDataDir(dataDir.listFiles(), "snapshot", false);
+        for (File f : files) {
+            zxid = isValidSnapshot(f);
             if (zxid == -1) {
                 ZooLog.logWarn("Skipping " + f);
                 continue;
             }
-            if (zxid > highestZxid) {
-                highestZxid = zxid;
-            }
-        }
-        // Restore sessions and data
-        // Find the latest snapshot
-        File snapshot = new File(dataDir, "snapshot."
-                + Long.toHexString(highestZxid));
-        if (snapshot.exists()) {
-            long snapShotZxid = highestZxid;
-            ZooLog.logWarn("Processing snapshot: " + snapshot);
+
+            ZooLog.logWarn("Processing snapshot: " + f);
+            
             InputStream snapIS =
-                new BufferedInputStream(new FileInputStream(snapshot));
+                new BufferedInputStream(new FileInputStream(f));
             loadData(BinaryInputArchive.getArchive(snapIS));
             snapIS.close();            
-            dataTree.lastProcessedZxid = highestZxid;
-            File[] files = getLogFiles(dataLogDir, snapShotZxid);
-            // Apply the logs
-            for (File f : files) {
-                ZooLog.logWarn("Processing log file: " + f);
+            
+            dataTree.lastProcessedZxid = zxid;
+            
+            // Apply the logs on/after the selected snapshot
+            File[] logfiles = getLogFiles(dataLogDir.listFiles(), zxid);
+            for (File logfile : logfiles) {
+                ZooLog.logWarn("Processing log file: " + logfile);
+                
                 InputStream logIS =
-                    new BufferedInputStream(new FileInputStream(f));
-                highestZxid = playLog(BinaryInputArchive.getArchive(logIS));
+                    new BufferedInputStream(new FileInputStream(logfile));
+                zxid = playLog(BinaryInputArchive.getArchive(logIS));
                 logIS.close();                
             }
-            hzxid = highestZxid;
-            ZooLog.logWarn("Snapshot/log data restored");
-        } else {
+            hzxid = zxid;
+
+            break;
+        }
+
+        if (zxid == -1) {
             sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
             dataTree = treeBuilder.build();
         }
+    }
+
+    public void loadData() throws IOException, InterruptedException {
+        loadSnapshotAndLogs();
+ 
         // Clean up dead sessions
         LinkedList<Long> deadSessions = new LinkedList<Long>();
         for (long session : dataTree.getSessions()) {
@@ -506,7 +553,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 highestZxid = zxid;
             }
         }
-        File[] files = getLogFiles(dataLogDir, highestZxid);
+        File[] files = getLogFiles(dataLogDir.listFiles(), highestZxid);
         boolean truncated = false;
         for (File f : files) {
             FileInputStream fin = new FileInputStream(f);

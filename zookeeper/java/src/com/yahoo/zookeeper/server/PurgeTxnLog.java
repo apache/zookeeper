@@ -33,15 +33,15 @@ public class PurgeTxnLog {
         System.exit(1);
     }
     /**
-     * @param args PurgeTxnLog dataLogDir 
+     * @param args PurgeTxnLog dataLogDir
      *     dataLogDir -- txn log directory
      */
-    public static void main(String[] args) throws IOException {       
+    public static void main(String[] args) throws IOException {
         if(args.length!=1)
             printUsage();
 
         File dataDir=new File(args[0]);
-        
+
         // find the most recent valid snapshot
         long highestZxid = -1;
         for (File f : dataDir.listFiles()) {
@@ -57,8 +57,8 @@ public class PurgeTxnLog {
         // files to exclude from deletion
         Set<File> exc=new HashSet<File>();
         exc.add(new File(dataDir, "snapshot."+Long.toHexString(highestZxid)));
-        exc.addAll(Arrays.asList(ZooKeeperServer.getLogFiles(dataDir,highestZxid)));
-        
+        exc.addAll(Arrays.asList(ZooKeeperServer.getLogFiles(dataDir.listFiles(),highestZxid)));
+
         final Set<File> exclude=exc;
         List<File> files=Arrays.asList(dataDir.listFiles(new FileFilter(){
             public boolean accept(File f){
