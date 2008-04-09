@@ -25,13 +25,15 @@ import java.util.ArrayList;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 /**
  *
  * @author Milind Bhandarkar
  */
 public class BinaryOutputArchive implements OutputArchive {
-    
+    private ByteBuffer bb = ByteBuffer.allocate(1024);
+
     private DataOutput out;
     
     public static BinaryOutputArchive getArchive(OutputStream strm) {
@@ -67,16 +69,48 @@ public class BinaryOutputArchive implements OutputArchive {
         out.writeDouble(d);
     }
     
-    public void writeString(String s, String tag) throws IOException {
-    	if (s == null) {
-    		out.writeInt(-1);
-    		return;
-    	}
-    	byte b[] = s.getBytes("UTF8");
-    	out.writeInt(b.length);
-        out.write(b);
+    /**
+     * create our own char encoder to utf8. This is faster 
+     * then string.getbytes(UTF8).
+     * @param s the string to encode into utf8
+     * @return utf8 byte sequence.
+     */
+    final private ByteBuffer stringToByteBuffer(CharSequence s) {
+        bb.clear();
+        final int len = s.length();
+        for (int i = 0; i < len; i++) {
+            if (bb.remaining() < 3) {
+                ByteBuffer n = ByteBuffer.allocate(bb.capacity() << 1);
+                bb.flip();
+                n.put(bb);
+                bb = n;
+            }
+            char c = s.charAt(i);
+            if (c < 0x80) {
+                bb.put((byte) c);
+            } else if (c < 0x800) {
+                bb.put((byte) (0xc0 | (c >> 6)));
+                bb.put((byte) (0x80 | (c & 0x3f)));
+            } else {
+                bb.put((byte) (0xe0 | (c >> 12)));
+                bb.put((byte) (0x80 | ((c >> 6) & 0x3f)));
+                bb.put((byte) (0x80 | (c & 0x3f)));
+            }
+        }
+        bb.flip();
+        return bb;
     }
-    
+
+    public void writeString(String s, String tag) throws IOException {
+        if (s == null) {
+            writeInt(-1, "len");
+            return;
+        }
+        ByteBuffer bb = stringToByteBuffer(s);
+        writeInt(bb.remaining(), "len");
+        out.write(bb.array(), bb.position(), bb.limit());
+    }
+
     public void writeBuffer(byte barr[], String tag)
     throws IOException {
     	if (barr == null) {
