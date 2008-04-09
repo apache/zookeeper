@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
 import com.yahoo.jute.InputArchive;
 import com.yahoo.jute.OutputArchive;
 import com.yahoo.jute.Record;
@@ -418,7 +419,8 @@ public class DataTree {
                 try {
                     deleteNode(path);
                     ZooLog.logTextTraceMessage("Deleting ephemeral node "
-                            + path + " for session " + Long.toHexString(session),
+                            + path + " for session "
+                            + Long.toHexString(session),
                             ZooLog.SESSION_TRACE_MASK);
                 } catch (KeeperException e) {
                     ZooLog.logException(e);
@@ -427,24 +429,39 @@ public class DataTree {
         }
     }
 
-    void serializeNode(OutputArchive oa, String path) throws IOException,
-            InterruptedException {
-        DataNode node = getNode(path);
+    /** 
+     * this method uses a stringbuilder to create a new 
+     * path for children. This is faster than string
+     * appends ( str1 + str2). 
+     * @param oa OutputArchive to write to.
+     * @param path a string builder.
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    void serializeNode(OutputArchive oa, StringBuilder path)
+            throws IOException, InterruptedException {
+        String pathString = path.toString();
+        DataNode node = getNode(pathString);
         if (node == null) {
             return;
         }
-        ArrayList<String> children = null;
+        String children[] = null;
         synchronized (node) {
             scount++;
-            oa.writeString(path, "path");
+            oa.writeString(pathString, "path");
             oa.writeRecord(node, "node");
-            children = new ArrayList<String>(node.children);
+            children = node.children.toArray(new String[node.children.size()]);
         }
+        path.append('/');
+        int off = path.length();
         if (children != null) {
-            Collections.sort(children);
-            for (String childName : children) {
-                String childPath = path + '/' + childName;
-                serializeNode(oa, childPath);
+            for (String child : children) {
+                //since this is single buffer being resused 
+                // we need
+                // to truncate the previous bytes of string.
+                path.delete(off, Integer.MAX_VALUE);
+                path.append(child);
+                serializeNode(oa, path);
             }
         }
     }
@@ -456,7 +473,7 @@ public class DataTree {
     public void serialize(OutputArchive oa, String tag) throws IOException,
             InterruptedException {
         scount = 0;
-        serializeNode(oa, "");
+        serializeNode(oa, new StringBuilder(""));
         // / marks end of stream
         // we need to check if clear had been called in between the snapshot.
         if (root != null) {
@@ -519,5 +536,4 @@ public class DataTree {
         // dataWatches = null;
         // childWatches = null;
     }
-
 }
