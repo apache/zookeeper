@@ -236,12 +236,13 @@ public class ClientCnxn {
     }
 
     WatcherEvent eventOfDeath = new WatcherEvent();
+
     final static UncaughtExceptionHandler uncaughtExceptionHandler = new UncaughtExceptionHandler() {
         public void uncaughtException(Thread t, Throwable e) {
             ZooLog.logException(e, "from " + t.getName());
-        }};
-    
-    
+        }
+    };
+
     class EventThread extends Thread {
         EventThread() {
             super("EventThread");
@@ -368,7 +369,7 @@ public class ClientCnxn {
             conRsp.deserialize(bbia, "connect");
             int sessionTimeout = conRsp.getTimeOut();
             if (sessionTimeout <= 0) {
-                running = false;
+                zooKeeper.state = States.CLOSED;
                 waitingEvents.add(new WatcherEvent(Watcher.Event.EventNone,
                         Watcher.Event.KeeperStateExpired, null));
                 throw new IOException("Connect failed");
@@ -414,7 +415,7 @@ public class ClientCnxn {
                         + r.getXid());
             }
             Packet p = null;
-            synchronized(pendingQueue) {
+            synchronized (pendingQueue) {
                 p = pendingQueue.remove();
             }
             /*
@@ -539,8 +540,6 @@ public class ClientCnxn {
             }
         }
 
-        boolean running = true;
-
         SendThread() {
             super("SendThread");
             zooKeeper.state = States.CONNECTING;
@@ -642,7 +641,7 @@ public class ClientCnxn {
             long now = System.currentTimeMillis();
             long lastHeard = now;
             int idle = 0;
-            while (running && zooKeeper.state.isAlive()) {
+            while (zooKeeper.state.isAlive()) {
                 try {
                     if (sockKey == null) {
                         startConnect();
@@ -700,7 +699,7 @@ public class ClientCnxn {
                 } catch (Exception e) {
                     ZooLog.logWarn("Closing: " + e.getMessage());
                     cleanup();
-                    if (running) {
+                    if (zooKeeper.state.isAlive()) {
                         waitingEvents.add(new WatcherEvent(Event.EventNone,
                                 Event.KeeperStateDisconnected, null));
                     }
@@ -758,7 +757,7 @@ public class ClientCnxn {
         }
 
         public void close() {
-            running = false;
+            zooKeeper.state = States.CLOSED;
             synchronized (this) {
                 selector.wakeup();
             }
@@ -769,7 +768,6 @@ public class ClientCnxn {
     public void close() throws IOException {
         ZooLog.logTextTraceMessage("Close ClientCnxn for session: " + sessionId
                 + "!", ZooLog.SESSION_TRACE_MASK);
-        sendThread.running = false;
         sendThread.close();
         waitingEvents.add(eventOfDeath);
     }
