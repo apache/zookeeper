@@ -1,3 +1,4 @@
+package com.yahoo.zookeeper.test;
 
 import java.io.IOException;
 
