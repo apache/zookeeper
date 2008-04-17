@@ -22,6 +22,7 @@
     <property name="test.timeout" value="900000" />
     <property name="test.junit.output.format" value="plain" />
     <property name="config.dir" value="${basedir}/test/config" />
+    <property name="test.junit.maxmem" value="512m" />
 
     <property name="javadoc.link.java" value="http://java.sun.com/j2se/1.5/docs/api/" />
     <property name="javadoc.packages" value="com.yahoo.*" />
@@ -50,7 +51,13 @@
             source="1.5" includes="com/yahoo/jute/**" debug="on" />
     </target>
 
-    <target name="compile_jute" depends="jute">
+    <target name="compile_jute_uptodate">
+        <uptodate property="juteBuild.notRequired"
+                  srcfile="${jute.file}"
+                  targetfile="${src_generated.dir}/.generated"/>
+    </target>
+
+    <target name="compile_jute" depends="jute,compile_jute_uptodate" unless="juteBuild.notRequired">
         <mkdir dir="${src_generated.dir}" />
         <mkdir dir="${csrc_generated.dir}" />
         <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
@@ -70,6 +77,8 @@
                 <pathelement path="${build.classes}" />
             </classpath>
         </java>
+
+        <touch file="${src_generated.dir}/.generated"/>
     </target>
 
     <target name="ver-gen" depends="init">
@@ -107,19 +116,22 @@
         </copy>
     </target>
 
-    <target name="compile-test" depends="jar">
+    <target name="test-classpath">
+      <path id="test.classpath">
+        <fileset dir="${basedir}">
+           <include name="*.jar"/>
+        </fileset>
+        <fileset dir="${lib.dir}">
+          <include name="*.jar"/>
+        </fileset>
+      </path>
+    </target>
+
+    <target name="compile-test" depends="jar,test-classpath">
       <mkdir dir="${build.testclasses}"/>
-      <javac srcdir="${test.src.dir}" destdir="${build.testclasses}" target="1.5" source="1.5" debug="on">
-         <classpath>
-           <fileset dir="${basedir}">
-              <include name="*.jar"/>
-           </fileset>
-         </classpath>
-         <classpath>
-           <fileset dir="${lib.dir}">
-             <include name="*.jar"/>
-           </fileset>
-         </classpath>
+      <javac srcdir="${test.src.dir}" destdir="${build.testclasses}"
+             target="1.5" source="1.5" debug="on">
+        <classpath refid="test.classpath"/>
       </javac>
     </target>
 
@@ -181,33 +193,57 @@
     <!-- ====================================================== -->
     <!-- Run unit tests                                         -->
     <!-- ====================================================== -->
-    <target name="test" depends="jar, compile-test">
+    <target name="test-init" depends="jar,compile-test">
         <delete dir="${test.log.dir}" />
         <delete dir="${test.tmp.dir}" />
         <mkdir dir="${test.log.dir}" />
         <mkdir dir="${test.tmp.dir}" />
-        <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no" fork="yes" 
-              maxmemory="512m" dir="${basedir}" timeout="${test.timeout}" errorProperty="tests.failed" 
-              failureProperty="tests.failed">
-            <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
-            <classpath>
-                <pathelement path="${build.testclasses}" />
-            </classpath>
-             <classpath>
-               <fileset dir="${basedir}">
-                 <include name="*.jar"/>
-               </fileset>
-            </classpath>
+    </target>
 
-            <formatter type="${test.junit.output.format}" />
-            <batchtest todir="${test.log.dir}" unless="testcase">
-                <fileset dir="${test.src.dir}" includes="**/*Test.java" />
-            </batchtest>
-            <batchtest todir="${test.log.dir}" if="testcase">
-                <fileset dir="${test.src.dir}" includes="**/${testcase}.java" />
-            </batchtest>
+    <target name="junit.run">
+        <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no" fork="yes" 
+            maxmemory="${test.junit.maxmem}" dir="${basedir}"
+            timeout="${test.timeout}" errorProperty="tests.failed"
+            failureProperty="tests.failed">
+          <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+          <classpath>
+            <pathelement path="${build.testclasses}" />
+          </classpath>
+          <classpath refid="test.classpath"/>
+          <formatter type="${test.junit.output.format}" />
+          <batchtest todir="${test.log.dir}" unless="testcase">
+            <fileset dir="${test.src.dir}"
+                     includes="**/*${test.category}Test.java"/>
+          </batchtest>
+          <batchtest todir="${test.log.dir}" if="testcase">
+            <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
+          </batchtest>
         </junit>
         <fail if="tests.failed">Tests failed!</fail>
+    </target>
+
+    <target name="test-unit" depends="test-init">
+        <antcall target="junit.run">
+            <param name="test.category" value="Unit"/>
+        </antcall>
+    </target>
+
+    <target name="test-func" depends="test-init">
+        <antcall target="junit.run">
+            <param name="test.category" value="Func"/>
+        </antcall>
+    </target>
+
+    <target name="test-perf" depends="test-init">
+        <antcall target="junit.run">
+            <param name="test.category" value="Perf"/>
+        </antcall>
+    </target>
+
+    <target name="test" depends="test-init">
+        <antcall target="junit.run">
+            <param name="test.category" value=""/>
+        </antcall>
     </target>
 
     <!-- ====================================================== -->
@@ -235,6 +271,72 @@
 
     <target name="check-for-findbugs">
         <available property="findbugs.present" file="${findbugs.home}/lib/findbugs.jar" />
+    </target>
+
+    <!-- Code coverage -->
+    <taskdef resource="tasks.properties">
+        <classpath>
+            <pathelement path="${lib.dir}/cobertura/cobertura.jar" />
+            <fileset dir="${lib.dir}/cobertura/lib">
+               <include name="*.jar"/>
+            </fileset>
+            <fileset dir="${lib.dir}">
+               <include name="*.jar"/>
+            </fileset>
+        </classpath>
+    </taskdef>
+
+    <target name="cobertura-instrument" depends="compile-test">
+        <cobertura-instrument todir="${build.dir}/cobertura">
+            <fileset dir="${build.classes}">
+                <include name="com/yahoo/zookeeper/**/*.class"/>
+            </fileset>
+        </cobertura-instrument>
+    </target>
+
+    <target name="cobertura-test" depends="test-init,cobertura-instrument">
+        <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no" fork="yes" 
+               maxmemory="${test.junit.maxmem}" dir="${basedir}" timeout="${test.timeout}"
+               errorProperty="tests.failed" failureProperty="tests.failed">
+            <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+            <classpath>
+                <pathelement path="${build.dir}/cobertura" />
+                <pathelement path="${lib.dir}/cobertura/cobertura.jar" />
+                <fileset dir="${lib.dir}/cobertura/lib">
+                    <include name="*.jar"/>
+                </fileset>
+                <fileset dir="${lib.dir}">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+            <classpath>
+                <pathelement path="${build.testclasses}" />
+            </classpath>
+            <classpath refid="test.classpath"/>
+            <classpath>
+                <pathelement path="${build.classes}" />
+            </classpath>
+
+            <formatter type="${test.junit.output.format}" />
+            <batchtest todir="${test.log.dir}" unless="testcase">
+                <fileset dir="${test.src.dir}"
+                         includes="**/*Test.java"/>
+            </batchtest>
+            <batchtest todir="${test.log.dir}" if="testcase">
+                <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="cobertura-report" depends="cobertura-test">
+        <cobertura-report destdir="${build.dir}/cobertura">
+            <fileset dir="${src.dir}">
+                <include name="**/*.java" />
+            </fileset>
+            <fileset dir="${src_generated.dir}">
+                <include name="**/*.java" />
+            </fileset>
+        </cobertura-report>
     </target>
 
 </project>
