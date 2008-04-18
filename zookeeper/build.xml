@@ -13,6 +13,8 @@
     <property name="build.classes" value="${build.dir}/classes" />
     <property name="jar.name" value="zookeeper-dev.jar" />
 
+    <property name="jute.file" value="${basedir}/zookeeper.jute" />
+
     <property name="build.testclasses" value="${build.dir}/testclasses"/>
     <property name="test.build.dir" value="${build.dir}/test" />
     <property name="test.src.dir" value="${basedir}/test"/>
