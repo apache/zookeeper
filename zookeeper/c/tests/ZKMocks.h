@@ -237,7 +237,7 @@ public:
 class ZooGetResponse: public Response
 {
 public:
-    ZooGetResponse(char* data, int len,int32_t xid=0,int rc=ZOK,const Stat& stat=NodeStat())
+    ZooGetResponse(const char* data, int len,int32_t xid=0,int rc=ZOK,const Stat& stat=NodeStat())
         :xid_(xid),data_(data,len),rc_(rc),stat_(stat)
     {
     }

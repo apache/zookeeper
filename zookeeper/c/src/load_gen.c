@@ -18,6 +18,8 @@
 #include "zk_log.h"
 #include <errno.h>
 #include <pthread.h>
+#include <string.h>
+#include <stdlib.h>
 
 static zhandle_t *zh;
 
