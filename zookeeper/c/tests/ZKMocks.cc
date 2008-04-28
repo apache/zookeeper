@@ -199,6 +199,20 @@ string ZNodeEvent::toString() const{
     return res;
 }
 
+string PingResponse::toString() const{
+    oarchive* oa=create_buffer_oarchive();
+    
+    ReplyHeader h = {PING_XID,1,ZOK};
+    serialize_ReplyHeader(oa, "hdr", &h);
+    
+    int32_t len=htonl(get_buffer_len(oa));
+    string res((char*)&len,sizeof(len));
+    res.append(get_buffer(oa),get_buffer_len(oa));
+    
+    close_buffer_oarchive(&oa,1);
+    return res;
+}
+
 //******************************************************************************
 // Zookeeper server simulator
 // 
@@ -230,6 +244,10 @@ ssize_t ZookeeperServer::callRecv(int s,void *buf,size_t len,int flags){
     return Mock_socket::callRecv(s,buf,len,flags);
 }
 
+void ZookeeperServer::onMessageReceived(const RequestHeader& rh, iarchive* ia){
+    // no-op by default
+}
+
 void ZookeeperServer::notifyBufferSent(const std::string& buffer){
     if(HandshakeRequest::isValid(buffer)){
         // could be a connect request
@@ -247,6 +265,8 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
     iarchive *ia=create_buffer_iarchive((char*)buffer.data(), buffer.size());
     RequestHeader rh;
     deserialize_RequestHeader(ia,"hdr",&rh);
+    // notify the "server" a client request has arrived
+    onMessageReceived(rh,ia);
     close_buffer_iarchive(&ia);
     if(rh.type==CLOSE_OP){
         ++closeSent;
@@ -265,3 +285,11 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
     addRecvResponse(e);
 }
 
+void forceConnected(zhandle_t* zh){
+    // simulate connected state
+    zh->state=CONNECTED_STATE;
+    zh->fd=ZookeeperServer::FD;
+    zh->input_buffer=0;
+    gettimeofday(&zh->last_recv,0);    
+    gettimeofday(&zh->last_send,0);    
+}

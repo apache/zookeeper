@@ -145,7 +145,9 @@ struct _zhandle {
     struct sockaddr *addrs; /* the addresses that correspond to the hostname */
     int addrs_count; /* The number of addresses in the addrs array */
     watcher_fn watcher; /* the registered watcher */
-    struct timeval last_recv; /* The time (in seconds) that the last message was received */
+    struct timeval last_recv; /* The time that the last message was received */
+    struct timeval last_send; /* The time that the last message was sent */
+    struct timeval next_deadline; /* The time of the next deadline */
     int recv_timeout; /* The maximum amount of time that can go by without 
      receiving anything from the zookeeper server */
     buffer_list_t *input_buffer; /* the current buffer being read in */
@@ -209,4 +211,5 @@ int queue_session_event(zhandle_t *zh, int state);
 #endif
 
 #endif /*ZK_ADAPTOR_H_*/
+
 

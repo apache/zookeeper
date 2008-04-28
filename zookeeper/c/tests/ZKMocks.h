@@ -25,6 +25,12 @@
 #include "MocksBase.h"
 
 // *****************************************************************************
+// sets internal zhandle_t members to certain values to simulate the client 
+// connected state. This function should only be used with the single-threaded
+// Async API tests!
+void forceConnected(zhandle_t* zh); 
+
+// *****************************************************************************
 // Abstract watcher action
 struct SyncedBoolCondition;
 
@@ -251,6 +257,13 @@ private:
     Stat stat_;
 };
 
+// PING response
+class PingResponse: public Response
+{
+public:
+    virtual std::string toString() const;    
+};
+
 // watcher znode event
 class ZNodeEvent: public Response
 {
@@ -320,6 +333,8 @@ public:
     void setConnectionLost() {connectionLost=true;}
     
     // recv
+    // this queue is used for server responses: client's recv() system call 
+    // returns next available message from this queue
     typedef std::pair<Response*,int> Element;
     typedef std::deque<Element> ResponseList;
     ResponseList recvQueue;
@@ -354,6 +369,10 @@ public:
     virtual ssize_t callRecv(int s,void *buf,size_t len,int flags);
     virtual bool hasMoreRecv() const;
     
+    // the operation response queue holds zookeeper operation responses till the
+    // operation request has been sent to the server. After that, the operation
+    // response gets moved on to the recv queue (see above) ready to be read by 
+    // the next recv() system call
     // send operation doesn't try to match request to the response
     ResponseList respQueue;
     mutable Mutex respQMx;
@@ -370,6 +389,9 @@ public:
     }
     AtomicInt closeSent;
     virtual void notifyBufferSent(const std::string& buffer);
+    // simulates an arrival of a client request
+    // a callback to be implemented by subclasses (no-op by default)
+    virtual void onMessageReceived(const RequestHeader& rh, iarchive* ia);
 };
 
 #endif /*ZKMOCKS_H_*/
