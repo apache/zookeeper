@@ -43,6 +43,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <limits.h>
 
 const int ZOOKEEPER_WRITE = 1 << 0;
 const int ZOOKEEPER_READ = 1 << 1;
@@ -405,6 +406,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
     zh->primer_buffer.len = sizeof(zh->primer_storage_buffer);
     zh->primer_buffer.next = 0;
     zh->last_zxid = 0;
+    zh->next_deadline.tv_sec=zh->next_deadline.tv_usec=0;
     if (adaptor_init(zh) == -1) {
         goto abort;
     }
@@ -641,27 +643,27 @@ void free_completions(zhandle_t *zh,int callCompletion,int rc)
         } else if (callCompletion) {
             switch (cptr->completion_type) {
             case COMPLETION_DATA:
-                LOG_DEBUG(("Calling COMPLETION_DATA rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_DATA for xid=%x rc=%d",cptr->xid,rc));
                 cptr->c.data_result(rc, 0, 0, 0, cptr->data);
                 break;
             case COMPLETION_STAT:
-                LOG_DEBUG(("Calling COMPLETION_STAT rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_STAT for xid=%x rc=%d",cptr->xid,rc));
                 cptr->c.stat_result(rc, 0, cptr->data);
                 break;
             case COMPLETION_STRINGLIST:
-                LOG_DEBUG(("Calling COMPLETION_STRINGLIST rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_STRINGLIST for xid=%x rc=%d",cptr->xid,rc));
                 cptr->c.strings_result(rc, 0, cptr->data);
                 break;
             case COMPLETION_STRING:
-                LOG_DEBUG(("Calling COMPLETION_STRING rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_STRING for xid=%x rc=%d",cptr->xid,rc));
                 cptr->c.string_result(rc, 0, cptr->data);
                 break;
             case COMPLETION_ACLLIST:
-                LOG_DEBUG(("Calling COMPLETION_ACLLIST rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_ACLLIST for xid=%x rc=%d",cptr->xid,rc));
                 cptr->c.acl_result(rc, 0, 0, cptr->data);
                 break;
             case COMPLETION_VOID:
-                LOG_DEBUG(("Calling COMPLETION_VOID rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_VOID for xid=%x rc=%d",cptr->xid,rc));
                 // We want to skip the ping
                 if (cptr->xid != PING_XID)
                     cptr->c.void_result(rc, cptr->data);
@@ -883,13 +885,36 @@ static struct timeval get_timeval(int interval)
  static int add_string_completion(zhandle_t *zh, int xid,
      string_completion_t dc, const void *data);
 
+ int send_ping(zhandle_t* zh) 
+ {
+    int rc;
+    struct oarchive *oa = create_buffer_oarchive();
+    struct RequestHeader h = { .xid = PING_XID, .type = PING_OP };
+
+    rc = serialize_RequestHeader(oa, "header", &h);
+    enter_critical(zh);
+    rc = rc < 0 ? rc : add_void_completion(zh, h.xid, 0, 0);
+    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
+            get_buffer_len(oa));
+    leave_critical(zh);
+    close_buffer_oarchive(&oa, 0);
+    return rc<0 ? rc : adaptor_send_queue(zh, 0);
+}
+ 
  int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
      struct timeval *tv)
 {
+    struct timeval now;
     if(zh==0 || fd==0 ||interest==0 || tv==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
+    gettimeofday(&now, 0);
+    if(zh->next_deadline.tv_sec!=0 || zh->next_deadline.tv_usec!=0){
+        int time_left = calculate_interval(&zh->next_deadline, &now);
+        if (time_left > 10)
+            LOG_WARN(("Exceeded deadline by %dms", time_left));
+    }
     api_prolog(zh);
     *fd = zh->fd;
     *interest = 0;
@@ -924,52 +949,48 @@ static struct timeval get_timeval(int interval)
         }
         *fd = zh->fd;
         *tv = get_timeval(zh->recv_timeout/3);
-        gettimeofday(&zh->last_recv,0);
+        zh->last_recv = now;
+        zh->last_send = now;
     }
     if (zh->fd != -1) {
-        struct timeval now;
-        int idle_interval;
-        int to;
-        gettimeofday(&now, 0);
-        idle_interval = calculate_interval(&zh->last_recv, &now);
+        int idle_recv = calculate_interval(&zh->last_recv, &now);
+        int idle_send = calculate_interval(&zh->last_send, &now);
+        int recv_to = zh->recv_timeout*2/3 - idle_recv;
+        int send_to = zh->recv_timeout/3;
+        // have we exceeded the receive timeout threshold?
+        if (recv_to <= 0) {
+            // We gotta cut our losses and connect to someone else
+            errno = ETIMEDOUT;               
+            *fd=-1;
+            *interest=0;
+            *tv = get_timeval(0);
+            return api_epilog(zh,handle_socket_error_msg(zh,
+                    __LINE__,ZOPERATIONTIMEOUT,
+                    "connection timed out (exceeded timeout by %dms)",-recv_to));
+        }
         // We only allow 1/3 of our timeout time to expire before sending
         // a PING
-        if (!zh->sent_requests.head && zh->state==CONNECTED_STATE) {
-            to = zh->recv_timeout/3 - idle_interval;
-            if (to <= 0) {
-                int rc;
-                struct oarchive *oa = create_buffer_oarchive();
-                struct RequestHeader h = { .xid = PING_XID, .type = PING_OP};
-
-                rc = serialize_RequestHeader(oa, "header", &h);
-                enter_critical(zh);
-                rc = rc < 0 ? rc : add_void_completion(zh, h.xid, 0, 0);
-                rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send,
-                        get_buffer(oa), get_buffer_len(oa));
-                leave_critical(zh);
-                close_buffer_oarchive(&oa, 0);
-                if (rc < 0){
-                    LOG_ERROR(("failed to marchall request (zk retcode=%d)",rc));
-                    return api_epilog(zh,ZMARSHALLINGERROR);
-                }
+        if (zh->state==CONNECTED_STATE) {
+            send_to = zh->recv_timeout/3 - idle_send;
+            if (send_to <= 0) {
 //                LOG_DEBUG(("Sending PING to %s (exceeded idle by %dms)",
-//                    format_current_endpoint_info(zh),-to));
-                to = zh->recv_timeout/3;
-            }
-        } else {
-            to = (zh->recv_timeout*2)/3 - idle_interval;
-            if (to <= 0) {
-                // We gotta cut our losses and connect to someone else
-                errno = ETIMEDOUT;               
-                *fd=-1;
-                *interest=0;
-                *tv = get_timeval(to);
-                return api_epilog(zh,handle_socket_error_msg(zh,
-                        __LINE__,ZOPERATIONTIMEOUT,
-                        "connection timed out (exceeded timeout by %dms)",-to));
+//                                format_current_endpoint_info(zh),-send_to));
+                int rc=send_ping(zh);
+                if (rc < 0){
+                    LOG_ERROR(("failed to send PING request (zk retcode=%d)",rc));
+                    return api_epilog(zh,rc);
+                }
+                send_to = zh->recv_timeout/3;
             }
         }
-        *tv = get_timeval(to);
+        // choose the lesser value as the timeout
+        *tv = get_timeval(recv_to < send_to? recv_to:send_to);
+        zh->next_deadline.tv_sec = now.tv_sec + tv->tv_sec;
+        zh->next_deadline.tv_usec = now.tv_usec + tv->tv_usec;
+        if (zh->next_deadline.tv_usec > 1000000) {
+            zh->next_deadline.tv_sec += zh->next_deadline.tv_usec / 1000000;
+            zh->next_deadline.tv_usec = zh->next_deadline.tv_usec % 1000000;
+        }
         *interest = ZOOKEEPER_READ;
         if (zh->to_send.head || zh->state == CONNECTING_STATE) {
             *interest |= ZOOKEEPER_WRITE;
@@ -1181,7 +1202,7 @@ void process_completions(zhandle_t *zh)
             int rc = hdr.err;
             switch (cptr->completion_type) {
             case COMPLETION_DATA:
-                LOG_DEBUG(("Calling COMPLETION_DATA rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_DATA for xid=%x rc=%d",cptr->xid,rc));
                 if (rc) {
                     cptr->c.data_result(rc, 0, 0, 0, cptr->data);
                 } else {
@@ -1193,7 +1214,7 @@ void process_completions(zhandle_t *zh)
                 }
                 break;
             case COMPLETION_STAT:
-                LOG_DEBUG(("Calling COMPLETION_STAT rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_STAT for xid=%x rc=%d",cptr->xid,rc));
                 if (rc) {
                     cptr->c.stat_result(rc, 0, cptr->data);
                 } else {
@@ -1204,7 +1225,7 @@ void process_completions(zhandle_t *zh)
                 }
                 break;
             case COMPLETION_STRINGLIST:
-                LOG_DEBUG(("Calling COMPLETION_STRINGLIST rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_STRINGLIST for xid=%x rc=%d",cptr->xid,rc));
                 if (rc) {
                     cptr->c.strings_result(rc, 0, cptr->data);
                 } else {
@@ -1215,7 +1236,7 @@ void process_completions(zhandle_t *zh)
                 }
                 break;
             case COMPLETION_STRING:
-                LOG_DEBUG(("Calling COMPLETION_STRING rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_STRING for xid=%x rc=%d",cptr->xid,rc));
                 if (rc) {
                     cptr->c.string_result(rc, 0, cptr->data);
                 } else {
@@ -1226,7 +1247,7 @@ void process_completions(zhandle_t *zh)
                 }
                 break;
             case COMPLETION_ACLLIST:
-                LOG_DEBUG(("Calling COMPLETION_ACLLIST rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_ACLLIST for xid=%x rc=%d",cptr->xid,rc));
                 if (rc) {
                     cptr->c.acl_result(rc, 0, 0, cptr->data);
                 } else {
@@ -1237,7 +1258,7 @@ void process_completions(zhandle_t *zh)
                 }
                 break;
             case COMPLETION_VOID:
-                LOG_DEBUG(("Calling COMPLETION_VOID rc=%d",rc));
+                LOG_DEBUG(("Calling COMPLETION_VOID for xid=%x rc=%d",cptr->xid,rc));
                 if (hdr.xid == PING_XID) {
                     // We want to skip the ping
                 } else {
@@ -1323,7 +1344,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                     if (rc==0) {
                         struct GetDataResponse res;
                         int len;
-                        LOG_DEBUG(("Calling COMPLETION_DATA rc=%d",rc));
+                        LOG_DEBUG(("Calling COMPLETION_DATA for xid=%x rc=%d",cptr->xid,rc));
                         deserialize_GetDataResponse(ia, "reply", &res);
                         if (res.data.len <= sc->u.data.buff_len) {
                             len = res.data.len;
@@ -1339,7 +1360,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                 case COMPLETION_STAT:
                     if (rc == 0) {
                         struct SetDataResponse res;
-                        LOG_DEBUG(("Calling COMPLETION_STAT rc=%d",rc));
+                        LOG_DEBUG(("Calling COMPLETION_STAT for xid=%x rc=%d",cptr->xid,rc));
                         deserialize_SetDataResponse(ia, "reply", &res);
                         sc->u.stat = res.stat;
                         deallocate_SetDataResponse(&res);
@@ -1348,7 +1369,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                 case COMPLETION_STRINGLIST:
                     if (rc == 0) {
                         struct GetChildrenResponse res;
-                        LOG_DEBUG(("Calling COMPLETION_STRINGLIST rc=%d",rc));
+                        LOG_DEBUG(("Calling COMPLETION_STRINGLIST for xid=%x rc=%d",cptr->xid,rc));
                         deserialize_GetChildrenResponse(ia, "reply", &res);
                         sc->u.strs = res.children;
                         /* We don't deallocate since we are passing it back */
@@ -1359,7 +1380,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                     if (rc == 0) {
                         struct CreateResponse res;
                         int len;
-                        LOG_DEBUG(("Calling COMPLETION_STRING rc=%d",rc));
+                        LOG_DEBUG(("Calling COMPLETION_STRING for xid=%x rc=%d",cptr->xid,rc));
                         deserialize_CreateResponse(ia, "reply", &res);
                         if (sc->u.str.str_len > strlen(res.path)) {
                             len = strlen(res.path);
@@ -1374,7 +1395,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                 case COMPLETION_ACLLIST:
                     if (rc == 0) {
                         struct GetACLResponse res;
-                        LOG_DEBUG(("Calling COMPLETION_ACLLIST rc=%d",rc));
+                        LOG_DEBUG(("Calling COMPLETION_ACLLIST for xid=%x rc=%d",cptr->xid,rc));
                         deserialize_GetACLResponse(ia, "reply", &res);
                         cptr->c.acl_result(rc, &res.acl, &res.stat, cptr->data);
                         sc->u.acl.acl = res.acl;
@@ -1384,7 +1405,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                     }
                     break;
                 case COMPLETION_VOID:
-                    LOG_DEBUG(("Calling COMPLETION_VOID rc=%d",rc));
+                    LOG_DEBUG(("Calling COMPLETION_VOID for xid=%x rc=%d",cptr->xid,rc));
                     break;
                 }
                 notify_sync_completion(sc);
@@ -1588,7 +1609,7 @@ int zoo_aget(zhandle_t *zh, const char *path, int watch, data_completion_t dc,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
     
-    LOG_DEBUG(("Sending zoo_aget() request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1621,7 +1642,7 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending zoo_aset() request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1661,7 +1682,7 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
     
-    LOG_DEBUG(("Sending zoo_acreate() request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1692,7 +1713,7 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending zoo_adelete() request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1723,7 +1744,7 @@ int zoo_aexists(zhandle_t *zh, const char *path, int watch,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending zoo_aexists() request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1754,7 +1775,7 @@ int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending zoo_aget_children() request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1784,7 +1805,7 @@ int zoo_async(zhandle_t *zh, const char *path,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending zoo_sync() request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1815,7 +1836,7 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending zoo_aget_acl() request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1847,7 +1868,7 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending zoo_aset_acl() request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1900,6 +1921,7 @@ int flush_send_queue(zhandle_t*zh, int timeout)
         // if the buffer has been sent succesfully, remove it from the queue
         if (rc > 0)
             remove_buffer(&zh->to_send);
+        gettimeofday(&zh->last_send, 0);
         rc = ZOK;
     }
     unlock_buffer_list(&zh->to_send);

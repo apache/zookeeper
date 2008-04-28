@@ -342,6 +342,11 @@ public:
         LIBC_SYMBOLS.gettimeofday(&tv,0);
         mock_=this;
     }
+    Mock_gettimeofday(const Mock_gettimeofday& other):tv(other.tv){}
+    Mock_gettimeofday(int32_t sec,int32_t usec){
+        tv.tv_sec=sec;
+        tv.tv_usec=usec;
+    }
     ~Mock_gettimeofday(){mock_=0;}
     
     timeval tv;
@@ -349,15 +354,52 @@ public:
         *tp=tv;
         return 0;
     }
+    operator timeval() const{
+        return tv;
+    }
     // advance secs
     virtual void tick(int howmuch=1){tv.tv_sec+=howmuch;}
     // advance milliseconds
+    // can move the clock forward as well as backward by providing a negative
+    // number
     virtual void millitick(int howmuch=1){
         int ms=tv.tv_usec/1000+howmuch;
         tv.tv_sec+=ms/1000;
-        tv.tv_usec=ms%1000;
+        // going backward?
+        if(ms<0){
+            ms=1000-(-ms%1000); //wrap millis around
+        }
+        tv.tv_usec=(ms%1000)*1000;
+    }
+    virtual void tick(const timeval& howmuch){
+        // add milliseconds (discarding microsecond portion)
+        long ms=tv.tv_usec/1000+howmuch.tv_usec/1000;
+        tv.tv_sec+=howmuch.tv_sec+ms/1000;
+        tv.tv_usec=(ms%1000)*1000;
     }
     static Mock_gettimeofday* mock_;
 };
+
+// discard microseconds!
+inline bool operator==(const timeval& lhs, const timeval& rhs){
+    return rhs.tv_sec==lhs.tv_sec && rhs.tv_usec/1000==lhs.tv_usec/1000;
+}
+
+// simplistic implementation: no normalization, assume lhs >= rhs,
+// discarding microseconds
+inline timeval operator-(const timeval& lhs, const timeval& rhs){
+    timeval res;
+    res.tv_sec=lhs.tv_sec-rhs.tv_sec;
+    res.tv_usec=(lhs.tv_usec/1000-rhs.tv_usec/1000)*1000;
+    if(res.tv_usec<0){
+        res.tv_sec--;
+        res.tv_usec=1000000+res.tv_usec%1000000; // wrap the millis around
+    }
+    return res;
+}
+
+inline int32_t toMilliseconds(const timeval& tv){
+    return tv.tv_sec*1000+tv.tv_usec/1000;    
+}
 
 #endif /*LIBCMOCKS_H_*/

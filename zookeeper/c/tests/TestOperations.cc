@@ -15,17 +15,24 @@
  */
 
 #include <cppunit/extensions/HelperMacros.h>
+#include "CppAssertHelper.h"
 
 #include "ZKMocks.h"
-#include "CppAssertHelper.h"
+#include <proto.h>
 
 using namespace std;
 
 class Zookeeper_operations : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Zookeeper_operations);
+#ifndef THREADED
+    CPPUNIT_TEST(testPing);
+    CPPUNIT_TEST(testTimeoutCausedByWatches1);
+    CPPUNIT_TEST(testTimeoutCausedByWatches2);
+#else    
     CPPUNIT_TEST(testAsyncWatcher1);
     CPPUNIT_TEST(testAsyncGetOperation);
+#endif
     CPPUNIT_TEST(testOperationsAndDisconnectConcurrently1);
     CPPUNIT_TEST(testOperationsAndDisconnectConcurrently2);
     CPPUNIT_TEST(testConcurrentOperations1);
@@ -81,10 +88,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        zh->state=CONNECTED_STATE;
-        zh->fd=ZookeeperServer::FD;
-        zh->input_buffer=0;
-        gettimeofday(&zh->last_recv,0);
+        forceConnected(zh);
         
         int fd=0;
         int interest=0;
@@ -123,10 +127,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        zh->state=CONNECTED_STATE;
-        zh->fd=ZookeeperServer::FD;
-        zh->input_buffer=0;
-        gettimeofday(&zh->last_recv,0);
+        forceConnected(zh);
         
         int fd=0;
         int interest=0;
@@ -168,10 +169,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        zh->state=CONNECTED_STATE;
-        zh->fd=ZookeeperServer::FD;
-        zh->input_buffer=0;
-        gettimeofday(&zh->last_recv,0);
+        forceConnected(zh);
         
         int fd=0;
         int interest=0;
@@ -187,7 +185,7 @@ public:
         rc=zoo_aget(zh,"/x/y/2",0,asyncCompletion,&res2);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
         // simulate timeout
-        timeMock.tick(10); // advance system time by 10 secs
+        timeMock.tick(+10); // advance system time by 10 secs
         // the next call to zookeeper_interest should return ZOPERATIONTIMEOUT
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
         CPPUNIT_ASSERT_EQUAL(ZOPERATIONTIMEOUT,rc);
@@ -195,12 +193,179 @@ public:
         CPPUNIT_ASSERT_EQUAL(ZOPERATIONTIMEOUT,res1.rc_);
         CPPUNIT_ASSERT_EQUAL(ZOPERATIONTIMEOUT,res2.rc_);
     }
-    void testAsyncGetOperation(){
+
+    class PingCountingServer: public ZookeeperServer{
+    public:
+        PingCountingServer():pingCount_(0){}
+        // called when a client request is received
+        virtual void onMessageReceived(const RequestHeader& rh, iarchive* ia){
+           if(rh.type==PING_OP){
+               pingCount_++;
+           }
+        }
+        int pingCount_;
+    };
+
+    // establish a connection; idle for a while
+    // verify ping was sent at least once
+    void testPing()
+    {
+        const int TIMEOUT=9; // timeout in secs
+        Mock_gettimeofday timeMock;
+        PingCountingServer zkServer;
+        // must call zookeeper_close() while all the mocks are in scope
+        CloseFinally guard(&zh);
         
-    }
-    void testAsyncWatcher1(){
+        // receive timeout is in milliseconds
+        zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        // simulate connected state
+        forceConnected(zh);
         
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        // Round 1.
+        int rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        // simulate waiting for the select() call to timeout; 
+        // advance the system clock accordingly
+        timeMock.tick(tv);  
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        // verify no ping sent
+        CPPUNIT_ASSERT(zkServer.pingCount_==0);
+        
+        // Round 2.
+        // the client should have the idle threshold exceeded, by now
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        // assume the socket is writable, so no idling here; move on to 
+        // zookeeper_process immediately
+        rc=zookeeper_process(zh,interest);
+        // ZNOTHING means the client hasn't received a ping response yet
+        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        // verify a ping is sent
+        CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
+        
+        // Round 3.
+        // we're going to receive a server PING response and make sure
+        // that the client has updated its last_recv timestamp 
+        zkServer.addRecvResponse(new PingResponse);
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        // sleep for a short while (10 ms)
+        timeMock.millitick(10);
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        // only one ping so far?
+        CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
+        CPPUNIT_ASSERT(timeMock==zh->last_recv);
     }
+
+    // simulate a watch arriving right before a ping is due
+    // assert the ping is sent nevertheless
+    void testTimeoutCausedByWatches1()
+    {
+        const int TIMEOUT=9; // timeout in secs
+        Mock_gettimeofday timeMock;
+        PingCountingServer zkServer;
+        // must call zookeeper_close() while all the mocks are in scope
+        CloseFinally guard(&zh);
+        
+        // receive timeout is in milliseconds
+        zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        // simulate connected state
+        forceConnected(zh);
+        
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        // Round 1.
+        int rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        // simulate waiting for the select() call to timeout; 
+        // advance the system clock accordingly
+        timeMock.tick(tv);
+        timeMock.tick(-1); // set the clock to a millisecond before a ping is due
+        // trigger a watch now
+        zkServer.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/x/y/z"));
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        // arrival of a watch sets the last_recv to the current time
+        CPPUNIT_ASSERT(timeMock==zh->last_recv);
+        // spend 1 millisecond by processing the watch
+        timeMock.tick(1);
+        
+        // Round 2.
+        // a ping is due; zookeeper_interest() must send it now
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        // no delay here -- as if the socket is immediately writable
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        // verify a ping is sent
+        CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);        
+    }
+
+    // similar to testTimeoutCausedByWatches1, but this time the watch is 
+    // triggered while the client has an outstanding request
+    // assert the ping is sent on time
+    void testTimeoutCausedByWatches2()
+    {
+        const int TIMEOUT=9; // timeout in secs
+        Mock_gettimeofday now;
+        PingCountingServer zkServer;
+        // must call zookeeper_close() while all the mocks are in scope
+        CloseFinally guard(&zh);
+        
+        // receive timeout is in milliseconds
+        zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        // simulate connected state
+        forceConnected(zh);
+        
+        // queue up a request; keep it pending (as if the server is busy or has died)
+        AsyncGetOperationCompletion res1;
+        int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
+
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        // Round 1.
+        // send the queued up zoo_aget() request
+        Mock_gettimeofday beginningOfTimes(now); // remember when we started
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        // no delay -- the socket is writable
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc); // ZNOTHING -- no response yet
+        
+        // Round 2.
+        // what's next?
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        // no response from the server yet -- waiting in the select() call
+        now.tick(tv);
+        // a watch has arrived, thus preventing the connection from timing out 
+        zkServer.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/x/y/z"));        
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc); // read the watch message
+        CPPUNIT_ASSERT_EQUAL(0,zkServer.pingCount_); // not yet!
+        
+        //Round 3.
+        // now is the time to send a ping; make sure it's actually sent
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        // verify a ping is sent
+        CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
+        // make sure only 1/3 of the timeout has passed
+        CPPUNIT_ASSERT_EQUAL((int32_t)TIMEOUT/3*1000,toMilliseconds(now-beginningOfTimes));
+    }
+
 #else   
     class TestGetDataJob: public TestJob{
     public:
