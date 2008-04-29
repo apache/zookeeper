@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -103,14 +104,15 @@ public class ZooLog {
         os.write(ByteBuffer.wrap(msg.getBytes()));
     }
 
+    private static final SimpleDateFormat DATELOGFMT =
+        new SimpleDateFormat("MM/dd/yy HH:mm:ss,SSS");
+    
     static private void writeText(FileChannel os, char rp, Request request,
             String header, String location) throws IOException {
         StringBuffer sb = new StringBuffer();
         long time = System.currentTimeMillis();
-        sb.append(
-                DateFormat.getDateTimeInstance(DateFormat.SHORT,
-                        DateFormat.LONG).format(new Date(time))).append(" ")
-                .append(location).append(" ");
+        sb.append(DATELOGFMT.format(new Date(time)));
+        sb.append(" ").append(location).append(" ");
         sb.append(header).append(":").append(rp);
         sb.append(request.toString());
         write(os, sb.toString());
@@ -121,10 +123,8 @@ public class ZooLog {
             String location) throws IOException {
         StringBuffer sb = new StringBuffer();
         long time = System.currentTimeMillis();
-        sb.append(
-                DateFormat.getDateTimeInstance(DateFormat.SHORT,
-                        DateFormat.LONG).format(new Date(time))).append(" ")
-                .append(location).append(" ");
+        sb.append(DATELOGFMT.format(new Date(time)));
+        sb.append(" ").append(location).append(" ");
         sb.append(message);
         write(os, sb.toString());
         write(textTos, "\n");
@@ -254,6 +254,7 @@ public class ZooLog {
         }
     }
 
+    /*
     public void logRequestBinary(char rp, Request request, long traceMask) {
         if (!doLog(traceMask)) {
             return;
@@ -290,7 +291,7 @@ public class ZooLog {
             }
         }
     }
-
+    */
     /*
     static private void formatLine(PrintStream ps, String mess, String location) {
         DateFormat dateFormat = DateFormat.getDateTimeInstance(
