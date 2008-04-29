@@ -45,6 +45,8 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#define IF_DEBUG(x) if(logLevel==LOG_LEVEL_DEBUG) {x;}
+
 const int ZOOKEEPER_WRITE = 1 << 0;
 const int ZOOKEEPER_READ = 1 << 1;
 
@@ -407,6 +409,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
     zh->primer_buffer.next = 0;
     zh->last_zxid = 0;
     zh->next_deadline.tv_sec=zh->next_deadline.tv_usec=0;
+    zh->socket_readable.tv_sec=zh->socket_readable.tv_usec=0;
     if (adaptor_init(zh) == -1) {
         goto abort;
     }
@@ -1273,6 +1276,35 @@ void process_completions(zhandle_t *zh)
     }
 }
 
+static void isSocketReadable(zhandle_t* zh)
+{
+    struct pollfd fds;
+    fds.fd = zh->fd;
+    fds.events = POLLIN;
+    if (poll(&fds,1,0)<=0) {
+        // socket not readable -- no more responses to process
+        zh->socket_readable.tv_sec=zh->socket_readable.tv_usec=0;
+    }else{
+        gettimeofday(&zh->socket_readable,0);        
+    }
+}
+
+static void checkResponseLatency(zhandle_t* zh)
+{
+    int delay;
+    struct timeval now;
+    
+    if(zh->socket_readable.tv_sec==0) 
+        return;
+    
+    gettimeofday(&now,0);
+    delay=calculate_interval(&zh->socket_readable, &now);
+    if(delay>20)
+        LOG_DEBUG(("The following server response has spent at least %dms sitting in the client socket recv buffer",delay));
+    
+    zh->socket_readable.tv_sec=zh->socket_readable.tv_usec=0;
+}
+
 int zookeeper_process(zhandle_t *zh, int events) 
 {
     buffer_list_t *bptr;
@@ -1282,10 +1314,13 @@ int zookeeper_process(zhandle_t *zh, int events)
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
     api_prolog(zh);
+    IF_DEBUG(checkResponseLatency(zh));
     rc = check_events(zh, events);
     if (rc!=ZOK)
         return api_epilog(zh, rc);
 
+    IF_DEBUG(isSocketReadable(zh));
+    
     while (rc >= 0&& (bptr=dequeue_buffer(&zh->to_process))) {
         struct ReplyHeader hdr;
         struct iarchive *ia = create_buffer_iarchive(
@@ -1593,7 +1628,7 @@ int zoo_aget(zhandle_t *zh, const char *path, int watch, data_completion_t dc,
     struct GetDataRequest req = { (char*)path, watch };
     int rc;
     
-    if (zh==0)
+    if (zh==0 || path==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1609,7 +1644,8 @@ int zoo_aget(zhandle_t *zh, const char *path, int watch, data_completion_t dc,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
     
-    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1623,7 +1659,7 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     struct SetDataRequest req;
     int rc;
     
-    if (zh==0)
+    if (zh==0 || path==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1642,7 +1678,8 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1657,7 +1694,7 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     struct CreateRequest req;
     int rc;
     
-    if (zh==0)
+    if (zh==0 || path==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1682,7 +1719,8 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
     
-    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1696,7 +1734,7 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
     struct DeleteRequest req;
     int rc;
     
-    if (zh==0)
+    if (zh==0 || path==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1713,7 +1751,8 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1727,7 +1766,7 @@ int zoo_aexists(zhandle_t *zh, const char *path, int watch,
     struct ExistsRequest req;
     int rc;
     
-    if (zh==0)
+    if (zh==0 || path==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1744,7 +1783,8 @@ int zoo_aexists(zhandle_t *zh, const char *path, int watch,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1758,7 +1798,7 @@ int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
     struct GetChildrenRequest req;
     int rc;
     
-    if (zh==0)
+    if (zh==0 || path==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1775,7 +1815,8 @@ int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1789,7 +1830,7 @@ int zoo_async(zhandle_t *zh, const char *path,
     struct SyncRequest req;
     int rc;
 
-    if (zh==0)
+    if (zh==0 || path==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1805,7 +1846,8 @@ int zoo_async(zhandle_t *zh, const char *path,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1820,7 +1862,7 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
     struct GetACLRequest req;
     int rc;
     
-    if (zh==0)
+    if (zh==0 || path==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1836,7 +1878,8 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1850,7 +1893,7 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     struct SetACLRequest req;
     int rc;
     
-    if (zh==0)
+    if (zh==0 || path==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1868,7 +1911,8 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
-    LOG_DEBUG(("Sending request xid=%x to %s",h.xid,format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending request xid=%x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -1973,6 +2017,10 @@ const char* zerror(int c)
       return "invalid acl";
     case ZAUTHFAILED:
       return "authentication failed";
+    case ZCLOSING:
+      return "zookeeper is closing";
+    case ZNOTHING:
+      return "(not error) no server responses to process";
     }
     if (c > 0) {
       return strerror(c);

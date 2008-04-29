@@ -171,6 +171,10 @@ struct _zhandle {
     int32_t ref_counter;
     volatile int close_requested;
     void *adaptor_priv;
+    /* Used for debugging only: non-zero value indicates the time when the zookeeper_process
+     * call returned while there was at least one server response 
+     * unprocessed available in the socket recv buffer */
+    struct timeval socket_readable;
 };
 
 int adaptor_init(zhandle_t *zh);
