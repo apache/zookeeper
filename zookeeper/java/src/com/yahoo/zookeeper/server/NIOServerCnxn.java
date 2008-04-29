@@ -36,6 +36,8 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.Record;
@@ -58,6 +60,8 @@ import com.yahoo.zookeeper.server.auth.ProviderRegistry;
  * client, but only one thread doing the communication.
  */
 public class NIOServerCnxn implements Watcher, ServerCnxn {
+    private static final Logger LOG = Logger.getLogger(NIOServerCnxn.class);
+
     static public class Factory extends Thread {
         ZooKeeperServer zks;
 
@@ -145,13 +149,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     }
                     selected.clear();
                 } catch (Exception e) {
-                    ZooLog.logException(e);
+                    LOG.error("FIXMSG",e);
                 }
             }
             ZooLog.logTextTraceMessage("NIOServerCnxn factory exitedloop.",
                     ZooLog.textTraceMask);
             clear();
-            ZooLog.logError("=====> Goodbye cruel world <======");
+            LOG.error("=====> Goodbye cruel world <======");
             // System.exit(0);
         }
 
@@ -185,7 +189,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 this.join();
             } catch (InterruptedException e) {
             } catch (Exception e) {
-                ZooLog.logException(e);
+                LOG.error("FIXMSG",e);
             }
             if (zks != null) {
                 zks.shutdown();
@@ -251,7 +255,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     sk.interestOps(sk.interestOps() | SelectionKey.OP_WRITE);
                 }
             } catch (RuntimeException e) {
-                ZooLog.logException(e);
+                LOG.error("FIXMSG",e);
                 throw e;
             }
         }
@@ -378,7 +382,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         } catch (CancelledKeyException e) {
             close();
         } catch (IOException e) {
-            // ZooLog.logException(e);
+            // LOG.error("FIXMSG",e);
             close();
         }
     }
@@ -401,10 +405,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             if (ap == null
                     || ap.handleAuthentication(this, authPacket.getAuth()) != KeeperException.Code.Ok) {
                 if (ap == null)
-                    ZooLog.logError("No authentication provider for scheme: "
+                    LOG.error("No authentication provider for scheme: "
                             + scheme);
                 else
-                    ZooLog.logError("Authentication failed for scheme: "
+                    LOG.error("Authentication failed for scheme: "
                             + scheme);
                 // send a response...
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
@@ -414,7 +418,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 sendBuffer(NIOServerCnxn.closeConn);
                 disableRecv();
             } else {
-                ZooLog.logError("Authentication succeeded for scheme: "
+                LOG.error("Authentication succeeded for scheme: "
                         + scheme);
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
                         KeeperException.Code.Ok);
@@ -458,13 +462,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 .getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
         connReq.deserialize(bia, "connect");
-        ZooLog.logWarn("Connected to " + sock.socket().getRemoteSocketAddress()
+        LOG.warn("Connected to " + sock.socket().getRemoteSocketAddress()
                 + " lastZxid " + connReq.getLastZxidSeen());
         if (zk == null) {
             throw new IOException("ZooKeeperServer not running");
         }
         if (connReq.getLastZxidSeen() > zk.dataTree.lastProcessedZxid) {
-            ZooLog.logError("Client has seen "
+            LOG.error("Client has seen "
                     + Long.toHexString(connReq.getLastZxidSeen())
                     + " our last zxid is "
                     + Long.toHexString(zk.dataTree.lastProcessedZxid));
@@ -484,10 +488,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         if (connReq.getSessionId() != 0) {
             setSessionId(connReq.getSessionId());
             zk.reopenSession(this, sessionId, passwd, sessionTimeout);
-            ZooLog.logWarn("Renewing session " + Long.toHexString(sessionId));
+            LOG.warn("Renewing session " + Long.toHexString(sessionId));
         } else {
             zk.createSession(this, passwd, sessionTimeout);
-            ZooLog.logWarn("Creating new session "
+            LOG.warn("Creating new session "
                     + Long.toHexString(sessionId));
         }
         initialized = true;
@@ -671,7 +675,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         try {
             sock.socket().close();
         } catch (IOException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         try {
             sock.close();
@@ -680,7 +684,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             // this section arise.
             // factory.selector.wakeup();
         } catch (IOException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         sock = null;
         if (sk != null) {
@@ -715,7 +719,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             }
             baos.close();
         } catch (IOException e) {
-            ZooLog.logError("Error serializing response");
+            LOG.error("Error serializing response");
         }
         byte b[] = baos.toByteArray();
         ByteBuffer bb = ByteBuffer.wrap(b);
@@ -761,7 +765,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
             bb.putInt(bb.remaining() - 4).rewind();
             sendBuffer(bb);
-            ZooLog.logWarn("Finished init of " + Long.toHexString(sessionId)
+            LOG.warn("Finished init of " + Long.toHexString(sessionId)
                     + ": " + valid);
             if (!valid) {
                 sendBuffer(closeConn);
@@ -772,7 +776,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 enableRecv();
             }
         } catch (Exception e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
             close();
         }
     }

@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.zookeeper.server.FinalRequestProcessor;
 import com.yahoo.zookeeper.server.Request;
@@ -37,6 +39,8 @@ import com.yahoo.zookeeper.server.ZooLog;
  * This class has the control logic for the Leader.
  */
 public class Leader {
+    private static final Logger LOG = Logger.getLogger(Leader.class);
+
     static public class Proposal {
         public QuorumPacket packet;
 
@@ -104,7 +108,7 @@ public class Leader {
         try {
             ss = new ServerSocket(self.getQuorumAddress().getPort());
         } catch (BindException e) {
-            ZooLog.logError("Couldn't bind to port "
+            LOG.error("Couldn't bind to port "
                     + self.getQuorumAddress().getPort());
             throw e;
         }
@@ -207,7 +211,7 @@ public class Leader {
         newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
                 null, null);
         if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
-            ZooLog.logError("NEWLEADER proposal has Zxid of "
+            LOG.error("NEWLEADER proposal has Zxid of "
                     + newLeaderProposal.packet.getZxid());
         }
         outstandingProposals.add(newLeaderProposal);
@@ -237,7 +241,7 @@ public class Leader {
                         + " followers, only synced with "
                         + newLeaderProposal.ackCount);
                 if (followers.size() >= self.quorumPeers.size() / 2) {
-                    ZooLog.logWarn("Enough followers present. "+
+                    LOG.warn("Enough followers present. "+
                             "Perhaps the initTicks need to be increased.");
                 }
                 return;
@@ -293,7 +297,7 @@ public class Leader {
             return;
         }
 
-        ZooLog.logException(new Exception("shutdown Leader! reason: "
+        LOG.error("FIXMSG",new Exception("shutdown Leader! reason: "
                         + reason));
         // NIO should not accept conenctions
         self.cnxnFactory.setZooKeeperServer(null);
@@ -306,7 +310,7 @@ public class Leader {
         try {
             ss.close();
         } catch (IOException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         synchronized (followers) {
             for (Iterator<FollowerHandler> it = followers.iterator(); it
@@ -330,10 +334,10 @@ public class Leader {
     synchronized public void processAck(long zxid, SocketAddress followerAddr) {
         boolean first = true;
         /*
-         * ZooLog.logError("Ack zxid: " + Long.toHexString(zxid)); for (Proposal
+         * LOG.error("Ack zxid: " + Long.toHexString(zxid)); for (Proposal
          * p : outstandingProposals) { long packetZxid = p.packet.getZxid();
-         * ZooLog.logError("outstanding proposal: " +
-         * Long.toHexString(packetZxid)); } ZooLog.logError("outstanding
+         * LOG.error("outstanding proposal: " +
+         * Long.toHexString(packetZxid)); } LOG.error("outstanding
          * proposals all");
          */
         if (outstandingProposals.size() == 0) {
@@ -347,13 +351,13 @@ public class Leader {
             long packetZxid = p.packet.getZxid();
             if (packetZxid == zxid) {
                 p.ackCount++;
-                // ZooLog.logException(new RuntimeException(), "Count for " +
+                // LOG.error("FIXMSG",new RuntimeException(), "Count for " +
                 // Long.toHexString(zxid) + " is " + p.ackCount);
                 if (p.ackCount > self.quorumPeers.size() / 2){
                     if (!first) {
-                        ZooLog.logError("Commiting " + Long.toHexString(zxid)
+                        LOG.error("Commiting " + Long.toHexString(zxid)
                                 + " from " + followerAddr + " not first!");
-                        ZooLog.logError("First is "
+                        LOG.error("First is "
                                 + outstandingProposals.element().packet);
                         System.exit(13);
                     }
@@ -364,7 +368,7 @@ public class Leader {
                     // We don't commit the new leader proposal
                     if ((zxid & 0xffffffffL) != 0) {
                         if (p.request == null) {
-                            ZooLog.logError("Going to commmit null: " + p);
+                            LOG.error("Going to commmit null: " + p);
                         }
                         commit(zxid);
                         zk.commitProcessor.commit(p.request);
@@ -375,7 +379,7 @@ public class Leader {
                 first = false;
             }
         }
-        ZooLog.logError("Trying to commit future proposal: "
+        LOG.error("Trying to commit future proposal: "
                 + Long.toHexString(zxid) + " from " + followerAddr);
     }
 
@@ -486,7 +490,7 @@ public class Leader {
             baos.close();
         } catch (IOException e) {
             // This really should be impossible
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, baos
                 .toByteArray(), null);
@@ -511,7 +515,7 @@ public class Leader {
     
     public void processSync(Request r){
         if(outstandingProposals.isEmpty()){
-            ZooLog.logWarn("No outstanding proposal");
+            LOG.warn("No outstanding proposal");
             sendSync(syncHandler.get(r.sessionId), r);
                 syncHandler.remove(r.sessionId);
         }

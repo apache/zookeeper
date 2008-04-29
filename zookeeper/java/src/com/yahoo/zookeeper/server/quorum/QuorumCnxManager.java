@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.server.ZooLog;
 
 /**
@@ -50,6 +52,8 @@ import com.yahoo.zookeeper.server.ZooLog;
  */
 
 class QuorumCnxManager extends Thread {
+    private static final Logger LOG = Logger.getLogger(QuorumCnxManager.class);
+
     /*
      * Maximum capacity of thread queues
      */
@@ -123,7 +127,7 @@ class QuorumCnxManager extends Thread {
         try {
             localIP = InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
-            ZooLog.logWarn("Couldn't get local address");
+            LOG.warn("Couldn't get local address");
         }
 
         // Generates a challenge to guarantee one connection between pairs of
@@ -159,7 +163,7 @@ class QuorumCnxManager extends Thread {
         //} else {
         //    wins = true;
         //} 
-        //ZooLog.logWarn("Hash codes: " + hashCodeRemote + ", " + localIP.hashCode());
+        //LOG.warn("Hash codes: " + hashCodeRemote + ", " + localIP.hashCode());
         
         try {
             while (challenged && s.isConnected()) {
@@ -186,7 +190,7 @@ class QuorumCnxManager extends Thread {
                 }
             }
         } catch (IOException e) {
-            ZooLog.logWarn("Exception reading or writing challenge: "
+            LOG.warn("Exception reading or writing challenge: "
                     + e.toString());
             return false;
         }
@@ -194,11 +198,10 @@ class QuorumCnxManager extends Thread {
         // If lost the challenge, then drop the new connection
         if (!wins) {
             try {
-                //ZooLog.logWarn("lost cause (initiate");
+                //LOG.warn("lost cause (initiate");
                 s.socket().close();
             } catch (IOException e) {
-                ZooLog
-                        .logWarn("Error when closing socket or trying to reopen connection: "
+                LOG.warn("Error when closing socket or trying to reopen connection: "
                                 + e.toString());
 
             }
@@ -235,7 +238,7 @@ class QuorumCnxManager extends Thread {
 
                     return true;
                 } else {
-                    ZooLog.logWarn("Channel null");
+                    LOG.warn("Channel null");
                     return false;
                 }
             }
@@ -264,7 +267,7 @@ class QuorumCnxManager extends Thread {
         //    wins = true;
         //} 
         
-        //ZooLog.logWarn("Hash codes: " + hashCodeRemote + ", " + localIP.hashCode());
+        //LOG.warn("Hash codes: " + hashCodeRemote + ", " + localIP.hashCode());
         
         
         try {
@@ -297,7 +300,7 @@ class QuorumCnxManager extends Thread {
                 }
             }
         } catch (IOException e) {
-            ZooLog.logWarn("Exception reading or writing challenge: "
+            LOG.warn("Exception reading or writing challenge: "
                     + e.toString());
             return false;
         }
@@ -308,7 +311,7 @@ class QuorumCnxManager extends Thread {
                 InetAddress addr = s.socket().getInetAddress();
                 SendWorker sw = senderWorkerMap.get(addr);
 
-                //ZooLog.logWarn("Keep connection (received)");
+                //LOG.warn("Keep connection (received)");
                 //sw.connect();
                 s.socket().close();
                 sw.finish();
@@ -319,8 +322,7 @@ class QuorumCnxManager extends Thread {
                 
                 
             } catch (IOException e) {
-                ZooLog
-                        .logWarn("Error when closing socket or trying to reopen connection: "
+                LOG.warn("Error when closing socket or trying to reopen connection: "
                                 + e.toString());
             }
         //Otherwise start worker threads to receive data.
@@ -347,7 +349,7 @@ class QuorumCnxManager extends Thread {
 
                     return true;
                 } else {
-                    ZooLog.logWarn("Channel null");
+                    LOG.warn("Channel null");
                     return false;
                 }
             }
@@ -368,7 +370,7 @@ class QuorumCnxManager extends Thread {
                 b.position(0);
                 recvQueue.put(new Message(b.duplicate(), addr));
             } catch (InterruptedException e) {
-                ZooLog.logWarn("Exception when loopbacking");
+                LOG.warn("Exception when loopbacking");
             }
         /*
          * Otherwise send to the corresponding thread to send. 
@@ -399,15 +401,14 @@ class QuorumCnxManager extends Thread {
                             channel.socket().setTcpNoDelay(true);
                             initiateConnection(channel);
                         } catch (IOException e) {
-                            ZooLog.logWarn("Cannot open channel to "
+                            LOG.warn("Cannot open channel to "
                                     + addr.toString() + "( " + e.toString()
                                     + ")");
                         }
                     }
                 }     
             } catch (InterruptedException e) {
-                ZooLog
-                        .logWarn("Interrupted while waiting to put message in queue."
+                LOG.warn("Interrupted while waiting to put message in queue."
                                 + e.toString());
             }
     }
@@ -472,7 +473,7 @@ class QuorumCnxManager extends Thread {
                      * simultaneously.
                      */
                     synchronized(senderWorkerMap){
-                        ZooLog.logWarn("Connection request");
+                        LOG.warn("Connection request");
                         receiveConnection(client);
                     }
                 }
@@ -513,9 +514,9 @@ class QuorumCnxManager extends Thread {
         //    if (channel.isConnected()) {
         //        recvWorker = new RecvWorker(channel);
         //        initiateConnection(channel);
-        //        ZooLog.logWarn("Opened new connection");
+        //        LOG.warn("Opened new connection");
         //    } else {
-        //        ZooLog.logWarn("Channel not connected.");
+        //        LOG.warn("Channel not connected.");
         //    }
         //
         //    return channel.isConnected();
@@ -541,8 +542,7 @@ class QuorumCnxManager extends Thread {
                     init = System.currentTimeMillis();
                     b = queueSendMap.get(addr).take();
                 } catch (InterruptedException e) {
-                    ZooLog
-                            .logWarn("Interrupted while waiting for message on queue ("
+                    LOG.warn("Interrupted while waiting for message on queue ("
                                     + e.toString() + ")");
                     continue;
                 }
@@ -564,7 +564,7 @@ class QuorumCnxManager extends Thread {
                      * If reconnection doesn't work, then put the
                      * message back to the beginning of the queue and leave.
                      */
-                    ZooLog.logWarn("Exception when using channel: " + addr
+                    LOG.warn("Exception when using channel: " + addr
                             + ")" + e.toString());
                     running = false;
                     synchronized (senderWorkerMap) {
@@ -582,7 +582,7 @@ class QuorumCnxManager extends Thread {
                     }
                 }
             }
-            ZooLog.logWarn("Leaving thread");
+            LOG.warn("Leaving thread");
         }
     }
 
@@ -642,10 +642,10 @@ class QuorumCnxManager extends Thread {
                 }
 
             } catch (IOException e) {
-                ZooLog.logWarn("Connection broken: " + e.toString());
+                LOG.warn("Connection broken: " + e.toString());
 
             } catch (InterruptedException e) {
-                ZooLog.logWarn("Interrupted while trying to add new "
+                LOG.warn("Interrupted while trying to add new "
                         + "message to the reception queue (" + e.toString()
                         + ")");
             }

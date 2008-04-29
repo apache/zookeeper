@@ -18,6 +18,8 @@ package com.yahoo.zookeeper.server.quorum;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.RequestProcessor;
 import com.yahoo.zookeeper.server.Request;
@@ -29,6 +31,8 @@ import com.yahoo.zookeeper.server.ZooLog;
  */
 public class FollowerRequestProcessor extends Thread implements
         RequestProcessor {
+    private static final Logger LOG = Logger.getLogger(FollowerRequestProcessor.class);
+
     FollowerZooKeeperServer zks;
 
     RequestProcessor nextProcessor;
@@ -70,7 +74,7 @@ public class FollowerRequestProcessor extends Thread implements
                 }
             }
         } catch (Exception e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         ZooLog.logTextTraceMessage("FollowerRequestProcessor exited loop!",
                 ZooLog.textTraceMask);

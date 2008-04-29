@@ -24,9 +24,12 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.StringTokenizer;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.server.ZooLog;
 
 public class ServerAdminClient {
+    private static final Logger LOG = Logger.getLogger(ServerAdminClient.class);
 
     private static long getMask(String mask) {
         long retv = 0;

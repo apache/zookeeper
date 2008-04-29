@@ -19,10 +19,13 @@ package com.yahoo.zookeeper.server.auth;
 import java.util.Enumeration;
 import java.util.HashMap;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.ZooLog;
 
 public class ProviderRegistry {
+    private static final Logger LOG = Logger.getLogger(ProviderRegistry.class);
+
     private static boolean initialized = false;
     private static HashMap<String, AuthenticationProvider> authenticationProviders = 
         new HashMap<String, AuthenticationProvider>();
@@ -50,7 +53,7 @@ public class ProviderRegistry {
                                 .newInstance();
                         authenticationProviders.put(ap.getScheme(), ap);
                     } catch (Exception e) {
-                        ZooLog.logException(e, "Problems loading " + className);
+                        LOG.error("Problems loading " + className,e);
                     }
                 }
             }

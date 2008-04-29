@@ -27,6 +27,8 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.Record;
@@ -42,6 +44,8 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * class.
  */
 public class FollowerHandler extends Thread {
+    private static final Logger LOG = Logger.getLogger(FollowerHandler.class);
+
     public Socket s;
 
     Leader leader;
@@ -97,7 +101,7 @@ public class FollowerHandler extends Thread {
                 bufferedOutput.flush();
             } catch (IOException e) {
                 if (!s.isClosed()) {
-                    ZooLog.logException(e);
+                    LOG.error("FIXMSG",e);
                 }
                 break;
             }
@@ -135,7 +139,7 @@ public class FollowerHandler extends Thread {
                 txn = ZooKeeperServer.deserializeTxn(ia, hdr);
                 // mess = "transaction: " + txn.toString();
             } catch (IOException e) {
-                ZooLog.logException(e);
+                LOG.error("FIXMSG",e);
             }
             break;
         case Leader.REQUEST:
@@ -182,7 +186,7 @@ public class FollowerHandler extends Thread {
             QuorumPacket qp = new QuorumPacket();
             ia.readRecord(qp, "packet");
             if (qp.getType() != Leader.LASTZXID) {
-                ZooLog.logError("First packet " + qp.toString()
+                LOG.error("First packet " + qp.toString()
                         + " is not LASTZXID!");
                 return;
             }
@@ -239,7 +243,7 @@ public class FollowerHandler extends Thread {
             bufferedOutput.flush();
             // only if we are not truncating or fast sycning
             if (packetToSend == Leader.SNAP) {
-                ZooLog.logWarn("Sending snapshot last zxid of peer is " 
+                LOG.warn("Sending snapshot last zxid of peer is " 
                         + Long.toHexString(peerLastZxid) + " " + " zxid of leader is " 
                         + Long.toHexString(leaderLastZxid));
                 // Dump data to follower
@@ -263,7 +267,7 @@ public class FollowerHandler extends Thread {
                     try {
                         sendPackets();
                     } catch (InterruptedException e) {
-                        ZooLog.logException(e);
+                        LOG.error("FIXMSG",e);
                     }
                 }
             }.start();
@@ -332,18 +336,18 @@ public class FollowerHandler extends Thread {
             }
         } catch (IOException e) {
             if (s != null && !s.isClosed()) {
-                ZooLog.logException(e);
+                LOG.error("FIXMSG",e);
             }
         } catch (InterruptedException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         } finally {
-            ZooLog.logWarn("******* GOODBYE " + s.getRemoteSocketAddress()
+            LOG.warn("******* GOODBYE " + s.getRemoteSocketAddress()
                     + " ********");
             // Send the packet of death
             try {
                 queuedPackets.put(proposalOfDeath);
             } catch (InterruptedException e) {
-                ZooLog.logException(e);
+                LOG.error("FIXMSG",e);
             }
             shutdown();
         }
@@ -355,7 +359,7 @@ public class FollowerHandler extends Thread {
                 s.close();
             }
         } catch (IOException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         leader.removeFollowerHandler(this);
     }

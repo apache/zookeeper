@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.InputArchive;
@@ -45,6 +47,8 @@ import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
 public class Follower {
+    private static final Logger LOG = Logger.getLogger(Follower.class);
+
     QuorumPeer self;
 
     FollowerZooKeeperServer zk;
@@ -114,10 +118,10 @@ public class Follower {
             }
         }
         if (addr == null) {
-            ZooLog.logError("Couldn't find the leader with id = "
+            LOG.error("Couldn't find the leader with id = "
                     + self.currentVote.id);
         }
-        ZooLog.logWarn("Following " + addr);
+        LOG.warn("Following " + addr);
         sock = new Socket();
         try {
             QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
@@ -130,7 +134,7 @@ public class Follower {
                     sock.setTcpNoDelay(true);
                     break;
                 } catch (ConnectException e) {
-                    ZooLog.logException(e);
+                    LOG.error("FIXMSG",e);
                     if (tries == 4) {
                         throw e;
                     }
@@ -154,33 +158,33 @@ public class Follower {
             long newLeaderZxid = qp.getZxid();
             
             if (qp.getType() != Leader.NEWLEADER) {
-                ZooLog.logError("First packet should have been NEWLEADER");
+                LOG.error("First packet should have been NEWLEADER");
                 throw new IOException("First packet should have been NEWLEADER");
             }
             readPacket(qp);
             synchronized (zk) {
                 if (qp.getType() == Leader.DIFF) {
-                    ZooLog.logWarn("Getting a diff from the leader!");
+                    LOG.warn("Getting a diff from the leader!");
                     zk.loadData();
                 }
                 else if (qp.getType() == Leader.SNAP) {
-                    ZooLog.logWarn("Getting a snapshot from leader");
+                    LOG.warn("Getting a snapshot from leader");
                     // The leader is going to dump the database
                     zk.loadData(leaderIs);
                     String signature = leaderIs.readString("signature");
                     if (!signature.equals("BenWasHere")) {
-                        ZooLog.logError("Missing signature. Got " + signature);
+                        LOG.error("Missing signature. Got " + signature);
                         throw new IOException("Missing signature");
                     }
                 } else if (qp.getType() == Leader.TRUNC) {
                     //we need to truncate the log to the lastzxid of the leader
-                    ZooLog.logWarn("Truncating log to get in sync with the leader " 
+                    LOG.warn("Truncating log to get in sync with the leader " 
                             + Long.toHexString(qp.getZxid()));
                     zk.truncateLog(qp.getZxid());
                     zk.loadData();
                 }
                 else {
-                    ZooLog.logError("Got unexpected packet from leader " 
+                    LOG.error("Got unexpected packet from leader " 
                             + qp.getType() + " exiting ... " );
                     System.exit(13);
                 }
@@ -212,7 +216,7 @@ public class Follower {
                             .getArchive(new ByteArrayInputStream(qp.getData()));
                     Record txn = ZooKeeperServer.deserializeTxn(ia, hdr);
                     if (hdr.getZxid() != lastQueued + 1) {
-                        ZooLog.logWarn("Got zxid "
+                        LOG.warn("Got zxid "
                                 + Long.toHexString(hdr.getZxid())
                                 + " expected "
                                 + Long.toHexString(lastQueued + 1));
@@ -237,7 +241,7 @@ public class Follower {
                         ServerCnxn cnxn = pendingRevalidations
                                 .remove(sessionId);
                         if (cnxn == null) {
-                            ZooLog.logWarn("Missing "
+                            LOG.warn("Missing "
                                     + Long.toHexString(sessionId)
                                     + " for validation");
                         } else {
@@ -354,6 +358,6 @@ public class Follower {
             zk.shutdown();
 
         }
-        ZooLog.logException(new Exception("shutdown Follower"));
+        LOG.error("FIXMSG",new Exception("shutdown Follower"));
     }
 }

@@ -20,12 +20,15 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.data.Id;
 import com.yahoo.zookeeper.server.ServerCnxn;
-import com.yahoo.zookeeper.server.ZooLog;
 
 public class DigestAuthenticationProvider implements AuthenticationProvider {
+    private static final Logger LOG = Logger.getLogger(DigestAuthenticationProvider.class);
+
     public static String superDigest = "super:1wZ8qIvQBMTq0KPxMc6RQ/PCXKM=";
 
     public String getScheme() {
@@ -95,7 +98,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
             cnxn.getAuthInfo().add(new Id(getScheme(), digest));
             return KeeperException.Code.Ok;
         } catch (NoSuchAlgorithmException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         return KeeperException.Code.AuthFailed;
     }

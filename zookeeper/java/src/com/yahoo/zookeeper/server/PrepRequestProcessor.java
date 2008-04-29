@@ -23,6 +23,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.ZooDefs;
@@ -55,6 +57,8 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * in the queue to be applied when generating a transaction.
  */
 public class PrepRequestProcessor extends Thread implements RequestProcessor {
+    private static final Logger LOG = Logger.getLogger(PrepRequestProcessor.class);
+
     static boolean skipACL;
     static {
         skipACL = System.getProperty("zookeeper.skipACL", "no").equals("yes");
@@ -90,7 +94,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 pRequest(request);
             }
         } catch (InterruptedException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         ZooLog.logTextTraceMessage("PrepRequestProcessor exited loop!",
                 ZooLog.textTraceMask);
@@ -166,7 +170,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      */
     @SuppressWarnings("unchecked")
     protected void pRequest(Request request) {
-        // ZooLog.logWarn("Prep>>> cxid = " + request.cxid + " type = " +
+        // LOG.warn("Prep>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = " + request.sessionId);
         TxnHeader txnHeader = null;
         Record txn = null;
@@ -334,7 +338,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                                 path2Delete, null, 0, null));
                     }
                 }
-                ZooLog.logWarn("Processed session termination request for id: "
+                LOG.warn("Processed session termination request for id: "
                         + Long.toHexString(request.sessionId));
                 break;
             case OpCode.sync:
@@ -351,7 +355,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 txn = new ErrorTxn(e.getCode());
             }
         } catch (Exception e) {
-            ZooLog.logWarn("*********************************" + request);
+            LOG.warn("*********************************" + request);
             StringBuffer sb = new StringBuffer();
             ByteBuffer bb = request.request;
             if(bb!=null){
@@ -361,8 +365,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 }
             }else
                 sb.append("request buffer is null");
-            ZooLog.logWarn(sb.toString());
-            ZooLog.logException(e);
+            LOG.warn(sb.toString());
+            LOG.error("FIXMSG",e);
             if (txnHeader != null) {
                 txnHeader.setType(OpCode.error);
                 txn = new ErrorTxn(Code.MarshallingError);
@@ -403,7 +407,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 for (Id cid : authInfo) {
                     AuthenticationProvider ap = ProviderRegistry.getProvider(cid.getScheme());
                     if (ap == null) {
-                        ZooLog.logError("Missing AuthenticationProvider for "
+                        LOG.error("Missing AuthenticationProvider for "
                                 + cid.getScheme());
                     } else if (ap.isAuthenticated()) {
                         toAdd.add(new ACL(a.getPerms(), cid));

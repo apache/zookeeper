@@ -19,6 +19,8 @@ package com.yahoo.zookeeper.server.quorum;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.RequestProcessor;
@@ -31,6 +33,8 @@ import com.yahoo.zookeeper.server.ZooLog;
  * so we need to match them up.
  */
 public class CommitProcessor extends Thread implements RequestProcessor {
+    private static final Logger LOG = Logger.getLogger(CommitProcessor.class);
+
     /**
      * Requests that we are holding until the commit comes in.
      */
@@ -130,7 +134,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                 }
             }
         } catch (Exception e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         ZooLog.logTextTraceMessage("CommitProcessor exited loop!",
                 ZooLog.textTraceMask);
@@ -139,7 +143,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     synchronized public void commit(Request request) {
         if (!finished) {
             if (request == null) {
-                ZooLog.logException(new Exception("committing a null! "));
+                LOG.error("FIXMSG",new Exception("committing a null! "));
                 return;
             }
             committedRequests.add(request);
@@ -149,7 +153,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
 
     synchronized public void processRequest(Request request) {
         // request.addRQRec(">commit");
-        // ZooLog.logWarn("Zoo processReq>>> cxid = " + request.cxid + " type =
+        // LOG.warn("Zoo processReq>>> cxid = " + request.cxid + " type =
         // " + request.type + " id = " + request.sessionId + " cnxn " +
         // request.cnxn);
         if (!finished) {

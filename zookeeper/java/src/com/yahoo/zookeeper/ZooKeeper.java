@@ -747,6 +747,7 @@ public class ZooKeeper {
         } else if (args.length < 3) {
             usage();
         }
+
         ZooKeeper zooKeeper = new ZooKeeper(args[0], 5000, new MyWatcher());
         boolean watch = processCmd(args, zooKeeper);
         if (!watch) {

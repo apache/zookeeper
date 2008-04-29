@@ -42,6 +42,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.InputArchive;
@@ -70,6 +72,8 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
  */
 public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
+    private static final Logger LOG = Logger.getLogger(ZooKeeperServer.class);
+
     /**
      * Create an instance of Zookeeper server
      */
@@ -159,7 +163,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             if (zk.isRunning())
                 zk.shutdown();
         } catch (Exception e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         System.exit(0);
     }
@@ -241,7 +245,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             int len = bb.getInt();
             byte b = bb.get();
             if (len != 1 || b != '/') {
-                ZooLog.logWarn("Invalid snapshot " + f + " len = " + len
+                LOG.warn("Invalid snapshot " + f + " len = " + len
                         + " byte = " + (b & 0xff));
                 return -1;
             }
@@ -337,11 +341,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         for (File f : files) {
             zxid = isValidSnapshot(f);
             if (zxid == -1) {
-                ZooLog.logWarn("Skipping " + f);
+                LOG.warn("Skipping " + f);
                 continue;
             }
 
-            ZooLog.logWarn("Processing snapshot: " + f);
+            LOG.warn("Processing snapshot: " + f);
             
             InputStream snapIS =
                 new BufferedInputStream(new FileInputStream(f));
@@ -353,7 +357,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             // Apply the logs on/after the selected snapshot
             File[] logfiles = getLogFiles(dataLogDir.listFiles(), zxid);
             for (File logfile : logfiles) {
-                ZooLog.logWarn("Processing log file: " + logfile);
+                LOG.warn("Processing log file: " + logfile);
                 
                 InputStream logIS =
                     new BufferedInputStream(new FileInputStream(logfile));
@@ -420,11 +424,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 TxnHeader hdr = new TxnHeader();
                 Record txn = deserializeTxn(ia, hdr);
                 if (logStream.readByte("EOR") != 'B') {
-                    ZooLog.logError("Last transaction was partial.");
+                    LOG.error("Last transaction was partial.");
                     throw new EOFException();
                 }
                 if (hdr.getZxid() <= highestZxid && highestZxid != 0) {
-                    ZooLog.logError(highestZxid + "(higestZxid) >= "
+                    LOG.error(highestZxid + "(higestZxid) >= "
                             + hdr.getZxid() + "(next log) for type "
                             + hdr.getType());
                 } else {
@@ -495,7 +499,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 baos.close();
             } catch (IOException e) {
                 // This really should be impossible
-                ZooLog.logException(e);
+                LOG.error("FIXMSG",e);
             }
             QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid,
                     baos.toByteArray(), null);
@@ -546,7 +550,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         for (File f : dataDir.listFiles()) {
             long zxid = isValidSnapshot(f);
             if (zxid == -1) {
-                ZooLog.logWarn("Skipping " + f);
+                LOG.warn("Skipping " + f);
                 continue;
             }
             if (zxid > highestZxid) {
@@ -592,7 +596,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         if (truncated == false) {
             // not able to truncate the log
-            ZooLog.logError("Not able to truncate the log "
+            LOG.error("Not able to truncate the log "
                     + Long.toHexString(finalZxid));
             System.exit(13);
         }
@@ -627,7 +631,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     "Snapshotting finished: " + Long.toHexString(lastZxid),
                     ZooLog.textTraceMask);
         } catch (IOException e) {
-            ZooLog.logException(e, "Severe error, exiting");
+            LOG.error("Severe error, exiting",e);
             // This is a severe error that we cannot recover from,
             // so we need to exit
             System.exit(10);
@@ -678,7 +682,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     ZooLog.SESSION_TRACE_MASK);
             closeSession(sessionId);
         } catch (Exception e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
     }
 
@@ -851,7 +855,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                         wait(1000);
                     }
                 } catch (InterruptedException e) {
-                    ZooLog.logException(e);
+                    LOG.error("FIXMSG",e);
                 }
                 if (firstProcessor == null) {
                     throw new RuntimeException("Not started");
@@ -868,11 +872,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     incInProcess();
                 }
             } else {
-                ZooLog.logWarn("Dropping packet at server of type " + type);
+                LOG.warn("Dropping packet at server of type " + type);
                 // if unvalid packet drop the packet.
             }
         } catch (IOException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
     }
 

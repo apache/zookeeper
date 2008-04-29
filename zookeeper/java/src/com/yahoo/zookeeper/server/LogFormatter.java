@@ -22,11 +22,14 @@ import java.io.FileInputStream;
 import java.text.DateFormat;
 import java.util.Date;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.InputArchive;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
 public class LogFormatter {
+    private static final Logger LOG = Logger.getLogger(LogFormatter.class);
 
     /**
      * @param args
@@ -59,7 +62,7 @@ public class LogFormatter {
                     + Long.toHexString(hdr.getZxid())
                     + " " + TraceFormatter.op2String(hdr.getType()));
             if (logStream.readByte("EOR") != 'B') {
-                ZooLog.logError("Last transaction was partial.");
+                LOG.error("Last transaction was partial.");
                 throw new EOFException();
             }
         }

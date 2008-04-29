@@ -28,6 +28,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.Random;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.Election;
 import com.yahoo.zookeeper.server.quorum.Vote;
@@ -35,6 +37,7 @@ import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 public class AuthFastLeaderElection implements Election {
+    private static final Logger LOG = Logger.getLogger(AuthFastLeaderElection.class);
 
     /* Sequence numbers for messages */
     static int sequencer = 0;
@@ -230,11 +233,11 @@ public class AuthFastLeaderElection implements Election {
                         responseBuffer.clear();
                         mySocket.receive(responsePacket);
                     } catch (IOException e) {
-                        ZooLog.logWarn("Exception receiving: " + e.toString());
+                        LOG.warn("Exception receiving: " + e.toString());
                     }
                     // Receive new message
                     if (responsePacket.getLength() != responseBytes.length) {
-                        ZooLog.logError("Got a short response: "
+                        LOG.error("Got a short response: "
                                 + responsePacket.getLength() + " "
                                 + responsePacket.toString());
                         continue;
@@ -242,7 +245,7 @@ public class AuthFastLeaderElection implements Election {
                     responseBuffer.clear();
                     int type = responseBuffer.getInt();
                     if ((type > 3) || (type < 0)) {
-                        ZooLog.logError("Got bad Msg type: " + type);
+                        LOG.error("Got bad Msg type: " + type);
                         continue;
                     }
                     long tag = responseBuffer.getLong();
@@ -312,12 +315,12 @@ public class AuthFastLeaderElection implements Election {
 
                                     sendqueue.offer(a);
                                 } else {
-                                    ZooLog.logWarn("Incorrect challenge: "
+                                    LOG.warn("Incorrect challenge: "
                                             + recChallenge + ", "
                                             + addrChallengeMap.toString());
                                 }
                             } else {
-                                ZooLog.logWarn("No challenge for host: " + addr
+                                LOG.warn("No challenge for host: " + addr
                                         + " " + tag);
                             }
                         } else {
@@ -365,7 +368,7 @@ public class AuthFastLeaderElection implements Election {
                         break;
                     // Default case
                     default:
-                        ZooLog.logWarn("Received message of incorrect type");
+                        LOG.warn("Received message of incorrect type");
                         break;
                     }
                 }
@@ -451,7 +454,7 @@ public class AuthFastLeaderElection implements Election {
                             mySocket.send(requestPacket);
                         }
                     } catch (IOException e) {
-                        ZooLog.logWarn("Exception while sending challenge: "
+                        LOG.warn("Exception while sending challenge: "
                                 + e.toString());
                     }
 
@@ -484,7 +487,7 @@ public class AuthFastLeaderElection implements Election {
                     try {
                         mySocket.send(requestPacket);
                     } catch (IOException e) {
-                        ZooLog.logWarn("Exception while sending challenge: "
+                        LOG.warn("Exception while sending challenge: "
                                 + e.toString());
                     }
 
@@ -537,11 +540,10 @@ public class AuthFastLeaderElection implements Election {
                                                 .containsKey(m.tag);
                                     }
                                 } catch (InterruptedException e) {
-                                    ZooLog
-                                            .logWarn("Challenge request exception: "
+                                    LOG.warn("Challenge request exception: "
                                                     + e.toString());
                                 } catch (IllegalMonitorStateException e) {
-                                    ZooLog.logWarn("Monitor exception: "
+                                    LOG.warn("Monitor exception: "
                                             + e.toString());
                                 }
                             }
@@ -570,8 +572,7 @@ public class AuthFastLeaderElection implements Election {
                                     l.wait((int) timeout);
                                 }
                             } catch (InterruptedException e) {
-                                ZooLog
-                                        .logWarn("Ack exception: "
+                                LOG.warn("Ack exception: "
                                                 + e.toString());
                             }
                             synchronized (acksqueue) {
@@ -595,8 +596,7 @@ public class AuthFastLeaderElection implements Election {
                                 }
                             }
                         } catch (IOException e) {
-                            ZooLog
-                                    .logWarn("Sending exception: "
+                            LOG.warn("Sending exception: "
                                             + e.toString());
                             /*
                              * Do nothing, just try again
@@ -637,7 +637,7 @@ public class AuthFastLeaderElection implements Election {
                     try {
                         mySocket.send(requestPacket);
                     } catch (IOException e) {
-                        ZooLog.logWarn("Exception while sending ack: "
+                        LOG.warn("Exception while sending ack: "
                                 + e.toString());
                     }
                     break;
@@ -790,7 +790,7 @@ public class AuthFastLeaderElection implements Election {
         proposedLeader = self.getId();
         proposedZxid = self.getLastLoggedZxid();
 
-        ZooLog.logWarn("Election tally");
+        LOG.warn("Election tally");
         sendNotifications();
 
         /*
@@ -847,7 +847,7 @@ public class AuthFastLeaderElection implements Election {
                     } else if (termPredicate(recvset, proposedLeader,
                             proposedZxid)) {
                         // Otherwise, wait for a fixed amount of time
-                        ZooLog.logWarn("Passed predicate");
+                        LOG.warn("Passed predicate");
                         Thread.sleep(finalizeWait);
 
                         // Notification probe = recvqueue.peek();
@@ -860,7 +860,7 @@ public class AuthFastLeaderElection implements Election {
                             recvqueue.poll();
                         }
                         if (recvqueue.isEmpty()) {
-                            // ZooLog.logWarn("Proposed leader: " +
+                            // LOG.warn("Proposed leader: " +
                             // proposedLeader);
                             self.setPeerState((proposedLeader == self.getId()) ? 
                                     ServerState.LEADING: ServerState.FOLLOWING);

@@ -27,12 +27,16 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.Vote;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 public class LeaderElection implements Election  {
+    private static final Logger LOG = Logger.getLogger(LeaderElection.class);
+
     QuorumPeer self;
 
     public LeaderElection(QuorumPeer self) {
@@ -83,13 +87,13 @@ public class LeaderElection implements Election  {
             }
         }
         result.winningCount = 0;
-        ZooLog.logWarn("Election tally: ");
+        LOG.warn("Election tally: ");
         for (Entry<Vote, Integer> entry : countTable.entrySet()) {
             if (entry.getValue() > result.winningCount) {
                 result.winningCount = entry.getValue();
                 result.winner = entry.getKey();
             }
-            ZooLog.logWarn(entry.getKey().id + "\t-> " + entry.getValue());
+            LOG.warn(entry.getKey().id + "\t-> " + entry.getValue());
         }
         return result;
     }
@@ -129,14 +133,14 @@ public class LeaderElection implements Election  {
                     responsePacket.setLength(responseBytes.length);
                     s.receive(responsePacket);
                     if (responsePacket.getLength() != responseBytes.length) {
-                        ZooLog.logError("Got a short response: "
+                        LOG.error("Got a short response: "
                                 + responsePacket.getLength());
                         continue;
                     }
                     responseBuffer.clear();
                     int recvedXid = responseBuffer.getInt();
                     if (recvedXid != xid) {
-                        ZooLog.logError("Got bad xid: expected " + xid
+                        LOG.error("Got bad xid: expected " + xid
                                 + " got " + recvedXid);
                         continue;
                     }
