@@ -100,6 +100,8 @@ public class KeeperException extends Exception {
             return "InvalidACL";
         case Code.AuthFailed:
             return "AuthFailed";
+        case Code.SessionExpired:
+            return "SessionExpired";
         default:
             return "Unknown error " + code;
         }

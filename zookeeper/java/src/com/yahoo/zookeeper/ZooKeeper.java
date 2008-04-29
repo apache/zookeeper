@@ -113,7 +113,7 @@ public class ZooKeeper {
         }
     }
 
-    States state;
+    volatile States state;
 
     ClientCnxn cnxn;
 

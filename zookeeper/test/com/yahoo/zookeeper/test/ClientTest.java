@@ -35,7 +35,7 @@ public class ClientTest extends TestCase implements Watcher {
     static File baseTest = new File(System.getProperty("build.test.dir", "build"));
     NIOServerCnxn.Factory f = null;
     File tmpDir = null;
-    private CountDownLatch clientConnected;
+    volatile private CountDownLatch clientConnected;
 
     protected void setUp() throws Exception {
         LOG.error("Client test setup");
@@ -76,13 +76,42 @@ public class ClientTest extends TestCase implements Watcher {
 
     private ZooKeeper createClient() throws KeeperException, IOException,InterruptedException{
         clientConnected=new CountDownLatch(1);
-		ZooKeeper zk = new ZooKeeper(hostPort, 30000, this);
+		ZooKeeper zk = new ZooKeeper(hostPort, 20000, this);
 		if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
 			fail("Unable to connect to server");
 		}
 		return zk;
     }
     
+    @Test
+    public void testPing() throws Exception {
+        ZooKeeper zkIdle = null;
+        ZooKeeper zkWatchCreator = null;
+        try {
+            zkIdle = createClient();
+            zkWatchCreator = createClient();
+            for(int i = 0 ; i < 30; i++) {
+                zkWatchCreator.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
+            }
+            for(int i = 0 ; i < 30; i++) {
+                zkIdle.exists("/" + i, true);
+            }
+            for(int i = 0; i < 30; i++) {
+                Thread.sleep(1000);
+                zkWatchCreator.delete("/"+i, -1);
+            }
+            // The bug will manifest itself here because zkIdle will expire
+            zkIdle.exists("/0", false);
+        } finally {
+            if (zkIdle != null) {
+                zkIdle.close();
+            }
+            if (zkWatchCreator != null) {
+                zkWatchCreator.close();
+            }
+        }
+    }
+
     @Test
     public void testClient() throws KeeperException, IOException,
             InterruptedException {
