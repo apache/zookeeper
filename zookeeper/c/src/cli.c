@@ -133,6 +133,10 @@ void my_silent_data_completion(int rc, const char *value, int value_len,
     recvd++;
     fprintf(stderr, "Data completion %s rc = %d\n",(char*)data,rc);
     free((void*)data);
+//    if(recvd==100){
+//        fprintf(stderr, "Sleeping for a few moments\n");
+//        sleep(2);
+//    }
     if (recvd==to_send) {
         fprintf(stderr,"Recvd %d responses for %d requests sent\n",recvd,to_send);
     }
@@ -190,7 +194,9 @@ void od_completion(int rc, const struct Stat *stat, const void *data) {
     fprintf(stderr, "od command response: rc = %d Stat:\n", rc);
     dumpStat(stat);
     // send a whole bunch of requests
-    to_send=40;
+    recvd=0;
+    sent=0;
+    to_send=200;
     for (i=0; i<to_send; i++) {
         char buf[4096*16];
         memset(buf, -1, sizeof(buf)-1);
@@ -277,14 +283,14 @@ void processline(char *line) {
             return;
         }
         fprintf(stderr, "Creating [%s] node\n", line);
-        {
-            struct ACL _CREATE_ONLY_ACL_ACL[] = {{PERM_CREATE, ANYONE_ID_UNSAFE}};
-            struct ACL_vector CREATE_ONLY_ACL = {1,_CREATE_ONLY_ACL_ACL};
-            rc = zoo_acreate(zh, line, "new", 3, &CREATE_ONLY_ACL, flags,
-                    my_string_completion, strdup(line));
-        }
-//        rc = zoo_acreate(zh, line, "new", 3, &OPEN_ACL_UNSAFE, flags,
-//                my_string_completion, strdup(line));
+//        {
+//            struct ACL _CREATE_ONLY_ACL_ACL[] = {{PERM_CREATE, ANYONE_ID_UNSAFE}};
+//            struct ACL_vector CREATE_ONLY_ACL = {1,_CREATE_ONLY_ACL_ACL};
+//            rc = zoo_acreate(zh, line, "new", 3, &CREATE_ONLY_ACL, flags,
+//                    my_string_completion, strdup(line));
+//        }
+        rc = zoo_acreate(zh, line, "new", 3, &OPEN_ACL_UNSAFE, flags,
+                my_string_completion, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
