@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
+import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,10 +26,11 @@ import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.NIOServerCnxn;
-import com.yahoo.zookeeper.server.ZooLog;
 
 public class AsyncTest extends TestCase implements Watcher, StringCallback, VoidCallback, DataCallback {
-	private static final int CONNECTION_TIMEOUT=30000;
+    private static final Logger LOG = Logger.getLogger(AsyncTest.class);
+
+    private static final int CONNECTION_TIMEOUT=30000;
     protected static String hostPort = "127.0.0.1:33221";
     LinkedBlockingQueue<WatcherEvent> events = new LinkedBlockingQueue<WatcherEvent>();
     static File baseTest = new File(System.getProperty("build.test.dir", "build"));
@@ -49,12 +51,12 @@ public class AsyncTest extends TestCase implements Watcher, StringCallback, Void
     @After
     protected void tearDown() throws Exception {
         qt.tearDown();
-    	ZooLog.logError("Client test shutdown");
+    	LOG.error("Client test shutdown");
         if (f != null) {
             f.shutdown();
         }
         clientConnected=null;
-        ZooLog.logError("Client test shutdown finished");
+        LOG.error("Client test shutdown finished");
     }
     
     private ZooKeeper createClient() throws KeeperException, IOException,InterruptedException{

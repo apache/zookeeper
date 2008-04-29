@@ -111,6 +111,7 @@
         <javac srcdir="${src.dir}" destdir="${build.classes}" target="1.5" source="1.5" debug="on">
             <classpath>
                 <fileset dir="${build.classes}" />
+                <pathelement path="${lib.dir}/log4j-1.2.15.jar" />
             </classpath>
         </javac>
         <copy todir="${build.classes}">

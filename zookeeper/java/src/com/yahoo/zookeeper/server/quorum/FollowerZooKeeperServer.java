@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.server.FinalRequestProcessor;
 import com.yahoo.zookeeper.server.Request;
@@ -39,6 +41,8 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * A SyncRequestProcessor is also spawn off to log proposals from the leader.
  */
 public class FollowerZooKeeperServer extends ZooKeeperServer {
+    private static final Logger LOG = Logger.getLogger(FollowerZooKeeperServer.class);
+
     private QuorumPeer self;
 
     CommitProcessor commitProcessor;
@@ -110,13 +114,13 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
 
     public void commit(long zxid) {
         if (pendingTxns.size() == 0) {
-            ZooLog.logWarn("Committing " + Long.toHexString(zxid)
+            LOG.warn("Committing " + Long.toHexString(zxid)
                     + " without seeing txn");
             return;
         }
         long firstElementZxid = pendingTxns.element().zxid;
         if (firstElementZxid != zxid) {
-            ZooLog.logError("Committing " + Long.toHexString(zxid)
+            LOG.error("Committing " + Long.toHexString(zxid)
                     + " but next pending txn "
                     + Long.toHexString(firstElementZxid));
             System.exit(12);
@@ -127,7 +131,7 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
     
     public void sync(){
         if(commitProcessor.pendingSyncs.size() ==0){
-            ZooLog.logWarn("Not expecting a sync.");
+            LOG.warn("Not expecting a sync.");
             return;
         }
                 
@@ -152,14 +156,14 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         try {
             super.shutdown();
         } catch (Exception e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         try {
             if (syncProcessor != null) {
                 syncProcessor.shutdown();
             }
         } catch (Exception e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
     }
 }

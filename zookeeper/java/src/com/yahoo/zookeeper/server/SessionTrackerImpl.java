@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.KeeperException;
 
 /**
@@ -32,6 +34,8 @@ import com.yahoo.zookeeper.KeeperException;
  * in a given interval.
  */
 public class SessionTrackerImpl extends Thread implements SessionTracker {
+    private static final Logger LOG = Logger.getLogger(SessionTrackerImpl.class);
+
     HashMap<Long, Session> sessionsById = new HashMap<Long, Session>();
 
     HashMap<Long, SessionSet> sessionSets = new HashMap<Long, SessionSet>();
@@ -126,7 +130,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
                 if (set != null) {
                     for (Session s : set.sessions) {
                         sessionsById.remove(s.sessionId);
-                        ZooLog.logWarn("Expiring "
+                        LOG.warn("Expiring "
                                 + Long.toHexString(s.sessionId));
                         expirer.expire(s.sessionId);
                     }
@@ -134,7 +138,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
                 nextExpirationTime += expirationInterval;
             }
         } catch (InterruptedException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         ZooLog.logTextTraceMessage("SessionTrackerImpl exited loop!",
                 ZooLog.textTraceMask);

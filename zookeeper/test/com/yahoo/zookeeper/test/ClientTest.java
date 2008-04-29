@@ -10,7 +10,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
+
+import org.apache.log4j.Logger;
 import org.junit.Test;
+
 import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.ZooKeeper;
@@ -22,10 +25,11 @@ import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.NIOServerCnxn;
 import com.yahoo.zookeeper.server.ServerStats;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.ZooLog;
 
 public class ClientTest extends TestCase implements Watcher {
-	private static final int CONNECTION_TIMEOUT=30000;
+    private static final Logger LOG = Logger.getLogger(ClientTest.class);
+
+    private static final int CONNECTION_TIMEOUT=30000;
     protected static String hostPort = "127.0.0.1:33221";
     LinkedBlockingQueue<WatcherEvent> events = new LinkedBlockingQueue<WatcherEvent>();
     static File baseTest = new File(System.getProperty("build.test.dir", "build"));
@@ -34,7 +38,7 @@ public class ClientTest extends TestCase implements Watcher {
     private CountDownLatch clientConnected;
 
     protected void setUp() throws Exception {
-    	ZooLog.logError("Client test setup");
+        LOG.error("Client test setup");
         tmpDir = File.createTempFile("test", ".junit", baseTest);
         tmpDir = new File(tmpDir + ".dir");
         tmpDir.mkdirs();
@@ -44,11 +48,11 @@ public class ClientTest extends TestCase implements Watcher {
         f = new NIOServerCnxn.Factory(33221);
         f.startup(zks);
         Thread.sleep(5000);
-        ZooLog.logError("Client test setup finished");
+        LOG.error("Client test setup finished");
     }
 
     protected void tearDown() throws Exception {
-    	ZooLog.logError("Clent test shutdown");
+        LOG.error("Clent test shutdown");
         if (tmpDir != null) {
             recursiveDelete(tmpDir);
         }
@@ -57,7 +61,7 @@ public class ClientTest extends TestCase implements Watcher {
         }
     	ServerStats.unregister();
         clientConnected=null;
-        ZooLog.logError("Client test shutdown finished");
+        LOG.error("Client test shutdown finished");
     }
     
     static void recursiveDelete(File d) {
@@ -282,7 +286,7 @@ public class ClientTest extends TestCase implements Watcher {
             System.err.println(new Date() + " Total time "
                     + (System.currentTimeMillis() - start));
             ZooKeeper zk = createClient();
-            ZooLog.logWarn("******************* Connected to ZooKeeper" + new Date());
+            LOG.error("******************* Connected to ZooKeeper" + new Date());
             for (int i = 0; i < threadCount; i++) {
                 System.err.println("Doing thread: " + i + " " + new Date());
                 ArrayList<String> children = zk

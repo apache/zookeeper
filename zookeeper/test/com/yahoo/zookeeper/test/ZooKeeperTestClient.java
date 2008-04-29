@@ -1,10 +1,7 @@
 package com.yahoo.zookeeper.test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -17,15 +14,9 @@ import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.ZooDefs;
 import com.yahoo.zookeeper.ZooKeeper;
 import com.yahoo.zookeeper.KeeperException.Code;
-import com.yahoo.zookeeper.Watcher.Event;
-import com.yahoo.zookeeper.ZooDefs.CreateFlags;
 import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
-import com.yahoo.zookeeper.server.NIOServerCnxn;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.ZooLog;
-import com.yahoo.zookeeper.test.ClientTest.HammerThread;
 
 public class ZooKeeperTestClient extends TestCase implements Watcher {
   protected String hostPort = "127.0.0.1:22801";

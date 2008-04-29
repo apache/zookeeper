@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.InputArchive;
 import com.yahoo.jute.OutputArchive;
 import com.yahoo.jute.Record;
@@ -51,6 +53,8 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
 public class DataTree {
+    private static final Logger LOG = Logger.getLogger(DataTree.class);
+
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
@@ -405,8 +409,8 @@ public class DataTree {
             // These are expected errors since we take a lazy snapshot
             if (initialized
                     || (e.getCode() != Code.NoNode && e.getCode() != Code.NodeExists)) {
-                ZooLog.logWarn(debug);
-                ZooLog.logException(e);
+                LOG.warn(debug);
+                LOG.error("FIXMSG",e);
             }
         }
         return rc;
@@ -423,7 +427,7 @@ public class DataTree {
                             + Long.toHexString(session),
                             ZooLog.SESSION_TRACE_MASK);
                 } catch (KeeperException e) {
-                    ZooLog.logException(e);
+                    LOG.error("FIXMSG",e);
                 }
             }
         }

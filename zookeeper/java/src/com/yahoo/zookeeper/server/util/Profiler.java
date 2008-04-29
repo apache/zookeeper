@@ -16,9 +16,13 @@
 
 package com.yahoo.zookeeper.server.util;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.server.ZooLog;
 
 public class Profiler {
+    private static final Logger LOG = Logger.getLogger(Profiler.class);
+
     public interface Operation<T> {
         public T execute() throws Exception;
     }
@@ -29,7 +33,7 @@ public class Profiler {
         T res = op.execute();
         long end = System.currentTimeMillis();
         if (end - start > timeout) {
-            ZooLog.logError("Elapsed "+(end - start) + " ms: " + message);
+            LOG.error("Elapsed "+(end - start) + " ms: " + message);
         }
         return res;
     }

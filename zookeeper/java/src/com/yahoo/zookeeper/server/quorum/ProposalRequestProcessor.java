@@ -41,7 +41,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
     }
 
     public void processRequest(Request request) {
-        // ZooLog.logWarn("Ack>>> cxid = " + request.cxid + " type = " +
+        // LOG.warn("Ack>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = " + request.sessionId);
         // request.addRQRec(">prop");
                 

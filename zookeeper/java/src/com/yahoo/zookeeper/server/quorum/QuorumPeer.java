@@ -40,14 +40,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.InputArchive;
 import com.yahoo.zookeeper.server.NIOServerCnxn;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.ZooLog;
-import com.yahoo.zookeeper.server.quorum.Vote;
-import com.yahoo.zookeeper.server.quorum.FastLeaderElection;
-import com.yahoo.zookeeper.server.quorum.QuorumCnxManager;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
 /**
@@ -100,6 +98,8 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * "myid" that contains the server id as an ASCII decimal value.
  */
 public class QuorumPeer extends Thread implements QuorumStats.Provider {
+    private static final Logger LOG = Logger.getLogger(QuorumPeer.class);
+
     /**
      * Create an instance of a quorum peer 
      */
@@ -195,7 +195,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 while (true) {
                     udpSocket.receive(packet);
                     if (packet.getLength() != 4) {
-                        ZooLog.logError("Got more than just an xid! Len = "
+                        LOG.error("Got more than just an xid! Len = "
                                 + packet.getLength());
                     } else {
                         responseBuffer.clear();
@@ -230,9 +230,9 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                     packet.setLength(b.length);
                 }
             } catch (Exception e) {
-                ZooLog.logException(e);
+                LOG.error("FIXMSG",e);
             } finally {
-                ZooLog.logError("QuorumPeer responder thread exited");
+                LOG.error("QuorumPeer responder thread exited");
             }
         }
     }
@@ -385,20 +385,20 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             switch (state) {
             case LOOKING:
                 try {
-                    ZooLog.logWarn("LOOKING");
+                    LOG.warn("LOOKING");
                     currentVote = makeLEStrategy().lookForLeader();
                 } catch (Exception e) {
-                    ZooLog.logException(e);
+                    LOG.error("FIXMSG",e);
                     state = ServerState.LOOKING;
                 }
                 break;
             case FOLLOWING:
                 try {
-                    ZooLog.logWarn("FOLLOWING");
+                    LOG.warn("FOLLOWING");
                     setFollower(makeFollower(dataDir,dataLogDir));
                     follower.followLeader();
                 } catch (Exception e) {
-                    ZooLog.logException(e);
+                    LOG.error("FIXMSG",e);
                 } finally {
                     follower.shutdown();
                     setFollower(null);
@@ -406,13 +406,13 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 }
                 break;
             case LEADING:
-                ZooLog.logWarn("LEADING");
+                LOG.warn("LEADING");
                 try {
                     setLeader(makeLeader(dataDir,dataLogDir));
                     leader.lead();
                     setLeader(null);
                 } catch (Exception e) {
-                    ZooLog.logException(e);
+                    LOG.error("FIXMSG",e);
                 } finally {
                     if (leader != null) {
                         leader.shutdown("Forcing shutdown");
@@ -423,7 +423,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 break;
             }
         }
-        ZooLog.logError("QuorumPeer main thread exited");
+        LOG.error("QuorumPeer main thread exited");
     }
 
     public void shutdown() {
@@ -487,14 +487,14 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 zxid = hdr.getZxid();
             }
         } catch (IOException e) {
-            ZooLog.logWarn(e.toString());
+            LOG.warn(e.toString());
         } finally {
             try {
                 if (logStream != null) {
                     logStream.close();
                 }
             } catch (IOException e) {
-                ZooLog.logException(e);
+                LOG.error("FIXMSG",e);
             }
         }
         return zxid;
@@ -507,7 +507,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             self.start();
             self.join();
         } catch (Exception e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
         System.exit(2);
     }
@@ -551,6 +551,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             return;
         }
         QuorumPeerConfig.parse(args);
+        
         if (!QuorumPeerConfig.isStandalone()) {
             runPeer(new QuorumPeer.Factory() {
                 public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory) 

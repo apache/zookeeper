@@ -25,11 +25,15 @@ import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.server.ServerConfig;
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 public class QuorumPeerConfig extends ServerConfig {
+    private static final Logger LOG = Logger.getLogger(QuorumPeerConfig.class);
+
     private int tickTime;
     private int initLimit;
     private int syncLimit;
@@ -53,7 +57,7 @@ public class QuorumPeerConfig extends ServerConfig {
             }
             File zooCfgFile = new File(args[0]);
             if (!zooCfgFile.exists()) {
-                ZooLog.logError(zooCfgFile.toString() + " file is missing");
+                LOG.error(zooCfgFile.toString() + " file is missing");
                 System.exit(2);
             }
             Properties cfg = new Properties();
@@ -93,7 +97,7 @@ public class QuorumPeerConfig extends ServerConfig {
                     long sid = Long.parseLong(key.substring(dot + 1));
                     String parts[] = value.split(":");
                     if (parts.length != 2) {
-                        ZooLog.logError(value
+                        LOG.error(value
                                 + " does not have the form host:port");
                     }
                     InetSocketAddress addr = new InetSocketAddress(parts[0],
@@ -104,31 +108,31 @@ public class QuorumPeerConfig extends ServerConfig {
                 }
             }
             if (dataDir == null) {
-                ZooLog.logError("dataDir is not set");
+                LOG.error("dataDir is not set");
                 System.exit(2);
             }
             if (dataLogDir == null) {
                 dataLogDir = dataDir;
             } else {
                 if (!new File(dataLogDir).isDirectory()) {
-                    ZooLog.logError("dataLogDir " + dataLogDir+ " is missing.");
+                    LOG.error("dataLogDir " + dataLogDir+ " is missing.");
                     System.exit(2);
                 }
             }
             if (clientPort == 0) {
-                ZooLog.logError("clientPort is not set");
+                LOG.error("clientPort is not set");
                 System.exit(2);
             }
             if (tickTime == 0) {
-                ZooLog.logError("tickTime is not set");
+                LOG.error("tickTime is not set");
                 System.exit(2);
             }
             if (servers.size() > 1 && initLimit == 0) {
-                ZooLog.logError("initLimit is not set");
+                LOG.error("initLimit is not set");
                 System.exit(2);
             }
             if (servers.size() > 1 && syncLimit == 0) {
-                ZooLog.logError("syncLimit is not set");
+                LOG.error("syncLimit is not set");
                 System.exit(2);
             }
             QuorumPeerConfig conf = new QuorumPeerConfig(clientPort, dataDir,
@@ -142,7 +146,7 @@ public class QuorumPeerConfig extends ServerConfig {
             if (servers.size() > 1) {
                 File myIdFile = new File(dataDir, "myid");
                 if (!myIdFile.exists()) {
-                    ZooLog.logError(myIdFile.toString() + " file is missing");
+                    LOG.error(myIdFile.toString() + " file is missing");
                     System.exit(2);
                 }
                 BufferedReader br = new BufferedReader(new FileReader(myIdFile));
@@ -150,13 +154,13 @@ public class QuorumPeerConfig extends ServerConfig {
                 try {
                     conf.serverId = Long.parseLong(myIdString);
                 } catch (NumberFormatException e) {
-                    ZooLog.logError(myIdString + " is not a number");
+                    LOG.error(myIdString + " is not a number");
                     System.exit(2);
                 }
             }
             instance=conf;
         } catch (Exception e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
             System.exit(2);
         }
     }

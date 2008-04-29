@@ -32,6 +32,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.Record;
@@ -58,6 +60,7 @@ import com.yahoo.zookeeper.proto.SetACLResponse;
 import com.yahoo.zookeeper.proto.SetDataResponse;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.ByteBufferInputStream;
+import com.yahoo.zookeeper.server.ZooKeeperServer;
 import com.yahoo.zookeeper.server.ZooLog;
 
 /**
@@ -67,6 +70,8 @@ import com.yahoo.zookeeper.server.ZooLog;
  * 
  */
 public class ClientCnxn {
+    private static final Logger LOG = Logger.getLogger(ZooKeeperServer.class);
+
     private ArrayList<InetSocketAddress> serverAddrs = new ArrayList<InetSocketAddress>();
 
     static class AuthData {
@@ -180,7 +185,7 @@ public class ClientCnxn {
                     this.bb.putInt(this.bb.capacity() - 4);
                     this.bb.rewind();
                 } catch (IOException e) {
-                    ZooLog.logException(e, "this should be impossible!");
+                    LOG.error("this should be impossible!", e);
                 }
             }
         }
@@ -239,7 +244,7 @@ public class ClientCnxn {
 
     final static UncaughtExceptionHandler uncaughtExceptionHandler = new UncaughtExceptionHandler() {
         public void uncaughtException(Thread t, Throwable e) {
-            ZooLog.logException(e, "from " + t.getName());
+            LOG.error("from " + t.getName(), e);
         }
     };
 
@@ -267,8 +272,7 @@ public class ClientCnxn {
                             rc = p.replyHeader.getErr();
                         }
                         if (p.cb == null) {
-                            ZooLog
-                                    .logError("Somehow a null cb got to EventThread!");
+                            LOG.error("Somehow a null cb got to EventThread!");
                         } else if (p.response instanceof ExistsResponse
                                 || p.response instanceof SetDataResponse
                                 || p.response instanceof SetACLResponse) {
@@ -548,7 +552,7 @@ public class ClientCnxn {
         }
 
         private void primeConnection(SelectionKey k) throws IOException {
-            ZooLog.logWarn("Priming connection to "
+            LOG.warn("Priming connection to "
                     + ((SocketChannel) sockKey.channel()));
             lastConnectIndex = currentConnectIndex;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid,
@@ -627,7 +631,7 @@ public class ClientCnxn {
             sock.configureBlocking(false);
             sock.socket().setSoLinger(false, -1);
             sock.socket().setTcpNoDelay(true);
-            ZooLog.logWarn("Trying to connect to " + addr);
+            LOG.warn("Trying to connect to " + addr);
             sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
             if (sock.connect(addr)) {
                 primeConnection(sockKey);
@@ -697,7 +701,7 @@ public class ClientCnxn {
                     }
                     selected.clear();
                 } catch (Exception e) {
-                    ZooLog.logWarn("Closing: " + e.getMessage());
+                    LOG.warn("Closing: " + e.getMessage());
                     cleanup();
                     if (zooKeeper.state.isAlive()) {
                         waitingEvents.add(new WatcherEvent(Event.EventNone,

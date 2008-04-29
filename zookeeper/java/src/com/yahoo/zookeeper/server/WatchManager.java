@@ -18,6 +18,9 @@ package com.yahoo.zookeeper.server;
 
 import java.util.HashMap;
 import java.util.HashSet;
+
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 
@@ -26,6 +29,8 @@ import com.yahoo.zookeeper.proto.WatcherEvent;
  * and removes watchers and their watches in addition to managing triggers.
  */
 public class WatchManager {
+    private static final Logger LOG = Logger.getLogger(WatchManager.class);
+
     HashMap<String, HashSet<Watcher>> watchTable = new HashMap<String, HashSet<Watcher>>();
 
     HashMap<Watcher, HashSet<String>> watch2Paths = new HashMap<Watcher, HashSet<String>>();

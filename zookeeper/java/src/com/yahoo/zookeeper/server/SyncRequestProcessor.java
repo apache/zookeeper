@@ -26,6 +26,8 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.server.util.Profiler;
@@ -37,6 +39,8 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * until its log has been synced to disk.
  */
 public class SyncRequestProcessor extends Thread implements RequestProcessor {
+    private static final Logger LOG = Logger.getLogger(SyncRequestProcessor.class);
+
     static final int PADDING_TIMEOUT=1000;
     ZooKeeperServer zks;
 
@@ -55,7 +59,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
             try {
                 preAllocSize = Long.parseLong(size) * 1024;
             } catch (NumberFormatException e) {
-                ZooLog.logWarn(size + " is not a valid value for preAllocSize");
+                LOG.warn(size + " is not a valid value for preAllocSize");
             }
         }
     }
@@ -132,7 +136,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                     break;
                 }
                 if (si != null) {
-                    // ZooLog.logWarn("Sync>>> cxid = " + si.cxid + " type = " +
+                    // LOG.warn("Sync>>> cxid = " + si.cxid + " type = " +
                     // si.type + " id = " + si.sessionId + " zxid = " +
                     // Long.toHexString(si.zxid));
                     ZooLog.logRequest('S', si, "",
@@ -140,7 +144,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                     TxnHeader hdr = si.hdr;
                     if (hdr != null) {
                         if (hdr.getZxid() <= lastZxidSeen) {
-                            ZooLog.logError("Current zxid " + hdr.getZxid()
+                            LOG.error("Current zxid " + hdr.getZxid()
                                     + " is <= " + lastZxidSeen + " for "
                                     + hdr.getType());
                         }
@@ -183,7 +187,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                             // We just want one snapshot going at a time
                             if (snapInProcess != null
                                     && snapInProcess.isAlive()) {
-                                ZooLog.logWarn("Too busy to snap, skipping");
+                                LOG.warn("Too busy to snap, skipping");
                             } else {
                                 logStream = null;
                                 logArchive = null;
@@ -192,7 +196,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                                         try {
                                             zks.snapshot();
                                         } catch (Exception e) {
-                                            ZooLog.logException(e);
+                                            LOG.error("FIXMSG",e);
                                         }
                                     }
                                 };
@@ -208,7 +212,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                 }
             }
         } catch (Exception e) {
-            ZooLog.logException(e, "Severe error, exiting");
+            LOG.error("Severe error, exiting",e);
             System.exit(11);
         }
         ZooLog.logTextTraceMessage("SyncRequestProcessor exiyed!",

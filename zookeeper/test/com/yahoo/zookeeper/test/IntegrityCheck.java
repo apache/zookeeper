@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.ZooDefs;
@@ -25,9 +27,10 @@ import com.yahoo.zookeeper.AsyncCallback.DataCallback;
 import com.yahoo.zookeeper.AsyncCallback.StatCallback;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
-import com.yahoo.zookeeper.server.ZooLog;
 
 public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
+    private static final Logger LOG = Logger.getLogger(IntegrityCheck.class);
+
     ZooKeeper zk;
 
     HashMap<String, byte[]> lastValue = new HashMap<String, byte[]>();
@@ -66,19 +69,19 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
 
     public void run() throws InterruptedException, KeeperException {
         try{
-            ZooLog.logWarn("Creating znodes for "+path);
+            LOG.warn("Creating znodes for "+path);
             doCreate();
-            ZooLog.logWarn("Staring the test loop for "+path);
+            LOG.warn("Staring the test loop for "+path);
             while (true) {
-                ZooLog.logWarn("Staring write cycle for "+path);
+                LOG.warn("Staring write cycle for "+path);
                 doPopulate();
                 waitOutstanding();
-                ZooLog.logWarn("Staring read cycle for "+path);
+                LOG.warn("Staring read cycle for "+path);
                 readAll();
                 waitOutstanding();
             }
         }finally{
-            ZooLog.logWarn("Test loop terminated for "+path);            
+            LOG.warn("Test loop terminated for "+path);            
         }
     }
 
@@ -106,7 +109,7 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
             String cpath = path + "/" + i;
             try{
                 if(i%10==0)
-                    ZooLog.logWarn("Creating znode "+cpath);
+                    LOG.warn("Creating znode "+cpath);
                 zk.create(cpath, v, ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
             }catch(KeeperException e){
                 if(e.getCode()!=KeeperException.Code.NodeExists)
@@ -202,7 +205,7 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
             }
             if (lastString != null
                     && Integer.parseInt(string) < Integer.parseInt(lastString)) {
-                ZooLog.logError("ERROR: Got " + string + " expected >= "
+                LOG.error("ERROR: Got " + string + " expected >= "
                         + lastString);
                 errorCount++;
             }

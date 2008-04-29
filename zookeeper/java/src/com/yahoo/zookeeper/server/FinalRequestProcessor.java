@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.ZooDefs;
@@ -36,11 +38,11 @@ import com.yahoo.zookeeper.proto.GetChildrenRequest;
 import com.yahoo.zookeeper.proto.GetChildrenResponse;
 import com.yahoo.zookeeper.proto.GetDataRequest;
 import com.yahoo.zookeeper.proto.GetDataResponse;
-import com.yahoo.zookeeper.proto.SyncRequest;
-import com.yahoo.zookeeper.proto.SyncResponse;
 import com.yahoo.zookeeper.proto.ReplyHeader;
 import com.yahoo.zookeeper.proto.SetACLResponse;
 import com.yahoo.zookeeper.proto.SetDataResponse;
+import com.yahoo.zookeeper.proto.SyncRequest;
+import com.yahoo.zookeeper.proto.SyncResponse;
 import com.yahoo.zookeeper.server.DataTree.ProcessTxnResult;
 import com.yahoo.zookeeper.server.NIOServerCnxn.Factory;
 import com.yahoo.zookeeper.txn.CreateSessionTxn;
@@ -56,6 +58,8 @@ import com.yahoo.zookeeper.txn.ErrorTxn;
  * outstandingRequests member of ZooKeeperServer.
  */
 public class FinalRequestProcessor implements RequestProcessor {
+    private static final Logger LOG = Logger.getLogger(FinalRequestProcessor.class);
+
     ZooKeeperServer zks;
 
     public FinalRequestProcessor(ZooKeeperServer zks) {
@@ -63,7 +67,7 @@ public class FinalRequestProcessor implements RequestProcessor {
     }
 
     public void processRequest(Request request) {
-        // ZooLog.logWarn("Zoo>>> cxid = " + request.cxid + " type = " +
+        // LOG.warn("Zoo>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = " + request.sessionId + " cnxn " +
         // request.cnxn);
         // request.addRQRec(">final");
@@ -77,7 +81,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             while (!zks.outstandingChanges.isEmpty()
                     && zks.outstandingChanges.get(0).zxid <= request.zxid) {
                 if (zks.outstandingChanges.get(0).zxid < request.zxid) {
-                    ZooLog.logError("Zxid outstanding "
+                    LOG.error("Zxid outstanding "
                             + zks.outstandingChanges.get(0).zxid
                             + " is less than current " + request.zxid);
                 }
@@ -91,7 +95,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         zks.sessionTracker.addSession(request.sessionId, cst
                                 .getTimeOut());
                     } else {
-                        ZooLog.logWarn("*****>>>>> Got "
+                        LOG.warn("*****>>>>> Got "
                                 + request.txn.getClass() + " "
                                 + request.txn.toString());
                     }
@@ -213,15 +217,15 @@ public class FinalRequestProcessor implements RequestProcessor {
         } catch (KeeperException e) {
             err = e.getCode();
         } catch (Exception e) {
-            ZooLog.logWarn("****************************** " + request);
+            LOG.warn("****************************** " + request);
             StringBuffer sb = new StringBuffer();
             ByteBuffer bb = request.request;
             bb.rewind();
             while (bb.hasRemaining()) {
                 sb.append(Integer.toHexString(bb.get() & 0xff));
             }
-            ZooLog.logWarn(sb.toString());
-            ZooLog.logException(e);
+            LOG.warn(sb.toString());
+            LOG.error("FIXMSG",e);
             err = Code.MarshallingError;
         }
         ReplyHeader hdr = new ReplyHeader(request.cxid, request.zxid, err);
@@ -229,7 +233,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         try {
             request.cnxn.sendResponse(hdr, rsp, "response");
         } catch (IOException e) {
-            ZooLog.logException(e);
+            LOG.error("FIXMSG",e);
         }
     }
 

@@ -26,6 +26,8 @@ import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.QuorumCnxManager.Message;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -44,6 +46,7 @@ import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 
 public class FastLeaderElection implements Election {
+    private static final Logger LOG = Logger.getLogger(FastLeaderElection.class);
 
 	/* Sequence numbers for messages */
     static int sequencer = 0;
@@ -176,7 +179,7 @@ public class FastLeaderElection implements Election {
             			
             			// Receive new message
             			if (response.buffer.capacity() < 28) {
-            				ZooLog.logError("Got a short response: "
+            				LOG.error("Got a short response: "
             						+ response.buffer.capacity());
             				continue;
             			}
@@ -215,7 +218,7 @@ public class FastLeaderElection implements Election {
             			//InetAddress addr = (InetAddress) responsePacket.getSocketAddress();
             			if(self.getPeerState() == QuorumPeer.ServerState.LOOKING){
             				recvqueue.offer(n);
-            				if(recvqueue.size() == 0) ZooLog.logWarn("Message: " + n.addr);
+            				if(recvqueue.size() == 0) LOG.warn("Message: " + n.addr);
             				if((ackstate == QuorumPeer.ServerState.LOOKING)
             						&& (n.epoch < logicalclock)){
             					ToSend notmsg = new ToSend(ToSend.mType.notification, 
@@ -408,7 +411,7 @@ public class FastLeaderElection implements Election {
         proposedLeader = self.getId();
         proposedZxid = self.getLastLoggedZxid();
 
-        ZooLog.logWarn("Election tally: " + proposedZxid);
+        LOG.warn("Election tally: " + proposedZxid);
         sendNotifications();
 
         /*
@@ -463,7 +466,7 @@ public class FastLeaderElection implements Election {
 
                 } else if (termPredicate(recvset, proposedLeader, proposedZxid)) {
                     //Otherwise, wait for a fixed amount of time
-                    ZooLog.logWarn("Passed predicate");
+                    LOG.warn("Passed predicate");
                     Thread.sleep(finalizeWait);
 
                     // Verify if there is any change in the proposed leader
