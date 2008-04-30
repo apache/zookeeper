@@ -1,5 +1,5 @@
-Release 2.0.3
-2008-04-29 Andrew Kornev <akornev@users.sourceforge.net>
+Release 2.1.0
+2008-04-30 Andrew Kornev <akornev@users.sourceforge.net>
 
     * added the client latency diagnostics; the client prints a warning when the
       reponse latency exceeds 20ms
