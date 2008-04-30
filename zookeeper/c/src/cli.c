@@ -35,12 +35,23 @@ static zhandle_t *zh;
 static clientid_t myid;
 static const char *clientIdFile = 0;
 struct timeval startTime;
+static char cmd[1024];
+static int batchMode=0;
 
 static int to_send=0;
 static int sent=0;
 static int recvd=0;
 
 static int shutdownThisThing=0;
+
+static __attribute__ ((unused)) void 
+printProfileInfo(struct timeval start, struct timeval end,int thres,const char* msg)
+{
+  int delay=(end.tv_sec*1000+end.tv_usec/1000)-
+    (start.tv_sec*1000+start.tv_usec/1000);
+  if(delay>thres)
+    fprintf(stderr,"%s: execution time=%dms\n",msg,delay);
+}
 
 void watcher(zhandle_t *zzh, int type, int state, const char *path) {
     fprintf(stderr,"Watcher %d state = %d for %s\n", type, state, (path ? path: "null"));
@@ -101,6 +112,8 @@ void my_string_completion(int rc, const char *name, const void *data) {
     if (!rc) {
         fprintf(stderr, "\tname = %s\n", name);
     }
+    if(batchMode)
+      shutdownThisThing=1;
 }
 
 void my_data_completion(int rc, const char *value, int value_len,
@@ -120,25 +133,19 @@ void my_data_completion(int rc, const char *value, int value_len,
     fprintf(stderr, "\nStat:\n");
     dumpStat(stat);
     free((void*)data);
+    if(batchMode)
+      shutdownThisThing=1;
 }
 
 void my_silent_data_completion(int rc, const char *value, int value_len,
         const struct Stat *stat, const void *data) {
-    //    char buf[value_len+1];
-    //    if(value){
-    //        strncpy(buf,value,value_len);buf[value_len]=0;
-    //    }
-    //    fprintf(stderr, "Data completion: %s=\n[%s] rc = %d\n",(char*)data,
-    //            value?buf:"null", rc);
     recvd++;
     fprintf(stderr, "Data completion %s rc = %d\n",(char*)data,rc);
     free((void*)data);
-//    if(recvd==100){
-//        fprintf(stderr, "Sleeping for a few moments\n");
-//        sleep(2);
-//    }
     if (recvd==to_send) {
         fprintf(stderr,"Recvd %d responses for %d requests sent\n",recvd,to_send);
+        if(batchMode)
+          shutdownThisThing=1;
     }
 }
 
@@ -163,17 +170,23 @@ void my_strings_completion(int rc, const struct String_vector *strings,
     sec = tv.tv_sec - startTime.tv_sec;
     usec = tv.tv_usec - startTime.tv_usec;
     fprintf(stderr, "time = %d msec\n", sec*1000 + usec/1000);
+    if(batchMode)
+      shutdownThisThing=1;
 }
 
 void my_void_completion(int rc, const void *data) {
     fprintf(stderr, "%s: rc = %d\n", (char*)data, rc);
     free((void*)data);
+    if(batchMode)
+      shutdownThisThing=1;
 }
 
 void my_stat_completion(int rc, const struct Stat *stat, const void *data) {
     fprintf(stderr, "%s: rc = %d Stat:\n", (char*)data, rc);
     dumpStat(stat);
     free((void*)data);
+    if(batchMode)
+      shutdownThisThing=1;
 }
 
 void my_silent_stat_completion(int rc, const struct Stat *stat,
@@ -355,6 +368,7 @@ void processline(char *line) {
 int main(int argc, char **argv) {
 #ifndef THREADED
     fd_set rfds, wfds, efds;
+    int processed=0;
 #endif
     char buffer[4096];
     char p[2048];
@@ -366,16 +380,24 @@ int main(int argc, char **argv) {
     FILE *fh;
 
     if (argc < 2) {
-        fprintf(stderr, "USAGE %s zookeeper_host_list [clientid_file]\n", argv[0]);
+        fprintf(stderr,
+                "USAGE %s zookeeper_host_list [clientid_file|cmd:(ls|create|od|...)]\n", 
+                argv[0]);
         return 2;
     }
     if (argc > 2) {
+      if(strncmp("cmd:",argv[2],4)==0){
+        strcpy(cmd,argv[2]+4);
+        batchMode=1;
+        fprintf(stderr,"Batch mode: %s\n",cmd);
+      }else{
         clientIdFile = argv[2];
         fh = fopen(clientIdFile, "r");
         if (fh) {
             fread(&myid, sizeof(myid), 1, fh);
             fclose(fh);
         }
+      }
     }
 #ifdef YCA
     strcpy(appId,"yahoo.example.yca_test");
@@ -462,6 +484,11 @@ int main(int argc, char **argv) {
         }
         if (FD_ISSET(fd, &wfds)) {
             events |= ZOOKEEPER_WRITE;
+        }
+        if(batchMode && processed==0){
+          //batch mode
+          processline(cmd);
+          processed=1;
         }
         if (FD_ISSET(0, &rfds)) {
             int rc;
