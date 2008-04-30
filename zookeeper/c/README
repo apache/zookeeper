@@ -59,8 +59,9 @@ downloaded from Source Forge please skip to step 3.
 USING THE CLIENT
 
 You can test your client by running a zookeeper server (see instructions on 
-the project wiki page on how to run it) and connecting to it using one of 
-the cli applications that were built as part of the installation procedure.
+the project wiki page on how to run it) and connecting to it using the zookeeper shell
+application cli that is built as part of the installation procedure.
+
 cli_mt (multithreaded, built against zookeeper_mt library) is shown in this example, 
 but you could also use cli_st (singlethreaded, built against zookeeper_st library):
 
@@ -76,11 +77,30 @@ To verify that the node's been created:
 
 > ls /
 
-You should see a list of node who are children of the root node "/".
-(TODO: document all the cli commands)
+You should see a list of nodes who are the children of the root node "/".
+
+Here's a list of command supported by the cli shell:
+
+ls <path>             -- list children of a znode identified by <path>. The command
+                         set a children watch on the znode.
+get <path>            -- get the value of a znode at <path>
+set <path> <value>    -- set the value of a znode at <path> to <value>
+create [+e|+s] <path> -- create a znode as a child of znode <path>; 
+                         use +e option to create an ephemeral znode,
+                         use +s option to create a znode with a sequence number 
+                         appended to the name. The operation will fail if 
+                         the parent znode (the one identified by <path>) doesn't
+                         exist.
+delete <path>         -- delete the znode at <path>. The command will fail if the znode
+                         has children.
+sync <path>           -- make sure all pending updates have been applied to znode at <path>
+exists <path>         -- returns a result code indicating whether the znode at <path>
+                         exists. The command also sets a znode watch.
+myid                  -- prints out the current zookeeper session id.
+quit                  -- exit the shell.
 
 In order to be able to use the zookeeper API in your application you have to
-1) remember to include zookeeper header 
+1) remember to include the zookeeper header 
    #include <zookeeper/zookeeper.h>
 2) use -DTHREADED compiler option to enable Sync API; in this case you should
    be linking your code against zookeeper_mt library

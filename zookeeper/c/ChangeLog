@@ -1,3 +1,25 @@
+Release 2.0.3
+2008-04-29 Andrew Kornev <akornev@users.sourceforge.net>
+
+    * added the client latency diagnostics; the client prints a warning when the
+      reponse latency exceeds 20ms
+
+    * modified logging format to report the znode path for which the zookeeper 
+      operation is called
+
+    * fixed a minor bug where error messages were missing for some of the newer 
+      zookeeper error codes (ZCLOSING and ZNOTHING).
+
+    * improved logging by adding the XID to the message to make it easy to match
+      requests to responses
+
+    * fixed the bug causing sporadic session termination and timeouts
+
+    * added a new return code to zookeeper_process() -- ZNOTHING -- 
+      that indicates that the socket has no more data to read
+
+    * more unit tests added    
+
 Release 1.1.3
 2008-02-07 Andrew Kornev <akornev@users.sourceforge.net>
 
