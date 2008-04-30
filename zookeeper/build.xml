@@ -31,6 +31,9 @@
     <property name="build.docs" value="${build.dir}/docs" />
     <property name="build.javadoc" value="${build.docs}/api" />
 
+    <property name="test.cobertura.output.format" value="html" />
+    <property name="coveragereport.dir" value="${build.dir}/cobertura" />
+
     <path id="svnant.classpath">
         <fileset dir="${lib.dir}/svnant">
             <include name="**/*.jar"/>
@@ -332,7 +335,8 @@
     </target>
 
     <target name="cobertura-report" depends="cobertura-test">
-        <cobertura-report destdir="${build.dir}/cobertura">
+        <cobertura-report format="${test.cobertura.output.format}"
+                          destdir="${coveragereport.dir}" > 
             <fileset dir="${src.dir}">
                 <include name="**/*.java" />
             </fileset>
