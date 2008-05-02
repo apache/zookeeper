@@ -1,3 +1,8 @@
+Release 2.1.1
+2008-04-30 Andrew Kornev <akornev@users.sourceforge.net>
+
+    * changed the distributino package name to "c-client-src"
+    
 Release 2.1.0
 2008-04-30 Andrew Kornev <akornev@users.sourceforge.net>
 
