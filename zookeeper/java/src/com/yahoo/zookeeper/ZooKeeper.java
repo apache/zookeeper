@@ -103,7 +103,7 @@ import com.yahoo.zookeeper.server.DataTree;
  * 
  */
 public class ZooKeeper {
-    Watcher watcher;
+    volatile Watcher watcher;
 
     public enum States {
         CONNECTING, ASSOCIATING, CONNECTED, CLOSED, AUTH_FAILED;
@@ -119,16 +119,16 @@ public class ZooKeeper {
 
     public ZooKeeper(String host, int sessionTimeout, Watcher watcher)
             throws KeeperException, IOException {
-        cnxn = new ClientCnxn(host, sessionTimeout, this);
         this.watcher = watcher;
+        cnxn = new ClientCnxn(host, sessionTimeout, this);
     }
 
     public ZooKeeper(String host, int sessionTimeout, Watcher watcher,
             long sessionId, byte[] sessionPasswd) throws KeeperException,
             IOException {
+        this.watcher = watcher;
         cnxn = new ClientCnxn(host, sessionTimeout, this, sessionId,
                 sessionPasswd);
-        this.watcher = watcher;
     }
 
     public long getSessionId() {
