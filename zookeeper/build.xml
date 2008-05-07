@@ -25,7 +25,7 @@
     <property name="test.junit.output.format" value="plain" />
     <property name="config.dir" value="${basedir}/test/config" />
     <property name="test.junit.maxmem" value="512m" />
-
+    <property name="conf.dir" value="${basedir}/conf"/>
     <property name="javadoc.link.java" value="http://java.sun.com/j2se/1.5/docs/api/" />
     <property name="javadoc.packages" value="com.yahoo.*" />
     <property name="build.docs" value="${build.dir}/docs" />
@@ -167,7 +167,8 @@
         <exec executable="hostname" outputproperty="host.name"/>
         <jar jarfile="${jar.name}"> 
             <fileset file="LICENSE" />
-            <fileset dir="${build.classes}"/> 
+            <fileset dir="${build.classes}"/>
+            <fileset file="${conf.dir}/log4j.properties"/> 
             <manifest>
                 <attribute name="Main-Class" value="com.yahoo.zookeeper.server.quorum.QuorumPeer" />
                 <attribute name="Built-By" value="${user.name}"/>
@@ -212,10 +213,10 @@
             timeout="${test.timeout}" errorProperty="tests.failed"
             failureProperty="tests.failed">
           <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+          <classpath refid="test.classpath"/>
           <classpath>
             <pathelement path="${build.testclasses}" />
           </classpath>
-          <classpath refid="test.classpath"/>
           <formatter type="${test.junit.output.format}" />
           <batchtest todir="${test.log.dir}" unless="testcase">
             <fileset dir="${test.src.dir}"
