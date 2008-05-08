@@ -71,11 +71,11 @@ public class FinalRequestProcessor implements RequestProcessor {
         // request.type + " id = " + request.sessionId + " cnxn " +
         // request.cnxn);
         // request.addRQRec(">final");
-        long traceMask = ZooLog.CLIENT_REQUEST_TRACE_MASK;
+        long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
         if (request.type == OpCode.ping) {
-            traceMask = ZooLog.SERVER_PING_TRACE_MASK;
+            traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
         }
-        ZooLog.logRequest('E', request, "", traceMask);
+        ZooTrace.logRequest(LOG, traceMask, 'E', request, "");
         ProcessTxnResult rc = null;
         synchronized (zks.outstandingChanges) {
             while (!zks.outstandingChanges.isEmpty()

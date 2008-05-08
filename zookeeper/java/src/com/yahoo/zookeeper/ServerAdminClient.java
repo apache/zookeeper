@@ -26,7 +26,7 @@ import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.ZooLog;
+import com.yahoo.zookeeper.server.ZooTrace;
 
 public class ServerAdminClient {
     private static final Logger LOG = Logger.getLogger(ServerAdminClient.class);
@@ -34,21 +34,21 @@ public class ServerAdminClient {
     private static long getMask(String mask) {
         long retv = 0;
         if (mask.equalsIgnoreCase("CLIENT_REQUEST_TRACE_MASK")) {
-            retv = ZooLog.CLIENT_REQUEST_TRACE_MASK;
+            retv = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
         } else if (mask.equalsIgnoreCase("CLIENT_DATA_PACKET_TRACE_MASK")) {
-            retv = ZooLog.CLIENT_DATA_PACKET_TRACE_MASK;
+            retv = ZooTrace.CLIENT_DATA_PACKET_TRACE_MASK;
         } else if (mask.equalsIgnoreCase("CLIENT_PING_TRACE_MASK")) {
-            retv = ZooLog.CLIENT_PING_TRACE_MASK;
+            retv = ZooTrace.CLIENT_PING_TRACE_MASK;
         } else if (mask.equalsIgnoreCase("SERVER_PACKET_TRACE_MASK")) {
-            retv = ZooLog.SERVER_PACKET_TRACE_MASK;
+            retv = ZooTrace.SERVER_PACKET_TRACE_MASK;
         } else if (mask.equalsIgnoreCase("SESSION_TRACE_MASK")) {
-            retv = ZooLog.SESSION_TRACE_MASK;
+            retv = ZooTrace.SESSION_TRACE_MASK;
         } else if (mask.equalsIgnoreCase("EVENT_DELIVERY_TRACE_MASK")) {
-            retv = ZooLog.EVENT_DELIVERY_TRACE_MASK;
+            retv = ZooTrace.EVENT_DELIVERY_TRACE_MASK;
         } else if (mask.equalsIgnoreCase("SERVER_PING_TRACE_MASK")) {
-            retv = ZooLog.SERVER_PING_TRACE_MASK;
+            retv = ZooTrace.SERVER_PING_TRACE_MASK;
         } else if (mask.equalsIgnoreCase("WARNING_TRACE_MASK")) {
-            retv = ZooLog.WARNING_TRACE_MASK;
+            retv = ZooTrace.WARNING_TRACE_MASK;
         }
         return retv;
     }

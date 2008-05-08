@@ -139,8 +139,8 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                     // LOG.warn("Sync>>> cxid = " + si.cxid + " type = " +
                     // si.type + " id = " + si.sessionId + " zxid = " +
                     // Long.toHexString(si.zxid));
-                    ZooLog.logRequest('S', si, "",
-                            ZooLog.CLIENT_REQUEST_TRACE_MASK);
+                    ZooTrace.logRequest(LOG, ZooTrace.CLIENT_REQUEST_TRACE_MASK,
+                            'S', si, "");
                     TxnHeader hdr = si.hdr;
                     if (hdr != null) {
                         if (hdr.getZxid() <= lastZxidSeen) {
@@ -169,7 +169,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                                     return SyncRequestProcessor.this
                                             .padLogFile(ffc, fsize);
                                 }
-                            }, PADDING_TIMEOUT, 
+                            }, PADDING_TIMEOUT,
                             "Logfile padding exceeded time threshold"
                         );
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -215,8 +215,8 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
             LOG.error("Severe error, exiting",e);
             System.exit(11);
         }
-        ZooLog.logTextTraceMessage("SyncRequestProcessor exiyed!",
-                ZooLog.textTraceMask);
+        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+                                     "SyncRequestProcessor exiyed!");
     }
 
     private void flush(LinkedList<Request> toFlush) throws IOException {

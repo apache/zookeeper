@@ -42,7 +42,7 @@ import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.ServerCnxn;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.ZooLog;
+import com.yahoo.zookeeper.server.ZooTrace;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
@@ -68,17 +68,17 @@ public class Follower {
 
     /**
      * write a packet to the leader
-     * 
+     *
      * @param pp
      *                the proposal packet to be sent to the leader
      * @throws IOException
      */
     void writePacket(QuorumPacket pp) throws IOException {
-        long traceMask = ZooLog.SERVER_PACKET_TRACE_MASK;
+        long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
         if (pp.getType() == Leader.PING) {
-            traceMask = ZooLog.SERVER_PING_TRACE_MASK;
+            traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
         }
-        ZooLog.logQuorumPacket('o', pp, traceMask);
+        ZooTrace.logQuorumPacket(LOG, traceMask, 'o', pp);
         synchronized (leaderOs) {
             leaderOs.writeRecord(pp, "packet");
             bufferedOutput.flush();
@@ -87,7 +87,7 @@ public class Follower {
 
     /**
      * read a packet from the leader
-     * 
+     *
      * @param pp
      *                the packet to be instantiated
      * @throws IOException
@@ -96,16 +96,16 @@ public class Follower {
         synchronized (leaderIs) {
             leaderIs.readRecord(pp, "packet");
         }
-        long traceMask = ZooLog.SERVER_PACKET_TRACE_MASK;
+        long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
         if (pp.getType() == Leader.PING) {
-            traceMask = ZooLog.SERVER_PING_TRACE_MASK;
+            traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
         }
-        ZooLog.logQuorumPacket('i', pp, traceMask);
+        ZooTrace.logQuorumPacket(LOG, traceMask, 'i', pp);
     }
 
     /**
      * the main method called by the follower to follow the leader
-     * 
+     *
      * @throws InterruptedException
      */
     void followLeader() throws InterruptedException {
@@ -156,7 +156,7 @@ public class Follower {
             writePacket(qp);
             readPacket(qp);
             long newLeaderZxid = qp.getZxid();
-            
+
             if (qp.getType() != Leader.NEWLEADER) {
                 LOG.error("First packet should have been NEWLEADER");
                 throw new IOException("First packet should have been NEWLEADER");
@@ -178,13 +178,13 @@ public class Follower {
                     }
                 } else if (qp.getType() == Leader.TRUNC) {
                     //we need to truncate the log to the lastzxid of the leader
-                    LOG.warn("Truncating log to get in sync with the leader " 
+                    LOG.warn("Truncating log to get in sync with the leader "
                             + Long.toHexString(qp.getZxid()));
                     zk.truncateLog(qp.getZxid());
                     zk.loadData();
                 }
                 else {
-                    LOG.error("Got unexpected packet from leader " 
+                    LOG.error("Got unexpected packet from leader "
                             + qp.getType() + " exiting ... " );
                     System.exit(13);
                 }
@@ -248,8 +248,9 @@ public class Follower {
                             cnxn.finishSessionInit(valid);
                         }
                     }
-                    ZooLog.logTextTraceMessage("Session " + sessionId
-                            + " is valid: " + valid, ZooLog.SESSION_TRACE_MASK);
+                    ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                                             "Session " + sessionId
+                                             + " is valid: " + valid);
                     break;
                 case Leader.SYNC:
                     zk.sync();
@@ -278,7 +279,7 @@ public class Follower {
 
     /**
      * validate a seesion for a client
-     * 
+     *
      * @param clientId
      *                the client to be revailidated
      * @param timeout
@@ -297,14 +298,16 @@ public class Follower {
         QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos
                 .toByteArray(), null);
         pendingRevalidations.put(clientId, cnxn);
-        ZooLog.logTextTraceMessage("To validate session " + Long.toHexString(clientId),
-                ZooLog.SESSION_TRACE_MASK);
+        ZooTrace.logTraceMessage(LOG,
+                                 ZooTrace.SESSION_TRACE_MASK,
+                                 "To validate session "
+                                 + Long.toHexString(clientId));
         writePacket(qp);
     }
 
     /**
      * send a request packet to the leader
-     * 
+     *
      * @param request
      *                the request from the client
      * @throws IOException
@@ -330,7 +333,7 @@ public class Follower {
 //        if(request.type == OpCode.sync){
 //            qp = new QuorumPacket(Leader.SYNC, -1, baos
 //                    .toByteArray(), request.authInfo);
-//        }    
+//        }
 //        else{
 //        qp = new QuorumPacket(Leader.REQUEST, -1, baos
 //                .toByteArray(), request.authInfo);

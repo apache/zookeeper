@@ -105,7 +105,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 this.outstandingLimit = 1;
             }
         }
-        
+
         public InetSocketAddress getLocalAddress(){
             return (InetSocketAddress)ss.socket().getLocalSocketAddress();
         }
@@ -120,7 +120,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 SelectionKey sk) throws IOException {
             return new NIOServerCnxn(zks, sock, sk, this);
         }
-        
+
         public void run() {
             while (!ss.socket().isClosed()) {
                 try {
@@ -152,8 +152,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     LOG.error("FIXMSG",e);
                 }
             }
-            ZooLog.logTextTraceMessage("NIOServerCnxn factory exitedloop.",
-                    ZooLog.textTraceMask);
+            ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+                                     "NIOServerCnxn factory exitedloop.");
             clear();
             LOG.error("=====> Goodbye cruel world <======");
             // System.exit(0);
@@ -161,7 +161,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
         /**
          * clear all the connections in the selector
-         * 
+         *
          */
         synchronized public void clear() {
             selector.wakeup();
@@ -246,10 +246,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         synchronized (factory) {
             try {
                 sk.selector().wakeup();
-                // ZooLog.logTextTraceMessage("Add a buffer to outgoingBuffers",
-                // ZooLog.CLIENT_DATA_PACKET_TRACE_MASK);
-                // ZooLog.logTextTraceMessage("sk " + sk + " is valid: " +
-                // sk.isValid(), ZooLog.CLIENT_DATA_PACKET_TRACE_MASK);
+                // ZooLog.logTraceMessage(LOG,
+                // ZooLog.CLIENT_DATA_PACKET_TRACE_MASK,
+                // "Add a buffer to outgoingBuffers");
+                // ZooLog.logTraceMessage(LOG,
+                // ZooLog.CLIENT_DATA_PACKET_TRACE_MASK,
+                //"sk " + sk + " is valid: " +
+                // sk.isValid(), );
                 outgoingBuffers.add(bb);
                 if (sk.isValid()) {
                     sk.interestOps(sk.interestOps() | SelectionKey.OP_WRITE);
@@ -291,12 +294,15 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 }
             }
             if (k.isWritable()) {
-                // ZooLog.logTextTraceMessage("outgoingBuffers.size() = " +
-                // outgoingBuffers.size(),
-                // ZooLog.CLIENT_DATA_PACKET_TRACE_MASK);
+                // ZooLog.logTraceMessage(LOG,
+                // ZooLog.CLIENT_DATA_PACKET_TRACE_MASK
+                // "outgoingBuffers.size() = " +
+                // outgoingBuffers.size());
                 if (outgoingBuffers.size() > 0) {
-                    // ZooLog.logTextTraceMessage("sk " + k + " is valid: " +
-                    // k.isValid(), ZooLog.CLIENT_DATA_PACKET_TRACE_MASK);
+                    // ZooLog.logTraceMessage(LOG,
+                    // ZooLog.CLIENT_DATA_PACKET_TRACE_MASK,
+                    // "sk " + k + " is valid: " +
+                    // k.isValid());
 
                     /*
                      * This is going to reset the buffer position to 0 and the
@@ -361,9 +367,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         ServerStats.getInstance().incrementPacketsSent();
                         outgoingBuffers.remove();
                     }
-                    // ZooLog.logTextTraceMessage("after send,
-                    // outgoingBuffers.size() = " + outgoingBuffers.size(),
-                    // ZooLog.CLIENT_DATA_PACKET_TRACE_MASK);
+                    // ZooLog.logTraceMessage(LOG,
+                    // ZooLog.CLIENT_DATA_PACKET_TRACE_MASK, "after send,
+                    // outgoingBuffers.size() = " + outgoingBuffers.size());
                 }
                 synchronized (this) {
                     if (outgoingBuffers.size() == 0) {
@@ -511,7 +517,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             } else if (len == killCmd) {
                 System.exit(0);
             } else if (len == getTraceMaskCmd) {
-                long traceMask = ZooLog.getTextTraceLevel();
+                long traceMask = ZooTrace.getTextTraceLevel();
                 ByteBuffer resp = ByteBuffer.allocate(8);
                 resp.putLong(traceMask);
                 resp.flip();
@@ -529,7 +535,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 System.out.println("rc=" + rc);
                 incomingBuffer.flip();
                 long traceMask = incomingBuffer.getLong();
-                ZooLog.setTextTraceLevel(traceMask);
+                ZooTrace.setTextTraceLevel(traceMask);
                 ByteBuffer resp = ByteBuffer.allocate(8);
                 resp.putLong(traceMask);
                 resp.flip();
@@ -602,7 +608,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.yahoo.zookeeper.server.ServerCnxnIface#getSessionTimeout()
      */
     public int getSessionTimeout() {
@@ -640,7 +646,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.yahoo.zookeeper.server.ServerCnxnIface#close()
      */
     public void close() {
@@ -655,8 +661,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             zk.removeCnxn(this);
         }
 
-        ZooLog.logTextTraceMessage("close  NIOServerCnxn: " + sock,
-                ZooLog.SESSION_TRACE_MASK);
+        ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                                 "close  NIOServerCnxn: " + sock);
         try {
             /*
              * The following sequence of code is stupid! You would think that
@@ -700,7 +706,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.yahoo.zookeeper.server.ServerCnxnIface#sendResponse(com.yahoo.zookeeper.proto.ReplyHeader,
      *      com.yahoo.jute.Record, java.lang.String)
      */
@@ -740,14 +746,14 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.yahoo.zookeeper.server.ServerCnxnIface#process(com.yahoo.zookeeper.proto.WatcherEvent)
      */
     synchronized public void process(WatcherEvent event) {
         ReplyHeader h = new ReplyHeader(-1, -1L, 0);
-        ZooLog.logTextTraceMessage("Deliver event " + event + " to "
-                + this.sessionId + " through " + this,
-                ZooLog.EVENT_DELIVERY_TRACE_MASK);
+        ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                                 "Deliver event " + event + " to "
+                                 + this.sessionId + " through " + this);
         sendResponse(h, event, "notification");
     }
 
@@ -783,7 +789,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.yahoo.zookeeper.server.ServerCnxnIface#getSessionId()
      */
     public long getSessionId() {
@@ -805,7 +811,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     private class CnxnStats implements ServerCnxn.Stats{
         long packetsReceived;
         long packetsSent;
-        
+
         /**
          * The number of requests that have been submitted but not yet responded to.
          */

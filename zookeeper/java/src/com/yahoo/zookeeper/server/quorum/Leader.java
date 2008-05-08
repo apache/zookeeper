@@ -33,7 +33,6 @@ import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.zookeeper.server.FinalRequestProcessor;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.RequestProcessor;
-import com.yahoo.zookeeper.server.ZooLog;
 
 /**
  * This class has the control logic for the Leader.

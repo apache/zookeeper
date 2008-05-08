@@ -36,9 +36,9 @@ public class WatchManager {
     HashMap<Watcher, HashSet<String>> watch2Paths = new HashMap<Watcher, HashSet<String>>();
 
     synchronized int size(){
-    	return watchTable.size();
+        return watchTable.size();
     }
-    
+
     synchronized void addWatch(String path, Watcher watcher) {
         HashSet<Watcher> list = watchTable.get(path);
         if (list == null) {
@@ -78,8 +78,9 @@ public class WatchManager {
         synchronized (this) {
             watchers = watchTable.remove(path);
             if (watchers == null || watchers.isEmpty()) {
-                ZooLog.logTextTraceMessage("No watchers for " + path,
-                        ZooLog.EVENT_DELIVERY_TRACE_MASK);
+                ZooTrace.logTraceMessage(LOG,
+                        ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                        "No watchers for " + path);
                 return;
             }
             for (Watcher w : watchers) {

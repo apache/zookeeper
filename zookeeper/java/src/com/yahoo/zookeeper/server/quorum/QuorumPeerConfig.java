@@ -28,7 +28,6 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import com.yahoo.zookeeper.server.ServerConfig;
-import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 public class QuorumPeerConfig extends ServerConfig {
@@ -49,7 +48,7 @@ public class QuorumPeerConfig extends ServerConfig {
     public static void parse(String[] args) {
         if(instance!=null)
             return;
-        
+
         try {
             if (args.length != 1) {
                 System.err.println("USAGE: configFile");
@@ -78,8 +77,6 @@ public class QuorumPeerConfig extends ServerConfig {
                     dataDir = value;
                 } else if (key.equals("dataLogDir")) {
                     dataLogDir = value;
-                } else if (key.equals("traceFile")) {
-                    System.setProperty("requestTraceFile", value);
                 } else if (key.equals("clientPort")) {
                     clientPort = Integer.parseInt(value);
                 } else if (key.equals("tickTime")) {
@@ -193,7 +190,7 @@ public class QuorumPeerConfig extends ServerConfig {
         assert instance instanceof QuorumPeerConfig;
         return ((QuorumPeerConfig)instance).electionPort;
     }
-    
+
     public static ArrayList<QuorumServer> getServers() {
         assert instance instanceof QuorumPeerConfig;
         return ((QuorumPeerConfig)instance).servers;
@@ -201,9 +198,9 @@ public class QuorumPeerConfig extends ServerConfig {
 
     public static int getQuorumSize(){
         assert instance instanceof QuorumPeerConfig;
-        return ((QuorumPeerConfig)instance).servers.size();        
+        return ((QuorumPeerConfig)instance).servers.size();
     }
-    
+
     public static long getServerId() {
         assert instance instanceof QuorumPeerConfig;
         return ((QuorumPeerConfig)instance).serverId;

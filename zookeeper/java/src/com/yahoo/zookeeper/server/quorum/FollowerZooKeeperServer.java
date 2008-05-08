@@ -30,7 +30,6 @@ import com.yahoo.zookeeper.server.RequestProcessor;
 import com.yahoo.zookeeper.server.ServerCnxn;
 import com.yahoo.zookeeper.server.SyncRequestProcessor;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
 /**

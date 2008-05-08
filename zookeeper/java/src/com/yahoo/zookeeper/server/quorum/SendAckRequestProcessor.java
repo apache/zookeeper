@@ -23,7 +23,6 @@ import org.apache.log4j.Logger;
 import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.RequestProcessor;
-import com.yahoo.zookeeper.server.ZooLog;
 
 public class SendAckRequestProcessor implements RequestProcessor {
     private static final Logger LOG = Logger.getLogger(SendAckRequestProcessor.class);

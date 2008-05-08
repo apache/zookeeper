@@ -61,13 +61,13 @@ import com.yahoo.zookeeper.proto.SetDataResponse;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.ByteBufferInputStream;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.ZooLog;
+import com.yahoo.zookeeper.server.ZooTrace;
 
 /**
  * This class manages the socket i/o for the client. ClientCnxn maintains a list
  * of available servers to connect to and "transparently" switches servers it is
  * connected to as needed.
- * 
+ *
  */
 class ClientCnxn {
     private static final Logger LOG = Logger.getLogger(ZooKeeperServer.class);
@@ -197,7 +197,7 @@ class ClientCnxn {
     /**
      * Creates a connection object. The actual network connect doesn't get
      * established until needed.
-     * 
+     *
      * @param hosts
      *                a comma separated list of hosts that can be connected to.
      * @param connectTimeout
@@ -677,7 +677,7 @@ class ClientCnxn {
                             }
                         }
                     }
-                    
+
                     selector.select(to);
                     Set<SelectionKey> selected;
                     synchronized (this) {
@@ -729,8 +729,8 @@ class ClientCnxn {
                 }
             }
             cleanup();
-            ZooLog.logTextTraceMessage("SendThread exitedloop.",
-                    ZooLog.textTraceMask);
+            ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+                                     "SendThread exitedloop.");
         }
 
         private void cleanup() {
@@ -784,8 +784,11 @@ class ClientCnxn {
 
     @SuppressWarnings("unchecked")
     public void close() throws IOException {
-        ZooLog.logTextTraceMessage("Close ClientCnxn for session: " + sessionId
-                + "!", ZooLog.SESSION_TRACE_MASK);
+        long traceMask = ZooTrace.SESSION_TRACE_MASK;
+        if (ZooTrace.isTraceEnabled(LOG, traceMask)) {
+            ZooTrace.logTraceMessage(LOG, traceMask,
+                    "Close ClientCnxn for session: " + sessionId + "!");
+        }
         sendThread.close();
         waitingEvents.add(eventOfDeath);
     }
