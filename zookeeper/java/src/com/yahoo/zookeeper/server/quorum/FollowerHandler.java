@@ -34,7 +34,7 @@ import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.ZooLog;
+import com.yahoo.zookeeper.server.ZooTrace;
 import com.yahoo.zookeeper.server.quorum.Leader.Proposal;
 import com.yahoo.zookeeper.txn.TxnHeader;
 
@@ -79,11 +79,11 @@ public class FollowerHandler extends Thread {
     /**
      * This method will use the thread to send packets added to the
      * queuedPackets list
-     * 
+     *
      * @throws InterruptedException
      */
     private void sendPackets() throws InterruptedException {
-        long traceMask = ZooLog.SERVER_PACKET_TRACE_MASK;
+        long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
         while (true) {
             QuorumPacket p;
             p = queuedPackets.take();
@@ -93,9 +93,9 @@ public class FollowerHandler extends Thread {
                 break;
             }
             if (p.getType() == Leader.PING) {
-                traceMask = ZooLog.SERVER_PING_TRACE_MASK;
+                traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
             }
-            ZooLog.logQuorumPacket('o', p, traceMask);
+            ZooTrace.logQuorumPacket(LOG, traceMask, 'o', p);
             try {
                 oa.writeRecord(p, "packet");
                 bufferedOutput.flush();
@@ -193,12 +193,12 @@ public class FollowerHandler extends Thread {
             long peerLastZxid = qp.getZxid();
             int packetToSend = Leader.SNAP;
             boolean logTxns = true;
-          
+
             long zxidToSend = 0;
             // we are sending the diff
             synchronized(leader.zk.committedLog) {
                 if (leader.zk.committedLog.size() != 0) {
-                    if ((leader.zk.maxCommittedLog >= peerLastZxid) 
+                    if ((leader.zk.maxCommittedLog >= peerLastZxid)
                             && (leader.zk.minCommittedLog <= peerLastZxid)) {
                         packetToSend = Leader.DIFF;
                         zxidToSend = leader.zk.maxCommittedLog;
@@ -208,7 +208,7 @@ public class FollowerHandler extends Thread {
                                 QuorumPacket qcommit = new QuorumPacket(Leader.COMMIT, propose.packet.getZxid(),
                                         null, null);
                                 queuePacket(qcommit);
-                              
+
                             }
                         }
                     }
@@ -227,7 +227,7 @@ public class FollowerHandler extends Thread {
                 zxidToSend = leaderLastZxid;
             }
             //check if we decided to send a diff or we need to send a truncate
-            // we avoid using epochs for truncating because epochs make things 
+            // we avoid using epochs for truncating because epochs make things
             // complicated. Two epochs might have the last 32 bits as same.
             // only if we know that there is a committed zxid in the queue that
             // is less than the one the peer has we send a trunc else to make
@@ -237,14 +237,14 @@ public class FollowerHandler extends Thread {
                 // we can ask the follower to truncate the log
                 packetToSend = Leader.TRUNC;
                 zxidToSend = leader.zk.maxCommittedLog;
-                
+
             }
             oa.writeRecord(new QuorumPacket(packetToSend, zxidToSend, null, null), "packet");
             bufferedOutput.flush();
             // only if we are not truncating or fast sycning
             if (packetToSend == Leader.SNAP) {
-                LOG.warn("Sending snapshot last zxid of peer is " 
-                        + Long.toHexString(peerLastZxid) + " " + " zxid of leader is " 
+                LOG.warn("Sending snapshot last zxid of peer is "
+                        + Long.toHexString(peerLastZxid) + " " + " zxid of leader is "
                         + Long.toHexString(leaderLastZxid));
                 // Dump data to follower
                 leader.zk.snapshot(oa);
@@ -276,19 +276,19 @@ public class FollowerHandler extends Thread {
                 qp = new QuorumPacket();
                 ia.readRecord(qp, "packet");
 
-                long traceMask = ZooLog.SERVER_PACKET_TRACE_MASK;
+                long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
                 if (qp.getType() == Leader.PING) {
-                    traceMask = ZooLog.SERVER_PING_TRACE_MASK;
+                    traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
                 }
-                ZooLog.logQuorumPacket('i', qp, traceMask);
+                ZooTrace.logQuorumPacket(LOG, traceMask, 'i', qp);
                 tickOfLastAck = leader.self.tick;
-                
-                                
+
+
                 ByteBuffer bb;
                 long sessionId;
                 int cxid;
                 int type;
-                
+
                 switch (qp.getType()) {
                 case Leader.ACK:
                     leader.processAck(qp.getZxid(), s.getLocalSocketAddress());
@@ -313,8 +313,10 @@ public class FollowerHandler extends Thread {
                     DataOutputStream dos = new DataOutputStream(bos);
                     dos.writeLong(id);
                     boolean valid = leader.zk.touch(id, to);
-                    ZooLog.logTextTraceMessage("Session " + Long.toHexString(id)
-                            + " is valid: "+ valid, ZooLog.SESSION_TRACE_MASK);
+                    ZooTrace.logTraceMessage(LOG,
+                                             ZooTrace.SESSION_TRACE_MASK,
+                                             "Session " + Long.toHexString(id)
+                                             + " is valid: "+ valid);
                     dos.writeBoolean(valid);
                     qp.setData(bos.toByteArray());
                     queuedPackets.add(qp);
@@ -380,7 +382,7 @@ public class FollowerHandler extends Thread {
     void queuePacket(QuorumPacket p) {
         queuedPackets.add(p);
     }
-    
+
     public boolean synced() {
         return isAlive()
                 && tickOfLastAck >= leader.self.tick - leader.self.syncLimit;

@@ -29,7 +29,6 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.Vote;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;

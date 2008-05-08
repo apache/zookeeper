@@ -92,7 +92,7 @@ public class DataTree {
     public int getNodeCount(){
         return nodes.size();
     }
-    
+
     public int getWatchCount(){
         return dataWatches.size()+childWatches.size();
     }
@@ -213,10 +213,12 @@ public class DataTree {
             }
             node.parent = null;
         }
-        ZooLog.logTextTraceMessage("dataWatches.triggerWatch " + path,
-                ZooLog.EVENT_DELIVERY_TRACE_MASK);
-        ZooLog.logTextTraceMessage("childWatches.triggerWatch " + parentName,
-                ZooLog.EVENT_DELIVERY_TRACE_MASK);
+        ZooTrace.logTraceMessage(LOG,
+                                 ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                                 "dataWatches.triggerWatch " + path);
+        ZooTrace.logTraceMessage(LOG,
+                                 ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                                 "childWatches.triggerWatch " + parentName);
         dataWatches.triggerWatch(path, Event.EventNodeDeleted);
         childWatches.triggerWatch(parentName.equals("")?"/":parentName, Event.EventNodeChildrenChanged);
     }
@@ -331,7 +333,7 @@ public class DataTree {
         /**
          * Equality is defined as the clientId and the cxid being the same. This
          * allows us to use hash tables to track completion of transactions.
-         * 
+         *
          * @see java.lang.Object#equals(java.lang.Object)
          */
         @Override
@@ -345,7 +347,7 @@ public class DataTree {
 
         /**
          * See equals() to find the rational for how this hashcode is generated.
-         * 
+         *
          * @see ProcessTxnResult#equals(Object)
          * @see java.lang.Object#hashCode()
          */
@@ -422,10 +424,11 @@ public class DataTree {
             for (String path : list) {
                 try {
                     deleteNode(path);
-                    ZooLog.logTextTraceMessage("Deleting ephemeral node "
-                            + path + " for session "
-                            + Long.toHexString(session),
-                            ZooLog.SESSION_TRACE_MASK);
+                    ZooTrace.logTraceMessage(LOG,
+                                             ZooTrace.SESSION_TRACE_MASK,
+                                             "Deleting ephemeral node "
+                                             + path + " for session "
+                                             + Long.toHexString(session));
                 } catch (KeeperException e) {
                     LOG.error("FIXMSG",e);
                 }
@@ -433,10 +436,10 @@ public class DataTree {
         }
     }
 
-    /** 
-     * this method uses a stringbuilder to create a new 
+    /**
+     * this method uses a stringbuilder to create a new
      * path for children. This is faster than string
-     * appends ( str1 + str2). 
+     * appends ( str1 + str2).
      * @param oa OutputArchive to write to.
      * @param path a string builder.
      * @throws IOException
@@ -460,7 +463,7 @@ public class DataTree {
         int off = path.length();
         if (children != null) {
             for (String child : children) {
-                //since this is single buffer being resused 
+                //since this is single buffer being resused
                 // we need
                 // to truncate the previous bytes of string.
                 path.delete(off, Integer.MAX_VALUE);

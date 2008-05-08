@@ -29,8 +29,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.ZooLog;
-
 /**
  * This class implements a connection manager for leader election using TCP. It
  * maintains one coonection for every pair of servers. The tricky part is to

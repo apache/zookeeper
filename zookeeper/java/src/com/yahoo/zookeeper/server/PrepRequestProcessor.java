@@ -83,11 +83,11 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         try {
             while (true) {
                 Request request = submittedRequests.take();
-                long traceMask = ZooLog.CLIENT_REQUEST_TRACE_MASK;
+                long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
                 if (request.type == OpCode.ping) {
-                    traceMask = ZooLog.CLIENT_PING_TRACE_MASK;
+                    traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
                 }
-                ZooLog.logRequest('P', request, "", traceMask);
+                ZooTrace.logRequest(LOG, traceMask, 'P', request, "");
                 if (Request.requestOfDeath == request) {
                     break;
                 }
@@ -96,8 +96,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         } catch (InterruptedException e) {
             LOG.error("FIXMSG",e);
         }
-        ZooLog.logTextTraceMessage("PrepRequestProcessor exited loop!",
-                ZooLog.textTraceMask);
+        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+                "PrepRequestProcessor exited loop!");
     }
 
     ChangeRecord getRecordForPath(String path) throws KeeperException {

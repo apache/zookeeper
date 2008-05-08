@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.RequestProcessor;
 import com.yahoo.zookeeper.server.Request;
-import com.yahoo.zookeeper.server.ZooLog;
+import com.yahoo.zookeeper.server.ZooTrace;
 
 /**
  * This RequestProcessor forwards any requests that modify the state of the
@@ -52,8 +52,8 @@ public class FollowerRequestProcessor extends Thread implements
         try {
             while (!finished) {
                 Request request = queuedRequests.take();
-                ZooLog.logRequest('F', request, "",
-                        ZooLog.CLIENT_REQUEST_TRACE_MASK);
+                ZooTrace.logRequest(LOG, ZooTrace.CLIENT_REQUEST_TRACE_MASK,
+                        'F', request, "");
                 if (request == Request.requestOfDeath) {
                     break;
                 }
@@ -76,8 +76,8 @@ public class FollowerRequestProcessor extends Thread implements
         } catch (Exception e) {
             LOG.error("FIXMSG",e);
         }
-        ZooLog.logTextTraceMessage("FollowerRequestProcessor exited loop!",
-                ZooLog.textTraceMask);
+        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+                                 "FollowerRequestProcessor exited loop!");
     }
 
     public void processRequest(Request request) {

@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
 import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.server.Request;
 import com.yahoo.zookeeper.server.RequestProcessor;
-import com.yahoo.zookeeper.server.ZooLog;
+import com.yahoo.zookeeper.server.ZooTrace;
 
 /**
  * This RequestProcessor matches the incoming committed requests with the
@@ -49,7 +49,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
      * Pending sync requests
      */
     LinkedList<Request> pendingSyncs = new LinkedList<Request>();
-    
+
     RequestProcessor nextProcessor;
 
     public CommitProcessor(RequestProcessor nextProcessor) {
@@ -136,8 +136,8 @@ public class CommitProcessor extends Thread implements RequestProcessor {
         } catch (Exception e) {
             LOG.error("FIXMSG",e);
         }
-        ZooLog.logTextTraceMessage("CommitProcessor exited loop!",
-                ZooLog.textTraceMask);
+        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+                                 "CommitProcessor exited loop!");
     }
 
     synchronized public void commit(Request request) {

@@ -57,14 +57,14 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
         long sessionId;
     }
-    
+
     public static long initializeNextSession(long id) {
         long nextSid = 0;
         nextSid = (System.currentTimeMillis() << 24) >> 8;
         nextSid =  nextSid | (id <<56);
         return nextSid;
     }
-    
+
     static class SessionSet {
         long expireTime;
 
@@ -140,14 +140,15 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         } catch (InterruptedException e) {
             LOG.error("FIXMSG",e);
         }
-        ZooLog.logTextTraceMessage("SessionTrackerImpl exited loop!",
-                ZooLog.textTraceMask);
+        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+                                 "SessionTrackerImpl exited loop!");
     }
 
     synchronized public boolean touchSession(long sessionId, int timeout) {
-        ZooLog.logTextTraceMessage("SessionTrackerImpl --- Touch session: "
-                + Long.toHexString(sessionId) + " with timeout " + timeout,
-                ZooLog.CLIENT_PING_TRACE_MASK);
+        ZooTrace.logTraceMessage(LOG,
+                                 ZooTrace.CLIENT_PING_TRACE_MASK,
+                                 "SessionTrackerImpl --- Touch session: "
+                + Long.toHexString(sessionId) + " with timeout " + timeout);
         Session s = sessionsById.get(sessionId);
         if (s == null) {
             return false;
@@ -175,8 +176,9 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
     synchronized public void removeSession(long sessionId) {
         Session s = sessionsById.remove(sessionId);
         sessionsWithTimeout.remove(sessionId);
-        ZooLog.logTextTraceMessage("SessionTrackerImpl --- Removing "
-                + Long.toHexString(sessionId), ZooLog.SESSION_TRACE_MASK);
+        ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                                 "SessionTrackerImpl --- Removing "
+                + Long.toHexString(sessionId));
         if (s != null) {
             sessionSets.get(s.tickTime).sessions.remove(s);
         }
@@ -184,11 +186,11 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     public void shutdown() {
         running = false;
-        ZooLog.logTextTraceMessage("Shutdown SessionTrackerImpl!",
-                ZooLog.textTraceMask);
+        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+                                 "Shutdown SessionTrackerImpl!");
     }
 
-   
+
     synchronized public long createSession(int sessionTimeout) {
         addSession(nextSessionId, sessionTimeout);
         return nextSessionId++;
@@ -199,12 +201,13 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         if (sessionsById.get(id) == null) {
             Session s = new Session(id, 0);
             sessionsById.put(id, s);
-            ZooLog.logTextTraceMessage("SessionTrackerImpl --- Adding " + Long.toHexString(id)
-                    + " " + sessionTimeout, ZooLog.SESSION_TRACE_MASK);
+            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                    "SessionTrackerImpl --- Adding " + Long.toHexString(id)
+                    + " " + sessionTimeout);
         } else {
-            ZooLog.logTextTraceMessage(
+            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
                     "SessionTrackerImpl --- Existing session " + Long.toHexString(id) + " "
-                            + sessionTimeout, ZooLog.SESSION_TRACE_MASK);
+                            + sessionTimeout);
         }
         touchSession(id, sessionTimeout);
     }
