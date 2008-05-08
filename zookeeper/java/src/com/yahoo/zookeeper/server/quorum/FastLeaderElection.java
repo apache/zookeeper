@@ -22,13 +22,11 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.ZooLog;
 import com.yahoo.zookeeper.server.quorum.QuorumCnxManager.Message;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -64,11 +62,6 @@ public class FastLeaderElection implements Election {
 	
 	static int challengeCounter = 0;
 	
-	/*
-	 * Flag to determine whether to authenticate or not
-	 */
-    
-	private boolean authEnabled = false;
     
 	/*
 	 * Connection manager
@@ -154,7 +147,6 @@ public class FastLeaderElection implements Election {
 
     private class Messenger {
     	
-        DatagramSocket mySocket;
         long lastProposedLeader;
         long lastProposedZxid;
         long lastEpoch;
@@ -162,11 +154,9 @@ public class FastLeaderElection implements Election {
         class WorkerReceiver implements Runnable {
 
         	QuorumCnxManager manager;
-            Messenger msg;
 
-            WorkerReceiver(QuorumCnxManager manager, Messenger msg) {
+            WorkerReceiver(QuorumCnxManager manager) {
                 this.manager = manager;
-                this.msg = msg;
             }
 
             public void run() {
@@ -252,14 +242,9 @@ public class FastLeaderElection implements Election {
 
         class WorkerSender implements Runnable {
         	
-            Random rand;
             QuorumCnxManager manager;
-            boolean processing;
-            int ackWait = finalizeWait / 6;
 
-            
             WorkerSender(QuorumCnxManager manager){ 
-                rand = new Random(java.lang.Thread.currentThread().getId() + System.currentTimeMillis());
                 this.manager = manager;
             }
             
@@ -276,7 +261,6 @@ public class FastLeaderElection implements Election {
             }
 
             private void process(ToSend m) {
-                int attempts = 0;
                 byte requestBytes[] = new byte[28];
                 ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);  
                 
@@ -309,7 +293,7 @@ public class FastLeaderElection implements Election {
             t.setDaemon(true);
             t.start();
 
-            t = new Thread(new WorkerReceiver(manager, this),
+            t = new Thread(new WorkerReceiver(manager),
                     				"WorkerReceiver Thread");
             t.setDaemon(true);
             t.start();
@@ -321,7 +305,6 @@ public class FastLeaderElection implements Election {
     int port;
     long logicalclock; /* Election instance */
     Messenger messenger;
-    DatagramSocket mySocket;
     long proposedLeader;
     long proposedZxid;
 
