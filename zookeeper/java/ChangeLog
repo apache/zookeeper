@@ -1,5 +1,11 @@
 Release 2.2.0
-2008-05-06 Andrew Kornev <akornev@users.sourceforge.net>
+2008-05-08 Andrew Kornev <akornev@users.sourceforge.net>
+
+    * phunt: [1956480] Renamed ZooLog to ZooTrace. Major cleanup of tracing.
+    
+    * fpj: [1958274] got rid of unused vars in leader election
+    
+    * fpj: [1958361] Patch to fix NPE upon access to watcher
 
     * tedunning: [1951806] Added a sample startup script.
     
