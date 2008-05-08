@@ -214,7 +214,7 @@ public class AuthFastLeaderElection implements Election {
                 }
 
                 if (l != null) {
-                    synchronized (l) {
+                    synchronized(l){
                         l.notify();
                     }
                 }
@@ -341,7 +341,7 @@ public class AuthFastLeaderElection implements Election {
                     case 3:
                         Long l = ackMutex.get(tag);
                         if (l != null) {
-                            synchronized (l) {
+                            synchronized(l){
                                 l.notify();
                             }
                         }
@@ -408,10 +408,14 @@ public class AuthFastLeaderElection implements Election {
                 buf[6] = (byte) ((secret & 0x0000ff00) >>> 8);
                 buf[7] = (byte) ((secret & 0x000000ff));
 
-                return ((buf[0] & 0xFF) << 56) + ((buf[1] & 0xFF) << 48)
-                        + ((buf[2] & 0xFF) << 40) + ((buf[3] & 0xFF) << 32)
-                        + ((buf[4] & 0xFF) << 24) + ((buf[5] & 0xFF) << 16)
-                        + ((buf[6] & 0xFF) << 8) + (buf[7] & 0xFF);
+                return (((long)(buf[0] & 0xFF)) << 56)  
+                        + (((long)(buf[1] & 0xFF)) << 48)
+                        + (((long)(buf[2] & 0xFF)) << 40) 
+                        + (((long)(buf[3] & 0xFF)) << 32)
+                        + (((long)(buf[4] & 0xFF)) << 24) 
+                        + (((long)(buf[5] & 0xFF)) << 16)
+                        + (((long)(buf[6] & 0xFF)) << 8) 
+                        + ((long)(buf[7] & 0xFF));
             }
 
             public void run() {
@@ -532,7 +536,7 @@ public class AuthFastLeaderElection implements Election {
                                     double timeout = ackWait
                                             * java.lang.Math.pow(2, attempts);
 
-                                    Long l = new Long(m.tag);
+                                    Long l = Long.valueOf(m.tag);
                                     synchronized (l) {
                                         challengeMutex.put(m.tag, l);
                                         l.wait((long) timeout);
@@ -542,10 +546,7 @@ public class AuthFastLeaderElection implements Election {
                                 } catch (InterruptedException e) {
                                     LOG.warn("Challenge request exception: "
                                                     + e.toString());
-                                } catch (IllegalMonitorStateException e) {
-                                    LOG.warn("Monitor exception: "
-                                            + e.toString());
-                                }
+                                } 
                             }
 
                             /*
@@ -564,7 +565,7 @@ public class AuthFastLeaderElection implements Election {
                             }
                             mySocket.send(requestPacket);
                             try {
-                                Long l = new Long(m.tag);
+                                Long l = Long.valueOf(m.tag);
                                 double timeout = ackWait
                                         * java.lang.Math.pow(10, attempts);
                                 synchronized (l) {
@@ -684,7 +685,6 @@ public class AuthFastLeaderElection implements Election {
     QuorumPeer self;
     int port;
     long logicalclock; /* Election instance */
-    Messenger myMessenger;
     DatagramSocket mySocket;
     long proposedLeader;
     long proposedZxid;
@@ -715,7 +715,7 @@ public class AuthFastLeaderElection implements Election {
         sendqueue = new LinkedBlockingQueue<ToSend>(2 * self.quorumPeers.size());
         recvqueue = new LinkedBlockingQueue<Notification>(2 * self.quorumPeers
                 .size());
-        myMessenger = new Messenger(self.quorumPeers.size() * 2, mySocket);
+        new Messenger(self.quorumPeers.size() * 2, mySocket);
     }
 
     private void leaveInstance() {
