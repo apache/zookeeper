@@ -59,12 +59,16 @@
             <format property="build.time" pattern="MM/dd/yyyy HH:mm zz" timezone="GMT"/>
             <format property="year" pattern="yyyy" timezone="GMT"/>
         </tstamp>
-        <condition property="extra.src.dir" value="${jmx.src.dir}" else="">
+        <condition property="extra.src.dir" value="${jmx.src.dir}">
             <and>
                 <equals arg1="${target.jdk}" arg2="1.6"/>
                 <available file="${jmx.src.dir}" type="dir"/>
             </and>
         </condition>
+        <path id="project.classpath">
+            <fileset dir="${build.classes}" />
+            <pathelement path="${lib.dir}/log4j-1.2.15.jar" />
+        </path>
     </target>
     
     <target name="jute" depends="init">
@@ -134,21 +138,28 @@
             target="${target.jdk}" debug="on" />
     </target>
     
-    <target name="compile" depends="build-generated">
-        <javac destdir="${build.classes}" target="${target.jdk}" debug="on">
-            <src path="${src.dir}"/>
-            <src path="${extra.src.dir}"/>
-            <classpath>
-                <fileset dir="${build.classes}" />
-                <pathelement path="${lib.dir}/log4j-1.2.15.jar" />
-            </classpath>
+    <target name="compile-extra" depends="compile-main" if="extra.src.dir">
+         <javac srcdir="${extra.src.dir}" destdir="${build.classes}" 
+                target="${target.jdk}" debug="on">
+            <classpath refid="project.classpath"/>
+        </javac>
+        <copy todir="${build.classes}">
+            <fileset dir="${extra.src.dir}"/>
+        </copy>
+   </target>
+    
+    <target name="compile-main" depends="build-generated">
+        <javac srcdir="${src.dir}" destdir="${build.classes}" 
+               target="${target.jdk}" debug="on">
+            <classpath refid="project.classpath"/>
         </javac>
         <copy todir="${build.classes}">
             <fileset dir="${src.dir}"/>
-            <fileset dir="${extra.src.dir}"/>
             <fileset dir="${src_generated.dir}"/>
         </copy>
     </target>
+
+    <target name="compile" depends="compile-main,compile-extra"/>
 
     <target name="test-classpath">
       <path id="test.classpath">
