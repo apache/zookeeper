@@ -22,6 +22,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 
+import org.apache.log4j.Logger;
+
 import com.yahoo.zookeeper.AsyncCallback.ACLCallback;
 import com.yahoo.zookeeper.AsyncCallback.ChildrenCallback;
 import com.yahoo.zookeeper.AsyncCallback.DataCallback;
@@ -53,6 +55,7 @@ import com.yahoo.zookeeper.proto.SyncRequest;
 import com.yahoo.zookeeper.proto.SyncResponse;
 import com.yahoo.zookeeper.proto.WatcherEvent;
 import com.yahoo.zookeeper.server.DataTree;
+import com.yahoo.zookeeper.server.ZooKeeperServer;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -103,6 +106,8 @@ import com.yahoo.zookeeper.server.DataTree;
  * 
  */
 public class ZooKeeper {
+    private static final Logger LOG = Logger.getLogger(ZooKeeper.class);
+    
     volatile Watcher watcher;
 
     public enum States {
@@ -156,9 +161,9 @@ public class ZooKeeper {
      * invalid. All the ephemeral nodes in the ZooKeeper server associated with
      * the session will be removed. The watches left on those nodes (and on
      * their parents) will be triggered.
-     * 
+     *
      * @throws InterruptedException
-     * 
+     *
      * @throws IOException
      * @throws InterruptedException
      * @throws KeeperException
@@ -170,7 +175,7 @@ public class ZooKeeper {
         try {
             cnxn.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.warn("Unexpected exception", e);
         }
     }
 
@@ -209,7 +214,7 @@ public class ZooKeeper {
      * If a node is created successfully, the ZooKeeper server will trigger the
      * watches on the path left by exists calls, and the watches on the parent
      * of the node by getChildren calls.
-     * 
+     *
      * @param path
      *                the path for the node
      * @param data
@@ -249,7 +254,7 @@ public class ZooKeeper {
     /**
      * The Asynchronous version of create. The request doesn't actually until
      * the asynchronous callback is called.
-     * 
+     *
      * @see #create(String, byte[], ArrayList, int)
      */
 
@@ -284,7 +289,7 @@ public class ZooKeeper {
      * This operation, if successful, will trigger all the watches on the node
      * of the given path left by exists API calls, and the watches on the parent
      * node left by getChildren API calls.
-     * 
+     *
      * @param path
      *                the path of the node to be deleted.
      * @param version
@@ -310,7 +315,7 @@ public class ZooKeeper {
     /**
      * The Asynchronous version of delete. The request doesn't actually until
      * the asynchronous callback is called.
-     * 
+     *
      * @see #delete(String, int)
      */
     public void delete(String path, int version, VoidCallback cb, Object ctx) {
@@ -330,7 +335,7 @@ public class ZooKeeper {
      * a watch will be left on the node with the given path. The watch will be
      * triggered by a successful operation that creates/delete the node or sets
      * the data on the node.
-     * 
+     *
      * @param path
      *                the node path
      * @param watch
@@ -362,7 +367,7 @@ public class ZooKeeper {
     /**
      * The Asynchronous version of exists. The request doesn't actually until
      * the asynchronous callback is called.
-     * 
+     *
      * @see #exists(String, boolean)
      */
     public void exists(String path, boolean watch, StatCallback cb, Object ctx) {
@@ -387,7 +392,7 @@ public class ZooKeeper {
      * <p>
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
-     * 
+     *
      * @param path
      *                the given path
      * @param watch
@@ -420,7 +425,7 @@ public class ZooKeeper {
     /**
      * The Asynchronous version of getData. The request doesn't actually until
      * the asynchronous callback is called.
-     * 
+     *
      * @see #getData(String, boolean, Stat)
      */
 
@@ -446,10 +451,10 @@ public class ZooKeeper {
      * <p>
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
-     * 
+     *
      * A KeeperException with error code KeeperException.BadVersion will be
      * thrown if the given version does not match the node's version.
-     * 
+     *
      * @param path
      *                the path of the node
      * @param data
@@ -480,7 +485,7 @@ public class ZooKeeper {
     /**
      * The Asynchronous version of setData. The request doesn't actually until
      * the asynchronous callback is called.
-     * 
+     *
      * @see #setData(String, byte[], int)
      */
     public void setData(String path, byte data[], int version, StatCallback cb,
@@ -498,12 +503,12 @@ public class ZooKeeper {
     }
 
     /**
-     * 
+     *
      * Return the ACL and stat of the node of the given path.
      * <p>
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
-     * 
+     *
      * @param path
      *                the given path for the node
      * @param stat
@@ -531,7 +536,7 @@ public class ZooKeeper {
     /**
      * The Asynchronous version of getACL. The request doesn't actually until
      * the asynchronous callback is called.
-     * 
+     *
      * @see #getACL(String, Stat)
      */
     public void getACL(String path, Stat stat, ACLCallback cb, Object ctx) {
@@ -555,7 +560,7 @@ public class ZooKeeper {
      * <p>
      * A KeeperException with error code KeeperException.BadVersion will be
      * thrown if the given version does not match the node's version.
-     * 
+     *
      * @param path
      * @param acl
      * @param version
@@ -586,7 +591,7 @@ public class ZooKeeper {
     /**
      * The Asynchronous version of setACL. The request doesn't actually until
      * the asynchronous callback is called.
-     * 
+     *
      * @see #setACL(String, ArrayList, int)
      */
     public void setACL(String path, ArrayList<ACL> acl, int version,
@@ -613,7 +618,7 @@ public class ZooKeeper {
      * <p>
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
-     * 
+     *
      * @param path
      * @param watch
      * @return an array of children of the node with the given path
@@ -639,7 +644,7 @@ public class ZooKeeper {
     /**
      * The Asynchronous version of getChildren. The request doesn't actually
      * until the asynchronous callback is called.
-     * 
+     *
      * @see #getChildren(String, boolean)
      */
     public void getChildren(String path, boolean watch, ChildrenCallback cb,
@@ -657,7 +662,7 @@ public class ZooKeeper {
 
     /**
      * Asynchronous sync. Flushes channel between process and leader.
-     * 
+     *
      * @see #sync(String)
      */
     public void sync(String path, VoidCallback cb, Object ctx){
@@ -668,7 +673,7 @@ public class ZooKeeper {
         request.setPath(path);
         cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, path, ctx);
     }
-    
+
     public States getState() {
         return state;
     }

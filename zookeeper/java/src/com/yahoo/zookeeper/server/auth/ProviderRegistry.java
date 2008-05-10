@@ -27,7 +27,7 @@ public class ProviderRegistry {
     private static final Logger LOG = Logger.getLogger(ProviderRegistry.class);
 
     private static boolean initialized = false;
-    private static HashMap<String, AuthenticationProvider> authenticationProviders = 
+    private static HashMap<String, AuthenticationProvider> authenticationProviders =
         new HashMap<String, AuthenticationProvider>();
 
     public static void initialize() {
@@ -53,7 +53,7 @@ public class ProviderRegistry {
                                 .newInstance();
                         authenticationProviders.put(ap.getScheme(), ap);
                     } catch (Exception e) {
-                        LOG.error("Problems loading " + className,e);
+                        LOG.warn("Problems loading " + className,e);
                     }
                 }
             }

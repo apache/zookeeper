@@ -144,7 +144,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                     TxnHeader hdr = si.hdr;
                     if (hdr != null) {
                         if (hdr.getZxid() <= lastZxidSeen) {
-                            LOG.error("Current zxid " + hdr.getZxid()
+                            LOG.warn("Current zxid " + hdr.getZxid()
                                     + " is <= " + lastZxidSeen + " for "
                                     + hdr.getType());
                         }
@@ -196,7 +196,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                                         try {
                                             zks.snapshot();
                                         } catch (Exception e) {
-                                            LOG.error("FIXMSG",e);
+                                            LOG.warn("Unexpected exception",e);
                                         }
                                     }
                                 };
