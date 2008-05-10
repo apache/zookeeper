@@ -29,7 +29,7 @@ import com.yahoo.zookeeper.server.ServerCnxn;
 public class DigestAuthenticationProvider implements AuthenticationProvider {
     private static final Logger LOG = Logger.getLogger(DigestAuthenticationProvider.class);
 
-    public static String superDigest = "super:1wZ8qIvQBMTq0KPxMc6RQ/PCXKM=";
+    public final static String superDigest = "super:1wZ8qIvQBMTq0KPxMc6RQ/PCXKM=";
 
     public String getScheme() {
         return "digest";
@@ -98,7 +98,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
             cnxn.getAuthInfo().add(new Id(getScheme(), digest));
             return KeeperException.Code.Ok;
         } catch (NoSuchAlgorithmException e) {
-            LOG.error("FIXMSG",e);
+            LOG.error("Missing algorithm",e);
         }
         return KeeperException.Code.AuthFailed;
     }

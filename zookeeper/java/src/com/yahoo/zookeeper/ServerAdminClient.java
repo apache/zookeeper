@@ -85,7 +85,7 @@ public class ServerAdminClient {
             String retv = new String(resBytes);
             System.out.println("rc=" + rc + " retv=" + retv);
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            LOG.warn("Unexpected exception", ioe);
         }
     }
 
@@ -111,7 +111,7 @@ public class ServerAdminClient {
             String retv = new String(resBytes);
             System.out.println("rc=" + rc + " retv=" + retv);
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            LOG.warn("Unexpected exception", ioe);
         }
     }
 
@@ -137,7 +137,7 @@ public class ServerAdminClient {
             String retv = new String(resBytes);
             System.out.println("rc=" + rc + " retv=" + retv);
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            LOG.warn("Unexpected exception", ioe);
         }
     }
 
@@ -162,7 +162,7 @@ public class ServerAdminClient {
             String retv = new String(resBytes);
             System.out.println("rc=" + rc + " retv=" + retv);
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            LOG.warn("Unexpected exception", ioe);
         }
     }
 
@@ -195,7 +195,7 @@ public class ServerAdminClient {
                     + Long.toOctalString(traceMask));
             assert (retv == traceMask);
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            LOG.warn("Unexpected exception", ioe);
         }
     }
 
@@ -224,7 +224,7 @@ public class ServerAdminClient {
             System.out.println("rc=" + rc + " retv=0"
                     + Long.toOctalString(retv));
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            LOG.warn("Unexpected exception", ioe);
         }
     }
 

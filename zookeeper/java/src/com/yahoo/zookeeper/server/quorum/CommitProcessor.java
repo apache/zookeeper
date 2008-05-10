@@ -143,7 +143,8 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     synchronized public void commit(Request request) {
         if (!finished) {
             if (request == null) {
-                LOG.error("FIXMSG",new Exception("committing a null! "));
+                LOG.warn("Committed a null!",
+                         new Exception("committing a null! "));
                 return;
             }
             committedRequests.add(request);
@@ -153,7 +154,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
 
     synchronized public void processRequest(Request request) {
         // request.addRQRec(">commit");
-        // LOG.warn("Zoo processReq>>> cxid = " + request.cxid + " type =
+        // LOG.info("Zoo processReq>>> cxid = " + request.cxid + " type =
         // " + request.type + " id = " + request.sessionId + " cnxn " +
         // request.cnxn);
         if (!finished) {

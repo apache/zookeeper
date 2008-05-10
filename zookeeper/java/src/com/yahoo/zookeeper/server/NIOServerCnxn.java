@@ -188,8 +188,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 this.interrupt();
                 this.join();
             } catch (InterruptedException e) {
+                LOG.warn("Interrupted",e);
             } catch (Exception e) {
-                LOG.error("FIXMSG",e);
+                LOG.error("Unexpected exception", e);
             }
             if (zks != null) {
                 zks.shutdown();

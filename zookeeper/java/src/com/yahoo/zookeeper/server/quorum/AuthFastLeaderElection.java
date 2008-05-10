@@ -586,7 +586,7 @@ public class AuthFastLeaderElection implements Election {
                                      * is empty. There are two alternatives:
                                      * synchronize this block, or test if newack
                                      * is null.
-                                     * 
+                                     *
                                      */
 
                                     if (newack == m.tag) {

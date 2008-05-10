@@ -165,12 +165,12 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     /**
      * This method will be called inside the ProcessRequestThread, which is a
      * singleton, so there will be a single thread calling this code.
-     * 
+     *
      * @param request
      */
     @SuppressWarnings("unchecked")
     protected void pRequest(Request request) {
-        // LOG.warn("Prep>>> cxid = " + request.cxid + " type = " +
+        // LOG.info("Prep>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = " + request.sessionId);
         TxnHeader txnHeader = null;
         Record txn = null;
@@ -338,7 +338,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                                 path2Delete, null, 0, null));
                     }
                 }
-                LOG.warn("Processed session termination request for id: "
+                LOG.info("Processed session termination request for id: "
                         + Long.toHexString(request.sessionId));
                 break;
             case OpCode.sync:
@@ -355,7 +355,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 txn = new ErrorTxn(e.getCode());
             }
         } catch (Exception e) {
-            LOG.warn("*********************************" + request);
+            LOG.error("*********************************" + request);
             StringBuffer sb = new StringBuffer();
             ByteBuffer bb = request.request;
             if(bb!=null){
@@ -365,8 +365,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 }
             }else
                 sb.append("request buffer is null");
-            LOG.warn(sb.toString());
-            LOG.error("FIXMSG",e);
+            LOG.error(sb.toString());
+            LOG.error("Unexpected exception", e);
             if (txnHeader != null) {
                 txnHeader.setType(OpCode.error);
                 txn = new ErrorTxn(Code.MarshallingError);
@@ -381,7 +381,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     }
 
     /**
-     * 
+     *
      * @param authInfo list of ACL IDs associated with the client connection
      * @param acl list of ACLs being assigned to the node (create or setACL operation)
      * @return

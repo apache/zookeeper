@@ -163,7 +163,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             if (zk.isRunning())
                 zk.shutdown();
         } catch (Exception e) {
-            LOG.error("FIXMSG",e);
+            LOG.fatal("Unexpected exception",e);
         }
         System.exit(0);
     }

@@ -105,19 +105,19 @@ class ClientCnxn {
 
     private int readTimeout;
 
-    private int sessionTimeout;
+    private final int sessionTimeout;
 
-    private ZooKeeper zooKeeper;
+    private final ZooKeeper zooKeeper;
 
     private long sessionId;
 
     private byte sessionPasswd[] = new byte[16];
 
-    SendThread sendThread;
+    final SendThread sendThread;
 
-    EventThread eventThread;
+    final EventThread eventThread;
 
-    Selector selector = Selector.open();
+    final Selector selector = Selector.open();
 
     public long getSessionId() {
         return sessionId;
@@ -183,7 +183,7 @@ class ClientCnxn {
                     this.bb.putInt(this.bb.capacity() - 4);
                     this.bb.rewind();
                 } catch (IOException e) {
-                    LOG.error("this should be impossible!", e);
+                    LOG.warn("Unexpected exception",e);
                 }
             }
         }
@@ -270,7 +270,7 @@ class ClientCnxn {
                             rc = p.replyHeader.getErr();
                         }
                         if (p.cb == null) {
-                            LOG.error("Somehow a null cb got to EventThread!");
+                            LOG.warn("Somehow a null cb got to EventThread!");
                         } else if (p.response instanceof ExistsResponse
                                 || p.response instanceof SetDataResponse
                                 || p.response instanceof SetACLResponse) {
@@ -565,7 +565,7 @@ class ClientCnxn {
         }
 
         private void primeConnection(SelectionKey k) throws IOException {
-            LOG.warn("Priming connection to "
+            LOG.info("Priming connection to "
                     + ((SocketChannel) sockKey.channel()));
             lastConnectIndex = currentConnectIndex;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid,
@@ -612,15 +612,14 @@ class ClientCnxn {
                 try {
                     Thread.sleep(r.nextInt(1000));
                 } catch (InterruptedException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    LOG.warn("Unexpected exception", e1);
                 }
                 if (nextAddrToTry == lastConnectIndex) {
                     try {
                         // Try not to spin too fast!
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        LOG.warn("Unexpected exception", e);
                     }
                 }
             }
@@ -636,7 +635,7 @@ class ClientCnxn {
             sock.configureBlocking(false);
             sock.socket().setSoLinger(false, -1);
             sock.socket().setTcpNoDelay(true);
-            LOG.warn("Trying to connect to " + addr);
+            LOG.info("Attempting connection to server " + addr);
             sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
             if (sock.connect(addr)) {
                 primeConnection(sockKey);
@@ -695,6 +694,7 @@ class ClientCnxn {
                                 lastHeard = now;
                                 lastSend = now;
                                 primeConnection(k);
+                                LOG.info("Server connection successful");
                             }
                         } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
                             if (outgoingQueue.size() > 0) {

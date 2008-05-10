@@ -59,24 +59,24 @@ import com.yahoo.zookeeper.txn.TxnHeader;
  * <li>Leader - the server will process requests and forward them to followers.
  * A majority of followers must log the request before it can be accepted.
  * </ol>
- * 
+ *
  * This class will setup a datagram socket that will always respond with its
  * view of the current leader. The response will take the form of:
- * 
+ *
  * <pre>
  * int xid;
- * 
+ *
  * long myid;
- * 
+ *
  * long leader_id;
- * 
+ *
  * long leader_zxid;
  * </pre>
- * 
+ *
  * The request for the current leader will consist solely of an xid: int xid;
- * 
+ *
  * <h2>Configuration file</h2>
- * 
+ *
  * When the main() method of this class is used to start the program, the file
  * "zoo.cfg" in the current directory will be used to obtain configuration
  * information. zoo.cfg is a Properties file, so keys and values are separated
@@ -101,13 +101,13 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     private static final Logger LOG = Logger.getLogger(QuorumPeer.class);
 
     /**
-     * Create an instance of a quorum peer 
+     * Create an instance of a quorum peer
      */
     public interface Factory{
         public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory) throws IOException;
         public NIOServerCnxn.Factory createConnectionFactory() throws IOException;
     }
-    
+
     public static class QuorumServer {
         public QuorumServer(long id, InetSocketAddress addr) {
             this.id = id;
@@ -178,9 +178,9 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * <p>
      * The response has the xid, the id of this server, the id of the leader,
      * and the zxid of the leader.
-     * 
+     *
      * @author breed
-     * 
+     *
      */
     class ResponderThread extends Thread {
         ResponderThread() {
@@ -195,7 +195,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 while (true) {
                     udpSocket.receive(packet);
                     if (packet.getLength() != 4) {
-                        LOG.error("Got more than just an xid! Len = "
+                        LOG.warn("Got more than just an xid! Len = "
                                 + packet.getLength());
                     } else {
                         responseBuffer.clear();
@@ -230,27 +230,27 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                     packet.setLength(b.length);
                 }
             } catch (Exception e) {
-                LOG.error("FIXMSG",e);
+                LOG.warn("Unexpected exception",e);
             } finally {
-                LOG.error("QuorumPeer responder thread exited");
+                LOG.warn("QuorumPeer responder thread exited");
             }
         }
     }
 
     private ServerState state = ServerState.LOOKING;
-    
+
     public void setPeerState(ServerState newState){
         state=newState;
     }
-    
+
     public ServerState getPeerState(){
         return state;
     }
-    
+
     DatagramSocket udpSocket;
 
     private InetSocketAddress myQuorumAddr;
-    
+
     public InetSocketAddress getQuorumAddress(){
         return myQuorumAddr;
     }
@@ -272,7 +272,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     NIOServerCnxn.Factory cnxnFactory;
 
     public QuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir,
-            File dataLogDir, int electionAlg, int electionPort,long myid, int tickTime, 
+            File dataLogDir, int electionAlg, int electionPort,long myid, int tickTime,
             int initLimit, int syncLimit,NIOServerCnxn.Factory cnxnFactory) throws IOException {
         super("QuorumPeer");
         this.cnxnFactory = cnxnFactory;
@@ -316,10 +316,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      */
     public QuorumPeer(NIOServerCnxn.Factory cnxnFactory) throws IOException {
         this(getServers(), new File(getDataDir()), new File(getDataLogDir()),
-                getElectionAlg(), getElectionPort(),getServerId(),getTickTime(), 
+                getElectionAlg(), getElectionPort(),getServerId(),getTickTime(),
                 getInitLimit(), getSyncLimit(),cnxnFactory);
     }
-    
+
     public Follower follower;
     public Leader leader;
 
@@ -332,7 +332,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         return new Leader(this, new LeaderZooKeeperServer(dataDir, dataLogDir,
                 this,new ZooKeeperServer.BasicDataTreeBuilder()));
     }
-    
+
     private Election createElectionAlgorithm(int electionAlgorithm){
         Election le=null;
         //TODO: use a factory rather than a switch
@@ -344,7 +344,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             le = new AuthFastLeaderElection(this, this.electionPort);
             break;
         case 2:
-            le = new AuthFastLeaderElection(this, this.electionPort, true); 
+            le = new AuthFastLeaderElection(this, this.electionPort, true);
             break;
         case 3:
             le = new FastLeaderElection(this,
@@ -352,15 +352,15 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         default:
             assert false;
         }
-        return le;       
+        return le;
     }
-    
+
     protected Election makeLEStrategy(){
         if(electionAlg==null)
             return new LeaderElection(this);
         return electionAlg;
     }
-    
+
     synchronized protected void setLeader(Leader newLeader){
         leader=newLeader;
     }
@@ -368,7 +368,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     synchronized protected void setFollower(Follower newFollower){
         follower=newFollower;
     }
-    
+
     synchronized public ZooKeeperServer getActiveServer(){
         if(leader!=null)
             return leader.zk;
@@ -376,7 +376,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             return follower.zk;
         return null;
     }
-    
+
     public void run() {
         /*
          * Main loop
@@ -385,20 +385,20 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             switch (state) {
             case LOOKING:
                 try {
-                    LOG.warn("LOOKING");
+                    LOG.info("LOOKING");
                     currentVote = makeLEStrategy().lookForLeader();
                 } catch (Exception e) {
-                    LOG.error("FIXMSG",e);
+                    LOG.warn("Unexpected exception",e);
                     state = ServerState.LOOKING;
                 }
                 break;
             case FOLLOWING:
                 try {
-                    LOG.warn("FOLLOWING");
+                    LOG.info("FOLLOWING");
                     setFollower(makeFollower(dataDir,dataLogDir));
                     follower.followLeader();
                 } catch (Exception e) {
-                    LOG.error("FIXMSG",e);
+                    LOG.warn("Unexpected exception",e);
                 } finally {
                     follower.shutdown();
                     setFollower(null);
@@ -406,13 +406,13 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 }
                 break;
             case LEADING:
-                LOG.warn("LEADING");
+                LOG.info("LEADING");
                 try {
                     setLeader(makeLeader(dataDir,dataLogDir));
                     leader.lead();
                     setLeader(null);
                 } catch (Exception e) {
-                    LOG.error("FIXMSG",e);
+                    LOG.warn("Unexpected exception",e);
                 } finally {
                     if (leader != null) {
                         leader.shutdown("Forcing shutdown");
@@ -423,7 +423,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 break;
             }
         }
-        LOG.error("QuorumPeer main thread exited");
+        LOG.warn("QuorumPeer main thread exited");
     }
 
     public void shutdown() {
@@ -487,14 +487,14 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 zxid = hdr.getZxid();
             }
         } catch (IOException e) {
-            LOG.warn(e.toString());
+            LOG.warn("Unexpected exception", e);
         } finally {
             try {
                 if (logStream != null) {
                     logStream.close();
                 }
             } catch (IOException e) {
-                LOG.error("FIXMSG",e);
+                LOG.warn("Unexpected exception",e);
             }
         }
         return zxid;
@@ -507,11 +507,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             self.start();
             self.join();
         } catch (Exception e) {
-            LOG.error("FIXMSG",e);
+            LOG.fatal("Unexpected exception",e);
         }
         System.exit(2);
     }
-    
+
     public String[] getQuorumPeers() {
         List<String> l = new ArrayList<String>();
         synchronized (this) {
@@ -551,10 +551,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             return;
         }
         QuorumPeerConfig.parse(args);
-        
+
         if (!QuorumPeerConfig.isStandalone()) {
             runPeer(new QuorumPeer.Factory() {
-                public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory) 
+                public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory)
                         throws IOException {
                     return new QuorumPeer(cnxnFactory);
                 }

@@ -53,7 +53,7 @@ import com.yahoo.zookeeper.txn.ErrorTxn;
  * request and services any queries. It is always at the end of a
  * RequestProcessor chain (hence the name), so it does not have a nextProcessor
  * member.
- * 
+ *
  * This RequestProcessor counts on ZooKeeperServer to populate the
  * outstandingRequests member of ZooKeeperServer.
  */
@@ -67,7 +67,7 @@ public class FinalRequestProcessor implements RequestProcessor {
     }
 
     public void processRequest(Request request) {
-        // LOG.warn("Zoo>>> cxid = " + request.cxid + " type = " +
+        // LOG.info("Zoo>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = " + request.sessionId + " cnxn " +
         // request.cnxn);
         // request.addRQRec(">final");
@@ -81,7 +81,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             while (!zks.outstandingChanges.isEmpty()
                     && zks.outstandingChanges.get(0).zxid <= request.zxid) {
                 if (zks.outstandingChanges.get(0).zxid < request.zxid) {
-                    LOG.error("Zxid outstanding "
+                    LOG.warn("Zxid outstanding "
                             + zks.outstandingChanges.get(0).zxid
                             + " is less than current " + request.zxid);
                 }
@@ -117,7 +117,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 scxn.closeSession(request.sessionId);
             }
         }
-        
+
         if (request.cnxn == null) {
             return;
         }
@@ -217,15 +217,15 @@ public class FinalRequestProcessor implements RequestProcessor {
         } catch (KeeperException e) {
             err = e.getCode();
         } catch (Exception e) {
-            LOG.warn("****************************** " + request);
+            LOG.error("****************************** " + request);
             StringBuffer sb = new StringBuffer();
             ByteBuffer bb = request.request;
             bb.rewind();
             while (bb.hasRemaining()) {
                 sb.append(Integer.toHexString(bb.get() & 0xff));
             }
-            LOG.warn(sb.toString());
-            LOG.error("FIXMSG",e);
+            LOG.error(sb.toString());
+            LOG.error("Unexpected error while marshalling",e);
             err = Code.MarshallingError;
         }
         ReplyHeader hdr = new ReplyHeader(request.cxid, request.zxid, err);
@@ -233,7 +233,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         try {
             request.cnxn.sendResponse(hdr, rsp, "response");
         } catch (IOException e) {
-            LOG.error("FIXMSG",e);
+            LOG.warn("Unexpected exception",e);
         }
     }
 

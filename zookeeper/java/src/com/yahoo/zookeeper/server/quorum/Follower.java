@@ -118,10 +118,10 @@ public class Follower {
             }
         }
         if (addr == null) {
-            LOG.error("Couldn't find the leader with id = "
+            LOG.warn("Couldn't find the leader with id = "
                     + self.currentVote.id);
         }
-        LOG.warn("Following " + addr);
+        LOG.info("Following " + addr);
         sock = new Socket();
         try {
             QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
@@ -134,11 +134,11 @@ public class Follower {
                     sock.setTcpNoDelay(true);
                     break;
                 } catch (ConnectException e) {
-                    LOG.error("FIXMSG",e);
                     if (tries == 4) {
+                        LOG.error("Unexpected exception",e);
                         throw e;
-                    }
-                    else{
+                    } else {
+                        LOG.warn("Unexpected exception",e);
                         sock = new Socket();
                         sock.setSoTimeout(self.tickTime * self.initLimit);
                     }
@@ -164,11 +164,11 @@ public class Follower {
             readPacket(qp);
             synchronized (zk) {
                 if (qp.getType() == Leader.DIFF) {
-                    LOG.warn("Getting a diff from the leader!");
+                    LOG.info("Getting a diff from the leader!");
                     zk.loadData();
                 }
                 else if (qp.getType() == Leader.SNAP) {
-                    LOG.warn("Getting a snapshot from leader");
+                    LOG.info("Getting a snapshot from leader");
                     // The leader is going to dump the database
                     zk.loadData(leaderIs);
                     String signature = leaderIs.readString("signature");

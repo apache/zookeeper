@@ -101,7 +101,7 @@ public class FollowerHandler extends Thread {
                 bufferedOutput.flush();
             } catch (IOException e) {
                 if (!s.isClosed()) {
-                    LOG.error("FIXMSG",e);
+                    LOG.warn("Unexpected exception",e);
                 }
                 break;
             }
@@ -139,7 +139,7 @@ public class FollowerHandler extends Thread {
                 txn = ZooKeeperServer.deserializeTxn(ia, hdr);
                 // mess = "transaction: " + txn.toString();
             } catch (IOException e) {
-                LOG.error("FIXMSG",e);
+                LOG.warn("Unexpected exception",e);
             }
             break;
         case Leader.REQUEST:
@@ -153,8 +153,7 @@ public class FollowerHandler extends Thread {
                 long id = dis.readLong();
                 mess = " sessionid = " + id;
             } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOG.warn("Unexpected exception", e);
             }
 
             break;
@@ -267,7 +266,7 @@ public class FollowerHandler extends Thread {
                     try {
                         sendPackets();
                     } catch (InterruptedException e) {
-                        LOG.error("FIXMSG",e);
+                        LOG.warn("Interrupted",e);
                     }
                 }
             }.start();
