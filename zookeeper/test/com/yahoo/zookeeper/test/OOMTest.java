@@ -9,9 +9,9 @@ import java.util.ArrayList;
 
 import junit.framework.TestCase;
 
-import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.ZooKeeper;
+import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
@@ -23,8 +23,7 @@ import com.yahoo.zookeeper.server.ZooKeeperServer;
  * 
  */
 public class OOMTest extends TestCase implements Watcher {
-    public void testOOM() throws IOException, InterruptedException,
-            KeeperException {
+    public void testOOM() throws IOException, InterruptedException, KeeperException {
         // This test takes too long to run!
         if (true)
             return;
@@ -79,8 +78,7 @@ public class OOMTest extends TestCase implements Watcher {
         f.shutdown();
     }
 
-    private void utestExists() throws IOException, InterruptedException,
-            KeeperException {
+    private void utestExists() throws IOException, InterruptedException, KeeperException {
         ZooKeeper zk = new ZooKeeper("127.0.0.1:33221", 30000, this);
         for (int i = 0; i < 10000; i++) {
             zk.exists("/this/path/doesnt_exist!", true);
@@ -88,8 +86,8 @@ public class OOMTest extends TestCase implements Watcher {
         zk.close();
     }
 
-    private void utestPrep() throws KeeperException, IOException,
-            InterruptedException {
+    private void utestPrep() throws IOException,
+            InterruptedException, KeeperException {
         ZooKeeper zk = new ZooKeeper("127.0.0.1:33221", 30000, this);
         for (int i = 0; i < 10000; i++) {
             zk.create("/" + i, null, Ids.OPEN_ACL_UNSAFE, 0);
@@ -97,8 +95,7 @@ public class OOMTest extends TestCase implements Watcher {
         zk.close();
     }
 
-    private void utestGet() throws IOException, InterruptedException,
-            KeeperException {
+    private void utestGet() throws IOException, InterruptedException, KeeperException {
         ZooKeeper zk = new ZooKeeper("127.0.0.1:33221", 30000, this);
         for (int i = 0; i < 10000; i++) {
             Stat stat = new Stat();
@@ -107,8 +104,7 @@ public class OOMTest extends TestCase implements Watcher {
         zk.close();
     }
 
-    private void utestChildren() throws IOException, InterruptedException,
-            KeeperException {
+    private void utestChildren() throws IOException, InterruptedException, KeeperException {
         ZooKeeper zk = new ZooKeeper("127.0.0.1:33221", 30000, this);
         for (int i = 0; i < 10000; i++) {
             zk.getChildren("/" + i, true);

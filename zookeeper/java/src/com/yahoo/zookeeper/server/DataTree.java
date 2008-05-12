@@ -148,7 +148,7 @@ public class DataTree {
      * @throws KeeperException
      */
     public String createNode(String path, byte data[], ArrayList<ACL> acl,
-            long ephemeralOwner, long zxid, long time) throws KeeperException {
+            long ephemeralOwner, long zxid, long time) throws KeeperException.NoNodeException, KeeperException.NodeExistsException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
@@ -162,11 +162,11 @@ public class DataTree {
         stat.setEphemeralOwner(ephemeralOwner);
         DataNode parent = nodes.get(parentName);
         if (parent == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         synchronized (parent) {
             if (parent.children.contains(childName)) {
-                throw new KeeperException(KeeperException.Code.NodeExists);
+                throw new KeeperException.NodeExistsException();
             }
             int cver = parent.stat.getCversion();
             cver++;
@@ -188,18 +188,18 @@ public class DataTree {
         return path;
     }
 
-    public void deleteNode(String path) throws KeeperException {
+    public void deleteNode(String path) throws KeeperException.NoNodeException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
         DataNode node = nodes.get(path);
         if (node == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         nodes.remove(path);
         DataNode parent = nodes.get(parentName);
         if (parent == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         synchronized (parent) {
             parent.children.remove(childName);
@@ -224,11 +224,11 @@ public class DataTree {
     }
 
     public Stat setData(String path, byte data[], int version, long zxid,
-            long time) throws KeeperException {
+            long time) throws KeeperException.NoNodeException {
         Stat s = new Stat();
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
             n.data = data;
@@ -241,11 +241,10 @@ public class DataTree {
         return s;
     }
 
-    public byte[] getData(String path, Stat stat, Watcher watcher)
-            throws KeeperException {
+    public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
             copyStat(n.stat, stat);
@@ -256,14 +255,14 @@ public class DataTree {
         }
     }
 
-    public Stat statNode(String path, Watcher watcher) throws KeeperException {
+    public Stat statNode(String path, Watcher watcher) throws KeeperException.NoNodeException {
         Stat stat = new Stat();
         DataNode n = nodes.get(path);
         if (watcher != null) {
             dataWatches.addWatch(path, watcher);
         }
         if (n == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
             copyStat(n.stat, stat);
@@ -271,11 +270,10 @@ public class DataTree {
         }
     }
 
-    public ArrayList<String> getChildren(String path, Stat stat, Watcher watcher)
-            throws KeeperException {
+    public ArrayList<String> getChildren(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
             ArrayList<String> children = new ArrayList<String>();
@@ -288,12 +286,11 @@ public class DataTree {
         }
     }
 
-    public Stat setACL(String path, ArrayList<ACL> acl, int version)
-            throws KeeperException {
+    public Stat setACL(String path, ArrayList<ACL> acl, int version) throws KeeperException.NoNodeException {
         Stat stat = new Stat();
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
             n.stat.setAversion(version);
@@ -304,10 +301,10 @@ public class DataTree {
     }
 
     @SuppressWarnings("unchecked")
-    public ArrayList<ACL> getACL(String path, Stat stat) throws KeeperException {
+    public ArrayList<ACL> getACL(String path, Stat stat) throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
             copyStat(n.stat, stat);

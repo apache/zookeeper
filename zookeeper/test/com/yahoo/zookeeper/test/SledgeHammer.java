@@ -20,7 +20,7 @@ public class SledgeHammer extends Thread implements Watcher {
     int readsPerWrite;
 
     public SledgeHammer(String hosts, int count, int readsPerWrite)
-            throws KeeperException, IOException {
+            throws IOException {
         zk = new ZooKeeper(hosts, 10000, this);
         this.count = count;
         this.readsPerWrite = readsPerWrite;
@@ -56,10 +56,10 @@ public class SledgeHammer extends Thread implements Watcher {
                             break;
                         }
                     }
+                } catch (KeeperException.ConnectionLossException e) {
+                    // ignore connection loss
                 } catch (KeeperException e) {
-                    if (e.getCode() != KeeperException.Code.ConnectionLoss) {
-                        e.printStackTrace();
-                    }
+                    e.printStackTrace();
                 }
             }
             System.out.println();
@@ -76,7 +76,7 @@ public class SledgeHammer extends Thread implements Watcher {
      * @throws NumberFormatException
      */
     public static void main(String[] args) throws NumberFormatException,
-            KeeperException, IOException {
+            IOException {
         if (args.length != 3) {
             System.err
                     .println("USAGE: SledgeHammer zookeeper_server reps reads_per_rep");

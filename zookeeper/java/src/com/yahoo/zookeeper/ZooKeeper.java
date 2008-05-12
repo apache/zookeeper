@@ -30,7 +30,6 @@ import com.yahoo.zookeeper.AsyncCallback.DataCallback;
 import com.yahoo.zookeeper.AsyncCallback.StatCallback;
 import com.yahoo.zookeeper.AsyncCallback.StringCallback;
 import com.yahoo.zookeeper.AsyncCallback.VoidCallback;
-import com.yahoo.zookeeper.KeeperException.Code;
 import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.ACL;
 import com.yahoo.zookeeper.data.Id;
@@ -97,17 +96,17 @@ import com.yahoo.zookeeper.server.ZooKeeperServer;
  * <p>
  * A client needs an object of a class implementing Watcher interface for
  * processing the events delivered to the client.
- * 
+ *
  * When a client drops current connection and re-connects to a server, all the
  * existing watches are considered as being triggered but the undelivered events
  * are lost. To emulate this, the client will generate a special event to tell
  * the event handler a connection has been dropped. This special event has type
  * EventNone and state sKeeperStateDisconnected.
- * 
+ *
  */
 public class ZooKeeper {
     private static final Logger LOG = Logger.getLogger(ZooKeeper.class);
-    
+
     volatile Watcher watcher;
 
     public enum States {
@@ -123,14 +122,13 @@ public class ZooKeeper {
     ClientCnxn cnxn;
 
     public ZooKeeper(String host, int sessionTimeout, Watcher watcher)
-            throws KeeperException, IOException {
+            throws IOException {
         this.watcher = watcher;
         cnxn = new ClientCnxn(host, sessionTimeout, this);
     }
 
     public ZooKeeper(String host, int sessionTimeout, Watcher watcher,
-            long sessionId, byte[] sessionPasswd) throws KeeperException,
-            IOException {
+            long sessionId, byte[] sessionPasswd) throws IOException {
         this.watcher = watcher;
         cnxn = new ClientCnxn(host, sessionTimeout, this, sessionId,
                 sessionPasswd);
@@ -166,7 +164,6 @@ public class ZooKeeper {
      *
      * @throws IOException
      * @throws InterruptedException
-     * @throws KeeperException
      */
     public synchronized void close() throws InterruptedException {
         RequestHeader h = new RequestHeader();
@@ -225,11 +222,9 @@ public class ZooKeeper {
      *                specifying whether the node to be created is ephemeral
      *                and/or sequential
      * @return the actual path of the created node
-     * @throws KeeperException
-     *                 an exception with appropriate error code defined in
-     *                 KeeperException class..
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws KeeperException if the server returns a non-zero error code
+     * @throws com.yahoo.zookeeper.KeeperException.InvalidACLException if the ACL is invalid
+     * @throws InterruptedException if the transaction is interrrupted
      */
     public String create(String path, byte data[], ArrayList<ACL> acl, int flags)
             throws KeeperException, InterruptedException {
@@ -241,12 +236,12 @@ public class ZooKeeper {
         request.setFlags(flags);
         request.setPath(path);
         if (acl != null && acl.size() == 0) {
-            throw new KeeperException(Code.InvalidACL);
+            throw new KeeperException.InvalidACLException();
         }
         request.setAcl(acl);
         ReplyHeader r = cnxn.submitRequest(h, request, response);
         if (r.getErr() != 0) {
-            throw new KeeperException(r.getErr(), path);
+            throw KeeperException.create(r.getErr(), path);
         }
         return response.getPath();
     }
@@ -294,13 +289,11 @@ public class ZooKeeper {
      *                the path of the node to be deleted.
      * @param version
      *                the expected node version.
-     * @throws KeeperException
-     *                 an KeeperException with appropriate error code.
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws InterruptedException IF the server transaction is interrupted
+     * @throws KeeperException If the server signals an error with a non-zero return code.
      */
-    public void delete(String path, int version) throws KeeperException,
-            InterruptedException {
+    public void delete(String path, int version) throws
+            InterruptedException, KeeperException {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.delete);
         DeleteRequest request = new DeleteRequest();
@@ -308,7 +301,7 @@ public class ZooKeeper {
         request.setVersion(version);
         ReplyHeader r = cnxn.submitRequest(h, request, null);
         if (r.getErr() != 0) {
-            throw new KeeperException(r.getErr());
+            throw KeeperException.create(r.getErr());
         }
     }
 
@@ -342,9 +335,8 @@ public class ZooKeeper {
      *                whether need to watch this node
      * @return the stat of the node of the given path; return null if no such a
      *         node exists.
-     * @throws KeeperException
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws KeeperException If the server signals an error
+     * @throws InterruptedException If the server transaction is interrupted.
      */
     public Stat exists(String path, boolean watch) throws KeeperException,
             InterruptedException {
@@ -359,7 +351,7 @@ public class ZooKeeper {
             if (r.getErr() == KeeperException.Code.NoNode) {
                 return null;
             }
-            throw new KeeperException(r.getErr());
+            throw KeeperException.create(r.getErr());
         }
         return response.getStat().getCzxid() == -1 ? null : response.getStat();
     }
@@ -400,9 +392,8 @@ public class ZooKeeper {
      * @param stat
      *                teh stat of the node
      * @return the data of the node
-     * @throws IOException
-     * @throws KeeperException
-     * @throws InterruptedException
+     * @throws KeeperException If the server signals an error with a non-zero error code
+     * @throws InterruptedException If the server transaction is interrupted.
      */
     public byte[] getData(String path, boolean watch, Stat stat)
             throws KeeperException, InterruptedException {
@@ -414,7 +405,7 @@ public class ZooKeeper {
         GetDataResponse response = new GetDataResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response);
         if (r.getErr() != 0) {
-            throw new KeeperException(r.getErr());
+            throw KeeperException.create(r.getErr());
         }
         if (stat != null) {
             DataTree.copyStat(response.getStat(), stat);
@@ -462,9 +453,8 @@ public class ZooKeeper {
      * @param version
      *                the expected matching version
      * @return the state of the node
-     * @throws KeeperException
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws KeeperException If the server signals an error with a non-zero error code.
      */
     public Stat setData(String path, byte data[], int version)
             throws KeeperException, InterruptedException {
@@ -477,7 +467,7 @@ public class ZooKeeper {
         SetDataResponse response = new SetDataResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response);
         if (r.getErr() != 0) {
-            throw new KeeperException(r.getErr());
+            throw KeeperException.create(r.getErr());
         }
         return response.getStat();
     }
@@ -514,9 +504,8 @@ public class ZooKeeper {
      * @param stat
      *                the stat of the node will be copied to this parameter.
      * @return the ACL array of the given node.
-     * @throws KeeperException
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws KeeperException If the server signals an error with a non-zero error code.
      */
     public ArrayList<ACL> getACL(String path, Stat stat)
             throws KeeperException, InterruptedException {
@@ -527,7 +516,7 @@ public class ZooKeeper {
         GetACLResponse response = new GetACLResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response);
         if (r.getErr() != 0) {
-            throw new KeeperException(r.getErr());
+            throw KeeperException.create(r.getErr());
         }
         DataTree.copyStat(response.getStat(), stat);
         return response.getAcl();
@@ -565,9 +554,9 @@ public class ZooKeeper {
      * @param acl
      * @param version
      * @return the stat of the node.
-     * @throws KeeperException
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws KeeperException If the server signals an error with a non-zero error code.
+     * @throws com.yahoo.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
      */
     public Stat setACL(String path, ArrayList<ACL> acl, int version)
             throws KeeperException, InterruptedException {
@@ -576,14 +565,14 @@ public class ZooKeeper {
         SetACLRequest request = new SetACLRequest();
         request.setPath(path);
         if (acl != null && acl.size() == 0) {
-            throw new KeeperException(Code.InvalidACL);
+            throw new KeeperException.InvalidACLException();
         }
         request.setAcl(acl);
         request.setVersion(version);
         SetACLResponse response = new SetACLResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response);
         if (r.getErr() != 0) {
-            throw new KeeperException(r.getErr());
+            throw KeeperException.create(r.getErr());
         }
         return response.getStat();
     }
@@ -622,9 +611,8 @@ public class ZooKeeper {
      * @param path
      * @param watch
      * @return an array of children of the node with the given path
-     * @throws IOException
-     * @throws KeeperException
-     * @throws InterruptedException
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws KeeperException If the server signals an error with a non-zero error code.
      */
     public ArrayList<String> getChildren(String path, boolean watch)
             throws KeeperException, InterruptedException {
@@ -636,7 +624,7 @@ public class ZooKeeper {
         GetChildrenResponse response = new GetChildrenResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response);
         if (r.getErr() != 0) {
-            throw new KeeperException(r.getErr());
+            throw KeeperException.create(r.getErr());
         }
         return response.getChildren();
     }
@@ -655,15 +643,12 @@ public class ZooKeeper {
         request.setPath(path);
         request.setWatch(watch);
         GetChildrenResponse response = new GetChildrenResponse();
-        cnxn
-                .queuePacket(h, new ReplyHeader(), request, response, cb, path,
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, path,
                         ctx);
     }
 
     /**
      * Asynchronous sync. Flushes channel between process and leader.
-     *
-     * @see #sync(String)
      */
     public void sync(String path, VoidCallback cb, Object ctx){
         RequestHeader h = new RequestHeader();

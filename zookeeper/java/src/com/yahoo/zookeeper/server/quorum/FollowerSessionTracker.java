@@ -19,7 +19,6 @@ package com.yahoo.zookeeper.server.quorum;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.server.SessionTracker;
 import com.yahoo.zookeeper.server.SessionTrackerImpl;
 
@@ -78,7 +77,7 @@ public class FollowerSessionTracker implements SessionTracker {
         return (nextSessionId++);
     }
 
-    public void checkSession(long sessionId) throws KeeperException {
+    public void checkSession(long sessionId)  {
         // Nothing to do here. Sessions are checked at the Leader
     }
 }

@@ -190,7 +190,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
                                  "Shutdown SessionTrackerImpl!");
     }
 
-
+   
     synchronized public long createSession(int sessionTimeout) {
         addSession(nextSessionId, sessionTimeout);
         return nextSessionId++;
@@ -212,9 +212,9 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         touchSession(id, sessionTimeout);
     }
 
-    public void checkSession(long sessionId) throws KeeperException {
+    public void checkSession(long sessionId) throws KeeperException.SessionExpiredException {
         if (sessionsById.get(sessionId) == null) {
-            throw new KeeperException(KeeperException.Code.SessionExpired);
+            throw new KeeperException.SessionExpiredException();
         }
     }
 }

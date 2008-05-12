@@ -19,10 +19,10 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.ZooDefs;
 import com.yahoo.zookeeper.ZooKeeper;
+import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.AsyncCallback.DataCallback;
 import com.yahoo.zookeeper.AsyncCallback.StatCallback;
 import com.yahoo.zookeeper.data.Stat;
@@ -60,7 +60,7 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
         }
     }
 
-    IntegrityCheck(String hostPort, String path, int count) throws KeeperException,
+    IntegrityCheck(String hostPort, String path, int count) throws
             IOException {
         zk = new ZooKeeper(hostPort, 15000, this);
         this.path = path;
@@ -94,13 +94,12 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
 
     }
 
-    void doCreate() throws KeeperException, InterruptedException {
+    void doCreate() throws InterruptedException, KeeperException {
         // create top level znode
         try{
             zk.create(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
-        }catch(KeeperException e){
-            if(e.getCode()!=KeeperException.Code.NodeExists)
-                throw e;
+        }catch(KeeperException.NodeExistsException e){
+            // ignore duplicate create
         }
         iteration++;
         byte v[] = ("" + iteration).getBytes();
@@ -111,10 +110,9 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
                 if(i%10==0)
                     LOG.warn("Creating znode "+cpath);
                 zk.create(cpath, v, ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
-            }catch(KeeperException e){
-                if(e.getCode()!=KeeperException.Code.NodeExists)
-                    throw e;
-            }               
+            }catch(KeeperException.NodeExistsException e){
+                // ignore duplicate create
+            }
             lastValue.put(cpath, v);
         }
     }
@@ -185,7 +183,6 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
         }
     }
 
-    @Override
     public void processResult(int rc, String path, Object ctx, Stat stat) {
         if (rc == 0) {
             lastValue.put(path, (byte[]) ctx);
@@ -193,7 +190,6 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
         decOutstanding();
     }
 
-    @Override
     public void processResult(int rc, String path, Object ctx, byte[] data,
             Stat stat) {
         if (rc == 0) {

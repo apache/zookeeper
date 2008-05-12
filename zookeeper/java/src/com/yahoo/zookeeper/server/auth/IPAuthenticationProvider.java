@@ -16,9 +16,9 @@
 
 package com.yahoo.zookeeper.server.auth;
 
-import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.data.Id;
 import com.yahoo.zookeeper.server.ServerCnxn;
+import com.yahoo.zookeeper.KeeperException;
 
 public class IPAuthenticationProvider implements AuthenticationProvider {
 
