@@ -21,7 +21,7 @@ Starting a client shell
 
 1) run the following command
 
-java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf -Dlog4j.configuration=log4j_console.properties com.yahoo.zookeeper.ZooKeeper <server>:<port>
+java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar com.yahoo.zookeeper.ZooKeeper <server>:<port>
 
 where server and port correspond to the ZooKeeper configuration.
 
