@@ -293,7 +293,8 @@
     </target>
 
     <target name="junit.run">
-        <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no" fork="yes" 
+        <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no"
+               fork="yes" 
             maxmemory="${test.junit.maxmem}" dir="${basedir}"
             timeout="${test.timeout}" errorProperty="tests.failed"
             failureProperty="tests.failed">
@@ -314,29 +315,26 @@
         <fail if="tests.failed">Tests failed!</fail>
     </target>
 
-    <target name="test-unit" depends="test-init">
-        <antcall target="junit.run">
-            <param name="test.category" value="Unit"/>
-        </antcall>
-    </target>
 
-    <target name="test-func" depends="test-init">
-        <antcall target="junit.run">
-            <param name="test.category" value="Func"/>
-        </antcall>
+    <target name="test-unit-category">
+      <property name="test.category" value="Unit"/>
     </target>
+    <target name="test-unit" depends="test-init,test-unit-category,junit.run"/>
 
-    <target name="test-perf" depends="test-init">
-        <antcall target="junit.run">
-            <param name="test.category" value="Perf"/>
-        </antcall>
+    <target name="test-func-category">
+      <property name="test.category" value="Func"/>
     </target>
+    <target name="test-func" depends="test-init,test-func-category,junit.run"/>
 
-    <target name="test" depends="test-init">
-        <antcall target="junit.run">
-            <param name="test.category" value=""/>
-        </antcall>
+    <target name="test-perf-category">
+      <property name="test.category" value="Perf"/>
     </target>
+    <target name="test-perf" depends="test-init,test-perf-category,junit.run"/>
+
+    <target name="test-category">
+      <property name="test.category" value=""/>
+    </target>
+    <target name="test" depends="test-init,test-category,junit.run"/>
 
     <!-- ====================================================== -->
     <!-- Run optional third-party tool targets                  -->
