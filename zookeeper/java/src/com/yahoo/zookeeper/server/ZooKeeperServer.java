@@ -48,7 +48,6 @@ import com.yahoo.jute.BinaryInputArchive;
 import com.yahoo.jute.BinaryOutputArchive;
 import com.yahoo.jute.InputArchive;
 import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.ZooDefs.OpCode;
 import com.yahoo.zookeeper.data.ACL;
 import com.yahoo.zookeeper.data.Id;
@@ -475,7 +474,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * maintains a list of last 500 or so committed requests. This is used for
      * fast follower synchronization.
      *
-     * @param r
+     * @param request
      *            committed request
      */
 
@@ -656,8 +655,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return "log." + Long.toHexString(zxid);
     }
 
-    public void closeSession(long sessionId) throws KeeperException,
-            InterruptedException {
+    public void closeSession(long sessionId) throws InterruptedException {
         ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
                                  "ZooKeeperServer --- Session to be closed: "
                 + Long.toHexString(sessionId));
@@ -834,7 +832,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void closeSession(ServerCnxn cnxn, RequestHeader requestHeader)
-            throws KeeperException, InterruptedException {
+            throws InterruptedException {
         closeSession(cnxn.getSessionId());
     }
 

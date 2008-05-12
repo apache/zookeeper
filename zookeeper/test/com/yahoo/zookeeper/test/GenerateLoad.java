@@ -329,12 +329,9 @@ public class GenerateLoad {
             if (event.getType() == Watcher.Event.EventNone && event.getState() == Watcher.Event.KeeperStateExpired) {
                 try {
                     zk = new ZooKeeper(host, 10000, this);
-                } catch (KeeperException e) {
-                    e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                
             }
         }
 

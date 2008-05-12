@@ -17,7 +17,6 @@ import org.junit.Test;
 import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.Watcher;
 import com.yahoo.zookeeper.ZooKeeper;
-import com.yahoo.zookeeper.KeeperException.Code;
 import com.yahoo.zookeeper.ZooDefs.CreateFlags;
 import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.Stat;
@@ -74,7 +73,7 @@ public class ClientTest extends TestCase implements Watcher {
         d.delete();
     }
 
-    private ZooKeeper createClient() throws KeeperException, IOException,InterruptedException{
+    private ZooKeeper createClient() throws IOException,InterruptedException{
         clientConnected=new CountDownLatch(1);
 		ZooKeeper zk = new ZooKeeper(hostPort, 20000, this);
 		if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
@@ -90,15 +89,15 @@ public class ClientTest extends TestCase implements Watcher {
         try {
             zkIdle = createClient();
             zkWatchCreator = createClient();
-            for(int i = 0 ; i < 30; i++) {
+            for (int i = 0; i < 30; i++) {
                 zkWatchCreator.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
             }
-            for(int i = 0 ; i < 30; i++) {
+            for (int i = 0; i < 30; i++) {
                 zkIdle.exists("/" + i, true);
             }
-            for(int i = 0; i < 30; i++) {
+            for (int i = 0; i < 30; i++) {
                 Thread.sleep(1000);
-                zkWatchCreator.delete("/"+i, -1);
+                zkWatchCreator.delete("/" + i, -1);
             }
             // The bug will manifest itself here because zkIdle will expire
             zkIdle.exists("/0", false);
@@ -113,8 +112,8 @@ public class ClientTest extends TestCase implements Watcher {
     }
 
     @Test
-    public void testClient() throws KeeperException, IOException,
-            InterruptedException {
+    public void testClient() throws IOException,
+            InterruptedException, KeeperException {
         ZooKeeper zk = null;
         try {
     		zk =createClient();
@@ -125,10 +124,10 @@ public class ClientTest extends TestCase implements Watcher {
             try {
             	zk.setData("/benwashere", "hi".getBytes(), 57);
         		fail("Should have gotten BadVersion exception");
-            } catch(KeeperException e) {
-            	if (e.getCode() != Code.BadVersion) {
-            		fail("Should have gotten BadVersion exception");
-            	}
+            } catch(KeeperException.BadVersionException e) {
+                // expected that
+            } catch (KeeperException e) {
+                fail("Should have gotten BadVersion exception");
             }
             System.out.println("Before delete /benwashere");
             zk.delete("/benwashere", 0);
@@ -143,8 +142,8 @@ public class ClientTest extends TestCase implements Watcher {
             try {
                 zk.delete("/", -1);
                 fail("deleted root!");
-            } catch(KeeperException e) {
-                assertEquals(KeeperException.Code.BadArguments, e.getCode());
+            } catch(KeeperException.BadArgumentsException e) {
+                // good, expected that
             }
             Stat stat = new Stat();
             // Test basic create, ls, and getData
@@ -160,8 +159,8 @@ public class ClientTest extends TestCase implements Watcher {
             try {
                 assertEquals(null, zk.exists("/frog", true));
                 System.out.println("Comment: asseting passed for frog setting /");
-            } catch (KeeperException e) {
-                assertEquals(Code.NoNode, e.getCode());
+            } catch (KeeperException.NoNodeException e) {
+                // OK, expected that
             }
             zk.create("/frog", "hi".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
             // the first poll is just a sesssion delivery
@@ -215,8 +214,8 @@ public class ClientTest extends TestCase implements Watcher {
             try {
                 zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
                 fail("duplicate create allowed");
-            } catch(KeeperException e) {
-                assertEquals(Code.NodeExists, e.getCode());
+            } catch(KeeperException.NodeExistsException e) {
+                // OK, expected that
             }
         } finally {
             if (zk != null) {
@@ -225,7 +224,7 @@ public class ClientTest extends TestCase implements Watcher {
         }
     }
 
-    private void notestConnections() throws KeeperException, IOException, InterruptedException {
+    private void notestConnections() throws IOException, InterruptedException, KeeperException {
         ZooKeeper zk;
         for(int i = 0; i < 2000; i++) {
             if (i % 100 == 0) {
@@ -263,8 +262,7 @@ public class ClientTest extends TestCase implements Watcher {
             }
         }
 
-        public void close() throws IOException, InterruptedException,
-                KeeperException {
+        public void close() throws IOException, InterruptedException {
             zk.close();
         }
     }
@@ -289,8 +287,8 @@ public class ClientTest extends TestCase implements Watcher {
     }
 
     @Test
-    public void testHammer() throws KeeperException, IOException,
-            InterruptedException {
+    public void testHammer() throws IOException,
+            InterruptedException, KeeperException {
         File tmpDir = File.createTempFile("test", ".junit", baseTest);
         tmpDir = new File(tmpDir + ".dir");
         tmpDir.mkdirs();

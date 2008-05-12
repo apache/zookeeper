@@ -52,5 +52,5 @@ public interface SessionTracker {
      */
     void removeSession(long sessionId);
 
-    void checkSession(long sessionId) throws KeeperException;
+    void checkSession(long sessionId) throws KeeperException.SessionExpiredException;
 }

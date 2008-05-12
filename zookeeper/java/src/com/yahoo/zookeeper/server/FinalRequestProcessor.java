@@ -126,7 +126,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         Record rsp = null;
         try {
             if (request.hdr != null && request.hdr.getType() == OpCode.error) {
-                throw new KeeperException(((ErrorTxn) request.txn).getErr());
+                throw KeeperException.create(((ErrorTxn) request.txn).getErr());
             }
             switch (request.type) {
             case OpCode.ping:
@@ -167,7 +167,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         existsRequest);
                 String path = existsRequest.getPath();
                 if (path.indexOf('\0') != -1) {
-                    throw new KeeperException(Code.BadArguments);
+                    throw new KeeperException.BadArgumentsException();
                 }
                 Stat stat = zks.dataTree.statNode(path, existsRequest
                         .getWatch() ? request.cnxn : null);
@@ -179,7 +179,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         getDataRequest);
                 DataNode n = zks.dataTree.getNode(getDataRequest.getPath());
                 if (n == null) {
-                    throw new KeeperException(Code.NoNode);
+                    throw new KeeperException.NoNodeException();
                 }
                 PrepRequestProcessor.checkACL(zks, n.acl, ZooDefs.Perms.READ,
                         request.authInfo);
@@ -204,7 +204,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 stat = new Stat();
                 n = zks.dataTree.getNode(getChildrenRequest.getPath());
                 if (n == null) {
-                    throw new KeeperException(Code.NoNode);
+                    throw new KeeperException.NoNodeException();
                 }
                 PrepRequestProcessor.checkACL(zks, n.acl, ZooDefs.Perms.READ,
                         request.authInfo);
@@ -217,15 +217,15 @@ public class FinalRequestProcessor implements RequestProcessor {
         } catch (KeeperException e) {
             err = e.getCode();
         } catch (Exception e) {
-            LOG.error("****************************** " + request);
+            LOG.warn("****************************** " + request);
             StringBuffer sb = new StringBuffer();
             ByteBuffer bb = request.request;
             bb.rewind();
             while (bb.hasRemaining()) {
                 sb.append(Integer.toHexString(bb.get() & 0xff));
             }
-            LOG.error(sb.toString());
-            LOG.error("Unexpected error while marshalling",e);
+            LOG.warn(sb.toString());
+            LOG.error("FIXMSG",e);
             err = Code.MarshallingError;
         }
         ReplyHeader hdr = new ReplyHeader(request.cxid, request.zxid, err);
@@ -233,7 +233,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         try {
             request.cnxn.sendResponse(hdr, rsp, "response");
         } catch (IOException e) {
-            LOG.warn("Unexpected exception",e);
+            LOG.error("FIXMSG",e);
         }
     }
 

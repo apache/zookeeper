@@ -100,7 +100,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 "PrepRequestProcessor exited loop!");
     }
 
-    ChangeRecord getRecordForPath(String path) throws KeeperException {
+    ChangeRecord getRecordForPath(String path) throws KeeperException.NoNodeException {
         ChangeRecord lastChange = null;
         synchronized (zks.outstandingChanges) {
             for (int i = 0; i < zks.outstandingChanges.size(); i++) {
@@ -118,7 +118,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             }
         }
         if (lastChange == null || lastChange.stat == null) {
-            throw new KeeperException(KeeperException.Code.NoNode);
+            throw new KeeperException.NoNodeException();
         }
         return lastChange;
     }
@@ -130,7 +130,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     }
 
     static void checkACL(ZooKeeperServer zks, ArrayList<ACL> acl, int perm,
-            ArrayList<Id> ids) throws KeeperException {
+            ArrayList<Id> ids) throws KeeperException.NoAuthException {
         if (skipACL) {
             return;
         }
@@ -159,7 +159,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 }
             }
         }
-        throw new KeeperException(KeeperException.Code.NoAuth);
+        throw new KeeperException.NoAuthException();
     }
 
     /**
@@ -186,10 +186,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 String path = createRequest.getPath();
                 int lastSlash = path.lastIndexOf('/');
                 if (lastSlash == -1 || path.indexOf('\0') != -1) {
-                    throw new KeeperException(Code.BadArguments);
+                    throw new KeeperException.BadArgumentsException();
                 }
                 if (!fixupACL(request.authInfo, createRequest.getAcl())) {
-                    throw new KeeperException(Code.InvalidACL);
+                    throw new KeeperException.InvalidACLException();
                 }
                 String parentPath = path.substring(0, lastSlash);
                 ChangeRecord parentRecord = getRecordForPath(parentPath);
@@ -202,16 +202,14 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 }
                 try {
                     if (getRecordForPath(path) != null) {
-                        throw new KeeperException(Code.NodeExists);
+                        throw new KeeperException.NodeExistsException();
                     }
-                } catch (KeeperException e) {
-                    if (e.getCode() != Code.NoNode) {
-                        throw e;
-                    }
+                } catch (KeeperException.NoNodeException e) {
+                    // ignore this one
                 }
                 boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
                 if (ephemeralParent) {
-                    throw new KeeperException(Code.NoChildrenForEphemerals);
+                    throw new KeeperException.NoChildrenForEphemeralsException();
                 }
                 txn = new CreateTxn(path, createRequest.getData(),
                         createRequest.getAcl(),
@@ -240,7 +238,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 lastSlash = path.lastIndexOf('/');
                 if (lastSlash == -1 || path.indexOf('\0') != -1
                         || path.equals("/")) {
-                    throw new KeeperException(Code.BadArguments);
+                    throw new KeeperException.BadArgumentsException();
                 }
                 parentPath = path.substring(0, lastSlash);
                 parentRecord = getRecordForPath(parentPath);
@@ -249,10 +247,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         request.authInfo);
                 int version = deleteRequest.getVersion();
                 if (version != -1 && nodeRecord.stat.getVersion() != version) {
-                    throw new KeeperException(Code.BadVersion);
+                    throw new KeeperException.BadVersionException();
                 }
                 if (nodeRecord.childCount > 0) {
-                    throw new KeeperException(Code.NotEmpty);
+                    throw new KeeperException.NotEmptyException();
                 }
                 txn = new DeleteTxn(path);
                 parentRecord = parentRecord.duplicate(txnHeader.getZxid());
@@ -277,7 +275,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 version = setDataRequest.getVersion();
                 int currentVersion = nodeRecord.stat.getVersion();
                 if (version != -1 && version != currentVersion) {
-                    throw new KeeperException(Code.BadVersion);
+                    throw new KeeperException.BadVersionException();
                 }
                 version = currentVersion + 1;
                 txn = new SetDataTxn(path, setDataRequest.getData(), version);
@@ -291,7 +289,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 zks.sessionTracker.checkSession(request.sessionId);
                 SetACLRequest setAclRequest = new SetACLRequest();
                 if (!fixupACL(request.authInfo, setAclRequest.getAcl())) {
-                    throw new KeeperException(Code.InvalidACL);
+                    throw new KeeperException.InvalidACLException();
                 }
                 ZooKeeperServer.byteBuffer2Record(request.request,
                         setAclRequest);
@@ -302,7 +300,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 version = setAclRequest.getVersion();
                 currentVersion = nodeRecord.stat.getAversion();
                 if (version != -1 && version != currentVersion) {
-                    throw new KeeperException(Code.BadVersion);
+                    throw new KeeperException.BadVersionException();
                 }
                 version = currentVersion + 1;
                 txn = new SetACLTxn(path, setAclRequest.getAcl(), version);

@@ -59,7 +59,7 @@ public class AsyncTest extends TestCase implements Watcher, StringCallback, Void
         LOG.error("Client test shutdown finished");
     }
     
-    private ZooKeeper createClient() throws KeeperException, IOException,InterruptedException{
+    private ZooKeeper createClient() throws IOException,InterruptedException{
         clientConnected=new CountDownLatch(1);
 		ZooKeeper zk = new ZooKeeper(hostPort, 30000, this);
 		if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
@@ -140,8 +140,8 @@ public class AsyncTest extends TestCase implements Watcher, StringCallback, Void
     
     LinkedList<Integer> results = new LinkedList<Integer>();
     @Test
-    public void testAsync() throws KeeperException, IOException,
-			InterruptedException {
+    public void testAsync() throws IOException,
+            InterruptedException, KeeperException {
 		ZooKeeper zk = null;
 		zk = createClient();
 		zk.addAuthInfo("digest", "ben:passwd".getBytes());

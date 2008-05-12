@@ -190,7 +190,7 @@ class ClientCnxn {
     }
 
     public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper)
-            throws KeeperException, IOException {
+            throws IOException {
         this(hosts, sessionTimeout, zooKeeper, 0, new byte[16]);
     }
 
@@ -200,18 +200,15 @@ class ClientCnxn {
      *
      * @param hosts
      *                a comma separated list of hosts that can be connected to.
-     * @param connectTimeout
+     * @param sessionTimeout
      *                the timeout for connections.
-     * @param readTimeout
-     *                the read timeout.
      * @param zooKeeper
      *                the zookeeper object that this connection is related to.
      * @throws KeeperException
      * @throws IOException
      */
     public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper,
-            long sessionId, byte[] sessionPasswd) throws KeeperException,
-            IOException {
+            long sessionId, byte[] sessionPasswd) throws IOException {
         this.zooKeeper = zooKeeper;
         this.sessionId = sessionId;
         this.sessionPasswd = sessionPasswd;
@@ -468,7 +465,6 @@ class ClientCnxn {
 
         /**
          * @return true if a packet was received
-         * @param k
          * @throws InterruptedException
          * @throws IOException
          */

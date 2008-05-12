@@ -42,7 +42,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
   }
 
   private void deleteZKDir(ZooKeeper zk, String nodeName)
-      throws KeeperException, IOException, InterruptedException {
+          throws IOException, InterruptedException, KeeperException {
 
     Stat stat = zk.exists(nodeName, false);
     if (stat == null) {
@@ -59,37 +59,33 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     }
   }
 
-  private void checkRoot() throws KeeperException, IOException,
+  private void checkRoot() throws IOException,
       InterruptedException {
     ZooKeeper zk = new ZooKeeper(hostPort, 10000, this);
 
     try {
       zk.create(dirOnZK, null, Ids.OPEN_ACL_UNSAFE, 0);
+    } catch (KeeperException.NodeExistsException ke) {
+        // expected, sort of
     } catch (KeeperException ke) {
-      int code = ke.getCode();
-      boolean valid = code == KeeperException.Code.NodeExists;
-      if (!valid) {
         fail("Unexpected exception code for create " + dirOnZK + ": "
             + ke.getMessage());
-      }
     }
 
     try {
       zk.create(testDirOnZK, null, Ids.OPEN_ACL_UNSAFE, 0);
+    } catch (KeeperException.NodeExistsException ke) {
+        // expected, sort of
     } catch (KeeperException ke) {
-      int code = ke.getCode();
-      boolean valid = code == KeeperException.Code.NodeExists;
-      if (!valid) {
         fail("Unexpected exception code for create " + testDirOnZK + ": "
             + ke.getMessage());
-      }
     }
 
     zk.close();
   }
 
-  private void enode_test_1() throws KeeperException, IOException,
-      InterruptedException {
+  private void enode_test_1() throws IOException,
+          InterruptedException, KeeperException {
     checkRoot();
     String parentName = testDirOnZK;
     String nodeName = parentName + "/enode_abc";
@@ -142,8 +138,8 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
 
   }
 
-  private void enode_test_2() throws KeeperException, IOException,
-      InterruptedException {
+  private void enode_test_2() throws IOException,
+          InterruptedException, KeeperException {
     checkRoot();
     String parentName = testDirOnZK;
     String nodeName = parentName + "/enode_abc";
@@ -286,8 +282,8 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     zk_1.close();
   }
 
-  private void delete_create_get_set_test_1() throws KeeperException,
-      IOException, InterruptedException {
+  private void delete_create_get_set_test_1() throws
+          IOException, InterruptedException, KeeperException {
     checkRoot();
     ZooKeeper zk = new ZooKeeper(hostPort, 10000, this);
     String parentName = testDirOnZK;
@@ -352,8 +348,8 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
   }
 
   @Test
-  public void my_test_1() throws KeeperException, IOException,
-      InterruptedException {
+  public void my_test_1() throws IOException,
+          InterruptedException, KeeperException {
     enode_test_1();
     enode_test_2();
     delete_create_get_set_test_1();

@@ -2,7 +2,6 @@ package com.yahoo.zookeeper.test;
 
 import java.io.IOException;
 
-import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.ZooKeeper;
 import com.yahoo.zookeeper.AsyncCallback.VoidCallback;
 import com.yahoo.zookeeper.ZooDefs.CreateFlags;
@@ -19,9 +18,6 @@ public class TestHammer implements VoidCallback {
             ZooKeeper zk = null;
             try {
                 zk = new ZooKeeper(args[0], 10000, null);
-            } catch (KeeperException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
             } catch (IOException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();

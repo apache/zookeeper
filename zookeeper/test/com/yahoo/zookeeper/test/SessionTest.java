@@ -33,8 +33,7 @@ public class SessionTest extends TestCase implements Watcher {
      * @throws InterruptedException
      * @throws KeeperException
      */
-    public void testSessionReuse() throws IOException, InterruptedException,
-            KeeperException {
+    public void testSessionReuse() throws IOException, InterruptedException {
         File tmpDir = File.createTempFile("test", ".junit", baseTest);
         tmpDir = new File(tmpDir + ".dir");
         tmpDir.mkdirs();
@@ -55,8 +54,7 @@ public class SessionTest extends TestCase implements Watcher {
         
     }
     @Test
-    public void testSession() throws IOException, InterruptedException,
-            KeeperException {
+    public void testSession() throws IOException, InterruptedException, KeeperException {
         File tmpDir = File.createTempFile("test", ".junit", baseTest);
         tmpDir = new File(tmpDir + ".dir");
         tmpDir.mkdirs();
@@ -65,8 +63,7 @@ public class SessionTest extends TestCase implements Watcher {
         f.startup(zs);
         Thread.sleep(2000);
         ZooKeeper zk = new ZooKeeper("127.0.0.1:33299", 30000, this);
-        zk
-                .create("/e", new byte[0], Ids.OPEN_ACL_UNSAFE,
+        zk.create("/e", new byte[0], Ids.OPEN_ACL_UNSAFE,
                         CreateFlags.EPHEMERAL);
         System.out.println("zk with session id " + zk.getSessionId()
                 + " was destroyed!");
