@@ -1,0 +1,178 @@
+/*
+ * Copyright 2008, Yahoo! Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.yahoo.zookeeper.server.quorum;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.Map.Entry;
+
+import org.apache.log4j.Logger;
+
+import com.yahoo.zookeeper.server.quorum.Vote;
+import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
+
+public class LeaderElection implements Election  {
+    private static final Logger LOG = Logger.getLogger(LeaderElection.class);
+
+    QuorumPeer self;
+
+    public LeaderElection(QuorumPeer self) {
+        this.self = self;
+    }
+
+    public static class ElectionResult {
+        public Vote vote;
+
+        public int count;
+
+        public Vote winner;
+
+        public int winningCount;
+    }
+
+    private ElectionResult countVotes(HashMap<InetSocketAddress, Vote> votes) {
+        ElectionResult result = new ElectionResult();
+        // Initialize with null vote
+        result.vote = new Vote(Long.MIN_VALUE, Long.MIN_VALUE);
+        result.winner = new Vote(Long.MIN_VALUE, Long.MIN_VALUE);
+        Collection<Vote> votesCast = votes.values();
+        // First make the views consistent. Sometimes peers will have
+        // different zxids for a server depending on timing.
+        for (Vote v : votesCast) {
+            for (Vote w : votesCast) {
+                if (v.id == w.id) {
+                    if (v.zxid < w.zxid) {
+                        v.zxid = w.zxid;
+                    }
+                }
+            }
+        }
+        HashMap<Vote, Integer> countTable = new HashMap<Vote, Integer>();
+        // Now do the tally
+        for (Vote v : votesCast) {
+            Integer count = countTable.get(v);
+            if (count == null) {
+                count = new Integer(0);
+            }
+            countTable.put(v, count + 1);
+            if (v.id == result.vote.id) {
+                result.count++;
+            } else if (v.zxid > result.vote.zxid
+                    || (v.zxid == result.vote.zxid && v.id > result.vote.id)) {
+                result.vote = v;
+                result.count = 1;
+            }
+        }
+        result.winningCount = 0;
+        LOG.warn("Election tally: ");
+        for (Entry<Vote, Integer> entry : countTable.entrySet()) {
+            if (entry.getValue() > result.winningCount) {
+                result.winningCount = entry.getValue();
+                result.winner = entry.getKey();
+            }
+            LOG.warn(entry.getKey().id + "\t-> " + entry.getValue());
+        }
+        return result;
+    }
+
+    public Vote lookForLeader() throws InterruptedException {
+        self.currentVote = new Vote(self.getId(), self.getLastLoggedZxid());
+        // We are going to look for a leader by casting a vote for ourself
+        byte requestBytes[] = new byte[4];
+        ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
+        byte responseBytes[] = new byte[28];
+        ByteBuffer responseBuffer = ByteBuffer.wrap(responseBytes);
+        /* The current vote for the leader. Initially me! */
+        DatagramSocket s = null;
+        try {
+            s = new DatagramSocket();
+            s.setSoTimeout(200);
+        } catch (SocketException e1) {
+            e1.printStackTrace();
+            System.exit(4);
+        }
+        DatagramPacket requestPacket = new DatagramPacket(requestBytes,
+                requestBytes.length);
+        DatagramPacket responsePacket = new DatagramPacket(responseBytes,
+                responseBytes.length);
+        HashMap<InetSocketAddress, Vote> votes = new HashMap<InetSocketAddress, Vote>(
+                self.quorumPeers.size());
+        int xid = new Random().nextInt();
+        while (self.running) {
+            votes.clear();
+            requestBuffer.clear();
+            requestBuffer.putInt(xid);
+            requestPacket.setLength(4);
+            for (QuorumServer server : self.quorumPeers) {
+                requestPacket.setSocketAddress(server.addr);
+                try {
+                    s.send(requestPacket);
+                    responsePacket.setLength(responseBytes.length);
+                    s.receive(responsePacket);
+                    if (responsePacket.getLength() != responseBytes.length) {
+                        LOG.error("Got a short response: "
+                                + responsePacket.getLength());
+                        continue;
+                    }
+                    responseBuffer.clear();
+                    int recvedXid = responseBuffer.getInt();
+                    if (recvedXid != xid) {
+                        LOG.error("Got bad xid: expected " + xid
+                                + " got " + recvedXid);
+                        continue;
+                    }
+                    responseBuffer.getLong();
+                    //if(server.id != peerId){
+                        Vote vote = new Vote(responseBuffer.getLong(),
+                            responseBuffer.getLong());
+                        InetSocketAddress addr = (InetSocketAddress) responsePacket
+                            .getSocketAddress();
+                        votes.put(addr, vote);
+                    //}
+                } catch (IOException e) {
+                    // Errors are okay, since hosts may be
+                    // down
+                    // ZooKeeperServer.logException(e);
+                }
+            }
+            ElectionResult result = countVotes(votes);
+            if (result.winner.id >= 0) {
+                self.currentVote = result.vote;
+                if (result.winningCount > (self.quorumPeers.size() / 2)) {
+                    self.currentVote = result.winner;
+                    s.close();
+                    self.setPeerState((self.currentVote.id == self.getId()) 
+                            ? ServerState.LEADING: ServerState.FOLLOWING);
+                    if (self.getPeerState() == ServerState.FOLLOWING) {
+                        Thread.sleep(100);
+                    }
+                    return self.currentVote;
+                }
+            }
+            Thread.sleep(1000);
+        }
+        return null;
+    }
+}
