@@ -19,6 +19,8 @@ package com.yahoo.zookeeper.server;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+
 import com.yahoo.jute.Index;
 import com.yahoo.jute.InputArchive;
 import com.yahoo.jute.OutputArchive;
@@ -37,7 +39,7 @@ public class DataNode implements Record {
     DataNode() {
     }
 
-    DataNode(DataNode parent, byte data[], ArrayList<ACL> acl, Stat stat) {
+    DataNode(DataNode parent, byte data[], List<ACL> acl, Stat stat) {
         this.parent = parent;
         this.data = data;
         this.acl = acl;
@@ -49,7 +51,7 @@ public class DataNode implements Record {
 
     byte data[];
 
-    ArrayList<ACL> acl;
+    List<ACL> acl;
 
     public Stat stat;
 

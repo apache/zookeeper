@@ -19,9 +19,8 @@
 package com.yahoo.jute;
 
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
+import java.util.List;
 import java.util.TreeMap;
-import java.util.ArrayList;
 import java.io.PrintStream;
 import java.io.OutputStream;
 import java.util.Stack;
@@ -224,13 +223,13 @@ class XmlOutputArchive implements OutputArchive {
         outsideRecord(tag);
     }
     
-    public void startVector(ArrayList v, String tag) throws IOException {
+    public void startVector(List v, String tag) throws IOException {
         insideVector(tag);
         stream.print("<array>\n");
         addIndent();
     }
     
-    public void endVector(ArrayList v, String tag) throws IOException {
+    public void endVector(List v, String tag) throws IOException {
         closeIndent();
         putIndent();
         stream.print("</array>");

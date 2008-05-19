@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -147,7 +148,7 @@ public class DataTree {
      * @return
      * @throws KeeperException
      */
-    public String createNode(String path, byte data[], ArrayList<ACL> acl,
+    public String createNode(String path, byte data[], List<ACL> acl,
             long ephemeralOwner, long zxid, long time) throws KeeperException.NoNodeException, KeeperException.NodeExistsException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
@@ -286,7 +287,7 @@ public class DataTree {
         }
     }
 
-    public Stat setACL(String path, ArrayList<ACL> acl, int version) throws KeeperException.NoNodeException {
+    public Stat setACL(String path, List<ACL> acl, int version) throws KeeperException.NoNodeException {
         Stat stat = new Stat();
         DataNode n = nodes.get(path);
         if (n == null) {
@@ -301,14 +302,14 @@ public class DataTree {
     }
 
     @SuppressWarnings("unchecked")
-    public ArrayList<ACL> getACL(String path, Stat stat) throws KeeperException.NoNodeException {
+    public List<ACL> getACL(String path, Stat stat) throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
             copyStat(n.stat, stat);
-            return (ArrayList<ACL>) n.acl.clone();
+            return new ArrayList<ACL>(n.acl);
         }
     }
 

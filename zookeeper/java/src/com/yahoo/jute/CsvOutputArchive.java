@@ -19,9 +19,8 @@
 package com.yahoo.jute;
 
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
+import java.util.List;
 import java.util.TreeMap;
-import java.util.ArrayList;
 import java.io.PrintStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -125,13 +124,13 @@ public class CsvOutputArchive implements OutputArchive {
         }
     }
     
-    public void startVector(ArrayList v, String tag) throws IOException {
+    public void startVector(List v, String tag) throws IOException {
         printCommaUnlessFirst();
         stream.print("v{");
         isFirst = true;
     }
     
-    public void endVector(ArrayList v, String tag) throws IOException {
+    public void endVector(List v, String tag) throws IOException {
         stream.print("}");
         isFirst = false;
     }

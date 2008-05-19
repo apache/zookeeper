@@ -15,7 +15,7 @@
  */
 package com.yahoo.zookeeper;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import com.yahoo.zookeeper.data.ACL;
 import com.yahoo.zookeeper.data.Stat;
@@ -32,12 +32,12 @@ public interface AsyncCallback {
 
     interface ACLCallback extends AsyncCallback {
         public void processResult(int rc, String path, Object ctx,
-                ArrayList<ACL> acl, Stat stat);
+                List<ACL> acl, Stat stat);
     }
 
     interface ChildrenCallback extends AsyncCallback {
         public void processResult(int rc, String path, Object ctx,
-                ArrayList<String> children);
+                List<String> children);
     }
 
     interface StringCallback extends AsyncCallback {

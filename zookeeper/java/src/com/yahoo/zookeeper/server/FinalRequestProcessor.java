@@ -19,6 +19,7 @@ package com.yahoo.zookeeper.server;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -193,8 +194,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ZooKeeperServer.byteBuffer2Record(request.request,
                         getACLRequest);
                 stat = new Stat();
-                ArrayList<ACL> acl = zks.dataTree.getACL(getACLRequest
-                        .getPath(), stat);
+                List<ACL> acl = 
+                    zks.dataTree.getACL(getACLRequest.getPath(), stat);
                 rsp = new GetACLResponse(acl, stat);
                 break;
             case OpCode.getChildren:
