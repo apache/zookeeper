@@ -18,6 +18,7 @@ package com.yahoo.zookeeper.server;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.yahoo.jute.Record;
 import com.yahoo.zookeeper.ZooDefs.OpCode;
@@ -41,7 +42,7 @@ public class Request {
      * @param bb
      */
     public Request(ServerCnxn cnxn, long sessionId, int xid, int type,
-            ByteBuffer bb, ArrayList<Id> authInfo) {
+            ByteBuffer bb, List<Id> authInfo) {
         this.cnxn = cnxn;
         this.sessionId = sessionId;
         this.cxid = xid;
@@ -66,7 +67,7 @@ public class Request {
 
     public long zxid = -1;
 
-    public ArrayList<Id> authInfo;
+    public List<Id> authInfo;
 
     public long createTime = System.currentTimeMillis();
 

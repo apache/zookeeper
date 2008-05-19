@@ -20,6 +20,7 @@ package com.yahoo.jute;
 
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.ArrayList;
 import java.io.DataOutput;
@@ -129,7 +130,7 @@ public class BinaryOutputArchive implements OutputArchive {
     
     public void endRecord(Record r, String tag) throws IOException {}
     
-    public void startVector(ArrayList v, String tag) throws IOException {
+    public void startVector(List v, String tag) throws IOException {
     	if (v == null) {
     		writeInt(-1, tag);
     		return;
@@ -137,7 +138,7 @@ public class BinaryOutputArchive implements OutputArchive {
         writeInt(v.size(), tag);
     }
     
-    public void endVector(ArrayList v, String tag) throws IOException {}
+    public void endVector(List v, String tag) throws IOException {}
     
     public void startMap(TreeMap v, String tag) throws IOException {
         writeInt(v.size(), tag);

@@ -38,7 +38,7 @@ public class JVector extends JCompType {
     
     /** Creates a new instance of JVector */
     public JVector(JType t) {
-        super("struct " + extractVectorName(t), " ::std::vector<"+t.getCppType()+">", "java.util.ArrayList", "Vector", "java.util.ArrayList");
+        super("struct " + extractVectorName(t), " ::std::vector<"+t.getCppType()+">", "java.util.List<" + t.getJavaType() + ">", "Vector", "java.util.ArrayList<" + t.getJavaType() + ">");
         mElement = t;
     }
     
@@ -53,13 +53,13 @@ public class JVector extends JCompType {
     public String genJavaReadWrapper(String fname, String tag, boolean decl) {
         StringBuffer ret = new StringBuffer("");
         if (decl) {
-            ret.append("      java.util.ArrayList "+fname+";\n");
+            ret.append("      java.util.List "+fname+";\n");
         }
         ret.append("    {\n");
         incrLevel();
         ret.append("      Index "+getId("vidx")+" = a_.startVector(\""+tag+"\");\n");
         ret.append("      if ("+getId("vidx")+"!= null) {");
-        ret.append("          "+fname+"=new java.util.ArrayList();\n");
+        ret.append("          "+fname+"=new java.util.ArrayList<"+ mElement.getJavaType() + ">();\n");
         ret.append("          for (; !"+getId("vidx")+".done(); "+getId("vidx")+".incr()) {\n");
         ret.append(mElement.genJavaReadWrapper(getId("e"), getId("e"), true));
         ret.append("            "+fname+".add("+getId("e")+");\n");

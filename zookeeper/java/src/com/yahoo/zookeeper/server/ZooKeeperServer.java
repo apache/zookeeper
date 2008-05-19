@@ -126,7 +126,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     final private long superSecret = 0XB3415C00L;
     int requestsInProcess;
-    ArrayList<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
+    List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
     private NIOServerCnxn.Factory serverCnxnFactory;
 
     /*
@@ -759,7 +759,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     static class ChangeRecord {
         ChangeRecord(long zxid, String path, Stat stat, int childCount,
-                ArrayList<ACL> acl) {
+                List<ACL> acl) {
             this.zxid = zxid;
             this.path = path;
             this.stat = stat;
@@ -775,7 +775,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         int childCount;
 
-        ArrayList<ACL> acl; /* Make sure to create a new object when changing */
+        List<ACL> acl; /* Make sure to create a new object when changing */
 
         @SuppressWarnings("unchecked")
         ChangeRecord duplicate(long zxid) {
@@ -784,8 +784,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 DataTree.copyStat(this.stat, stat);
             }
             return new ChangeRecord(zxid, path, stat, childCount,
-                    acl == null ? new ArrayList<ACL>() : (ArrayList<ACL>) acl
-                            .clone());
+                    acl == null ? new ArrayList<ACL>() : new ArrayList(acl));
         }
     }
 
@@ -847,7 +846,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param bb
      */
     public void submitRequest(ServerCnxn cnxn, long sessionId, int type,
-            int xid, ByteBuffer bb, ArrayList<Id> authInfo) {
+            int xid, ByteBuffer bb, List<Id> authInfo) {
         if (firstProcessor == null) {
             synchronized (this) {
                 try {

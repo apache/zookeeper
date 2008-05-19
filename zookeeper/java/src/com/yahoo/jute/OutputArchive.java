@@ -19,9 +19,8 @@
 package com.yahoo.jute;
 
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
+import java.util.List;
 import java.util.TreeMap;
-import java.util.ArrayList;
 
 /**
  * Interface that alll the serializers have to implement.
@@ -41,8 +40,8 @@ public interface OutputArchive {
     public void writeRecord(Record r, String tag) throws IOException;
     public void startRecord(Record r, String tag) throws IOException;
     public void endRecord(Record r, String tag) throws IOException;
-    public void startVector(ArrayList v, String tag) throws IOException;
-    public void endVector(ArrayList v, String tag) throws IOException;
+    public void startVector(List v, String tag) throws IOException;
+    public void endVector(List v, String tag) throws IOException;
     public void startMap(TreeMap v, String tag) throws IOException;
     public void endMap(TreeMap v, String tag) throws IOException;
 

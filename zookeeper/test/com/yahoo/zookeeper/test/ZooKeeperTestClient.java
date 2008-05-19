@@ -1,7 +1,7 @@
 package com.yahoo.zookeeper.test;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -49,7 +49,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
       return;
     }
 
-    ArrayList<String> children = zk.getChildren(nodeName, false);
+    List<String> children = zk.getChildren(nodeName, false);
     if (children.size() == 0) {
       zk.delete(nodeName, -1);
       return;
@@ -170,7 +170,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
       }
     }
 
-    ArrayList<String> firstGen = zk_1.getChildren(parentName, true);
+    List<String> firstGen = zk_1.getChildren(parentName, true);
 
     try {
       zk.create(nodeName, null, Ids.OPEN_ACL_UNSAFE, ZooDefs.CreateFlags.EPHEMERAL);
@@ -221,7 +221,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     }
 
     try {
-      ArrayList<String> children = zk.getChildren(nodeName, false);
+      List<String> children = zk.getChildren(nodeName, false);
       if (children.size() > 0) {
         fail("ephemeral node " + nodeName + " should not have children");
       }

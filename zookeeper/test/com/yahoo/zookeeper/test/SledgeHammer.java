@@ -3,6 +3,7 @@ package com.yahoo.zookeeper.test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import com.yahoo.zookeeper.KeeperException;
 import com.yahoo.zookeeper.Watcher;
@@ -43,8 +44,8 @@ public class SledgeHammer extends Thread implements Watcher {
             for (int i = 0; i < count; i++) {
                 try {
                     System.out.print(i + "\r");
-                    ArrayList<String> childs = zk
-                            .getChildren("/hammers", false);
+                    List<String> childs = 
+                        zk.getChildren("/hammers", false);
                     Collections.shuffle(childs);
                     for (String s : childs) {
                         if (s.startsWith("hammer-")) {

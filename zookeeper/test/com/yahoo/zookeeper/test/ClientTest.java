@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -150,7 +151,7 @@ public class ClientTest extends TestCase implements Watcher {
             System.out.println("Before create /ben");
             zk.create("/ben", "Ben was here".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
             System.out.println("Before getChildren /");
-            ArrayList<String> children = zk.getChildren("/", false);
+            List<String> children = zk.getChildren("/", false);
             assertEquals(1, children.size());
             assertEquals("ben", children.get(0));
             String value = new String(zk.getData("/ben", false, stat));
@@ -316,13 +317,13 @@ public class ClientTest extends TestCase implements Watcher {
             LOG.error("******************* Connected to ZooKeeper" + new Date());
             for (int i = 0; i < threadCount; i++) {
                 System.err.println("Doing thread: " + i + " " + new Date());
-                ArrayList<String> children = zk
-                        .getChildren("/test-" + i, false);
+                List<String> children = 
+                    zk.getChildren("/test-" + i, false);
                 assertEquals(childCount, children.size());
             }
             for (int i = 0; i < threadCount; i++) {
-                ArrayList<String> children = zk
-                        .getChildren("/test-" + i, false);
+                List<String> children = 
+                    zk.getChildren("/test-" + i, false);
                 assertEquals(childCount, children.size());
             }
         } finally {

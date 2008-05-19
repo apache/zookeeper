@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
@@ -129,8 +130,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         }
     }
 
-    static void checkACL(ZooKeeperServer zks, ArrayList<ACL> acl, int perm,
-            ArrayList<Id> ids) throws KeeperException.NoAuthException {
+    static void checkACL(ZooKeeperServer zks, List<ACL> acl, int perm,
+            List<Id> ids) throws KeeperException.NoAuthException {
         if (skipACL) {
             return;
         }
@@ -384,7 +385,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      * @param acl list of ACLs being assigned to the node (create or setACL operation)
      * @return
      */
-    private boolean fixupACL(ArrayList<Id> authInfo, ArrayList<ACL> acl) {
+    private boolean fixupACL(List<Id> authInfo, List<ACL> acl) {
         if (skipACL) {
             return true;
         }

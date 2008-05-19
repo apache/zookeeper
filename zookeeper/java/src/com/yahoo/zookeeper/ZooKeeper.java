@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
@@ -226,7 +227,7 @@ public class ZooKeeper {
      * @throws com.yahoo.zookeeper.KeeperException.InvalidACLException if the ACL is invalid
      * @throws InterruptedException if the transaction is interrrupted
      */
-    public String create(String path, byte data[], ArrayList<ACL> acl, int flags)
+    public String create(String path, byte data[], List<ACL> acl, int flags)
             throws KeeperException, InterruptedException {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.create);
@@ -250,10 +251,10 @@ public class ZooKeeper {
      * The Asynchronous version of create. The request doesn't actually until
      * the asynchronous callback is called.
      *
-     * @see #create(String, byte[], ArrayList, int)
+     * @see #create(String, byte[], List, int)
      */
 
-    public void create(String path, byte data[], ArrayList<ACL> acl, int flags,
+    public void create(String path, byte data[], List<ACL> acl, int flags,
             StringCallback cb, Object ctx) {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.create);
@@ -507,7 +508,7 @@ public class ZooKeeper {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
-    public ArrayList<ACL> getACL(String path, Stat stat)
+    public List<ACL> getACL(String path, Stat stat)
             throws KeeperException, InterruptedException {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.getACL);
@@ -558,7 +559,7 @@ public class ZooKeeper {
      * @throws KeeperException If the server signals an error with a non-zero error code.
      * @throws com.yahoo.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
      */
-    public Stat setACL(String path, ArrayList<ACL> acl, int version)
+    public Stat setACL(String path, List<ACL> acl, int version)
             throws KeeperException, InterruptedException {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.setACL);
@@ -581,9 +582,9 @@ public class ZooKeeper {
      * The Asynchronous version of setACL. The request doesn't actually until
      * the asynchronous callback is called.
      *
-     * @see #setACL(String, ArrayList, int)
+     * @see #setACL(String, List, int)
      */
-    public void setACL(String path, ArrayList<ACL> acl, int version,
+    public void setACL(String path, List<ACL> acl, int version,
             StatCallback cb, Object ctx) {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.setACL);
@@ -614,7 +615,7 @@ public class ZooKeeper {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
-    public ArrayList<String> getChildren(String path, boolean watch)
+    public List<String> getChildren(String path, boolean watch)
             throws KeeperException, InterruptedException {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.getChildren);
@@ -769,7 +770,7 @@ public class ZooKeeper {
         String cmd = args[1];
         boolean watch = args.length > 3;
         String path = args[2];
-        ArrayList<ACL> acl = Ids.OPEN_ACL_UNSAFE;
+        List<ACL> acl = Ids.OPEN_ACL_UNSAFE;
         System.out.println("Processing " + cmd);
         if (cmd.equals("create") && args.length >= 4) {
             if (args.length == 5) {
@@ -790,7 +791,7 @@ public class ZooKeeper {
             System.out.println(new String(data));
             printStat(stat);
         } else if (cmd.equals("ls") && args.length >= 3) {
-            ArrayList<String> children = zooKeeper.getChildren(path, watch);
+            List<String> children = zooKeeper.getChildren(path, watch);
             System.out.println(children);
         } else if (cmd.equals("getAcl") && args.length >= 2) {
             acl = zooKeeper.getACL(path, stat);
@@ -832,8 +833,8 @@ public class ZooKeeper {
         return p.toString();
     }
 
-    private static ArrayList<ACL> parseACLs(String aclString) {
-        ArrayList<ACL> acl;
+    private static List<ACL> parseACLs(String aclString) {
+        List<ACL> acl;
         String acls[] = aclString.split(",");
         acl = new ArrayList<ACL>();
         for (String a : acls) {
