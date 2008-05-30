@@ -207,7 +207,6 @@
         <jar jarfile="${jar.name}"> 
             <fileset file="LICENSE" />
             <fileset dir="${build.classes}" excludes="**/.generated"/>
-            <fileset file="${conf.dir}/log4j.properties"/> 
             <manifest>
                 <attribute name="Main-Class" value="com.yahoo.zookeeper.server.quorum.QuorumPeer" />
                 <attribute name="Built-By" value="${user.name}"/>
