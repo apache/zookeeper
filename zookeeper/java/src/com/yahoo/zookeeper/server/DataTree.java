@@ -79,7 +79,11 @@ public class DataTree {
         if (retv == null) {
             return new HashSet<String>();
         }
-        return (HashSet<String>) retv.clone();
+        HashSet<String> cloned = null;
+        synchronized(retv) {
+            cloned =  (HashSet<String>) retv.clone();
+        }
+        return cloned;
     }
 
     public Collection<Long> getSessions() {
@@ -181,7 +185,9 @@ public class DataTree {
                     list = new HashSet<String>();
                     ephemerals.put(ephemeralOwner, list);
                 }
-                list.add(path);
+                synchronized(list) {
+                    list.add(path);
+                }
             }
         }
         dataWatches.triggerWatch(path, Event.EventNodeCreated);
@@ -209,7 +215,9 @@ public class DataTree {
             if (eowner != 0) {
                 HashSet<String> nodes = ephemerals.get(eowner);
                 if (nodes != null) {
-                    nodes.remove(path);
+                    synchronized(nodes) {
+                        nodes.remove(path);
+                    }
                 }
             }
             node.parent = null;
@@ -417,6 +425,12 @@ public class DataTree {
     }
 
     void killSession(long session) {
+        // the list is already removed from the ephemerals 
+        // so we do not have to worry about synchronyzing on
+        // the list. This is only called from FinalRequestProcessor
+        // so there is no need for synchornization. The list is not 
+        // changed here. Only create and delete change the list which
+        // are again called from FinalRequestProcessor in sequence.
         HashSet<String> list = ephemerals.remove(session);
         if (list != null) {
             for (String path : list) {
@@ -522,8 +536,11 @@ public class DataTree {
         for (long k : keys) {
             sb.append(Long.toHexString(k));
             sb.append(":\n");
-            for (String path : ephemerals.get(k)) {
-                sb.append("\t" + path + "\n");
+            HashSet<String> tmp = ephemerals.get(k);
+            synchronized(tmp) {
+                for (String path : tmp) {
+                    sb.append("\t" + path + "\n");
+                }
             }
         }
         return sb.toString();
