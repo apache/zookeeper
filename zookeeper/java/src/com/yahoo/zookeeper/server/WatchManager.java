@@ -18,6 +18,7 @@ package com.yahoo.zookeeper.server;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -31,9 +32,11 @@ import com.yahoo.zookeeper.proto.WatcherEvent;
 public class WatchManager {
     private static final Logger LOG = Logger.getLogger(WatchManager.class);
 
-    HashMap<String, HashSet<Watcher>> watchTable = new HashMap<String, HashSet<Watcher>>();
+    private HashMap<String, HashSet<Watcher>> watchTable = 
+        new HashMap<String, HashSet<Watcher>>();
 
-    HashMap<Watcher, HashSet<String>> watch2Paths = new HashMap<Watcher, HashSet<String>>();
+    private HashMap<Watcher, HashSet<String>> watch2Paths = 
+        new HashMap<Watcher, HashSet<String>>();
 
     synchronized int size(){
         return watchTable.size();
@@ -71,7 +74,11 @@ public class WatchManager {
         }
     }
 
-    void triggerWatch(String path, int type) {
+    Set<Watcher> triggerWatch(String path, int type) {
+        return triggerWatch(path, type, null);
+    }
+    
+    Set<Watcher> triggerWatch(String path, int type, Set<Watcher> supress) {
         WatcherEvent e = new WatcherEvent(type,
                 Watcher.Event.KeeperStateSyncConnected, path);
         HashSet<Watcher> watchers;
@@ -81,7 +88,7 @@ public class WatchManager {
                 ZooTrace.logTraceMessage(LOG,
                         ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                         "No watchers for " + path);
-                return;
+                return null;
             }
             for (Watcher w : watchers) {
                 HashSet<String> paths = watch2Paths.get(w);
@@ -91,7 +98,11 @@ public class WatchManager {
             }
         }
         for (Watcher w : watchers) {
+            if (supress != null && supress.contains(w)) {
+                continue;
+            }
             w.process(e);
         }
+        return watchers;
     }
 }
