@@ -98,9 +98,6 @@ public class DataTree {
         return nodes.size();
     }
 
-    public int getWatchCount(){
-        return dataWatches.size()+childWatches.size();
-    }
     /**
      * This is a pointer to the root of the DataTree. It is the source of truth,
      * but we usually use the nodes hashmap to find nodes in the tree.
@@ -228,7 +225,9 @@ public class DataTree {
         ZooTrace.logTraceMessage(LOG,
                                  ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                                  "childWatches.triggerWatch " + parentName);
+        Set<Watcher> processed =
         dataWatches.triggerWatch(path, Event.EventNodeDeleted);
+        childWatches.triggerWatch(path, Event.EventNodeDeleted, processed);
         childWatches.triggerWatch(parentName.equals("")?"/":parentName, Event.EventNodeChildrenChanged);
     }
 

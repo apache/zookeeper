@@ -10,9 +10,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.TestCase;
-
-import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.yahoo.zookeeper.KeeperException;
@@ -22,74 +19,35 @@ import com.yahoo.zookeeper.ZooDefs.CreateFlags;
 import com.yahoo.zookeeper.ZooDefs.Ids;
 import com.yahoo.zookeeper.data.Stat;
 import com.yahoo.zookeeper.proto.WatcherEvent;
-import com.yahoo.zookeeper.server.NIOServerCnxn;
-import com.yahoo.zookeeper.server.ServerStats;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
-
-public class ClientTest extends TestCase implements Watcher {
-    private static final Logger LOG = Logger.getLogger(ClientTest.class);
-
-    private static final int CONNECTION_TIMEOUT=30000;
-    protected static String hostPort = "127.0.0.1:33221";
-    LinkedBlockingQueue<WatcherEvent> events = new LinkedBlockingQueue<WatcherEvent>();
-    static File baseTest = new File(System.getProperty("build.test.dir", "build"));
-    NIOServerCnxn.Factory f = null;
-    File tmpDir = null;
-    volatile private CountDownLatch clientConnected;
-
-    protected void setUp() throws Exception {
-        LOG.error("Client test setup");
-        tmpDir = File.createTempFile("test", ".junit", baseTest);
-        tmpDir = new File(tmpDir + ".dir");
-        tmpDir.mkdirs();
-    	ServerStats.registerAsConcrete();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        hostPort = "127.0.0.1:33221";
-        f = new NIOServerCnxn.Factory(33221);
-        f.startup(zks);
-        Thread.sleep(5000);
-        LOG.error("Client test setup finished");
-    }
-
-    protected void tearDown() throws Exception {
-        LOG.error("Clent test shutdown");
-        if (tmpDir != null) {
-            recursiveDelete(tmpDir);
-        }
-        if (f != null) {
-            f.shutdown();
-        }
-    	ServerStats.unregister();
-        clientConnected=null;
-        LOG.error("Client test shutdown finished");
-    }
     
-    static void recursiveDelete(File d) {
-        if (d.isDirectory()) {
-            File children[] = d.listFiles();
-            for (File f : children) {
-                recursiveDelete(f);
-            }
-        }
-        d.delete();
-    }
+public class ClientTest extends ClientBase implements Watcher {
+    LinkedBlockingQueue<WatcherEvent> events = 
+        new LinkedBlockingQueue<WatcherEvent>();
+    protected volatile CountDownLatch clientConnected;
 
-    private ZooKeeper createClient() throws IOException,InterruptedException{
+    protected ZooKeeper createClient(Watcher watcher) 
+        throws IOException, InterruptedException
+    {
         clientConnected=new CountDownLatch(1);
-		ZooKeeper zk = new ZooKeeper(hostPort, 20000, this);
+        ZooKeeper zk = new ZooKeeper(hostPort, 20000, watcher);
 		if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
 			fail("Unable to connect to server");
 		}
 		return zk;
     }
     
+    protected void tearDown() throws Exception {
+        clientConnected = null;
+        super.tearDown();
+    }
+
     @Test
     public void testPing() throws Exception {
         ZooKeeper zkIdle = null;
         ZooKeeper zkWatchCreator = null;
         try {
-            zkIdle = createClient();
-            zkWatchCreator = createClient();
+            zkIdle = createClient(this);
+            zkWatchCreator = createClient(this);
             for (int i = 0; i < 30; i++) {
                 zkWatchCreator.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
             }
@@ -113,11 +71,24 @@ public class ClientTest extends TestCase implements Watcher {
     }
 
     @Test
-    public void testClient() throws IOException,
+    public void testClientwithoutWatcherObj() throws IOException,
+            InterruptedException, KeeperException
+    {
+        performClientTest(false);
+    }
+
+    @Test
+    public void testClientWithWatcherObj() throws IOException,
+            InterruptedException, KeeperException
+    {
+        performClientTest(true);
+    }
+
+    private void performClientTest(boolean withWatcherObj) throws IOException,
             InterruptedException, KeeperException {
         ZooKeeper zk = null;
         try {
-    		zk =createClient();
+    		zk =createClient(this);
             //System.out.println("Created client: " + zk.describeCNXN());
             System.out.println("Before create /benwashere");
             zk.create("/benwashere", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
@@ -136,7 +107,7 @@ public class ClientTest extends TestCase implements Watcher {
             zk.close();
             //System.out.println("Closed client: " + zk.describeCNXN());
             Thread.sleep(2000);
-            zk = createClient();
+            zk = createClient(this);
             //System.out.println("Created a new client: " + zk.describeCNXN());
             System.out.println("Before delete /");
             
@@ -158,7 +129,11 @@ public class ClientTest extends TestCase implements Watcher {
             assertEquals("Ben was here", value);
             // Test stat and watch of non existent node
             try {
+                if (withWatcherObj) {
+                    assertEquals(null, zk.exists("/frog", new MyWatcher()));
+                } else {
                 assertEquals(null, zk.exists("/frog", true));
+                }
                 System.out.println("Comment: asseting passed for frog setting /");
             } catch (KeeperException.NoNodeException e) {
                 // OK, expected that
@@ -182,10 +157,19 @@ public class ClientTest extends TestCase implements Watcher {
             for (int i = 0; i < 10; i++) {
                 final String name = children.get(i);
                 assertTrue(name.startsWith(i + "-"));
-                byte b[] = zk.getData("/ben/" + name, true, stat);
+                byte b[];
+                if (withWatcherObj) {
+                    b = zk.getData("/ben/" + name, new MyWatcher(), stat);
+                } else {
+                    b = zk.getData("/ben/" + name, true, stat);
+                }
                 assertEquals(Integer.toString(i), new String(b));
                 zk.setData("/ben/" + name, "new".getBytes(), stat.getVersion());
+                if (withWatcherObj) {
+                    stat = zk.exists("/ben/" + name, new MyWatcher());
+                } else {
                 stat = zk.exists("/ben/" + name, true);
+                }
                 zk.delete("/ben/" + name, stat.getVersion());
             }
             event = events.poll(10, TimeUnit.SECONDS);
@@ -273,7 +257,7 @@ public class ClientTest extends TestCase implements Watcher {
         File tmpDir = File.createTempFile("test", ".junit", baseTest);
         tmpDir = new File(tmpDir + ".dir");
         tmpDir.mkdirs();
-        ZooKeeper zk = createClient();
+        ZooKeeper zk = createClient(this);
         zk.create("/parent", new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
         zk.create("/parent/child", new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
         try {
@@ -301,7 +285,7 @@ public class ClientTest extends TestCase implements Watcher {
             long start = System.currentTimeMillis();
             for (int i = 0; i < threadCount; i++) {
                 Thread.sleep(10);
-                ZooKeeper zk = createClient();
+                ZooKeeper zk = createClient(this);
                 String prefix = "/test-" + i;
                 zk.create(prefix, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
                 prefix += "/";
@@ -313,7 +297,7 @@ public class ClientTest extends TestCase implements Watcher {
             }
             System.err.println(new Date() + " Total time "
                     + (System.currentTimeMillis() - start));
-            ZooKeeper zk = createClient();
+            ZooKeeper zk = createClient(this);
             LOG.error("******************* Connected to ZooKeeper" + new Date());
             for (int i = 0; i < threadCount; i++) {
                 System.err.println("Doing thread: " + i + " " + new Date());
@@ -328,6 +312,12 @@ public class ClientTest extends TestCase implements Watcher {
             }
         } finally {
             //  recursiveDelete(tmpDir);
+        }
+    }
+
+    public class MyWatcher implements Watcher {
+        public void process(WatcherEvent event) {
+            ClientTest.this.process(event);
         }
     }
 
