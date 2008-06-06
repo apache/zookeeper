@@ -415,6 +415,7 @@
                 <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
             </batchtest>
         </junit>
+        <fail if="tests.failed">Tests failed!</fail>
     </target>
 
     <target name="cobertura-report" depends="cobertura-test">
