@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -29,9 +29,9 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.quorum.Vote;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.server.quorum.Vote;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 public class LeaderElection implements Election  {
     private static final Logger LOG = Logger.getLogger(LeaderElection.class);

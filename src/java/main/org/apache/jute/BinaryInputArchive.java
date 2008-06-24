@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.jute;
+package org.apache.jute;
 
 import java.io.DataInput;
 import java.io.IOException;

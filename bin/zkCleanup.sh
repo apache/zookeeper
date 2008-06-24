@@ -18,4 +18,4 @@ eval `grep -e "^dataDir=" $ZOOCFG`
 
 java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
      -cp $CLASSPATH $JVMFLAGS \
-     com.yahoo.zookeeper.server.PurgeTxnLog $dataDir
+     org.apache.zookeeper.server.PurgeTxnLog $dataDir

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.ZooDefs.OpCode;
-import com.yahoo.zookeeper.server.Request;
-import com.yahoo.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestProcessor;
 
 public class SendAckRequestProcessor implements RequestProcessor {
     private static final Logger LOG = Logger.getLogger(SendAckRequestProcessor.class);

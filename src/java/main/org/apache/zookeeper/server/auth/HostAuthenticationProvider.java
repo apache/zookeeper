@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.auth;
+package org.apache.zookeeper.server.auth;
 
-import com.yahoo.zookeeper.data.Id;
-import com.yahoo.zookeeper.server.ServerCnxn;
-import com.yahoo.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.KeeperException;
 
 public class HostAuthenticationProvider implements AuthenticationProvider {
 

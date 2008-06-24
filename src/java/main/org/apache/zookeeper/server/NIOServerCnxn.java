@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -38,22 +38,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.BinaryInputArchive;
-import com.yahoo.jute.BinaryOutputArchive;
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.Version;
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.ZooDefs.OpCode;
-import com.yahoo.zookeeper.data.Id;
-import com.yahoo.zookeeper.proto.AuthPacket;
-import com.yahoo.zookeeper.proto.ConnectRequest;
-import com.yahoo.zookeeper.proto.ConnectResponse;
-import com.yahoo.zookeeper.proto.ReplyHeader;
-import com.yahoo.zookeeper.proto.RequestHeader;
-import com.yahoo.zookeeper.proto.WatcherEvent;
-import com.yahoo.zookeeper.server.auth.AuthenticationProvider;
-import com.yahoo.zookeeper.server.auth.ProviderRegistry;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.Record;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Version;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.proto.AuthPacket;
+import org.apache.zookeeper.proto.ConnectRequest;
+import org.apache.zookeeper.proto.ConnectResponse;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.server.auth.AuthenticationProvider;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
 
 /**
  * This class handles communication with clients using NIO. There is one per
@@ -610,7 +610,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     /*
      * (non-Javadoc)
      *
-     * @see com.yahoo.zookeeper.server.ServerCnxnIface#getSessionTimeout()
+     * @see org.apache.zookeeper.server.ServerCnxnIface#getSessionTimeout()
      */
     public int getSessionTimeout() {
         return sessionTimeout;
@@ -648,7 +648,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     /*
      * (non-Javadoc)
      *
-     * @see com.yahoo.zookeeper.server.ServerCnxnIface#close()
+     * @see org.apache.zookeeper.server.ServerCnxnIface#close()
      */
     public void close() {
         if (closed) {
@@ -708,8 +708,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     /*
      * (non-Javadoc)
      *
-     * @see com.yahoo.zookeeper.server.ServerCnxnIface#sendResponse(com.yahoo.zookeeper.proto.ReplyHeader,
-     *      com.yahoo.jute.Record, java.lang.String)
+     * @see org.apache.zookeeper.server.ServerCnxnIface#sendResponse(org.apache.zookeeper.proto.ReplyHeader,
+     *      org.apache.jute.Record, java.lang.String)
      */
     synchronized public void sendResponse(ReplyHeader h, Record r, String tag) {
         if (closed) {
@@ -748,7 +748,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     /*
      * (non-Javadoc)
      *
-     * @see com.yahoo.zookeeper.server.ServerCnxnIface#process(com.yahoo.zookeeper.proto.WatcherEvent)
+     * @see org.apache.zookeeper.server.ServerCnxnIface#process(org.apache.zookeeper.proto.WatcherEvent)
      */
     synchronized public void process(WatcherEvent event) {
         ReplyHeader h = new ReplyHeader(-1, -1L, 0);
@@ -791,7 +791,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     /*
      * (non-Javadoc)
      *
-     * @see com.yahoo.zookeeper.server.ServerCnxnIface#getSessionId()
+     * @see org.apache.zookeeper.server.ServerCnxnIface#getSessionId()
      */
     public long getSessionId() {
         return sessionId;

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper;
+package org.apache.zookeeper;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
-import com.yahoo.zookeeper.data.ACL;
-import com.yahoo.zookeeper.data.Id;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 
 public class ZooDefs {
     public interface OpCode {

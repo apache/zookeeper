@@ -1,5 +1,5 @@
 <FindBugsFilter>
      <Match>
-       <Package name="com.yahoo.jute.compiler.generated" />
+       <Package name="org.apache.jute.compiler.generated" />
      </Match>
 </FindBugsFilter>

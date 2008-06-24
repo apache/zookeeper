@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.util;
+package org.apache.zookeeper.server.util;
 
 /**
  * An observable component is responsible for decoding and dispatching its events

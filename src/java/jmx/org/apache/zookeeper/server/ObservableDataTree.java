@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.util.ArrayList;
 
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.data.ACL;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.server.util.DataTreeObserver;
-import com.yahoo.zookeeper.server.util.EventInfo;
-import com.yahoo.zookeeper.server.util.ObservableComponent;
-import com.yahoo.zookeeper.server.util.ObserverManager;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.util.DataTreeObserver;
+import org.apache.zookeeper.server.util.EventInfo;
+import org.apache.zookeeper.server.util.ObservableComponent;
+import org.apache.zookeeper.server.util.ObserverManager;
 
 /**
  * An observable data tree notifies its observers about any data modification

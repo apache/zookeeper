@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx.server;
+package org.apache.zookeeper.jmx.server;
 
 import java.util.Arrays;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.jmx.MBeanRegistry;
-import com.yahoo.zookeeper.jmx.ZKMBeanInfo;
-import com.yahoo.zookeeper.server.ServerCnxn;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * Implementation of connection MBean interface.

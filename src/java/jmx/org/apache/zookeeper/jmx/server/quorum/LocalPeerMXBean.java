@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx.server.quorum;
+package org.apache.zookeeper.jmx.server.quorum;
 
-import com.yahoo.zookeeper.jmx.server.ZooKeeperServerMXBean;
+import org.apache.zookeeper.jmx.server.ZooKeeperServerMXBean;
 
 /**
  * A local zookeeper server MBean interface. Unlike the remote peer, the local

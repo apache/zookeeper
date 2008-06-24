@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.auth;
+package org.apache.zookeeper.server.auth;
 
-import com.yahoo.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ServerCnxn;
 
 /**
  * This interface is implemented by authentication providers to add new kinds of

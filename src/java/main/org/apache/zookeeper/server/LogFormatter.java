@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
@@ -24,9 +24,9 @@ import java.util.Date;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.BinaryInputArchive;
-import com.yahoo.jute.InputArchive;
-import com.yahoo.zookeeper.txn.TxnHeader;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.InputArchive;
+import org.apache.zookeeper.txn.TxnHeader;
 
 public class LogFormatter {
     private static final Logger LOG = Logger.getLogger(LogFormatter.class);

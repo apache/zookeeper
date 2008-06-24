@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx.server;
+package org.apache.zookeeper.jmx.server;
 
 import java.io.ByteArrayOutputStream;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.BinaryOutputArchive;
-import com.yahoo.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
 /**
  * This class implements the data tree MBean.
@@ -29,12 +29,12 @@ import com.yahoo.zookeeper.jmx.ZKMBeanInfo;
 public class DataTreeBean implements DataTreeMXBean, ZKMBeanInfo {
     private static final Logger LOG = Logger.getLogger(DataTreeBean.class);
 
-    com.yahoo.zookeeper.server.DataTree dataTree;
+    org.apache.zookeeper.server.DataTree dataTree;
     
     public DataTreeBean(){
     }
 
-    public DataTreeBean(com.yahoo.zookeeper.server.DataTree dataTree){
+    public DataTreeBean(org.apache.zookeeper.server.DataTree dataTree){
         this.dataTree=dataTree;
     }
     
@@ -43,7 +43,7 @@ public class DataTreeBean implements DataTreeMXBean, ZKMBeanInfo {
     }
 
     /* (non-Javadoc)
-     * @see com.yahoo.zookeeper.jmx.server.DataTreeMBean#getDataSize()
+     * @see org.apache.zookeeper.jmx.server.DataTreeMBean#getDataSize()
      */
     //TODO: it's useful info but can be expensive to get
     public long getDataSize() {
@@ -61,14 +61,14 @@ public class DataTreeBean implements DataTreeMXBean, ZKMBeanInfo {
     }
 
     /* (non-Javadoc)
-     * @see com.yahoo.zookeeper.jmx.server.DataTreeMBean#getEphemeralCount()
+     * @see org.apache.zookeeper.jmx.server.DataTreeMBean#getEphemeralCount()
      */
     public int getEphemeralCount() {
         return dataTree.getSessions().size();
     }
 
     /* (non-Javadoc)
-     * @see com.yahoo.zookeeper.jmx.server.DataTreeMBean#getWatchCount()
+     * @see org.apache.zookeeper.jmx.server.DataTreeMBean#getWatchCount()
      */
     public int getWatchCount() {
         return dataTree.getWatchCount();

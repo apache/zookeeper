@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper;
+package org.apache.zookeeper;
 
-import com.yahoo.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.proto.WatcherEvent;
 
 /**
  * This interface specifies the public interface an event handler class must

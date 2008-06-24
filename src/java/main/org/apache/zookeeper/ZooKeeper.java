@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper;
+package org.apache.zookeeper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,36 +29,36 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.AsyncCallback.ACLCallback;
-import com.yahoo.zookeeper.AsyncCallback.ChildrenCallback;
-import com.yahoo.zookeeper.AsyncCallback.DataCallback;
-import com.yahoo.zookeeper.AsyncCallback.StatCallback;
-import com.yahoo.zookeeper.AsyncCallback.StringCallback;
-import com.yahoo.zookeeper.AsyncCallback.VoidCallback;
-import com.yahoo.zookeeper.ZooDefs.Ids;
-import com.yahoo.zookeeper.data.ACL;
-import com.yahoo.zookeeper.data.Id;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.CreateRequest;
-import com.yahoo.zookeeper.proto.CreateResponse;
-import com.yahoo.zookeeper.proto.DeleteRequest;
-import com.yahoo.zookeeper.proto.ExistsRequest;
-import com.yahoo.zookeeper.proto.GetACLRequest;
-import com.yahoo.zookeeper.proto.GetACLResponse;
-import com.yahoo.zookeeper.proto.GetChildrenRequest;
-import com.yahoo.zookeeper.proto.GetChildrenResponse;
-import com.yahoo.zookeeper.proto.GetDataRequest;
-import com.yahoo.zookeeper.proto.GetDataResponse;
-import com.yahoo.zookeeper.proto.ReplyHeader;
-import com.yahoo.zookeeper.proto.RequestHeader;
-import com.yahoo.zookeeper.proto.SetACLRequest;
-import com.yahoo.zookeeper.proto.SetACLResponse;
-import com.yahoo.zookeeper.proto.SetDataRequest;
-import com.yahoo.zookeeper.proto.SetDataResponse;
-import com.yahoo.zookeeper.proto.SyncRequest;
-import com.yahoo.zookeeper.proto.SyncResponse;
-import com.yahoo.zookeeper.proto.WatcherEvent;
-import com.yahoo.zookeeper.server.DataTree;
+import org.apache.zookeeper.AsyncCallback.ACLCallback;
+import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.StatCallback;
+import org.apache.zookeeper.AsyncCallback.StringCallback;
+import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.DeleteRequest;
+import org.apache.zookeeper.proto.ExistsRequest;
+import org.apache.zookeeper.proto.GetACLRequest;
+import org.apache.zookeeper.proto.GetACLResponse;
+import org.apache.zookeeper.proto.GetChildrenRequest;
+import org.apache.zookeeper.proto.GetChildrenResponse;
+import org.apache.zookeeper.proto.GetDataRequest;
+import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.proto.SetACLRequest;
+import org.apache.zookeeper.proto.SetACLResponse;
+import org.apache.zookeeper.proto.SetDataRequest;
+import org.apache.zookeeper.proto.SetDataResponse;
+import org.apache.zookeeper.proto.SyncRequest;
+import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.server.DataTree;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -365,7 +365,7 @@ public class ZooKeeper {
      *                and/or sequential
      * @return the actual path of the created node
      * @throws KeeperException if the server returns a non-zero error code
-     * @throws com.yahoo.zookeeper.KeeperException.InvalidACLException if the ACL is invalid
+     * @throws org.apache.zookeeper.KeeperException.InvalidACLException if the ACL is invalid
      * @throws InterruptedException if the transaction is interrrupted
      */
     public String create(String path, byte data[], List<ACL> acl, int flags)
@@ -777,7 +777,7 @@ public class ZooKeeper {
      * @return the stat of the node.
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
-     * @throws com.yahoo.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
+     * @throws org.apache.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
      */
     public Stat setACL(String path, List<ACL> acl, int version)
             throws KeeperException, InterruptedException {

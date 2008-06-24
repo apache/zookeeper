@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.jute.compiler.generated;
+package org.apache.jute.compiler.generated;
 
 /**
  * This exception is thrown when parse errors are encountered.

@@ -1,4 +1,4 @@
-package com.yahoo.zookeeper.test;
+package org.apache.zookeeper.test;
 
 /**
  * This is a simple test to check the integrity of ZooKeeper servers. The client
@@ -19,14 +19,14 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.ZooDefs;
-import com.yahoo.zookeeper.ZooKeeper;
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.AsyncCallback.DataCallback;
-import com.yahoo.zookeeper.AsyncCallback.StatCallback;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.StatCallback;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.WatcherEvent;
 
 public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
     private static final Logger LOG = Logger.getLogger(IntegrityCheck.class);

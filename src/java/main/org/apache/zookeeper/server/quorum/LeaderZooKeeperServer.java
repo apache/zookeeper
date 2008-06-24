@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
 import java.io.IOException;
 
-import com.yahoo.zookeeper.server.FinalRequestProcessor;
-import com.yahoo.zookeeper.server.PrepRequestProcessor;
-import com.yahoo.zookeeper.server.RequestProcessor;
-import com.yahoo.zookeeper.server.SessionTrackerImpl;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.FinalRequestProcessor;
+import org.apache.zookeeper.server.PrepRequestProcessor;
+import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.SessionTrackerImpl;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * 

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import com.yahoo.jute.Index;
-import com.yahoo.jute.InputArchive;
-import com.yahoo.jute.OutputArchive;
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.data.ACL;
-import com.yahoo.zookeeper.data.Stat;
+import org.apache.jute.Index;
+import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
+import org.apache.jute.Record;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
 
 /**
  * This class contains the data for a node in the data tree.

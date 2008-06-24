@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper;
+package org.apache.zookeeper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,35 +34,35 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.BinaryInputArchive;
-import com.yahoo.jute.BinaryOutputArchive;
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.AsyncCallback.ACLCallback;
-import com.yahoo.zookeeper.AsyncCallback.ChildrenCallback;
-import com.yahoo.zookeeper.AsyncCallback.DataCallback;
-import com.yahoo.zookeeper.AsyncCallback.StatCallback;
-import com.yahoo.zookeeper.AsyncCallback.StringCallback;
-import com.yahoo.zookeeper.AsyncCallback.VoidCallback;
-import com.yahoo.zookeeper.Watcher.Event;
-import com.yahoo.zookeeper.ZooDefs.OpCode;
-import com.yahoo.zookeeper.ZooKeeper.States;
-import com.yahoo.zookeeper.ZooKeeper.WatchRegistration;
-import com.yahoo.zookeeper.proto.AuthPacket;
-import com.yahoo.zookeeper.proto.ConnectRequest;
-import com.yahoo.zookeeper.proto.ConnectResponse;
-import com.yahoo.zookeeper.proto.CreateResponse;
-import com.yahoo.zookeeper.proto.ExistsResponse;
-import com.yahoo.zookeeper.proto.GetACLResponse;
-import com.yahoo.zookeeper.proto.GetChildrenResponse;
-import com.yahoo.zookeeper.proto.GetDataResponse;
-import com.yahoo.zookeeper.proto.ReplyHeader;
-import com.yahoo.zookeeper.proto.RequestHeader;
-import com.yahoo.zookeeper.proto.SetACLResponse;
-import com.yahoo.zookeeper.proto.SetDataResponse;
-import com.yahoo.zookeeper.proto.WatcherEvent;
-import com.yahoo.zookeeper.server.ByteBufferInputStream;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.ZooTrace;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.Record;
+import org.apache.zookeeper.AsyncCallback.ACLCallback;
+import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.StatCallback;
+import org.apache.zookeeper.AsyncCallback.StringCallback;
+import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.Watcher.Event;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.ZooKeeper.WatchRegistration;
+import org.apache.zookeeper.proto.AuthPacket;
+import org.apache.zookeeper.proto.ConnectRequest;
+import org.apache.zookeeper.proto.ConnectResponse;
+import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.ExistsResponse;
+import org.apache.zookeeper.proto.GetACLResponse;
+import org.apache.zookeeper.proto.GetChildrenResponse;
+import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.proto.SetACLResponse;
+import org.apache.zookeeper.proto.SetDataResponse;
+import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.server.ByteBufferInputStream;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooTrace;
 
 /**
  * This class manages the socket i/o for the client. ClientCnxn maintains a list

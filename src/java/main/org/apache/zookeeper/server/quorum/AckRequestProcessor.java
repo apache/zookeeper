@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
-import com.yahoo.zookeeper.server.Request;
-import com.yahoo.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestProcessor;
 
 /**
  * This is a very simple RequestProcessor that simply forwards a request from a

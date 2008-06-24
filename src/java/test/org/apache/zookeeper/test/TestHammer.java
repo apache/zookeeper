@@ -1,11 +1,11 @@
-package com.yahoo.zookeeper.test;
+package org.apache.zookeeper.test;
 
 import java.io.IOException;
 
-import com.yahoo.zookeeper.ZooKeeper;
-import com.yahoo.zookeeper.AsyncCallback.VoidCallback;
-import com.yahoo.zookeeper.ZooDefs.CreateFlags;
-import com.yahoo.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.ZooDefs.CreateFlags;
+import org.apache.zookeeper.ZooDefs.Ids;
 
 public class TestHammer implements VoidCallback {
 

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx.server.quorum;
+package org.apache.zookeeper.jmx.server.quorum;
 
 import java.util.Date;
 
-import com.yahoo.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
 /**
  * Leader election MBean interface implementation

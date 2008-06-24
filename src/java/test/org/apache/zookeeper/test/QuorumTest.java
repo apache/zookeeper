@@ -1,4 +1,4 @@
-package com.yahoo.zookeeper.test;
+package org.apache.zookeeper.test;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,9 +9,9 @@ import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 
-import com.yahoo.zookeeper.server.quorum.QuorumPeer;
-import com.yahoo.zookeeper.server.quorum.QuorumStats;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.QuorumStats;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 public class QuorumTest extends ClientTest {
     private static final Logger LOG = Logger.getLogger(QuorumTest.class);

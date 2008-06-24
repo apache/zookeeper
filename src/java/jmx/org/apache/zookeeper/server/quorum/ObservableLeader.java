@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 
-import com.yahoo.zookeeper.server.util.EventInfo;
-import com.yahoo.zookeeper.server.util.ObserverManager;
-import com.yahoo.zookeeper.server.util.QuorumPeerObserver;
+import org.apache.zookeeper.server.util.EventInfo;
+import org.apache.zookeeper.server.util.ObserverManager;
+import org.apache.zookeeper.server.util.QuorumPeerObserver;
 
 /**
  * This observable leader implementation notifies its registered observers

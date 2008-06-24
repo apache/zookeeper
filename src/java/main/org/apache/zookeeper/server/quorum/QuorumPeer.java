@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 
-import static com.yahoo.zookeeper.server.ServerConfig.getClientPort;
-import static com.yahoo.zookeeper.server.ServerConfig.getDataDir;
-import static com.yahoo.zookeeper.server.ServerConfig.getDataLogDir;
-import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getElectionAlg;
-import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getElectionPort;
-import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getInitLimit;
-import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getServerId;
-import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getServers;
-import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getSyncLimit;
-import static com.yahoo.zookeeper.server.quorum.QuorumPeerConfig.getTickTime;
+import static org.apache.zookeeper.server.ServerConfig.getClientPort;
+import static org.apache.zookeeper.server.ServerConfig.getDataDir;
+import static org.apache.zookeeper.server.ServerConfig.getDataLogDir;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getElectionAlg;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getElectionPort;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getInitLimit;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getServerId;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getServers;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getSyncLimit;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getTickTime;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -42,11 +42,11 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.BinaryInputArchive;
-import com.yahoo.jute.InputArchive;
-import com.yahoo.zookeeper.server.NIOServerCnxn;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.txn.TxnHeader;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.InputArchive;
+import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This class manages the quorum protocol. There are three states this server

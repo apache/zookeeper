@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx.server.quorum;
+package org.apache.zookeeper.jmx.server.quorum;
 
 /**
  * Leader election protocol MBean. 

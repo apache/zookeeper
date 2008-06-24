@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
 import java.io.IOException;
 
-import com.yahoo.zookeeper.server.ZooKeeperObserverNotifier;
-import com.yahoo.zookeeper.server.util.ObserverManager;
-import com.yahoo.zookeeper.server.util.ServerObserver;
+import org.apache.zookeeper.server.ZooKeeperObserverNotifier;
+import org.apache.zookeeper.server.util.ObserverManager;
+import org.apache.zookeeper.server.util.ServerObserver;
 
 /**
  * This observable leader server class notifies the registered observers

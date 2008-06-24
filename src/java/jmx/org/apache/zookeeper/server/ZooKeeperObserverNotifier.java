@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
-import com.yahoo.zookeeper.server.util.ObservableComponent;
-import com.yahoo.zookeeper.server.util.ObserverManager;
-import com.yahoo.zookeeper.server.util.ServerObserver;
+import org.apache.zookeeper.server.util.ObservableComponent;
+import org.apache.zookeeper.server.util.ObserverManager;
+import org.apache.zookeeper.server.util.ServerObserver;
 
 /**
  * The class is responsible for triggering and dispatching of server life cycle events.

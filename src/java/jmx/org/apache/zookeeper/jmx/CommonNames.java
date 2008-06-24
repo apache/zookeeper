@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx;
+package org.apache.zookeeper.jmx;
 
 /**
  * A bunch of constants.
  * TODO: will get rid of it eventually.
  */
 public class CommonNames {
-    public static final String DOMAIN="com.yahoo.ZookeeperService";
+    public static final String DOMAIN="org.apache.ZookeeperService";
     public static final String DATA_TREE_KEY="DataTree";
     public static final String STANDALONE_SERVER_KEY="StandaloneServer";
 }

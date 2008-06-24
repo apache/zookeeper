@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.yahoo.zookeeper.test;
+package org.apache.zookeeper.test;
 
 import static org.junit.Assert.*;
 
@@ -21,10 +21,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.WatcherEvent;
-import com.yahoo.zookeeper.server.DataTree;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.server.DataTree;
 import junit.framework.TestCase;
 
 public class DataTreeTest extends TestCase {

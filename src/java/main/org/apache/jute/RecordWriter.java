@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.jute;
+package org.apache.jute;
 
 import java.io.IOException;
 import java.io.OutputStream;

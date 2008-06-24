@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx;
+package org.apache.zookeeper.jmx;
 
 /**
  * Zookeeper MBean info interface. MBeanRegistry uses the interface to generate

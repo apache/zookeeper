@@ -1,4 +1,4 @@
-module com.yahoo.zookeeper.data {
+module org.apache.zookeeper.data {
     class Id {
     	ustring scheme;
     	ustring id;
@@ -18,7 +18,7 @@ module com.yahoo.zookeeper.data {
 	long ephemeralOwner;
     }
 }
-module com.yahoo.zookeeper.proto {
+module org.apache.zookeeper.proto {
     class op_result_t {
         int rc;
         int op;
@@ -62,12 +62,12 @@ module com.yahoo.zookeeper.proto {
         int version;
     }
     class SetDataResponse {
-        com.yahoo.zookeeper.data.Stat stat;
+        org.apache.zookeeper.data.Stat stat;
     }
     class CreateRequest {
         ustring path;
         buffer data;
-        vector<com.yahoo.zookeeper.data.ACL> acl;
+        vector<org.apache.zookeeper.data.ACL> acl;
         int flags;
     }
     class DeleteRequest {
@@ -99,11 +99,11 @@ module com.yahoo.zookeeper.proto {
     }
     class SetACLRequest {
         ustring path;
-        vector<com.yahoo.zookeeper.data.ACL> acl;
+        vector<org.apache.zookeeper.data.ACL> acl;
         int version;
     }
     class SetACLResponse {
-        com.yahoo.zookeeper.data.Stat stat;
+        org.apache.zookeeper.data.Stat stat;
     }
     class WatcherEvent {
         int type;  // event type
@@ -119,31 +119,31 @@ module com.yahoo.zookeeper.proto {
         boolean watch;
     }
     class ExistsResponse {
-	com.yahoo.zookeeper.data.Stat stat;
+	org.apache.zookeeper.data.Stat stat;
     }
     class GetDataResponse {
         buffer data;
-        com.yahoo.zookeeper.data.Stat stat;
+        org.apache.zookeeper.data.Stat stat;
     }
     class GetChildrenResponse {
         vector<ustring>children;
     }
     class GetACLResponse {
-        vector<com.yahoo.zookeeper.data.ACL> acl;
-        com.yahoo.zookeeper.data.Stat stat;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        org.apache.zookeeper.data.Stat stat;
     }
 }
 
-module com.yahoo.zookeeper.server.quorum {
+module org.apache.zookeeper.server.quorum {
     class QuorumPacket {
         int type; // Request, Ack, Commit, Ping
         long zxid;
 	buffer data; // Only significant when type is request
-	vector<com.yahoo.zookeeper.data.Id> authinfo;
+	vector<org.apache.zookeeper.data.Id> authinfo;
     }
 }
 
-module com.yahoo.zookeeper.txn {
+module org.apache.zookeeper.txn {
     class TxnHeader {
         long clientId;
 	int cxid;
@@ -154,7 +154,7 @@ module com.yahoo.zookeeper.txn {
     class CreateTxn {
         ustring path;
         buffer data;
-        vector<com.yahoo.zookeeper.data.ACL> acl;
+        vector<org.apache.zookeeper.data.ACL> acl;
 	boolean ephemeral;
     }
     class DeleteTxn {
@@ -167,7 +167,7 @@ module com.yahoo.zookeeper.txn {
     }
     class SetACLTxn {
         ustring path;
-        vector<com.yahoo.zookeeper.data.ACL> acl;
+        vector<org.apache.zookeeper.data.ACL> acl;
         int version;
     }
     class SetMaxChildrenTxn {

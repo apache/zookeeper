@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,8 +22,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.proto.WatcherEvent;
 
 /**
  * This class manages watches. It allows watches to be associated with a string

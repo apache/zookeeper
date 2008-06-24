@@ -1,12 +1,12 @@
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 import junit.framework.TestCase;
 
-import com.yahoo.jute.BinaryOutputArchive;
-import com.yahoo.zookeeper.KeeperException;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.KeeperException;
 
 public class SerializationPerfTest extends TestCase {
     private static class NullOutputStream extends OutputStream {

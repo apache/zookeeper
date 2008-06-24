@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException;
 
 /**
  * This is a full featured SessionTracker. It tracks session in grouped by tick

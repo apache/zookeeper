@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper;
+package org.apache.zookeeper;
 
-public class Version implements com.yahoo.zookeeper.version.Info{
+public class Version implements org.apache.zookeeper.version.Info{
 
     public static int getRevision() {
         return REVISION;
@@ -40,7 +40,7 @@ public class Version implements com.yahoo.zookeeper.version.Info{
 
     public static void printUsage() {
         System.out
-                .print("Usage:\tjava -cp ... com.yahoo.zookeeper.Version "
+                .print("Usage:\tjava -cp ... org.apache.zookeeper.Version "
                         + "[--full | --short | --revision],\n\tPrints --full version "
                         + "info if no arg specified.");
         System.exit(1);

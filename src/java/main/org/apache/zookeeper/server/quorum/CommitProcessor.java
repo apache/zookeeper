@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.ZooDefs.OpCode;
-import com.yahoo.zookeeper.server.Request;
-import com.yahoo.zookeeper.server.RequestProcessor;
-import com.yahoo.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ZooTrace;
 
 /**
  * This RequestProcessor matches the incoming committed requests with the

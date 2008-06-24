@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,16 +22,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.jmx.MBeanRegistry;
-import com.yahoo.zookeeper.jmx.server.ConnectionBean;
-import com.yahoo.zookeeper.jmx.server.DataTreeBean;
-import com.yahoo.zookeeper.jmx.server.ZooKeeperServerBean;
-import com.yahoo.zookeeper.server.util.ConnectionObserver;
-import com.yahoo.zookeeper.server.util.ObserverManager;
-import com.yahoo.zookeeper.server.util.ServerObserver;
-import com.yahoo.zookeeper.server.util.ZooKeeperObserverManager;
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.jmx.server.ConnectionBean;
+import org.apache.zookeeper.jmx.server.DataTreeBean;
+import org.apache.zookeeper.jmx.server.ZooKeeperServerBean;
+import org.apache.zookeeper.server.util.ConnectionObserver;
+import org.apache.zookeeper.server.util.ObserverManager;
+import org.apache.zookeeper.server.util.ServerObserver;
+import org.apache.zookeeper.server.util.ZooKeeperObserverManager;
 
-import static com.yahoo.zookeeper.server.ServerConfig.getClientPort;
+import static org.apache.zookeeper.server.ServerConfig.getClientPort;
 
 /**
  * This class launches a standalone zookeeper server with JMX support
