@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.yahoo.zookeeper.test;
+package org.apache.zookeeper.test;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,14 +9,14 @@ import java.util.ArrayList;
 
 import junit.framework.TestCase;
 
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.ZooKeeper;
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.ZooDefs.Ids;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.WatcherEvent;
-import com.yahoo.zookeeper.server.NIOServerCnxn;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * @author breed
@@ -115,7 +115,7 @@ public class OOMTest extends TestCase implements Watcher {
     /*
      * (non-Javadoc)
      * 
-     * @see com.yahoo.zookeeper.Watcher#process(com.yahoo.zookeeper.proto.WatcherEvent)
+     * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.proto.WatcherEvent)
      */
     public void process(WatcherEvent event) {
         System.err.println("Got event " + event.getType() + " "

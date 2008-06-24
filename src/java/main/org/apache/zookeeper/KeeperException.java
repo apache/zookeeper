@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper;
+package org.apache.zookeeper;
 
 @SuppressWarnings("serial")
 public abstract class KeeperException extends Exception {

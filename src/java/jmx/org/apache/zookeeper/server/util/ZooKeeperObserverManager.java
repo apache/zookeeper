@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.util;
+package org.apache.zookeeper.server.util;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import com.yahoo.zookeeper.server.DataTree;
-import com.yahoo.zookeeper.server.ServerCnxn;
-import com.yahoo.zookeeper.server.ZooKeeperObserverNotifier;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ZooKeeperObserverNotifier;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 /**
  * Zookeeper specific implementation of ObserverManager. It implements a mapping

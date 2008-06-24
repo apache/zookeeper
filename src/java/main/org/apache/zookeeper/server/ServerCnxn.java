@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.data.Id;
-import com.yahoo.zookeeper.proto.ReplyHeader;
-import com.yahoo.zookeeper.proto.WatcherEvent;
+import org.apache.jute.Record;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.WatcherEvent;
 
 public interface ServerCnxn extends Watcher {
     final static int killCmd = ByteBuffer.wrap("kill".getBytes()).getInt();

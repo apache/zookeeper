@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.auth;
+package org.apache.zookeeper.server.auth;
 
 import java.util.Enumeration;
 import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 public class ProviderRegistry {
     private static final Logger LOG = Logger.getLogger(ProviderRegistry.class);

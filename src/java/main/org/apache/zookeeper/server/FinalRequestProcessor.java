@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,31 +23,31 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.ZooDefs;
-import com.yahoo.zookeeper.KeeperException.Code;
-import com.yahoo.zookeeper.ZooDefs.OpCode;
-import com.yahoo.zookeeper.data.ACL;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.CreateResponse;
-import com.yahoo.zookeeper.proto.ExistsRequest;
-import com.yahoo.zookeeper.proto.ExistsResponse;
-import com.yahoo.zookeeper.proto.GetACLRequest;
-import com.yahoo.zookeeper.proto.GetACLResponse;
-import com.yahoo.zookeeper.proto.GetChildrenRequest;
-import com.yahoo.zookeeper.proto.GetChildrenResponse;
-import com.yahoo.zookeeper.proto.GetDataRequest;
-import com.yahoo.zookeeper.proto.GetDataResponse;
-import com.yahoo.zookeeper.proto.ReplyHeader;
-import com.yahoo.zookeeper.proto.SetACLResponse;
-import com.yahoo.zookeeper.proto.SetDataResponse;
-import com.yahoo.zookeeper.proto.SyncRequest;
-import com.yahoo.zookeeper.proto.SyncResponse;
-import com.yahoo.zookeeper.server.DataTree.ProcessTxnResult;
-import com.yahoo.zookeeper.server.NIOServerCnxn.Factory;
-import com.yahoo.zookeeper.txn.CreateSessionTxn;
-import com.yahoo.zookeeper.txn.ErrorTxn;
+import org.apache.jute.Record;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.ExistsRequest;
+import org.apache.zookeeper.proto.ExistsResponse;
+import org.apache.zookeeper.proto.GetACLRequest;
+import org.apache.zookeeper.proto.GetACLResponse;
+import org.apache.zookeeper.proto.GetChildrenRequest;
+import org.apache.zookeeper.proto.GetChildrenResponse;
+import org.apache.zookeeper.proto.GetDataRequest;
+import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.SetACLResponse;
+import org.apache.zookeeper.proto.SetDataResponse;
+import org.apache.zookeeper.proto.SyncRequest;
+import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
+import org.apache.zookeeper.server.NIOServerCnxn.Factory;
+import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.txn.ErrorTxn;
 
 /**
  * This Request processor actually applies any transaction associated with a

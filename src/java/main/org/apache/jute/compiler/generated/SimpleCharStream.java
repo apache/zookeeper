@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.jute.compiler.generated;
+package org.apache.jute.compiler.generated;
 
 /**
  * An implementation of interface CharStream, where the stream is assumed to

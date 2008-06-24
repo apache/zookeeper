@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,22 +27,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.InputArchive;
-import com.yahoo.jute.OutputArchive;
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.KeeperException.Code;
-import com.yahoo.zookeeper.Watcher.Event;
-import com.yahoo.zookeeper.ZooDefs.OpCode;
-import com.yahoo.zookeeper.data.ACL;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.txn.CreateTxn;
-import com.yahoo.zookeeper.txn.DeleteTxn;
-import com.yahoo.zookeeper.txn.ErrorTxn;
-import com.yahoo.zookeeper.txn.SetACLTxn;
-import com.yahoo.zookeeper.txn.SetDataTxn;
-import com.yahoo.zookeeper.txn.TxnHeader;
+import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
+import org.apache.jute.Record;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.Watcher.Event;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
+import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.SetACLTxn;
+import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This class maintains the tree data structure. It doesn't have any networking
@@ -96,6 +96,10 @@ public class DataTree {
 
     public int getNodeCount(){
         return nodes.size();
+    }
+
+    public int getWatchCount(){
+        return dataWatches.size()+childWatches.size();
     }
 
     /**
@@ -424,10 +428,10 @@ public class DataTree {
     }
 
     void killSession(long session) {
-        // the list is already removed from the ephemerals 
+        // the list is already removed from the ephemerals
         // so we do not have to worry about synchronyzing on
         // the list. This is only called from FinalRequestProcessor
-        // so there is no need for synchornization. The list is not 
+        // so there is no need for synchornization. The list is not
         // changed here. Only create and delete change the list which
         // are again called from FinalRequestProcessor in sequence.
         HashSet<String> list = ephemerals.remove(session);

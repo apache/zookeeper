@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
-import com.yahoo.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.ServerStats;
 
 public class QuorumStats extends ServerStats {
     

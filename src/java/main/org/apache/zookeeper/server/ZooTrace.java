@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.quorum.QuorumPacket;
+import org.apache.zookeeper.server.quorum.QuorumPacket;
 
 /**
  * This class encapsulates and centralizes tracing for the ZooKeeper server.

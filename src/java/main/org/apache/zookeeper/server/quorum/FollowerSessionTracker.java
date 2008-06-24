@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.yahoo.zookeeper.server.SessionTracker;
-import com.yahoo.zookeeper.server.SessionTrackerImpl;
+import org.apache.zookeeper.server.SessionTracker;
+import org.apache.zookeeper.server.SessionTrackerImpl;
 
 /**
  * This is really just a shell of a SessionTracker that tracks session activity

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,14 +23,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.server.FinalRequestProcessor;
-import com.yahoo.zookeeper.server.Request;
-import com.yahoo.zookeeper.server.RequestProcessor;
-import com.yahoo.zookeeper.server.ServerCnxn;
-import com.yahoo.zookeeper.server.SyncRequestProcessor;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.txn.TxnHeader;
+import org.apache.jute.Record;
+import org.apache.zookeeper.server.FinalRequestProcessor;
+import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * Just like the standard ZooKeeperServer. We just replace the request

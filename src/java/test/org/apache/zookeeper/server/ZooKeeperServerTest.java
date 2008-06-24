@@ -1,4 +1,4 @@
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.File;
 import java.util.List;

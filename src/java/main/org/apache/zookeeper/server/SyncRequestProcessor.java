@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -28,10 +28,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.BinaryOutputArchive;
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.server.util.Profiler;
-import com.yahoo.zookeeper.txn.TxnHeader;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.Record;
+import org.apache.zookeeper.server.util.Profiler;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This RequestProcessor logs requests to disk. It batches the requests to do

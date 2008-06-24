@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -26,29 +26,29 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.ZooDefs;
-import com.yahoo.zookeeper.KeeperException.Code;
-import com.yahoo.zookeeper.ZooDefs.CreateFlags;
-import com.yahoo.zookeeper.ZooDefs.OpCode;
-import com.yahoo.zookeeper.data.ACL;
-import com.yahoo.zookeeper.data.Id;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.CreateRequest;
-import com.yahoo.zookeeper.proto.DeleteRequest;
-import com.yahoo.zookeeper.proto.SetACLRequest;
-import com.yahoo.zookeeper.proto.SetDataRequest;
-import com.yahoo.zookeeper.server.ZooKeeperServer.ChangeRecord;
-import com.yahoo.zookeeper.server.auth.AuthenticationProvider;
-import com.yahoo.zookeeper.server.auth.ProviderRegistry;
-import com.yahoo.zookeeper.txn.CreateSessionTxn;
-import com.yahoo.zookeeper.txn.CreateTxn;
-import com.yahoo.zookeeper.txn.DeleteTxn;
-import com.yahoo.zookeeper.txn.ErrorTxn;
-import com.yahoo.zookeeper.txn.SetACLTxn;
-import com.yahoo.zookeeper.txn.SetDataTxn;
-import com.yahoo.zookeeper.txn.TxnHeader;
+import org.apache.jute.Record;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.ZooDefs.CreateFlags;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.proto.DeleteRequest;
+import org.apache.zookeeper.proto.SetACLRequest;
+import org.apache.zookeeper.proto.SetDataRequest;
+import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
+import org.apache.zookeeper.server.auth.AuthenticationProvider;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
+import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
+import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.SetACLTxn;
+import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This request processor is generally at the start of a RequestProcessor

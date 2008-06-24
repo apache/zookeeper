@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-import com.yahoo.zookeeper.server.util.ConnectionObserver;
-import com.yahoo.zookeeper.server.util.ObservableComponent;
-import com.yahoo.zookeeper.server.util.ObserverManager;
+import org.apache.zookeeper.server.util.ConnectionObserver;
+import org.apache.zookeeper.server.util.ObservableComponent;
+import org.apache.zookeeper.server.util.ObserverManager;
 
 /**
  * This class implements an observable server connection. It supports two

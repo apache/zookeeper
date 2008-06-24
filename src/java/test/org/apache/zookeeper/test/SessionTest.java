@@ -1,18 +1,18 @@
-package com.yahoo.zookeeper.test;
+package org.apache.zookeeper.test;
 
 import java.io.File;
 import java.io.IOException;
 import org.junit.Test;
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.ZooKeeper;
-import com.yahoo.zookeeper.ZooDefs.CreateFlags;
-import com.yahoo.zookeeper.ZooDefs.Ids;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.WatcherEvent;
-import com.yahoo.zookeeper.server.NIOServerCnxn;
-import com.yahoo.zookeeper.server.ServerStats;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.ZooDefs.CreateFlags;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import junit.framework.TestCase;
 
 public class SessionTest extends TestCase implements Watcher {

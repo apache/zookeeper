@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.yahoo.zookeeper.server.NIOServerCnxn;
-import com.yahoo.zookeeper.server.ZooKeeperServer;
-import com.yahoo.zookeeper.server.util.EventInfo;
-import com.yahoo.zookeeper.server.util.ObservableComponent;
-import com.yahoo.zookeeper.server.util.ObserverManager;
-import com.yahoo.zookeeper.server.util.QuorumPeerObserver;
+import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.util.EventInfo;
+import org.apache.zookeeper.server.util.ObservableComponent;
+import org.apache.zookeeper.server.util.ObserverManager;
+import org.apache.zookeeper.server.util.QuorumPeerObserver;
 
 /**
  * The observable quorum peer sends notifications to all registered observers

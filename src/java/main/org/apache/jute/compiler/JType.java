@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.jute.compiler;
+package org.apache.jute.compiler;
 
 /**
  * Abstract Base class for all types supported by Hadoop Record I/O.

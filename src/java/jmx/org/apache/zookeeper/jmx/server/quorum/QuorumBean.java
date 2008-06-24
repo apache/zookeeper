@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx.server.quorum;
+package org.apache.zookeeper.jmx.server.quorum;
 
-import com.yahoo.zookeeper.jmx.ZKMBeanInfo;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 public class QuorumBean implements QuorumMXBean,ZKMBeanInfo {
 

@@ -1,4 +1,4 @@
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -6,9 +6,9 @@ import java.io.IOException;
 
 import junit.framework.TestCase;
 
-import com.yahoo.jute.BinaryInputArchive;
-import com.yahoo.jute.BinaryOutputArchive;
-import com.yahoo.zookeeper.KeeperException;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.KeeperException;
 
 public class DeserializationPerfTest extends TestCase {
     private static void deserializeTree(int depth, int width, int len)

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -44,26 +44,26 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.BinaryInputArchive;
-import com.yahoo.jute.BinaryOutputArchive;
-import com.yahoo.jute.InputArchive;
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.ZooDefs.OpCode;
-import com.yahoo.zookeeper.data.ACL;
-import com.yahoo.zookeeper.data.Id;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.RequestHeader;
-import com.yahoo.zookeeper.server.SessionTracker.SessionExpirer;
-import com.yahoo.zookeeper.server.quorum.Leader;
-import com.yahoo.zookeeper.server.quorum.QuorumPacket;
-import com.yahoo.zookeeper.server.quorum.Leader.Proposal;
-import com.yahoo.zookeeper.txn.CreateSessionTxn;
-import com.yahoo.zookeeper.txn.CreateTxn;
-import com.yahoo.zookeeper.txn.DeleteTxn;
-import com.yahoo.zookeeper.txn.ErrorTxn;
-import com.yahoo.zookeeper.txn.SetACLTxn;
-import com.yahoo.zookeeper.txn.SetDataTxn;
-import com.yahoo.zookeeper.txn.TxnHeader;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.InputArchive;
+import org.apache.jute.Record;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
+import org.apache.zookeeper.server.quorum.Leader;
+import org.apache.zookeeper.server.quorum.QuorumPacket;
+import org.apache.zookeeper.server.quorum.Leader.Proposal;
+import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
+import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.SetACLTxn;
+import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This class implements a simple standalone ZooKeeperServer. It sets up the

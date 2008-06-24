@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx;
+package org.apache.zookeeper.jmx;
 
 import java.lang.management.ManagementFactory;
 import java.util.Map;

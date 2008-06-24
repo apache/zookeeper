@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.yahoo.jute.Record;
-import com.yahoo.zookeeper.ZooDefs.OpCode;
-import com.yahoo.zookeeper.data.Id;
-import com.yahoo.zookeeper.txn.TxnHeader;
+import org.apache.jute.Record;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This is the structure that represents a request moving through a chain of

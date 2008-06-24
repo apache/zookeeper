@@ -1,7 +1,7 @@
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 
-import com.yahoo.zookeeper.server.quorum.Vote;
+import org.apache.zookeeper.server.quorum.Vote;
 
 interface Election {
     public Vote lookForLeader() throws InterruptedException;

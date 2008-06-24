@@ -15,7 +15,7 @@
  */
 
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -27,9 +27,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.quorum.QuorumCnxManager.Message;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 
 /**

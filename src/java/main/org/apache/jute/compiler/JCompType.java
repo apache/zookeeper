@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.jute.compiler;
+package org.apache.jute.compiler;
 
 /**
  * Abstract base class for all the "compound" types such as ustring,

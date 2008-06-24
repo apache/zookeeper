@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
-import com.yahoo.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException;
 
 /**
  * This is the basic interface that ZooKeeperServer uses to track sessions. The

@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
-package com.yahoo.jute.compiler.generated;
+package org.apache.jute.compiler.generated;
 
-import com.yahoo.jute.compiler.*;
+import org.apache.jute.compiler.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;

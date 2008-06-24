@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx.server;
+package org.apache.zookeeper.jmx.server;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 
-import com.yahoo.zookeeper.Version;
-import com.yahoo.zookeeper.jmx.ZKMBeanInfo;
-import com.yahoo.zookeeper.server.ServerConfig;
-import com.yahoo.zookeeper.server.ServerStats;
+import org.apache.zookeeper.Version;
+import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.ServerConfig;
+import org.apache.zookeeper.server.ServerStats;
 
 /**
  * This class implements the zookeeper server MBean interface.

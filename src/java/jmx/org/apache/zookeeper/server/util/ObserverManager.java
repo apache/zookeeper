@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.util;
+package org.apache.zookeeper.server.util;
 
 import java.util.Collections;
 import java.util.Map;

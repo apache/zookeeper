@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.jute;
+package org.apache.jute;
 
 /**
  * Interface that acts as an iterator for deserializing maps.

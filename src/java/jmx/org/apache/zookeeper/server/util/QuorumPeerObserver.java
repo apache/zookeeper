@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.util;
+package org.apache.zookeeper.server.util;
 
-import com.yahoo.zookeeper.server.quorum.Follower;
-import com.yahoo.zookeeper.server.quorum.Leader;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.Follower;
+import org.apache.zookeeper.server.quorum.Leader;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 /**
 * Application must implement this interface and register its instance with

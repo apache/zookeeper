@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.jmx.server;
+package org.apache.zookeeper.jmx.server;
 
 /**
  * This MBean represents a client connection.

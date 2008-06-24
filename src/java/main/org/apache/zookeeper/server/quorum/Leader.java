@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,10 +29,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.jute.BinaryOutputArchive;
-import com.yahoo.zookeeper.server.FinalRequestProcessor;
-import com.yahoo.zookeeper.server.Request;
-import com.yahoo.zookeeper.server.RequestProcessor;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.server.FinalRequestProcessor;
+import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestProcessor;
 
 /**
  * This class has the control logic for the Leader.
@@ -413,7 +413,7 @@ public class Leader {
         /*
          * (non-Javadoc)
          * 
-         * @see com.yahoo.zookeeper.server.RequestProcessor#processRequest(com.yahoo.zookeeper.server.Request)
+         * @see org.apache.zookeeper.server.RequestProcessor#processRequest(org.apache.zookeeper.server.Request)
          */
         public void processRequest(Request request) {
             // request.addRQRec(">tobe");
@@ -428,7 +428,7 @@ public class Leader {
         /*
          * (non-Javadoc)
          * 
-         * @see com.yahoo.zookeeper.server.RequestProcessor#shutdown()
+         * @see org.apache.zookeeper.server.RequestProcessor#shutdown()
          */
         public void shutdown() {
             next.shutdown();

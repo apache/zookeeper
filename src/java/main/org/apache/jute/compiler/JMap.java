@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.jute.compiler;
+package org.apache.jute.compiler;
 
 /**
  *
@@ -60,7 +60,7 @@ public class JMap extends JCompType {
         }
         ret.append("    {\n");
         incrLevel();
-        ret.append("      com.yahoo.jute.Index "+getId("midx")+" = a_.startMap(\""+tag+"\");\n");
+        ret.append("      org.apache.jute.Index "+getId("midx")+" = a_.startMap(\""+tag+"\");\n");
         ret.append("      "+fname+"=new java.util.TreeMap();\n");
         ret.append("      for (; !"+getId("midx")+".done(); "+getId("midx")+".incr()) {\n");
         ret.append(mKey.genJavaReadWrapper(getId("k"),getId("k"),true));

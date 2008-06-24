@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper;
+package org.apache.zookeeper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +26,7 @@ import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.ZooTrace;
 
 public class ServerAdminClient {
     private static final Logger LOG = Logger.getLogger(ServerAdminClient.class);
@@ -230,7 +230,7 @@ public class ServerAdminClient {
 
     private static void usage() {
         System.out
-                .println("usage: java [-cp CLASSPATH] com.yahoo.zookeeper.ServerAdminClient "
+                .println("usage: java [-cp CLASSPATH] org.apache.zookeeper.ServerAdminClient "
                         + "host port op (ruok|stat|dump|kill|gettracemask|settracemask) [arguments]");
 
     }

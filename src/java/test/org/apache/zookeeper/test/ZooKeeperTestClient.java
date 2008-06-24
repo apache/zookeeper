@@ -1,4 +1,4 @@
-package com.yahoo.zookeeper.test;
+package org.apache.zookeeper.test;
 
 import java.io.IOException;
 import java.util.List;
@@ -9,14 +9,14 @@ import junit.framework.TestCase;
 
 import org.junit.Test;
 
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.ZooDefs;
-import com.yahoo.zookeeper.ZooKeeper;
-import com.yahoo.zookeeper.KeeperException.Code;
-import com.yahoo.zookeeper.ZooDefs.Ids;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.WatcherEvent;
 
 public class ZooKeeperTestClient extends TestCase implements Watcher {
   protected String hostPort = "127.0.0.1:22801";

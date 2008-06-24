@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.util;
+package org.apache.zookeeper.server.util;
 
-import com.yahoo.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * Application must implement this interface and register its instance with

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server;
+package org.apache.zookeeper.server;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,7 +23,7 @@ import java.nio.channels.FileChannel;
 import java.text.DateFormat;
 import java.util.Date;
 
-import com.yahoo.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.ZooDefs.OpCode;
 
 public class TraceFormatter {
 

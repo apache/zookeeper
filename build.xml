@@ -1,42 +1,62 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
 <project name="ZooKeeper" default="jar">
 
     <property name="Name" value="ZooKeeper" />
     <property name="name" value="zookeeper" />
     
-    <property name="version" value="2.2.0" />
+    <property name="version" value="3.0.0" />
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
-    <property file="${basedir}/java/${revision.properties}" />
+    <property file="${basedir}/src/java/${revision.properties}" />
     
     <!-- Target JDK version to build for. Certain zookeeper features -->
     <!-- (for example, JMX) are only supported on JDK 1.6            -->
     <property name="target.jdk" value="${ant.java.version}" />
 
-    <property name="src.dir" value="${basedir}/java/src" />
-    <property name="jmx.src.dir" value="${basedir}/java/jmx" />
-    <property name="lib.dir" value="${basedir}/java/lib" />
+    <property name="src.dir" value="${basedir}/src" />
+    <property name="java.src.dir" value="${src.dir}/java/main" />
+    <property name="jmx.src.dir" value="${src.dir}/java/jmx" />
+    <property name="lib.dir" value="${src.dir}/java/lib" />
     <property name="build.dir" value="${basedir}/build" />
     <property name="distribution" value="${basedir}/distribution" />
-    <property name="src_generated.dir" value="${basedir}/java/generated" />
-    <property name="csrc_generated.dir" value="${basedir}/c/generated" />
+    <property name="src_generated.dir" value="${src.dir}/java/generated" />
+    <property name="csrc_generated.dir" value="${src.dir}/c/generated" />
     <property name="build.classes" value="${build.dir}/classes" />
     <property name="jar.name" value="zookeeper-dev.jar" />
 
-    <property name="jute.file" value="${basedir}/zookeeper.jute" />
+    <property name="jute.file" value="${src.dir}/zookeeper.jute" />
 
     <property name="build.testclasses" value="${build.dir}/testclasses"/>
     <property name="test.build.dir" value="${build.dir}/test" />
-    <property name="test.src.dir" value="${basedir}/test"/>
+    <property name="test.src.dir" value="${src.dir}/java/test"/>
     <property name="test.log.dir" value="${test.build.dir}/logs" />
     <property name="test.tmp.dir" value="${test.build.dir}/tmp" />
     <property name="test.output" value="no" />
     <property name="test.timeout" value="900000" />
     <property name="test.junit.output.format" value="plain" />
-    <property name="config.dir" value="${basedir}/test/config" />
+    <property name="config.dir" value="${src.dir}/java/test/config" />
     <property name="test.junit.maxmem" value="512m" />
     <property name="conf.dir" value="${basedir}/conf"/>
     <property name="javadoc.link.java" value="http://java.sun.com/j2se/${target.jdk}/docs/api/" />
-    <property name="javadoc.packages" value="com.yahoo.*" />
+    <property name="javadoc.packages" value="org.apache.*" />
     <property name="build.docs" value="${build.dir}/docs" />
     <property name="build.javadoc" value="${build.docs}/api" />
 
@@ -72,8 +92,8 @@
     </target>
     
     <target name="jute" depends="init">
-        <javac srcdir="${src.dir}" destdir="${build.classes}" target="${target.jdk}" 
-            includes="com/yahoo/jute/**" debug="on" />
+        <javac srcdir="${java.src.dir}" destdir="${build.classes}" target="${target.jdk}" 
+            includes="org/apache/jute/**" debug="on" />
     </target>
 
     <target name="compile_jute_uptodate">
@@ -85,7 +105,7 @@
     <target name="compile_jute" depends="jute,compile_jute_uptodate" unless="juteBuild.notRequired">
         <mkdir dir="${src_generated.dir}" />
         <mkdir dir="${csrc_generated.dir}" />
-        <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
+        <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
             <arg value="-l" />
             <arg value="java" />
             <arg value="../../zookeeper.jute" /> 
@@ -94,7 +114,7 @@
             </classpath>
         </java>
         
-        <java classname="com.yahoo.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
+        <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
             <arg value="-l" />
             <arg value="c" />
             <arg value="../../zookeeper.jute" />
@@ -107,13 +127,13 @@
     </target>
 
     <target name="ver-gen" depends="init">
-        <javac srcdir="${src.dir}" destdir="${build.classes}" target="${target.jdk}" 
-            includes="com/yahoo/zookeeper/version/util/**" debug="on" />
+        <javac srcdir="${java.src.dir}" destdir="${build.classes}" target="${target.jdk}" 
+            includes="org/apache/zookeeper/version/util/**" debug="on" />
     </target>
     
     <target name="svn-revision" unless="lastRevision">
         <svn>
-            <status path="${basedir}/java" lastChangedRevisionProperty="lastRevision" />
+            <status path="${java.src.dir}/java" lastChangedRevisionProperty="lastRevision" />
         </svn>
         <mkdir dir="${revision.dir}" />
         <echo file="${revision.dir}/${revision.properties}" 
@@ -122,10 +142,11 @@
     
     <target name="version-info" depends="ver-gen,svn-revision">
         <mkdir dir="${src_generated.dir}" />
-        <java classname="com.yahoo.zookeeper.version.util.VerGen" fork="true" 
+        <java classname="org.apache.zookeeper.version.util.VerGen" fork="true" 
                 dir="${src_generated.dir}">
             <arg value="${version}" />
-            <arg value="${lastRevision}" />
+            <!--PDH fixme - <arg value="${lastRevision}" />-->
+            <arg value="1" />
             <arg value="${build.time}" />
             <classpath>
                 <pathelement path="${build.classes}" />
@@ -149,12 +170,12 @@
    </target>
     
     <target name="compile-main" depends="build-generated">
-        <javac srcdir="${src.dir}" destdir="${build.classes}" 
+        <javac srcdir="${java.src.dir}" destdir="${build.classes}" 
                target="${target.jdk}" debug="on">
             <classpath refid="project.classpath"/>
         </javac>
         <copy todir="${build.classes}">
-            <fileset dir="${src.dir}"/>
+            <fileset dir="${java.src.dir}"/>
             <fileset dir="${src_generated.dir}"/>
         </copy>
     </target>
@@ -185,10 +206,10 @@
     <!-- ====================================================== -->
     <target name="javadoc" depends="jar">
         <mkdir dir="${build.javadoc}" />
-        <javadoc packagenames="com.yahoo.*" destdir="${build.javadoc}" author="true" version="true" 
+        <javadoc packagenames="org.apache.*" destdir="${build.javadoc}" author="true" version="true" 
                 use="true" windowtitle="${Name} ${version} API" doctitle="${Name} ${version} API" 
-                bottom="Copyright &amp;copy; ${year} Yahoo Inc.">
-            <packageset dir="${src.dir}" />
+                bottom="Copyright &amp;copy; ${year} The Apache Software Foundation">
+            <packageset dir="${java.src.dir}" />
             <link href="${javadoc.link.java}" />
         </javadoc>
     </target>
@@ -197,7 +218,7 @@
     <!-- Make zookeeper.jar                                     -->
     <!-- ====================================================== -->
     <target name="jar" depends="compile">
-        <java classname="com.yahoo.zookeeper.Version" fork="true" outputproperty="revision" failonerror="true">
+        <java classname="org.apache.zookeeper.Version" fork="true" outputproperty="revision" failonerror="true">
             <arg value="--revision" />
             <classpath>
                 <pathelement path="${build.classes}" />
@@ -208,13 +229,13 @@
             <fileset file="LICENSE" />
             <fileset dir="${build.classes}" excludes="**/.generated"/>
             <manifest>
-                <attribute name="Main-Class" value="com.yahoo.zookeeper.server.quorum.QuorumPeer" />
+                <attribute name="Main-Class" value="org.apache.zookeeper.server.quorum.QuorumPeer" />
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Built-At" value="${build.time}"/>
                 <attribute name="Built-On" value="${host.name}" />
-                <attribute name="Implementation-Title" value="com.yahoo.zookeeper"/>
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
                 <attribute name="Implementation-Version" value="${revision}"/> 
-                <attribute name="Implementation-Vendor" value="Yahoo! Inc."/>
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
             </manifest>
         </jar>
     </target>
@@ -351,7 +372,7 @@
         <mkdir dir="${findbugs.out.dir}" />
         <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" 
                 outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
-            <sourcePath path="${src.dir}" />
+            <sourcePath path="${java.src.dir}" />
             <class location="${basedir}/${jar.name}" />
         </findbugs>
         <xslt style="${findbugs.home}/src/xsl/default.xsl" in="${findbugs.report.xmlfile}" 
@@ -378,7 +399,7 @@
     <target name="cobertura-instrument" depends="compile-test">
         <cobertura-instrument todir="${build.dir}/cobertura">
             <fileset dir="${build.classes}">
-                <include name="com/yahoo/zookeeper/**/*.class"/>
+                <include name="org/apache/zookeeper/**/*.class"/>
             </fileset>
         </cobertura-instrument>
     </target>
@@ -421,7 +442,7 @@
     <target name="cobertura-report" depends="cobertura-test">
         <cobertura-report format="${test.cobertura.output.format}"
                           destdir="${coveragereport.dir}" > 
-            <fileset dir="${src.dir}">
+            <fileset dir="${java.src.dir}">
                 <include name="**/*.java" />
             </fileset>
             <fileset dir="${src_generated.dir}">

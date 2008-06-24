@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yahoo.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,8 +27,8 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import com.yahoo.zookeeper.server.ServerConfig;
-import com.yahoo.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.ServerConfig;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 public class QuorumPeerConfig extends ServerConfig {
     private static final Logger LOG = Logger.getLogger(QuorumPeerConfig.class);
