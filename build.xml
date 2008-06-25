@@ -319,6 +319,8 @@
             timeout="${test.timeout}" errorProperty="tests.failed"
             failureProperty="tests.failed">
           <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+          <sysproperty key="log4j.configuration"
+                       value="file:${basedir}/conf/log4j.properties" />
           <classpath refid="test.classpath"/>
           <classpath>
             <pathelement path="${build.testclasses}" />
@@ -372,6 +374,7 @@
         <mkdir dir="${findbugs.out.dir}" />
         <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" 
                 outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
+            <auxClasspath path="${lib.dir}/log4j-1.2.15.jar" />
             <sourcePath path="${java.src.dir}" />
             <class location="${basedir}/${jar.name}" />
         </findbugs>
@@ -409,6 +412,8 @@
                maxmemory="${test.junit.maxmem}" dir="${basedir}" timeout="${test.timeout}"
                errorProperty="tests.failed" failureProperty="tests.failed">
             <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+            <sysproperty key="log4j.configuration"
+                         value="file:${basedir}/conf/log4j.properties" />
             <classpath>
                 <pathelement path="${build.dir}/cobertura" />
                 <pathelement path="${lib.dir}/cobertura/cobertura.jar" />
