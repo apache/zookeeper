@@ -41,7 +41,7 @@ public abstract class ClientBase extends TestCase {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         f = new NIOServerCnxn.Factory(33221);
         f.startup(zks);
-        //Thread.sleep(5000);
+        Thread.sleep(5000);
         LOG.info("Client test setup finished");
     }
 
