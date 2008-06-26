@@ -38,7 +38,8 @@
     <property name="build.dir" value="${basedir}/build" />
     <property name="distribution" value="${basedir}/distribution" />
     <property name="src_generated.dir" value="${src.dir}/java/generated" />
-    <property name="csrc_generated.dir" value="${src.dir}/c/generated" />
+    <property name="c.src.dir" value="${src.dir}/c" />    
+    <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
     <property name="build.classes" value="${build.dir}/classes" />
     <property name="jar.name" value="zookeeper-dev.jar" />
 
@@ -133,7 +134,7 @@
     
     <target name="svn-revision" unless="lastRevision">
         <svn>
-            <status path="${java.src.dir}/java" lastChangedRevisionProperty="lastRevision" />
+            <status path="${src.dir}/java" lastChangedRevisionProperty="lastRevision" />
         </svn>
         <mkdir dir="${revision.dir}" />
         <echo file="${revision.dir}/${revision.properties}" 
@@ -145,8 +146,7 @@
         <java classname="org.apache.zookeeper.version.util.VerGen" fork="true" 
                 dir="${src_generated.dir}">
             <arg value="${version}" />
-            <!--PDH fixme - <arg value="${lastRevision}" />-->
-            <arg value="1" />
+            <arg value="${lastRevision}" />
             <arg value="${build.time}" />
             <classpath>
                 <pathelement path="${build.classes}" />
@@ -249,25 +249,25 @@
     <!-- ====================================================== -->
     <!-- Build all distribution tar files                       -->
     <!-- ====================================================== -->
-    <available file="c/Makefile" property="Makefile.present"/>
+    <available file="${c.src.dir}/Makefile" property="Makefile.present"/>
     
     <target name="c-dist">
         <fail unless="Makefile.present" 
-            message="Please run 'autoreconf -if &amp;&amp; ./configure' in the c/ directory to generate a Makefile."/>
-        <exec dir="c" executable="make" failonerror="true">
+            message="Please run 'autoreconf -if &amp;&amp; ./configure' in the ${c.src.dir} directory to generate a Makefile."/>
+        <exec dir="${c.src.dir}" executable="make" failonerror="true">
             <arg value="VERSION=${version}"/>
             <arg value="dist"/>
         </exec>
         <mkdir dir="${distribution}"/>
-        <copy file="c/c-client-src-${version}.tar.gz" todir="${distribution}" />
+        <copy file="${c.src.dir}/c-client-src-${version}.tar.gz" todir="${distribution}" />
     </target>
     
     <target name="dist" depends="release">
         <mkdir dir="${distribution}"/>
         <tar destfile="${distribution}/java-src-${version}.tar.gz" compression="gzip">
-            <tarfileset dir="java" includes="src/**,jmx/**,lib/**,ChangeLog" 
+            <tarfileset dir="${java.src.dir}" includes="src/**,jmx/**,lib/**,ChangeLog" 
                 prefix="zookeeper/java"/>
-            <tarfileset dir="test" includes="com/**,config/**" 
+            <tarfileset dir="${test.src.dir}" includes="com/**,config/**" 
                 prefix="zookeeper/test"/>
             <tarfileset dir="${basedir}" 
                 includes="zookeeper.jute,build.xml,conf/*,bin/*,README,LICENSE" 
@@ -276,7 +276,7 @@
         </tar>
         <tar destfile="${distribution}/java-bin-${version}.tar.gz" compression="gzip">
             <tarfileset file="zookeeper-${version}.jar" prefix="zookeeper/lib"/>
-            <tarfileset dir="java/lib" includes="log4j*" 
+            <tarfileset dir="${lib.dir}" includes="log4j*" 
                 prefix="zookeeper/lib"/>
             <tarfileset dir="${basedir}" includes="conf/*,bin/*,README,LICENSE" 
                 prefix="zookeeper"/>
