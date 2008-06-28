@@ -349,7 +349,7 @@ class ClientCnxn {
         if (p.watchRegistration != null) {
             p.watchRegistration.register(p.replyHeader.getErr());
         }
-        
+
         p.finished = true;
         if (p.cb == null) {
             synchronized (p) {
@@ -597,6 +597,7 @@ class ClientCnxn {
             synchronized (this) {
                 k.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
             }
+            zooKeeper.state = States.CONNECTED;
         }
 
         private void sendPing() {
@@ -697,7 +698,6 @@ class ClientCnxn {
                         SocketChannel sc = ((SocketChannel) k.channel());
                         if ((k.readyOps() & SelectionKey.OP_CONNECT) != 0) {
                             if (sc.finishConnect()) {
-                                zooKeeper.state = States.CONNECTED;
                                 lastHeard = now;
                                 lastSend = now;
                                 primeConnection(k);
@@ -809,10 +809,10 @@ class ClientCnxn {
     public ReplyHeader submitRequest(RequestHeader h, Record request,
             Record response,
             WatchRegistration watchRegistration)
-        throws InterruptedException 
+        throws InterruptedException
     {
         ReplyHeader r = new ReplyHeader();
-        Packet packet = 
+        Packet packet =
             queuePacket(h, r, request, response, null, null, null,
                     watchRegistration);
         synchronized (packet) {
