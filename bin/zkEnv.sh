@@ -58,10 +58,10 @@ do
     CLASSPATH="$CLASSPATH:$i"
 done
 #make it work for developers
-for d in ${ZOOBINDIR}/../java/lib/*.jar
+for d in ${ZOOBINDIR}/../src/java/lib/*.jar
 do
    CLASSPATH="$CLASSPATH:$d"
 done
-
-
+#add the zoocfg dir to classpath
+CLASSPATH=$ZOOCFGDIR:$CLASSPATH
 ZOOCFG="$ZOOCFGDIR/zoo.cfg"
