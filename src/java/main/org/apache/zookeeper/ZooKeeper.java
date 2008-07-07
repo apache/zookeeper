@@ -1103,7 +1103,7 @@ public class ZooKeeper {
         acl = new ArrayList<ACL>();
         for (String a : acls) {
             int firstColon = a.indexOf(':');
-            int lastColon = a.indexOf(':');
+            int lastColon = a.lastIndexOf(':');
             if (firstColon == -1 || lastColon == -1 || firstColon == lastColon) {
                 System.err
                         .println(a + " does not have the form scheme:id:perm");
