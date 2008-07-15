@@ -1,3 +1,21 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.zookeeper.test;
 
 import java.io.File;
@@ -40,7 +58,7 @@ public class QuorumTest extends ClientTest {
         LOG.warn("Setup finished");
     }
     void startServers() throws IOException, InterruptedException {
-		QuorumStats.registerAsConcrete();
+        QuorumStats.registerAsConcrete();
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
@@ -83,6 +101,6 @@ public class QuorumTest extends ClientTest {
         s4.shutdown();
         s5.shutdown();
         Thread.sleep(5000);
-		QuorumStats.unregister();
+        QuorumStats.unregister();
     }
 }

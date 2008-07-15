@@ -1,3 +1,21 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.zookeeper.test;
 
 import java.io.File;
@@ -19,23 +37,23 @@ import org.apache.zookeeper.ZooDefs.CreateFlags;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
-    
+
 public class ClientTest extends ClientBase implements Watcher {
-    LinkedBlockingQueue<WatcherEvent> events = 
+    LinkedBlockingQueue<WatcherEvent> events =
         new LinkedBlockingQueue<WatcherEvent>();
     protected volatile CountDownLatch clientConnected;
 
-    protected ZooKeeper createClient(Watcher watcher) 
+    protected ZooKeeper createClient(Watcher watcher)
         throws IOException, InterruptedException
     {
         clientConnected=new CountDownLatch(1);
         ZooKeeper zk = new ZooKeeper(hostPort, 20000, watcher);
-		if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
-			fail("Unable to connect to server");
-		}
-		return zk;
+        if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
+            fail("Unable to connect to server");
+        }
+        return zk;
     }
-    
+
     protected void tearDown() throws Exception {
         clientConnected = null;
         super.tearDown();
@@ -88,14 +106,14 @@ public class ClientTest extends ClientBase implements Watcher {
             InterruptedException, KeeperException {
         ZooKeeper zk = null;
         try {
-    		zk =createClient(this);
+            zk =createClient(this);
             //System.out.println("Created client: " + zk.describeCNXN());
             System.out.println("Before create /benwashere");
             zk.create("/benwashere", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
             System.out.println("After create /benwashere");
             try {
-            	zk.setData("/benwashere", "hi".getBytes(), 57);
-        		fail("Should have gotten BadVersion exception");
+                zk.setData("/benwashere", "hi".getBytes(), 57);
+                fail("Should have gotten BadVersion exception");
             } catch(KeeperException.BadVersionException e) {
                 // expected that
             } catch (KeeperException e) {
@@ -110,7 +128,7 @@ public class ClientTest extends ClientBase implements Watcher {
             zk = createClient(this);
             //System.out.println("Created a new client: " + zk.describeCNXN());
             System.out.println("Before delete /");
-            
+
             try {
                 zk.delete("/", -1);
                 fail("deleted root!");
@@ -194,7 +212,7 @@ public class ClientTest extends ClientBase implements Watcher {
             //} catch(KeeperException e) {
             //    assertEquals(KeeperException.Code.BadArguments, e.getCode());
             //}
-            
+
             zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
             try {
                 zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
@@ -301,12 +319,12 @@ public class ClientTest extends ClientBase implements Watcher {
             LOG.error("******************* Connected to ZooKeeper" + new Date());
             for (int i = 0; i < threadCount; i++) {
                 System.err.println("Doing thread: " + i + " " + new Date());
-                List<String> children = 
+                List<String> children =
                     zk.getChildren("/test-" + i, false);
                 assertEquals(childCount, children.size());
             }
             for (int i = 0; i < threadCount; i++) {
-                List<String> children = 
+                List<String> children =
                     zk.getChildren("/test-" + i, false);
                 assertEquals(childCount, children.size());
             }
@@ -322,15 +340,15 @@ public class ClientTest extends ClientBase implements Watcher {
     }
 
     public void process(WatcherEvent event) {
-		if (event.getState() == Event.KeeperStateSyncConnected) {
-			clientConnected.countDown();
-		}
-		if (event.getType() != Event.EventNone) {
-			try {
-				events.put(event);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+        if (event.getState() == Event.KeeperStateSyncConnected) {
+            clientConnected.countDown();
+        }
+        if (event.getType() != Event.EventNone) {
+            try {
+                events.put(event);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

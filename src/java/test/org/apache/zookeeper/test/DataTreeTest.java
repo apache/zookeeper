@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.test;
 
 import static org.junit.Assert.*;
@@ -31,7 +32,7 @@ import junit.framework.TestCase;
 
 public class DataTreeTest extends TestCase {
     DataTree dt;
-    
+
     public void setUp() throws Exception {
         dt=new DataTree();
     }
@@ -40,7 +41,7 @@ public class DataTreeTest extends TestCase {
         dt=null;
     }
 
-   
+
     public void testRootWatchTriggered() throws Exception {
         class MyWatcher implements Watcher{
             boolean fired=false;

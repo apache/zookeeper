@@ -1,10 +1,28 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.zookeeper.test;
 
 /**
  * This is a simple test to check the integrity of ZooKeeper servers. The client
  * simply cycles through blasting changes to ZooKeeper and the checking what it
  * gets back.
- * 
+ *
  * The check is very simple. The value of the last successful read or write is
  * stored in lastValue. When we issue a request, that value becomes a possible
  * value. The difficulty is that when a communication error happens, the client
@@ -81,7 +99,7 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
                 waitOutstanding();
             }
         }finally{
-            LOG.warn("Test loop terminated for "+path);            
+            LOG.warn("Test loop terminated for "+path);
         }
     }
 
@@ -145,7 +163,7 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
             }
         }
     }
-    
+
     /**
      * @param args
      */
@@ -175,7 +193,7 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
                     ctest.run();
                 } catch (Exception e) {
                     e.printStackTrace();
-                }                
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
