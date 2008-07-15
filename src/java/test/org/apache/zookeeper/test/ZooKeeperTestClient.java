@@ -1,3 +1,21 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
@@ -240,18 +258,18 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     System.out.println("session id of zk: " + zk.getSessionId());
     System.out.println("session id of zk_1: " + zk_1.getSessionId());
     zk.close();
-  
+
     stat = zk_1.exists("nosuchnode", false);
-    
+
     event = this.getEvent(10);
     if (event == null) {
       fail("First event was not delivered promptly");
     }
-    if (!((event.getType() == Watcher.Event.EventNodeChildrenChanged && 
+    if (!((event.getType() == Watcher.Event.EventNodeChildrenChanged &&
            event.getPath().equalsIgnoreCase(parentName)) ||
-         (event.getType() == Watcher.Event.EventNodeDeleted && 
+         (event.getType() == Watcher.Event.EventNodeDeleted &&
            event.getPath().equalsIgnoreCase(nodeName)))) {
-      System.out.print(parentName + " " 
+      System.out.print(parentName + " "
           + Watcher.Event.EventNodeChildrenChanged + " " + nodeName + " " + Watcher.Event.EventNodeDeleted);
       fail("Unexpected first event was delivered: " + event.toString());
     }
@@ -261,11 +279,11 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     if (event == null) {
       fail("Second event was not delivered promptly");
     }
-    if (!((event.getType() == Watcher.Event.EventNodeChildrenChanged && 
+    if (!((event.getType() == Watcher.Event.EventNodeChildrenChanged &&
         event.getPath().equalsIgnoreCase(parentName)) ||
-      (event.getType() == Watcher.Event.EventNodeDeleted && 
+      (event.getType() == Watcher.Event.EventNodeDeleted &&
         event.getPath().equalsIgnoreCase(nodeName)))) {
-      System.out.print(parentName + " " 
+      System.out.print(parentName + " "
           + Watcher.Event.EventNodeChildrenChanged + " " + nodeName + " " + Watcher.Event.EventNodeDeleted);
       fail("Unexpected second event was delivered: " + event.toString());
     }
