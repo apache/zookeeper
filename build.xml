@@ -387,24 +387,24 @@
     </target>
 
     <!-- Code coverage -->
-    <taskdef resource="tasks.properties">
-        <classpath>
-            <pathelement path="${lib.dir}/cobertura/cobertura.jar" />
-            <fileset dir="${lib.dir}/cobertura/lib">
-               <include name="*.jar"/>
-            </fileset>
-            <fileset dir="${lib.dir}">
-               <include name="*.jar"/>
-            </fileset>
-        </classpath>
-    </taskdef>
-
     <target name="cobertura-instrument" depends="compile-test">
-        <cobertura-instrument todir="${build.dir}/cobertura">
-            <fileset dir="${build.classes}">
-                <include name="org/apache/zookeeper/**/*.class"/>
-            </fileset>
-        </cobertura-instrument>
+      <taskdef resource="tasks.properties">
+        <classpath>
+          <pathelement path="${lib.dir}/cobertura/cobertura.jar" />
+          <fileset dir="${lib.dir}/cobertura/lib">
+            <include name="*.jar"/>
+          </fileset>
+          <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+          </fileset>
+        </classpath>
+      </taskdef>
+
+      <cobertura-instrument todir="${build.dir}/cobertura">
+        <fileset dir="${build.classes}">
+          <include name="org/apache/zookeeper/**/*.class"/>
+        </fileset>
+      </cobertura-instrument>
     </target>
 
     <target name="cobertura-test" depends="test-init,cobertura-instrument">
