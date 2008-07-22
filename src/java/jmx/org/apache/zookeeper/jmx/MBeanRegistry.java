@@ -143,7 +143,7 @@ public class MBeanRegistry {
     private int tokenize(StringBuilder sb, String path, int index){
         String[] tokens = path.split("/");
         for (String s: tokens) {
-            if (s.isEmpty())
+            if (s.length()==0)
                 continue;
             sb.append("name").append(index++)
                     .append("=").append(s).append(",");
