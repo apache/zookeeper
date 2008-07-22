@@ -56,6 +56,8 @@
     <property name="config.dir" value="${src.dir}/java/test/config" />
     <property name="test.junit.maxmem" value="512m" />
     <property name="conf.dir" value="${basedir}/conf"/>
+    <property name="docs.dir" value="${basedir}/docs"/>
+    <property name="docs.src" value="${basedir}/src/docs"/>
     <property name="javadoc.link.java" value="http://java.sun.com/j2se/${target.jdk}/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
     <property name="build.docs" value="${build.dir}/docs" />
@@ -204,15 +206,46 @@
     <!-- ====================================================== -->
     <!-- Documentation                                          -->
     <!-- ====================================================== -->
-    <target name="javadoc" depends="jar">
-        <mkdir dir="${build.javadoc}" />
-        <javadoc packagenames="org.apache.*" destdir="${build.javadoc}" author="true" version="true" 
-                use="true" windowtitle="${Name} ${version} API" doctitle="${Name} ${version} API" 
-                bottom="Copyright &amp;copy; ${year} The Apache Software Foundation">
-            <packageset dir="${java.src.dir}" />
-            <link href="${javadoc.link.java}" />
-        </javadoc>
+    <target name="docs" depends="forrest.check" description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line." if="forrest.home">
+      <condition property="forrest.exec" value="forrest.bat" else="forrest">
+      	<os family="windows"/>
+      </condition>
+      <exec dir="${docs.src}" executable="${forrest.home}/bin/${forrest.exec}" failonerror="true" />
+      <copy todir="${docs.dir}">
+        <fileset dir="${docs.src}/build/site/" />
+      </copy>
+      <style basedir="${conf.dir}" destdir="${docs.dir}"
+             includes="zookeeper-default.xml" style="conf/configuration.xsl"/>
     </target>
+
+    <target name="forrest.check" unless="forrest.home">
+      <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
+    </target>
+
+    <!-- Javadoc -->
+    <target name="javadoc" description="Generate javadoc">
+      <mkdir dir="${build.javadoc}"/>
+      <javadoc
+         overview="${java.src.dir}/overview.html"
+         packagenames="org.apache.zookeeper.*"
+         destdir="${build.javadoc}"
+         author="true"
+         version="true"
+         use="true"
+         windowtitle="${Name} ${version} API"
+         doctitle="${Name} ${version} API"
+         bottom="Copyright &amp;copy; ${year} The Apache Software Foundation"
+         >
+    	<packageset dir="${java.src.dir}">
+          <include name="org/apache/**"/>
+          <exclude name="org/apache/jute/**"/>
+    	</packageset>
+        <link href="${javadoc.link.java}"/>
+        <classpath >
+          <pathelement path="${java.class.path}"/>
+        </classpath>
+      </javadoc>
+    </target>	
 
     <!-- ====================================================== -->
     <!-- Make zookeeper.jar                                     -->
