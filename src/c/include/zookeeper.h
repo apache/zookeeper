@@ -231,10 +231,32 @@ typedef struct {
 /**
  * \brief signature of a watch function.
  * 
- * Programs wishing to receive events from ZooKeeper need to implement a function 
- * with this signature and pass a pointer to the function to \ref zookeeper_init.
+ * There are two ways to receive watch notifications: legacy and watcher object.
+ * <p>
+ * The legacy style, an application wishing to receive events from ZooKeeper must 
+ * first implement a function with this signature and pass a pointer to the function 
+ * to \ref zookeeper_init. Next, the application sets a watch by calling one of 
+ * the getter API that accept the watch integer flag (for example, \ref zoo_aexists, 
+ * \ref zoo_get, etc).
+ * <p>
+ * The watcher object style uses an instance of a "watcher object" which in 
+ * the C world is represented by a pair: a pointer to a function implementing this
+ * signature and a pointer to watcher context -- handback user-specific data. 
+ * When a watch is triggered this function will be called along with 
+ * the watcher context. An application wishing to use this style must use
+ * the getter API functions with the "w" prefix in their names (for example, \ref
+ * zoo_awexists, \ref zoo_wget, etc).
+ * 
+ * \param zh zookeeper handle
+ * \param type event type. This is one of the *_EVENT constants. 
+ * \param state connection state. If the type is SESSION_EVENT, the state value 
+ * will be one of the *_STATE constants, otherwise -1.
+ * \param path znode path for which the watcher is triggered. NULL if the event 
+ * type is SESSION_EVENT
+ * \param watcherCtx watcher context.
  */
-typedef void (*watcher_fn)(zhandle_t *, int type, int state, const char *path);
+typedef void (*watcher_fn)(zhandle_t *zh, int type, 
+        int state, const char *path,void *watcherCtx);
 
 /**
  * \brief create a handle to used communicate with zookeeper.
@@ -243,7 +265,7 @@ typedef void (*watcher_fn)(zhandle_t *, int type, int state, const char *path);
  * to that handle.
  * \param host the host name to connect to. This may be a comma separated list
  *   of different hosts.
- * \param fn the watcher callback function. When notifications are triggered
+ * \param fn the global watcher callback function. When notifications are triggered
  *   this function will be invoked.
  * \param clientid the id of a previously established session that this
  *   client will be reconnecting to. Pass 0 if not reconnecting to a previous
@@ -579,6 +601,39 @@ ZOOAPI int zoo_aexists(zhandle_t *zh, const char *path, int watch,
         stat_completion_t completion, const void *data);
 
 /**
+ * \brief checks the existence of a node in zookeeper.
+ * 
+ * This function is similar to \ref zoo_axists except it allows one specify 
+ * a watcher object - a function pointer and associated context. The function
+ * will be called once the watch has fired. The associated context data will be 
+ * passed to the function as the watcher context parameter. 
+ * 
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param watcher if non-null a watch will set on the specified znode on the server.
+ * The watch will be set even if the node does not exist. This allows clients 
+ * to watch for nodes to appear.
+ * \param watcherCtx user specific data, will be passed to the watcher callback.
+ * Unlike the global context set by \ref zookeeper_init, this watcher context
+ * is associated with the given instance of the watcher only.
+ * \param completion the routine to invoke when the request completes. The completion
+ * will be triggered with one of the following codes passed in as the rc argument:
+ * ZOK operation completed succesfully
+ * ZNONODE the node does not exist.
+ * ZNOAUTH the client does not have permission.
+ * \param data the data that will be passed to the completion routine when the 
+ * function completes.
+ * \return ZOK on success or one of the following errcodes on failure:
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_awexists(zhandle_t *zh, const char *path, 
+        watcher_fn watcher, void* watcherCtx, 
+        stat_completion_t completion, const void *data);
+
+/**
  * \brief gets the data associated with a node.
  * 
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
@@ -599,6 +654,36 @@ ZOOAPI int zoo_aexists(zhandle_t *zh, const char *path, int watch,
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
 ZOOAPI int zoo_aget(zhandle_t *zh, const char *path, int watch, 
+        data_completion_t completion, const void *data);
+
+/**
+ * \brief gets the data associated with a node.
+ * 
+ * This function is similar to \ref zoo_aget except it allows one specify 
+ * a watcher object rather than a boolean watch flag. 
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param watcher if non-null, a watch will be set at the server to notify 
+ * the client if the node changes.
+ * \param watcherCtx user specific data, will be passed to the watcher callback.
+ * Unlike the global context set by \ref zookeeper_init, this watcher context
+ * is associated with the given instance of the watcher only.
+ * \param completion the routine to invoke when the request completes. The completion
+ * will be triggered with one of the following codes passed in as the rc argument:
+ * ZOK operation completed succesfully
+ * ZNONODE the node does not exist.
+ * ZNOAUTH the client does not have permission.
+ * \param data the data that will be passed to the completion routine when 
+ * the function completes.
+ * \return ZOK on success or one of the following errcodes on failure:
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either in SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_awget(zhandle_t *zh, const char *path, 
+        watcher_fn watcher, void* watcherCtx, 
         data_completion_t completion, const void *data);
 
 /**
@@ -654,6 +739,36 @@ ZOOAPI int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
         strings_completion_t completion, const void *data);
 
 /**
+ * \brief lists the children of a node.
+ * 
+ * This function is similar to \ref zoo_aget_children except it allows one specify 
+ * a watcher object rather than a boolean watch flag.
+ *  
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param watcher if non-null, a watch will be set at the server to notify 
+ * the client if the node changes.
+ * \param watcherCtx user specific data, will be passed to the watcher callback.
+ * Unlike the global context set by \ref zookeeper_init, this watcher context
+ * is associated with the given instance of the watcher only.
+ * \param completion the routine to invoke when the request completes. The completion
+ * will be triggered with one of the following codes passed in as the rc argument:
+ * ZOK operation completed succesfully
+ * ZNONODE the node does not exist.
+ * ZNOAUTH the client does not have permission.
+ * \param data the data that will be passed to the completion routine when 
+ * the function completes.
+ * \return ZOK on success or one of the following errcodes on failure:
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_awget_children(zhandle_t *zh, const char *path,
+        watcher_fn watcher, void* watcherCtx, 
+        strings_completion_t completion, const void *data);
+
+/**
  * \brief Flush leader channel.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
@@ -672,7 +787,8 @@ ZOOAPI int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
 
-ZOOAPI int zoo_async(zhandle_t *zh, const char *path, string_completion_t completion, const void *data);
+ZOOAPI int zoo_async(zhandle_t *zh, const char *path, 
+        string_completion_t completion, const void *data);
 
 
 /**
@@ -825,7 +941,6 @@ ZOOAPI void zoo_deterministic_conn_order(int yesOrNo);
  * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-
 ZOOAPI int zoo_create(zhandle_t *zh, const char *path, const char *value,
         int valuelen, const struct ACL_vector *acl, int flags, char *realpath,	 
         int max_realpath_len);
@@ -849,7 +964,6 @@ ZOOAPI int zoo_create(zhandle_t *zh, const char *path, const char *value,
  * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-
 ZOOAPI int zoo_delete(zhandle_t *zh, const char *path, int version);
 
 
@@ -871,8 +985,34 @@ ZOOAPI int zoo_delete(zhandle_t *zh, const char *path, int version);
  * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-
 ZOOAPI int zoo_exists(zhandle_t *zh, const char *path, int watch, struct Stat *stat);
+
+/**
+ * \brief checks the existence of a node in zookeeper synchronously.
+ * 
+ * This function is similar to \ref zoo_exists except it allows one specify 
+ * a watcher object rather than a boolean watch flag.
+ * 
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param watcher if non-null a watch will set on the specified znode on the server.
+ * The watch will be set even if the node does not exist. This allows clients 
+ * to watch for nodes to appear.
+ * \param watcherCtx user specific data, will be passed to the watcher callback.
+ * Unlike the global context set by \ref zookeeper_init, this watcher context
+ * is associated with the given instance of the watcher only.
+ * \param the return stat value of the node.
+ * \return  return code of the function call.
+ * ZOK operation completed succesfully
+ * ZNONODE the node does not exist.
+ * ZNOAUTH the client does not have permission.
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_wexists(zhandle_t *zh, const char *path,
+        watcher_fn watcher, void* watcherCtx, struct Stat *stat);
 
 /**
  * \brief gets the data associated with a node synchronously.
@@ -894,10 +1034,38 @@ ZOOAPI int zoo_exists(zhandle_t *zh, const char *path, int watch, struct Stat *s
  * ZINVALIDSTATE - zhandle state is either in SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-
 ZOOAPI int zoo_get(zhandle_t *zh, const char *path, int watch, char *buffer,   
                    int* buffer_len, struct Stat *stat);
 
+/**
+ * \brief gets the data associated with a node synchronously.
+ * 
+ * This function is similar to \ref zoo_get except it allows one specify 
+ * a watcher object rather than a boolean watch flag.
+ * 
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param watcher if non-null, a watch will be set at the server to notify 
+ * the client if the node changes.
+ * \param watcherCtx user specific data, will be passed to the watcher callback.
+ * Unlike the global context set by \ref zookeeper_init, this watcher context
+ * is associated with the given instance of the watcher only.
+ * \param buffer the buffer holding the node data returned by the server
+ * \param buffer_len is the size of the buffer pointed to by the buffer parameter.
+ * It'll be set to the actual data length upon return.
+ * \param stat if not NULL, will hold the value of stat for the path on return.
+ * \return return value of the function call.
+ * ZOK operation completed succesfully
+ * ZNONODE the node does not exist.
+ * ZNOAUTH the client does not have permission.
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either in SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_wget(zhandle_t *zh, const char *path, 
+        watcher_fn watcher, void* watcherCtx, 
+        char *buffer, int* buffer_len, struct Stat *stat);
 
 /**
  * \brief sets the data associated with a node.
@@ -919,7 +1087,6 @@ ZOOAPI int zoo_get(zhandle_t *zh, const char *path, int watch, char *buffer,
  * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-
 ZOOAPI int zoo_set(zhandle_t *zh, const char *path, const char *buffer, int buflen,
                    int version);
 
@@ -941,9 +1108,36 @@ ZOOAPI int zoo_set(zhandle_t *zh, const char *path, const char *buffer, int bufl
  * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-
 ZOOAPI int zoo_get_children(zhandle_t *zh, const char *path, int watch,
                             struct String_vector *strings);
+
+/**
+ * \brief lists the children of a node synchronously.
+ * 
+ * This function is similar to \ref zoo_get_children except it allows one specify 
+ * a watcher object rather than a boolean watch flag.
+ * 
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param watcher if non-null, a watch will be set at the server to notify 
+ * the client if the node changes.
+ * \param watcherCtx user specific data, will be passed to the watcher callback.
+ * Unlike the global context set by \ref zookeeper_init, this watcher context
+ * is associated with the given instance of the watcher only.
+ * \param strings return value of children paths.
+ * \return the return code of the function.
+ * ZOK operation completed succesfully
+ * ZNONODE the node does not exist.
+ * ZNOAUTH the client does not have permission.
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_wget_children(zhandle_t *zh, const char *path, 
+        watcher_fn watcher, void* watcherCtx,
+        struct String_vector *strings);
+
 /**
  * \brief gets the acl associated with a node synchronously.
  * 
@@ -960,7 +1154,6 @@ ZOOAPI int zoo_get_children(zhandle_t *zh, const char *path, int watch,
  * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-
 ZOOAPI int zoo_get_acl(zhandle_t *zh, const char *path, struct ACL_vector *acl,
                        struct Stat *stat);
 
@@ -982,7 +1175,6 @@ ZOOAPI int zoo_get_acl(zhandle_t *zh, const char *path, struct ACL_vector *acl,
  * ZINVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-
 ZOOAPI int zoo_set_acl(zhandle_t *zh, const char *path, int version,
                            const struct ACL_vector *acl);
 

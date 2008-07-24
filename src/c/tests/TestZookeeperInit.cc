@@ -49,7 +49,7 @@ class Zookeeper_init : public CPPUNIT_NS::TestFixture
 	CPPUNIT_TEST_SUITE_END();
     zhandle_t *zh;
     MockPthreadsNull* pthreadMock;   
-    static void watcher(zhandle_t *, int , int , const char *){}
+    static void watcher(zhandle_t *, int , int , const char *,void*){}
 public: 
     Zookeeper_init():zh(0),pthreadMock(0){}
     

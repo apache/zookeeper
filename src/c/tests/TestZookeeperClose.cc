@@ -38,7 +38,7 @@ class Zookeeper_close : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testCloseFromWatcher1);
     CPPUNIT_TEST_SUITE_END();
     zhandle_t *zh;
-    static void watcher(zhandle_t *, int, int, const char *){}
+    static void watcher(zhandle_t *, int, int, const char *,void*){}
 public: 
     void setUp()
     {
@@ -59,7 +59,7 @@ public:
         virtual void onSessionExpired(zhandle_t* zh){
             memcpy(&lzh,zh,sizeof(lzh));
             if(callClose_)
-                rc=zookeeper_close(zh);           
+                rc=zookeeper_close(zh);
         }
         zhandle_t lzh;
         bool callClose_;
@@ -88,7 +88,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs));
-        CPPUNIT_ASSERT_EQUAL(3,freeMock.callCounter);
+        CPPUNIT_ASSERT_EQUAL(9,freeMock.callCounter);
     }
     void testCloseUnconnected1()
     {
@@ -236,7 +236,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(adaptor));
-        CPPUNIT_ASSERT_EQUAL(4,freeMock.callCounter);
+        CPPUNIT_ASSERT_EQUAL(10,freeMock.callCounter);
         // threads
         CPPUNIT_ASSERT_EQUAL(1,MockPthreadsNull::getDestroyCounter(adaptor->io));
         CPPUNIT_ASSERT_EQUAL(1,MockPthreadsNull::getDestroyCounter(adaptor->completion));
@@ -410,6 +410,8 @@ public:
             CPPUNIT_ASSERT(zh!=0);
             CPPUNIT_ASSERT(ensureCondition(SessionExpired(zh),1000)<1000);
             CPPUNIT_ASSERT(ensureCondition(IOThreadStopped(zh),1000)<1000);
+            // make sure the watcher has been processed
+            CPPUNIT_ASSERT(ensureCondition(closeAction.isWatcherTriggered(),1000)<1000);
             // make sure the threads have not been destroyed yet
             adaptor_threads* adaptor=(adaptor_threads*)zh->adaptor_priv;
             CPPUNIT_ASSERT_EQUAL(0,CheckedPthread::getDestroyCounter(adaptor->io));

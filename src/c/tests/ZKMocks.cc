@@ -66,17 +66,26 @@ HandshakeRequest* HandshakeRequest::parse(const std::string& buf){
 
 // *****************************************************************************
 // watcher action implementation
-void activeWatcher(zhandle_t *zh, int type, int state, const char *path){
-    if(zh==0 || zoo_get_context(zh)==0) return;
-    WatcherAction* action=(WatcherAction*)zoo_get_context(zh);
-    action->setWatcherTriggered();    
+void activeWatcher(zhandle_t *zh, int type, int state, const char *path,void* ctx){
+    if(zh==0 || ctx==0) return;
+    WatcherAction* action=(WatcherAction*)ctx;
     
-    if(type==SESSION_EVENT && state==EXPIRED_SESSION_STATE)
-        action->onSessionExpired(zh);
-    if(type==CHANGED_EVENT)
+    if(type==SESSION_EVENT){
+        if(state==EXPIRED_SESSION_STATE)
+            action->onSessionExpired(zh);
+        else if(state==CONNECTING_STATE)
+            action->onConnectionLost(zh);
+        else if(state==CONNECTED_STATE)
+            action->onConnectionEstablished(zh);
+    }else if(type==CHANGED_EVENT)
         action->onNodeValueChanged(zh,path);
+    else if(type==DELETED_EVENT)
+        action->onNodeDeleted(zh,path);
+    else if(type==CHILD_EVENT)
+        action->onChildChanged(zh,path);
     // TODO: implement for the rest of the event types
     // ...
+    action->setWatcherTriggered();    
 }
 SyncedBoolCondition WatcherAction::isWatcherTriggered() const{
     return SyncedBoolCondition(triggered_,mx_);
@@ -145,6 +154,167 @@ DECLARE_WRAPPER(int32_t,get_xid,())
 Mock_get_xid* Mock_get_xid::mock_=0;
 
 //******************************************************************************
+// activateWatcher mock
+
+DECLARE_WRAPPER(void,activateWatcher,(watcher_registration_t* reg, int rc))
+{
+    if(!Mock_activateWatcher::mock_){
+        CALL_REAL(activateWatcher,(reg,rc));
+    }else{
+        Mock_activateWatcher::mock_->call(reg,rc);
+    }
+}
+Mock_activateWatcher* Mock_activateWatcher::mock_=0;
+
+class ActivateWatcherWrapper: public Mock_activateWatcher{
+public:
+    ActivateWatcherWrapper():ctx_(0),activated_(false){}
+    
+    virtual void call(watcher_registration_t* reg, int rc){
+        CALL_REAL(activateWatcher,(reg,rc));
+        synchronized(mx_);
+        if(reg->context==ctx_){
+            activated_=true;
+            ctx_=0;
+        }
+    }
+    
+    void setContext(void* ctx){
+        synchronized(mx_);
+        ctx_=ctx;
+        activated_=false;
+    }
+    
+    SyncedBoolCondition isActivated() const{
+        return SyncedBoolCondition(activated_,mx_);
+    }
+    mutable Mutex mx_;
+    void* ctx_;
+    bool activated_;
+};
+
+WatcherActivationTracker::WatcherActivationTracker():
+    wrapper_(new ActivateWatcherWrapper)
+{    
+}
+
+WatcherActivationTracker::~WatcherActivationTracker(){
+    delete wrapper_;
+}
+
+void WatcherActivationTracker::track(void* ctx){
+    wrapper_->setContext(ctx);
+}
+
+SyncedBoolCondition WatcherActivationTracker::isWatcherActivated() const{
+    return wrapper_->isActivated();
+}
+
+//******************************************************************************
+//
+DECLARE_WRAPPER(void,deliverWatchers,(zhandle_t* zh,int type,int state, const char* path))
+{
+    if(!Mock_deliverWatchers::mock_){
+        CALL_REAL(deliverWatchers,(zh,type,state,path));
+    }else{
+        Mock_deliverWatchers::mock_->call(zh,type,state,path);
+    }
+}
+
+Mock_deliverWatchers* Mock_deliverWatchers::mock_=0;
+
+struct RefCounterValue{
+    RefCounterValue(zhandle_t* const& zh,int32_t expectedCounter,Mutex& mx):
+        zh_(zh),expectedCounter_(expectedCounter),mx_(mx){}
+    bool operator()() const{
+        {
+            synchronized(mx_);
+            if(zh_==0)
+                return false;
+        }
+        return inc_ref_counter(zh_,0)==expectedCounter_;
+    }
+    zhandle_t* const& zh_;
+    int32_t expectedCounter_;
+    Mutex& mx_;
+};
+
+
+class DeliverWatchersWrapper: public Mock_deliverWatchers{
+public:
+    DeliverWatchersWrapper(int type,int state,bool terminate):
+        type_(type),state_(state),
+        allDelivered_(false),terminate_(terminate),zh_(0),deliveryCounter_(0){}
+    virtual void call(zhandle_t* zh,int type,int state, const char* path){
+        {
+            synchronized(mx_);
+            zh_=zh;
+            allDelivered_=false;
+        }
+        CALL_REAL(deliverWatchers,(zh,type,state,path));
+        if(type_==type && state_==state){
+            if(terminate_){
+                // prevent zhandle_t from being prematurely distroyed;
+                // this will also ensure that zookeeper_close() cleanups the thread
+                // resources by calling finish_adaptor()
+                inc_ref_counter(zh,1);
+                terminateZookeeperThreads(zh);
+            }
+            synchronized(mx_);
+            allDelivered_=true;
+            deliveryCounter_++;
+        }
+    }
+    SyncedBoolCondition isDelivered() const{
+        if(terminate_){
+            int i=ensureCondition(RefCounterValue(zh_,1,mx_),1000);
+            assert(i<1000);
+        }
+        return SyncedBoolCondition(allDelivered_,mx_);
+    }
+    void resetDeliveryCounter(){
+        synchronized(mx_);
+        deliveryCounter_=0;
+    }
+    SyncedIntegerEqual deliveryCounterEquals(int expected) const{
+        if(terminate_){
+            int i=ensureCondition(RefCounterValue(zh_,1,mx_),1000);
+            assert(i<1000);
+        }
+        return SyncedIntegerEqual(deliveryCounter_,expected,mx_);
+    }
+    int type_;
+    int state_;
+    mutable Mutex mx_;
+    bool allDelivered_;
+    bool terminate_;
+    zhandle_t* zh_;
+    int deliveryCounter_;
+};
+
+WatcherDeliveryTracker::WatcherDeliveryTracker(
+        int type,int state,bool terminateCompletionThread):
+    deliveryWrapper_(new DeliverWatchersWrapper(
+            type,state,terminateCompletionThread)){
+}
+
+WatcherDeliveryTracker::~WatcherDeliveryTracker(){
+    delete deliveryWrapper_;
+}
+
+SyncedBoolCondition WatcherDeliveryTracker::isWatcherProcessingCompleted() const{
+    return deliveryWrapper_->isDelivered();
+}
+
+void WatcherDeliveryTracker::resetDeliveryCounter(){
+    deliveryWrapper_->resetDeliveryCounter();
+}
+
+SyncedIntegerEqual WatcherDeliveryTracker::deliveryCounterEquals(int expected) const{
+    return deliveryWrapper_->deliveryCounterEquals(expected);
+}
+
+//******************************************************************************
 //
 string HandshakeResponse::toString() const {
     string buf;
@@ -177,6 +347,45 @@ string ZooGetResponse::toString() const{
     data_.copy(resp.data.buff, data_.size());
     resp.stat=stat_;
     serialize_GetDataResponse(oa, "reply", &resp);
+    int32_t len=htonl(get_buffer_len(oa));
+    string res((char*)&len,sizeof(len));
+    res.append(get_buffer(oa),get_buffer_len(oa));
+    
+    close_buffer_oarchive(&oa,1);
+    return res;
+}
+
+string ZooStatResponse::toString() const{
+    oarchive* oa=create_buffer_oarchive();
+    
+    ReplyHeader h = {xid_,1,rc_};
+    serialize_ReplyHeader(oa, "hdr", &h);
+    
+    SetDataResponse resp;
+    resp.stat=stat_;
+    serialize_SetDataResponse(oa, "reply", &resp);
+    int32_t len=htonl(get_buffer_len(oa));
+    string res((char*)&len,sizeof(len));
+    res.append(get_buffer(oa),get_buffer_len(oa));
+    
+    close_buffer_oarchive(&oa,1);
+    return res;
+}
+
+string ZooGetChildrenResponse::toString() const{
+    oarchive* oa=create_buffer_oarchive();
+    
+    ReplyHeader h = {xid_,1,rc_};
+    serialize_ReplyHeader(oa, "hdr", &h);
+ 
+    GetChildrenResponse resp;
+    // populate the string vector
+    allocate_String_vector(&resp.children,strings_.size());
+    for(int i=0;i<(int)strings_.size();++i)
+        resp.children.data[i]=strdup(strings_[i].c_str());
+    serialize_GetChildrenResponse(oa, "reply", &resp);
+    deallocate_GetChildrenResponse(&resp);
+    
     int32_t len=htonl(get_buffer_len(oa));
     string res((char*)&len,sizeof(len));
     res.append(get_buffer(oa),get_buffer_len(oa));
@@ -219,7 +428,7 @@ string PingResponse::toString() const{
 // Zookeeper server simulator
 // 
 bool ZookeeperServer::hasMoreRecv() const{
-  return recvHasMore.get()!=0;
+  return recvHasMore.get()!=0  || connectionLost;
 }
 
 ssize_t ZookeeperServer::callRecv(int s,void *buf,size_t len,int flags){
@@ -294,4 +503,9 @@ void forceConnected(zhandle_t* zh){
     zh->input_buffer=0;
     gettimeofday(&zh->last_recv,0);    
     gettimeofday(&zh->last_send,0);    
+}
+
+void terminateZookeeperThreads(zhandle_t* zh){
+    // this will cause the zookeeper threads to terminate
+    zh->close_requested=1;
 }
