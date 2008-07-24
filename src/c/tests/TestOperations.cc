@@ -41,7 +41,7 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE_END();
     zhandle_t *zh;
 
-    static void watcher(zhandle_t *, int, int, const char *){}
+    static void watcher(zhandle_t *, int, int, const char *,void*){}
 public: 
     void setUp()
     {
@@ -256,7 +256,7 @@ public:
         zkServer.addRecvResponse(new PingResponse);
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
-        // sleep for a short while (10 ms)
+        // pseudo-sleep for a short while (10 ms)
         timeMock.millitick(10);
         rc=zookeeper_process(zh,interest);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
@@ -575,11 +575,25 @@ public:
             changed_=true;
             if(path!=0) path_=path;
         }
+        // this predicate checks if CHANGE_EVENT event type was triggered, unlike
+        // the isWatcherTriggered() that returns true whenever a watcher is triggered
+        // regardless of the event type
         SyncedBoolCondition isNodeChangedTriggered() const{
             return SyncedBoolCondition(changed_,mx_);
         }
         bool changed_;
         string path_;
+    };
+    
+    class AsyncWatcherCompletion: public AsyncCompletion{
+    public:
+        AsyncWatcherCompletion(ZookeeperServer& zkServer):zkServer_(zkServer){}
+        virtual void statCompl(int rc, const Stat *stat){
+            // we received a server response, now enqueue a watcher event
+            // to trigger the watcher
+            zkServer_.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/x/y/z"));
+        }
+        ZookeeperServer& zkServer_;
     };
     // verify that async watcher is called for znode events (CREATED, DELETED etc.)
     void testAsyncWatcher1(){
@@ -596,9 +610,14 @@ public:
         CPPUNIT_ASSERT(zh!=0);
         // make sure the client has connected
         CPPUNIT_ASSERT(ensureCondition(ClientConnected(zh),1000)<1000);
-
-        // trigger the watcher
-        zkServer.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/x/y/z"));
+        
+        // set the watcher
+        AsyncWatcherCompletion completion(zkServer);
+        // prepare a response for the zoo_aexists() request
+        zkServer.addOperationResponse(new ZooStatResponse);
+        int rc=zoo_aexists(zh,"/x/y/z",1,asyncCompletion,&completion);
+        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        
         CPPUNIT_ASSERT(ensureCondition(action.isNodeChangedTriggered(),1000)<1000);
         CPPUNIT_ASSERT_EQUAL(string("/x/y/z"),action.path_);                
     }

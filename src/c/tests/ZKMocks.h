@@ -32,6 +32,11 @@
 // Async API tests!
 void forceConnected(zhandle_t* zh); 
 
+/**
+ * Gracefully terminates zookeeper I/O and completion threads. 
+ */
+void terminateZookeeperThreads(zhandle_t* zh);
+
 // *****************************************************************************
 // Abstract watcher action
 struct SyncedBoolCondition;
@@ -42,7 +47,11 @@ public:
     virtual ~WatcherAction(){}
     
     virtual void onSessionExpired(zhandle_t*){}
+    virtual void onConnectionEstablished(zhandle_t*){}
+    virtual void onConnectionLost(zhandle_t*){}
     virtual void onNodeValueChanged(zhandle_t*,const char* path){}
+    virtual void onNodeDeleted(zhandle_t*,const char* path){}
+    virtual void onChildChanged(zhandle_t*,const char* path){}
     
     SyncedBoolCondition isWatcherTriggered() const;
     void setWatcherTriggered(){
@@ -57,7 +66,7 @@ protected:
 // zh->context is a pointer to a WatcherAction instance
 // based on the event type and state, the watcher calls a specific watcher 
 // action method
-void activeWatcher(zhandle_t *zh, int type, int state, const char *path);
+void activeWatcher(zhandle_t *zh, int type, int state, const char *path,void* ctx);
 
 // *****************************************************************************
 // a set of async completion signatures
@@ -104,6 +113,7 @@ struct IOThreadStopped{
     zhandle_t* zh_;
 };
 
+// a synchronized boolean condition
 struct SyncedBoolCondition{
     SyncedBoolCondition(const bool& cond,Mutex& mx):cond_(cond),mx_(mx){}
     bool operator()() const{
@@ -113,6 +123,20 @@ struct SyncedBoolCondition{
     const bool& cond_;
     Mutex& mx_;
 };
+
+// a synchronized integer comparison
+struct SyncedIntegerEqual{
+    SyncedIntegerEqual(const int& cond,int expected,Mutex& mx):
+        cond_(cond),expected_(expected),mx_(mx){}
+    bool operator()() const{
+        synchronized(mx_);
+        return cond_==expected_;
+    }
+    const int& cond_;
+    const int expected_;
+    Mutex& mx_;
+};
+
 // *****************************************************************************
 // make sure to call zookeeper_close() even in presence of exceptions 
 struct CloseFinally{
@@ -158,7 +182,6 @@ struct HandshakeRequest: public connect_req
 
 // *****************************************************************************
 // flush_send_queue
-
 class Mock_flush_send_queue: public Mock
 {
 public:
@@ -177,7 +200,6 @@ public:
 
 // *****************************************************************************
 // get_xid
-
 class Mock_get_xid: public Mock
 {
 public:
@@ -191,6 +213,57 @@ public:
     }
 
     static Mock_get_xid* mock_;
+};
+
+// *****************************************************************************
+// activateWatcher
+class Mock_activateWatcher: public Mock{
+public:
+    Mock_activateWatcher(){mock_=this;}
+    virtual ~Mock_activateWatcher(){mock_=0;}
+    
+    virtual void call(watcher_registration_t* reg, int rc){}
+    static Mock_activateWatcher* mock_;
+};
+
+class ActivateWatcherWrapper;
+class WatcherActivationTracker{
+public:
+    WatcherActivationTracker();
+    ~WatcherActivationTracker();
+    
+    void track(void* ctx);
+    SyncedBoolCondition isWatcherActivated() const;
+private:
+    ActivateWatcherWrapper* wrapper_;
+};
+
+// *****************************************************************************
+// deliverWatchers
+class Mock_deliverWatchers: public Mock{
+public:
+    Mock_deliverWatchers(){mock_=this;}
+    virtual ~Mock_deliverWatchers(){mock_=0;}
+    
+    virtual void call(zhandle_t* zh,int type,int state, const char* path){}
+    static Mock_deliverWatchers* mock_;
+};
+
+class DeliverWatchersWrapper;
+class WatcherDeliveryTracker{
+public:
+    // filters deliveries by state and type
+    WatcherDeliveryTracker(int type,int state,bool terminateCompletionThread=true);
+    ~WatcherDeliveryTracker();
+    
+    // if the thread termination requested (see the ctor params)
+    // this function will wait for the I/O and completion threads to 
+    // terminate before returning a SyncBoolCondition instance
+    SyncedBoolCondition isWatcherProcessingCompleted() const;
+    void resetDeliveryCounter();
+    SyncedIntegerEqual deliveryCounterEquals(int expected) const;
+private:
+    DeliverWatchersWrapper* deliveryWrapper_;
 };
 
 // *****************************************************************************
@@ -220,6 +293,8 @@ public:
     virtual ~Response(){}
     
     virtual void setXID(int32_t xid){}
+    // this method is used by the ZookeeperServer class to serialize 
+    // the instance of Response
     virtual std::string toString() const =0;
 };
 
@@ -257,6 +332,41 @@ private:
     std::string data_;
     int rc_;
     Stat stat_;
+};
+
+// zoo_exists(), zoo_set() response
+class ZooStatResponse: public Response
+{
+public:
+    ZooStatResponse(int32_t xid=0,int rc=ZOK,const Stat& stat=NodeStat())
+        :xid_(xid),rc_(rc),stat_(stat)
+    {
+    }
+    virtual std::string toString() const;
+    virtual void setXID(int32_t xid) {xid_=xid;}
+    
+private:
+    int32_t xid_;
+    int rc_;
+    Stat stat_;
+};
+
+// zoo_get_children()
+class ZooGetChildrenResponse: public Response
+{
+public:
+    typedef std::vector<std::string> StringVector;
+    ZooGetChildrenResponse(const StringVector& v,int rc=ZOK):
+        xid_(0),strings_(v),rc_(rc)
+    {
+    }
+    
+    virtual std::string toString() const;
+    virtual void setXID(int32_t xid) {xid_=xid;}
+
+    int32_t xid_;
+    StringVector strings_;
+    int rc_;
 };
 
 // PING response
@@ -326,12 +436,12 @@ public:
     // this is a trigger that gets reset back to false
     // a connect request will return a non-matching session id thus causing 
     // the client throw SESSION_EXPIRED
-    bool sessionExpired;
+    volatile bool sessionExpired;
     void returnSessionExpired(){ sessionExpired=true; }
     
-    // this is a trigger that gets reset back to false
+    // this is a one shot trigger that gets reset back to false
     // next recv call will return 0 length, thus simulating a connecton loss
-    bool connectionLost;
+    volatile bool connectionLost;
     void setConnectionLost() {connectionLost=true;}
     
     // recv

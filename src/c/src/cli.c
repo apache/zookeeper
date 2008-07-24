@@ -55,7 +55,7 @@ printProfileInfo(struct timeval start, struct timeval end,int thres,const char* 
     fprintf(stderr,"%s: execution time=%dms\n",msg,delay);
 }
 
-void watcher(zhandle_t *zzh, int type, int state, const char *path) {
+void watcher(zhandle_t *zzh, int type, int state, const char *path,void* context) {
     fprintf(stderr,"Watcher %d state = %d for %s\n", type, state, (path ? path: "null"));
     if (type == SESSION_EVENT) {
         if (state == CONNECTED_STATE) {

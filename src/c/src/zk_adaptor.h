@@ -23,11 +23,27 @@
 #include <pthread.h>
 #endif
 #include "zookeeper.h"
+#include "zk_hashtable.h"
 
 /* predefined xid's values recognized as special by the server */
 #define WATCHER_EVENT_XID -1 
 #define PING_XID -2
 #define AUTH_XID -4
+
+/* zookeeper state constants */
+#define EXPIRED_SESSION_STATE_DEF -112
+#define AUTH_FAILED_STATE_DEF -113
+#define CONNECTING_STATE_DEF 1
+#define ASSOCIATING_STATE_DEF 2
+#define CONNECTED_STATE_DEF 3
+
+/* zookeeper event type constants */
+#define CREATED_EVENT_DEF 1
+#define DELETED_EVENT_DEF 2
+#define CHANGED_EVENT_DEF 3
+#define CHILD_EVENT_DEF 4
+#define SESSION_EVENT_DEF -1
+#define NOTWATCHING_EVENT_DEF -2
 
 #ifdef __cplusplus
 extern "C" {
@@ -174,9 +190,12 @@ struct _zhandle {
     volatile int close_requested;
     void *adaptor_priv;
     /* Used for debugging only: non-zero value indicates the time when the zookeeper_process
-     * call returned while there was at least one server response 
-     * unprocessed available in the socket recv buffer */
+     * call returned while there was at least one unprocessed server response 
+     * available in the socket recv buffer */
     struct timeval socket_readable;
+    
+    zk_hashtable* active_node_watchers;
+    zk_hashtable* active_child_watchers;
 };
 
 int adaptor_init(zhandle_t *zh);
@@ -209,7 +228,7 @@ int queue_session_event(zhandle_t *zh, int state);
 #define PROCESS_SESSION_EVENT(zh,newstate) queue_session_event(zh,newstate)
 #else
 // in single-threaded mode process session event immediately
-#define PROCESS_SESSION_EVENT(zh,newstate) zh->watcher(zh,SESSION_EVENT,newstate,0)
+#define PROCESS_SESSION_EVENT(zh,newstate) deliverWatchers(zh,SESSION_EVENT,newstate,0)
 #endif
 
 #ifdef __cplusplus

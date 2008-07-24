@@ -68,7 +68,7 @@ void waitCounter(){
     pthread_mutex_unlock(&counterLock);    
 }
 
-void listener(zhandle_t *zzh, int type, int state, const char *path) {
+void listener(zhandle_t *zzh, int type, int state, const char *path,void* ctx) {
     if(type == SESSION_EVENT){
         if(state == CONNECTED_STATE){
             pthread_mutex_lock(&lock);
