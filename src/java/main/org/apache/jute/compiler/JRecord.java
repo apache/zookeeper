@@ -357,10 +357,10 @@ public class JRecord extends JCompType {
         
     }
     
-    public void genJavaCode() throws IOException {
+    public void genJavaCode(File outputDirectory) throws IOException {
         String pkg = getJavaPackage();
         String pkgpath = pkg.replaceAll("\\.", "/");
-        File pkgdir = new File(pkgpath);
+        File pkgdir = new File(outputDirectory, pkgpath);
         if (!pkgdir.exists()) {
             // create the pkg directory
             boolean ret = pkgdir.mkdirs();

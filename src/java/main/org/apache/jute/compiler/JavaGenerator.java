@@ -33,17 +33,20 @@ class JavaGenerator {
     private String mName;
     private ArrayList mInclFiles;
     private ArrayList mRecList;
+    private final File outputDirectory;
     
     /** Creates a new instance of JavaGenerator
      *
      * @param name possibly full pathname to the file
      * @param incl included files (as JFile)
      * @param records List of records defined within this file
+     * @param outputDirectory 
      */
-    JavaGenerator(String name, ArrayList incl, ArrayList records) {
+    JavaGenerator(String name, ArrayList incl, ArrayList records, File outputDirectory) {
         mName = name;
         mInclFiles = incl;
         mRecList = records;
+        this.outputDirectory = outputDirectory;
     }
     
     /**
@@ -53,7 +56,7 @@ class JavaGenerator {
     void genCode() throws IOException {
         for (Iterator i = mRecList.iterator(); i.hasNext(); ) {
             JRecord rec = (JRecord) i.next();
-            rec.genJavaCode();
+            rec.genJavaCode(outputDirectory);
         }
     }
 }

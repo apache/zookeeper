@@ -18,6 +18,7 @@
 
 package org.apache.jute.compiler;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -54,16 +55,17 @@ public class JFile {
     
     /** Generate record code in given language. Language should be all
      *  lowercase.
+     * @param outputDirectory 
      */
-    public void genCode(String language) throws IOException {
+    public void genCode(String language, File outputDirectory) throws IOException {
         if ("c++".equals(language)) {
-            CppGenerator gen = new CppGenerator(mName, mInclFiles, mRecords);
+            CppGenerator gen = new CppGenerator(mName, mInclFiles, mRecords, outputDirectory);
             gen.genCode();
         } else if ("java".equals(language)) {
-            JavaGenerator gen = new JavaGenerator(mName, mInclFiles, mRecords);
+            JavaGenerator gen = new JavaGenerator(mName, mInclFiles, mRecords, outputDirectory);
             gen.genCode();
         } else if ("c".equals(language)) {
-        	CGenerator gen = new CGenerator(mName, mInclFiles, mRecords);
+        	CGenerator gen = new CGenerator(mName, mInclFiles, mRecords, outputDirectory);
         	gen.genCode();
         } else {
             System.out.println("Cannnot recognize language:"+language);
