@@ -32,10 +32,10 @@ public class VerGen {
         System.exit(1);
     }
 
-    static void generateFile(int maj, int min, int micro, int rev,
+    static void generateFile(File outputDir, int maj, int min, int micro, int rev,
             String buildDate) {
         String path = PACKAGE_NAME.replaceAll("\\.", "/");
-        File pkgdir = new File(path);
+        File pkgdir = new File(outputDir, path);
         if (!pkgdir.exists()) {
             // create the pkg directory
             boolean ret = pkgdir.mkdirs();
@@ -100,7 +100,7 @@ public class VerGen {
             int min = Integer.parseInt(v[1]);
             int micro = Integer.parseInt(v[2]);
             int rev = Integer.parseInt(args[1]);
-            generateFile(maj, min, micro, rev, args[2]);
+            generateFile(new File("."), maj, min, micro, rev, args[2]);
         } catch (NumberFormatException e) {
             System.err
                 .println("All version-related parameters must be valid integers!");

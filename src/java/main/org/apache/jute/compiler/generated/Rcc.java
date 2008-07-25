@@ -29,15 +29,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class Rcc implements RccConstants {
-    private static String language = "java";
-    private static ArrayList recFiles = new ArrayList();
-    private static JFile curFile;
-    private static Hashtable recTab;
+    private static Hashtable recTab = new Hashtable();
     private static String curDir = System.getProperty("user.dir");
     private static String curFileName;
     private static String curModuleName;
 
     public static void main(String args[]) {
+        String language = "java";
+        ArrayList recFiles = new ArrayList();
+        JFile curFile=null;
+
         for (int i=0; i<args.length; i++) {
             if ("-l".equalsIgnoreCase(args[i]) ||
                 "--language".equalsIgnoreCase(args[i])) {
@@ -57,33 +58,38 @@ public class Rcc implements RccConstants {
         }
         for (int i=0; i<recFiles.size(); i++) {
             curFileName = (String) recFiles.get(i);
-            File file = new File(curDir, curFileName);
+            File file = new File(curFileName);
             try {
-                FileReader reader = new FileReader(file);
-                Rcc parser = new Rcc(reader);
-                try {
-                    recTab = new Hashtable();
-                    curFile = parser.Input();
-                    System.out.println((String) recFiles.get(i) +
-                        " Parsed Successfully");
-                } catch (ParseException e) {
-                    System.out.println(e.toString());
-                    System.exit(1);
-                }
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                }
+                curFile = parseFile(file);
             } catch (FileNotFoundException e) {
-                System.out.println("File " + (String) recFiles.get(i) +
-                    " Not found.");
+                System.out.println("File " + (String) recFiles.get(i) + " Not found.");
+                System.exit(1);
+            } catch (ParseException e) {
+                System.out.println(e.toString());
                 System.exit(1);
             }
+            System.out.println((String) recFiles.get(i) + " Parsed Successfully");
             try {
-                curFile.genCode(language);
+                curFile.genCode(language, new File("."));
             } catch (IOException e) {
                 System.out.println(e.toString());
                 System.exit(1);
+            }
+        }
+    }
+
+    public static JFile parseFile(File file) throws FileNotFoundException, ParseException {
+        curDir = file.getParent();
+        curFileName = file.getName();
+        FileReader reader = new FileReader(file);
+        try {
+            Rcc parser = new Rcc(reader);
+            recTab = new Hashtable();
+            return parser.Input();
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException e) {
             }
         }
     }
