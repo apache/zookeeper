@@ -649,6 +649,12 @@ class ClientCnxn {
                 primeConnection(sockKey);
             }
             initialized = false;
+            
+            /*
+             * Reset incomingBuffer
+             */
+            lenBuffer.clear();
+            incomingBuffer = lenBuffer;
         }
 
         @Override
