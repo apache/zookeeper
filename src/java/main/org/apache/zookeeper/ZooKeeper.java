@@ -1036,45 +1036,51 @@ public class ZooKeeper {
         String path = args[2];
         List<ACL> acl = Ids.OPEN_ACL_UNSAFE;
         System.out.println("Processing " + cmd);
-        if (cmd.equals("create") && args.length >= 4) {
-            if (args.length == 5) {
-                acl = parseACLs(args[4]);
-            }
-            String newPath = zooKeeper.create(path, args[3].getBytes(), acl, 0);
-            System.err.println("Created " + newPath);
-        } else if (cmd.equals("delete") && args.length >= 3) {
-            zooKeeper.delete(path, watch ? Integer.parseInt(args[3]) : -1);
-        } else if (cmd.equals("set") && args.length >= 4) {
-            stat = zooKeeper.setData(path, args[3].getBytes(),
-                    args.length > 4 ? Integer.parseInt(args[4]) : -1);
-            printStat(stat);
-        } else if (cmd.equals("aget") && args.length >= 3) {
-            zooKeeper.getData(path, watch, dataCallback, path);
-        } else if (cmd.equals("get") && args.length >= 3) {
-            byte data[] = zooKeeper.getData(path, watch, stat);
-            System.out.println(new String(data));
-            printStat(stat);
-        } else if (cmd.equals("ls") && args.length >= 3) {
-            List<String> children = zooKeeper.getChildren(path, watch);
-            System.out.println(children);
-        } else if (cmd.equals("getAcl") && args.length >= 2) {
-            acl = zooKeeper.getACL(path, stat);
-            for (ACL a : acl) {
-                System.out.println(a.getId() + ": "
-                        + getPermString(a.getPerms()));
-            }
-        } else if (cmd.equals("setAcl") && args.length >= 4) {
+        try {
+            if (cmd.equals("create") && args.length >= 4) {
+                if (args.length == 5) {
+                    acl = parseACLs(args[4]);
+                }
+                String newPath = zooKeeper.create(path, args[3].getBytes(), acl, 0);
+                System.err.println("Created " + newPath);
+            } else if (cmd.equals("delete") && args.length >= 3) {
+                zooKeeper.delete(path, watch ? Integer.parseInt(args[3]) : -1);
+            } else if (cmd.equals("set") && args.length >= 4) {
+                stat = zooKeeper.setData(path, args[3].getBytes(),
+                        args.length > 4 ? Integer.parseInt(args[4]) : -1);
+                printStat(stat);
+            } else if (cmd.equals("aget") && args.length >= 3) {
+                zooKeeper.getData(path, watch, dataCallback, path);
+            } else if (cmd.equals("get") && args.length >= 3) {
+                byte data[] = zooKeeper.getData(path, watch, stat);
+                System.out.println(new String(data));
+                printStat(stat);
+            } else if (cmd.equals("ls") && args.length >= 3) {
+                List<String> children = zooKeeper.getChildren(path, watch);
+                System.out.println(children);
+            } else if (cmd.equals("getAcl") && args.length >= 2) {
+                acl = zooKeeper.getACL(path, stat);
+                for (ACL a : acl) {
+                    System.out.println(a.getId() + ": "
+                            + getPermString(a.getPerms()));
+                }
+            } else if (cmd.equals("setAcl") && args.length >= 4) {
 
-            stat = zooKeeper.setACL(path, parseACLs(args[3]),
-                    args.length > 4 ? Integer.parseInt(args[4]) : -1);
-            printStat(stat);
-        } else if (cmd.equals("stat") && args.length >= 3) {
-            stat = zooKeeper.exists(path, watch);
-            printStat(stat);
-        } else {
-            usage();
-        }
-        return watch;
+                stat = zooKeeper.setACL(path, parseACLs(args[3]),
+                        args.length > 4 ? Integer.parseInt(args[4]) : -1);
+                printStat(stat);
+            } else if (cmd.equals("stat") && args.length >= 3) {
+                stat = zooKeeper.exists(path, watch);
+                printStat(stat);
+            } else {
+                usage();
+            }
+
+            return watch;
+        } catch (KeeperException e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            return false;
+	}
     }
 
     private static String getPermString(int perms) {
