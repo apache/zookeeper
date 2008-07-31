@@ -417,7 +417,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     LOG.error("No authentication provider for scheme: "
                             + scheme);
                 else
-                    LOG.error("Authentication failed for scheme: "
+                    LOG.debug("Authentication failed for scheme: "
                             + scheme);
                 // send a response...
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
@@ -427,7 +427,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 sendBuffer(NIOServerCnxn.closeConn);
                 disableRecv();
             } else {
-                LOG.error("Authentication succeeded for scheme: "
+                LOG.debug("Authentication succeeded for scheme: "
                         + scheme);
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
                         KeeperException.Code.Ok);

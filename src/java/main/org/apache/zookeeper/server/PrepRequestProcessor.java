@@ -65,6 +65,9 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     static boolean skipACL;
     static {
         skipACL = System.getProperty("zookeeper.skipACL", "no").equals("yes");
+        if (skipACL) {
+            LOG.info("zookeeper.skipACL==\"yes\", ACL checks will be skipped");
+        }
     }
 
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
@@ -291,11 +294,11 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         .getNextZxid(), zks.getTime(), OpCode.setACL);
                 zks.sessionTracker.checkSession(request.sessionId);
                 SetACLRequest setAclRequest = new SetACLRequest();
+                ZooKeeperServer.byteBuffer2Record(request.request,
+                        setAclRequest);
                 if (!fixupACL(request.authInfo, setAclRequest.getAcl())) {
                     throw new KeeperException.InvalidACLException();
                 }
-                ZooKeeperServer.byteBuffer2Record(request.request,
-                        setAclRequest);
                 path = setAclRequest.getPath();
                 nodeRecord = getRecordForPath(path);
                 checkACL(zks, nodeRecord.acl, ZooDefs.Perms.ADMIN,
@@ -382,6 +385,9 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     }
 
     /**
+     * This method checks out the acl making sure it isn't null or empty,
+     * it has valid schemes and ids, and expanding any relative ids that
+     * depend on the requestor's authentication information.
      *
      * @param authInfo list of ACL IDs associated with the client connection
      * @param acl list of ACLs being assigned to the node (create or setACL operation)
@@ -401,18 +407,25 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             Id id = a.getId();
             if (id.getScheme().equals("world") && id.getId().equals("anyone")) {
             } else if (id.getScheme().equals("auth")) {
+                // This is the "auth" id, so we have to expand it to the
+                // authenticated ids of the requestor
                 it.remove();
                 if (toAdd == null) {
                     toAdd = new LinkedList<ACL>();
                 }
+                boolean authIdValid = false;
                 for (Id cid : authInfo) {
                     AuthenticationProvider ap = ProviderRegistry.getProvider(cid.getScheme());
                     if (ap == null) {
                         LOG.error("Missing AuthenticationProvider for "
                                 + cid.getScheme());
                     } else if (ap.isAuthenticated()) {
+                        authIdValid = true;
                         toAdd.add(new ACL(a.getPerms(), cid));
                     }
+                }
+                if (!authIdValid) {
+                    return false;
                 }
             } else {
                 AuthenticationProvider ap = ProviderRegistry.getProvider(id
@@ -430,7 +443,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 acl.add(a);
             }
         }
-        return true;
+        return acl.size() > 0;
     }
 
     public void processRequest(Request request) {

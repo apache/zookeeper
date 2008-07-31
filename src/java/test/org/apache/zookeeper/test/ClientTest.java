@@ -31,10 +31,15 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.InvalidACLException;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.CreateFlags;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooDefs.Perms;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
 
@@ -100,6 +105,52 @@ public class ClientTest extends ClientBase implements Watcher {
             InterruptedException, KeeperException
     {
         performClientTest(true);
+    }
+
+    @Test
+    public void testACLs() throws Exception {
+        ZooKeeper zk = null;
+        try {
+            zk = createClient(this);
+            try {
+                zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, 0);
+                fail("Should have received an invalid acl error");
+            } catch(InvalidACLException e) {
+            }
+            try {
+                ArrayList<ACL> testACL = new ArrayList<ACL>();
+                testACL.add(new ACL(Perms.ALL | Perms.ADMIN, Ids.AUTH_IDS));
+                testACL.add(new ACL(Perms.ALL | Perms.ADMIN, new Id("ip", "127.0.0.1/8")));
+                zk.create("/acltest", new byte[0], testACL, 0);
+                fail("Should have received an invalid acl error");
+            } catch(InvalidACLException e) {
+            }
+            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, 0);
+            zk.close();
+            zk = createClient(this);
+            zk.addAuthInfo("digest", "ben:passwd2".getBytes());
+            try {
+                zk.getData("/acltest", false, new Stat());
+                fail("Should have received a permission error");
+            } catch (KeeperException e) {
+                assertEquals(Code.NoAuth, e.getCode());
+            }
+            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.getData("/acltest", false, new Stat());
+            zk.setACL("/acltest", Ids.OPEN_ACL_UNSAFE, -1);
+            zk.close();
+            zk = createClient(this);
+            zk.getData("/acltest", false, new Stat());
+            List<ACL> acls = zk.getACL("/acltest", new Stat());
+            assertEquals(1, acls.size());
+            assertEquals(Ids.OPEN_ACL_UNSAFE, acls);
+            zk.close();
+        } finally {
+            if (zk != null) {
+                zk.close();
+            }
+        }
     }
 
     private void performClientTest(boolean withWatcherObj) throws IOException,
