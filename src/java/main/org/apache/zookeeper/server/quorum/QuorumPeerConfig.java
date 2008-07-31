@@ -70,8 +70,8 @@ public class QuorumPeerConfig extends ServerConfig {
             int tickTime = 0;
             int initLimit = 0;
             int syncLimit = 0;
-            int electionAlg = 0;
-            int electionPort = 0;
+            int electionAlg = 3;
+            int electionPort = 2182;
             for (Entry<Object, Object> entry : cfg.entrySet()) {
                 String key = entry.getKey().toString();
                 String value = entry.getValue().toString();
