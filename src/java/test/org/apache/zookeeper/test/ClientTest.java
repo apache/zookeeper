@@ -278,6 +278,47 @@ public class ClientTest extends ClientBase implements Watcher {
         }
     }
 
+    // Test that sequential filenames are being created correctly,
+    // with 0-padding in the filename
+    public void testSequentialNodeNames() throws IOException, InterruptedException, KeeperException {
+    	String path = "/SEQUENCE";
+	String file = "TEST";
+	String filepath = path + "/" + file;
+
+        ZooKeeper zk = null;
+        try {
+            zk =createClient(this);
+            zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
+            zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+            List<String> children = zk.getChildren(path, false);
+            assertEquals(1, children.size());
+            assertEquals(file + "0000000000", children.get(0));
+            
+            zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+            children = zk.getChildren(path, false);
+            assertEquals(2, children.size());
+            assertTrue(children.contains(file + "0000000001"));
+            
+            zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+            children = zk.getChildren(path, false);
+            assertEquals(3, children.size());
+            assertTrue(children.contains(file + "0000000002"));
+            
+            // The pattern is holding so far.  Let's run the counter a bit
+            // to be sure it continues to spit out the correct answer
+            for(int i = children.size(); i < 105; i++)
+               zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+
+            children = zk.getChildren(path, false);
+            assertTrue(children.contains(file + "0000000104"));
+            	
+        }
+        finally {
+        	if(zk != null)
+        		zk.close();
+        }
+    }
+    
     private void notestConnections() throws IOException, InterruptedException, KeeperException {
         ZooKeeper zk;
         for(int i = 0; i < 2000; i++) {

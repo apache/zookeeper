@@ -292,7 +292,6 @@ public class DataTree {
         synchronized (n) {
             ArrayList<String> children = new ArrayList<String>();
             children.addAll(n.children);
-            Collections.sort(children);
             if (watcher != null) {
                 childWatches.addWatch(path, watcher);
             }

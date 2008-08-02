@@ -204,7 +204,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         request.authInfo);
                 int parentCVersion = parentRecord.stat.getCversion();
                 if ((createRequest.getFlags() & CreateFlags.SEQUENCE) != 0) {
-                    path = path + parentCVersion;
+                    path = path + String.format("%010d", parentCVersion);
                 }
                 try {
                     if (getRecordForPath(path) != null) {

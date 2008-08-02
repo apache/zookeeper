@@ -828,12 +828,15 @@ public class ZooKeeper {
      * triggered by a successful operation that deletes the node of the given
      * path or creates/delete a child under the node.
      * <p>
+     * The list of children returned is not sorted and no guarantee is provided
+     * as to its natural or lexical order.
+     * <p>
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
      *
      * @param path
      * @param watcher explicit watcher
-     * @return an array of children of the node with the given path
+     * @return an unordered array of children of the node with the given path
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
@@ -864,12 +867,15 @@ public class ZooKeeper {
      * triggered by a successful operation that deletes the node of the given
      * path or creates/delete a child under the node.
      * <p>
+     * The list of children returned is not sorted and no guarantee is provided
+     * as to its natural or lexical order.
+     * <p>
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
      *
      * @param path
      * @param watch
-     * @return an array of children of the node with the given path
+     * @return an unordered array of children of the node with the given path
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
