@@ -47,11 +47,6 @@ public class CommitProcessor extends Thread implements RequestProcessor {
      */
     LinkedList<Request> committedRequests = new LinkedList<Request>();
 
-    /*
-     * Pending sync requests
-     */
-    LinkedList<Request> pendingSyncs = new LinkedList<Request>();
-
     RequestProcessor nextProcessor;
 
     public CommitProcessor(RequestProcessor nextProcessor) {
@@ -127,7 +122,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                             break;
                         case OpCode.sync:
                             nextPending = request;
-                            pendingSyncs.add(request);
+                            //pendingSyncs.add(request);
                             break;
                         default:
                             toProcess.add(request);
@@ -149,6 +144,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                          new Exception("committing a null! "));
                 return;
             }
+            LOG.debug("Committing" + request.cxid);
             committedRequests.add(request);
             notifyAll();
         }
