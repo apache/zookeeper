@@ -64,10 +64,11 @@ public class FollowerRequestProcessor extends Thread implements
                 // the response
                 nextProcessor.processRequest(request);
                 switch (request.type) {
+                case OpCode.sync:
+                    zks.pendingSyncs.add(request);
                 case OpCode.create:
                 case OpCode.delete:
                 case OpCode.setData:
-                case OpCode.sync:
                 case OpCode.setACL:
                 case OpCode.createSession:
                 case OpCode.closeSession:

@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.log4j.Logger;
 
@@ -50,6 +51,11 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
 
     SyncRequestProcessor syncProcessor;
 
+    /*
+     * Pending sync requests
+     */
+    ConcurrentLinkedQueue<Request> pendingSyncs;
+    
     /**
      * @param port
      * @param dataDir
@@ -59,6 +65,7 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
             QuorumPeer self,DataTreeBuilder treeBuilder) throws IOException {
         super(dataDir, dataLogDir, self.tickTime,treeBuilder);
         this.self = self;
+        this.pendingSyncs = new ConcurrentLinkedQueue<Request>();
     }
 
     public Follower getFollower(){
@@ -131,12 +138,12 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
     }
     
     public void sync(){
-        if(commitProcessor.pendingSyncs.size() ==0){
+        if(pendingSyncs.size() ==0){
             LOG.warn("Not expecting a sync.");
             return;
         }
                 
-        commitProcessor.commit(commitProcessor.pendingSyncs.remove());
+        commitProcessor.commit(pendingSyncs.remove());
     }
              
          

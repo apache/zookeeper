@@ -48,14 +48,22 @@ public class ProposalRequestProcessor implements RequestProcessor {
         // request.addRQRec(">prop");
                 
         
+        /* In the following IF-THEN-ELSE block, we process syncs on the leader. 
+         * If the sync is coming from a follower, then the follower
+         * handler adds it to syncHandler. Otherwise, if it is a client of
+         * the leader that issued the sync command, then syncHandler won't 
+         * contain the handler. In this case, we add it to syncHandler, and 
+         * call processRequest on the next processor.
+         */
+        
         if(request.type == ZooDefs.OpCode.sync){
-            if(zks.getLeader().syncHandler.containsKey(request.sessionId)){
-                zks.getLeader().processSync(request);
-            }
-            else{
+            zks.getLeader().processSync(request);
+
+            if(!zks.getLeader().syncHandler.containsKey(request.sessionId)){
+                zks.getLeader().syncHandler.put(request.sessionId, null);
                 nextProcessor.processRequest(request);
-                zks.commitProcessor.commit(request);
             }
+            
         }
         else{
             nextProcessor.processRequest(request);

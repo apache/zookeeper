@@ -158,6 +158,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 err = rc.err;
                 break;
             case OpCode.sync:
+                LOG.debug("OpCode.sync " + request);
                 SyncRequest syncRequest = new SyncRequest();
                 ZooKeeperServer.byteBuffer2Record(request.request,
                         syncRequest);

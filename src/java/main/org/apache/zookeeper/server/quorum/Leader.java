@@ -373,6 +373,11 @@ public class Leader {
                         }
                         commit(zxid);
                         zk.commitProcessor.commit(p.request);
+                        if(pendingSyncs.containsKey(zxid)){
+                            sendSync(syncHandler.get(pendingSyncs.get(zxid).sessionId), pendingSyncs.get(zxid));
+                            syncHandler.remove(pendingSyncs.get(zxid));
+                            pendingSyncs.remove(zxid);
+                        }
                     }
                 }
                 return;
@@ -462,12 +467,6 @@ public class Leader {
         lastCommitted = zxid;
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
         sendPacket(qp);
-               
-        if(pendingSyncs.containsKey(zxid)){
-            sendSync(syncHandler.get(pendingSyncs.get(zxid).sessionId), pendingSyncs.get(zxid));
-            syncHandler.remove(pendingSyncs.get(zxid));
-            pendingSyncs.remove(zxid);
-        }
     }
 
     long lastProposed;
@@ -544,8 +543,14 @@ public class Leader {
      */
             
     public void sendSync(FollowerHandler f, Request r){
-        QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
-        f.queuePacket(qp);
+        if(f != null){
+            QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
+            f.queuePacket(qp);
+        }
+        else{
+            LOG.warn("Committing sync: " + r.cxid );
+            zk.commitProcessor.commit(r);
+        }
     }
                 
     /**
