@@ -1,0 +1,6 @@
+Trunk:
+  BUGFIXES:
+  
+  ZOOKEEPER-105. Catch Zookeeper exceptions and print on the stderr. (Anthony Urso via Mahadev)
+
+  ZOOKEEPER-108. Fix sync operation reordering on a Quorum. (Flavio Paiva Junqueira via Mahadev)
