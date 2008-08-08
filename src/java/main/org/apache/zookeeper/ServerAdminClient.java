@@ -66,11 +66,11 @@ public class ServerAdminClient {
     }
 
     public static void ruok(String host, int port) {
+        Socket s = null;
         try {
             byte[] reqBytes = new byte[4];
             ByteBuffer req = ByteBuffer.wrap(reqBytes);
             req.putInt(ByteBuffer.wrap("ruok".getBytes()).getInt());
-            Socket s = null;
             s = new Socket();
             s.setSoLinger(false, 10);
             s.setSoTimeout(20000);
@@ -86,17 +86,25 @@ public class ServerAdminClient {
             int rc = is.read(resBytes);
             String retv = new String(resBytes);
             System.out.println("rc=" + rc + " retv=" + retv);
-        } catch (IOException ioe) {
-            LOG.warn("Unexpected exception", ioe);
+        } catch (IOException e) {
+            LOG.warn("Unexpected exception", e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    LOG.warn("Unexpected exception", e);
+                }
+            }
         }
     }
 
     public static void dump(String host, int port) {
+        Socket s = null;
         try {
             byte[] reqBytes = new byte[4];
             ByteBuffer req = ByteBuffer.wrap(reqBytes);
             req.putInt(ByteBuffer.wrap("dump".getBytes()).getInt());
-            Socket s = null;
             s = new Socket();
             s.setSoLinger(false, 10);
             s.setSoTimeout(20000);
@@ -112,17 +120,25 @@ public class ServerAdminClient {
             int rc = is.read(resBytes);
             String retv = new String(resBytes);
             System.out.println("rc=" + rc + " retv=" + retv);
-        } catch (IOException ioe) {
-            LOG.warn("Unexpected exception", ioe);
+        } catch (IOException e) {
+            LOG.warn("Unexpected exception", e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    LOG.warn("Unexpected exception", e);
+                }
+            }
         }
     }
 
     public static void stat(String host, int port) {
+        Socket s = null;
         try {
             byte[] reqBytes = new byte[4];
             ByteBuffer req = ByteBuffer.wrap(reqBytes);
             req.putInt(ByteBuffer.wrap("stat".getBytes()).getInt());
-            Socket s = null;
             s = new Socket();
             s.setSoLinger(false, 10);
             s.setSoTimeout(20000);
@@ -138,17 +154,25 @@ public class ServerAdminClient {
             int rc = is.read(resBytes);
             String retv = new String(resBytes);
             System.out.println("rc=" + rc + " retv=" + retv);
-        } catch (IOException ioe) {
-            LOG.warn("Unexpected exception", ioe);
+        } catch (IOException e) {
+            LOG.warn("Unexpected exception", e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    LOG.warn("Unexpected exception", e);
+                }
+            }
         }
     }
 
     public static void kill(String host, int port) {
+        Socket s = null;
         try {
             byte[] reqBytes = new byte[4];
             ByteBuffer req = ByteBuffer.wrap(reqBytes);
             req.putInt(ByteBuffer.wrap("kill".getBytes()).getInt());
-            Socket s = null;
             s = new Socket();
             s.setSoLinger(false, 10);
             s.setSoTimeout(20000);
@@ -163,12 +187,21 @@ public class ServerAdminClient {
             int rc = is.read(resBytes);
             String retv = new String(resBytes);
             System.out.println("rc=" + rc + " retv=" + retv);
-        } catch (IOException ioe) {
-            LOG.warn("Unexpected exception", ioe);
+        } catch (IOException e) {
+            LOG.warn("Unexpected exception", e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    LOG.warn("Unexpected exception", e);
+                }
+            }
         }
     }
 
     public static void setTraceMask(String host, int port, String traceMaskStr) {
+        Socket s = null;
         try {
             byte[] reqBytes = new byte[12];
             ByteBuffer req = ByteBuffer.wrap(reqBytes);
@@ -176,7 +209,6 @@ public class ServerAdminClient {
             req.putInt(ByteBuffer.wrap("stmk".getBytes()).getInt());
             req.putLong(traceMask);
 
-            Socket s = null;
             s = new Socket();
             s.setSoLinger(false, 10);
             s.setSoTimeout(20000);
@@ -196,18 +228,26 @@ public class ServerAdminClient {
                     + Long.toOctalString(retv) + " masks=0"
                     + Long.toOctalString(traceMask));
             assert (retv == traceMask);
-        } catch (IOException ioe) {
-            LOG.warn("Unexpected exception", ioe);
+        } catch (IOException e) {
+            LOG.warn("Unexpected exception", e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    LOG.warn("Unexpected exception", e);
+                }
+            }
         }
     }
 
     public static void getTraceMask(String host, int port) {
+        Socket s = null;
         try {
             byte[] reqBytes = new byte[12];
             ByteBuffer req = ByteBuffer.wrap(reqBytes);
             req.putInt(ByteBuffer.wrap("gtmk".getBytes()).getInt());
 
-            Socket s = null;
             s = new Socket();
             s.setSoLinger(false, 10);
             s.setSoTimeout(20000);
@@ -225,8 +265,16 @@ public class ServerAdminClient {
             long retv = res.getLong();
             System.out.println("rc=" + rc + " retv=0"
                     + Long.toOctalString(retv));
-        } catch (IOException ioe) {
-            LOG.warn("Unexpected exception", ioe);
+        } catch (IOException e) {
+            LOG.warn("Unexpected exception", e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    LOG.warn("Unexpected exception", e);
+                }
+            }
         }
     }
 

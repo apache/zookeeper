@@ -520,9 +520,9 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             if (leader != null) {
                 synchronized (leader.followers) {
                     for (FollowerHandler fh : leader.followers) {
-                        if (fh.s == null)
+                        if (fh.sock == null)
                             continue;
-                        String s = fh.s.getRemoteSocketAddress().toString();
+                        String s = fh.sock.getRemoteSocketAddress().toString();
                         if (leader.isFollowerSynced(fh))
                             s += "*";
                         l.add(s);
