@@ -48,7 +48,7 @@ import org.apache.zookeeper.txn.TxnHeader;
 public class FollowerHandler extends Thread {
     private static final Logger LOG = Logger.getLogger(FollowerHandler.class);
 
-    public Socket s;
+    public Socket sock;
 
     Leader leader;
 
@@ -65,9 +65,9 @@ public class FollowerHandler extends Thread {
 
     private BufferedOutputStream bufferedOutput;
 
-    FollowerHandler(Socket s, Leader leader) throws IOException {
-        super("FollowerHandler-" + s.getRemoteSocketAddress());
-        this.s = s;
+    FollowerHandler(Socket sock, Leader leader) throws IOException {
+        super("FollowerHandler-" + sock.getRemoteSocketAddress());
+        this.sock = sock;
         this.leader = leader;
         leader.addFollowerHandler(this);
         start();
@@ -102,7 +102,7 @@ public class FollowerHandler extends Thread {
                 oa.writeRecord(p, "packet");
                 bufferedOutput.flush();
             } catch (IOException e) {
-                if (!s.isClosed()) {
+                if (!sock.isClosed()) {
                     LOG.warn("Unexpected exception",e);
                 }
                 break;
@@ -179,9 +179,9 @@ public class FollowerHandler extends Thread {
     public void run() {
         try {
 
-            ia = BinaryInputArchive.getArchive(new BufferedInputStream(s
+            ia = BinaryInputArchive.getArchive(new BufferedInputStream(sock
                     .getInputStream()));
-            bufferedOutput = new BufferedOutputStream(s.getOutputStream());
+            bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
             oa = BinaryOutputArchive.getArchive(bufferedOutput);
 
             QuorumPacket qp = new QuorumPacket();
@@ -264,7 +264,7 @@ public class FollowerHandler extends Thread {
             new Thread() {
                 public void run() {
                     Thread.currentThread().setName(
-                            "Sender-" + s.getRemoteSocketAddress());
+                            "Sender-" + sock.getRemoteSocketAddress());
                     try {
                         sendPackets();
                     } catch (InterruptedException e) {
@@ -292,7 +292,7 @@ public class FollowerHandler extends Thread {
 
                 switch (qp.getType()) {
                 case Leader.ACK:
-                    leader.processAck(qp.getZxid(), s.getLocalSocketAddress());
+                    leader.processAck(qp.getZxid(), sock.getLocalSocketAddress());
                     break;
                 case Leader.PING:
                     // Process the touches
@@ -338,13 +338,14 @@ public class FollowerHandler extends Thread {
                 }
             }
         } catch (IOException e) {
-            if (s != null && !s.isClosed()) {
+            if (sock != null && !sock.isClosed()) {
                 LOG.error("FIXMSG",e);
             }
         } catch (InterruptedException e) {
             LOG.error("FIXMSG",e);
         } finally {
-            LOG.warn("******* GOODBYE " + s.getRemoteSocketAddress()
+            LOG.warn("******* GOODBYE " 
+                    + (sock != null ? sock.getRemoteSocketAddress() : "<null>")
                     + " ********");
             // Send the packet of death
             try {
@@ -358,8 +359,8 @@ public class FollowerHandler extends Thread {
 
     public void shutdown() {
         try {
-            if (s != null && !s.isClosed()) {
-                s.close();
+            if (sock != null && !sock.isClosed()) {
+                sock.close();
             }
         } catch (IOException e) {
             LOG.error("FIXMSG",e);

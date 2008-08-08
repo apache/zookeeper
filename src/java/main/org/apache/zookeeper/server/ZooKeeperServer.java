@@ -426,7 +426,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 TxnHeader hdr = new TxnHeader();
                 Record txn = deserializeTxn(ia, hdr);
                 if (logStream.readByte("EOR") != 'B') {
-                    LOG.error("Last transaction was partial.");
+                    LOG.warn("Last transaction was partial.");
                     throw new EOFException();
                 }
                 if (hdr.getZxid() <= highestZxid && highestZxid != 0) {
@@ -468,6 +468,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 addCommittedProposal(r);
             }
         } catch (EOFException e) {
+            // expected in some cases - see comments in try block
         }
         return highestZxid;
     }
@@ -569,6 +570,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 while (true) {
                     byte[] bytes = ia.readBuffer("txtEntry");
                     if (bytes.length == 0) {
+                        // Since we preallocate, we define EOF to be an
+                        // empty transaction
                         throw new EOFException();
                     }
                     InputArchive iab = BinaryInputArchive
@@ -576,6 +579,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     TxnHeader hdr = new TxnHeader();
                     deserializeTxn(iab, hdr);
                     if (ia.readByte("EOF") != 'B') {
+                        LOG.warn("Last transaction was partial.");
                         throw new EOFException();
                     }
                     if (hdr.getZxid() == finalZxid) {
@@ -586,11 +590,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                         FileOutputStream fout = new FileOutputStream(f);
                         FileChannel fchanOut = fout.getChannel();
                         fchanOut.truncate(pos);
+                        fchanOut.close();
+                        fout.close();
                         truncated = true;
                         break;
                     }
                 }
             } catch (EOFException eof) {
+                // expected in some cases - see comments in try block
+            } finally {
+                fchan.close();
+                fin.close();
             }
             if (truncated == true) {
                 break;
