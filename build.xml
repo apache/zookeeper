@@ -21,8 +21,11 @@
 
     <property name="Name" value="ZooKeeper" />
     <property name="name" value="zookeeper" />
+
+    <property environment="env"/>
     
     <property name="version" value="3.0.0" />
+    <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
     <property file="${basedir}/src/java/${revision.properties}" />
@@ -53,6 +56,9 @@
     <property name="test.output" value="no" />
     <property name="test.timeout" value="900000" />
     <property name="test.junit.output.format" value="plain" />
+    <property name="test.junit.fork.mode" value="perTest" />
+    <property name="test.junit.printsummary" value="yes" />
+    <property name="test.junit.haltonfailure" value="no" />
     <property name="config.dir" value="${src.dir}/java/test/config" />
     <property name="test.junit.maxmem" value="512m" />
     <property name="conf.dir" value="${basedir}/conf"/>
@@ -62,6 +68,25 @@
     <property name="javadoc.packages" value="org.apache.*" />
     <property name="build.docs" value="${build.dir}/docs" />
     <property name="build.javadoc" value="${build.docs}/api" />
+
+    <property name="clover.home" location="${env.CLOVER_HOME}"/>
+    <property name="clover.jar" location="${clover.home}/lib/clover.jar" />
+    <property name="clover.db.dir" location="${test.build.dir}/clover/db"/>
+    <property name="clover.report.dir"
+              location="${test.build.dir}/clover/reports"/>
+
+    <available property="clover.present"
+               classname="com.cenqua.clover.CloverInstr"
+               classpath="${clover.home}/lib/clover.jar"/>
+
+    <!-- check if clover reports should be generated -->
+    <condition property="clover.enabled">
+      <and>
+        <isset property="run.clover"/>
+        <isset property="clover.present"/>
+      </and>
+    </condition>
+
 
     <property name="test.cobertura.output.format" value="html" />
     <property name="coveragereport.dir" value="${build.dir}/cobertura" />
@@ -91,6 +116,7 @@
         <path id="project.classpath">
             <fileset dir="${build.classes}" />
             <pathelement path="${lib.dir}/log4j-1.2.15.jar" />
+            <pathelement path="${clover.jar}" />
         </path>
     </target>
     
@@ -182,7 +208,7 @@
         </copy>
     </target>
 
-    <target name="compile" depends="compile-main,compile-extra"/>
+    <target name="compile" depends="clover,compile-main,compile-extra"/>
 
     <target name="test-classpath">
       <path id="test.classpath">
@@ -192,6 +218,7 @@
         <fileset dir="${lib.dir}">
           <include name="*.jar"/>
         </fileset>
+        <pathelement path="${clover.jar}" />
       </path>
     </target>
 
@@ -251,10 +278,12 @@
     <!-- Make zookeeper.jar                                     -->
     <!-- ====================================================== -->
     <target name="jar" depends="compile">
-        <java classname="org.apache.zookeeper.Version" fork="true" outputproperty="revision" failonerror="true">
+        <java classname="org.apache.zookeeper.Version" fork="true"
+              outputproperty="revision" failonerror="true">
             <arg value="--revision" />
             <classpath>
                 <pathelement path="${build.classes}" />
+                <pathelement path="${clover.jar}" />
             </classpath>
         </java>
         <exec executable="hostname" outputproperty="host.name"/>
@@ -346,11 +375,14 @@
     </target>
 
     <target name="junit.run">
-        <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no"
-               fork="yes" 
-            maxmemory="${test.junit.maxmem}" dir="${basedir}"
-            timeout="${test.timeout}" errorProperty="tests.failed"
-            failureProperty="tests.failed">
+        <junit showoutput="${test.output}"
+               printsummary="${test.junit.printsummary}"
+               haltonfailure="${test.junit.haltonfailure}"
+               fork="yes"
+               forkmode="${test.junit.fork.mode}"
+               maxmemory="${test.junit.maxmem}"
+               dir="${basedir}" timeout="${test.timeout}"
+               errorProperty="tests.failed" failureProperty="tests.failed">
           <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
           <sysproperty key="log4j.configuration"
                        value="file:${basedir}/conf/log4j.properties" />
@@ -394,6 +426,50 @@
     <!-- ====================================================== -->
     <!-- Run optional third-party tool targets                  -->
     <!-- ====================================================== -->
+
+    <!-- clover code coverage -->
+    <target name="clover" depends="clover.setup, clover.info" 
+            description="Instrument the Unit tests using Clover.  Requires a Clover license and CLOVER_HOME environment variable set appropriately.  To use, specify -Drun.clover=true on the command line."/>
+
+    <target name="clover.setup" if="clover.enabled">
+      <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
+      <mkdir dir="${clover.db.dir}"/>
+      <clover-setup initString="${clover.db.dir}/zookeeper_coverage.db">
+        <fileset dir="${java.src.dir}"
+                 includes="org/apache/zookeeper/**/*"
+                 excludes="org/apache/zookeeper/version/**/*"/>
+      </clover-setup>
+    </target>
+
+    <target name="clover.info" if="run.clover" unless="clover.present">
+      <echo>
+        Clover not found. Code coverage reports disabled.
+      </echo>
+    </target>
+
+    <target name="clover.check">
+      <fail unless="clover.present">
+        ##################################################################
+        Clover not found.
+        Please make sure clover.jar is in ANT_HOME/lib, or made available
+        to Ant using other mechanisms like -lib or CLASSPATH.
+        ##################################################################
+      </fail>
+    </target>
+
+    <target name="generate-clover-reports" depends="clover.check, clover">
+      <mkdir dir="${clover.report.dir}"/>
+      <clover-report>
+        <current outfile="${clover.report.dir}" title="${final.name}">
+          <format type="html"/>
+        </current>
+      </clover-report>
+      <clover-report>
+        <current outfile="${clover.report.dir}/clover.xml" title="${final.name}">
+          <format type="xml"/>
+        </current>
+      </clover-report>
+    </target>
 
     <!-- Run with 'ant -Dfindbugs.home="path to Findbugs directory" findbugs -->
     <property name="findbugs.home" value="" />
