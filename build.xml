@@ -91,13 +91,6 @@
     <property name="test.cobertura.output.format" value="html" />
     <property name="coveragereport.dir" value="${build.dir}/cobertura" />
 
-    <path id="svnant.classpath">
-        <fileset dir="${lib.dir}/svnant">
-            <include name="**/*.jar"/>
-        </fileset>
-    </path>  
-    <typedef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="svnant.classpath" />
-
     <!-- ====================================================== -->
     <!-- Generate and compile the Java files                    -->
     <!-- ====================================================== -->
@@ -161,12 +154,18 @@
     </target>
     
     <target name="svn-revision" unless="lastRevision">
-        <svn>
-            <status path="${src.dir}/java" lastChangedRevisionProperty="lastRevision" />
-        </svn>
         <mkdir dir="${revision.dir}" />
-        <echo file="${revision.dir}/${revision.properties}" 
-            message="lastRevision=${lastRevision}" />
+        <condition property="shell.name" value="cmd" else="sh">
+      	    <os family="windows"/>
+        </condition>
+        <condition property="revision.cmd.line" 
+        	value="/c ${src.dir}\lastRevision.bat" else="${src.dir}/lastRevision.sh">
+      	    <os family="windows"/>
+        </condition>
+        <exec executable="${shell.name}">
+           <arg line="${revision.cmd.line} ${revision.dir}${file.separator}${revision.properties}"/>
+        </exec>
+        <property file="${revision.dir}/${revision.properties}" />
     </target>
     
     <target name="version-info" depends="ver-gen,svn-revision">
