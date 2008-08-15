@@ -24,6 +24,8 @@ import java.util.ArrayList;
 
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.NIOServerCnxn.Factory;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.EventInfo;
 import org.apache.zookeeper.server.util.ObservableComponent;
 import org.apache.zookeeper.server.util.ObserverManager;
@@ -58,17 +60,20 @@ public class ObservableQuorumPeer extends QuorumPeer implements ObservableCompon
         };
         public abstract void dispatch(ObservableQuorumPeer peer,QuorumPeerObserver ob);
     }
-    
-    public ObservableQuorumPeer(ArrayList<QuorumServer> quorumPeers,
-            File dataDir, File dataLogDir, int electionAlg,    int electionPort,long myid, 
-            int tickTime, int initLimit, int syncLimit,NIOServerCnxn.Factory cnxnFactory)
-            throws IOException {
-        super(quorumPeers, dataDir, dataLogDir,electionAlg,electionPort, myid,
-                tickTime, initLimit, syncLimit,cnxnFactory);
+
+
+    public ObservableQuorumPeer() {
+        super();
     }
 
-    public ObservableQuorumPeer(NIOServerCnxn.Factory cnxnFactory) throws IOException {
-        super(cnxnFactory);
+    public ObservableQuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir, File dataLogDir, int clientPort, int electionAlg, int electionPort, long myid, int tickTime, int initLimit,
+                                int syncLimit) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, clientPort, electionAlg, electionPort, myid, tickTime, initLimit, syncLimit);
+    }
+
+    public ObservableQuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir, File dataLogDir, int electionType, int electionPort, long myid, int tickTime, int initLimit, int syncLimit,
+                                NIOServerCnxn.Factory cnxnFactory) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, electionType, electionPort, myid, tickTime, initLimit, syncLimit, cnxnFactory);
     }
 
     // instantiate an observable follower

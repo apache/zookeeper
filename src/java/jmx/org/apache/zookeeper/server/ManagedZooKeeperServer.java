@@ -28,6 +28,7 @@ import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.server.ConnectionBean;
 import org.apache.zookeeper.jmx.server.DataTreeBean;
 import org.apache.zookeeper.jmx.server.ZooKeeperServerBean;
+import org.apache.zookeeper.server.ZooKeeperServer.DataTreeBuilder;
 import org.apache.zookeeper.server.util.ConnectionObserver;
 import org.apache.zookeeper.server.util.ObserverManager;
 import org.apache.zookeeper.server.util.ServerObserver;
@@ -71,7 +72,7 @@ public class ManagedZooKeeperServer extends ObservableZooKeeperServer {
 
         public void onStartup(ZooKeeperServer server) {
             try {
-                svrBean = new ZooKeeperServerBean();
+                svrBean = new ZooKeeperServerBean(server);
                 MBeanRegistry.getInstance().register(svrBean, null);
                 dataTreeBean = new DataTreeBean(server.dataTree);
                 MBeanRegistry.getInstance().register(dataTreeBean, svrBean);
@@ -104,37 +105,22 @@ public class ManagedZooKeeperServer extends ObservableZooKeeperServer {
         }
     }
 
-    public ManagedZooKeeperServer(File dataDir, File dataLogDir, 
-            int tickTime,DataTreeBuilder treeBuilder) throws IOException {
-        super(dataDir, dataLogDir, tickTime,treeBuilder);
+    public ManagedZooKeeperServer() {
+        super();
         ObserverManager.getInstance().add(new ManagedServerObserver());
         ObserverManager.getInstance().add(new ManagedConnectionObserver());
     }
 
-    public ManagedZooKeeperServer(DataTreeBuilder treeBuilder) throws IOException {
-        super(treeBuilder);
+    public ManagedZooKeeperServer(File dataDir, File dataLogDir, int tickTime, DataTreeBuilder treeBuilder) throws IOException {
+        super(dataDir, dataLogDir, tickTime, treeBuilder);
         ObserverManager.getInstance().add(new ManagedServerObserver());
         ObserverManager.getInstance().add(new ManagedConnectionObserver());
     }
 
-    /**
-     * To start the server specify the client port number and the data directory
-     * on the command line.
-     * @see ServerConfig#parse(String[])
-     * @param args command line parameters.
-     */
-    public static void main(String[] args) {
-        ServerConfig.parse(args);
-        ZooKeeperObserverManager.setAsConcrete();
-        runStandalone(new Factory() {
-            public NIOServerCnxn.Factory createConnectionFactory()throws IOException {
-                return new ObservableNIOServerCnxn.Factory(getClientPort());
-            }
-            public ZooKeeperServer createServer() throws IOException {
-                // TODO: we may want to build an observable/managed data tree here instead
-                return new ManagedZooKeeperServer(new BasicDataTreeBuilder());
-            }
-        });
+    public ManagedZooKeeperServer(File dataDir, File dataLogDir, int tickTime) throws IOException {
+        super(dataDir, dataLogDir, tickTime);
+        ObserverManager.getInstance().add(new ManagedServerObserver());
+        ObserverManager.getInstance().add(new ManagedConnectionObserver());
     }
 
 }

@@ -24,21 +24,32 @@ import java.util.Date;
 
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * This class implements the zookeeper server MBean interface.
  */
 public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     private Date startTime=new Date();
+    private ZooKeeperServer zooKeeperServer;
+    
+    public ZooKeeperServerBean() {        
+    }
+    public ZooKeeperServerBean(ZooKeeperServer zooKeeperServer) {
+        this.zooKeeperServer = zooKeeperServer;
+    }
 
     public String getClientPort() {
+        ZooKeeperServer zks = getZooKeeperServer();
+        if( zks == null ) {
+            return null;
+        }
         try {
             return InetAddress.getLocalHost().getHostAddress() + ":"
-                    + ServerConfig.getClientPort();
+                    + zks.getClientPort();
         } catch (UnknownHostException e) {
-            return "localhost:" + ServerConfig.getClientPort();
+            return "localhost:" + zks.getClientPort();
         }
     }
     
@@ -94,4 +105,13 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         ServerStats.getInstance().resetRequestCounters();
         ServerStats.getInstance().resetLatency();
     }
+
+    public ZooKeeperServer getZooKeeperServer() {
+        return zooKeeperServer;
+    }
+
+    public void setZooKeeperServer(ZooKeeperServer zooKeeperServer) {
+        this.zooKeeperServer = zooKeeperServer;
+    }
+
 }

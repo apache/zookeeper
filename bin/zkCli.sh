@@ -34,4 +34,4 @@ eval `grep -e "^dataDir=" $ZOOCFG`
 
 java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
      -cp $CLASSPATH $JVMFLAGS \
-     org.apache.zookeeper.ZooKeeper $@
+     org.apache.zookeeper.ZooKeeperMain $@
