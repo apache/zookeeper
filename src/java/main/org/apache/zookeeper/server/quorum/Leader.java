@@ -356,7 +356,7 @@ public class Leader {
                 // Long.toHexString(zxid) + " is " + p.ackCount);
                 if (p.ackCount > self.quorumPeers.size() / 2){
                     if (!first) {
-                        LOG.error("Commiting " + Long.toHexString(zxid)
+                        LOG.error("Commiting zxid 0x" + Long.toHexString(zxid)
                                 + " from " + followerAddr + " not first!");
                         LOG.error("First is "
                                 + outstandingProposals.element().packet);
@@ -385,7 +385,7 @@ public class Leader {
                 first = false;
             }
         }
-        LOG.error("Trying to commit future proposal: "
+        LOG.error("Trying to commit future proposal: zxid 0x"
                 + Long.toHexString(zxid) + " from " + followerAddr);
     }
 

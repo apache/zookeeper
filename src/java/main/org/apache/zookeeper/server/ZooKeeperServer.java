@@ -105,7 +105,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public int commitLogBuffer = 700;
     public LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
     public long minCommittedLog, maxCommittedLog;
-    private DataTreeBuilder treeBuilder = new BasicDataTreeBuilder();
+    private DataTreeBuilder treeBuilder;
     public DataTree dataTree;
     protected SessionTracker sessionTracker;
     /**
@@ -138,39 +138,54 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
+     * Creates a ZooKeeperServer instance. Nothing is setup, use the setX
+     * methods to prepare the instance (eg datadir, datalogdir, ticktime, 
+     * builder, etc...)
      * 
      * @throws IOException
      */
     public ZooKeeperServer() {
         ServerStats.getInstance().setStatsProvider(this);
+        treeBuilder = new BasicDataTreeBuilder();
     }
     /**
      * Creates a ZooKeeperServer instance. It sets everything up, but doesn't
      * actually start listening for clients until run() is invoked.
      *
-     * @param dataDir
-     *            the directory to put the data
+     * @param dataDir the directory to put the data
      * @throws IOException
      */
     public ZooKeeperServer(File dataDir, File dataLogDir, int tickTime,
             DataTreeBuilder treeBuilder) throws IOException {
-        this.treeBuilder = treeBuilder;
         this.dataDir = dataDir;
         this.dataLogDir = dataLogDir;
         this.tickTime = tickTime;
+        this.treeBuilder = treeBuilder;
         ServerStats.getInstance().setStatsProvider(this);
+        
+        LOG.info("Created server with dataDir:" + dataDir 
+                + " dataLogDir:" + dataLogDir
+                + " tickTime:" + tickTime);
     }
 
     /**
-     * This constructor is for backward comaptibility with the existing unit
+     * This constructor is for backward compatibility with the existing unit
      * test code.
      */
     public ZooKeeperServer(File dataDir, File dataLogDir, int tickTime)
-            throws IOException {
-        this();
-        this.dataDir = dataDir;
-        this.dataLogDir = dataLogDir;
-        this.tickTime = tickTime;
+        throws IOException 
+    {
+        this(dataDir, dataLogDir, tickTime, new BasicDataTreeBuilder());
+    }
+
+    /**
+     * Default constructor, relies on the config for its agrument values
+     *
+     * @throws IOException
+     */
+    public ZooKeeperServer(DataTreeBuilder treeBuilder) throws IOException {
+        this(new File(ServerConfig.getDataDir()), new File(ServerConfig
+                .getDataLogDir()), DEFAULT_TICK_TIME, treeBuilder);
     }
 
     public static long getZxidFromName(String name, String prefix) {
@@ -396,7 +411,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                             ((CreateSessionTxn) txn).getTimeOut());
                     ZooTrace.logTraceMessage(LOG,
                                              ZooTrace.SESSION_TRACE_MASK,
-                            "playLog --- create session in log: "
+                            "playLog --- create session in log: 0x"
                                     + Long.toHexString(hdr.getClientId())
                                     + " with timeout: "
                                     + ((CreateSessionTxn) txn).getTimeOut());
@@ -407,7 +422,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     sessionsWithTimeouts.remove(hdr.getClientId());
                     ZooTrace.logTraceMessage(LOG,
                             ZooTrace.SESSION_TRACE_MASK,
-                            "playLog --- close session in log: "
+                            "playLog --- close session in log: 0x"
                                     + Long.toHexString(hdr.getClientId()));
                     dataTree.processTxn(hdr, txn);
                     break;
@@ -562,7 +577,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         if (truncated == false) {
             // not able to truncate the log
-            LOG.error("Not able to truncate the log "
+            LOG.error("Not able to truncate the log zxid 0x"
                     + Long.toHexString(finalZxid));
             System.exit(13);
         }
@@ -584,7 +599,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public void snapshot() throws InterruptedException {
         long lastZxid = dataTree.lastProcessedZxid;
         ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                "Snapshotting: " + Long.toHexString(lastZxid));
+                "Snapshotting: zxid 0x" + Long.toHexString(lastZxid));
         try {
             File f =new File(dataDir, "snapshot." + Long.toHexString(lastZxid));
             OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(f));
@@ -593,7 +608,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             sessOS.flush();
             sessOS.close();
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                    "Snapshotting finished: " + Long.toHexString(lastZxid));
+                    "Snapshotting finished: zxid 0x" + Long.toHexString(lastZxid));
         } catch (IOException e) {
             LOG.error("Severe error, exiting",e);
             // This is a severe error that we cannot recover from,
@@ -623,7 +638,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void closeSession(long sessionId) throws InterruptedException {
         ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                                 "ZooKeeperServer --- Session to be closed: "
+                                 "ZooKeeperServer --- Session to be closed: 0x"
                 + Long.toHexString(sessionId));
         // we do not want to wait for a session close. send it as soon as we
         // detect it!
@@ -633,7 +648,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected void killSession(long sessionId) {
         dataTree.killSession(sessionId);
         ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                                     "ZooKeeperServer --- killSession: "
+                                     "ZooKeeperServer --- killSession: 0x"
                 + Long.toHexString(sessionId));
         if (sessionTracker != null) {
             sessionTracker.removeSession(sessionId);
@@ -643,8 +658,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public void expire(long sessionId) {
         try {
             ZooTrace.logTraceMessage(LOG,
-                                     ZooTrace.SESSION_TRACE_MASK,
-                    "ZooKeeperServer --- Session to expire: " + Long.toHexString(sessionId));
+                     ZooTrace.SESSION_TRACE_MASK,
+                    "ZooKeeperServer --- Session to expire: 0x" 
+                     + Long.toHexString(sessionId));
             closeSession(sessionId);
         } catch (Exception e) {
             LOG.error("FIXMSG",e);
@@ -658,11 +674,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         long id = cnxn.getSessionId();
         int to = cnxn.getSessionTimeout();
         if (!sessionTracker.touchSession(id, to)) {
-            throw new IOException("Missing session " + Long.toHexString(id));
+            throw new IOException("Missing session 0x" + Long.toHexString(id));
         }
     }
 
     public void startup() throws IOException, InterruptedException {
+        if (dataDir == null || !dataDir.isDirectory()) {
+            throw new IOException("data directory does not exist: " + dataDir);
+        }
+        if (dataLogDir == null || !dataLogDir.isDirectory()) {
+            throw new IOException("data log directory does not exist: "
+                    + dataLogDir);
+        }
+
         if (dataTree == null) {
             loadData();
         }
@@ -782,7 +806,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             int sessionTimeout) throws IOException, InterruptedException {
         boolean rc = sessionTracker.touchSession(sessionId, sessionTimeout);
         ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
-                                 "Session " + Long.toHexString(sessionId) +
+                                 "Session 0x" + Long.toHexString(sessionId) +
                 " is valid: " + rc);
         cnxn.finishSessionInit(rc);
     }
@@ -931,8 +955,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     /**
      * Sets directoy for storing the log tnxns
      */
-    public void setDataLogDir(File dataLogDir) {
+    public void setDataLogDir(File dataLogDir) throws IOException {
         this.dataLogDir = dataLogDir;
+        if (!dataLogDir.isDirectory()) {
+            throw new IOException("data log directory does not exist");
+        }
     }
 
     public int getClientPort() {

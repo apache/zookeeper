@@ -29,6 +29,7 @@ import org.apache.zookeeper.KeeperException;
 public class SerializationPerfTest extends TestCase {
     private static class NullOutputStream extends OutputStream {
         public void write(int b) {
+            // do nothing - exclude persistence from perf
         }
     }
 

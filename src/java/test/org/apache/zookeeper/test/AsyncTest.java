@@ -18,20 +18,17 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.File;
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.apache.zookeeper.test.ClientBase.verifyThreadTerminated;
+
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -43,157 +40,203 @@ import org.apache.zookeeper.ZooDefs.CreateFlags;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-public class AsyncTest extends TestCase implements Watcher, StringCallback, VoidCallback, DataCallback {
+public class AsyncTest extends TestCase
+    implements Watcher, StringCallback, VoidCallback, DataCallback
+{
     private static final Logger LOG = Logger.getLogger(AsyncTest.class);
 
-    private static final int CONNECTION_TIMEOUT=30000;
-    protected static String hostPort = "127.0.0.1:33221";
-    LinkedBlockingQueue<WatcherEvent> events = new LinkedBlockingQueue<WatcherEvent>();
-    static File baseTest = new File(System.getProperty("build.test.dir", "build"));
-    NIOServerCnxn.Factory f = null;
-    QuorumTest qt = new QuorumTest();
+    private QuorumTest quorumTest = new QuorumTest();
     private CountDownLatch clientConnected;
 
+    private volatile boolean bang;
+
     @Before
+    @Override
     protected void setUp() throws Exception {
-        qt.setUp();
-        hostPort = ClientTest.hostPort;
+        LOG.info("STARTING " + getName());
+        
+        ClientBase.setupTestEnv();
+
+        quorumTest.setUp();
     }
 
     protected void restart() throws Exception {
-        qt.startServers();
+        quorumTest.startServers();
     }
 
     @After
+    @Override
     protected void tearDown() throws Exception {
-        qt.tearDown();
-        LOG.error("Client test shutdown");
-        if (f != null) {
-            f.shutdown();
-        }
-        clientConnected=null;
-        LOG.error("Client test shutdown finished");
+        LOG.info("Test clients shutting down");
+        clientConnected = null;
+        quorumTest.tearDown();
+        LOG.info("FINISHED " + getName());
     }
 
-    private ZooKeeper createClient() throws IOException,InterruptedException{
-        clientConnected=new CountDownLatch(1);
-        ZooKeeper zk = new ZooKeeper(hostPort, 30000, this);
+    private ZooKeeper createClient() throws IOException,InterruptedException {
+        return createClient(quorumTest.hostPort);
+    }
+
+    private ZooKeeper createClient(String hp)
+        throws IOException, InterruptedException
+    {
+        clientConnected = new CountDownLatch(1);
+        ZooKeeper zk = new ZooKeeper(hp, 30000, this);
         if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
             fail("Unable to connect to server");
         }
         return zk;
     }
 
-    boolean bang;
+    /**
+     * Create /test- sequence nodes asynchronously, max 30 outstanding
+     */
+    class HammerThread extends Thread
+        implements Watcher, StringCallback, VoidCallback
+    {
+        private static final int MAX_OUTSTANDING = 30;
 
-    class HammerThread extends Thread implements Watcher, StringCallback, VoidCallback {
-        ZooKeeper zk;
+        private ZooKeeper zk;
+        private int outstanding;
+
+        public HammerThread(String name) {
+            super(name);
+        }
+
         public void run() {
-        try {
-            zk = new ZooKeeper(hostPort, 30000, this);
-            while(bang) {
-                zk.create("/test-", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE, this, null);
-                incOut();
+            try {
+                zk = new ZooKeeper(quorumTest.hostPort, 30000, this);
+                while(bang) {
+                    incOutstanding(); // before create otw race
+                    zk.create("/test-", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                            CreateFlags.SEQUENCE, this, null);
+                }
+            } catch (InterruptedException e) {
+                if (bang) {
+                    LOG.error("sanity check failed!!!"); // sanity check
+                    return;
+                }
+            } catch (Exception e) {
+                LOG.error("Client create operation failed", e);
+                return;
+            } finally {
+                if (zk != null) {
+                    try {
+                        zk.close();
+                    } catch (InterruptedException e) {
+                        LOG.warn("Unexpected", e);
+                    }
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        }
-        int outstanding;
-        synchronized void incOut() throws InterruptedException {
+
+        private synchronized void incOutstanding() throws InterruptedException {
             outstanding++;
-            while(outstanding > 30) {
+            while(outstanding > MAX_OUTSTANDING) {
                 wait();
             }
         }
-        synchronized void decOut() {
+
+        private synchronized void decOutstanding() {
             outstanding--;
+            assertTrue("outstanding >= 0", outstanding >= 0);
             notifyAll();
         }
 
         public void process(WatcherEvent event) {
+            // ignore for purposes of this test
         }
 
         public void processResult(int rc, String path, Object ctx, String name) {
             try {
-                decOut();
+                decOutstanding();
                 zk.delete(path, -1, this, null);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("Client delete failed", e);
             }
         }
 
         public void processResult(int rc, String path, Object ctx) {
+            // ignore for purposes of this test
         }
     }
 
     @Test
     public void testHammer() throws Exception {
-        Thread.sleep(1000);
         bang = true;
-        for (int i = 0; i < 100; i++) {
-            new HammerThread().start();
+        Thread[] hammers = new Thread[100];
+        for (int i = 0; i < hammers.length; i++) {
+            hammers[i] = new HammerThread("HammerThread-" + i);
+            hammers[i].start();
         }
-        Thread.sleep(5000);
-        tearDown();
+        Thread.sleep(5000); // allow the clients to run for max 5sec
         bang = false;
-        restart();
-        Thread.sleep(5000);
-        String parts[] = hostPort.split(",");
-        String prevList[] = null;
-        for (String hp : parts) {
-            ZooKeeper zk = createClient();
-            String list[] = zk.getChildren("/", false).toArray(new String[0]);
-            if (prevList != null) {
-                assertEquals(prevList.length, list.length);
-                for (int i = 0; i < list.length; i++) {
-                    assertEquals(prevList[i], list[i]);
-                }
-            }
-            prevList = list;
+        for (int i = 0; i < hammers.length; i++) {
+            hammers[i].interrupt();
+            verifyThreadTerminated(hammers[i], 60000);
         }
+        // before restart
+        quorumTest.verifyRootOfAllServersMatch(quorumTest.hostPort);
+        tearDown();
+
+        restart();
+
+        // after restart
+        quorumTest.verifyRootOfAllServersMatch(quorumTest.hostPort);
     }
 
     LinkedList<Integer> results = new LinkedList<Integer>();
     @Test
-    public void testAsync() throws IOException,
-            InterruptedException, KeeperException {
+    public void testAsync()
+        throws IOException, InterruptedException, KeeperException
+    {
         ZooKeeper zk = null;
         zk = createClient();
-        zk.addAuthInfo("digest", "ben:passwd".getBytes());
-        zk.create("/ben", new byte[0], Ids.READ_ACL_UNSAFE, 0, this, results);
-        zk.create("/ben/2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
-        zk.delete("/ben", -1, this, results);
-        zk.create("/ben2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
-        zk.getData("/ben2", false, this, results);
-        synchronized (results) {
-            while (results.size() < 5) {
-                results.wait();
-            }
-        }
-        assertEquals(0, (int) results.get(0));
-        assertEquals(Code.NoAuth, (int) results.get(1));
-        assertEquals(0, (int) results.get(2));
-        assertEquals(0, (int) results.get(3));
-        assertEquals(0, (int) results.get(4));
-        zk.close();
-
-        zk =createClient();
-        zk.addAuthInfo("digest", "ben:passwd2".getBytes());
         try {
-            zk.getData("/ben2", false, new Stat());
-            fail("Should have received a permission error");
-        } catch (KeeperException e) {
-            assertEquals(Code.NoAuth, e.getCode());
+            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.create("/ben", new byte[0], Ids.READ_ACL_UNSAFE, 0, this, results);
+            zk.create("/ben/2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
+            zk.delete("/ben", -1, this, results);
+            zk.create("/ben2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
+            zk.getData("/ben2", false, this, results);
+            synchronized (results) {
+                while (results.size() < 5) {
+                    results.wait();
+                }
+            }
+            assertEquals(0, (int) results.get(0));
+            assertEquals(Code.NoAuth, (int) results.get(1));
+            assertEquals(0, (int) results.get(2));
+            assertEquals(0, (int) results.get(3));
+            assertEquals(0, (int) results.get(4));
+        } finally {
+            zk.close();
         }
-        zk.close();
 
-        zk =createClient();
-        zk.addAuthInfo("digest", "ben:passwd".getBytes());
-        zk.getData("/ben2", false, new Stat());
-        zk.close();
+        zk = createClient();
+        try {
+            zk.addAuthInfo("digest", "ben:passwd2".getBytes());
+            try {
+                zk.getData("/ben2", false, new Stat());
+                fail("Should have received a permission error");
+            } catch (KeeperException e) {
+                assertEquals(Code.NoAuth, e.getCode());
+            }
+        } finally {
+            zk.close();
+        }
+
+        zk = createClient();
+        try {
+            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.getData("/ben2", false, new Stat());
+        } finally {
+            zk.close();
+        }
     }
 
     public void process(WatcherEvent event) {
@@ -202,24 +245,27 @@ public class AsyncTest extends TestCase implements Watcher, StringCallback, Void
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void processResult(int rc, String path, Object ctx, String name) {
-        ((LinkedList<Integer>)ctx).add(rc);
         synchronized(ctx) {
+            ((LinkedList<Integer>)ctx).add(rc);
             ctx.notifyAll();
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void processResult(int rc, String path, Object ctx) {
-        ((LinkedList<Integer>)ctx).add(rc);
         synchronized(ctx) {
+            ((LinkedList<Integer>)ctx).add(rc);
             ctx.notifyAll();
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void processResult(int rc, String path, Object ctx, byte[] data,
             Stat stat) {
-        ((LinkedList<Integer>)ctx).add(rc);
         synchronized(ctx) {
+            ((LinkedList<Integer>)ctx).add(rc);
             ctx.notifyAll();
         }
     }

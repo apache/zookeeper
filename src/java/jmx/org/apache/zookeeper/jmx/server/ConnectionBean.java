@@ -79,8 +79,8 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
         try {
             zk.closeSession(connection.getSessionId());
         } catch (Exception e) {
-            LOG.warn("Unable to closeSession() for session: "+getSessionId()+
-                    ", "+e.getMessage());
+            LOG.warn("Unable to closeSession() for session: 0x" 
+                    + getSessionId(), e);
         }
     }
     
@@ -89,7 +89,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     }
     
     public String toString() {
-        return "ConnectionBean{ClientIP="+getSourceIP()+",SessionId="+getSessionId()+"}";
+        return "ConnectionBean{ClientIP="+getSourceIP()+",SessionId=0x"+getSessionId()+"}";
     }
     
     public long getOutstandingRequests() {

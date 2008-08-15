@@ -18,15 +18,17 @@
 
 package org.apache.zookeeper.test;
 
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import junit.framework.TestCase;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
@@ -42,9 +44,7 @@ public class OOMTest extends TestCase implements Watcher {
         // This test takes too long to run!
         if (true)
             return;
-        File tmpDir = File.createTempFile("test", ".junit");
-        tmpDir = new File(tmpDir + ".dir");
-        tmpDir.mkdirs();
+        File tmpDir = ClientBase.createTmpDir();
         // Grab some memory so that it is easier to cause an
         // OOM condition;
         ArrayList<byte[]> hog = new ArrayList<byte[]>();
@@ -56,10 +56,16 @@ public class OOMTest extends TestCase implements Watcher {
                 break;
             }
         }
+        ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(33221);
+        
+        final int PORT = 33221;
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
         f.startup(zks);
-        Thread.sleep(2000);
+        assertTrue("waiting for server up",
+                   ClientBase.waitForServerUp("127.0.0.1:" + PORT,
+                                              CONNECTION_TIMEOUT));
+
         System.err.println("OOM Stage 0");
         utestPrep();
         System.out.println("Free = " + Runtime.getRuntime().freeMemory()
@@ -90,7 +96,11 @@ public class OOMTest extends TestCase implements Watcher {
                 + " total = " + Runtime.getRuntime().totalMemory() + " max = "
                 + Runtime.getRuntime().maxMemory());
         hog.get(0)[0] = (byte) 1;
+
         f.shutdown();
+        assertTrue("waiting for server down",
+                   ClientBase.waitForServerDown("127.0.0.1:" + PORT,
+                                                CONNECTION_TIMEOUT));
     }
 
     private void utestExists() throws IOException, InterruptedException, KeeperException {

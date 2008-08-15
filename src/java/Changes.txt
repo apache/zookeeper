@@ -1,8 +1,14 @@
 Trunk:
   BUGFIXES:
   
-  ZOOKEEPER-110. Build script relies on svnant, which is not compatible with subversion 1.5 working copies (Jakob Homan)
- 
-  ZOOKEEPER-105. Catch Zookeeper exceptions and print on the stderr. (Anthony Urso via Mahadev)
+  ZOOKEEPER-105. Catch Zookeeper exceptions and print on the stderr. 
+  (Anthony Urso via Mahadev)
 
-  ZOOKEEPER-108. Fix sync operation reordering on a Quorum. (Flavio Paiva Junqueira via Mahadev)
+  ZOOKEEPER-108. Fix sync operation reordering on a Quorum. 
+  (Flavio Paiva Junqueira via Mahadev)
+
+  ZOOKEEPER-110. Build script relies on svnant, which is not compatible 
+  with subversion 1.5 working copies (Jakob Homan)
+
+  ZOOKEEPER-111. Significant cleanup of existing tests. (Patrick Hunt via
+  mahadev)

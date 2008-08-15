@@ -128,8 +128,8 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         }
         long firstElementZxid = pendingTxns.element().zxid;
         if (firstElementZxid != zxid) {
-            LOG.error("Committing " + Long.toHexString(zxid)
-                    + " but next pending txn "
+            LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
+                    + " but next pending txn 0x"
                     + Long.toHexString(firstElementZxid));
             System.exit(12);
         }

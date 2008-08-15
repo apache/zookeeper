@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
 import org.junit.Test;
@@ -132,9 +133,8 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     if (stat == null) {
       fail("node " + nodeName + " should exist");
     }
-    long prevSessionId = zk.getSessionId();
-    byte[] prevSessionPasswd = zk.getSessionPasswd();
-    System.out.println("Closing client with sessioid:  " + prevSessionId);
+    System.out.println("Closing client with sessionid: 0x" 
+            + Long.toHexString(zk.getSessionId()));
     zk.close();
     zk = new ZooKeeper(hostPort, 10000, this);
 
@@ -263,7 +263,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
 
     event = this.getEvent(10);
     if (event == null) {
-      fail("First event was not delivered promptly");
+      throw new AssertionFailedError("First event was not delivered promptly");
     }
     if (!((event.getType() == Watcher.Event.EventNodeChildrenChanged &&
            event.getPath().equalsIgnoreCase(parentName)) ||
@@ -277,7 +277,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     event = this.getEvent(10);
 
     if (event == null) {
-      fail("Second event was not delivered promptly");
+      throw new AssertionFailedError("Second event was not delivered promptly");
     }
     if (!((event.getType() == Watcher.Event.EventNodeChildrenChanged &&
         event.getPath().equalsIgnoreCase(parentName)) ||

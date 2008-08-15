@@ -271,6 +271,13 @@ public class ZooKeeper {
                 sessionPasswd);
     }
 
+    /**
+     * The session id for this ZooKeeper client instance. The value returned
+     * is not valid until the client connects to a server and may change
+     * after a re-connect.
+     * 
+     * @return current session id
+     */
     public long getSessionId() {
         return cnxn.getSessionId();
     }
@@ -303,6 +310,8 @@ public class ZooKeeper {
      * @throws InterruptedException
      */
     public synchronized void close() throws InterruptedException {
+        LOG.info("Closing session: 0x" + Long.toHexString(getSessionId()));
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.closeSession);
         cnxn.submitRequest(h, null, null, null);
@@ -311,6 +320,8 @@ public class ZooKeeper {
         } catch (IOException e) {
             LOG.warn("Unexpected exception", e);
         }
+
+        LOG.info("Session: 0x" + Long.toHexString(getSessionId()) + " closed");
     }
 
     /**

@@ -18,57 +18,87 @@
 
 package org.apache.zookeeper.test;
 
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+
 import java.io.File;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
-import org.junit.Test;
-
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.SyncRequestProcessor;
-import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.junit.Test;
 
 /**
  * @author breed
  *
  */
 public class RecoveryTest extends TestCase implements Watcher {
-    static File baseTest = new File(System.getProperty("build.test.dir",
-            "build"));
+    protected static final Logger LOG = Logger.getLogger(RecoveryTest.class);
+
+    private static String HOSTPORT = "127.0.0.1:2344";
+
+    private CountDownLatch startSignal;
+
+    @Override
     protected void setUp() throws Exception {
+        LOG.info("STARTING " + getName());
         ServerStats.registerAsConcrete();
     }
+    @Override
     protected void tearDown() throws Exception {
         ServerStats.unregister();
+        LOG.info("FINISHED " + getName());
     }
 
     @Test
+    /**
+     * Verify that if a server goes down that clients will reconnect
+     * automatically after the server is restarted. Note that this requires the
+     * server to restart within the connection timeout period.
+     *
+     * Also note that the client latches are used to eliminate any chance
+     * of spurrious connectionloss exceptions on the read ops. Specifically
+     * a sync operation will throw this exception if the server goes down
+     * (as recognized by the client) during the operation. If the operation
+     * occurs after the server is down, but before the client recognizes
+     * that the server is down (ping) then the op will throw connectionloss.
+     */
     public void testRecovery() throws Exception {
-        File tmpDir = File.createTempFile("test", ".junit", baseTest);
-        tmpDir = new File(tmpDir + ".dir");
-        tmpDir.mkdirs();
+        File tmpDir = ClientBase.createTmpDir();
+
+        ClientBase.setupTestEnv();
         ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+
         int oldSnapCount = SyncRequestProcessor.snapCount;
         SyncRequestProcessor.snapCount = 1000;
         try {
-            NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(2344);
+            final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+            NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
             f.startup(zs);
-            System.out.println("starting up the the server -- sleeping");
-            Thread.sleep(1000);
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:2344", 20000, this);
+            LOG.info("starting up the the server, waiting");
+
+            assertTrue("waiting for server up",
+                       ClientBase.waitForServerUp(HOSTPORT,
+                                       CONNECTION_TIMEOUT));
+
+            ZooKeeper zk = new ZooKeeper(HOSTPORT, 20000, this);
             String path;
-            System.out.println("starting creating nodes");
+            LOG.info("starting creating nodes");
             for (int i = 0; i < 10; i++) {
                 path = "/" + i;
-                zk
-                        .create(path, (path + "!").getBytes(),
-                                Ids.OPEN_ACL_UNSAFE, 0);
+                zk.create(path,
+                          (path + "!").getBytes(),
+                          Ids.OPEN_ACL_UNSAFE, 0);
                 for (int j = 0; j < 10; j++) {
                     String subpath = path + "/" + j;
                     zk.create(subpath, (subpath + "!").getBytes(),
@@ -80,16 +110,32 @@ public class RecoveryTest extends TestCase implements Watcher {
                     }
                 }
             }
+
             f.shutdown();
-            Thread.sleep(1000);
+
+            assertTrue("waiting for server down",
+                       ClientBase.waitForServerDown(HOSTPORT,
+                                          CONNECTION_TIMEOUT));
+
             zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-            f = new NIOServerCnxn.Factory(2344);
+            f = new NIOServerCnxn.Factory(PORT);
+
+            startSignal = new CountDownLatch(1);
+
             f.startup(zs);
-            Thread.sleep(1000);
+
+            assertTrue("waiting for server up",
+                       ClientBase.waitForServerUp(HOSTPORT,
+                                           CONNECTION_TIMEOUT));
+
+            startSignal.await(CONNECTION_TIMEOUT,
+                    TimeUnit.MILLISECONDS);
+            assertTrue("count == 0", startSignal.getCount() == 0);
+
             Stat stat = new Stat();
             for (int i = 0; i < 10; i++) {
                 path = "/" + i;
-                System.out.println("Checking " + path);
+                LOG.info("Checking " + path);
                 assertEquals(new String(zk.getData(path, false, stat)), path
                         + "!");
                 for (int j = 0; j < 10; j++) {
@@ -104,17 +150,31 @@ public class RecoveryTest extends TestCase implements Watcher {
                 }
             }
             f.shutdown();
-            Thread.sleep(2000);
+
+            assertTrue("waiting for server down",
+                       ClientBase.waitForServerDown(HOSTPORT,
+                                          ClientBase.CONNECTION_TIMEOUT));
+
             zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-            f = new NIOServerCnxn.Factory(2344);
+            f = new NIOServerCnxn.Factory(PORT);
+
+            startSignal = new CountDownLatch(1);
+
             f.startup(zs);
-            Thread.sleep(4000);
+
+            assertTrue("waiting for server up",
+                       ClientBase.waitForServerUp(HOSTPORT,
+                               CONNECTION_TIMEOUT));
+
+            startSignal.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+            assertTrue("count == 0", startSignal.getCount() == 0);
+
             stat = new Stat();
-            System.out.println("Check 2");
+            LOG.info("Check 2");
             for (int i = 0; i < 10; i++) {
                 path = "/" + i;
-                assertEquals(new String(zk.getData(path, false, stat)), path
-                        + "!");
+                assertEquals(new String(zk.getData(path, false, stat)),
+                             path + "!");
                 for (int j = 0; j < 10; j++) {
                     String subpath = path + "/" + j;
                     assertEquals(new String(zk.getData(subpath, false, stat)),
@@ -127,6 +187,10 @@ public class RecoveryTest extends TestCase implements Watcher {
                 }
             }
             f.shutdown();
+
+            assertTrue("waiting for server down",
+                       ClientBase.waitForServerDown(HOSTPORT,
+                                                    CONNECTION_TIMEOUT));
         } finally {
             SyncRequestProcessor.snapCount = oldSnapCount;
         }
@@ -138,7 +202,11 @@ public class RecoveryTest extends TestCase implements Watcher {
      * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.proto.WatcherEvent)
      */
     public void process(WatcherEvent event) {
-        // TODO Auto-generated method stub
-
+        LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
+        if (event.getState() == Watcher.Event.KeeperStateSyncConnected
+                && startSignal != null && startSignal.getCount() > 0)
+        {
+            startSignal.countDown();
+        }
     }
 }
