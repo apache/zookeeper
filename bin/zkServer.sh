@@ -30,7 +30,7 @@ case $1 in
 start) 
     echo -n "Starting zookeeper ... "
     java  "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp $CLASSPATH $JVMFLAGS org.apache.zookeeper.server.quorum.QuorumPeer $ZOOCFG &
+    -cp $CLASSPATH $JVMFLAGS org.apache.zookeeper.server.quorum.QuorumPeerMain $ZOOCFG &
     echo STARTED
     ;;
 stop) 

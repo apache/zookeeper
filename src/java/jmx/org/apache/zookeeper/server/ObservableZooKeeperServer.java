@@ -20,6 +20,8 @@ package org.apache.zookeeper.server;
 
 import java.io.File;
 import java.io.IOException;
+
+import org.apache.zookeeper.server.ZooKeeperServer.DataTreeBuilder;
 /**
  * The observable server broadcast notifications when its state changes. 
  * 
@@ -31,13 +33,16 @@ public class ObservableZooKeeperServer extends ZooKeeperServer{
 
     private ZooKeeperObserverNotifier notifier=new ZooKeeperObserverNotifier(this);
     
-    public ObservableZooKeeperServer(File dataDir, File dataLogDir, 
-            int tickTime,DataTreeBuilder treeBuilder) throws IOException {
-        super(dataDir, dataLogDir, tickTime,treeBuilder);
+    public ObservableZooKeeperServer() {
+        super();
     }
 
-    public ObservableZooKeeperServer(DataTreeBuilder treeBuilder) throws IOException {
-        super(treeBuilder);
+    public ObservableZooKeeperServer(File dataDir, File dataLogDir, int tickTime, DataTreeBuilder treeBuilder) throws IOException {
+        super(dataDir, dataLogDir, tickTime, treeBuilder);
+    }
+
+    public ObservableZooKeeperServer(File dataDir, File dataLogDir, int tickTime) throws IOException {
+        super(dataDir, dataLogDir, tickTime);
     }
 
     public void shutdown() {

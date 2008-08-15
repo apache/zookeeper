@@ -112,6 +112,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             return (InetSocketAddress)ss.socket().getLocalSocketAddress();
         }
 
+        public int getLocalPort(){
+            return ss.socket().getLocalPort();
+        }
+
         private void addCnxn(NIOServerCnxn cnxn) {
             synchronized (cnxns) {
                 cnxns.add(cnxn);

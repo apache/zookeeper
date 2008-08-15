@@ -11,7 +11,7 @@ Starting the server:
 
 2) start the server with the following comand line:
 
-java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar org.apache.zookeeper.server.quorum.QuorumPeer conf/zoo.cfg
+java -cp conf:zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar org.apache.zookeeper.server.quorum.QuorumPeerMain conf/zoo.cfg
 
 Notice that the server is picking up the log4j.properties file from the conf directory (default).
 
@@ -21,8 +21,8 @@ Starting a client shell
 
 1) run the following command
 
-java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar org.apache.zookeeper.ZooKeeper <server>:<port>
+java -cp conf:zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar org.apache.zookeeper.ZooKeeperMain <server>:<port>
 
 where server and port correspond to the ZooKeeper configuration.
 
-Notice that the client is picking up the log4j_console.properties file from the conf directory (default).
+Notice that the client is picking up the log4j.properties file from the conf directory (default).

@@ -19,6 +19,7 @@
 package org.apache.zookeeper.jmx.server.quorum;
 
 import org.apache.zookeeper.jmx.server.ZooKeeperServerBean;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 /**
@@ -45,4 +46,8 @@ public class LocalPeerBean extends ZooKeeperServerBean implements LocalPeerMXBea
             peer.getQuorumAddress().getPort();
     }
 
+    @Override
+    public ZooKeeperServer getZooKeeperServer() {
+        return peer.getActiveServer();
+    }
 }

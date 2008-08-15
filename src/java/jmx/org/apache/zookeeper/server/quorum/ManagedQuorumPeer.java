@@ -44,6 +44,7 @@ import org.apache.zookeeper.server.ObservableNIOServerCnxn;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.ConnectionObserver;
 import org.apache.zookeeper.server.util.ObserverManager;
 import org.apache.zookeeper.server.util.QuorumPeerObserver;
@@ -201,45 +202,21 @@ public class ManagedQuorumPeer extends ObservableQuorumPeer {
         ObserverManager.getInstance().add(new ManagedConnectionObserver());        
     }
     
-    public ManagedQuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir,
-            File dataLogDir,int electionAlg, int electionPort,long myid,    int tickTime, 
-            int initLimit, int syncLimit,NIOServerCnxn.Factory cnxnFactory) 
-                throws IOException {
-        super(quorumPeers, dataDir, dataLogDir,electionAlg, electionPort,myid,
-                tickTime, initLimit, syncLimit,cnxnFactory);
+    public ManagedQuorumPeer() {
+        super();
         setupObservers();
     }
 
-    public ManagedQuorumPeer(NIOServerCnxn.Factory cnxnFactory) throws IOException {
-        super(cnxnFactory);
+    public ManagedQuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir, File dataLogDir, int clientPort, int electionAlg, int electionPort, long myid, int tickTime, int initLimit,
+                                int syncLimit) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, clientPort, electionAlg, electionPort, myid, tickTime, initLimit, syncLimit);
         setupObservers();
     }
 
-    /**
-     * To start the replicated server specify the configuration file name on the
-     * command line.
-     * @param args command line
-     */
-    public static void main(String[] args) {
-        if (args.length == 2) {
-            ManagedZooKeeperServer.main(args);
-            return;
-        }
-        QuorumPeerConfig.parse(args);
-        if (!QuorumPeerConfig.isStandalone()) {
-            ZooKeeperObserverManager.setAsConcrete();
-            runPeer(new QuorumPeer.Factory() {
-                public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory)
-                        throws IOException {
-                    return new ManagedQuorumPeer(cnxnFactory);
-                }
-                public NIOServerCnxn.Factory createConnectionFactory() throws IOException {
-                    return new ObservableNIOServerCnxn.Factory(getClientPort());
-                }
-            });
-        }else{
-            // there is only server in the quorum -- run as standalone
-            ManagedZooKeeperServer.main(args);
-        }
+    public ManagedQuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir, File dataLogDir, int electionType, int electionPort, long myid, int tickTime, int initLimit, int syncLimit,
+                                NIOServerCnxn.Factory cnxnFactory) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, electionType, electionPort, myid, tickTime, initLimit, syncLimit, cnxnFactory);
+        setupObservers();
     }
+
 }

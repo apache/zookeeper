@@ -78,7 +78,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     /**
      * Create an instance of Zookeeper server
      */
-    public interface Factory {
+    static public interface Factory {
         public ZooKeeperServer createServer() throws IOException;
 
         public NIOServerCnxn.Factory createConnectionFactory()
@@ -105,7 +105,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public int commitLogBuffer = 700;
     public LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
     public long minCommittedLog, maxCommittedLog;
-    private DataTreeBuilder treeBuilder;
+    private DataTreeBuilder treeBuilder = new BasicDataTreeBuilder();
     public DataTree dataTree;
     protected SessionTracker sessionTracker;
     /**
@@ -130,49 +130,20 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     int requestsInProcess;
     List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
     private NIOServerCnxn.Factory serverCnxnFactory;
+    private int clientPort;
 
-    /*
-     * Start up the ZooKeeper server.
-     *
-     * @param args the port and data directory
-     */
-    public static void main(String[] args) {
-        ServerConfig.parse(args);
-        runStandalone(new Factory() {
-            public NIOServerCnxn.Factory createConnectionFactory()
-                    throws IOException {
-                return new NIOServerCnxn.Factory(ServerConfig.getClientPort());
-            }
-
-            public ZooKeeperServer createServer() throws IOException {
-                return new ZooKeeperServer(new BasicDataTreeBuilder());
-            }
-        });
-    }
-
-    public static void runStandalone(Factory factory) {
-        try {
-            // Note that this thread isn't going to be doing anything else,
-            // so rather than spawning another thread, we will just call
-            // run() in this thread.
-            ServerStats.registerAsConcrete();
-            ZooKeeperServer zk = factory.createServer();
-            zk.startup();
-            NIOServerCnxn.Factory t = factory.createConnectionFactory();
-            t.setZooKeeperServer(zk);
-            t.join();
-            if (zk.isRunning())
-                zk.shutdown();
-        } catch (Exception e) {
-            LOG.fatal("Unexpected exception",e);
-        }
-        System.exit(0);
-    }
-
+ 
     void removeCnxn(ServerCnxn cnxn) {
         dataTree.removeCnxn(cnxn);
     }
 
+    /**
+     * 
+     * @throws IOException
+     */
+    public ZooKeeperServer() {
+        ServerStats.getInstance().setStatsProvider(this);
+    }
     /**
      * Creates a ZooKeeperServer instance. It sets everything up, but doesn't
      * actually start listening for clients until run() is invoked.
@@ -187,9 +158,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.dataDir = dataDir;
         this.dataLogDir = dataLogDir;
         this.tickTime = tickTime;
-        if (!dataDir.isDirectory()) {
-            throw new IOException("data directory does not exist");
-        }
         ServerStats.getInstance().setStatsProvider(this);
     }
 
@@ -199,24 +167,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(File dataDir, File dataLogDir, int tickTime)
             throws IOException {
-        this.treeBuilder = new BasicDataTreeBuilder();
+        this();
         this.dataDir = dataDir;
         this.dataLogDir = dataLogDir;
         this.tickTime = tickTime;
-        if (!dataDir.isDirectory()) {
-            throw new IOException("data directory does not exist");
-        }
-        ServerStats.getInstance().setStatsProvider(this);
-    }
-
-    /**
-     * Default constructor, relies on the config for its agrument values
-     *
-     * @throws IOException
-     */
-    public ZooKeeperServer(DataTreeBuilder treeBuilder) throws IOException {
-        this(new File(ServerConfig.getDataDir()), new File(ServerConfig
-                .getDataLogDir()), DEFAULT_TICK_TIME, treeBuilder);
     }
 
     public static long getZxidFromName(String name, String prefix) {
@@ -932,5 +886,60 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public long getOutstandingRequests() {
         return getInProcess();
+    }
+
+    public int getTickTime() {
+        return tickTime;
+    }
+
+    public void setTickTime(int tickTime) {
+        this.tickTime = tickTime;
+    }
+
+    public DataTreeBuilder getTreeBuilder() {
+        return treeBuilder;
+    }
+
+    public void setTreeBuilder(DataTreeBuilder treeBuilder) {
+        this.treeBuilder = treeBuilder;
+    }
+
+    /**
+     * Gets directory for storing the snapshot
+     */
+    public File getDataDir() {
+        return dataDir;
+    }
+
+    /**
+     * Sets directory for storing the snapshot
+     */
+    public void setDataDir(File dataDir) throws IOException {
+        this.dataDir = dataDir;
+        if (!dataDir.isDirectory()) {
+            throw new IOException("data directory does not exist");
+        }
+    }
+
+    /**
+     * Gets directoy for storing the log tnxns
+     */
+    public File getDataLogDir() {
+        return dataLogDir;
+    }
+
+    /**
+     * Sets directoy for storing the log tnxns
+     */
+    public void setDataLogDir(File dataLogDir) {
+        this.dataLogDir = dataLogDir;
+    }
+
+    public int getClientPort() {
+        return clientPort;
+    }
+
+    public void setClientPort(int clientPort) {
+        this.clientPort = clientPort;
     }
 }
