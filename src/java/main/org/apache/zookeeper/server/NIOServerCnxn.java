@@ -214,6 +214,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         try {
                             cnxn.close();
                         } catch (Exception e) {
+                            LOG.warn("exception during session close", e);
                         }
                         break;
                     }
@@ -481,9 +482,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             throw new IOException("ZooKeeperServer not running");
         }
         if (connReq.getLastZxidSeen() > zk.dataTree.lastProcessedZxid) {
-            LOG.error("Client has seen "
+            LOG.error("Client has seen zxid 0x"
                     + Long.toHexString(connReq.getLastZxidSeen())
-                    + " our last zxid is "
+                    + " our last zxid is 0x"
                     + Long.toHexString(zk.dataTree.lastProcessedZxid));
             throw new IOException("We are out of date");
         }
@@ -501,10 +502,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         if (connReq.getSessionId() != 0) {
             setSessionId(connReq.getSessionId());
             zk.reopenSession(this, sessionId, passwd, sessionTimeout);
-            LOG.warn("Renewing session " + Long.toHexString(sessionId));
+            LOG.warn("Renewing session 0x" + Long.toHexString(sessionId));
         } else {
             zk.createSession(this, passwd, sessionTimeout);
-            LOG.warn("Creating new session "
+            LOG.warn("Creating new session 0x"
                     + Long.toHexString(sessionId));
         }
         initialized = true;
@@ -759,8 +760,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     synchronized public void process(WatcherEvent event) {
         ReplyHeader h = new ReplyHeader(-1, -1L, 0);
         ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                                 "Deliver event " + event + " to "
-                                 + this.sessionId + " through " + this);
+                                 "Deliver event " + event + " to 0x"
+                                 + Long.toHexString(this.sessionId) 
+                                 + " through " + this);
         sendResponse(h, event, "notification");
     }
 
@@ -778,7 +780,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
             bb.putInt(bb.remaining() - 4).rewind();
             sendBuffer(bb);
-            LOG.warn("Finished init of " + Long.toHexString(sessionId)
+            LOG.warn("Finished init of 0x" + Long.toHexString(sessionId)
                     + ": " + valid);
             if (!valid) {
                 sendBuffer(closeConn);

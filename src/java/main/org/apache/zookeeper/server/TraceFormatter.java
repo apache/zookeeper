@@ -101,13 +101,13 @@ public class TraceFormatter {
                     DateFormat.LONG).format(new Date(time))
                     + ": "
                     + (char) app
-                    + " id="
+                    + " id=0x"
                     + Long.toHexString(id)
                     + " cxid="
                     + cxid
                     + " op="
                     + op2String(type)
-                    + " zxid="
+                    + " zxid=0x"
                     + Long.toHexString(zxid)
                     + " txnType="
                     + txnType

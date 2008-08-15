@@ -56,11 +56,11 @@ public class LogFormatter {
             hdr.deserialize(ia, "hdr");
             System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT,
                     DateFormat.LONG).format(new Date(hdr.getTime()))
-                    + " "
+                    + " session 0x"
                     + Long.toHexString(hdr.getClientId())
                     + ":"
                     + hdr.getCxid()
-                    + " "
+                    + " zxid 0x"
                     + Long.toHexString(hdr.getZxid())
                     + " " + TraceFormatter.op2String(hdr.getType()));
             if (logStream.readByte("EOR") != 'B') {

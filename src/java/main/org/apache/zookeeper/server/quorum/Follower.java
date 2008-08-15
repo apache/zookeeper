@@ -181,7 +181,7 @@ public class Follower {
                     }
                 } else if (qp.getType() == Leader.TRUNC) {
                     //we need to truncate the log to the lastzxid of the leader
-                    LOG.warn("Truncating log to get in sync with the leader "
+                    LOG.warn("Truncating log to get in sync with the leader 0x"
                             + Long.toHexString(qp.getZxid()));
                     zk.truncateLog(qp.getZxid());
                     zk.loadData();
@@ -219,9 +219,9 @@ public class Follower {
                             .getArchive(new ByteArrayInputStream(qp.getData()));
                     Record txn = ZooKeeperServer.deserializeTxn(ia, hdr);
                     if (hdr.getZxid() != lastQueued + 1) {
-                        LOG.warn("Got zxid "
+                        LOG.warn("Got zxid 0x"
                                 + Long.toHexString(hdr.getZxid())
-                                + " expected "
+                                + " expected 0x"
                                 + Long.toHexString(lastQueued + 1));
                     }
                     lastQueued = hdr.getZxid();
@@ -244,7 +244,7 @@ public class Follower {
                         ServerCnxn cnxn = pendingRevalidations
                                 .remove(sessionId);
                         if (cnxn == null) {
-                            LOG.warn("Missing "
+                            LOG.warn("Missing session 0x"
                                     + Long.toHexString(sessionId)
                                     + " for validation");
                         } else {
@@ -252,7 +252,8 @@ public class Follower {
                         }
                     }
                     ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                                             "Session " + sessionId
+                                             "Session 0x" 
+                                             + Long.toHexString(sessionId)
                                              + " is valid: " + valid);
                     break;
                 case Leader.SYNC:
@@ -303,7 +304,7 @@ public class Follower {
         pendingRevalidations.put(clientId, cnxn);
         ZooTrace.logTraceMessage(LOG,
                                  ZooTrace.SESSION_TRACE_MASK,
-                                 "To validate session "
+                                 "To validate session 0x"
                                  + Long.toHexString(clientId));
         writePacket(qp);
     }
@@ -350,6 +351,7 @@ public class Follower {
                 return zk.getZxid();
             }
         } catch (NullPointerException e) {
+            LOG.warn("error getting zxid", e);
         }
         return -1;
     }

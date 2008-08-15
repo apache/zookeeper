@@ -132,7 +132,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
                 if (set != null) {
                     for (Session s : set.sessions) {
                         sessionsById.remove(s.sessionId);
-                        LOG.warn("Expiring "
+                        LOG.warn("Expiring session 0x"
                                 + Long.toHexString(s.sessionId));
                         expirer.expire(s.sessionId);
                     }
@@ -149,7 +149,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
     synchronized public boolean touchSession(long sessionId, int timeout) {
         ZooTrace.logTraceMessage(LOG,
                                  ZooTrace.CLIENT_PING_TRACE_MASK,
-                                 "SessionTrackerImpl --- Touch session: "
+                                 "SessionTrackerImpl --- Touch session: 0x"
                 + Long.toHexString(sessionId) + " with timeout " + timeout);
         Session s = sessionsById.get(sessionId);
         if (s == null) {
@@ -179,7 +179,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         Session s = sessionsById.remove(sessionId);
         sessionsWithTimeout.remove(sessionId);
         ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                                 "SessionTrackerImpl --- Removing "
+                "SessionTrackerImpl --- Removing session 0x"
                 + Long.toHexString(sessionId));
         if (s != null) {
             sessionSets.get(s.tickTime).sessions.remove(s);
@@ -204,12 +204,12 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
             Session s = new Session(id, 0);
             sessionsById.put(id, s);
             ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                    "SessionTrackerImpl --- Adding " + Long.toHexString(id)
-                    + " " + sessionTimeout);
+                    "SessionTrackerImpl --- Adding session 0x" 
+                    + Long.toHexString(id) + " " + sessionTimeout);
         } else {
             ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                    "SessionTrackerImpl --- Existing session " + Long.toHexString(id) + " "
-                            + sessionTimeout);
+                    "SessionTrackerImpl --- Existing session 0x" 
+                    + Long.toHexString(id) + " " + sessionTimeout);
         }
         touchSession(id, sessionTimeout);
     }

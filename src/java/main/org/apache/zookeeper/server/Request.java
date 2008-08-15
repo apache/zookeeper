@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.jute.Record;
@@ -160,9 +159,9 @@ public class Request {
 
     public String toString() {
         StringBuffer sb = new StringBuffer();
-        sb.append(Long.toHexString(sessionId)).append(" ");
-        sb.append(Long.toHexString(cxid)).append(" ");
-        sb.append(Long.toHexString((hdr == null ? -2 : hdr.getZxid()))).append(
+        sb.append("session 0x").append(Long.toHexString(sessionId));
+        sb.append(" cxid 0x").append(Long.toHexString(cxid));
+        sb.append("zxid 0x").append(Long.toHexString((hdr == null ? -2 : hdr.getZxid()))).append(
                 " ");
         sb
                 .append(

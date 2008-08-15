@@ -19,16 +19,14 @@
 package org.apache.zookeeper.server;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
-
 import org.apache.jute.Record;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.KeeperException.Code;
@@ -177,7 +175,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     @SuppressWarnings("unchecked")
     protected void pRequest(Request request) {
         // LOG.info("Prep>>> cxid = " + request.cxid + " type = " +
-        // request.type + " id = " + request.sessionId);
+        // request.type + " id = 0x" + Long.toHexString(request.sessionId));
         TxnHeader txnHeader = null;
         Record txn = null;
         try {
@@ -342,7 +340,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                                 path2Delete, null, 0, null));
                     }
                 }
-                LOG.info("Processed session termination request for id: "
+                LOG.info("Processed session termination request for id: 0x"
                         + Long.toHexString(request.sessionId));
                 break;
             case OpCode.sync:

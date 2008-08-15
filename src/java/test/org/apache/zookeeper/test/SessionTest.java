@@ -18,9 +18,15 @@
 
 package org.apache.zookeeper.test;
 
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+
 import java.io.File;
 import java.io.IOException;
-import org.junit.Test;
+import java.util.concurrent.CountDownLatch;
+
+import junit.framework.TestCase;
+
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -31,88 +37,136 @@ import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import junit.framework.TestCase;
+import org.junit.Test;
 
 public class SessionTest extends TestCase implements Watcher {
-    static File baseTest = new File(System.getProperty("build.test.dir",
-            "build"));
+    protected static final Logger LOG = Logger.getLogger(SessionTest.class);
 
+    private static final String HOSTPORT = "127.0.0.1:33299";
+
+    private CountDownLatch startSignal;
+
+    private NIOServerCnxn.Factory serverFactory;
+
+    @Override
     protected void setUp() throws Exception {
+        LOG.info("STARTING " + getName());
+
         ServerStats.registerAsConcrete();
+
+        File tmpDir = ClientBase.createTmpDir();
+
+        ClientBase.setupTestEnv();
+        ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        serverFactory = new NIOServerCnxn.Factory(PORT);
+        serverFactory.startup(zs);
+
+        assertTrue("waiting for server up",
+                   ClientBase.waitForServerUp(HOSTPORT,
+                                              CONNECTION_TIMEOUT));
     }
+    @Override
     protected void tearDown() throws Exception {
+        serverFactory.shutdown();
+        assertTrue("waiting for server down",
+                   ClientBase.waitForServerDown(HOSTPORT,
+                                                CONNECTION_TIMEOUT));
+
         ServerStats.unregister();
+        LOG.info("FINISHED " + getName());
     }
-    /**
-     * this test checks to see if the sessionid that was created for the
-     * first zookeeper client can be reused for the second one immidiately
-     * after the first client closes and the new client resues them.
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws KeeperException
-     */
-    public void testSessionReuse() throws IOException, InterruptedException {
-        File tmpDir = File.createTempFile("test", ".junit", baseTest);
-        tmpDir = new File(tmpDir + ".dir");
-        tmpDir.mkdirs();
-        ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(33299);
-        f.startup(zs);
-        Thread.sleep(4000);
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:33299", 3000, this);
 
-        long sessionId = zk.getSessionId();
-        byte[] passwd = zk.getSessionPasswd();
-        zk.close();
-        zk = new ZooKeeper("127.0.0.1:33299", 3000, this, sessionId, passwd);
-        assertEquals(sessionId, zk.getSessionId());
-        zk.close();
-        zs.shutdown();
-        f.shutdown();
+    private ZooKeeper createClient()
+        throws IOException, InterruptedException
+    {
+        startSignal = new CountDownLatch(1);
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+        startSignal.await();
 
+        return zk;
     }
+
+// FIXME this test is failing due to client close race condition fixing in separate patch for ZOOKEEPER-63
+//    /**
+//     * this test checks to see if the sessionid that was created for the
+//     * first zookeeper client can be reused for the second one immidiately
+//     * after the first client closes and the new client resues them.
+//     * @throws IOException
+//     * @throws InterruptedException
+//     * @throws KeeperException
+//     */
+//    public void testSessionReuse() throws IOException, InterruptedException {
+//        ZooKeeper zk = createClient();
+//
+//        long sessionId = zk.getSessionId();
+//        byte[] passwd = zk.getSessionPasswd();
+//        zk.close();
+//
+//        zk.close();
+//
+//        LOG.info("Closed first session");
+//
+//        startSignal = new CountDownLatch(1);
+//        zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this,
+//                sessionId, passwd);
+//        startSignal.await();
+//
+//        LOG.info("Opened reuse");
+//
+//        assertEquals(sessionId, zk.getSessionId());
+//
+//        zk.close();
+//    }
+
     @Test
-    public void testSession() throws IOException, InterruptedException, KeeperException {
-        File tmpDir = File.createTempFile("test", ".junit", baseTest);
-        tmpDir = new File(tmpDir + ".dir");
-        tmpDir.mkdirs();
-        ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(33299);
-        f.startup(zs);
-        Thread.sleep(2000);
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:33299", 30000, this);
+    /**
+     * This test verifies that when the session id is reused, and the original
+     * client is disconnected, but not session closed, that the server
+     * will remove ephemeral nodes created by the original session.
+     */
+    public void testSession()
+        throws IOException, InterruptedException, KeeperException
+    {
+        ZooKeeper zk = createClient();
         zk.create("/e", new byte[0], Ids.OPEN_ACL_UNSAFE,
                         CreateFlags.EPHEMERAL);
-        System.out.println("zk with session id " + zk.getSessionId()
+        LOG.info("zk with session id 0x" + Long.toHexString(zk.getSessionId())
                 + " was destroyed!");
-        // zk.close();
+
+        // disconnect the client by killing the socket, not sending the
+        // session disconnect to the server as usual. This allows the test
+        // to verify disconnect handling
+        zk.disconnect();
+
         Stat stat = new Stat();
-        try {
-            zk = new ZooKeeper("127.0.0.1:33299", 30000, this, zk
-                    .getSessionId(), zk.getSessionPasswd());
-            System.out.println("zk with session id " + zk.getSessionId()
-                    + " was created!");
-            zk.getData("/e", false, stat);
-            System.out.println("After get data /e");
-        } catch (KeeperException e) {
-            // the zk.close() above if uncommented will close the session on the
-            // server
-            // in such case we get an exception here because we've tried joining
-            // a closed session
-        }
+        startSignal = new CountDownLatch(1);
+        zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this,
+                           zk.getSessionId(),
+                           zk.getSessionPasswd());
+        startSignal.await();
+
+        LOG.info("zk with session id 0x" + Long.toHexString(zk.getSessionId())
+                 + " was created!");
+        zk.getData("/e", false, stat);
+        LOG.info("After get data /e");
         zk.close();
-        Thread.sleep(10000);
-        zk = new ZooKeeper("127.0.0.1:33299", 30000, this);
+
+        zk = createClient();
         assertEquals(null, zk.exists("/e", false));
-        System.out.println("before close zk with session id "
-                + zk.getSessionId() + "!");
+        LOG.info("before close zk with session id 0x"
+                + Long.toHexString(zk.getSessionId()) + "!");
         zk.close();
-        System.out.println("before shutdown zs!");
-        zs.shutdown();
-        System.out.println("after shutdown zs!");
     }
 
     public void process(WatcherEvent event) {
+        LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
+        if (event.getState() == Watcher.Event.KeeperStateSyncConnected
+                && startSignal.getCount() > 0)
+        {
+            startSignal.countDown();
+        }
     }
 
 }

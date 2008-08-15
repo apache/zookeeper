@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.KeeperException;
@@ -48,6 +49,8 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
 
 public class GenerateLoad {
+    protected static final Logger LOG = Logger.getLogger(GenerateLoad.class);
+
     static ServerSocket ss;
 
     static Set<SlaveThread> slaves = Collections
@@ -113,7 +116,7 @@ public class GenerateLoad {
                         throw new IOException(result);
                     }
                     long time = Long.parseLong(timePercentCount[0]);
-                    int percent = Integer.parseInt(timePercentCount[1]);
+                    //int percent = Integer.parseInt(timePercentCount[1]);
                     int count = Integer.parseInt(timePercentCount[2]);
                     int errs = Integer.parseInt(timePercentCount[3]);
                     if (errs > 0) {
@@ -242,6 +245,7 @@ public class GenerateLoad {
         for (SlaveThread st : slaves.toArray(new SlaveThread[0])) {
             st.send(percentage);
         }
+        now = System.currentTimeMillis();
         long delay = now - start;
         if (delay > 1000) {
             System.out.println("Delay of " + delay + " to send new percentage");
@@ -300,6 +304,7 @@ public class GenerateLoad {
         String path;
 
         ZooKeeper zk;
+
         public void run() {
             try {
                 byte bytes[] = new byte[1024];
@@ -311,6 +316,7 @@ public class GenerateLoad {
                                 CreateFlags.EPHEMERAL|CreateFlags.SEQUENCE);
                         break;
                     } catch(KeeperException e) {
+                        LOG.error("keeper exception thrown", e);
                     }
                 }
                 if (path == null) {

@@ -18,29 +18,32 @@
 
 package org.apache.zookeeper.test;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.Arrays;
 
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
-
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 public abstract class ClientBase extends TestCase {
     protected static final Logger LOG = Logger.getLogger(ClientBase.class);
-    protected static String hostPort = "127.0.0.1:33221";
-    protected static final int CONNECTION_TIMEOUT = 30000;
-    protected NIOServerCnxn.Factory f = null;
-    protected File tmpDir = null;
-    protected static File baseTest =
+
+    static final int CONNECTION_TIMEOUT = 30000;
+    static final File BASETEST =
         new File(System.getProperty("build.test.dir", "build"));
+
+    protected String hostPort = "127.0.0.1:33221";
+    protected NIOServerCnxn.Factory serverFactory = null;
+    protected File tmpDir = null;
 
     public ClientBase() {
         super();
@@ -50,39 +53,193 @@ public abstract class ClientBase extends TestCase {
         super(name);
     }
 
+    public static boolean waitForServerUp(String hp, long timeout) {
+        long start = System.currentTimeMillis();
+        String split[] = hp.split(":");
+        String host = split[0];
+        int port = Integer.parseInt(split[1]);
+        while (true) {
+            try {
+                Socket sock = new Socket(host, port);
+                BufferedReader reader = null;
+                try {
+                    OutputStream outstream = sock.getOutputStream();
+                    outstream.write("stat".getBytes());
+                    outstream.flush();
+
+                    reader =
+                        new BufferedReader(
+                                new InputStreamReader(sock.getInputStream()));
+                    String line = reader.readLine();
+                    if (line != null && line.startsWith("Zookeeper version:")) {
+                        return true;
+                    }
+                } finally {
+                    sock.close();
+                    if (reader != null) {
+                        reader.close();
+                    }
+                }
+            } catch (IOException e) {
+                // ignore as this is expected
+                LOG.info("server " + hp + " not up " + e);
+            }
+
+            if (System.currentTimeMillis() > start + timeout) {
+                break;
+            }
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+        return false;
+    }
+    public static boolean waitForServerDown(String hp, long timeout) {
+        long start = System.currentTimeMillis();
+        String split[] = hp.split(":");
+        String host = split[0];
+        int port = Integer.parseInt(split[1]);
+        while (true) {
+            try {
+                Socket sock = new Socket(host, port);
+                try {
+                    OutputStream outstream = sock.getOutputStream();
+                    outstream.write("stat".getBytes());
+                    outstream.flush();
+                } finally {
+                    sock.close();
+                }
+            } catch (IOException e) {
+                return true;
+            }
+
+            if (System.currentTimeMillis() > start + timeout) {
+                break;
+            }
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+        return false;
+    }
+    
+    static void verifyThreadTerminated(Thread thread, long millis)
+        throws InterruptedException
+    {
+        thread.join(millis);
+        if (thread.isAlive()) {
+            LOG.error("Thread " + thread.getName() + " : "
+                    + Arrays.toString(thread.getStackTrace()));
+            assertFalse("thread " + thread.getName() 
+                    + " still alive after join", true);
+        }
+    }
+
+
+    static File createTmpDir() throws IOException {
+        return createTmpDir(BASETEST);
+    }
+    static File createTmpDir(File parentDir) throws IOException {
+        File tmpFile = File.createTempFile("test", ".junit", parentDir);
+        // don't delete tmpFile - this ensures we don't attempt to create
+        // a tmpDir with a duplicate name
+        
+        File tmpDir = new File(tmpFile + ".dir");
+        assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
+        assertTrue(tmpDir.mkdirs());
+        
+        return tmpDir;
+    }
+    
+    static NIOServerCnxn.Factory createNewServerInstance(File dataDir,
+            NIOServerCnxn.Factory factory, String hostPort)
+        throws IOException, InterruptedException 
+    {
+        ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
+        final int PORT = Integer.parseInt(hostPort.split(":")[1]);
+        if (factory == null) {
+            factory = new NIOServerCnxn.Factory(PORT);
+        }
+        factory.startup(zks);
+
+        assertTrue("waiting for server up",
+                   ClientBase.waitForServerUp("127.0.0.1:" + PORT,
+                                              CONNECTION_TIMEOUT));
+
+        return factory;
+    }
+    
+    static void shutdownServerInstance(NIOServerCnxn.Factory factory,
+            String hostPort)
+    {
+        if (factory != null) {
+            factory.shutdown();
+            final int PORT = Integer.parseInt(hostPort.split(":")[1]);
+
+            assertTrue("waiting for server down",
+                       ClientBase.waitForServerDown("127.0.0.1:" + PORT,
+                                                    CONNECTION_TIMEOUT));
+        }
+    }
+    
+    /**
+     * Test specific setup
+     */
+    static void setupTestEnv() {
+        // during the tests we run with 100K prealloc in the logs.
+        // on windows systems prealloc of 64M was seen to take ~15seconds
+        // resulting in test failure (client timeout on first session).
+        // set env and directly in order to handle static init/gc issues
+        System.setProperty("zookeeper.preAllocSize", "100");
+        SyncRequestProcessor.setPreAllocSize(100);
+    }
+    
+    @Override
     protected void setUp() throws Exception {
-        LOG.info("Client test setup");
-        tmpDir = File.createTempFile("test", ".junit", baseTest);
-        tmpDir = new File(tmpDir + ".dir");
-        tmpDir.mkdirs();
+        LOG.info("STARTING " + getName());
+
         ServerStats.registerAsConcrete();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        f = new NIOServerCnxn.Factory(33221);
-        f.startup(zks);
-        Thread.sleep(5000);
+
+        tmpDir = createTmpDir(BASETEST);
+        
+        setupTestEnv();
+        serverFactory =
+            createNewServerInstance(tmpDir, serverFactory, hostPort);
+        
         LOG.info("Client test setup finished");
     }
 
+    @Override
     protected void tearDown() throws Exception {
-        LOG.info("Clent test shutdown");
-        if (f != null) {
-            f.shutdown();
-        }
+        LOG.info("tearDown starting");
+
+        shutdownServerInstance(serverFactory, hostPort);
+        
         if (tmpDir != null) {
+            //assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
+            // FIXME see ZOOKEEPER-121 replace following line with previous
             recursiveDelete(tmpDir);
         }
+
         ServerStats.unregister();
-        LOG.info("Client test shutdown finished");
+
+        LOG.info("FINISHED " + getName());
     }
 
-    private static void recursiveDelete(File d) {
+    private static boolean recursiveDelete(File d) {
         if (d.isDirectory()) {
             File children[] = d.listFiles();
             for (File f : children) {
+                //assertTrue("delete " + f.toString(), recursiveDelete(f));
+                // FIXME see ZOOKEEPER-121 replace following line with previous
                 recursiveDelete(f);
             }
         }
-        d.delete();
+        return d.delete();
     }
 
 }

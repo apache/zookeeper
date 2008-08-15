@@ -244,8 +244,9 @@ public class FollowerHandler extends Thread {
             bufferedOutput.flush();
             // only if we are not truncating or fast sycning
             if (packetToSend == Leader.SNAP) {
-                LOG.warn("Sending snapshot last zxid of peer is "
-                        + Long.toHexString(peerLastZxid) + " " + " zxid of leader is "
+                LOG.warn("Sending snapshot last zxid of peer is 0x"
+                        + Long.toHexString(peerLastZxid) + " " 
+                        + " zxid of leader is 0x"
                         + Long.toHexString(leaderLastZxid));
                 // Dump data to follower
                 leader.zk.snapshot(oa);
@@ -316,7 +317,7 @@ public class FollowerHandler extends Thread {
                     boolean valid = leader.zk.touch(id, to);
                     ZooTrace.logTraceMessage(LOG,
                                              ZooTrace.SESSION_TRACE_MASK,
-                                             "Session " + Long.toHexString(id)
+                                             "Session 0x" + Long.toHexString(id)
                                              + " is valid: "+ valid);
                     dos.writeBoolean(valid);
                     qp.setData(bos.toByteArray());

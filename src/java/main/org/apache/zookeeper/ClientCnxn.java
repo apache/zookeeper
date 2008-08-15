@@ -95,7 +95,8 @@ class ClientCnxn {
      */
     private LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
 
-    private LinkedBlockingQueue waitingEvents = new LinkedBlockingQueue();
+    private LinkedBlockingQueue<Object> waitingEvents = 
+        new LinkedBlockingQueue<Object>();
 
     /**
      * These are the packets that need to be sent.
@@ -125,14 +126,14 @@ class ClientCnxn {
     public long getSessionId() {
         return sessionId;
     }
-
+    
     public byte[] getSessionPasswd() {
         return sessionPasswd;
     }
 
     public String toString() {
         StringBuffer sb = new StringBuffer();
-        sb.append("sessionId: ").append(sessionId).append("\n");
+        sb.append("sessionId: 0x").append(Long.toHexString(getSessionId())).append("\n");
         sb.append("lastZxid: ").append(lastZxid).append("\n");
         sb.append("xid: ").append(xid).append("\n");
         sb.append("nextAddrToTry: ").append(nextAddrToTry).append("\n");
@@ -649,7 +650,7 @@ class ClientCnxn {
                 primeConnection(sockKey);
             }
             initialized = false;
-            
+
             /*
              * Reset incomingBuffer
              */
@@ -729,7 +730,9 @@ class ClientCnxn {
                     }
                     selected.clear();
                 } catch (Exception e) {
-                    LOG.warn("Closing: ", e);
+                    LOG.warn("Closing session 0x" 
+                            + Long.toHexString(getSessionId()),
+                            e);
                     cleanup();
                     if (zooKeeper.state.isAlive()) {
                         waitingEvents.add(new WatcherEvent(Event.EventNone,
@@ -797,11 +800,9 @@ class ClientCnxn {
 
     @SuppressWarnings("unchecked")
     public void close() throws IOException {
-        long traceMask = ZooTrace.SESSION_TRACE_MASK;
-        if (ZooTrace.isTraceEnabled(LOG, traceMask)) {
-            ZooTrace.logTraceMessage(LOG, traceMask,
-                    "Close ClientCnxn for session: " + sessionId + "!");
-        }
+        LOG.info("Closing ClientCnxn for session: 0x" 
+                + Long.toHexString(getSessionId()));
+
         sendThread.close();
         waitingEvents.add(eventOfDeath);
     }

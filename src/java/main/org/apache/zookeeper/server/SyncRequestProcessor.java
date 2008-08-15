@@ -54,16 +54,33 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                 "no");
     }
 
-    static long preAllocSize = 65536 * 1024;
+    private static long preAllocSize = 65536 * 1024;
     static {
         String size = System.getProperty("zookeeper.preAllocSize");
         if (size != null) {
             try {
                 preAllocSize = Long.parseLong(size) * 1024;
             } catch (NumberFormatException e) {
-                LOG.warn(size + " is not a valid value for preAllocSize");
+                LOG.warn(size 
+                        + " is not a valid value for zookeeper.preAllocSize");
             }
         }
+    }
+    
+    /**
+     * Change the data log pre-allocation size on the fly.
+     * 
+     * You might want to do this on systems (Windows esp) where preallocation
+     * is slow, WARN messages are output the log if preAllocation is taking
+     * too long -- will stall the request pipeline.
+     * 
+     * This value can also be set through the "zookeeper.preAllocSize" (also
+     * in K bytes) environment variable when starting the jvm.
+     * 
+     * @param size size in K bytes to change the log prealloc to
+     */
+    public static void setPreAllocSize(long size) {
+        preAllocSize = size * 1024; 
     }
 
     /**

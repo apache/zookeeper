@@ -39,6 +39,7 @@ public class TestHammer implements VoidCallback {
             } catch (IOException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
+                throw new RuntimeException(e1);
             }
             for(int i = 0; i < REPS; i++) {
                 try {

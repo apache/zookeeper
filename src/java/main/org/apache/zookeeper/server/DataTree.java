@@ -21,17 +21,15 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
-
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.KeeperException.Code;
@@ -443,7 +441,7 @@ public class DataTree {
                     ZooTrace.logTraceMessage(LOG,
                                              ZooTrace.SESSION_TRACE_MASK,
                                              "Deleting ephemeral node "
-                                             + path + " for session "
+                                             + path + " for session 0x"
                                              + Long.toHexString(session));
                 } catch (KeeperException e) {
                     LOG.error("FIXMSG",e);
@@ -538,7 +536,7 @@ public class DataTree {
         StringBuffer sb = new StringBuffer("Sessions with Ephemerals ("
                 + keys.size() + "):\n");
         for (long k : keys) {
-            sb.append(Long.toHexString(k));
+            sb.append("0x" + Long.toHexString(k));
             sb.append(":\n");
             HashSet<String> tmp = ephemerals.get(k);
             synchronized(tmp) {
