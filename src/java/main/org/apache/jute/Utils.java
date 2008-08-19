@@ -124,8 +124,10 @@ public class Utils {
      * @param s 
      * @return 
      */
-    static String toCSVString(String t) {
-        String s = t.toString();
+    static String toCSVString(String s) {
+        if (s == null)
+            return "";
+
         StringBuffer sb = new StringBuffer(s.length()+1);
         sb.append('\'');
         int len = s.length();
