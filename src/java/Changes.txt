@@ -12,3 +12,6 @@ Trunk:
 
   ZOOKEEPER-111. Significant cleanup of existing tests. (Patrick Hunt via
   mahadev)
+ 
+  ZOOKEEPER-122. Fix  NPE in jute's Utils.toCSVString. (Anthony Urso via
+  mahadev)
