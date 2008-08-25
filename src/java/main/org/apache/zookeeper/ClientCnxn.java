@@ -73,7 +73,7 @@ import org.apache.zookeeper.server.ZooTrace;
  *
  */
 class ClientCnxn {
-    private static final Logger LOG = Logger.getLogger(ZooKeeperServer.class);
+    private static final Logger LOG = Logger.getLogger(ClientCnxn.class);
 
     private ArrayList<InetSocketAddress> serverAddrs = new ArrayList<InetSocketAddress>();
 
