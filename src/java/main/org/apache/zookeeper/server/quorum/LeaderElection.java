@@ -100,7 +100,7 @@ public class LeaderElection implements Election  {
     }
 
     public Vote lookForLeader() throws InterruptedException {
-        self.currentVote = new Vote(self.getId(), self.getLastLoggedZxid());
+        self.setCurrentVote(new Vote(self.getId(), self.getLastLoggedZxid()));
         // We are going to look for a leader by casting a vote for ourself
         byte requestBytes[] = new byte[4];
         ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
@@ -161,16 +161,17 @@ public class LeaderElection implements Election  {
             }
             ElectionResult result = countVotes(votes);
             if (result.winner.id >= 0) {
-                self.currentVote = result.vote;
+                self.setCurrentVote(result.vote);
                 if (result.winningCount > (self.quorumPeers.size() / 2)) {
-                    self.currentVote = result.winner;
+                    self.setCurrentVote(result.winner);
                     s.close();
-                    self.setPeerState((self.currentVote.id == self.getId()) 
+                    Vote current = self.getCurrentVote();
+                    self.setPeerState((current.id == self.getId()) 
                             ? ServerState.LEADING: ServerState.FOLLOWING);
                     if (self.getPeerState() == ServerState.FOLLOWING) {
                         Thread.sleep(100);
                     }
-                    return self.currentVote;
+                    return current;
                 }
             }
             Thread.sleep(1000);

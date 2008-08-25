@@ -111,7 +111,15 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     /**
      * This is who I think the leader currently is.
      */
-    volatile Vote currentVote;
+    volatile private Vote currentVote;
+        
+    public synchronized Vote getCurrentVote(){
+        return currentVote;
+    }
+       
+    public synchronized void setCurrentVote(Vote v){
+        currentVote = v;
+    }    
 
     volatile boolean running = true;
 
@@ -167,10 +175,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                         responseBuffer.clear();
                         responseBuffer.getInt(); // Skip the xid
                         responseBuffer.putLong(myid);
-                        switch (state) {
+                        Vote current = getCurrentVote();
+                        switch (getPeerState()) {
                         case LOOKING:
-                            responseBuffer.putLong(currentVote.id);
-                            responseBuffer.putLong(currentVote.zxid);
+                            responseBuffer.putLong(current.id);
+                            responseBuffer.putLong(current.zxid);
                             break;
                         case LEADING:
                             responseBuffer.putLong(myid);
@@ -182,7 +191,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                             }
                             break;
                         case FOLLOWING:
-                            responseBuffer.putLong(currentVote.id);
+                            responseBuffer.putLong(current.id);
                             try {
                                 responseBuffer.putLong(follower.getZxid());
                             } catch (NullPointerException npe) {
@@ -205,11 +214,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     private ServerState state = ServerState.LOOKING;
 
-    public void setPeerState(ServerState newState){
+    public synchronized void setPeerState(ServerState newState){
         state=newState;
     }
 
-    public ServerState getPeerState(){
+    public synchronized ServerState getPeerState(){
         return state;
     }
 
@@ -364,14 +373,14 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
          * Main loop
          */
         while (running) {
-            switch (state) {
+            switch (getPeerState()) {
             case LOOKING:
                 try {
                     LOG.info("LOOKING");
-                    currentVote = makeLEStrategy().lookForLeader();
+                    setCurrentVote(makeLEStrategy().lookForLeader());
                 } catch (Exception e) {
                     LOG.warn("Unexpected exception",e);
-                    state = ServerState.LOOKING;
+                    setPeerState(ServerState.LOOKING);
                 }
                 break;
             case FOLLOWING:
@@ -384,7 +393,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 } finally {
                     follower.shutdown();
                     setFollower(null);
-                    state = ServerState.LOOKING;
+                    setPeerState(ServerState.LOOKING);
                 }
                 break;
             case LEADING:
@@ -400,7 +409,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                         leader.shutdown("Forcing shutdown");
                         setLeader(null);
                     }
-                    state = ServerState.LOOKING;
+                    setPeerState(ServerState.LOOKING);
                 }
                 break;
             }
@@ -504,7 +513,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     }
 
     public String getServerState() {
-        switch (state) {
+        switch (getPeerState()) {
         case LOOKING:
             return QuorumStats.Provider.LOOKING_STATE;
         case LEADING:

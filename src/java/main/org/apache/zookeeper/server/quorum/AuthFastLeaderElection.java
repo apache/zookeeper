@@ -264,11 +264,13 @@ public class AuthFastLeaderElection implements Election {
                         break;
                     }
 
+                    Vote current = self.getCurrentVote();
+
                     switch (type) {
                     case 0:
                         // Receive challenge request
                         ToSend c = new ToSend(ToSend.mType.challenge, tag,
-                                self.currentVote.id, self.currentVote.zxid,
+                                current.id, current.zxid,
                                 logicalclock, self.getPeerState(),
                                 (InetSocketAddress) responsePacket
                                         .getSocketAddress());
@@ -309,8 +311,8 @@ public class AuthFastLeaderElection implements Election {
                                     recvqueue.offer(n);
 
                                     ToSend a = new ToSend(ToSend.mType.ack,
-                                            tag, self.currentVote.id,
-                                            self.currentVote.zxid,
+                                            tag, current.id,
+                                            current.zxid,
                                             logicalclock, self.getPeerState(),
                                             (InetSocketAddress) addr);
 
@@ -328,7 +330,7 @@ public class AuthFastLeaderElection implements Election {
                             recvqueue.offer(n);
 
                             ToSend a = new ToSend(ToSend.mType.ack, tag,
-                                    self.currentVote.id, self.currentVote.zxid,
+                                    current.id, current.zxid,
                                     logicalclock, self.getPeerState(),
                                     (InetSocketAddress) responsePacket
                                             .getSocketAddress());
@@ -685,7 +687,7 @@ public class AuthFastLeaderElection implements Election {
 
     QuorumPeer self;
     int port;
-    long logicalclock; /* Election instance */
+    volatile long logicalclock; /* Election instance */
     DatagramSocket mySocket;
     long proposedLeader;
     long proposedZxid;

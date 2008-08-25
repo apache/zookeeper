@@ -493,6 +493,8 @@ class QuorumCnxManager extends Thread {
             this.addr = channel.socket().getInetAddress();
             this.channel = channel;
             recvWorker = null;
+            
+            LOG.debug("Address of remote peer: " + this.addr);
         }
 
         void setRecv(RecvWorker recvWorker) {

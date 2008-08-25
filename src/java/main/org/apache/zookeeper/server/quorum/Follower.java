@@ -114,15 +114,16 @@ public class Follower {
     void followLeader() throws InterruptedException {
         InetSocketAddress addr = null;
         // Find the leader by id
+        Vote current = self.getCurrentVote();
         for (QuorumServer s : self.quorumPeers) {
-            if (s.id == self.currentVote.id) {
+            if (s.id == current.id) {
                 addr = s.addr;
                 break;
             }
         }
         if (addr == null) {
             LOG.warn("Couldn't find the leader with id = "
-                    + self.currentVote.id);
+                    + current.id);
         }
         LOG.info("Following " + addr);
         sock = new Socket();
