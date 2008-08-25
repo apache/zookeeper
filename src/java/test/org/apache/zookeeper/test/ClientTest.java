@@ -44,7 +44,7 @@ import org.apache.zookeeper.proto.WatcherEvent;
 import org.junit.Test;
 
 public class ClientTest extends ClientBase implements Watcher {
-    protected static final Logger LOG = Logger.getLogger(ClientBase.class);
+    protected static final Logger LOG = Logger.getLogger(ClientTest.class);
 
     LinkedBlockingQueue<WatcherEvent> events =
         new LinkedBlockingQueue<WatcherEvent>();

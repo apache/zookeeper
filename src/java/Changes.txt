@@ -15,3 +15,6 @@ Trunk:
  
   ZOOKEEPER-122. Fix  NPE in jute's Utils.toCSVString. (Anthony Urso via
   mahadev)
+  
+ ZOOKEEPER-123. Fix  the wrong class is specified for the logger. (Jakob Homan
+ via mahadev)
