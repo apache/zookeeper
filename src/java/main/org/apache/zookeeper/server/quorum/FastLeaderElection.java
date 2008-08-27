@@ -410,16 +410,6 @@ public class FastLeaderElection implements Election {
         recvqueue.clear();
     }
 
-    
-    public static class ElectionResult {
-        public Vote vote;
-
-        public int count;
-
-        public Vote winner;
-
-        public int winningCount;
-    }
 
     /**
      * Send notifications to all peers upon a change in our vote
