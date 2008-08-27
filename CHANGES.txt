@@ -1,11 +1,34 @@
 Trunk:
-  BUGFIXES:
-  
+  BUGFIXES: 
+
+  ZOOKEEPER-39. Use Watcher objects rather than boolean on read operations.
+  (Andrew Kornev)
+
+  ZOOKEEPER-97. supports optional output directory in code generator. (Hiram
+  Chirino via phunt)
+ 
   ZOOKEEPER-105. Catch Zookeeper exceptions and print on the stderr. 
   (Anthony Urso via Mahadev)
+ 
+  ZOOKEEPER-42. Change Leader Election to fast tcp. (Flavio Paiva Junqueira
+  via phunt)
 
+  ZOOKEEPER-48. auth_id now handled correctly when no auth ids present
+  (Benjamin Reed via phunt)
+ 
+  ZOOKEEPER-44. Create sequence flag children with prefixes of 0's so that
+  they can be lexicographically sorted. (Jakob Homan via mahadev)
+  
   ZOOKEEPER-108. Fix sync operation reordering on a Quorum. 
   (Flavio Paiva Junqueira via Mahadev)
+
+  ZOOKEEPER-25. Fuse module for Zookeeper. (Swee Lim, Bart, Patrick Hunt and
+  Andrew Kornev via Mahadev)
+
+  ZOOKEEPER-56. Add clover support to build.xml. (Patrick Hunt via mahadev)
+
+  ZOOKEEPER-82. Make the ZooKeeperServer more DI friendly. (Hiram Chirino via
+  mahadev)
 
   ZOOKEEPER-110. Build script relies on svnant, which is not compatible 
   with subversion 1.5 working copies (Jakob Homan)
