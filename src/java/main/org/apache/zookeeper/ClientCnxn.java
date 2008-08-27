@@ -34,11 +34,10 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
@@ -63,7 +62,6 @@ import org.apache.zookeeper.proto.SetACLResponse;
 import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.ByteBufferInputStream;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
 
 /**
@@ -75,7 +73,8 @@ import org.apache.zookeeper.server.ZooTrace;
 class ClientCnxn {
     private static final Logger LOG = Logger.getLogger(ClientCnxn.class);
 
-    private ArrayList<InetSocketAddress> serverAddrs = new ArrayList<InetSocketAddress>();
+    private ArrayList<InetSocketAddress> serverAddrs =
+        new ArrayList<InetSocketAddress>();
 
     static class AuthData {
         AuthData(String scheme, byte data[]) {
@@ -122,6 +121,12 @@ class ClientCnxn {
     final EventThread eventThread;
 
     final Selector selector = Selector.open();
+    
+    /** Set to true when close is called. Latches the connection such that
+     * we don't attempt to re-connect to the server if in the middle of
+     * closing the connection (client sends session disconnect to server
+     * as part of close operation) */
+    volatile boolean closing = false;
 
     public long getSessionId() {
         return sessionId;
@@ -253,7 +258,7 @@ class ClientCnxn {
 
     class EventThread extends Thread {
         EventThread() {
-            super("EventThread");
+            super(currentThread().getName() + "-EventThread");
             setUncaughtExceptionHandler(uncaughtExceptionHandler);
             setDaemon(true);
         }
@@ -341,7 +346,10 @@ class ClientCnxn {
                     }
                 }
             } catch (InterruptedException e) {
+                LOG.warn("Event thread exiting due to interruption", e);
             }
+            
+            LOG.info("EventThread shut down");
         }
     }
 
@@ -566,7 +574,7 @@ class ClientCnxn {
         }
 
         SendThread() {
-            super("SendThread");
+            super(currentThread().getName() + "-SendThread");
             zooKeeper.state = States.CONNECTING;
             setUncaughtExceptionHandler(uncaughtExceptionHandler);
             setDaemon(true);
@@ -666,6 +674,10 @@ class ClientCnxn {
             while (zooKeeper.state.isAlive()) {
                 try {
                     if (sockKey == null) {
+                        // don't re-establish connection if we are closing
+                        if (closing) {
+                            break;
+                        }
                         startConnect();
                         lastSend = now;
                         lastHeard = now;
@@ -730,21 +742,34 @@ class ClientCnxn {
                     }
                     selected.clear();
                 } catch (Exception e) {
-                    LOG.warn("Closing session 0x" 
-                            + Long.toHexString(getSessionId()),
-                            e);
-                    cleanup();
-                    if (zooKeeper.state.isAlive()) {
-                        waitingEvents.add(new WatcherEvent(Event.EventNone,
-                                Event.KeeperStateDisconnected, null));
+                    if (closing) {
+                        // closing so this is expected
+                        LOG.info("Exception while closing send thread for session 0x" 
+                                + Long.toHexString(getSessionId())
+                                + " : " + e.getMessage());
+                        break;
+                    } else {
+                        LOG.warn("Exception closing session 0x" 
+                                + Long.toHexString(getSessionId()),
+                                e);
+                        cleanup();
+                        if (zooKeeper.state.isAlive()) {
+                            waitingEvents.add(new WatcherEvent(Event.EventNone,
+                                    Event.KeeperStateDisconnected, null));
+                        }
+    
+                        now = System.currentTimeMillis();
+                        lastHeard = now;
+                        lastSend = now;
                     }
-
-                    now = System.currentTimeMillis();
-                    lastHeard = now;
-                    lastSend = now;
                 }
             }
             cleanup();
+            try {
+                selector.close();
+            } catch (IOException e) {
+                LOG.warn("Ignoring exception during selector close", e);
+            }
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
                                      "SendThread exitedloop.");
         }
@@ -755,25 +780,29 @@ class ClientCnxn {
                 sockKey.cancel();
                 try {
                     sock.socket().shutdownInput();
-                } catch (IOException e2) {
+                } catch (IOException e) {
+                    LOG.warn("Ignoring exception during shutdown input", e);
                 }
                 try {
                     sock.socket().shutdownOutput();
-                } catch (IOException e2) {
+                } catch (IOException e) {
+                    LOG.warn("Ignoring exception during shutdown output", e);
                 }
                 try {
                     sock.socket().close();
-                } catch (IOException e1) {
+                } catch (IOException e) {
+                    LOG.warn("Ignoring exception during socket close", e);
                 }
                 try {
                     sock.close();
-                } catch (IOException e1) {
+                } catch (IOException e) {
+                    LOG.warn("Ignoring exception during channel close", e);
                 }
             }
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
+            } catch (InterruptedException e) {
+                LOG.warn("SendThread interrupted during sleep, ignoring");
             }
             sockKey = null;
             synchronized (pendingQueue) {
@@ -798,13 +827,42 @@ class ClientCnxn {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public void close() throws IOException {
-        LOG.info("Closing ClientCnxn for session: 0x" 
+    /**
+     * Shutdown the send/event threads. This method should not be called
+     * directly - rather it should be called as part of close operation. This
+     * method is primarily here to allow the tests to verify disconnection
+     * behavior.
+     */
+    public void disconnect() {
+        LOG.info("Disconnecting ClientCnxn for session: 0x" 
                 + Long.toHexString(getSessionId()));
 
         sendThread.close();
         waitingEvents.add(eventOfDeath);
+    }
+
+    /**
+     * Close the connection, which includes; send session disconnect to
+     * the server, shutdown the send/event threads.
+     * 
+     * @throws IOException
+     */
+    public void close() throws IOException {
+        LOG.info("Closing ClientCnxn for session: 0x" 
+                + Long.toHexString(getSessionId()));
+
+        closing = true;
+        
+        try {
+            RequestHeader h = new RequestHeader();
+            h.setType(ZooDefs.OpCode.closeSession);
+            
+            submitRequest(h, null, null, null);
+        } catch (InterruptedException e) {
+            // ignore, close the send/event threads
+        } finally {
+            disconnect();
+        }
     }
 
     private int xid = 1;

@@ -47,3 +47,5 @@ Trunk:
 
  ZOOKEEPER-125. Remove unwanted class declaration in FastLeaderElection. 
  (Flavio Paiva Junqueira via mahadev)
+
+ ZOOKEEPER-63. Race condition in client close() operation. (phunt via breed)
