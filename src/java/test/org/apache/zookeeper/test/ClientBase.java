@@ -25,10 +25,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.SyncRequestProcessor;
@@ -51,6 +57,51 @@ public abstract class ClientBase extends TestCase {
 
     public ClientBase(String name) {
         super(name);
+    }
+
+    /**
+     * In general don't use this. Only use in the special case that you
+     * want to ignore results (for whatever reason) in your test. Don't
+     * use empty watchers in real code!
+     *
+     */
+    protected class NullWatcher implements Watcher {
+        public void process(WatcherEvent event) { /* nada */ }
+    }
+
+    protected static class CountdownWatcher implements Watcher {
+        volatile CountDownLatch clientConnected = new CountDownLatch(1);
+
+        public void process(WatcherEvent event) {
+            if (event.getState() == Event.KeeperStateSyncConnected) {
+                clientConnected.countDown();
+            }
+        }
+    }
+    
+    protected ZooKeeper createClient()
+        throws IOException, InterruptedException
+    {
+        return createClient(hostPort);
+    }
+
+    protected ZooKeeper createClient(String hp)
+        throws IOException, InterruptedException
+    {
+        CountdownWatcher watcher = new CountdownWatcher();
+        return createClient(watcher, hp);
+    }
+
+    protected ZooKeeper createClient(CountdownWatcher watcher, String hp)
+        throws IOException, InterruptedException
+    {
+        ZooKeeper zk = new ZooKeeper(hp, 20000, watcher);
+        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT,
+                TimeUnit.MILLISECONDS))
+        {
+            fail("Unable to connect to server");
+        }
+        return zk;
     }
 
     public static boolean waitForServerUp(String hp, long timeout) {
@@ -242,4 +293,44 @@ public abstract class ClientBase extends TestCase {
         return d.delete();
     }
 
+    /*
+     * Verify that all of the servers see the same number of nodes
+     * at the root
+     */
+    void verifyRootOfAllServersMatch(String hostPort)
+        throws InterruptedException, KeeperException, IOException
+    {
+        String parts[] = hostPort.split(",");
+
+        // run through till the counts no longer change on each server
+        // max 15 tries, with 2 second sleeps, so approx 30 seconds
+        int[] counts = new int[parts.length];
+        for (int j = 0; j < 100; j++) {
+            int newcounts[] = new int[parts.length];
+            int i = 0;
+            for (String hp : parts) {
+                ZooKeeper zk = createClient(hp);
+                try {
+                    newcounts[i++] = zk.getChildren("/", false).size();
+                } finally {
+                    zk.close();
+                }
+            }
+
+            if (Arrays.equals(newcounts, counts)) {
+                LOG.info("Found match with array:"
+                        + Arrays.toString(newcounts));
+                counts = newcounts;
+                break;
+            } else {
+                counts = newcounts;
+                Thread.sleep(10000);
+            }
+        }
+
+        // verify all the servers reporting same number of nodes
+        for (int i = 1; i < parts.length; i++) {
+            assertEquals("node count not consistent", counts[i-1], counts[i]);
+        }
+    }
 }

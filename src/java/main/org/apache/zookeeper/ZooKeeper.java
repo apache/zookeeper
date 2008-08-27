@@ -312,9 +312,6 @@ public class ZooKeeper {
     public synchronized void close() throws InterruptedException {
         LOG.info("Closing session: 0x" + Long.toHexString(getSessionId()));
 
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.closeSession);
-        cnxn.submitRequest(h, null, null, null);
         try {
             cnxn.close();
         } catch (IOException e) {
@@ -940,7 +937,10 @@ public class ZooKeeper {
 
     // Everything below this line is for testing!
 
+    /** Testing only!!! Really this needs to be moved into a stub in the
+     * tests - pending JIRA for that.
+     */
     public void disconnect() throws IOException {
-        cnxn.close();
+        cnxn.disconnect();
     }
 }

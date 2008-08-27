@@ -24,17 +24,22 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumStats;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
-public class QuorumTest extends ClientTest {
+public class QuorumTest extends ClientBase {
     private static final Logger LOG = Logger.getLogger(QuorumTest.class);
+
+    private ClientTest ct = new ClientTest();
 
     File s1dir, s2dir, s3dir, s4dir, s5dir;
     QuorumPeer s1, s2, s3, s4, s5;
+
     @Before
     @Override
     protected void setUp() throws Exception {
@@ -43,6 +48,7 @@ public class QuorumTest extends ClientTest {
         setupTestEnv();
 
         hostPort = "127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183,127.0.0.1:2184,127.0.0.1:2185";
+        ct.hostPort = hostPort;
 
         s1dir = ClientBase.createTmpDir();
         s2dir = ClientBase.createTmpDir();
@@ -126,4 +132,47 @@ public class QuorumTest extends ClientTest {
             LOG.debug("QP interrupted", e);
         }
     }
+
+    @Test
+    public void testDeleteWithChildren() throws Exception {
+        ct.testDeleteWithChildren();
+    }
+    
+    @Test
+    public void testHammerBasic() throws Throwable {
+        ct.testHammerBasic();
+    }
+    
+    @Test
+    public void testPing() throws Exception {
+        ct.testPing();
+    }
+    
+    @Test
+    public void testSequentialNodeNames()
+        throws IOException, InterruptedException, KeeperException
+    {
+        ct.testSequentialNodeNames();
+    }
+
+    @Test
+    public void testACLs() throws Exception {
+        ct.testACLs();
+    }
+
+    @Test
+    public void testClientwithoutWatcherObj() throws IOException,
+            InterruptedException, KeeperException
+    {
+        ct.testClientwithoutWatcherObj();
+    }
+
+    @Test
+    public void testClientWithWatcherObj() throws IOException,
+            InterruptedException, KeeperException
+    {
+        ct.testClientWithWatcherObj();
+    }
+    
+    // skip superhammer and clientcleanup as they are too expensive for quorum
 }

@@ -25,20 +25,17 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.proto.WatcherEvent;
 import org.junit.Test;
 
 
 public class SyncCallTest extends ClientBase
-    implements Watcher, ChildrenCallback, StringCallback, VoidCallback
+    implements ChildrenCallback, StringCallback, VoidCallback
 {
-    private CountDownLatch clientConnected;
     private CountDownLatch opsCount;
     
     List<Integer> results = new LinkedList<Integer>();
@@ -59,7 +56,7 @@ public class SyncCallTest extends ClientBase
             for(int i = 0; i < 100; i++)
                 zk.delete("/test" + i, 0, this, results);
             for(int i = 0; i < 100; i++)
-                zk.getChildren("/", this, this, results);
+                zk.getChildren("/", new NullWatcher(), this, results);
 
             LOG.info("Submitted all operations:" + (new Date()).toString());
             
@@ -73,22 +70,6 @@ public class SyncCallTest extends ClientBase
         } catch (IOException e) {
             System.out.println(e.toString());
         } 
-    }
-    
-    private ZooKeeper createClient() throws IOException,InterruptedException{
-        clientConnected=new CountDownLatch(1);
-        ZooKeeper zk = new ZooKeeper(hostPort, 30000, this);
-        if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
-            fail("Unable to connect to server");
-        }
-        return zk;
-    }
-    
-    public void process(WatcherEvent event) {
-        //LOG.info("Process: " + event.getType() + " " + event.getPath());       
-        if (event.getState() == Event.KeeperStateSyncConnected) {
-            clientConnected.countDown();
-        }
     }
 
     @SuppressWarnings("unchecked")

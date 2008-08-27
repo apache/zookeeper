@@ -43,7 +43,6 @@ public class DataTreeTest extends TestCase {
         LOG.info("FINISHED " + getName());
     }
 
-
     public void testRootWatchTriggered() throws Exception {
         class MyWatcher implements Watcher{
             boolean fired=false;

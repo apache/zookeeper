@@ -45,12 +45,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class AsyncTest extends TestCase
-    implements Watcher, StringCallback, VoidCallback, DataCallback
+    implements StringCallback, VoidCallback, DataCallback
 {
     private static final Logger LOG = Logger.getLogger(AsyncTest.class);
 
     private QuorumTest quorumTest = new QuorumTest();
-    private CountDownLatch clientConnected;
 
     private volatile boolean bang;
 
@@ -72,11 +71,20 @@ public class AsyncTest extends TestCase
     @Override
     protected void tearDown() throws Exception {
         LOG.info("Test clients shutting down");
-        clientConnected = null;
         quorumTest.tearDown();
         LOG.info("FINISHED " + getName());
     }
 
+    private static class CountdownWatcher implements Watcher {
+        volatile CountDownLatch clientConnected = new CountDownLatch(1);
+
+        public void process(WatcherEvent event) {
+            if (event.getState() == Event.KeeperStateSyncConnected) {
+                clientConnected.countDown();
+            }
+        }
+    }
+    
     private ZooKeeper createClient() throws IOException,InterruptedException {
         return createClient(quorumTest.hostPort);
     }
@@ -84,9 +92,11 @@ public class AsyncTest extends TestCase
     private ZooKeeper createClient(String hp)
         throws IOException, InterruptedException
     {
-        clientConnected = new CountDownLatch(1);
-        ZooKeeper zk = new ZooKeeper(hp, 30000, this);
-        if(!clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(hp, 30000, watcher);
+        if(!watcher.clientConnected.await(CONNECTION_TIMEOUT,
+                TimeUnit.MILLISECONDS))
+        {
             fail("Unable to connect to server");
         }
         return zk;
@@ -236,12 +246,6 @@ public class AsyncTest extends TestCase
             zk.getData("/ben2", false, new Stat());
         } finally {
             zk.close();
-        }
-    }
-
-    public void process(WatcherEvent event) {
-        if(event.getState()==Event.KeeperStateSyncConnected){
-            clientConnected.countDown();
         }
     }
 

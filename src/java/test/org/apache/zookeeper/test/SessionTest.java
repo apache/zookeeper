@@ -23,6 +23,7 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
@@ -44,9 +45,9 @@ public class SessionTest extends TestCase implements Watcher {
 
     private static final String HOSTPORT = "127.0.0.1:33299";
 
-    private CountDownLatch startSignal;
-
     private NIOServerCnxn.Factory serverFactory;
+    
+    private CountDownLatch startSignal;
 
     @Override
     protected void setUp() throws Exception {
@@ -78,12 +79,26 @@ public class SessionTest extends TestCase implements Watcher {
         LOG.info("FINISHED " + getName());
     }
 
+    private static class CountdownWatcher implements Watcher {
+        volatile CountDownLatch clientConnected = new CountDownLatch(1);
+
+        public void process(WatcherEvent event) {
+            if (event.getState() == Event.KeeperStateSyncConnected) {
+                clientConnected.countDown();
+            }
+        }
+    }
+
     private ZooKeeper createClient()
         throws IOException, InterruptedException
     {
-        startSignal = new CountDownLatch(1);
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
-        startSignal.await();
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
+        if(!watcher.clientConnected.await(CONNECTION_TIMEOUT,
+                TimeUnit.MILLISECONDS))
+        {
+            fail("Unable to connect to server");
+        }
 
         return zk;
     }
