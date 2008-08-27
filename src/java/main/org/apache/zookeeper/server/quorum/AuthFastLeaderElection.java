@@ -727,16 +727,6 @@ public class AuthFastLeaderElection implements Election {
         // recvqueue.clear();
     }
 
-    public static class ElectionResult {
-        public Vote vote;
-
-        public int count;
-
-        public Vote winner;
-
-        public int winningCount;
-    }
-
     private void sendNotifications() {
         for (QuorumServer server : self.quorumPeers) {
             InetSocketAddress saddr = new InetSocketAddress(server.addr

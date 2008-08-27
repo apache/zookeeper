@@ -21,3 +21,6 @@ Trunk:
 
  ZOOKEEPER-2. Fix synchronization issues in QuorumPeer and FastLeader
  election. (Flavio Paiva Junqueira via mahadev)
+
+ ZOOKEEPER-125. Remove unwanted class declaration in FastLeaderElection. 
+ (Flavio Paiva Junqueira via mahadev)
