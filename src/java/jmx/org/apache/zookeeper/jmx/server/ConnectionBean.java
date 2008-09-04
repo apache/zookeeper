@@ -88,6 +88,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
         connection.close();
     }
     
+    @Override
     public String toString() {
         return "ConnectionBean{ClientIP="+getSourceIP()+",SessionId=0x"+getSessionId()+"}";
     }

@@ -62,7 +62,12 @@ public class QuorumPeerConfig extends ServerConfig {
                 System.exit(2);
             }
             Properties cfg = new Properties();
-            cfg.load(new FileInputStream(zooCfgFile));
+            FileInputStream zooCfgStream = new FileInputStream(zooCfgFile);
+            try {
+                cfg.load(zooCfgStream);
+            } finally {
+                zooCfgStream.close();
+            }
             ArrayList<QuorumServer> servers = new ArrayList<QuorumServer>();
             String dataDir = null;
             String dataLogDir = null;
@@ -149,7 +154,12 @@ public class QuorumPeerConfig extends ServerConfig {
                     System.exit(2);
                 }
                 BufferedReader br = new BufferedReader(new FileReader(myIdFile));
-                String myIdString = br.readLine();
+                String myIdString;
+                try {
+                    myIdString = br.readLine();
+                } finally {
+                    br.close();
+                }
                 try {
                     conf.serverId = Long.parseLong(myIdString);
                 } catch (NumberFormatException e) {
@@ -164,6 +174,7 @@ public class QuorumPeerConfig extends ServerConfig {
         }
     }
 
+    @Override
     protected boolean isStandaloneServer(){
         return QuorumPeerConfig.getServers().size() <= 1;
     }

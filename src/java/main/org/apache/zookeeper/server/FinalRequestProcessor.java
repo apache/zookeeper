@@ -242,6 +242,8 @@ public class FinalRequestProcessor implements RequestProcessor {
     }
 
     public void shutdown() {
+        // we are the final link in the chain
+        LOG.info("shutdown of request processor complete");
     }
 
 }

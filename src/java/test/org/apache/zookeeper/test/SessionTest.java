@@ -44,7 +44,6 @@ public class SessionTest extends TestCase implements Watcher {
     protected static final Logger LOG = Logger.getLogger(SessionTest.class);
 
     private static final String HOSTPORT = "127.0.0.1:33299";
-
     private NIOServerCnxn.Factory serverFactory;
     
     private CountDownLatch startSignal;

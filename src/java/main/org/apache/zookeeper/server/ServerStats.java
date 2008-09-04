@@ -48,7 +48,9 @@ public class ServerStats {
         assert instance==null;
         instance = newInstance;
     }
-    protected ServerStats(){}
+    protected ServerStats() {
+        // protected constructor
+    }
     
     // getters
     synchronized public long getMinLatency() {
@@ -87,6 +89,7 @@ public class ServerStats {
         return "standalone";
     }
     
+    @Override
     public String toString(){
         StringBuilder sb = new StringBuilder();
         sb.append("Latency min/avg/max: " + getMinLatency() + "/"

@@ -23,7 +23,6 @@ import static org.apache.zookeeper.server.ServerConfig.getClientPort;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.server.ConnectionMXBean;
 import org.apache.zookeeper.jmx.server.DataTreeMXBean;
 import org.apache.zookeeper.jmx.server.ZooKeeperServerMXBean;

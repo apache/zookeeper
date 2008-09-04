@@ -51,7 +51,7 @@ import org.apache.log4j.Logger;
  * 
  */
 
-class QuorumCnxManager extends Thread {
+class QuorumCnxManager {
     private static final Logger LOG = Logger.getLogger(QuorumCnxManager.class);
 
     /*
@@ -108,7 +108,7 @@ class QuorumCnxManager extends Thread {
      */
     Listener listener;
 
-    class Message {
+    static class Message {
         Message(ByteBuffer buffer, InetAddress addr) {
             this.buffer = buffer;
             this.addr = addr;
@@ -441,6 +441,7 @@ class QuorumCnxManager extends Thread {
         /**
          * Sleeps on accept().
          */
+        @Override
         public void run() {
             ServerSocketChannel ss = null;
             try {
@@ -511,6 +512,7 @@ class QuorumCnxManager extends Thread {
             return running;
         }
 
+        @Override
         public void run() {
 
             while (running && !shutdown) {
@@ -563,7 +565,6 @@ class QuorumCnxManager extends Thread {
      * Thread to receive messages. Instance waits on a socket read. If the
      * channel breaks, then removes itself from the pool of receivers.
      */
-
     class RecvWorker extends Thread {
         InetAddress addr;
         SocketChannel channel;
@@ -580,6 +581,7 @@ class QuorumCnxManager extends Thread {
             return running;
         }
 
+        @Override
         public void run() {
             try {
                 byte[] size = new byte[4];

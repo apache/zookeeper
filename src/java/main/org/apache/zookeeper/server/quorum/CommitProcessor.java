@@ -54,8 +54,9 @@ public class CommitProcessor extends Thread implements RequestProcessor {
         start();
     }
 
-    boolean finished = false;
+    volatile boolean finished = false;
 
+    @Override
     public void run() {
         try {
             Request nextPending = null;
@@ -162,9 +163,9 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     }
 
     public void shutdown() {
-        finished = true;
-        queuedRequests.clear();
         synchronized (this) {
+            finished = true;
+            queuedRequests.clear();
             notifyAll();
         }
         nextProcessor.shutdown();

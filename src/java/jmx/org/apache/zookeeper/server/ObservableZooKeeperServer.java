@@ -21,7 +21,8 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.zookeeper.server.ZooKeeperServer.DataTreeBuilder;
+import org.apache.zookeeper.server.util.ObserverManager;
+import org.apache.zookeeper.server.util.ServerObserver;
 /**
  * The observable server broadcast notifications when its state changes. 
  * 

@@ -646,6 +646,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         sk.interestOps(SelectionKey.OP_READ);
     }
 
+    @Override
     public String toString() {
         return "NIOServerCnxn object with sock = " + sock + " and sk = " + sk;
     }
@@ -685,11 +686,12 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         try {
             sock.socket().shutdownInput();
         } catch (IOException e) {
+            LOG.warn("ignoring exception during input shutdown", e);
         }
         try {
             sock.socket().close();
         } catch (IOException e) {
-            LOG.error("FIXMSG",e);
+            LOG.warn("ignoring exception during socket close", e);
         }
         try {
             sock.close();
@@ -698,7 +700,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             // this section arise.
             // factory.selector.wakeup();
         } catch (IOException e) {
-            LOG.error("FIXMSG",e);
+            LOG.warn("ignoring exception during socketchannel close", e);
         }
         sock = null;
         if (sk != null) {
@@ -706,6 +708,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 // need to cancel this selection key from the selector
                 sk.cancel();
             } catch (Exception e) {
+                LOG.warn("ignoring exception during selectionkey cancel", e);
             }
         }
     }
@@ -833,6 +836,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         public long getPacketsSent() {
             return packetsSent;
         }
+        @Override
         public String toString(){
             StringBuilder sb=new StringBuilder();
             Channel channel = sk.channel();

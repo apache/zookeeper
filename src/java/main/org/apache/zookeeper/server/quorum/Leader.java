@@ -49,6 +49,7 @@ public class Leader {
 
         public Request request;
 
+        @Override
         public String toString() {
             return packet.getType() + ", " + packet.getZxid() + ", " + request;
         }
@@ -217,6 +218,7 @@ public class Leader {
         }
         outstandingProposals.add(newLeaderProposal);
         new Thread() {
+            @Override
             public void run() {
                 try {
                     while (true) {
@@ -226,7 +228,7 @@ public class Leader {
                         new FollowerHandler(s, Leader.this);
                     }
                 } catch (Exception e) {
-                    // 
+                    LOG.warn("Exception while accepting follower", e);
                 }
             }
         }.start();

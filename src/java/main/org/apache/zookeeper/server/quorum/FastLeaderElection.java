@@ -112,7 +112,7 @@ public class FastLeaderElection implements Election {
      * of reception of notification.
      */
     static public class ToSend {
-    	static enum mType {crequest, challenge, notification, ack};
+    	static enum mType {crequest, challenge, notification, ack}
         
         ToSend(mType type, 
         		long leader, 

@@ -18,11 +18,7 @@
 
 package org.apache.zookeeper.jmx.server;
 
-import java.io.ByteArrayOutputStream;
-
 import org.apache.log4j.Logger;
-
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
 /**

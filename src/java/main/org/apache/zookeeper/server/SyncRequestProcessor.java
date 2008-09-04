@@ -135,6 +135,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         return fileSize;
     }
 
+    @Override
     public void run() {
         try {
             long fileSize = 0;
@@ -238,6 +239,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                                      "SyncRequestProcessor exiyed!");
     }
 
+    @SuppressWarnings("unchecked")
     private void flush(LinkedList<Request> toFlush) throws IOException {
         if (toFlush.size() == 0) {
             return;
@@ -251,7 +253,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         for (FileOutputStream fos : streamsToFlushNow) {
             fos.flush();
             if (forceSync) {
-                ((FileChannel) fos.getChannel()).force(false);
+                fos.getChannel().force(false);
             }
         }
         while (streamsToFlushNow.size() > 1) {

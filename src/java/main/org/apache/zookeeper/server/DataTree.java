@@ -74,6 +74,7 @@ public class DataTree {
     /** A debug string * */
     private String debug = "debug";
 
+    @SuppressWarnings("unchecked")
     public HashSet<String> getEphemerals(long sessionId) {
         HashSet<String> retv = ephemerals.get(sessionId);
         if (retv == null) {

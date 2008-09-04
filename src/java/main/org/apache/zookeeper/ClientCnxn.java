@@ -136,6 +136,7 @@ class ClientCnxn {
         return sessionPasswd;
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("sessionId: 0x").append(Long.toHexString(getSessionId())).append("\n");
@@ -263,6 +264,7 @@ class ClientCnxn {
             setDaemon(true);
         }
 
+        @Override
         public void run() {
             try {
                 while (true) {
@@ -359,12 +361,13 @@ class ClientCnxn {
             p.watchRegistration.register(p.replyHeader.getErr());
         }
 
-        p.finished = true;
         if (p.cb == null) {
             synchronized (p) {
+                p.finished = true;
                 p.notifyAll();
             }
         } else {
+            p.finished = true;
             waitingEvents.add(p);
         }
     }
@@ -525,7 +528,7 @@ class ClientCnxn {
             if (sockKey.isWritable()) {
                 synchronized (outgoingQueue) {
                     if (outgoingQueue.size() > 0) {
-                        int rc = sock.write(outgoingQueue.getFirst().bb);
+                        sock.write(outgoingQueue.getFirst().bb);
                         if (outgoingQueue.getFirst().bb.remaining() == 0) {
                             Packet p = outgoingQueue.removeFirst();
                             if (p.header != null
@@ -581,8 +584,7 @@ class ClientCnxn {
         }
 
         private void primeConnection(SelectionKey k) throws IOException {
-            LOG.info("Priming connection to "
-                    + ((SocketChannel) sockKey.channel()));
+            LOG.info("Priming connection to " + sockKey.channel());
             lastConnectIndex = currentConnectIndex;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid,
                     sessionTimeout, sessionId, sessionPasswd);
@@ -833,6 +835,7 @@ class ClientCnxn {
      * method is primarily here to allow the tests to verify disconnection
      * behavior.
      */
+    @SuppressWarnings("unchecked")
     public void disconnect() {
         LOG.info("Disconnecting ClientCnxn for session: 0x" 
                 + Long.toHexString(getSessionId()));

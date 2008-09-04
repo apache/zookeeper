@@ -50,6 +50,7 @@ public class FollowerRequestProcessor extends Thread implements
         start();
     }
 
+    @Override
     public void run() {
         try {
             while (!finished) {
