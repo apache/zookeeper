@@ -72,11 +72,13 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         return self.follower;
     }
     
+    @Override
     protected void createSessionTracker() {
         sessionTracker = new FollowerSessionTracker(this, sessionsWithTimeouts,
                 self.getId());
     }
 
+    @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         commitProcessor = new CommitProcessor(finalProcessor);
@@ -160,6 +162,7 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         //do nothing
     }
     
+    @Override
     public void shutdown() {
         try {
             super.shutdown();

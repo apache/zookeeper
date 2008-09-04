@@ -95,7 +95,7 @@ public class AuthFastLeaderElection implements Election {
     static public class ToSend {
         static enum mType {
             crequest, challenge, notification, ack
-        };
+        }
 
         ToSend(mType type, long tag, long leader, long zxid, long epoch,
                 ServerState state, InetSocketAddress addr) {
@@ -238,7 +238,7 @@ public class AuthFastLeaderElection implements Election {
                     }
                     // Receive new message
                     if (responsePacket.getLength() != responseBytes.length) {
-                        LOG.error("Got a short response: "
+                        LOG.warn("Got a short response: "
                                 + responsePacket.getLength() + " "
                                 + responsePacket.toString());
                         continue;
@@ -246,7 +246,7 @@ public class AuthFastLeaderElection implements Election {
                     responseBuffer.clear();
                     int type = responseBuffer.getInt();
                     if ((type > 3) || (type < 0)) {
-                        LOG.error("Got bad Msg type: " + type);
+                        LOG.warn("Got bad Msg type: " + type);
                         continue;
                     }
                     long tag = responseBuffer.getLong();
@@ -314,7 +314,7 @@ public class AuthFastLeaderElection implements Election {
                                             tag, current.id,
                                             current.zxid,
                                             logicalclock, self.getPeerState(),
-                                            (InetSocketAddress) addr);
+                                            addr);
 
                                     sendqueue.offer(a);
                                 } else {
@@ -351,8 +351,7 @@ public class AuthFastLeaderElection implements Election {
                         acksqueue.offer(tag);
 
                         if (authEnabled) {
-                            addrChallengeMap.get(
-                                    (InetSocketAddress) responsePacket
+                            addrChallengeMap.get(responsePacket
                                             .getSocketAddress()).remove(tag);
                         }
 
@@ -381,7 +380,6 @@ public class AuthFastLeaderElection implements Election {
         class WorkerSender implements Runnable {
 
             Random rand;
-            boolean processing;
             int maxAttempts;
             int ackWait = finalizeWait;
 

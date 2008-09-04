@@ -161,6 +161,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             super("ResponderThread");
         }
 
+        @Override
         public void run() {
             try {
                 byte b[] = new byte[36];
@@ -289,7 +290,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 udpSocket = new DatagramSocket(myQuorumAddr.getPort());
                 new ResponderThread().start();
             } catch (SocketException e) {
-                new RuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
         this.electionAlg = createElectionAlgorithm(electionType);
@@ -368,6 +369,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         return null;
     }
 
+    @Override
     public void run() {
         /*
          * Main loop

@@ -205,7 +205,7 @@ public class Follower {
                     // Send back the ping with our session data
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     DataOutputStream dos = new DataOutputStream(bos);
-                    HashMap<Long, Integer> touchTable = ((FollowerZooKeeperServer) zk)
+                    HashMap<Long, Integer> touchTable = zk
                             .getTouchSnapshot();
                     for (Entry<Long, Integer> entry : touchTable.entrySet()) {
                         dos.writeLong(entry.getKey());

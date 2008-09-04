@@ -95,15 +95,11 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         start();
     }
 
-    boolean running = true;
-
-    synchronized public void finish() {
-        running = false;
-        this.notifyAll();
-    }
+    volatile boolean running = true;
 
     volatile long currentTime;
 
+    @Override
     synchronized public String toString() {
         StringBuffer sb = new StringBuffer("Session Sets ("
                 + sessionSets.size() + "):\n");
@@ -119,6 +115,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         return sb.toString();
     }
 
+    @Override
     synchronized public void run() {
         try {
             while (running) {

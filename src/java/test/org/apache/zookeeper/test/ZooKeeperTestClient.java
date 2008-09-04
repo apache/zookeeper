@@ -40,7 +40,7 @@ import org.apache.zookeeper.proto.WatcherEvent;
 public class ZooKeeperTestClient extends TestCase implements Watcher {
   protected String hostPort = "127.0.0.1:22801";
 
-  protected static String dirOnZK = "/test_dir";
+  protected static final String dirOnZK = "/test_dir";
 
   protected String testDirOnZK = dirOnZK + "/" + System.currentTimeMillis();
 

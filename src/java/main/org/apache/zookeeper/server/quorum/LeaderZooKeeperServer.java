@@ -54,6 +54,7 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
         return self.leader;
     }
     
+    @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(
@@ -69,6 +70,7 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
         return super.getGlobalOutstandingLimit() / (self.getQuorumSize() - 1);
     }
     
+    @Override
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, sessionsWithTimeouts,
                 tickTime, self.getId());

@@ -241,6 +241,7 @@ public class ZooKeeper {
         {
             super(watches, watcher, path);
         }
+        @Override
         protected boolean shouldAddWatch(int rc) {
             return rc == 0 || rc == KeeperException.Code.NoNode;
         }

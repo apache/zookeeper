@@ -24,8 +24,6 @@ import java.util.ArrayList;
 
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.NIOServerCnxn.Factory;
-import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.EventInfo;
 import org.apache.zookeeper.server.util.ObservableComponent;
 import org.apache.zookeeper.server.util.ObserverManager;

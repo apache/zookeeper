@@ -76,7 +76,7 @@ public class LeaderElection implements Election  {
         for (Vote v : votesCast) {
             Integer count = countTable.get(v);
             if (count == null) {
-                count = new Integer(0);
+                count = Integer.valueOf(0);
             }
             countTable.put(v, count + 1);
             if (v.id == result.vote.id) {

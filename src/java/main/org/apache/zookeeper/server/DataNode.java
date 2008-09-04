@@ -39,6 +39,7 @@ import org.apache.zookeeper.data.Stat;
  */
 public class DataNode implements Record {
     DataNode() {
+        // default rather than public constructor
     }
 
     DataNode(DataNode parent, byte data[], List<ACL> acl, Stat stat) {

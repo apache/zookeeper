@@ -48,6 +48,7 @@ public class QuorumStats extends ServerStats {
         qprovider=newProvider;
     }
     
+    @Override
     public String getServerState(){
         return (qprovider!=null)?qprovider.getServerState():Provider.UNKNOWN_STATE;
     }
@@ -55,6 +56,8 @@ public class QuorumStats extends ServerStats {
     public String[] getQuorumPeers(){
         return (qprovider!=null)?qprovider.getQuorumPeers():new String[0];
     }
+
+    @Override
     public String toString(){
         StringBuilder sb=new StringBuilder(super.toString());
         String state=getServerState();

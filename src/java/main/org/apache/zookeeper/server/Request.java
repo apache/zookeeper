@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.apache.jute.Record;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -32,6 +33,8 @@ import org.apache.zookeeper.txn.TxnHeader;
  * onto the request as it is processed.
  */
 public class Request {
+    private static final Logger LOG = Logger.getLogger(Request.class);
+
     public final static Request requestOfDeath = new Request(null, 0, 0, 0,
             null, null);
 
@@ -157,6 +160,7 @@ public class Request {
         }
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("session 0x").append(Long.toHexString(sessionId));
@@ -180,7 +184,7 @@ public class Request {
                 path = new String(b);
                 request.clear();
             } catch (Exception e) {
-
+                LOG.warn("Ignoring exception during toString", e);
             }
         }
         sb.append(path).append(" ");

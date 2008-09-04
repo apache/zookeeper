@@ -83,6 +83,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         start();
     }
 
+    @Override
     public void run() {
         try {
             while (true) {
@@ -404,6 +405,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             ACL a = it.next();
             Id id = a.getId();
             if (id.getScheme().equals("world") && id.getId().equals("anyone")) {
+                // wide open
             } else if (id.getScheme().equals("auth")) {
                 // This is the "auth" id, so we have to expand it to the
                 // authenticated ids of the requestor

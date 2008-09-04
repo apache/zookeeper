@@ -19,40 +19,22 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.server.ServerConfig.getClientPort;
-import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getElectionAlg;
-import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getServerId;
-import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getServers;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
-
-import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.jmx.server.ConnectionBean;
-import org.apache.zookeeper.jmx.server.DataTreeBean;
-import org.apache.zookeeper.jmx.server.quorum.FollowerBean;
-import org.apache.zookeeper.jmx.server.quorum.LeaderBean;
-import org.apache.zookeeper.jmx.server.quorum.LeaderElectionBean;
-import org.apache.zookeeper.jmx.server.quorum.LocalPeerBean;
-import org.apache.zookeeper.jmx.server.quorum.QuorumBean;
-import org.apache.zookeeper.jmx.server.quorum.RemotePeerBean;
-import org.apache.zookeeper.jmx.server.quorum.ServerBean;
+import org.apache.zookeeper.jmx.server.ConnectionMXBean;
+import org.apache.zookeeper.jmx.server.DataTreeMXBean;
+import org.apache.zookeeper.jmx.server.ZooKeeperServerMXBean;
+import org.apache.zookeeper.jmx.server.quorum.LeaderElectionMXBean;
+import org.apache.zookeeper.jmx.server.quorum.LocalPeerMXBean;
+import org.apache.zookeeper.jmx.server.quorum.QuorumMXBean;
+import org.apache.zookeeper.jmx.server.quorum.RemotePeerMXBean;
 import org.apache.zookeeper.server.ManagedZooKeeperServerMain;
-import org.apache.zookeeper.server.ManagedZooKeeperServer;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ObservableNIOServerCnxn;
-import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerConfig;
-import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.ZooTrace;
-import org.apache.zookeeper.server.util.ConnectionObserver;
-import org.apache.zookeeper.server.util.ObserverManager;
-import org.apache.zookeeper.server.util.QuorumPeerObserver;
-import org.apache.zookeeper.server.util.ServerObserver;
 import org.apache.zookeeper.server.util.ZooKeeperObserverManager;
 
 /**

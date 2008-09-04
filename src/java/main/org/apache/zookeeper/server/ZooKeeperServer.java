@@ -121,7 +121,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     final public static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
     LinkedBlockingQueue<Long> sessionsToDie = new LinkedBlockingQueue<Long>();
-    protected boolean running;
+    protected volatile boolean running;
     /**
      * This is the secret that we use to generate passwords, for the moment it
      * is more of a sanity check.
@@ -195,6 +195,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             try {
                 zxid = Long.parseLong(nameParts[1], 16);
             } catch (NumberFormatException e) {
+                LOG.warn("unable to parse zxid string into long: "
+                        + nameParts[1]);
             }
         }
         return zxid;
@@ -317,10 +319,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
             LOG.warn("Processing snapshot: " + f);
 
-            InputStream snapIS =
-                new BufferedInputStream(new FileInputStream(f));
-            loadData(BinaryInputArchive.getArchive(snapIS));
-            snapIS.close();
+            FileInputStream snapFIS = new FileInputStream(f);
+            try {
+                InputStream snapIS = new BufferedInputStream(snapFIS);
+                try {
+                    loadData(BinaryInputArchive.getArchive(snapIS));
+                } finally {
+                    snapIS.close();
+                }
+            } finally {
+                snapFIS.close();
+            }
 
             dataTree.lastProcessedZxid = zxid;
 
@@ -601,12 +610,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
                 "Snapshotting: zxid 0x" + Long.toHexString(lastZxid));
         try {
-            File f =new File(dataDir, "snapshot." + Long.toHexString(lastZxid));
+            File f = new File(dataDir, "snapshot." + Long.toHexString(lastZxid));
             OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(f));
-            BinaryOutputArchive oa = BinaryOutputArchive.getArchive(sessOS);
-            snapshot(oa);
-            sessOS.flush();
-            sessOS.close();
+            try {
+                BinaryOutputArchive oa = BinaryOutputArchive.getArchive(sessOS);
+                snapshot(oa);
+                sessOS.flush();
+            } finally {
+                sessOS.close();
+            }
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
                     "Snapshotting finished: zxid 0x" + Long.toHexString(lastZxid));
         } catch (IOException e) {
@@ -692,8 +704,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         createSessionTracker();
         setupRequestProcessors();
-        running = true;
         synchronized (this) {
+            running = true;
             notifyAll();
         }
     }

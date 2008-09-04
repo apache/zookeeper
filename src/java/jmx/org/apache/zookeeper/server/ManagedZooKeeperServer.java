@@ -23,18 +23,16 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
-
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.server.ConnectionBean;
+import org.apache.zookeeper.jmx.server.ConnectionMXBean;
 import org.apache.zookeeper.jmx.server.DataTreeBean;
+import org.apache.zookeeper.jmx.server.DataTreeMXBean;
 import org.apache.zookeeper.jmx.server.ZooKeeperServerBean;
-import org.apache.zookeeper.server.ZooKeeperServer.DataTreeBuilder;
+import org.apache.zookeeper.jmx.server.ZooKeeperServerMXBean;
 import org.apache.zookeeper.server.util.ConnectionObserver;
 import org.apache.zookeeper.server.util.ObserverManager;
 import org.apache.zookeeper.server.util.ServerObserver;
-import org.apache.zookeeper.server.util.ZooKeeperObserverManager;
-
-import static org.apache.zookeeper.server.ServerConfig.getClientPort;
 
 /**
  * This class launches a standalone zookeeper server with JMX support
