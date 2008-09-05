@@ -35,7 +35,7 @@ import org.junit.Test;
 public class QuorumTest extends ClientBase {
     private static final Logger LOG = Logger.getLogger(QuorumTest.class);
 
-    private ClientTest ct = new ClientTest();
+    private final ClientTest ct = new ClientTest();
 
     File s1dir, s2dir, s3dir, s4dir, s5dir;
     QuorumPeer s1, s2, s3, s4, s5;
@@ -55,9 +55,9 @@ public class QuorumTest extends ClientBase {
         s3dir = ClientBase.createTmpDir();
         s4dir = ClientBase.createTmpDir();
         s5dir = ClientBase.createTmpDir();
-        
+
         startServers();
-        
+
         LOG.info("Setup finished");
     }
     void startServers() throws IOException, InterruptedException {
@@ -137,17 +137,17 @@ public class QuorumTest extends ClientBase {
     public void testDeleteWithChildren() throws Exception {
         ct.testDeleteWithChildren();
     }
-    
+
     @Test
     public void testHammerBasic() throws Throwable {
         ct.testHammerBasic();
     }
-    
+
     @Test
     public void testPing() throws Exception {
         ct.testPing();
     }
-    
+
     @Test
     public void testSequentialNodeNames()
         throws IOException, InterruptedException, KeeperException
@@ -173,6 +173,12 @@ public class QuorumTest extends ClientBase {
     {
         ct.testClientWithWatcherObj();
     }
-    
+    @Test
+    public void testMultipleWatcherObjs() throws IOException,
+            InterruptedException, KeeperException
+    {
+        ct.testMutipleWatcherObjs();
+    }
+
     // skip superhammer and clientcleanup as they are too expensive for quorum
 }
