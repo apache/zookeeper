@@ -30,7 +30,6 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.CreateFlags;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
@@ -88,11 +87,12 @@ public class SessionTest extends TestCase implements Watcher {
         }
     }
 
-    private ZooKeeper createClient()
+    private DisconnectableZooKeeper createClient()
         throws IOException, InterruptedException
     {
         CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
+        DisconnectableZooKeeper zk =
+                new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
         if(!watcher.clientConnected.await(CONNECTION_TIMEOUT,
                 TimeUnit.MILLISECONDS))
         {
@@ -143,7 +143,7 @@ public class SessionTest extends TestCase implements Watcher {
     public void testSession()
         throws IOException, InterruptedException, KeeperException
     {
-        ZooKeeper zk = createClient();
+        DisconnectableZooKeeper zk = createClient();
         zk.create("/e", new byte[0], Ids.OPEN_ACL_UNSAFE,
                         CreateFlags.EPHEMERAL);
         LOG.info("zk with session id 0x" + Long.toHexString(zk.getSessionId())
@@ -156,9 +156,9 @@ public class SessionTest extends TestCase implements Watcher {
 
         Stat stat = new Stat();
         startSignal = new CountDownLatch(1);
-        zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this,
-                           zk.getSessionId(),
-                           zk.getSessionPasswd());
+        zk = new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this,
+                               zk.getSessionId(),
+                               zk.getSessionPasswd());
         startSignal.await();
 
         LOG.info("zk with session id 0x" + Long.toHexString(zk.getSessionId())
