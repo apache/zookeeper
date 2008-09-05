@@ -70,7 +70,7 @@ import org.apache.zookeeper.server.ZooTrace;
  * connected to as needed.
  *
  */
-class ClientCnxn {
+public class ClientCnxn {
     private static final Logger LOG = Logger.getLogger(ClientCnxn.class);
 
     private ArrayList<InetSocketAddress> serverAddrs =
@@ -111,6 +111,8 @@ class ClientCnxn {
     private final int sessionTimeout;
 
     private final ZooKeeper zooKeeper;
+
+    private final Watcher watcher;
 
     private long sessionId;
 
@@ -203,9 +205,11 @@ class ClientCnxn {
         }
     }
 
-    public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper)
-            throws IOException {
-        this(hosts, sessionTimeout, zooKeeper, 0, new byte[16]);
+    public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper,
+            Watcher watcher)
+        throws IOException
+    {
+        this(hosts, sessionTimeout, zooKeeper, watcher, 0, new byte[16]);
     }
 
     /**
@@ -222,8 +226,11 @@ class ClientCnxn {
      * @throws IOException
      */
     public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper,
-            long sessionId, byte[] sessionPasswd) throws IOException {
+            Watcher watcher, long sessionId, byte[] sessionPasswd)
+        throws IOException
+    {
         this.zooKeeper = zooKeeper;
+        this.watcher = watcher;
         this.sessionId = sessionId;
         this.sessionPasswd = sessionPasswd;
         String hostsList[] = hosts.split(",");
@@ -273,7 +280,7 @@ class ClientCnxn {
                         break;
                     }
                     if (event instanceof WatcherEvent) {
-                        zooKeeper.processWatchEvent((WatcherEvent) event);
+                        watcher.process((WatcherEvent) event);
                     } else {
                         Packet p = (Packet) event;
                         int rc = 0;
