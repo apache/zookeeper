@@ -28,9 +28,9 @@ import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs.CreateFlags;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
@@ -145,7 +145,7 @@ public class SessionTest extends TestCase implements Watcher {
     {
         DisconnectableZooKeeper zk = createClient();
         zk.create("/e", new byte[0], Ids.OPEN_ACL_UNSAFE,
-                        CreateFlags.EPHEMERAL);
+                        CreateMode.EPHEMERAL);
         LOG.info("zk with session id 0x" + Long.toHexString(zk.getSessionId())
                 + " was destroyed!");
 

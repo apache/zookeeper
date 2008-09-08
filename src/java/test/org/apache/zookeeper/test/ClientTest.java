@@ -27,12 +27,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.InvalidACLException;
 import org.apache.zookeeper.Watcher.Event;
-import org.apache.zookeeper.ZooDefs.CreateFlags;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.data.ACL;
@@ -57,7 +57,7 @@ public class ClientTest extends ClientBase {
             zkIdle = createClient();
             zkWatchCreator = createClient();
             for (int i = 0; i < 30; i++) {
-                zkWatchCreator.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
+                zkWatchCreator.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
             for (int i = 0; i < 30; i++) {
                 zkIdle.exists("/" + i, true);
@@ -98,7 +98,7 @@ public class ClientTest extends ClientBase {
         try {
             zk = createClient();
             try {
-                zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, 0);
+                zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
             } catch(InvalidACLException e) {
                 LOG.info("Test successful, invalid acl received : "
@@ -108,14 +108,14 @@ public class ClientTest extends ClientBase {
                 ArrayList<ACL> testACL = new ArrayList<ACL>();
                 testACL.add(new ACL(Perms.ALL | Perms.ADMIN, Ids.AUTH_IDS));
                 testACL.add(new ACL(Perms.ALL | Perms.ADMIN, new Id("ip", "127.0.0.1/8")));
-                zk.create("/acltest", new byte[0], testACL, 0);
+                zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
             } catch(InvalidACLException e) {
                 LOG.info("Test successful, invalid acl received : "
                         + e.getMessage());
             }
             zk.addAuthInfo("digest", "ben:passwd".getBytes());
-            zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, 0);
+            zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             zk.close();
             zk = createClient();
             zk.addAuthInfo("digest", "ben:passwd2".getBytes());
@@ -174,7 +174,7 @@ public class ClientTest extends ClientBase {
                 watchers[i] = new MyWatcher();
                 watchers2[i] = new MyWatcher();
                 zk.create("/foo-" + i, ("foodata" + i).getBytes(),
-                        Ids.OPEN_ACL_UNSAFE, 0);
+                        Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
             Stat stat = new Stat();
 
@@ -285,7 +285,7 @@ public class ClientTest extends ClientBase {
             zk = createClient(watcher, hostPort);
             //LOG.info("Created client: " + zk.describeCNXN());
             LOG.info("Before create /benwashere");
-            zk.create("/benwashere", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+            zk.create("/benwashere", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             LOG.info("After create /benwashere");
             try {
                 zk.setData("/benwashere", "hi".getBytes(), 57);
@@ -315,7 +315,7 @@ public class ClientTest extends ClientBase {
             Stat stat = new Stat();
             // Test basic create, ls, and getData
             LOG.info("Before create /ben");
-            zk.create("/ben", "Ben was here".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+            zk.create("/ben", "Ben was here".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             LOG.info("Before getChildren /");
             List<String> children = zk.getChildren("/", false);
             assertEquals(1, children.size());
@@ -334,7 +334,8 @@ public class ClientTest extends ClientBase {
             } catch (KeeperException.NoNodeException e) {
                 // OK, expected that
             }
-            zk.create("/frog", "hi".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+            zk.create("/frog", "hi".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
             // the first poll is just a session delivery
             LOG.info("Comment: checking for events length "
                      + watcher.events.size());
@@ -346,7 +347,7 @@ public class ClientTest extends ClientBase {
             zk.getChildren("/ben", true);
             for (int i = 0; i < 10; i++) {
                 zk.create("/ben/" + i + "-", Integer.toString(i).getBytes(),
-                        Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+                        Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             }
             children = zk.getChildren("/ben", false);
             Collections.sort(children);
@@ -384,17 +385,17 @@ public class ClientTest extends ClientBase {
                 assertEquals(Event.EventNodeDeleted, event.getType());
                 assertEquals(Event.KeeperStateSyncConnected, event.getState());
             }
-            zk.create("/good\u0001path", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+            zk.create("/good\u0001path", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             //try {
-            //    zk.create("/bad\u0000path", "".getBytes(), null, 0);
+            //    zk.create("/bad\u0000path", "".getBytes(), null, CreateMode.PERSISTENT);
             //    fail("created an invalid path");
             //} catch(KeeperException e) {
             //    assertEquals(KeeperException.Code.BadArguments, e.getCode());
             //}
 
-            zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+            zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             try {
-                zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+                zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 fail("duplicate create allowed");
             } catch(KeeperException.NodeExistsException e) {
                 // OK, expected that
@@ -419,19 +420,18 @@ public class ClientTest extends ClientBase {
         ZooKeeper zk = null;
         try {
             zk = createClient();
-            zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
-            zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+            zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             List<String> children = zk.getChildren(path, false);
             assertEquals(1, children.size());
             assertEquals(file + "0000000000", children.get(0));
 
-            zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+            zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             children = zk.getChildren(path, false);
             assertEquals(2, children.size());
-            assertTrue("contains child 1",
-                       children.contains(file + "0000000001"));
+            assertTrue("contains child 1",  children.contains(file + "0000000001"));
 
-            zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+            zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             children = zk.getChildren(path, false);
             assertEquals(3, children.size());
             assertTrue("contains child 2",
@@ -440,7 +440,7 @@ public class ClientTest extends ClientBase {
             // The pattern is holding so far.  Let's run the counter a bit
             // to be sure it continues to spit out the correct answer
             for(int i = children.size(); i < 105; i++)
-               zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+               zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
 
             children = zk.getChildren(path, false);
             assertTrue("contains child 104",
@@ -471,8 +471,8 @@ public class ClientTest extends ClientBase {
     @Test
     public void testDeleteWithChildren() throws Exception {
         ZooKeeper zk = createClient();
-        zk.create("/parent", new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
-        zk.create("/parent/child", new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
+        zk.create("/parent", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/parent/child", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         try {
             zk.delete("/parent", -1);
             fail("Should have received a not equals message");
@@ -512,7 +512,7 @@ public class ClientTest extends ClientBase {
                 for (; current < count; current++) {
                     // Simulate a bit of network latency...
                     Thread.sleep(HAMMERTHREAD_LATENCY);
-                    zk.create(prefix + current, b, Ids.OPEN_ACL_UNSAFE, 0);
+                    zk.create(prefix + current, b, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 }
             } catch (Throwable t) {
                 LOG.error("Client create operation failed", t);
@@ -544,7 +544,7 @@ public class ClientTest extends ClientBase {
                 for (; current < count; current++) {
                     ZooKeeper zk = parent.createClient();
                     try {
-                        zk.create(prefix + current, b, Ids.OPEN_ACL_UNSAFE, 0);
+                        zk.create(prefix + current, b, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     } finally {
                         try {
                             zk.close();
@@ -575,7 +575,7 @@ public class ClientTest extends ClientBase {
             for (int i = 0; i < threads.length; i++) {
                 ZooKeeper zk = createClient();
                 String prefix = "/test-" + i;
-                zk.create(prefix, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
+                zk.create(prefix, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 prefix += "/";
                 HammerThread thread = 
                     new BasicHammerThread("BasicHammerThread-" + i, zk, prefix,
@@ -610,7 +610,7 @@ public class ClientTest extends ClientBase {
                 {
                     ZooKeeper zk = createClient();
                     try {
-                        zk.create(prefix, new byte[0], Ids.OPEN_ACL_UNSAFE, 0);
+                        zk.create(prefix, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     } finally {
                         zk.close();
                     }

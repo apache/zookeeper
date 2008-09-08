@@ -36,8 +36,8 @@ import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.KeeperException.Code;
-import org.apache.zookeeper.ZooDefs.CreateFlags;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.junit.After;
@@ -123,7 +123,7 @@ public class AsyncTest extends TestCase
                 while(bang) {
                     incOutstanding(); // before create otw race
                     zk.create("/test-", new byte[0], Ids.OPEN_ACL_UNSAFE,
-                            CreateFlags.SEQUENCE, this, null);
+                            CreateMode.PERSISTENT_SEQUENTIAL, this, null);
                 }
             } catch (InterruptedException e) {
                 if (bang) {
@@ -208,10 +208,10 @@ public class AsyncTest extends TestCase
         zk = createClient();
         try {
             zk.addAuthInfo("digest", "ben:passwd".getBytes());
-            zk.create("/ben", new byte[0], Ids.READ_ACL_UNSAFE, 0, this, results);
-            zk.create("/ben/2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
+            zk.create("/ben", new byte[0], Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT, this, results);
+            zk.create("/ben/2", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT, this, results);
             zk.delete("/ben", -1, this, results);
-            zk.create("/ben2", new byte[0], Ids.CREATOR_ALL_ACL, 0, this, results);
+            zk.create("/ben2", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT, this, results);
             zk.getData("/ben2", false, this, results);
             synchronized (results) {
                 while (results.size() < 5) {

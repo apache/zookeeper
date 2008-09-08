@@ -22,7 +22,7 @@ import java.io.IOException;
 
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
-import org.apache.zookeeper.ZooDefs.CreateFlags;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 
 public class TestHammer implements VoidCallback {
@@ -44,7 +44,7 @@ public class TestHammer implements VoidCallback {
             for(int i = 0; i < REPS; i++) {
                 try {
                     String name = zk.create("/testFile-", new byte[16], Ids.OPEN_ACL_UNSAFE,
-                        CreateFlags.EPHEMERAL|CreateFlags.SEQUENCE);
+                        CreateMode.EPHEMERAL_SEQUENTIAL);
                     zk.delete(name, -1, new TestHammer(), null);
                 } catch(Exception e) {
                     i--;

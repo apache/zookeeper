@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.proto.WatcherEvent;
 
@@ -122,9 +123,9 @@ public class WatcherFuncTest extends ClientBase {
         assertNull(lsnr.exists("/foo", true));
         assertNull(lsnr.exists("/foo/bar", true));
 
-        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         expected.add(Watcher.Event.EventNodeCreated);
-        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         expected.add(Watcher.Event.EventNodeCreated);
 
         verify();
@@ -182,9 +183,9 @@ public class WatcherFuncTest extends ClientBase {
             assertEquals(KeeperException.Code.NoNode, e.getCode());
         }
 
-        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         assertNotNull(lsnr.getData("/foo", true, null));
-        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         assertNotNull(lsnr.getData("/foo/bar", true, null));
 
         client.setData("/foo", "parent".getBytes(), -1);
@@ -221,10 +222,10 @@ public class WatcherFuncTest extends ClientBase {
             assertEquals(KeeperException.Code.NoNode, e.getCode());
         }
 
-        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         assertNotNull(lsnr.getChildren("/foo", true));
 
-        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         expected.add(Watcher.Event.EventNodeChildrenChanged); // /foo
         assertNotNull(lsnr.getChildren("/foo/bar", true));
 
@@ -265,9 +266,9 @@ public class WatcherFuncTest extends ClientBase {
         assertNull(lsnr.exists("/foo/bar", w3));
         assertNull(lsnr.exists("/foo/bar", w4));
 
-        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         expected.add(Watcher.Event.EventNodeCreated);
-        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         e2.add(Watcher.Event.EventNodeCreated);
 
         lsnr_dwatch.verify(expected);
@@ -346,10 +347,10 @@ public class WatcherFuncTest extends ClientBase {
             assertEquals(KeeperException.Code.NoNode, e.getCode());
         }
 
-        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         assertNotNull(lsnr.getData("/foo", true, null));
         assertNotNull(lsnr.getData("/foo", w1, null));
-        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         assertNotNull(lsnr.getData("/foo/bar", w2, null));
         assertNotNull(lsnr.getData("/foo/bar", w3, null));
         assertNotNull(lsnr.getData("/foo/bar", w4, null));
@@ -412,11 +413,11 @@ public class WatcherFuncTest extends ClientBase {
             assertEquals(KeeperException.Code.NoNode, e.getCode());
         }
 
-        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         assertNotNull(lsnr.getChildren("/foo", true));
         assertNotNull(lsnr.getChildren("/foo", w1));
 
-        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, 0);
+        client.create("/foo/bar", "child".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         expected.add(Watcher.Event.EventNodeChildrenChanged); // /foo
         assertNotNull(lsnr.getChildren("/foo/bar", w2));
         assertNotNull(lsnr.getChildren("/foo/bar", w2));

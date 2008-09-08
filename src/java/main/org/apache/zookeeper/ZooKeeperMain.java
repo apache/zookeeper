@@ -23,13 +23,13 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import org.apache.zookeeper.AsyncCallback.DataCallback;
-import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.CreateMode;
 
 /**
  * The command line client to ZooKeeper.
@@ -147,7 +147,7 @@ public class ZooKeeperMain {
             if (args.length == 5) {
                 acl = parseACLs(args[4]);
             }
-            String newPath = zooKeeper.create(path, args[3].getBytes(), acl, 0);
+            String newPath = zooKeeper.create(path, args[3].getBytes(), acl, CreateMode.PERSISTENT);
             System.err.println("Created " + newPath);
         } else if (cmd.equals("delete") && args.length >= 3) {
             zooKeeper.delete(path, watch ? Integer.parseInt(args[3]) : -1);
