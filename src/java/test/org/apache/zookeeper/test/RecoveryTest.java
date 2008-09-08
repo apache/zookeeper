@@ -29,6 +29,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
@@ -98,15 +99,15 @@ public class RecoveryTest extends TestCase implements Watcher {
                 path = "/" + i;
                 zk.create(path,
                           (path + "!").getBytes(),
-                          Ids.OPEN_ACL_UNSAFE, 0);
+                          Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 for (int j = 0; j < 10; j++) {
                     String subpath = path + "/" + j;
                     zk.create(subpath, (subpath + "!").getBytes(),
-                            Ids.OPEN_ACL_UNSAFE, 0);
+                            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     for (int k = 0; k < 20; k++) {
                         String subsubpath = subpath + "/" + k;
                         zk.create(subsubpath, (subsubpath + "!").getBytes(),
-                                Ids.OPEN_ACL_UNSAFE, 0);
+                                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     }
                 }
             }

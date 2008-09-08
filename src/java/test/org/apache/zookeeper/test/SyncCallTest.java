@@ -26,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
@@ -51,7 +52,7 @@ public class SyncCallTest extends ClientBase
             LOG.info("Beginning test:" + (new Date()).toString());
             for(int i = 0; i < 100; i++)
                 zk.create("/test" + i, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                        0, this, results);
+                        CreateMode.PERSISTENT, this, results);
             zk.sync("/test", this, results);
             for(int i = 0; i < 100; i++)
                 zk.delete("/test" + i, 0, this, results);

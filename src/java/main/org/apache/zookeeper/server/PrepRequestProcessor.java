@@ -29,8 +29,8 @@ import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.Code;
-import org.apache.zookeeper.ZooDefs.CreateFlags;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
@@ -202,7 +202,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 checkACL(zks, parentRecord.acl, ZooDefs.Perms.CREATE,
                         request.authInfo);
                 int parentCVersion = parentRecord.stat.getCversion();
-                if ((createRequest.getFlags() & CreateFlags.SEQUENCE) != 0) {
+                CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
+                if (createMode.isSequential()) {
                     path = path + String.format("%010d", parentCVersion);
                 }
                 try {
@@ -218,9 +219,9 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 }
                 txn = new CreateTxn(path, createRequest.getData(),
                         createRequest.getAcl(),
-                        (createRequest.getFlags() & CreateFlags.EPHEMERAL) != 0);
+                        createMode.isEphemeral());
                 Stat s = new Stat();
-                if ((createRequest.getFlags() & CreateFlags.EPHEMERAL) != 0) {
+                if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
                 }
                 parentRecord = parentRecord.duplicate(txnHeader.getZxid());

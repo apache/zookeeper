@@ -40,6 +40,7 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
@@ -115,7 +116,7 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
     void doCreate() throws InterruptedException, KeeperException {
         // create top level znode
         try{
-            zk.create(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
+            zk.create(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }catch(KeeperException.NodeExistsException e){
             // ignore duplicate create
         }
@@ -127,7 +128,7 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
             try{
                 if(i%10==0)
                     LOG.warn("Creating znode "+cpath);
-                zk.create(cpath, v, ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
+                zk.create(cpath, v, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }catch(KeeperException.NodeExistsException e){
                 // ignore duplicate create
             }

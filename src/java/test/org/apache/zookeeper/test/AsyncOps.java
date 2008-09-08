@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
@@ -133,7 +134,7 @@ public class AsyncOps {
     public static class StringCB extends AsyncCB implements StringCallback {
         byte[] data = new byte[10];
         List<ACL> acl = Ids.CREATOR_ALL_ACL;
-        int flags = 0;
+        CreateMode flags = CreateMode.PERSISTENT;
         String name = path;
         
         StringCB(ZooKeeper zk) {

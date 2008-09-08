@@ -25,7 +25,7 @@ import java.util.List;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooDefs.CreateFlags;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
@@ -48,7 +48,7 @@ public class SledgeHammer extends Thread implements Watcher {
         try {
             Stat stat = new Stat();
             String path = zk.create("/hammers/hammer-", new byte[0],
-                    Ids.OPEN_ACL_UNSAFE, CreateFlags.SEQUENCE);
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             byte tag[] = (path + " was here!").getBytes();
             synchronized (this) {
                 String startPath = "/hammers/start";

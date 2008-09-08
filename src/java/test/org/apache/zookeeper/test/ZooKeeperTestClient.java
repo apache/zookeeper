@@ -26,16 +26,15 @@ import java.util.concurrent.TimeUnit;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
-import org.junit.Test;
-
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
+import org.junit.Test;
 
 public class ZooKeeperTestClient extends TestCase implements Watcher {
   protected String hostPort = "127.0.0.1:22801";
@@ -83,7 +82,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     ZooKeeper zk = new ZooKeeper(hostPort, 10000, this);
 
     try {
-      zk.create(dirOnZK, null, Ids.OPEN_ACL_UNSAFE, 0);
+      zk.create(dirOnZK, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     } catch (KeeperException.NodeExistsException ke) {
         // expected, sort of
     } catch (KeeperException ke) {
@@ -92,7 +91,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     }
 
     try {
-      zk.create(testDirOnZK, null, Ids.OPEN_ACL_UNSAFE, 0);
+      zk.create(testDirOnZK, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     } catch (KeeperException.NodeExistsException ke) {
         // expected, sort of
     } catch (KeeperException ke) {
@@ -113,14 +112,14 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     Stat stat = zk.exists(parentName, false);
     if (stat == null) {
       try {
-        zk.create(parentName, null, Ids.OPEN_ACL_UNSAFE, 0);
+        zk.create(parentName, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
       } catch (KeeperException ke) {
         fail("Creating node " + parentName + ke.getMessage());
       }
     }
 
     try {
-      zk.create(nodeName, null, Ids.OPEN_ACL_UNSAFE, ZooDefs.CreateFlags.EPHEMERAL);
+      zk.create(nodeName, null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
     } catch (KeeperException ke) {
       int code = ke.getCode();
       boolean valid = code == KeeperException.Code.NodeExists;
@@ -167,7 +166,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     Stat stat = zk_1.exists(parentName, false);
     if (stat == null) {
       try {
-        zk.create(parentName, null, Ids.OPEN_ACL_UNSAFE, 0);
+        zk.create(parentName, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
       } catch (KeeperException ke) {
         fail("Creating node " + parentName + ke.getMessage());
       }
@@ -191,7 +190,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     List<String> firstGen = zk_1.getChildren(parentName, true);
 
     try {
-      zk.create(nodeName, null, Ids.OPEN_ACL_UNSAFE, ZooDefs.CreateFlags.EPHEMERAL);
+      zk.create(nodeName, null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
     } catch (KeeperException ke) {
       int code = ke.getCode();
       boolean valid = code == KeeperException.Code.NodeExists;
@@ -227,9 +226,8 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     }
 
     try {
-      zk.create(nodeName + "/def", null, Ids.OPEN_ACL_UNSAFE, ZooDefs.CreateFlags.EPHEMERAL);
-      fail("Should be impossible to create child off Ephemeral node "
-          + nodeName);
+      zk.create(nodeName + "/def", null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+      fail("Should be impossible to create child off Ephemeral node " + nodeName);
     } catch (KeeperException ke) {
       int code = ke.getCode();
       boolean valid = code == KeeperException.Code.NoChildrenForEphemerals;
@@ -317,7 +315,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
       }
     }
     try {
-      zk.create(nodeName, null, Ids.OPEN_ACL_UNSAFE, 0);
+      zk.create(nodeName, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     } catch (KeeperException ke) {
       int code = ke.getCode();
       boolean valid = code == KeeperException.Code.NodeExists;

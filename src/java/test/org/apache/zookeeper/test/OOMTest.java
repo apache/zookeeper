@@ -29,6 +29,7 @@ import junit.framework.TestCase;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.WatcherEvent;
@@ -115,7 +116,7 @@ public class OOMTest extends TestCase implements Watcher {
             InterruptedException, KeeperException {
         ZooKeeper zk = new ZooKeeper("127.0.0.1:33221", 30000, this);
         for (int i = 0; i < 10000; i++) {
-            zk.create("/" + i, null, Ids.OPEN_ACL_UNSAFE, 0);
+            zk.create("/" + i, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         zk.close();
     }

@@ -377,14 +377,16 @@ public class ZooKeeper {
      * @throws org.apache.zookeeper.KeeperException.InvalidACLException if the ACL is invalid
      * @throws InterruptedException if the transaction is interrrupted
      */
-    public String create(String path, byte data[], List<ACL> acl, int flags)
-            throws KeeperException, InterruptedException {
+    public String create(String path, byte data[], List<ACL> acl,
+            CreateMode createMode)
+        throws KeeperException, InterruptedException
+    {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.create);
         CreateRequest request = new CreateRequest();
         CreateResponse response = new CreateResponse();
         request.setData(data);
-        request.setFlags(flags);
+        request.setFlags(createMode.toFlag());
         request.setPath(path);
         if (acl != null && acl.size() == 0) {
             throw new KeeperException.InvalidACLException();
@@ -397,22 +399,25 @@ public class ZooKeeper {
         return response.getPath();
     }
 
-    /**
+
+
+	/**
      * The Asynchronous version of create. The request doesn't actually until
      * the asynchronous callback is called.
      *
-     * @see #create(String, byte[], List, int)
+     * @see #create(String, byte[], List<ACL>, CreateMode)
      */
 
-    public void create(String path, byte data[], List<ACL> acl, int flags,
-            StringCallback cb, Object ctx) {
+    public void create(String path, byte data[], List<ACL> acl,
+            CreateMode createMode,  StringCallback cb, Object ctx)
+    {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.create);
         CreateRequest request = new CreateRequest();
         CreateResponse response = new CreateResponse();
         ReplyHeader r = new ReplyHeader();
         request.setData(data);
-        request.setFlags(flags);
+        request.setFlags(createMode.toFlag());
         request.setPath(path);
         request.setAcl(acl);
         cnxn.queuePacket(h, r, request, response, cb, path, ctx, null);

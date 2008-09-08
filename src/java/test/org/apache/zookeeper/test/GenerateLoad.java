@@ -42,7 +42,7 @@ import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs.CreateFlags;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
@@ -313,7 +313,7 @@ public class GenerateLoad {
                     try {
                         Thread.sleep(100);
                         path = zk.create("/client", new byte[16], Ids.OPEN_ACL_UNSAFE,
-                                CreateFlags.EPHEMERAL|CreateFlags.SEQUENCE);
+                                CreateMode.EPHEMERAL_SEQUENTIAL);
                         break;
                     } catch(KeeperException e) {
                         LOG.error("keeper exception thrown", e);

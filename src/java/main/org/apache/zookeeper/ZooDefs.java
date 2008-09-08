@@ -57,12 +57,6 @@ public class ZooDefs {
         public final int error = -1;
     }
 
-    public interface CreateFlags {
-        int EPHEMERAL = 1 << 0;
-
-        int SEQUENCE = 1 << 1;
-    }
-
     public interface Perms {
         int READ = 1 << 0;
 
