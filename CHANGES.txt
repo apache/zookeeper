@@ -1,4 +1,11 @@
 Trunk:
+
+Non-backward compatible changes:
+
+  ZOOKEEPER-132: Create Enum to replace CreateFlag in ZooKepper.create method (Jakob Homan)
+
+Backward compatibile changes:
+
   BUGFIXES: 
 
   ZOOKEEPER-39. Use Watcher objects rather than boolean on read operations.
