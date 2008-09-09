@@ -2,11 +2,13 @@ Trunk:
 
 Non-backward compatible changes:
 
-  ZOOKEEPER-132: Create Enum to replace CreateFlag in ZooKepper.create method (Jakob Homan)
+  ZOOKEEPER-132. Create Enum to replace CreateFlag in ZooKepper.create method (Jakob Homan via phunt)
 
 Backward compatibile changes:
 
   BUGFIXES: 
+
+  ZOOKEEPER-118. findbugs flagged switch statement in followerrequestprocessor.run() (Flavio Paiva Junqueira via phunt)
 
   ZOOKEEPER-39. Use Watcher objects rather than boolean on read operations.
   (Andrew Kornev)
