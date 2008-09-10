@@ -40,7 +40,6 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Test;
 
 /**
- * @author breed
  *
  */
 public class RecoveryTest extends TestCase implements Watcher {

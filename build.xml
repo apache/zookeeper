@@ -64,10 +64,15 @@
     <property name="conf.dir" value="${basedir}/conf"/>
     <property name="docs.dir" value="${basedir}/docs"/>
     <property name="docs.src" value="${basedir}/src/docs"/>
-    <property name="javadoc.link.java" value="http://java.sun.com/j2se/${target.jdk}/docs/api/" />
+    <property name="javadoc.link.java"
+              value="http://java.sun.com/j2se/1.5/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
+
     <property name="build.docs" value="${build.dir}/docs" />
     <property name="build.javadoc" value="${build.docs}/api" />
+    <property name="build.javadoc.dev" value="${build.docs}/dev-api"/>
+
+    <property name="dist.dir" value="${build.dir}/${final.name}"/>
 
     <property name="clover.home" location="${env.CLOVER_HOME}"/>
     <property name="clover.jar" location="${clover.home}/lib/clover.jar" />
@@ -75,9 +80,13 @@
     <property name="clover.report.dir"
               location="${test.build.dir}/clover/reports"/>
 
+    <property name="contrib.dir" value="${src.dir}/contrib"/>
+
     <available property="clover.present"
                classname="com.cenqua.clover.CloverInstr"
                classpath="${clover.home}/lib/clover.jar"/>
+
+    <available file="${c.src.dir}/Makefile" property="Makefile.present"/>
 
     <!-- check if clover reports should be generated -->
     <condition property="clover.enabled">
@@ -90,6 +99,20 @@
 
     <property name="test.cobertura.output.format" value="html" />
     <property name="coveragereport.dir" value="${build.dir}/cobertura" />
+
+    <!-- ====================================================== -->
+    <!-- Macro definitions                                      -->
+    <!-- ====================================================== -->
+    <macrodef name="macro_tar" description="Worker Macro for tar">
+      <attribute name="param.destfile"/>
+      <element name="param.listofitems"/>
+      <sequential>
+        <tar compression="gzip" longfile="gnu"
+             destfile="@{param.destfile}">
+          <param.listofitems/>
+        </tar>
+      </sequential>
+    </macrodef>
 
     <!-- ====================================================== -->
     <!-- Generate and compile the Java files                    -->
@@ -236,7 +259,10 @@
       <condition property="forrest.exec" value="forrest.bat" else="forrest">
       	<os family="windows"/>
       </condition>
-      <exec dir="${docs.src}" executable="${forrest.home}/bin/${forrest.exec}" failonerror="true" />
+      <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
+            failonerror="true">
+        <env key="JAVA_HOME" value="${java5.home}"/>
+      </exec>
       <copy todir="${docs.dir}">
         <fileset dir="${docs.src}/build/site/" />
       </copy>
@@ -244,17 +270,22 @@
              includes="zookeeper-default.xml" style="conf/configuration.xsl"/>
     </target>
 
-    <target name="forrest.check" unless="forrest.home">
+    <target name="forrest.check" unless="forrest.home" depends="java5.check">
       <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
     </target>
 
+    <target name="java5.check" unless="java5.home">
+      <fail message="'java5.home' is not defined.  Forrest requires Java 5.  Please pass -Djava5.home=&lt;base of Java 5 distribution&gt; to Ant on the command-line." />
+    </target>
+	
     <!-- Javadoc -->
-    <target name="javadoc" description="Generate javadoc">
-      <mkdir dir="${build.javadoc}"/>
+    <target name="javadoc-dev" depends="compile"
+            description="Generate javadoc for zookeeper developers">
+      <mkdir dir="${build.javadoc.dev}"/>
       <javadoc
          overview="${java.src.dir}/overview.html"
          packagenames="org.apache.zookeeper.*"
-         destdir="${build.javadoc}"
+         destdir="${build.javadoc.dev}"
          author="true"
          version="true"
          use="true"
@@ -266,10 +297,44 @@
           <include name="org/apache/**"/>
           <exclude name="org/apache/jute/**"/>
     	</packageset>
+    	<packageset dir="${src_generated.dir}"/>
         <link href="${javadoc.link.java}"/>
-        <classpath >
-          <pathelement path="${java.class.path}"/>
-        </classpath>
+        <classpath refid="project.classpath"/>
+      </javadoc>
+    </target>	
+
+    <target name="javadoc" depends="compile" description="Generate javadoc">
+      <mkdir dir="${build.javadoc}"/>
+      <javadoc
+         overview="${java.src.dir}/overview.html"
+         packagenames="org.apache.zookeeper.*"
+         destdir="${build.javadoc}"
+         author="true"
+         version="true"
+         use="true"
+         Public="yes"
+         windowtitle="${Name} ${version} API"
+         doctitle="${Name} ${version} API"
+         bottom="Copyright &amp;copy; ${year} The Apache Software Foundation"
+         >
+    	<fileset dir="${java.src.dir}">
+          <include name="org/apache/**/*Main.java"/>
+          <include name="org/apache/zookeeper/AsyncCallback.java"/>
+          <include name="org/apache/zookeeper/KeeperException.java"/>
+          <include name="org/apache/zookeeper/ServerAdminClient.java"/>
+          <include name="org/apache/zookeeper/Watcher.java"/>
+          <include name="org/apache/zookeeper/ZooDefs.java"/>
+          <include name="org/apache/zookeeper/ZooKeeper.java"/>
+          <exclude name="org/apache/zookeeper/server/quorum/QuorumPacket"/>
+    	</fileset>
+    	<packageset dir="${src_generated.dir}">
+          <exclude name="org/apache/zookeeper/proto"/>
+          <exclude name="org/apache/zookeeper/txn"/>
+          <exclude name="org/apache/zookeeper/version"/>
+          <exclude name="org/apache/zookeeper/server/**"/>
+    	</packageset>
+        <link href="${javadoc.link.java}"/>
+        <classpath refid="project.classpath"/>
       </javadoc>
     </target>	
 
@@ -301,66 +366,136 @@
         </jar>
     </target>
 
-    <target name="release">
+    <target name="release-jar">
         <antcall target="jar">
-            <param name="jar.name" value="zookeeper-${version}.jar" />
+            <param name="jar.name" value="${build.dir}/${final.name}.jar" />
         </antcall>
     </target>
     
-    <!-- ====================================================== -->
-    <!-- Build all distribution tar files                       -->
-    <!-- ====================================================== -->
-    <available file="${c.src.dir}/Makefile" property="Makefile.present"/>
-    
-    <target name="c-dist">
-        <fail unless="Makefile.present" 
-            message="Please run 'autoreconf -if &amp;&amp; ./configure' in the ${c.src.dir} directory to generate a Makefile."/>
-        <exec dir="${c.src.dir}" executable="make" failonerror="true">
-            <arg value="VERSION=${version}"/>
-            <arg value="dist"/>
-        </exec>
-        <mkdir dir="${distribution}"/>
-        <copy file="${c.src.dir}/c-client-src-${version}.tar.gz" todir="${distribution}" />
+    <!-- ================================================================== -->
+    <!-- D I S T R I B U T I O N                                            -->
+    <!-- ================================================================== -->
+    <!--                                                                    -->
+    <!-- ================================================================== -->
+    <target name="package" depends="release-jar, javadoc"
+            description="Build distribution">
+      <mkdir dir="${dist.dir}"/>
+      <mkdir dir="${dist.dir}/lib"/>
+      <mkdir dir="${dist.dir}/contrib"/>
+      <mkdir dir="${dist.dir}/bin"/>
+      <mkdir dir="${dist.dir}/docs"/>
+      <mkdir dir="${dist.dir}/docs/api"/>
+
+      <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
+        <fileset dir="${lib.dir}"/>
+      </copy>
+
+      <subant target="package">
+        <!--Pass down the version in case its needed again and the target
+            distribution directory so contribs know where to install to.-->
+        <property name="version" value="${version}"/>
+        <property name="dist.dir" value="${dist.dir}"/>
+        <fileset file="${contrib.dir}/build.xml"/>
+      </subant>  	
+
+      <copy todir="${dist.dir}"> 
+        <fileset file="${build.dir}/${final.name}.jar"/>
+      </copy>
+      
+      <copy todir="${dist.dir}/bin">
+        <fileset dir="bin"/>
+      </copy>
+
+      <copy todir="${dist.dir}/conf">
+        <fileset dir="${conf.dir}" excludes="**/*.template"/>
+      </copy>
+
+      <copy todir="${dist.dir}/docs">
+        <fileset dir="${docs.dir}" />
+        <fileset dir="${build.docs}"/>
+      </copy>
+
+      <copy todir="${dist.dir}">
+        <fileset dir=".">
+          <include name="*.txt" />
+        </fileset>
+      </copy>
+
+      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
+        <fileset dir="src" excludes="**/*.template **/docs/build/**/*"/>
+      </copy>
+  	  
+      <copy todir="${dist.dir}/" file="build.xml"/>
+
+      <chmod perm="ugo+x" type="file" parallel="false">
+        <fileset dir="${dist.dir}/bin"/>
+        <fileset dir="${dist.dir}/src/contrib/">
+          <include name="*/bin/*" />
+        </fileset>
+      </chmod>
     </target>
-    
-    <target name="dist" depends="release">
-        <mkdir dir="${distribution}"/>
-        <tar destfile="${distribution}/java-src-${version}.tar.gz" compression="gzip">
-            <tarfileset dir="${java.src.dir}" includes="src/**,jmx/**,lib/**,ChangeLog" 
-                prefix="zookeeper/java"/>
-            <tarfileset dir="${test.src.dir}" includes="com/**,config/**" 
-                prefix="zookeeper/test"/>
-            <tarfileset dir="${basedir}" 
-                includes="zookeeper.jute,build.xml,conf/*,bin/*,README,LICENSE" 
-                prefix="zookeeper"/>
-            <tarfileset dir="${revision.dir}" prefix="zookeeper/java"/>
-        </tar>
-        <tar destfile="${distribution}/java-bin-${version}.tar.gz" compression="gzip">
-            <tarfileset file="zookeeper-${version}.jar" prefix="zookeeper/lib"/>
-            <tarfileset dir="${lib.dir}" includes="log4j*" 
-                prefix="zookeeper/lib"/>
-            <tarfileset dir="${basedir}" includes="conf/*,bin/*,README,LICENSE" 
-                prefix="zookeeper"/>
-        </tar>
-        <antcall target="c-dist"/>
-        <tar destfile="zookeeper-${version}.tar.gz" compression="gzip">
-            <tarfileset dir="${distribution}"/>
-        </tar>
+
+    <!-- ================================================================== -->
+    <!-- Make release tarball                                               -->
+    <!-- ================================================================== -->
+    <target name="tar" depends="package" description="Make release tarball">
+      <macro_tar param.destfile="${build.dir}/${final.name}.tar.gz">
+        <param.listofitems>
+          <tarfileset dir="${build.dir}" mode="664">
+            <exclude name="${final.name}/bin/*" />
+            <exclude name="${final.name}/contrib/*/bin/*" />
+            <include name="${final.name}/**" />
+          </tarfileset>
+          <tarfileset dir="${build.dir}" mode="755">
+            <include name="${final.name}/bin/*" />
+            <include name="${final.name}/contrib/*/bin/*" />
+          </tarfileset>
+        </param.listofitems>
+      </macro_tar>
     </target>
-    
+
+    <target name="binary" depends="package"
+            description="Make tarball without source and documentation">
+      <macro_tar param.destfile="${build.dir}/${final.name}-bin.tar.gz">
+        <param.listofitems>
+          <tarfileset dir="${build.dir}" mode="664">
+            <include name="${final.name}/src/c/**" />
+            <exclude name="${final.name}/src/c/generated/**" />
+          </tarfileset>
+          <tarfileset dir="${build.dir}" mode="664">
+            <exclude name="${final.name}/bin/*" />
+            <exclude name="${final.name}/src/**" />
+            <exclude name="${final.name}/docs/**" />
+            <include name="${final.name}/**" />
+          </tarfileset>
+          <tarfileset dir="${build.dir}" mode="755">
+            <include name="${final.name}/bin/*" />
+          </tarfileset>
+        </param.listofitems>
+      </macro_tar>
+    </target>
+
     <!-- ====================================================== -->
     <!-- Clean.  Delete the build files, and their directories  -->
     <!-- ====================================================== -->
-    <target name="clean">
-        <delete dir="${build.dir}" />
-        <delete dir="${src_generated.dir}" />
-        <delete dir="${csrc_generated.dir}" />
-        <delete file="${jar.name}" />
-        <delete dir="${distribution}"/>
-        <delete dir="${revision.dir}"/>
-        <delete>
-            <fileset dir="${basedir}" includes="*.jar,*.tar.gz"/>
-        </delete>
+    <target name="clean" depends="clean-contrib"
+            description="Clean.  Delete the build files, and their directories">
+      <delete dir="${build.dir}"/>
+      <delete dir="${docs.src}/build"/>
+      <delete dir="${src_generated.dir}" />
+      <delete dir="${csrc_generated.dir}" />
+      <delete file="${jar.name}" />
+      <delete dir="${distribution}"/>
+      <delete dir="${revision.dir}"/>
+      <delete>
+        <fileset dir="${basedir}" includes="*.jar,*.tar.gz"/>
+      </delete>
+    </target>
+
+    <target name="clean-contrib">
+      <subant target="clean">        
+        <fileset file="${contrib.dir}/build.xml"/>
+      </subant>  	
     </target>
 
     <!-- ====================================================== -->

@@ -58,3 +58,6 @@ Backward compatibile changes:
  (Flavio Paiva Junqueira via mahadev)
 
  ZOOKEEPER-63. Race condition in client close() operation. (phunt via breed)
+
+ ZOOKEEPER-130. update build.xml to support apache release process. 
+ (phunt via mahadev)
