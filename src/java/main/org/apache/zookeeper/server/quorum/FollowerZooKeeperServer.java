@@ -93,9 +93,6 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         getFollower().validateSession(cnxn, sessionId, sessionTimeout);
     }
 
-    /**
-     * @return
-     */
     public HashMap<Long, Integer> getTouchSnapshot() {
         if (sessionTracker != null) {
             return ((FollowerSessionTracker) sessionTracker).snapshot();

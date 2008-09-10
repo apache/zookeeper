@@ -511,8 +511,7 @@ public class Leader {
     /**
      * Process sync requests
      * 
-     * @param QuorumPacket p
-     * @return void
+     * @param r the request
      */
     
     public void processSync(Request r){
@@ -529,8 +528,8 @@ public class Leader {
     /**
      * Set FollowerHandler for sync.
      * 
-     * @param QuorumPacket p
-     * @return void
+     * @param f
+     * @param s
      */
         
     synchronized public void setSyncHandler(FollowerHandler f, long s){
@@ -540,8 +539,8 @@ public class Leader {
     /**
      * Sends a sync message to the appropriate server
      * 
-     * @param request
-     * @return void
+     * @param f
+     * @param r
      */
             
     public void sendSync(FollowerHandler f, Request r){
@@ -559,8 +558,7 @@ public class Leader {
      * lets the leader know that a follower is capable of following and is done
      * syncing
      * 
-     * @param handler
-     *                handler of the follower
+     * @param handler handler of the follower
      * @return last proposed zxid
      */
     synchronized public long startForwarding(FollowerHandler handler,

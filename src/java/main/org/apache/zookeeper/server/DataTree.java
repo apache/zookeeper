@@ -151,7 +151,7 @@ public class DataTree {
      *                not an ephemeral node.
      * @param zxid
      * @param time
-     * @return
+     * @return the patch of the created node
      * @throws KeeperException
      */
     public String createNode(String path, byte data[], List<ACL> acl,

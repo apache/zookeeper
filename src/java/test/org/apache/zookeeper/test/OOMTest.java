@@ -37,7 +37,6 @@ import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
- * @author breed
  *
  */
 public class OOMTest extends TestCase implements Watcher {

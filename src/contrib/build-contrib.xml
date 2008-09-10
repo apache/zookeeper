@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- Imported by contrib/*/build.xml files to share generic targets. -->
+
+<project name="zookeeperbuildcontrib">
+
+  <property name="name" value="${ant.project.name}"/>
+  <property name="root" value="${basedir}"/>
+
+  <property name="hadoop.root" location="${root}/../../../"/>
+
+  <property name="build.dir" location="${hadoop.root}/build/contrib/${name}"/>
+
+  <!-- to be overridden by sub-projects -->
+  <target name="check-contrib"/>
+  <target name="init-contrib"/>
+
+  <!-- ====================================================== -->
+  <!-- Stuff needed by all targets                            -->
+  <!-- ====================================================== -->
+  <target name="init" depends="check-contrib" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+    <mkdir dir="${build.dir}"/>
+    <antcall target="init-contrib"/>
+  </target>
+
+  <!-- ====================================================== -->
+  <!-- Compile a contrib's files                              -->
+  <!-- ====================================================== -->
+  <target name="compile" depends="init">
+    <mkdir dir="${build.dir}"/>
+    <copy todir="${build.dir}">
+      <fileset dir="${basedir}">
+        <exclude name="**/VERSION"/>
+      </fileset>
+    </copy>
+    <exec executable="echo" output="${build.dir}/VERSION">
+      <arg line="${version}" />
+    </exec>
+  </target>
+
+
+  <!-- ====================================================== -->
+  <!-- Package a contrib's files                              -->
+  <!-- ====================================================== -->
+  <target name="package" depends="compile">
+    <mkdir dir="${dist.dir}/contrib/${name}"/>
+    <copy todir="${dist.dir}/contrib/${name}">
+      <fileset dir="${build.dir}"/>
+    </copy>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Clean.  Delete the build files, and their directories              -->
+  <!-- ================================================================== -->
+  <target name="clean">
+    <echo message="contrib: ${name}"/>
+    <delete dir="${build.dir}"/>
+  </target>
+
+</project>

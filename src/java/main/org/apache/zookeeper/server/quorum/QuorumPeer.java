@@ -153,7 +153,6 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * The response has the xid, the id of this server, the id of the leader,
      * and the zxid of the leader.
      *
-     * @author breed
      *
      */
     class ResponderThread extends Thread {
