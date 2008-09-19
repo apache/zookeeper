@@ -26,6 +26,8 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.Map.Entry;
 
@@ -54,7 +56,7 @@ public class LeaderElection implements Election  {
         public int winningCount;
     }
 
-    private ElectionResult countVotes(HashMap<InetSocketAddress, Vote> votes) {
+    private ElectionResult countVotes(HashMap<InetSocketAddress, Vote> votes, HashSet<Long> heardFrom) {
         ElectionResult result = new ElectionResult();
         // Initialize with null vote
         result.vote = new Vote(Long.MIN_VALUE, Long.MIN_VALUE);
@@ -62,7 +64,13 @@ public class LeaderElection implements Election  {
         Collection<Vote> votesCast = votes.values();
         // First make the views consistent. Sometimes peers will have
         // different zxids for a server depending on timing.
-        for (Vote v : votesCast) {
+        for (Iterator<Vote> i = votesCast.iterator(); i.hasNext();) {
+            Vote v = i.next();
+            if (!heardFrom.contains(v.id)) {
+                // Discard votes for machines that we didn't hear from
+                i.remove();
+                continue;
+            }
             for (Vote w : votesCast) {
                 if (v.id == w.id) {
                     if (v.zxid < w.zxid) {
@@ -71,6 +79,7 @@ public class LeaderElection implements Election  {
                 }
             }
         }
+        
         HashMap<Vote, Integer> countTable = new HashMap<Vote, Integer>();
         // Now do the tally
         for (Vote v : votesCast) {
@@ -127,6 +136,7 @@ public class LeaderElection implements Election  {
             requestBuffer.clear();
             requestBuffer.putInt(xid);
             requestPacket.setLength(4);
+            HashSet<Long> heardFrom = new HashSet<Long>();
             for (QuorumServer server : self.quorumPeers) {
                 requestPacket.setSocketAddress(server.addr);
                 try {
@@ -145,7 +155,8 @@ public class LeaderElection implements Election  {
                                 + " got " + recvedXid);
                         continue;
                     }
-                    responseBuffer.getLong();
+                    long peerId = responseBuffer.getLong();
+                    heardFrom.add(peerId);
                     //if(server.id != peerId){
                         Vote vote = new Vote(responseBuffer.getLong(),
                             responseBuffer.getLong());
@@ -154,12 +165,13 @@ public class LeaderElection implements Election  {
                         votes.put(addr, vote);
                     //}
                 } catch (IOException e) {
+                    LOG.error("Error in looking for leader", e);
                     // Errors are okay, since hosts may be
                     // down
                     // ZooKeeperServer.logException(e);
                 }
             }
-            ElectionResult result = countVotes(votes);
+            ElectionResult result = countVotes(votes, heardFrom);
             if (result.winner.id >= 0) {
                 self.setCurrentVote(result.vote);
                 if (result.winningCount > (self.quorumPeers.size() / 2)) {
