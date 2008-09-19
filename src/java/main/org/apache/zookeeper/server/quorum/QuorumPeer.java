@@ -160,13 +160,15 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             super("ResponderThread");
         }
 
+        volatile boolean running = true;
+        
         @Override
         public void run() {
             try {
                 byte b[] = new byte[36];
                 ByteBuffer responseBuffer = ByteBuffer.wrap(b);
                 DatagramPacket packet = new DatagramPacket(b, b.length);
-                while (true) {
+                while (running) {
                     udpSocket.receive(packet);
                     if (packet.getLength() != 4) {
                         LOG.warn("Got more than just an xid! Len = "
@@ -273,7 +275,17 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     @Override
     public synchronized void start() {
-        
+        startLeaderElection();
+        super.start();
+    }
+
+    ResponderThread responder;
+    
+    public void stopLeaderElection() {
+        responder.running = false;
+        responder.interrupt();
+    }
+    public void startLeaderElection() {
         currentVote = new Vote(myid, getLastLoggedZxid());
         for (QuorumServer p : quorumPeers) {
             if (p.id == myid) {
@@ -287,13 +299,14 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         if (electionType == 0) {
             try {
                 udpSocket = new DatagramSocket(myQuorumAddr.getPort());
-                new ResponderThread().start();
+                responder = new ResponderThread();
+                responder.start();
             } catch (SocketException e) {
                 throw new RuntimeException(e);
             }
         }
         this.electionAlg = createElectionAlgorithm(electionType);
-        super.start();
+       
     }
     
     /**

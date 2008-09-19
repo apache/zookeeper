@@ -44,4 +44,7 @@ public class Vote {
         return (int) (id & zxid);
     }
 
+    public String toString() {
+        return "(" + id + ", " + Long.toHexString(zxid) + ")";
+    }
 }

@@ -61,3 +61,6 @@ Backward compatibile changes:
 
  ZOOKEEPER-130. update build.xml to support apache release process. 
  (phunt via mahadev)
+
+ ZOOKEEPER-131. Fix Old leader election can elect a dead leader over and over
+ again. (breed via mahadev)
