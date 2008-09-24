@@ -66,3 +66,6 @@ Backward compatibile changes:
  again. (breed via mahadev)
 
  ZOOKEEPER-137. client watcher objects can lose events (Patrick Hunt via breed)
+
+ ZOOKEEPER-117. threading issues in Leader election (Flavio Junqueira and Patrick
+ Hunt via breed)
