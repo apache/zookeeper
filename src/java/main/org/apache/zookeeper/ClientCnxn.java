@@ -94,9 +94,6 @@ public class ClientCnxn {
      */
     private LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
 
-    private LinkedBlockingQueue<Object> waitingEvents = 
-        new LinkedBlockingQueue<Object>();
-
     /**
      * These are the packets that need to be sent.
      */
@@ -112,7 +109,7 @@ public class ClientCnxn {
 
     private final ZooKeeper zooKeeper;
 
-    private final Watcher watcher;
+    private final ClientWatchManager watcher;
 
     private long sessionId;
 
@@ -206,7 +203,7 @@ public class ClientCnxn {
     }
 
     public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper,
-            Watcher watcher)
+            ClientWatchManager watcher)
         throws IOException
     {
         this(hosts, sessionTimeout, zooKeeper, watcher, 0, new byte[16]);
@@ -226,7 +223,7 @@ public class ClientCnxn {
      * @throws IOException
      */
     public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper,
-            Watcher watcher, long sessionId, byte[] sessionPasswd)
+            ClientWatchManager watcher, long sessionId, byte[] sessionPasswd)
         throws IOException
     {
         this.zooKeeper = zooKeeper;
@@ -251,11 +248,11 @@ public class ClientCnxn {
         readTimeout = sessionTimeout * 2 / 3;
         Collections.shuffle(serverAddrs);
         sendThread = new SendThread();
-        sendThread.start();
         eventThread = new EventThread();
+        sendThread.start();
         eventThread.start();
     }
-
+    
     WatcherEvent eventOfDeath = new WatcherEvent();
 
     final static UncaughtExceptionHandler uncaughtExceptionHandler = new UncaughtExceptionHandler() {
@@ -264,11 +261,42 @@ public class ClientCnxn {
         }
     };
 
+    private class WatcherSetEventPair {
+        private final Set<Watcher> watchers;
+        private final WatcherEvent event;
+        
+        public WatcherSetEventPair(Set<Watcher> watchers, WatcherEvent event) {
+            this.watchers = watchers;
+            this.event = event;
+        }
+    }
+    
     class EventThread extends Thread {
+        private final LinkedBlockingQueue<Object> waitingEvents = 
+            new LinkedBlockingQueue<Object>();
+
         EventThread() {
             super(currentThread().getName() + "-EventThread");
             setUncaughtExceptionHandler(uncaughtExceptionHandler);
             setDaemon(true);
+        }
+        
+        public void queueEvent(WatcherEvent event) {
+            // materialize the watchers based on the event
+            WatcherSetEventPair pair = new WatcherSetEventPair(
+                    watcher.materialize(event.getState(), event.getType(),
+                            event.getPath()),
+                            event);
+            // queue the pair (watch set & event) for later processing
+            waitingEvents.add(pair);
+        }
+        
+        public void queuePacket(Packet packet) {
+            waitingEvents.add(packet);
+        }
+
+        public void queueEventOfDeath() {
+            waitingEvents.add(eventOfDeath);
         }
 
         @Override
@@ -279,8 +307,12 @@ public class ClientCnxn {
                     if (event == eventOfDeath) {
                         break;
                     }
-                    if (event instanceof WatcherEvent) {
-                        watcher.process((WatcherEvent) event);
+                    if (event instanceof WatcherSetEventPair) {
+                        // each watcher will process the event
+                        WatcherSetEventPair pair = (WatcherSetEventPair)event;
+                        for (Watcher watcher: pair.watchers) {
+                            watcher.process(pair.event);
+                        }
                     } else {
                         Packet p = (Packet) event;
                         int rc = 0;
@@ -362,7 +394,6 @@ public class ClientCnxn {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void finishPacket(Packet p) {
         if (p.watchRegistration != null) {
             p.watchRegistration.register(p.replyHeader.getErr());
@@ -375,7 +406,7 @@ public class ClientCnxn {
             }
         } else {
             p.finished = true;
-            waitingEvents.add(p);
+            eventThread.queuePacket(p);
         }
     }
 
@@ -428,7 +459,7 @@ public class ClientCnxn {
             int sessionTimeout = conRsp.getTimeOut();
             if (sessionTimeout <= 0) {
                 zooKeeper.state = States.CLOSED;
-                waitingEvents.add(new WatcherEvent(Watcher.Event.EventNone,
+                eventThread.queueEvent(new WatcherEvent(Watcher.Event.EventNone,
                         Watcher.Event.KeeperStateExpired, null));
                 throw new IOException("Session Expired");
             }
@@ -436,11 +467,10 @@ public class ClientCnxn {
             connectTimeout = sessionTimeout / serverAddrs.size();
             sessionId = conRsp.getSessionId();
             sessionPasswd = conRsp.getPasswd();
-            waitingEvents.add(new WatcherEvent(Watcher.Event.EventNone,
+            eventThread.queueEvent(new WatcherEvent(Watcher.Event.EventNone,
                     Watcher.Event.KeeperStateSyncConnected, null));
         }
 
-        @SuppressWarnings("unchecked")
         void readResponse() throws IOException {
             ByteBufferInputStream bbis = new ByteBufferInputStream(
                     incomingBuffer);
@@ -461,9 +491,13 @@ public class ClientCnxn {
                 // -1 means notification
                 WatcherEvent event = new WatcherEvent();
                 event.deserialize(bbia, "response");
-                // System.out.println("Got an event: " + event + " for " +
-                // sessionId + " through" + _cnxn);
-                waitingEvents.add(event);
+                
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Got an event: " + event + " for sessionid 0x"
+                            + Long.toHexString(sessionId));
+                }
+                
+                eventThread.queueEvent(event);
                 return;
             }
             if (pendingQueue.size() == 0) {
@@ -763,8 +797,10 @@ public class ClientCnxn {
                                 e);
                         cleanup();
                         if (zooKeeper.state.isAlive()) {
-                            waitingEvents.add(new WatcherEvent(Event.EventNone,
-                                    Event.KeeperStateDisconnected, null));
+                            eventThread.queueEvent(new WatcherEvent(
+                                    Event.EventNone,
+                                    Event.KeeperStateDisconnected,
+                                    null));
                         }
     
                         now = System.currentTimeMillis();
@@ -842,13 +878,12 @@ public class ClientCnxn {
      * method is primarily here to allow the tests to verify disconnection
      * behavior.
      */
-    @SuppressWarnings("unchecked")
     public void disconnect() {
         LOG.info("Disconnecting ClientCnxn for session: 0x" 
                 + Long.toHexString(getSessionId()));
 
         sendThread.close();
-        waitingEvents.add(eventOfDeath);
+        eventThread.queueEventOfDeath();
     }
 
     /**
