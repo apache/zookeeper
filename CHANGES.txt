@@ -64,3 +64,5 @@ Backward compatibile changes:
 
  ZOOKEEPER-131. Fix Old leader election can elect a dead leader over and over
  again. (breed via mahadev)
+
+ ZOOKEEPER-137. client watcher objects can lose events (Patrick Hunt via breed)
