@@ -1,0 +1,446 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta content="Apache Forrest" name="Generator">
+<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-skin-name" content="pelt">
+<title></title>
+<link type="text/css" href="skin/basic.css" rel="stylesheet">
+<link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+<link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+<link type="text/css" href="skin/profile.css" rel="stylesheet">
+<script src="skin/getBlank.js" language="javascript" type="text/javascript"></script><script src="skin/getMenu.js" language="javascript" type="text/javascript"></script><script src="skin/fontsize.js" language="javascript" type="text/javascript"></script>
+<link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init()">
+<script type="text/javascript">ndeSetTextSize();</script>
+<div id="top">
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://hadoop.apache.org/">Hadoop</a> &gt; <a href="http://hadoop.apache.org/zookeeper/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
+</div>
+<!--+
+    |header
+    +-->
+<div class="header">
+<!--+
+    |start group logo
+    +-->
+<div class="grouplogo">
+<a href="http://hadoop.apache.org/"><img class="logoImage" alt="Hadoop" src="images/hadoop-logo.jpg" title="Apache Hadoop"></a>
+</div>
+<!--+
+    |end group logo
+    +-->
+<!--+
+    |start Project Logo
+    +-->
+<div class="projectlogo">
+<a href="http://hadoop.apache.org/zookeeper/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="The Hadoop database"></a>
+</div>
+<!--+
+    |end Project Logo
+    +-->
+<!--+
+    |start Search
+    +-->
+<div class="searchbox">
+<form action="http://www.google.com/search" method="get" class="roundtopsmall">
+<input value="hadoop.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
+                    <input name="Search" value="Search" type="submit">
+</form>
+</div>
+<!--+
+    |end search
+    +-->
+<!--+
+    |start Tabs
+    +-->
+<ul id="tabs">
+<li>
+<a class="unselected" href="http://hadoop.apache.org/zookeeper/">Project</a>
+</li>
+<li>
+<a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+</li>
+<li class="current">
+<a class="selected" href="index.html">ZooKeeper Documentation</a>
+</li>
+</ul>
+<!--+
+    |end Tabs
+    +-->
+</div>
+</div>
+<div id="main">
+<div id="publishedStrip">
+<!--+
+    |start Subtabs
+    +-->
+<div id="level2tabs"></div>
+<!--+
+    |end Endtabs
+    +-->
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+
+             &nbsp;
+           </div>
+<!--+
+    |start Menu, mainarea
+    +-->
+<!--+
+    |start Menu
+    +-->
+<div id="menu">
+<div onclick="SwitchMenu('menu_selected_1.1', 'skin/')" id="menu_selected_1.1Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Documentation</div>
+<div id="menu_selected_1.1" class="selectedmenuitemgroup" style="display: block;">
+<div class="menuitem">
+<a href="index.html">Welcome</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperOver.html">Zookeeper Overview</a>
+</div>
+<div class="menupage">
+<div class="menupagetitle">Getting Started</div>
+</div>
+<div class="menuitem">
+<a href="zookeeperProgrammers.html">Programmer's Guide</a>
+</div>
+<div class="menuitem">
+<a href="recipes.html">Recipes</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperAdmin.html">Administrator's Guide</a>
+</div>
+<div class="menuitem">
+<a href="api/index.html">API Docs</a>
+</div>
+<div class="menuitem">
+<a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+</div>
+<div class="menuitem">
+<a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a>
+</div>
+<div class="menuitem">
+<a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">Mailing Lists</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperOtherInfo.html">Other Info</a>
+</div>
+</div>
+<div id="credit"></div>
+<div id="roundbottom">
+<img style="display: none" class="corner" height="15" width="15" alt="" src="skin/images/rc-b-l-15-1body-2menu-3menu.png"></div>
+<!--+
+  |alternative credits
+  +-->
+<div id="credit2"></div>
+</div>
+<!--+
+    |end Menu
+    +-->
+<!--+
+    |start content
+    +-->
+<div id="content">
+<div title="Portable Document Format" class="pdflink">
+<a class="dida" href="zookeeperStarted.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+        PDF</a>
+</div>
+<div id="minitoc-area">
+<ul class="minitoc">
+<li>
+<a href="#Getting+Started%3A+Coordinating+Distributed+Applications+with%0A++++++ZooKeeper">Getting Started: Coordinating Distributed Applications with
+      ZooKeeper</a>
+<ul class="minitoc">
+<li>
+<a href="#sc_InstallingSingleMode">Installing and Running ZooKeeper in Single Server Mode</a>
+</li>
+<li>
+<a href="#sc_ConnectingToZooKeeper">Connecting to ZooKeeper</a>
+</li>
+<li>
+<a href="#sc_ProgrammingToZooKeeper">Programming to ZooKeeper</a>
+</li>
+<li>
+<a href="#sc_RunningReplicatedZooKeeper">Running Replicated ZooKeeper</a>
+</li>
+<li>
+<a href="#Other+Optimizations">Other Optimizations</a>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+  
+<title>ZooKeeper Getting Started Guide</title>
+
+  
+
+  
+<a name="N1000A"></a><a name="Getting+Started%3A+Coordinating+Distributed+Applications+with%0A++++++ZooKeeper"></a>
+<h2 class="h3">Getting Started: Coordinating Distributed Applications with
+      ZooKeeper</h2>
+<div class="section">
+<p>This document contains information to get you started quickly with
+    Zookeeper. It is aimed primarily at developers hoping to try it out, and
+    contains simple installation instructions for a single ZooKeeper server, a
+    few commands to verify that it is running, and a simple programming
+    example. Finally, as a convenience, there are a few sections regarding
+    more complicated installations, for example running replicated
+    deployments, and optimizing the transaction log. However for the complete
+    instructions for commercial deployments, please refer to the <a href="zookeeperAdmin.html">Zookeeper
+    Administrator's Guide</a>.</p>
+<a name="N10017"></a><a name="sc_InstallingSingleMode"></a>
+<h3 class="h4">Installing and Running ZooKeeper in Single Server Mode</h3>
+<p>Setting up a ZooKeeper server in standalone mode is
+      straightforward. The server is contained in a single JAR file, so
+      installation consists of copying a JAR file and creating a
+      configuration.</p>
+<div class="note">
+<div class="label">Note</div>
+<div class="content">
+        
+<p>Zookeeper requires Java 1.5 or more recent.</p>
+      
+</div>
+</div>
+<p>[tbd: should we start w/ a word here about were to get the source,
+      exactly what to download, how to unpack it, and where to put it? Also,
+      does the user need to be in sudo, or can they be under their regular
+      login?]</p>
+<p>Once you have downloaded the ZooKeeper source, cd to the root of
+      your ZooKeeper source, and run "ant jar". For example:<pre class="code">$ cd ~/dev/zookeeper
+
+$ ~/dev/zookeeper/: ant jar</pre>
+</p>
+<p>This should generate a JAR file called zookeeper.jar. To start
+      Zookeeper, compile and run zookeeper.jar. <em>[tbd, some more
+      instruction here. Perhaps a command line? Are these two steps or
+      one?]</em>
+</p>
+<p>To start ZooKeeper you need a configuration file. Here is a sample
+      file:</p>
+<p>
+<pre class="code">tickTime=2000
+dataDir=/var/zookeeper/ 
+clientPort=2181
+</pre>
+</p>
+<p>This file can be called anything, but for the sake of this
+      discussion, call it <strong>zoo.cfg</strong>. Here are
+      the meanings for each of the fields:</p>
+<dl>
+        
+<dt>
+<term>
+<strong>tickTime</strong>
+</term>
+</dt>
+<dd>
+<p>the basic time unit in milliseconds used by ZooKeeper. It is
+            used to do heartbeats and the minimum session timeout will be
+            twice the tickTime.</p>
+</dd>
+      
+</dl>
+<dl>
+        
+<dt>
+<term>
+<strong>dataDir</strong>
+</term>
+</dt>
+<dd>
+<p>the location to store the in-memory database snapshots and,
+            unless specified otherwise, the transaction log of updates to the
+            database.</p>
+</dd>
+
+        
+<dt>
+<term>
+<strong>clientPort</strong>
+</term>
+</dt>
+<dd>
+<p>the port to listen for client connections</p>
+</dd>
+      
+</dl>
+<p>Now that you created the configuration file, you can start
+      ZooKeeper:</p>
+<p>
+<pre class="code">java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</pre>
+</p>
+<p>ZooKeeper logs messages using log4j -- more detail available in
+      the <a href="zookeeperProgrammers.html#Logging">Logging</a>
+      section of the Programmer's Guide.<remark revision="include_tbd">[tbd:
+      real reference needed]</remark> You will see log messages coming to the
+      console and/or a log file depending on the log4j configuration.</p>
+<p>The steps outlined here run ZooKeeper in standalone mode. There is
+      no replication, so if Zookeeper process fails, the service will go down.
+      This is fine for most development situations, but to run Zookeeper in
+      replicated mode, please see <a href="#sc_RunningReplicatedZooKeeper">Running Replicated
+      Zookeeper</a>.</p>
+<p></p>
+<a name="N1007A"></a><a name="sc_ConnectingToZooKeeper"></a>
+<h3 class="h4">Connecting to ZooKeeper</h3>
+<p>Once ZooKeeper is running, you have several option for connection
+      to it:</p>
+<ul>
+        
+<li>
+          
+<p>
+<strong>Java</strong>: Use java -cp
+          zookeeper.jar:java/lib/log4j-1.2.15.jar:conf
+          org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</p>
+
+          
+<p>This lets you perform simple, file-like operations.</p>
+        
+</li>
+
+        
+<li>
+          
+<p>
+<strong>C</strong>: compile cli_mt
+          (multi-threaded) or cli_st (single-threaded) by running
+          <span class="codefrag command">_make cli_mt_</span> or <span class="codefrag command">_make cli_st_</span>
+          in the c subdirectory in the ZooKeeper sources.</p>
+
+          
+<p>You can run the program using <em>LD_LIBRARY_PATH=.
+          cli_mt 127.0.0.1:2181</em> or <em>LD_LIBRARY_PATH=.
+          cli_st 127.0.0.1:2181</em>. This will give you a simple shell
+          to execute file system like operations on ZooKeeper.</p>
+        
+</li>
+      
+</ul>
+<a name="N100AB"></a><a name="sc_ProgrammingToZooKeeper"></a>
+<h3 class="h4">Programming to ZooKeeper</h3>
+<p>ZooKeeper has a Java bindings and C bindings. They are
+      functionally equivalent. The C bindings exist in two variants: single
+      threaded and multi-threaded. These differ only in how the messaging loop
+      is done. <remark>[tbd: what is the messaging loop? Do we talk about it
+      anywyhere? is this too much info for a getting started guide?]</remark>
+      For more information, see the <a href="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
+      Examples in the Zookeeper Programmer's Guide</a> for
+      sample code using of the different APIs.</p>
+<a name="N100BC"></a><a name="sc_RunningReplicatedZooKeeper"></a>
+<h3 class="h4">Running Replicated ZooKeeper</h3>
+<p>Running ZooKeeper in standalone mode is convenient for evaluation,
+      some development, and testing. But in production, you should run
+      ZooKeeper in replicated mode. A replicated group of servers in the same
+      application is called a <em>quorum</em>, and in replicated
+      mode, all servers in the quorum have copies of the same configuration
+      file. The file is similar to the one used in standalone mode, but with a
+      few differences. Here is an example:</p>
+<p>
+<pre class="code">tickTime=2000 
+dataDir=/var/zookeeper/ 
+clientPort=2181 
+initLimit=5 
+syncLimit=2 
+server.1=zoo1:2888 server.2=zoo2:2888 
+server.3=zoo3:2888 </pre>
+</p>
+<p>The new entry, <strong>initLimit</strong> is
+      timeouts ZooKeeper uses to limit the length of time the Zookeeper
+      servers in quorum have to connect to a leader. The entry <strong>syncLimit</strong> limits how far out of date a server can
+      be from a leader. [TBD: someone please verify that the previous is
+      true.]</p>
+<p>With both of these timeouts, you specify the unit of time using
+      <strong>tickTime</strong>. In this example, the timeout
+      for initLimit is 5 ticks at 2000 milleseconds a tick, or 10
+      seconds.</p>
+<p>The entries of the form <em>server.X</em> list the
+      servers that make up the ZooKeeper service. When the server starts up,
+      it knows which server it is by looking for the file *myid* in the data
+      directory. That file has the contains the server number, in
+      ASCII.</p>
+<p>Finally, note the "2888" port numbers after each server name.
+      These are the "electionPort" numbers of the servers (as opposed to
+      clientPorts), that is ports for <remark>[tbd: feedback need: what are
+      these ports, exactly?]</remark>.</p>
+<div class="note">
+<div class="label">Note</div>
+<div class="content">
+        
+<p>If you want to test multiple servers on a single machine, define
+        the electionPort for each server in that server's config file, using
+        the line <span class="codefrag command">electionPort=xxxx</span> as means of avoiding
+        clashes.</p>
+      
+</div>
+</div>
+<a name="N100F2"></a><a name="Other+Optimizations"></a>
+<h3 class="h4">Other Optimizations</h3>
+<p>There are a couple of other configuration parameters that can
+      greatly increase performance:</p>
+<ul>
+        
+<li>
+          
+<p>To get low latencies on updates it is important to have a
+          dedicated transaction log directory. By default transaction logs are
+          put in the same directory as the data snapshots and *myid* file. The
+          dataLogDir parameters indicates a different directory to use for the
+          transaction logs.</p>
+        
+</li>
+
+        
+<li>
+          
+<p>
+<remark>[tbd: feedback need: what is the other config param?
+          (I believe two are mentioned above.)]</remark>
+</p>
+        
+</li>
+      
+</ul>
+</div>
+
+<p align="right">
+<font size="-2"></font>
+</p>
+</div>
+<!--+
+    |end content
+    +-->
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+<!--+
+    |start bottomstrip
+    +-->
+<div class="lastmodified">
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<div class="copyright">
+        Copyright &copy;
+         2008 <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+</div>
+<!--+
+    |end bottomstrip
+    +-->
+</div>
+</body>
+</html>

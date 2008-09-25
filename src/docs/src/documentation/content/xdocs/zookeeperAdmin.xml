@@ -1,0 +1,827 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<book id="bk_Admin">
+  <title>ZooKeeper Administrator's Guide</title>
+
+  <subtitle>A Guide to Deployment and Administration</subtitle>
+
+  <bookinfo>
+    <legalnotice>
+      <para>Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License. You may
+      obtain a copy of the License at <ulink
+      url="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</ulink>.</para>
+
+      <para>Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied. See the License for the specific language governing permissions
+      and limitations under the License.</para>
+    </legalnotice>
+
+    <abstract>
+      <para>This document contains information about deploying, administering
+      and mantaining ZooKeeper. It also discusses best practices and common
+      problems.</para>
+
+      <para>$Revision: 1.7 $ $Date: 2008/09/19 05:29:31 $</para>
+    </abstract>
+  </bookinfo>
+
+  <chapter id="ch_deployment">
+    <title>Deployment</title>
+
+    <para>This chapter contains information about deploying Zookeeper and
+    covers these topics:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><xref linkend="sc_systemReq"/></para>
+      </listitem>
+
+      <listitem>
+        <para><xref linkend="sc_zkMulitServerSetup"/></para>
+      </listitem>
+
+      <listitem>
+        <para><xref linkend="sc_singleAndDevSetup"/></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>The first two sections assume you are interested in installing
+    Zookeeper in a production environment such as a datacenter. The final
+    section covers situations in which you are setting up Zookeeper on a
+    limited basis - for evaluation, testing, or development - but not in a
+    production environment.</para>
+
+    <section id="sc_systemReq">
+      <title>System Requirements</title>
+
+      <para>Zookeeper runs in Java, release 1.6 or greater, as group of hosts
+      called a quorum. Three Zookeeper hosts per quorum is the minimum
+      recommended quorum size. At Yahoo!, Zookeeper is usually deployed on
+      dedicated RHEL boxes, with dual-core processors, 2GB of RAM, and 80GB
+      IDE harddrives.</para>
+    </section>
+
+    <section id="sc_zkMulitServerSetup">
+      <title>Clustered (Multi-Server) Setup</title>
+
+      <para>For reliable ZooKeeper service, you should deploy ZooKeeper in a
+      cluster known as a <firstterm>quorum</firstterm>. As long as a majority
+      of the quorum are up, the service will be available. Because Zookeeper
+      requires a majority <remark>[tbd: why?]</remark>, it is best to use an
+      odd number of machines. For example, with four machines ZooKeeper can
+      only handle the failure of a single machine; if two machines fail, the
+      remaining two machines do not constitute a majority. However, with five
+      machines ZooKeeper can handle the failure of two machines. </para>
+
+      <para>Here are the steps to setting a server that will be part of a
+      quorum. These steps should be performed on every host in the
+      quorum:</para>
+
+      <orderedlist>
+        <listitem>
+          <para>Install the Java JDK:</para>
+
+          <screen>$yinst -i jdk-1.6.0.00_3 -br test  <remark>[y! prop - replace with open equiv]</remark></screen>
+        </listitem>
+
+        <listitem>
+          <para>Set the Java heap size. This is very important, to avoid
+          swapping, which will seriously degrade Zookeeper performance. To
+          determine the correct value, load tests, make sure you are well
+          below the usage limit that would cause you to swap. Be conservative
+          - use a maximum heap size of 3GB for a 4GB machine. <remark>[tbd:
+          where would they do this? Environment variable,
+          etc?]</remark></para>
+        </listitem>
+
+        <listitem>
+          <para>Install the Zookeeper Server Package:</para>
+
+          <screen>$ yinst install -nostart zookeeper_server <remark>[Y! prop - replace with open eq]</remark></screen>
+        </listitem>
+
+        <listitem>
+          <para>Create a configuration file. This file can be called anything.
+          Use the following settings as a starting point:</para>
+
+          <screen>
+tickTime=2000
+dataDir=/var/zookeeper/
+clientPort=2181
+initLimit=5
+syncLimit=2
+server.1=zoo1:2888
+server.2=zoo2:2888
+server.3=zoo3:2888</screen>
+
+          <para>You can find the meanings of these and other configuration
+          settings in the section <xref linkend="sc_configuration" />. A word
+          though about a few here:</para>
+
+          <para>Every machine that is part of the ZooKeeper quorum should know
+          about every other machine in the quorum. You accomplish this with
+          the series of lines of the form <emphasis
+          role="bold">server.id=host:port</emphasis>. The integers <emphasis
+          role="bold">host</emphasis> and <emphasis
+          role="bold">port</emphasis> are straightforward. You attribute the
+          server id to each machine by creating a file named
+          <filename>myid</filename>, one for each server, which resides in
+          that server's data directory, as specified by the configuration file
+          parameter <emphasis role="bold">dataDir</emphasis>. The myid file
+          consists of a single line containing only the text of that machine's
+          id. So <filename>myid</filename> of server 1 would contain the text
+          "1" and nothing else. The id must be unique within the
+          quorum.</para>
+        </listitem>
+
+        <listitem>
+          <para>If your configuration file is set up, you can start
+          Zookeeper:</para>
+
+          <screen>$ java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf \
+        org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</screen>
+        </listitem>
+
+        <listitem>
+          <para>Test your deployment by connecting to the hosts:</para>
+
+          <itemizedlist>
+            <listitem>
+              <para>In Java, you can run the following command to execute
+              simple operations:<remark> [tbd: also, maybe give some of those
+              simple operations?]</remark></para>
+
+              <screen>$ java -cp zookeeper.jar:java/lib/log4j-1.2.15.jar:conf \
+      org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</screen>
+            </listitem>
+
+            <listitem>
+              <para>In C, you can compile either the single threaded client or
+              the multithreaded client: or n the c subdirectory in the
+              Zookeeper sources. This compiles the single threaded
+              client:</para>
+
+              <screen>$ _make cli_st_</screen>
+
+              <para>And this compiles the mulithreaded client:</para>
+
+              <screen>$ _make cli_mt_</screen>
+            </listitem>
+          </itemizedlist>
+
+          <para>Running either program gives you a shell in which to execute
+          simple file-system-like operations. <remark>[tbd: again, sample
+          operations?]</remark> To connect to Zookeeper with the multithreaded
+          client, for example, you would run:</para>
+
+          <screen>$ cli_mt 127.0.0.1:2181</screen>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="sc_singleAndDevSetup">
+      <title>Single Server and Developer Setup</title>
+
+      <para>If you want to setup Zookeeper for development purposes, you will
+      probably want to setup a single server instance of Zookeeper, and then
+      install either the Java or C client-side libraries and bindings on your
+      development machine.</para>
+
+      <para>The steps to setting up a single server instance are the similar
+      to the above, except the configuration file is simpler. You can find the
+      complete instructions in the <ulink
+      url="zookeeperStarted.html#sc_InstallingSingleMode">Installing
+      and Running Zookeeper in SIngle Server Mode</ulink> section of the
+      <ulink url="zookeeperStarted.html">Zookeeper
+      Getting Started Guide</ulink>.</para>
+
+      <para>For information on installing the client side libraries, refer to
+      the <ulink
+      url="zookeeperProgrammers.html#Bindings">Bindings</ulink>
+      section of the <ulink
+      url="zookeeperProgrammers.html">Zookeeper
+      Programmer's Guide</ulink>.</para>
+    </section>
+  </chapter>
+
+  <chapter id="ch_administration">
+    <title>Administration</title>
+
+    <para>This chapter contains information about running and maintaining
+    ZooKeeper and covers these topics: <itemizedlist>
+        <listitem>
+          <para><xref linkend="sc_configuration"/></para>
+        </listitem>
+
+        <listitem>
+          <para><xref linkend="sc_zkCommands"/></para>
+        </listitem>
+
+        <listitem>
+          <para><xref linkend="sc_dataFileManagement"/></para>
+        </listitem>
+
+        <listitem>
+          <para><xref linkend="sc_commonProblems"/></para>
+        </listitem>
+
+        <listitem>
+          <para><xref linkend="sc_bestPractices"/></para>
+        </listitem>
+      </itemizedlist></para>
+
+
+      <section id="sc_configuration">
+        <title>Configuration Parameters</title>
+
+        <para>ZooKeeper's behavior is governed by the ZooKeeper configuration
+        file. This file is designed so that the exact same file can be used by
+        all the servers that make up a ZooKeeper server assuming the disk
+        layouts are the same. If servers use different configuration files,
+        care must be taken to ensure that the list of servers in all of the
+        different configuration files match.<remark> [tbd: reformat in
+        standard form, with legal values, etc]</remark></para>
+
+        <section id="sc_minimumConfiguration">
+          <title>Minimum Configuration</title>
+
+          <para>Here are the minimum configuration keywords that must be
+          defined in the configuration file:</para>
+
+          <variablelist>
+
+	    <varlistentry>
+              <term>clientPort</term>
+
+              <listitem>
+                <para>the port to listen for client connections; that is, the
+                port that clients attempt to connect to.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>dataDir</term>
+
+              <listitem>
+                <para>the location where Zookeeper will store the in-memory
+                database snapshots and, unless specified otherwise, the
+                transaction log of updates to the database.</para>
+
+                <note>
+                  <para>Be careful where you put the transaction log. A
+                  dedicated transaction log device is key to consistent good
+                  performance. Putting the log on a busy device will adversely
+                  effect performance.</para>
+                </note>
+              </listitem>
+            </varlistentry>
+	    
+	    <varlistentry id="id_tickTime">
+              <term>tickTime</term>
+
+              <listitem>
+                <para>the length of a single tick, which is the basic time
+                unit used by ZooKeeper, as measured in milliseconds. It is
+                used to regulate heartbeats, and timeouts. For example, the
+                minimum session timeout will be two ticks.</para>
+              </listitem>
+            </varlistentry>
+	    
+          </variablelist>
+        </section>
+
+        <section id="sc_advancedConfiguration">
+          <title>Advanced Configuration</title>
+
+          <para>The configuration settings in the section are optional. You
+          can use them to further fine tune the behaviour of your Zookeeper
+          servers. Some can also be set using Java system properties,
+          generally of the form <emphasis>zookeeper.keyword</emphasis>. The
+          exact system property, when available, is noted below.</para>
+
+          <variablelist>
+	  
+            <varlistentry>
+              <term>dataLogDir</term>
+
+              <listitem>
+                <para>(No Java system property)</para>
+
+                <para>This option will direct the machine to write the
+                transaction log to the <emphasis
+                role="bold">dataLogDir</emphasis> rather than the <emphasis
+                role="bold">dataDir</emphasis>. This allows a dedicated log
+                device to be used, and helps avoid competition between logging
+                and snaphots.</para>
+
+                <note>
+                  <para>Having a dedicated log device has a large impact on
+                  throughput and stable latencies. It is highly recommened to
+                  dedicate a log device and set <emphasis
+                  role="bold">dataLogDir</emphasis> to point to a directory on
+                  that device, and then make sure to point <emphasis
+                  role="bold">dataDir</emphasis> to a directory
+                  <emphasis>not</emphasis> residing on that device.</para>
+                </note>
+              </listitem>
+            </varlistentry>
+	    
+	     <varlistentry>
+              <term>globalOutstandingLimit</term>
+
+              <listitem>
+                <para>(Java system property: <emphasis
+                role="bold">zookeeper.globalOutstandingLimit.</emphasis>)</para>
+
+                <para>Clients can submit requests faster than ZooKeeper can
+                process them, especially if there are a lot of clients. To
+                prevent ZooKeeper from running out of memory due to queued
+                requests, ZooKeeper will throttle clients so that there is no
+                more than globalOutstandingLimit outstanding requests in the
+                system. The default limit is 1,000.</para>
+              </listitem>
+            </varlistentry>
+	    
+            <varlistentry>
+              <term>preAllocSize</term>
+
+              <listitem>
+                <para>(Java system property: <emphasis
+                role="bold">zookeeper.preAllocSize</emphasis>)</para>
+
+                <para>To avoid seeks ZooKeeper allocates space in the
+                transaction log file in blocks of preAllocSize kilobytes. The
+                default block size is 64M. One reason for changing the size of
+                the blocks is to reduce the block size if snapshots are taken
+                more often. (Also, see <emphasis
+                role="bold">snapCount</emphasis>).</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>snapCount</term>
+
+              <listitem>
+                <para>(Java system property: <emphasis
+                role="bold">zookeeper.snapCount</emphasis>)</para>
+
+                <para>Clients can submit requests faster than ZooKeeper can
+                process them, especially if there are a lot of clients. To
+                prevent ZooKeeper from running out of memory due to queued
+                requests, ZooKeeper will throttle clients so that there is no
+                more than globalOutstandingLimit outstanding requests in the
+                system. The default limit is 1,000.ZooKeeper logs transactions
+                to a transaction log. After snapCount transactions are written
+                to a log file a snapshot is started and a new transaction log
+                file is started. The default snapCount is 10,000.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>traceFile</term>
+
+              <listitem>
+                <para>(Java system property: <emphasis
+                role="bold">requestTraceFile</emphasis>)</para>
+
+                <para>If this option is defined, requests will be will logged
+                to a trace file named traceFile.year.month.day. Use of this
+                option provides useful debugging information, but will impact
+                performance. (Note: The system property has no zookeeper
+                prefix, and the configuration variable name is different from
+                the system property. Yes - it's not consistent, and it's
+                annoying.<remark> [tbd: is there any explanation for
+                this?]</remark>)</para>
+              </listitem>
+            </varlistentry>
+
+          </variablelist>
+        </section>
+
+        <section id="sc_clusterOptions">
+          <title>Cluster Options</title>
+
+          <para>The options in this section are designed for use in quorums --
+          that is, when deploying clusters of servers.</para>
+
+          <variablelist>
+            <varlistentry>
+              <term>electionAlg:</term>
+
+              <listitem>
+                <para>(No Java system property)</para>
+
+                <para>Election implementation to use. A value of "0"
+                corresponds to the original UDP-based version, "1" corresponds
+                to the non-authenticated UDP-based version of fast leader
+                election, "2" corresponds to the authenticated UDP-based
+                version of fast leader election, and "3" corresponds to
+                TCP-based version of fast leader election</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>electionPort</term>
+
+              <listitem>
+                <para>(No Java system property)</para>
+
+                <para>Port used for leader election. It is only used when the
+                election algorithm is not "0". When the election algorithm is
+                "0" a UDP port with the same port number as the port listed in
+                the <emphasis role="bold">server.num</emphasis> option will be
+                used. <remark>[tbd: should that be <emphasis
+                role="bold">server.id</emphasis>? Also, why isn't server.id
+                documented anywhere?]</remark></para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>initLimit</term>
+
+              <listitem>
+                <para>(No Java system property)</para>
+
+                <para>Amount of time, in ticks (see <ulink
+                url="#id_tickTime">tickTime</ulink>), to allow followers to
+                connect and sync to a leader. Increased this value as needed,
+                if the amount of data managed by ZooKeeper is large.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>leaderServes</term>
+
+              <listitem>
+                <para>(Java system property: zookeeper.<emphasis
+                role="bold">leaderServes</emphasis>)</para>
+
+                <para>Leader accepts client connections. Default value is
+                "yes". The leader machine coordinates updates. For higher
+                update throughput at thes slight expense of read throughput
+                the leader can be configured to not accept clients and focus
+                on coordination. The default to this option is yes, which
+                means that a leader will accept client connections.
+                <remark>[tbd: how do you specifiy which server is the
+                leader?]</remark></para>
+
+                <note>
+                  <para>Turning on leader selection is highly recommended when
+                  you have more than three Zookeeper servers in a
+                  quorum.</para>
+                </note>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>server.x=[hostname]:nnnn, etc</term>
+
+              <listitem>
+                <para>(No Java system property)</para>
+
+                <para>servers making up the Zookeeper quorum. When the server
+                starts up, it determines which server it is by looking for the
+                file <filename>myid</filename> in the data directory.<remark>
+                [tdb: should we mention somewhere about creating this file,
+                myid, in the setup procedure?]</remark> That file contains the
+                server number, in ASCII, and it should match <emphasis
+                role="bold">x</emphasis> in <emphasis
+                role="bold">server.x</emphasis> in the left hand side of this
+                setting.</para>
+
+                <para>The list of servers that make up ZooKeeper servers that
+                is used by the clients must match the list of ZooKeeper
+                servers that each ZooKeeper server has.</para>
+
+                <para>The port numbers <emphasis role="bold">nnnn</emphasis>
+                in this setting are the <emphasis>electionPort</emphasis>
+                numbers of the servers (as opposed to clientPorts).
+                <remark>[tbd: is the next sentence explanation an of what the
+                election port or is it a description of a special case?]
+                </remark>If you want to test multiple servers on a single
+                machine, the individual choices of electionPort for each
+                server can be defined in each server's config files using the
+                line electionPort=xxxx to avoid clashes.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>syncLimit</term>
+
+              <listitem>
+                <para>(No Java system property)</para>
+
+                <para>Amount of time, in ticks (see <ulink
+                url="#id_tickTime">tickTime</ulink>), to allow followers to
+                sync with ZooKeeper. If followers fall too far behind a
+                leader, they will be dropped. <remark>[tbd: is this a correct
+                rewording: if followers fall beyond this limit, they are
+                dropped?]</remark></para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+
+          <para></para>
+        </section>
+
+        <section>
+          <title>Unsafe Options</title>
+
+          <para>The following options can be useful, but be careful when you
+          use them. The risk of each is explained along with the explanation
+          of what the variable does.</para>
+
+          <variablelist>
+	  
+	  <varlistentry>
+              <term>forceSync</term>
+
+              <listitem>
+                <para>(Java system property: <emphasis
+                role="bold">zookeeper.forceSync</emphasis>)</para>
+
+                <para>Requires updates to be synced to media of the
+                transaction log before finishing processing the update. If
+                this option is set to no, ZooKeeper will not require updates
+                to be synced to the media. <remark>[tbd: useful because...,
+                dangerous because...]</remark></para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>jute.maxbuffer:</term>
+
+              <listitem>
+                <para>(Java system property:<emphasis role="bold">
+                jute.maxbuffer</emphasis>)</para>
+
+                <para>This option can only be set as a Java system property.
+                There is no zookeeper prefix on it. It specifies the maximum
+                size of the data that can be stored in a znode. The default is
+                0xfffff, or just under 1M. If this option is changed, the
+                system property must be set on all servers and clients
+                otherwise problems will arise. This is really a sanity check.
+                ZooKeeper is designed to store data on the order of kilobytes
+                in size.</para>
+              </listitem>
+            </varlistentry>
+	    
+            <varlistentry>
+              <term>skipACL</term>
+
+              <listitem>
+                <para>(Java system property: <emphasis
+                role="bold">zookeeper.skipACL</emphasis>)</para>
+
+                <para>Skips ACL checks. <remark>[tbd: when? where?]</remark>
+                This results in a boost in throughput, but opens up full
+                access to the data tree to everyone.</para>
+              </listitem>
+            </varlistentry>
+
+            
+          </variablelist>
+        </section>
+      </section>
+
+      <section id="sc_zkCommands">
+        <title>Zookeeper Commands: The Four Letter Words</title>
+
+        <para>Zookeeper responds to a small set of commands. Each command is composed of
+        four letters. You issue the commands to Zookeeper via telnet or nc, at
+        the client port.</para>
+
+        <variablelist>
+	
+	    <varlistentry>
+            <term>dump</term>
+
+            <listitem>
+              <para>Lists the outstanding sessions and ephemeral nodes. This
+              only works on the leader.</para>
+            </listitem>
+          </varlistentry>
+	  
+	    <varlistentry>
+            <term>kill</term>
+
+            <listitem>
+              <para>Shuts down the server. This must be issued from the
+              machine the Zookeeper server is running on.</para>
+            </listitem>
+          </varlistentry>
+	  
+          <varlistentry>
+            <term>ruok</term>
+
+            <listitem>
+              <para>Tests if server is running in a non-error state. The
+              server will respond with imok if it is running. Otherwise it
+              will not respond at all.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>stat</term>
+
+            <listitem>
+              <para>Lists statistics about performance and connected
+              clients.</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>Here's an example of the <emphasis role="bold">ruok</emphasis>
+        command:</para>
+
+        <screen>$ echo ruok | nc 127.0.0.1 5111
+
+imok
+</screen>
+      </section>
+
+      <section id="sc_monitoring">
+        <title>Monitoring</title>
+
+        <para><remark>[tbd: Patrick, Ben, et al: I believe the Message Broker
+        team does perform routine monitoring of Zookeeper. But I might be
+        wrong. To your knowledge, is there any monitoring of a Zookeeper
+        deployment that will a Zookeeper sys admin will want to do, outside of
+        Yahoo?]</remark></para>
+      </section>
+
+    <section id="sc_dataFileManagement">
+      <title>Data File Management</title>
+
+      <para>ZooKeeper stores its data in a data directory and its transaction
+      log in a transaction log directory. By default these two directories are
+      the same. The server can (and should) be configured to store the
+      transaction log files in a separate directory than the data files.
+      Throughput increases and latency decreases when transaction logs reside
+      on a dedicated log devices.</para>
+
+      <section>
+        <title>The Data Directory</title>
+
+        <para>This directory has two files in it:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><filename>myid</filename> - contains a single integer in
+            human readable ASCII text that represents the server id.</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>snapshot.&lt;zxid&gt;</filename> - holds the fuzzy
+            snapshot of a data tree.</para>
+          </listitem>
+        </itemizedlist>
+
+        <para>Each ZooKeeper server has a unique id. This id is used in two
+        places: the <filename>myid</filename> file and the configuration file.
+        The <filename>myid</filename> file identifies the server that
+        corresponds to the given data directory. The configuration file lists
+        the contact information for each server identified by its server id.
+        When a ZooKeeper server instance starts, it reads its id from the
+        <filename>myid</filename> file and then, using that id, reads from the
+        configuration file, looking up the port on which it should
+        listen.</para>
+
+        <para>The <filename>snapshot</filename> files stored in the data
+        directory are fuzzy snapshots in the sense that during the time the
+        ZooKeeper server is taking the snapshot, updates are occurring to the
+        data tree. The suffix of the <filename>snapshot</filename> file names
+        is the <emphasis>zxid</emphasis>, the ZooKeeper transaction id, of the
+        last committed transaction at the start of the snapshot. Thus, the
+        snapshot includes a subset of the updates to the data tree that
+        occurred while the snapshot was in process. The snapshot, then, may
+        not correspond to any data tree that actually existed, and for this
+        reason we refer to it as a fuzzy snapshot. Still, ZooKeeper can
+        recover using this snapshot because it takes advantage of the
+        idempotent nature of its updates. By replaying the transaction log
+        against fuzzy snapshots ZooKeeper gets the state of the system at the
+        end of the log.</para>
+      </section>
+
+      <section>
+        <title>The Log Directory</title>
+
+        <para>The Log Directory contains the ZooKeeper transaction logs.
+        Before any update takes place, ZooKeeper ensures that the transaction
+        that represents the update is written to non-volatile storage. A new
+        log file is started each time a snapshot is begun. The log file's
+        suffix is the first zxid written to that log.</para>
+      </section>
+
+      <section>
+        <title>File Management</title>
+
+        <para>The format of snapshot and log files does not change between
+        standalone ZooKeeper servers and different configurations of
+        replicated ZooKeeper servers. Therefore, you can pull these files from
+        a running replicated ZooKeeper server to a development machine with a
+        stand-alone ZooKeeper server for trouble shooting.</para>
+
+        <para>Using older log and snapshot files, you can look at the previous
+        state of ZooKeeper servers and even restore that state. The
+        LogFormatter class allows an administrator to look at the transactions
+        in a log.</para>
+
+        <para>The ZooKeeper server creates snapshot and log files, but never
+        deletes them. The retention policy of the data and log files is
+        implemented outside of the ZooKeeper server. The server itself only
+        needs the latest complete fuzzy snapshot and the log files from the
+        start of that snapshot. The PurgeTxnLog utility implements a simple
+        retention policy that administrators can use.</para>
+      </section>
+    </section>
+
+    <section id="sc_commonProblems">
+      <title>Things to Avoid</title>
+
+      <para>Here are some common problems you can avoid by configuring
+      ZooKeeper correctly:</para>
+
+      <variablelist>
+        <varlistentry>
+          <term>inconsistent lists of servers</term>
+
+          <listitem>
+            <para>The list of Zookeeper servers used by the clients must match
+            the list of ZooKeeper servers that each ZooKeeper server has.
+            Things work okay if the client list is a subset of the real list,
+            but things will really act strange if clients have a list of
+            ZooKeeper servers that are in different ZooKeeper clusters. Also,
+            the server lists in each Zookeeper server configuration file
+            should be consistent with one another. <remark>[tbd: I'm assuming
+            this last part is true. Is it?]</remark></para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>incorrect placement of transasction log</term>
+
+          <listitem>
+            <para>The most performance critical part of ZooKeeper is the
+            transaction log. Zookeeper syncs transactions to media before it
+            returns a response. A dedicated transaction log device is key to
+            consistent good performance. Putting the log on a busy device will
+            adversely effect performance. If you only have one storage device,
+            put trace files on NFS and increase the snapshotCount; it doesn't
+            eliminate the problem, but it should mitigate it.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>incorrect Java heap size</term>
+
+          <listitem>
+            <para>You should take special care to set your Java max heap size
+            correctly. In particular, you should not create a situation in
+            which Zookeeper swaps to disk. The disk is death to ZooKeeper.
+            Everything is ordered, so if processing one request swaps the
+            disk, all other queued requests will probably do the same. the
+            disk. DON'T SWAP.</para>
+
+            <para>Be conservative in your estimates: if you have 4G of RAM, do
+            not set the Java max heap size to 6G or even 4G. For example, it
+            is more likely you would use a 3G heap for a 4G machine, as the
+            operating system and the cache also need memory. The best and only
+            recommend practice for estimating the heap size your system needs
+            is to run load tests, and then make sure you are well below the
+            usage limit that would cause the system to swap.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </section>
+
+    <section id="sc_bestPractices">
+      <title>Best Practices</title>
+
+      <para>For best results, take note of the following list of good
+      Zookeeper practices. <remark>[tbd: I just threw this section in. Do we
+      have list that is is different from the "things to avoid"? If not, I can
+      easily remove this section.]</remark></para>
+    </section>
+  </chapter>
+</book>

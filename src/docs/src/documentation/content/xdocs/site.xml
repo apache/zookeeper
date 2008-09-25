@@ -32,12 +32,17 @@ See http://forrest.apache.org/docs/linking.html for more info.
 <site label="Hadoop" href="" xmlns="http://apache.org/forrest/linkmap/1.0">
 
   <docs label="Documentation"> 
-    <overview  label="Overview"           href="index.html" />
-    <started   label="Getting Started"    href="ext:api/started" />
-    <api       label="API Docs"           href="ext:api/index" />
-    <wiki      label="Wiki"               href="ext:wiki" />
-    <faq       label="FAQ"                href="ext:faq" />
-    <lists     label="Mailing Lists"      href="ext:lists" />
+    <welcome   label="Welcome"                href="index.html" />
+    <overview  label="Zookeeper Overview"     href="zookeeperOver.html" />
+    <started   label="Getting Started"        href="zookeeperStarted.html" />
+    <program   label="Programmer's Guide"     href="zookeeperProgrammers.html" />
+    <recipes   label="Recipes"		      href="recipes.html" />
+    <admin     label="Administrator's Guide"  href="zookeeperAdmin.html" />
+    <api       label="API Docs"               href="ext:api/index" />
+    <wiki      label="Wiki"                   href="ext:wiki" />
+    <faq       label="FAQ"                    href="ext:faq" />
+    <lists     label="Mailing Lists"          href="ext:lists" />
+    <other     label="Other Info"	      href="zookeeperOtherInfo.html" />
   </docs>
 
   <external-refs>
