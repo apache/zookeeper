@@ -2,13 +2,35 @@ Trunk:
 
 Non-backward compatible changes:
 
-  ZOOKEEPER-132. Create Enum to replace CreateFlag in ZooKepper.create method (Jakob Homan via phunt)
+  ZOOKEEPER-132. Create Enum to replace CreateFlag in ZooKepper.create 
+  method (Jakob Homan via phunt)
+
+  ZOOKEEPER-139. Create Enums for WatcherEvent's KeeperState and EventType
+  (Jakob Homan via phunt)
+
+  ZOOKEEPER-18. keeper state inconsistency (Jakob Homan via phunt)
 
 Backward compatibile changes:
 
   BUGFIXES: 
 
-  ZOOKEEPER-118. findbugs flagged switch statement in followerrequestprocessor.run() (Flavio Paiva Junqueira via phunt)
+  ZOOKEEPER-142. Provide Javadoc as to the maximum size of the data byte 
+  array that may be stored within a znode (Jakob Homan via phunt)
+
+  ZOOKEEPER-93. Create Documentation for Zookeeper (phunt)
+
+  ZOOKEEPER-117. threading issues in Leader election (fpj via breed)
+
+  ZOOKEEPER-137. client watcher objects can lose events (phunt via breed)
+
+  ZOOKEEPER-131. Old leader election can elect a dead leader over and over
+  again (breed via mahadev)
+
+  ZOOKEEPER-130. update build.xml to support apache release process
+  (phunt via mahadev)
+
+  ZOOKEEPER-118. findbugs flagged switch statement in 
+  followerrequestprocessor.run() (Flavio Paiva Junqueira via phunt)
 
   ZOOKEEPER-39. Use Watcher objects rather than boolean on read operations.
   (Andrew Kornev)
