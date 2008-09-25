@@ -32,7 +32,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
@@ -142,7 +142,7 @@ public class OOMTest extends TestCase implements Watcher {
      *
      * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.proto.WatcherEvent)
      */
-    public void process(WatcherEvent event) {
+    public void process(WatchedEvent event) {
         System.err.println("Got event " + event.getType() + " "
                 + event.getState() + " " + event.getPath());
     }

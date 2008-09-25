@@ -28,7 +28,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 
 public class SledgeHammer extends Thread implements Watcher {
     ZooKeeper zk;
@@ -106,7 +106,7 @@ public class SledgeHammer extends Thread implements Watcher {
         System.exit(0);
     }
 
-    public void process(WatcherEvent event) {
+    public void process(WatchedEvent event) {
         synchronized (this) {
             notifyAll();
         }

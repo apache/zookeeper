@@ -16,27 +16,35 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper;
+package org.apache.zookeeper.test;
 
-import java.util.Set;
+import java.util.EnumSet;
 
-import org.apache.zookeeper.Watcher.Event.EventType;
+import junit.framework.TestCase;
+import org.junit.Test;
+
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 
-/**
- */
-public interface ClientWatchManager {
-    /**
-     * Return a set of watchers that should be notified of the event. The 
-     * manager must not notify the watcher(s), however it will update it's 
-     * internal structure as if the watches had triggered. The intent being 
-     * that the callee is now responsible for notifying the watchers of the 
-     * event, possibly at some later time.
-     * 
-     * @param state event state
-     * @param type event type
-     * @param path event path
-     * @return
-     */
-    public Set<Watcher> materialize(Watcher.Event.KeeperState state, Watcher.Event.EventType type, String path);
+public class KeeperStateTest extends TestCase {
+    
+    @Test
+    public void testIntConversion() {
+        // Ensure that we can convert all valid integers to KeeperStates
+        EnumSet<KeeperState> allStates = EnumSet.allOf(KeeperState.class);
+
+        for(KeeperState as : allStates) {
+            assertEquals(as, KeeperState.fromInt( as.getIntValue() ) );
+        }
+    }
+
+    @Test
+    public void testInvalidIntConversion() {
+        try {
+            KeeperState ks = KeeperState.fromInt(324142);
+            fail("Was able to create an invalid KeeperState via an integer");
+        } catch(RuntimeException re) {
+            // we're good.
+        }
+
+    }
 }

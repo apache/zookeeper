@@ -30,10 +30,11 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 import org.junit.Test;
 
 public class ZooKeeperTestClient extends TestCase implements Watcher {
@@ -43,10 +44,10 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
 
   protected String testDirOnZK = dirOnZK + "/" + System.currentTimeMillis();
 
-  LinkedBlockingQueue<WatcherEvent> events = new LinkedBlockingQueue<WatcherEvent>();
+  LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
 
-  private WatcherEvent getEvent(int numTries) throws InterruptedException {
-    WatcherEvent event = null;
+  private WatchedEvent getEvent(int numTries) throws InterruptedException {
+    WatchedEvent event = null;
     for (int i = 0; i < numTries; i++) {
       System.out.println("i = " + i);
       event = events.poll(10, TimeUnit.SECONDS);
@@ -200,11 +201,11 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     }
 
     Thread.sleep(5000);
-    WatcherEvent event = events.poll(10, TimeUnit.SECONDS);
+    WatchedEvent event = events.poll(10, TimeUnit.SECONDS);
     if (event == null) {
       throw new IOException("No event was delivered promptly");
     }
-    if (event.getType() != Watcher.Event.EventNodeChildrenChanged
+    if (event.getType() != EventType.NodeChildrenChanged
         || !event.getPath().equalsIgnoreCase(parentName)) {
       fail("Unexpected event was delivered: " + event.toString());
     }
@@ -263,12 +264,12 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     if (event == null) {
       throw new AssertionFailedError("First event was not delivered promptly");
     }
-    if (!((event.getType() == Watcher.Event.EventNodeChildrenChanged &&
+    if (!((event.getType() == EventType.NodeChildrenChanged &&
            event.getPath().equalsIgnoreCase(parentName)) ||
-         (event.getType() == Watcher.Event.EventNodeDeleted &&
+         (event.getType() == EventType.NodeDeleted &&
            event.getPath().equalsIgnoreCase(nodeName)))) {
       System.out.print(parentName + " "
-          + Watcher.Event.EventNodeChildrenChanged + " " + nodeName + " " + Watcher.Event.EventNodeDeleted);
+          + EventType.NodeChildrenChanged + " " + nodeName + " " + EventType.NodeDeleted);
       fail("Unexpected first event was delivered: " + event.toString());
     }
 
@@ -277,12 +278,12 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     if (event == null) {
       throw new AssertionFailedError("Second event was not delivered promptly");
     }
-    if (!((event.getType() == Watcher.Event.EventNodeChildrenChanged &&
+    if (!((event.getType() == EventType.NodeChildrenChanged &&
         event.getPath().equalsIgnoreCase(parentName)) ||
-      (event.getType() == Watcher.Event.EventNodeDeleted &&
+      (event.getType() == EventType.NodeDeleted &&
         event.getPath().equalsIgnoreCase(nodeName)))) {
       System.out.print(parentName + " "
-          + Watcher.Event.EventNodeChildrenChanged + " " + nodeName + " " + Watcher.Event.EventNodeDeleted);
+          + EventType.NodeChildrenChanged + " " + nodeName + " " + EventType.NodeDeleted);
       fail("Unexpected second event was delivered: " + event.toString());
     }
 
@@ -371,7 +372,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     delete_create_get_set_test_1();
   }
 
-  synchronized public void process(WatcherEvent event) {
+  synchronized public void process(WatchedEvent event) {
     try {
       System.out.println("Got an event " + event.toString());
       events.put(event);

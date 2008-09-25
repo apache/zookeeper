@@ -33,12 +33,14 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.InvalidACLException;
 import org.apache.zookeeper.Watcher.Event;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 import org.junit.Test;
 public class ClientTest extends ClientBase {
     protected static final Logger LOG = Logger.getLogger(ClientTest.class);
@@ -143,12 +145,12 @@ public class ClientTest extends ClientBase {
     }
 
     private class MyWatcher extends CountdownWatcher {
-        LinkedBlockingQueue<WatcherEvent> events =
-            new LinkedBlockingQueue<WatcherEvent>();
+        LinkedBlockingQueue<WatchedEvent> events =
+            new LinkedBlockingQueue<WatchedEvent>();
 
-        public void process(WatcherEvent event) {
+        public void process(WatchedEvent event) {
             super.process(event);
-            if (event.getType() != Event.EventNone) {
+            if (event.getType() != EventType.None) {
                 try {
                     events.put(event);
                 } catch (InterruptedException e) {
@@ -194,11 +196,11 @@ public class ClientTest extends ClientBase {
                 zk.setData("/foo-" + i, ("foodata3-" + i).getBytes(), -1);
             }
             for (int i = 0; i < watchers.length; i++) {
-                WatcherEvent event =
+                WatchedEvent event =
                     watchers[i].events.poll(10, TimeUnit.SECONDS);
                 assertEquals("/foo-" + i, event.getPath());
-                assertEquals(Event.EventNodeDataChanged, event.getType());
-                assertEquals(Event.KeeperStateSyncConnected, event.getState());
+                assertEquals(EventType.NodeDataChanged, event.getType());
+                assertEquals(KeeperState.SyncConnected, event.getState());
                 
                 // small chance that an unexpected message was delivered
                 //  after this check, but we would catch that next time
@@ -220,11 +222,11 @@ public class ClientTest extends ClientBase {
                 zk.setData("/foo-" + i, ("foodata5-" + i).getBytes(), -1);
             }
             for (int i = 0; i < watchers.length; i++) {
-                WatcherEvent event =
+                WatchedEvent event =
                     watchers[i].events.poll(10, TimeUnit.SECONDS);
                 assertEquals("/foo-" + i, event.getPath());
-                assertEquals(Event.EventNodeDataChanged, event.getType());
-                assertEquals(Event.KeeperStateSyncConnected, event.getState());
+                assertEquals(EventType.NodeDataChanged, event.getType());
+                assertEquals(KeeperState.SyncConnected, event.getState());
                 
                 // small chance that an unexpected message was delivered
                 //  after this check, but we would catch that next time
@@ -245,11 +247,11 @@ public class ClientTest extends ClientBase {
                 zk.setData("/foo-" + i, ("foodata7-" + i).getBytes(), -1);
             }
             for (int i = 0; i < watchers.length; i++) {
-                WatcherEvent event =
+                WatchedEvent event =
                     watchers[i].events.poll(10, TimeUnit.SECONDS);
                 assertEquals("/foo-" + i, event.getPath());
-                assertEquals(Event.EventNodeDataChanged, event.getType());
-                assertEquals(Event.KeeperStateSyncConnected, event.getState());
+                assertEquals(EventType.NodeDataChanged, event.getType());
+                assertEquals(KeeperState.SyncConnected, event.getState());
                 
                 // small chance that an unexpected message was delivered
                 //  after this check, but we would catch that next time
@@ -257,11 +259,11 @@ public class ClientTest extends ClientBase {
                 assertEquals(0, watchers[i].events.size());
 
                 // watchers2
-                WatcherEvent event2 =
+                WatchedEvent event2 =
                     watchers2[i].events.poll(10, TimeUnit.SECONDS);
                 assertEquals("/foo-" + i, event2.getPath());
-                assertEquals(Event.EventNodeDataChanged, event2.getType());
-                assertEquals(Event.KeeperStateSyncConnected, event2.getState());
+                assertEquals(EventType.NodeDataChanged, event2.getType());
+                assertEquals(KeeperState.SyncConnected, event2.getState());
                 
                 // small chance that an unexpected message was delivered
                 //  after this check, but we would catch that next time
@@ -339,10 +341,10 @@ public class ClientTest extends ClientBase {
             // the first poll is just a session delivery
             LOG.info("Comment: checking for events length "
                      + watcher.events.size());
-            WatcherEvent event = watcher.events.poll(10, TimeUnit.SECONDS);
+            WatchedEvent event = watcher.events.poll(10, TimeUnit.SECONDS);
             assertEquals("/frog", event.getPath());
-            assertEquals(Event.EventNodeCreated, event.getType());
-            assertEquals(Event.KeeperStateSyncConnected, event.getState());
+            assertEquals(EventType.NodeCreated, event.getType());
+            assertEquals(KeeperState.SyncConnected, event.getState());
             // Test child watch and create with sequence
             zk.getChildren("/ben", true);
             for (int i = 0; i < 10; i++) {
@@ -372,18 +374,18 @@ public class ClientTest extends ClientBase {
             }
             event = watcher.events.poll(10, TimeUnit.SECONDS);
             assertEquals("/ben", event.getPath());
-            assertEquals(Event.EventNodeChildrenChanged, event.getType());
-            assertEquals(Event.KeeperStateSyncConnected, event.getState());
+            assertEquals(EventType.NodeChildrenChanged, event.getType());
+            assertEquals(KeeperState.SyncConnected, event.getState());
             for (int i = 0; i < 10; i++) {
                 event = watcher.events.poll(10, TimeUnit.SECONDS);
                 final String name = children.get(i);
                 assertEquals("/ben/" + name, event.getPath());
-                assertEquals(Event.EventNodeDataChanged, event.getType());
-                assertEquals(Event.KeeperStateSyncConnected, event.getState());
+                assertEquals(EventType.NodeDataChanged, event.getType());
+                assertEquals(KeeperState.SyncConnected, event.getState());
                 event = watcher.events.poll(10, TimeUnit.SECONDS);
                 assertEquals("/ben/" + name, event.getPath());
-                assertEquals(Event.EventNodeDeleted, event.getType());
-                assertEquals(Event.KeeperStateSyncConnected, event.getState());
+                assertEquals(EventType.NodeDeleted, event.getType());
+                assertEquals(KeeperState.SyncConnected, event.getState());
             }
             zk.create("/good\u0001path", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             //try {

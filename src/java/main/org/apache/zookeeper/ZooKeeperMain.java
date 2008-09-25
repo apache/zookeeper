@@ -51,7 +51,7 @@ public class ZooKeeperMain {
     }
 
     static private class MyWatcher implements Watcher {
-        public void process(WatcherEvent event) {
+        public void process(WatchedEvent event) {
             System.err.println(event.getPath() + ": " + event.getState() + "-"
                     + event.getType());
         }

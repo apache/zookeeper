@@ -31,9 +31,10 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -80,8 +81,8 @@ public class SessionTest extends TestCase implements Watcher {
     private static class CountdownWatcher implements Watcher {
         volatile CountDownLatch clientConnected = new CountDownLatch(1);
 
-        public void process(WatcherEvent event) {
-            if (event.getState() == Event.KeeperStateSyncConnected) {
+        public void process(WatchedEvent event) {
+            if (event.getState() == KeeperState.SyncConnected) {
                 clientConnected.countDown();
             }
         }
@@ -174,9 +175,9 @@ public class SessionTest extends TestCase implements Watcher {
         zk.close();
     }
 
-    public void process(WatcherEvent event) {
+    public void process(WatchedEvent event) {
         LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
-        if (event.getState() == Watcher.Event.KeeperStateSyncConnected
+        if (event.getState() == KeeperState.SyncConnected
                 && startSignal.getCount() > 0)
         {
             startSignal.countDown();

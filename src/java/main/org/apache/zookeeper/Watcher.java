@@ -31,36 +31,79 @@ import org.apache.zookeeper.proto.WatcherEvent;
 public interface Watcher {
 
     /**
-     * 
-     * This interface defines the list of possible event codes
-     * 
+     * This interface defines the possible states an Event may represent
      */
     public interface Event {
+        /**
+         * Enumeration of states the ZooKeeper may be at the event
+         */
+        public enum KeeperState {
+            Unknown (-1),
+            Disconnected (0),
+            NoSyncConnected (1),
+            SyncConnected (3),
+            Expired (-112);
 
-        // constants for connection states
-        final public static int KeeperStateChanged = 0;
+            private final int intValue;     // Integer representation of value
+                                            // for sending over wire
 
-        final public static int KeeperStateUnknown = -1;
+            KeeperState(int intValue) {
+                this.intValue = intValue;
+            }
 
-        final public static int KeeperStateDisconnected = 0;
+            public int getIntValue() {
+                return intValue;
+            }
 
-        final public static int KeeperStateNoSyncConnected = 1;
+            public static KeeperState fromInt(int intValue) {
+                switch(intValue) {
+                    case   -1: return KeeperState.Unknown;
+                    case    0: return KeeperState.Disconnected;
+                    case    1: return KeeperState.NoSyncConnected;
+                    case    3: return KeeperState.SyncConnected;
+                    case -112: return KeeperState.Expired;
 
-        final public static int KeeperStateSyncConnected = 3;
+                    default:
+                        throw new RuntimeException("Invalid integer value for conversion to KeeperState");
+                }
+            }
+        }
 
-        public static final int KeeperStateExpired = -112;
+        /**
+         * Enumeration of types of events that may occur on the ZooKeeper
+         */
+        public enum EventType {
+            None (-1),
+            NodeCreated (1),
+            NodeDeleted (2),
+            NodeDataChanged (3),
+            NodeChildrenChanged (4);
 
-        // constants for event types
-        final public static int EventNone = -1;
+            private final int intValue;     // Integer representation of value
+                                            // for sending over wire
 
-        final public static int EventNodeCreated = 1;
+            EventType(int intValue) {
+                this.intValue = intValue;
+            }
 
-        final public static int EventNodeDeleted = 2;
+            public int getIntValue() {
+                return intValue;
+            }
 
-        final public static int EventNodeDataChanged = 3;
+            public static EventType fromInt(int intValue) {
+                switch(intValue) {
+                    case -1: return EventType.None;
+                    case  1: return EventType.NodeCreated;
+                    case  2: return EventType.NodeDeleted;
+                    case  3: return EventType.NodeDataChanged;
+                    case  4: return EventType.NodeChildrenChanged;
 
-        final public static int EventNodeChildrenChanged = 4;
+                    default:
+                        throw new RuntimeException("Invalid integer value for conversion to EventType");
+                }
+            }           
+        }
     }
 
-    abstract public void process(WatcherEvent event);
+    abstract public void process(WatchedEvent event);
 }
