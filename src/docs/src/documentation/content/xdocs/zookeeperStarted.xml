@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<book id="bk_GettStartedGuide">
+  <title>ZooKeeper Getting Started Guide</title>
+
+  <bookinfo>
+    <legalnotice>
+      <para>Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License. You may
+      obtain a copy of the License at <ulink
+      url="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</ulink>.</para>
+
+      <para>Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied. See the License for the specific language governing permissions
+      and limitations under the License.</para>
+    </legalnotice>
+
+    <abstract>
+      <para>This guide contains detailed information about creating
+      distributed applications that use ZooKeeper. It discusses the basic
+      operations Zookeeper supports, and how these can be used to build
+      higher-level abstractions. It contains solutions to common tasks, a
+      troubleshooting guide, and links to other information.</para>
+    </abstract>
+  </bookinfo>
+
+  <chapter id="ch_GettingStarted">
+    <title>Getting Started: Coordinating Distributed Applications with
+      ZooKeeper</title>
+
+    <para>This document contains information to get you started quickly with
+    Zookeeper. It is aimed primarily at developers hoping to try it out, and
+    contains simple installation instructions for a single ZooKeeper server, a
+    few commands to verify that it is running, and a simple programming
+    example. Finally, as a convenience, there are a few sections regarding
+    more complicated installations, for example running replicated
+    deployments, and optimizing the transaction log. However for the complete
+    instructions for commercial deployments, please refer to the <ulink
+    url="zookeeperAdmin.html">Zookeeper
+    Administrator's Guide</ulink>.</para>
+
+    <section id="sc_InstallingSingleMode">
+      <title>Installing and Running ZooKeeper in Single Server Mode</title>
+
+      <para>Setting up a ZooKeeper server in standalone mode is
+      straightforward. The server is contained in a single JAR file, so
+      installation consists of copying a JAR file and creating a
+      configuration.</para>
+
+      <note>
+        <para>Zookeeper requires Java 1.5 or more recent.</para>
+      </note>
+
+      <para>[tbd: should we start w/ a word here about were to get the source,
+      exactly what to download, how to unpack it, and where to put it? Also,
+      does the user need to be in sudo, or can they be under their regular
+      login?]</para>
+
+      <para>Once you have downloaded the ZooKeeper source, cd to the root of
+      your ZooKeeper source, and run "ant jar". For example:<screen>$ cd ~/dev/zookeeper
+
+$ ~/dev/zookeeper/: ant jar</screen></para>
+
+      <para>This should generate a JAR file called zookeeper.jar. To start
+      Zookeeper, compile and run zookeeper.jar. <emphasis>[tbd, some more
+      instruction here. Perhaps a command line? Are these two steps or
+      one?]</emphasis></para>
+
+      <para>To start ZooKeeper you need a configuration file. Here is a sample
+      file:</para>
+
+      <para><programlisting>tickTime=2000
+dataDir=/var/zookeeper/ 
+clientPort=2181
+</programlisting></para>
+
+      <para>This file can be called anything, but for the sake of this
+      discussion, call it <emphasis role="bold">zoo.cfg</emphasis>. Here are
+      the meanings for each of the fields:</para>
+
+      <variablelist>
+        <varlistentry>
+          <term><emphasis role="bold">tickTime</emphasis></term>
+
+          <listitem>
+            <para>the basic time unit in milliseconds used by ZooKeeper. It is
+            used to do heartbeats and the minimum session timeout will be
+            twice the tickTime.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <variablelist>
+        <varlistentry>
+          <term><emphasis role="bold">dataDir</emphasis></term>
+
+          <listitem>
+            <para>the location to store the in-memory database snapshots and,
+            unless specified otherwise, the transaction log of updates to the
+            database.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><emphasis role="bold">clientPort</emphasis></term>
+
+          <listitem>
+            <para>the port to listen for client connections</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>Now that you created the configuration file, you can start
+      ZooKeeper:</para>
+
+      <para><screen>java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</screen></para>
+
+      <para>ZooKeeper logs messages using log4j -- more detail available in
+      the <ulink url="zookeeperProgrammers.html#Logging">Logging</ulink>
+      section of the Programmer's Guide.<remark revision="include_tbd">[tbd:
+      real reference needed]</remark> You will see log messages coming to the
+      console and/or a log file depending on the log4j configuration.</para>
+
+      <para>The steps outlined here run ZooKeeper in standalone mode. There is
+      no replication, so if Zookeeper process fails, the service will go down.
+      This is fine for most development situations, but to run Zookeeper in
+      replicated mode, please see <ulink
+      url="#sc_RunningReplicatedZooKeeper">Running Replicated
+      Zookeeper</ulink>.</para>
+
+      <para></para>
+    </section>
+
+    <section id="sc_ConnectingToZooKeeper">
+      <title>Connecting to ZooKeeper</title>
+
+      <para>Once ZooKeeper is running, you have several option for connection
+      to it:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis role="bold">Java</emphasis>: Use java -cp
+          zookeeper.jar:java/lib/log4j-1.2.15.jar:conf
+          org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</para>
+
+          <para>This lets you perform simple, file-like operations.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">C</emphasis>: compile cli_mt
+          (multi-threaded) or cli_st (single-threaded) by running
+          <command>_make cli_mt_</command> or <command>_make cli_st_</command>
+          in the c subdirectory in the ZooKeeper sources.</para>
+
+          <para>You can run the program using <emphasis>LD_LIBRARY_PATH=.
+          cli_mt 127.0.0.1:2181</emphasis> or <emphasis>LD_LIBRARY_PATH=.
+          cli_st 127.0.0.1:2181</emphasis>. This will give you a simple shell
+          to execute file system like operations on ZooKeeper.</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section id="sc_ProgrammingToZooKeeper">
+      <title>Programming to ZooKeeper</title>
+
+      <para>ZooKeeper has a Java bindings and C bindings. They are
+      functionally equivalent. The C bindings exist in two variants: single
+      threaded and multi-threaded. These differ only in how the messaging loop
+      is done. <remark>[tbd: what is the messaging loop? Do we talk about it
+      anywyhere? is this too much info for a getting started guide?]</remark>
+      For more information, see the <ulink
+      url="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
+      Examples in the Zookeeper Programmer's Guide</ulink> for
+      sample code using of the different APIs.</para>
+    </section>
+
+    <section id="sc_RunningReplicatedZooKeeper">
+      <title>Running Replicated ZooKeeper</title>
+
+      <para>Running ZooKeeper in standalone mode is convenient for evaluation,
+      some development, and testing. But in production, you should run
+      ZooKeeper in replicated mode. A replicated group of servers in the same
+      application is called a <emphasis>quorum</emphasis>, and in replicated
+      mode, all servers in the quorum have copies of the same configuration
+      file. The file is similar to the one used in standalone mode, but with a
+      few differences. Here is an example:</para>
+
+      <para><screen>tickTime=2000 
+dataDir=/var/zookeeper/ 
+clientPort=2181 
+initLimit=5 
+syncLimit=2 
+server.1=zoo1:2888 server.2=zoo2:2888 
+server.3=zoo3:2888 </screen></para>
+
+      <para>The new entry, <emphasis role="bold">initLimit</emphasis> is
+      timeouts ZooKeeper uses to limit the length of time the Zookeeper
+      servers in quorum have to connect to a leader. The entry <emphasis
+      role="bold">syncLimit</emphasis> limits how far out of date a server can
+      be from a leader. [TBD: someone please verify that the previous is
+      true.]</para>
+
+      <para>With both of these timeouts, you specify the unit of time using
+      <emphasis role="bold">tickTime</emphasis>. In this example, the timeout
+      for initLimit is 5 ticks at 2000 milleseconds a tick, or 10
+      seconds.</para>
+
+      <para>The entries of the form <emphasis>server.X</emphasis> list the
+      servers that make up the ZooKeeper service. When the server starts up,
+      it knows which server it is by looking for the file *myid* in the data
+      directory. That file has the contains the server number, in
+      ASCII.</para>
+
+      <para>Finally, note the "2888" port numbers after each server name.
+      These are the "electionPort" numbers of the servers (as opposed to
+      clientPorts), that is ports for <remark>[tbd: feedback need: what are
+      these ports, exactly?]</remark>.</para>
+
+      <note>
+        <para>If you want to test multiple servers on a single machine, define
+        the electionPort for each server in that server's config file, using
+        the line <command>electionPort=xxxx</command> as means of avoiding
+        clashes.</para>
+      </note>
+    </section>
+
+    <section>
+      <title>Other Optimizations</title>
+
+      <para>There are a couple of other configuration parameters that can
+      greatly increase performance:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>To get low latencies on updates it is important to have a
+          dedicated transaction log directory. By default transaction logs are
+          put in the same directory as the data snapshots and *myid* file. The
+          dataLogDir parameters indicates a different directory to use for the
+          transaction logs.</para>
+        </listitem>
+
+        <listitem>
+          <para><remark>[tbd: feedback need: what is the other config param?
+          (I believe two are mentioned above.)]</remark></para>
+        </listitem>
+      </itemizedlist>
+    </section>
+  </chapter>
+</book>

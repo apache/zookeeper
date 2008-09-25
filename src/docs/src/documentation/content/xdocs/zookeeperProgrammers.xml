@@ -1,0 +1,1077 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<book id="bk_programmersGuide">
+  <title>ZooKeeper Programmer's Guide</title>
+
+  <subtitle>Developing Distributed Applications that use ZooKeeper</subtitle>
+
+  <bookinfo>
+    <legalnotice>
+      <para>Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License. You may
+      obtain a copy of the License at <ulink
+      url="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</ulink>.</para>
+
+      <para>Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied. See the License for the specific language governing permissions
+      and limitations under the License.</para>
+    </legalnotice>
+
+    <abstract>
+      <para>This guide contains detailed information about creating
+      distributed applications that use ZooKeeper. It discusses the basic
+      operations Zookeeper supports, and how these can be used to build
+      higher-level abstractions. It contains solutions to common tasks, a
+      troubleshooting guide, and links to other information.</para>
+
+      <para>$Revision: 1.14 $ $Date: 2008/09/19 05:31:45 $</para>
+    </abstract>
+  </bookinfo>
+
+  <preface id="_introduction">
+    <title>Introduction</title>
+
+    <para>This document is a guide for developers wishing to create
+    distributed applications that take advantage of ZooKeeper's coordination
+    services. It contains conceptual and practical information.</para>
+
+    <para>The first four chapters of this guide present higher level
+    discussions of various ZooKeeper concepts. These are necessary both for an
+    understanding of how Zookeeper works as well how to work with it. It does
+    not contain source code, but it does assume a familiarity with the
+    problems associated with distributed computing. The chapters in this first
+    group are:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><xref linkend="ch_zkDataModel" /></para>
+      </listitem>
+
+      <listitem>
+        <para><xref linkend="ch_zkSessions" /></para>
+      </listitem>
+
+      <listitem>
+        <para><xref linkend="ch_zkWatches" /></para>
+      </listitem>
+
+      <listitem>
+        <para><xref linkend="ch_zkGuarantees" /></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>The next four chapters of this provided practical programming
+    information. These are:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><xref linkend="ch_guideToZkOperations" /></para>
+      </listitem>
+
+      <listitem>
+        <para><xref linkend="ch_bindings" /></para>
+      </listitem>
+
+      <listitem>
+        <para><xref linkend="ch_programStructureWithExample" />
+        <remark>[tbd]</remark></para>
+      </listitem>
+
+      <listitem>
+        <para><xref linkend="ch_gotchas" /></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>The book concludes with an <ulink
+    url="#apx_linksToOtherInfo">appendix</ulink> containing links to other
+    useful, ZooKeeper-related information.</para>
+
+    <para>Most of information in this document is written to be accessible as
+    stand-alone reference material. However, before starting your first
+    ZooKeeper application, you should probably at least read the chaptes on
+    the <ulink url="#ch_zkDataModel">ZooKeeper Data Model</ulink> and <ulink
+    url="#ch_guideToZkOperations">ZooKeeper Basic Operations</ulink>. Also,
+    the <ulink url="#ch_programStructureWithExample">Simple Programmming
+    Example</ulink> <remark>[tbd]</remark> is helpful for understand the basic
+    structure of a ZooKeeper client application.</para>
+  </preface>
+
+  <chapter id="ch_zkDataModel">
+    <title>The ZooKeeper Data Model</title>
+
+    <para>ZooKeeper has a hierarchal name space, much like a distributed file
+    system. The only difference is that each node in the namespace can have
+    data associated with it as well as children. It is like having a file
+    system that allows a file to also be a directory. Paths to nodes are
+    always expressed as canonical, absolute, slash-separated paths; there are
+    no relative reference. Any unicode character can be used in a path subject
+    to the following constraints:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>The null character (\u0000) cannot be part of a path name. (This
+        causes problems with the C binding.)</para>
+      </listitem>
+
+      <listitem>
+        <para>The following characters can't be used because they don't
+        display well, or render in confusing ways: \u0001 - \u0019 and \u007F
+        - \u009F.</para>
+      </listitem>
+
+      <listitem>
+        <para>The following characters are not allowed because <remark>[tbd:
+        do we need reasons?]</remark> :\ud800 -uF8FFF, \uFFF0-uFFFF, \uXFFFE -
+        \uXFFFF (where X is an digit 1 - E), \uF0000 - \uFFFFF.</para>
+      </listitem>
+
+      <listitem>
+        <para>The "." character can be used as part of another name, but "."
+        and ".." cannot alone make up the whole name of a path location,
+        because ZooKeeper doesn't use relative paths. The following would be
+        invalid: "/a/b/./c" or "/a/b/../c".</para>
+      </listitem>
+
+      <listitem>
+        <para>The token "zookeeper" is reserved.</para>
+      </listitem>
+    </itemizedlist>
+
+    <section id="sc_zkDataModel_znodes">
+      <title>ZNodes</title>
+
+      <para>Every node in a ZooKeeper tree is refered to as a
+      <firstterm>znode</firstterm>. Znodes maintain a stat structure that
+      includes version numbers for data changes, acl changes. The stat
+      structure also has timestamps. The version number, together with the
+      timestamp allow ZooKeeper to validate the cache and to coordinate
+      updates. Each time a znode's data changes, the version number increases.
+      For instance, whenever a client retrieves data, it also receives the
+      version of the data. And when a client performs an update or a delete,
+      it must supply the version of the data of the znode it is changing. If
+      the version it supplies doesn't match the actual version of the data,
+      the update will fail. (This behavior can be overridden. For more
+      information see... <remark>[tbd... reference here to the section
+      describing the special version number -1]</remark></para>
+
+      <note>
+        <para>In distributed application engineering, the word
+        <emphasis>node</emphasis> can refer to a generic host machine, a
+        server, a member of quorums, a client process, etc. In the ZooKeeper
+        documentatin, <emphasis>znodes</emphasis> refer to the data nodes.
+        <firstterm>Servers</firstterm> to refer to machines that make up the
+        ZooKeeper service; <emphasis>quorum peers</emphasis> refer to the
+        servers that make up a quorum; client refers to any host or process
+        which uses a ZooKeeper service.</para>
+      </note>
+
+      <para>Znodes are the main enitity that a programmer access. They have
+      several characteristics that are worth mentioning here.</para>
+
+      <section id="sc_zkDataMode_watches">
+        <title>Watches</title>
+
+        <para>Clients can set watches on znodes. Changes to that znode trigger
+        the watch and then clear the watch. When a watch triggers, ZooKeeper
+        sends the client a notification. More information about watches can be
+        found in the section 
+	<ulink url="recipes.html#sc_recipes_Locks">
+	Zookeeper Watches</ulink>.
+        <remark>[tbd: fix this link] [tbd: Ben there is note from to emphasize
+        that "it is queued". What is "it" and is what we have here
+        sufficient?]</remark></para>
+      </section>
+
+      <section>
+        <title>Data Access</title>
+
+        <para>The data stored at each znode in a namespace is read and written
+        atomically. Reads get all the data bytes associated with a znode and a
+        write replaces all the data. Each node has an Access Control List
+        (ACL) that restricts who can do what.</para>
+      </section>
+
+      <section>
+        <title>Ephemeral Nodes</title>
+
+        <para>ZooKeeper also has the notion of ephemeral nodes. These znodes
+        exists as long as the session that created the znode is active. When
+        the session ends the znode is deleted. Because of this behavior
+        ephemeral znodes are not allowed to have children.</para>
+      </section>
+
+      <section>
+        <title>Unique Naming</title>
+
+        <para>Finally you create a znode, you can request that ZooKeeper
+        append a monotonicly increasing counter be appended to the path name
+        of the znode to be requested. This counter is unique to the parent
+        znode.</para>
+      </section>
+    </section>
+
+    <section id="sc_timeInZk">
+      <title>Time in ZooKeeper</title>
+
+      <para>ZooKeeper tracks time multiple ways:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis role="bold">Zxid</emphasis></para>
+
+          <para>Every change to the ZooKeeper state receives a stamp in the
+          form of a <firstterm>zxid</firstterm> (ZooKeeper Transaction Id).
+          This exposes the total ordering of all changes to ZooKeeper. Each
+          change will have a unique zxid and if zxid1 is smaller than zxid2
+          then zxid1 happened before zxid2.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Version numbers</emphasis></para>
+
+          <para>Every change to a a node will cause an increase to one of the
+          version numbers of that node. The three version numbers are version
+          (number of changes to the data of a znode), cversion (number of
+          changes to the children of a znode), and aversion (number of changes
+          to the ACL of a znode).</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Ticks</emphasis></para>
+
+          <para>When using multi-server ZooKeeper, servers use ticks to define
+          timing of events such as status uploads, session timeouts,
+          connection timeouts between peers, etc. The tick time is only
+          indirectly exposed through the minimum session timeout (2 times the
+          tick time); if a client requests a session timeout less than the
+          minimum session timeout, the server will tell the client that the
+          session timeout is actually the minimum session timeout.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Real time</emphasis></para>
+
+          <para>ZooKeeper doesn't use real time, or clock time, at all except
+          to put timestamps into the stat structure on znode creation and
+          znode modification.</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section id="sc_zkStatStructure">
+      <title>ZooKeeper Stat Structure</title>
+
+      <para>The Stat structure for each znode in ZooKeeper is made up of the
+      following fields:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis role="bold">czxid</emphasis></para>
+
+          <para>The zxid of the change that caused this znode to be
+          created.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">mzxid</emphasis></para>
+
+          <para>The zxid of the change that last modified this znode.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">ctime</emphasis></para>
+
+          <para>The time in milliseconds from epoch when this znode was
+          created.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">mtime</emphasis></para>
+
+          <para>The time in milliseconds from epoch when this znode was last
+          modified.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">version</emphasis></para>
+
+          <para>The number of changes to the data of this znode.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">cversion</emphasis></para>
+
+          <para>The number of changes to the children of this znode.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">aversion</emphasis></para>
+
+          <para>The number of changes to the ACL of this znode.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">ephemeralOwner</emphasis></para>
+
+          <para>The session id of the owner of this znode if the znode is an
+          ephemeral node. If it is not an ephemeral node, it will be
+          zero.</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+  </chapter>
+
+  <chapter id="ch_zkSessions">
+    <title>ZooKeeper Sessions</title>
+
+    <para>When a client gets a handle to the ZooKeeper service, ZooKeeper
+    creates a ZooKeeper session, represented as a 64-bit number, that it
+    assigns to the client. If the client connects to a different ZooKeeper
+    server, it will send the session id as a part of the connection handshake.
+    As a security measure, the server creates a password for the session id
+    that any ZooKeeper server can validate. <remark>[tbd: note from Ben:
+    "perhaps capability is a better word." need clarification on that.]
+    </remark>The password is sent to the client with the session id when the
+    client establishes the session. The client sends this password with the
+    session id whenever it reestablishes the session with a new server.</para>
+
+    <para>One of the parameters to the ZooKeeper client library call to create
+    a ZooKeeper session is the session timeout in milliseconds. The client
+    sends a requested timeout, the server responds with the timeout that it
+    can give the client. The current implementation requires that the timeout
+    be between 2 times the tickTime (as set in the server configuration) and
+    60 seconds.</para>
+
+    <para>The session is kept alive by requests sent by the client. If the
+    session is idle for a period of time that would timeout the session, the
+    client will send a PING request to keep the session alive. This PING
+    request not only allows the ZooKeeper server to know that the client is
+    still active, but it also allows the client to verify that its connection
+    to the ZooKeeper server is still active. The timing of the PING is
+    conservative enough to ensure reasonable time to detect a dead connection
+    and reconnect to a new server.</para>
+  </chapter>
+
+  <chapter id="ch_zkWatches">
+    <title>ZooKeeper Watches</title>
+
+    <para>All of the read operations in ZooKeeper - <emphasis
+    role="bold">getData()</emphasis>, <emphasis
+    role="bold">getChildren()</emphasis>, and <emphasis
+    role="bold">exists()</emphasis> - have the option of setting a watch as a
+    side effect. Here is ZooKeeper's definition of a watch: a watch event is
+    one-time trigger, sent to the client that set the watch, which occurs when
+    the data for which the watch was set changes. There are three key points
+    to consider in this definition of a watch:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><emphasis role="bold">One-time trigger</emphasis></para>
+
+        <para>One watch event will be sent to the client the data has changed.
+        For example, if a client does a getData("/znode1", true) and later the
+        data for /znode1 is changed or deleted, the client will get a watch
+        event for /znode1. If /znode1 changes again, no watch event will be
+        sent unless the client has done another read that sets a new
+        watch.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">Sent to the client</emphasis></para>
+
+        <para>This implies that an event is on the way to the client, but may
+        not reach the client before the successful return code to the change
+        operation reaches the client that initiated the change. Watches are
+        sent asynchronously to watchers. ZooKeeper provides an ordering
+        guarantee: a client will never see a change for which it has set a
+        watch until it first sees the watch event. Network delays or other
+        factors may cause different clients to see watches and return codes
+        from updates at different times. The key point is that everything seen
+        by the different clients will have a consistent order.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">The data for which the watch was
+        set</emphasis></para>
+
+        <para>This refers to the different ways a node can change. ZooKeeper
+        maintains two lists of watches: data watches and child watches.
+        getData() and exists() set data watches. getChildren() sets child
+        watches. Thus, setData() will trigger data watches for the znode being
+        set (assuming the set is successful). A successful create() will
+        trigger a data watch for the znode being created and a child watch for
+        the parent znode. A successful delete() will trigger both a data watch
+        and a child watch (since there can be no more children) for a znode
+        being deleted as well as a child watch for the parent znode.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Watches are maintained locally at the ZooKeeper server to which the
+    client is connected. This allows watches to be light weight to set,
+    maintain, and dispatch. It also means if a client connects to a different
+    server, the new server is not going to know about its watches. So, when a
+    client gets a disconnect event, it must consider that an implicit trigger
+    of all watches. When a client reconnects to a new server, the client
+    should re-set any watches that it is still interested in.</para>
+
+    <section id="sc_WatchGuarantees">
+      <title>What ZooKeeper Guarantees about Watches</title>
+
+      <para>With regard to watches, ZooKeeper maintains these
+      guarantees:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Watches are ordered with respect to other events, other
+          watches, and asynchronous replies. The ZooKeeper client libraries
+          ensures that everything is dispatched in order.</para>
+        </listitem>
+      </itemizedlist>
+
+      <itemizedlist>
+        <listitem>
+          <para>A client will see a watch event for a znode it is watching
+          before seeing the new data that corresponds to that znode.</para>
+        </listitem>
+      </itemizedlist>
+
+      <itemizedlist>
+        <listitem>
+          <para>The order of watch events from ZooKeeper corresponds to the
+          order of the updates as seen by the ZooKeeper service.</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section id="sc_WatchRememberThese">
+      <title>Things to Remember about Watches</title>
+
+      <itemizedlist>
+        <listitem>
+          <para>Watches are one time triggers; if you get a watch event and
+          you want to get notified of future changes, you must set another
+          watch.</para>
+        </listitem>
+      </itemizedlist>
+
+      <itemizedlist>
+        <listitem>
+          <para>Because watches are one time triggers and there is latency
+          between getting the event and sending a new request to get a watch
+          you cannot reliably see every change that happens to a node in
+          ZooKeeper. Be prepared to handle the case where the znode changes
+          multiple times between getting the event and setting the watch
+          again. (You may not care, but at least realize it may
+          happen.)</para>
+        </listitem>
+      </itemizedlist>
+
+      <itemizedlist>
+        <listitem>
+          <para>When you disconnect from a server (for example, when the
+          server fails), all of the watches you have registered are lost, so
+          you should treat this case as if all your watches were
+          triggered.</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+  </chapter>
+
+  <chapter id="ch_zkGuarantees">
+    <title>Consistency Guarantees</title>
+
+    <para>ZooKeeper is a high performance, scalable service. Both reads and
+    write operations are designed to be fast, though reads are faster than
+    writes. The reason for this is that in the case of reads, ZooKeeper can
+    serve older data, which in turn is due to ZooKeeper's consistency
+    guarantees:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>Sequential Consistency</term>
+
+        <listitem>
+          <para>Updates from a client will be applied in the order that they
+          were sent.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Atomicity</term>
+
+        <listitem>
+          <para>Updates either succeed or fail -- there are no partial
+          results.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Single System Image</term>
+
+        <listitem>
+          <para>A client will see the same view of the service regardless of
+          the server that it connects to.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Reliability</term>
+
+        <listitem>
+          <para>Once an update has been applied, it will persist from that
+          time forward until a client overwrites the update. This guarantee
+          has two corollaries:</para>
+
+          <orderedlist>
+            <listitem>
+              <para>If a client gets a successful return code, the update will
+              have been applied. On some failures (communication errors,
+              timeouts, etc) the client will not know if the update has
+              applied or not. We take steps to minimize the failures, but the
+              only guarantee is only present with successful return codes.
+              (This is called the _monotonicity condition_ in Paxos.)</para>
+            </listitem>
+
+            <listitem>
+              <para>Any updates that are seen by the client, through a read
+              request or successful update, will never be rolled back when
+              recovering from server failures.</para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Timeliness</term>
+
+        <listitem>
+          <para>The clients view of the system is guaranteed to be up-to-date
+          within a certain time bound. (On the order of tens of seconds.)
+          Either system changes will be seen by a client within this bound, or
+          the client will detect a service outage.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>Using these consistency guarantees it is easy to build higher level
+    functions such as leader election, barriers, queues, and read/write
+    revocable locks solely at the ZooKeeper client (no additions needed to
+    ZooKeeper). See <ulink url="recipes.html">Recipes and Solutions</ulink>
+    for more details.</para>
+
+    <para><note>
+        <para>Sometimes developers mistakenly assume one other guarantee that
+        Zookeeper does <emphasis>not</emphasis> in fact make. This is:</para>
+
+        <variablelist>
+          <varlistentry>
+            <term>Simultaneously Conistent Cross-Client Views</term>
+
+            <listitem>
+              <para>ZooKeeper does not guarantee that at every instance in
+              time, two different clients will have identical views of
+              ZooKeeper data. Due to factors like network delays, one client
+              may perform an update before another client gets notified of the
+              change. Consider the scenario of two clients, A and B. If client
+              A sets the value of a znode /a from 0 to 1, then tells client B
+              to read /a, client B may read the old value of 0, depending on
+              which server in the ZooKeeper quorum it is connected to. If it
+              is important that Client A and Client B read the same value,
+              Client B should should call the <emphasis
+              role="bold">sync()</emphasis> method from the ZooKeeper API
+              method before it performs its read.</para>
+
+              <para>So, ZooKeeper by itself doesn't guarantee instantaneous,
+              atomic, synchronization across its quorum, but ZooKeeper
+              primitives can be used to construct higher level functions that
+              provide complete client synchronization. (For more information,
+              see the <ulink
+              url="recipes.html#sc_recipes_Locks">Locks</ulink>
+              <remark>[tbd: fix final link target]</remark> in <ulink
+              url="recipes.html">Zookeeper Recipes</ulink>.
+              <remark>[tbd: fix final link target]</remark>).</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </note></para>
+  </chapter>
+
+  <chapter id="ch_bindings">
+    <title>Bindings</title>
+
+    <para>The ZooKeeper client libraries come in two languages: Java and C.
+    The following sections describe these.</para>
+
+    <section>
+      <title>Java Binding</title>
+
+      <para>There are two packages that make up the ZooKeeper Java binding:
+      <emphasis role="bold">org.apache.zookeeper</emphasis> and <emphasis
+      role="bold">org.apache.zookeeper.data</emphasis>. The rest of the
+      packages that make up ZooKeeper are used internally or are part of the
+      server implementation. The <emphasis
+      role="bold">org.apache.zookeeper.data</emphasis> package is made up of
+      generated classes that are used simply as containers.</para>
+
+      <para>The main class used by a ZooKeeper Java client is the <emphasis
+      role="bold">ZooKeeper</emphasis> class. Its two constructors differ only
+      by an optional session id and password. ZooKeeper supports session
+      recovery accross instances of a process. A Java program may save its
+      session id and password to stable storage, restart, and recover the
+      session that was used by the earlier instance of the program.</para>
+
+      <para>When a ZooKeeper object is created, two threads are created as
+      well: an IO thread and an event thread. All IO happens on the IO thread
+      (using Java NIO). All event callbacks happen on the event thread.
+      Session maintenance such as reconnecting to ZooKeeper servers and
+      maintaining heartbeat is done on the IO thread. Responses for
+      synchronous methods are also processed in the IO thread. All responses
+      to asynchronous methods and watch events are processed on the event
+      thread. There are a few things to notice that result from this
+      design:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>All completions for asynchronous calls and watcher callbacks
+          will be made in order, one at a time. The caller can do any
+          processing they wish, but no other callbacks will be processed
+          during that time.</para>
+        </listitem>
+
+        <listitem>
+          <para>Callbacks do not block the processing of the IO thread or the
+          processing of the synchronous calls.</para>
+        </listitem>
+
+        <listitem>
+          <para>Synchronous calls may not return in the correct order. For
+          example, assume a client does the following processing: issues an
+          asynchronous read of node <emphasis role="bold">/a</emphasis> with
+          <emphasis>watch</emphasis> set to true, and then in the completion
+          callback of the read it does a synchronous read of <emphasis
+          role="bold">/a</emphasis>. (Maybe not good practice, but not illegal
+          either, and it makes for a simple example.)</para>
+
+          <para>Note that if there is a change to <emphasis
+          role="bold">/a</emphasis> between the asynchronous read and the
+          synchronous read, the client library will receive the watch event
+          saying <emphasis role="bold">/a</emphasis> changed before the
+          response for the synchronous read, but because the completion
+          callback is blocking the event queue, the synchronous read will
+          return with the new value of <emphasis role="bold">/a</emphasis>
+          before the watch event is processed.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Finally, the rules associated with shutdown are straightforward:
+      once a ZooKeeper object is closed or receives a fatal event
+      (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid,
+      the two threads shut down, and any further ZooKeeper calls throw
+      errors.</para>
+    </section>
+
+    <section>
+      <title>C Binding</title>
+
+      <para>The C binding has a single-threaded and multi-threaded library.
+      The multi-threaded library is easiest to use and is most similar to the
+      Java API. This library will create an IO thread and an event dispatch
+      thread for handling connection maintenance and callbacks. The
+      single-threaded library allows ZooKeeper to be used in event driven
+      applications by exposing the event loop used in the multi-threaded
+      library.</para>
+
+      <para>The package includes two shared libraries: zookeeper_st and
+      zookeeper_mt. The former only provides the asynchronous APIs and
+      callbacks for integrating into the application's event loop. The only
+      reason this library exists is to support the platforms were a
+      <emphasis>pthread</emphasis> library is not available or is unstable
+      (i.e. FreeBSD 4.x). In all other cases, application developers should
+      link with zookeeper_mt, as it includes support for both Sync and Async
+      API.</para>
+
+      <section>
+        <title>Installation</title>
+
+        <para>If you're building the client from a check-out from the Apache
+        repository, follow the steps outlined below. If you're building from a
+        project source package downloaded from apache, skip to step <emphasis
+        role="bold">3</emphasis>.</para>
+
+        <orderedlist>
+          <listitem>
+            <para>Run <command>ant compile_just</command> from the zookeeper
+            top level directory (<filename>.../trunk/zookeeper</filename>).
+            This will create a directory named "generated" under
+            <filename>zookeeper/c</filename>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Change directory to the<filename>zookeeper/c</filename> and
+            run <command>autoreconf -i</command> to bootstrap <emphasis
+            role="bold">autoconf</emphasis>, <emphasis
+            role="bold">automake</emphasis> and <emphasis
+            role="bold">libtool</emphasis>. Make sure you have <emphasis
+            role="bold">autoconf version 2.59</emphasis> or greater installed.
+            Skip to step<emphasis role="bold"> 4</emphasis>.</para>
+          </listitem>
+
+          <listitem>
+            <para>If you are building from a project source package,
+            unzip/untar the source tarball and cd to the<filename>
+            zookeeper-x.x.x/</filename> directory.</para>
+          </listitem>
+
+          <listitem>
+            <para>Run <command>./configure &lt;your-options&gt;</command> to
+            generate the makefile. Here are some of options the <emphasis
+            role="bold">configure</emphasis> utility supports that can be
+            useful in this step:</para>
+
+            <itemizedlist>
+              <listitem>
+                <para><command>--enable-debug</command></para>
+
+                <para>Enables optimization and enables debug info compiler
+                options. (Disabled by default.)</para>
+              </listitem>
+
+              <listitem>
+                <para><command>--without-syncapi </command></para>
+
+                <para>Disables Sync API support; zookeeper_mt library won't be
+                built. (Enabled by default.)</para>
+              </listitem>
+
+              <listitem>
+                <para><command>--disable-static </command></para>
+
+                <para>Do not build static libraries. (Enabled by
+                default.)</para>
+              </listitem>
+
+              <listitem>
+                <para><command>--disable-shared</command></para>
+
+                <para>Do not build shared libraries. (Enabled by
+                default.)</para>
+              </listitem>
+            </itemizedlist>
+
+            <note>
+              <para>See INSTALL for general information about running
+              <emphasis role="bold">configure</emphasis>. <remark>[tbd: what
+              is INSTALL? a directory? a file?]</remark></para>
+            </note>
+          </listitem>
+
+          <listitem>
+            <para>Run <command>make</command> or <command>make
+            install</command> to build the libraries and install them.</para>
+          </listitem>
+
+          <listitem>
+            <para>To generate doxygen documentation for the ZooKeeper API, run
+            <command>make doxygen-doc</command>. All documentation will be
+            placed in a new subfolder named docs. By default, this command
+            only generates HTML. For information on other document formats,
+            run <command>./configure --help</command></para>
+          </listitem>
+        </orderedlist>
+      </section>
+
+      <section>
+        <title>Using the Client</title>
+
+        <para>You can test your client by running a zookeeper server (see
+        instructions on the project wiki page on how to run it) and connecting
+        to it using one of the cli applications that were built as part of the
+        installation procedure. cli_mt (multithreaded, built against
+        zookeeper_mt library) is shown in this example, but you could also use
+        cli_st (singlethreaded, built against zookeeper_st library):</para>
+
+        <para><programlisting>$ cli_mt zookeeper_host:9876</programlisting>This
+        is a client application that gives you a shell for executing simple
+        zookeeper commands. Once succesully started and connected to the
+        server it displays a shell prompt. You can now enter zookeeper
+        commands. For example, to create a node:</para>
+
+        <programlisting>&gt; create /my_new_node</programlisting>
+
+        <para>To verify that the node's been created:</para>
+
+        <para>You should see a list of node who are children of the root node
+        "/". <remark>[tbd: document all the cli commands (I think this is
+        Ben's tbd? It's from sourceforge)]</remark></para>
+
+        <para>In order to be able to use the ZooKeeper API in your application
+        you have to remember to</para>
+
+        <orderedlist>
+          <listitem>
+            <para>Include zookeeper header: #include
+            &lt;zookeeper/zookeeper.h</para>
+          </listitem>
+
+          <listitem>
+            <para>If you are building a multithreaded client, compile with
+            -DTHREADED compiler flag to enable the multi-threaded version of
+            the library, and then link against against the
+            <varname>zookeeper_mt</varname> library. If you are building a
+            single-threaded client, do not compile with -DTHREADED, and be
+            sure to link against the<varname> zookeeper_st
+            </varname>library.</para>
+          </listitem>
+        </orderedlist>
+
+        <para>Refer to <xref linkend="ch_programStructureWithExample"/>for examples of usage in Java and C.
+        <remark>[tbd: some kind of short tutorial would be helpful, I guess
+        (ben's tbd?) ][tbd: whatever the case, make sure that link points to something.]</remark></para>
+      </section>
+    </section>
+  </chapter>
+
+   <chapter id="ch_guideToZkOperations">
+    <title>Building Blocks: A Guide to ZooKeeper Operations</title>
+
+    <para><remark>[Engineering input needed. This is a new section. The below
+    is just placeholder, and was actually copied from the overview book. There
+    should probably be a subsection on each of those operations, with a little
+    bit of illustrative code for each op.] </remark></para>
+
+    <para>One of the design goals of ZooKeeper is provide a very simple
+    programming interface. As a result, it supports only these
+    operations:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>create</term>
+
+        <listitem>
+          <para>creates a node at a location in the tree</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>delete</term>
+
+        <listitem>
+          <para>deletes a node</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>exists</term>
+
+        <listitem>
+          <para>tests if a node exists at a location</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>get data</term>
+
+        <listitem>
+          <para>reads the data from a node</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>set data</term>
+
+        <listitem>
+          <para>writes data to a node</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>get children</term>
+
+        <listitem>
+          <para>retrieves a list of children of a node</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>sync</term>
+
+        <listitem>
+          <para>waits for data to be propagated.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </chapter>
+  
+  <chapter id="ch_programStructureWithExample">
+    <title>Program Structure, with Simple Example</title>
+
+    <para><remark>[tbd]</remark></para>
+  </chapter>
+
+  <chapter id="ch_gotchas">
+    <title>Gotchas: Common Problems and Troubleshooting</title>
+
+    <para>So now you know ZooKeeper. It's fast, simple, your application
+    works, but wait ... something's wrong. Here are some pitfalls that
+    ZooKeeper users fall into:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>If you are using watches, you must look for the connected watch
+        event. When a ZooKeeper client disconnects from a server, all the
+        watches are removed, so a client must treat the disconnect event as an
+        implicit trigger of watches. The easiest way to deal with this is to
+        act like the connected watch event is a watch trigger for all your
+        watches. The connected event makes a better trigger than the
+        disconnected event because you can access ZooKeeper and reestablish
+        watches when you are connected.</para>
+      </listitem>
+
+      <listitem>
+        <para>You must test ZooKeeper server failures. The ZooKeeper service
+        can survive failures as long as a majority of servers are active. The
+        question to ask is: can your application handle it? In the real world
+        a client's connection to ZooKeeper can break. (ZooKeeper server
+        failures and network partitions are common reasons for connection
+        loss.) The ZooKeeper client library takes care of recovering your
+        connection and letting you know what happened, but you must make sure
+        that you recover your state and any outstanding requests that failed.
+        Find out if you got it right in the test lab, not in production - test
+        with a ZooKeeper service made up of a several of servers and subject
+        them to reboots.</para>
+      </listitem>
+
+      <listitem>
+        <para>The list of ZooKeeper servers used by the client must match the
+        list of ZooKeeper servers that each ZooKeeper server has. Things can
+        work, although not optimally, if the client list is a subset of the
+        real list of ZooKeeper servers, but not if the client lists ZooKeeper
+        servers not in the ZooKeeper cluster.</para>
+      </listitem>
+
+      <listitem>
+        <para>Be careful where you put that transaction log. The most
+        performance-critical part of ZooKeeper is the transaction log.
+        ZooKeeper must sync transactions to media before it returns a
+        response. A dedicated transaction log device is key to consistent good
+        performance. Putting the log on a busy device will adversely effect
+        performance. If you only have one storage device, put trace files on
+        NFS and increase the snapshotCount; it doesn't eliminate the problem,
+        but it can mitigate it.</para>
+      </listitem>
+
+      <listitem>
+        <para>Set your Java max heap size correctly. It is very important to
+        <emphasis>avoid swapping.</emphasis> Going to disk unnecessarily will
+        almost certainly degrade your performance unacceptably. Remember, in
+        ZooKeeper, everything is ordered, so if one request hits the disk, all
+        other queued requests hit the disk.</para>
+
+        <para>To avoid swapping, try to set the heapsize to the amount of
+        physical memory you have, minus the amount needed by the OS and cache.
+        The best way to determine an optimal heap size for your configurations
+        is to <emphasis>run load tests</emphasis>. If for some reason you
+        can't, be conservative in your estimates and choose a number well
+        below the limit that would cause your machine to swap. For example, on
+        a 4G machine, a 3G heap is a conservative estimate to start
+        with.</para>
+      </listitem>
+    </orderedlist>
+  </chapter>
+
+  <appendix id="apx_linksToOtherInfo">
+    <title>Links to Other Information</title>
+
+    <para>Outside the formal documentation, there're several other sources of
+    information for ZooKeeper developers.</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>ZooKeeper Whitepaper <remark>[tbd: find url]</remark></term>
+
+        <listitem>
+          <para>The definitive discussion of ZooKeeper design and performance,
+          by Yahoo! Research</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>API Reference <remark>[tbd: find url]</remark></term>
+
+        <listitem>
+          <para>The complete reference to the ZooKeeper API</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><ulink
+        url="http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v">Zookeeper
+        Talk at the Hadoup Summit 2008</ulink></term>
+
+        <listitem>
+          <para>A video introduction to ZooKeeper, by Benjamin Reed of Yahoo!
+          Research</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><ulink
+        url="http://wiki.apache.org/hadoop/ZooKeeper/Tutorial">Barrier and
+        Queue Tutorial</ulink></term>
+
+        <listitem>
+          <para>The excellent Java tutorial by Flavio Junqueira, implementing
+          simple barriers and producer-consumer queues using ZooKeeper.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><ulink
+        url="http://wiki.apache.org/hadoop/ZooKeeper/ZooKeeperArticles">ZooKeeper
+        - A Reliable, Scalable Distributed Coordination System</ulink></term>
+
+        <listitem>
+          <para>An article by Todd Hoff (07/15/2008)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><ulink url="recipes.html">Zookeeper Recipes [tbd: fix
+        linkend for apache site]</ulink></term>
+
+        <listitem>
+          <para>Pseudo-level discussion of the implementation of various
+          synchronization solutions with ZooKeeper: Event Handles, Queues,
+          Locks, and Two-phase Commits.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><remark>[tbd]</remark></term>
+
+        <listitem>
+          <para>Whatever good sources anyone can think of...</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </appendix>
+</book>
