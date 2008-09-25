@@ -25,6 +25,9 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.proto.WatcherEvent;
 
 /**
@@ -76,13 +79,13 @@ public class WatchManager {
         }
     }
 
-    Set<Watcher> triggerWatch(String path, int type) {
+    Set<Watcher> triggerWatch(String path, EventType type) {
         return triggerWatch(path, type, null);
     }
     
-    Set<Watcher> triggerWatch(String path, int type, Set<Watcher> supress) {
-        WatcherEvent e = new WatcherEvent(type,
-                Watcher.Event.KeeperStateSyncConnected, path);
+    Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
+        WatchedEvent e = new WatchedEvent(type,
+                KeeperState.SyncConnected, path);
         HashSet<Watcher> watchers;
         synchronized (this) {
             watchers = watchTable.remove(path);

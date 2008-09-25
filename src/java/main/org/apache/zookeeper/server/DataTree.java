@@ -32,6 +32,8 @@ import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -192,8 +194,8 @@ public class DataTree {
                 }
             }
         }
-        dataWatches.triggerWatch(path, Event.EventNodeCreated);
-        childWatches.triggerWatch(parentName.equals("")?"/":parentName, Event.EventNodeChildrenChanged);
+        dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
+        childWatches.triggerWatch(parentName.equals("")?"/":parentName, Event.EventType.NodeChildrenChanged);
         return path;
     }
 
@@ -231,9 +233,9 @@ public class DataTree {
                                  ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                                  "childWatches.triggerWatch " + parentName);
         Set<Watcher> processed =
-        dataWatches.triggerWatch(path, Event.EventNodeDeleted);
-        childWatches.triggerWatch(path, Event.EventNodeDeleted, processed);
-        childWatches.triggerWatch(parentName.equals("")?"/":parentName, Event.EventNodeChildrenChanged);
+        dataWatches.triggerWatch(path, EventType.NodeDeleted);
+        childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
+        childWatches.triggerWatch(parentName.equals("")?"/":parentName, EventType.NodeChildrenChanged);
     }
 
     public Stat setData(String path, byte data[], int version, long zxid,
@@ -250,7 +252,7 @@ public class DataTree {
             n.stat.setVersion(version);
             copyStat(n.stat, s);
         }
-        dataWatches.triggerWatch(path, Event.EventNodeDataChanged);
+        dataWatches.triggerWatch(path, EventType.NodeDataChanged);
         return s;
     }
 

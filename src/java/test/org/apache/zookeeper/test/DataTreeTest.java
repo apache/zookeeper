@@ -23,7 +23,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.server.DataTree;
 
 public class DataTreeTest extends TestCase {
@@ -46,7 +46,7 @@ public class DataTreeTest extends TestCase {
     public void testRootWatchTriggered() throws Exception {
         class MyWatcher implements Watcher{
             boolean fired=false;
-            public void process(WatcherEvent event) {
+            public void process(WatchedEvent event) {
                 if(event.getPath().equals("/"))
                     fired=true;
             }

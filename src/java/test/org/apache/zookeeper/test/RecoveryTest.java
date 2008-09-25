@@ -28,20 +28,18 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Test;
 
-/**
- *
- */
 public class RecoveryTest extends TestCase implements Watcher {
     protected static final Logger LOG = Logger.getLogger(RecoveryTest.class);
 
@@ -199,11 +197,11 @@ public class RecoveryTest extends TestCase implements Watcher {
     /*
      * (non-Javadoc)
      *
-     * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.proto.WatcherEvent)
+     * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.WatcherEvent)
      */
-    public void process(WatcherEvent event) {
+    public void process(WatchedEvent event) {
         LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
-        if (event.getState() == Watcher.Event.KeeperStateSyncConnected
+        if (event.getState() == KeeperState.SyncConnected
                 && startSignal != null && startSignal.getCount() > 0)
         {
             startSignal.countDown();

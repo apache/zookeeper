@@ -42,11 +42,13 @@ import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 
 public class GenerateLoad {
     protected static final Logger LOG = Logger.getLogger(GenerateLoad.class);
@@ -340,7 +342,7 @@ public class GenerateLoad {
             }
         }
 
-        public void process(WatcherEvent event) {
+        public void process(WatchedEvent event) {
             System.err.println(event);
             synchronized(this) {
                 try {
@@ -350,7 +352,7 @@ public class GenerateLoad {
                     e.printStackTrace();
                 }
             }
-            if (event.getType() == Watcher.Event.EventNone && event.getState() == Watcher.Event.KeeperStateExpired) {
+            if (event.getType() == EventType.None && event.getState() == KeeperState.Expired) {
                 try {
                     zk = new ZooKeeper(host, 10000, this);
                 } catch (IOException e) {

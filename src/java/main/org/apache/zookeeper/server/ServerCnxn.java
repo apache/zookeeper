@@ -25,6 +25,7 @@ import java.util.ArrayList;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
@@ -57,7 +58,7 @@ public interface ServerCnxn extends Watcher {
 
     public void finishSessionInit(boolean valid);
 
-    public abstract void process(WatcherEvent event);
+    public abstract void process(WatchedEvent event);
 
     public abstract long getSessionId();
 

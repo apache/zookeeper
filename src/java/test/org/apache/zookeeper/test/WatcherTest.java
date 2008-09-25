@@ -29,21 +29,23 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.Watcher.Event;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 import org.junit.Test;
 
 public class WatcherTest extends ClientBase {
     protected static final Logger LOG = Logger.getLogger(WatcherTest.class);
 
     private class MyWatcher extends CountdownWatcher {
-        LinkedBlockingQueue<WatcherEvent> events =
-            new LinkedBlockingQueue<WatcherEvent>();
+        LinkedBlockingQueue<WatchedEvent> events =
+            new LinkedBlockingQueue<WatchedEvent>();
 
-        public void process(WatcherEvent event) {
+        public void process(WatchedEvent event) {
             super.process(event);
-            if (event.getType() != Event.EventNone) {
+            if (event.getType() != Event.EventType.None) {
                 try {
                     events.put(event);
                 } catch (InterruptedException e) {
@@ -100,14 +102,14 @@ public class WatcherTest extends ClientBase {
             
             for (int i = 0; i < names.length; i++) {
                 String name = names[i];
-                WatcherEvent event = watcher.events.poll(10, TimeUnit.SECONDS);
+                WatchedEvent event = watcher.events.poll(10, TimeUnit.SECONDS);
                 assertEquals(name, event.getPath());
-                assertEquals(Event.EventNodeDataChanged, event.getType());
-                assertEquals(Event.KeeperStateSyncConnected, event.getState());
+                assertEquals(Event.EventType.NodeDataChanged, event.getType());
+                assertEquals(Event.KeeperState.SyncConnected, event.getState());
                 event = watcher.events.poll(10, TimeUnit.SECONDS);
                 assertEquals(name, event.getPath());
-                assertEquals(Event.EventNodeDeleted, event.getType());
-                assertEquals(Event.KeeperStateSyncConnected, event.getState());
+                assertEquals(Event.EventType.NodeDeleted, event.getType());
+                assertEquals(Event.KeeperState.SyncConnected, event.getState());
             }
         } finally {
             if (zk != null) {

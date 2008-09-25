@@ -31,6 +31,8 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -39,7 +41,7 @@ import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,8 +80,8 @@ public class AsyncTest extends TestCase
     private static class CountdownWatcher implements Watcher {
         volatile CountDownLatch clientConnected = new CountDownLatch(1);
 
-        public void process(WatcherEvent event) {
-            if (event.getState() == Event.KeeperStateSyncConnected) {
+        public void process(WatchedEvent event) {
+            if (event.getState() == KeeperState.SyncConnected) {
                 clientConnected.countDown();
             }
         }
@@ -157,7 +159,7 @@ public class AsyncTest extends TestCase
             notifyAll();
         }
 
-        public void process(WatcherEvent event) {
+        public void process(WatchedEvent event) {
             // ignore for purposes of this test
         }
 

@@ -45,6 +45,8 @@ import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.Watcher.Event;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.ZooKeeper.WatchRegistration;
@@ -253,7 +255,7 @@ public class ClientCnxn {
         eventThread.start();
     }
     
-    WatcherEvent eventOfDeath = new WatcherEvent();
+    Object eventOfDeath = new Object();
 
     final static UncaughtExceptionHandler uncaughtExceptionHandler = new UncaughtExceptionHandler() {
         public void uncaughtException(Thread t, Throwable e) {
@@ -263,9 +265,9 @@ public class ClientCnxn {
 
     private class WatcherSetEventPair {
         private final Set<Watcher> watchers;
-        private final WatcherEvent event;
+        private final WatchedEvent event;
         
-        public WatcherSetEventPair(Set<Watcher> watchers, WatcherEvent event) {
+        public WatcherSetEventPair(Set<Watcher> watchers, WatchedEvent event) {
             this.watchers = watchers;
             this.event = event;
         }
@@ -281,7 +283,7 @@ public class ClientCnxn {
             setDaemon(true);
         }
         
-        public void queueEvent(WatcherEvent event) {
+        public void queueEvent(WatchedEvent event) {
             // materialize the watchers based on the event
             WatcherSetEventPair pair = new WatcherSetEventPair(
                     watcher.materialize(event.getState(), event.getType(),
@@ -307,6 +309,7 @@ public class ClientCnxn {
                     if (event == eventOfDeath) {
                         break;
                     }
+
                     if (event instanceof WatcherSetEventPair) {
                         // each watcher will process the event
                         WatcherSetEventPair pair = (WatcherSetEventPair)event;
@@ -459,16 +462,17 @@ public class ClientCnxn {
             int sessionTimeout = conRsp.getTimeOut();
             if (sessionTimeout <= 0) {
                 zooKeeper.state = States.CLOSED;
-                eventThread.queueEvent(new WatcherEvent(Watcher.Event.EventNone,
-                        Watcher.Event.KeeperStateExpired, null));
+
+                eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
+                        Watcher.Event.KeeperState.Expired, null));
                 throw new IOException("Session Expired");
             }
             readTimeout = sessionTimeout * 2 / 3;
             connectTimeout = sessionTimeout / serverAddrs.size();
             sessionId = conRsp.getSessionId();
             sessionPasswd = conRsp.getPasswd();
-            eventThread.queueEvent(new WatcherEvent(Watcher.Event.EventNone,
-                    Watcher.Event.KeeperStateSyncConnected, null));
+            eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
+                    Watcher.Event.KeeperState.SyncConnected, null));
         }
 
         void readResponse() throws IOException {
@@ -497,7 +501,7 @@ public class ClientCnxn {
                             + Long.toHexString(sessionId));
                 }
                 
-                eventThread.queueEvent(event);
+                eventThread.queueEvent( new WatchedEvent(event) );
                 return;
             }
             if (pendingQueue.size() == 0) {
@@ -797,9 +801,9 @@ public class ClientCnxn {
                                 e);
                         cleanup();
                         if (zooKeeper.state.isAlive()) {
-                            eventThread.queueEvent(new WatcherEvent(
-                                    Event.EventNone,
-                                    Event.KeeperStateDisconnected,
+                            eventThread.queueEvent(new WatchedEvent(
+                                    Event.EventType.None,
+                                    Event.KeeperState.Disconnected,
                                     null));
                         }
     

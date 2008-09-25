@@ -54,6 +54,8 @@ import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -124,13 +126,15 @@ public class ZooKeeper {
         private volatile Watcher defaultWatcher;
 
         /* (non-Javadoc)
-         * @see org.apache.zookeeper.ClientWatchManager#materialize(int, int, java.lang.String)
+         * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState, Event.EventType, java.lang.String)
          */
-        public Set<Watcher> materialize(int state, int type, String path) {
+        public Set<Watcher> materialize(Watcher.Event.KeeperState state, 
+                                        Watcher.Event.EventType type, String path) {
             Set<Watcher> result = new HashSet<Watcher>();
             
             // clear the watches if we are not connected
-            if (state != Watcher.Event.KeeperStateSyncConnected) {
+
+            if (state != Watcher.Event.KeeperState.SyncConnected) {
                 synchronized (dataWatches) {
                     for (Set<Watcher> watchers : dataWatches.values()) {
                         for (Watcher watcher : watchers) {
@@ -152,21 +156,21 @@ public class ZooKeeper {
             Set<Watcher> watchers = null;
     
             switch (type) {
-            case Watcher.Event.EventNone:
+            case None:
                 result.add(defaultWatcher);
                 return result;
-            case Watcher.Event.EventNodeDataChanged:
-            case Watcher.Event.EventNodeCreated:
+            case NodeDataChanged:
+            case NodeCreated:
                 synchronized (dataWatches) {
                     watchers = dataWatches.remove(path);
                 }
                 break;
-            case Watcher.Event.EventNodeChildrenChanged:
+            case NodeChildrenChanged:
                 synchronized (childWatches) {
                     watchers = childWatches.remove(path);
                 }
                 break;
-            case Watcher.Event.EventNodeDeleted:
+            case NodeDeleted:
                 synchronized (dataWatches) {
                     watchers = dataWatches.remove(path);
                 }

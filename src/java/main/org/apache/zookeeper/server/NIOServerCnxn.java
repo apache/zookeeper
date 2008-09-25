@@ -46,6 +46,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.AuthPacket;
@@ -760,13 +761,17 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
      *
      * @see org.apache.zookeeper.server.ServerCnxnIface#process(org.apache.zookeeper.proto.WatcherEvent)
      */
-    synchronized public void process(WatcherEvent event) {
+    synchronized public void process(WatchedEvent event) {
         ReplyHeader h = new ReplyHeader(-1, -1L, 0);
         ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                                  "Deliver event " + event + " to 0x"
                                  + Long.toHexString(this.sessionId) 
                                  + " through " + this);
-        sendResponse(h, event, "notification");
+
+        // Convert WatchedEvent to a type that can be sent over the wire
+        WatcherEvent e = event.getWrapper();
+        
+        sendResponse(h, e, "notification");
     }
 
     public void finishSessionInit(boolean valid) {
@@ -830,12 +835,15 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         public long getOutstandingRequests() {
             return outstandingRequests;
         }
+
         public long getPacketsReceived() {
             return packetsReceived;
         }
+
         public long getPacketsSent() {
             return packetsSent;
         }
+
         @Override
         public String toString(){
             StringBuilder sb=new StringBuilder();

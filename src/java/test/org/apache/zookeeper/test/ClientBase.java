@@ -32,9 +32,11 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.SyncRequestProcessor;
@@ -66,14 +68,14 @@ public abstract class ClientBase extends TestCase {
      *
      */
     protected class NullWatcher implements Watcher {
-        public void process(WatcherEvent event) { /* nada */ }
+        public void process(WatchedEvent event) { /* nada */ }
     }
 
     protected static class CountdownWatcher implements Watcher {
         volatile CountDownLatch clientConnected = new CountDownLatch(1);
 
-        public void process(WatcherEvent event) {
-            if (event.getState() == Event.KeeperStateSyncConnected) {
+        public void process(WatchedEvent event) {
+            if (event.getState() == KeeperState.SyncConnected) {
                 clientConnected.countDown();
             }
         }
