@@ -358,6 +358,9 @@ public class ZooKeeper {
      * If a node is created successfully, the ZooKeeper server will trigger the
      * watches on the path left by exists calls, and the watches on the parent
      * of the node by getChildren calls.
+     * <p>
+     * The maximum allowable size of the data array is 1 MB (1,048,576 bytes). 
+     * Arrays larger than this will cause a KeeperExecption to be thrown.
      *
      * @param path
      *                the path for the node
@@ -394,8 +397,6 @@ public class ZooKeeper {
         }
         return response.getPath();
     }
-
-
 
 	/**
      * The Asynchronous version of create. The request doesn't actually until
@@ -677,9 +678,12 @@ public class ZooKeeper {
      * <p>
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
-     *
+     * <p>
      * A KeeperException with error code KeeperException.BadVersion will be
      * thrown if the given version does not match the node's version.
+     * <p>
+     * The maximum allowable size of the data array is 1 MB (1,048,576 bytes). 
+     * Arrays larger than this will cause a KeeperExecption to be thrown.
      *
      * @param path
      *                the path of the node
@@ -728,7 +732,6 @@ public class ZooKeeper {
     }
 
     /**
-     *
      * Return the ACL and stat of the node of the given path.
      * <p>
      * A KeeperException with error code KeeperException.NoNode will be thrown
