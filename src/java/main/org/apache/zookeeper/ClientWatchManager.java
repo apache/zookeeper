@@ -20,9 +20,6 @@ package org.apache.zookeeper;
 
 import java.util.Set;
 
-import org.apache.zookeeper.Watcher.Event.EventType;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-
 /**
  */
 public interface ClientWatchManager {

@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper;
 
-import org.apache.zookeeper.proto.WatcherEvent;
-
 /**
  * This interface specifies the public interface an event handler class must
  * implement. A ZooKeeper client will get various events from the ZooKeepr

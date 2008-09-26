@@ -14,6 +14,8 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-21. Improve zk ctor/watcher (state transition) docs (phunt)
+
   ZOOKEEPER-142. Provide Javadoc as to the maximum size of the data byte 
   array that may be stored within a znode (Jakob Homan via phunt)
 

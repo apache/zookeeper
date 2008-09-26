@@ -194,8 +194,7 @@
         the watch and then clear the watch. When a watch triggers, ZooKeeper
         sends the client a notification. More information about watches can be
         found in the section 
-	<ulink url="recipes.html#sc_recipes_Locks">
-	Zookeeper Watches</ulink>.
+	    <ulink url="#ch_zkWatches">Zookeeper Watches</ulink>.
         <remark>[tbd: fix this link] [tbd: Ben there is note from to emphasize
         that "it is queued". What is "it" and is what we have here
         sufficient?]</remark></para>
