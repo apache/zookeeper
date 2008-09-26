@@ -23,13 +23,12 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.WatcherEvent;
-import org.apache.zookeeper.AsyncCallback.DataCallback;
-import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.CreateMode;
 
 /**
  * The command line client to ZooKeeper.
