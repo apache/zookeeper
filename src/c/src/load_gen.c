@@ -40,7 +40,7 @@ static int counter;
 
 void ensureConnected(){
     pthread_mutex_lock(&lock);
-    while (zoo_state(zh)!=CONNECTED_STATE) {
+    while (zoo_state(zh)!=ZOO_CONNECTED_STATE) {
         pthread_cond_wait(&cond,&lock);
     }
     pthread_mutex_unlock(&lock);
@@ -69,8 +69,8 @@ void waitCounter(){
 }
 
 void listener(zhandle_t *zzh, int type, int state, const char *path,void* ctx) {
-    if(type == SESSION_EVENT){
-        if(state == CONNECTED_STATE){
+    if(type == ZOO_SESSION_EVENT){
+        if(state == ZOO_CONNECTED_STATE){
             pthread_mutex_lock(&lock);
             pthread_cond_broadcast(&cond);
             pthread_mutex_unlock(&lock);
@@ -92,7 +92,7 @@ int doCreateNodes(const char* root, int count){
     for(i=0; i<count;i++){
         snprintf(nodeName, sizeof(nodeName),"%s/%d",root,i);
         incCounter(1);
-        int rc=zoo_acreate(zh, nodeName, "first", 5, &OPEN_ACL_UNSAFE, 0,
+        int rc=zoo_acreate(zh, nodeName, "first", 5, &ZOO_OPEN_ACL_UNSAFE, 0,
                             create_completion, 0);
         if(i%1000==0){
             LOG_INFO(("Created %s",nodeName));
@@ -103,7 +103,7 @@ int doCreateNodes(const char* root, int count){
 
 int createRoot(const char* root){
     char realpath[1024];
-    return zoo_create(zh,root,"root",4,&OPEN_ACL_UNSAFE,0,realpath,sizeof(realpath)-1);
+    return zoo_create(zh,root,"root",4,&ZOO_OPEN_ACL_UNSAFE,0,realpath,sizeof(realpath)-1);
 }
 
 void write_completion(int rc, const struct Stat *stat, const void *data) {
@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
     if(strcmp("clean",argv[3])==0){
         cleaning=1;
     }
-    zoo_set_debug_level(LOG_LEVEL_INFO);
+    zoo_set_debug_level(ZOO_LOG_LEVEL_INFO);
     zoo_deterministic_conn_order(1); // enable deterministic order
 
     zh = zookeeper_init(argv[1], listener, 10000, 0, 0, 0);

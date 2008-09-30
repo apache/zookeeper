@@ -228,7 +228,7 @@ int queue_session_event(zhandle_t *zh, int state);
 #define PROCESS_SESSION_EVENT(zh,newstate) queue_session_event(zh,newstate)
 #else
 // in single-threaded mode process session event immediately
-#define PROCESS_SESSION_EVENT(zh,newstate) deliverWatchers(zh,SESSION_EVENT,newstate,0)
+#define PROCESS_SESSION_EVENT(zh,newstate) deliverWatchers(zh,ZOO_SESSION_EVENT,newstate,0)
 #endif
 
 #ifdef __cplusplus

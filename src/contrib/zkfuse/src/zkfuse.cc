@@ -2356,7 +2356,7 @@ class ZkFuseFile : boost::noncopyable
         /*
           IMPORTANT: 
           
-          Do not mark ZkFuseFile instance as deleted when a DELETED_EVENT 
+          Do not mark ZkFuseFile instance as deleted when a ZOO_DELETED_EVENT 
           is received without checking with ZooKeeper. An example of 
           problematic sequence would be:
 
@@ -2411,7 +2411,7 @@ class ZkFuseFile : boost::noncopyable
              * the data cache in-sync with ZooKeeper.
              */ 
             if (_initializedData && 
-                eventState == CONNECTED_STATE 
+                eventState == ZOO_CONNECTED_STATE 
                ) {
                 try {
                     LOG_DEBUG(LOG, "register data watcher");
@@ -2463,7 +2463,7 @@ class ZkFuseFile : boost::noncopyable
              * re-register children watch.
              */
             if (_initializedChildren && 
-                (_isZombie() || eventState != CONNECTED_STATE)) {
+                (_isZombie() || eventState != ZOO_CONNECTED_STATE)) {
                 LOG_DEBUG(LOG, "invalidate children");
                 _clearChildren();
             }
@@ -2494,7 +2494,7 @@ class ZkFuseFile : boost::noncopyable
              * keep the children information cache in-sync with ZooKeeper.
              */ 
             if (_initializedChildren && 
-                eventState == CONNECTED_STATE 
+                eventState == ZOO_CONNECTED_STATE 
                ) {
                 /* Should try to keep the cache in-sync, register call 
                  * callback again and get current children.
@@ -3118,9 +3118,9 @@ void ZkFuseHandleManager::eventReceived(const ZKWatcherEvent & event)
     LOG_DEBUG(LOG, "eventReceived() eventType %d, eventState %d, path %s",
               eventType, eventState, path.c_str());
 
-    if (eventType == DELETED_EVENT ||
-        eventType == CHANGED_EVENT ||
-        eventType == CHILD_EVENT) {
+    if (eventType == ZOO_DELETED_EVENT ||
+        eventType == ZOO_CHANGED_EVENT ||
+        eventType == ZOO_CHILD_EVENT) {
         {
             AutoLock lock(_mutex);
             Map::iterator it = _map.find(path);
@@ -3142,14 +3142,14 @@ void ZkFuseHandleManager::eventReceived(const ZKWatcherEvent & event)
                 {
                     /* _mutex is unlocked in this scope */
                     AutoUnlockTemp autoUnlockTemp(lock);
-                    if (eventType == CHILD_EVENT) {
+                    if (eventType == ZOO_CHILD_EVENT) {
                         file->childrenEventReceived(event);
                     }
-                    else if (eventType == CHANGED_EVENT) {
+                    else if (eventType == ZOO_CHANGED_EVENT) {
                         file->dataEventReceived(event);
                     }
                     else {
-                        assert(eventType == DELETED_EVENT);
+                        assert(eventType == ZOO_DELETED_EVENT);
                         file->dataEventReceived(event);
                         // file->childrenEventReceived(event);
                     }
@@ -3164,8 +3164,8 @@ void ZkFuseHandleManager::eventReceived(const ZKWatcherEvent & event)
             }
         }
     } 
-    else if (eventType == SESSION_EVENT) {
-        if (eventState == CONNECTING_STATE) {
+    else if (eventType == ZOO_SESSION_EVENT) {
+        if (eventState == ZOO_CONNECTING_STATE) {
             LOG_TRACE(LOG, "*** CONNECTING ***");
             {
                 AutoLock lock(_mutex);
@@ -3195,7 +3195,7 @@ void ZkFuseHandleManager::eventReceived(const ZKWatcherEvent & event)
                 }
             }
         }
-        else if (eventState == CONNECTED_STATE) {
+        else if (eventState == ZOO_CONNECTED_STATE) {
             LOG_TRACE(LOG, "*** CONNECTED ***");
         }
     }

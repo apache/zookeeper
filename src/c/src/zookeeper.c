@@ -49,77 +49,77 @@
 #include <stdarg.h>
 #include <limits.h>
 
-#define IF_DEBUG(x) if(logLevel==LOG_LEVEL_DEBUG) {x;}
+#define IF_DEBUG(x) if(logLevel==ZOO_LOG_LEVEL_DEBUG) {x;}
 
 const int ZOOKEEPER_WRITE = 1 << 0;
 const int ZOOKEEPER_READ = 1 << 1;
 
-const int EPHEMERAL = 1 << 0;
-const int SEQUENCE = 1 << 1;
+const int ZOO_EPHEMERAL = 1 << 0;
+const int ZOO_SEQUENCE = 1 << 1;
 
-const int EXPIRED_SESSION_STATE = EXPIRED_SESSION_STATE_DEF;
-const int AUTH_FAILED_STATE = AUTH_FAILED_STATE_DEF;
-const int CONNECTING_STATE = CONNECTING_STATE_DEF;
-const int ASSOCIATING_STATE = ASSOCIATING_STATE_DEF;
-const int CONNECTED_STATE = CONNECTED_STATE_DEF;
+const int ZOO_EXPIRED_SESSION_STATE = EXPIRED_SESSION_STATE_DEF;
+const int ZOO_AUTH_FAILED_STATE = AUTH_FAILED_STATE_DEF;
+const int ZOO_CONNECTING_STATE = CONNECTING_STATE_DEF;
+const int ZOO_ASSOCIATING_STATE = ASSOCIATING_STATE_DEF;
+const int ZOO_CONNECTED_STATE = CONNECTED_STATE_DEF;
 static __attribute__ ((unused)) const char* state2String(int state){
     switch(state){
     case 0:
-        return "CLOSED_STATE";
+        return "ZOO_CLOSED_STATE";
     case CONNECTING_STATE_DEF:
-        return "CONNECTING_STATE";
+        return "ZOO_CONNECTING_STATE";
     case ASSOCIATING_STATE_DEF:
-        return "ASSOCIATING_STATE";
+        return "ZOO_ASSOCIATING_STATE";
     case CONNECTED_STATE_DEF:
-        return "CONNECTED_STATE";
+        return "ZOO_CONNECTED_STATE";
     case EXPIRED_SESSION_STATE_DEF:
-        return "EXPIRED_SESSION_STATE";
+        return "ZOO_EXPIRED_SESSION_STATE";
     case AUTH_FAILED_STATE_DEF:
-        return "AUTH_FAILED_STATE";
+        return "ZOO_AUTH_FAILED_STATE";
     }
     return "INVALID_STATE";
 }
 
-const int CREATED_EVENT = CREATED_EVENT_DEF;
-const int DELETED_EVENT = DELETED_EVENT_DEF;
-const int CHANGED_EVENT = CHANGED_EVENT_DEF;
-const int CHILD_EVENT = CHILD_EVENT_DEF;
-const int SESSION_EVENT = SESSION_EVENT_DEF;
-const int NOTWATCHING_EVENT = NOTWATCHING_EVENT_DEF;
+const int ZOO_CREATED_EVENT = CREATED_EVENT_DEF;
+const int ZOO_DELETED_EVENT = DELETED_EVENT_DEF;
+const int ZOO_CHANGED_EVENT = CHANGED_EVENT_DEF;
+const int ZOO_CHILD_EVENT = CHILD_EVENT_DEF;
+const int ZOO_SESSION_EVENT = SESSION_EVENT_DEF;
+const int ZOO_NOTWATCHING_EVENT = NOTWATCHING_EVENT_DEF;
 static __attribute__ ((unused)) const char* watcherEvent2String(int ev){
     switch(ev){
     case 0:
-        return "ERROR_EVENT";
+        return "ZOO_ERROR_EVENT";
     case CREATED_EVENT_DEF:
-        return "CREATED_EVENT";
+        return "ZOO_CREATED_EVENT";
     case DELETED_EVENT_DEF:
-        return "DELETED_EVENT";
+        return "ZOO_DELETED_EVENT";
     case CHANGED_EVENT_DEF:
-        return "CHANGED_EVENT";
+        return "ZOO_CHANGED_EVENT";
     case CHILD_EVENT_DEF:
-        return "CHILD_EVENT";
+        return "ZOO_CHILD_EVENT";
     case SESSION_EVENT_DEF:
-        return "SESSION_EVENT";
+        return "ZOO_SESSION_EVENT";
     case NOTWATCHING_EVENT_DEF:
-        return "NOTWATCHING_EVENT";
+        return "ZOO_NOTWATCHING_EVENT";
     }
     return "INVALID_EVENT";
 }
 
-const int PERM_READ = 1 << 0;
-const int PERM_WRITE = 1 << 1;
-const int PERM_CREATE = 1 << 2;
-const int PERM_DELETE = 1 << 3;
-const int PERM_ADMIN = 1 << 4;
-const int PERM_ALL = 0x1f;
-struct Id ANYONE_ID_UNSAFE = {"world", "anyone"};
-struct Id AUTH_IDS = {"auth", ""};
+const int ZOO_PERM_READ = 1 << 0;
+const int ZOO_PERM_WRITE = 1 << 1;
+const int ZOO_PERM_CREATE = 1 << 2;
+const int ZOO_PERM_DELETE = 1 << 3;
+const int ZOO_PERM_ADMIN = 1 << 4;
+const int ZOO_PERM_ALL = 0x1f;
+struct Id ZOO_ANYONE_ID_UNSAFE = {"world", "anyone"};
+struct Id ZOO_AUTH_IDS = {"auth", ""};
 static struct ACL _OPEN_ACL_UNSAFE_ACL[] = {{0x1f, {"world", "anyone"}}};
 static struct ACL _READ_ACL_UNSAFE_ACL[] = {{0x01, {"world", "anyone"}}};
 static struct ACL _CREATOR_ALL_ACL_ACL[] = {{0x1f, {"auth", ""}}};
-struct ACL_vector OPEN_ACL_UNSAFE = { 1, _OPEN_ACL_UNSAFE_ACL};
-struct ACL_vector READ_ACL_UNSAFE = { 1, _READ_ACL_UNSAFE_ACL};
-struct ACL_vector CREATOR_ALL_ACL = { 1, _CREATOR_ALL_ACL_ACL};
+struct ACL_vector ZOO_OPEN_ACL_UNSAFE = { 1, _OPEN_ACL_UNSAFE_ACL};
+struct ACL_vector ZOO_READ_ACL_UNSAFE = { 1, _READ_ACL_UNSAFE_ACL};
+struct ACL_vector ZOO_CREATOR_ALL_ACL = { 1, _CREATOR_ALL_ACL_ACL};
 
 #define COMPLETION_VOID 0
 #define COMPLETION_STAT 1
@@ -723,12 +723,12 @@ static void handle_error(zhandle_t *zh,int rc)
 {
     close(zh->fd);
     if (is_unrecoverable(zh)) {
-        LOG_DEBUG(("Calling a watcher for a SESSION_EVENT and the state=%s",
+        LOG_DEBUG(("Calling a watcher for a ZOO_SESSION_EVENT and the state=%s",
                 state2String(zh->state)));
         PROCESS_SESSION_EVENT(zh, zh->state);
-    } else if (zh->state == CONNECTED_STATE) {
-        LOG_DEBUG(("Calling a watcher for a SESSION_EVENT and the state=CONNECTING_STATE"));
-        PROCESS_SESSION_EVENT(zh, CONNECTING_STATE);
+    } else if (zh->state == ZOO_CONNECTED_STATE) {
+        LOG_DEBUG(("Calling a watcher for a ZOO_SESSION_EVENT and the state=CONNECTING_STATE"));
+        PROCESS_SESSION_EVENT(zh, ZOO_CONNECTING_STATE);
     }
     cleanup_bufs(zh,1,rc);
     zh->fd = -1;
@@ -741,12 +741,12 @@ static void handle_error(zhandle_t *zh,int rc)
 static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
         const char* format, ...)
 {
-    if(logLevel>=LOG_LEVEL_ERROR){
+    if(logLevel>=ZOO_LOG_LEVEL_ERROR){
         va_list va;
         char buf[1024];
         va_start(va,format);
         vsnprintf(buf, sizeof(buf)-1,format,va);
-        log_message(LOG_LEVEL_ERROR,line,__func__,
+        log_message(ZOO_LOG_LEVEL_ERROR,line,__func__,
             format_log_message("Socket [%s] zk retcode=%d, errno=%d(%s): %s",
             format_current_endpoint_info(zh),rc,errno,strerror(errno),buf));
         va_end(va);
@@ -763,7 +763,7 @@ static void auth_completion_func(int rc, zhandle_t* zh)
     if(rc!=0){
         LOG_ERROR(("Authentication scheme %s failed. Connection closed.",
                 zh->auth.scheme));
-        zh->state=AUTH_FAILED_STATE;
+        zh->state=ZOO_AUTH_FAILED_STATE;
     }else{
         zh->auth.state=1;  // active
         LOG_INFO(("Authentication scheme %s succeeded", zh->auth.scheme));
@@ -879,7 +879,7 @@ static int prime_connection(zhandle_t *zh)
         return handle_socket_error_msg(zh, __LINE__, ZCONNECTIONLOSS,
                 "failed to send a handshake packet: %s", strerror(errno));
     }
-    zh->state = ASSOCIATING_STATE;
+    zh->state = ZOO_ASSOCIATING_STATE;
 
     zh->input_buffer = &zh->primer_buffer;
     /* This seems a bit weird to to set the offset to 4, but we already have a
@@ -967,7 +967,7 @@ static struct timeval get_timeval(int interval)
                     sizeof(struct sockaddr));
             if (rc == -1) {
                 if (errno == EWOULDBLOCK || errno == EINPROGRESS)
-                    zh->state = CONNECTING_STATE;
+                    zh->state = ZOO_CONNECTING_STATE;
                 else
                     return api_epilog(zh,handle_socket_error_msg(zh,__LINE__,
                             ZCONNECTIONLOSS,"connect() call failed"));
@@ -1002,7 +1002,7 @@ static struct timeval get_timeval(int interval)
         }
         // We only allow 1/3 of our timeout time to expire before sending
         // a PING
-        if (zh->state==CONNECTED_STATE) {
+        if (zh->state==ZOO_CONNECTED_STATE) {
             send_to = zh->recv_timeout/3 - idle_send;
             if (send_to <= 0) {
 //                LOG_DEBUG(("Sending PING to %s (exceeded idle by %dms)",
@@ -1024,7 +1024,7 @@ static struct timeval get_timeval(int interval)
             zh->next_deadline.tv_usec = zh->next_deadline.tv_usec % 1000000;
         }
         *interest = ZOOKEEPER_READ;
-        if (zh->to_send.head || zh->state == CONNECTING_STATE) {
+        if (zh->to_send.head || zh->state == ZOO_CONNECTING_STATE) {
             *interest |= ZOOKEEPER_WRITE;
         }
     }
@@ -1035,7 +1035,7 @@ static int check_events(zhandle_t *zh, int events)
 {
     if (zh->fd == -1)
         return ZINVALIDSTATE;
-    if ((events&ZOOKEEPER_WRITE)&&(zh->state == CONNECTING_STATE)) {
+    if ((events&ZOOKEEPER_WRITE)&&(zh->state == ZOO_CONNECTING_STATE)) {
         int rc, error;
         socklen_t len = sizeof(error);
         rc = getsockopt(zh->fd, SOL_SOCKET, SO_ERROR, &error, &len);
@@ -1082,7 +1082,7 @@ static int check_events(zhandle_t *zh, int events)
                 oldid = zh->client_id.client_id;
                 newid = zh->primer_storage.sessionId;
                 if (oldid != 0 && oldid != newid) {
-                    zh->state = EXPIRED_SESSION_STATE;
+                    zh->state = ZOO_EXPIRED_SESSION_STATE;
                     errno = ESTALE;
                     return handle_socket_error_msg(zh,__LINE__,ZSESSIONEXPIRED,
                             "session %llx has expired.",oldid);
@@ -1091,14 +1091,14 @@ static int check_events(zhandle_t *zh, int events)
                     zh->client_id.client_id = newid;
                  
                     memcpy(zh->client_id.passwd, &zh->primer_storage.passwd, sizeof(zh->client_id.passwd));
-                    zh->state = CONNECTED_STATE;
+                    zh->state = ZOO_CONNECTED_STATE;
                     LOG_INFO(("connected to server [%s] with session id=%llx",
                             format_endpoint_info(&zh->addrs[zh->connect_index]),newid));
                     /* send the authentication packet now */
                     send_auth_info(zh);
-                    LOG_DEBUG(("Calling a watcher for a SESSION_EVENT and the state=CONNECTED_STATE"));
+                    LOG_DEBUG(("Calling a watcher for a ZOO_SESSION_EVENT and the state=ZOO_CONNECTED_STATE"));
                     zh->input_buffer = 0; // just in case the watcher calls zookeeper_process() again
-                    PROCESS_SESSION_EVENT(zh, CONNECTED_STATE);
+                    PROCESS_SESSION_EVENT(zh, ZOO_CONNECTED_STATE);
                 }
             }
             zh->input_buffer = 0;
@@ -1127,7 +1127,7 @@ static __attribute__((unused)) void print_completion_queue(zhandle_t *zh)
 {
     completion_list_t* cptr;
     
-    if(logLevel<LOG_LEVEL_DEBUG) return;
+    if(logLevel<ZOO_LOG_LEVEL_DEBUG) return;
         
     fprintf(LOGSTREAM,"Completion queue: ");
     if (zh->sent_requests.head==0) {
@@ -1148,7 +1148,7 @@ static __attribute__((unused)) void print_completion_queue(zhandle_t *zh)
 int queue_session_event(zhandle_t *zh, int state)
 {
     int rc;
-    struct WatcherEvent evt = { SESSION_EVENT, state, "" };
+    struct WatcherEvent evt = { ZOO_SESSION_EVENT, state, "" };
     struct ReplyHeader hdr = { WATCHER_EVENT_XID, 0, 0 };
     struct oarchive *oa;
     completion_list_t *cptr;
@@ -1642,7 +1642,7 @@ int zookeeper_close(zhandle_t *zh)
         adaptor_finish(zh);
         return ZOK;
     }
-    if(zh->state==CONNECTED_STATE){
+    if(zh->state==ZOO_CONNECTED_STATE){
         struct oarchive *oa;
         struct RequestHeader h = { .xid = get_xid(), .type = CLOSE_OP};
         LOG_INFO(("Closing zookeeper session %llx to [%s]\n",
@@ -2007,7 +2007,7 @@ int flush_send_queue(zhandle_t*zh, int timeout)
     // we use a recursive lock instead and only dequeue the buffer if a send was
     // successful
     lock_buffer_list(&zh->to_send);
-    while (zh->to_send.head != 0&& zh->state == CONNECTED_STATE) {
+    while (zh->to_send.head != 0&& zh->state == ZOO_CONNECTED_STATE) {
         if(timeout!=0){
             int elapsed;
             struct pollfd fds;
@@ -2126,7 +2126,7 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
     
     zh->auth.completion=completion;
     zh->auth.data=data;
-    if(zh->state == CONNECTED_STATE || zh->state == ASSOCIATING_STATE)
+    if(zh->state == ZOO_CONNECTED_STATE || zh->state == ZOO_ASSOCIATING_STATE)
         return send_auth_info(zh);
     
     return ZOK;

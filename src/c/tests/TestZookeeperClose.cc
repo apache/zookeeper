@@ -96,7 +96,7 @@ public:
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state 
         zh->fd=ZookeeperServer::FD;
-        zh->state=CONNECTED_STATE;
+        zh->state=ZOO_CONNECTED_STATE;
         Mock_flush_send_queue zkMock;
         // do not actually free the memory while in zookeeper_close()
         Mock_free_noop freeMock;
@@ -134,18 +134,18 @@ public:
         int rc=zookeeper_interest(zh,&fd,&interest,&tv);
         
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
-        CPPUNIT_ASSERT_EQUAL(CONNECTING_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTING_STATE,zoo_state(zh));
         CPPUNIT_ASSERT_EQUAL(ZOOKEEPER_READ|ZOOKEEPER_WRITE,interest);
         
         rc=zookeeper_process(zh,interest);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
-        CPPUNIT_ASSERT_EQUAL(ASSOCIATING_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(ZOO_ASSOCIATING_STATE,zoo_state(zh));
         
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
         rc=zookeeper_process(zh,interest);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
-        CPPUNIT_ASSERT_EQUAL(CONNECTED_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,zoo_state(zh));
         // do not actually free the memory while in zookeeper_close()
         Mock_free_noop freeMock;
         // make a copy of zhandle before close() overwrites some of 
@@ -183,23 +183,23 @@ public:
         // initiate connection
         int rc=zookeeper_interest(zh,&fd,&interest,&tv);        
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
-        CPPUNIT_ASSERT_EQUAL(CONNECTING_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTING_STATE,zoo_state(zh));
         CPPUNIT_ASSERT_EQUAL(ZOOKEEPER_READ|ZOOKEEPER_WRITE,interest);
         rc=zookeeper_process(zh,interest);
         // make sure the handshake in progress 
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
-        CPPUNIT_ASSERT_EQUAL(ASSOCIATING_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(ZOO_ASSOCIATING_STATE,zoo_state(zh));
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
         
         // do not actually free the memory while in zookeeper_close()
         Mock_free_noop freeMock;
-        // should call the watcher with EXPIRED_SESSION_STATE state
+        // should call the watcher with ZOO_EXPIRED_SESSION_STATE state
         rc=zookeeper_process(zh,interest);
         zhandle_t* savezh=zh; zh=0;
         freeMock.disable(); // disable mock's fake free()- use libc's free() instead
         
-        CPPUNIT_ASSERT_EQUAL(EXPIRED_SESSION_STATE,zoo_state(savezh));
+        CPPUNIT_ASSERT_EQUAL(ZOO_EXPIRED_SESSION_STATE,zoo_state(savezh));
         // memory
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.hostname));

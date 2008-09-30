@@ -94,7 +94,7 @@ void asyncCompletion(int rc, const void *data);
 struct ClientConnected{
     ClientConnected(zhandle_t* zh):zh_(zh){}
     bool operator()() const{
-        return zoo_state(zh_)==CONNECTED_STATE;
+        return zoo_state(zh_)==ZOO_CONNECTED_STATE;
     }
     zhandle_t* zh_;
 };
@@ -102,7 +102,7 @@ struct ClientConnected{
 struct SessionExpired{
     SessionExpired(zhandle_t* zh):zh_(zh){}
     bool operator()() const{
-        return zoo_state(zh_)==EXPIRED_SESSION_STATE;
+        return zoo_state(zh_)==ZOO_EXPIRED_SESSION_STATE;
     }
     zhandle_t* zh_;
 };

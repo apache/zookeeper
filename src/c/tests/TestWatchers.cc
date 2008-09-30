@@ -137,16 +137,16 @@ public:
         // open the socket
         int rc=zookeeper_interest(zh,&fd,&interest,&tv);        
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
-        CPPUNIT_ASSERT_EQUAL(CONNECTING_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTING_STATE,zoo_state(zh));
         // send the handshake packet to the server
         rc=zookeeper_process(zh,interest);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
-        CPPUNIT_ASSERT_EQUAL(ASSOCIATING_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(ZOO_ASSOCIATING_STATE,zoo_state(zh));
         // receive the server handshake response
         rc=zookeeper_process(zh,interest);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
         // verify connected
-        CPPUNIT_ASSERT_EQUAL(CONNECTED_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,zoo_state(zh));
         CPPUNIT_ASSERT(watcher.connected_);
         CPPUNIT_ASSERT_EQUAL(1,watcher.counter_);
     }
@@ -307,8 +307,8 @@ public:
         CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
 
         // we are all set now; let's trigger the watches
-        zkServer.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/a/b/c"));
-        zkServer.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/x/y/z"));
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/a/b/c"));
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/x/y/z"));
         // make sure all watchers have been processed
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
         CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
@@ -355,7 +355,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
 
         // we are all set now; let's trigger the watches
-        zkServer.addRecvResponse(new ZNodeEvent(DELETED_EVENT,"/a"));
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_DELETED_EVENT,"/a"));
         // make sure the watchers have been processed
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
         CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
@@ -365,7 +365,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(0,defWatcher.counter_);
     }
 
-    // testcase: create both a child and data watch on the node /a, send a CHILD_EVENT
+    // testcase: create both a child and data watch on the node /a, send a ZOO_CHILD_EVENT
     // verify: only the child watch triggered
     void testChildWatcher2(){
         Mock_gettimeofday timeMock;
@@ -401,7 +401,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
 
         // we are all set now; let's trigger the watches
-        zkServer.addRecvResponse(new ZNodeEvent(CHILD_EVENT,"/a"));
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHILD_EVENT,"/a"));
         // make sure the watchers have been processed
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
         CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
@@ -418,7 +418,7 @@ public:
         // zookeeper simulator
         ZookeeperServer zkServer;
         // detects when all watchers have been delivered
-        WatcherDeliveryTracker deliveryTracker(SESSION_EVENT,CONNECTED_STATE);
+        WatcherDeliveryTracker deliveryTracker(ZOO_SESSION_EVENT,ZOO_CONNECTED_STATE);
         Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
         // must call zookeeper_close() while all the mocks are in the scope!
         CloseFinally guard(&zh);
@@ -449,7 +449,7 @@ public:
         CloseFinally guard(&zh);
         
         // detects when all watchers have been delivered
-        WatcherDeliveryTracker deliveryTracker(SESSION_EVENT,CONNECTING_STATE);
+        WatcherDeliveryTracker deliveryTracker(ZOO_SESSION_EVENT,ZOO_CONNECTING_STATE);
         DisconnectWatcher watcher;
         zh=zookeeper_init("localhost:2121",activeWatcher,10000,TEST_CLIENT_ID,
                 &watcher,0);
@@ -486,7 +486,7 @@ public:
         CloseFinally guard(&zh);
         
         // detects when all watchers have been delivered
-        WatcherDeliveryTracker deliveryTracker(SESSION_EVENT,CONNECTING_STATE);
+        WatcherDeliveryTracker deliveryTracker(ZOO_SESSION_EVENT,ZOO_CONNECTING_STATE);
         DisconnectWatcher defWatcher;
         // use the tracker to find out when the watcher has been activated
         WatcherActivationTracker activationTracker;
@@ -537,7 +537,7 @@ public:
         CloseFinally guard(&zh);
         
         // detects when all watchers have been delivered
-        WatcherDeliveryTracker deliveryTracker(SESSION_EVENT,CONNECTING_STATE);
+        WatcherDeliveryTracker deliveryTracker(ZOO_SESSION_EVENT,ZOO_CONNECTING_STATE);
         DisconnectWatcher defWatcher;
         // use the tracker to find out when the watcher has been activated
         WatcherActivationTracker activationTracker;
@@ -596,7 +596,7 @@ public:
         CloseFinally guard(&zh);
         
         // detects when all watchers have been delivered
-        WatcherDeliveryTracker deliveryTracker(CHANGED_EVENT,0,false);
+        WatcherDeliveryTracker deliveryTracker(ZOO_CHANGED_EVENT,0,false);
         CountingDataWatcher defWatcher;
         // use the tracker to find out when the watcher has been activated
         WatcherActivationTracker activationTracker;
@@ -631,8 +631,8 @@ public:
         CPPUNIT_ASSERT(ensureCondition(activationTracker.isWatcherActivated(),1000)<1000);
 
         // we are all set now; let's trigger the watches
-        zkServer.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/a/b/c"));
-        zkServer.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/x/y/z"));
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/a/b/c"));
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/x/y/z"));
         // make sure all watchers have been processed
         CPPUNIT_ASSERT(ensureCondition(
                 deliveryTracker.deliveryCounterEquals(2),1000)<1000);
@@ -654,7 +654,7 @@ public:
         CloseFinally guard(&zh);
         
         // detects when all watchers have been delivered
-        WatcherDeliveryTracker deliveryTracker(DELETED_EVENT,0);
+        WatcherDeliveryTracker deliveryTracker(ZOO_DELETED_EVENT,0);
         DeletionCountingDataWatcher defWatcher;
         zh=zookeeper_init("localhost:2121",activeWatcher,10000,TEST_CLIENT_ID,
                 &defWatcher,0);
@@ -681,7 +681,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
         
         // we are all set now; let's trigger the watches
-        zkServer.addRecvResponse(new ZNodeEvent(DELETED_EVENT,"/a"));
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_DELETED_EVENT,"/a"));
         // make sure the watchers have been processed
         CPPUNIT_ASSERT(ensureCondition(
                 deliveryTracker.isWatcherProcessingCompleted(),1000)<1000);
@@ -691,7 +691,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(0,defWatcher.counter_);
     }
     
-    // testcase: create both a child and data watch on the node /a, send a CHILD_EVENT
+    // testcase: create both a child and data watch on the node /a, send a ZOO_CHILD_EVENT
     // verify: only the child watch triggered
     void testChildWatcher2(){
         Mock_gettimeofday timeMock;
@@ -702,7 +702,7 @@ public:
         CloseFinally guard(&zh);
         
         // detects when all watchers have been delivered
-        WatcherDeliveryTracker deliveryTracker(CHILD_EVENT,0);
+        WatcherDeliveryTracker deliveryTracker(ZOO_CHILD_EVENT,0);
         ChildEventCountingWatcher defWatcher;
         zh=zookeeper_init("localhost:2121",activeWatcher,10000,TEST_CLIENT_ID,
                 &defWatcher,0);
@@ -729,7 +729,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
 
         // we are all set now; let's trigger the watches
-        zkServer.addRecvResponse(new ZNodeEvent(CHILD_EVENT,"/a"));
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHILD_EVENT,"/a"));
         // make sure the watchers have been processed
         CPPUNIT_ASSERT(ensureCondition(
                 deliveryTracker.isWatcherProcessingCompleted(),1000)<1000);

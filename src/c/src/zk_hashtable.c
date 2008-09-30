@@ -385,9 +385,9 @@ void deliver_znode_event(zk_hashtable* ht,zhandle_t* zh,const char* path,int typ
 void deliverWatchers(zhandle_t* zh,int type,int state, const char* path)
 {
     zk_hashtable *ht;
-    if(type==SESSION_EVENT){
+    if(type==ZOO_SESSION_EVENT){
         watcher_object_t defWatcher;
-        if(state==CONNECTED_STATE){
+        if(state==ZOO_CONNECTED_STATE){
             clean_zk_hashtable(zh->active_node_watchers);
             clean_zk_hashtable(zh->active_child_watchers);
             // unconditionally call back the default watcher only

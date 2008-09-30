@@ -37,7 +37,7 @@
 
 // must include "src/zk_log.h" to be able to use this macro
 #define TEST_TRACE(x) \
-    log_message(LOG_LEVEL_DEBUG,__LINE__,__func__,format_log_message x)
+    log_message(ZOO_LOG_LEVEL_DEBUG,__LINE__,__func__,format_log_message x)
 
 extern const std::string EMPTY_STRING;
 
