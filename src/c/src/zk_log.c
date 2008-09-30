@@ -75,7 +75,7 @@ char* get_format_log_buffer(){
 
 #endif
 
-ZooLogLevel logLevel=LOG_LEVEL_INFO;
+ZooLogLevel logLevel=ZOO_LOG_LEVEL_INFO;
 
 static FILE* logStream=0;
 FILE* getLogStream(){
@@ -137,8 +137,8 @@ void zoo_set_debug_level(ZooLogLevel level)
         logLevel=(ZooLogLevel)0;
         return;
     }
-    if(level<LOG_LEVEL_ERROR)level=LOG_LEVEL_ERROR;
-    if(level>LOG_LEVEL_DEBUG)level=LOG_LEVEL_DEBUG;
+    if(level<ZOO_LOG_LEVEL_ERROR)level=ZOO_LOG_LEVEL_ERROR;
+    if(level>ZOO_LOG_LEVEL_DEBUG)level=ZOO_LOG_LEVEL_DEBUG;
     logLevel=level;
 }
 

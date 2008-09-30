@@ -42,13 +42,13 @@ class InitZooKeeperLogging
 #endif
             ) 
         {
-            zoo_set_debug_level( LOG_LEVEL_DEBUG );
+            zoo_set_debug_level( ZOO_LOG_LEVEL_DEBUG );
         } else if (ZK_LOG->isInfoEnabled()) {
-            zoo_set_debug_level( LOG_LEVEL_INFO );
+            zoo_set_debug_level( ZOO_LOG_LEVEL_INFO );
         } else if (ZK_LOG->isWarnEnabled()) {
-            zoo_set_debug_level( LOG_LEVEL_WARN );
+            zoo_set_debug_level( ZOO_LOG_LEVEL_WARN );
         } else {
-            zoo_set_debug_level( LOG_LEVEL_ERROR );
+            zoo_set_debug_level( ZOO_LOG_LEVEL_ERROR );
         }
     }
 };
@@ -123,15 +123,16 @@ class RetryHandler
     
     
 //the implementation of the global ZK event watcher
-void zkWatcher(zhandle_t *zh, int type, int state, const char *path)
+void zkWatcher(zhandle_t *zh, int type, int state, const char *path,
+               void *watcherCtx)
 {
     TRACE( LOG, "zkWatcher" );
 
     //a workaround for buggy ZK API
     string sPath = 
         (path == NULL || 
-         state == SESSION_EVENT || 
-         state == NOTWATCHING_EVENT)
+         state == ZOO_SESSION_EVENT || 
+         state == ZOO_NOTWATCHING_EVENT)
         ? "" 
         : string(path);
     LOG_INFO( LOG,
@@ -280,10 +281,10 @@ ZooKeeperAdapter::handleEvent(int type, int state, const string &path)
                type, state, path.c_str() );
     Listener2Context context, context2;
     //ignore internal ZK events
-    if (type != SESSION_EVENT && type != NOTWATCHING_EVENT) {
+    if (type != ZOO_SESSION_EVENT && type != ZOO_NOTWATCHING_EVENT) {
         m_zkContextsMutex.Acquire();
         //check if the user context is available
-        if (type == CHANGED_EVENT || type == DELETED_EVENT) {
+        if (type == ZOO_CHANGED_EVENT || type == ZOO_DELETED_EVENT) {
             //we may have two types of interest here, 
             //in this case lets try to notify twice
             context = findAndRemoveListenerContext( GET_NODE_DATA, path );
@@ -294,9 +295,9 @@ ZooKeeperAdapter::handleEvent(int type, int state, const string &path)
                 context = context2;
                 context2.clear();
             }
-        } else if (type == CHILD_EVENT) {
+        } else if (type == ZOO_CHILD_EVENT) {
             context = findAndRemoveListenerContext( GET_NODE_CHILDREN, path );
-        } else if (type == CREATED_EVENT) {
+        } else if (type == ZOO_CREATED_EVENT) {
             context = findAndRemoveListenerContext( NODE_EXISTS, path );
         }
         m_zkContextsMutex.Release();
@@ -351,19 +352,19 @@ ZooKeeperAdapter::processEvents()
         bool timedOut = false;
         ZKWatcherEvent source = m_events.take( 100, &timedOut );
         if (!timedOut) {
-            if (source.getType() == SESSION_EVENT) {
+            if (source.getType() == ZOO_SESSION_EVENT) {
                 LOG_INFO( LOG,
                           "Received SESSION event, state: %d. Adapter state: %d",
                           source.getState(), m_state );
                 m_stateLock.lock();
-                if (source.getState() == CONNECTED_STATE) {
+                if (source.getState() == ZOO_CONNECTED_STATE) {
                     m_connected = true;
                     resetRemainingConnectTimeout();
                     setState( AS_CONNECTED );
-                } else if (source.getState() == CONNECTING_STATE) {
+                } else if (source.getState() == ZOO_CONNECTING_STATE) {
                     m_connected = false;
                     setState( AS_CONNECTING );
-                } else if (source.getState() == EXPIRED_SESSION_STATE) {
+                } else if (source.getState() == ZOO_EXPIRED_SESSION_STATE) {
                     LOG_INFO( LOG, "Received EXPIRED_SESSION event" );
                     setState( AS_SESSION_EXPIRED );
                 }
@@ -551,7 +552,7 @@ ZooKeeperAdapter::createNode(const string &path,
                          path.c_str(), 
                          value.c_str(),
                          value.length(),
-                         &OPEN_ACL_UNSAFE,
+                         &ZOO_OPEN_ACL_UNSAFE,
                          flags,
                          realPath,
                          MAX_PATH_LENGTH );
@@ -620,7 +621,7 @@ ZooKeeperAdapter::createSequence(const string &path,
     string createdPath;    
     bool result = createNode( path,
                               value,
-                              flags | SEQUENCE,
+                              flags | ZOO_SEQUENCE,
                               createAncestors,
                               createdPath );
     if (!result) {

@@ -57,8 +57,8 @@ printProfileInfo(struct timeval start, struct timeval end,int thres,const char* 
 
 void watcher(zhandle_t *zzh, int type, int state, const char *path,void* context) {
     fprintf(stderr,"Watcher %d state = %d for %s\n", type, state, (path ? path: "null"));
-    if (type == SESSION_EVENT) {
-        if (state == CONNECTED_STATE) {
+    if (type == ZOO_SESSION_EVENT) {
+        if (state == ZOO_CONNECTED_STATE) {
             const clientid_t *id = zoo_client_id(zh);
             if (myid.client_id == 0|| myid.client_id != id->client_id) {
                 myid = *id;
@@ -73,12 +73,12 @@ void watcher(zhandle_t *zzh, int type, int state, const char *path,void* context
                     }
                 }
             }
-        } else if (state == AUTH_FAILED_STATE) {
+        } else if (state == ZOO_AUTH_FAILED_STATE) {
             fprintf(stderr, "Authentication failure. Shutting down...\n");
             zookeeper_close(zh);
             shutdownThisThing=1;
             zh=0;
-        } else if (state == EXPIRED_SESSION_STATE) {
+        } else if (state == ZOO_EXPIRED_SESSION_STATE) {
             fprintf(stderr, "Session expired. Shutting down...\n");
             zookeeper_close(zh);
             shutdownThisThing=1;
@@ -284,11 +284,11 @@ void processline(char *line) {
         if (line[0] == '+') {
             line++;
             if (line[0] == 'e') {
-                flags |= EPHEMERAL;
+                flags |= ZOO_EPHEMERAL;
                 line++;
             }
             if (line[0] == 's') {
-                flags |= SEQUENCE;
+                flags |= ZOO_SEQUENCE;
                 line++;
             }
             line++;
@@ -299,12 +299,12 @@ void processline(char *line) {
         }
         fprintf(stderr, "Creating [%s] node\n", line);
 //        {
-//            struct ACL _CREATE_ONLY_ACL_ACL[] = {{PERM_CREATE, ANYONE_ID_UNSAFE}};
+//            struct ACL _CREATE_ONLY_ACL_ACL[] = {{ZOO_PERM_CREATE, ZOO_ANYONE_ID_UNSAFE}};
 //            struct ACL_vector CREATE_ONLY_ACL = {1,_CREATE_ONLY_ACL_ACL};
 //            rc = zoo_acreate(zh, line, "new", 3, &CREATE_ONLY_ACL, flags,
 //                    my_string_completion, strdup(line));
 //        }
-        rc = zoo_acreate(zh, line, "new", 3, &OPEN_ACL_UNSAFE, flags,
+        rc = zoo_acreate(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, flags,
                 my_string_completion, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
@@ -415,7 +415,7 @@ int main(int argc, char **argv) {
 #else
     strcpy(p, "dummy");
 #endif
-    zoo_set_debug_level(LOG_LEVEL_DEBUG);
+    zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
     zoo_deterministic_conn_order(1); // enable deterministic order
     hostPort = argv[1];
     zh = zookeeper_init(hostPort, watcher, 10000, &myid, 0, 0);

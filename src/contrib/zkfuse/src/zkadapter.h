@@ -221,16 +221,16 @@ class ZKWatcherEvent
     private:
         
         /**
-         * The type of this event. It can be either CREATED_EVENT, DELETED_EVENT,
-         * CHANGED_EVENT, CHILD_EVENT, SESSION_EVENT or NOTWATCHING_EVENT. 
+         * The type of this event. It can be either ZOO_CREATED_EVENT, ZOO_DELETED_EVENT,
+         * ZOO_CHANGED_EVENT, ZOO_CHILD_EVENT, ZOO_SESSION_EVENT or ZOO_NOTWATCHING_EVENT. 
          * See zookeeper.h for more details.
          */
         const int m_type;
         
         /**
          * The state of ZK at the time of sending this event.
-         * It can be either CONNECTING_STATE, ASSOCIATING_STATE, 
-         * CONNECTED_STATE, EXPIRED_SESSION_STATE or AUTH_FAILED_STATE.
+         * It can be either ZOO_CONNECTING_STATE, ZOO_ASSOCIATING_STATE, 
+         * ZOO_CONNECTED_STATE, ZOO_EXPIRED_SESSION_STATE or AUTH_FAILED_STATE.
          * See {@file zookeeper.h} for more details.
          */
         const int m_state;
@@ -268,7 +268,7 @@ class ZooKeeperAdapter
         /**
          * \brief The global function that handles all ZK asynchronous notifications.
          */
-        friend void zkWatcher(zhandle_t *, int, int, const char *);
+        friend void zkWatcher(zhandle_t *, int, int, const char *, void *watcherCtx);
         
         /**
          * \brief The type representing the user's context.

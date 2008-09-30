@@ -292,7 +292,7 @@ public:
         timeMock.tick(tv);
         timeMock.tick(-1); // set the clock to a millisecond before a ping is due
         // trigger a watch now
-        zkServer.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/x/y/z"));
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/x/y/z"));
         rc=zookeeper_process(zh,interest);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
         // arrival of a watch sets the last_recv to the current time
@@ -351,7 +351,7 @@ public:
         // no response from the server yet -- waiting in the select() call
         now.tick(tv);
         // a watch has arrived, thus preventing the connection from timing out 
-        zkServer.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/x/y/z"));        
+        zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/x/y/z"));        
         rc=zookeeper_process(zh,interest);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc); // read the watch message
         CPPUNIT_ASSERT_EQUAL(0,zkServer.pingCount_); // not yet!
@@ -473,7 +473,7 @@ public:
                 ensureCondition(ClientConnected(zh),5000)<5000);
         
         char realpath[1024];
-        int rc=zoo_create(lzh,"/xyz","1",1,&OPEN_ACL_UNSAFE,0,realpath,sizeof(realpath)-1);
+        int rc=zoo_create(lzh,"/xyz","1",1,&ZOO_OPEN_ACL_UNSAFE,0,realpath,sizeof(realpath)-1);
         CPPUNIT_ASSERT(rc==ZOK || rc==ZNODEEXISTS);
         zookeeper_close(lzh); 
   
@@ -591,7 +591,7 @@ public:
         virtual void statCompl(int rc, const Stat *stat){
             // we received a server response, now enqueue a watcher event
             // to trigger the watcher
-            zkServer_.addRecvResponse(new ZNodeEvent(CHANGED_EVENT,"/x/y/z"));
+            zkServer_.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/x/y/z"));
         }
         ZookeeperServer& zkServer_;
     };
