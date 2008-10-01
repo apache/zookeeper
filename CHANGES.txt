@@ -99,3 +99,6 @@ Backward compatibile changes:
 
  ZOOKEEPER-38. headers (version+) in log/snap files (Andrew Kornev and Mahadev
  Konar via breed)
+
+ ZOOKEEPER-127.  Use of non-standard election ports in config breaks services (Mark
+ Harwood and Flavio Junqueira via breed)

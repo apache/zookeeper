@@ -670,7 +670,7 @@ public class AuthFastLeaderElection implements Election {
                 t.start();
             }
 
-            for (QuorumServer server : self.quorumPeers) {
+            for (QuorumServer server : self.quorumPeers.values()) {
                 InetSocketAddress saddr = new InetSocketAddress(server.addr
                         .getAddress(), port);
                 addrChallengeMap.put(saddr, new HashMap<Long, Long>());
@@ -690,19 +690,19 @@ public class AuthFastLeaderElection implements Election {
     long proposedLeader;
     long proposedZxid;
 
-    public AuthFastLeaderElection(QuorumPeer self, int electionPort,
+    public AuthFastLeaderElection(QuorumPeer self,
             boolean auth) {
         this.authEnabled = auth;
-        starter(self, electionPort);
+        starter(self);
     }
 
-    public AuthFastLeaderElection(QuorumPeer self, int electionPort) {
-        starter(self, electionPort);
+    public AuthFastLeaderElection(QuorumPeer self) {
+        starter(self);
     }
 
-    private void starter(QuorumPeer self, int electionPort) {
+    private void starter(QuorumPeer self) {
         this.self = self;
-        port = electionPort;
+        port = self.quorumPeers.get(self.getId()).electionAddr.getPort();
         proposedLeader = -1;
         proposedZxid = -1;
 
@@ -726,14 +726,14 @@ public class AuthFastLeaderElection implements Election {
     }
 
     private void sendNotifications() {
-        for (QuorumServer server : self.quorumPeers) {
-            InetSocketAddress saddr = new InetSocketAddress(server.addr
-                    .getAddress(), port);
+        for (QuorumServer server : self.quorumPeers.values()) {
+            //InetSocketAddress saddr = new InetSocketAddress(server.addr
+            //        .getAddress(), port);
 
             ToSend notmsg = new ToSend(ToSend.mType.notification,
                     AuthFastLeaderElection.sequencer++, proposedLeader,
                     proposedZxid, logicalclock, QuorumPeer.ServerState.LOOKING,
-                    saddr);
+                    self.quorumPeers.get(server.id).electionAddr);
 
             sendqueue.offer(notmsg);
         }

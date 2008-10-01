@@ -23,9 +23,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
@@ -40,7 +40,7 @@ public class QuorumPeerConfig extends ServerConfig {
     private int syncLimit;
     private int electionAlg;
     private int electionPort;
-    private ArrayList<QuorumServer> servers = null;
+    private HashMap<Long,QuorumServer> servers = null;
     private long serverId;
 
     private QuorumPeerConfig(int port, String dataDir, String dataLogDir) {
@@ -68,7 +68,7 @@ public class QuorumPeerConfig extends ServerConfig {
             } finally {
                 zooCfgStream.close();
             }
-            ArrayList<QuorumServer> servers = new ArrayList<QuorumServer>();
+            HashMap<Long,QuorumServer> servers = new HashMap<Long,QuorumServer>();
             String dataDir = null;
             String dataLogDir = null;
             int clientPort = 0;
@@ -94,19 +94,24 @@ public class QuorumPeerConfig extends ServerConfig {
                     syncLimit = Integer.parseInt(value);
                 } else if (key.equals("electionAlg")) {
                     electionAlg = Integer.parseInt(value);
-                } else if (key.equals("electionPort")) {
-                    electionPort = Integer.parseInt(value);
                 } else if (key.startsWith("server.")) {
                     int dot = key.indexOf('.');
                     long sid = Long.parseLong(key.substring(dot + 1));
                     String parts[] = value.split(":");
-                    if (parts.length != 2) {
+                    if ((parts.length != 2) && 
+                            (parts.length != 3)){
                         LOG.error(value
-                                + " does not have the form host:port");
+                                + " does not have the form host:port or host:port:port");
                     }
                     InetSocketAddress addr = new InetSocketAddress(parts[0],
-                            Integer.parseInt(parts[1]));
-                    servers.add(new QuorumServer(sid, addr));
+                            Integer.parseInt(parts[1])); 
+                    if(parts.length == 2)
+                        servers.put(Long.valueOf(sid), new QuorumServer(sid, addr));
+                    else if(parts.length == 3){
+                        InetSocketAddress electionAddr = new InetSocketAddress(parts[0],
+                                Integer.parseInt(parts[2]));
+                        servers.put(Long.valueOf(sid), new QuorumServer(sid, addr, electionAddr));
+                    }
                 } else {
                     System.setProperty("zookeeper." + key, value);
                 }
@@ -145,7 +150,6 @@ public class QuorumPeerConfig extends ServerConfig {
             conf.initLimit = initLimit;
             conf.syncLimit = syncLimit;
             conf.electionAlg = electionAlg;
-            conf.electionPort = electionPort;
             conf.servers = servers;
             if (servers.size() > 1) {
                 File myIdFile = new File(dataDir, "myid");
@@ -198,13 +202,8 @@ public class QuorumPeerConfig extends ServerConfig {
         assert instance instanceof QuorumPeerConfig;
         return ((QuorumPeerConfig)instance).electionAlg;
     }
-
-    public static int getElectionPort() {
-        assert instance instanceof QuorumPeerConfig;
-        return ((QuorumPeerConfig)instance).electionPort;
-    }
-
-    public static ArrayList<QuorumServer> getServers() {
+    
+    public static HashMap<Long,QuorumServer> getServers() {
         assert instance instanceof QuorumPeerConfig;
         return ((QuorumPeerConfig)instance).servers;
     }

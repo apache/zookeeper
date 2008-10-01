@@ -20,7 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.net.InetSocketAddress;
 
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -63,21 +64,14 @@ public class ObservableQuorumPeer extends QuorumPeer implements ObservableCompon
         super();
     }
 
-    public ObservableQuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir,
-            File dataLogDir, int clientPort, int electionAlg,
-            int electionPort, long myid, int tickTime, int initLimit,
-            int syncLimit) throws IOException {
-        super(quorumPeers, dataDir, dataLogDir, clientPort, 
-                electionAlg, electionPort, myid, tickTime, initLimit, syncLimit);
+    public ObservableQuorumPeer(HashMap<Long,QuorumServer> quorumPeers, File dataDir, File dataLogDir, int clientPort, int electionAlg, long myid, int tickTime, int initLimit,
+                                int syncLimit) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, clientPort, electionAlg, myid, tickTime, initLimit, syncLimit);
     }
 
-    public ObservableQuorumPeer(ArrayList<QuorumServer> quorumPeers,
-            File dataDir, File dataLogDir, int electionType, 
-            int electionPort, long myid, int tickTime, 
-            int initLimit, int syncLimit,
-            NIOServerCnxn.Factory cnxnFactory) throws IOException {
-        super(quorumPeers, dataDir, dataLogDir, electionType, electionPort,
-                myid, tickTime, initLimit, syncLimit, cnxnFactory);
+    public ObservableQuorumPeer(HashMap<Long,QuorumServer> quorumPeers, File dataDir, File dataLogDir, int electionType, long myid, int tickTime, int initLimit, int syncLimit,
+                                NIOServerCnxn.Factory cnxnFactory) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, initLimit, syncLimit, cnxnFactory);
     }
 
 

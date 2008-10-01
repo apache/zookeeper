@@ -137,8 +137,9 @@ public class LeaderElection implements Election  {
             requestBuffer.putInt(xid);
             requestPacket.setLength(4);
             HashSet<Long> heardFrom = new HashSet<Long>();
-            for (QuorumServer server : self.quorumPeers) {
+            for (QuorumServer server : self.quorumPeers.values()) {
                 requestPacket.setSocketAddress(server.addr);
+                LOG.warn("Server address: " + server.addr);
                 try {
                     s.send(requestPacket);
                     responsePacket.setLength(responseBytes.length);
