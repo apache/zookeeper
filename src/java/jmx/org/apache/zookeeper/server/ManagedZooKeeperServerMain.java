@@ -26,6 +26,8 @@ import java.io.IOException;
 import org.apache.zookeeper.jmx.server.ConnectionMXBean;
 import org.apache.zookeeper.jmx.server.DataTreeMXBean;
 import org.apache.zookeeper.jmx.server.ZooKeeperServerMXBean;
+import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.util.ZooKeeperObserverManager;
 
 /**
@@ -65,12 +67,10 @@ public class ManagedZooKeeperServerMain extends ZooKeeperServerMain {
                 return new ObservableNIOServerCnxn.Factory(getClientPort());
             }
             public ZooKeeperServer createServer() throws IOException {
-                ManagedZooKeeperServer zks = new ManagedZooKeeperServer();
-                zks.setDataDir(new File(ServerConfig.getDataDir()));
-                zks.setDataLogDir(new File(ServerConfig.getDataLogDir()));
-                zks.setClientPort(ServerConfig.getClientPort());
-                // TODO: we may want to build an observable/managed data tree here instead
-                zks.setTreeBuilder(new ZooKeeperServer.BasicDataTreeBuilder());
+                ManagedZooKeeperServer zks = new ManagedZooKeeperServer(
+                        new FileTxnSnapLog(new File(ServerConfig.getDataDir()),
+                        new File(ServerConfig.getDataLogDir())),
+                new ZooKeeperServer.BasicDataTreeBuilder());
                 return zks;
             }
         });

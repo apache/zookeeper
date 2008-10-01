@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.apache.zookeeper.server.ZooKeeperObserverNotifier;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.util.ObserverManager;
 import org.apache.zookeeper.server.util.ServerObserver;
 
@@ -37,9 +37,9 @@ public class ObservableLeaderZooKeeperServer extends LeaderZooKeeperServer {
 
     private ZooKeeperObserverNotifier notifier;
 
-    public ObservableLeaderZooKeeperServer(File dataDir, File dataLogDir,
+    public ObservableLeaderZooKeeperServer(FileTxnSnapLog logFactory,
             QuorumPeer self, DataTreeBuilder treeBuilder) throws IOException {
-        super(dataDir, dataLogDir, self, treeBuilder);
+        super(logFactory, self, treeBuilder);
         notifier=new ZooKeeperObserverNotifier(this);
     }
 

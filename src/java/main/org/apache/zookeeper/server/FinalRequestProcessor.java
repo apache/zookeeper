@@ -20,7 +20,6 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -212,7 +211,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 }
                 PrepRequestProcessor.checkACL(zks, n.acl, ZooDefs.Perms.READ,
                         request.authInfo);
-                ArrayList<String> children = zks.dataTree.getChildren(
+                List<String> children = zks.dataTree.getChildren(
                         getChildrenRequest.getPath(), stat, getChildrenRequest
                                 .getWatch() ? request.cnxn : null);
                 rsp = new GetChildrenResponse(children);

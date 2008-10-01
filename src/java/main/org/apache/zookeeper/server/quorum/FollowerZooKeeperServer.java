@@ -18,21 +18,20 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.log4j.Logger;
-
 import org.apache.jute.Record;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -61,9 +60,9 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
      * @param dataDir
      * @throws IOException
      */
-    FollowerZooKeeperServer(File dataDir, File dataLogDir,
-            QuorumPeer self,DataTreeBuilder treeBuilder) throws IOException {
-        super(dataDir, dataLogDir, self.tickTime,treeBuilder);
+    FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
+            DataTreeBuilder treeBuilder) throws IOException {
+        super(logFactory, self.tickTime,treeBuilder);
         this.self = self;
         this.pendingSyncs = new ConcurrentLinkedQueue<Request>();
     }

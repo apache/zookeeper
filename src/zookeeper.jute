@@ -161,6 +161,14 @@ module org.apache.zookeeper.server.quorum {
     }
 }
 
+module org.apache.zookeeper.server.persistence {
+    class FileHeader {
+        int magic;
+        int version;
+        long dbid;
+    }
+}
+
 module org.apache.zookeeper.txn {
     class TxnHeader {
         long clientId;

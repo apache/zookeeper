@@ -38,8 +38,8 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
-import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.persistence.FileTxnLog;
 
 public abstract class ClientBase extends TestCase {
     protected static final Logger LOG = Logger.getLogger(ClientBase.class);
@@ -247,7 +247,7 @@ public abstract class ClientBase extends TestCase {
         // resulting in test failure (client timeout on first session).
         // set env and directly in order to handle static init/gc issues
         System.setProperty("zookeeper.preAllocSize", "100");
-        SyncRequestProcessor.setPreAllocSize(100);
+        FileTxnLog.setPreallocSize(100);
     }
     
     @Override

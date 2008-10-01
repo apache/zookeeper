@@ -96,3 +96,6 @@ Backward compatibile changes:
 
  ZOOKEEPER-117. threading issues in Leader election (Flavio Junqueira and Patrick
  Hunt via breed)
+
+ ZOOKEEPER-38. headers (version+) in log/snap files (Andrew Kornev and Mahadev
+ Konar via breed)

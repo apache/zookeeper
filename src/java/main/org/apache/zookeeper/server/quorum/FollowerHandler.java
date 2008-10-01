@@ -29,15 +29,14 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
+import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -138,7 +137,7 @@ public class FollowerHandler extends Thread {
                     .getArchive(new ByteArrayInputStream(p.getData()));
             TxnHeader hdr = new TxnHeader();
             try {
-                txn = ZooKeeperServer.deserializeTxn(ia, hdr);
+                txn = SerializeUtils.deserializeTxn(ia, hdr);
                 // mess = "transaction: " + txn.toString();
             } catch (IOException e) {
                 LOG.warn("Unexpected exception",e);
@@ -250,7 +249,7 @@ public class FollowerHandler extends Thread {
                         + " zxid of leader is 0x"
                         + Long.toHexString(leaderLastZxid));
                 // Dump data to follower
-                leader.zk.snapshot(oa);
+                leader.zk.serializeSnapshot(oa);
                 oa.writeString("BenWasHere", "signature");
             }
             bufferedOutput.flush();

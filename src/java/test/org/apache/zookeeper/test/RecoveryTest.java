@@ -25,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
-
+import java.io.IOException;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -110,7 +110,6 @@ public class RecoveryTest extends TestCase implements Watcher {
             }
 
             f.shutdown();
-
             assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(HOSTPORT,
                                           CONNECTION_TIMEOUT));

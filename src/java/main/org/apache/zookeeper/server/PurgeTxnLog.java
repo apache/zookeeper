@@ -22,16 +22,21 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.Util;
+
 public class PurgeTxnLog {
 
     static void printUsage(){
-        System.out.println("PurgeTxnLog dataLogDir ");
+        System.out.println("PurgeTxnLog dataLogDir [snapDir]");
         System.out.println("\tdataLogDir -- path to the txn log directory");
+        System.out.println("\tsnapDir -- path to the snapshot directory");
         System.exit(1);
     }
     /**
@@ -39,38 +44,42 @@ public class PurgeTxnLog {
      *     dataLogDir -- txn log directory
      */
     public static void main(String[] args) throws IOException {
-        if(args.length!=1)
+        if(args.length<1 || args.length>2)
             printUsage();
 
         File dataDir=new File(args[0]);
-
-        // find the most recent valid snapshot
-        long highestZxid = -1;
-        for (File f : dataDir.listFiles()) {
-            long zxid = ZooKeeperServer.isValidSnapshot(f);
-            if (zxid > highestZxid) {
-                highestZxid = zxid;
+        File snapDir=dataDir;
+        if(args.length==2){
+            snapDir=new File(args[1]);
             }
-        }
-        // found any valid snapshots?
-        if(highestZxid==-1)
-            return;  // no snapshots
-
+        FileTxnSnapLog txnLog = new FileTxnSnapLog(dataDir, snapDir);
+        
+        // found any valid recent snapshots?
+        
         // files to exclude from deletion
         Set<File> exc=new HashSet<File>();
-        exc.add(new File(dataDir, "snapshot."+Long.toHexString(highestZxid)));
-        exc.addAll(Arrays.asList(ZooKeeperServer.getLogFiles(dataDir.listFiles(),highestZxid)));
+        File snapShot = txnLog.findMostRecentSnapshot();
+        exc.add(txnLog.findMostRecentSnapshot());
+        long zxid = Util.getZxidFromName(snapShot.getName(),"snapshot");
+        exc.addAll(Arrays.asList(txnLog.getSnapshotLogs(zxid)));
 
         final Set<File> exclude=exc;
-        List<File> files=Arrays.asList(dataDir.listFiles(new FileFilter(){
+        class MyFileFilter implements FileFilter{
+            private final String prefix;
+            MyFileFilter(String prefix){
+                this.prefix=prefix;
+            }
             public boolean accept(File f){
-                if(!f.getName().startsWith("log.") &&
-                        !f.getName().startsWith("snapshot."))
-                    return false;
-                if(exclude.contains(f))
+                if(!f.getName().startsWith(prefix) || exclude.contains(f))
                     return false;
                 return true;
-            }}));
+            }
+        }
+        // add all non-excluded log files
+        List<File> files=new ArrayList<File>(
+                Arrays.asList(dataDir.listFiles(new MyFileFilter("log."))));
+        // add all non-excluded snapshot files to the deletion list
+        files.addAll(Arrays.asList(snapDir.listFiles(new MyFileFilter("snapshot."))));
         // remove the old files
         for(File f: files)
         {
