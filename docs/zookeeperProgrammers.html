@@ -395,8 +395,7 @@ document.write("Last Published: " + document.lastModified);
       
 <li>
         
-<p>The following characters are not allowed because <remark>[tbd:
-        do we need reasons?]</remark> :\ud800 -uF8FFF, \uFFF0-uFFFF, \uXFFFE -
+<p>The following characters are not allowed: \ud800 -uF8FFF, \uFFF0-uFFFF, \uXFFFE -
         \uXFFFF (where X is an digit 1 - E), \uF0000 - \uFFFFF.</p>
       
 </li>
@@ -419,7 +418,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-<a name="N100AC"></a><a name="sc_zkDataModel_znodes"></a>
+<a name="N100A9"></a><a name="sc_zkDataModel_znodes"></a>
 <h3 class="h4">ZNodes</h3>
 <p>Every node in a ZooKeeper tree is refered to as a
       <em>znode</em>. Znodes maintain a stat structure that
@@ -432,8 +431,7 @@ document.write("Last Published: " + document.lastModified);
       it must supply the version of the data of the znode it is changing. If
       the version it supplies doesn't match the actual version of the data,
       the update will fail. (This behavior can be overridden. For more
-      information see... <remark>[tbd... reference here to the section
-      describing the special version number -1]</remark>
+      information see... )<remark>[tbd...]</remark>
 </p>
 <div class="note">
 <div class="label">Note</div>
@@ -452,36 +450,34 @@ document.write("Last Published: " + document.lastModified);
 </div>
 <p>Znodes are the main enitity that a programmer access. They have
       several characteristics that are worth mentioning here.</p>
-<a name="N100CF"></a><a name="sc_zkDataMode_watches"></a>
+<a name="N100CC"></a><a name="sc_zkDataMode_watches"></a>
 <h4>Watches</h4>
 <p>Clients can set watches on znodes. Changes to that znode trigger
         the watch and then clear the watch. When a watch triggers, ZooKeeper
         sends the client a notification. More information about watches can be
         found in the section 
 	    <a href="#ch_zkWatches">Zookeeper Watches</a>.
-        <remark>[tbd: fix this link] [tbd: Ben there is note from to emphasize
-        that "it is queued". What is "it" and is what we have here
-        sufficient?]</remark>
+        <remark>[tbd]</remark>
 </p>
-<a name="N100DF"></a><a name="Data+Access"></a>
+<a name="N100DC"></a><a name="Data+Access"></a>
 <h4>Data Access</h4>
 <p>The data stored at each znode in a namespace is read and written
         atomically. Reads get all the data bytes associated with a znode and a
         write replaces all the data. Each node has an Access Control List
         (ACL) that restricts who can do what.</p>
-<a name="N100E9"></a><a name="Ephemeral+Nodes"></a>
+<a name="N100E6"></a><a name="Ephemeral+Nodes"></a>
 <h4>Ephemeral Nodes</h4>
 <p>ZooKeeper also has the notion of ephemeral nodes. These znodes
         exists as long as the session that created the znode is active. When
         the session ends the znode is deleted. Because of this behavior
         ephemeral znodes are not allowed to have children.</p>
-<a name="N100F3"></a><a name="Unique+Naming"></a>
+<a name="N100F0"></a><a name="Unique+Naming"></a>
 <h4>Unique Naming</h4>
 <p>Finally you create a znode, you can request that ZooKeeper
         append a monotonicly increasing counter be appended to the path name
         of the znode to be requested. This counter is unique to the parent
         znode.</p>
-<a name="N100FE"></a><a name="sc_timeInZk"></a>
+<a name="N100FB"></a><a name="sc_timeInZk"></a>
 <h3 class="h4">Time in ZooKeeper</h3>
 <p>ZooKeeper tracks time multiple ways:</p>
 <ul>
@@ -550,7 +546,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N10136"></a><a name="sc_zkStatStructure"></a>
+<a name="N10133"></a><a name="sc_zkStatStructure"></a>
 <h3 class="h4">ZooKeeper Stat Structure</h3>
 <p>The Stat structure for each znode in ZooKeeper is made up of the
       following fields:</p>
@@ -660,7 +656,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N10194"></a><a name="ZooKeeper+Sessions"></a>
+<a name="N10191"></a><a name="ZooKeeper+Sessions"></a>
 <h2 class="h3">ZooKeeper Sessions</h2>
 <div class="section">
 <p>When a client gets a handle to the ZooKeeper service, ZooKeeper
@@ -668,9 +664,7 @@ document.write("Last Published: " + document.lastModified);
     assigns to the client. If the client connects to a different ZooKeeper
     server, it will send the session id as a part of the connection handshake.
     As a security measure, the server creates a password for the session id
-    that any ZooKeeper server can validate. <remark>[tbd: note from Ben:
-    "perhaps capability is a better word." need clarification on that.]
-    </remark>The password is sent to the client with the session id when the
+    that any ZooKeeper server can validate.The password is sent to the client with the session id when the
     client establishes the session. The client sends this password with the
     session id whenever it reestablishes the session with a new server.</p>
 <p>One of the parameters to the ZooKeeper client library call to create
@@ -690,7 +684,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N101A7"></a><a name="ZooKeeper+Watches"></a>
+<a name="N101A1"></a><a name="ZooKeeper+Watches"></a>
 <h2 class="h3">ZooKeeper Watches</h2>
 <div class="section">
 <p>All of the read operations in ZooKeeper - <strong>getData()</strong>, <strong>getChildren()</strong>, and <strong>exists()</strong> - have the option of setting a watch as a
@@ -765,7 +759,7 @@ document.write("Last Published: " + document.lastModified);
     client gets a disconnect event, it must consider that an implicit trigger
     of all watches. When a client reconnects to a new server, the client
     should re-set any watches that it is still interested in.</p>
-<a name="N101DD"></a><a name="sc_WatchGuarantees"></a>
+<a name="N101D7"></a><a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
 <p>With regard to watches, ZooKeeper maintains these
       guarantees:</p>
@@ -800,7 +794,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N10202"></a><a name="sc_WatchRememberThese"></a>
+<a name="N101FC"></a><a name="sc_WatchRememberThese"></a>
 <h3 class="h4">Things to Remember about Watches</h3>
 <ul>
         
@@ -843,7 +837,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N10225"></a><a name="Consistency+Guarantees"></a>
+<a name="N1021F"></a><a name="Consistency+Guarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -961,8 +955,8 @@ document.write("Last Published: " + document.lastModified);
               provide complete client synchronization. (For more information,
               see the <a href="recipes.html#sc_recipes_Locks">Locks</a>
               
-<remark>[tbd: fix final link target]</remark> in <a href="recipes.html">Zookeeper Recipes</a>.
-              <remark>[tbd: fix final link target]</remark>).</p>
+<remark>[tbd:...]</remark> in <a href="recipes.html">Zookeeper Recipes</a>.
+              <remark>[tbd:..]</remark>).</p>
 </dd>
         
 </dl>
@@ -973,12 +967,12 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N10291"></a><a name="Bindings"></a>
+<a name="N1028B"></a><a name="Bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N1029A"></a><a name="Java+Binding"></a>
+<a name="N10294"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1045,7 +1039,7 @@ document.write("Last Published: " + document.lastModified);
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid,
       the two threads shut down, and any further ZooKeeper calls throw
       errors.</p>
-<a name="N102E3"></a><a name="C+Binding"></a>
+<a name="N102DD"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1062,7 +1056,7 @@ document.write("Last Published: " + document.lastModified);
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N102F2"></a><a name="Installation"></a>
+<a name="N102EC"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1165,9 +1159,7 @@ document.write("Last Published: " + document.lastModified);
 <div class="content">
               
 <p>See INSTALL for general information about running
-              <strong>configure</strong>. <remark>[tbd: what
-              is INSTALL? a directory? a file?]</remark>
-</p>
+              <strong>configure</strong>.</p>
             
 </div>
 </div>
@@ -1195,7 +1187,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
         
 </ol>
-<a name="N1039D"></a><a name="Using+the+Client"></a>
+<a name="N10395"></a><a name="Using+the+Client"></a>
 <h4>Using the Client</h4>
 <p>You can test your client by running a zookeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1212,9 +1204,7 @@ document.write("Last Published: " + document.lastModified);
 <pre class="code">&gt; create /my_new_node</pre>
 <p>To verify that the node's been created:</p>
 <p>You should see a list of node who are children of the root node
-        "/". <remark>[tbd: document all the cli commands (I think this is
-        Ben's tbd? It's from sourceforge)]</remark>
-</p>
+        "/".</p>
 <p>In order to be able to use the ZooKeeper API in your application
         you have to remember to</p>
 <ol>
@@ -1241,19 +1231,17 @@ document.write("Last Published: " + document.lastModified);
         
 </ol>
 <p>Refer to <a href="#ch_programStructureWithExample">Program Structure, with Simple Example</a>for examples of usage in Java and C.
-        <remark>[tbd: some kind of short tutorial would be helpful, I guess
-        (ben's tbd?) ][tbd: whatever the case, make sure that link points to something.]</remark>
+        <remark>[tbd]</remark>
 </p>
 </div>
 
    
-<a name="N103DC"></a><a name="Building+Blocks%3A+A+Guide+to+ZooKeeper+Operations"></a>
+<a name="N103D2"></a><a name="Building+Blocks%3A+A+Guide+to+ZooKeeper+Operations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>
-<remark>[Engineering input needed. This is a new section. The below
-    is just placeholder, and was actually copied from the overview book. There
-    should probably be a subsection on each of those operations, with a little
+<remark>[tbd: This is a new section. The below
+    is just placeholder. Eventually, a subsection on each of those operations, with a little
     bit of illustrative code for each op.] </remark>
 </p>
 <p>One of the design goals of ZooKeeper is provide a very simple
@@ -1320,7 +1308,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
   
   
-<a name="N1041E"></a><a name="Program+Structure%2C+with+Simple+Example"></a>
+<a name="N10414"></a><a name="Program+Structure%2C+with+Simple+Example"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -1329,7 +1317,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N10429"></a><a name="Gotchas%3A+Common+Problems+and+Troubleshooting"></a>
+<a name="N1041F"></a><a name="Gotchas%3A+Common+Problems+and+Troubleshooting"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application
@@ -1485,8 +1473,7 @@ document.write("Last Published: " + document.lastModified);
       
 <dt>
 <term>
-<a href="recipes.html">Zookeeper Recipes [tbd: fix
-        linkend for apache site]</a>
+<a href="recipes.html">Zookeeper Recipes</a>
 </term>
 </dt>
 <dd>
@@ -1502,7 +1489,7 @@ document.write("Last Published: " + document.lastModified);
 </term>
 </dt>
 <dd>
-<p>Whatever good sources anyone can think of...</p>
+<p>Any other good sources anyone can think of...</p>
 </dd>
     
 </dl>

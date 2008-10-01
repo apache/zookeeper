@@ -447,12 +447,9 @@ document.write("Last Published: " + document.lastModified);
 <p>
 <a href="#fg_zkComponents">ZooKeeper Components</a> shows the high-level components
       of the ZooKeeper service. With the exception of the request processor,
-      <remark>[tbd: where does the request processor live?]</remark> each of
+     each of
       the servers that make up the ZooKeeper service replicates its own copy
-      of each of components. <remark>[tbd: I changed the wording in this
-      sentence from the white paper. Can someone please make sure it is still
-      correct?]</remark>
-</p>
+      of each of components.</p>
 <p>
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
 <tr>
@@ -489,7 +486,7 @@ document.write("Last Published: " + document.lastModified);
       calculates what the state of the system is when the write is to be
       applied and transforms this into a transaction that captures this new
       state.</p>
-<a name="N1012F"></a><a name="Uses"></a>
+<a name="N1012A"></a><a name="Uses"></a>
 <h3 class="h4">Uses</h3>
 <p>The programming interface to ZooKeeper is deliberately simple.
       With it, however, you can implement higher order operations, such as
@@ -498,7 +495,7 @@ document.write("Last Published: " + document.lastModified);
       white paper and video presentation.]</remark> For more information, see
       <remark>[tbd]</remark>
 </p>
-<a name="N1013E"></a><a name="Performance"></a>
+<a name="N10139"></a><a name="Performance"></a>
 <h3 class="h4">Performance</h3>
 <p>ZooKeeper is designed to be highly performant. But is it? The
       results of the ZooKeeper's development team at Yahoo! Research indicate
@@ -580,7 +577,7 @@ document.write("Last Published: " + document.lastModified);
       ZooKeeper takes less than 200ms to elect a new leader. Third, as
       followers recover, ZooKeeper is able to raise throughput again once they
       start processing requests.</p>
-<a name="N1018F"></a><a name="The+ZooKeeper+Project"></a>
+<a name="N1018A"></a><a name="The+ZooKeeper+Project"></a>
 <h3 class="h4">The ZooKeeper Project</h3>
 <p>ZooKeeper has been successfully used in industrial applications.
       It is used at Yahoo! as the coordination and failure recovery service

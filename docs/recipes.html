@@ -288,11 +288,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ol>
-<p>
-<remark>[tbd: maybe an illustration would be nice for each of the
-    recipes?]</remark>
-</p>
-<a name="N1006C"></a><a name="sc_doubleBarriers"></a>
+<a name="N10068"></a><a name="sc_doubleBarriers"></a>
 <h4>Double Barriers</h4>
 <p>Double barriers enable clients to synchronize the beginning and
       the end of a computation. When enough processes have joined the barrier,
@@ -364,9 +360,7 @@ document.write("Last Published: " + document.lastModified);
 <li>
                       
 <p>if fewer children in L than<em>
-                      x</em>, wait for watch event <remark>[tbd: how do
-                      you wait?]</remark>
-</p>
+                      x</em>, wait for watch event</p>
                     
 </li>
 
@@ -459,7 +453,7 @@ document.write("Last Published: " + document.lastModified);
       (picking the highest for simplicity) to go away. This means that only a
       single process wakes up on each node deletion except for the last node,
       which wakes up everyone when it is removed.</p>
-<a name="N10120"></a><a name="sc_recipes_Queues"></a>
+<a name="N1011A"></a><a name="sc_recipes_Queues"></a>
 <h3 class="h4">Queues</h3>
 <p>Distributed queues are a common data structure. To implement a
     distributed queue in ZooKeeper, first designate a znode to hold the queue,
@@ -476,7 +470,7 @@ document.write("Last Published: " + document.lastModified);
     the list obtained from the first <strong>getChildren(
     )</strong> call. If there are are no children in the queue node, the
     reader waits for a watch notification to check to queue again.</p>
-<a name="N1013E"></a><a name="sc_recipes_priorityQueues"></a>
+<a name="N10138"></a><a name="sc_recipes_priorityQueues"></a>
 <h4>Priority Queues</h4>
 <p>To implement a priority queue, you need only make two simple
       changes to the generic <a href="#sc_recipes_Queues">queue
@@ -486,7 +480,7 @@ document.write("Last Published: " + document.lastModified);
       from the queue a client uses an up-to-date children list meaning that
       the client will invalidate previously obtained children lists if a watch
       notification triggers for the queue node.</p>
-<a name="N1014D"></a><a name="sc_recipes_Locks"></a>
+<a name="N10147"></a><a name="sc_recipes_Locks"></a>
 <h3 class="h4">Locks</h3>
 <p>Fully distributed locks that are globally synchronous, meaning at
     any snapshot in time no two clients think they hold the same lock. These
@@ -574,7 +568,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-<a name="N101B9"></a><a name="Shared+Locks"></a>
+<a name="N101B3"></a><a name="Shared+Locks"></a>
 <h4>Shared Locks</h4>
 <p>You can implement shared locks by with a few changes to the lock
       protocol:</p>
@@ -731,14 +725,12 @@ document.write("Last Published: " + document.lastModified);
           is deleted. In fact. that's valid behavior: as all those waiting
           reader clients should be released since they have the lock. The herd
           effect refers to releasing a "herd" when in fact only a single or a
-          small number of machines can proceed. <remark>[tbd: myabe helpful to
-          indicate which step this refers to?]</remark>
-</p>
+          small number of machines can proceed.</p>
         
 </div>
 </div>
 </p>
-<a name="N10288"></a><a name="sc_recoverableSharedLocks"></a>
+<a name="N10280"></a><a name="sc_recoverableSharedLocks"></a>
 <h4>Recoverable Shared Locks</h4>
 <p>With minor modifications to the Shared Lock protocol, you make
       shared locks revocable by modifying the shared lock protocol:</p>
@@ -760,7 +752,7 @@ document.write("Last Published: " + document.lastModified);
       Laser Beams</em> by stipulating in your protocol that the revoker
       is allowed to delete the lock node if after some length of time the lock
       isn't deleted by the lock holder.</p>
-<a name="N102B4"></a><a name="sc_recipes_twoPhasedCommit"></a>
+<a name="N102AC"></a><a name="sc_recipes_twoPhasedCommit"></a>
 <h3 class="h4">Two-phased Commit</h3>
 <p>A two-phase commit protocol is an algorithm that lets all clients in
     a distributed system agree either to commit a transaction or abort.</p>
@@ -792,7 +784,7 @@ document.write("Last Published: " + document.lastModified);
 <p>To address the second problem, you can have the coordinator
     propagate the transaction to the sites, and have each site creating its
     own ephemeral node.</p>
-<a name="N102CD"></a><a name="sc_leaderElection"></a>
+<a name="N102C5"></a><a name="sc_leaderElection"></a>
 <h3 class="h4">Leader Election</h3>
 <p>A simple way of doing leader election with ZooKeeper is to use the
     <strong>SEQUENCE|EPHEMERAL</strong> flags when creating
