@@ -17,9 +17,7 @@
  */
 package org.apache.zookeeper.server.quorum;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -28,13 +26,18 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.InputArchive;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getElectionAlg;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getElectionPort;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getInitLimit;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getServerId;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getServers;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getSyncLimit;
+import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getTickTime;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -232,16 +235,6 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         return myQuorumAddr;
     }
 
-    /**
-     * the directory where the snapshot is stored.
-     */
-    private File dataDir;
-
-    /**
-     * the directory where the logs are stored.
-     */
-    private File dataLogDir;
-
     private int electionType;
 
     Election electionAlg;
@@ -249,27 +242,41 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     int electionPort;
 
     NIOServerCnxn.Factory cnxnFactory;
+    private FileTxnSnapLog logFactory = null;
 
-
+    
     public QuorumPeer() {
         super("QuorumPeer");
     }
     
-    public QuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir,
-            File dataLogDir, int electionType, int electionPort,long myid, int tickTime,
+    public QuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir, File dataLogDir,
+            int electionAlg, int electionPort,long myid, int tickTime,
             int initLimit, int syncLimit,NIOServerCnxn.Factory cnxnFactory) throws IOException {
-        this();
-        this.electionType = electionType;
+        super("QuorumPeer");
         this.cnxnFactory = cnxnFactory;
         this.quorumPeers = quorumPeers;
-        this.dataDir = dataDir;
         this.electionPort = electionPort;
-        this.dataLogDir = dataLogDir;
         this.myid = myid;
         this.tickTime = tickTime;
         this.initLimit = initLimit;
         this.syncLimit = syncLimit;        
+        this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
+        QuorumStats.getInstance().setStatsProvider(this);
+    }
+    
+    public QuorumPeer(ArrayList<QuorumServer> quorumPeers, FileTxnSnapLog logFactory,
+            int electionAlg, int electionPort,long myid, int tickTime,
+            int initLimit, int syncLimit,NIOServerCnxn.Factory cnxnFactory) throws IOException {
         
+        super("QuorumPeer");
+        this.cnxnFactory = cnxnFactory;
+        this.quorumPeers = quorumPeers;
+        this.electionPort = electionPort;
+        this.myid = myid;
+        this.tickTime = tickTime;
+        this.initLimit = initLimit;
+        this.syncLimit = syncLimit;        
+        this.logFactory=logFactory;
         QuorumStats.getInstance().setStatsProvider(this);
     }
 
@@ -306,35 +313,35 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             }
         }
         this.electionAlg = createElectionAlgorithm(electionType);
-       
     }
     
     /**
      * This constructor is only used by the existing unit test code.
+     * It defaults to FileLogProvider persistence provider.
      */
-    public QuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir,
-            File dataLogDir, int clientPort, int electionAlg, int electionPort,
+    public QuorumPeer(ArrayList<QuorumServer> quorumPeers, File snapDir,
+            File logDir, int clientPort, int electionAlg, int electionPort,
             long myid, int tickTime, int initLimit, int syncLimit) throws IOException {
-        this(quorumPeers,dataDir,dataLogDir,electionAlg,electionPort,myid,tickTime,
-                initLimit,syncLimit,new NIOServerCnxn.Factory(clientPort));
+        this(quorumPeers,
+                new FileTxnSnapLog(snapDir,logDir),
+                electionAlg,electionPort,myid,tickTime,initLimit,syncLimit,
+                new NIOServerCnxn.Factory(clientPort));
     }
-
+    
+    public long getLastLoggedZxid(){
+        return logFactory.getLastLoggedZxid();
+    }
     public Follower follower;
     public Leader leader;
 
-    private int clientPort;
-
-    protected Follower makeFollower(File dataDir,File dataLogDir) throws IOException {
-        FollowerZooKeeperServer zks = new FollowerZooKeeperServer(dataDir, dataLogDir, this,new ZooKeeperServer.BasicDataTreeBuilder());
-        zks.setClientPort(clientPort);
-        return new Follower(this, zks);
+    protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
+        return new Follower(this, new FollowerZooKeeperServer(logFactory, 
+                this,new ZooKeeperServer.BasicDataTreeBuilder()));
     }
-
-    protected Leader makeLeader(File dataDir,File dataLogDir) throws IOException {
-        LeaderZooKeeperServer zks = new LeaderZooKeeperServer(dataDir, dataLogDir,
-                this,new ZooKeeperServer.BasicDataTreeBuilder());
-        zks.setClientPort(clientPort);
-        return new Leader(this, zks);
+     
+    protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
+        return new Leader(this, new LeaderZooKeeperServer(logFactory,
+                this,new ZooKeeperServer.BasicDataTreeBuilder()));
     }
 
     private Election createElectionAlgorithm(int electionAlgorithm){
@@ -400,7 +407,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             case FOLLOWING:
                 try {
                     LOG.info("FOLLOWING");
-                    setFollower(makeFollower(dataDir,dataLogDir));
+                    setFollower(makeFollower(logFactory));
                     follower.followLeader();
                 } catch (Exception e) {
                     LOG.warn("Unexpected exception",e);
@@ -413,7 +420,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             case LEADING:
                 LOG.info("LEADING");
                 try {
-                    setLeader(makeLeader(dataDir,dataLogDir));
+                    setLeader(makeLeader(logFactory));
                     leader.lead();
                     setLeader(null);
                 } catch (Exception e) {
@@ -441,68 +448,6 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         }
         cnxnFactory.shutdown();
         udpSocket.close();
-    }
-
-    long getLastLoggedZxid() {
-        File[] list = dataLogDir.listFiles();
-        if (list == null) {
-            return 0;
-        }
-        long maxLog = -1;
-        long maxSnapShot = 0;
-        for (File f : list) {
-            String name = f.getName();
-            if (name.startsWith("log.")) {
-                long zxid = ZooKeeperServer.getZxidFromName(f.getName(), "log");
-                if (zxid > maxLog) {
-                    maxLog = zxid;
-                }
-            } else if (name.startsWith("snapshot.")) {
-                long zxid = ZooKeeperServer.getZxidFromName(f.getName(),
-                        "snapshot");
-                if (zxid > maxLog) {
-                    maxSnapShot = zxid;
-                }
-            }
-        }
-        if (maxSnapShot > maxLog) {
-            return maxSnapShot;
-        }
-        long zxid = maxLog;
-        FileInputStream logStream = null;
-        try {
-            logStream = new FileInputStream(new File(dataLogDir, "log."
-                    + Long.toHexString(maxLog)));
-            BinaryInputArchive ia = BinaryInputArchive.getArchive(logStream);
-            while (true) {
-                byte[] bytes = ia.readBuffer("txnEntry");
-                if (bytes.length == 0) {
-                    // Since we preallocate, we define EOF to be an
-                    // empty transaction
-                    break;
-                }
-                int B = ia.readByte("EOR");
-                if (B != 'B') {
-                    break;
-                }
-                InputArchive bia = BinaryInputArchive
-                        .getArchive(new ByteArrayInputStream(bytes));
-                TxnHeader hdr = new TxnHeader();
-                hdr.deserialize(bia, "hdr");
-                zxid = hdr.getZxid();
-            }
-        } catch (IOException e) {
-            LOG.warn("Unexpected exception", e);
-        } finally {
-            try {
-                if (logStream != null) {
-                    logStream.close();
-                }
-            } catch (IOException e) {
-                LOG.warn("Unexpected exception",e);
-            }
-        }
-        return zxid;
     }
 
     public String[] getQuorumPeers() {
@@ -537,6 +482,20 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         }
         return QuorumStats.Provider.UNKNOWN_STATE;
     }
+
+
+    public NIOServerCnxn.Factory getCnxnFactory() {
+        return cnxnFactory;
+    }
+
+    public void setCnxnFactory(NIOServerCnxn.Factory cnxnFactory) {
+        this.cnxnFactory = cnxnFactory;
+    }
+
+    public void setQuorumPeers(ArrayList<QuorumServer> quorumPeers) {
+        this.quorumPeers = quorumPeers;
+    }
+
 
     /**
      * get the id of this quorum peer.
@@ -597,34 +556,6 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     }
 
     /**
-     * Get the directory where the snapshot is stored.
-     */
-    public File getDataDir() {
-        return dataDir;
-    }
-
-    /**
-     * Set the directory where the snapshot is stored.
-     */
-    public void setDataDir(File dataDir) {
-        this.dataDir = dataDir;
-    }
-
-    /**
-     * Get the directory where the logs are stored.
-     */
-    public File getDataLogDir() {
-        return dataLogDir;
-    }
-
-    /**
-     * Set the directory where the logs are stored.
-     */
-    public void setDataLogDir(File dataLogDir) {
-        this.dataLogDir = dataLogDir;
-    }
-
-    /**
      * Gets the election port
      */
     public int getElectionPort() {
@@ -651,25 +582,19 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     public void setElectionPort(int electionPort) {
         this.electionPort = electionPort;
     }
-
-    public NIOServerCnxn.Factory getCnxnFactory() {
-        return cnxnFactory;
-    }
-
-    public void setCnxnFactory(NIOServerCnxn.Factory cnxnFactory) {
-        this.cnxnFactory = cnxnFactory;
-    }
-
-    public void setQuorumPeers(ArrayList<QuorumServer> quorumPeers) {
-        this.quorumPeers = quorumPeers;
-    }
-
+    
     public int getClientPort() {
-        return clientPort;
+        return -1;
     }
 
     public void setClientPort(int clientPort) {
-        this.clientPort = clientPort;
     }
-
+ 
+    public void setTxnFactory(FileTxnSnapLog factory) {
+        this.logFactory = factory;
+    }
+    
+    public FileTxnSnapLog getTxnFactory() {
+        return this.logFactory;
+    }
 }

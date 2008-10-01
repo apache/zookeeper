@@ -18,11 +18,13 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.File;
 import java.io.IOException;
 
+
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.util.ObserverManager;
 import org.apache.zookeeper.server.util.ServerObserver;
+
 /**
  * The observable server broadcast notifications when its state changes. 
  * 
@@ -33,17 +35,13 @@ import org.apache.zookeeper.server.util.ServerObserver;
 public class ObservableZooKeeperServer extends ZooKeeperServer{
 
     private ZooKeeperObserverNotifier notifier=new ZooKeeperObserverNotifier(this);
-    
-    public ObservableZooKeeperServer() {
-        super();
+    public ObservableZooKeeperServer(FileTxnSnapLog logFactory, 
+            int tickTime,DataTreeBuilder treeBuilder) throws IOException {
+        super(logFactory, tickTime,treeBuilder);
     }
-
-    public ObservableZooKeeperServer(File dataDir, File dataLogDir, int tickTime, DataTreeBuilder treeBuilder) throws IOException {
-        super(dataDir, dataLogDir, tickTime, treeBuilder);
-    }
-
-    public ObservableZooKeeperServer(File dataDir, File dataLogDir, int tickTime) throws IOException {
-        super(dataDir, dataLogDir, tickTime);
+    public ObservableZooKeeperServer(FileTxnSnapLog logFactory,
+            DataTreeBuilder treeBuilder) throws IOException {
+        super(logFactory,treeBuilder);
     }
 
     public void shutdown() {

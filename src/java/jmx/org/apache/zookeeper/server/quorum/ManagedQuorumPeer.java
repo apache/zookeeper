@@ -46,6 +46,8 @@ import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.util.ConnectionObserver;
 import org.apache.zookeeper.server.util.ObserverManager;
 import org.apache.zookeeper.server.util.QuorumPeerObserver;
@@ -207,15 +209,21 @@ public class ManagedQuorumPeer extends ObservableQuorumPeer {
         setupObservers();
     }
 
-    public ManagedQuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir, File dataLogDir, int clientPort, int electionAlg, int electionPort, long myid, int tickTime, int initLimit,
-                                int syncLimit) throws IOException {
-        super(quorumPeers, dataDir, dataLogDir, clientPort, electionAlg, electionPort, myid, tickTime, initLimit, syncLimit);
+    public ManagedQuorumPeer(ArrayList<QuorumServer> quorumPeers, 
+            File dataDir, File dataLogDir, int clientPort, 
+            int electionAlg, int electionPort, long myid, int tickTime, int initLimit,
+            int syncLimit) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, clientPort, 
+                electionAlg, electionPort, myid, tickTime, initLimit, syncLimit);
         setupObservers();
     }
 
-    public ManagedQuorumPeer(ArrayList<QuorumServer> quorumPeers, File dataDir, File dataLogDir, int electionType, int electionPort, long myid, int tickTime, int initLimit, int syncLimit,
-                                NIOServerCnxn.Factory cnxnFactory) throws IOException {
-        super(quorumPeers, dataDir, dataLogDir, electionType, electionPort, myid, tickTime, initLimit, syncLimit, cnxnFactory);
+    public ManagedQuorumPeer(ArrayList<QuorumServer> quorumPeers, 
+            File dataDir, File dataLogDir, int electionType, int electionPort,
+            long myid, int tickTime, int initLimit, int syncLimit,
+            NIOServerCnxn.Factory cnxnFactory) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, electionType, electionPort,
+                myid, tickTime, initLimit, syncLimit, cnxnFactory);
         setupObservers();
     }
 

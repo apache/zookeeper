@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.apache.zookeeper.server.FinalRequestProcessor;
@@ -26,6 +25,7 @@ import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SessionTrackerImpl;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
  * 
@@ -44,9 +44,9 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
      * @param dataDir
      * @throws IOException
      */
-    LeaderZooKeeperServer(File dataDir, File dataLogDir,
-            QuorumPeer self,DataTreeBuilder treeBuilder) throws IOException {
-        super(dataDir, dataLogDir, self.tickTime,treeBuilder);
+    LeaderZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
+            DataTreeBuilder treeBuilder) throws IOException {
+        super(logFactory, self.tickTime,treeBuilder);
         this.self = self;
     }
 

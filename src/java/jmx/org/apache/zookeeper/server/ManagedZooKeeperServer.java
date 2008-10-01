@@ -18,8 +18,11 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.server.ServerConfig.getClientPort;
+
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
@@ -30,6 +33,9 @@ import org.apache.zookeeper.jmx.server.DataTreeBean;
 import org.apache.zookeeper.jmx.server.DataTreeMXBean;
 import org.apache.zookeeper.jmx.server.ZooKeeperServerBean;
 import org.apache.zookeeper.jmx.server.ZooKeeperServerMXBean;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.Util;
+
 import org.apache.zookeeper.server.util.ConnectionObserver;
 import org.apache.zookeeper.server.util.ObserverManager;
 import org.apache.zookeeper.server.util.ServerObserver;
@@ -103,22 +109,17 @@ public class ManagedZooKeeperServer extends ObservableZooKeeperServer {
         }
     }
 
-    public ManagedZooKeeperServer() {
-        super();
+    public ManagedZooKeeperServer(FileTxnSnapLog logFactory, 
+            int tickTime,DataTreeBuilder treeBuilder) throws IOException {
+        super(logFactory, tickTime,treeBuilder);
         ObserverManager.getInstance().add(new ManagedServerObserver());
         ObserverManager.getInstance().add(new ManagedConnectionObserver());
     }
 
-    public ManagedZooKeeperServer(File dataDir, File dataLogDir, int tickTime, DataTreeBuilder treeBuilder) throws IOException {
-        super(dataDir, dataLogDir, tickTime, treeBuilder);
+    public ManagedZooKeeperServer(FileTxnSnapLog logFactory,
+            DataTreeBuilder treeBuilder) throws IOException {
+        super(logFactory,treeBuilder);
         ObserverManager.getInstance().add(new ManagedServerObserver());
         ObserverManager.getInstance().add(new ManagedConnectionObserver());
     }
-
-    public ManagedZooKeeperServer(File dataDir, File dataLogDir, int tickTime) throws IOException {
-        super(dataDir, dataLogDir, tickTime);
-        ObserverManager.getInstance().add(new ManagedServerObserver());
-        ObserverManager.getInstance().add(new ManagedConnectionObserver());
-    }
-
 }

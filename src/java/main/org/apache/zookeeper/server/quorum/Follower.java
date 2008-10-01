@@ -32,18 +32,17 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -174,7 +173,7 @@ public class Follower {
                 else if (qp.getType() == Leader.SNAP) {
                     LOG.info("Getting a snapshot from leader");
                     // The leader is going to dump the database
-                    zk.loadData(leaderIs);
+                    zk.deserializeSnapshot(leaderIs);
                     String signature = leaderIs.readString("signature");
                     if (!signature.equals("BenWasHere")) {
                         LOG.error("Missing signature. Got " + signature);
@@ -184,7 +183,14 @@ public class Follower {
                     //we need to truncate the log to the lastzxid of the leader
                     LOG.warn("Truncating log to get in sync with the leader 0x"
                             + Long.toHexString(qp.getZxid()));
-                    zk.truncateLog(qp.getZxid());
+                    boolean truncated=zk.getLogWriter().truncateLog(qp.getZxid());
+                    if (!truncated) {
+                        // not able to truncate the log
+                        LOG.error("Not able to truncate the log "
+                                + Long.toHexString(qp.getZxid()));
+                        System.exit(13);
+                    }
+
                     zk.loadData();
                 }
                 else {
@@ -218,7 +224,7 @@ public class Follower {
                     TxnHeader hdr = new TxnHeader();
                     BinaryInputArchive ia = BinaryInputArchive
                             .getArchive(new ByteArrayInputStream(qp.getData()));
-                    Record txn = ZooKeeperServer.deserializeTxn(ia, hdr);
+                    Record txn = SerializeUtils.deserializeTxn(ia, hdr);
                     if (hdr.getZxid() != lastQueued + 1) {
                         LOG.warn("Got zxid 0x"
                                 + Long.toHexString(hdr.getZxid())
@@ -232,7 +238,7 @@ public class Follower {
                     zk.commit(qp.getZxid());
                     break;
                 case Leader.UPTODATE:
-                    zk.snapshot();
+                    zk.takeSnapshot();
                     self.cnxnFactory.setZooKeeperServer(zk);
                     break;
                 case Leader.REVALIDATE:

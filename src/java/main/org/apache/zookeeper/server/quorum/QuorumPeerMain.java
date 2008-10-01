@@ -26,6 +26,7 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
  * 
@@ -69,13 +70,12 @@ public class QuorumPeerMain {
         QuorumPeerConfig.parse(args);
         if (!QuorumPeerConfig.isStandalone()) {
             runPeer(new QuorumPeer.Factory() {
-                public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory)
-                        throws IOException {
-                    
+                public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory) throws IOException {
                     QuorumPeer peer = new QuorumPeer();
                     peer.setClientPort(ServerConfig.getClientPort());
-                    peer.setDataDir(new File(ServerConfig.getDataDir()));
-                    peer.setDataLogDir(new File(ServerConfig.getDataLogDir()));
+                    peer.setTxnFactory(new FileTxnSnapLog(
+                                new File(QuorumPeerConfig.getDataLogDir()), 
+                                new File(QuorumPeerConfig.getDataDir())));
                     peer.setQuorumPeers(QuorumPeerConfig.getServers());
                     peer.setElectionPort(QuorumPeerConfig.getElectionPort());
                     peer.setElectionType(QuorumPeerConfig.getElectionAlg());
@@ -85,7 +85,6 @@ public class QuorumPeerMain {
                     peer.setSyncLimit(QuorumPeerConfig.getSyncLimit());
                     peer.setCnxnFactory(cnxnFactory);
                     return peer;
-                    
                 }
                 public NIOServerCnxn.Factory createConnectionFactory() throws IOException {
                     return new NIOServerCnxn.Factory(getClientPort());

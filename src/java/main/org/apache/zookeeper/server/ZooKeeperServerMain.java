@@ -22,12 +22,14 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.ZooKeeperServer.BasicDataTreeBuilder;
 
 /**
  * This class starts and runs a standalone ZooKeeperServer.
  */
 public class ZooKeeperServerMain {
-    
+
     private static final Logger LOG = Logger.getLogger(ZooKeeperServerMain.class);
 
     /*
@@ -43,11 +45,15 @@ public class ZooKeeperServerMain {
             }
 
             public ZooKeeperServer createServer() throws IOException {
+                // create a file logger url from the command line args
                 ZooKeeperServer zks = new ZooKeeperServer();
-                zks.setDataDir(new File(ServerConfig.getDataDir()));
-                zks.setDataLogDir(new File(ServerConfig.getDataLogDir()));
                 zks.setClientPort(ServerConfig.getClientPort());
-                return zks;
+
+               FileTxnSnapLog ftxn = new FileTxnSnapLog(new 
+                       File(ServerConfig.getDataLogDir()),
+                        new File(ServerConfig.getDataDir()));
+               zks.setTxnLogFactory(ftxn);
+               return zks;
             }
         });
     }

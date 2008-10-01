@@ -55,6 +55,7 @@ public class DataTreeBean implements DataTreeMXBean, ZKMBeanInfo {
         }
         return stream.size();
       */
+        LOG.warn("Not Implemented");            
         return -1;
     }
 

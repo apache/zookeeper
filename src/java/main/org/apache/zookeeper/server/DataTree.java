@@ -285,7 +285,8 @@ public class DataTree {
         }
     }
 
-    public ArrayList<String> getChildren(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
+    public List<String> getChildren(String path, Stat stat, Watcher watcher) 
+            throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
@@ -462,8 +463,7 @@ public class DataTree {
      * @throws IOException
      * @throws InterruptedException
      */
-    void serializeNode(OutputArchive oa, StringBuilder path)
-            throws IOException, InterruptedException {
+    void serializeNode(OutputArchive oa, StringBuilder path) throws IOException {
         String pathString = path.toString();
         DataNode node = getNode(pathString);
         if (node == null) {
@@ -494,8 +494,7 @@ public class DataTree {
 
     public boolean initialized = false;
 
-    public void serialize(OutputArchive oa, String tag) throws IOException,
-            InterruptedException {
+    public void serialize(OutputArchive oa, String tag) throws IOException {
         scount = 0;
         serializeNode(oa, new StringBuilder(""));
         // / marks end of stream

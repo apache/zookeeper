@@ -35,6 +35,14 @@ import org.apache.zookeeper.server.ManagedZooKeeperServerMain;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ObservableNIOServerCnxn;
 import org.apache.zookeeper.server.ServerConfig;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.util.ConnectionObserver;
+import org.apache.zookeeper.server.util.ObserverManager;
+import org.apache.zookeeper.server.util.QuorumPeerObserver;
+import org.apache.zookeeper.server.util.ServerObserver;
 import org.apache.zookeeper.server.util.ZooKeeperObserverManager;
 
 /**
@@ -82,12 +90,13 @@ public class ManagedQuorumPeerMain {
             ZooKeeperObserverManager.setAsConcrete();
             runPeer(new QuorumPeer.Factory() {
                 public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory)
-                        throws IOException {
-                    
+                throws IOException {
                     ManagedQuorumPeer peer = new ManagedQuorumPeer();
                     peer.setClientPort(ServerConfig.getClientPort());
-                    peer.setDataDir(new File(ServerConfig.getDataDir()));
-                    peer.setDataLogDir(new File(ServerConfig.getDataLogDir()));
+                    FileTxnSnapLog factory = new FileTxnSnapLog(new 
+                            File(ServerConfig.getDataLogDir()), new  
+                                    File(ServerConfig.getDataDir()));
+                    peer.setTxnFactory(factory);
                     peer.setQuorumPeers(QuorumPeerConfig.getServers());
                     peer.setElectionPort(QuorumPeerConfig.getElectionPort());
                     peer.setElectionType(QuorumPeerConfig.getElectionAlg());
@@ -97,7 +106,7 @@ public class ManagedQuorumPeerMain {
                     peer.setSyncLimit(QuorumPeerConfig.getSyncLimit());
                     peer.setCnxnFactory(cnxnFactory);
                     return peer;
-                    
+
                 }
                 public NIOServerCnxn.Factory createConnectionFactory() throws IOException {
                     return new ObservableNIOServerCnxn.Factory(getClientPort());
