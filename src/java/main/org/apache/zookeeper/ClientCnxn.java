@@ -493,13 +493,13 @@ public class ClientCnxn {
                 // -1 means notification
                 WatcherEvent event = new WatcherEvent();
                 event.deserialize(bbia, "response");
-                
+                WatchedEvent we = new WatchedEvent(event);
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Got an event: " + event + " for sessionid 0x"
+                    LOG.debug("Got " + we + " for sessionid 0x"
                             + Long.toHexString(sessionId));
                 }
                 
-                eventThread.queueEvent( new WatchedEvent(event) );
+                eventThread.queueEvent( we );
                 return;
             }
             if (pendingQueue.size() == 0) {

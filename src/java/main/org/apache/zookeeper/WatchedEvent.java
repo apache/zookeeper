@@ -62,12 +62,20 @@ public class WatchedEvent {
         return path;
     }
 
+    @Override
+    public String toString() {
+        if(path == null)  // then is a state change 
+            return "WatchedEvent: Server state change. New state: " + keeperState;
+         else  // is a znode change
+            return "WatchedEvent: Znode change. Path: " + path + " Type: " + eventType;
+    }
+
     /**
      *  Convert WatchedEvent to type that can be sent over network
      */
     public WatcherEvent getWrapper() {
         return new WatcherEvent(eventType.getIntValue(), 
-                                       keeperState.getIntValue(), 
-                                       path);
+                                keeperState.getIntValue(), 
+                                path);
     }
 }
