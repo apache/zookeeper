@@ -273,7 +273,7 @@ document.write("Last Published: " + document.lastModified);
     production environment.</p>
 <a name="N10034"></a><a name="sc_systemReq"></a>
 <h3 class="h4">System Requirements</h3>
-<p>Zookeeper runs in Java, release 1.6 or greater, as group of hosts
+<p>Zookeeper runs in Java, release 1.5 or greater, as group of hosts
       called a quorum. Three Zookeeper hosts per quorum is the minimum
       recommended quorum size. At Yahoo!, Zookeeper is usually deployed on
       dedicated RHEL boxes, with dual-core processors, 2GB of RAM, and 80GB
@@ -283,7 +283,7 @@ document.write("Last Published: " + document.lastModified);
 <p>For reliable ZooKeeper service, you should deploy ZooKeeper in a
       cluster known as a <em>quorum</em>. As long as a majority
       of the quorum are up, the service will be available. Because Zookeeper
-      requires a majority <remark>[tbd: why?]</remark>, it is best to use an
+      requires a majority, it is best to use an
       odd number of machines. For example, with four machines ZooKeeper can
       only handle the failure of a single machine; if two machines fail, the
       remaining two machines do not constitute a majority. However, with five
@@ -298,8 +298,7 @@ document.write("Last Published: " + document.lastModified);
 <p>Install the Java JDK:</p>
 
           
-<pre class="code">$yinst -i jdk-1.6.0.00_3 -br test  <remark>[y! prop - replace with open equiv]</remark>
-</pre>
+<pre class="code">$yinst -i jdk-1.6.0.00_3 -br test </pre>
         
 </li>
 
@@ -310,10 +309,7 @@ document.write("Last Published: " + document.lastModified);
           swapping, which will seriously degrade Zookeeper performance. To
           determine the correct value, load tests, make sure you are well
           below the usage limit that would cause you to swap. Be conservative
-          - use a maximum heap size of 3GB for a 4GB machine. <remark>[tbd:
-          where would they do this? Environment variable,
-          etc?]</remark>
-</p>
+          - use a maximum heap size of 3GB for a 4GB machine.</p>
         
 </li>
 
@@ -323,8 +319,7 @@ document.write("Last Published: " + document.lastModified);
 <p>Install the Zookeeper Server Package:</p>
 
           
-<pre class="code">$ yinst install -nostart zookeeper_server <remark>[Y! prop - replace with open eq]</remark>
-</pre>
+<pre class="code">$ yinst install -nostart zookeeper_server </pre>
         
 </li>
 
@@ -388,9 +383,7 @@ server.3=zoo3:2888</pre>
 <li>
               
 <p>In Java, you can run the following command to execute
-              simple operations:<remark> [tbd: also, maybe give some of those
-              simple operations?]</remark>
-</p>
+              simple operations:</p>
 
               
 <pre class="code">$ java -cp zookeeper.jar:java/lib/log4j-1.2.15.jar:conf \
@@ -421,8 +414,7 @@ server.3=zoo3:2888</pre>
 
           
 <p>Running either program gives you a shell in which to execute
-          simple file-system-like operations. <remark>[tbd: again, sample
-          operations?]</remark> To connect to Zookeeper with the multithreaded
+          simple file-system-like operations. To connect to Zookeeper with the multithreaded
           client, for example, you would run:</p>
 
           
@@ -431,7 +423,7 @@ server.3=zoo3:2888</pre>
 </li>
       
 </ol>
-<a name="N100CE"></a><a name="sc_singleAndDevSetup"></a>
+<a name="N100C0"></a><a name="sc_singleAndDevSetup"></a>
 <h3 class="h4">Single Server and Developer Setup</h3>
 <p>If you want to setup Zookeeper for development purposes, you will
       probably want to setup a single server instance of Zookeeper, and then
@@ -450,7 +442,7 @@ server.3=zoo3:2888</pre>
 </div>
 
   
-<a name="N100EF"></a><a name="Administration"></a>
+<a name="N100E1"></a><a name="Administration"></a>
 <h2 class="h3">Administration</h2>
 <div class="section">
 <p>This chapter contains information about running and maintaining
@@ -502,17 +494,15 @@ server.3=zoo3:2888</pre>
       
 </ul>
 </p>
-<a name="N10122"></a><a name="sc_configuration"></a>
+<a name="N10114"></a><a name="sc_configuration"></a>
 <h3 class="h4">Configuration Parameters</h3>
 <p>ZooKeeper's behavior is governed by the ZooKeeper configuration
         file. This file is designed so that the exact same file can be used by
         all the servers that make up a ZooKeeper server assuming the disk
         layouts are the same. If servers use different configuration files,
         care must be taken to ensure that the list of servers in all of the
-        different configuration files match.<remark> [tbd: reformat in
-        standard form, with legal values, etc]</remark>
-</p>
-<a name="N1012D"></a><a name="sc_minimumConfiguration"></a>
+        different configuration files match.</p>
+<a name="N1011D"></a><a name="sc_minimumConfiguration"></a>
 <h4>Minimum Configuration</h4>
 <p>Here are the minimum configuration keywords that must be
           defined in the configuration file:</p>
@@ -561,7 +551,7 @@ server.3=zoo3:2888</pre>
 	    
           
 </dl>
-<a name="N10154"></a><a name="sc_advancedConfiguration"></a>
+<a name="N10144"></a><a name="sc_advancedConfiguration"></a>
 <h4>Advanced Configuration</h4>
 <p>The configuration settings in the section are optional. You
           can use them to further fine tune the behaviour of your Zookeeper
@@ -650,13 +640,12 @@ server.3=zoo3:2888</pre>
                 performance. (Note: The system property has no zookeeper
                 prefix, and the configuration variable name is different from
                 the system property. Yes - it's not consistent, and it's
-                annoying.<remark> [tbd: is there any explanation for
-                this?]</remark>)</p>
+                annoying.)</p>
 </dd>
 
           
 </dl>
-<a name="N101B7"></a><a name="sc_clusterOptions"></a>
+<a name="N101A4"></a><a name="sc_clusterOptions"></a>
 <h4>Cluster Options</h4>
 <p>The options in this section are designed for use in quorums --
           that is, when deploying clusters of servers.</p>
@@ -685,9 +674,7 @@ server.3=zoo3:2888</pre>
                 election algorithm is not "0". When the election algorithm is
                 "0" a UDP port with the same port number as the port listed in
                 the <strong>server.num</strong> option will be
-                used. <remark>[tbd: should that be <strong>server.id</strong>? Also, why isn't server.id
-                documented anywhere?]</remark>
-</p>
+                used.</p>
 </dd>
 
             
@@ -713,9 +700,7 @@ server.3=zoo3:2888</pre>
                 the leader can be configured to not accept clients and focus
                 on coordination. The default to this option is yes, which
                 means that a leader will accept client connections.
-                <remark>[tbd: how do you specifiy which server is the
-                leader?]</remark>
-</p>
+                </p>
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
@@ -736,9 +721,7 @@ server.3=zoo3:2888</pre>
 <p>(No Java system property)</p>
 <p>servers making up the Zookeeper quorum. When the server
                 starts up, it determines which server it is by looking for the
-                file <span class="codefrag filename">myid</span> in the data directory.<remark>
-                [tdb: should we mention somewhere about creating this file,
-                myid, in the setup procedure?]</remark> That file contains the
+                file <span class="codefrag filename">myid</span> in the data directory. That file contains the
                 server number, in ASCII, and it should match <strong>x</strong> in <strong>server.x</strong> in the left hand side of this
                 setting.</p>
 <p>The list of servers that make up ZooKeeper servers that
@@ -747,9 +730,7 @@ server.3=zoo3:2888</pre>
 <p>The port numbers <strong>nnnn</strong>
                 in this setting are the <em>electionPort</em>
                 numbers of the servers (as opposed to clientPorts).
-                <remark>[tbd: is the next sentence explanation an of what the
-                election port or is it a description of a special case?]
-                </remark>If you want to test multiple servers on a single
+               If you want to test multiple servers on a single
                 machine, the individual choices of electionPort for each
                 server can be defined in each server's config files using the
                 line electionPort=xxxx to avoid clashes.</p>
@@ -763,15 +744,12 @@ server.3=zoo3:2888</pre>
 <p>(No Java system property)</p>
 <p>Amount of time, in ticks (see <a href="#id_tickTime">tickTime</a>), to allow followers to
                 sync with ZooKeeper. If followers fall too far behind a
-                leader, they will be dropped. <remark>[tbd: is this a correct
-                rewording: if followers fall beyond this limit, they are
-                dropped?]</remark>
-</p>
+                leader, they will be dropped.</p>
 </dd>
           
 </dl>
 <p></p>
-<a name="N10232"></a><a name="Unsafe+Options"></a>
+<a name="N10210"></a><a name="Unsafe+Options"></a>
 <h4>Unsafe Options</h4>
 <p>The following options can be useful, but be careful when you
           use them. The risk of each is explained along with the explanation
@@ -787,9 +765,7 @@ server.3=zoo3:2888</pre>
 <p>Requires updates to be synced to media of the
                 transaction log before finishing processing the update. If
                 this option is set to no, ZooKeeper will not require updates
-                to be synced to the media. <remark>[tbd: useful because...,
-                dangerous because...]</remark>
-</p>
+                to be synced to the media.</p>
 </dd>
 
             
@@ -815,7 +791,7 @@ server.3=zoo3:2888</pre>
 </dt>
 <dd>
 <p>(Java system property: <strong>zookeeper.skipACL</strong>)</p>
-<p>Skips ACL checks. <remark>[tbd: when? where?]</remark>
+<p>Skips ACL checks.
                 This results in a boost in throughput, but opens up full
                 access to the data tree to everyone.</p>
 </dd>
@@ -823,7 +799,7 @@ server.3=zoo3:2888</pre>
             
           
 </dl>
-<a name="N10269"></a><a name="sc_zkCommands"></a>
+<a name="N10242"></a><a name="sc_zkCommands"></a>
 <h3 class="h4">Zookeeper Commands: The Four Letter Words</h3>
 <p>Zookeeper responds to a small set of commands. Each command is composed of
         four letters. You issue the commands to Zookeeper via telnet or nc, at
@@ -874,16 +850,10 @@ server.3=zoo3:2888</pre>
 
 imok
 </pre>
-<a name="N1029B"></a><a name="sc_monitoring"></a>
+<a name="N10274"></a><a name="sc_monitoring"></a>
 <h3 class="h4">Monitoring</h3>
-<p>
-<remark>[tbd: Patrick, Ben, et al: I believe the Message Broker
-        team does perform routine monitoring of Zookeeper. But I might be
-        wrong. To your knowledge, is there any monitoring of a Zookeeper
-        deployment that will a Zookeeper sys admin will want to do, outside of
-        Yahoo?]</remark>
-</p>
-<a name="N102A6"></a><a name="sc_dataFileManagement"></a>
+<remark>[tbd]</remark>
+<a name="N1027E"></a><a name="sc_dataFileManagement"></a>
 <h3 class="h4">Data File Management</h3>
 <p>ZooKeeper stores its data in a data directory and its transaction
       log in a transaction log directory. By default these two directories are
@@ -891,7 +861,7 @@ imok
       transaction log files in a separate directory than the data files.
       Throughput increases and latency decreases when transaction logs reside
       on a dedicated log devices.</p>
-<a name="N102AF"></a><a name="The+Data+Directory"></a>
+<a name="N10287"></a><a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
 <p>This directory has two files in it:</p>
 <ul>
@@ -937,14 +907,14 @@ imok
         idempotent nature of its updates. By replaying the transaction log
         against fuzzy snapshots ZooKeeper gets the state of the system at the
         end of the log.</p>
-<a name="N102EB"></a><a name="The+Log+Directory"></a>
+<a name="N102C3"></a><a name="The+Log+Directory"></a>
 <h4>The Log Directory</h4>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
         log file is started each time a snapshot is begun. The log file's
         suffix is the first zxid written to that log.</p>
-<a name="N102F5"></a><a name="File+Management"></a>
+<a name="N102CD"></a><a name="File+Management"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
         standalone ZooKeeper servers and different configurations of
@@ -961,7 +931,7 @@ imok
         needs the latest complete fuzzy snapshot and the log files from the
         start of that snapshot. The PurgeTxnLog utility implements a simple
         retention policy that administrators can use.</p>
-<a name="N10306"></a><a name="sc_commonProblems"></a>
+<a name="N102DE"></a><a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
       ZooKeeper correctly:</p>
@@ -977,9 +947,7 @@ imok
             but things will really act strange if clients have a list of
             ZooKeeper servers that are in different ZooKeeper clusters. Also,
             the server lists in each Zookeeper server configuration file
-            should be consistent with one another. <remark>[tbd: I'm assuming
-            this last part is true. Is it?]</remark>
-</p>
+            should be consistent with one another.</p>
 </dd>
 
         
@@ -1017,12 +985,10 @@ imok
 </dd>
       
 </dl>
-<a name="N1032C"></a><a name="sc_bestPractices"></a>
+<a name="N10302"></a><a name="sc_bestPractices"></a>
 <h3 class="h4">Best Practices</h3>
 <p>For best results, take note of the following list of good
-      Zookeeper practices. <remark>[tbd: I just threw this section in. Do we
-      have list that is is different from the "things to avoid"? If not, I can
-      easily remove this section.]</remark>
+      Zookeeper practices. <remark>[tbd...]</remark>
 </p>
 </div>
 

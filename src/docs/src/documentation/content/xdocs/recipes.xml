@@ -122,9 +122,6 @@
       </listitem>
     </orderedlist>
 
-    <para><remark>[tbd: maybe an illustration would be nice for each of the
-    recipes?]</remark></para>
-
     <section id="sc_doubleBarriers">
       <title>Double Barriers</title>
 
@@ -179,8 +176,7 @@
 
                     <listitem>
                       <para>if fewer children in L than<emphasis>
-                      x</emphasis>, wait for watch event <remark>[tbd: how do
-                      you wait?]</remark></para>
+                      x</emphasis>, wait for watch event</para>
                     </listitem>
 
                     <listitem>
@@ -469,8 +465,7 @@
           is deleted. In fact. that's valid behavior: as all those waiting
           reader clients should be released since they have the lock. The herd
           effect refers to releasing a "herd" when in fact only a single or a
-          small number of machines can proceed. <remark>[tbd: myabe helpful to
-          indicate which step this refers to?]</remark></para>
+          small number of machines can proceed.</para>
         </note></para>
     </section>
 

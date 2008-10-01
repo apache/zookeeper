@@ -13,12 +13,12 @@ Non-backward compatible changes:
   ZOOKEEPER-38. headers (version+) in log/snap files (Andrew Kornev and Mahadev
   Konar via breed)
 
-  ZOOKEEPER-127.  Use of non-standard election ports in config breaks services
-  (Mark Harwood and Flavio Junqueira via breed)
-
 Backward compatibile changes:
 
   BUGFIXES: 
+
+  ZOOKEEPER-147. This is version of the documents with most of the [tbd...]
+  scrubbed out (robbie via phunt)
 
   ZOOKEEPER-150. zookeeper build broken (mahadev via phunt)
 
@@ -104,3 +104,7 @@ Backward compatibile changes:
 
  ZOOKEEPER-117. threading issues in Leader election (Flavio Junqueira and Patrick
  Hunt via breed)
+
+ ZOOKEEPER-127.  Use of non-standard election ports in config breaks services
+ (Mark Harwood and Flavio Junqueira via breed)
+

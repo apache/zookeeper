@@ -215,19 +215,15 @@ document.write("Last Published: " + document.lastModified);
       
 </div>
 </div>
-<p>[tbd: should we start w/ a word here about were to get the source,
-      exactly what to download, how to unpack it, and where to put it? Also,
-      does the user need to be in sudo, or can they be under their regular
-      login?]</p>
 <p>Once you have downloaded the ZooKeeper source, cd to the root of
       your ZooKeeper source, and run "ant jar". For example:<pre class="code">$ cd ~/dev/zookeeper
 
 $ ~/dev/zookeeper/: ant jar</pre>
 </p>
 <p>This should generate a JAR file called zookeeper.jar. To start
-      Zookeeper, compile and run zookeeper.jar. <em>[tbd, some more
+      Zookeeper, compile and run zookeeper.jar. <remark>[tbd, some more
       instruction here. Perhaps a command line? Are these two steps or
-      one?]</em>
+      one?]</remark>
 </p>
 <p>To start ZooKeeper you need a configuration file. Here is a sample
       file:</p>
@@ -285,7 +281,7 @@ clientPort=2181
 </p>
 <p>ZooKeeper logs messages using log4j -- more detail available in
       the <a href="zookeeperProgrammers.html#Logging">Logging</a>
-      section of the Programmer's Guide.<remark revision="include_tbd">[tbd:
+      section of the Programmer's Guide.<remark>[tbd:
       real reference needed]</remark> You will see log messages coming to the
       console and/or a log file depending on the log4j configuration.</p>
 <p>The steps outlined here run ZooKeeper in standalone mode. There is
@@ -294,7 +290,7 @@ clientPort=2181
       replicated mode, please see <a href="#sc_RunningReplicatedZooKeeper">Running Replicated
       Zookeeper</a>.</p>
 <p></p>
-<a name="N1007A"></a><a name="sc_ConnectingToZooKeeper"></a>
+<a name="N10076"></a><a name="sc_ConnectingToZooKeeper"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p>Once ZooKeeper is running, you have several option for connection
       to it:</p>
@@ -330,17 +326,15 @@ clientPort=2181
 </li>
       
 </ul>
-<a name="N100AB"></a><a name="sc_ProgrammingToZooKeeper"></a>
+<a name="N100A7"></a><a name="sc_ProgrammingToZooKeeper"></a>
 <h3 class="h4">Programming to ZooKeeper</h3>
 <p>ZooKeeper has a Java bindings and C bindings. They are
       functionally equivalent. The C bindings exist in two variants: single
       threaded and multi-threaded. These differ only in how the messaging loop
-      is done. <remark>[tbd: what is the messaging loop? Do we talk about it
-      anywyhere? is this too much info for a getting started guide?]</remark>
-      For more information, see the <a href="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
+      is done. For more information, see the <a href="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
       Examples in the Zookeeper Programmer's Guide</a> for
       sample code using of the different APIs.</p>
-<a name="N100BC"></a><a name="sc_RunningReplicatedZooKeeper"></a>
+<a name="N100B5"></a><a name="sc_RunningReplicatedZooKeeper"></a>
 <h3 class="h4">Running Replicated ZooKeeper</h3>
 <p>Running ZooKeeper in standalone mode is convenient for evaluation,
       some development, and testing. But in production, you should run
@@ -361,8 +355,7 @@ server.3=zoo3:2888 </pre>
 <p>The new entry, <strong>initLimit</strong> is
       timeouts ZooKeeper uses to limit the length of time the Zookeeper
       servers in quorum have to connect to a leader. The entry <strong>syncLimit</strong> limits how far out of date a server can
-      be from a leader. [TBD: someone please verify that the previous is
-      true.]</p>
+      be from a leader.</p>
 <p>With both of these timeouts, you specify the unit of time using
       <strong>tickTime</strong>. In this example, the timeout
       for initLimit is 5 ticks at 2000 milleseconds a tick, or 10
@@ -374,8 +367,7 @@ server.3=zoo3:2888 </pre>
       ASCII.</p>
 <p>Finally, note the "2888" port numbers after each server name.
       These are the "electionPort" numbers of the servers (as opposed to
-      clientPorts), that is ports for <remark>[tbd: feedback need: what are
-      these ports, exactly?]</remark>.</p>
+      clientPorts), that is ports for <remark>[tbd]</remark>.</p>
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
@@ -387,7 +379,7 @@ server.3=zoo3:2888 </pre>
       
 </div>
 </div>
-<a name="N100F2"></a><a name="Other+Optimizations"></a>
+<a name="N100EB"></a><a name="Other+Optimizations"></a>
 <h3 class="h4">Other Optimizations</h3>
 <p>There are a couple of other configuration parameters that can
       greatly increase performance:</p>
@@ -407,8 +399,7 @@ server.3=zoo3:2888 </pre>
 <li>
           
 <p>
-<remark>[tbd: feedback need: what is the other config param?
-          (I believe two are mentioned above.)]</remark>
+<remark>[tbd: what is the other config param?]</remark>
 </p>
         
 </li>

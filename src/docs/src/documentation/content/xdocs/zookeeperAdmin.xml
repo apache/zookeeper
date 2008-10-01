@@ -74,7 +74,7 @@
     <section id="sc_systemReq">
       <title>System Requirements</title>
 
-      <para>Zookeeper runs in Java, release 1.6 or greater, as group of hosts
+      <para>Zookeeper runs in Java, release 1.5 or greater, as group of hosts
       called a quorum. Three Zookeeper hosts per quorum is the minimum
       recommended quorum size. At Yahoo!, Zookeeper is usually deployed on
       dedicated RHEL boxes, with dual-core processors, 2GB of RAM, and 80GB
@@ -87,7 +87,7 @@
       <para>For reliable ZooKeeper service, you should deploy ZooKeeper in a
       cluster known as a <firstterm>quorum</firstterm>. As long as a majority
       of the quorum are up, the service will be available. Because Zookeeper
-      requires a majority <remark>[tbd: why?]</remark>, it is best to use an
+      requires a majority, it is best to use an
       odd number of machines. For example, with four machines ZooKeeper can
       only handle the failure of a single machine; if two machines fail, the
       remaining two machines do not constitute a majority. However, with five
@@ -101,7 +101,7 @@
         <listitem>
           <para>Install the Java JDK:</para>
 
-          <screen>$yinst -i jdk-1.6.0.00_3 -br test  <remark>[y! prop - replace with open equiv]</remark></screen>
+          <screen>$yinst -i jdk-1.6.0.00_3 -br test </screen>
         </listitem>
 
         <listitem>
@@ -109,15 +109,13 @@
           swapping, which will seriously degrade Zookeeper performance. To
           determine the correct value, load tests, make sure you are well
           below the usage limit that would cause you to swap. Be conservative
-          - use a maximum heap size of 3GB for a 4GB machine. <remark>[tbd:
-          where would they do this? Environment variable,
-          etc?]</remark></para>
+          - use a maximum heap size of 3GB for a 4GB machine.</para>
         </listitem>
 
         <listitem>
           <para>Install the Zookeeper Server Package:</para>
 
-          <screen>$ yinst install -nostart zookeeper_server <remark>[Y! prop - replace with open eq]</remark></screen>
+          <screen>$ yinst install -nostart zookeeper_server </screen>
         </listitem>
 
         <listitem>
@@ -168,8 +166,7 @@ server.3=zoo3:2888</screen>
           <itemizedlist>
             <listitem>
               <para>In Java, you can run the following command to execute
-              simple operations:<remark> [tbd: also, maybe give some of those
-              simple operations?]</remark></para>
+              simple operations:</para>
 
               <screen>$ java -cp zookeeper.jar:java/lib/log4j-1.2.15.jar:conf \
       org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</screen>
@@ -190,8 +187,7 @@ server.3=zoo3:2888</screen>
           </itemizedlist>
 
           <para>Running either program gives you a shell in which to execute
-          simple file-system-like operations. <remark>[tbd: again, sample
-          operations?]</remark> To connect to Zookeeper with the multithreaded
+          simple file-system-like operations. To connect to Zookeeper with the multithreaded
           client, for example, you would run:</para>
 
           <screen>$ cli_mt 127.0.0.1:2181</screen>
@@ -259,8 +255,7 @@ server.3=zoo3:2888</screen>
         all the servers that make up a ZooKeeper server assuming the disk
         layouts are the same. If servers use different configuration files,
         care must be taken to ensure that the list of servers in all of the
-        different configuration files match.<remark> [tbd: reformat in
-        standard form, with legal values, etc]</remark></para>
+        different configuration files match.</para>
 
         <section id="sc_minimumConfiguration">
           <title>Minimum Configuration</title>
@@ -410,8 +405,7 @@ server.3=zoo3:2888</screen>
                 performance. (Note: The system property has no zookeeper
                 prefix, and the configuration variable name is different from
                 the system property. Yes - it's not consistent, and it's
-                annoying.<remark> [tbd: is there any explanation for
-                this?]</remark>)</para>
+                annoying.)</para>
               </listitem>
             </varlistentry>
 
@@ -450,9 +444,7 @@ server.3=zoo3:2888</screen>
                 election algorithm is not "0". When the election algorithm is
                 "0" a UDP port with the same port number as the port listed in
                 the <emphasis role="bold">server.num</emphasis> option will be
-                used. <remark>[tbd: should that be <emphasis
-                role="bold">server.id</emphasis>? Also, why isn't server.id
-                documented anywhere?]</remark></para>
+                used.</para>
               </listitem>
             </varlistentry>
 
@@ -482,8 +474,7 @@ server.3=zoo3:2888</screen>
                 the leader can be configured to not accept clients and focus
                 on coordination. The default to this option is yes, which
                 means that a leader will accept client connections.
-                <remark>[tbd: how do you specifiy which server is the
-                leader?]</remark></para>
+                </para>
 
                 <note>
                   <para>Turning on leader selection is highly recommended when
@@ -501,9 +492,7 @@ server.3=zoo3:2888</screen>
 
                 <para>servers making up the Zookeeper quorum. When the server
                 starts up, it determines which server it is by looking for the
-                file <filename>myid</filename> in the data directory.<remark>
-                [tdb: should we mention somewhere about creating this file,
-                myid, in the setup procedure?]</remark> That file contains the
+                file <filename>myid</filename> in the data directory. That file contains the
                 server number, in ASCII, and it should match <emphasis
                 role="bold">x</emphasis> in <emphasis
                 role="bold">server.x</emphasis> in the left hand side of this
@@ -516,9 +505,7 @@ server.3=zoo3:2888</screen>
                 <para>The port numbers <emphasis role="bold">nnnn</emphasis>
                 in this setting are the <emphasis>electionPort</emphasis>
                 numbers of the servers (as opposed to clientPorts).
-                <remark>[tbd: is the next sentence explanation an of what the
-                election port or is it a description of a special case?]
-                </remark>If you want to test multiple servers on a single
+               If you want to test multiple servers on a single
                 machine, the individual choices of electionPort for each
                 server can be defined in each server's config files using the
                 line electionPort=xxxx to avoid clashes.</para>
@@ -534,9 +521,7 @@ server.3=zoo3:2888</screen>
                 <para>Amount of time, in ticks (see <ulink
                 url="#id_tickTime">tickTime</ulink>), to allow followers to
                 sync with ZooKeeper. If followers fall too far behind a
-                leader, they will be dropped. <remark>[tbd: is this a correct
-                rewording: if followers fall beyond this limit, they are
-                dropped?]</remark></para>
+                leader, they will be dropped.</para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -563,8 +548,7 @@ server.3=zoo3:2888</screen>
                 <para>Requires updates to be synced to media of the
                 transaction log before finishing processing the update. If
                 this option is set to no, ZooKeeper will not require updates
-                to be synced to the media. <remark>[tbd: useful because...,
-                dangerous because...]</remark></para>
+                to be synced to the media.</para>
               </listitem>
             </varlistentry>
 
@@ -593,7 +577,7 @@ server.3=zoo3:2888</screen>
                 <para>(Java system property: <emphasis
                 role="bold">zookeeper.skipACL</emphasis>)</para>
 
-                <para>Skips ACL checks. <remark>[tbd: when? where?]</remark>
+                <para>Skips ACL checks.
                 This results in a boost in throughput, but opens up full
                 access to the data tree to everyone.</para>
               </listitem>
@@ -662,12 +646,7 @@ imok
 
       <section id="sc_monitoring">
         <title>Monitoring</title>
-
-        <para><remark>[tbd: Patrick, Ben, et al: I believe the Message Broker
-        team does perform routine monitoring of Zookeeper. But I might be
-        wrong. To your knowledge, is there any monitoring of a Zookeeper
-        deployment that will a Zookeeper sys admin will want to do, outside of
-        Yahoo?]</remark></para>
+	<remark>[tbd]</remark>
       </section>
 
     <section id="sc_dataFileManagement">
@@ -773,8 +752,7 @@ imok
             but things will really act strange if clients have a list of
             ZooKeeper servers that are in different ZooKeeper clusters. Also,
             the server lists in each Zookeeper server configuration file
-            should be consistent with one another. <remark>[tbd: I'm assuming
-            this last part is true. Is it?]</remark></para>
+            should be consistent with one another.</para>
           </listitem>
         </varlistentry>
 
@@ -819,9 +797,7 @@ imok
       <title>Best Practices</title>
 
       <para>For best results, take note of the following list of good
-      Zookeeper practices. <remark>[tbd: I just threw this section in. Do we
-      have list that is is different from the "things to avoid"? If not, I can
-      easily remove this section.]</remark></para>
+      Zookeeper practices. <remark>[tbd...]</remark></para>
     </section>
   </chapter>
 </book>

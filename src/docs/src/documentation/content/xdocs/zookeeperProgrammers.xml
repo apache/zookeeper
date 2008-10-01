@@ -139,8 +139,7 @@
       </listitem>
 
       <listitem>
-        <para>The following characters are not allowed because <remark>[tbd:
-        do we need reasons?]</remark> :\ud800 -uF8FFF, \uFFF0-uFFFF, \uXFFFE -
+        <para>The following characters are not allowed: \ud800 -uF8FFF, \uFFF0-uFFFF, \uXFFFE -
         \uXFFFF (where X is an digit 1 - E), \uF0000 - \uFFFFF.</para>
       </listitem>
 
@@ -170,8 +169,7 @@
       it must supply the version of the data of the znode it is changing. If
       the version it supplies doesn't match the actual version of the data,
       the update will fail. (This behavior can be overridden. For more
-      information see... <remark>[tbd... reference here to the section
-      describing the special version number -1]</remark></para>
+      information see... )<remark>[tbd...]</remark></para>
 
       <note>
         <para>In distributed application engineering, the word
@@ -195,9 +193,7 @@
         sends the client a notification. More information about watches can be
         found in the section 
 	    <ulink url="#ch_zkWatches">Zookeeper Watches</ulink>.
-        <remark>[tbd: fix this link] [tbd: Ben there is note from to emphasize
-        that "it is queued". What is "it" and is what we have here
-        sufficient?]</remark></para>
+        <remark>[tbd]</remark></para>
       </section>
 
       <section>
@@ -347,9 +343,7 @@
     assigns to the client. If the client connects to a different ZooKeeper
     server, it will send the session id as a part of the connection handshake.
     As a security measure, the server creates a password for the session id
-    that any ZooKeeper server can validate. <remark>[tbd: note from Ben:
-    "perhaps capability is a better word." need clarification on that.]
-    </remark>The password is sent to the client with the session id when the
+    that any ZooKeeper server can validate.The password is sent to the client with the session id when the
     client establishes the session. The client sends this password with the
     session id whenever it reestablishes the session with a new server.</para>
 
@@ -605,9 +599,9 @@
               provide complete client synchronization. (For more information,
               see the <ulink
               url="recipes.html#sc_recipes_Locks">Locks</ulink>
-              <remark>[tbd: fix final link target]</remark> in <ulink
+              <remark>[tbd:...]</remark> in <ulink
               url="recipes.html">Zookeeper Recipes</ulink>.
-              <remark>[tbd: fix final link target]</remark>).</para>
+              <remark>[tbd:..]</remark>).</para>
             </listitem>
           </varlistentry>
         </variablelist>
@@ -778,8 +772,7 @@
 
             <note>
               <para>See INSTALL for general information about running
-              <emphasis role="bold">configure</emphasis>. <remark>[tbd: what
-              is INSTALL? a directory? a file?]</remark></para>
+              <emphasis role="bold">configure</emphasis>.</para>
             </note>
           </listitem>
 
@@ -819,8 +812,7 @@
         <para>To verify that the node's been created:</para>
 
         <para>You should see a list of node who are children of the root node
-        "/". <remark>[tbd: document all the cli commands (I think this is
-        Ben's tbd? It's from sourceforge)]</remark></para>
+        "/".</para>
 
         <para>In order to be able to use the ZooKeeper API in your application
         you have to remember to</para>
@@ -843,8 +835,7 @@
         </orderedlist>
 
         <para>Refer to <xref linkend="ch_programStructureWithExample"/>for examples of usage in Java and C.
-        <remark>[tbd: some kind of short tutorial would be helpful, I guess
-        (ben's tbd?) ][tbd: whatever the case, make sure that link points to something.]</remark></para>
+        <remark>[tbd]</remark></para>
       </section>
     </section>
   </chapter>
@@ -852,9 +843,8 @@
    <chapter id="ch_guideToZkOperations">
     <title>Building Blocks: A Guide to ZooKeeper Operations</title>
 
-    <para><remark>[Engineering input needed. This is a new section. The below
-    is just placeholder, and was actually copied from the overview book. There
-    should probably be a subsection on each of those operations, with a little
+    <para><remark>[tbd: This is a new section. The below
+    is just placeholder. Eventually, a subsection on each of those operations, with a little
     bit of illustrative code for each op.] </remark></para>
 
     <para>One of the design goals of ZooKeeper is provide a very simple
@@ -1054,8 +1044,7 @@
       </varlistentry>
 
       <varlistentry>
-        <term><ulink url="recipes.html">Zookeeper Recipes [tbd: fix
-        linkend for apache site]</ulink></term>
+        <term><ulink url="recipes.html">Zookeeper Recipes</ulink></term>
 
         <listitem>
           <para>Pseudo-level discussion of the implementation of various
@@ -1068,7 +1057,7 @@
         <term><remark>[tbd]</remark></term>
 
         <listitem>
-          <para>Whatever good sources anyone can think of...</para>
+          <para>Any other good sources anyone can think of...</para>
         </listitem>
       </varlistentry>
     </variablelist>

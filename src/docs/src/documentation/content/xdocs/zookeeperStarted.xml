@@ -70,20 +70,15 @@
         <para>Zookeeper requires Java 1.5 or more recent.</para>
       </note>
 
-      <para>[tbd: should we start w/ a word here about were to get the source,
-      exactly what to download, how to unpack it, and where to put it? Also,
-      does the user need to be in sudo, or can they be under their regular
-      login?]</para>
-
       <para>Once you have downloaded the ZooKeeper source, cd to the root of
       your ZooKeeper source, and run "ant jar". For example:<screen>$ cd ~/dev/zookeeper
 
 $ ~/dev/zookeeper/: ant jar</screen></para>
 
       <para>This should generate a JAR file called zookeeper.jar. To start
-      Zookeeper, compile and run zookeeper.jar. <emphasis>[tbd, some more
+      Zookeeper, compile and run zookeeper.jar. <remark>[tbd, some more
       instruction here. Perhaps a command line? Are these two steps or
-      one?]</emphasis></para>
+      one?]</remark></para>
 
       <para>To start ZooKeeper you need a configuration file. Here is a sample
       file:</para>
@@ -136,7 +131,7 @@ clientPort=2181
 
       <para>ZooKeeper logs messages using log4j -- more detail available in
       the <ulink url="zookeeperProgrammers.html#Logging">Logging</ulink>
-      section of the Programmer's Guide.<remark revision="include_tbd">[tbd:
+      section of the Programmer's Guide.<remark>[tbd:
       real reference needed]</remark> You will see log messages coming to the
       console and/or a log file depending on the log4j configuration.</para>
 
@@ -185,9 +180,7 @@ clientPort=2181
       <para>ZooKeeper has a Java bindings and C bindings. They are
       functionally equivalent. The C bindings exist in two variants: single
       threaded and multi-threaded. These differ only in how the messaging loop
-      is done. <remark>[tbd: what is the messaging loop? Do we talk about it
-      anywyhere? is this too much info for a getting started guide?]</remark>
-      For more information, see the <ulink
+      is done. For more information, see the <ulink
       url="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
       Examples in the Zookeeper Programmer's Guide</ulink> for
       sample code using of the different APIs.</para>
@@ -216,8 +209,7 @@ server.3=zoo3:2888 </screen></para>
       timeouts ZooKeeper uses to limit the length of time the Zookeeper
       servers in quorum have to connect to a leader. The entry <emphasis
       role="bold">syncLimit</emphasis> limits how far out of date a server can
-      be from a leader. [TBD: someone please verify that the previous is
-      true.]</para>
+      be from a leader.</para>
 
       <para>With both of these timeouts, you specify the unit of time using
       <emphasis role="bold">tickTime</emphasis>. In this example, the timeout
@@ -232,8 +224,7 @@ server.3=zoo3:2888 </screen></para>
 
       <para>Finally, note the "2888" port numbers after each server name.
       These are the "electionPort" numbers of the servers (as opposed to
-      clientPorts), that is ports for <remark>[tbd: feedback need: what are
-      these ports, exactly?]</remark>.</para>
+      clientPorts), that is ports for <remark>[tbd]</remark>.</para>
 
       <note>
         <para>If you want to test multiple servers on a single machine, define
@@ -259,8 +250,7 @@ server.3=zoo3:2888 </screen></para>
         </listitem>
 
         <listitem>
-          <para><remark>[tbd: feedback need: what is the other config param?
-          (I believe two are mentioned above.)]</remark></para>
+          <para><remark>[tbd: what is the other config param?]</remark></para>
         </listitem>
       </itemizedlist>
     </section>

@@ -291,11 +291,9 @@
 
       <para><xref linkend="fg_zkComponents" /> shows the high-level components
       of the ZooKeeper service. With the exception of the request processor,
-      <remark>[tbd: where does the request processor live?]</remark> each of
+     each of
       the servers that make up the ZooKeeper service replicates its own copy
-      of each of components. <remark>[tbd: I changed the wording in this
-      sentence from the white paper. Can someone please make sure it is still
-      correct?]</remark></para>
+      of each of components.</para>
 
       <para><figure id="fg_zkComponents">
           <title>ZooKeeper Components</title>
