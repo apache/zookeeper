@@ -126,37 +126,7 @@ public class Util {
     public static String getFormatConversionPolicy(Properties props){
         return props.getProperty(DB_FORMAT_CONV);
     }
-    
-    /**
-     * The routine parses the scheme-specific part and returns the attributes 
-     * values (if any) as an instance of Properties.
-     * @param uri the persistence provider URI
-     * @return URI attributes
-     */
-    public static Properties parseUrl(URI uri){
-        Properties props=new Properties();        
-        for(String s: uri.getSchemeSpecificPart().split(";")){
-            String[] pair=s.split("=");
-            if(pair.length==2){
-                if(pair[0].equals(SNAP_DIR)){
-                    props.setProperty(SNAP_DIR,pair[1]);
-                }else if(pair[0].equals(LOG_DIR)){
-                    props.setProperty(LOG_DIR,pair[1]);                        
-                }else if(pair[0].equals(DB_FORMAT_CONV)){
-                    props.setProperty(DB_FORMAT_CONV,pair[1]);                        
-                }else{
-                    LOG.warn("Unknown parameter ["+pair[0]+"] ignored");
-                }
-            }
-        }
-        Set<String> pp=props.stringPropertyNames();
-        if(!pp.contains(SNAP_DIR) || !pp.contains(LOG_DIR)){
-            throw new IllegalArgumentException(
-                    "Both snapDir and logDir must be specified");
-        }
-        return props;
-    }
-
+   
     /**
      * Extracts zxid from the file name. The file name should have been created
      * using one of the {@link makeLogName} or {@link makeSnapshotName}.

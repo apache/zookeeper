@@ -10,9 +10,17 @@ Non-backward compatible changes:
 
   ZOOKEEPER-18. keeper state inconsistency (Jakob Homan via phunt)
 
+  ZOOKEEPER-38. headers (version+) in log/snap files (Andrew Kornev and Mahadev
+  Konar via breed)
+
+  ZOOKEEPER-127.  Use of non-standard election ports in config breaks services
+  (Mark Harwood and Flavio Junqueira via breed)
+
 Backward compatibile changes:
 
   BUGFIXES: 
+
+  ZOOKEEPER-150. zookeeper build broken (mahadev via phunt)
 
   ZOOKEEPER-144. add tostring support for watcher event, and enums for event
   type/state (Jakob Homan via phunt)
@@ -96,9 +104,3 @@ Backward compatibile changes:
 
  ZOOKEEPER-117. threading issues in Leader election (Flavio Junqueira and Patrick
  Hunt via breed)
-
- ZOOKEEPER-38. headers (version+) in log/snap files (Andrew Kornev and Mahadev
- Konar via breed)
-
- ZOOKEEPER-127.  Use of non-standard election ports in config breaks services (Mark
- Harwood and Flavio Junqueira via breed)
