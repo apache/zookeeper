@@ -20,7 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
@@ -139,7 +139,7 @@ public class ManagedQuorumPeer extends ObservableQuorumPeer {
                     "Starting quorum peer");
             quorumBean=new QuorumBean(qp);
             MBeanRegistry.getInstance().register(quorumBean, null);
-            for(QuorumServer s: qp.quorumPeers){
+            for(QuorumServer s: qp.quorumPeers.values()){
                 ZKMBeanInfo p;
                 if(qp.getId()==s.id)
                     p=localPeerBean=new LocalPeerBean(qp);
@@ -209,21 +209,16 @@ public class ManagedQuorumPeer extends ObservableQuorumPeer {
         setupObservers();
     }
 
-    public ManagedQuorumPeer(ArrayList<QuorumServer> quorumPeers, 
-            File dataDir, File dataLogDir, int clientPort, 
-            int electionAlg, int electionPort, long myid, int tickTime, int initLimit,
-            int syncLimit) throws IOException {
-        super(quorumPeers, dataDir, dataLogDir, clientPort, 
-                electionAlg, electionPort, myid, tickTime, initLimit, syncLimit);
+    public ManagedQuorumPeer(HashMap<Long,QuorumServer> quorumPeers, File dataDir, File dataLogDir, int clientPort, int electionAlg, long myid, int tickTime, int initLimit,
+                                int syncLimit) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, clientPort, electionAlg, myid, tickTime, initLimit, 
+syncLimit);
         setupObservers();
     }
 
-    public ManagedQuorumPeer(ArrayList<QuorumServer> quorumPeers, 
-            File dataDir, File dataLogDir, int electionType, int electionPort,
-            long myid, int tickTime, int initLimit, int syncLimit,
-            NIOServerCnxn.Factory cnxnFactory) throws IOException {
-        super(quorumPeers, dataDir, dataLogDir, electionType, electionPort,
-                myid, tickTime, initLimit, syncLimit, cnxnFactory);
+    public ManagedQuorumPeer(HashMap<Long,QuorumServer> quorumPeers, File dataDir, File dataLogDir, int electionType, long myid, int tickTime, int initLimit, int syncLimit,
+                                NIOServerCnxn.Factory cnxnFactory) throws IOException {
+        super(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, initLimit, syncLimit, cnxnFactory);
         setupObservers();
     }
 

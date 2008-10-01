@@ -77,7 +77,6 @@ public class QuorumPeerMain {
                                 new File(QuorumPeerConfig.getDataLogDir()), 
                                 new File(QuorumPeerConfig.getDataDir())));
                     peer.setQuorumPeers(QuorumPeerConfig.getServers());
-                    peer.setElectionPort(QuorumPeerConfig.getElectionPort());
                     peer.setElectionType(QuorumPeerConfig.getElectionAlg());
                     peer.setMyid(QuorumPeerConfig.getServerId());
                     peer.setTickTime(QuorumPeerConfig.getTickTime());

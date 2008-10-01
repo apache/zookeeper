@@ -98,7 +98,6 @@ public class ManagedQuorumPeerMain {
                                     File(ServerConfig.getDataDir()));
                     peer.setTxnFactory(factory);
                     peer.setQuorumPeers(QuorumPeerConfig.getServers());
-                    peer.setElectionPort(QuorumPeerConfig.getElectionPort());
                     peer.setElectionType(QuorumPeerConfig.getElectionAlg());
                     peer.setMyid(QuorumPeerConfig.getServerId());
                     peer.setTickTime(QuorumPeerConfig.getTickTime());

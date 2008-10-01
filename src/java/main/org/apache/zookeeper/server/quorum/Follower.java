@@ -114,7 +114,7 @@ public class Follower {
         InetSocketAddress addr = null;
         // Find the leader by id
         Vote current = self.getCurrentVote();
-        for (QuorumServer s : self.quorumPeers) {
+        for (QuorumServer s : self.quorumPeers.values()) {
             if (s.id == current.id) {
                 addr = s.addr;
                 break;
@@ -269,7 +269,7 @@ public class Follower {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.warn("Exception when following the leader", e);
             try {
                 sock.close();
             } catch (IOException e1) {
