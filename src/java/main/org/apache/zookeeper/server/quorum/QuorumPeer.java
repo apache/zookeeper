@@ -384,6 +384,8 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     @Override
     public void run() {
+        setName("QuorumPeer:" + cnxnFactory.getLocalAddress());
+
         /*
          * Main loop
          */

@@ -80,7 +80,8 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
     @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        commitProcessor = new CommitProcessor(finalProcessor);
+        commitProcessor = new CommitProcessor(finalProcessor,
+                Integer.toString(getClientPort()), true);
         firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
         syncProcessor = new SyncRequestProcessor(this,
                 new SendAckRequestProcessor(getFollower()));
@@ -135,16 +136,16 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         commitProcessor.commit(request);
     }
     
-    public void sync(){
+    synchronized public void sync(){
         if(pendingSyncs.size() ==0){
             LOG.warn("Not expecting a sync.");
             return;
         }
                 
-        commitProcessor.commit(pendingSyncs.remove());
+        Request r = pendingSyncs.remove();
+		commitProcessor.commit(r);
     }
              
-         
     @Override
     public int getGlobalOutstandingLimit() {
         return super.getGlobalOutstandingLimit() / (self.getQuorumSize() - 1);

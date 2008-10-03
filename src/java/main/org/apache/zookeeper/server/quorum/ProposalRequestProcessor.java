@@ -56,17 +56,10 @@ public class ProposalRequestProcessor implements RequestProcessor {
          * call processRequest on the next processor.
          */
         
-        if(request.type == ZooDefs.OpCode.sync){
-            zks.getLeader().processSync(request);
-
-            if(!zks.getLeader().syncHandler.containsKey(request.sessionId)){
-                zks.getLeader().syncHandler.put(request.sessionId, null);
+        if(request instanceof FollowerSyncRequest){
+            zks.getLeader().processSync((FollowerSyncRequest)request);
+        } else {
                 nextProcessor.processRequest(request);
-            }
-            
-        }
-        else{
-            nextProcessor.processRequest(request);
             if (request.hdr != null) {
                 // We need to sync and get consensus on any transactions
                 zks.getLeader().propose(request);

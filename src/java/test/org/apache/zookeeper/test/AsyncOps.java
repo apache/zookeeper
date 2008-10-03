@@ -123,7 +123,7 @@ public class AsyncOps {
                 fail("unexpected interrupt");
             }
             // on the lookout for timeout
-            assertSame(latch.getCount(), 0L);
+            assertSame(0L, latch.getCount());
             
             String actual = toString();
             
@@ -410,11 +410,15 @@ public class AsyncOps {
             verify();
         }
         
+        public void setData() {
+            zk.setData(path, data, version, this, toString());
+        }
+        
         public void verifySetData() {
             stat.setVersion(1);
             new StringCB(zk).verifyCreate();
 
-            zk.setData(path, data, version, this, toString());
+            setData();
             verify();
         }
         
@@ -460,10 +464,14 @@ public class AsyncOps {
             super(zk, latch);
         }
         
+        public void delete() {
+            zk.delete(path, version, this, toString());
+        }
+        
         public void verifyDelete() {
             new StringCB(zk).verifyCreate();
 
-            zk.delete(path, version, this, toString());
+            delete();
             verify();
         }
         
@@ -473,8 +481,12 @@ public class AsyncOps {
             verify();
         }
         
-        public void verifySync() {
+        public void sync() {
             zk.sync(path, this, toString());
+        }
+        
+        public void verifySync() {
+            sync();
             verify();
         }
         

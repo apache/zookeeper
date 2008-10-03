@@ -103,6 +103,9 @@ public class CsvOutputArchive implements OutputArchive {
     }
     
     public void writeRecord(Record r, String tag) throws IOException {
+        if (r == null) {
+            return;
+        }
         r.serialize(this, tag);
     }
     

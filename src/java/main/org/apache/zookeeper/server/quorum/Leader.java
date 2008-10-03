@@ -25,9 +25,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.log4j.Logger;
@@ -70,11 +72,8 @@ public class Leader {
     public HashSet<FollowerHandler> forwardingFollowers = new HashSet<FollowerHandler>();
     
     //Pending sync requests
-    public HashMap<Long,Request> pendingSyncs = new HashMap<Long,Request>();
+    public HashMap<Long,List<FollowerSyncRequest>> pendingSyncs = new HashMap<Long,List<FollowerSyncRequest>>();
                
-    //Map sync request to FollowerHandler
-    public HashMap<Long,FollowerHandler> syncHandler = new HashMap<Long,FollowerHandler>();
-       
     /**
      * Adds follower to the leader.
      * 
@@ -253,7 +252,7 @@ public class Leader {
         newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
                 null, null);
         if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
-            LOG.error("NEWLEADER proposal has Zxid of "
+            LOG.warn("NEWLEADER proposal has Zxid of "
                     + newLeaderProposal.packet.getZxid());
         }
         outstandingProposals.add(newLeaderProposal);
@@ -373,17 +372,29 @@ public class Leader {
      */
     synchronized public void processAck(long zxid, SocketAddress followerAddr) {
         boolean first = true;
-        /*
-         * LOG.error("Ack zxid: " + Long.toHexString(zxid)); for (Proposal
-         * p : outstandingProposals) { long packetZxid = p.packet.getZxid();
-         * LOG.error("outstanding proposal: " +
-         * Long.toHexString(packetZxid)); } LOG.error("outstanding
-         * proposals all");
-         */
+        
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Ack zxid: 0x" + Long.toHexString(zxid));
+            for (Proposal p : outstandingProposals) {
+                long packetZxid = p.packet.getZxid();
+                LOG.debug("outstanding proposal: 0x"
+                        + Long.toHexString(packetZxid));
+            }
+            LOG.debug("outstanding proposals all");
+        }
+        
         if (outstandingProposals.size() == 0) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("outstanding is 0");
+            }
             return;
         }
         if (outstandingProposals.peek().packet.getZxid() > zxid) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("proposal has already been committed, pzxid:"
+                        + outstandingProposals.peek().packet.getZxid()
+                        + " zxid:" + zxid);
+            }
             // The proposal has already been committed
             return;
         }
@@ -391,13 +402,16 @@ public class Leader {
             long packetZxid = p.packet.getZxid();
             if (packetZxid == zxid) {
                 p.ackCount++;
-                // LOG.error("FIXMSG",new RuntimeException(), "Count for " +
-                // Long.toHexString(zxid) + " is " + p.ackCount);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Count for zxid: 0x" + Long.toHexString(zxid)
+                            + " is " + p.ackCount);
+                }
+                
                 if (p.ackCount > self.quorumPeers.size() / 2){
                     if (!first) {
-                        LOG.error("Commiting zxid 0x" + Long.toHexString(zxid)
+                        LOG.fatal("Commiting zxid 0x" + Long.toHexString(zxid)
                                 + " from " + followerAddr + " not first!");
-                        LOG.error("First is "
+                        LOG.fatal("First is "
                                 + outstandingProposals.element().packet);
                         System.exit(13);
                     }
@@ -408,23 +422,23 @@ public class Leader {
                     // We don't commit the new leader proposal
                     if ((zxid & 0xffffffffL) != 0) {
                         if (p.request == null) {
-                            LOG.error("Going to commmit null: " + p);
+                            LOG.warn("Going to commmit null: " + p);
                         }
                         commit(zxid);
                         zk.commitProcessor.commit(p.request);
                         if(pendingSyncs.containsKey(zxid)){
-                            sendSync(syncHandler.get(pendingSyncs.get(zxid).sessionId), pendingSyncs.get(zxid));
-                            syncHandler.remove(pendingSyncs.get(zxid));
-                            pendingSyncs.remove(zxid);
+                           for(FollowerSyncRequest r: pendingSyncs.remove(zxid)) {
+                               sendSync(r);
                         }
                     }
+                }
                 }
                 return;
             } else {
                 first = false;
             }
         }
-        LOG.error("Trying to commit future proposal: zxid 0x"
+        LOG.warn("Trying to commit future proposal: zxid 0x"
                 + Long.toHexString(zxid) + " from " + followerAddr);
     }
 
@@ -528,8 +542,7 @@ public class Leader {
             }
             baos.close();
         } catch (IOException e) {
-            // This really should be impossible
-            LOG.error("FIXMSG",e);
+            LOG.warn("This really should be impossible", e);
         }
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, baos
                 .toByteArray(), null);
@@ -538,6 +551,10 @@ public class Leader {
         p.packet = pp;
         p.request = request;
         synchronized (this) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Proposing:: " + request);
+            }
+
             outstandingProposals.add(p);
             lastProposed = p.packet.getZxid();
             sendPacket(pp);
@@ -551,28 +568,19 @@ public class Leader {
      * @param r the request
      */
     
-    public void processSync(Request r){
+    synchronized public void processSync(FollowerSyncRequest r){
         if(outstandingProposals.isEmpty()){
-            LOG.warn("No outstanding proposal");
-            sendSync(syncHandler.get(r.sessionId), r);
-                syncHandler.remove(r.sessionId);
-        }
-        else{
-            pendingSyncs.put(lastProposed, r);
+            sendSync(r);
+        } else {
+            List<FollowerSyncRequest> l = pendingSyncs.get(lastProposed);
+            if (l == null) {
+                l = new ArrayList<FollowerSyncRequest>();
+            }
+            l.add(r);
+            pendingSyncs.put(lastProposed, l);
         }
     }
         
-    /**
-     * Set FollowerHandler for sync.
-     * 
-     * @param f
-     * @param s
-     */
-        
-    synchronized public void setSyncHandler(FollowerHandler f, long s){
-        syncHandler.put(s, f);
-    }
-            
     /**
      * Sends a sync message to the appropriate server
      * 
@@ -580,15 +588,9 @@ public class Leader {
      * @param r
      */
             
-    public void sendSync(FollowerHandler f, Request r){
-        if(f != null){
-            QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
-            f.queuePacket(qp);
-        }
-        else{
-            LOG.warn("Committing sync: " + r.cxid );
-            zk.commitProcessor.commit(r);
-        }
+    public void sendSync(FollowerSyncRequest r){
+        QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
+        r.fh.queuePacket(qp);
     }
                 
     /**

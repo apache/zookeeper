@@ -163,19 +163,19 @@ public class Request {
     @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
-        sb.append("session 0x").append(Long.toHexString(sessionId));
-        sb.append(" cxid 0x").append(Long.toHexString(cxid));
-        sb.append("zxid 0x").append(Long.toHexString((hdr == null ? -2 : hdr.getZxid()))).append(
-                " ");
-        sb
-                .append(
-                        " txn type = "
-                                + (hdr == null ? "unknown" : "" + hdr.getType()))
-                .append(" ");
-        sb.append(op2String(type)).append(" ");
+        sb.append("sessionid:0x").append(Long.toHexString(sessionId));
+        sb.append(" type:").append(op2String(type));
+        sb.append(" cxid:0x").append(Long.toHexString(cxid));
+        sb.append(" zxid:0x").append(Long.toHexString((hdr == null ?
+                -2 : hdr.getZxid())));
+        sb.append(" txntype:" + (hdr == null ?
+                "unknown" : "" + hdr.getType()));
+        sb.append(" ");
 
         String path = "n/a";
-        if (type != OpCode.createSession) {
+        if (type != OpCode.createSession && request != null
+                && request.remaining() >= 4)
+        {
             try {
                 request.clear();
                 int pathLen = request.getInt();
@@ -188,6 +188,7 @@ public class Request {
             }
         }
         sb.append(path).append(" ");
+
         return sb.toString();
     }
 }
