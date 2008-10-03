@@ -17,6 +17,12 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-154. reliability graph diagram in overview doc needs context
+  (phunt)
+
+  ZOOKEEPER-155. improve "the zookeeper project" section of overview doc
+  (phunt)
+
   ZOOKEEPER-147. This is version of the documents with most of the [tbd...]
   scrubbed out (robbie via phunt)
 
