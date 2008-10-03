@@ -15,12 +15,12 @@
   limitations under the License.
 -->
 
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-<book id="bk_Overview">
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="bk_Overview">
   <title>ZooKeeper</title>
 
-  <bookinfo>
+  <articleinfo>
     <legalnotice>
       <para>Licensed under the Apache License, Version 2.0 (the "License");
       you may not use this file except in compliance with the License. You may
@@ -39,9 +39,9 @@
       discusses design goals, key concepts, implementation, and
       performance.</para>
     </abstract>
-  </bookinfo>
+  </articleinfo>
 
-  <chapter id="ch_DesignOverview">
+  <section id="ch_DesignOverview">
     <title>ZooKeeper: A Distributed Coordination Service for Distributed
     Applications</title>
 
@@ -142,7 +142,7 @@
       (ZooKeeper was designed to store coordination data: status information,
       configuration, location information, etc., so the data stored at each
       node is usually small, in the byte to kilobyte range.) We use the term
-      <firstterm>znode</firstterm> to make it clear that we are talking about
+      <emphasis>znode</emphasis> to make it clear that we are talking about
       ZooKeeper data nodes.</para>
 
       <para>Znodes maintain a stat structure that includes version numbers for
@@ -159,19 +159,19 @@
       <para>ZooKeeper also has the notion of ephemeral nodes. These znodes
       exists as long as the session that created the znode is active. When the
       session ends the znode is deleted. Ephemeral nodes are useful when you
-      want to implement <remark>[tbd]</remark>.</para>
+      want to implement <emphasis>[tbd]</emphasis>.</para>
     </section>
 
     <section>
       <title>Conditional updates and watches</title>
 
-      <para>ZooKeeper supports the concept of <firstterm>watches</firstterm>.
+      <para>ZooKeeper supports the concept of <emphasis>watches</emphasis>.
       Clients can set a watch on a znodes. A watch will be triggered and
       removed when the znode changes. When a watch is triggered the client
       receives a packet saying that the znode has changed. And if the
       connection between the client and one of the Zoo Keeper servers is
       broken, the client will receive a local notification. These can be used
-      to <remark>[tbd]</remark>.</para>
+      to <emphasis>[tbd]</emphasis>.</para>
     </section>
 
     <section>
@@ -213,7 +213,7 @@
       </itemizedlist>
 
       <para>For more information on these, and how they can be used, see
-      <remark>[tbd]</remark></para>
+      <emphasis>[tbd]</emphasis></para>
     </section>
 
     <section>
@@ -283,7 +283,7 @@
 
       <para>For a more in-depth discussion on these, and how they can be used
       to implement higher level operations, please refer to
-      <remark>[tbd]</remark></para>
+      <emphasis>[tbd]</emphasis></para>
     </section>
 
     <section>
@@ -295,15 +295,15 @@
       the servers that make up the ZooKeeper service replicates its own copy
       of each of components.</para>
 
-      <para><figure id="fg_zkComponents">
-          <title>ZooKeeper Components</title>
+      <figure id="fg_zkComponents">
+        <title>ZooKeeper Components</title>
 
-          <mediaobject>
-            <imageobject>
-              <imagedata fileref="images/zkcomponents.jpg" />
-            </imageobject>
-          </mediaobject>
-        </figure></para>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/zkcomponents.jpg" />
+          </imageobject>
+        </mediaobject>
+      </figure>
 
       <para>The replicated database is an in-memory database containing the
       entire data tree. Updates are logged to disk for recoverability, and
@@ -318,8 +318,8 @@
 
       <para>As part of the agreement protocol all write requests from clients
       are forwarded to a single server, called the
-      <firstterm>leader</firstterm>. The rest of the ZooKeeper servers, called
-      <firstterm>followers</firstterm>, receive message proposals from the
+      <emphasis>leader</emphasis>. The rest of the ZooKeeper servers, called
+      <emphasis>followers</emphasis>, receive message proposals from the
       leader and agree upon message delivery. The messaging layer takes care
       of replacing leaders on failures and syncing followers with
       leaders.</para>
@@ -338,9 +338,9 @@
       <para>The programming interface to ZooKeeper is deliberately simple.
       With it, however, you can implement higher order operations, such as
       synchronizations primitives, group membership, ownership, etc. Some
-      distributed applications have used it to: <remark>[tbd: add uses from
-      white paper and video presentation.]</remark> For more information, see
-      <remark>[tbd]</remark></para>
+      distributed applications have used it to: <emphasis>[tbd: add uses from
+      white paper and video presentation.]</emphasis> For more information, see
+      <emphasis>[tbd]</emphasis></para>
     </section>
 
     <section>
@@ -353,15 +353,17 @@
       involve synchronizing the state of all servers. (Reads outnumbering
       writes is typically the case for a coordination service.)</para>
 
-      <para><figure id="fg_zkPerfRW">
-          <title>ZooKeeper Throughput as the Read-Write Ratio Varies</title>
+      <figure id="fg_zkPerfRW">
+        <title>ZooKeeper Throughput as the Read-Write Ratio Varies</title>
 
-          <mediaobject>
-            <imageobject>
-              <imagedata fileref="images/zkperfRW.jpg" />
-            </imageobject>
-          </mediaobject>
-        </figure>Benchmarks also indicate that it is reliable, too. <xref
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/zkperfRW.jpg" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <para>Benchmarks also indicate that it is reliable, too. <xref
       linkend="fg_zkPerfReliability" /> shows how a deployment responds to
       various failures. The events marked in the figure are the
       following:</para>
@@ -399,16 +401,14 @@
         30%, which is a conservative ratio of our expected
         workloads.
       </para>
-      <para>
-        <figure id="fg_zkPerfReliability">
-          <title>Reliability in the Presence of Errors</title>
-          <mediaobject>
-            <imageobject>
-              <imagedata fileref="images/zkperfreliability.jpg" />
-            </imageobject>
-          </mediaobject>
-        </figure>
-      </para>
+      <figure id="fg_zkPerfReliability">
+        <title>Reliability in the Presence of Errors</title>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/zkperfreliability.jpg" />
+          </imageobject>
+        </mediaobject>
+      </figure>
 
       <para>The are a few important observations from this graph. First, if
       followers fail and recover quickly, then ZooKeeper is able to sustain a
@@ -445,5 +445,5 @@
         for more information.
       </para>
     </section>
-  </chapter>
-</book>
+  </section>
+</article>

@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title></title>
+<title>ZooKeeper</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -157,10 +157,11 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="zookeeperOver.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
+<h1>ZooKeeper</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#ZooKeeper%3A+A+Distributed+Coordination+Service+for+Distributed%0A++++Applications">ZooKeeper: A Distributed Coordination Service for Distributed
+<a href="#ch_DesignOverview">ZooKeeper: A Distributed Coordination Service for Distributed
     Applications</a>
 <ul class="minitoc">
 <li>
@@ -191,6 +192,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#Performance">Performance</a>
 </li>
 <li>
+<a href="#Reliability">Reliability</a>
+</li>
+<li>
 <a href="#The+ZooKeeper+Project">The ZooKeeper Project</a>
 </li>
 </ul>
@@ -198,12 +202,11 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 </div>
   
-<title>ZooKeeper</title>
 
   
 
   
-<a name="N1000A"></a><a name="ZooKeeper%3A+A+Distributed+Coordination+Service+for+Distributed%0A++++Applications"></a>
+<a name="N10009"></a><a name="ch_DesignOverview"></a>
 <h2 class="h3">ZooKeeper: A Distributed Coordination Service for Distributed
     Applications</h2>
 <div class="section">
@@ -218,7 +221,7 @@ document.write("Last Published: " + document.lastModified);
     especially prone to errors such as race conditions and deadlock. The
     motivation behind ZooKeeper is to relieve distributed applications the
     responsibility of implementing coordination services from scratch.</p>
-<a name="N10016"></a><a name="sc_designGoals"></a>
+<a name="N10015"></a><a name="sc_designGoals"></a>
 <h3 class="h4">Design Goals</h3>
 <p>
 <strong>ZooKeeper is simple.</strong> ZooKeeper
@@ -271,7 +274,7 @@ document.write("Last Published: " + document.lastModified);
       especially fast in "read-dominant" workloads. ZooKeeper applications run
       on thousands of machines, and it performs best where reads are more
       common than writes, at ratios of around 10:1.</p>
-<a name="N10046"></a><a name="sc_dataModelNameSpace"></a>
+<a name="N10045"></a><a name="sc_dataModelNameSpace"></a>
 <h3 class="h4">Data model and the hierarchical namespace</h3>
 <p>The name space provided by ZooKeeper is much like that of a
       standard file system. A name is a sequence of path elements separated by
@@ -289,7 +292,7 @@ document.write("Last Published: " + document.lastModified);
         </td>
 </tr>
 </table>
-<a name="N1005C"></a><a name="Nodes+and+ephemeral+nodes"></a>
+<a name="N1005B"></a><a name="Nodes+and+ephemeral+nodes"></a>
 <h3 class="h4">Nodes and ephemeral nodes</h3>
 <p>Unlike is standard file systems, each node in a ZooKeeper
       namespace can have data associated with it as well as children. It is
@@ -311,8 +314,8 @@ document.write("Last Published: " + document.lastModified);
 <p>ZooKeeper also has the notion of ephemeral nodes. These znodes
       exists as long as the session that created the znode is active. When the
       session ends the znode is deleted. Ephemeral nodes are useful when you
-      want to implement <remark>[tbd]</remark>.</p>
-<a name="N10075"></a><a name="Conditional+updates+and+watches"></a>
+      want to implement <em>[tbd]</em>.</p>
+<a name="N10074"></a><a name="Conditional+updates+and+watches"></a>
 <h3 class="h4">Conditional updates and watches</h3>
 <p>ZooKeeper supports the concept of <em>watches</em>.
       Clients can set a watch on a znodes. A watch will be triggered and
@@ -320,8 +323,8 @@ document.write("Last Published: " + document.lastModified);
       receives a packet saying that the znode has changed. And if the
       connection between the client and one of the Zoo Keeper servers is
       broken, the client will receive a local notification. These can be used
-      to <remark>[tbd]</remark>.</p>
-<a name="N10085"></a><a name="Guarantees"></a>
+      to <em>[tbd]</em>.</p>
+<a name="N10084"></a><a name="Guarantees"></a>
 <h3 class="h4">Guarantees</h3>
 <p>ZooKeeper is very fast and very simple. Since its goal, though, is
       to be a basis for the construction of more complicated services, such as
@@ -373,9 +376,9 @@ document.write("Last Published: " + document.lastModified);
       
 </ul>
 <p>For more information on these, and how they can be used, see
-      <remark>[tbd]</remark>
+      <em>[tbd]</em>
 </p>
-<a name="N100BB"></a><a name="Simple+API"></a>
+<a name="N100BA"></a><a name="Simple+API"></a>
 <h3 class="h4">Simple API</h3>
 <p>One of the design goals of ZooKeeper is provide a very simple
       programming interface. As a result, it supports only these
@@ -440,9 +443,9 @@ document.write("Last Published: " + document.lastModified);
 </dl>
 <p>For a more in-depth discussion on these, and how they can be used
       to implement higher level operations, please refer to
-      <remark>[tbd]</remark>
+      <em>[tbd]</em>
 </p>
-<a name="N100FE"></a><a name="Implementation"></a>
+<a name="N100FD"></a><a name="Implementation"></a>
 <h3 class="h4">Implementation</h3>
 <p>
 <a href="#fg_zkComponents">ZooKeeper Components</a> shows the high-level components
@@ -450,20 +453,18 @@ document.write("Last Published: " + document.lastModified);
      each of
       the servers that make up the ZooKeeper service replicates its own copy
       of each of components.</p>
-<p>
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
 <tr>
 <td>ZooKeeper Components</td>
 </tr>
 <tr>
 <td>
-            
-              <img alt="" src="images/zkcomponents.jpg">
-            
-          </td>
+          
+            <img alt="" src="images/zkcomponents.jpg">
+          
+        </td>
 </tr>
 </table>
-</p>
 <p>The replicated database is an in-memory database containing the
       entire data tree. Updates are logged to disk for recoverability, and
       writes are serialized to disk before they are applied to the in-memory
@@ -486,16 +487,16 @@ document.write("Last Published: " + document.lastModified);
       calculates what the state of the system is when the write is to be
       applied and transforms this into a transaction that captures this new
       state.</p>
-<a name="N1012A"></a><a name="Uses"></a>
+<a name="N10128"></a><a name="Uses"></a>
 <h3 class="h4">Uses</h3>
 <p>The programming interface to ZooKeeper is deliberately simple.
       With it, however, you can implement higher order operations, such as
       synchronizations primitives, group membership, ownership, etc. Some
-      distributed applications have used it to: <remark>[tbd: add uses from
-      white paper and video presentation.]</remark> For more information, see
-      <remark>[tbd]</remark>
+      distributed applications have used it to: <em>[tbd: add uses from
+      white paper and video presentation.]</em> For more information, see
+      <em>[tbd]</em>
 </p>
-<a name="N10139"></a><a name="Performance"></a>
+<a name="N10137"></a><a name="Performance"></a>
 <h3 class="h4">Performance</h3>
 <p>ZooKeeper is designed to be highly performant. But is it? The
       results of the ZooKeeper's development team at Yahoo! Research indicate
@@ -503,19 +504,19 @@ document.write("Last Published: " + document.lastModified);
       performance in applications where reads outnumber writes, since writes
       involve synchronizing the state of all servers. (Reads outnumbering
       writes is typically the case for a coordination service.)</p>
-<p>
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
 <tr>
 <td>ZooKeeper Throughput as the Read-Write Ratio Varies</td>
 </tr>
 <tr>
 <td>
-            
-              <img alt="" src="images/zkperfRW.jpg">
-            
-          </td>
+          
+            <img alt="" src="images/zkperfRW.jpg">
+          
+        </td>
 </tr>
-</table>Benchmarks also indicate that it is reliable, too. <a href="#fg_zkPerfReliability">Reliability in the Presence of Errors</a> shows how a deployment responds to
+</table>
+<p>Benchmarks also indicate that it is reliable, too. <a href="#fg_zkPerfReliability">Reliability in the Presence of Errors</a> shows how a deployment responds to
       various failures. The events marked in the figure are the
       following:</p>
 <ol>
@@ -555,20 +556,27 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ol>
-<p>
+<a name="N10179"></a><a name="Reliability"></a>
+<h3 class="h4">Reliability</h3>
+<p>To show the behavior of the system over time as
+        failures are injected we ran a ZooKeeper service made up of
+        7 machines. We ran the same saturation benchmark as before,
+        but this time we kept the write percentage at a constant
+        30%, which is a conservative ratio of our expected
+        workloads.
+      </p>
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
 <tr>
 <td>Reliability in the Presence of Errors</td>
 </tr>
 <tr>
 <td>
-            
-              <img alt="" src="images/zkperfreliability.jpg">
-            
-          </td>
+          
+            <img alt="" src="images/zkperfreliability.jpg">
+          
+        </td>
 </tr>
 </table>
-</p>
 <p>The are a few important observations from this graph. First, if
       followers fail and recover quickly, then ZooKeeper is able to sustain a
       high throughput despite the failure. But maybe more importantly, the
@@ -577,23 +585,28 @@ document.write("Last Published: " + document.lastModified);
       ZooKeeper takes less than 200ms to elect a new leader. Third, as
       followers recover, ZooKeeper is able to raise throughput again once they
       start processing requests.</p>
-<a name="N1018A"></a><a name="The+ZooKeeper+Project"></a>
+<a name="N10192"></a><a name="The+ZooKeeper+Project"></a>
 <h3 class="h4">The ZooKeeper Project</h3>
-<p>ZooKeeper has been successfully used in industrial applications.
-      It is used at Yahoo! as the coordination and failure recovery service
-      for Yahoo! Message Broker, which is a highly scalable publish-subscribe
-      system managing thousands of topics for replication and data delivery.
-      It is used by the Fetching Service for Yahoo! crawler, where it also
-      manages failure recovery. And it is used by Hadoop On Demand (HOD),
-      which is an open source implementation of the map-reduce model of
-      computation. HOD uses Zookeeper as a communications and control channel
-      between slave and master process. (For more information, see the <a href="http://hadoop.apache.org/core/">Hadoop</a> and <a href="http://hadoop.apache.org/core/docs/current/hod.html">Hadoop on
-      Demand</a> open source projects on Apache.)</p>
-<p>ZooKeeper itself is an open source project, under the Apache Open
-      Source Foundation. It is a subproject of Hadoop. All users and
-      developers are encourged to join the community and contribute their
-      expertise. See the <a href="http://hadoop.apache.org/zookeeper/">Zookeeper Project on
-      Apache</a> for more information.</p>
+<p>ZooKeeper has been
+        <a href="http://wiki.apache.org/hadoop/ZooKeeper/PoweredBy">
+          successfully used
+        </a>
+        in many industrial applications.  It is used at Yahoo! as the
+        coordination and failure recovery service for Yahoo! Message
+        Broker, which is a highly scalable publish-subscribe system
+        managing thousands of topics for replication and data
+        delivery.  It is used by the Fetching Service for Yahoo!
+        crawler, where it also manages failure recovery. A number of
+        Yahoo! advertising systems also use ZooKeeper to implement
+        reliable services.
+      </p>
+<p>All users and developers are encouraged to join the
+        community and contribute their expertise. See the
+        <a href="http://hadoop.apache.org/zookeeper/">
+          Zookeeper Project on Apache
+        </a>
+        for more information.
+      </p>
 </div>
 
 <p align="right">

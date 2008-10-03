@@ -15,12 +15,12 @@
   limitations under the License.
 -->
 
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-<book id="ar_Recipes">
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="ar_Recipes">
   <title>ZooKeeper Recipes and Solutions</title>
 
-  <bookinfo>
+  <articleinfo>
     <legalnotice>
       <para>Licensed under the Apache License, Version 2.0 (the "License");
       you may not use this file except in compliance with the License. You may
@@ -41,9 +41,9 @@
 
       <para>$Revision: 1.6 $ $Date: 2008/09/19 03:46:18 $</para>
     </abstract>
-  </bookinfo>
+  </articleinfo>
 
-  <chapter id="ch_recipes">
+  <section id="ch_recipes">
     <title>A Guide to Creating Higher-level Constructs with ZooKeeper</title>
 
     <para>In this article, you'll find guidelines for using
@@ -91,11 +91,12 @@
   <section id="sc_recipes_eventHandles">
     <title>Barriers</title>
 
-    <para>Distributed systems use <firstterm>barriers</firstterm> to block
-    processing of a set of nodes until a condition is met at which time all
-    the nodes are allowed to proceed. Barriers are implemented in ZooKeeper by
-    designating a barrier node. The barrier is in place if the barrier node
-    exists. Here's the pseudo code:</para>
+    <para>Distributed systems use <emphasis>barriers</emphasis>
+      to block processing of a set of nodes until a condition is met
+      at which time all the nodes are allowed to proceed. Barriers are
+      implemented in ZooKeeper by designating a barrier node. The
+      barrier is in place if the barrier node exists. Here's the
+      pseudo code:</para>
 
     <orderedlist>
       <listitem>
@@ -140,91 +141,93 @@
       the computation. (The <emphasis>x</emphasis> here is up to you to
       determine for your system.)</para>
 
-      <para><informaltable colsep="0" frame="none" rowsep="0">
-          <tgroup cols="2">
-            <tbody>
-              <row>
-                <entry align="center"><emphasis
-                role="bold">Enter</emphasis></entry>
+      <informaltable colsep="0" frame="none" rowsep="0">
+        <tgroup cols="2">
+          <tbody>
+            <row>
+              <entry align="center"><emphasis
+                                       role="bold">Enter</emphasis></entry>
 
-                <entry align="center"><emphasis
-                role="bold">Leave</emphasis></entry>
-              </row>
+              <entry align="center"><emphasis
+                                       role="bold">Leave</emphasis></entry>
+            </row>
 
-              <row>
-                <entry align="left"><orderedlist>
-                    <listitem>
-                      <para>Create a name <emphasis><emphasis>n</emphasis> =
-                      <emphasis>b</emphasis>+“/”+<emphasis>p</emphasis></emphasis></para>
-                    </listitem>
+            <row>
+              <entry align="left"><orderedlist>
+                  <listitem>
+                    <para>Create a name <emphasis><emphasis>n</emphasis> =
+                        <emphasis>b</emphasis>+“/”+<emphasis>p</emphasis></emphasis></para>
+                  </listitem>
 
-                    <listitem>
-                      <para>Set watch: <emphasis
-                      role="bold">exists(<emphasis>b</emphasis> + ‘‘/ready’’,
-                      true)</emphasis></para>
-                    </listitem>
+                  <listitem>
+                    <para>Set watch: <emphasis
+                                        role="bold">exists(<emphasis>b</emphasis> + ‘‘/ready’’,
+                        true)</emphasis></para>
+                  </listitem>
 
-                    <listitem>
-                      <para>Create child: <emphasis role="bold">create(
-                      <emphasis>n</emphasis>, EPHEMERAL)</emphasis></para>
-                    </listitem>
+                  <listitem>
+                    <para>Create child: <emphasis role="bold">create(
+                        <emphasis>n</emphasis>, EPHEMERAL)</emphasis></para>
+                  </listitem>
 
-                    <listitem>
-                      <para><emphasis role="bold">L = getChildren(b,
-                      false)</emphasis></para>
-                    </listitem>
+                  <listitem>
+                    <para><emphasis role="bold">L = getChildren(b,
+                        false)</emphasis></para>
+                  </listitem>
 
-                    <listitem>
-                      <para>if fewer children in L than<emphasis>
-                      x</emphasis>, wait for watch event</para>
-                    </listitem>
+                  <listitem>
+                    <para>if fewer children in L than<emphasis>
+                        x</emphasis>, wait for watch event</para>
+                  </listitem>
 
-                    <listitem>
-                      <para>else <emphasis role="bold">create(b + ‘‘/ready’’,
-                      REGULAR)</emphasis></para>
-                    </listitem>
-                  </orderedlist></entry>
+                  <listitem>
+                    <para>else <emphasis role="bold">create(b + ‘‘/ready’’,
+                        REGULAR)</emphasis></para>
+                  </listitem>
+                </orderedlist></entry>
 
-                <entry><orderedlist>
-                    <listitem>
-                      <para><emphasis role="bold">L = getChildren(b,
-                      false)</emphasis></para>
-                    </listitem>
+              <entry><orderedlist>
+                  <listitem>
+                    <para><emphasis role="bold">L = getChildren(b,
+                        false)</emphasis></para>
+                  </listitem>
 
-                    <listitem>
-                      <para>if no children, exit</para>
-                    </listitem>
+                  <listitem>
+                    <para>if no children, exit</para>
+                  </listitem>
 
-                    <listitem>
-                      <para>if <emphasis>p</emphasis> is only process node in
+                  <listitem>
+                    <para>if <emphasis>p</emphasis> is only process node in
                       L, delete(n) and exit</para>
-                    </listitem>
+                  </listitem>
 
-                    <listitem>
-                      <para>if <emphasis>p</emphasis> is the lowest process
+                  <listitem>
+                    <para>if <emphasis>p</emphasis> is the lowest process
                       node in L, wait on highest process node in P</para>
-                    </listitem>
+                  </listitem>
 
-                    <listitem>
-                      <para>else <emphasis
-                      role="bold">delete(<emphasis>n</emphasis>) </emphasis>if
+                  <listitem>
+                    <para>else <emphasis
+                                  role="bold">delete(<emphasis>n</emphasis>) </emphasis>if
                       still exists and wait on lowest process node in L</para>
-                    </listitem>
+                  </listitem>
 
-                    <listitem>
-                      <para>goto 1</para>
-                    </listitem>
-                  </orderedlist></entry>
-              </row>
-            </tbody>
-          </tgroup>
-        </informaltable>On entering, all processes watch on a ready node and
-      create an ephemeral node as a child of the barrier node. Each process
-      but the last enters the barrier and waits for the ready node to appear
-      at line 5. The process that creates the xth node, the last process, will
-      see x nodes in the list of children and create the ready node, waking up
-      the other processes. Note that waiting processes wake up only when it is
-      time to exit, so waiting is efficient.</para>
+                  <listitem>
+                    <para>goto 1</para>
+                  </listitem>
+                </orderedlist></entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>On entering, all processes watch on a ready node and
+        create an ephemeral node as a child of the barrier node. Each process
+        but the last enters the barrier and waits for the ready node to appear
+        at line 5. The process that creates the xth node, the last process, will
+        see x nodes in the list of children and create the ready node, waking up
+        the other processes. Note that waiting processes wake up only when it is
+        time to exit, so waiting is efficient.
+      </para>
 
       <para>On exit, you can't use a flag such as <emphasis>ready</emphasis>
       because you are watching for process nodes to go away. By using
@@ -370,7 +373,7 @@
                   <listitem>
                     <para>Call <emphasis role="bold">create( )</emphasis> to
                     create a node with pathname
-                    "<parameter>_locknode_/read-</parameter>". This is the
+                    "<filename>_locknode_/read-</filename>". This is the
                     lock node use later in the protocol. Make sure to set both
                     the <emphasis>sequence</emphasis> and
                     <emphasis>ephemeral</emphasis> flags.</para>
@@ -385,7 +388,7 @@
 
                   <listitem>
                     <para>If there are no children with a pathname starting
-                    with "<parameter>write-</parameter>" and having a lower
+                    with "<filename>write-</filename>" and having a lower
                     sequence number than the node created in step <emphasis
                     role="bold">1</emphasis>, the client has the lock and can
                     exit the protocol. </para>
@@ -395,7 +398,7 @@
                     <para>Otherwise, call <emphasis role="bold">exists(
                     )</emphasis>, with <emphasis>watch</emphasis> flag, set on
                     the node in lock directory with pathname staring with
-                    "<parameter>write-</parameter>" having the next lowest
+                    "<filename>write-</filename>" having the next lowest
                     sequence number.</para>
                   </listitem>
 
@@ -416,7 +419,7 @@
                   <listitem>
                     <para>Call <emphasis role="bold">create( )</emphasis> to
                     create a node with pathname
-                    "<parameter>_locknode_/write-</parameter>". This is the
+                    "<filename>_locknode_/write-</filename>". This is the
                     lock node spoken of later in the protocol. Make sure to
                     set both <emphasis>sequence</emphasis> and
                     <emphasis>ephemeral</emphasis> flags.</para>
@@ -457,16 +460,18 @@
         </tgroup>
       </informaltable>
 
-      <para><note>
-          <para>It might appear that this recipe creates a herd effect: when
-          there is a large group of clients waiting for a read lock, and all
-          getting notified more or less simultaneously when the
-          "<parameter>write-</parameter>" node with the lowest sequence number
-          is deleted. In fact. that's valid behavior: as all those waiting
-          reader clients should be released since they have the lock. The herd
-          effect refers to releasing a "herd" when in fact only a single or a
-          small number of machines can proceed.</para>
-        </note></para>
+      <note>
+        <para>It might appear that this recipe creates a herd effect:
+          when there is a large group of clients waiting for a read
+          lock, and all getting notified more or less simultaneously
+          when the "<filename>write-</filename>" node with the lowest
+          sequence number is deleted. In fact. that's valid behavior:
+          as all those waiting reader clients should be released since
+          they have the lock. The herd effect refers to releasing a
+          "herd" when in fact only a single or a small number of
+          machines can proceed.
+        </para>
+      </note>
     </section>
 
     <section id="sc_recoverableSharedLocks">
@@ -614,5 +619,5 @@
     the current leader. Applications may consider creating a separate to znode
     to acknowledge that the leader has executed the leader procedure. </para>
   </section>
-  </chapter>
-</book>
+  </section>
+</article>

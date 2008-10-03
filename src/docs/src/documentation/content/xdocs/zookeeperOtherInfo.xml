@@ -15,12 +15,12 @@
   limitations under the License.
 -->
 
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-<book id="bk_OtherInfo">
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="bk_OtherInfo">
   <title>ZooKeeper</title>
 
-  <bookinfo>
+  <articleinfo>
     <legalnotice>
       <para>Licensed under the Apache License, Version 2.0 (the "License");
       you may not use this file except in compliance with the License. You may
@@ -37,10 +37,10 @@
     <abstract>
       <para> currently empty </para>
     </abstract>
-  </bookinfo>
+  </articleinfo>
 
-  <chapter id="ch_placeholder">
+  <section id="ch_placeholder">
     <title>Other Info</title>
     <para> currently empty </para>
-  </chapter>
-</book>
+  </section>
+</article>
