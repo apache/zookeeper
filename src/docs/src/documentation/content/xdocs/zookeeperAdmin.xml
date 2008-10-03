@@ -15,14 +15,14 @@
   limitations under the License.
 -->
 
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-<book id="bk_Admin">
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="bk_Admin">
   <title>ZooKeeper Administrator's Guide</title>
 
   <subtitle>A Guide to Deployment and Administration</subtitle>
 
-  <bookinfo>
+  <articleinfo>
     <legalnotice>
       <para>Licensed under the Apache License, Version 2.0 (the "License");
       you may not use this file except in compliance with the License. You may
@@ -43,12 +43,12 @@
 
       <para>$Revision: 1.7 $ $Date: 2008/09/19 05:29:31 $</para>
     </abstract>
-  </bookinfo>
+  </articleinfo>
 
-  <chapter id="ch_deployment">
+  <section id="ch_deployment">
     <title>Deployment</title>
 
-    <para>This chapter contains information about deploying Zookeeper and
+    <para>This section contains information about deploying Zookeeper and
     covers these topics:</para>
 
     <itemizedlist>
@@ -85,7 +85,7 @@
       <title>Clustered (Multi-Server) Setup</title>
 
       <para>For reliable ZooKeeper service, you should deploy ZooKeeper in a
-      cluster known as a <firstterm>quorum</firstterm>. As long as a majority
+      cluster known as a <emphasis>quorum</emphasis>. As long as a majority
       of the quorum are up, the service will be available. Because Zookeeper
       requires a majority, it is best to use an
       odd number of machines. For example, with four machines ZooKeeper can
@@ -101,7 +101,7 @@
         <listitem>
           <para>Install the Java JDK:</para>
 
-          <screen>$yinst -i jdk-1.6.0.00_3 -br test </screen>
+          <para><computeroutput>$yinst -i jdk-1.6.0.00_3 -br test </computeroutput></para>
         </listitem>
 
         <listitem>
@@ -115,14 +115,14 @@
         <listitem>
           <para>Install the Zookeeper Server Package:</para>
 
-          <screen>$ yinst install -nostart zookeeper_server </screen>
+          <para><computeroutput>$ yinst install -nostart zookeeper_server </computeroutput></para>
         </listitem>
 
         <listitem>
           <para>Create a configuration file. This file can be called anything.
           Use the following settings as a starting point:</para>
 
-          <screen>
+          <para><computeroutput>
 tickTime=2000
 dataDir=/var/zookeeper/
 clientPort=2181
@@ -130,7 +130,7 @@ initLimit=5
 syncLimit=2
 server.1=zoo1:2888
 server.2=zoo2:2888
-server.3=zoo3:2888</screen>
+server.3=zoo3:2888</computeroutput></para>
 
           <para>You can find the meanings of these and other configuration
           settings in the section <xref linkend="sc_configuration" />. A word
@@ -156,8 +156,8 @@ server.3=zoo3:2888</screen>
           <para>If your configuration file is set up, you can start
           Zookeeper:</para>
 
-          <screen>$ java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf \
-        org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</screen>
+          <para><computeroutput>$ java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf \
+        org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</computeroutput></para>
         </listitem>
 
         <listitem>
@@ -168,8 +168,8 @@ server.3=zoo3:2888</screen>
               <para>In Java, you can run the following command to execute
               simple operations:</para>
 
-              <screen>$ java -cp zookeeper.jar:java/lib/log4j-1.2.15.jar:conf \
-      org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</screen>
+              <para><computeroutput>$ java -cp zookeeper.jar:java/lib/log4j-1.2.15.jar:conf \
+      org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</computeroutput></para>
             </listitem>
 
             <listitem>
@@ -178,11 +178,11 @@ server.3=zoo3:2888</screen>
               Zookeeper sources. This compiles the single threaded
               client:</para>
 
-              <screen>$ _make cli_st_</screen>
+              <para><computeroutput>$ _make cli_st_</computeroutput></para>
 
               <para>And this compiles the mulithreaded client:</para>
 
-              <screen>$ _make cli_mt_</screen>
+              <para><computeroutput>$ _make cli_mt_</computeroutput></para>
             </listitem>
           </itemizedlist>
 
@@ -190,7 +190,7 @@ server.3=zoo3:2888</screen>
           simple file-system-like operations. To connect to Zookeeper with the multithreaded
           client, for example, you would run:</para>
 
-          <screen>$ cli_mt 127.0.0.1:2181</screen>
+          <para><computeroutput>$ cli_mt 127.0.0.1:2181</computeroutput></para>
         </listitem>
       </orderedlist>
     </section>
@@ -218,13 +218,14 @@ server.3=zoo3:2888</screen>
       url="zookeeperProgrammers.html">Zookeeper
       Programmer's Guide</ulink>.</para>
     </section>
-  </chapter>
+  </section>
 
-  <chapter id="ch_administration">
+  <section id="ch_administration">
     <title>Administration</title>
 
-    <para>This chapter contains information about running and maintaining
-    ZooKeeper and covers these topics: <itemizedlist>
+    <para>This section contains information about running and maintaining
+    ZooKeeper and covers these topics: </para>
+    <itemizedlist>
         <listitem>
           <para><xref linkend="sc_configuration"/></para>
         </listitem>
@@ -244,7 +245,7 @@ server.3=zoo3:2888</screen>
         <listitem>
           <para><xref linkend="sc_bestPractices"/></para>
         </listitem>
-      </itemizedlist></para>
+      </itemizedlist>
 
 
       <section id="sc_configuration">
@@ -638,15 +639,15 @@ server.3=zoo3:2888</screen>
         <para>Here's an example of the <emphasis role="bold">ruok</emphasis>
         command:</para>
 
-        <screen>$ echo ruok | nc 127.0.0.1 5111
+        <para><computeroutput>$ echo ruok | nc 127.0.0.1 5111
 
-imok
-</screen>
+imok</computeroutput>
+        </para>
       </section>
 
       <section id="sc_monitoring">
         <title>Monitoring</title>
-	<remark>[tbd]</remark>
+	    <para><emphasis>[tbd]</emphasis></para>
       </section>
 
     <section id="sc_dataFileManagement">
@@ -797,7 +798,7 @@ imok
       <title>Best Practices</title>
 
       <para>For best results, take note of the following list of good
-      Zookeeper practices. <remark>[tbd...]</remark></para>
+      Zookeeper practices. <emphasis>[tbd...]</emphasis></para>
     </section>
-  </chapter>
-</book>
+  </section>
+</article>

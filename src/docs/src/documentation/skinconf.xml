@@ -141,6 +141,11 @@ which will be used to configure the chosen Forrest skin.
       background-color: #f0f0f0;
       font-family: monospace;
     }
+
+    .code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 110%;
+    }
   </extra-css>
 
   <colors>

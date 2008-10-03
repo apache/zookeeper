@@ -17,6 +17,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-156. update programmer guide with acl details from old wiki page
+  (phunt)
+
   ZOOKEEPER-154. reliability graph diagram in overview doc needs context
   (phunt)
 

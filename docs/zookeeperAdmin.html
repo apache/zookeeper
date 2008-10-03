@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title></title>
+<title>ZooKeeper Administrator's Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -157,10 +157,12 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="zookeeperAdmin.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
+<h1>ZooKeeper Administrator's Guide</h1>
+<h3>A Guide to Deployment and Administration</h3>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#Deployment">Deployment</a>
+<a href="#ch_deployment">Deployment</a>
 <ul class="minitoc">
 <li>
 <a href="#sc_systemReq">System Requirements</a>
@@ -174,7 +176,7 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 </li>
 <li>
-<a href="#Administration">Administration</a>
+<a href="#ch_administration">Administration</a>
 <ul class="minitoc">
 <li>
 <a href="#sc_configuration">Configuration Parameters</a>
@@ -224,18 +226,16 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 </div>
   
-<title>ZooKeeper Administrator's Guide</title>
-
-  
-<subtitle>A Guide to Deployment and Administration</subtitle>
 
   
 
   
-<a name="N1000D"></a><a name="Deployment"></a>
+
+  
+<a name="N1000B"></a><a name="ch_deployment"></a>
 <h2 class="h3">Deployment</h2>
 <div class="section">
-<p>This chapter contains information about deploying Zookeeper and
+<p>This section contains information about deploying Zookeeper and
     covers these topics:</p>
 <ul>
       
@@ -271,14 +271,14 @@ document.write("Last Published: " + document.lastModified);
     section covers situations in which you are setting up Zookeeper on a
     limited basis - for evaluation, testing, or development - but not in a
     production environment.</p>
-<a name="N10034"></a><a name="sc_systemReq"></a>
+<a name="N10032"></a><a name="sc_systemReq"></a>
 <h3 class="h4">System Requirements</h3>
 <p>Zookeeper runs in Java, release 1.5 or greater, as group of hosts
       called a quorum. Three Zookeeper hosts per quorum is the minimum
       recommended quorum size. At Yahoo!, Zookeeper is usually deployed on
       dedicated RHEL boxes, with dual-core processors, 2GB of RAM, and 80GB
       IDE harddrives.</p>
-<a name="N1003E"></a><a name="sc_zkMulitServerSetup"></a>
+<a name="N1003C"></a><a name="sc_zkMulitServerSetup"></a>
 <h3 class="h4">Clustered (Multi-Server) Setup</h3>
 <p>For reliable ZooKeeper service, you should deploy ZooKeeper in a
       cluster known as a <em>quorum</em>. As long as a majority
@@ -298,7 +298,9 @@ document.write("Last Published: " + document.lastModified);
 <p>Install the Java JDK:</p>
 
           
-<pre class="code">$yinst -i jdk-1.6.0.00_3 -br test </pre>
+<p>
+<span class="codefrag computeroutput">$yinst -i jdk-1.6.0.00_3 -br test </span>
+</p>
         
 </li>
 
@@ -319,7 +321,9 @@ document.write("Last Published: " + document.lastModified);
 <p>Install the Zookeeper Server Package:</p>
 
           
-<pre class="code">$ yinst install -nostart zookeeper_server </pre>
+<p>
+<span class="codefrag computeroutput">$ yinst install -nostart zookeeper_server </span>
+</p>
         
 </li>
 
@@ -330,7 +334,8 @@ document.write("Last Published: " + document.lastModified);
           Use the following settings as a starting point:</p>
 
           
-<pre class="code">
+<p>
+<span class="codefrag computeroutput">
 tickTime=2000
 dataDir=/var/zookeeper/
 clientPort=2181
@@ -338,7 +343,8 @@ initLimit=5
 syncLimit=2
 server.1=zoo1:2888
 server.2=zoo2:2888
-server.3=zoo3:2888</pre>
+server.3=zoo3:2888</span>
+</p>
 
           
 <p>You can find the meanings of these and other configuration
@@ -367,8 +373,10 @@ server.3=zoo3:2888</pre>
           Zookeeper:</p>
 
           
-<pre class="code">$ java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf \
-        org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</pre>
+<p>
+<span class="codefrag computeroutput">$ java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf \
+        org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</span>
+</p>
         
 </li>
 
@@ -386,8 +394,10 @@ server.3=zoo3:2888</pre>
               simple operations:</p>
 
               
-<pre class="code">$ java -cp zookeeper.jar:java/lib/log4j-1.2.15.jar:conf \
-      org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</pre>
+<p>
+<span class="codefrag computeroutput">$ java -cp zookeeper.jar:java/lib/log4j-1.2.15.jar:conf \
+      org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</span>
+</p>
             
 </li>
 
@@ -400,13 +410,17 @@ server.3=zoo3:2888</pre>
               client:</p>
 
               
-<pre class="code">$ _make cli_st_</pre>
+<p>
+<span class="codefrag computeroutput">$ _make cli_st_</span>
+</p>
 
               
 <p>And this compiles the mulithreaded client:</p>
 
               
-<pre class="code">$ _make cli_mt_</pre>
+<p>
+<span class="codefrag computeroutput">$ _make cli_mt_</span>
+</p>
             
 </li>
           
@@ -418,12 +432,14 @@ server.3=zoo3:2888</pre>
           client, for example, you would run:</p>
 
           
-<pre class="code">$ cli_mt 127.0.0.1:2181</pre>
+<p>
+<span class="codefrag computeroutput">$ cli_mt 127.0.0.1:2181</span>
+</p>
         
 </li>
       
 </ol>
-<a name="N100C0"></a><a name="sc_singleAndDevSetup"></a>
+<a name="N100CE"></a><a name="sc_singleAndDevSetup"></a>
 <h3 class="h4">Single Server and Developer Setup</h3>
 <p>If you want to setup Zookeeper for development purposes, you will
       probably want to setup a single server instance of Zookeeper, and then
@@ -442,11 +458,12 @@ server.3=zoo3:2888</pre>
 </div>
 
   
-<a name="N100E1"></a><a name="Administration"></a>
+<a name="N100EF"></a><a name="ch_administration"></a>
 <h2 class="h3">Administration</h2>
 <div class="section">
-<p>This chapter contains information about running and maintaining
-    ZooKeeper and covers these topics: <ul>
+<p>This section contains information about running and maintaining
+    ZooKeeper and covers these topics: </p>
+<ul>
         
 <li>
           
@@ -493,8 +510,7 @@ server.3=zoo3:2888</pre>
 </li>
       
 </ul>
-</p>
-<a name="N10114"></a><a name="sc_configuration"></a>
+<a name="N10123"></a><a name="sc_configuration"></a>
 <h3 class="h4">Configuration Parameters</h3>
 <p>ZooKeeper's behavior is governed by the ZooKeeper configuration
         file. This file is designed so that the exact same file can be used by
@@ -502,7 +518,7 @@ server.3=zoo3:2888</pre>
         layouts are the same. If servers use different configuration files,
         care must be taken to ensure that the list of servers in all of the
         different configuration files match.</p>
-<a name="N1011D"></a><a name="sc_minimumConfiguration"></a>
+<a name="N1012C"></a><a name="sc_minimumConfiguration"></a>
 <h4>Minimum Configuration</h4>
 <p>Here are the minimum configuration keywords that must be
           defined in the configuration file:</p>
@@ -551,7 +567,7 @@ server.3=zoo3:2888</pre>
 	    
           
 </dl>
-<a name="N10144"></a><a name="sc_advancedConfiguration"></a>
+<a name="N10153"></a><a name="sc_advancedConfiguration"></a>
 <h4>Advanced Configuration</h4>
 <p>The configuration settings in the section are optional. You
           can use them to further fine tune the behaviour of your Zookeeper
@@ -645,7 +661,7 @@ server.3=zoo3:2888</pre>
 
           
 </dl>
-<a name="N101A4"></a><a name="sc_clusterOptions"></a>
+<a name="N101B3"></a><a name="sc_clusterOptions"></a>
 <h4>Cluster Options</h4>
 <p>The options in this section are designed for use in quorums --
           that is, when deploying clusters of servers.</p>
@@ -749,7 +765,7 @@ server.3=zoo3:2888</pre>
           
 </dl>
 <p></p>
-<a name="N10210"></a><a name="Unsafe+Options"></a>
+<a name="N1021F"></a><a name="Unsafe+Options"></a>
 <h4>Unsafe Options</h4>
 <p>The following options can be useful, but be careful when you
           use them. The risk of each is explained along with the explanation
@@ -799,7 +815,7 @@ server.3=zoo3:2888</pre>
             
           
 </dl>
-<a name="N10242"></a><a name="sc_zkCommands"></a>
+<a name="N10251"></a><a name="sc_zkCommands"></a>
 <h3 class="h4">Zookeeper Commands: The Four Letter Words</h3>
 <p>Zookeeper responds to a small set of commands. Each command is composed of
         four letters. You issue the commands to Zookeeper via telnet or nc, at
@@ -846,14 +862,18 @@ server.3=zoo3:2888</pre>
 </dl>
 <p>Here's an example of the <strong>ruok</strong>
         command:</p>
-<pre class="code">$ echo ruok | nc 127.0.0.1 5111
+<p>
+<span class="codefrag computeroutput">$ echo ruok | nc 127.0.0.1 5111
 
-imok
-</pre>
-<a name="N10274"></a><a name="sc_monitoring"></a>
+imok</span>
+        
+</p>
+<a name="N10286"></a><a name="sc_monitoring"></a>
 <h3 class="h4">Monitoring</h3>
-<remark>[tbd]</remark>
-<a name="N1027E"></a><a name="sc_dataFileManagement"></a>
+<p>
+<em>[tbd]</em>
+</p>
+<a name="N10291"></a><a name="sc_dataFileManagement"></a>
 <h3 class="h4">Data File Management</h3>
 <p>ZooKeeper stores its data in a data directory and its transaction
       log in a transaction log directory. By default these two directories are
@@ -861,7 +881,7 @@ imok
       transaction log files in a separate directory than the data files.
       Throughput increases and latency decreases when transaction logs reside
       on a dedicated log devices.</p>
-<a name="N10287"></a><a name="The+Data+Directory"></a>
+<a name="N1029A"></a><a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
 <p>This directory has two files in it:</p>
 <ul>
@@ -907,14 +927,14 @@ imok
         idempotent nature of its updates. By replaying the transaction log
         against fuzzy snapshots ZooKeeper gets the state of the system at the
         end of the log.</p>
-<a name="N102C3"></a><a name="The+Log+Directory"></a>
+<a name="N102D6"></a><a name="The+Log+Directory"></a>
 <h4>The Log Directory</h4>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
         log file is started each time a snapshot is begun. The log file's
         suffix is the first zxid written to that log.</p>
-<a name="N102CD"></a><a name="File+Management"></a>
+<a name="N102E0"></a><a name="File+Management"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
         standalone ZooKeeper servers and different configurations of
@@ -931,7 +951,7 @@ imok
         needs the latest complete fuzzy snapshot and the log files from the
         start of that snapshot. The PurgeTxnLog utility implements a simple
         retention policy that administrators can use.</p>
-<a name="N102DE"></a><a name="sc_commonProblems"></a>
+<a name="N102F1"></a><a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
       ZooKeeper correctly:</p>
@@ -985,10 +1005,10 @@ imok
 </dd>
       
 </dl>
-<a name="N10302"></a><a name="sc_bestPractices"></a>
+<a name="N10315"></a><a name="sc_bestPractices"></a>
 <h3 class="h4">Best Practices</h3>
 <p>For best results, take note of the following list of good
-      Zookeeper practices. <remark>[tbd...]</remark>
+      Zookeeper practices. <em>[tbd...]</em>
 </p>
 </div>
 

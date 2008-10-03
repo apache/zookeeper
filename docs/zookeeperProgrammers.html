@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title></title>
+<title>ZooKeeper Programmer's Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -157,10 +157,15 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="zookeeperProgrammers.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
+<h1>ZooKeeper Programmer's Guide</h1>
+<h3>Developing Distributed Applications that use ZooKeeper</h3>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#The+ZooKeeper+Data+Model">The ZooKeeper Data Model</a>
+<a href="#_introduction">Introduction</a>
+</li>
+<li>
+<a href="#ch_zkDataModel">The ZooKeeper Data Model</a>
 <ul class="minitoc">
 <li>
 <a href="#sc_zkDataModel_znodes">ZNodes</a>
@@ -188,10 +193,10 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 </li>
 <li>
-<a href="#ZooKeeper+Sessions">ZooKeeper Sessions</a>
+<a href="#ch_zkSessions">ZooKeeper Sessions</a>
 </li>
 <li>
-<a href="#ZooKeeper+Watches">ZooKeeper Watches</a>
+<a href="#ch_zkWatches">ZooKeeper Watches</a>
 <ul class="minitoc">
 <li>
 <a href="#sc_WatchGuarantees">What ZooKeeper Guarantees about Watches</a>
@@ -202,10 +207,26 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 </li>
 <li>
-<a href="#Consistency+Guarantees">Consistency Guarantees</a>
+<a href="#sc_ZooKeeperAccessControl">ZooKeeper access control using ACLs</a>
+<ul class="minitoc">
+<li>
+<a href="#sc_ACLPermissions">ACL Permissions</a>
+<ul class="minitoc">
+<li>
+<a href="#sc_BuiltinACLSchemes">Builtin ACL Schemes</a>
 </li>
 <li>
-<a href="#Bindings">Bindings</a>
+<a href="#Zookeeper+C+client+API">Zookeeper C client API</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<a href="#ch_zkGuarantees">Consistency Guarantees</a>
+</li>
+<li>
+<a href="#ch_bindings">Bindings</a>
 <ul class="minitoc">
 <li>
 <a href="#Java+Binding">Java Binding</a>
@@ -224,44 +245,35 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 </li>
 <li>
-<a href="#Building+Blocks%3A+A+Guide+to+ZooKeeper+Operations">Building Blocks: A Guide to ZooKeeper Operations</a>
+<a href="#ch_guideToZkOperations">Building Blocks: A Guide to ZooKeeper Operations</a>
 </li>
 <li>
-<a href="#Program+Structure%2C+with+Simple+Example">Program Structure, with Simple Example</a>
+<a href="#ch_programStructureWithExample">Program Structure, with Simple Example</a>
 </li>
 <li>
-<a href="#Gotchas%3A+Common+Problems+and+Troubleshooting">Gotchas: Common Problems and Troubleshooting</a>
+<a href="#ch_gotchas">Gotchas: Common Problems and Troubleshooting</a>
 </li>
 </ul>
 </div>
   
-<title>ZooKeeper Programmer's Guide</title>
-
-  
-<subtitle>Developing Distributed Applications that use ZooKeeper</subtitle>
 
   
 
   
-<a name="_introduction"></a>
-<preface id="_introduction">
-    
-<title>Introduction</title>
 
-    
+  
+<a name="N1000B"></a><a name="_introduction"></a>
+<h2 class="h3">Introduction</h2>
+<div class="section">
 <p>This document is a guide for developers wishing to create
     distributed applications that take advantage of ZooKeeper's coordination
     services. It contains conceptual and practical information.</p>
-
-    
-<p>The first four chapters of this guide present higher level
+<p>The first four sections of this guide present higher level
     discussions of various ZooKeeper concepts. These are necessary both for an
     understanding of how Zookeeper works as well how to work with it. It does
     not contain source code, but it does assume a familiarity with the
-    problems associated with distributed computing. The chapters in this first
+    problems associated with distributed computing. The sections in this first
     group are:</p>
-
-    
 <ul>
       
 <li>
@@ -300,12 +312,8 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-
-    
-<p>The next four chapters of this provided practical programming
+<p>The next four sections of this provided practical programming
     information. These are:</p>
-
-    
 <ul>
       
 <li>
@@ -330,8 +338,7 @@ document.write("Last Published: " + document.lastModified);
         
 <p>
 <a href="#ch_programStructureWithExample">Program Structure, with Simple Example</a>
-        
-<remark>[tbd]</remark>
+        <em>[tbd]</em>
 </p>
       
 </li>
@@ -346,25 +353,19 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-
-    
 <p>The book concludes with an <a href="#apx_linksToOtherInfo">appendix</a> containing links to other
     useful, ZooKeeper-related information.</p>
-
-    
 <p>Most of information in this document is written to be accessible as
     stand-alone reference material. However, before starting your first
     ZooKeeper application, you should probably at least read the chaptes on
     the <a href="#ch_zkDataModel">ZooKeeper Data Model</a> and <a href="#ch_guideToZkOperations">ZooKeeper Basic Operations</a>. Also,
     the <a href="#ch_programStructureWithExample">Simple Programmming
-    Example</a> 
-<remark>[tbd]</remark> is helpful for understand the basic
+    Example</a> <em>[tbd]</em> is helpful for understand the basic
     structure of a ZooKeeper client application.</p>
-  
-</preface>
+</div>
 
   
-<a name="N1007F"></a><a name="The+ZooKeeper+Data+Model"></a>
+<a name="N1007D"></a><a name="ch_zkDataModel"></a>
 <h2 class="h3">The ZooKeeper Data Model</h2>
 <div class="section">
 <p>ZooKeeper has a hierarchal name space, much like a distributed file
@@ -418,7 +419,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-<a name="N100A9"></a><a name="sc_zkDataModel_znodes"></a>
+<a name="N100A7"></a><a name="sc_zkDataModel_znodes"></a>
 <h3 class="h4">ZNodes</h3>
 <p>Every node in a ZooKeeper tree is refered to as a
       <em>znode</em>. Znodes maintain a stat structure that
@@ -431,7 +432,7 @@ document.write("Last Published: " + document.lastModified);
       it must supply the version of the data of the znode it is changing. If
       the version it supplies doesn't match the actual version of the data,
       the update will fail. (This behavior can be overridden. For more
-      information see... )<remark>[tbd...]</remark>
+      information see... )<em>[tbd...]</em>
 </p>
 <div class="note">
 <div class="label">Note</div>
@@ -450,34 +451,34 @@ document.write("Last Published: " + document.lastModified);
 </div>
 <p>Znodes are the main enitity that a programmer access. They have
       several characteristics that are worth mentioning here.</p>
-<a name="N100CC"></a><a name="sc_zkDataMode_watches"></a>
+<a name="N100CA"></a><a name="sc_zkDataMode_watches"></a>
 <h4>Watches</h4>
 <p>Clients can set watches on znodes. Changes to that znode trigger
         the watch and then clear the watch. When a watch triggers, ZooKeeper
         sends the client a notification. More information about watches can be
         found in the section 
 	    <a href="#ch_zkWatches">Zookeeper Watches</a>.
-        <remark>[tbd]</remark>
+        <em>[tbd]</em>
 </p>
-<a name="N100DC"></a><a name="Data+Access"></a>
+<a name="N100DA"></a><a name="Data+Access"></a>
 <h4>Data Access</h4>
 <p>The data stored at each znode in a namespace is read and written
         atomically. Reads get all the data bytes associated with a znode and a
         write replaces all the data. Each node has an Access Control List
         (ACL) that restricts who can do what.</p>
-<a name="N100E6"></a><a name="Ephemeral+Nodes"></a>
+<a name="N100E4"></a><a name="Ephemeral+Nodes"></a>
 <h4>Ephemeral Nodes</h4>
 <p>ZooKeeper also has the notion of ephemeral nodes. These znodes
         exists as long as the session that created the znode is active. When
         the session ends the znode is deleted. Because of this behavior
         ephemeral znodes are not allowed to have children.</p>
-<a name="N100F0"></a><a name="Unique+Naming"></a>
+<a name="N100EE"></a><a name="Unique+Naming"></a>
 <h4>Unique Naming</h4>
 <p>Finally you create a znode, you can request that ZooKeeper
         append a monotonicly increasing counter be appended to the path name
         of the znode to be requested. This counter is unique to the parent
         znode.</p>
-<a name="N100FB"></a><a name="sc_timeInZk"></a>
+<a name="N100F9"></a><a name="sc_timeInZk"></a>
 <h3 class="h4">Time in ZooKeeper</h3>
 <p>ZooKeeper tracks time multiple ways:</p>
 <ul>
@@ -546,7 +547,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N10133"></a><a name="sc_zkStatStructure"></a>
+<a name="N10131"></a><a name="sc_zkStatStructure"></a>
 <h3 class="h4">ZooKeeper Stat Structure</h3>
 <p>The Stat structure for each znode in ZooKeeper is made up of the
       following fields:</p>
@@ -656,7 +657,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N10191"></a><a name="ZooKeeper+Sessions"></a>
+<a name="N1018F"></a><a name="ch_zkSessions"></a>
 <h2 class="h3">ZooKeeper Sessions</h2>
 <div class="section">
 <p>When a client gets a handle to the ZooKeeper service, ZooKeeper
@@ -684,7 +685,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N101A1"></a><a name="ZooKeeper+Watches"></a>
+<a name="N1019F"></a><a name="ch_zkWatches"></a>
 <h2 class="h3">ZooKeeper Watches</h2>
 <div class="section">
 <p>All of the read operations in ZooKeeper - <strong>getData()</strong>, <strong>getChildren()</strong>, and <strong>exists()</strong> - have the option of setting a watch as a
@@ -759,7 +760,7 @@ document.write("Last Published: " + document.lastModified);
     client gets a disconnect event, it must consider that an implicit trigger
     of all watches. When a client reconnects to a new server, the client
     should re-set any watches that it is still interested in.</p>
-<a name="N101D7"></a><a name="sc_WatchGuarantees"></a>
+<a name="N101D5"></a><a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
 <p>With regard to watches, ZooKeeper maintains these
       guarantees:</p>
@@ -794,7 +795,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N101FC"></a><a name="sc_WatchRememberThese"></a>
+<a name="N101FA"></a><a name="sc_WatchRememberThese"></a>
 <h3 class="h4">Things to Remember about Watches</h3>
 <ul>
         
@@ -837,7 +838,267 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N1021F"></a><a name="Consistency+Guarantees"></a>
+<a name="N1021D"></a><a name="sc_ZooKeeperAccessControl"></a>
+<h2 class="h3">ZooKeeper access control using ACLs</h2>
+<div class="section">
+<p>ZooKeeper uses ACLs to control access to its znodes (the data nodes of a ZooKeeper data tree). The ACL implementation is quite similar to UNIX file access permissions: it employs permission bits to allow/disallow various operations against a node and the scope to which the bits apply. Unlike standard UNIX permissions, a ZooKeeper node is not limited by the three standard scopes for user (owner of the file), group, and world (other). ZooKeeper does not have a notion of an owner of a znode. Instead, an ACL specifies sets of ids and permissions that are associated with those ids.</p>
+<p>ZooKeeper supports pluggable authentication schemes. Ids are specified using the form <em>scheme:id</em>, where <em>scheme</em> is a the authentication scheme that the id corresponds to. For example, <em>host:host1.corp.com</em> is an id for a host named <em>host1.corp.com</em>.</p>
+<p>When a client connects to ZooKeeper and authenticates itself, ZooKeeper associates all the ids that correspond to a client with the clients connection. These ids are checked against the ACLs of znodes when a clients tries to access a node. ACLs are made up of pairs of <em>(scheme:expression, perms)</em>. The format of the <em>expression</em> is specific to the scheme. For example, the pair <em>(ip:19.22.0.0/16, READ)</em> gives the <em>READ</em> permission to any clients with an IP address that starts with 19.22.</p>
+<a name="N10244"></a><a name="sc_ACLPermissions"></a>
+<h3 class="h4">ACL Permissions</h3>
+<p>Zookeeper supports the following permissions:</p>
+<ul>
+        
+<li>
+<p>
+<strong>CREATE</strong>: you can create a child node</p>
+</li>
+        
+<li>
+<p>
+<strong>READ</strong>: you can get data from a node and list its children.</p>
+</li>
+        
+<li>
+<p>
+<strong>WRITE</strong>: you can set data for a node</p>
+</li>
+        
+<li>
+<p>
+<strong>DELETE</strong>: you can delete a child node</p>
+</li>
+        
+<li>
+<p>
+<strong>ADMIN</strong>: you can set permissions</p>
+</li>
+      
+</ul>
+<p>The <em>CREATE</em> and <em>DELETE</em> permissions have been broken out of the <em>WRITE</em> permission for finer grained access controls. The cases for <em>CREATE</em> and <em>DELETE</em> are the following:</p>
+<p>You want A to be able to do a set on a zookeeper node, but not be able to <em>CREATE</em> or <em>DELETE</em> children.</p>
+<p>
+<em>CREATE</em> without <em>DELETE</em>: clients create requests by creating zookeeper nodes in a parent directory. You want all clients to be able to add, but only request processor can delete. (This is kind of like the APPEND permission for files.)</p>
+<p>Also, the <em>ADMIN</em> permission is there since Zookeeper doesn&rsquo;t have a notion of file owner. In some sense the <em>ADMIN</em> permission designates the entity as the owner. Zookeeper doesn&rsquo;t support the LOOKUP permission (execute permission bit on directories to allow you to LOOKUP even though you can't list the directory). Everyone implicitly has LOOKUP permission. This allows you to stat a node, but nothing more. (The problem is, if you want to call zoo_exists() on a node that doesn't exist, there is no permission to check.)</p>
+<a name="N1029A"></a><a name="sc_BuiltinACLSchemes"></a>
+<h4>Builtin ACL Schemes</h4>
+<p>ZooKeeeper has the following built in schemes:</p>
+<ul>
+        
+<li>
+<p>
+<strong>world</strong> has a single id, <em>anyone</em>, that represents anyone.</p>
+</li>
+        
+<li>
+<p>
+<strong>auth</strong> doesn't use any id, represents any authenticated user.</p>
+</li>
+        
+<li>
+<p>
+<strong>digest</strong> uses a <em>username:password</em> string to generate MD5 hash which is then used as an ACL ID identity. Authentication is done by sending the <em>username:password</em> in clear text. When used in the ACL the expression will be the <em>username:base64</em>encoded<em>SHA1</em>password<em>digest</em>.</p>
+</li>
+        
+<li>
+<p>
+<strong>host</strong> uses the client host name as an ACL ID identity. The ACL expression is a hostname suffix. For example, the ACL expression <em>host:corp.com</em> matches the ids <em>host:host1.corp.com</em> and <em>host:host2.corp.com</em>, but not <em>host:host1.store.com</em>.</p>
+</li>
+        
+<li>
+<p>
+<strong>ip</strong> uses the client host IP as an ACL ID identity. The ACL expression is of the form <em>addr/bits</em> where the most significant <em>bits</em> of <em>addr</em> are matched against the most significant <em>bits</em> of the client host IP.</p>
+</li>
+      
+</ul>
+<a name="N102EF"></a><a name="Zookeeper+C+client+API"></a>
+<h4>Zookeeper C client API</h4>
+<p>The following constants are provided by the zookeeper C library:</p>
+<ul>
+        
+<li>
+<p>
+<em>const</em> <em>int</em> PERM_READ; //can read node&rsquo;s value and list its children</p>
+</li>
+        
+<li>
+<p>
+<em>const</em> <em>int</em> PERM_WRITE;// can set the node&rsquo;s value</p>
+</li>
+        
+<li>
+<p>
+<em>const</em> <em>int</em> PERM_CREATE; //can create children</p>
+</li>
+        
+<li>
+<p>
+<em>const</em> <em>int</em> PERM_DELETE;// can delete children</p>
+</li>
+        
+<li>
+<p>
+<em>const</em> <em>int</em> PERM_ADMIN; //can execute set_acl()</p>
+</li>
+        
+<li>
+<p>
+<em>const</em> <em>int</em> PERM_ALL;// all of the above flags OR&rsquo;d together</p>
+</li>
+      
+</ul>
+<p>The following are the standard ACL IDs:</p>
+<ul>
+        
+<li>
+<p>
+<em>struct</em> Id ANYONE_ID_UNSAFE; //(&lsquo;world&rsquo;,&rsquo;anyone&rsquo;)</p>
+</li>
+        
+<li>
+<p>
+<em>struct</em> Id AUTH_IDS;// (&lsquo;auth&rsquo;,&rsquo;&rsquo;)</p>
+</li>
+      
+</ul>
+<p>AUTH_IDS empty identity string should be interpreted as &ldquo;the identity of the creator&rdquo;.</p>
+<p>Zookeeper client comes with three standard ACLs:</p>
+<ul>
+        
+<li>
+<p>
+<em>struct</em> ACL_vector OPEN_ACL_UNSAFE; //(PERM_ALL,ANYONE_ID_UNSAFE)</p>
+</li>
+        
+<li>
+<p>
+<em>struct</em> ACL_vector READ_ACL_UNSAFE;// (PERM_READ, ANYONE_ID_UNSAFE)</p>
+</li>
+        
+<li>
+<p>
+<em>struct</em> ACL_vector CREATOR_ALL_ACL; //(PERM_ALL,AUTH_IDS)</p>
+</li>
+      
+</ul>
+<p>The OPEN_ACL_UNSAFE is completely open free for all ACL: any application can execute any operation on the node and can create, list and delete its children. The READ_ACL_UNSAFE is read-only access for any application. CREATE_ALL_ACL grants all permissions to the creator of the node. The creator must have been authenticated by the server (for example, using &ldquo;<em>digest</em>&rdquo; scheme) before it can create nodes with this ACL.</p>
+<p>The following zookeeper operations deal with ACLs:</p>
+<ul>
+        
+<li>
+<p>
+<em>int</em> <em>zoo_add_auth</em>(zhandle_t *zh,<em>const</em> <em>char</em>* scheme,<em>const</em> <em>char</em>* cert,</p>
+</li>
+        
+<li>
+<p>
+<em>int</em> certLen, void_completion_t completion, <em>const</em> <em>void</em> *data);</p>
+</li>
+      
+</ul>
+<p>The application uses the zoo_add_auth function to authenticate itself to the server. The function can be called multiple times if the application wants to authenticate using different schemes and/or identities.</p>
+<ul>
+        
+<li>
+<p>
+<em>int</em> <em>zoo_create</em>(zhandle_t *zh, <em>const</em> <em>char</em> *path, <em>const</em> <em>char</em> *value,</p>
+</li>
+        
+<li>
+<p>
+<em>int</em> valuelen, <em>const</em> <em>struct</em> ACL_vector *acl, <em>int</em> flags,</p>
+</li>
+        
+<li>
+<p>
+<em>char</em> *realpath, <em>int</em> max_realpath_len);</p>
+</li>
+      
+</ul>
+<p>zoo_create() operation creates a new node. The acl parameter is a list of ACLs associated with the node. The parent node must have the CREATE permission bit set.</p>
+<ul>
+        
+<li>
+<p>
+<em>int</em> <em>zoo_get_acl</em>(zhandle_t *zh, <em>const</em> <em>char</em> *path,</p>
+</li>
+        
+<li>
+<p>
+<em>struct</em> ACL_vector *acl, <em>struct</em> Stat *stat);</p>
+</li>
+      
+</ul>
+<p>This operation returns a node&rsquo;s ACL info.</p>
+<ul>
+        
+<li>
+<p>
+<em>int</em> <em>zoo_set_acl</em>(zhandle_t *zh, <em>const</em> <em>char</em> *path, <em>int</em> version,</p>
+</li>
+        
+<li>
+<p>
+<em>const</em> <em>struct</em> ACL_vector *acl);</p>
+</li>
+      
+</ul>
+<p>This function replaces node&rsquo;s ACL list with a new one. The node must have the ADMIN permission set.</p>
+<p>Here is a sample code that makes use of the above APIs to authenticate itself using the &ldquo;<em>foo</em>&rdquo; scheme and create an ephemeral node &ldquo;/xyz&rdquo; with create-only permissions.</p>
+<pre class="code">
+static zhandle_t *zh;
+
+void watcher(zhandle_t *zzh, int type, int state, const char *path) {
+}
+
+int main(int argc, char argv) {
+  char buffer[512];
+  char p[2048];
+  char *cert=0;
+  char appId[64];
+
+  strcpy(appId, "example.foo_test");
+  cert = foo_get_cert_once(appId);
+  if(cert!=0) {
+    fprintf(stderr,
+            "Certificate for appid [%s] is [%s]\n",appId,cert);
+    strncpy(p,cert, sizeof(p)-1);
+    free(cert);
+  } else {
+    fprintf(stderr, "Certificate for appid [%s] not found\n",appId);
+    strcpy(p, "dummy");
+  }
+
+  zoo_set_debug_level(LOG_LEVEL_DEBUG);
+
+  zh = zookeeper_init(&ldquo;localhost:3181&rdquo;, watcher,10000,0, 0, 0);
+  if (!zh) {
+    return errno;
+  }
+  if(zoo_add_auth(zh,"foo",p,strlen(p),0,0)!=ZOK)
+    return 2;
+
+  struct ACL_CREATE_ONLY_ACL[] = {{PERM_CREATE, AUTH_IDS}};
+  struct ACL_vector CREATE_ONLY = {1,_CREATE_ONLY_ACL};
+  int rc = zoo_create(zh,"/xyz","value", 5, &amp;CREATE_ONLY, EPHEMERAL,
+                      buffer, sizeof(buffer)-1);
+
+  this operation will fail with a ZNOAUTH error
+    int buflen= sizeof(buffer);
+  struct Stat stat;
+  rc = zoo_get(zh, "/xyz",0,buffer,&amp;buflen,&amp;stat);
+  if (rc) {
+    fprintf(stderr, "Error %d for %s\n", rc, line);
+  }
+
+  zookeeper_close(zh);
+  return 0;
+}
+      </pre>
+</div>
+
+  
+<a name="N1040C"></a><a name="ch_zkGuarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -890,7 +1151,7 @@ document.write("Last Published: " + document.lastModified);
               timeouts, etc) the client will not know if the update has
               applied or not. We take steps to minimize the failures, but the
               only guarantee is only present with successful return codes.
-              (This is called the _monotonicity condition_ in Paxos.)</p>
+              (This is called the <em>monotonicity condition</em> in Paxos.)</p>
             
 </li>
 
@@ -923,7 +1184,6 @@ document.write("Last Published: " + document.lastModified);
     revocable locks solely at the ZooKeeper client (no additions needed to
     ZooKeeper). See <a href="recipes.html">Recipes and Solutions</a>
     for more details.</p>
-<p>
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
@@ -954,25 +1214,23 @@ document.write("Last Published: " + document.lastModified);
               primitives can be used to construct higher level functions that
               provide complete client synchronization. (For more information,
               see the <a href="recipes.html#sc_recipes_Locks">Locks</a>
-              
-<remark>[tbd:...]</remark> in <a href="recipes.html">Zookeeper Recipes</a>.
-              <remark>[tbd:..]</remark>).</p>
+              <em>[tbd:...]</em> in <a href="recipes.html">Zookeeper Recipes</a>.
+              <em>[tbd:..]</em>).</p>
 </dd>
         
 </dl>
       
 </div>
 </div>
-</p>
 </div>
 
   
-<a name="N1028B"></a><a name="Bindings"></a>
+<a name="N1047A"></a><a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N10294"></a><a name="Java+Binding"></a>
+<a name="N10483"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1039,7 +1297,7 @@ document.write("Last Published: " + document.lastModified);
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid,
       the two threads shut down, and any further ZooKeeper calls throw
       errors.</p>
-<a name="N102DD"></a><a name="C+Binding"></a>
+<a name="N104CC"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1056,7 +1314,7 @@ document.write("Last Published: " + document.lastModified);
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N102EC"></a><a name="Installation"></a>
+<a name="N104DB"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1187,7 +1445,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
         
 </ol>
-<a name="N10395"></a><a name="Using+the+Client"></a>
+<a name="N10584"></a><a name="Using+the+Client"></a>
 <h4>Using the Client</h4>
 <p>You can test your client by running a zookeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1196,7 +1454,9 @@ document.write("Last Published: " + document.lastModified);
         zookeeper_mt library) is shown in this example, but you could also use
         cli_st (singlethreaded, built against zookeeper_st library):</p>
 <p>
-<pre class="code">$ cli_mt zookeeper_host:9876</pre>This
+<span class="codefrag command">$ cli_mt zookeeper_host:9876</span>
+</p>
+<p>This
         is a client application that gives you a shell for executing simple
         zookeeper commands. Once succesully started and connected to the
         server it displays a shell prompt. You can now enter zookeeper
@@ -1222,27 +1482,29 @@ document.write("Last Published: " + document.lastModified);
 <p>If you are building a multithreaded client, compile with
             -DTHREADED compiler flag to enable the multi-threaded version of
             the library, and then link against against the
-            <span class="codefrag varname">zookeeper_mt</span> library. If you are building a
+            <em>zookeeper_mt</em> library. If you are building a
             single-threaded client, do not compile with -DTHREADED, and be
-            sure to link against the<span class="codefrag varname"> zookeeper_st
-            </span>library.</p>
+            sure to link against the<em> zookeeper_st
+            </em>library.</p>
           
 </li>
         
 </ol>
-<p>Refer to <a href="#ch_programStructureWithExample">Program Structure, with Simple Example</a>for examples of usage in Java and C.
-        <remark>[tbd]</remark>
+<p>Refer to <a href="#ch_programStructureWithExample">Program Structure, with Simple Example</a>
+          for examples of usage in Java and C.
+          <em>[tbd]</em>
+        
 </p>
 </div>
 
    
-<a name="N103D2"></a><a name="Building+Blocks%3A+A+Guide+to+ZooKeeper+Operations"></a>
+<a name="N105C3"></a><a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>
-<remark>[tbd: This is a new section. The below
+<em>[tbd: This is a new section. The below
     is just placeholder. Eventually, a subsection on each of those operations, with a little
-    bit of illustrative code for each op.] </remark>
+    bit of illustrative code for each op.] </em>
 </p>
 <p>One of the design goals of ZooKeeper is provide a very simple
     programming interface. As a result, it supports only these
@@ -1308,16 +1570,16 @@ document.write("Last Published: " + document.lastModified);
 </div>
   
   
-<a name="N10414"></a><a name="Program+Structure%2C+with+Simple+Example"></a>
+<a name="N10605"></a><a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
-<remark>[tbd]</remark>
+<em>[tbd]</em>
 </p>
 </div>
 
   
-<a name="N1041F"></a><a name="Gotchas%3A+Common+Problems+and+Troubleshooting"></a>
+<a name="N10610"></a><a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application
@@ -1418,7 +1680,7 @@ document.write("Last Published: " + document.lastModified);
 <dl>
       
 <dt>
-<term>ZooKeeper Whitepaper <remark>[tbd: find url]</remark>
+<term>ZooKeeper Whitepaper <em>[tbd: find url]</em>
 </term>
 </dt>
 <dd>
@@ -1428,7 +1690,7 @@ document.write("Last Published: " + document.lastModified);
 
       
 <dt>
-<term>API Reference <remark>[tbd: find url]</remark>
+<term>API Reference <em>[tbd: find url]</em>
 </term>
 </dt>
 <dd>
@@ -1485,7 +1747,7 @@ document.write("Last Published: " + document.lastModified);
       
 <dt>
 <term>
-<remark>[tbd]</remark>
+<em>[tbd]</em>
 </term>
 </dt>
 <dd>

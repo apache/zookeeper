@@ -155,4 +155,9 @@ a:hover { color:#6587ff}
       background-color: #f0f0f0;
       font-family: monospace;
     }
+
+    .code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 110%;
+    }
   

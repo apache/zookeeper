@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title></title>
+<title>ZooKeeper Recipes and Solutions</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -157,10 +157,11 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="recipes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
+<h1>ZooKeeper Recipes and Solutions</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#A+Guide+to+Creating+Higher-level+Constructs+with+ZooKeeper">A Guide to Creating Higher-level Constructs with ZooKeeper</a>
+<a href="#ch_recipes">A Guide to Creating Higher-level Constructs with ZooKeeper</a>
 <ul class="minitoc">
 <li>
 <a href="#sc_outOfTheBox">Out of the Box Applications: Name Service, Configuration, Group
@@ -204,12 +205,11 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 </div>
   
-<title>ZooKeeper Recipes and Solutions</title>
 
   
 
   
-<a name="N1000A"></a><a name="A+Guide+to+Creating+Higher-level+Constructs+with+ZooKeeper"></a>
+<a name="N10009"></a><a name="ch_recipes"></a>
 <h2 class="h3">A Guide to Creating Higher-level Constructs with ZooKeeper</h2>
 <div class="section">
 <p>In this article, you'll find guidelines for using
@@ -234,7 +234,7 @@ document.write("Last Published: " + document.lastModified);
     as event handles or queues, a more practical means of performing the same
     function. In general, the examples in this section are designed to
     stimulate thought.</p>
-<a name="N10022"></a><a name="sc_outOfTheBox"></a>
+<a name="N10021"></a><a name="sc_outOfTheBox"></a>
 <h3 class="h4">Out of the Box Applications: Name Service, Configuration, Group
     Membership</h3>
 <p>Name service and configuration are two of the primary applications
@@ -245,13 +245,14 @@ document.write("Last Published: " + document.lastModified);
     group create ephemeral nodes under the group node. Nodes of the members
     that fail abnormally will be removed automatically when ZooKeeper detects
     the failure.</p>
-<a name="N10032"></a><a name="sc_recipes_eventHandles"></a>
+<a name="N10031"></a><a name="sc_recipes_eventHandles"></a>
 <h3 class="h4">Barriers</h3>
-<p>Distributed systems use <em>barriers</em> to block
-    processing of a set of nodes until a condition is met at which time all
-    the nodes are allowed to proceed. Barriers are implemented in ZooKeeper by
-    designating a barrier node. The barrier is in place if the barrier node
-    exists. Here's the pseudo code:</p>
+<p>Distributed systems use <em>barriers</em>
+      to block processing of a set of nodes until a condition is met
+      at which time all the nodes are allowed to proceed. Barriers are
+      implemented in ZooKeeper by designating a barrier node. The
+      barrier is in place if the barrier node exists. Here's the
+      pseudo code:</p>
 <ol>
       
 <li>
@@ -288,7 +289,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ol>
-<a name="N10068"></a><a name="sc_doubleBarriers"></a>
+<a name="N10067"></a><a name="sc_doubleBarriers"></a>
 <h4>Double Barriers</h4>
 <p>Double barriers enable clients to synchronize the beginning and
       the end of a computation. When enough processes have joined the barrier,
@@ -302,143 +303,144 @@ document.write("Last Published: " + document.lastModified);
       <em>x</em> client process register before proceeding with
       the computation. (The <em>x</em> here is up to you to
       determine for your system.)</p>
-<p>
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
-          
-              
+        
+            
 <tr>
-                
+              
 <td><strong>Enter</strong></td>
 
-                <td><strong>Leave</strong></td>
-              
+              <td><strong>Leave</strong></td>
+            
 </tr>
 
-              
+            
 <tr>
-                
+              
 <td>
 <ol>
-                    
+                  
 <li>
-                      
+                    
 <p>Create a name <em><em>n</em> =
-                      <em>b</em>+&ldquo;/&rdquo;+<em>p</em></em>
+                        <em>b</em>+&ldquo;/&rdquo;+<em>p</em></em>
 </p>
-                    
+                  
 </li>
 
-                    
+                  
 <li>
-                      
+                    
 <p>Set watch: <strong>exists(<em>b</em> + &lsquo;&lsquo;/ready&rsquo;&rsquo;,
-                      true)</strong>
+                        true)</strong>
 </p>
-                    
+                  
 </li>
 
-                    
+                  
 <li>
-                      
+                    
 <p>Create child: <strong>create(
-                      <em>n</em>, EPHEMERAL)</strong>
+                        <em>n</em>, EPHEMERAL)</strong>
 </p>
-                    
+                  
 </li>
 
-                    
+                  
 <li>
-                      
+                    
 <p>
 <strong>L = getChildren(b,
-                      false)</strong>
+                        false)</strong>
 </p>
-                    
-</li>
-
-                    
-<li>
-                      
-<p>if fewer children in L than<em>
-                      x</em>, wait for watch event</p>
-                    
-</li>
-
-                    
-<li>
-                      
-<p>else <strong>create(b + &lsquo;&lsquo;/ready&rsquo;&rsquo;,
-                      REGULAR)</strong>
-</p>
-                    
-</li>
                   
+</li>
+
+                  
+<li>
+                    
+<p>if fewer children in L than<em>
+                        x</em>, wait for watch event</p>
+                  
+</li>
+
+                  
+<li>
+                    
+<p>else <strong>create(b + &lsquo;&lsquo;/ready&rsquo;&rsquo;,
+                        REGULAR)</strong>
+</p>
+                  
+</li>
+                
 </ol>
 </td>
 
-                <td>
+              <td>
 <ol>
-                    
+                  
 <li>
-                      
+                    
 <p>
 <strong>L = getChildren(b,
-                      false)</strong>
+                        false)</strong>
 </p>
-                    
+                  
 </li>
 
-                    
+                  
 <li>
-                      
+                    
 <p>if no children, exit</p>
-                    
+                  
 </li>
 
-                    
+                  
 <li>
-                      
+                    
 <p>if <em>p</em> is only process node in
                       L, delete(n) and exit</p>
-                    
+                  
 </li>
 
-                    
+                  
 <li>
-                      
+                    
 <p>if <em>p</em> is the lowest process
                       node in L, wait on highest process node in P</p>
-                    
+                  
 </li>
 
-                    
+                  
 <li>
-                      
+                    
 <p>else <strong>delete(<em>n</em>) </strong>if
                       still exists and wait on lowest process node in L</p>
-                    
+                  
 </li>
 
-                    
-<li>
-                      
-<p>goto 1</p>
-                    
-</li>
                   
+<li>
+                    
+<p>goto 1</p>
+                  
+</li>
+                
 </ol>
 </td>
-              
-</tr>
             
-        
-</table>On entering, all processes watch on a ready node and
-      create an ephemeral node as a child of the barrier node. Each process
-      but the last enters the barrier and waits for the ready node to appear
-      at line 5. The process that creates the xth node, the last process, will
-      see x nodes in the list of children and create the ready node, waking up
-      the other processes. Note that waiting processes wake up only when it is
-      time to exit, so waiting is efficient.</p>
+</tr>
+          
+      
+</table>
+<p>On entering, all processes watch on a ready node and
+        create an ephemeral node as a child of the barrier node. Each process
+        but the last enters the barrier and waits for the ready node to appear
+        at line 5. The process that creates the xth node, the last process, will
+        see x nodes in the list of children and create the ready node, waking up
+        the other processes. Note that waiting processes wake up only when it is
+        time to exit, so waiting is efficient.
+      </p>
 <p>On exit, you can't use a flag such as <em>ready</em>
       because you are watching for process nodes to go away. By using
       ephemeral nodes, processes that fail after the barrier has been entered
@@ -595,7 +597,7 @@ document.write("Last Published: " + document.lastModified);
                     
 <p>Call <strong>create( )</strong> to
                     create a node with pathname
-                    "<span class="codefrag parameter">_locknode_/read-</span>". This is the
+                    "<span class="codefrag filename">_locknode_/read-</span>". This is the
                     lock node use later in the protocol. Make sure to set both
                     the <em>sequence</em> and
                     <em>ephemeral</em> flags.</p>
@@ -616,7 +618,7 @@ document.write("Last Published: " + document.lastModified);
 <li>
                     
 <p>If there are no children with a pathname starting
-                    with "<span class="codefrag parameter">write-</span>" and having a lower
+                    with "<span class="codefrag filename">write-</span>" and having a lower
                     sequence number than the node created in step <strong>1</strong>, the client has the lock and can
                     exit the protocol. </p>
                   
@@ -628,7 +630,7 @@ document.write("Last Published: " + document.lastModified);
 <p>Otherwise, call <strong>exists(
                     )</strong>, with <em>watch</em> flag, set on
                     the node in lock directory with pathname staring with
-                    "<span class="codefrag parameter">write-</span>" having the next lowest
+                    "<span class="codefrag filename">write-</span>" having the next lowest
                     sequence number.</p>
                   
 </li>
@@ -660,7 +662,7 @@ document.write("Last Published: " + document.lastModified);
                     
 <p>Call <strong>create( )</strong> to
                     create a node with pathname
-                    "<span class="codefrag parameter">_locknode_/write-</span>". This is the
+                    "<span class="codefrag filename">_locknode_/write-</span>". This is the
                     lock node spoken of later in the protocol. Make sure to
                     set both <em>sequence</em> and
                     <em>ephemeral</em> flags.</p>
@@ -713,24 +715,24 @@ document.write("Last Published: " + document.lastModified);
           
       
 </table>
-<p>
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
-          
-<p>It might appear that this recipe creates a herd effect: when
-          there is a large group of clients waiting for a read lock, and all
-          getting notified more or less simultaneously when the
-          "<span class="codefrag parameter">write-</span>" node with the lowest sequence number
-          is deleted. In fact. that's valid behavior: as all those waiting
-          reader clients should be released since they have the lock. The herd
-          effect refers to releasing a "herd" when in fact only a single or a
-          small number of machines can proceed.</p>
         
+<p>It might appear that this recipe creates a herd effect:
+          when there is a large group of clients waiting for a read
+          lock, and all getting notified more or less simultaneously
+          when the "<span class="codefrag filename">write-</span>" node with the lowest
+          sequence number is deleted. In fact. that's valid behavior:
+          as all those waiting reader clients should be released since
+          they have the lock. The herd effect refers to releasing a
+          "herd" when in fact only a single or a small number of
+          machines can proceed.
+        </p>
+      
 </div>
 </div>
-</p>
-<a name="N10280"></a><a name="sc_recoverableSharedLocks"></a>
+<a name="N1027F"></a><a name="sc_recoverableSharedLocks"></a>
 <h4>Recoverable Shared Locks</h4>
 <p>With minor modifications to the Shared Lock protocol, you make
       shared locks revocable by modifying the shared lock protocol:</p>
@@ -752,7 +754,7 @@ document.write("Last Published: " + document.lastModified);
       Laser Beams</em> by stipulating in your protocol that the revoker
       is allowed to delete the lock node if after some length of time the lock
       isn't deleted by the lock holder.</p>
-<a name="N102AC"></a><a name="sc_recipes_twoPhasedCommit"></a>
+<a name="N102AB"></a><a name="sc_recipes_twoPhasedCommit"></a>
 <h3 class="h4">Two-phased Commit</h3>
 <p>A two-phase commit protocol is an algorithm that lets all clients in
     a distributed system agree either to commit a transaction or abort.</p>
@@ -784,7 +786,7 @@ document.write("Last Published: " + document.lastModified);
 <p>To address the second problem, you can have the coordinator
     propagate the transaction to the sites, and have each site creating its
     own ephemeral node.</p>
-<a name="N102C5"></a><a name="sc_leaderElection"></a>
+<a name="N102C4"></a><a name="sc_leaderElection"></a>
 <h3 class="h4">Leader Election</h3>
 <p>A simple way of doing leader election with ZooKeeper is to use the
     <strong>SEQUENCE|EPHEMERAL</strong> flags when creating

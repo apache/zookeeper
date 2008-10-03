@@ -15,14 +15,14 @@
   limitations under the License.
 -->
 
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-<book id="bk_programmersGuide">
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="bk_programmersGuide">
   <title>ZooKeeper Programmer's Guide</title>
 
   <subtitle>Developing Distributed Applications that use ZooKeeper</subtitle>
 
-  <bookinfo>
+  <articleinfo>
     <legalnotice>
       <para>Licensed under the Apache License, Version 2.0 (the "License");
       you may not use this file except in compliance with the License. You may
@@ -45,20 +45,20 @@
 
       <para>$Revision: 1.14 $ $Date: 2008/09/19 05:31:45 $</para>
     </abstract>
-  </bookinfo>
+  </articleinfo>
 
-  <preface id="_introduction">
+  <section id="_introduction">
     <title>Introduction</title>
 
     <para>This document is a guide for developers wishing to create
     distributed applications that take advantage of ZooKeeper's coordination
     services. It contains conceptual and practical information.</para>
 
-    <para>The first four chapters of this guide present higher level
+    <para>The first four sections of this guide present higher level
     discussions of various ZooKeeper concepts. These are necessary both for an
     understanding of how Zookeeper works as well how to work with it. It does
     not contain source code, but it does assume a familiarity with the
-    problems associated with distributed computing. The chapters in this first
+    problems associated with distributed computing. The sections in this first
     group are:</para>
 
     <itemizedlist>
@@ -79,7 +79,7 @@
       </listitem>
     </itemizedlist>
 
-    <para>The next four chapters of this provided practical programming
+    <para>The next four sections of this provided practical programming
     information. These are:</para>
 
     <itemizedlist>
@@ -93,7 +93,7 @@
 
       <listitem>
         <para><xref linkend="ch_programStructureWithExample" />
-        <remark>[tbd]</remark></para>
+        <emphasis>[tbd]</emphasis></para>
       </listitem>
 
       <listitem>
@@ -111,11 +111,11 @@
     the <ulink url="#ch_zkDataModel">ZooKeeper Data Model</ulink> and <ulink
     url="#ch_guideToZkOperations">ZooKeeper Basic Operations</ulink>. Also,
     the <ulink url="#ch_programStructureWithExample">Simple Programmming
-    Example</ulink> <remark>[tbd]</remark> is helpful for understand the basic
+    Example</ulink> <emphasis>[tbd]</emphasis> is helpful for understand the basic
     structure of a ZooKeeper client application.</para>
-  </preface>
+  </section>
 
-  <chapter id="ch_zkDataModel">
+  <section id="ch_zkDataModel">
     <title>The ZooKeeper Data Model</title>
 
     <para>ZooKeeper has a hierarchal name space, much like a distributed file
@@ -159,7 +159,7 @@
       <title>ZNodes</title>
 
       <para>Every node in a ZooKeeper tree is refered to as a
-      <firstterm>znode</firstterm>. Znodes maintain a stat structure that
+      <emphasis>znode</emphasis>. Znodes maintain a stat structure that
       includes version numbers for data changes, acl changes. The stat
       structure also has timestamps. The version number, together with the
       timestamp allow ZooKeeper to validate the cache and to coordinate
@@ -169,14 +169,14 @@
       it must supply the version of the data of the znode it is changing. If
       the version it supplies doesn't match the actual version of the data,
       the update will fail. (This behavior can be overridden. For more
-      information see... )<remark>[tbd...]</remark></para>
+      information see... )<emphasis>[tbd...]</emphasis></para>
 
       <note>
         <para>In distributed application engineering, the word
         <emphasis>node</emphasis> can refer to a generic host machine, a
         server, a member of quorums, a client process, etc. In the ZooKeeper
         documentatin, <emphasis>znodes</emphasis> refer to the data nodes.
-        <firstterm>Servers</firstterm> to refer to machines that make up the
+        <emphasis>Servers</emphasis> to refer to machines that make up the
         ZooKeeper service; <emphasis>quorum peers</emphasis> refer to the
         servers that make up a quorum; client refers to any host or process
         which uses a ZooKeeper service.</para>
@@ -193,7 +193,7 @@
         sends the client a notification. More information about watches can be
         found in the section 
 	    <ulink url="#ch_zkWatches">Zookeeper Watches</ulink>.
-        <remark>[tbd]</remark></para>
+        <emphasis>[tbd]</emphasis></para>
       </section>
 
       <section>
@@ -234,7 +234,7 @@
           <para><emphasis role="bold">Zxid</emphasis></para>
 
           <para>Every change to the ZooKeeper state receives a stamp in the
-          form of a <firstterm>zxid</firstterm> (ZooKeeper Transaction Id).
+          form of a <emphasis>zxid</emphasis> (ZooKeeper Transaction Id).
           This exposes the total ordering of all changes to ZooKeeper. Each
           change will have a unique zxid and if zxid1 is smaller than zxid2
           then zxid1 happened before zxid2.</para>
@@ -333,9 +333,9 @@
         </listitem>
       </itemizedlist>
     </section>
-  </chapter>
+  </section>
 
-  <chapter id="ch_zkSessions">
+  <section id="ch_zkSessions">
     <title>ZooKeeper Sessions</title>
 
     <para>When a client gets a handle to the ZooKeeper service, ZooKeeper
@@ -362,9 +362,9 @@
     to the ZooKeeper server is still active. The timing of the PING is
     conservative enough to ensure reasonable time to detect a dead connection
     and reconnect to a new server.</para>
-  </chapter>
+  </section>
 
-  <chapter id="ch_zkWatches">
+  <section id="ch_zkWatches">
     <title>ZooKeeper Watches</title>
 
     <para>All of the read operations in ZooKeeper - <emphasis
@@ -487,9 +487,172 @@
         </listitem>
       </itemizedlist>
     </section>
-  </chapter>
+  </section>
 
-  <chapter id="ch_zkGuarantees">
+  <section id="sc_ZooKeeperAccessControl">
+    <title>ZooKeeper access control using ACLs</title>
+
+    <para>ZooKeeper uses ACLs to control access to its znodes (the data nodes of a ZooKeeper data tree). The ACL implementation is quite similar to UNIX file access permissions: it employs permission bits to allow/disallow various operations against a node and the scope to which the bits apply. Unlike standard UNIX permissions, a ZooKeeper node is not limited by the three standard scopes for user (owner of the file), group, and world (other). ZooKeeper does not have a notion of an owner of a znode. Instead, an ACL specifies sets of ids and permissions that are associated with those ids.</para>
+
+    <para>ZooKeeper supports pluggable authentication schemes. Ids are specified using the form <emphasis>scheme:id</emphasis>, where <emphasis>scheme</emphasis> is a the authentication scheme that the id corresponds to. For example, <emphasis>host:host1.corp.com</emphasis> is an id for a host named <emphasis>host1.corp.com</emphasis>.</para>
+
+    <para>When a client connects to ZooKeeper and authenticates itself, ZooKeeper associates all the ids that correspond to a client with the clients connection. These ids are checked against the ACLs of znodes when a clients tries to access a node. ACLs are made up of pairs of <emphasis>(scheme:expression, perms)</emphasis>. The format of the <emphasis>expression</emphasis> is specific to the scheme. For example, the pair <emphasis>(ip:19.22.0.0/16, READ)</emphasis> gives the <emphasis>READ</emphasis> permission to any clients with an IP address that starts with 19.22.</para>
+
+    <section id="sc_ACLPermissions">
+      <title>ACL Permissions</title>
+                               
+      <para>Zookeeper supports the following permissions:</para>
+
+      <itemizedlist>
+        <listitem><para><emphasis role="bold">CREATE</emphasis>: you can create a child node</para></listitem>
+        <listitem><para><emphasis role="bold">READ</emphasis>: you can get data from a node and list its children.</para></listitem>
+        <listitem><para><emphasis role="bold">WRITE</emphasis>: you can set data for a node</para></listitem>
+        <listitem><para><emphasis role="bold">DELETE</emphasis>: you can delete a child node</para></listitem>
+        <listitem><para><emphasis role="bold">ADMIN</emphasis>: you can set permissions</para></listitem>
+      </itemizedlist>
+
+      <para>The <emphasis>CREATE</emphasis> and <emphasis>DELETE</emphasis> permissions have been broken out of the <emphasis>WRITE</emphasis> permission for finer grained access controls. The cases for <emphasis>CREATE</emphasis> and <emphasis>DELETE</emphasis> are the following:</para>
+
+      <para>You want A to be able to do a set on a zookeeper node, but not be able to <emphasis>CREATE</emphasis> or <emphasis>DELETE</emphasis> children.</para>
+
+      <para><emphasis>CREATE</emphasis> without <emphasis>DELETE</emphasis>: clients create requests by creating zookeeper nodes in a parent directory. You want all clients to be able to add, but only request processor can delete. (This is kind of like the APPEND permission for files.)</para>
+
+      <para>Also, the <emphasis>ADMIN</emphasis> permission is there since Zookeeper doesn’t have a notion of file owner. In some sense the <emphasis>ADMIN</emphasis> permission designates the entity as the owner. Zookeeper doesn’t support the LOOKUP permission (execute permission bit on directories to allow you to LOOKUP even though you can't list the directory). Everyone implicitly has LOOKUP permission. This allows you to stat a node, but nothing more. (The problem is, if you want to call zoo_exists() on a node that doesn't exist, there is no permission to check.)</para>
+
+    <section id="sc_BuiltinACLSchemes">
+      <title>Builtin ACL Schemes</title>
+
+      <para>ZooKeeeper has the following built in schemes:</para>
+      <itemizedlist>
+        <listitem><para><emphasis role="bold">world</emphasis> has a single id, <emphasis>anyone</emphasis>, that represents anyone.</para></listitem>
+        <listitem><para><emphasis role="bold">auth</emphasis> doesn't use any id, represents any authenticated user.</para></listitem>
+        <listitem><para><emphasis role="bold">digest</emphasis> uses a <emphasis>username:password</emphasis> string to generate MD5 hash which is then used as an ACL ID identity. Authentication is done by sending the <emphasis>username:password</emphasis> in clear text. When used in the ACL the expression will be the <emphasis>username:base64</emphasis>encoded<emphasis>SHA1</emphasis>password<emphasis>digest</emphasis>.</para></listitem>
+        <listitem><para><emphasis role="bold">host</emphasis> uses the client host name as an ACL ID identity. The ACL expression is a hostname suffix. For example, the ACL expression <emphasis>host:corp.com</emphasis> matches the ids <emphasis>host:host1.corp.com</emphasis> and <emphasis>host:host2.corp.com</emphasis>, but not <emphasis>host:host1.store.com</emphasis>.</para></listitem>
+        <listitem><para><emphasis role="bold">ip</emphasis> uses the client host IP as an ACL ID identity. The ACL expression is of the form <emphasis>addr/bits</emphasis> where the most significant <emphasis>bits</emphasis> of <emphasis>addr</emphasis> are matched against the most significant <emphasis>bits</emphasis> of the client host IP.</para></listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>Zookeeper C client API</title>
+
+      <para>The following constants are provided by the zookeeper C library:</para>
+
+      <itemizedlist>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_READ; //can read node’s value and list its children</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_WRITE;// can set the node’s value</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_CREATE; //can create children</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_DELETE;// can delete children</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_ADMIN; //can execute set_acl()</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_ALL;// all of the above flags OR’d together</para></listitem>
+      </itemizedlist>
+
+      <para>The following are the standard ACL IDs:</para>
+
+      <itemizedlist>
+        <listitem><para><emphasis>struct</emphasis> Id ANYONE_ID_UNSAFE; //(‘world’,’anyone’)</para></listitem>
+        <listitem><para><emphasis>struct</emphasis> Id AUTH_IDS;// (‘auth’,’’)</para></listitem>
+      </itemizedlist>
+
+      <para>AUTH_IDS empty identity string should be interpreted as “the identity of the creator”.</para>
+
+      <para>Zookeeper client comes with three standard ACLs:</para>
+
+      <itemizedlist>
+        <listitem><para><emphasis>struct</emphasis> ACL_vector OPEN_ACL_UNSAFE; //(PERM_ALL,ANYONE_ID_UNSAFE)</para></listitem>
+        <listitem><para><emphasis>struct</emphasis> ACL_vector READ_ACL_UNSAFE;// (PERM_READ, ANYONE_ID_UNSAFE)</para></listitem>
+        <listitem><para><emphasis>struct</emphasis> ACL_vector CREATOR_ALL_ACL; //(PERM_ALL,AUTH_IDS)</para></listitem>
+      </itemizedlist>
+
+      <para>The OPEN_ACL_UNSAFE is completely open free for all ACL: any application can execute any operation on the node and can create, list and delete its children. The READ_ACL_UNSAFE is read-only access for any application. CREATE_ALL_ACL grants all permissions to the creator of the node. The creator must have been authenticated by the server (for example, using “<emphasis>digest</emphasis>” scheme) before it can create nodes with this ACL.</para>
+
+      <para>The following zookeeper operations deal with ACLs:</para>
+
+      <itemizedlist>
+        <listitem><para><emphasis>int</emphasis> <emphasis>zoo_add_auth</emphasis>(zhandle_t *zh,<emphasis>const</emphasis> <emphasis>char</emphasis>* scheme,<emphasis>const</emphasis> <emphasis>char</emphasis>* cert,</para></listitem>
+        <listitem><para><emphasis>int</emphasis> certLen, void_completion_t completion, <emphasis>const</emphasis> <emphasis>void</emphasis> *data);</para></listitem>
+      </itemizedlist>
+
+      <para>The application uses the zoo_add_auth function to authenticate itself to the server. The function can be called multiple times if the application wants to authenticate using different schemes and/or identities.</para>
+
+      <itemizedlist>
+        <listitem><para><emphasis>int</emphasis> <emphasis>zoo_create</emphasis>(zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis> *path, <emphasis>const</emphasis> <emphasis>char</emphasis> *value,</para></listitem>
+        <listitem><para><emphasis>int</emphasis> valuelen, <emphasis>const</emphasis> <emphasis>struct</emphasis> ACL_vector *acl, <emphasis>int</emphasis> flags,</para></listitem>
+        <listitem><para><emphasis>char</emphasis> *realpath, <emphasis>int</emphasis> max_realpath_len);</para></listitem>
+      </itemizedlist>
+
+      <para>zoo_create() operation creates a new node. The acl parameter is a list of ACLs associated with the node. The parent node must have the CREATE permission bit set.</para>
+
+      <itemizedlist>
+        <listitem><para><emphasis>int</emphasis> <emphasis>zoo_get_acl</emphasis>(zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis> *path,</para></listitem>
+        <listitem><para><emphasis>struct</emphasis> ACL_vector *acl, <emphasis>struct</emphasis> Stat *stat);</para></listitem>
+      </itemizedlist>
+
+      <para>This operation returns a node’s ACL info.</para>
+
+      <itemizedlist>
+        <listitem><para><emphasis>int</emphasis> <emphasis>zoo_set_acl</emphasis>(zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis> *path, <emphasis>int</emphasis> version,</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>struct</emphasis> ACL_vector *acl);</para></listitem>
+      </itemizedlist>
+
+      <para>This function replaces node’s ACL list with a new one. The node must have the ADMIN permission set.</para>
+
+      <para>Here is a sample code that makes use of the above APIs to authenticate itself using the “<emphasis>foo</emphasis>” scheme and create an ephemeral node “/xyz” with create-only permissions.</para>
+
+      <programlisting>
+static zhandle_t *zh;
+
+void watcher(zhandle_t *zzh, int type, int state, const char *path) {
+}
+
+int main(int argc, char argv) {
+  char buffer[512];
+  char p[2048];
+  char *cert=0;
+  char appId[64];
+
+  strcpy(appId, "example.foo_test");
+  cert = foo_get_cert_once(appId);
+  if(cert!=0) {
+    fprintf(stderr,
+            "Certificate for appid [%s] is [%s]\n",appId,cert);
+    strncpy(p,cert, sizeof(p)-1);
+    free(cert);
+  } else {
+    fprintf(stderr, "Certificate for appid [%s] not found\n",appId);
+    strcpy(p, "dummy");
+  }
+
+  zoo_set_debug_level(LOG_LEVEL_DEBUG);
+
+  zh = zookeeper_init(“localhost:3181”, watcher,10000,0, 0, 0);
+  if (!zh) {
+    return errno;
+  }
+  if(zoo_add_auth(zh,"foo",p,strlen(p),0,0)!=ZOK)
+    return 2;
+
+  struct ACL_CREATE_ONLY_ACL[] = {{PERM_CREATE, AUTH_IDS}};
+  struct ACL_vector CREATE_ONLY = {1,_CREATE_ONLY_ACL};
+  int rc = zoo_create(zh,"/xyz","value", 5, &amp;CREATE_ONLY, EPHEMERAL,
+                      buffer, sizeof(buffer)-1);
+
+  this operation will fail with a ZNOAUTH error
+    int buflen= sizeof(buffer);
+  struct Stat stat;
+  rc = zoo_get(zh, "/xyz",0,buffer,&amp;buflen,&amp;stat);
+  if (rc) {
+    fprintf(stderr, "Error %d for %s\n", rc, line);
+  }
+
+  zookeeper_close(zh);
+  return 0;
+}
+      </programlisting>
+    </section>
+    </section>
+  </section>
+
+  <section id="ch_zkGuarantees">
     <title>Consistency Guarantees</title>
 
     <para>ZooKeeper is a high performance, scalable service. Both reads and
@@ -541,7 +704,7 @@
               timeouts, etc) the client will not know if the update has
               applied or not. We take steps to minimize the failures, but the
               only guarantee is only present with successful return codes.
-              (This is called the _monotonicity condition_ in Paxos.)</para>
+              (This is called the <emphasis>monotonicity condition</emphasis> in Paxos.)</para>
             </listitem>
 
             <listitem>
@@ -571,7 +734,7 @@
     ZooKeeper). See <ulink url="recipes.html">Recipes and Solutions</ulink>
     for more details.</para>
 
-    <para><note>
+    <note>
         <para>Sometimes developers mistakenly assume one other guarantee that
         Zookeeper does <emphasis>not</emphasis> in fact make. This is:</para>
 
@@ -599,16 +762,16 @@
               provide complete client synchronization. (For more information,
               see the <ulink
               url="recipes.html#sc_recipes_Locks">Locks</ulink>
-              <remark>[tbd:...]</remark> in <ulink
+              <emphasis>[tbd:...]</emphasis> in <ulink
               url="recipes.html">Zookeeper Recipes</ulink>.
-              <remark>[tbd:..]</remark>).</para>
+              <emphasis>[tbd:..]</emphasis>).</para>
             </listitem>
           </varlistentry>
         </variablelist>
-      </note></para>
-  </chapter>
+      </note>
+  </section>
 
-  <chapter id="ch_bindings">
+  <section id="ch_bindings">
     <title>Bindings</title>
 
     <para>The ZooKeeper client libraries come in two languages: Java and C.
@@ -801,7 +964,9 @@
         zookeeper_mt library) is shown in this example, but you could also use
         cli_st (singlethreaded, built against zookeeper_st library):</para>
 
-        <para><programlisting>$ cli_mt zookeeper_host:9876</programlisting>This
+        <para><command>$ cli_mt zookeeper_host:9876</command></para>
+
+        <para>This
         is a client application that gives you a shell for executing simple
         zookeeper commands. Once succesully started and connected to the
         server it displays a shell prompt. You can now enter zookeeper
@@ -827,25 +992,27 @@
             <para>If you are building a multithreaded client, compile with
             -DTHREADED compiler flag to enable the multi-threaded version of
             the library, and then link against against the
-            <varname>zookeeper_mt</varname> library. If you are building a
+            <emphasis>zookeeper_mt</emphasis> library. If you are building a
             single-threaded client, do not compile with -DTHREADED, and be
-            sure to link against the<varname> zookeeper_st
-            </varname>library.</para>
+            sure to link against the<emphasis> zookeeper_st
+            </emphasis>library.</para>
           </listitem>
         </orderedlist>
 
-        <para>Refer to <xref linkend="ch_programStructureWithExample"/>for examples of usage in Java and C.
-        <remark>[tbd]</remark></para>
+        <para>Refer to <xref linkend="ch_programStructureWithExample"/>
+          for examples of usage in Java and C.
+          <emphasis>[tbd]</emphasis>
+        </para>
       </section>
     </section>
-  </chapter>
+  </section>
 
-   <chapter id="ch_guideToZkOperations">
+   <section id="ch_guideToZkOperations">
     <title>Building Blocks: A Guide to ZooKeeper Operations</title>
 
-    <para><remark>[tbd: This is a new section. The below
+    <para><emphasis>[tbd: This is a new section. The below
     is just placeholder. Eventually, a subsection on each of those operations, with a little
-    bit of illustrative code for each op.] </remark></para>
+    bit of illustrative code for each op.] </emphasis></para>
 
     <para>One of the design goals of ZooKeeper is provide a very simple
     programming interface. As a result, it supports only these
@@ -908,15 +1075,15 @@
         </listitem>
       </varlistentry>
     </variablelist>
-  </chapter>
+  </section>
   
-  <chapter id="ch_programStructureWithExample">
+  <section id="ch_programStructureWithExample">
     <title>Program Structure, with Simple Example</title>
 
-    <para><remark>[tbd]</remark></para>
-  </chapter>
+    <para><emphasis>[tbd]</emphasis></para>
+  </section>
 
-  <chapter id="ch_gotchas">
+  <section id="ch_gotchas">
     <title>Gotchas: Common Problems and Troubleshooting</title>
 
     <para>So now you know ZooKeeper. It's fast, simple, your application
@@ -985,7 +1152,7 @@
         with.</para>
       </listitem>
     </orderedlist>
-  </chapter>
+  </section>
 
   <appendix id="apx_linksToOtherInfo">
     <title>Links to Other Information</title>
@@ -995,7 +1162,7 @@
 
     <variablelist>
       <varlistentry>
-        <term>ZooKeeper Whitepaper <remark>[tbd: find url]</remark></term>
+        <term>ZooKeeper Whitepaper <emphasis>[tbd: find url]</emphasis></term>
 
         <listitem>
           <para>The definitive discussion of ZooKeeper design and performance,
@@ -1004,7 +1171,7 @@
       </varlistentry>
 
       <varlistentry>
-        <term>API Reference <remark>[tbd: find url]</remark></term>
+        <term>API Reference <emphasis>[tbd: find url]</emphasis></term>
 
         <listitem>
           <para>The complete reference to the ZooKeeper API</para>
@@ -1054,7 +1221,7 @@
       </varlistentry>
 
       <varlistentry>
-        <term><remark>[tbd]</remark></term>
+        <term><emphasis>[tbd]</emphasis></term>
 
         <listitem>
           <para>Any other good sources anyone can think of...</para>
@@ -1062,4 +1229,4 @@
       </varlistentry>
     </variablelist>
   </appendix>
-</book>
+</article>
