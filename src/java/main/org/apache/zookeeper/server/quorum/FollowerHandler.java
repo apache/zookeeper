@@ -330,10 +330,12 @@ public class FollowerHandler extends Thread {
                     type = bb.getInt();
                     bb = bb.slice();
                     if(type == OpCode.sync){
-                        leader.setSyncHandler(this, sessionId);
-                    }
+                     	leader.zk.submitRequest(new FollowerSyncRequest(this, sessionId, cxid, type, bb,
+                                qp.getAuthinfo()));
+                    } else {
                     leader.zk.submitRequest(null, sessionId, type, cxid, bb,
                             qp.getAuthinfo());
+                    }
                     break;
                 default:
                 }

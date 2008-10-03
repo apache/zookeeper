@@ -133,12 +133,12 @@ public class AsyncOpsTest extends ClientBase {
 
     @Test
     public void testAsyncExists() {
-        new StatCB(zk).verifySetData();
+        new StatCB(zk).verifyExists();
     }
 
     @Test
     public void testAsyncExistsFailure_NoNode() {
-        new StatCB(zk).verifySetData();
+        new StatCB(zk).verifyExistsFailure_NoNode();
     }
 
     @Test

@@ -69,9 +69,9 @@ public class FinalRequestProcessor implements RequestProcessor {
     }
 
     public void processRequest(Request request) {
-        // LOG.info("Zoo>>> cxid = " + request.cxid + " type = " +
-        // request.type + " id = " + request.sessionId + " cnxn " +
-        // request.cnxn);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Processing request:: " + request);
+        }
         // request.addRQRec(">final");
         long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
         if (request.type == OpCode.ping) {
@@ -130,6 +130,10 @@ public class FinalRequestProcessor implements RequestProcessor {
             if (request.hdr != null && request.hdr.getType() == OpCode.error) {
                 throw KeeperException.create(((ErrorTxn) request.txn).getErr());
             }
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(request);
+            }
             switch (request.type) {
             case OpCode.ping:
                 request.cnxn.sendResponse(new ReplyHeader(-2,
@@ -157,7 +161,6 @@ public class FinalRequestProcessor implements RequestProcessor {
                 err = rc.err;
                 break;
             case OpCode.sync:
-                LOG.debug("OpCode.sync " + request);
                 SyncRequest syncRequest = new SyncRequest();
                 ZooKeeperServer.byteBuffer2Record(request.request,
                         syncRequest);

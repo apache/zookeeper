@@ -84,7 +84,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         int outstandingLimit = 1;
 
         public Factory(int port) throws IOException {
-            super("NIOServerCxn.Factory");
+            super("NIOServerCxn.Factory:" + port);
             setDaemon(true);
             this.ss = ServerSocketChannel.open();
             ss.socket().bind(new InetSocketAddress(port));
@@ -421,7 +421,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     || ap.handleAuthentication(this, authPacket.getAuth()) != KeeperException.Code.Ok) {
                 if (ap == null)
                     LOG.error("No authentication provider for scheme: "
-                            + scheme);
+                            + scheme + " has " + ProviderRegistry.listProviders());
                 else
                     LOG.debug("Authentication failed for scheme: "
                             + scheme);
@@ -449,6 +449,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 outstandingRequests++;
                 // check throttling
                 if (zk.getInProcess() > factory.outstandingLimit) {
+                    LOG.warn("Throttling recv " + zk.getInProcess());
                     disableRecv();
                     // following lines should not be needed since we are already
                     // reading

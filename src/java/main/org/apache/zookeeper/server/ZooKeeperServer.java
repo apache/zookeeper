@@ -467,6 +467,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public void submitRequest(ServerCnxn cnxn, long sessionId, int type,
             int xid, ByteBuffer bb, List<Id> authInfo) {
+        Request si = new Request(cnxn, sessionId, xid, type, bb, authInfo);
+        submitRequest(si);
+    }
+    
+    public void submitRequest(Request si) {
         if (firstProcessor == null) {
             synchronized (this) {
                 try {
@@ -482,16 +487,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
         }
         try {
-            touch(cnxn);
-            Request si = new Request(cnxn, sessionId, xid, type, bb, authInfo);
-            boolean validpacket = Request.isValid(type);
+            touch(si.cnxn);
+            boolean validpacket = Request.isValid(si.type);
             if (validpacket) {
                 firstProcessor.processRequest(si);
-                if (cnxn != null) {
+                if (si.cnxn != null) {
                     incInProcess();
                 }
             } else {
-                LOG.warn("Dropping packet at server of type " + type);
+                LOG.warn("Dropping packet at server of type " + si.type);
                 // if unvalid packet drop the packet.
             }
         } catch (IOException e) {

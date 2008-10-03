@@ -49,8 +49,17 @@ public class CommitProcessor extends Thread implements RequestProcessor {
 
     RequestProcessor nextProcessor;
 
-    public CommitProcessor(RequestProcessor nextProcessor) {
+    /**
+     * This flag indicates whether we need to wait for a response to come back from the
+     * leader or we just let the sync operation flow through like a read. The flag will
+     * be true if the CommitProcessor is in a Leader pipeline.
+     */
+    boolean matchSyncs;
+
+    public CommitProcessor(RequestProcessor nextProcessor, String id, boolean matchSyncs) {
+        super("CommitProcessor:" + id);
         this.nextProcessor = nextProcessor;
+        this.matchSyncs = matchSyncs;
         start();
     }
 
@@ -122,8 +131,11 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                             nextPending = request;
                             break;
                         case OpCode.sync:
-                            nextPending = request;
-                            //pendingSyncs.add(request);
+                            if (matchSyncs) {
+                                nextPending = request;
+                            } else {
+                                toProcess.add(request);
+                            }
                             break;
                         default:
                             toProcess.add(request);
@@ -145,7 +157,9 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                          new Exception("committing a null! "));
                 return;
             }
-            LOG.debug("Committing" + request.cxid);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Committing request:: " + request);
+            }
             committedRequests.add(request);
             notifyAll();
         }
@@ -153,9 +167,10 @@ public class CommitProcessor extends Thread implements RequestProcessor {
 
     synchronized public void processRequest(Request request) {
         // request.addRQRec(">commit");
-        // LOG.info("Zoo processReq>>> cxid = " + request.cxid + " type =
-        // " + request.type + " id = " + request.sessionId + " cnxn " +
-        // request.cnxn);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Processing request:: " + request);
+        }
+        
         if (!finished) {
             queuedRequests.add(request);
             notifyAll();

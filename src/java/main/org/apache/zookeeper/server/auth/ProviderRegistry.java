@@ -36,7 +36,6 @@ public class ProviderRegistry {
         synchronized (ProviderRegistry.class) {
             if (initialized)
                 return;
-            initialized = true;
             IPAuthenticationProvider ipp = new IPAuthenticationProvider();
             HostAuthenticationProvider hostp = new HostAuthenticationProvider();
             DigestAuthenticationProvider digp = new DigestAuthenticationProvider();
@@ -59,6 +58,7 @@ public class ProviderRegistry {
                     }
                 }
             }
+            initialized = true;
         }
     }
 
@@ -66,5 +66,13 @@ public class ProviderRegistry {
         if(!initialized)
             initialize();
         return authenticationProviders.get(scheme);
+    }
+
+    public static String listProviders() {
+        StringBuilder sb = new StringBuilder();
+        for(String s: authenticationProviders.keySet()) {
+        sb.append(s + " ");
+}
+        return sb.toString();
     }
 }

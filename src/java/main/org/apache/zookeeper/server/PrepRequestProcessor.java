@@ -76,7 +76,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
 
     public PrepRequestProcessor(ZooKeeperServer zks,
             RequestProcessor nextProcessor) {
-        super("ProcessThread");
+        super("ProcessThread:" + zks.getClientPort());
         this.nextProcessor = nextProcessor;
         this.zks = zks;
 
