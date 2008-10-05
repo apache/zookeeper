@@ -563,8 +563,6 @@ public class FastLeaderElection implements Election {
                 }
                 break;
             case LEADING:
-                leaveInstance();
-                return new Vote(n.leader, n.zxid);
             case FOLLOWING:
                 LOG.info("Notification: " + n.leader + ", " + n.zxid + ", " + n.epoch + ", " + self.getId() + ", " + self.getPeerState() + ", " + n.state + ", " + n.sid);
               
