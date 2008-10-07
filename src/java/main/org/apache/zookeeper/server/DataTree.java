@@ -32,13 +32,13 @@ import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.Watcher.Event.EventType;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher.Event;
+import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -109,12 +109,24 @@ public class DataTree {
      * This is a pointer to the root of the DataTree. It is the source of truth,
      * but we usually use the nodes hashmap to find nodes in the tree.
      */
-    private DataNode root = new DataNode(null, new byte[0], null, new Stat());
+    private DataNode root =
+        new DataNode(null, new byte[0], null, new StatPersisted());
 
     public DataTree() {
         /* Rather than fight it, let root have an alias */
         nodes.put("", root);
         nodes.put("/", root);
+    }
+
+    static public void copyStatPersisted(StatPersisted from, StatPersisted to) {
+        to.setAversion(from.getAversion());
+        to.setCtime(from.getCtime());
+        to.setCversion(from.getCversion());
+        to.setCzxid(from.getCzxid());
+        to.setMtime(from.getMtime());
+        to.setMzxid(from.getMzxid());
+        to.setVersion(from.getVersion());
+        to.setEphemeralOwner(from.getEphemeralOwner());
     }
 
     static public void copyStat(Stat from, Stat to) {
@@ -126,6 +138,8 @@ public class DataTree {
         to.setMzxid(from.getMzxid());
         to.setVersion(from.getVersion());
         to.setEphemeralOwner(from.getEphemeralOwner());
+        to.setDataLength(from.getDataLength());
+        to.setNumChildren(from.getNumChildren());
     }
 
     // public void remooveInterest(String path, Watcher nw) {
@@ -161,7 +175,7 @@ public class DataTree {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
-        Stat stat = new Stat();
+        StatPersisted stat = new StatPersisted();
         stat.setCtime(time);
         stat.setMtime(time);
         stat.setCzxid(zxid);
@@ -250,7 +264,7 @@ public class DataTree {
             n.stat.setMtime(time);
             n.stat.setMzxid(zxid);
             n.stat.setVersion(version);
-            copyStat(n.stat, s);
+            n.copyStat(s);
         }
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
         return s;
@@ -262,7 +276,7 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
-            copyStat(n.stat, stat);
+            n.copyStat(stat);
             if (watcher != null) {
                 dataWatches.addWatch(path, watcher);
             }
@@ -280,7 +294,7 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
-            copyStat(n.stat, stat);
+            n.copyStat(stat);
             return stat;
         }
     }
@@ -310,7 +324,7 @@ public class DataTree {
         synchronized (n) {
             n.stat.setAversion(version);
             n.acl = acl;
-            copyStat(n.stat, stat);
+            n.copyStat(stat);
             return stat;
         }
     }
@@ -322,7 +336,7 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
-            copyStat(n.stat, stat);
+            n.copyStat(stat);
             return new ArrayList<ACL>(n.acl);
         }
     }

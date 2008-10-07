@@ -29,6 +29,7 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.StatPersisted;
 
 /**
  * This class contains the data for a node in the data tree.
@@ -42,7 +43,7 @@ public class DataNode implements Record {
         // default rather than public constructor
     }
 
-    DataNode(DataNode parent, byte data[], List<ACL> acl, Stat stat) {
+    DataNode(DataNode parent, byte data[], List<ACL> acl, StatPersisted stat) {
         this.parent = parent;
         this.data = data;
         this.acl = acl;
@@ -56,9 +57,22 @@ public class DataNode implements Record {
 
     List<ACL> acl;
 
-    public Stat stat;
+    public StatPersisted stat;
 
     HashSet<String> children = new HashSet<String>();
+
+    public void copyStat(Stat to) {
+        to.setAversion(stat.getAversion());
+        to.setCtime(stat.getCtime());
+        to.setCversion(stat.getCversion());
+        to.setCzxid(stat.getCzxid());
+        to.setMtime(stat.getMtime());
+        to.setMzxid(stat.getMzxid());
+        to.setVersion(stat.getVersion());
+        to.setEphemeralOwner(stat.getEphemeralOwner());
+        to.setDataLength(data.length);
+        to.setNumChildren(children.size());
+    }
 
     public void deserialize(InputArchive archive, String tag)
             throws IOException {
@@ -75,8 +89,8 @@ public class DataNode implements Record {
             }
         }
         archive.endVector("acl");
-        stat = new Stat();
-        stat.deserialize(archive, "stat");
+        stat = new StatPersisted();
+        stat.deserialize(archive, "statpersisted");
         archive.endRecord("node");
     }
 
@@ -91,7 +105,7 @@ public class DataNode implements Record {
             }
         }
         archive.endVector(acl, "acl");
-        stat.serialize(archive, "stat");
+        stat.serialize(archive, "statpersisted");
         archive.endRecord(this, "node");
     }
 }

@@ -18,22 +18,36 @@
 
 module org.apache.zookeeper.data {
     class Id {
-    	ustring scheme;
-    	ustring id;
+        ustring scheme;
+        ustring id;
     }
     class ACL {
         int perms;
-	Id id;
+        Id id;
     }
+    // information shared with the client
     class Stat {
-        long czxid;
-        long mzxid;
-        long ctime; 
-        long mtime;
-        int version; 
-        int cversion; 
-        int aversion; 
-	long ephemeralOwner;
+        long czxid;      // created zxid
+        long mzxid;      // last modified zxid
+        long ctime;      // created
+        long mtime;      // last modified
+        int version;     // version
+        int cversion;    // child version
+        int aversion;    // acl version
+        long ephemeralOwner; // owner id if ephemeral, 0 otw
+        int dataLength;  //length of the data in the node
+        int numChildren; //number of children of this node
+    }
+    // information explicitly stored by the server persistently
+    class StatPersisted {
+        long czxid;      // created zxid
+        long mzxid;      // last modified zxid
+        long ctime;      // created
+        long mtime;      // last modified
+        int version;     // version
+        int cversion;    // child version
+        int aversion;    // acl version
+        long ephemeralOwner; // owner id if ephemeral, 0 otw
     }
 }
 module org.apache.zookeeper.proto {
@@ -45,7 +59,7 @@ module org.apache.zookeeper.proto {
 
     class ConnectRequest {
         int protocolVersion;
-	long lastZxidSeen;
+        long lastZxidSeen;
         int timeOut;
         long sessionId;
         buffer passwd;
@@ -61,14 +75,14 @@ module org.apache.zookeeper.proto {
         int type;
     }
     class AuthPacket {
-	int type;
-	ustring scheme;
-	buffer auth;
+        int type;
+        ustring scheme;
+        buffer auth;
     }
     class ReplyHeader {
         int xid;
         long zxid;
-	int err;
+        int err;
     }
     class GetDataRequest {
         ustring path;
@@ -106,7 +120,7 @@ module org.apache.zookeeper.proto {
         ustring path;
         int max;
     }
-	class SyncRequest {
+    class SyncRequest {
         ustring path;
     }
     class SyncResponse {
@@ -126,7 +140,7 @@ module org.apache.zookeeper.proto {
     class WatcherEvent {
         int type;  // event type
         int state; // state of the Keeper client runtime
-        ustring path; 
+        ustring path;
     }
 
     class CreateResponse {
@@ -137,7 +151,7 @@ module org.apache.zookeeper.proto {
         boolean watch;
     }
     class ExistsResponse {
-	org.apache.zookeeper.data.Stat stat;
+        org.apache.zookeeper.data.Stat stat;
     }
     class GetDataResponse {
         buffer data;
@@ -156,8 +170,8 @@ module org.apache.zookeeper.server.quorum {
     class QuorumPacket {
         int type; // Request, Ack, Commit, Ping
         long zxid;
-	buffer data; // Only significant when type is request
-	vector<org.apache.zookeeper.data.Id> authinfo;
+        buffer data; // Only significant when type is request
+        vector<org.apache.zookeeper.data.Id> authinfo;
     }
 }
 
@@ -172,8 +186,8 @@ module org.apache.zookeeper.server.persistence {
 module org.apache.zookeeper.txn {
     class TxnHeader {
         long clientId;
-	int cxid;
-	long zxid;
+        int cxid;
+        long zxid;
         long time;
         int type;
     }
@@ -181,7 +195,7 @@ module org.apache.zookeeper.txn {
         ustring path;
         buffer data;
         vector<org.apache.zookeeper.data.ACL> acl;
-	boolean ephemeral;
+        boolean ephemeral;
     }
     class DeleteTxn {
         ustring path;
@@ -201,7 +215,7 @@ module org.apache.zookeeper.txn {
         int max;
     }
     class CreateSessionTxn {
-	int timeOut;
+        int timeOut;
     }
     class ErrorTxn {
         int err;
