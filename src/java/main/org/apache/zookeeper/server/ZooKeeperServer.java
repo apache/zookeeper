@@ -40,6 +40,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -378,7 +379,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * and FinalRP.
      */
     static class ChangeRecord {
-        ChangeRecord(long zxid, String path, Stat stat, int childCount,
+        ChangeRecord(long zxid, String path, StatPersisted stat, int childCount,
                 List<ACL> acl) {
             this.zxid = zxid;
             this.path = path;
@@ -391,7 +392,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         String path;
 
-        Stat stat; /* Make sure to create a new object when changing */
+        StatPersisted stat; /* Make sure to create a new object when changing */
 
         int childCount;
 
@@ -399,9 +400,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         @SuppressWarnings("unchecked")
         ChangeRecord duplicate(long zxid) {
-            Stat stat = new Stat();
+            StatPersisted stat = new StatPersisted();
             if (this.stat != null) {
-                DataTree.copyStat(this.stat, stat);
+                DataTree.copyStatPersisted(this.stat, stat);
             }
             return new ChangeRecord(zxid, path, stat, childCount,
                     acl == null ? new ArrayList<ACL>() : new ArrayList(acl));

@@ -652,12 +652,37 @@ document.write("Last Published: " + document.lastModified);
           zero.</p>
         
 </li>
+
+        
+<li>
+          
+<p>
+<strong>dataLength</strong>
+</p>
+
+          
+<p>The length of the data field of this znode.</p>
+        
+</li>
+
+        
+<li>
+          
+<p>
+<strong>numChildren</strong>
+</p>
+
+          
+<p>The number of children of this znode.</p>
+        
+</li>
+
       
 </ul>
 </div>
 
   
-<a name="N1018F"></a><a name="ch_zkSessions"></a>
+<a name="N101A3"></a><a name="ch_zkSessions"></a>
 <h2 class="h3">ZooKeeper Sessions</h2>
 <div class="section">
 <p>When a client gets a handle to the ZooKeeper service, ZooKeeper
@@ -685,7 +710,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N1019F"></a><a name="ch_zkWatches"></a>
+<a name="N101B3"></a><a name="ch_zkWatches"></a>
 <h2 class="h3">ZooKeeper Watches</h2>
 <div class="section">
 <p>All of the read operations in ZooKeeper - <strong>getData()</strong>, <strong>getChildren()</strong>, and <strong>exists()</strong> - have the option of setting a watch as a
@@ -760,7 +785,7 @@ document.write("Last Published: " + document.lastModified);
     client gets a disconnect event, it must consider that an implicit trigger
     of all watches. When a client reconnects to a new server, the client
     should re-set any watches that it is still interested in.</p>
-<a name="N101D5"></a><a name="sc_WatchGuarantees"></a>
+<a name="N101E9"></a><a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
 <p>With regard to watches, ZooKeeper maintains these
       guarantees:</p>
@@ -795,7 +820,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N101FA"></a><a name="sc_WatchRememberThese"></a>
+<a name="N1020E"></a><a name="sc_WatchRememberThese"></a>
 <h3 class="h4">Things to Remember about Watches</h3>
 <ul>
         
@@ -838,13 +863,13 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N1021D"></a><a name="sc_ZooKeeperAccessControl"></a>
+<a name="N10231"></a><a name="sc_ZooKeeperAccessControl"></a>
 <h2 class="h3">ZooKeeper access control using ACLs</h2>
 <div class="section">
 <p>ZooKeeper uses ACLs to control access to its znodes (the data nodes of a ZooKeeper data tree). The ACL implementation is quite similar to UNIX file access permissions: it employs permission bits to allow/disallow various operations against a node and the scope to which the bits apply. Unlike standard UNIX permissions, a ZooKeeper node is not limited by the three standard scopes for user (owner of the file), group, and world (other). ZooKeeper does not have a notion of an owner of a znode. Instead, an ACL specifies sets of ids and permissions that are associated with those ids.</p>
 <p>ZooKeeper supports pluggable authentication schemes. Ids are specified using the form <em>scheme:id</em>, where <em>scheme</em> is a the authentication scheme that the id corresponds to. For example, <em>host:host1.corp.com</em> is an id for a host named <em>host1.corp.com</em>.</p>
 <p>When a client connects to ZooKeeper and authenticates itself, ZooKeeper associates all the ids that correspond to a client with the clients connection. These ids are checked against the ACLs of znodes when a clients tries to access a node. ACLs are made up of pairs of <em>(scheme:expression, perms)</em>. The format of the <em>expression</em> is specific to the scheme. For example, the pair <em>(ip:19.22.0.0/16, READ)</em> gives the <em>READ</em> permission to any clients with an IP address that starts with 19.22.</p>
-<a name="N10244"></a><a name="sc_ACLPermissions"></a>
+<a name="N10258"></a><a name="sc_ACLPermissions"></a>
 <h3 class="h4">ACL Permissions</h3>
 <p>Zookeeper supports the following permissions:</p>
 <ul>
@@ -880,7 +905,7 @@ document.write("Last Published: " + document.lastModified);
 <p>
 <em>CREATE</em> without <em>DELETE</em>: clients create requests by creating zookeeper nodes in a parent directory. You want all clients to be able to add, but only request processor can delete. (This is kind of like the APPEND permission for files.)</p>
 <p>Also, the <em>ADMIN</em> permission is there since Zookeeper doesn&rsquo;t have a notion of file owner. In some sense the <em>ADMIN</em> permission designates the entity as the owner. Zookeeper doesn&rsquo;t support the LOOKUP permission (execute permission bit on directories to allow you to LOOKUP even though you can't list the directory). Everyone implicitly has LOOKUP permission. This allows you to stat a node, but nothing more. (The problem is, if you want to call zoo_exists() on a node that doesn't exist, there is no permission to check.)</p>
-<a name="N1029A"></a><a name="sc_BuiltinACLSchemes"></a>
+<a name="N102AE"></a><a name="sc_BuiltinACLSchemes"></a>
 <h4>Builtin ACL Schemes</h4>
 <p>ZooKeeeper has the following built in schemes:</p>
 <ul>
@@ -911,7 +936,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N102EF"></a><a name="Zookeeper+C+client+API"></a>
+<a name="N10303"></a><a name="Zookeeper+C+client+API"></a>
 <h4>Zookeeper C client API</h4>
 <p>The following constants are provided by the zookeeper C library:</p>
 <ul>
@@ -1098,7 +1123,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N1040C"></a><a name="ch_zkGuarantees"></a>
+<a name="N10420"></a><a name="ch_zkGuarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -1225,12 +1250,12 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N1047A"></a><a name="ch_bindings"></a>
+<a name="N1048E"></a><a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N10483"></a><a name="Java+Binding"></a>
+<a name="N10497"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1297,7 +1322,7 @@ int main(int argc, char argv) {
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid,
       the two threads shut down, and any further ZooKeeper calls throw
       errors.</p>
-<a name="N104CC"></a><a name="C+Binding"></a>
+<a name="N104E0"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1314,7 +1339,7 @@ int main(int argc, char argv) {
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N104DB"></a><a name="Installation"></a>
+<a name="N104EF"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1445,7 +1470,7 @@ int main(int argc, char argv) {
 </li>
         
 </ol>
-<a name="N10584"></a><a name="Using+the+Client"></a>
+<a name="N10598"></a><a name="Using+the+Client"></a>
 <h4>Using the Client</h4>
 <p>You can test your client by running a zookeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1498,7 +1523,7 @@ int main(int argc, char argv) {
 </div>
 
    
-<a name="N105C3"></a><a name="ch_guideToZkOperations"></a>
+<a name="N105D7"></a><a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>
@@ -1570,7 +1595,7 @@ int main(int argc, char argv) {
 </div>
   
   
-<a name="N10605"></a><a name="ch_programStructureWithExample"></a>
+<a name="N10619"></a><a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -1579,7 +1604,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10610"></a><a name="ch_gotchas"></a>
+<a name="N10624"></a><a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application

@@ -35,6 +35,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
@@ -220,7 +221,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 txn = new CreateTxn(path, createRequest.getData(),
                         createRequest.getAcl(),
                         createMode.isEphemeral());
-                Stat s = new Stat();
+                StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
                 }

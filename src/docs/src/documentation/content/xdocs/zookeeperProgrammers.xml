@@ -331,6 +331,19 @@
           ephemeral node. If it is not an ephemeral node, it will be
           zero.</para>
         </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">dataLength</emphasis></para>
+
+          <para>The length of the data field of this znode.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">numChildren</emphasis></para>
+
+          <para>The number of children of this znode.</para>
+        </listitem>
+
       </itemizedlist>
     </section>
   </section>

@@ -13,6 +13,9 @@ Non-backward compatible changes:
   ZOOKEEPER-38. headers (version+) in log/snap files (Andrew Kornev and Mahadev
   Konar via breed)
 
+  ZOOKEEPER-8. Stat enchaned to include num of children and size
+  (phunt)
+
 Backward compatibile changes:
 
   BUGFIXES: 
