@@ -20,6 +20,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-180. Placeholder sections needed in document for new topics that
+  the umbrella jira discusses (robbie via phunt)
+
   ZOOKEEPER-179. Programmer's Guide "Basic Operations" section is missing 
   content (robbie via phunt)
 
