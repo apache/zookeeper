@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+
 
 public class Vote {
     public Vote(long id, long zxid) {
@@ -25,9 +27,26 @@ public class Vote {
         this.zxid = zxid;
     }
 
+    public Vote(long id, long zxid, long epoch) {
+        this.id = id;
+        this.zxid = zxid;
+        this.epoch = epoch;
+    }
+    
+    public Vote(long id, long zxid, long epoch, ServerState state) {
+        this.id = id;
+        this.zxid = zxid;
+        this.epoch = epoch;
+        this.state = state;
+    }
+    
     public long id;
     
     public long zxid;
+    
+    public long epoch = -1;
+    
+    public ServerState state = ServerState.LOOKING;
     
     @Override
     public boolean equals(Object o) {
@@ -35,7 +54,7 @@ public class Vote {
             return false;
         }
         Vote other = (Vote) o;
-        return id == other.id && zxid == other.zxid;
+        return (id == other.id && zxid == other.zxid && epoch == other.epoch);
 
     }
 

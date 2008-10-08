@@ -20,6 +20,8 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-159. Cover two corner cases of leader election
+
   ZOOKEEPER-156. update programmer guide with acl details from old wiki page
   (phunt)
 
