@@ -246,6 +246,23 @@ document.write("Last Published: " + document.lastModified);
 </li>
 <li>
 <a href="#ch_guideToZkOperations">Building Blocks: A Guide to ZooKeeper Operations</a>
+<ul class="minitoc">
+<li>
+<a href="#sc_connectingToZk">Connecting to ZooKeeper</a>
+</li>
+<li>
+<a href="#sc_readOps">Read Operations</a>
+</li>
+<li>
+<a href="#sc_writeOps">Write Operations</a>
+</li>
+<li>
+<a href="#sc_handlingWatches">Handling Watches</a>
+</li>
+<li>
+<a href="#sc_miscOps">Miscelleaneous ZooKeeper Operations</a>
+</li>
+</ul>
 </li>
 <li>
 <a href="#ch_programStructureWithExample">Program Structure, with Simple Example</a>
@@ -396,8 +413,9 @@ document.write("Last Published: " + document.lastModified);
       
 <li>
         
-<p>The following characters are not allowed: \ud800 -uF8FFF, \uFFF0-uFFFF, \uXFFFE -
-        \uXFFFF (where X is an digit 1 - E), \uF0000 - \uFFFFF.</p>
+<p>The following characters are not allowed: \ud800 -uF8FFF,
+        \uFFF0-uFFFF, \uXFFFE - \uXFFFF (where X is a digit 1 - E), \uF0000 -
+        \uFFFFF.</p>
       
 </li>
 
@@ -405,7 +423,7 @@ document.write("Last Published: " + document.lastModified);
 <li>
         
 <p>The "." character can be used as part of another name, but "."
-        and ".." cannot alone make up the whole name of a path location,
+        and ".." cannot alone be used to indicate a node along a path,
         because ZooKeeper doesn't use relative paths. The following would be
         invalid: "/a/b/./c" or "/a/b/../c".</p>
       
@@ -1238,8 +1256,7 @@ int main(int argc, char argv) {
               atomic, synchronization across its quorum, but ZooKeeper
               primitives can be used to construct higher level functions that
               provide complete client synchronization. (For more information,
-              see the <a href="recipes.html#sc_recipes_Locks">Locks</a>
-              <em>[tbd:...]</em> in <a href="recipes.html">Zookeeper Recipes</a>.
+              see the <a href="recipes.html">Zookeeper Recipes</a>.
               <em>[tbd:..]</em>).</p>
 </dd>
         
@@ -1250,12 +1267,12 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N1048E"></a><a name="ch_bindings"></a>
+<a name="N10487"></a><a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N10497"></a><a name="Java+Binding"></a>
+<a name="N10490"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1322,7 +1339,7 @@ int main(int argc, char argv) {
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid,
       the two threads shut down, and any further ZooKeeper calls throw
       errors.</p>
-<a name="N104E0"></a><a name="C+Binding"></a>
+<a name="N104D9"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1339,7 +1356,7 @@ int main(int argc, char argv) {
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N104EF"></a><a name="Installation"></a>
+<a name="N104E8"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1470,7 +1487,7 @@ int main(int argc, char argv) {
 </li>
         
 </ol>
-<a name="N10598"></a><a name="Using+the+Client"></a>
+<a name="N10591"></a><a name="Using+the+Client"></a>
 <h4>Using the Client</h4>
 <p>You can test your client by running a zookeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1523,79 +1540,43 @@ int main(int argc, char argv) {
 </div>
 
    
-<a name="N105D7"></a><a name="ch_guideToZkOperations"></a>
+<a name="N105D0"></a><a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
+<p>This section surveys all the operations a developer can perform
+    against a ZooKeeper server. It is lower level information than the earlier
+    concepts chapters in this manual, but higher level than the ZooKeeper API
+    Reference. It covers these topics:</p>
+<ul>
+      
+<li>
+        
 <p>
-<em>[tbd: This is a new section. The below
-    is just placeholder. Eventually, a subsection on each of those operations, with a little
-    bit of illustrative code for each op.] </em>
+<a href="#sc_connectingToZk">Connecting to ZooKeeper</a>
 </p>
-<p>One of the design goals of ZooKeeper is provide a very simple
-    programming interface. As a result, it supports only these
-    operations:</p>
-<dl>
       
-<dt>
-<term>create</term>
-</dt>
-<dd>
-<p>creates a node at a location in the tree</p>
-</dd>
-
-      
-<dt>
-<term>delete</term>
-</dt>
-<dd>
-<p>deletes a node</p>
-</dd>
-
-      
-<dt>
-<term>exists</term>
-</dt>
-<dd>
-<p>tests if a node exists at a location</p>
-</dd>
-
-      
-<dt>
-<term>get data</term>
-</dt>
-<dd>
-<p>reads the data from a node</p>
-</dd>
-
-      
-<dt>
-<term>set data</term>
-</dt>
-<dd>
-<p>writes data to a node</p>
-</dd>
-
-      
-<dt>
-<term>get children</term>
-</dt>
-<dd>
-<p>retrieves a list of children of a node</p>
-</dd>
-
-      
-<dt>
-<term>sync</term>
-</dt>
-<dd>
-<p>waits for data to be propagated.</p>
-</dd>
+</li>
     
-</dl>
+</ul>
+<a name="N105E4"></a><a name="sc_connectingToZk"></a>
+<h3 class="h4">Connecting to ZooKeeper</h3>
+<p></p>
+<a name="N105ED"></a><a name="sc_readOps"></a>
+<h3 class="h4">Read Operations</h3>
+<p></p>
+<a name="N105F6"></a><a name="sc_writeOps"></a>
+<h3 class="h4">Write Operations</h3>
+<p></p>
+<a name="N105FF"></a><a name="sc_handlingWatches"></a>
+<h3 class="h4">Handling Watches</h3>
+<p></p>
+<a name="N10608"></a><a name="sc_miscOps"></a>
+<h3 class="h4">Miscelleaneous ZooKeeper Operations</h3>
+<p></p>
 </div>
+
   
-  
-<a name="N10619"></a><a name="ch_programStructureWithExample"></a>
+<a name="N10612"></a><a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -1604,7 +1585,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10624"></a><a name="ch_gotchas"></a>
+<a name="N1061D"></a><a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application
