@@ -20,7 +20,11 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-179. Programmer's Guide "Basic Operations" section is missing 
+  content (robbie via phunt)
+
   ZOOKEEPER-159. Cover two corner cases of leader election
+  (Flavio Paiva Junqueira via phunt)
 
   ZOOKEEPER-156. update programmer guide with acl details from old wiki page
   (phunt)

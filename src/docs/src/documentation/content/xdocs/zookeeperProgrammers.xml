@@ -14,7 +14,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-
 <!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
 "http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
 <article id="bk_programmersGuide">
@@ -139,13 +138,14 @@
       </listitem>
 
       <listitem>
-        <para>The following characters are not allowed: \ud800 -uF8FFF, \uFFF0-uFFFF, \uXFFFE -
-        \uXFFFF (where X is an digit 1 - E), \uF0000 - \uFFFFF.</para>
+        <para>The following characters are not allowed: \ud800 -uF8FFF,
+        \uFFF0-uFFFF, \uXFFFE - \uXFFFF (where X is a digit 1 - E), \uF0000 -
+        \uFFFFF.</para>
       </listitem>
 
       <listitem>
         <para>The "." character can be used as part of another name, but "."
-        and ".." cannot alone make up the whole name of a path location,
+        and ".." cannot alone be used to indicate a node along a path,
         because ZooKeeper doesn't use relative paths. The following would be
         invalid: "/a/b/./c" or "/a/b/../c".</para>
       </listitem>
@@ -774,8 +774,6 @@ int main(int argc, char argv) {
               primitives can be used to construct higher level functions that
               provide complete client synchronization. (For more information,
               see the <ulink
-              url="recipes.html#sc_recipes_Locks">Locks</ulink>
-              <emphasis>[tbd:...]</emphasis> in <ulink
               url="recipes.html">Zookeeper Recipes</ulink>.
               <emphasis>[tbd:..]</emphasis>).</para>
             </listitem>
@@ -1023,73 +1021,49 @@ int main(int argc, char argv) {
    <section id="ch_guideToZkOperations">
     <title>Building Blocks: A Guide to ZooKeeper Operations</title>
 
-    <para><emphasis>[tbd: This is a new section. The below
-    is just placeholder. Eventually, a subsection on each of those operations, with a little
-    bit of illustrative code for each op.] </emphasis></para>
+    <para>This section surveys all the operations a developer can perform
+    against a ZooKeeper server. It is lower level information than the earlier
+    concepts chapters in this manual, but higher level than the ZooKeeper API
+    Reference. It covers these topics:</para>
 
-    <para>One of the design goals of ZooKeeper is provide a very simple
-    programming interface. As a result, it supports only these
-    operations:</para>
+    <itemizedlist>
+      <listitem>
+        <para><xref linkend="sc_connectingToZk" /></para>
+      </listitem>
+    </itemizedlist>
 
-    <variablelist>
-      <varlistentry>
-        <term>create</term>
+    <section id="sc_connectingToZk">
+      <title>Connecting to ZooKeeper</title>
 
-        <listitem>
-          <para>creates a node at a location in the tree</para>
-        </listitem>
-      </varlistentry>
+      <para></para>
+    </section>
+    
+    <section id="sc_readOps">
+      <title>Read Operations</title>
 
-      <varlistentry>
-        <term>delete</term>
+      <para></para>
+    </section>
+    
+    <section id="sc_writeOps">
+      <title>Write Operations</title>
 
-        <listitem>
-          <para>deletes a node</para>
-        </listitem>
-      </varlistentry>
+      <para></para>
+    </section>
+    
+    <section id="sc_handlingWatches">
+      <title>Handling Watches</title>
 
-      <varlistentry>
-        <term>exists</term>
+      <para></para>
+    </section>
+    
+    <section id="sc_miscOps">
+      <title>Miscelleaneous ZooKeeper Operations</title>
+      <para></para>
+    </section>
+    
 
-        <listitem>
-          <para>tests if a node exists at a location</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>get data</term>
-
-        <listitem>
-          <para>reads the data from a node</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>set data</term>
-
-        <listitem>
-          <para>writes data to a node</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>get children</term>
-
-        <listitem>
-          <para>retrieves a list of children of a node</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>sync</term>
-
-        <listitem>
-          <para>waits for data to be propagated.</para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
   </section>
-  
+
   <section id="ch_programStructureWithExample">
     <title>Program Structure, with Simple Example</title>
 
