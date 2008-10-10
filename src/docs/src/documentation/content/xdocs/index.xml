@@ -38,6 +38,9 @@ The following documents provide concepts and procedures to get you started using
       <li><a href="zookeeperProgrammers.html">Programmer's Guide</a> - an application developer's guide to ZooKeeper</li>
       <li><a href="recipes.html">ZooKeeper Recipes</a> - a set of common, higher level solutions using ZooKeeper</li>
       <li><a href="zookeeperAdmin.html">Administrator's Guide</a> - a guide for system administrators and anyone else who might deploy Zookeeer</li>
+      <li><a href="javaExample.html">ZooKeeper Java Example</a> - A simple Zookeeer Client, written in Java</li>
+      <li><a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a> - Simple Implementations of Barriers and Queues</li>
+      <li><a href="zookeeperInternals.html">ZooKeeper Internals</a> - Assorted Topics on the Inner Workings of ZooKeeper</li>
       <li><a href="ext:api/index">API Docs</a> - the technical reference to ZooKeeper APIs</li>
       <li><a href="ext:wiki">Wiki</a> - miscellaneous, informal ZooKeeper documentation, in Wiki format</li>
       <li><a href="ext:faq">FAQ</a> - frequently asked questions</li>    

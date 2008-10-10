@@ -20,6 +20,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-181. Some Source Forge Documents did not get moved over: 
+  javaExample, zookeeperTutorial, zookeeperInternals (robbie via phunt)
+
   ZOOKEEPER-180. Placeholder sections needed in document for new topics that
   the umbrella jira discusses (robbie via phunt)
 

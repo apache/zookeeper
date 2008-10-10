@@ -38,6 +38,9 @@ See http://forrest.apache.org/docs/linking.html for more info.
     <program   label="Programmer's Guide"     href="zookeeperProgrammers.html" />
     <recipes   label="Recipes"		      href="recipes.html" />
     <admin     label="Administrator's Guide"  href="zookeeperAdmin.html" />
+    <javaEx    label="Java Example"     href="javaExample.html" />
+    <barTutor  label="Barrie and Queue Tutorial" href="zookeeperTutorial.html" />
+    <internals label="ZooKeeper Internals"	href="zookeeperInternals.html" />
     <api       label="API Docs"               href="ext:api/index" />
     <wiki      label="Wiki"                   href="ext:wiki" />
     <faq       label="FAQ"                    href="ext:faq" />

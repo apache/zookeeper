@@ -71,19 +71,20 @@
       </note>
 
       <para>Once you have downloaded the ZooKeeper source, cd to the root of
-      your ZooKeeper source, and run "ant jar". For example:<computeroutput>$ cd ~/dev/zookeeper
-
-$ ~/dev/zookeeper/: ant jar</computeroutput></para>
+      your ZooKeeper source, and run "ant jar". For example:</para>
+<programlisting>
+$ cd ~/dev/zookeeper
+$ ~/dev/zookeeper/: ant jar
+</programlisting>
 
       <para>This should generate a JAR file called zookeeper.jar. To start
-      Zookeeper, compile and run zookeeper.jar. <emphasis>[tbd, some more
-      instruction here. Perhaps a command line? Are these two steps or
-      one?]</emphasis></para>
+      Zookeeper, compile and run zookeeper.jar.</para>
 
       <para>To start ZooKeeper you need a configuration file. Here is a sample
       file:</para>
 
-      <programlisting>tickTime=2000
+<programlisting>
+tickTime=2000
 dataDir=/var/zookeeper/ 
 clientPort=2181
 </programlisting>
@@ -127,7 +128,7 @@ clientPort=2181
       <para>Now that you created the configuration file, you can start
       ZooKeeper:</para>
 
-      <para><computeroutput>java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</computeroutput></para>
+      <programlisting>java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</programlisting>
 
       <para>ZooKeeper logs messages using log4j -- more detail available in
       the <ulink url="zookeeperProgrammers.html#Logging">Logging</ulink>
@@ -163,7 +164,7 @@ clientPort=2181
         <listitem>
           <para><emphasis role="bold">C</emphasis>: compile cli_mt
           (multi-threaded) or cli_st (single-threaded) by running
-          <command>_make cli_mt_</command> or <command>_make cli_st_</command>
+          <command>make cli_mt</command> or <command>make cli_st</command>
           in the c subdirectory in the ZooKeeper sources.</para>
 
           <para>You can run the program using <emphasis>LD_LIBRARY_PATH=.
@@ -197,13 +198,16 @@ clientPort=2181
       file. The file is similar to the one used in standalone mode, but with a
       few differences. Here is an example:</para>
 
-      <para><computeroutput>tickTime=2000 
+<programlisting>
+tickTime=2000 
 dataDir=/var/zookeeper/ 
 clientPort=2181 
 initLimit=5 
 syncLimit=2 
-server.1=zoo1:2888 server.2=zoo2:2888 
-server.3=zoo3:2888 </computeroutput></para>
+server.1=zoo1:2888
+server.2=zoo2:2888 
+server.3=zoo3:2888 
+</programlisting>
 
       <para>The new entry, <emphasis role="bold">initLimit</emphasis> is
       timeouts ZooKeeper uses to limit the length of time the Zookeeper

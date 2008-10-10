@@ -142,10 +142,20 @@ which will be used to configure the chosen Forrest skin.
       font-family: monospace;
     }
 
+    pre.code {
+      margin-left: 0em;
+      padding: 0.5em;
+      background-color: #f0f0f0;
+      font-family: monospace;
+    }
+
+<!-- patricks
     .code {
       font-family: "Courier New", Courier, monospace;
       font-size: 110%;
     }
+-->
+
   </extra-css>
 
   <colors>

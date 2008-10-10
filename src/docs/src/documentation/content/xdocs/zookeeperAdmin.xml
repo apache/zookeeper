@@ -116,7 +116,6 @@
           <para>Install the ZooKeeper Server Package. It can be downloaded
             from:
           </para>
-
           <para>
             <ulink url="http://hadoop.apache.org/zookeeper/releases.html">
               http://hadoop.apache.org/zookeeper/releases.html
@@ -312,7 +311,16 @@ server.3=zoo3:2888</computeroutput></para>
     <section id="sc_logging">
       <title>Logging</title>
 
-      <para></para>
+      <para>ZooKeeper uses <emphasis role="bold">log4j</emphasis> version 1.2 as 
+      its logging infrastructure. The  ZooKeeper default <filename>log4j.properties</filename> 
+      file resides in the <filename>conf</filename> directory. Log4j requires that 
+      <filename>log4j.properties</filename> either be in the working directory 
+      (the directory from which ZooKeeper is run) or be accessible from the classpath.</para>
+
+      <para>For more information, see 
+      <ulink url="http://logging.apache.org/log4j/1.2/manual.html#defaultInit">Log4j Default Initialization Procedure</ulink> 
+      of the log4j manual.</para>
+      
     </section>
 
     <section id="sc_troubleshooting">
