@@ -587,6 +587,19 @@ public class FastLeaderElection implements Election {
                 }
                 break;
             case LEADING:
+                /*
+                 * There is at most one leader for each epoch, so if a peer claims to
+                 * be the leader for an epoch, then that peer must be the leader (no
+                 * arbitrary failures assumed). Now, if there is no quorum supporting 
+                 * this leader, then processes will naturally move to a new epoch.
+                 */
+                if(n.epoch == logicalclock){
+                    self.setPeerState((n.leader == self.getId()) ? 
+                            ServerState.LEADING: ServerState.FOLLOWING);
+                   
+                    leaveInstance();
+                    return new Vote(n.leader, n.zxid);
+                }
             case FOLLOWING:
                 LOG.info("Notification: " + n.leader + ", " + n.zxid + ", " + n.epoch + ", " + self.getId() + ", " + self.getPeerState() + ", " + n.state + ", " + n.sid);
        
