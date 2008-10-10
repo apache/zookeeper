@@ -262,16 +262,21 @@ typedef void (*watcher_fn)(zhandle_t *zh, int type,
  * \brief create a handle to used communicate with zookeeper.
  * 
  * This method creates a new handle and a zookeeper session that corresponds
- * to that handle.
+ * to that handle. Session establishment is asynchronous, meaning that the
+ * session should not be considered established until (and unless) an
+ * event of state ZOO_CONNECTED_STATE is received.
  * \param host the host name to connect to. This may be a comma separated list
  *   of different hosts.
- * \param fn the global watcher callback function. When notifications are triggered
- *   this function will be invoked.
+ * \param fn the global watcher callback function. When notifications are
+ *   triggered this function will be invoked.
  * \param clientid the id of a previously established session that this
  *   client will be reconnecting to. Pass 0 if not reconnecting to a previous
- *   session. If the session timed out or the id is invalid, a new
- *   session will be automatically generated. Clients should check the actual
- *   session id by calling \ref zoo_client_id. 
+ *   session. Clients can access the session id of an established, valid,
+ *   connection by calling \ref zoo_client_id. If the session corresponding to
+ *   the specified clientid has expired, or if the clientid is invalid for 
+ *   any reason, the returned zhandle_t will be invalid -- the zhandle_t 
+ *   state will indicate the reason for failure (typically
+ *   ZOO_EXPIRED_SESSION_STATE).
  * \param context the handback object that will be associated with this instance 
  *   of zhandle_t. Application can access it (for example, in the watcher 
  *   callback) using \ref zoo_get_context. The object is not used by zookeeper 
@@ -308,7 +313,8 @@ ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
 ZOOAPI int zookeeper_close(zhandle_t *zh);
 
 /**
- * \brief return the client session id
+ * \brief return the client session id, only valid if the connections
+ * is currently connected (ie. last watcher state is ZOO_CONNECTED_STATE)
  */
 ZOOAPI const clientid_t *zoo_client_id(zhandle_t *zh);
 

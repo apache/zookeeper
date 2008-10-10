@@ -20,6 +20,8 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-17. zookeeper_init doc needs clarification (phunt)
+
   ZOOKEEPER-181. Some Source Forge Documents did not get moved over: 
   javaExample, zookeeperTutorial, zookeeperInternals (robbie via phunt)
 
