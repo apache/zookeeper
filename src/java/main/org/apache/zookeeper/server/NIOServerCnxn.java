@@ -109,6 +109,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             }
         }
 
+        public ZooKeeperServer getZooKeeperServer() {
+            return this.zks;
+        }
+ 
         public InetSocketAddress getLocalAddress(){
             return (InetSocketAddress)ss.socket().getLocalSocketAddress();
         }

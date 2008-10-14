@@ -63,7 +63,7 @@ public class FileSnap implements SnapShot {
         }
         InputStream snapIS = new BufferedInputStream(new FileInputStream(snap));
         InputArchive ia=BinaryInputArchive.getArchive(snapIS);
-        deserialize(dt,sessions,ia);
+        deserialize(dt,sessions, ia);
         snapIS.close();
         dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), "snapshot");
         return dt.lastProcessedZxid;

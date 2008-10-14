@@ -136,3 +136,4 @@ Backward compatibile changes:
 
  ZOOKEEPER-172. FLE Test (Flavio Junqueira via breed)
 
+ ZOOKEEPER-33. Better ACL management (Mahadev Konar)

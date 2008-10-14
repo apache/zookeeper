@@ -43,7 +43,7 @@ public class DataNode implements Record {
         // default rather than public constructor
     }
 
-    DataNode(DataNode parent, byte data[], List<ACL> acl, StatPersisted stat) {
+    DataNode(DataNode parent, byte data[], Long acl, StatPersisted stat) {
         this.parent = parent;
         this.data = data;
         this.acl = acl;
@@ -55,7 +55,7 @@ public class DataNode implements Record {
 
     byte data[];
 
-    List<ACL> acl;
+    Long acl;
 
     public StatPersisted stat;
 
@@ -78,17 +78,7 @@ public class DataNode implements Record {
             throws IOException {
         archive.startRecord("node");
         data = archive.readBuffer("data");
-        Index i = archive.startVector("acl");
-        if (i != null) {
-            acl = new ArrayList<ACL>();
-            while (!i.done()) {
-                ACL a = new ACL();
-                a.deserialize(archive, "aclEntry");
-                acl.add(a);
-                i.incr();
-            }
-        }
-        archive.endVector("acl");
+        acl = archive.readLong("acl");
         stat = new StatPersisted();
         stat.deserialize(archive, "statpersisted");
         archive.endRecord("node");
@@ -98,14 +88,12 @@ public class DataNode implements Record {
             throws IOException {
         archive.startRecord(this, "node");
         archive.writeBuffer(data, "data");
-        archive.startVector(acl, "acl");
-        if (acl != null) {
-            for (ACL a : acl) {
-                a.serialize(archive, "aclEntry");
-            }
-        }
-        archive.endVector(acl, "acl");
+        archive.writeLong(acl, "acl");
         stat.serialize(archive, "statpersisted");
         archive.endRecord(this, "node");
+    }
+    
+    public int compareTo(Object o) {
+        return -1;
     }
 }

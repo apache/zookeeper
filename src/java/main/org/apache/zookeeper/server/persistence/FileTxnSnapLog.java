@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooTrace;
@@ -165,7 +166,8 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public void save(DataTree dataTree,
-            ConcurrentHashMap<Long, Integer> sessionsWithTimeouts) throws IOException {
+            ConcurrentHashMap<Long, Integer> sessionsWithTimeouts)
+        throws IOException {
         long lastZxid = dataTree.lastProcessedZxid;
         LOG.info("Snapshotting: " + Long.toHexString(lastZxid));
         File snapshot=new File(

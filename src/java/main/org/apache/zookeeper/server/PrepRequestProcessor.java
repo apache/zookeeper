@@ -119,7 +119,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 DataNode n = zks.dataTree.getNode(path);
                 if (n != null) {
                     lastChange = new ChangeRecord(-1, path, n.stat, n.children
-                            .size(), n.acl);
+                            .size(), zks.dataTree.convertLong(n.acl));
                 }
             }
         }
