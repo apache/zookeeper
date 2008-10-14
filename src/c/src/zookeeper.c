@@ -415,6 +415,10 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
     } else {
        zh->watcher = null_watcher_fn;
     }
+    if (host == 0 || *host == 0) { // what we shouldn't dup
+        errno=EINVAL;
+        goto abort;
+    }
     zh->hostname = strdup(host);
     if (zh->hostname == 0) {
         goto abort;
