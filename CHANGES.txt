@@ -35,6 +35,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-189. forrest build not validated xml of input documents
+  (robbie via phunt)
+
   ZOOKEEPER-188. Check that election port is present for all servers
   (Flavio Paiva Junqueira via phunt)
 
