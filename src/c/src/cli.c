@@ -215,7 +215,7 @@ void od_completion(int rc, const struct Stat *stat, const void *data) {
     for (i=0; i<to_send; i++) {
         char buf[4096*16];
         memset(buf, -1, sizeof(buf)-1);
-        buf[sizeof(buf)]=0;
+        buf[sizeof(buf)-1]=0;
         sendRequest(buf);
     }
 }
