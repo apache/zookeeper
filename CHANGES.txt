@@ -20,6 +20,12 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-183. Array subscript is above array bounds in od_completion(),
+  src/cli.c. (Maxim P. Dementiev via phunt)
+
+  ZOOKEEPER-182.  zookeeper_init accepts empty host-port string and returns
+  valid pointer to zhandle_t. (Maxim P. Dementiev via phunt)
+
   ZOOKEEPER-17. zookeeper_init doc needs clarification (phunt)
 
   ZOOKEEPER-181. Some Source Forge Documents did not get moved over: 
