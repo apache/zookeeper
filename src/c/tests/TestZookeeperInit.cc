@@ -39,6 +39,10 @@ class Zookeeper_init : public CPPUNIT_NS::TestFixture
 	CPPUNIT_TEST(testBasic);
     CPPUNIT_TEST(testAddressResolution);
     CPPUNIT_TEST(testMultipleAddressResolution);
+    CPPUNIT_TEST(testNullAddressString);
+    CPPUNIT_TEST(testEmptyAddressString);
+    CPPUNIT_TEST(testOneSpaceAddressString);
+    CPPUNIT_TEST(testTwoSpacesAddressString);
     CPPUNIT_TEST(testInvalidAddressString1);
     CPPUNIT_TEST(testInvalidAddressString2);
     CPPUNIT_TEST(testNonexistentHost);
@@ -160,6 +164,33 @@ public:
             else
                 CPPUNIT_ASSERT_EQUAL(3434,(int)ntohs(addr->sin_port));
         }
+    }
+    void testNullAddressString()
+    {
+        zh=zookeeper_init(NULL,0,0,0,0,0);
+        CPPUNIT_ASSERT(zh==0);
+        CPPUNIT_ASSERT_EQUAL(EINVAL,errno);
+    }
+    void testEmptyAddressString()
+    {
+        const string INVALID_HOST("");
+        zh=zookeeper_init(INVALID_HOST.c_str(),0,0,0,0,0);
+        CPPUNIT_ASSERT(zh==0);
+        CPPUNIT_ASSERT_EQUAL(EINVAL,errno);
+    }
+    void testOneSpaceAddressString()
+    {
+        const string INVALID_HOST(" ");
+        zh=zookeeper_init(INVALID_HOST.c_str(),0,0,0,0,0);
+        CPPUNIT_ASSERT(zh==0);
+        CPPUNIT_ASSERT_EQUAL(EINVAL,errno);
+    }
+    void testTwoSpacesAddressString()
+    {
+        const string INVALID_HOST("  ");
+        zh=zookeeper_init(INVALID_HOST.c_str(),0,0,0,0,0);
+        CPPUNIT_ASSERT(zh==0);
+        CPPUNIT_ASSERT_EQUAL(EINVAL,errno);
     }
     void testInvalidAddressString1()
     {
