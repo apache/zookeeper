@@ -47,7 +47,8 @@ public interface SnapShot {
      * @param sessions 
      * @throws IOException
      */
-    void serialize(DataTree dt, Map<Long, Integer> sessions, File name) 
+    void serialize(DataTree dt, Map<Long, Integer> sessions, 
+            File name) 
         throws IOException;
     
     /**

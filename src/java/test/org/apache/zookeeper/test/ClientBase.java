@@ -51,7 +51,6 @@ public abstract class ClientBase extends TestCase {
     protected String hostPort = "127.0.0.1:33221";
     protected NIOServerCnxn.Factory serverFactory = null;
     protected File tmpDir = null;
-
     public ClientBase() {
         super();
     }
