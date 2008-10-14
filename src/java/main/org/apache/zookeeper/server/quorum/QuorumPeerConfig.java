@@ -152,6 +152,16 @@ public class QuorumPeerConfig extends ServerConfig {
             conf.electionAlg = electionAlg;
             conf.servers = servers;
             if (servers.size() > 1) {
+                /*
+                 * If using FLE, then every server requires a separate election port.
+                 */
+                if(electionAlg != 0){
+                   for(QuorumServer s : servers.values()){
+                       if(s.electionAddr == null)
+                           LOG.error("Missing election port for server: " + s.id);
+                   }
+                }
+                
                 File myIdFile = new File(dataDir, "myid");
                 if (!myIdFile.exists()) {
                     LOG.error(myIdFile.toString() + " file is missing");

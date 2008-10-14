@@ -91,6 +91,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         public QuorumServer(long id, InetSocketAddress addr) {
             this.id = id;
             this.addr = addr;
+            this.electionAddr = null;
         }
         
         public InetSocketAddress addr;
