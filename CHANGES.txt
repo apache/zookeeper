@@ -35,6 +35,11 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-188. Check that election port is present for all servers
+  (Flavio Paiva Junqueira via phunt)
+
+  ZOOKEEPER-185. Improved version of FLETest (Flavio Paiva Junqueira)
+
   ZOOKEEPER-184. tests: An explicit include derective is needed for the usage
   of memcpy(), memset(), strlen(), strdup() and free() functions
   (Maxim P. Dementiev via phunt)
@@ -56,6 +61,8 @@ Backward compatibile changes:
   ZOOKEEPER-179. Programmer's Guide "Basic Operations" section is missing 
   content (robbie via phunt)
 
+  ZOOKEEPER-178. FLE test. (Flavio Paiva Junqueira)
+
   ZOOKEEPER-159. Cover two corner cases of leader election
   (Flavio Paiva Junqueira via phunt)
 
@@ -65,13 +72,23 @@ Backward compatibile changes:
   ZOOKEEPER-154. reliability graph diagram in overview doc needs context
   (phunt)
 
+  ZOOKEEPER-157. Peer can't find existing leader (Flavio Paiva Junqueira)
+
   ZOOKEEPER-155. improve "the zookeeper project" section of overview doc
   (phunt)
+
+  ZOOKEEPER-140. Deadlock in QuorumCnxManager (Flavio Paiva Junqueira)
 
   ZOOKEEPER-147. This is version of the documents with most of the [tbd...]
   scrubbed out (robbie via phunt)
 
   ZOOKEEPER-150. zookeeper build broken (mahadev via phunt)
+
+  ZOOKEEPER-136. sync causes hang in all followers of quorum. (breed)
+
+  ZOOKEEPER-134. findbugs cleanup (phunt)
+
+  ZOOKEEPER-133. hudson tests failing intermittently (phunt)
 
   ZOOKEEPER-144. add tostring support for watcher event, and enums for event
   type/state (Jakob Homan via phunt)
@@ -96,11 +113,23 @@ Backward compatibile changes:
   ZOOKEEPER-118. findbugs flagged switch statement in 
   followerrequestprocessor.run() (Flavio Paiva Junqueira via phunt)
 
+  ZOOKEEPER-115. Potential NPE in QuorumCnxManager
+  (Flavio Paiva Junqueira)
+
+  ZOOKEEPER-114. cleanup ugly event messages in zookeeper client 
+  (Jakob Homan)
+
+  ZOOKEEPER-112. src/java/main ZooKeeper.java has test code embedded into it.
+  (phunt)
+
   ZOOKEEPER-39. Use Watcher objects rather than boolean on read operations.
   (Andrew Kornev)
 
   ZOOKEEPER-97. supports optional output directory in code generator. (Hiram
   Chirino via phunt)
+
+  ZOOKEEPER-101. Integrate ZooKeeper with "violations" feature on hudson
+  (phunt)
  
   ZOOKEEPER-105. Catch Zookeeper exceptions and print on the stderr. 
   (Anthony Urso via Mahadev)
@@ -120,7 +149,22 @@ Backward compatibile changes:
   ZOOKEEPER-25. Fuse module for Zookeeper. (Swee Lim, Bart, Patrick Hunt and
   Andrew Kornev via Mahadev)
 
+  ZOOKEEPER-58. Race condition on ClientCnxn.java (breed)
+
   ZOOKEEPER-56. Add clover support to build.xml. (Patrick Hunt via mahadev)
+
+  ZOOKEEPER-75. register the ZooKeeper mailing lists with nabble.com (phunt)
+  
+  ZOOKEEPER-54. remove sleeps in the tests. (phunt)
+
+  ZOOKEEPER-55. build.xml failes to retrieve a release number from SVN and 
+  the ant target "dist" fails (Andrew Kornev)
+
+  ZOOKEEPER-89. invoke WhenOwnerListener.whenNotOwner() when the ZK 
+  connection fails (james strachan)
+
+  ZOOKEEPER-90. invoke WhenOwnerListener.whenNotOwner() when the ZK
+  session expires and the znode is the leader (james strachan)
 
   ZOOKEEPER-82. Make the ZooKeeperServer more DI friendly. (Hiram Chirino via
   mahadev)
@@ -143,7 +187,32 @@ Backward compatibile changes:
  ZOOKEEPER-125. Remove unwanted class declaration in FastLeaderElection. 
  (Flavio Paiva Junqueira via mahadev)
 
+ ZOOKEEPER-61. Address (remove) use of sleep(#) in client/server test cases.
+ (phunt)
+
+ ZOOKEEPER-75. cleanup the library directory (phunt)
+
+ ZOOKEEPER-109. cleanup of NPE and Resource issue nits found by static
+ analysis (phunt)
+
+ ZOOKEEPER-76. Commit 677109 removed the cobertura library, but not the 
+ build targets. (phunt)
+
  ZOOKEEPER-63. Race condition in client close() operation. (phunt via breed)
+
+ ZOOKEEPER-70. Add skeleton forrest doc structure for ZooKeeper (phunt)
+
+ ZOOKEEPER-79. Document jacob's leader election on the wiki recipes page 
+ (Flavio Junqueira)
+
+ ZOOKEEPER-73. Move ZK wiki from SourceForge to Apache (phunt)
+
+ ZOOKEEPER-72. Initial creation/setup of ZooKeeper ASF site. (phunt)
+
+ ZOOKEEPER-71. Determine what to do re ZooKeeper Changelog(s) (mahadev)
+
+ ZOOKEEPER-68. parseACLs in ZooKeeper.java fails to parse elements of ACL,
+ should be lastIndexOf rather than IndexOf (mahadev)
 
  ZOOKEEPER-130. update build.xml to support apache release process. 
  (phunt via mahadev)
@@ -153,12 +222,32 @@ Backward compatibile changes:
 
  ZOOKEEPER-137. client watcher objects can lose events (Patrick Hunt via breed)
 
- ZOOKEEPER-117. threading issues in Leader election (Flavio Junqueira and Patrick
- Hunt via breed)
+ ZOOKEEPER-117. threading issues in Leader election (Flavio Junqueira and
+ Patrick Hunt via breed)
+
+ ZOOKEEPER-128. test coverage on async client operations needs to be improved
+ (phunt)
 
  ZOOKEEPER-127.  Use of non-standard election ports in config breaks services
  (Mark Harwood and Flavio Junqueira via breed)
 
+ ZOOKEEPER-53. tests failing on solaris. (phunt)
+
  ZOOKEEPER-172. FLE Test (Flavio Junqueira via breed)
 
+ ZOOKEEPER-41. Sample startup script (mahadev)
+
  ZOOKEEPER-33. Better ACL management (Mahadev Konar)
+
+ ZOOKEEPER-49. SetACL does not work (breed)
+
+ ZOOKEEPER-20. Child watches are not triggered when the node is deleted
+ (phunt)
+
+ ZOOKEEPER-15. handle failure better in build.xml:test (phunt)
+
+ ZOOKEEPER-11. ArrayList is used instead of List (phunt)
+
+ ZOOKEEPER-45. Restructure the SVN repository after initial import (phunt)
+
+ ZOOKEEPER-1. Initial ZooKeeper code contribution from Yahoo! (phunt)
