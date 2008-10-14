@@ -24,6 +24,7 @@
 #include <deque>
 
 #include <errno.h>
+#include <string.h>
 
 #include "MocksBase.h"
 #include "LibCSymTable.h"

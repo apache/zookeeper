@@ -19,6 +19,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "CppAssertHelper.h"
 
+#include <stdlib.h>
 
 #include "CollectionUtil.h"
 using namespace Util;

@@ -16,9 +16,28 @@ Non-backward compatible changes:
   ZOOKEEPER-8. Stat enchaned to include num of children and size
   (phunt)
 
+  ZOOKEEPER-6. List of problem identifiers in zookeeper.h
+  (phunt)
+
+  ZOOKEEPER-7. Use enums rather than ints for types and state
+  (Jakob Homan via mahadev)
+
+  ZOOKEEPER-27. Unique DB identifiers for servers and clients
+  (mahadev)
+
+  ZOOKEEPER-32. CRCs for ZooKeeper data
+  (mahadev)
+
+  ZOOKEEPER-33. Better ACL management
+  (mahadev)
+
 Backward compatibile changes:
 
   BUGFIXES: 
+
+  ZOOKEEPER-184. tests: An explicit include derective is needed for the usage
+  of memcpy(), memset(), strlen(), strdup() and free() functions
+  (Maxim P. Dementiev via phunt)
 
   ZOOKEEPER-183. Array subscript is above array bounds in od_completion(),
   src/cli.c. (Maxim P. Dementiev via phunt)
