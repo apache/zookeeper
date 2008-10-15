@@ -33,8 +33,9 @@ See http://forrest.apache.org/docs/linking.html for more info.
 
   <docs label="Overview"> 
     <welcome   label="Welcome"                href="index.html" />
-    <overview  label="Overview"     href="zookeeperOver.html" />
+    <overview  label="Overview"               href="zookeeperOver.html" />
     <started   label="Getting Started"        href="zookeeperStarted.html" />
+    <relnotes  label="Release Notes"          href="ext:relnotes" />
   </docs>
   
   <docs label="Developer">
@@ -76,6 +77,7 @@ See http://forrest.apache.org/docs/linking.html for more info.
     <gzip      href="http://www.gzip.org/" />
     <cygwin    href="http://www.cygwin.com/" />
     <osx       href="http://www.apple.com/macosx" />
+    <relnotes  href="releasenotes.html" />
     <api href="api/">
       <started href="overview-summary.html#overview_description" />
       <index href="index.html" />
