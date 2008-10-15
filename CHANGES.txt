@@ -35,6 +35,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-190. Reorg links to docs and navs to docs into related sections
+  (robbie via phunt)
+
   ZOOKEEPER-189. forrest build not validated xml of input documents
   (robbie via phunt)
 
