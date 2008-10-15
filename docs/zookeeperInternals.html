@@ -102,38 +102,50 @@ document.write("Last Published: " + document.lastModified);
     |start Menu
     +-->
 <div id="menu">
-<div onclick="SwitchMenu('menu_selected_1.1', 'skin/')" id="menu_selected_1.1Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Documentation</div>
-<div id="menu_selected_1.1" class="selectedmenuitemgroup" style="display: block;">
+<div onclick="SwitchMenu('menu_1.1', 'skin/')" id="menu_1.1Title" class="menutitle">Overview</div>
+<div id="menu_1.1" class="menuitemgroup">
 <div class="menuitem">
 <a href="index.html">Welcome</a>
 </div>
 <div class="menuitem">
-<a href="zookeeperOver.html">Zookeeper Overview</a>
+<a href="zookeeperOver.html">Overview</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperStarted.html">Getting Started</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.2', 'skin/')" id="menu_1.2Title" class="menutitle">Developer</div>
+<div id="menu_1.2" class="menuitemgroup">
+<div class="menuitem">
+<a href="api/index.html">API Docs</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperProgrammers.html">Programmer's Guide</a>
 </div>
 <div class="menuitem">
-<a href="recipes.html">Recipes</a>
-</div>
-<div class="menuitem">
-<a href="zookeeperAdmin.html">Administrator's Guide</a>
-</div>
-<div class="menuitem">
 <a href="javaExample.html">Java Example</a>
 </div>
 <div class="menuitem">
-<a href="zookeeperTutorial.html">Barrie and Queue Tutorial</a>
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
 </div>
+<div class="menuitem">
+<a href="recipes.html">Recipes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.3" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperAdmin.html">Administrator's Guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_selected_1.4', 'skin/')" id="menu_selected_1.4Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Contributor</div>
+<div id="menu_selected_1.4" class="selectedmenuitemgroup" style="display: block;">
 <div class="menupage">
 <div class="menupagetitle">ZooKeeper Internals</div>
 </div>
-<div class="menuitem">
-<a href="api/index.html">API Docs</a>
 </div>
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Informal Documentation</div>
+<div id="menu_1.5" class="menuitemgroup">
 <div class="menuitem">
 <a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </div>
