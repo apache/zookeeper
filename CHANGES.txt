@@ -35,6 +35,8 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-187. CreateMode api docs missing (phunt)
+
   ZOOKEEPER-186. add new "releasenotes.xml" to forrest documentation
   (phunt)
 

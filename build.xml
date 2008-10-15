@@ -320,6 +320,7 @@
     	<fileset dir="${java.src.dir}">
           <include name="org/apache/**/*Main.java"/>
           <include name="org/apache/zookeeper/AsyncCallback.java"/>
+          <include name="org/apache/zookeeper/CreateMode.java"/>
           <include name="org/apache/zookeeper/KeeperException.java"/>
           <include name="org/apache/zookeeper/ServerAdminClient.java"/>
           <include name="org/apache/zookeeper/Watcher.java"/>
