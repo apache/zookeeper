@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper</title>
+<title>ZooKeeper 3.0.0 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -102,8 +102,8 @@ document.write("Last Published: " + document.lastModified);
     |start Menu
     +-->
 <div id="menu">
-<div onclick="SwitchMenu('menu_1.1', 'skin/')" id="menu_1.1Title" class="menutitle">Overview</div>
-<div id="menu_1.1" class="menuitemgroup">
+<div onclick="SwitchMenu('menu_selected_1.1', 'skin/')" id="menu_selected_1.1Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Overview</div>
+<div id="menu_selected_1.1" class="selectedmenuitemgroup" style="display: block;">
 <div class="menuitem">
 <a href="index.html">Welcome</a>
 </div>
@@ -113,8 +113,8 @@ document.write("Last Published: " + document.lastModified);
 <div class="menuitem">
 <a href="zookeeperStarted.html">Getting Started</a>
 </div>
-<div class="menuitem">
-<a href="releasenotes.html">Release Notes</a>
+<div class="menupage">
+<div class="menupagetitle">Release Notes</div>
 </div>
 </div>
 <div onclick="SwitchMenu('menu_1.2', 'skin/')" id="menu_1.2Title" class="menutitle">Developer</div>
@@ -147,8 +147,8 @@ document.write("Last Published: " + document.lastModified);
 <a href="zookeeperInternals.html">ZooKeeper Internals</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_selected_1.5', 'skin/')" id="menu_selected_1.5Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Informal Documentation</div>
-<div id="menu_selected_1.5" class="selectedmenuitemgroup" style="display: block;">
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Informal Documentation</div>
+<div id="menu_1.5" class="menuitemgroup">
 <div class="menuitem">
 <a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </div>
@@ -158,8 +158,8 @@ document.write("Last Published: " + document.lastModified);
 <div class="menuitem">
 <a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">Mailing Lists</a>
 </div>
-<div class="menupage">
-<div class="menupagetitle">Other Info</div>
+<div class="menuitem">
+<a href="zookeeperOtherInfo.html">Other Info</a>
 </div>
 </div>
 <div id="credit"></div>
@@ -178,14 +178,33 @@ document.write("Last Published: " + document.lastModified);
     +-->
 <div id="content">
 <div title="Portable Document Format" class="pdflink">
-<a class="dida" href="zookeeperOtherInfo.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+<a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper</h1>
+<h1>ZooKeeper 3.0.0 Release Notes</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#ch_placeholder">Other Info</a>
+<a href="#migration">Migration Instructions when Upgrading to 3.0.0</a>
+<ul class="minitoc">
+<li>
+<a href="#migration_code">Migrating Client Code</a>
+<ul class="minitoc">
+<li>
+<a href="#Java+API">Java API</a>
+</li>
+<li>
+<a href="#C+API">C API</a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#migration_data">Migrating Server Data</a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#changes">Changes Since ZooKeeper 2.2.1</a>
 </li>
 </ul>
 </div>
@@ -193,11 +212,171 @@ document.write("Last Published: " + document.lastModified);
 
   
 
+
+<p>
+These release notes include new developer and user facing incompatibilities, features, and major improvements.
+</p>
+
+
+<ul>
   
-<a name="N10009"></a><a name="ch_placeholder"></a>
-<h2 class="h3">Other Info</h2>
+<li>
+<p>
+<a href="#migration">Migration Instructions</a>
+</p>
+</li>
+  
+<li>
+<p>
+<a href="#changes">Changes</a>
+</p>
+</li>
+
+</ul>
+
+
+<a name="N1001B"></a><a name="migration"></a>
+<h2 class="h3">Migration Instructions when Upgrading to 3.0.0</h2>
 <div class="section">
-<p> currently empty </p>
+<p>
+
+<em>You should only have to read this section if you are upgrading from a previous version of ZooKeeper to version 3.0.0, otw skip down to <a href="#changes">changes</a></em>
+
+</p>
+<p>
+A small number of changes in this release have resulted in non-backward compatible Zookeeper client user code and server instance data. The following instructions provide details on how to migrate code and date from version 2.2.1 to version 3.0.0.
+</p>
+<p>
+Note: ZooKeeper increments the major version number (major.minor.fix) when backward incompatible changes are made to the source base. As part of the migration from SourceForge we changed the package structure (com.yahoo.zookeeper.* to org.apache.zookeeper.*) and felt it was a good time to incorporate some changes that we had been withholding. As a result the following will be required when migrating from 2.2.1 to 3.0.0 version of ZooKeeper.
+</p>
+<ul>
+  
+<li>
+<p>
+<a href="#migration_code">Migrating Client Code</a>
+</p>
+</li>
+  
+<li>
+<p>
+<a href="#migration_data">Migrating Server Data</a>
+</p>
+</li>
+
+</ul>
+<a name="N1003F"></a><a name="migration_code"></a>
+<h3 class="h4">Migrating Client Code</h3>
+<a name="N10045"></a><a name="Java+API"></a>
+<h4>Java API</h4>
+<ol>
+  
+<li>
+<p>The java package structure has changed from <strong>com.yahoo.zookeeper*</strong> to <strong>org.apache.zookeeper*</strong>. This will probably effect all of your java code which makes use of ZooKeeper APIs (typically import statements)</p>
+</li>
+  
+<li>
+<p>A number of constants used in the client ZooKeeper API were re-specified using enums (rather than ints). See <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-7">ZOOKEEPER-7</a>, <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-132">ZOOKEEPER-132</a> and <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-139">ZOOKEEPER-139</a> for full details</p>
+</li>
+  
+<li>
+<p>
+<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-18">ZOOKEEPER-18</a> removed KeeperStateChanged, use KeeperStateDisconnected instead</p>
+</li>
+
+</ol>
+<p>
+Also see <a href="http://hadoop.apache.org/zookeeper/docs/current/api/index.html">the current java API</a>
+
+</p>
+<a name="N10077"></a><a name="C+API"></a>
+<h4>C API</h4>
+<ol>
+  
+<li>
+<p>A number of constants used in the client ZooKeeper API were renamed in order to reduce namespace collision, see <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-6">ZOOKEEPER-6</a> for full details</p>
+</li>
+
+</ol>
+<a name="N1008A"></a><a name="migration_data"></a>
+<h3 class="h4">Migrating Server Data</h3>
+<p>
+The following issues resulted in changes to the on-disk data format (the snapshot and transaction log files contained within the ZK data directory) and require a migration utility to be run. 
+</p>
+<ul>
+  
+<li>
+<p>
+<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-27">ZOOKEEPER-27 Unique DB identifiers for servers and clients</a>
+</p>
+</li>
+  
+<li>
+<p>
+<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-32">ZOOKEEPER-32 CRCs for ZooKeeper data</a>
+</p>
+</li>
+  
+<li>
+<p>
+<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-33">ZOOKEEPER-33 Better ACL management</a>
+</p>
+</li>
+  
+<li>
+<p>
+<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-38">ZOOKEEPER-38 headers (version+) in log/snap files</a>
+</p>
+</li>
+
+</ul>
+<p>
+The following must be run once, and only once, when upgrading the ZooKeeper server instances to version 3.0.0.
+</p>
+<ol>
+  
+<li>
+<p>TBD</p>
+</li>
+
+</ol>
+</div>
+
+
+<a name="N100BA"></a><a name="changes"></a>
+<h2 class="h3">Changes Since ZooKeeper 2.2.1</h2>
+<div class="section">
+<p>
+Version 2.2.1 code, documentation, binaries, etc... are still accessible on <a href="http://sourceforge.net/projects/zookeeper">SourceForge</a>
+
+</p>
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 2.2.1</caption>
+
+<title>Changes Since ZooKeeper 2.2.1</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1">
+      ZOOKEEPER-1</a>
+  </td>
+  <td>
+    notes, placeholder - TBD during release process
+  </td>
+
+</tr>
+
+
+</table>
 </div>
 
 <p align="right">

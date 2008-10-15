@@ -40,6 +40,7 @@ The following documents describe concepts and procedures to get you started usin
       <li><strong>ZooKeeper Overview</strong><p>Technical Overview Documents for Client Developers, Adminstrators, and Contributors</p>
       <ul><li><a href="zookeeperOver.html">Overview</a> - a bird's eye view of ZooKeeper, including design concepts and architecture</li>
       <li><a href="zookeeperStarted.html">Getting Started</a> - a tutorial-style guide for developers to install, run, and program to ZooKeeper</li>
+      <li><a href="ext:relnotes">Release Notes</a> - new developer and user facing features, improvements, and incompatibilities</li>
       </ul>
       </li>
       

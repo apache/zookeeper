@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="ar_ReleaseNotes">
+  <title>ZooKeeper 3.0.0 Release Notes</title>
+
+  <articleinfo>
+    <legalnotice>
+      <para>Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License. You may
+      obtain a copy of the License at <ulink
+      url="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</ulink>.</para>
+
+      <para>Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied. See the License for the specific language governing permissions
+      and limitations under the License.</para>
+    </legalnotice>
+  </articleinfo>
+
+<para>
+These release notes include new developer and user facing incompatibilities, features, and major improvements.
+</para>
+
+<itemizedlist>
+  <listitem><para><ulink url="#migration">Migration Instructions</ulink></para></listitem>
+  <listitem><para><ulink url="#changes">Changes</ulink></para></listitem>
+</itemizedlist>
+
+<section id="migration">
+<title>Migration Instructions when Upgrading to 3.0.0</title>
+
+<para>
+<emphasis>You should only have to read this section if you are upgrading from a previous version of ZooKeeper to version 3.0.0, otw skip down to <ulink url="#changes">changes</ulink></emphasis>
+</para>
+
+<para>
+A small number of changes in this release have resulted in non-backward compatible Zookeeper client user code and server instance data. The following instructions provide details on how to migrate code and date from version 2.2.1 to version 3.0.0.
+</para>
+
+<para>
+Note: ZooKeeper increments the major version number (major.minor.fix) when backward incompatible changes are made to the source base. As part of the migration from SourceForge we changed the package structure (com.yahoo.zookeeper.* to org.apache.zookeeper.*) and felt it was a good time to incorporate some changes that we had been withholding. As a result the following will be required when migrating from 2.2.1 to 3.0.0 version of ZooKeeper.
+</para>
+
+<itemizedlist>
+  <listitem><para><ulink url="#migration_code">Migrating Client Code</ulink></para></listitem>
+  <listitem><para><ulink url="#migration_data">Migrating Server Data</ulink></para></listitem>
+</itemizedlist>
+
+<section id="migration_code">
+<title>Migrating Client Code</title>
+
+<section>
+<title>Java API</title>
+
+<orderedlist>
+  <listitem><para>The java package structure has changed from <emphasis role="bold">com.yahoo.zookeeper*</emphasis> to <emphasis role="bold">org.apache.zookeeper*</emphasis>. This will probably effect all of your java code which makes use of ZooKeeper APIs (typically import statements)</para></listitem>
+  <listitem><para>A number of constants used in the client ZooKeeper API were re-specified using enums (rather than ints). See <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-7">ZOOKEEPER-7</ulink>, <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-132">ZOOKEEPER-132</ulink> and <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-139">ZOOKEEPER-139</ulink> for full details</para></listitem>
+  <listitem><para><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-18">ZOOKEEPER-18</ulink> removed KeeperStateChanged, use KeeperStateDisconnected instead</para></listitem>
+</orderedlist>
+
+<para>
+Also see <ulink url="http://hadoop.apache.org/zookeeper/docs/current/api/index.html">the current java API</ulink>
+</para>
+</section>
+
+<section>
+<title>C API</title>
+
+<orderedlist>
+  <listitem><para>A number of constants used in the client ZooKeeper API were renamed in order to reduce namespace collision, see <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-6">ZOOKEEPER-6</ulink> for full details</para></listitem>
+</orderedlist>
+
+</section>
+</section>
+
+<section id="migration_data">
+<title>Migrating Server Data</title>
+
+<para>
+The following issues resulted in changes to the on-disk data format (the snapshot and transaction log files contained within the ZK data directory) and require a migration utility to be run. 
+</para>
+
+<itemizedlist>
+  <listitem><para><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-27">ZOOKEEPER-27 Unique DB identifiers for servers and clients</ulink></para></listitem>
+  <listitem><para><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-32">ZOOKEEPER-32 CRCs for ZooKeeper data</ulink></para></listitem>
+  <listitem><para><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-33">ZOOKEEPER-33 Better ACL management</ulink></para></listitem>
+  <listitem><para><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-38">ZOOKEEPER-38 headers (version+) in log/snap files</ulink></para></listitem>
+</itemizedlist>
+
+<para>
+The following must be run once, and only once, when upgrading the ZooKeeper server instances to version 3.0.0.
+</para>
+
+<orderedlist>
+  <listitem><para>TBD</para></listitem>
+</orderedlist>
+</section>
+
+</section>
+
+<section id="changes">
+<title>Changes Since ZooKeeper 2.2.1</title>
+
+<para>
+Version 2.2.1 code, documentation, binaries, etc... are still accessible on <ulink url="http://sourceforge.net/projects/zookeeper">SourceForge</ulink>
+</para>
+
+  <table>
+<title>Changes Since ZooKeeper 2.2.1</title>
+<tgroup cols='2'>
+<colspec colname='c1'/><colspec colname='c2'/>
+<thead>
+<row>
+  <entry>Issue</entry>
+  <entry>Notes</entry>
+</row>
+</thead>
+<tbody>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1">
+      ZOOKEEPER-1</ulink>
+  </entry>
+  <entry>
+    notes, placeholder - TBD during release process
+  </entry>
+</row>
+
+</tbody></tgroup></table>
+
+</section>
+</article>
+

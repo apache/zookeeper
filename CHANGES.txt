@@ -35,6 +35,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-186. add new "releasenotes.xml" to forrest documentation
+  (phunt)
+
   ZOOKEEPER-190. Reorg links to docs and navs to docs into related sections
   (robbie via phunt)
 
