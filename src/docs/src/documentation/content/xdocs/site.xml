@@ -31,22 +31,36 @@ See http://forrest.apache.org/docs/linking.html for more info.
 
 <site label="Hadoop" href="" xmlns="http://apache.org/forrest/linkmap/1.0">
 
-  <docs label="Documentation"> 
+  <docs label="Overview"> 
     <welcome   label="Welcome"                href="index.html" />
-    <overview  label="Zookeeper Overview"     href="zookeeperOver.html" />
+    <overview  label="Overview"     href="zookeeperOver.html" />
     <started   label="Getting Started"        href="zookeeperStarted.html" />
-    <program   label="Programmer's Guide"     href="zookeeperProgrammers.html" />
-    <recipes   label="Recipes"		      href="recipes.html" />
-    <admin     label="Administrator's Guide"  href="zookeeperAdmin.html" />
-    <javaEx    label="Java Example"     href="javaExample.html" />
-    <barTutor  label="Barrie and Queue Tutorial" href="zookeeperTutorial.html" />
-    <internals label="ZooKeeper Internals"	href="zookeeperInternals.html" />
+  </docs>
+  
+  <docs label="Developer">
     <api       label="API Docs"               href="ext:api/index" />
+    <program   label="Programmer's Guide"     href="zookeeperProgrammers.html" />
+    <javaEx    label="Java Example"     href="javaExample.html" />
+    <barTutor  label="Barrier and Queue Tutorial" href="zookeeperTutorial.html" />
+    <recipes   label="Recipes"		      href="recipes.html" />
+  </docs>
+  
+  <docs label="Admin &amp; Ops">
+      <admin     label="Administrator's Guide"  href="zookeeperAdmin.html" />
+  </docs>
+  
+  <docs label="Contributor">
+      <internals label="ZooKeeper Internals"	href="zookeeperInternals.html" />
+  </docs>
+  
+  <docs label="Informal Documentation">
     <wiki      label="Wiki"                   href="ext:wiki" />
     <faq       label="FAQ"                    href="ext:faq" />
     <lists     label="Mailing Lists"          href="ext:lists" />
     <other     label="Other Info"	      href="zookeeperOtherInfo.html" />
   </docs>
+  
+  
 
   <external-refs>
     <site      href="http://hadoop.apache.org/zookeeper/"/>

@@ -102,38 +102,50 @@ document.write("Last Published: " + document.lastModified);
     |start Menu
     +-->
 <div id="menu">
-<div onclick="SwitchMenu('menu_1.1', 'skin/')" id="menu_1.1Title" class="menutitle">Documentation</div>
+<div onclick="SwitchMenu('menu_1.1', 'skin/')" id="menu_1.1Title" class="menutitle">Overview</div>
 <div id="menu_1.1" class="menuitemgroup">
 <div class="menuitem">
 <a href="index.html">Welcome</a>
 </div>
 <div class="menuitem">
-<a href="zookeeperOver.html">Zookeeper Overview</a>
+<a href="zookeeperOver.html">Overview</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperStarted.html">Getting Started</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.2', 'skin/')" id="menu_1.2Title" class="menutitle">Developer</div>
+<div id="menu_1.2" class="menuitemgroup">
+<div class="menuitem">
+<a href="api/index.html">API Docs</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperProgrammers.html">Programmer's Guide</a>
 </div>
 <div class="menuitem">
-<a href="recipes.html">Recipes</a>
-</div>
-<div class="menuitem">
-<a href="zookeeperAdmin.html">Administrator's Guide</a>
-</div>
-<div class="menuitem">
 <a href="javaExample.html">Java Example</a>
 </div>
 <div class="menuitem">
-<a href="zookeeperTutorial.html">Barrie and Queue Tutorial</a>
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
 </div>
+<div class="menuitem">
+<a href="recipes.html">Recipes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.3" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperAdmin.html">Administrator's Guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Contributor</div>
+<div id="menu_1.4" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperInternals.html">ZooKeeper Internals</a>
 </div>
-<div class="menuitem">
-<a href="api/index.html">API Docs</a>
 </div>
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Informal Documentation</div>
+<div id="menu_1.5" class="menuitemgroup">
 <div class="menuitem">
 <a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </div>
@@ -179,7 +191,7 @@ document.write("Last Published: " + document.lastModified);
   
 <ul>
 <li>
-<a>Documentation</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>docs</em>
+<a>Overview</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>docs</em>
 </li>
 <ul> 
     
@@ -191,13 +203,29 @@ document.write("Last Published: " + document.lastModified);
     
 <ul>
 <li>
-<a href="zookeeperOver.html">Zookeeper Overview</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>overview</em>
+<a href="zookeeperOver.html">Overview</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>overview</em>
 </li>
 </ul>
     
 <ul>
 <li>
 <a href="zookeeperStarted.html">Getting Started</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>started</em>
+</li>
+</ul>
+  
+</ul>
+</ul>
+  
+  
+<ul>
+<li>
+<a>Developer</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>docs</em>
+</li>
+<ul>
+    
+<ul>
+<li>
+<a href="api/index.html">API Docs</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>api</em>
 </li>
 </ul>
     
@@ -209,39 +237,63 @@ document.write("Last Published: " + document.lastModified);
     
 <ul>
 <li>
-<a href="recipes.html">Recipes</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>recipes</em>
-</li>
-</ul>
-    
-<ul>
-<li>
-<a href="zookeeperAdmin.html">Administrator's Guide</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>admin</em>
-</li>
-</ul>
-    
-<ul>
-<li>
 <a href="javaExample.html">Java Example</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>javaEx</em>
 </li>
 </ul>
     
 <ul>
 <li>
-<a href="zookeeperTutorial.html">Barrie and Queue Tutorial</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>barTutor</em>
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>barTutor</em>
 </li>
 </ul>
     
+<ul>
+<li>
+<a href="recipes.html">Recipes</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>recipes</em>
+</li>
+</ul>
+  
+</ul>
+</ul>
+  
+  
+<ul>
+<li>
+<a>Admin &amp; Ops</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>docs</em>
+</li>
+<ul>
+      
+<ul>
+<li>
+<a href="zookeeperAdmin.html">Administrator's Guide</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>admin</em>
+</li>
+</ul>
+  
+</ul>
+</ul>
+  
+  
+<ul>
+<li>
+<a>Contributor</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>docs</em>
+</li>
+<ul>
+      
 <ul>
 <li>
 <a href="zookeeperInternals.html">ZooKeeper Internals</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>internals</em>
 </li>
 </ul>
-    
+  
+</ul>
+</ul>
+  
+  
 <ul>
 <li>
-<a href="api/index.html">API Docs</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>api</em>
+<a>Informal Documentation</a>&nbsp;&nbsp;___________________&nbsp;&nbsp;<em>docs</em>
 </li>
-</ul>
+<ul>
     
 <ul>
 <li>
@@ -269,6 +321,8 @@ document.write("Last Published: " + document.lastModified);
   
 </ul>
 </ul>
+  
+  
 
   
  

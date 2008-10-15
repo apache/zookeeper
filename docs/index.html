@@ -102,38 +102,50 @@ document.write("Last Published: " + document.lastModified);
     |start Menu
     +-->
 <div id="menu">
-<div onclick="SwitchMenu('menu_selected_1.1', 'skin/')" id="menu_selected_1.1Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Documentation</div>
+<div onclick="SwitchMenu('menu_selected_1.1', 'skin/')" id="menu_selected_1.1Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Overview</div>
 <div id="menu_selected_1.1" class="selectedmenuitemgroup" style="display: block;">
 <div class="menupage">
 <div class="menupagetitle">Welcome</div>
 </div>
 <div class="menuitem">
-<a href="zookeeperOver.html">Zookeeper Overview</a>
+<a href="zookeeperOver.html">Overview</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperStarted.html">Getting Started</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.2', 'skin/')" id="menu_1.2Title" class="menutitle">Developer</div>
+<div id="menu_1.2" class="menuitemgroup">
+<div class="menuitem">
+<a href="api/index.html">API Docs</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperProgrammers.html">Programmer's Guide</a>
 </div>
 <div class="menuitem">
-<a href="recipes.html">Recipes</a>
-</div>
-<div class="menuitem">
-<a href="zookeeperAdmin.html">Administrator's Guide</a>
-</div>
-<div class="menuitem">
 <a href="javaExample.html">Java Example</a>
 </div>
 <div class="menuitem">
-<a href="zookeeperTutorial.html">Barrie and Queue Tutorial</a>
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
 </div>
+<div class="menuitem">
+<a href="recipes.html">Recipes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.3" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperAdmin.html">Administrator's Guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Contributor</div>
+<div id="menu_1.4" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperInternals.html">ZooKeeper Internals</a>
 </div>
-<div class="menuitem">
-<a href="api/index.html">API Docs</a>
 </div>
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Informal Documentation</div>
+<div id="menu_1.5" class="menuitemgroup">
 <div class="menuitem">
 <a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </div>
@@ -172,49 +184,108 @@ document.write("Last Published: " + document.lastModified);
 <h1>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</h1>
     
 <p>
-ZooKeeper is a high-performance coordination service for distributed applications. It exposes common services - such as naming, configuration management, synchronization, and group services - in a simple interface so you don't have to write them from scratch. You can use it off-the-shelf to implement consensus, group management, leader election, and presence protocols. And you can build on it for your own, specific needs.
+ZooKeeper is a high-performance coordination service for distributed applications. 
+It exposes common services - such as naming, configuration management, synchronization, 
+and group services - in a simple interface so you don't have to write them from scratch. 
+You can use it off-the-shelf to implement consensus, group management, leader election, 
+and presence protocols. And you can build on it for your own, specific needs.
 </p>
 
 
 <p>
-The following documents provide concepts and procedures to get you started using ZooKeeper. If you have more questions, please ask the <a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">mailing list</a> or browse the archives.
-    </p>
+The following documents describe concepts and procedures to get you started using ZooKeeper. If you have more questions, please ask the <a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">mailing list</a> or browse the archives.
+</p>
     
 <ul>
 
       
+<li>
+<strong>ZooKeeper Overview</strong>
+<p>Technical Overview Documents for Client Developers, Adminstrators, and Contributors</p>
+      
+<ul>
 <li>
 <a href="zookeeperOver.html">Overview</a> - a bird's eye view of ZooKeeper, including design concepts and architecture</li>
       
 <li>
 <a href="zookeeperStarted.html">Getting Started</a> - a tutorial-style guide for developers to install, run, and program to ZooKeeper</li>
       
-<li>
-<a href="zookeeperProgrammers.html">Programmer's Guide</a> - an application developer's guide to ZooKeeper</li>
+</ul>
+      
+</li>
+      
       
 <li>
-<a href="recipes.html">ZooKeeper Recipes</a> - a set of common, higher level solutions using ZooKeeper</li>
+<strong>Developers</strong>
+<p> Documents for Developers using the ZooKeeper Client API</p>
+      
+<ul>
+            
+<li>
+<a href="api/index.html">API Docs</a> - the technical reference to ZooKeeper Client APIs</li>
+      
+<li>
+<a href="zookeeperProgrammers.html">Programmer's Guide</a> - a client application developer's guide to ZooKeeper</li>
+      
+<li>
+<a href="javaExample.html">ZooKeeper Java Example</a> - a simple Zookeeper client appplication, written in Java</li>
+      
+<li>
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a> - sample implementations of barriers and queues</li>  
+      
+<li>
+<a href="recipes.html">ZooKeeper Recipes</a> - higher level solutions to common problems in distributed applications</li>
+      
+</ul>
+      
+</li>
+      
+      
+<li>
+<strong>Administrators &amp; Operators</strong> 
+<p> Documents for Administrators and Operations Engineers of ZooKeeper Deployments</p>
+      
+<ul>
       
 <li>
 <a href="zookeeperAdmin.html">Administrator's Guide</a> - a guide for system administrators and anyone else who might deploy Zookeeer</li>
       
-<li>
-<a href="javaExample.html">ZooKeeper Java Example</a> - A simple Zookeeer Client, written in Java</li>
+</ul>
+      
+</li>
+      
       
 <li>
-<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a> - Simple Implementations of Barriers and Queues</li>
+<strong>Contributors</strong>
+<p> Documents for Developers Contributing to the ZooKeeper Open Source Project</p>
+      
+<ul>
       
 <li>
-<a href="zookeeperInternals.html">ZooKeeper Internals</a> - Assorted Topics on the Inner Workings of ZooKeeper</li>
+<a href="zookeeperInternals.html">ZooKeeper Internals</a> - assorted topics on the inner workings of ZooKeeper</li>
+      
+</ul>
+      
+</li>
+      
       
 <li>
-<a href="api/index.html">API Docs</a> - the technical reference to ZooKeeper APIs</li>
+<strong>Informal Documentation</strong>
+<p> Miscellaneous, Informal ZooKeeper Documentation</p>
+      
+<ul>
       
 <li>
-<a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a> - miscellaneous, informal ZooKeeper documentation, in Wiki format</li>
+<a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+</li>
       
 <li>
-<a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a> - frequently asked questions</li>    
+<a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a>
+</li>    
+      
+</ul>
+      
+</li>
 
     
 </ul>
