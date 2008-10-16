@@ -174,11 +174,11 @@
       <note>
         <para>In distributed application engineering, the word
         <emphasis>node</emphasis> can refer to a generic host machine, a
-        server, a member of quorums, a client process, etc. In the ZooKeeper
+        server, a member of an ensemble, a client process, etc. In the ZooKeeper
         documentatin, <emphasis>znodes</emphasis> refer to the data nodes.
         <emphasis>Servers</emphasis> to refer to machines that make up the
         ZooKeeper service; <emphasis>quorum peers</emphasis> refer to the
-        servers that make up a quorum; client refers to any host or process
+        servers that make up an ensemble; client refers to any host or process
         which uses a ZooKeeper service.</para>
       </note>
 
@@ -763,16 +763,16 @@ int main(int argc, char argv) {
               change. Consider the scenario of two clients, A and B. If client
               A sets the value of a znode /a from 0 to 1, then tells client B
               to read /a, client B may read the old value of 0, depending on
-              which server in the ZooKeeper quorum it is connected to. If it
+              which server it is connected to. If it
               is important that Client A and Client B read the same value,
               Client B should should call the <emphasis
               role="bold">sync()</emphasis> method from the ZooKeeper API
               method before it performs its read.</para>
 
-              <para>So, ZooKeeper by itself doesn't guarantee instantaneous,
-              atomic, synchronization across its quorum, but ZooKeeper
+              <para>So, ZooKeeper by itself doesn't guarantee that changes occur 
+              synchronously across all servers, but ZooKeeper
               primitives can be used to construct higher level functions that
-              provide complete client synchronization. (For more information,
+              provide useful client synchronization. (For more information,
               see the <ulink
               url="recipes.html">Zookeeper Recipes</ulink>.
               <emphasis>[tbd:..]</emphasis>).</para>

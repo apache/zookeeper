@@ -79,7 +79,7 @@
 
       <para><emphasis role="bold">ZooKeeper is replicated.</emphasis> Like the
       distributed processes it coordinates, ZooKeeper itself is intended to be
-      replicated over a sets of machines called quorums.</para>
+      replicated over a sets of hosts called an ensemble.</para>
 
       <figure>
         <title>ZooKeeper Service</title>

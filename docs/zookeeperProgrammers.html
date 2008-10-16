@@ -482,11 +482,11 @@ document.write("Last Published: " + document.lastModified);
         
 <p>In distributed application engineering, the word
         <em>node</em> can refer to a generic host machine, a
-        server, a member of quorums, a client process, etc. In the ZooKeeper
+        server, a member of an ensemble, a client process, etc. In the ZooKeeper
         documentatin, <em>znodes</em> refer to the data nodes.
         <em>Servers</em> to refer to machines that make up the
         ZooKeeper service; <em>quorum peers</em> refer to the
-        servers that make up a quorum; client refers to any host or process
+        servers that make up an ensemble; client refers to any host or process
         which uses a ZooKeeper service.</p>
       
 </div>
@@ -1272,14 +1272,14 @@ int main(int argc, char argv) {
               change. Consider the scenario of two clients, A and B. If client
               A sets the value of a znode /a from 0 to 1, then tells client B
               to read /a, client B may read the old value of 0, depending on
-              which server in the ZooKeeper quorum it is connected to. If it
+              which server it is connected to. If it
               is important that Client A and Client B read the same value,
               Client B should should call the <strong>sync()</strong> method from the ZooKeeper API
               method before it performs its read.</p>
-<p>So, ZooKeeper by itself doesn't guarantee instantaneous,
-              atomic, synchronization across its quorum, but ZooKeeper
+<p>So, ZooKeeper by itself doesn't guarantee that changes occur 
+              synchronously across all servers, but ZooKeeper
               primitives can be used to construct higher level functions that
-              provide complete client synchronization. (For more information,
+              provide useful client synchronization. (For more information,
               see the <a href="recipes.html">Zookeeper Recipes</a>.
               <em>[tbd:..]</em>).</p>
 </dd>
