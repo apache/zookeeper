@@ -35,6 +35,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-193. update java example doc to compile with latest zookeeper
+  (phunt)
+
   ZOOKEEPER-187. CreateMode api docs missing (phunt)
 
   ZOOKEEPER-186. add new "releasenotes.xml" to forrest documentation

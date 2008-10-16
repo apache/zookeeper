@@ -83,47 +83,44 @@
     <xref linkend="sc_design"/>.  </para>
     
     <programlisting>
-// from the Executor class...
+    // from the Executor class...
     
-public static void main(String[] args) {
-    if (args.length &lt; 4) {
-        System.err
-                .println("USAGE: Executor hostPort znode filename program [args ...]");
-        System.exit(2);
-    }
-    String hostPort = args[0];
-    String znode = args[1];
-    String filename = args[2];
-    String exec[] = new String[args.length - 3];
-    System.arraycopy(args, 3, exec, 0, exec.length);
-    try {
-        Executor theExectutor = new Executor(hostPort, znode, filename, exec);
-	theExectutor.run();
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-}
-    
-public Executor(String hostPort, String znode, String filename,
-    String exec[]) throws KeeperException, IOException {
-    this.filename = filename;
-    this.exec = exec;
-    
-    //create a new zookeeper object, passing a self-reference in a the Watcher
-    zk = new ZooKeeper(hostPort, 3000, this);
-    dm = new DataMonitor(zk, znode, null, this);
-}
-   
-public void run() {
-    try {
-        synchronized (this) {
-            while (!dm.dead) {
-                wait();
-            }
+    public static void main(String[] args) {
+        if (args.length &lt; 4) {
+            System.err
+                    .println("USAGE: Executor hostPort znode filename program [args ...]");
+            System.exit(2);
         }
-    } catch (InterruptedException e) {    
+        String hostPort = args[0];
+        String znode = args[1];
+        String filename = args[2];
+        String exec[] = new String[args.length - 3];
+        System.arraycopy(args, 3, exec, 0, exec.length);
+        try {
+            new Executor(hostPort, znode, filename, exec).run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-}
+
+    public Executor(String hostPort, String znode, String filename,
+            String exec[]) throws KeeperException, IOException {
+        this.filename = filename;
+        this.exec = exec;
+        zk = new ZooKeeper(hostPort, 3000, this);
+        dm = new DataMonitor(zk, znode, null, this);
+    }
+
+    public void run() {
+        try {
+            synchronized (this) {
+                while (!dm.dead) {
+                    wait();
+                }
+            }
+        } catch (InterruptedException e) {
+        }
+    }
 </programlisting>
 
 
@@ -136,7 +133,7 @@ public void run() {
     </para>
     
     <programlisting>
-public class Executor implements Watcher, Runnable, DataMonitorListener {
+public class Executor implements Watcher, Runnable, DataMonitor.DataMonitorListener {
 ...
     </programlisting>
     
@@ -148,9 +145,9 @@ public class Executor implements Watcher, Runnable, DataMonitorListener {
     events to other objects. It also uses this as the default channel on which to fire watch events. (More on this later.)</para>
     
 <programlisting>
-public void process(WatcherEvent event) {
-    dm.process(event);
-}
+    public void process(WatchedEvent event) {
+        dm.process(event);
+    }
 </programlisting>
     
     <para>The <emphasis role="bold">DataMonitorListener</emphasis> 
@@ -330,33 +327,33 @@ the connection comes back up.
 
 <para>Finally, notice how DataMonitor processes watch events: </para>
 <programlisting>
-public void process(WatcherEvent event) {
-    String path = event.getPath();
-    if (event.getType() == Watcher.Event.EventNone) {
-        // We are are being told that the state of the
-        // connection has changed
-        switch (event.getState()) {
-        case Event.KeeperStateSyncConnected:
-            // Everything is happy. Lets kick things off
-            // again by checking the existence of the znode
-            zk.exists(znode, true, this, null);
-            break;
-        case Event.KeeperStateExpired:
-            // It's all over
-            dead = true;
-            listener.closing(KeeperException.Code.SessionExpired);
-            break;
+    public void process(WatchedEvent event) {
+        String path = event.getPath();
+        if (event.getType() == Event.EventType.None) {
+            // We are are being told that the state of the
+            // connection has changed
+            switch (event.getState()) {
+            case SyncConnected:
+                // Everything is happy. Lets kick things off
+                // again by checking the existence of the znode
+                zk.exists(znode, true, this, null);
+                break;
+            case Expired:
+                // It's all over
+                dead = true;
+                listener.closing(KeeperException.Code.SessionExpired);
+                break;
+            }
+        } else {
+            if (path != null &amp;&amp; path.equals(znode)) {
+                // Something has changed on the node, let's find out
+                zk.exists(znode, true, this, null);
+            }
         }
-    } else {
-        if (path != null &amp;&amp; path.equals(znode)) {
-            // Something has changed on the node, let's find out
-            zk.exists(znode, true, this, null);
+        if (chainedWatcher != null) {
+            chainedWatcher.process(event);
         }
-   }
-   if (chainedWatcher != null) {
-        chainedWatcher.process(event);
-   }
-}
+    }
 </programlisting>
 <para>
 If the client-side ZooKeeper libraries can reestablish the communication channel to ZooKeeper, DataMonitor simply kicks
@@ -376,20 +373,19 @@ If it gets an event for a znode, it calls <command>ZooKeeper.exists()</command> 
  * with the specified arguments when the znode exists and kills
  * the program if the znode goes away.
  */
-package com.yahoo.zk.executor;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.yahoo.zk.executor.DataMonitor.DataMonitorListener;
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.ZooKeeper;
-import com.yahoo.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
 
-public class Executor implements Watcher, Runnable, DataMonitorListener {
+public class Executor
+    implements Watcher, Runnable, DataMonitor.DataMonitorListener
+{
     String znode;
 
     DataMonitor dm;
@@ -433,15 +429,13 @@ public class Executor implements Watcher, Runnable, DataMonitorListener {
 
     /***************************************************************************
      * We do process any events ourselves, we just need to forward them on.
-     * 
-     * @see com.yahoo.zookeeper.Watcher#process(com.yahoo.zookeeper.proto.WatcherEvent)
+     *
+     * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.proto.WatcherEvent)
      */
-    @Override
-    public void process(WatcherEvent event) {
+    public void process(WatchedEvent event) {
         dm.process(event);
     }
 
-    @Override
     public void run() {
         try {
             synchronized (this) {
@@ -453,7 +447,6 @@ public class Executor implements Watcher, Runnable, DataMonitorListener {
         }
     }
 
-    @Override
     public void closing(int rc) {
         synchronized (this) {
             notifyAll();
@@ -484,7 +477,6 @@ public class Executor implements Watcher, Runnable, DataMonitorListener {
         }
     }
 
-    @Override
     public void exists(byte[] data) {
         if (data == null) {
             if (child != null) {
@@ -535,17 +527,15 @@ public class Executor implements Watcher, Runnable, DataMonitorListener {
  * A simple class that monitors the data and existence of a ZooKeeper
  * node. It uses asynchronous ZooKeeper APIs.
  */
-package com.yahoo.zk.executor;
-
 import java.util.Arrays;
 
-import com.yahoo.zookeeper.KeeperException;
-import com.yahoo.zookeeper.Watcher;
-import com.yahoo.zookeeper.ZooKeeper;
-import com.yahoo.zookeeper.AsyncCallback.StatCallback;
-import com.yahoo.zookeeper.KeeperException.Code;
-import com.yahoo.zookeeper.data.Stat;
-import com.yahoo.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.AsyncCallback.StatCallback;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.data.Stat;
 
 public class DataMonitor implements Watcher, StatCallback {
 
@@ -583,30 +573,25 @@ public class DataMonitor implements Watcher, StatCallback {
 
         /**
          * The ZooKeeper session is no longer valid.
-         * 
+         *
          * @param rc
          *                the ZooKeeper reason code
          */
         void closing(int rc);
     }
 
-    @Override
-    /**
-     * This is a watch event callback. The node we were watching has changed or
-     * something happened to our connection to ZooKeeper.
-     */
-    public void process(WatcherEvent event) {
+    public void process(WatchedEvent event) {
         String path = event.getPath();
-        if (event.getType() == Watcher.Event.EventNone) {
+        if (event.getType() == Event.EventType.None) {
             // We are are being told that the state of the
             // connection has changed
             switch (event.getState()) {
-            case Event.KeeperStateSyncConnected:
+            case SyncConnected:
                 // Everything is happy. Lets kick things off
                 // again by checking the existence of the znode
                 zk.exists(znode, true, this, null);
                 break;
-            case Event.KeeperStateExpired:
+            case Expired:
                 // It's all over
                 dead = true;
                 listener.closing(KeeperException.Code.SessionExpired);
@@ -623,7 +608,6 @@ public class DataMonitor implements Watcher, StatCallback {
         }
     }
 
-    @Override
     public void processResult(int rc, String path, Object ctx, Stat stat) {
         boolean exists;
         switch (rc) {
