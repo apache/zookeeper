@@ -72,27 +72,28 @@
       <title>System Requirements</title>
 
       <para>ZooKeeper runs in Java, release 1.5 or greater (JDK 5 or greater).
-      It runs as group of hosts called a quorum. Three ZooKeeper hosts per
-      quorum is the minimum recommended quorum size. At Yahoo!, ZooKeeper is
-      usually deployed on dedicated RHEL boxes, with dual-core processors, 2GB
-      of RAM, and 80GB IDE hard drives.</para>
+      It runs as an <emphasis>ensemble</emphasis> of ZooKeeper servers. Three ZooKeeper
+      servers is the minimum recommended size for an ensemble, and we also recommend that
+      they run on separate machines. At Yahoo!, ZooKeeper is usually deployed on 
+      dedicated RHEL boxes, with dual-core processors, 2GB of RAM, and 80GB IDE hard 
+      drives.</para>
     </section>
 
     <section id="sc_zkMulitServerSetup">
       <title>Clustered (Multi-Server) Setup</title>
 
       <para>For reliable ZooKeeper service, you should deploy ZooKeeper in a
-      cluster known as a <emphasis>quorum</emphasis>. As long as a majority
-      of the quorum are up, the service will be available. Because Zookeeper
+      cluster known as an <emphasis>ensemble</emphasis>. As long as a majority
+      of the ensemble are up, the service will be available. Because Zookeeper
       requires a majority, it is best to use an
       odd number of machines. For example, with four machines ZooKeeper can
       only handle the failure of a single machine; if two machines fail, the
       remaining two machines do not constitute a majority. However, with five
       machines ZooKeeper can handle the failure of two machines. </para>
 
-      <para>Here are the steps to setting a server that will be part of a
-      quorum. These steps should be performed on every host in the
-      quorum:</para>
+      <para>Here are the steps to setting a server that will be part of an
+      ensemble. These steps should be performed on every host in the
+      ensemble:</para>
 
       <orderedlist>
         <listitem>
@@ -141,8 +142,8 @@ server.3=zoo3:2888:3888</computeroutput></para>
           settings in the section <xref linkend="sc_configuration" />. A word
           though about a few here:</para>
 
-          <para>Every machine that is part of the ZooKeeper quorum should know
-          about every other machine in the quorum. You accomplish this with
+          <para>Every machine that is part of the ZooKeeper ensemble should know
+          about every other machine in the ensemble. You accomplish this with
           the series of lines of the form <emphasis
           role="bold">server.id=host:port:port</emphasis>. The parameters <emphasis
           role="bold">host</emphasis> and <emphasis
@@ -154,7 +155,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
           consists of a single line containing only the text of that machine's
           id. So <filename>myid</filename> of server 1 would contain the text
           "1" and nothing else. The id must be unique within the
-          quorum.</para>
+          ensemble.</para>
         </listitem>
 
         <listitem>
@@ -492,8 +493,8 @@ server.3=zoo3:2888:3888</computeroutput></para>
       <section id="sc_clusterOptions">
         <title>Cluster Options</title>
 
-        <para>The options in this section are designed for use in quorums --
-        that is, when deploying clusters of servers.</para>
+        <para>The options in this section are designed for use with an ensemble
+        of servers -- that is, when deploying clusters of servers.</para>
 
         <variablelist>
           <varlistentry>
@@ -541,7 +542,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
 
               <note>
                 <para>Turning on leader selection is highly recommended when
-                you have more than three ZooKeeper servers in a quorum.</para>
+                you have more than three ZooKeeper servers in an ensemble.</para>
               </note>
             </listitem>
           </varlistentry>
@@ -552,7 +553,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
             <listitem>
               <para>(No Java system property)</para>
 
-              <para>servers making up the ZooKeeper quorum. When the server
+              <para>servers making up the ZooKeeper ensemble. When the server
               starts up, it determines which server it is by looking for the
               file <filename>myid</filename> in the data directory. That file
               contains the server number, in ASCII, and it should match

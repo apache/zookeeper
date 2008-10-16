@@ -35,6 +35,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-194. Fix terminology in zookeeperAdmin.xml
+  (Flavio Paiva Junqueira)
+
   ZOOKEEPER-151. Document change to server configuration
   (Flavio Paiva Junqueira)
 

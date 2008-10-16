@@ -316,23 +316,24 @@ document.write("Last Published: " + document.lastModified);
 <a name="N10032"></a><a name="sc_systemReq"></a>
 <h3 class="h4">System Requirements</h3>
 <p>ZooKeeper runs in Java, release 1.5 or greater (JDK 5 or greater).
-      It runs as group of hosts called a quorum. Three ZooKeeper hosts per
-      quorum is the minimum recommended quorum size. At Yahoo!, ZooKeeper is
-      usually deployed on dedicated RHEL boxes, with dual-core processors, 2GB
-      of RAM, and 80GB IDE hard drives.</p>
-<a name="N1003C"></a><a name="sc_zkMulitServerSetup"></a>
+      It runs as an <em>ensemble</em> of ZooKeeper servers. Three ZooKeeper
+      servers is the minimum recommended size for an ensemble, and we also recommend that
+      they run on separate machines. At Yahoo!, ZooKeeper is usually deployed on 
+      dedicated RHEL boxes, with dual-core processors, 2GB of RAM, and 80GB IDE hard 
+      drives.</p>
+<a name="N1003F"></a><a name="sc_zkMulitServerSetup"></a>
 <h3 class="h4">Clustered (Multi-Server) Setup</h3>
 <p>For reliable ZooKeeper service, you should deploy ZooKeeper in a
-      cluster known as a <em>quorum</em>. As long as a majority
-      of the quorum are up, the service will be available. Because Zookeeper
+      cluster known as an <em>ensemble</em>. As long as a majority
+      of the ensemble are up, the service will be available. Because Zookeeper
       requires a majority, it is best to use an
       odd number of machines. For example, with four machines ZooKeeper can
       only handle the failure of a single machine; if two machines fail, the
       remaining two machines do not constitute a majority. However, with five
       machines ZooKeeper can handle the failure of two machines. </p>
-<p>Here are the steps to setting a server that will be part of a
-      quorum. These steps should be performed on every host in the
-      quorum:</p>
+<p>Here are the steps to setting a server that will be part of an
+      ensemble. These steps should be performed on every host in the
+      ensemble:</p>
 <ol>
         
 <li>
@@ -401,8 +402,8 @@ server.3=zoo3:2888:3888</span>
           though about a few here:</p>
 
           
-<p>Every machine that is part of the ZooKeeper quorum should know
-          about every other machine in the quorum. You accomplish this with
+<p>Every machine that is part of the ZooKeeper ensemble should know
+          about every other machine in the ensemble. You accomplish this with
           the series of lines of the form <strong>server.id=host:port:port</strong>. The parameters <strong>host</strong> and <strong>port</strong> are straightforward. You attribute the
           server id to each machine by creating a file named
           <span class="codefrag filename">myid</span>, one for each server, which resides in
@@ -411,7 +412,7 @@ server.3=zoo3:2888:3888</span>
           consists of a single line containing only the text of that machine's
           id. So <span class="codefrag filename">myid</span> of server 1 would contain the text
           "1" and nothing else. The id must be unique within the
-          quorum.</p>
+          ensemble.</p>
         
 </li>
 
@@ -488,7 +489,7 @@ server.3=zoo3:2888:3888</span>
 </li>
       
 </ol>
-<a name="N100D0"></a><a name="sc_singleAndDevSetup"></a>
+<a name="N100D3"></a><a name="sc_singleAndDevSetup"></a>
 <h3 class="h4">Single Server and Developer Setup</h3>
 <p>If you want to setup ZooKeeper for development purposes, you will
       probably want to setup a single server instance of ZooKeeper, and then
@@ -506,7 +507,7 @@ server.3=zoo3:2888:3888</span>
 </div>
 
   
-<a name="N100F1"></a><a name="ch_administration"></a>
+<a name="N100F4"></a><a name="ch_administration"></a>
 <h2 class="h3">Administration</h2>
 <div class="section">
 <p>This section contains information about running and maintaining
@@ -621,22 +622,22 @@ server.3=zoo3:2888:3888</span>
 </li>
       
 </ul>
-<a name="N1015D"></a><a name="sc_designing"></a>
+<a name="N10160"></a><a name="sc_designing"></a>
 <h3 class="h4">Designing a ZooKeeper Deployment</h3>
 <p></p>
-<a name="N10166"></a><a name="sc_provisioning"></a>
+<a name="N10169"></a><a name="sc_provisioning"></a>
 <h3 class="h4">Provisioning</h3>
 <p></p>
-<a name="N1016F"></a><a name="sc_strengthsAndLimitations"></a>
+<a name="N10172"></a><a name="sc_strengthsAndLimitations"></a>
 <h3 class="h4">Things to Consider: ZooKeeper Strengths and Limitations</h3>
 <p></p>
-<a name="N10178"></a><a name="sc_administering"></a>
+<a name="N1017B"></a><a name="sc_administering"></a>
 <h3 class="h4">Administering</h3>
 <p></p>
-<a name="N10181"></a><a name="sc_monitoring"></a>
+<a name="N10184"></a><a name="sc_monitoring"></a>
 <h3 class="h4">Monitoring</h3>
 <p></p>
-<a name="N1018A"></a><a name="sc_logging"></a>
+<a name="N1018D"></a><a name="sc_logging"></a>
 <h3 class="h4">Logging</h3>
 <p>ZooKeeper uses <strong>log4j</strong> version 1.2 as 
       its logging infrastructure. The  ZooKeeper default <span class="codefrag filename">log4j.properties</span> 
@@ -646,10 +647,10 @@ server.3=zoo3:2888:3888</span>
 <p>For more information, see 
       <a href="http://logging.apache.org/log4j/1.2/manual.html#defaultInit">Log4j Default Initialization Procedure</a> 
       of the log4j manual.</p>
-<a name="N101AA"></a><a name="sc_troubleshooting"></a>
+<a name="N101AD"></a><a name="sc_troubleshooting"></a>
 <h3 class="h4">Troubleshooting</h3>
 <p></p>
-<a name="N101B3"></a><a name="sc_configuration"></a>
+<a name="N101B6"></a><a name="sc_configuration"></a>
 <h3 class="h4">Configuration Parameters</h3>
 <p>ZooKeeper's behavior is governed by the ZooKeeper configuration
       file. This file is designed so that the exact same file can be used by
@@ -657,7 +658,7 @@ server.3=zoo3:2888:3888</span>
       layouts are the same. If servers use different configuration files, care
       must be taken to ensure that the list of servers in all of the different
       configuration files match.</p>
-<a name="N101BC"></a><a name="sc_minimumConfiguration"></a>
+<a name="N101BF"></a><a name="sc_minimumConfiguration"></a>
 <h4>Minimum Configuration</h4>
 <p>Here are the minimum configuration keywords that must be defined
         in the configuration file:</p>
@@ -704,7 +705,7 @@ server.3=zoo3:2888:3888</span>
 </dd>
         
 </dl>
-<a name="N101E3"></a><a name="sc_advancedConfiguration"></a>
+<a name="N101E6"></a><a name="sc_advancedConfiguration"></a>
 <h4>Advanced Configuration</h4>
 <p>The configuration settings in the section are optional. You can
         use them to further fine tune the behaviour of your ZooKeeper servers.
@@ -795,10 +796,10 @@ server.3=zoo3:2888:3888</span>
 </dd>
         
 </dl>
-<a name="N10243"></a><a name="sc_clusterOptions"></a>
+<a name="N10246"></a><a name="sc_clusterOptions"></a>
 <h4>Cluster Options</h4>
-<p>The options in this section are designed for use in quorums --
-        that is, when deploying clusters of servers.</p>
+<p>The options in this section are designed for use with an ensemble
+        of servers -- that is, when deploying clusters of servers.</p>
 <dl>
           
 <dt>
@@ -843,7 +844,7 @@ server.3=zoo3:2888:3888</span>
 <div class="content">
                 
 <p>Turning on leader selection is highly recommended when
-                you have more than three ZooKeeper servers in a quorum.</p>
+                you have more than three ZooKeeper servers in an ensemble.</p>
               
 </div>
 </div>
@@ -855,7 +856,7 @@ server.3=zoo3:2888:3888</span>
 </dt>
 <dd>
 <p>(No Java system property)</p>
-<p>servers making up the ZooKeeper quorum. When the server
+<p>servers making up the ZooKeeper ensemble. When the server
               starts up, it determines which server it is by looking for the
               file <span class="codefrag filename">myid</span> in the data directory. That file
               contains the server number, in ASCII, and it should match
@@ -885,7 +886,7 @@ server.3=zoo3:2888:3888</span>
         
 </dl>
 <p></p>
-<a name="N102A0"></a><a name="Unsafe+Options"></a>
+<a name="N102A3"></a><a name="Unsafe+Options"></a>
 <h4>Unsafe Options</h4>
 <p>The following options can be useful, but be careful when you use
         them. The risk of each is explained along with the explanation of what
@@ -930,7 +931,7 @@ server.3=zoo3:2888:3888</span>
 </dd>
         
 </dl>
-<a name="N102D2"></a><a name="sc_zkCommands"></a>
+<a name="N102D5"></a><a name="sc_zkCommands"></a>
 <h3 class="h4">ZooKeeper Commands: The Four Letter Words</h3>
 <p>ZooKeeper responds to a small set of commands. Each command is
       composed of four letters. You issue the commands to ZooKeeper via telnet
@@ -979,7 +980,7 @@ server.3=zoo3:2888:3888</span>
 <pre class="code">$ echo ruok | nc 127.0.0.1 5111
 imok
 </pre>
-<a name="N10304"></a><a name="sc_dataFileManagement"></a>
+<a name="N10307"></a><a name="sc_dataFileManagement"></a>
 <h3 class="h4">Data File Management</h3>
 <p>ZooKeeper stores its data in a data directory and its transaction
       log in a transaction log directory. By default these two directories are
@@ -987,7 +988,7 @@ imok
       transaction log files in a separate directory than the data files.
       Throughput increases and latency decreases when transaction logs reside
       on a dedicated log devices.</p>
-<a name="N1030D"></a><a name="The+Data+Directory"></a>
+<a name="N10310"></a><a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
 <p>This directory has two files in it:</p>
 <ul>
@@ -1033,14 +1034,14 @@ imok
         idempotent nature of its updates. By replaying the transaction log
         against fuzzy snapshots ZooKeeper gets the state of the system at the
         end of the log.</p>
-<a name="N10349"></a><a name="The+Log+Directory"></a>
+<a name="N1034C"></a><a name="The+Log+Directory"></a>
 <h4>The Log Directory</h4>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
         log file is started each time a snapshot is begun. The log file's
         suffix is the first zxid written to that log.</p>
-<a name="N10353"></a><a name="File+Management"></a>
+<a name="N10356"></a><a name="File+Management"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
         standalone ZooKeeper servers and different configurations of
@@ -1057,7 +1058,7 @@ imok
         needs the latest complete fuzzy snapshot and the log files from the
         start of that snapshot. The PurgeTxnLog utility implements a simple
         retention policy that administrators can use.</p>
-<a name="N10364"></a><a name="sc_commonProblems"></a>
+<a name="N10367"></a><a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
       ZooKeeper correctly:</p>
@@ -1111,7 +1112,7 @@ imok
 </dd>
       
 </dl>
-<a name="N10388"></a><a name="sc_bestPractices"></a>
+<a name="N1038B"></a><a name="sc_bestPractices"></a>
 <h3 class="h4">Best Practices</h3>
 <p>For best results, take note of the following list of good
       Zookeeper practices. <em>[tbd...]</em>
