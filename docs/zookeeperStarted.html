@@ -251,7 +251,7 @@ $ ~/dev/zookeeper/: ant jar
       file:</p>
 <pre class="code">
 tickTime=2000
-dataDir=/var/zookeeper/ 
+dataDir=/var/zookeeper
 clientPort=2181
 </pre>
 <p>This file can be called anything, but for the sake of this
@@ -297,30 +297,34 @@ clientPort=2181
 </dl>
 <p>Now that you created the configuration file, you can start
       ZooKeeper:</p>
-<pre class="code">java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</pre>
-<p>ZooKeeper logs messages using log4j -- more detail available in
-      the <a href="zookeeperProgrammers.html#Logging">Logging</a>
-      section of the Programmer's Guide.<em>[tbd:
-      real reference needed]</em> You will see log messages coming to the
-      console and/or a log file depending on the log4j configuration.</p>
+<pre class="code">java -cp zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</pre>
+<p>ZooKeeper logs messages using log4j -- more detail
+      available in the
+      <a href="zookeeperProgrammers.html#Logging">Logging</a>
+      section of the Programmer's Guide. You will see log messages
+      coming to the console and/or a log file depending on the log4j
+      configuration.</p>
 <p>The steps outlined here run ZooKeeper in standalone mode. There is
       no replication, so if Zookeeper process fails, the service will go down.
       This is fine for most development situations, but to run Zookeeper in
       replicated mode, please see <a href="#sc_RunningReplicatedZooKeeper">Running Replicated
       Zookeeper</a>.</p>
 <p></p>
-<a name="N10072"></a><a name="sc_ConnectingToZooKeeper"></a>
+<a name="N1006F"></a><a name="sc_ConnectingToZooKeeper"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
-<p>Once ZooKeeper is running, you have several option for connection
+<p>Once ZooKeeper is running, you have several options for connection
       to it:</p>
 <ul>
         
 <li>
           
 <p>
-<strong>Java</strong>: Use java -cp
-          zookeeper.jar:java/lib/log4j-1.2.15.jar:conf
-          org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</p>
+<strong>Java</strong>:
+          Use <span class="codefrag computeroutput">java -cp
+          zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar:conf
+          org.apache.zookeeper.ZooKeeperMain
+          127.0.0.1:2181</span>
+</p>
 
           
 <p>This lets you perform simple, file-like operations.</p>
@@ -363,14 +367,14 @@ clientPort=2181
       file. The file is similar to the one used in standalone mode, but with a
       few differences. Here is an example:</p>
 <pre class="code">
-tickTime=2000 
-dataDir=/var/zookeeper/ 
-clientPort=2181 
-initLimit=5 
-syncLimit=2 
-server.1=zoo1:2888
-server.2=zoo2:2888 
-server.3=zoo3:2888 
+tickTime=2000
+dataDir=/var/zookeeper
+clientPort=2181
+initLimit=5
+syncLimit=2
+server.1=zoo1:2888:3888
+server.2=zoo2:2888:3888
+server.3=zoo3:2888:3888
 </pre>
 <p>The new entry, <strong>initLimit</strong> is
       timeouts ZooKeeper uses to limit the length of time the Zookeeper
@@ -382,24 +386,38 @@ server.3=zoo3:2888
       seconds.</p>
 <p>The entries of the form <em>server.X</em> list the
       servers that make up the ZooKeeper service. When the server starts up,
-      it knows which server it is by looking for the file *myid* in the data
-      directory. That file has the contains the server number, in
-      ASCII.</p>
-<p>Finally, note the "2888" port numbers after each server name.
-      These are the "electionPort" numbers of the servers (as opposed to
-      clientPorts), that is ports for <em>[tbd]</em>.</p>
+      it knows which server it is by looking for the file
+      <em>myid</em> in the data directory. That file has the 
+      contains the server number, in ASCII.</p>
+<p>Finally, note the two port numbers after each server
+       name: " 2888" and "3888". Peers use the former port to connect
+       to other peers. Such a connection is necessary so that peers
+       can communicate, for example, to agree upon the order of
+       updates. More specifically, a ZooKeeper server uses this port
+       to connect followers to the leader. When a new leader arises, a
+       follower opens a TCP connection to the leader using this
+       port. Because the default leader election also uses TCP, we
+       currently require another port for leader election. This is the
+       second port in the server entry.
+       </p>
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
         
-<p>If you want to test multiple servers on a single machine, define
-        the electionPort for each server in that server's config file, using
-        the line <span class="codefrag command">electionPort=xxxx</span> as means of avoiding
-        clashes.</p>
+<p>If you want to test multiple servers on a single
+        machine, specify the servername
+        as <em>localhost</em> with unique quorum &amp;
+        leader election ports (i.e. 2888:3888, 2889:3889, 2890:3890 in
+        the example above) for each server.X in that server's config
+        file. Of course separate <em>dataDir</em>s and
+        distinct <em>clientPort</em>s are also necessary
+        (in the above replicated example, running on a
+        single <em>localhost</em>, you would still have
+        three config files).</p>
       
 </div>
 </div>
-<a name="N100E6"></a><a name="Other+Optimizations"></a>
+<a name="N100EE"></a><a name="Other+Optimizations"></a>
 <h3 class="h4">Other Optimizations</h3>
 <p>There are a couple of other configuration parameters that can
       greatly increase performance:</p>
@@ -407,10 +425,11 @@ server.3=zoo3:2888
         
 <li>
           
-<p>To get low latencies on updates it is important to have a
-          dedicated transaction log directory. By default transaction logs are
-          put in the same directory as the data snapshots and *myid* file. The
-          dataLogDir parameters indicates a different directory to use for the
+<p>To get low latencies on updates it is important to
+          have a dedicated transaction log directory. By default
+          transaction logs are put in the same directory as the data
+          snapshots and <em>myid</em> file. The dataLogDir
+          parameters indicates a different directory to use for the
           transaction logs.</p>
         
 </li>

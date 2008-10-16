@@ -319,7 +319,7 @@ document.write("Last Published: " + document.lastModified);
       It runs as group of hosts called a quorum. Three ZooKeeper hosts per
       quorum is the minimum recommended quorum size. At Yahoo!, ZooKeeper is
       usually deployed on dedicated RHEL boxes, with dual-core processors, 2GB
-      of RAM, and 80GB IDE harddrives.</p>
+      of RAM, and 80GB IDE hard drives.</p>
 <a name="N1003C"></a><a name="sc_zkMulitServerSetup"></a>
 <h3 class="h4">Clustered (Multi-Server) Setup</h3>
 <p>For reliable ZooKeeper service, you should deploy ZooKeeper in a
@@ -390,9 +390,9 @@ dataDir=/var/zookeeper/
 clientPort=2181
 initLimit=5
 syncLimit=2
-server.1=zoo1:2888
-server.2=zoo2:2888
-server.3=zoo3:2888</span>
+server.1=zoo1:2888:3888
+server.2=zoo2:2888:3888
+server.3=zoo3:2888:3888</span>
 </p>
 
           
@@ -403,7 +403,7 @@ server.3=zoo3:2888</span>
           
 <p>Every machine that is part of the ZooKeeper quorum should know
           about every other machine in the quorum. You accomplish this with
-          the series of lines of the form <strong>server.id=host:port</strong>. The integers <strong>host</strong> and <strong>port</strong> are straightforward. You attribute the
+          the series of lines of the form <strong>server.id=host:port:port</strong>. The parameters <strong>host</strong> and <strong>port</strong> are straightforward. You attribute the
           server id to each machine by creating a file named
           <span class="codefrag filename">myid</span>, one for each server, which resides in
           that server's data directory, as specified by the configuration file
@@ -423,7 +423,7 @@ server.3=zoo3:2888</span>
 
           
 <p>
-<span class="codefrag computeroutput">$ java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf \
+<span class="codefrag computeroutput">$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf \
         org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</span>
 </p>
         
@@ -444,7 +444,7 @@ server.3=zoo3:2888</span>
 
               
 <p>
-<span class="codefrag computeroutput">$ java -cp zookeeper.jar:java/lib/log4j-1.2.15.jar:conf \
+<span class="codefrag computeroutput">$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf \
       org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</span>
 </p>
             
@@ -460,7 +460,7 @@ server.3=zoo3:2888</span>
 
               
 <p>
-<span class="codefrag computeroutput">$ _make cli_st_</span>
+<span class="codefrag computeroutput">$ make cli_st</span>
 </p>
 
               
@@ -468,7 +468,7 @@ server.3=zoo3:2888</span>
 
               
 <p>
-<span class="codefrag computeroutput">$ _make cli_mt_</span>
+<span class="codefrag computeroutput">$ make cli_mt</span>
 </p>
             
 </li>
@@ -811,20 +811,8 @@ server.3=zoo3:2888</span>
               non-authenticated UDP-based version of fast leader election, "2"
               corresponds to the authenticated UDP-based version of fast
               leader election, and "3" corresponds to TCP-based version of
-              fast leader election</p>
-</dd>
-
-          
-<dt>
-<term>electionPort</term>
-</dt>
-<dd>
-<p>(No Java system property)</p>
-<p>Port used for leader election. It is only used when the
-              election algorithm is not "0". When the election algorithm is
-              "0" a UDP port with the same port number as the port listed in
-              the <strong>server.num</strong> option will be
-              used.</p>
+              fast leader election. Currently, only 0 and 3 are supported, 3 
+              being the default</p>
 </dd>
 
           
@@ -863,7 +851,7 @@ server.3=zoo3:2888</span>
 
           
 <dt>
-<term>server.x=[hostname]:nnnn, etc</term>
+<term>server.x=[hostname]:nnnnn[:nnnnn], etc</term>
 </dt>
 <dd>
 <p>(No Java system property)</p>
@@ -876,13 +864,12 @@ server.3=zoo3:2888</span>
 <p>The list of servers that make up ZooKeeper servers that is
               used by the clients must match the list of ZooKeeper servers
               that each ZooKeeper server has.</p>
-<p>The port numbers <strong>nnnn</strong> in
-              this setting are the <em>electionPort</em> numbers
-              of the servers (as opposed to clientPorts). If you want to test
-              multiple servers on a single machine, the individual choices of
-              electionPort for each server can be defined in each server's
-              config files using the line electionPort=xxxx to avoid
-              clashes.</p>
+<p>There are two port numbers <strong>nnnnn</strong>. 
+              The first followers use to connect to the leader, and the second is for 
+              leader election. The leader election port is only necessary if electionAlg 
+              is 1, 2, or 3 (default). If electionAlg is 0, then the second port is not 
+              necessary. If you want to test multiple servers on a single machine, then 
+              different ports can be used for each server.</p>
 </dd>
 
           
@@ -898,7 +885,7 @@ server.3=zoo3:2888</span>
         
 </dl>
 <p></p>
-<a name="N102AF"></a><a name="Unsafe+Options"></a>
+<a name="N102A0"></a><a name="Unsafe+Options"></a>
 <h4>Unsafe Options</h4>
 <p>The following options can be useful, but be careful when you use
         them. The risk of each is explained along with the explanation of what
@@ -943,7 +930,7 @@ server.3=zoo3:2888</span>
 </dd>
         
 </dl>
-<a name="N102E1"></a><a name="sc_zkCommands"></a>
+<a name="N102D2"></a><a name="sc_zkCommands"></a>
 <h3 class="h4">ZooKeeper Commands: The Four Letter Words</h3>
 <p>ZooKeeper responds to a small set of commands. Each command is
       composed of four letters. You issue the commands to ZooKeeper via telnet
@@ -992,7 +979,7 @@ server.3=zoo3:2888</span>
 <pre class="code">$ echo ruok | nc 127.0.0.1 5111
 imok
 </pre>
-<a name="N10313"></a><a name="sc_dataFileManagement"></a>
+<a name="N10304"></a><a name="sc_dataFileManagement"></a>
 <h3 class="h4">Data File Management</h3>
 <p>ZooKeeper stores its data in a data directory and its transaction
       log in a transaction log directory. By default these two directories are
@@ -1000,7 +987,7 @@ imok
       transaction log files in a separate directory than the data files.
       Throughput increases and latency decreases when transaction logs reside
       on a dedicated log devices.</p>
-<a name="N1031C"></a><a name="The+Data+Directory"></a>
+<a name="N1030D"></a><a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
 <p>This directory has two files in it:</p>
 <ul>
@@ -1046,14 +1033,14 @@ imok
         idempotent nature of its updates. By replaying the transaction log
         against fuzzy snapshots ZooKeeper gets the state of the system at the
         end of the log.</p>
-<a name="N10358"></a><a name="The+Log+Directory"></a>
+<a name="N10349"></a><a name="The+Log+Directory"></a>
 <h4>The Log Directory</h4>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
         log file is started each time a snapshot is begun. The log file's
         suffix is the first zxid written to that log.</p>
-<a name="N10362"></a><a name="File+Management"></a>
+<a name="N10353"></a><a name="File+Management"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
         standalone ZooKeeper servers and different configurations of
@@ -1070,7 +1057,7 @@ imok
         needs the latest complete fuzzy snapshot and the log files from the
         start of that snapshot. The PurgeTxnLog utility implements a simple
         retention policy that administrators can use.</p>
-<a name="N10373"></a><a name="sc_commonProblems"></a>
+<a name="N10364"></a><a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
       ZooKeeper correctly:</p>
@@ -1124,7 +1111,7 @@ imok
 </dd>
       
 </dl>
-<a name="N10397"></a><a name="sc_bestPractices"></a>
+<a name="N10388"></a><a name="sc_bestPractices"></a>
 <h3 class="h4">Best Practices</h3>
 <p>For best results, take note of the following list of good
       Zookeeper practices. <em>[tbd...]</em>

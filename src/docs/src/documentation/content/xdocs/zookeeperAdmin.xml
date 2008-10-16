@@ -75,7 +75,7 @@
       It runs as group of hosts called a quorum. Three ZooKeeper hosts per
       quorum is the minimum recommended quorum size. At Yahoo!, ZooKeeper is
       usually deployed on dedicated RHEL boxes, with dual-core processors, 2GB
-      of RAM, and 80GB IDE harddrives.</para>
+      of RAM, and 80GB IDE hard drives.</para>
     </section>
 
     <section id="sc_zkMulitServerSetup">
@@ -133,9 +133,9 @@ dataDir=/var/zookeeper/
 clientPort=2181
 initLimit=5
 syncLimit=2
-server.1=zoo1:2888
-server.2=zoo2:2888
-server.3=zoo3:2888</computeroutput></para>
+server.1=zoo1:2888:3888
+server.2=zoo2:2888:3888
+server.3=zoo3:2888:3888</computeroutput></para>
 
           <para>You can find the meanings of these and other configuration
           settings in the section <xref linkend="sc_configuration" />. A word
@@ -144,7 +144,7 @@ server.3=zoo3:2888</computeroutput></para>
           <para>Every machine that is part of the ZooKeeper quorum should know
           about every other machine in the quorum. You accomplish this with
           the series of lines of the form <emphasis
-          role="bold">server.id=host:port</emphasis>. The integers <emphasis
+          role="bold">server.id=host:port:port</emphasis>. The parameters <emphasis
           role="bold">host</emphasis> and <emphasis
           role="bold">port</emphasis> are straightforward. You attribute the
           server id to each machine by creating a file named
@@ -161,7 +161,7 @@ server.3=zoo3:2888</computeroutput></para>
           <para>If your configuration file is set up, you can start
           ZooKeeper:</para>
 
-          <para><computeroutput>$ java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf \
+          <para><computeroutput>$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf \
         org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</computeroutput></para>
         </listitem>
 
@@ -173,7 +173,7 @@ server.3=zoo3:2888</computeroutput></para>
               <para>In Java, you can run the following command to execute
               simple operations:</para>
 
-              <para><computeroutput>$ java -cp zookeeper.jar:java/lib/log4j-1.2.15.jar:conf \
+              <para><computeroutput>$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf \
       org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</computeroutput></para>
             </listitem>
 
@@ -183,11 +183,11 @@ server.3=zoo3:2888</computeroutput></para>
               ZooKeeper sources. This compiles the single threaded
               client:</para>
 
-              <para><computeroutput>$ _make cli_st_</computeroutput></para>
+              <para><computeroutput>$ make cli_st</computeroutput></para>
 
               <para>And this compiles the mulithreaded client:</para>
 
-              <para><computeroutput>$ _make cli_mt_</computeroutput></para>
+              <para><computeroutput>$ make cli_mt</computeroutput></para>
             </listitem>
           </itemizedlist>
 
@@ -507,21 +507,8 @@ server.3=zoo3:2888</computeroutput></para>
               non-authenticated UDP-based version of fast leader election, "2"
               corresponds to the authenticated UDP-based version of fast
               leader election, and "3" corresponds to TCP-based version of
-              fast leader election</para>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term>electionPort</term>
-
-            <listitem>
-              <para>(No Java system property)</para>
-
-              <para>Port used for leader election. It is only used when the
-              election algorithm is not "0". When the election algorithm is
-              "0" a UDP port with the same port number as the port listed in
-              the <emphasis role="bold">server.num</emphasis> option will be
-              used.</para>
+              fast leader election. Currently, only 0 and 3 are supported, 3 
+              being the default</para>
             </listitem>
           </varlistentry>
 
@@ -560,7 +547,7 @@ server.3=zoo3:2888</computeroutput></para>
           </varlistentry>
 
           <varlistentry>
-            <term>server.x=[hostname]:nnnn, etc</term>
+            <term>server.x=[hostname]:nnnnn[:nnnnn], etc</term>
 
             <listitem>
               <para>(No Java system property)</para>
@@ -577,13 +564,12 @@ server.3=zoo3:2888</computeroutput></para>
               used by the clients must match the list of ZooKeeper servers
               that each ZooKeeper server has.</para>
 
-              <para>The port numbers <emphasis role="bold">nnnn</emphasis> in
-              this setting are the <emphasis>electionPort</emphasis> numbers
-              of the servers (as opposed to clientPorts). If you want to test
-              multiple servers on a single machine, the individual choices of
-              electionPort for each server can be defined in each server's
-              config files using the line electionPort=xxxx to avoid
-              clashes.</para>
+              <para>There are two port numbers <emphasis role="bold">nnnnn</emphasis>. 
+              The first followers use to connect to the leader, and the second is for 
+              leader election. The leader election port is only necessary if electionAlg 
+              is 1, 2, or 3 (default). If electionAlg is 0, then the second port is not 
+              necessary. If you want to test multiple servers on a single machine, then 
+              different ports can be used for each server.</para>
             </listitem>
           </varlistentry>
 
