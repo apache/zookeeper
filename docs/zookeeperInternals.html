@@ -453,7 +453,8 @@ Below, we make clear why.)
 <p>
 Leader activation includes leader election. We currently have two leader election 
 algorithms in ZooKeeper: LeaderElection and FastLeaderElection (AuthFastLeaderElection 
-is a variant of FastLeaderElection). ZooKeeper messaging doesn't care about the 
+is a variant of FastLeaderElection that uses UDP and allows servers to perform a simple
+form of authentication to avoid IP spoofing). ZooKeeper messaging doesn't care about the 
 exact method of electing a leader has long as the following holds:
 </p>
 <ul>
@@ -484,8 +485,8 @@ are missing, or if a follower is missing too many proposals, it will send a full
 snapshot of the state to the follower.
 </p>
 <p>
-There is a corner cases that a follower arrives that has proposals, U, not seen 
-by a leader. Proposals are seen in order, so the proposals of U will have a zxids 
+There is a corner case in which a follower that has proposals, U, not seen 
+by a leader arrives. Proposals are seen in order, so the proposals of U will have a zxids 
 higher than zxids seen by the leader. The follower must have arrived after the 
 leader election, otherwise the follower would have been elected leader given that 
 it has seen a higher zxid. Since committed proposals must be seen by a quorum of 

@@ -35,6 +35,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-151. Document change to server configuration
+  (Flavio Paiva Junqueira)
+
   ZOOKEEPER-193. update java example doc to compile with latest zookeeper
   (phunt)
 

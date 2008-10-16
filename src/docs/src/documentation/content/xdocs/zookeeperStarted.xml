@@ -85,7 +85,7 @@ $ ~/dev/zookeeper/: ant jar
 
 <programlisting>
 tickTime=2000
-dataDir=/var/zookeeper/ 
+dataDir=/var/zookeeper
 clientPort=2181
 </programlisting>
 
@@ -128,13 +128,14 @@ clientPort=2181
       <para>Now that you created the configuration file, you can start
       ZooKeeper:</para>
 
-      <programlisting>java -cp zookeeper-dev.jar:java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</programlisting>
+      <programlisting>java -cp zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</programlisting>
 
-      <para>ZooKeeper logs messages using log4j -- more detail available in
-      the <ulink url="zookeeperProgrammers.html#Logging">Logging</ulink>
-      section of the Programmer's Guide.<emphasis>[tbd:
-      real reference needed]</emphasis> You will see log messages coming to the
-      console and/or a log file depending on the log4j configuration.</para>
+      <para>ZooKeeper logs messages using log4j -- more detail
+      available in the
+      <ulink url="zookeeperProgrammers.html#Logging">Logging</ulink>
+      section of the Programmer's Guide. You will see log messages
+      coming to the console and/or a log file depending on the log4j
+      configuration.</para>
 
       <para>The steps outlined here run ZooKeeper in standalone mode. There is
       no replication, so if Zookeeper process fails, the service will go down.
@@ -149,14 +150,16 @@ clientPort=2181
     <section id="sc_ConnectingToZooKeeper">
       <title>Connecting to ZooKeeper</title>
 
-      <para>Once ZooKeeper is running, you have several option for connection
+      <para>Once ZooKeeper is running, you have several options for connection
       to it:</para>
 
       <itemizedlist>
         <listitem>
-          <para><emphasis role="bold">Java</emphasis>: Use java -cp
-          zookeeper.jar:java/lib/log4j-1.2.15.jar:conf
-          org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</para>
+          <para><emphasis role="bold">Java</emphasis>:
+          Use <computeroutput>java -cp
+          zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar:conf
+          org.apache.zookeeper.ZooKeeperMain
+          127.0.0.1:2181</computeroutput></para>
 
           <para>This lets you perform simple, file-like operations.</para>
         </listitem>
@@ -199,14 +202,14 @@ clientPort=2181
       few differences. Here is an example:</para>
 
 <programlisting>
-tickTime=2000 
-dataDir=/var/zookeeper/ 
-clientPort=2181 
-initLimit=5 
-syncLimit=2 
-server.1=zoo1:2888
-server.2=zoo2:2888 
-server.3=zoo3:2888 
+tickTime=2000
+dataDir=/var/zookeeper
+clientPort=2181
+initLimit=5
+syncLimit=2
+server.1=zoo1:2888:3888
+server.2=zoo2:2888:3888
+server.3=zoo3:2888:3888
 </programlisting>
 
       <para>The new entry, <emphasis role="bold">initLimit</emphasis> is
@@ -222,19 +225,33 @@ server.3=zoo3:2888
 
       <para>The entries of the form <emphasis>server.X</emphasis> list the
       servers that make up the ZooKeeper service. When the server starts up,
-      it knows which server it is by looking for the file *myid* in the data
-      directory. That file has the contains the server number, in
-      ASCII.</para>
+      it knows which server it is by looking for the file
+      <emphasis>myid</emphasis> in the data directory. That file has the 
+      contains the server number, in ASCII.</para>
 
-      <para>Finally, note the "2888" port numbers after each server name.
-      These are the "electionPort" numbers of the servers (as opposed to
-      clientPorts), that is ports for <emphasis>[tbd]</emphasis>.</para>
+       <para>Finally, note the two port numbers after each server
+       name: " 2888" and "3888". Peers use the former port to connect
+       to other peers. Such a connection is necessary so that peers
+       can communicate, for example, to agree upon the order of
+       updates. More specifically, a ZooKeeper server uses this port
+       to connect followers to the leader. When a new leader arises, a
+       follower opens a TCP connection to the leader using this
+       port. Because the default leader election also uses TCP, we
+       currently require another port for leader election. This is the
+       second port in the server entry.
+       </para>
 
       <note>
-        <para>If you want to test multiple servers on a single machine, define
-        the electionPort for each server in that server's config file, using
-        the line <command>electionPort=xxxx</command> as means of avoiding
-        clashes.</para>
+        <para>If you want to test multiple servers on a single
+        machine, specify the servername
+        as <emphasis>localhost</emphasis> with unique quorum &amp;
+        leader election ports (i.e. 2888:3888, 2889:3889, 2890:3890 in
+        the example above) for each server.X in that server's config
+        file. Of course separate <emphasis>dataDir</emphasis>s and
+        distinct <emphasis>clientPort</emphasis>s are also necessary
+        (in the above replicated example, running on a
+        single <emphasis>localhost</emphasis>, you would still have
+        three config files).</para>
       </note>
     </section>
 
@@ -246,10 +263,11 @@ server.3=zoo3:2888
 
       <itemizedlist>
         <listitem>
-          <para>To get low latencies on updates it is important to have a
-          dedicated transaction log directory. By default transaction logs are
-          put in the same directory as the data snapshots and *myid* file. The
-          dataLogDir parameters indicates a different directory to use for the
+          <para>To get low latencies on updates it is important to
+          have a dedicated transaction log directory. By default
+          transaction logs are put in the same directory as the data
+          snapshots and <emphasis>myid</emphasis> file. The dataLogDir
+          parameters indicates a different directory to use for the
           transaction logs.</para>
         </listitem>
 
