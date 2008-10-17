@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server;
+package org.apache.zookeeper.server.upgrade;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.data.StatPersistedV1;
 
 /**
  * This class contains the data for a node in the data tree.
@@ -38,26 +38,19 @@ import org.apache.zookeeper.data.StatPersisted;
  * array of ACLs, a stat object, and a set of its children's paths.
  * 
  */
-public class DataNode implements Record {
-    DataNode() {
+public class DataNodeV1 implements Record {
+    DataNodeV1() {
         // default rather than public constructor
     }
 
-    /**
-     * create a DataNode with parent, data, acls and stat
-     * @param parent the parent of this DataNode
-     * @param data the data to be set
-     * @param acl the acls for this node
-     * @param stat the stat for this node.
-     */
-  
-    public DataNode(DataNode parent, byte data[], Long acl, StatPersisted stat) {
+    DataNodeV1(DataNodeV1 parent, byte data[], List<ACL> acl, StatPersistedV1 stat) {
         this.parent = parent;
         this.data = data;
         this.acl = acl;
         this.stat = stat;
         this.children = new HashSet<String>();
     }
+    
 
     /**
      * convenience method for creating DataNode
@@ -76,13 +69,13 @@ public class DataNode implements Record {
         return this.children;
     }
     
-    DataNode parent;
+    DataNodeV1 parent;
 
     byte data[];
 
-    Long acl;
+    List<ACL> acl;
 
-    public StatPersisted stat;
+    public StatPersistedV1 stat;
 
     HashSet<String> children = new HashSet<String>();
 
@@ -103,9 +96,19 @@ public class DataNode implements Record {
             throws IOException {
         archive.startRecord("node");
         data = archive.readBuffer("data");
-        acl = archive.readLong("acl");
-        stat = new StatPersisted();
-        stat.deserialize(archive, "statpersisted");
+        Index i = archive.startVector("acl");
+        if (i != null) {
+            acl = new ArrayList<ACL>();
+            while (!i.done()) {
+                ACL a = new ACL();
+                a.deserialize(archive, "aclEntry");
+                acl.add(a);
+                i.incr();
+            }
+        }
+        archive.endVector("acl");
+        stat = new StatPersistedV1();
+        stat.deserialize(archive, "stat");
         archive.endRecord("node");
     }
 
@@ -113,12 +116,14 @@ public class DataNode implements Record {
             throws IOException {
         archive.startRecord(this, "node");
         archive.writeBuffer(data, "data");
-        archive.writeLong(acl, "acl");
-        stat.serialize(archive, "statpersisted");
+        archive.startVector(acl, "acl");
+        if (acl != null) {
+            for (ACL a : acl) {
+                a.serialize(archive, "aclEntry");
+            }
+        }
+        archive.endVector(acl, "acl");
+        stat.serialize(archive, "stat");
         archive.endRecord(this, "node");
-    }
-    
-    public int compareTo(Object o) {
-        return -1;
     }
 }
