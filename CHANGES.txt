@@ -35,6 +35,8 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-5. Upgrade Feature in Zookeeper server. (mahadev via phunt)
+
   ZOOKEEPER-194. Fix terminology in zookeeperAdmin.xml
   (Flavio Paiva Junqueira)
 

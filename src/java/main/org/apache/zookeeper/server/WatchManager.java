@@ -43,11 +43,11 @@ public class WatchManager {
     private HashMap<Watcher, HashSet<String>> watch2Paths = 
         new HashMap<Watcher, HashSet<String>>();
 
-    synchronized int size(){
+    public synchronized int size(){
         return watchTable.size();
     }
 
-    synchronized void addWatch(String path, Watcher watcher) {
+    public synchronized void addWatch(String path, Watcher watcher) {
         HashSet<Watcher> list = watchTable.get(path);
         if (list == null) {
             list = new HashSet<Watcher>();
@@ -63,7 +63,7 @@ public class WatchManager {
         paths.add(path);
     }
 
-    synchronized void removeWatcher(Watcher watcher) {
+    public synchronized void removeWatcher(Watcher watcher) {
         HashSet<String> paths = watch2Paths.remove(watcher);
         if (paths == null) {
             return;
@@ -79,11 +79,11 @@ public class WatchManager {
         }
     }
 
-    Set<Watcher> triggerWatch(String path, EventType type) {
+    public Set<Watcher> triggerWatch(String path, EventType type) {
         return triggerWatch(path, type, null);
     }
     
-    Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
+    public Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
         WatchedEvent e = new WatchedEvent(type,
                 KeeperState.SyncConnected, path);
         HashSet<Watcher> watchers;

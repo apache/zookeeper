@@ -52,6 +52,8 @@
     <property name="test.build.dir" value="${build.dir}/test" />
     <property name="test.src.dir" value="${src.dir}/java/test"/>
     <property name="test.log.dir" value="${test.build.dir}/logs" />
+    <property name="test.data.dir" value="${test.build.dir}/data" />
+    <property name="test.data.upgrade.dir" value="${test.data.dir}/upgrade" />
     <property name="test.tmp.dir" value="${test.build.dir}/tmp" />
     <property name="test.output" value="no" />
     <property name="test.timeout" value="900000" />
@@ -505,8 +507,15 @@
     <target name="test-init" depends="jar,compile-test">
         <delete dir="${test.log.dir}" />
         <delete dir="${test.tmp.dir}" />
+        <delete dir="${test.data.upgrade.dir}" />
+        <delete dir="${test.data.dir}" />
         <mkdir dir="${test.log.dir}" />
         <mkdir dir="${test.tmp.dir}" />
+        <mkdir dir="${test.data.dir}" />
+        <mkdir dir="${test.data.upgrade.dir}" />
+        <copy todir="${test.data.upgrade.dir}">
+            <fileset dir="${basedir}/src/java/test/data/upgrade"/>
+        </copy> 
     </target>
 
     <target name="junit.run">
@@ -519,6 +528,7 @@
                dir="${basedir}" timeout="${test.timeout}"
                errorProperty="tests.failed" failureProperty="tests.failed">
           <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+          <sysproperty key="test.data.dir" value="${test.data.dir}" />
           <sysproperty key="log4j.configuration"
                        value="file:${basedir}/conf/log4j.properties" />
           <classpath refid="test.classpath"/>
@@ -656,6 +666,7 @@
                maxmemory="${test.junit.maxmem}" dir="${basedir}" timeout="${test.timeout}"
                errorProperty="tests.failed" failureProperty="tests.failed">
             <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+            <sysproperty key="test.data.dir" value="${test.data.dir}" />
             <sysproperty key="log4j.configuration"
                          value="file:${basedir}/conf/log4j.properties" />
             <classpath>

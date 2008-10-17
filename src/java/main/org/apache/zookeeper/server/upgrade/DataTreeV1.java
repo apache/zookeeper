@@ -16,32 +16,32 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server;
+package org.apache.zookeeper.server.upgrade;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.jute.Index;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher.Event;
-import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.data.StatPersistedV1;
+import org.apache.zookeeper.server.WatchManager;
+import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -58,14 +58,14 @@ import org.apache.zookeeper.txn.TxnHeader;
  * full paths to DataNodes and a tree of DataNodes. All accesses to a path is
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
-public class DataTree {
-    private static final Logger LOG = Logger.getLogger(DataTree.class);
+public class DataTreeV1 {
+    private static final Logger LOG = Logger.getLogger(DataTreeV1.class);
 
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
      */
-    private ConcurrentHashMap<String, DataNode> nodes = new ConcurrentHashMap<String, DataNode>();
+    private ConcurrentHashMap<String, DataNodeV1> nodes = new ConcurrentHashMap<String, DataNodeV1>();
 
     private WatchManager dataWatches = new WatchManager();
 
@@ -76,28 +76,21 @@ public class DataTree {
      */
     private Map<Long, HashSet<String>> ephemerals = new ConcurrentHashMap<Long, HashSet<String>>();
 
-    /**
-     * this is map from longs to acl's. It saves acl's being stored 
-     * for each datanode.
-     */
-    public Map<Long, List<ACL>> longKeyMap =
-                             new HashMap<Long, List<ACL>>();
-    
-    /**
-     * this a map from acls to long. 
-     */
-    public Map<List<ACL>, Long> aclKeyMap = 
-                            new HashMap<List<ACL>, Long>();
-    
-     /**
-     * these are the number of acls 
-     * that we have in the datatree
-     */
-    protected long aclIndex = 0;
-    
     /** A debug string * */
     private String debug = "debug";
-
+    
+    /**
+     * return the ephemerals for this tree
+     * @return the ephemerals for this tree
+     */
+    public Map<Long, HashSet<String>>  getEphemeralsMap() {
+        return this.ephemerals;
+    }
+    
+    public void setEphemeralsMap(Map<Long, HashSet<String>> ephemerals) {
+        this.ephemerals = ephemerals;
+    }
+    
     @SuppressWarnings("unchecked")
     public HashSet<String> getEphemerals(long sessionId) {
         HashSet<String> retv = ephemerals.get(sessionId);
@@ -111,118 +104,27 @@ public class DataTree {
         return cloned;
     }
     
-    public Map<Long, HashSet<String>> getEphemeralsMap() {
-        return ephemerals;
-    }
-    
-    public void setEphemerals(Map<Long, HashSet<String>> ephemerals) {
-        this.ephemerals = ephemerals;
-    }
-    
-    
-    private long incrementIndex() {
-       return ++aclIndex;
-    }
-    
-    /**
-     * compare two list of acls. if there elements are in the same
-     * order and the same size then return true else return false
-     * @param lista the list to be compared
-     * @param listb the list to be compared
-     * @return true if and only if the lists are of the same size
-     * and the elements are in the same order in lista and listb
-     */
-    private boolean listACLEquals(List<ACL> lista, List<ACL> listb) {
-        if (lista.size() != listb.size()) {
-            return false;
-        }
-        for (int i = 0; i < lista.size(); i++) {
-            ACL a = lista.get(i);
-            ACL b = listb.get(i);
-            if (!a.equals(b)) {
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    /**
-     * converts the list of acls to a list of 
-     * longs. 
-     * @param acls
-     * @return a list of longs that map to the acls
-     */
-    public synchronized Long convertAcls(List<ACL> acls) {
-        if (acls == null)
-            return -1L;
-        // get the value from the map 
-        Long ret = aclKeyMap.get(acls);
-        // could not find the map
-        if (ret != null)
-            return ret;
-        long val = incrementIndex();
-        longKeyMap.put(val,acls);
-        aclKeyMap.put(acls, val);
-        return val;
-    }
-    
-    /**
-     * converts a list of longs to a list of acls. 
-     * @param longs the list of longs 
-     * @return a list of ACLs that map to longs
-     */
-    public synchronized List<ACL> convertLong(Long longVal) {
-        if (longVal == null || longVal == -1L) 
-            return null;
-        List<ACL> acls = longKeyMap.get(longVal);
-        if (acls == null) {
-            LOG.error("ERROR: ACL not available for long " + longVal);
-            throw new RuntimeException("Failed to fetch acls for " + longVal);
-        }
-        return acls;
-    }
-    
     public Collection<Long> getSessions() {
         return ephemerals.keySet();
     }
 
-    /**
-     * just an accessor method to allow raw creation
-     * of datatree's from a bunch of datanodes
-     * @param path the path of the datanode
-     * @param node the datanode corresponding to this
-     * path
-     */
-    public void addDataNode(String path, DataNode node) {
-        nodes.put(path, node);
-    }
-    
-    public DataNode getNode(String path) {
+    public DataNodeV1 getNode(String path) {
         return nodes.get(path);
-    }
-
-    public int getNodeCount(){
-        return nodes.size();
-    }
-
-    public int getWatchCount(){
-        return dataWatches.size()+childWatches.size();
     }
 
     /**
      * This is a pointer to the root of the DataTree. It is the source of truth,
      * but we usually use the nodes hashmap to find nodes in the tree.
      */
-    private DataNode root =
-        new DataNode(null, new byte[0], -1L, new StatPersisted());
+    private DataNodeV1 root = new DataNodeV1(null, new byte[0], null, new StatPersistedV1());
 
-    public DataTree() {
+    public DataTreeV1() {
         /* Rather than fight it, let root have an alias */
         nodes.put("", root);
         nodes.put("/", root);
     }
 
-    static public void copyStatPersisted(StatPersisted from, StatPersisted to) {
+    static public void copyStatPersisted(StatPersistedV1 from, StatPersistedV1 to) {
         to.setAversion(from.getAversion());
         to.setCtime(from.getCtime());
         to.setCversion(from.getCversion());
@@ -245,6 +147,7 @@ public class DataTree {
         to.setDataLength(from.getDataLength());
         to.setNumChildren(from.getNumChildren());
     }
+
 
     // public void remooveInterest(String path, Watcher nw) {
     // DataNode n = nodes.get(path);
@@ -276,11 +179,11 @@ public class DataTree {
      */
     public String createNode(String path, byte data[], List<ACL> acl,
             long ephemeralOwner, long zxid, long time) 
-        throws KeeperException.NoNodeException, KeeperException.NodeExistsException {
+            throws KeeperException.NoNodeException, KeeperException.NodeExistsException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
-        StatPersisted stat = new StatPersisted();
+        StatPersistedV1 stat = new StatPersistedV1();
         stat.setCtime(time);
         stat.setMtime(time);
         stat.setCzxid(zxid);
@@ -288,7 +191,7 @@ public class DataTree {
         stat.setVersion(0);
         stat.setAversion(0);
         stat.setEphemeralOwner(ephemeralOwner);
-        DataNode parent = nodes.get(parentName);
+        DataNodeV1 parent = nodes.get(parentName);
         if (parent == null) {
             throw new KeeperException.NoNodeException();
         }
@@ -299,8 +202,7 @@ public class DataTree {
             int cver = parent.stat.getCversion();
             cver++;
             parent.stat.setCversion(cver);
-            Long longval = convertAcls(acl);
-            DataNode child = new DataNode(parent, data, longval, stat);
+            DataNodeV1 child = new DataNodeV1(parent, data, acl, stat);
             parent.children.add(childName);
             nodes.put(path, child);
             if (ephemeralOwner != 0) {
@@ -319,21 +221,16 @@ public class DataTree {
         return path;
     }
 
-    /**
-     * remove the path from the datatree
-     * @param path the path to be deleted
-     * @throws KeeperException.NoNodeException
-     */
     public void deleteNode(String path) throws KeeperException.NoNodeException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
-        DataNode node = nodes.get(path);
+        DataNodeV1 node = nodes.get(path);
         if (node == null) {
             throw new KeeperException.NoNodeException();
         }
         nodes.remove(path);
-        DataNode parent = nodes.get(parentName);
+        DataNodeV1 parent = nodes.get(parentName);
         if (parent == null) {
             throw new KeeperException.NoNodeException();
         }
@@ -351,12 +248,6 @@ public class DataTree {
             }
             node.parent = null;
         }
-        ZooTrace.logTraceMessage(LOG,
-                                 ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                                 "dataWatches.triggerWatch " + path);
-        ZooTrace.logTraceMessage(LOG,
-                                 ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                                 "childWatches.triggerWatch " + parentName);
         Set<Watcher> processed =
         dataWatches.triggerWatch(path, EventType.NodeDeleted);
         childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
@@ -366,7 +257,7 @@ public class DataTree {
     public Stat setData(String path, byte data[], int version, long zxid,
             long time) throws KeeperException.NoNodeException {
         Stat s = new Stat();
-        DataNode n = nodes.get(path);
+        DataNodeV1 n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
@@ -382,7 +273,7 @@ public class DataTree {
     }
 
     public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
-        DataNode n = nodes.get(path);
+        DataNodeV1 n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
@@ -397,7 +288,7 @@ public class DataTree {
 
     public Stat statNode(String path, Watcher watcher) throws KeeperException.NoNodeException {
         Stat stat = new Stat();
-        DataNode n = nodes.get(path);
+        DataNodeV1 n = nodes.get(path);
         if (watcher != null) {
             dataWatches.addWatch(path, watcher);
         }
@@ -410,9 +301,8 @@ public class DataTree {
         }
     }
 
-    public List<String> getChildren(String path, Stat stat, Watcher watcher) 
-            throws KeeperException.NoNodeException {
-        DataNode n = nodes.get(path);
+    public ArrayList<String> getChildren(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
+        DataNodeV1 n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
@@ -428,13 +318,13 @@ public class DataTree {
 
     public Stat setACL(String path, List<ACL> acl, int version) throws KeeperException.NoNodeException {
         Stat stat = new Stat();
-        DataNode n = nodes.get(path);
+        DataNodeV1 n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
             n.stat.setAversion(version);
-            n.acl = convertAcls(acl);
+            n.acl = acl;
             n.copyStat(stat);
             return stat;
         }
@@ -442,13 +332,13 @@ public class DataTree {
 
     @SuppressWarnings("unchecked")
     public List<ACL> getACL(String path, Stat stat) throws KeeperException.NoNodeException {
-        DataNode n = nodes.get(path);
+        DataNodeV1 n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
             n.copyStat(stat);
-            return new ArrayList<ACL>(convertLong(n.acl));
+            return new ArrayList<ACL>(n.acl);
         }
     }
 
@@ -588,9 +478,10 @@ public class DataTree {
      * @throws IOException
      * @throws InterruptedException
      */
-    void serializeNode(OutputArchive oa, StringBuilder path) throws IOException {
+    void serializeNode(OutputArchive oa, StringBuilder path)
+            throws IOException, InterruptedException {
         String pathString = path.toString();
-        DataNode node = getNode(pathString);
+        DataNodeV1 node = getNode(pathString);
         if (node == null) {
             return;
         }
@@ -618,48 +509,10 @@ public class DataTree {
     int scount;
 
     public boolean initialized = false;
-    
-    private void deserializeList(Map<Long, List<ACL>> longKeyMap, InputArchive ia) 
-            throws IOException {
-        int i = ia.readInt("map");
-        while (i > 0) {
-            Long val = ia.readLong("long");
-            if (aclIndex < val) {
-                aclIndex = val;
-            }
-            List<ACL> aclList = new ArrayList<ACL>();
-            Index j = ia.startVector("acls");
-            while (!j.done()) {
-                ACL acl = new ACL();
-                acl.deserialize(ia, "acl");
-                aclList.add(acl);
-                j.incr();
-            }
-            longKeyMap.put(val, aclList);
-            aclKeyMap.put(aclList, val);
-            i--;
-        }
-    }
-    
-    private synchronized void serializeList(Map<Long, List<ACL>> longKeyMap, 
-            OutputArchive oa) 
-            throws IOException {
-        oa.writeInt(longKeyMap.size(), "map");
-        Set<Map.Entry<Long, List<ACL>>> set = longKeyMap.entrySet();
-        for (Map.Entry<Long, List<ACL>> val : set) {
-            oa.writeLong(val.getKey(), "long");
-            List<ACL> aclList = val.getValue();
-            oa.startVector(aclList, "acls");
-            for (ACL acl: aclList) {
-                acl.serialize(oa, "acl");
-            }
-            oa.endVector(aclList, "acls");
-        }
-    }
-    
-    public void serialize(OutputArchive oa, String tag) throws IOException {
+
+    public void serialize(OutputArchive oa, String tag) throws IOException,
+            InterruptedException {
         scount = 0;
-        serializeList(longKeyMap, oa);
         serializeNode(oa, new StringBuilder(""));
         // / marks end of stream
         // we need to check if clear had been called in between the snapshot.
@@ -669,11 +522,10 @@ public class DataTree {
     }
 
     public void deserialize(InputArchive ia, String tag) throws IOException {
-        deserializeList(longKeyMap, ia);
         nodes.clear();
         String path = ia.readString("path");
         while (!path.equals("/")) {
-            DataNode node = new DataNode();
+            DataNodeV1 node = new DataNodeV1();
             ia.readRecord(node, "node");
             nodes.put(path, node);
             int lastSlash = path.lastIndexOf('/');

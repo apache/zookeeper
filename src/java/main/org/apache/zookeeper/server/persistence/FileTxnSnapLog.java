@@ -49,6 +49,8 @@ public class FileTxnSnapLog {
     File snapDir;
     TxnLog txnLog;
     SnapShot snapLog;
+    public final static int VERSION = 2;
+    public final static String version = "version-";
     
     private static final Logger LOG = Logger.getLogger(FileTxnSnapLog.class);
     
@@ -70,10 +72,16 @@ public class FileTxnSnapLog {
      * @param snapDir the snapshot directory
      */
     public FileTxnSnapLog(File dataDir, File snapDir) {
-        this.dataDir = dataDir;
-        this.snapDir = snapDir;
-        txnLog = new FileTxnLog(dataDir);
-        snapLog = new FileSnap(snapDir);
+        this.dataDir = new File(dataDir, version + VERSION);
+        this.snapDir = new File(snapDir, version + VERSION);
+        if (!this.dataDir.exists()) {
+            this.dataDir.mkdirs();
+        }
+        if (!this.snapDir.exists()) {
+            this.snapDir.mkdirs();
+        }
+        txnLog = new FileTxnLog(this.dataDir);
+        snapLog = new FileSnap(this.snapDir);
     }
     
     /**
