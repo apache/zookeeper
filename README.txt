@@ -1,8 +1,17 @@
 Welcome to ZooKeeper!
 
 -------------------
-Run "ant" command in this directory to build the server/client. "zookeeper-dev.jar" will be output to this directory on a successful build.
+Documentation
 
+See docs/index.html
+
+New Users -- see the overview, getting started, and programmer guides
+Existing Users -- if you are upgrading to 3.0 review the releasenotes and upgrade guide
+
+-------------------
+Quick Start
+
+Run "ant" command in this directory to build the server/client. "zookeeper-dev.jar" will be output to this directory on a successful build.
 
 -------------------
 Starting the server:

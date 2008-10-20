@@ -35,6 +35,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-198. apache license header missing from FollowerSyncRequest.java
+  (phunt)
+
   ZOOKEEPER-5. Upgrade Feature in Zookeeper server. (mahadev via phunt)
 
   ZOOKEEPER-194. Fix terminology in zookeeperAdmin.xml
