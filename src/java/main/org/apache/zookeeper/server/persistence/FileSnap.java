@@ -94,6 +94,11 @@ public class FileSnap implements SnapShot {
             InputArchive ia) throws IOException {
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
+        if (header.getMagic() != SNAP_MAGIC) {
+            throw new IOException("mismatching magic headers "
+                    + header.getMagic() + 
+                    " !=  " + FileSnap.SNAP_MAGIC);
+        }
         SerializeUtils.deserializeSnapshot(dt,ia,sessions);
     }
 
