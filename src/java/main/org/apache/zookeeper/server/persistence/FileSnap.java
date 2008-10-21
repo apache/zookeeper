@@ -28,11 +28,15 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.Adler32;
+import java.util.zip.CheckedInputStream;
+import java.util.zip.CheckedOutputStream;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.util.SerializeUtils;
 
@@ -46,6 +50,7 @@ public class FileSnap implements SnapShot {
     File snapDir;
     private static final int VERSION=2;
     private static final long dbId=-1;
+    private static final Logger LOG = Logger.getLogger(FileSnap.class);
     public final static int MAGIC = ByteBuffer.wrap("AK47".getBytes()).getInt();
     public FileSnap(File snapDir) {
         this.snapDir = snapDir;
@@ -61,10 +66,18 @@ public class FileSnap implements SnapShot {
         if (snap == null) {
             return -1L;
         }
+        LOG.info("Reading snapshot " + snap);
         InputStream snapIS = new BufferedInputStream(new FileInputStream(snap));
-        InputArchive ia=BinaryInputArchive.getArchive(snapIS);
+        CheckedInputStream crcIn = new CheckedInputStream(snapIS, new Adler32());
+        InputArchive ia=BinaryInputArchive.getArchive(crcIn);
         deserialize(dt,sessions, ia);
+        long checkSum = crcIn.getChecksum().getValue();
+        long val = ia.readLong("val");
+        if (val != checkSum) {
+            throw new IOException("CRC corruption in snapshot :  " + snap);
+        }
         snapIS.close();
+        crcIn.close();
         dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), "snapshot");
         return dt.lastProcessedZxid;
     }
@@ -124,10 +137,16 @@ public class FileSnap implements SnapShot {
     public void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)
             throws IOException {
         OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
-        OutputArchive oa = BinaryOutputArchive.getArchive(sessOS);
+        CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32());
+        //CheckedOutputStream cout = new CheckedOutputStream()
+        OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
         FileHeader header = new FileHeader(MAGIC, VERSION, dbId);
         serialize(dt,sessions,oa, header);
+        long val = crcOut.getChecksum().getValue();
+        oa.writeLong(val, "val");
+        oa.writeString("/", "path");
         sessOS.flush();
+        crcOut.close();
         sessOS.close();
     }
    

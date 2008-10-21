@@ -44,7 +44,7 @@ import org.apache.zookeeper.server.persistence.FileTxnLog;
 public abstract class ClientBase extends TestCase {
     protected static final Logger LOG = Logger.getLogger(ClientBase.class);
 
-    static final int CONNECTION_TIMEOUT = 30000;
+    public static final int CONNECTION_TIMEOUT = 30000;
     static final File BASETEST =
         new File(System.getProperty("build.test.dir", "build"));
 
@@ -191,7 +191,7 @@ public abstract class ClientBase extends TestCase {
     }
 
 
-    static File createTmpDir() throws IOException {
+    public static File createTmpDir() throws IOException {
         return createTmpDir(BASETEST);
     }
     static File createTmpDir(File parentDir) throws IOException {
@@ -240,7 +240,7 @@ public abstract class ClientBase extends TestCase {
     /**
      * Test specific setup
      */
-    static void setupTestEnv() {
+    public static void setupTestEnv() {
         // during the tests we run with 100K prealloc in the logs.
         // on windows systems prealloc of 64M was seen to take ~15seconds
         // resulting in test failure (client timeout on first session).
