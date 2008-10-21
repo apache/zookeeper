@@ -35,6 +35,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-201. validate magic number when reading snapshot and transaction
+  logs (mahadev via phunt)
+
   ZOOKEEPER-200. the magic number for snapshot and log must be different
   (currently same) (phunt)
 

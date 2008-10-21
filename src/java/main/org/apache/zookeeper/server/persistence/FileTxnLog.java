@@ -384,6 +384,10 @@ public class FileTxnLog implements TxnLog {
             throws IOException{
             FileHeader header= new FileHeader();
             header.deserialize(ia, "fileheader");
+            if (header.getMagic() != FileTxnLog.TXNLOG_MAGIC) {
+                throw new IOException("Invalid magic number " + header.getMagic() 
+                        + " != " + FileTxnLog.TXNLOG_MAGIC);
+            }  
         }
         
         /**
@@ -395,10 +399,10 @@ public class FileTxnLog implements TxnLog {
         protected InputArchive createInputArchive(File logFile) throws IOException {
             if(inputStream==null){
                 inputStream= new FileInputStream(logFile);
-                LOG.info("Created new input stream " + logFile);
+                LOG.debug("Created new input stream " + logFile);
                 ia  = BinaryInputArchive.getArchive(new BufferedInputStream(inputStream));
                 inStreamCreated(ia,inputStream);
-                LOG.info("created new input archive " + logFile);
+                LOG.debug("created new input archive " + logFile);
             }
             return ia;
         }
