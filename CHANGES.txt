@@ -35,6 +35,8 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-197. create checksums for snapshots (mahadev via phunt)
+
   ZOOKEEPER-198. apache license header missing from FollowerSyncRequest.java
   (phunt)
 
