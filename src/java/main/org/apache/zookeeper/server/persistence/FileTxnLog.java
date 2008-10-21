@@ -53,7 +53,8 @@ public class FileTxnLog implements TxnLog {
     volatile OutputArchive oa;
     
     File logDir;
-    public final static int MAGIC = ByteBuffer.wrap("AK47".getBytes()).getInt();
+    public final static int TXNLOG_MAGIC =
+        ByteBuffer.wrap("ZKLG".getBytes()).getInt();
     public final static int VERSION = 2;
     private boolean forceSync = true;
     long dbId;
@@ -127,7 +128,7 @@ public class FileTxnLog implements TxnLog {
                        Long.toHexString(hdr.getZxid())));
                logStream=new FileOutputStream(logFileWrite);
                oa = BinaryOutputArchive.getArchive(logStream);
-               FileHeader fhdr = new FileHeader(MAGIC,VERSION, dbId);
+               FileHeader fhdr = new FileHeader(TXNLOG_MAGIC,VERSION, dbId);
                fhdr.serialize(oa, "fileheader");
                currentSize = logStream.getChannel().position();
                streamsToFlush.add(logStream);

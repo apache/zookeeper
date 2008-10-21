@@ -35,6 +35,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-200. the magic number for snapshot and log must be different
+  (currently same) (phunt)
+
   ZOOKEEPER-199. fix log messages in persistence code (mahadev via phunt)
 
   ZOOKEEPER-197. create checksums for snapshots (mahadev via phunt)

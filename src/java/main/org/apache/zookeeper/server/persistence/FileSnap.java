@@ -51,11 +51,12 @@ public class FileSnap implements SnapShot {
     private static final int VERSION=2;
     private static final long dbId=-1;
     private static final Logger LOG = Logger.getLogger(FileSnap.class);
-    public final static int MAGIC = ByteBuffer.wrap("AK47".getBytes()).getInt();
+    public final static int SNAP_MAGIC
+        = ByteBuffer.wrap("ZKSN".getBytes()).getInt();
     public FileSnap(File snapDir) {
         this.snapDir = snapDir;
     }
-    
+
     /**
      * deserialize a data tree from the most recent snapshot
      * @return the zxid of the snapshot
@@ -81,7 +82,7 @@ public class FileSnap implements SnapShot {
         dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), "snapshot");
         return dt.lastProcessedZxid;
     }
-    
+
     /**
      * deserialize the datatree from an inputarchive
      * @param dt the datatree to be serialized into
@@ -95,7 +96,7 @@ public class FileSnap implements SnapShot {
         header.deserialize(ia, "fileheader");
         SerializeUtils.deserializeSnapshot(dt,ia,sessions);
     }
-    
+
     /**
      * find the most recent snapshot in the database.
      * @return the file containing the most recent snapshot
@@ -119,7 +120,7 @@ public class FileSnap implements SnapShot {
      */
     protected void serialize(DataTree dt,Map<Long, Integer> sessions,
             OutputArchive oa, FileHeader header) throws IOException {
-        // this is really a programmatic error and not something that can 
+        // this is really a programmatic error and not something that can
         // happen at runtime
         if(header==null)
             throw new IllegalStateException(
@@ -127,7 +128,7 @@ public class FileSnap implements SnapShot {
         header.serialize(oa, "fileheader");
         SerializeUtils.serializeSnapshot(dt,oa,sessions);
     }
-    
+
     /**
      * serialize the datatree and session into the file snapshot
      * @param dt the datatree to be serialized
@@ -140,7 +141,7 @@ public class FileSnap implements SnapShot {
         CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32());
         //CheckedOutputStream cout = new CheckedOutputStream()
         OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
-        FileHeader header = new FileHeader(MAGIC, VERSION, dbId);
+        FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
         serialize(dt,sessions,oa, header);
         long val = crcOut.getChecksum().getValue();
         oa.writeLong(val, "val");
@@ -149,5 +150,5 @@ public class FileSnap implements SnapShot {
         crcOut.close();
         sessOS.close();
     }
-   
+
  }
