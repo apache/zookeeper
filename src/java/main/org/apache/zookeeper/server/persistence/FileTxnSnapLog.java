@@ -110,8 +110,8 @@ public class FileTxnSnapLog {
                 //empty logs 
                 return dt.lastProcessedZxid;
             }
-            if (hdr.getZxid() <= highestZxid && highestZxid != 0) {
-                LOG.error(highestZxid + "(higestZxid) >= "
+            if (hdr.getZxid() < highestZxid && highestZxid != 0) {
+                LOG.error(highestZxid + "(higestZxid) > "
                         + hdr.getZxid() + "(next log) for type "
                         + hdr.getType());
             } else {
