@@ -49,6 +49,8 @@ public class ZooDefs {
         public final int ping = 11;
 
         public final int auth = 100;
+        
+        public final int setWatches = 101;
 
         public final int createSession = -10;
 

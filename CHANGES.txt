@@ -30,6 +30,8 @@ Non-backward compatible changes:
 
   ZOOKEEPER-33. Better ACL management
   (mahadev)
+   
+  ZOOKEEPER-43. Server side of auto reset watches.
 
 Backward compatibile changes:
 

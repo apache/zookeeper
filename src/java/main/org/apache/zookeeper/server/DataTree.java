@@ -34,14 +34,17 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -229,6 +232,7 @@ public class DataTree {
         to.setCzxid(from.getCzxid());
         to.setMtime(from.getMtime());
         to.setMzxid(from.getMzxid());
+        to.setPzxid(from.getPzxid());
         to.setVersion(from.getVersion());
         to.setEphemeralOwner(from.getEphemeralOwner());
     }
@@ -240,6 +244,7 @@ public class DataTree {
         to.setCzxid(from.getCzxid());
         to.setMtime(from.getMtime());
         to.setMzxid(from.getMzxid());
+        to.setPzxid(from.getPzxid());
         to.setVersion(from.getVersion());
         to.setEphemeralOwner(from.getEphemeralOwner());
         to.setDataLength(from.getDataLength());
@@ -285,6 +290,7 @@ public class DataTree {
         stat.setMtime(time);
         stat.setCzxid(zxid);
         stat.setMzxid(zxid);
+        stat.setPzxid(zxid);
         stat.setVersion(0);
         stat.setAversion(0);
         stat.setEphemeralOwner(ephemeralOwner);
@@ -299,6 +305,7 @@ public class DataTree {
             int cver = parent.stat.getCversion();
             cver++;
             parent.stat.setCversion(cver);
+            parent.stat.setPzxid(zxid);
             Long longval = convertAcls(acl);
             DataNode child = new DataNode(parent, data, longval, stat);
             parent.children.add(childName);
@@ -321,10 +328,13 @@ public class DataTree {
 
     /**
      * remove the path from the datatree
-     * @param path the path to be deleted
+     * @param path the path to of the node to be deleted
+     * @param zxid the current zxid
      * @throws KeeperException.NoNodeException
      */
-    public void deleteNode(String path) throws KeeperException.NoNodeException {
+    public void deleteNode(String path, long zxid)
+        throws KeeperException.NoNodeException
+    {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
@@ -340,6 +350,7 @@ public class DataTree {
         synchronized (parent) {
             parent.children.remove(childName);
             parent.stat.setCversion(parent.stat.getCversion() + 1);
+            parent.stat.setPzxid(zxid);
             long eowner = node.stat.getEphemeralOwner();
             if (eowner != 0) {
                 HashSet<String> nodes = ephemerals.get(eowner);
@@ -522,7 +533,7 @@ public class DataTree {
             case OpCode.delete:
                 DeleteTxn deleteTxn = (DeleteTxn) txn;
                 debug = "Delete transaction for " + deleteTxn.getPath();
-                deleteNode(deleteTxn.getPath());
+                deleteNode(deleteTxn.getPath(), header.getZxid());
                 break;
             case OpCode.setData:
                 SetDataTxn setDataTxn = (SetDataTxn) txn;
@@ -537,7 +548,7 @@ public class DataTree {
                         setACLTxn.getVersion());
                 break;
             case OpCode.closeSession:
-                killSession(header.getClientId());
+                killSession(header.getClientId(), header.getZxid());
                 break;
             case OpCode.error:
                 ErrorTxn errTxn = (ErrorTxn) txn;
@@ -555,7 +566,7 @@ public class DataTree {
         return rc;
     }
 
-    void killSession(long session) {
+    void killSession(long session, long zxid) {
         // the list is already removed from the ephemerals
         // so we do not have to worry about synchronyzing on
         // the list. This is only called from FinalRequestProcessor
@@ -566,7 +577,7 @@ public class DataTree {
         if (list != null) {
             for (String path : list) {
                 try {
-                    deleteNode(path);
+                    deleteNode(path, zxid);
                     ZooTrace.logTraceMessage(LOG,
                                              ZooTrace.SESSION_TRACE_MASK,
                                              "Deleting ephemeral node "
@@ -726,5 +737,62 @@ public class DataTree {
         ephemerals.clear();
         // dataWatches = null;
         // childWatches = null;
+    }
+
+    public void setWatches(long relativeZxid, List<String> dataWatches, 
+            List<String> existWatches, List<String> childWatches, Watcher watcher) {
+        for(String path: dataWatches) {
+            DataNode node = getNode(path);
+            WatchedEvent e = null;
+            if (node == null) {
+                e = new WatchedEvent(EventType.NodeDeleted,
+                        KeeperState.SyncConnected, path);
+            } else if (node.stat.getCzxid() > relativeZxid) {
+                e = new WatchedEvent(EventType.NodeCreated,
+                        KeeperState.SyncConnected, path);
+            } else if (node.stat.getMzxid() > relativeZxid) {
+                e = new WatchedEvent(EventType.NodeDataChanged,
+                        KeeperState.SyncConnected, path);
+            }
+            if (e != null) {
+                watcher.process(e);
+            } else {
+                this.dataWatches.addWatch(path, watcher);
+            }
+        }
+        for(String path: existWatches) {
+            DataNode node = getNode(path);
+            WatchedEvent e = null;
+            if (node == null) {
+                // This is the case when the watch was registered
+            } else if (node.stat.getMzxid() > relativeZxid) {
+                e = new WatchedEvent(EventType.NodeDataChanged,
+                        KeeperState.SyncConnected, path);
+            } else {
+                e = new WatchedEvent(EventType.NodeCreated,
+                        KeeperState.SyncConnected, path);
+            }
+            if (e != null) {
+                watcher.process(e);
+            } else {
+                this.dataWatches.addWatch(path, watcher);
+            }
+        }
+        for(String path: childWatches) {
+            DataNode node = getNode(path);
+            WatchedEvent e = null;
+            if (node == null) {
+                e = new WatchedEvent(EventType.NodeDeleted,
+                        KeeperState.SyncConnected, path);
+            } else if (node.stat.getPzxid() > relativeZxid) {
+                e = new WatchedEvent(EventType.NodeChildrenChanged,
+                        KeeperState.SyncConnected, path);
+            }
+            if (e != null) {
+                watcher.process(e);
+            } else {
+                this.childWatches.addWatch(path, watcher);
+            }
+        }
     }
 }

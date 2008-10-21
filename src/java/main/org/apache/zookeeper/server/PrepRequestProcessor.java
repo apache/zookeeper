@@ -352,6 +352,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             case OpCode.getACL:
             case OpCode.getChildren:
             case OpCode.ping:
+            case OpCode.setWatches:
                 break;
             }
         } catch (KeeperException e) {
@@ -379,9 +380,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         }
         request.hdr = txnHeader;
         request.txn = txn;
-        if (request.hdr != null) {
-            request.zxid = request.hdr.getZxid();
-        }
+        request.zxid = zks.getZxid();
         nextProcessor.processRequest(request);
     }
 

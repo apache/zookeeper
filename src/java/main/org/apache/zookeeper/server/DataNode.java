@@ -93,6 +93,7 @@ public class DataNode implements Record {
         to.setCzxid(stat.getCzxid());
         to.setMtime(stat.getMtime());
         to.setMzxid(stat.getMzxid());
+        to.setPzxid(stat.getPzxid());
         to.setVersion(stat.getVersion());
         to.setEphemeralOwner(stat.getEphemeralOwner());
         to.setDataLength(data.length);

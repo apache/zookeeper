@@ -87,9 +87,11 @@ public class ObservableDataTree extends DataTree implements ObservableComponent 
         return result;
     }
 
-    public void deleteNode(String path) throws KeeperException.NoNodeException {
+    public void deleteNode(String path, long zxid)
+        throws KeeperException.NoNodeException
+    {
         DataNode deleted=getNode(path);
-        super.deleteNode(path);
+        super.deleteNode(path, zxid);
         ObserverManager.getInstance().notifyObservers(this,
                 new TreeEventInfo(Event.DELETE,deleted));
     }

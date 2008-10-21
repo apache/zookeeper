@@ -83,13 +83,19 @@ public class ZooKeeperMain {
     }
 
     private static void printStat(Stat stat) {
-        System.err.println("ctime = " + new Date(stat.getCtime()).toString());
-        System.err.println("ctime = " + new Date(stat.getMtime()).toString());
-        System.err.println("cversion = " + stat.getCversion());
         System.err.println("cZxid = " + stat.getCzxid());
+        System.err.println("ctime = " + new Date(stat.getCtime()).toString());
         System.err.println("mZxid = " + stat.getMzxid());
+        System.err.println("mtime = " + new Date(stat.getMtime()).toString());
+        System.err.println("pZxid = " + stat.getPzxid());
+
+        System.err.println("cversion = " + stat.getCversion());
         System.err.println("dataVersion = " + stat.getVersion());
         System.err.println("aclVersion = " + stat.getAversion());
+        
+        System.err.println("ephemeralOwner = " + stat.getEphemeralOwner());
+        System.err.println("dataLength = " + stat.getDataLength());
+        System.err.println("numChildren = " + stat.getNumChildren());
     }
 
     public static void main(String args[]) throws NumberFormatException,

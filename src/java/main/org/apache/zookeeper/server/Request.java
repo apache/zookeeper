@@ -99,6 +99,7 @@ public class Request {
         case OpCode.getChildren:
         case OpCode.ping:
         case OpCode.closeSession:
+        case OpCode.setWatches:
             return true;
         default:
             return false;
@@ -131,6 +132,8 @@ public class Request {
             return "notification";
         case OpCode.create:
             return "create";
+        case OpCode.setWatches:
+            return "setWatches";
         case OpCode.delete:
             return "delete";
         case OpCode.exists:
