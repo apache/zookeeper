@@ -438,7 +438,7 @@ public class FileTxnLog implements TxnLog {
                 hdr = new TxnHeader();
                 record = SerializeUtils.deserializeTxn(iab, hdr);
             } catch (EOFException e) {
-                LOG.info("EOF excepton " + e);
+                LOG.debug("EOF excepton " + e);
                 inputStream.close();
                 inputStream = null;
                 // thsi means that the file has ended 
