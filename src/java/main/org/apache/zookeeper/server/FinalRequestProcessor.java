@@ -43,6 +43,7 @@ import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
 import org.apache.zookeeper.proto.SetDataResponse;
+import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
@@ -194,6 +195,17 @@ public class FinalRequestProcessor implements RequestProcessor {
                 byte b[] = zks.dataTree.getData(getDataRequest.getPath(), stat,
                         getDataRequest.getWatch() ? request.cnxn : null);
                 rsp = new GetDataResponse(b, stat);
+                break;
+            case OpCode.setWatches:
+                SetWatches setWatches = new SetWatches();
+                // XXX We really should NOT need this!!!!
+                request.request.rewind();
+                ZooKeeperServer.byteBuffer2Record(request.request, setWatches);
+                long relativeZxid = setWatches.getRelativeZxid();
+                zks.dataTree.setWatches(relativeZxid, 
+                        setWatches.getDataWatches(), 
+                        setWatches.getExistWatches(),
+                        setWatches.getChildWatches(), request.cnxn);
                 break;
             case OpCode.getACL:
                 GetACLRequest getACLRequest = new GetACLRequest();

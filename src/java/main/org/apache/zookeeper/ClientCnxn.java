@@ -60,6 +60,7 @@ import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
 import org.apache.zookeeper.proto.SetDataResponse;
+import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ZooTrace;
@@ -72,6 +73,19 @@ import org.apache.zookeeper.server.ZooTrace;
  */
 public class ClientCnxn {
     private static final Logger LOG = Logger.getLogger(ClientCnxn.class);
+    
+    /** This controls whether automatic watch resetting is enabled.
+     * Clients automatically reset watches during session reconnect, this
+     * option allows the client to turn off this behavior by setting
+     * the environment variable "zookeeper.disableAutoWatchReset" to "true" */
+    public static boolean disableAutoWatchReset;
+    static {
+        // this var should not be public, but otw there is no easy way 
+        // to test
+        disableAutoWatchReset = 
+            Boolean.getBoolean("zookeeper.disableAutoWatchReset");
+        LOG.info("zookeeper.disableAutoWatchReset is " + disableAutoWatchReset);
+    }
 
     private ArrayList<InetSocketAddress> serverAddrs = new ArrayList<InetSocketAddress>();
 
@@ -446,7 +460,7 @@ public class ClientCnxn {
         finishPacket(p);
     }
 
-    long lastZxid;
+    volatile long lastZxid;
 
     /**
      * This class services the outgoing request queue and generates the heart
@@ -479,7 +493,8 @@ public class ClientCnxn {
             if (sessionTimeout <= 0) {
                 zooKeeper.state = States.CLOSED;
 
-                eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
+                eventThread.queueEvent(new WatchedEvent(
+                        Watcher.Event.EventType.None,
                         Watcher.Event.KeeperState.Expired, null));
                 throw new IOException("Session Expired");
             }
@@ -489,6 +504,15 @@ public class ClientCnxn {
             sessionPasswd = conRsp.getPasswd();
             eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
                     Watcher.Event.KeeperState.SyncConnected, null));
+            if (!disableAutoWatchReset) {
+                SetWatches sw = new SetWatches(lastZxid,
+                        zooKeeper.getDataWatches(),
+                        zooKeeper.getExistWatches(),
+                        zooKeeper.getChildWatches());
+                RequestHeader h = new RequestHeader();
+                h.setType(ZooDefs.OpCode.setWatches);
+                queuePacket(h, new ReplyHeader(), sw, null, null, null, null, null);
+            }
         }
 
         void readResponse() throws IOException {
@@ -540,27 +564,31 @@ public class ClientCnxn {
              * Since requests are processed in order, we better get a response
              * to the first request!
              */
-         if (packet.header.getXid() != replyHdr.getXid()) {
-         throw new IOException("Xid out of order. Got "
-                  + replyHdr.getXid() + " expected "
-                  + packet.header.getXid());
+            try {
+                if (packet.header.getXid() != replyHdr.getXid()) {
+                    packet.replyHeader.setErr(KeeperException.Code.ConnectionLoss);
+                    throw new IOException("Xid out of order. Got "
+                            + replyHdr.getXid() + " expected "
+                            + packet.header.getXid());
+                }
+
+                packet.replyHeader.setXid(replyHdr.getXid());
+                packet.replyHeader.setErr(replyHdr.getErr());
+                packet.replyHeader.setZxid(replyHdr.getZxid());
+                if (replyHdr.getZxid() > 0) {
+                    lastZxid = replyHdr.getZxid();
+                }
+                if (packet.response != null && replyHdr.getErr() == 0) {
+                    packet.response.deserialize(bbia, "response");
+                }
+
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Reading reply sessionid:0x"
+                            + Long.toHexString(sessionId) + ", packet:: " + packet);
+                }
+            } finally {
+                finishPacket(packet);
             }
-
-         packet.replyHeader.setXid(replyHdr.getXid());
-         packet.replyHeader.setErr(replyHdr.getErr());
-         packet.replyHeader.setZxid(replyHdr.getZxid());
-         lastZxid = replyHdr.getZxid();
-         if (packet.response != null && replyHdr.getErr() == 0) {
-             packet.response.deserialize(bbia, "response");
-            }
-            packet.finished = true;
-
-            if (LOG.isDebugEnabled()) {
-            LOG.debug("Reading reply sessionid:0x"
-                + Long.toHexString(sessionId) + ", packet:: " + packet);
-        }
-
-            finishPacket(packet);
         }
 
         /**

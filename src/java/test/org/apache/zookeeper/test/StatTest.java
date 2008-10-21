@@ -63,6 +63,7 @@ public class StatTest extends ClientBase {
         stat.setMtime(100);
         stat.setMzxid(100);
         stat.setNumChildren(100);
+        stat.setPzxid(100);
         stat.setVersion(100);
         
         return stat;
@@ -82,6 +83,7 @@ public class StatTest extends ClientBase {
         zk.getData(name, false, stat);
         
         assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid(), stat.getPzxid());
         assertEquals(stat.getCtime(), stat.getMtime());
         assertEquals(0, stat.getCversion());
         assertEquals(0, stat.getVersion());
@@ -109,6 +111,7 @@ public class StatTest extends ClientBase {
         zk.getData(name, false, stat);
 
         assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid() + 1, stat.getPzxid());
         assertEquals(stat.getCtime(), stat.getMtime());
         assertEquals(1, stat.getCversion());
         assertEquals(0, stat.getVersion());
@@ -121,6 +124,7 @@ public class StatTest extends ClientBase {
         zk.getData(childname, false, stat);
 
         assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid(), stat.getPzxid());
         assertEquals(stat.getCtime(), stat.getMtime());
         assertEquals(0, stat.getCversion());
         assertEquals(0, stat.getVersion());
@@ -149,6 +153,7 @@ public class StatTest extends ClientBase {
             zk.getData(name, false, stat);
     
             assertEquals(stat.getCzxid(), stat.getMzxid());
+            assertEquals(stat.getCzxid() + i + 1, stat.getPzxid());
             assertEquals(stat.getCtime(), stat.getMtime());
             assertEquals(i + 1, stat.getCversion());
             assertEquals(0, stat.getVersion());
@@ -173,6 +178,7 @@ public class StatTest extends ClientBase {
         zk.getData(name, false, stat);
         
         assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid(), stat.getPzxid());
         assertEquals(stat.getCtime(), stat.getMtime());
         assertEquals(0, stat.getCversion());
         assertEquals(0, stat.getVersion());
@@ -187,6 +193,7 @@ public class StatTest extends ClientBase {
         zk.getData(name, false, stat);
         
         assertNotSame(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid(), stat.getPzxid());
         assertNotSame(stat.getCtime(), stat.getMtime());
         assertEquals(0, stat.getCversion());
         assertEquals(1, stat.getVersion());

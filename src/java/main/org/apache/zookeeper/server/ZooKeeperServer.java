@@ -191,7 +191,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         dataTree.initialized = true;
         for (long session : deadSessions) {
-            killSession(session);
+            // XXX: Is lastProcessedZxid really the best thing to use?
+            killSession(session, dataTree.lastProcessedZxid);
         }
         // Make a clean snapshot
         takeSnapshot();
@@ -284,8 +285,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         submitRequest(null, sessionId, OpCode.closeSession, 0, null, null);
     }
 
-    protected void killSession(long sessionId) {
-        dataTree.killSession(sessionId);
+    protected void killSession(long sessionId, long zxid) {
+        dataTree.killSession(sessionId, zxid);
         ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
                                      "ZooKeeperServer --- killSession: 0x"
                 + Long.toHexString(sessionId));

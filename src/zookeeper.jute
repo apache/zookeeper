@@ -37,6 +37,7 @@ module org.apache.zookeeper.data {
         long ephemeralOwner; // owner id if ephemeral, 0 otw
         int dataLength;  //length of the data in the node
         int numChildren; //number of children of this node
+        long pzxid;      // last modified children
     }
     // information explicitly stored by the server persistently
     class StatPersisted {
@@ -48,6 +49,7 @@ module org.apache.zookeeper.data {
         int cversion;    // child version
         int aversion;    // acl version
         long ephemeralOwner; // owner id if ephemeral, 0 otw
+        long pzxid;      // last modified children
     }
 
    // information explicitly stored by the version 1 database of servers 
@@ -83,6 +85,12 @@ module org.apache.zookeeper.proto {
         long sessionId;
         buffer passwd;
     }
+    class SetWatches {
+        long relativeZxid;
+        vector<ustring>dataWatches;
+        vector<ustring>existWatches;
+        vector<ustring>childWatches;
+    }        
     class RequestHeader {
         int xid;
         int type;
