@@ -37,6 +37,8 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-203. fix datadir typo in releasenotes (phunt)
+
   ZOOKEEPER-145. write detailed release notes for users migrating from 2.x
   to 3.0 (phunt)
 
