@@ -2,6 +2,8 @@ Trunk:
 
 Non-backward compatible changes:
 
+  ZOOKEEPER-43. Server side of auto reset watches. (breed via mahadev)
+
   ZOOKEEPER-132. Create Enum to replace CreateFlag in ZooKepper.create 
   method (Jakob Homan via phunt)
 
@@ -31,11 +33,11 @@ Non-backward compatible changes:
   ZOOKEEPER-33. Better ACL management
   (mahadev)
    
-  ZOOKEEPER-43. Server side of auto reset watches.
-
 Backward compatibile changes:
 
   BUGFIXES: 
+
+  ZOOKEEPER-191. forrest docs for upgrade. (mahadev via phunt)
 
   ZOOKEEPER-201. validate magic number when reading snapshot and transaction
   logs (mahadev via phunt)

@@ -330,19 +330,123 @@ The following issues resulted in changes to the on-disk data format (the snapsho
 
 </ul>
 <p>
-The following must be run once, and only once, when upgrading the ZooKeeper server instances to version 3.0.0.
+  
+<strong>The following must be run once, and only once, when upgrading the ZooKeeper server instances to version 3.0.0.</strong>
+
 </p>
+<div class="note">
+<div class="label">Note</div>
+<div class="content">
+  
+<p>
+    The &lt;dataLogDir&gt; and &lt;dataDir&gt; directories referenced
+    below are specified by the <em>dataLogDir</em>
+    and <em>dataLogDir</em> specification in your
+    ZooKeeper config file
+    respectively. <em>dataLogDir</em> defaults to the
+    value of <em>dataDir</em> if not specified explicitly
+    in the ZooKeeper server config file (in which case provide the
+    same directory for both parameters to the upgrade utility).
+  </p>
+
+</div>
+</div>
 <ol>
   
 <li>
-<p>TBD</p>
+<p>Shutdown the ZooKeeper server cluster.</p>
 </li>
+  
+<li>
+<p>Backup your &lt;dataLogDir&gt; and &lt;dataDir&gt; directories</p>
+</li>
+  
+<li>
+<p>Run upgrade using</p>
+    
+<ul>
+      
+<li>
+<p>
+<span class="codefrag computeroutput">bin/zkServer.sh upgrade &lt;dataLogDir&gt; &lt;dataDir&gt;</span>
+</p>
+</li>
+    
+</ul>
+    
+<p>or</p>
+    
+<ul>
+      
+<li>
+<p>
+<span class="codefrag computeroutput">java -classpath pathtolog4j:pathtozookeeper.jar UpgradeMain &lt;dataLogDir&gt; &lt;dataDir&gt;</span>
+</p>
+</li>
+    
+</ul>
+    
+<p>where &lt;dataLogDir&gt; is the directory where all transaction logs (log.*) are stored. &lt;dataDir&gt; is the directory where all the snapshots (snapshot.*) are stored.</p>
+  
+</li>
+  
+<li>
+<p>Restart the cluster. </p>
+</li>
+ 
+</ol>
+<p>
+ If you have any failure during the upgrade procedure keep reading to sanitize your database. 
+ </p>
+<p>This is how upgrade works in ZooKeeper. This will help you troubleshoot in case you have problems while upgrading</p>
+<ol>
 
+<li>
+<p>Upgrade moves files from &lt;dataLogDir&gt; and &lt;dataDir&gt; to &lt;dataLogDir&gt;/version-1/ and &lt;dataDir&gt;/version-1 respectively (version-1 sub-directory is created by the upgrade utility). </p>
+</li>
+ 
+<li>
+<p>Upgrade creates a new version sub-directory &lt;dataDir&gt;/version-2 and &lt;dataLogDir&gt;/version-2</p>
+</li>
+ 
+<li>
+<p>Upgrade reads the old database from &lt;dataDir&gt;/version-1 and &lt;dataLogDir&gt;/version-1 into the memory and creates a new upgraded snapshot. </p>
+</li>
+ 
+<li>
+<p>Upgrade writes the new database in &lt;dataDir&gt;/version-2.  </p>
+</li>
+ 
+</ol>
+<p>Troubleshooting.</p>
+<ol>
+ 
+<li>
+<p>In case you start ZooKeeper 3.0 without upgrading from 2.0 on a 2.0 database - the servers will start up with an empty database.
+ This is because the servers assume that &lt;dataDir&gt;/version-2 and &lt;dataLogDir&gt;/version-2 will have the database to start with. Since this will be empty
+ in case of no upgrade, the servers will start with an empty database. In such a case, shutdown the ZooKeeper servers, remove the version-2 directory (remember
+ this will lead to loss of updates after you started 3.0.)
+ and then start the upgrade procedure.</p>
+</li>
+ 
+<li>
+<p>If the upgrade fails while trying to rename files into the version-1 directory, you should try and move all the files under &lt;dataDir&gt;/version-1
+ and &lt;dataLogDir&gt;/version-1 to &lt;dataDir&gt; and &lt;dataLogDir&gt; respectively. Then try upgrade again.
+ </p>
+ 
+</li>
+ 
+<li>
+<p> If you do not wish to run with ZooKeeper 3.0 and prefer to run with ZooKeeper 2.0 and have already upgraded - you can run ZooKeeper 2 with 
+ the &lt;dataDir&gt; and &lt;dataLogDir&gt; directories changed to &lt;dataDir&gt;/version-1 and &lt;dataLogDir&gt;/version-1. Remember that you will lose all the updates that you made after the upgrade.
+</p>
+</li> 
+ 
 </ol>
 </div>
 
 
-<a name="N100BA"></a><a name="changes"></a>
+<a name="N10120"></a><a name="changes"></a>
 <h2 class="h3">Changes Since ZooKeeper 2.2.1</h2>
 <div class="section">
 <p>
