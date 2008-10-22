@@ -142,7 +142,7 @@ The following issues resulted in changes to the on-disk data format (the snapsho
   <para>
     The &lt;dataLogDir&gt; and &lt;dataDir&gt; directories referenced
     below are specified by the <emphasis>dataLogDir</emphasis>
-    and <emphasis>dataLogDir</emphasis> specification in your
+    and <emphasis>dataDir</emphasis> specification in your
     ZooKeeper config file
     respectively. <emphasis>dataLogDir</emphasis> defaults to the
     value of <emphasis>dataDir</emphasis> if not specified explicitly
