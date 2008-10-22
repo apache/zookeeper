@@ -29,6 +29,7 @@
 #define WATCHER_EVENT_XID -1 
 #define PING_XID -2
 #define AUTH_XID -4
+#define SET_WATCHES_XID -8
 
 /* zookeeper state constants */
 #define EXPIRED_SESSION_STATE_DEF -112
@@ -194,7 +195,8 @@ struct _zhandle {
      * available in the socket recv buffer */
     struct timeval socket_readable;
     
-    zk_hashtable* active_node_watchers;
+    zk_hashtable* active_node_watchers;   
+    zk_hashtable* active_exist_watchers;
     zk_hashtable* active_child_watchers;
 };
 
@@ -224,11 +226,11 @@ int32_t inc_ref_counter(zhandle_t* zh,int i);
 // atomic post-increment
 int32_t fetch_and_add(volatile int32_t* operand, int incr);
 // in mt mode process session event asynchronously by the completion thread
-int queue_session_event(zhandle_t *zh, int state);
 #define PROCESS_SESSION_EVENT(zh,newstate) queue_session_event(zh,newstate)
 #else
 // in single-threaded mode process session event immediately
-#define PROCESS_SESSION_EVENT(zh,newstate) deliverWatchers(zh,ZOO_SESSION_EVENT,newstate,0)
+//#define PROCESS_SESSION_EVENT(zh,newstate) deliverWatchers(zh,ZOO_SESSION_EVENT,newstate,0)
+#define PROCESS_SESSION_EVENT(zh,newstate) queue_session_event(zh,newstate)
 #endif
 
 #ifdef __cplusplus

@@ -37,6 +37,8 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-23. Auto reset of watches on reconnect (breed via phunt)
+
   ZOOKEEPER-191. forrest docs for upgrade. (mahadev via phunt)
 
   ZOOKEEPER-201. validate magic number when reading snapshot and transaction

@@ -26,6 +26,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <errno.h>
+#include <assert.h>
 
 #ifdef YCA
 #include <yca/yca.h>
@@ -68,7 +69,10 @@ void watcher(zhandle_t *zzh, int type, int state, const char *path,void* context
                     if (!fh) {
                         perror(clientIdFile);
                     } else {
-                        fwrite(&myid, sizeof(myid), 1, fh);
+                        int rc = fwrite(&myid, sizeof(myid), 1, fh);
+                        if (rc != sizeof(myid)) {
+                            perror("writing client id");
+                        }
                         fclose(fh);
                     }
                 }
@@ -130,7 +134,7 @@ void my_data_completion(int rc, const char *value, int value_len,
     fprintf(stderr, "%s: rc = %d\n", (char*)data, rc);
     if (value) {
         fprintf(stderr, " value_len = %d\n", value_len);
-        write(2, value, value_len);
+        assert(write(2, value, value_len) == value_len);
     }
     fprintf(stderr, "\nStat:\n");
     dumpStat(stat);
@@ -396,7 +400,9 @@ int main(int argc, char **argv) {
         clientIdFile = argv[2];
         fh = fopen(clientIdFile, "r");
         if (fh) {
-            fread(&myid, sizeof(myid), 1, fh);
+            if (fread(&myid, sizeof(myid), 1, fh) != sizeof(myid)) {
+                memset(&myid, 0, sizeof(myid));
+            }
             fclose(fh);
         }
       }

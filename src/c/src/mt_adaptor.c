@@ -271,6 +271,7 @@ void *do_io(void *v)
         int interest;
         int timeout;
         int maxfd=1;
+        int rc;
         
         zookeeper_interest(zh, &fd, &interest, &tv);
         if (fd != -1) {
@@ -292,7 +293,7 @@ void *do_io(void *v)
             while(read(adaptor_threads->self_pipe[0],b,sizeof(b))==sizeof(b)){}
         }
         // dispatch zookeeper events
-        zookeeper_process(zh, interest);
+        rc = zookeeper_process(zh, interest);
         // check the current state of the zhandle and terminate 
         // if it is_unrecoverable()
         if(is_unrecoverable(zh))

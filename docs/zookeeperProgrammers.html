@@ -822,11 +822,13 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 <p>Watches are maintained locally at the ZooKeeper server to which the
     client is connected. This allows watches to be light weight to set,
-    maintain, and dispatch. It also means if a client connects to a different
-    server, the new server is not going to know about its watches. So, when a
-    client gets a disconnect event, it must consider that an implicit trigger
-    of all watches. When a client reconnects to a new server, the client
-    should re-set any watches that it is still interested in.</p>
+    maintain, and dispatch. When a client connects to a new server, the watch
+    will be triggered for any session events. Watches will not be received
+    while disconnected from a server. When a client reconnects, any previously
+    registered watches will be reregistered and triggered if needed. In
+    general this all occurs transparently. There is one case where a watch
+    may be missed: a watch for the existance of a znode not yet created will
+    be missed if the znode is created and deleted while disconnected.</p>
 <a name="N101E9"></a><a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
 <p>With regard to watches, ZooKeeper maintains these
@@ -894,10 +896,26 @@ document.write("Last Published: " + document.lastModified);
         
 <li>
           
+<p>A watch object, or function/context pair, will only be
+          triggered once for a given notification. For example, if the same
+          watch object is registered for an exists and a getData call for the
+          same file and that file is then deleted, the watch object would
+          only be invoked once with the deletion notification for the file.
+          </p>
+        
+</li>
+      
+</ul>
+<ul>
+        
+<li>
+          
 <p>When you disconnect from a server (for example, when the
-          server fails), all of the watches you have registered are lost, so
-          you should treat this case as if all your watches were
-          triggered.</p>
+          server fails), you will not get any watches until the connection
+          is reestablished. For this reason session events are sent to all
+          outstanding watch handlers. Use session events to go into a safe
+          mode: you will not be receiving events while disconnected, so your
+          process should act conservatively in that mode.</p>
         
 </li>
       
@@ -905,13 +923,13 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N10231"></a><a name="sc_ZooKeeperAccessControl"></a>
+<a name="N1023A"></a><a name="sc_ZooKeeperAccessControl"></a>
 <h2 class="h3">ZooKeeper access control using ACLs</h2>
 <div class="section">
 <p>ZooKeeper uses ACLs to control access to its znodes (the data nodes of a ZooKeeper data tree). The ACL implementation is quite similar to UNIX file access permissions: it employs permission bits to allow/disallow various operations against a node and the scope to which the bits apply. Unlike standard UNIX permissions, a ZooKeeper node is not limited by the three standard scopes for user (owner of the file), group, and world (other). ZooKeeper does not have a notion of an owner of a znode. Instead, an ACL specifies sets of ids and permissions that are associated with those ids.</p>
 <p>ZooKeeper supports pluggable authentication schemes. Ids are specified using the form <em>scheme:id</em>, where <em>scheme</em> is a the authentication scheme that the id corresponds to. For example, <em>host:host1.corp.com</em> is an id for a host named <em>host1.corp.com</em>.</p>
 <p>When a client connects to ZooKeeper and authenticates itself, ZooKeeper associates all the ids that correspond to a client with the clients connection. These ids are checked against the ACLs of znodes when a clients tries to access a node. ACLs are made up of pairs of <em>(scheme:expression, perms)</em>. The format of the <em>expression</em> is specific to the scheme. For example, the pair <em>(ip:19.22.0.0/16, READ)</em> gives the <em>READ</em> permission to any clients with an IP address that starts with 19.22.</p>
-<a name="N10258"></a><a name="sc_ACLPermissions"></a>
+<a name="N10261"></a><a name="sc_ACLPermissions"></a>
 <h3 class="h4">ACL Permissions</h3>
 <p>Zookeeper supports the following permissions:</p>
 <ul>
@@ -947,7 +965,7 @@ document.write("Last Published: " + document.lastModified);
 <p>
 <em>CREATE</em> without <em>DELETE</em>: clients create requests by creating zookeeper nodes in a parent directory. You want all clients to be able to add, but only request processor can delete. (This is kind of like the APPEND permission for files.)</p>
 <p>Also, the <em>ADMIN</em> permission is there since Zookeeper doesn&rsquo;t have a notion of file owner. In some sense the <em>ADMIN</em> permission designates the entity as the owner. Zookeeper doesn&rsquo;t support the LOOKUP permission (execute permission bit on directories to allow you to LOOKUP even though you can't list the directory). Everyone implicitly has LOOKUP permission. This allows you to stat a node, but nothing more. (The problem is, if you want to call zoo_exists() on a node that doesn't exist, there is no permission to check.)</p>
-<a name="N102AE"></a><a name="sc_BuiltinACLSchemes"></a>
+<a name="N102B7"></a><a name="sc_BuiltinACLSchemes"></a>
 <h4>Builtin ACL Schemes</h4>
 <p>ZooKeeeper has the following built in schemes:</p>
 <ul>
@@ -978,7 +996,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N10303"></a><a name="Zookeeper+C+client+API"></a>
+<a name="N1030C"></a><a name="Zookeeper+C+client+API"></a>
 <h4>Zookeeper C client API</h4>
 <p>The following constants are provided by the zookeeper C library:</p>
 <ul>
@@ -1165,7 +1183,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10420"></a><a name="ch_zkGuarantees"></a>
+<a name="N10429"></a><a name="ch_zkGuarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -1291,12 +1309,12 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10487"></a><a name="ch_bindings"></a>
+<a name="N10490"></a><a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N10490"></a><a name="Java+Binding"></a>
+<a name="N10499"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1363,7 +1381,7 @@ int main(int argc, char argv) {
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid,
       the two threads shut down, and any further ZooKeeper calls throw
       errors.</p>
-<a name="N104D9"></a><a name="C+Binding"></a>
+<a name="N104E2"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1380,7 +1398,7 @@ int main(int argc, char argv) {
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N104E8"></a><a name="Installation"></a>
+<a name="N104F1"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1511,7 +1529,7 @@ int main(int argc, char argv) {
 </li>
         
 </ol>
-<a name="N10591"></a><a name="Using+the+Client"></a>
+<a name="N1059A"></a><a name="Using+the+Client"></a>
 <h4>Using the Client</h4>
 <p>You can test your client by running a zookeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1564,7 +1582,7 @@ int main(int argc, char argv) {
 </div>
 
    
-<a name="N105D0"></a><a name="ch_guideToZkOperations"></a>
+<a name="N105D9"></a><a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>This section surveys all the operations a developer can perform
@@ -1582,25 +1600,25 @@ int main(int argc, char argv) {
 </li>
     
 </ul>
-<a name="N105E4"></a><a name="sc_connectingToZk"></a>
+<a name="N105ED"></a><a name="sc_connectingToZk"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p></p>
-<a name="N105ED"></a><a name="sc_readOps"></a>
+<a name="N105F6"></a><a name="sc_readOps"></a>
 <h3 class="h4">Read Operations</h3>
 <p></p>
-<a name="N105F6"></a><a name="sc_writeOps"></a>
+<a name="N105FF"></a><a name="sc_writeOps"></a>
 <h3 class="h4">Write Operations</h3>
 <p></p>
-<a name="N105FF"></a><a name="sc_handlingWatches"></a>
+<a name="N10608"></a><a name="sc_handlingWatches"></a>
 <h3 class="h4">Handling Watches</h3>
 <p></p>
-<a name="N10608"></a><a name="sc_miscOps"></a>
+<a name="N10611"></a><a name="sc_miscOps"></a>
 <h3 class="h4">Miscelleaneous ZooKeeper Operations</h3>
 <p></p>
 </div>
 
   
-<a name="N10612"></a><a name="ch_programStructureWithExample"></a>
+<a name="N1061B"></a><a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -1609,7 +1627,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N1061D"></a><a name="ch_gotchas"></a>
+<a name="N10626"></a><a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application
@@ -1620,13 +1638,10 @@ int main(int argc, char argv) {
 <li>
         
 <p>If you are using watches, you must look for the connected watch
-        event. When a ZooKeeper client disconnects from a server, all the
-        watches are removed, so a client must treat the disconnect event as an
-        implicit trigger of watches. The easiest way to deal with this is to
-        act like the connected watch event is a watch trigger for all your
-        watches. The connected event makes a better trigger than the
-        disconnected event because you can access ZooKeeper and reestablish
-        watches when you are connected.</p>
+        event. When a ZooKeeper client disconnects from a server, you will
+        not receive notification of changes until reconnected. If you are
+        watching for a znode to come into existance, you will miss the event
+        if the znode is created and deleted while you are disconnected.</p>
       
 </li>
 

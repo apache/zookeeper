@@ -222,7 +222,7 @@ public:
     Mock_activateWatcher(){mock_=this;}
     virtual ~Mock_activateWatcher(){mock_=0;}
     
-    virtual void call(watcher_registration_t* reg, int rc){}
+    virtual void call(zhandle_t *zh, watcher_registration_t* reg, int rc){}
     static Mock_activateWatcher* mock_;
 };
 
@@ -245,7 +245,7 @@ public:
     Mock_deliverWatchers(){mock_=this;}
     virtual ~Mock_deliverWatchers(){mock_=0;}
     
-    virtual void call(zhandle_t* zh,int type,int state, const char* path){}
+    virtual void call(zhandle_t* zh,int type,int state, const char* path, watcher_object_list **){}
     static Mock_deliverWatchers* mock_;
 };
 

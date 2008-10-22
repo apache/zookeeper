@@ -39,9 +39,9 @@ hashtable_impl* getImpl(zk_hashtable* ht){
     return ht->ht;
 }
 
-typedef struct _watcher_object_list_t {
+struct watcher_object_list {
     watcher_object_t* head;
-} watcher_object_list_t;
+};
 
 watcher_object_t* getFirstWatcher(zk_hashtable* ht,const char* path)
 {
@@ -54,6 +54,7 @@ watcher_object_t* getFirstWatcher(zk_hashtable* ht,const char* path)
 watcher_object_t* clone_watcher_object(watcher_object_t* wo)
 {
     watcher_object_t* res=calloc(1,sizeof(watcher_object_t));
+    assert(res);
     res->watcher=wo->watcher;
     res->context=wo->context;
     return res;
@@ -78,6 +79,7 @@ static int string_equal(void *key1,void *key2)
 watcher_object_t* create_watcher_object(watcher_fn watcher,void* ctx)
 {
     watcher_object_t* wo=calloc(1,sizeof(watcher_object_t));
+    assert(wo);
     wo->watcher=watcher;
     wo->context=ctx;
     return wo;
@@ -86,6 +88,7 @@ watcher_object_t* create_watcher_object(watcher_fn watcher,void* ctx)
 static watcher_object_list_t* create_watcher_object_list(watcher_object_t* head) 
 {
     watcher_object_list_t* wl=calloc(1,sizeof(watcher_object_list_t));
+    assert(wl);
     wl->head=head;
     return wl;
 }
@@ -106,47 +109,12 @@ static void destroy_watcher_object_list(watcher_object_list_t* list)
 zk_hashtable* create_zk_hashtable()
 {
     struct _zk_hashtable *ht=calloc(1,sizeof(struct _zk_hashtable));
+    assert(ht);
 #ifdef THREADED
     pthread_mutex_init(&ht->lock, 0);
 #endif
     ht->ht=create_hashtable(32,string_hash_djb2,string_equal);
     return ht;
-}
-
-int get_element_count(zk_hashtable *ht)
-{
-    int res;
-#ifdef THREADED
-    pthread_mutex_lock(&ht->lock);
-#endif
-    res=hashtable_count(ht->ht);    
-#ifdef THREADED
-    pthread_mutex_unlock(&ht->lock);
-#endif
-    return res;
-}
-
-int get_watcher_count(zk_hashtable* ht,const char* path)
-{
-    int res=0;
-    watcher_object_list_t* wl;
-    watcher_object_t* wo;
-#ifdef THREADED
-    pthread_mutex_lock(&ht->lock);
-#endif
-    wl=hashtable_search(ht->ht,(void*)path);
-    if(wl==0)
-        goto done;
-    wo=wl->head;
-    while(wo!=0){
-        res++;
-        wo=wo->next;
-    }
-done:
-#ifdef THREADED
-    pthread_mutex_unlock(&ht->lock);
-#endif
-    return res;    
 }
 
 static void do_clean_hashtable(zk_hashtable* ht)
@@ -156,11 +124,11 @@ static void do_clean_hashtable(zk_hashtable* ht)
     if(hashtable_count(ht->ht)==0)
         return;
     it=hashtable_iterator(ht->ht);
-    do{
+    do {
         watcher_object_list_t* w=hashtable_iterator_value(it);
         destroy_watcher_object_list(w);
         hasMore=hashtable_iterator_remove(it);
-    }while(hasMore);
+    } while(hasMore);
     free(it);
 }
 
@@ -190,9 +158,9 @@ void destroy_zk_hashtable(zk_hashtable* ht)
 // searches for a watcher object instance in a watcher object list;
 // two watcher objects are equal if their watcher function and context pointers
 // are equal
-static watcher_object_t* search_watcher(watcher_object_list_t* wl,watcher_object_t* wo)
+static watcher_object_t* search_watcher(watcher_object_list_t** wl,watcher_object_t* wo)
 {
-    watcher_object_t* wobj=wl->head;
+    watcher_object_t* wobj=(*wl)->head;
     while(wobj!=0){
         if(wobj->watcher==wo->watcher && wobj->context==wo->context)
             return wobj;
@@ -201,10 +169,29 @@ static watcher_object_t* search_watcher(watcher_object_list_t* wl,watcher_object
     return 0;
 }
 
+int add_to_list(watcher_object_list_t **wl, watcher_object_t *wo, int clone)
+{
+    if (search_watcher(wl, wo)==0) {
+        watcher_object_t* cloned=wo;
+        if (clone) {
+            cloned = clone_watcher_object(wo);
+            assert(cloned);
+        }
+        cloned->next = (*wl)->head;
+        (*wl)->head = cloned;
+        return 1;
+    } else if (!clone) {
+        // If it's here and we aren't supposed to clone, we must destroy
+        free(wo);
+    }
+    return 0;
+}
+
 static int do_insert_watcher_object(zk_hashtable *ht, const char *path, watcher_object_t* wo)
 {
     int res=1;
     watcher_object_list_t* wl;
+
     wl=hashtable_search(ht->ht,(void*)path);
     if(wl==0){
         int res;
@@ -213,13 +200,27 @@ static int do_insert_watcher_object(zk_hashtable *ht, const char *path, watcher_
         assert(res);
     }else{
         /* path already exists; check if the watcher already exists */
-        if(search_watcher(wl,wo)==0){
-            wo->next=wl->head;
-            wl->head=wo; // insert the new watcher at the head
-        }else
-            res=0; // the watcher already exists -- do not insert!
+        res = add_to_list(&wl, wo, 1);
     }
     return res;    
+}
+
+
+char **collect_keys(zk_hashtable *ht, int *count)
+{
+    char **list;
+    struct hashtable_itr *it;
+    int i;
+
+    *count = hashtable_count(ht->ht);
+    list = calloc(*count, sizeof(char*));
+    it=hashtable_iterator(ht->ht);
+    for(i = 0; i < *count; i++) {
+        list[i] = strdup(hashtable_iterator_key(it));
+        hashtable_iterator_advance(it);
+    }
+    free(it);
+    return list;
 }
 
 int insert_watcher_object(zk_hashtable *ht, const char *path, watcher_object_t* wo)
@@ -235,102 +236,63 @@ int insert_watcher_object(zk_hashtable *ht, const char *path, watcher_object_t* 
     return res;
 }
 
-static void copy_watchers(zk_hashtable* dst,const char* path,watcher_object_list_t* wl)
+static void copy_watchers(watcher_object_list_t *from, watcher_object_list_t *to, int clone)
 {
-    if(wl==0)
-        return;
-    watcher_object_t* wo=wl->head;
-    while(wo!=0){
-        int res;
-        watcher_object_t* cloned=clone_watcher_object(wo);
-        res=do_insert_watcher_object(dst,path,cloned);
-        // was it a duplicate?
-        if(res==0)
-            free(cloned); // yes, didn't get inserted
-        wo=wo->next;
+    watcher_object_t* wo=from->head;
+    while(wo){
+        watcher_object_t *next = wo->next;
+        add_to_list(&to, wo, clone);
+        wo=next;
     }
 }
 
-static void copy_table(zk_hashtable* dst,zk_hashtable* src)
-{
+static void copy_table(zk_hashtable *from, watcher_object_list_t *to) {
     struct hashtable_itr *it;
     int hasMore;
-    if(hashtable_count(src->ht)==0)
+    if(hashtable_count(from->ht)==0)
         return;
-    it=hashtable_iterator(src->ht);
-    do{
-        copy_watchers(dst,hashtable_iterator_key(it),hashtable_iterator_value(it));
+    it=hashtable_iterator(from->ht);
+    do {
+        watcher_object_list_t *w = hashtable_iterator_value(it);
+        copy_watchers(w, to, 1);
         hasMore=hashtable_iterator_advance(it);
-    }while(hasMore);
+    } while(hasMore);
     free(it);
 }
 
-zk_hashtable* combine_hashtables(zk_hashtable *ht1,zk_hashtable *ht2)
+void collect_session_watchers(zhandle_t *zh, watcher_object_list_t **list)
 {
-    zk_hashtable* newht=create_zk_hashtable();
 #ifdef THREADED
-    pthread_mutex_lock(&ht1->lock);
-    pthread_mutex_lock(&ht2->lock);
+    pthread_mutex_lock(&zh->active_node_watchers->lock);
+    pthread_mutex_lock(&zh->active_exist_watchers->lock);
+    pthread_mutex_lock(&zh->active_child_watchers->lock);
 #endif
-    copy_table(newht,ht1);
-    copy_table(newht,ht2);
+    copy_table(zh->active_node_watchers, *list);
+    copy_table(zh->active_exist_watchers, *list);
+    copy_table(zh->active_child_watchers, *list);
 #ifdef THREADED
-    pthread_mutex_unlock(&ht2->lock);
-    pthread_mutex_unlock(&ht1->lock);
+    pthread_mutex_unlock(&zh->active_node_watchers->lock);
+    pthread_mutex_unlock(&zh->active_exist_watchers->lock);
+    pthread_mutex_unlock(&zh->active_child_watchers->lock);
 #endif    
-    return newht;
 }
 
-zk_hashtable* move_merge_watchers(zk_hashtable *ht1,zk_hashtable *ht2,const char *path)
+static void add_for_event(zk_hashtable *ht, char *path, watcher_object_list_t **list)
 {
     watcher_object_list_t* wl;
-    zk_hashtable* newht=create_zk_hashtable();
-#ifdef THREADED
-    pthread_mutex_lock(&ht1->lock);
-    pthread_mutex_lock(&ht2->lock);
-#endif
-    // copy watchers from table 1
-    wl=hashtable_remove(ht1->ht,(void*)path);
-    copy_watchers(newht,path,wl);
-    destroy_watcher_object_list(wl);
-    // merge all watchers from tabe 2
-    wl=hashtable_remove(ht2->ht,(void*)path);
-    copy_watchers(newht,path,wl);
-    destroy_watcher_object_list(wl);
-    
-#ifdef THREADED
-    pthread_mutex_unlock(&ht2->lock);
-    pthread_mutex_unlock(&ht1->lock);
-#endif    
-    return newht;
-}
-
-int contains_watcher(zk_hashtable *ht,watcher_object_t* wo)
-{
-    struct hashtable_itr *it=0;
-    int res=0;
-    int hasMore;
 #ifdef THREADED
     pthread_mutex_lock(&ht->lock);
 #endif
-    if(hashtable_count(ht->ht)==0)
-        goto done;
-    it=hashtable_iterator(ht->ht);
-    do{
-        watcher_object_list_t* w=hashtable_iterator_value(it);
-        if(search_watcher(w,wo)!=0){
-            res=1;
-            goto done;
-        }
-        hasMore=hashtable_iterator_advance(it);
-    }while(hasMore);
-done:
-    if(it!=0)
-        free(it);
+    wl = (watcher_object_list_t*)hashtable_remove(ht->ht, path);
+    if (wl) {
+        copy_watchers(wl, *list, 0);
+        // Since we move, not clone the watch_objects, we just need to free the
+        // head pointer
+        free(wl);
+    }
 #ifdef THREADED
     pthread_mutex_unlock(&ht->lock);
-#endif
-    return res;
+#endif    
 }
 
 static void do_foreach_watcher(watcher_object_t* wo,zhandle_t* zh,
@@ -342,103 +304,67 @@ static void do_foreach_watcher(watcher_object_t* wo,zhandle_t* zh,
     }    
 }
 
-void deliver_session_event(zk_hashtable* ht,zhandle_t* zh,int type,int state)
-{
-    struct hashtable_itr *it;
-    int hasMore;
-#ifdef THREADED
-    pthread_mutex_lock(&ht->lock);
-#endif
-    if(hashtable_count(ht->ht)==0)
-        goto done;
-    it=hashtable_iterator(ht->ht);
-    do{
-        watcher_object_t* wo=((watcher_object_list_t*)hashtable_iterator_value(it))->head;
-        // session events are delivered with the path set to null
-        do_foreach_watcher(wo,zh,0,type,state);
-        hasMore=hashtable_iterator_advance(it);
-    }while(hasMore);
-    free(it);
-done:
-#ifdef THREADED
-    pthread_mutex_unlock(&ht->lock);
-#endif
-    return;
-}
-
-void deliver_znode_event(zk_hashtable* ht,zhandle_t* zh,const char* path,int type,int state)
-{
-    watcher_object_list_t* wl;
-#ifdef THREADED
-    pthread_mutex_lock(&ht->lock);
-#endif
-    wl=hashtable_remove(ht->ht,(void*)path);
-#ifdef THREADED
-    pthread_mutex_unlock(&ht->lock);
-#endif
-    if(wl!=0){
-        do_foreach_watcher(wl->head,zh,path,type,state);
-        destroy_watcher_object_list(wl);
+int countList(watcher_object_t *wo) {
+    int count = 0;
+    while(wo) {
+        count++;
+        wo = wo->next;
     }
+    return count;
 }
-
-void deliverWatchers(zhandle_t* zh,int type,int state, const char* path)
+watcher_object_list_t *collectWatchers(zhandle_t *zh,int type, char *path)
 {
-    zk_hashtable *ht;
+    struct watcher_object_list *list = create_watcher_object_list(0); 
+    int count = 0;
+
     if(type==ZOO_SESSION_EVENT){
         watcher_object_t defWatcher;
-        if(state==ZOO_CONNECTED_STATE){
-            clean_zk_hashtable(zh->active_node_watchers);
-            clean_zk_hashtable(zh->active_child_watchers);
-            // unconditionally call back the default watcher only
-            zh->watcher(zh,type,state,0,zh->context);
-            return;
-        }
-        // process a disconnect/expiration
-        // must merge node and child watchers first
-        ht=combine_hashtables(zh->active_node_watchers,
-                zh->active_child_watchers);
-        // check if the default watcher is already present on the combined map 
         defWatcher.watcher=zh->watcher;
         defWatcher.context=zh->context;
-        if(contains_watcher(ht,&defWatcher)==0)
-            insert_watcher_object(ht,"",clone_watcher_object(&defWatcher));
-        // deliver watcher callback to all registered watchers
-        deliver_session_event(ht,zh,type,state);
-        destroy_zk_hashtable(ht);
-        // in anticipation of the watcher auto-reset feature we keep 
-        // the watcher maps intact. 
-        // (for now, we simply clean the maps on reconnect, see above)
-        return;
+        add_to_list(&list, &defWatcher, 1);
+        collect_session_watchers(zh, &list);
+        count = countList(list->head);
+        return list;
     }
     switch(type){
     case CREATED_EVENT_DEF:
     case CHANGED_EVENT_DEF:
-        // look up the watchers for the path and deliver them
-        deliver_znode_event(zh->active_node_watchers,zh,path,type,state);
+        // look up the watchers for the path and move them to a delivery list
+        add_for_event(zh->active_node_watchers,path,&list);
+        add_for_event(zh->active_exist_watchers,path,&list);
         break;
     case CHILD_EVENT_DEF:
-        // look up the watchers for the path and deliver them
-        deliver_znode_event(zh->active_child_watchers,zh,path,type,state);
+        // look up the watchers for the path and move them to a delivery list
+        add_for_event(zh->active_child_watchers,path,&list);
         break;
     case DELETED_EVENT_DEF:
-        // combine node and child watchers for the path and deliver them
-        ht=move_merge_watchers(zh->active_child_watchers,
-                zh->active_node_watchers,path);
-        deliver_znode_event(ht,zh,path,type,state);
-        destroy_zk_hashtable(ht);
+        // look up the watchers for the path and move them to a delivery list
+        add_for_event(zh->active_node_watchers,path,&list);
+        add_for_event(zh->active_exist_watchers,path,&list);
+        add_for_event(zh->active_child_watchers,path,&list);
         break;
     }
+    count = countList(list->head);
+    return list;
 }
 
-void activateWatcher(watcher_registration_t* reg, int rc)
+void deliverWatchers(zhandle_t *zh, int type,int state, char *path, watcher_object_list_t **list)
 {
-    if(reg!=0){
+    if (!list || !(*list)) return;
+    do_foreach_watcher((*list)->head, zh, path, type, state);
+    destroy_watcher_object_list(*list);
+    *list = 0;
+}
+
+void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc)
+{
+    if(reg){
         /* in multithreaded lib, this code is executed 
          * by the completion thread */
-        if(reg->checker(rc)){
-            insert_watcher_object(reg->activeMap,reg->path,
-                    create_watcher_object(reg->watcher,reg->context));
+        zk_hashtable *ht = reg->checker(zh, rc);
+        if(ht){
+            insert_watcher_object(ht,reg->path,
+                    create_watcher_object(reg->watcher, reg->context));
         }
     }    
 }

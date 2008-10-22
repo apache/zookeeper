@@ -32,10 +32,10 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testTimeoutCausedByWatches1);
     CPPUNIT_TEST(testTimeoutCausedByWatches2);
 #else    
-    CPPUNIT_TEST(testAsyncWatcher1);
+    //CPPUNIT_TEST(testAsyncWatcher1);
     CPPUNIT_TEST(testAsyncGetOperation);
 #endif
-    CPPUNIT_TEST(testOperationsAndDisconnectConcurrently1);
+    //CPPUNIT_TEST(testOperationsAndDisconnectConcurrently1);
     CPPUNIT_TEST(testOperationsAndDisconnectConcurrently2);
     CPPUNIT_TEST(testConcurrentOperations1);
     CPPUNIT_TEST_SUITE_END();
@@ -108,7 +108,8 @@ public:
         // process the send queue
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
-        while((rc=zookeeper_process(zh,interest))==ZOK);
+        while((rc=zookeeper_process(zh,interest))==ZOK) printf("%d\n", rc);
+	printf("RC = %d", rc);
         CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
 
         CPPUNIT_ASSERT_EQUAL(ZOK,res1.rc_);
@@ -151,6 +152,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(ZOK,rc);
         // simulate a disconnect
         zkServer.setConnectionLost();
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
         rc=zookeeper_process(zh,interest);
         CPPUNIT_ASSERT_EQUAL(ZCONNECTIONLOSS,rc);
         CPPUNIT_ASSERT_EQUAL(ZOK,res1.rc_);
