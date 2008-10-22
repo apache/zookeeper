@@ -24,7 +24,7 @@
 
     <property environment="env"/>
     
-    <property name="version" value="3.0.0" />
+    <property name="version" value="3.1.0" />
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />

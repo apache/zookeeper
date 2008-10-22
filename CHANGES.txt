@@ -1,3 +1,13 @@
+Trunk
+
+Non-backward compatible changes:
+
+Backward compatibile changes:
+
+  BUGFIXES: 
+
+
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
