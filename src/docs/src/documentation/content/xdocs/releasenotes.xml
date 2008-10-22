@@ -245,11 +245,1001 @@ Version 2.2.1 code, documentation, binaries, etc... are still accessible on <uli
 <tbody>
 <row>
   <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-43">
+      ZOOKEEPER-43</ulink>
+  </entry>
+  <entry>
+    Server side of auto reset watches.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-132">
+      ZOOKEEPER-132</ulink>
+  </entry>
+  <entry>
+    Create Enum to replace CreateFlag in ZooKepper.create method 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-139">
+      ZOOKEEPER-139</ulink>
+  </entry>
+  <entry>
+    Create Enums for WatcherEvent's KeeperState and EventType
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-18">
+      ZOOKEEPER-18</ulink>
+  </entry>
+  <entry>
+    keeper state inconsistency 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-38">
+      ZOOKEEPER-38</ulink>
+  </entry>
+  <entry>
+    headers  in log/snap files
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-8">
+      ZOOKEEPER-8</ulink>
+  </entry>
+  <entry>
+    Stat enchaned to include num of children and size
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-6">
+      ZOOKEEPER-6</ulink>
+  </entry>
+  <entry>
+    List of problem identifiers in zookeeper.h
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-7">
+      ZOOKEEPER-7</ulink>
+  </entry>
+  <entry>
+    Use enums rather than ints for types and state
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-27">
+      ZOOKEEPER-27</ulink>
+  </entry>
+  <entry>
+    Unique DB identifiers for servers and clients
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-32">
+      ZOOKEEPER-32</ulink>
+  </entry>
+  <entry>
+    CRCs for ZooKeeper data
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-33">
+      ZOOKEEPER-33</ulink>
+  </entry>
+  <entry>
+    Better ACL management
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-203">
+      ZOOKEEPER-203</ulink>
+  </entry>
+  <entry>
+    fix datadir typo in releasenotes
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-145">
+      ZOOKEEPER-145</ulink>
+  </entry>
+  <entry>
+    write detailed release notes for users migrating from 2.x to 3.0
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-23">
+      ZOOKEEPER-23</ulink>
+  </entry>
+  <entry>
+    Auto reset of watches on reconnect
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-191">
+      ZOOKEEPER-191</ulink>
+  </entry>
+  <entry>
+    forrest docs for upgrade.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-201">
+      ZOOKEEPER-201</ulink>
+  </entry>
+  <entry>
+    validate magic number when reading snapshot and transaction logs 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-200">
+      ZOOKEEPER-200</ulink>
+  </entry>
+  <entry>
+    the magic number for snapshot and log must be different
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-199">
+      ZOOKEEPER-199</ulink>
+  </entry>
+  <entry>
+    fix log messages in persistence code 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-197">
+      ZOOKEEPER-197</ulink>
+  </entry>
+  <entry>
+    create checksums for snapshots 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-198">
+      ZOOKEEPER-198</ulink>
+  </entry>
+  <entry>
+    apache license header missing from FollowerSyncRequest.java
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-5">
+      ZOOKEEPER-5</ulink>
+  </entry>
+  <entry>
+    Upgrade Feature in Zookeeper server. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-194">
+      ZOOKEEPER-194</ulink>
+  </entry>
+  <entry>
+    Fix terminology in zookeeperAdmin.xml
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-151">
+      ZOOKEEPER-151</ulink>
+  </entry>
+  <entry>
+    Document change to server configuration
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-193">
+      ZOOKEEPER-193</ulink>
+  </entry>
+  <entry>
+    update java example doc to compile with latest zookeeper
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-187">
+      ZOOKEEPER-187</ulink>
+  </entry>
+  <entry>
+    CreateMode api docs missing 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-186">
+      ZOOKEEPER-186</ulink>
+  </entry>
+  <entry>
+    add new "releasenotes.xml" to forrest documentation
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-190">
+      ZOOKEEPER-190</ulink>
+  </entry>
+  <entry>
+    Reorg links to docs and navs to docs into related sections
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-189">
+      ZOOKEEPER-189</ulink>
+  </entry>
+  <entry>
+    forrest build not validated xml of input documents
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-188">
+      ZOOKEEPER-188</ulink>
+  </entry>
+  <entry>
+    Check that election port is present for all servers
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-185">
+      ZOOKEEPER-185</ulink>
+  </entry>
+  <entry>
+    Improved version of FLETest 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-184">
+      ZOOKEEPER-184</ulink>
+  </entry>
+  <entry>
+    tests: An explicit include derective is needed for the usage of memcpy functions
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-183">
+      ZOOKEEPER-183</ulink>
+  </entry>
+  <entry>
+    Array subscript is above array bounds in od_completion, src/cli.c. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-182">
+      ZOOKEEPER-182</ulink>
+  </entry>
+  <entry>
+     zookeeper_init accepts empty host-port string and returns valid pointer to zhandle_t. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-17">
+      ZOOKEEPER-17</ulink>
+  </entry>
+  <entry>
+    zookeeper_init doc needs clarification 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-181">
+      ZOOKEEPER-181</ulink>
+  </entry>
+  <entry>
+    Some Source Forge Documents did not get moved over: javaExample, zookeeperTutorial, zookeeperInternals 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-180">
+      ZOOKEEPER-180</ulink>
+  </entry>
+  <entry>
+    Placeholder sections needed in document for new topics that the umbrella jira discusses 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-179">
+      ZOOKEEPER-179</ulink>
+  </entry>
+  <entry>
+    Programmer's Guide "Basic Operations" section is missing content 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-178">
+      ZOOKEEPER-178</ulink>
+  </entry>
+  <entry>
+    FLE test. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-159">
+      ZOOKEEPER-159</ulink>
+  </entry>
+  <entry>
+    Cover two corner cases of leader election
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-156">
+      ZOOKEEPER-156</ulink>
+  </entry>
+  <entry>
+    update programmer guide with acl details from old wiki page
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-154">
+      ZOOKEEPER-154</ulink>
+  </entry>
+  <entry>
+    reliability graph diagram in overview doc needs context
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-157">
+      ZOOKEEPER-157</ulink>
+  </entry>
+  <entry>
+    Peer can't find existing leader 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-155">
+      ZOOKEEPER-155</ulink>
+  </entry>
+  <entry>
+    improve "the zookeeper project" section of overview doc
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-140">
+      ZOOKEEPER-140</ulink>
+  </entry>
+  <entry>
+    Deadlock in QuorumCnxManager 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-147">
+      ZOOKEEPER-147</ulink>
+  </entry>
+  <entry>
+    This is version of the documents with most of the [tbd...] scrubbed out 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-150">
+      ZOOKEEPER-150</ulink>
+  </entry>
+  <entry>
+    zookeeper build broken 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-136">
+      ZOOKEEPER-136</ulink>
+  </entry>
+  <entry>
+    sync causes hang in all followers of quorum. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-134">
+      ZOOKEEPER-134</ulink>
+  </entry>
+  <entry>
+    findbugs cleanup 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-133">
+      ZOOKEEPER-133</ulink>
+  </entry>
+  <entry>
+    hudson tests failing intermittently 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-144">
+      ZOOKEEPER-144</ulink>
+  </entry>
+  <entry>
+    add tostring support for watcher event, and enums for event type/state 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-21">
+      ZOOKEEPER-21</ulink>
+  </entry>
+  <entry>
+    Improve zk ctor/watcher 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-142">
+      ZOOKEEPER-142</ulink>
+  </entry>
+  <entry>
+    Provide Javadoc as to the maximum size of the data byte array that may be stored within a znode 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-93">
+      ZOOKEEPER-93</ulink>
+  </entry>
+  <entry>
+    Create Documentation for Zookeeper 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-117">
+      ZOOKEEPER-117</ulink>
+  </entry>
+  <entry>
+    threading issues in Leader election 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-137">
+      ZOOKEEPER-137</ulink>
+  </entry>
+  <entry>
+    client watcher objects can lose events 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-131">
+      ZOOKEEPER-131</ulink>
+  </entry>
+  <entry>
+    Old leader election can elect a dead leader over and over again 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-130">
+      ZOOKEEPER-130</ulink>
+  </entry>
+  <entry>
+    update build.xml to support apache release process
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-118">
+      ZOOKEEPER-118</ulink>
+  </entry>
+  <entry>
+    findbugs flagged switch statement in followerrequestprocessor.run
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-115">
+      ZOOKEEPER-115</ulink>
+  </entry>
+  <entry>
+    Potential NPE in QuorumCnxManager
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-114">
+      ZOOKEEPER-114</ulink>
+  </entry>
+  <entry>
+    cleanup ugly event messages in zookeeper client 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-112">
+      ZOOKEEPER-112</ulink>
+  </entry>
+  <entry>
+    src/java/main ZooKeeper.java has test code embedded into it.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-39">
+      ZOOKEEPER-39</ulink>
+  </entry>
+  <entry>
+    Use Watcher objects rather than boolean on read operations.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-97">
+      ZOOKEEPER-97</ulink>
+  </entry>
+  <entry>
+    supports optional output directory in code generator.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-101">
+      ZOOKEEPER-101</ulink>
+  </entry>
+  <entry>
+    Integrate ZooKeeper with "violations" feature on hudson
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-105">
+      ZOOKEEPER-105</ulink>
+  </entry>
+  <entry>
+    Catch Zookeeper exceptions and print on the stderr. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-42">
+      ZOOKEEPER-42</ulink>
+  </entry>
+  <entry>
+    Change Leader Election to fast tcp.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-48">
+      ZOOKEEPER-48</ulink>
+  </entry>
+  <entry>
+    auth_id now handled correctly when no auth ids present
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-44">
+      ZOOKEEPER-44</ulink>
+  </entry>
+  <entry>
+    Create sequence flag children with prefixes of 0's so that they can be lexicographically sorted. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-108">
+      ZOOKEEPER-108</ulink>
+  </entry>
+  <entry>
+    Fix sync operation reordering on a Quorum. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-25">
+      ZOOKEEPER-25</ulink>
+  </entry>
+  <entry>
+    Fuse module for Zookeeper.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-58">
+      ZOOKEEPER-58</ulink>
+  </entry>
+  <entry>
+    Race condition on ClientCnxn.java 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-56">
+      ZOOKEEPER-56</ulink>
+  </entry>
+  <entry>
+    Add clover support to build.xml. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-75">
+      ZOOKEEPER-75</ulink>
+  </entry>
+  <entry>
+    register the ZooKeeper mailing lists with nabble.com 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-54">
+      ZOOKEEPER-54</ulink>
+  </entry>
+  <entry>
+    remove sleeps in the tests. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-55">
+      ZOOKEEPER-55</ulink>
+  </entry>
+  <entry>
+    build.xml failes to retrieve a release number from SVN and the ant target "dist" fails 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-89">
+      ZOOKEEPER-89</ulink>
+  </entry>
+  <entry>
+    invoke WhenOwnerListener.whenNotOwner when the ZK connection fails 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-90">
+      ZOOKEEPER-90</ulink>
+  </entry>
+  <entry>
+    invoke WhenOwnerListener.whenNotOwner when the ZK session expires and the znode is the leader 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-82">
+      ZOOKEEPER-82</ulink>
+  </entry>
+  <entry>
+    Make the ZooKeeperServer more DI friendly.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-110">
+      ZOOKEEPER-110</ulink>
+  </entry>
+  <entry>
+    Build script relies on svnant, which is not compatible with subversion 1.5 working copies 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-111">
+      ZOOKEEPER-111</ulink>
+  </entry>
+  <entry>
+    Significant cleanup of existing tests.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-122">
+      ZOOKEEPER-122</ulink>
+  </entry>
+  <entry>
+    Fix  NPE in jute's Utils.toCSVString.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-123">
+      ZOOKEEPER-123</ulink>
+  </entry>
+  <entry>
+    Fix  the wrong class is specified for the logger.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-2">
+      ZOOKEEPER-2</ulink>
+  </entry>
+  <entry>
+    Fix synchronization issues in QuorumPeer and FastLeader election. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-125">
+      ZOOKEEPER-125</ulink>
+  </entry>
+  <entry>
+    Remove unwanted class declaration in FastLeaderElection. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-61">
+      ZOOKEEPER-61</ulink>
+  </entry>
+  <entry>
+    Address  in client/server test cases.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-75">
+      ZOOKEEPER-75</ulink>
+  </entry>
+  <entry>
+    cleanup the library directory 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-109">
+      ZOOKEEPER-109</ulink>
+  </entry>
+  <entry>
+    cleanup of NPE and Resource issue nits found by static analysis 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-76">
+      ZOOKEEPER-76</ulink>
+  </entry>
+  <entry>
+    Commit 677109 removed the cobertura library, but not the build targets. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-63">
+      ZOOKEEPER-63</ulink>
+  </entry>
+  <entry>
+    Race condition in client close
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-70">
+      ZOOKEEPER-70</ulink>
+  </entry>
+  <entry>
+    Add skeleton forrest doc structure for ZooKeeper 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-79">
+      ZOOKEEPER-79</ulink>
+  </entry>
+  <entry>
+    Document jacob's leader election on the wiki recipes page 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-73">
+      ZOOKEEPER-73</ulink>
+  </entry>
+  <entry>
+    Move ZK wiki from SourceForge to Apache 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-72">
+      ZOOKEEPER-72</ulink>
+  </entry>
+  <entry>
+    Initial creation/setup of ZooKeeper ASF site. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-71">
+      ZOOKEEPER-71</ulink>
+  </entry>
+  <entry>
+    Determine what to do re ZooKeeper Changelog
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-68">
+      ZOOKEEPER-68</ulink>
+  </entry>
+  <entry>
+    parseACLs in ZooKeeper.java fails to parse elements of ACL, should be lastIndexOf rather than IndexOf 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-130">
+      ZOOKEEPER-130</ulink>
+  </entry>
+  <entry>
+    update build.xml to support apache release process. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-131">
+      ZOOKEEPER-131</ulink>
+  </entry>
+  <entry>
+    Fix Old leader election can elect a dead leader over and over again. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-137">
+      ZOOKEEPER-137</ulink>
+  </entry>
+  <entry>
+    client watcher objects can lose events 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-117">
+      ZOOKEEPER-117</ulink>
+  </entry>
+  <entry>
+    threading issues in Leader election
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-128">
+      ZOOKEEPER-128</ulink>
+  </entry>
+  <entry>
+    test coverage on async client operations needs to be improved
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-127">
+      ZOOKEEPER-127</ulink>
+  </entry>
+  <entry>
+     Use of non-standard election ports in config breaks services
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-53">
+      ZOOKEEPER-53</ulink>
+  </entry>
+  <entry>
+    tests failing on solaris. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-172">
+      ZOOKEEPER-172</ulink>
+  </entry>
+  <entry>
+    FLE Test 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-41">
+      ZOOKEEPER-41</ulink>
+  </entry>
+  <entry>
+    Sample startup script 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-33">
+      ZOOKEEPER-33</ulink>
+  </entry>
+  <entry>
+    Better ACL management 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-49">
+      ZOOKEEPER-49</ulink>
+  </entry>
+  <entry>
+    SetACL does not work 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-20">
+      ZOOKEEPER-20</ulink>
+  </entry>
+  <entry>
+    Child watches are not triggered when the node is deleted
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-15">
+      ZOOKEEPER-15</ulink>
+  </entry>
+  <entry>
+    handle failure better in build.xml:test 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-11">
+      ZOOKEEPER-11</ulink>
+  </entry>
+  <entry>
+    ArrayList is used instead of List 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-45">
+      ZOOKEEPER-45</ulink>
+  </entry>
+  <entry>
+    Restructure the SVN repository after initial import 
+  </entry>
+</row>
+<row>
+  <entry>
     <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1">
       ZOOKEEPER-1</ulink>
   </entry>
   <entry>
-    notes, placeholder - TBD during release process
+    Initial ZooKeeper code contribution from Yahoo!
   </entry>
 </row>
 
