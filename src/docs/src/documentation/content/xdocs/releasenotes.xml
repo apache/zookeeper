@@ -68,6 +68,26 @@ Note: ZooKeeper increments the major version number (major.minor.fix) when backw
 <title>Migrating Client Code</title>
 
 <section>
+<title>Watch Management</title>
+
+<para>
+In previous releases of ZooKeeper any watches registered by clients were lost if the client lost a connection to a ZooKeeper server.
+This meant that developers had to track watches they were interested in and reregister them if a session disconnect event was recieved.
+In this release the client library tracks watches that a client has registered and reregisters the watches when a connection is made to a new server.
+Applications that still manually reregister interest should continue working properly as long as they are able to handle unsolicited watches.
+For example, an old application may register a watch for /foo and /goo, lose the connection, and reregister only /goo.
+As long as the application is able to recieve a notification for /foo, (probably ignoring it) the applications does not to be changes.
+One caveat to the watch management: it is possible to miss an event for the creation and deletion of a znode if watching for creation and both the create and delete happens while the client is disconnected from ZooKeeper.
+</para>
+
+<para>
+This release also allows clients to specify call specific watch functions.
+This gives the developer the ability to modularize logic in different watch functions rather than cramming everything in the watch function attached to the ZooKeeper handle.
+Call specific watch functions receive all session events for as long as they are active, but will only receive the watch callbacks for which they are registered.
+</para>
+</section>
+
+<section>
 <title>Java API</title>
 
 <orderedlist>

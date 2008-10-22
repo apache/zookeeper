@@ -35,6 +35,7 @@ static const int SYNC_OP=9;
 static const int PING_OP=11;
 static const int CLOSE_OP=-11;
 static const int SETAUTH_OP=100;
+static const int SETWATCHES_OP=101;
 
 #ifdef __cplusplus
 }

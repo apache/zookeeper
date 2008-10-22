@@ -3,7 +3,7 @@ include $(top_srcdir)/aminclude.am
 
 AM_CPPFLAGS = -Iinclude -Igenerated
 AM_CFLAGS = -Wall -Werror 
-CXXFLAGS += -Wall
+CXXFLAGS = -Wall -g
 
 LIB_LDFLAGS = -no-undefined -version-info 2
 
@@ -70,8 +70,9 @@ EXTRA_DIST+=$(wildcard tests/*.cc) $(wildcard tests/*.h) \
 
 TEST_SOURCES = tests/TestDriver.cc tests/LibCMocks.cc tests/LibCSymTable.cc \
     tests/MocksBase.cc  tests/ZKMocks.cc tests/Util.cc tests/ThreadingUtil.cc \
-    tests/TestWatchers.cc tests/TestHashtable.cc \
-    tests/TestOperations.cc tests/TestZookeeperInit.cc tests/TestZookeeperClose.cc
+    tests/TestWatchers.cc \
+    tests/TestOperations.cc tests/TestZookeeperInit.cc \
+    tests/TestZookeeperClose.cc tests/TestClient.cc
 
 SYMBOL_WRAPPERS=$(shell cat tests/wrappers.opt)
 

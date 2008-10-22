@@ -336,7 +336,6 @@ the connection comes back up.
             case SyncConnected:
                 // Everything is happy. Lets kick things off
                 // again by checking the existence of the znode
-                zk.exists(znode, true, this, null);
                 break;
             case Expired:
                 // It's all over
@@ -589,7 +588,6 @@ public class DataMonitor implements Watcher, StatCallback {
             case SyncConnected:
                 // Everything is happy. Lets kick things off
                 // again by checking the existence of the znode
-                zk.exists(znode, true, this, null);
                 break;
             case Expired:
                 // It's all over

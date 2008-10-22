@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+    typedef struct watcher_object_list watcher_object_list_t;
 typedef struct _zk_hashtable zk_hashtable;
 
 /**
@@ -33,7 +34,7 @@ typedef struct _zk_hashtable zk_hashtable;
  * if the server returns a success code (ZOK). However in the case when zoo_exists() 
  * returns a ZNONODE code the watcher should be activated nevertheless.
  */
-typedef int (*result_checker_fn)(int rc);
+typedef zk_hashtable *(*result_checker_fn)(zhandle_t *, int rc);
 
 /**
  * A watcher object gets temporarily stored with the completion entry until 
@@ -42,9 +43,8 @@ typedef int (*result_checker_fn)(int rc);
  */
 typedef struct _watcher_registration {
     watcher_fn watcher;
-    result_checker_fn checker;
     void* context;
-    zk_hashtable* activeMap; // the map to add the watcher to upon activation
+    result_checker_fn checker;
     const char* path;
 } watcher_registration_t;
 
@@ -58,15 +58,12 @@ typedef struct _watcher_object {
 watcher_object_t* create_watcher_object(watcher_fn watcher,void* ctx);
 watcher_object_t* clone_watcher_object(watcher_object_t* wo);
 
+    int add_to_list(watcher_object_list_t **list, watcher_object_t *obj, int clone);
+void free_list(watcher_object_t **list);
+
 zk_hashtable* create_zk_hashtable();
 void clean_zk_hashtable(zk_hashtable* ht);
 void destroy_zk_hashtable(zk_hashtable* ht);
-zk_hashtable* combine_hashtables(zk_hashtable* ht1,zk_hashtable* ht2);
-/**
- * \brief first, merges all watchers for path from ht1 and ht2 to a new hashtable and 
- * then removes the path entries from ht1 and ht2 
- */
-zk_hashtable* move_merge_watchers(zk_hashtable* ht1,zk_hashtable* ht2,const char* path);
 
 /**
  * The hashtable takes ownership of the watcher object instance.
@@ -74,34 +71,18 @@ zk_hashtable* move_merge_watchers(zk_hashtable* ht1,zk_hashtable* ht2,const char
  * \return 1 if the watcher object was succesfully inserted, 0 otherwise
  */
 int insert_watcher_object(zk_hashtable* ht, const char* path, watcher_object_t* wo);
-/**
- * \brief searches the entire hashtable for the watcher object
- * 
- * \return 1 if the watcher object found in the table, 0 otherwise
- */
-int contains_watcher(zk_hashtable* ht,watcher_object_t* wo);
-int get_element_count(zk_hashtable* ht);
-int get_watcher_count(zk_hashtable* ht,const char* path);
-/**
- * \brief delivers all watchers in the hashtable
- */
-void deliver_session_event(zk_hashtable* ht,zhandle_t* zh,int type,int state);
-/**
- * \brief delivers all watchers for path and then removes the path entry 
- * from the hashtable
- */
-void deliver_znode_event(zk_hashtable* ht,zhandle_t* zh,const char* path,int type,int state);
 
-/**
- * zookeeper uses this function to deliver watcher callbacks
- */
-void deliverWatchers(zhandle_t* zh,int type,int state, const char* path);
+    void collect_session_watchers(zhandle_t *zh, struct watcher_object_list **list);
+    char **collect_keys(zk_hashtable *ht, int *count);
+
 /**
  * check if the completion has a watcher object associated
  * with it. If it does, move the watcher object to the map of
  * active watchers (only if the checker allows to do so)
  */
-void activateWatcher(watcher_registration_t* reg, int rc);
+    void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc);
+    watcher_object_list_t *collectWatchers(zhandle_t *zh,int type, char *path);
+    void deliverWatchers(zhandle_t *zh, int type, int state, char *path, struct watcher_object_list **list);
 
 /* the following functions are for testing only */
 typedef struct hashtable hashtable_impl;

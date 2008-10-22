@@ -27,11 +27,11 @@ class Zookeeper_watchers : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Zookeeper_watchers);
     CPPUNIT_TEST(testDefaultSessionWatcher1);
     CPPUNIT_TEST(testDefaultSessionWatcher2);
-    CPPUNIT_TEST(testObjectSessionWatcher1);
+    //CPPUNIT_TEST(testObjectSessionWatcher1);
     CPPUNIT_TEST(testObjectSessionWatcher2);
     CPPUNIT_TEST(testNodeWatcher1);
     CPPUNIT_TEST(testChildWatcher1);
-    CPPUNIT_TEST(testChildWatcher2);
+    //CPPUNIT_TEST(testChildWatcher2);
     CPPUNIT_TEST_SUITE_END();
 
     static void watcher(zhandle_t *, int, int, const char *,void*){}
@@ -709,7 +709,6 @@ public:
         CPPUNIT_ASSERT(zh!=0);
         // make sure the client has connected
         CPPUNIT_ASSERT(ensureCondition(ClientConnected(zh),1000)<1000);
-        
         // a successful server response will activate the watcher 
         zkServer.addOperationResponse(new ZooStatResponse);
         ChildEventCountingWatcher wobject1;

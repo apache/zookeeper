@@ -433,11 +433,13 @@
 
     <para>Watches are maintained locally at the ZooKeeper server to which the
     client is connected. This allows watches to be light weight to set,
-    maintain, and dispatch. It also means if a client connects to a different
-    server, the new server is not going to know about its watches. So, when a
-    client gets a disconnect event, it must consider that an implicit trigger
-    of all watches. When a client reconnects to a new server, the client
-    should re-set any watches that it is still interested in.</para>
+    maintain, and dispatch. When a client connects to a new server, the watch
+    will be triggered for any session events. Watches will not be received
+    while disconnected from a server. When a client reconnects, any previously
+    registered watches will be reregistered and triggered if needed. In
+    general this all occurs transparently. There is one case where a watch
+    may be missed: a watch for the existance of a znode not yet created will
+    be missed if the znode is created and deleted while disconnected.</para>
 
     <section id="sc_WatchGuarantees">
       <title>What ZooKeeper Guarantees about Watches</title>
@@ -493,10 +495,23 @@
 
       <itemizedlist>
         <listitem>
+          <para>A watch object, or function/context pair, will only be
+          triggered once for a given notification. For example, if the same
+          watch object is registered for an exists and a getData call for the
+          same file and that file is then deleted, the watch object would
+          only be invoked once with the deletion notification for the file.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <itemizedlist>
+        <listitem>
           <para>When you disconnect from a server (for example, when the
-          server fails), all of the watches you have registered are lost, so
-          you should treat this case as if all your watches were
-          triggered.</para>
+          server fails), you will not get any watches until the connection
+          is reestablished. For this reason session events are sent to all
+          outstanding watch handlers. Use session events to go into a safe
+          mode: you will not be receiving events while disconnected, so your
+          process should act conservatively in that mode.</para>
         </listitem>
       </itemizedlist>
     </section>
@@ -1080,13 +1095,10 @@ int main(int argc, char argv) {
     <orderedlist>
       <listitem>
         <para>If you are using watches, you must look for the connected watch
-        event. When a ZooKeeper client disconnects from a server, all the
-        watches are removed, so a client must treat the disconnect event as an
-        implicit trigger of watches. The easiest way to deal with this is to
-        act like the connected watch event is a watch trigger for all your
-        watches. The connected event makes a better trigger than the
-        disconnected event because you can access ZooKeeper and reestablish
-        watches when you are connected.</para>
+        event. When a ZooKeeper client disconnects from a server, you will
+        not receive notification of changes until reconnected. If you are
+        watching for a znode to come into existance, you will miss the event
+        if the znode is created and deleted while you are disconnected.</para>
       </listitem>
 
       <listitem>

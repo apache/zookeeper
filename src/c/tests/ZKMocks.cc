@@ -156,12 +156,12 @@ Mock_get_xid* Mock_get_xid::mock_=0;
 //******************************************************************************
 // activateWatcher mock
 
-DECLARE_WRAPPER(void,activateWatcher,(watcher_registration_t* reg, int rc))
+DECLARE_WRAPPER(void,activateWatcher,(zhandle_t *zh, watcher_registration_t* reg, int rc))
 {
     if(!Mock_activateWatcher::mock_){
-        CALL_REAL(activateWatcher,(reg,rc));
+        CALL_REAL(activateWatcher,(zh, reg,rc));
     }else{
-        Mock_activateWatcher::mock_->call(reg,rc);
+        Mock_activateWatcher::mock_->call(zh, reg,rc);
     }
 }
 Mock_activateWatcher* Mock_activateWatcher::mock_=0;
@@ -170,8 +170,8 @@ class ActivateWatcherWrapper: public Mock_activateWatcher{
 public:
     ActivateWatcherWrapper():ctx_(0),activated_(false){}
     
-    virtual void call(watcher_registration_t* reg, int rc){
-        CALL_REAL(activateWatcher,(reg,rc));
+    virtual void call(zhandle_t *zh, watcher_registration_t* reg, int rc){
+        CALL_REAL(activateWatcher,(zh, reg,rc));
         synchronized(mx_);
         if(reg->context==ctx_){
             activated_=true;
@@ -212,12 +212,12 @@ SyncedBoolCondition WatcherActivationTracker::isWatcherActivated() const{
 
 //******************************************************************************
 //
-DECLARE_WRAPPER(void,deliverWatchers,(zhandle_t* zh,int type,int state, const char* path))
+DECLARE_WRAPPER(void,deliverWatchers,(zhandle_t* zh,int type,int state, const char* path, watcher_object_list_t **list))
 {
     if(!Mock_deliverWatchers::mock_){
-        CALL_REAL(deliverWatchers,(zh,type,state,path));
+        CALL_REAL(deliverWatchers,(zh,type,state,path, list));
     }else{
-        Mock_deliverWatchers::mock_->call(zh,type,state,path);
+        Mock_deliverWatchers::mock_->call(zh,type,state,path, list);
     }
 }
 
@@ -245,13 +245,13 @@ public:
     DeliverWatchersWrapper(int type,int state,bool terminate):
         type_(type),state_(state),
         allDelivered_(false),terminate_(terminate),zh_(0),deliveryCounter_(0){}
-    virtual void call(zhandle_t* zh,int type,int state, const char* path){
+    virtual void call(zhandle_t* zh,int type,int state, const char* path, watcher_object_list **list){
         {
             synchronized(mx_);
             zh_=zh;
             allDelivered_=false;
         }
-        CALL_REAL(deliverWatchers,(zh,type,state,path));
+        CALL_REAL(deliverWatchers,(zh,type,state,path, list));
         if(type_==type && state_==state){
             if(terminate_){
                 // prevent zhandle_t from being prematurely distroyed;
@@ -468,6 +468,9 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
             int64_t sessId=sessionExpired?req->sessionId+1:req->sessionId;
             sessionExpired=false;
             addRecvResponse(new HandshakeResponse(sessId));            
+            Element e = Element(new ZooStatResponse,0);
+            e.first->setXID(-8);
+            addRecvResponse(e);
             return;
         }
         // not a connect request -- fall thru

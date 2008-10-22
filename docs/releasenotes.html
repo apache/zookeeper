@@ -191,6 +191,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#migration_code">Migrating Client Code</a>
 <ul class="minitoc">
 <li>
+<a href="#Watch+Management">Watch Management</a>
+</li>
+<li>
 <a href="#Java+API">Java API</a>
 </li>
 <li>
@@ -266,7 +269,23 @@ Note: ZooKeeper increments the major version number (major.minor.fix) when backw
 </ul>
 <a name="N1003F"></a><a name="migration_code"></a>
 <h3 class="h4">Migrating Client Code</h3>
-<a name="N10045"></a><a name="Java+API"></a>
+<a name="N10045"></a><a name="Watch+Management"></a>
+<h4>Watch Management</h4>
+<p>
+In previous releases of ZooKeeper any watches registered by clients were lost if the client lost a connection to a ZooKeeper server.
+This meant that developers had to track watches they were interested in and reregister them if a session disconnect event was recieved.
+In this release the client library tracks watches that a client has registered and reregisters the watches when a connection is made to a new server.
+Applications that still manually reregister interest should continue working properly as long as they are able to handle unsolicited watches.
+For example, an old application may register a watch for /foo and /goo, lose the connection, and reregister only /goo.
+As long as the application is able to recieve a notification for /foo, (probably ignoring it) the applications does not to be changes.
+One caveat to the watch management: it is possible to miss an event for the creation and deletion of a znode if watching for creation and both the create and delete happens while the client is disconnected from ZooKeeper.
+</p>
+<p>
+This release also allows clients to specify call specific watch functions.
+This gives the developer the ability to modularize logic in different watch functions rather than cramming everything in the watch function attached to the ZooKeeper handle.
+Call specific watch functions receive all session events for as long as they are active, but will only receive the watch callbacks for which they are registered.
+</p>
+<a name="N10052"></a><a name="Java+API"></a>
 <h4>Java API</h4>
 <ol>
   
@@ -288,7 +307,7 @@ Note: ZooKeeper increments the major version number (major.minor.fix) when backw
 Also see <a href="http://hadoop.apache.org/zookeeper/docs/current/api/index.html">the current java API</a>
 
 </p>
-<a name="N10077"></a><a name="C+API"></a>
+<a name="N10084"></a><a name="C+API"></a>
 <h4>C API</h4>
 <ol>
   
@@ -297,7 +316,7 @@ Also see <a href="http://hadoop.apache.org/zookeeper/docs/current/api/index.html
 </li>
 
 </ol>
-<a name="N1008A"></a><a name="migration_data"></a>
+<a name="N10097"></a><a name="migration_data"></a>
 <h3 class="h4">Migrating Server Data</h3>
 <p>
 The following issues resulted in changes to the on-disk data format (the snapshot and transaction log files contained within the ZK data directory) and require a migration utility to be run. 
@@ -446,7 +465,7 @@ The following issues resulted in changes to the on-disk data format (the snapsho
 </div>
 
 
-<a name="N10120"></a><a name="changes"></a>
+<a name="N1012D"></a><a name="changes"></a>
 <h2 class="h3">Changes Since ZooKeeper 2.2.1</h2>
 <div class="section">
 <p>
