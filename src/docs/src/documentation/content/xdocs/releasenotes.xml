@@ -62,10 +62,19 @@ Note: ZooKeeper increments the major version number (major.minor.fix) when backw
 <itemizedlist>
   <listitem><para><ulink url="#migration_code">Migrating Client Code</ulink></para></listitem>
   <listitem><para><ulink url="#migration_data">Migrating Server Data</ulink></para></listitem>
+  <listitem><para><ulink url="#migration_config">Migrating Server Configuration</ulink></para></listitem>
 </itemizedlist>
 
 <section id="migration_code">
 <title>Migrating Client Code</title>
+
+<para>
+  The underlying client-server protocol has changed in version 3.0.0
+  of ZooKeeper. As a result clients must be upgraded along with
+  serving clusters to ensure proper operation of the system (old
+  pre-3.0.0 clients are not guaranteed to operate against upgraded
+  3.0.0 servers and vice-versa).
+</para>
 
 <section>
 <title>Watch Management</title>
@@ -186,6 +195,34 @@ The following issues resulted in changes to the on-disk data format (the snapsho
  </orderedlist>
  
 </section>
+
+<section id="migration_config">
+<title>Migrating Server Configuration</title>
+
+<para>
+There is a significant change to the ZooKeeper server configuration file.
+</para>
+
+<para>The default election algorithm, specified by
+  the <emphasis>electionAlg</emphasis> configuration attribute, has
+  changed from a default of <emphasis>0</emphasis> to a default
+  of <emphasis>3</emphasis>. See
+  <ulink url="zookeeperAdmin.html#sc_clusterOptions">Cluster
+  Options</ulink> section of the administrators guide, specifically
+  the <emphasis>electionAlg</emphasis>
+  and <emphasis>server.X</emphasis> properties.
+</para>
+
+<para>
+  You will either need to explicitly
+  set <emphasis>electionAlg</emphasis> to it's previous default value
+  of <emphasis>0</emphasis> or change
+  your <emphasis>server.X</emphasis> options to include the leader
+  election port.
+</para>
+
+</section>
+
 </section>
 
 <section id="changes">

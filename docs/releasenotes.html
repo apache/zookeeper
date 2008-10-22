@@ -204,6 +204,9 @@ document.write("Last Published: " + document.lastModified);
 <li>
 <a href="#migration_data">Migrating Server Data</a>
 </li>
+<li>
+<a href="#migration_config">Migrating Server Configuration</a>
+</li>
 </ul>
 </li>
 <li>
@@ -265,11 +268,24 @@ Note: ZooKeeper increments the major version number (major.minor.fix) when backw
 <a href="#migration_data">Migrating Server Data</a>
 </p>
 </li>
+  
+<li>
+<p>
+<a href="#migration_config">Migrating Server Configuration</a>
+</p>
+</li>
 
 </ul>
-<a name="N1003F"></a><a name="migration_code"></a>
+<a name="N10045"></a><a name="migration_code"></a>
 <h3 class="h4">Migrating Client Code</h3>
-<a name="N10045"></a><a name="Watch+Management"></a>
+<p>
+  The underlying client-server protocol has changed in version 3.0.0
+  of ZooKeeper. As a result clients must be upgraded along with
+  serving clusters to ensure proper operation of the system (old
+  pre-3.0.0 clients are not guaranteed to operate against upgraded
+  3.0.0 servers and vice-versa).
+</p>
+<a name="N1004E"></a><a name="Watch+Management"></a>
 <h4>Watch Management</h4>
 <p>
 In previous releases of ZooKeeper any watches registered by clients were lost if the client lost a connection to a ZooKeeper server.
@@ -285,7 +301,7 @@ This release also allows clients to specify call specific watch functions.
 This gives the developer the ability to modularize logic in different watch functions rather than cramming everything in the watch function attached to the ZooKeeper handle.
 Call specific watch functions receive all session events for as long as they are active, but will only receive the watch callbacks for which they are registered.
 </p>
-<a name="N10052"></a><a name="Java+API"></a>
+<a name="N1005B"></a><a name="Java+API"></a>
 <h4>Java API</h4>
 <ol>
   
@@ -307,7 +323,7 @@ Call specific watch functions receive all session events for as long as they are
 Also see <a href="http://hadoop.apache.org/zookeeper/docs/current/api/index.html">the current java API</a>
 
 </p>
-<a name="N10084"></a><a name="C+API"></a>
+<a name="N1008D"></a><a name="C+API"></a>
 <h4>C API</h4>
 <ol>
   
@@ -316,7 +332,7 @@ Also see <a href="http://hadoop.apache.org/zookeeper/docs/current/api/index.html
 </li>
 
 </ol>
-<a name="N10097"></a><a name="migration_data"></a>
+<a name="N100A0"></a><a name="migration_data"></a>
 <h3 class="h4">Migrating Server Data</h3>
 <p>
 The following issues resulted in changes to the on-disk data format (the snapshot and transaction log files contained within the ZK data directory) and require a migration utility to be run. 
@@ -462,10 +478,31 @@ The following issues resulted in changes to the on-disk data format (the snapsho
 </li> 
  
 </ol>
+<a name="N10135"></a><a name="migration_config"></a>
+<h3 class="h4">Migrating Server Configuration</h3>
+<p>
+There is a significant change to the ZooKeeper server configuration file.
+</p>
+<p>The default election algorithm, specified by
+  the <em>electionAlg</em> configuration attribute, has
+  changed from a default of <em>0</em> to a default
+  of <em>3</em>. See
+  <a href="zookeeperAdmin.html#sc_clusterOptions">Cluster
+  Options</a> section of the administrators guide, specifically
+  the <em>electionAlg</em>
+  and <em>server.X</em> properties.
+</p>
+<p>
+  You will either need to explicitly
+  set <em>electionAlg</em> to it's previous default value
+  of <em>0</em> or change
+  your <em>server.X</em> options to include the leader
+  election port.
+</p>
 </div>
 
 
-<a name="N1012D"></a><a name="changes"></a>
+<a name="N10162"></a><a name="changes"></a>
 <h2 class="h3">Changes Since ZooKeeper 2.2.1</h2>
 <div class="section">
 <p>

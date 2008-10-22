@@ -37,6 +37,9 @@ Backward compatibile changes:
 
   BUGFIXES: 
 
+  ZOOKEEPER-145. write detailed release notes for users migrating from 2.x
+  to 3.0 (phunt)
+
   ZOOKEEPER-23. Auto reset of watches on reconnect (breed via phunt)
 
   ZOOKEEPER-191. forrest docs for upgrade. (mahadev via phunt)
