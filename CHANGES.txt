@@ -10,6 +10,9 @@ mahadev)
    
    ZOOKEEPER-212. fix the snapshot to be asynchronous. (mahadev and ben)
 
+   ZOOKEEPER-213. fix programmer guide C api docs to be  in sync with latest
+zookeeper.h (pat via mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:

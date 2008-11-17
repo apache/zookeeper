@@ -192,7 +192,7 @@
         the watch and then clear the watch. When a watch triggers, ZooKeeper
         sends the client a notification. More information about watches can be
         found in the section 
-	    <ulink url="#ch_zkWatches">Zookeeper Watches</ulink>.
+	    <ulink url="#ch_zkWatches">ZooKeeper Watches</ulink>.
         <emphasis>[tbd]</emphasis></para>
       </section>
 
@@ -520,16 +520,39 @@
   <section id="sc_ZooKeeperAccessControl">
     <title>ZooKeeper access control using ACLs</title>
 
-    <para>ZooKeeper uses ACLs to control access to its znodes (the data nodes of a ZooKeeper data tree). The ACL implementation is quite similar to UNIX file access permissions: it employs permission bits to allow/disallow various operations against a node and the scope to which the bits apply. Unlike standard UNIX permissions, a ZooKeeper node is not limited by the three standard scopes for user (owner of the file), group, and world (other). ZooKeeper does not have a notion of an owner of a znode. Instead, an ACL specifies sets of ids and permissions that are associated with those ids.</para>
+    <para>ZooKeeper uses ACLs to control access to its znodes (the
+    data nodes of a ZooKeeper data tree). The ACL implementation is
+    quite similar to UNIX file access permissions: it employs
+    permission bits to allow/disallow various operations against a
+    node and the scope to which the bits apply. Unlike standard UNIX
+    permissions, a ZooKeeper node is not limited by the three standard
+    scopes for user (owner of the file), group, and world
+    (other). ZooKeeper does not have a notion of an owner of a
+    znode. Instead, an ACL specifies sets of ids and permissions that
+    are associated with those ids.</para>
 
-    <para>ZooKeeper supports pluggable authentication schemes. Ids are specified using the form <emphasis>scheme:id</emphasis>, where <emphasis>scheme</emphasis> is a the authentication scheme that the id corresponds to. For example, <emphasis>host:host1.corp.com</emphasis> is an id for a host named <emphasis>host1.corp.com</emphasis>.</para>
+    <para>ZooKeeper supports pluggable authentication schemes. Ids are
+    specified using the form <emphasis>scheme:id</emphasis>,
+    where <emphasis>scheme</emphasis> is a the authentication scheme
+    that the id corresponds to. For
+    example, <emphasis>host:host1.corp.com</emphasis> is an id for a
+    host named <emphasis>host1.corp.com</emphasis>.</para>
 
-    <para>When a client connects to ZooKeeper and authenticates itself, ZooKeeper associates all the ids that correspond to a client with the clients connection. These ids are checked against the ACLs of znodes when a clients tries to access a node. ACLs are made up of pairs of <emphasis>(scheme:expression, perms)</emphasis>. The format of the <emphasis>expression</emphasis> is specific to the scheme. For example, the pair <emphasis>(ip:19.22.0.0/16, READ)</emphasis> gives the <emphasis>READ</emphasis> permission to any clients with an IP address that starts with 19.22.</para>
+    <para>When a client connects to ZooKeeper and authenticates
+    itself, ZooKeeper associates all the ids that correspond to a
+    client with the clients connection. These ids are checked against
+    the ACLs of znodes when a clients tries to access a node. ACLs are
+    made up of pairs of <emphasis>(scheme:expression,
+    perms)</emphasis>. The format of
+    the <emphasis>expression</emphasis> is specific to the scheme. For
+    example, the pair <emphasis>(ip:19.22.0.0/16, READ)</emphasis>
+    gives the <emphasis>READ</emphasis> permission to any clients with
+    an IP address that starts with 19.22.</para>
 
     <section id="sc_ACLPermissions">
       <title>ACL Permissions</title>
                                
-      <para>Zookeeper supports the following permissions:</para>
+      <para>ZooKeeper supports the following permissions:</para>
 
       <itemizedlist>
         <listitem><para><emphasis role="bold">CREATE</emphasis>: you can create a child node</para></listitem>
@@ -539,61 +562,113 @@
         <listitem><para><emphasis role="bold">ADMIN</emphasis>: you can set permissions</para></listitem>
       </itemizedlist>
 
-      <para>The <emphasis>CREATE</emphasis> and <emphasis>DELETE</emphasis> permissions have been broken out of the <emphasis>WRITE</emphasis> permission for finer grained access controls. The cases for <emphasis>CREATE</emphasis> and <emphasis>DELETE</emphasis> are the following:</para>
+      <para>The <emphasis>CREATE</emphasis>
+      and <emphasis>DELETE</emphasis> permissions have been broken out
+      of the <emphasis>WRITE</emphasis> permission for finer grained
+      access controls. The cases for <emphasis>CREATE</emphasis>
+      and <emphasis>DELETE</emphasis> are the following:</para>
 
-      <para>You want A to be able to do a set on a zookeeper node, but not be able to <emphasis>CREATE</emphasis> or <emphasis>DELETE</emphasis> children.</para>
+      <para>You want A to be able to do a set on a ZooKeeper node, but
+      not be able to <emphasis>CREATE</emphasis>
+      or <emphasis>DELETE</emphasis> children.</para>
 
-      <para><emphasis>CREATE</emphasis> without <emphasis>DELETE</emphasis>: clients create requests by creating zookeeper nodes in a parent directory. You want all clients to be able to add, but only request processor can delete. (This is kind of like the APPEND permission for files.)</para>
+      <para><emphasis>CREATE</emphasis>
+      without <emphasis>DELETE</emphasis>: clients create requests by
+      creating ZooKeeper nodes in a parent directory. You want all
+      clients to be able to add, but only request processor can
+      delete. (This is kind of like the APPEND permission for
+      files.)</para>
 
-      <para>Also, the <emphasis>ADMIN</emphasis> permission is there since Zookeeper doesn’t have a notion of file owner. In some sense the <emphasis>ADMIN</emphasis> permission designates the entity as the owner. Zookeeper doesn’t support the LOOKUP permission (execute permission bit on directories to allow you to LOOKUP even though you can't list the directory). Everyone implicitly has LOOKUP permission. This allows you to stat a node, but nothing more. (The problem is, if you want to call zoo_exists() on a node that doesn't exist, there is no permission to check.)</para>
+      <para>Also, the <emphasis>ADMIN</emphasis> permission is there
+      since ZooKeeper doesn’t have a notion of file owner. In some
+      sense the <emphasis>ADMIN</emphasis> permission designates the
+      entity as the owner. ZooKeeper doesn’t support the LOOKUP
+      permission (execute permission bit on directories to allow you
+      to LOOKUP even though you can't list the directory). Everyone
+      implicitly has LOOKUP permission. This allows you to stat a
+      node, but nothing more. (The problem is, if you want to call
+      zoo_exists() on a node that doesn't exist, there is no
+      permission to check.)</para>
 
     <section id="sc_BuiltinACLSchemes">
       <title>Builtin ACL Schemes</title>
 
       <para>ZooKeeeper has the following built in schemes:</para>
+
       <itemizedlist>
-        <listitem><para><emphasis role="bold">world</emphasis> has a single id, <emphasis>anyone</emphasis>, that represents anyone.</para></listitem>
-        <listitem><para><emphasis role="bold">auth</emphasis> doesn't use any id, represents any authenticated user.</para></listitem>
-        <listitem><para><emphasis role="bold">digest</emphasis> uses a <emphasis>username:password</emphasis> string to generate MD5 hash which is then used as an ACL ID identity. Authentication is done by sending the <emphasis>username:password</emphasis> in clear text. When used in the ACL the expression will be the <emphasis>username:base64</emphasis>encoded<emphasis>SHA1</emphasis>password<emphasis>digest</emphasis>.</para></listitem>
-        <listitem><para><emphasis role="bold">host</emphasis> uses the client host name as an ACL ID identity. The ACL expression is a hostname suffix. For example, the ACL expression <emphasis>host:corp.com</emphasis> matches the ids <emphasis>host:host1.corp.com</emphasis> and <emphasis>host:host2.corp.com</emphasis>, but not <emphasis>host:host1.store.com</emphasis>.</para></listitem>
-        <listitem><para><emphasis role="bold">ip</emphasis> uses the client host IP as an ACL ID identity. The ACL expression is of the form <emphasis>addr/bits</emphasis> where the most significant <emphasis>bits</emphasis> of <emphasis>addr</emphasis> are matched against the most significant <emphasis>bits</emphasis> of the client host IP.</para></listitem>
+        <listitem><para><emphasis role="bold">world</emphasis> has a
+        single id, <emphasis>anyone</emphasis>, that represents
+        anyone.</para></listitem>
+
+        <listitem><para><emphasis role="bold">auth</emphasis> doesn't
+        use any id, represents any authenticated
+        user.</para></listitem>
+
+        <listitem><para><emphasis role="bold">digest</emphasis> uses
+        a <emphasis>username:password</emphasis> string to generate
+        MD5 hash which is then used as an ACL ID
+        identity. Authentication is done by sending
+        the <emphasis>username:password</emphasis> in clear text. When
+        used in the ACL the expression will be
+        the <emphasis>username:base64</emphasis>
+        encoded <emphasis>SHA1</emphasis>
+        password <emphasis>digest</emphasis>.</para>
+        </listitem>
+
+        <listitem><para><emphasis role="bold">host</emphasis> uses the
+        client host name as an ACL ID identity. The ACL expression is
+        a hostname suffix. For example, the ACL
+        expression <emphasis>host:corp.com</emphasis> matches the
+        ids <emphasis>host:host1.corp.com</emphasis>
+        and <emphasis>host:host2.corp.com</emphasis>, but
+        not <emphasis>host:host1.store.com</emphasis>.</para></listitem>
+
+        <listitem><para><emphasis role="bold">ip</emphasis> uses the
+        client host IP as an ACL ID identity. The ACL expression is of
+        the form <emphasis>addr/bits</emphasis> where the most
+        significant <emphasis>bits</emphasis>
+        of <emphasis>addr</emphasis> are matched against the most
+        significant <emphasis>bits</emphasis> of the client host
+        IP.</para></listitem>
+
       </itemizedlist>
     </section>
 
     <section>
-      <title>Zookeeper C client API</title>
+      <title>ZooKeeper C client API</title>
 
-      <para>The following constants are provided by the zookeeper C library:</para>
+      <para>The following constants are provided by the ZooKeeper C
+      library:</para>
 
       <itemizedlist>
-        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_READ; //can read node’s value and list its children</para></listitem>
-        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_WRITE;// can set the node’s value</para></listitem>
-        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_CREATE; //can create children</para></listitem>
-        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_DELETE;// can delete children</para></listitem>
-        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_ADMIN; //can execute set_acl()</para></listitem>
-        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> PERM_ALL;// all of the above flags OR’d together</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> ZOO_PERM_READ; //can read node’s value and list its children</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> ZOO_PERM_WRITE;// can set the node’s value</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> ZOO_PERM_CREATE; //can create children</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> ZOO_PERM_DELETE;// can delete children</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> ZOO_PERM_ADMIN; //can execute set_acl()</para></listitem>
+        <listitem><para><emphasis>const</emphasis> <emphasis>int</emphasis> ZOO_PERM_ALL;// all of the above flags OR’d together</para></listitem>
       </itemizedlist>
 
       <para>The following are the standard ACL IDs:</para>
 
       <itemizedlist>
-        <listitem><para><emphasis>struct</emphasis> Id ANYONE_ID_UNSAFE; //(‘world’,’anyone’)</para></listitem>
-        <listitem><para><emphasis>struct</emphasis> Id AUTH_IDS;// (‘auth’,’’)</para></listitem>
+        <listitem><para><emphasis>struct</emphasis> Id ZOO_ANYONE_ID_UNSAFE; //(‘world’,’anyone’)</para></listitem>
+        <listitem><para><emphasis>struct</emphasis> Id ZOO_AUTH_IDS;// (‘auth’,’’)</para></listitem>
       </itemizedlist>
 
-      <para>AUTH_IDS empty identity string should be interpreted as “the identity of the creator”.</para>
+      <para>ZOO_AUTH_IDS empty identity string should be interpreted as “the identity of the creator”.</para>
 
-      <para>Zookeeper client comes with three standard ACLs:</para>
+      <para>ZooKeeper client comes with three standard ACLs:</para>
 
       <itemizedlist>
-        <listitem><para><emphasis>struct</emphasis> ACL_vector OPEN_ACL_UNSAFE; //(PERM_ALL,ANYONE_ID_UNSAFE)</para></listitem>
-        <listitem><para><emphasis>struct</emphasis> ACL_vector READ_ACL_UNSAFE;// (PERM_READ, ANYONE_ID_UNSAFE)</para></listitem>
-        <listitem><para><emphasis>struct</emphasis> ACL_vector CREATOR_ALL_ACL; //(PERM_ALL,AUTH_IDS)</para></listitem>
+        <listitem><para><emphasis>struct</emphasis> ACL_vector ZOO_OPEN_ACL_UNSAFE; //(ZOO_PERM_ALL,ZOO_ANYONE_ID_UNSAFE)</para></listitem>
+        <listitem><para><emphasis>struct</emphasis> ACL_vector ZOO_READ_ACL_UNSAFE;// (ZOO_PERM_READ, ZOO_ANYONE_ID_UNSAFE)</para></listitem>
+        <listitem><para><emphasis>struct</emphasis> ACL_vector ZOO_CREATOR_ALL_ACL; //(ZOO_PERM_ALL,ZOO_AUTH_IDS)</para></listitem>
       </itemizedlist>
 
-      <para>The OPEN_ACL_UNSAFE is completely open free for all ACL: any application can execute any operation on the node and can create, list and delete its children. The READ_ACL_UNSAFE is read-only access for any application. CREATE_ALL_ACL grants all permissions to the creator of the node. The creator must have been authenticated by the server (for example, using “<emphasis>digest</emphasis>” scheme) before it can create nodes with this ACL.</para>
+      <para>The ZOO_OPEN_ACL_UNSAFE is completely open free for all ACL: any application can execute any operation on the node and can create, list and delete its children. The ZOO_READ_ACL_UNSAFE is read-only access for any application. CREATE_ALL_ACL grants all permissions to the creator of the node. The creator must have been authenticated by the server (for example, using “<emphasis>digest</emphasis>” scheme) before it can create nodes with this ACL.</para>
 
-      <para>The following zookeeper operations deal with ACLs:</para>
+      <para>The following ZooKeeper operations deal with ACLs:</para>
 
       <itemizedlist>
         <listitem><para><emphasis>int</emphasis> <emphasis>zoo_add_auth</emphasis>(zhandle_t *zh,<emphasis>const</emphasis> <emphasis>char</emphasis>* scheme,<emphasis>const</emphasis> <emphasis>char</emphasis>* cert,</para></listitem>
@@ -608,7 +683,7 @@
         <listitem><para><emphasis>char</emphasis> *realpath, <emphasis>int</emphasis> max_realpath_len);</para></listitem>
       </itemizedlist>
 
-      <para>zoo_create() operation creates a new node. The acl parameter is a list of ACLs associated with the node. The parent node must have the CREATE permission bit set.</para>
+      <para>zoo_create(...) operation creates a new node. The acl parameter is a list of ACLs associated with the node. The parent node must have the CREATE permission bit set.</para>
 
       <itemizedlist>
         <listitem><para><emphasis>int</emphasis> <emphasis>zoo_get_acl</emphasis>(zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis> *path,</para></listitem>
@@ -626,11 +701,30 @@
 
       <para>Here is a sample code that makes use of the above APIs to authenticate itself using the “<emphasis>foo</emphasis>” scheme and create an ephemeral node “/xyz” with create-only permissions.</para>
 
+      <note><para>This is a very simple example which is intended to show
+        how to interact with ZooKeeper ACLs
+        specifically. See <filename>.../trunk/src/c/src/cli.c</filename>
+        for an example of a proper C client implementation</para>
+      </note>
+
       <programlisting>
+#include &lt;string.h>
+#include &lt;errno.h>
+
+#include "zookeeper.h"
+
 static zhandle_t *zh;
 
-void watcher(zhandle_t *zzh, int type, int state, const char *path) {
-}
+/**
+ * In this example this method gets the cert for your
+ *   environment -- you must provide
+ */
+char *foo_get_cert_once(char* id) { return 0; }
+
+/** Watcher function -- empty for this example, not something you should
+ * do in real code */
+void watcher(zhandle_t *zzh, int type, int state, const char *path,
+             void *watcherCtx) {}
 
 int main(int argc, char argv) {
   char buffer[512];
@@ -650,26 +744,26 @@ int main(int argc, char argv) {
     strcpy(p, "dummy");
   }
 
-  zoo_set_debug_level(LOG_LEVEL_DEBUG);
+  zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
 
-  zh = zookeeper_init(“localhost:3181”, watcher,10000,0, 0, 0);
+  zh = zookeeper_init("localhost:3181", watcher, 10000, 0, 0, 0);
   if (!zh) {
     return errno;
   }
   if(zoo_add_auth(zh,"foo",p,strlen(p),0,0)!=ZOK)
     return 2;
 
-  struct ACL_CREATE_ONLY_ACL[] = {{PERM_CREATE, AUTH_IDS}};
-  struct ACL_vector CREATE_ONLY = {1,_CREATE_ONLY_ACL};
-  int rc = zoo_create(zh,"/xyz","value", 5, &amp;CREATE_ONLY, EPHEMERAL,
+  struct ACL CREATE_ONLY_ACL[] = {{ZOO_PERM_CREATE, ZOO_AUTH_IDS}};
+  struct ACL_vector CREATE_ONLY = {1, CREATE_ONLY_ACL};
+  int rc = zoo_create(zh,"/xyz","value", 5, &amp;CREATE_ONLY, ZOO_EPHEMERAL,
                       buffer, sizeof(buffer)-1);
 
-  this operation will fail with a ZNOAUTH error
-    int buflen= sizeof(buffer);
+  /** this operation will fail with a ZNOAUTH error */
+  int buflen= sizeof(buffer);
   struct Stat stat;
-  rc = zoo_get(zh, "/xyz",0,buffer,&amp;buflen,&amp;stat);
+  rc = zoo_get(zh, "/xyz", 0, buffer, &amp;buflen, &amp;stat);
   if (rc) {
-    fprintf(stderr, "Error %d for %s\n", rc, line);
+    fprintf(stderr, "Error %d for %s\n", rc, __LINE__);
   }
 
   zookeeper_close(zh);
@@ -764,7 +858,7 @@ int main(int argc, char argv) {
 
     <note>
         <para>Sometimes developers mistakenly assume one other guarantee that
-        Zookeeper does <emphasis>not</emphasis> in fact make. This is:</para>
+        ZooKeeper does <emphasis>not</emphasis> in fact make. This is:</para>
 
         <variablelist>
           <varlistentry>
@@ -789,7 +883,7 @@ int main(int argc, char argv) {
               primitives can be used to construct higher level functions that
               provide useful client synchronization. (For more information,
               see the <ulink
-              url="recipes.html">Zookeeper Recipes</ulink>.
+              url="recipes.html">ZooKeeper Recipes</ulink>.
               <emphasis>[tbd:..]</emphasis>).</para>
             </listitem>
           </varlistentry>
@@ -901,15 +995,15 @@ int main(int argc, char argv) {
 
         <orderedlist>
           <listitem>
-            <para>Run <command>ant compile_just</command> from the zookeeper
-            top level directory (<filename>.../trunk/zookeeper</filename>).
+            <para>Run <command>ant compile_jute</command> from the ZooKeeper
+            top level directory (<filename>.../trunk</filename>).
             This will create a directory named "generated" under
-            <filename>zookeeper/c</filename>.</para>
+            <filename>.../trunk/src/c</filename>.</para>
           </listitem>
 
           <listitem>
-            <para>Change directory to the<filename>zookeeper/c</filename> and
-            run <command>autoreconf -i</command> to bootstrap <emphasis
+            <para>Change directory to the<filename>.../trunk/src/c</filename>
+            and run <command>autoreconf -if</command> to bootstrap <emphasis
             role="bold">autoconf</emphasis>, <emphasis
             role="bold">automake</emphasis> and <emphasis
             role="bold">libtool</emphasis>. Make sure you have <emphasis
@@ -920,7 +1014,7 @@ int main(int argc, char argv) {
           <listitem>
             <para>If you are building from a project source package,
             unzip/untar the source tarball and cd to the<filename>
-            zookeeper-x.x.x/</filename> directory.</para>
+            zookeeper-x.x.x/src/c</filename> directory.</para>
           </listitem>
 
           <listitem>
@@ -981,9 +1075,9 @@ int main(int argc, char argv) {
       </section>
 
       <section>
-        <title>Using the Client</title>
+        <title>Using the C Client</title>
 
-        <para>You can test your client by running a zookeeper server (see
+        <para>You can test your client by running a ZooKeeper server (see
         instructions on the project wiki page on how to run it) and connecting
         to it using one of the cli applications that were built as part of the
         installation procedure. cli_mt (multithreaded, built against
@@ -992,15 +1086,17 @@ int main(int argc, char argv) {
 
         <para><command>$ cli_mt zookeeper_host:9876</command></para>
 
-        <para>This
-        is a client application that gives you a shell for executing simple
-        zookeeper commands. Once succesully started and connected to the
-        server it displays a shell prompt. You can now enter zookeeper
-        commands. For example, to create a node:</para>
+        <para>This is a client application that gives you a shell for
+        executing simple ZooKeeper commands. Once successfully started
+        and connected to the server it displays a shell prompt. You
+        can now enter ZooKeeper commands. For example, to create a
+        node:</para>
 
-        <programlisting>&gt; create /my_new_node</programlisting>
+        <para><command>&gt; create /my_new_node</command></para>
 
         <para>To verify that the node's been created:</para>
+
+        <para><command>&gt; ls /</command></para>
 
         <para>You should see a list of node who are children of the root node
         "/".</para>
@@ -1010,8 +1106,8 @@ int main(int argc, char argv) {
 
         <orderedlist>
           <listitem>
-            <para>Include zookeeper header: #include
-            &lt;zookeeper/zookeeper.h</para>
+            <para>Include ZooKeeper header: #include
+              &lt;zookeeper/zookeeper.h</para>
           </listitem>
 
           <listitem>
@@ -1179,7 +1275,7 @@ int main(int argc, char argv) {
 
       <varlistentry>
         <term><ulink
-        url="http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v">Zookeeper
+        url="http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v">ZooKeeper
         Talk at the Hadoup Summit 2008</ulink></term>
 
         <listitem>
@@ -1210,7 +1306,7 @@ int main(int argc, char argv) {
       </varlistentry>
 
       <varlistentry>
-        <term><ulink url="recipes.html">Zookeeper Recipes</ulink></term>
+        <term><ulink url="recipes.html">ZooKeeper Recipes</ulink></term>
 
         <listitem>
           <para>Pseudo-level discussion of the implementation of various
