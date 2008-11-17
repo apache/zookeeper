@@ -240,7 +240,7 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_BuiltinACLSchemes">Builtin ACL Schemes</a>
 </li>
 <li>
-<a href="#Zookeeper+C+client+API">Zookeeper C client API</a>
+<a href="#ZooKeeper+C+client+API">ZooKeeper C client API</a>
 </li>
 </ul>
 </li>
@@ -262,7 +262,7 @@ document.write("Last Published: " + document.lastModified);
 <a href="#Installation">Installation</a>
 </li>
 <li>
-<a href="#Using+the+Client">Using the Client</a>
+<a href="#Using+the+C+Client">Using the C Client</a>
 </li>
 </ul>
 </li>
@@ -499,7 +499,7 @@ document.write("Last Published: " + document.lastModified);
         the watch and then clear the watch. When a watch triggers, ZooKeeper
         sends the client a notification. More information about watches can be
         found in the section 
-	    <a href="#ch_zkWatches">Zookeeper Watches</a>.
+	    <a href="#ch_zkWatches">ZooKeeper Watches</a>.
         <em>[tbd]</em>
 </p>
 <a name="N100DA"></a><a name="Data+Access"></a>
@@ -926,12 +926,35 @@ document.write("Last Published: " + document.lastModified);
 <a name="N1023A"></a><a name="sc_ZooKeeperAccessControl"></a>
 <h2 class="h3">ZooKeeper access control using ACLs</h2>
 <div class="section">
-<p>ZooKeeper uses ACLs to control access to its znodes (the data nodes of a ZooKeeper data tree). The ACL implementation is quite similar to UNIX file access permissions: it employs permission bits to allow/disallow various operations against a node and the scope to which the bits apply. Unlike standard UNIX permissions, a ZooKeeper node is not limited by the three standard scopes for user (owner of the file), group, and world (other). ZooKeeper does not have a notion of an owner of a znode. Instead, an ACL specifies sets of ids and permissions that are associated with those ids.</p>
-<p>ZooKeeper supports pluggable authentication schemes. Ids are specified using the form <em>scheme:id</em>, where <em>scheme</em> is a the authentication scheme that the id corresponds to. For example, <em>host:host1.corp.com</em> is an id for a host named <em>host1.corp.com</em>.</p>
-<p>When a client connects to ZooKeeper and authenticates itself, ZooKeeper associates all the ids that correspond to a client with the clients connection. These ids are checked against the ACLs of znodes when a clients tries to access a node. ACLs are made up of pairs of <em>(scheme:expression, perms)</em>. The format of the <em>expression</em> is specific to the scheme. For example, the pair <em>(ip:19.22.0.0/16, READ)</em> gives the <em>READ</em> permission to any clients with an IP address that starts with 19.22.</p>
+<p>ZooKeeper uses ACLs to control access to its znodes (the
+    data nodes of a ZooKeeper data tree). The ACL implementation is
+    quite similar to UNIX file access permissions: it employs
+    permission bits to allow/disallow various operations against a
+    node and the scope to which the bits apply. Unlike standard UNIX
+    permissions, a ZooKeeper node is not limited by the three standard
+    scopes for user (owner of the file), group, and world
+    (other). ZooKeeper does not have a notion of an owner of a
+    znode. Instead, an ACL specifies sets of ids and permissions that
+    are associated with those ids.</p>
+<p>ZooKeeper supports pluggable authentication schemes. Ids are
+    specified using the form <em>scheme:id</em>,
+    where <em>scheme</em> is a the authentication scheme
+    that the id corresponds to. For
+    example, <em>host:host1.corp.com</em> is an id for a
+    host named <em>host1.corp.com</em>.</p>
+<p>When a client connects to ZooKeeper and authenticates
+    itself, ZooKeeper associates all the ids that correspond to a
+    client with the clients connection. These ids are checked against
+    the ACLs of znodes when a clients tries to access a node. ACLs are
+    made up of pairs of <em>(scheme:expression,
+    perms)</em>. The format of
+    the <em>expression</em> is specific to the scheme. For
+    example, the pair <em>(ip:19.22.0.0/16, READ)</em>
+    gives the <em>READ</em> permission to any clients with
+    an IP address that starts with 19.22.</p>
 <a name="N10261"></a><a name="sc_ACLPermissions"></a>
 <h3 class="h4">ACL Permissions</h3>
-<p>Zookeeper supports the following permissions:</p>
+<p>ZooKeeper supports the following permissions:</p>
 <ul>
         
 <li>
@@ -960,11 +983,31 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<p>The <em>CREATE</em> and <em>DELETE</em> permissions have been broken out of the <em>WRITE</em> permission for finer grained access controls. The cases for <em>CREATE</em> and <em>DELETE</em> are the following:</p>
-<p>You want A to be able to do a set on a zookeeper node, but not be able to <em>CREATE</em> or <em>DELETE</em> children.</p>
+<p>The <em>CREATE</em>
+      and <em>DELETE</em> permissions have been broken out
+      of the <em>WRITE</em> permission for finer grained
+      access controls. The cases for <em>CREATE</em>
+      and <em>DELETE</em> are the following:</p>
+<p>You want A to be able to do a set on a ZooKeeper node, but
+      not be able to <em>CREATE</em>
+      or <em>DELETE</em> children.</p>
 <p>
-<em>CREATE</em> without <em>DELETE</em>: clients create requests by creating zookeeper nodes in a parent directory. You want all clients to be able to add, but only request processor can delete. (This is kind of like the APPEND permission for files.)</p>
-<p>Also, the <em>ADMIN</em> permission is there since Zookeeper doesn&rsquo;t have a notion of file owner. In some sense the <em>ADMIN</em> permission designates the entity as the owner. Zookeeper doesn&rsquo;t support the LOOKUP permission (execute permission bit on directories to allow you to LOOKUP even though you can't list the directory). Everyone implicitly has LOOKUP permission. This allows you to stat a node, but nothing more. (The problem is, if you want to call zoo_exists() on a node that doesn't exist, there is no permission to check.)</p>
+<em>CREATE</em>
+      without <em>DELETE</em>: clients create requests by
+      creating ZooKeeper nodes in a parent directory. You want all
+      clients to be able to add, but only request processor can
+      delete. (This is kind of like the APPEND permission for
+      files.)</p>
+<p>Also, the <em>ADMIN</em> permission is there
+      since ZooKeeper doesn&rsquo;t have a notion of file owner. In some
+      sense the <em>ADMIN</em> permission designates the
+      entity as the owner. ZooKeeper doesn&rsquo;t support the LOOKUP
+      permission (execute permission bit on directories to allow you
+      to LOOKUP even though you can't list the directory). Everyone
+      implicitly has LOOKUP permission. This allows you to stat a
+      node, but nothing more. (The problem is, if you want to call
+      zoo_exists() on a node that doesn't exist, there is no
+      permission to check.)</p>
 <a name="N102B7"></a><a name="sc_BuiltinACLSchemes"></a>
 <h4>Builtin ACL Schemes</h4>
 <p>ZooKeeeper has the following built in schemes:</p>
@@ -972,63 +1015,94 @@ document.write("Last Published: " + document.lastModified);
         
 <li>
 <p>
-<strong>world</strong> has a single id, <em>anyone</em>, that represents anyone.</p>
+<strong>world</strong> has a
+        single id, <em>anyone</em>, that represents
+        anyone.</p>
 </li>
+
         
 <li>
 <p>
-<strong>auth</strong> doesn't use any id, represents any authenticated user.</p>
+<strong>auth</strong> doesn't
+        use any id, represents any authenticated
+        user.</p>
 </li>
+
         
 <li>
 <p>
-<strong>digest</strong> uses a <em>username:password</em> string to generate MD5 hash which is then used as an ACL ID identity. Authentication is done by sending the <em>username:password</em> in clear text. When used in the ACL the expression will be the <em>username:base64</em>encoded<em>SHA1</em>password<em>digest</em>.</p>
+<strong>digest</strong> uses
+        a <em>username:password</em> string to generate
+        MD5 hash which is then used as an ACL ID
+        identity. Authentication is done by sending
+        the <em>username:password</em> in clear text. When
+        used in the ACL the expression will be
+        the <em>username:base64</em>
+        encoded <em>SHA1</em>
+        password <em>digest</em>.</p>
+        
 </li>
+
         
 <li>
 <p>
-<strong>host</strong> uses the client host name as an ACL ID identity. The ACL expression is a hostname suffix. For example, the ACL expression <em>host:corp.com</em> matches the ids <em>host:host1.corp.com</em> and <em>host:host2.corp.com</em>, but not <em>host:host1.store.com</em>.</p>
+<strong>host</strong> uses the
+        client host name as an ACL ID identity. The ACL expression is
+        a hostname suffix. For example, the ACL
+        expression <em>host:corp.com</em> matches the
+        ids <em>host:host1.corp.com</em>
+        and <em>host:host2.corp.com</em>, but
+        not <em>host:host1.store.com</em>.</p>
 </li>
+
         
 <li>
 <p>
-<strong>ip</strong> uses the client host IP as an ACL ID identity. The ACL expression is of the form <em>addr/bits</em> where the most significant <em>bits</em> of <em>addr</em> are matched against the most significant <em>bits</em> of the client host IP.</p>
+<strong>ip</strong> uses the
+        client host IP as an ACL ID identity. The ACL expression is of
+        the form <em>addr/bits</em> where the most
+        significant <em>bits</em>
+        of <em>addr</em> are matched against the most
+        significant <em>bits</em> of the client host
+        IP.</p>
 </li>
+
       
 </ul>
-<a name="N1030C"></a><a name="Zookeeper+C+client+API"></a>
-<h4>Zookeeper C client API</h4>
-<p>The following constants are provided by the zookeeper C library:</p>
+<a name="N1030D"></a><a name="ZooKeeper+C+client+API"></a>
+<h4>ZooKeeper C client API</h4>
+<p>The following constants are provided by the ZooKeeper C
+      library:</p>
 <ul>
         
 <li>
 <p>
-<em>const</em> <em>int</em> PERM_READ; //can read node&rsquo;s value and list its children</p>
+<em>const</em> <em>int</em> ZOO_PERM_READ; //can read node&rsquo;s value and list its children</p>
 </li>
         
 <li>
 <p>
-<em>const</em> <em>int</em> PERM_WRITE;// can set the node&rsquo;s value</p>
+<em>const</em> <em>int</em> ZOO_PERM_WRITE;// can set the node&rsquo;s value</p>
 </li>
         
 <li>
 <p>
-<em>const</em> <em>int</em> PERM_CREATE; //can create children</p>
+<em>const</em> <em>int</em> ZOO_PERM_CREATE; //can create children</p>
 </li>
         
 <li>
 <p>
-<em>const</em> <em>int</em> PERM_DELETE;// can delete children</p>
+<em>const</em> <em>int</em> ZOO_PERM_DELETE;// can delete children</p>
 </li>
         
 <li>
 <p>
-<em>const</em> <em>int</em> PERM_ADMIN; //can execute set_acl()</p>
+<em>const</em> <em>int</em> ZOO_PERM_ADMIN; //can execute set_acl()</p>
 </li>
         
 <li>
 <p>
-<em>const</em> <em>int</em> PERM_ALL;// all of the above flags OR&rsquo;d together</p>
+<em>const</em> <em>int</em> ZOO_PERM_ALL;// all of the above flags OR&rsquo;d together</p>
 </li>
       
 </ul>
@@ -1037,37 +1111,37 @@ document.write("Last Published: " + document.lastModified);
         
 <li>
 <p>
-<em>struct</em> Id ANYONE_ID_UNSAFE; //(&lsquo;world&rsquo;,&rsquo;anyone&rsquo;)</p>
+<em>struct</em> Id ZOO_ANYONE_ID_UNSAFE; //(&lsquo;world&rsquo;,&rsquo;anyone&rsquo;)</p>
 </li>
         
 <li>
 <p>
-<em>struct</em> Id AUTH_IDS;// (&lsquo;auth&rsquo;,&rsquo;&rsquo;)</p>
+<em>struct</em> Id ZOO_AUTH_IDS;// (&lsquo;auth&rsquo;,&rsquo;&rsquo;)</p>
 </li>
       
 </ul>
-<p>AUTH_IDS empty identity string should be interpreted as &ldquo;the identity of the creator&rdquo;.</p>
-<p>Zookeeper client comes with three standard ACLs:</p>
+<p>ZOO_AUTH_IDS empty identity string should be interpreted as &ldquo;the identity of the creator&rdquo;.</p>
+<p>ZooKeeper client comes with three standard ACLs:</p>
 <ul>
         
 <li>
 <p>
-<em>struct</em> ACL_vector OPEN_ACL_UNSAFE; //(PERM_ALL,ANYONE_ID_UNSAFE)</p>
+<em>struct</em> ACL_vector ZOO_OPEN_ACL_UNSAFE; //(ZOO_PERM_ALL,ZOO_ANYONE_ID_UNSAFE)</p>
 </li>
         
 <li>
 <p>
-<em>struct</em> ACL_vector READ_ACL_UNSAFE;// (PERM_READ, ANYONE_ID_UNSAFE)</p>
+<em>struct</em> ACL_vector ZOO_READ_ACL_UNSAFE;// (ZOO_PERM_READ, ZOO_ANYONE_ID_UNSAFE)</p>
 </li>
         
 <li>
 <p>
-<em>struct</em> ACL_vector CREATOR_ALL_ACL; //(PERM_ALL,AUTH_IDS)</p>
+<em>struct</em> ACL_vector ZOO_CREATOR_ALL_ACL; //(ZOO_PERM_ALL,ZOO_AUTH_IDS)</p>
 </li>
       
 </ul>
-<p>The OPEN_ACL_UNSAFE is completely open free for all ACL: any application can execute any operation on the node and can create, list and delete its children. The READ_ACL_UNSAFE is read-only access for any application. CREATE_ALL_ACL grants all permissions to the creator of the node. The creator must have been authenticated by the server (for example, using &ldquo;<em>digest</em>&rdquo; scheme) before it can create nodes with this ACL.</p>
-<p>The following zookeeper operations deal with ACLs:</p>
+<p>The ZOO_OPEN_ACL_UNSAFE is completely open free for all ACL: any application can execute any operation on the node and can create, list and delete its children. The ZOO_READ_ACL_UNSAFE is read-only access for any application. CREATE_ALL_ACL grants all permissions to the creator of the node. The creator must have been authenticated by the server (for example, using &ldquo;<em>digest</em>&rdquo; scheme) before it can create nodes with this ACL.</p>
+<p>The following ZooKeeper operations deal with ACLs:</p>
 <ul>
         
 <li>
@@ -1100,7 +1174,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<p>zoo_create() operation creates a new node. The acl parameter is a list of ACLs associated with the node. The parent node must have the CREATE permission bit set.</p>
+<p>zoo_create(...) operation creates a new node. The acl parameter is a list of ACLs associated with the node. The parent node must have the CREATE permission bit set.</p>
 <ul>
         
 <li>
@@ -1130,11 +1204,34 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 <p>This function replaces node&rsquo;s ACL list with a new one. The node must have the ADMIN permission set.</p>
 <p>Here is a sample code that makes use of the above APIs to authenticate itself using the &ldquo;<em>foo</em>&rdquo; scheme and create an ephemeral node &ldquo;/xyz&rdquo; with create-only permissions.</p>
+<div class="note">
+<div class="label">Note</div>
+<div class="content">
+<p>This is a very simple example which is intended to show
+        how to interact with ZooKeeper ACLs
+        specifically. See <span class="codefrag filename">.../trunk/src/c/src/cli.c</span>
+        for an example of a proper C client implementation</p>
+      
+</div>
+</div>
 <pre class="code">
+#include &lt;string.h&gt;
+#include &lt;errno.h&gt;
+
+#include "zookeeper.h"
+
 static zhandle_t *zh;
 
-void watcher(zhandle_t *zzh, int type, int state, const char *path) {
-}
+/**
+ * In this example this method gets the cert for your
+ *   environment -- you must provide
+ */
+char *foo_get_cert_once(char* id) { return 0; }
+
+/** Watcher function -- empty for this example, not something you should
+ * do in real code */
+void watcher(zhandle_t *zzh, int type, int state, const char *path,
+             void *watcherCtx) {}
 
 int main(int argc, char argv) {
   char buffer[512];
@@ -1154,26 +1251,26 @@ int main(int argc, char argv) {
     strcpy(p, "dummy");
   }
 
-  zoo_set_debug_level(LOG_LEVEL_DEBUG);
+  zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
 
-  zh = zookeeper_init(&ldquo;localhost:3181&rdquo;, watcher,10000,0, 0, 0);
+  zh = zookeeper_init("localhost:3181", watcher, 10000, 0, 0, 0);
   if (!zh) {
     return errno;
   }
   if(zoo_add_auth(zh,"foo",p,strlen(p),0,0)!=ZOK)
     return 2;
 
-  struct ACL_CREATE_ONLY_ACL[] = {{PERM_CREATE, AUTH_IDS}};
-  struct ACL_vector CREATE_ONLY = {1,_CREATE_ONLY_ACL};
-  int rc = zoo_create(zh,"/xyz","value", 5, &amp;CREATE_ONLY, EPHEMERAL,
+  struct ACL CREATE_ONLY_ACL[] = {{ZOO_PERM_CREATE, ZOO_AUTH_IDS}};
+  struct ACL_vector CREATE_ONLY = {1, CREATE_ONLY_ACL};
+  int rc = zoo_create(zh,"/xyz","value", 5, &amp;CREATE_ONLY, ZOO_EPHEMERAL,
                       buffer, sizeof(buffer)-1);
 
-  this operation will fail with a ZNOAUTH error
-    int buflen= sizeof(buffer);
+  /** this operation will fail with a ZNOAUTH error */
+  int buflen= sizeof(buffer);
   struct Stat stat;
-  rc = zoo_get(zh, "/xyz",0,buffer,&amp;buflen,&amp;stat);
+  rc = zoo_get(zh, "/xyz", 0, buffer, &amp;buflen, &amp;stat);
   if (rc) {
-    fprintf(stderr, "Error %d for %s\n", rc, line);
+    fprintf(stderr, "Error %d for %s\n", rc, __LINE__);
   }
 
   zookeeper_close(zh);
@@ -1183,7 +1280,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10429"></a><a name="ch_zkGuarantees"></a>
+<a name="N10433"></a><a name="ch_zkGuarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -1274,7 +1371,7 @@ int main(int argc, char argv) {
 <div class="content">
         
 <p>Sometimes developers mistakenly assume one other guarantee that
-        Zookeeper does <em>not</em> in fact make. This is:</p>
+        ZooKeeper does <em>not</em> in fact make. This is:</p>
 
         
 <dl>
@@ -1298,7 +1395,7 @@ int main(int argc, char argv) {
               synchronously across all servers, but ZooKeeper
               primitives can be used to construct higher level functions that
               provide useful client synchronization. (For more information,
-              see the <a href="recipes.html">Zookeeper Recipes</a>.
+              see the <a href="recipes.html">ZooKeeper Recipes</a>.
               <em>[tbd:..]</em>).</p>
 </dd>
         
@@ -1309,12 +1406,12 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10490"></a><a name="ch_bindings"></a>
+<a name="N1049A"></a><a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N10499"></a><a name="Java+Binding"></a>
+<a name="N104A3"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1381,7 +1478,7 @@ int main(int argc, char argv) {
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid,
       the two threads shut down, and any further ZooKeeper calls throw
       errors.</p>
-<a name="N104E2"></a><a name="C+Binding"></a>
+<a name="N104EC"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1398,7 +1495,7 @@ int main(int argc, char argv) {
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N104F1"></a><a name="Installation"></a>
+<a name="N104FB"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1407,18 +1504,18 @@ int main(int argc, char argv) {
           
 <li>
             
-<p>Run <span class="codefrag command">ant compile_just</span> from the zookeeper
-            top level directory (<span class="codefrag filename">.../trunk/zookeeper</span>).
+<p>Run <span class="codefrag command">ant compile_jute</span> from the ZooKeeper
+            top level directory (<span class="codefrag filename">.../trunk</span>).
             This will create a directory named "generated" under
-            <span class="codefrag filename">zookeeper/c</span>.</p>
+            <span class="codefrag filename">.../trunk/src/c</span>.</p>
           
 </li>
 
           
 <li>
             
-<p>Change directory to the<span class="codefrag filename">zookeeper/c</span> and
-            run <span class="codefrag command">autoreconf -i</span> to bootstrap <strong>autoconf</strong>, <strong>automake</strong> and <strong>libtool</strong>. Make sure you have <strong>autoconf version 2.59</strong> or greater installed.
+<p>Change directory to the<span class="codefrag filename">.../trunk/src/c</span>
+            and run <span class="codefrag command">autoreconf -if</span> to bootstrap <strong>autoconf</strong>, <strong>automake</strong> and <strong>libtool</strong>. Make sure you have <strong>autoconf version 2.59</strong> or greater installed.
             Skip to step<strong> 4</strong>.</p>
           
 </li>
@@ -1428,7 +1525,7 @@ int main(int argc, char argv) {
             
 <p>If you are building from a project source package,
             unzip/untar the source tarball and cd to the<span class="codefrag filename">
-            zookeeper-x.x.x/</span> directory.</p>
+            zookeeper-x.x.x/src/c</span> directory.</p>
           
 </li>
 
@@ -1529,9 +1626,9 @@ int main(int argc, char argv) {
 </li>
         
 </ol>
-<a name="N1059A"></a><a name="Using+the+Client"></a>
-<h4>Using the Client</h4>
-<p>You can test your client by running a zookeeper server (see
+<a name="N105A4"></a><a name="Using+the+C+Client"></a>
+<h4>Using the C Client</h4>
+<p>You can test your client by running a ZooKeeper server (see
         instructions on the project wiki page on how to run it) and connecting
         to it using one of the cli applications that were built as part of the
         installation procedure. cli_mt (multithreaded, built against
@@ -1540,13 +1637,18 @@ int main(int argc, char argv) {
 <p>
 <span class="codefrag command">$ cli_mt zookeeper_host:9876</span>
 </p>
-<p>This
-        is a client application that gives you a shell for executing simple
-        zookeeper commands. Once succesully started and connected to the
-        server it displays a shell prompt. You can now enter zookeeper
-        commands. For example, to create a node:</p>
-<pre class="code">&gt; create /my_new_node</pre>
+<p>This is a client application that gives you a shell for
+        executing simple ZooKeeper commands. Once successfully started
+        and connected to the server it displays a shell prompt. You
+        can now enter ZooKeeper commands. For example, to create a
+        node:</p>
+<p>
+<span class="codefrag command">&gt; create /my_new_node</span>
+</p>
 <p>To verify that the node's been created:</p>
+<p>
+<span class="codefrag command">&gt; ls /</span>
+</p>
 <p>You should see a list of node who are children of the root node
         "/".</p>
 <p>In order to be able to use the ZooKeeper API in your application
@@ -1555,8 +1657,8 @@ int main(int argc, char argv) {
           
 <li>
             
-<p>Include zookeeper header: #include
-            &lt;zookeeper/zookeeper.h</p>
+<p>Include ZooKeeper header: #include
+              &lt;zookeeper/zookeeper.h</p>
           
 </li>
 
@@ -1582,7 +1684,7 @@ int main(int argc, char argv) {
 </div>
 
    
-<a name="N105D9"></a><a name="ch_guideToZkOperations"></a>
+<a name="N105EA"></a><a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>This section surveys all the operations a developer can perform
@@ -1600,25 +1702,25 @@ int main(int argc, char argv) {
 </li>
     
 </ul>
-<a name="N105ED"></a><a name="sc_connectingToZk"></a>
+<a name="N105FE"></a><a name="sc_connectingToZk"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p></p>
-<a name="N105F6"></a><a name="sc_readOps"></a>
+<a name="N10607"></a><a name="sc_readOps"></a>
 <h3 class="h4">Read Operations</h3>
 <p></p>
-<a name="N105FF"></a><a name="sc_writeOps"></a>
+<a name="N10610"></a><a name="sc_writeOps"></a>
 <h3 class="h4">Write Operations</h3>
 <p></p>
-<a name="N10608"></a><a name="sc_handlingWatches"></a>
+<a name="N10619"></a><a name="sc_handlingWatches"></a>
 <h3 class="h4">Handling Watches</h3>
 <p></p>
-<a name="N10611"></a><a name="sc_miscOps"></a>
+<a name="N10622"></a><a name="sc_miscOps"></a>
 <h3 class="h4">Miscelleaneous ZooKeeper Operations</h3>
 <p></p>
 </div>
 
   
-<a name="N1061B"></a><a name="ch_programStructureWithExample"></a>
+<a name="N1062C"></a><a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -1627,7 +1729,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10626"></a><a name="ch_gotchas"></a>
+<a name="N10637"></a><a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application
@@ -1745,7 +1847,7 @@ int main(int argc, char argv) {
       
 <dt>
 <term>
-<a href="http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v">Zookeeper
+<a href="http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v">ZooKeeper
         Talk at the Hadoup Summit 2008</a>
 </term>
 </dt>
@@ -1780,7 +1882,7 @@ int main(int argc, char argv) {
       
 <dt>
 <term>
-<a href="recipes.html">Zookeeper Recipes</a>
+<a href="recipes.html">ZooKeeper Recipes</a>
 </term>
 </dt>
 <dd>
