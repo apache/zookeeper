@@ -7,7 +7,8 @@ Backward compatibile changes:
 BUGFIXES: 
    ZOOKEEPER-223. change default level in root logger to INFO. (pat via
 mahadev) 
-
+   
+   ZOOKEEPER-212. fix the snapshot to be asynchronous. (mahadev and ben)
 
 Release 3.0.0 - 2008-10-21
 

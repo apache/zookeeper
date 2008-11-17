@@ -37,6 +37,8 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     private LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
     private RequestProcessor nextProcessor;
     boolean timeToDie = false;
+    Thread snapInProcess = null;
+    
     /**
      * Transactions that have been written and are waiting to be flushed to
      * disk. Basically this is the list of SyncItems whose callbacks will be
@@ -58,10 +60,6 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         this.zks = zks;
         this.nextProcessor = nextProcessor;
         start();
-    }
-
-    private void startSnapshot() throws IOException {
-        zks.takeSnapshot();
     }
 
     @Override
@@ -89,7 +87,21 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                             // roll the log
                             zks.getLogWriter().rollLog();
                             // take a snapshot
-                            startSnapshot();
+                            if (snapInProcess != null && snapInProcess.isAlive()) {
+                                LOG.warn("Too busy to snap, skipping");
+                            }
+                            else {
+                                snapInProcess = new Thread("Snapshot Thread") {
+                                    public void run() {
+                                     try {
+                                         zks.takeSnapshot();
+                                     } catch(Exception e) {
+                                         LOG.warn("Unexpected exception", e);
+                                     }
+                                    }
+                                };
+                                snapInProcess.start();
+                            }
                             logCount = 0;
                         }
                     toFlush.add(si);
