@@ -1,3 +1,14 @@
+Trunk
+  
+Non-backward compatible changes:
+
+Backward compatibile changes:
+
+BUGFIXES: 
+   ZOOKEEPER-223. change default level in root logger to INFO. (pat via
+mahadev) 
+
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
