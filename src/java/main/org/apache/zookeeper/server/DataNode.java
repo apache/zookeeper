@@ -96,7 +96,7 @@ public class DataNode implements Record {
         to.setPzxid(stat.getPzxid());
         to.setVersion(stat.getVersion());
         to.setEphemeralOwner(stat.getEphemeralOwner());
-        to.setDataLength(data.length);
+        to.setDataLength(data == null ? 0 : data.length);
         to.setNumChildren(children.size());
     }
 
