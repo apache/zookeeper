@@ -125,12 +125,12 @@ we call root (<emphasis role="bold">Note:</emphasis> This is not the ZooKeeper r
          * Barrier constructor
          *
          * @param address
-         * @param name
+         * @param root
          * @param size
          */
-        Barrier(String address, String name, int size) {
+        Barrier(String address, String root, int size) {
             super(address);
-            this.root = name;
+            this.root = root;
             this.size = size;
 
             // Create barrier node
@@ -182,7 +182,7 @@ a boolean flag that enables the process to set a watch. In the code the flag is 
 
         boolean enter() throws KeeperException, InterruptedException{
             zk.create(root + "/" + name, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.EPHEMERAL);
+                    CreateMode.EPHEMERAL_SEQUENTIAL);
             while (true) {
                 synchronized (mutex) {
                     List&lt;String&gt; list = zk.getChildren(root, true);
@@ -422,12 +422,12 @@ public class SyncPrimitive implements Watcher {
          * Barrier constructor
          *
          * @param address
-         * @param name
+         * @param root
          * @param size
          */
-        Barrier(String address, String name, int size) {
+        Barrier(String address, String root, int size) {
             super(address);
-            this.root = name;
+            this.root = root;
             this.size = size;
 
             // Create barrier node
@@ -466,7 +466,7 @@ public class SyncPrimitive implements Watcher {
 
         boolean enter() throws KeeperException, InterruptedException{
             zk.create(root + "/" + name, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.EPHEMERAL);
+                    CreateMode.EPHEMERAL_SEQUENTIAL);
             while (true) {
                 synchronized (mutex) {
                     List&lt;String&gt; list = zk.getChildren(root, true);
