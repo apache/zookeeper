@@ -67,7 +67,12 @@ public class QuorumPeerMain {
             ZooKeeperServerMain.main(args);
             return;
         }
-        QuorumPeerConfig.parse(args);
+        try {
+            QuorumPeerConfig.parse(args);
+        } catch(Exception e) {
+            LOG.fatal("Error in config", e);
+            System.exit(2);
+        }
         if (!QuorumPeerConfig.isStandalone()) {
             runPeer(new QuorumPeer.Factory() {
                 public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory) throws IOException {

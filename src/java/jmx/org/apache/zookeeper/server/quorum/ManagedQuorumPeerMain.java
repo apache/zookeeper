@@ -85,7 +85,12 @@ public class ManagedQuorumPeerMain {
             ManagedZooKeeperServerMain.main(args);
             return;
         }
-        QuorumPeerConfig.parse(args);
+        try {
+            QuorumPeerConfig.parse(args);
+        } catch(Exception e) {
+            LOG.fatal("Error in config ", e);
+            System.exit(2);
+        }
         if (!QuorumPeerConfig.isStandalone()) {
             ZooKeeperObserverManager.setAsConcrete();
             runPeer(new QuorumPeer.Factory() {
