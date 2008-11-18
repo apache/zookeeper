@@ -22,6 +22,9 @@ via mahadev)
 
    ZOOKEEPER-218. fix the error in the barrier example code. (pat via mahadev)
 
+   ZOOKEEPER-206. documentation tab should contain the version number and 
+   other small site changes. (pat via mahadev) 
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:

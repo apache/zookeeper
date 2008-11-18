@@ -31,6 +31,6 @@
 
   <tab label="Project" href="http://hadoop.apache.org/zookeeper/" />
   <tab label="Wiki" href="http://wiki.apache.org/hadoop/ZooKeeper" />
-  <tab label="ZooKeeper Documentation" dir="" />  
+  <tab label="ZooKeeper 3.1 Documentation" dir="" />
   
 </tabs>

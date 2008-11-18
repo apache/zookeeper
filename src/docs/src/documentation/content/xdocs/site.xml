@@ -54,11 +54,11 @@ See http://forrest.apache.org/docs/linking.html for more info.
       <internals label="ZooKeeper Internals"	href="zookeeperInternals.html" />
   </docs>
   
-  <docs label="Informal Documentation">
+  <docs label="Miscellaneous">
     <wiki      label="Wiki"                   href="ext:wiki" />
     <faq       label="FAQ"                    href="ext:faq" />
     <lists     label="Mailing Lists"          href="ext:lists" />
-    <other     label="Other Info"	      href="zookeeperOtherInfo.html" />
+    <!--<other     label="Other Info"	      href="zookeeperOtherInfo.html" />-->
   </docs>
   
   
