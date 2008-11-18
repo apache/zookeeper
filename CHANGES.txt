@@ -13,6 +13,9 @@ mahadev)
    ZOOKEEPER-213. fix programmer guide C api docs to be  in sync with latest
 zookeeper.h (pat via mahadev)
 
+   ZOOKEEPER-219. fix events.poll timeout in watcher test to be longer. (pat
+via mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
