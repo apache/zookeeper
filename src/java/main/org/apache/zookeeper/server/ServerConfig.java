@@ -51,18 +51,16 @@ public class ServerConfig {
     
     protected static ServerConfig instance=null;
     
-    public static void parse(String[] args) {
+    public static void parse(String[] args) throws Exception {
         if(instance!=null)
             return;
         if (args.length != 2) {
-            System.err.println("USAGE: ZooKeeperServer port datadir\n");
-            System.exit(2);
+            throw new IllegalArgumentException("Invalid usage.");
         }
         try {
               instance=new ServerConfig(Integer.parseInt(args[0]),args[1],args[1]);
         } catch (NumberFormatException e) {
-            System.err.println(args[0] + " is not a valid port number");
-            System.exit(2);
+            throw new IllegalArgumentException(args[0] + " is not a valid port number");
         }
     }
 

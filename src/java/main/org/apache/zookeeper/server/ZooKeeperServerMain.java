@@ -31,14 +31,20 @@ import org.apache.zookeeper.server.ZooKeeperServer.BasicDataTreeBuilder;
 public class ZooKeeperServerMain {
 
     private static final Logger LOG = Logger.getLogger(ZooKeeperServerMain.class);
-
+    private static final String USAGE = "Usage: ZooKeeperServerMain port datadir";
     /*
      * Start up the ZooKeeper server.
      *
      * @param args the port and data directory
      */
     public static void main(String[] args) {
-        ServerConfig.parse(args);
+        try {
+            ServerConfig.parse(args);
+        } catch(Exception e) {
+            LOG.fatal("Error in config", e);
+            LOG.info(USAGE);
+            System.exit(2);
+        }
         runStandalone(new ZooKeeperServer.Factory() {
             public NIOServerCnxn.Factory createConnectionFactory() throws IOException {
                 return new NIOServerCnxn.Factory(ServerConfig.getClientPort());

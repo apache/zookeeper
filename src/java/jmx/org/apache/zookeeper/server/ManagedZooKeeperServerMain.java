@@ -23,6 +23,7 @@ import static org.apache.zookeeper.server.ServerConfig.getClientPort;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.server.ConnectionMXBean;
 import org.apache.zookeeper.jmx.server.DataTreeMXBean;
 import org.apache.zookeeper.jmx.server.ZooKeeperServerMXBean;
@@ -53,6 +54,7 @@ import org.apache.zookeeper.server.util.ZooKeeperObserverManager;
  */
 public class ManagedZooKeeperServerMain extends ZooKeeperServerMain {
     
+    private static final Logger LOG = Logger.getLogger(ManagedZooKeeperServerMain.class);
     /**
      * To start the server specify the client port number and the data directory
      * on the command line.
@@ -60,7 +62,12 @@ public class ManagedZooKeeperServerMain extends ZooKeeperServerMain {
      * @param args command line parameters.
      */
     public static void main(String[] args) {
-        ServerConfig.parse(args);
+        try {
+            ServerConfig.parse(args);
+        } catch(Exception e) {
+            LOG.fatal("Error in config", e);
+            System.exit(2);
+        }
         ZooKeeperObserverManager.setAsConcrete();
         runStandalone(new ZooKeeperServer.Factory() {
             public NIOServerCnxn.Factory createConnectionFactory()throws IOException {
