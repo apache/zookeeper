@@ -18,6 +18,8 @@ via mahadev)
    
    ZOOKEEPER-217. Fix errors in config to be thrown as Exceptions. (mahadev)
 
+   ZOOKEEPER-228. fix apache header missing in DBTest. (mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
