@@ -121,14 +121,11 @@ public:
     }
     void testAddressResolution()
     {
-        const char EXPECTED_IPS[][4]={{127,0,0,1},{127,0,0,2},{127,0,0,3}};
+        const char EXPECTED_IPS[][4]={{127,0,0,1}};
         const int EXPECTED_ADDRS_COUNT =COUNTOF(EXPECTED_IPS);
-        Mock_gethostbyname mock;
-        mock.addHostEntry("somehostname").addAddress(EXPECTED_IPS[0]).
-            addAddress(EXPECTED_IPS[1]).addAddress(EXPECTED_IPS[2]);
 
         zoo_deterministic_conn_order(1);
-        zh=zookeeper_init("host:2121",0,10000,0,0,0);
+        zh=zookeeper_init("127.0.0.1:2121",0,10000,0,0,0);
         
         CPPUNIT_ASSERT(zh!=0);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
@@ -140,15 +137,9 @@ public:
     }
     void testMultipleAddressResolution()
     {
-        const string EXPECTED_HOST("host1:2121,host2:3434");
-        const char EXPECTED_IPS[][4]={{127,0,0,1},{127,0,0,2},{127,0,0,3},
-                {126,1,1,1},{126,2,2,2}};
+        const string EXPECTED_HOST("127.0.0.1:2121,127.0.0.2:3434");
+        const char EXPECTED_IPS[][4]={{127,0,0,1},{127,0,0,2}};
         const int EXPECTED_ADDRS_COUNT =COUNTOF(EXPECTED_IPS);
-        Mock_gethostbyname mock;
-        mock.addHostEntry("somehost1").addAddress(EXPECTED_IPS[0]).
-            addAddress(EXPECTED_IPS[1]).addAddress(EXPECTED_IPS[2]);
-        mock.addHostEntry("somehost2").addAddress(EXPECTED_IPS[3]).
-            addAddress(EXPECTED_IPS[4]);
 
         zoo_deterministic_conn_order(1);
         zh=zookeeper_init(EXPECTED_HOST.c_str(),0,1000,0,0,0);
@@ -159,7 +150,7 @@ public:
         for(int i=0;i<zh->addrs_count;i++){
             sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs[i];
             CPPUNIT_ASSERT(memcmp(EXPECTED_IPS[i],&addr->sin_addr,sizeof(addr->sin_addr))==0);
-            if(i<3)
+            if(i<1)
                 CPPUNIT_ASSERT_EQUAL(2121,(int)ntohs(addr->sin_port));
             else
                 CPPUNIT_ASSERT_EQUAL(3434,(int)ntohs(addr->sin_port));
@@ -208,14 +199,15 @@ public:
     }
     void testNonexistentHost()
     {
-        const string EXPECTED_HOST("host1:1111");
-        MockFailed_gethostbyname mock;
+        const string EXPECTED_HOST("host1.blabadibla.bla.:1111");
         
         zh=zookeeper_init(EXPECTED_HOST.c_str(),0,0,0,0,0);
         
         CPPUNIT_ASSERT(zh==0);
-        CPPUNIT_ASSERT_EQUAL(EINVAL,errno);
-        CPPUNIT_ASSERT_EQUAL(HOST_NOT_FOUND,h_errno);
+        //With the switch to thread safe getaddrinfo, we don't get
+        //these global variables
+        //CPPUNIT_ASSERT_EQUAL(EINVAL,errno);
+        //CPPUNIT_ASSERT_EQUAL(HOST_NOT_FOUND,h_errno);
     }
     void testOutOfMemory_init()
     {
@@ -232,30 +224,17 @@ public:
         Mock_realloc reallocMock;
         reallocMock.callsBeforeFailure=0; // fail on first call to realloc
 
-        Mock_gethostbyname gethostbynameMock;
-        gethostbynameMock.addHostEntry("ahost").addAddress("\1\1\1\1");
-
-        zh=zookeeper_init("ahost:123",0,0,0,0,0);
+        zh=zookeeper_init("127.0.0.1:123",0,0,0,0,0);
         
         CPPUNIT_ASSERT(zh==0);
         CPPUNIT_ASSERT_EQUAL(ENOMEM,errno);
     }
     void testOutOfMemory_getaddrs2()
     {
-        const char ADDR[]="\1\1\1\1";
         Mock_realloc reallocMock;
         reallocMock.callsBeforeFailure=1; // fail on the second call to realloc
 
-        Mock_gethostbyname gethostbynameMock;
-        // need >16 IPs to get realloc called the second time
-        gethostbynameMock.addHostEntry("ahost").
-            addAddress(ADDR).addAddress(ADDR).addAddress(ADDR).addAddress(ADDR).
-            addAddress(ADDR).addAddress(ADDR).addAddress(ADDR).addAddress(ADDR).
-            addAddress(ADDR).addAddress(ADDR).addAddress(ADDR).addAddress(ADDR).
-            addAddress(ADDR).addAddress(ADDR).addAddress(ADDR).addAddress(ADDR).
-            addAddress(ADDR);
-
-        zh=zookeeper_init("ahost:123",0,0,0,0,0);
+        zh=zookeeper_init("127.0.0.1:123,127.0.0.2:123,127.0.0.3:123,127.0.0.4:123,127.0.0.5:123,127.0.0.6:123,127.0.0.7:123,127.0.0.8:123,127.0.0.9:123,127.0.0.10:123,127.0.0.11:123,127.0.0.12:123,127.0.0.13:123,127.0.0.14:123,127.0.0.15:123,127.0.0.16:123,127.0.0.17:123",0,0,0,0,0);
         
         CPPUNIT_ASSERT(zh==0);
         CPPUNIT_ASSERT_EQUAL(ENOMEM,errno);
@@ -265,16 +244,11 @@ public:
         const char EXPECTED[][5]={"\0\0\0\0","\1\1\1\1","\2\2\2\2","\3\3\3\3"};
         const int EXPECTED_ADDR_COUNT=COUNTOF(EXPECTED);
         
-        Mock_gethostbyname gethostbynameMock;
-        gethostbynameMock.addHostEntry("ahost").
-            addAddress(EXPECTED[0]).addAddress(EXPECTED[1]).
-            addAddress(EXPECTED[2]).addAddress(EXPECTED[3]);
-
         const int RAND_SEQ[]={0,1,2,3,1,3,2,0,-1};
         const int RAND_SIZE=COUNTOF(RAND_SEQ);
         Mock_random randomMock;
         randomMock.randomReturns.assign(RAND_SEQ,RAND_SEQ+RAND_SIZE-1);
-        zh=zookeeper_init("ahost:123",0,1000,0,0,0);
+        zh=zookeeper_init("0.0.0.0:123,1.1.1.1:123,2.2.2.2:123,3.3.3.3:123",0,1000,0,0,0);
         
         CPPUNIT_ASSERT(zh!=0);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDR_COUNT,zh->addrs_count);

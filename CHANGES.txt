@@ -32,6 +32,10 @@ BUGFIXES:
 
    ZOOKEEPER-204. SetWatches needs to be the first message after auth messages
 to the server (ben via mahadev)
+  
+   ZOOKEEPER-208. Zookeeper C client uses API that are not thread safe,
+causing crashes when multiple instances are active. (austin shoemaker, chris
+daroch and ben reed via mahadev) 
 
 Release 3.0.0 - 2008-10-21
 
