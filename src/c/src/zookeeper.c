@@ -281,13 +281,11 @@ static void setup_random()
  */
 int getaddrs(zhandle_t *zh)
 {
-    struct hostent *he;
+    struct addrinfo hints, *res, *res0;
     struct sockaddr *addr;
-    struct sockaddr_in *addr4;
-    struct sockaddr_in6 *addr6;
-    char **ptr;
     char *hosts = strdup(zh->hostname);
     char *host;
+    char *strtok_last;
     int i;
     int rc;
     int alen = 0; /* the allocated length of the addrs array */
@@ -303,7 +301,7 @@ int getaddrs(zhandle_t *zh)
         return ZSYSTEMERROR;
     }
     zh->addrs = 0;
-    host=strtok(hosts, ",");
+    host=strtok_r(hosts, ",", &strtok_last);
     while(host) {
         char *port_spec = strchr(host, ':');
         char *end_port_spec;
@@ -323,16 +321,21 @@ int getaddrs(zhandle_t *zh)
             rc=ZBADARGUMENTS;
             goto fail;
         }
-        he = gethostbyname(host);
-        if (!he) {
-            LOG_ERROR(("could not resolve %s", host));
-            errno=EINVAL;
-            rc=ZBADARGUMENTS;
+
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_flags = AI_ADDRCONFIG;
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+
+        if (getaddrinfo(host, port_spec, &hints, &res0) != 0) {
+            LOG_ERROR(("getaddrinfo: %s\n", strerror(errno)));
+            rc=ZSYSTEMERROR;
             goto fail;
         }
-        
-        /* Setup the address array */
-        for(ptr = he->h_addr_list;*ptr != 0; ptr++) {
+
+        for (res = res0; res; res = res->ai_next) {
+            // Expand address list if needed
             if (zh->addrs_count == alen) {
                 void *tmpaddr;
                 alen += 16;
@@ -345,31 +348,30 @@ int getaddrs(zhandle_t *zh)
                 }
                 zh->addrs=tmpaddr;
             }
+
+            // Copy addrinfo into address list
             addr = &zh->addrs[zh->addrs_count];
-            addr4 = (struct sockaddr_in*)addr;
-            addr6 = (struct sockaddr_in6*)addr;
-            addr->sa_family = he->h_addrtype;
-            if (addr->sa_family == AF_INET) {
-                addr4->sin_port = htons(port);
-                memset(&addr4->sin_zero, 0, sizeof(addr4->sin_zero));
-                memcpy(&addr4->sin_addr, *ptr, he->h_length);
-                zh->addrs_count++;
+            switch (res->ai_family) {
+            case AF_INET:
 #if defined(AF_INET6)
-            } else if (addr->sa_family == AF_INET6) {
-                addr6->sin6_port = htons(port);
-                addr6->sin6_scope_id = 0;
-                addr6->sin6_flowinfo = 0;
-                memcpy(&addr6->sin6_addr, *ptr, he->h_length);
-                zh->addrs_count++;
+            case AF_INET6:
 #endif
-            } else {
-                LOG_WARN(("skipping unknown address family %x for %s", 
-                        addr->sa_family, zh->hostname)); 
+                memcpy(addr, res->ai_addr, res->ai_addrlen);
+                ++zh->addrs_count;
+                break;
+            default:
+                LOG_WARN(("skipping unknown address family %x for %s",
+                res->ai_family, zh->hostname));
+                break;
             }
         }
-        host = strtok(0, ",");
+
+        freeaddrinfo(res0);
+
+        host = strtok_r(0, ",", &strtok_last);
     }
     free(hosts);
+
     if(!disable_conn_permute){
         setup_random();
         /* Permute */
