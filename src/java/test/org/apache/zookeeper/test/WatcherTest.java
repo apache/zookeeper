@@ -27,7 +27,10 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
@@ -39,6 +42,14 @@ import org.junit.Test;
 
 public class WatcherTest extends ClientBase {
     protected static final Logger LOG = Logger.getLogger(WatcherTest.class);
+
+    private final class MyStatCallback implements StatCallback {
+        int rc;
+        public void processResult(int rc, String path, Object ctx, Stat stat) {
+            ((int[])ctx)[0]++;
+            this.rc = rc;
+        }
+    }
 
     private class MyWatcher extends CountdownWatcher {
         LinkedBlockingQueue<WatchedEvent> events =
@@ -118,6 +129,57 @@ public class WatcherTest extends ClientBase {
         }
     }
 
+    final static int COUNT = 100;
+    boolean hasSeenDelete = true;
+    /**
+     * This test checks that watches for pending requests do not get triggered,
+     * but watches set by previous requests do.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testWatchAutoResetWithPending() throws Exception {
+       MyWatcher watches[] = new MyWatcher[COUNT];
+       MyStatCallback cbs[] = new MyStatCallback[COUNT];
+       MyWatcher watcher = new MyWatcher();
+       int count[] = new int[1];
+       TestableZooKeeper zk = createClient(watcher, hostPort);
+       ZooKeeper zk2 = createClient(watcher, hostPort);
+       zk2.create("/test", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+       for(int i = 0; i < COUNT/2; i++) {
+           watches[i] = new MyWatcher();
+           cbs[i] = new MyStatCallback();
+           zk.exists("/test", watches[i], cbs[i], count);
+       }
+       zk.exists("/test", false);
+       zk.pauseCnxn(4000);
+       Thread.sleep(50);
+       zk2.close();
+       stopServer();
+       watches[0].waitForDisconnected(3000);
+       for(int i = COUNT/2; i < COUNT; i++) {
+           watches[i] = new MyWatcher();
+           cbs[i] = new MyStatCallback();
+           zk.exists("/test", watches[i], cbs[i], count);
+       }
+       startServer();
+       watches[49].waitForConnected(4000);
+       assertEquals(null, zk.exists("/test", false));
+       Thread.sleep(10);
+       for(int i = 0; i < COUNT/2; i++) {
+           assertEquals("For " + i, 1, watches[i].events.size());
+       }
+       for(int i = COUNT/2; i < COUNT; i++) {
+           if (cbs[i].rc == 0) {
+               assertEquals("For " +i, 1, watches[i].events.size());
+           } else {
+               assertEquals("For " +i, 0, watches[i].events.size());
+           }
+       }
+       assertEquals(COUNT, count[0]);
+       zk.close();
+    }
+    
     @Test
     public void testWatcherAutoResetWithGlobal() throws Exception {
         ZooKeeper zk = null;

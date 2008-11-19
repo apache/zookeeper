@@ -30,6 +30,9 @@ BUGFIXES:
    ZOOKEEPER-226. fix exists calls that fail on server if node has null data.
    (mahadev) 
 
+   ZOOKEEPER-204. SetWatches needs to be the first message after auth messages
+to the server (ben via mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
