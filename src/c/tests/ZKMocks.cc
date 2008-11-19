@@ -468,9 +468,6 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
             int64_t sessId=sessionExpired?req->sessionId+1:req->sessionId;
             sessionExpired=false;
             addRecvResponse(new HandshakeResponse(sessId));            
-            Element e = Element(new ZooStatResponse,0);
-            e.first->setXID(-8);
-            addRecvResponse(e);
             return;
         }
         // not a connect request -- fall thru
@@ -480,7 +477,15 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
     RequestHeader rh;
     deserialize_RequestHeader(ia,"hdr",&rh);
     // notify the "server" a client request has arrived
-    onMessageReceived(rh,ia);
+    if (rh.xid == -8) {
+        Element e = Element(new ZooStatResponse,0);
+        e.first->setXID(-8);
+        addRecvResponse(e);
+        close_buffer_iarchive(&ia);
+        return;
+    } else {
+        onMessageReceived(rh,ia);
+    }
     close_buffer_iarchive(&ia);
     if(rh.type==CLOSE_OP){
         ++closeSent;

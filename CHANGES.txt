@@ -5,16 +5,18 @@ Non-backward compatible changes:
 Backward compatibile changes:
 
 BUGFIXES: 
-   ZOOKEEPER-223. change default level in root logger to INFO. (pat via
-mahadev) 
+   ZOOKEEPER-211 Not all Mock tests are working (ben via phunt)
+
+   ZOOKEEPER-223. change default level in root logger to INFO.
+   (pat via mahadev) 
    
    ZOOKEEPER-212. fix the snapshot to be asynchronous. (mahadev and ben)
 
    ZOOKEEPER-213. fix programmer guide C api docs to be  in sync with latest
-zookeeper.h (pat via mahadev)
+   zookeeper.h (pat via mahadev)
 
-   ZOOKEEPER-219. fix events.poll timeout in watcher test to be longer. (pat
-via mahadev)
+   ZOOKEEPER-219. fix events.poll timeout in watcher test to be longer.
+   (pat via mahadev)
    
    ZOOKEEPER-217. Fix errors in config to be thrown as Exceptions. (mahadev)
 

@@ -34,7 +34,7 @@ class Zookeeper_close : public CPPUNIT_NS::TestFixture
 #endif
     CPPUNIT_TEST(testCloseUnconnected);
     CPPUNIT_TEST(testCloseUnconnected1);
-    //CPPUNIT_TEST(testCloseConnected1);
+    CPPUNIT_TEST(testCloseConnected1);
     CPPUNIT_TEST(testCloseFromWatcher1);
     CPPUNIT_TEST_SUITE_END();
     zhandle_t *zh;
