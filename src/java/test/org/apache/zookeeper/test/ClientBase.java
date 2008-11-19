@@ -33,6 +33,7 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -126,10 +127,10 @@ public abstract class ClientBase extends TestCase {
         return createClient(watcher, hp);
     }
 
-    protected ZooKeeper createClient(CountdownWatcher watcher, String hp)
+    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp)
         throws IOException, InterruptedException
     {
-        ZooKeeper zk = new ZooKeeper(hp, 9000, watcher);
+        TestableZooKeeper zk = new TestableZooKeeper(hp, 9000, watcher);
         if (!watcher.clientConnected.await(CONNECTION_TIMEOUT,
                 TimeUnit.MILLISECONDS))
         {

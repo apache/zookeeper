@@ -192,8 +192,11 @@ public class ZooKeeper {
                 }
                 // XXX This shouldn't be needed, but just in case
                 synchronized (existWatches) {
-                    addTo(existWatches.remove(path), result);
-                    LOG.warn("We are triggering an exists watch for delete! Shouldn't happen!");
+                    Set<Watcher> list = existWatches.remove(path);
+                    if (list != null) {
+                        addTo(existWatches.remove(path), result);
+                        LOG.warn("We are triggering an exists watch for delete! Shouldn't happen!");
+                    }
                 }
                 synchronized (childWatches) {
                     addTo(childWatches.remove(path), result);
