@@ -37,6 +37,8 @@ to the server (ben via mahadev)
 causing crashes when multiple instances are active. (austin shoemaker, chris
 daroch and ben reed via mahadev) 
 
+   ZOOKEEPER-227. gcc warning from recordio.h (chris darroch via mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:

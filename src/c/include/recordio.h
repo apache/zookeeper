@@ -60,7 +60,7 @@ struct oarchive {
     void *priv;
 };
 
-struct oarchive *create_buffer_oarchive();
+struct oarchive *create_buffer_oarchive(void);
 void close_buffer_oarchive(struct oarchive **oa, int free_buffer);
 struct iarchive *create_buffer_iarchive(char *buffer, int len);
 void close_buffer_iarchive(struct iarchive **ia);
