@@ -32,10 +32,10 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testTimeoutCausedByWatches1);
     CPPUNIT_TEST(testTimeoutCausedByWatches2);
 #else    
-    //CPPUNIT_TEST(testAsyncWatcher1);
+    CPPUNIT_TEST(testAsyncWatcher1);
     CPPUNIT_TEST(testAsyncGetOperation);
 #endif
-    //CPPUNIT_TEST(testOperationsAndDisconnectConcurrently1);
+    CPPUNIT_TEST(testOperationsAndDisconnectConcurrently1);
     CPPUNIT_TEST(testOperationsAndDisconnectConcurrently2);
     CPPUNIT_TEST(testConcurrentOperations1);
     CPPUNIT_TEST_SUITE_END();
@@ -380,6 +380,12 @@ public:
             for(i=0;i<reps_;i++){
                 char buf;
                 int size=sizeof(buf);
+
+                if (i % 10 == 0) {
+                    // We need to pause every once in a while so we don't
+                    // get too far ahead and finish before the disconnect
+	            millisleep(1);
+                }
                 svr_->addOperationResponse(new ZooGetResponse("1",1));
                 rc_=zoo_get(zh_,"/x/y/z",0,&buf,&size,0);
                 if(rc_!=ZOK){
@@ -535,7 +541,8 @@ public:
             
             TestJobManager jmgr(TestConcurrentOpWithDisconnectJob(&zkServer,zh),10);
             jmgr.startJobsImmediately();
-            millisleep(1);
+            // let everything startup before we shutdown the server
+            millisleep(4);
             // reconnect attempts will start failing immediately 
             zkServer.setServerDown(0);
             // next recv call will return 0
