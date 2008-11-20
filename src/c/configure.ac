@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],2.1.1,[zookeeper-user@lists.sourceforge.net],[c-client-src])
+AC_INIT([zookeeper C client],3.0.1,[zookeeper-user@hadoop.apache.org],[c-client-src])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
 AC_CHECK_FILES([generated/zookeeper.jute.c generated/zookeeper.jute.h],[],
     [AC_MSG_ERROR([jute files are missing! Please run "ant compile_jute" while in the zookeeper top level directory.])

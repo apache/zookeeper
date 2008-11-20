@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.0.0 Release Notes</title>
+<title>ZooKeeper 3.0.1 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -178,11 +178,11 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.0.0 Release Notes</h1>
+<h1>ZooKeeper 3.0.1 Release Notes</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#migration">Migration Instructions when Upgrading to 3.0.0</a>
+<a href="#migration">Migration Instructions when Upgrading to version 3</a>
 <ul class="minitoc">
 <li>
 <a href="#migration_code">Migrating Client Code</a>
@@ -207,7 +207,7 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 </li>
 <li>
-<a href="#changes">Changes Since ZooKeeper 2.2.1</a>
+<a href="#changes">ZooKeeper 3.0.1 Changes</a>
 </li>
 </ul>
 </div>
@@ -239,11 +239,11 @@ These release notes include new developer and user facing incompatibilities, fea
 
 
 <a name="N1001B"></a><a name="migration"></a>
-<h2 class="h3">Migration Instructions when Upgrading to 3.0.0</h2>
+<h2 class="h3">Migration Instructions when Upgrading to version 3</h2>
 <div class="section">
 <p>
 
-<em>You should only have to read this section if you are upgrading from a previous version of ZooKeeper to version 3.0.0, otw skip down to <a href="#changes">changes</a></em>
+<em>You should only have to read this section if you are upgrading from a previous version of ZooKeeper, version 2 or earlier, to version 3, otw skip down to <a href="#changes">changes</a></em>
 
 </p>
 <p>
@@ -500,8 +500,179 @@ There is a significant change to the ZooKeeper server configuration file.
 
 
 <a name="N10162"></a><a name="changes"></a>
-<h2 class="h3">Changes Since ZooKeeper 2.2.1</h2>
+<h2 class="h3">ZooKeeper 3.0.1 Changes</h2>
 <div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.0.0</caption>
+
+<title>Changes Since ZooKeeper 3.0.0</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-211">
+      ZOOKEEPER-211</a>
+  </td>
+  <td>
+    Not all Mock tests are working 
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-223">
+      ZOOKEEPER-223</a>
+  </td>
+  <td>
+    change default level in root logger to INFO.
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-212">
+      ZOOKEEPER-212</a>
+  </td>
+  <td>
+    fix the snapshot to be asynchronous. 
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-213">
+      ZOOKEEPER-213</a>
+  </td>
+  <td>
+    fix programmer guide C api docs to be  in sync with latest zookeeper.h 
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-219">
+      ZOOKEEPER-219</a>
+  </td>
+  <td>
+    fix events.poll timeout in watcher test to be longer.
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-217">
+      ZOOKEEPER-217</a>
+  </td>
+  <td>
+    Fix errors in config to be thrown as Exceptions. 
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-228">
+      ZOOKEEPER-228</a>
+  </td>
+  <td>
+    fix apache header missing in DBTest. 
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-218">
+      ZOOKEEPER-218</a>
+  </td>
+  <td>
+    fix the error in the barrier example code. 
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-206">
+      ZOOKEEPER-206</a>
+  </td>
+  <td>
+    documentation tab should contain the version number and other small site changes.
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-226">
+      ZOOKEEPER-226</a>
+  </td>
+  <td>
+    fix exists calls that fail on server if node has null data.
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-204">
+      ZOOKEEPER-204</a>
+  </td>
+  <td>
+    SetWatches needs to be the first message after auth messages to the server 
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-208">
+      ZOOKEEPER-208</a>
+  </td>
+  <td>
+    Zookeeper C client uses API that are not thread safe, causing crashes when multiple instances are active.
+  </td>
+
+</tr>
+
+<tr>
+  
+<td>
+    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-227">
+      ZOOKEEPER-227</a>
+  </td>
+  <td>
+    gcc warning from recordio.h 
+  </td>
+
+</tr>
+
+</table>
 <p>
 Version 2.2.1 code, documentation, binaries, etc... are still accessible on <a href="http://sourceforge.net/projects/zookeeper">SourceForge</a>
 

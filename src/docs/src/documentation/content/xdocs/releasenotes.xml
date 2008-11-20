@@ -18,7 +18,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
 "http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
 <article id="ar_ReleaseNotes">
-  <title>ZooKeeper 3.0.0 Release Notes</title>
+  <title>ZooKeeper 3.0.1 Release Notes</title>
 
   <articleinfo>
     <legalnotice>
@@ -45,10 +45,10 @@ These release notes include new developer and user facing incompatibilities, fea
 </itemizedlist>
 
 <section id="migration">
-<title>Migration Instructions when Upgrading to 3.0.0</title>
+<title>Migration Instructions when Upgrading to version 3</title>
 
 <para>
-<emphasis>You should only have to read this section if you are upgrading from a previous version of ZooKeeper to version 3.0.0, otw skip down to <ulink url="#changes">changes</ulink></emphasis>
+<emphasis>You should only have to read this section if you are upgrading from a previous version of ZooKeeper, version 2 or earlier, to version 3, otw skip down to <ulink url="#changes">changes</ulink></emphasis>
 </para>
 
 <para>
@@ -226,7 +226,137 @@ There is a significant change to the ZooKeeper server configuration file.
 </section>
 
 <section id="changes">
-<title>Changes Since ZooKeeper 2.2.1</title>
+<title>ZooKeeper 3.0.1 Changes</title>
+
+<table>
+<title>Changes Since ZooKeeper 3.0.0</title>
+<tgroup cols='2'>
+<colspec colname='c1'/><colspec colname='c2'/>
+<thead>
+<row>
+  <entry>Issue</entry>
+  <entry>Notes</entry>
+</row>
+</thead>
+<tbody>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-211">
+      ZOOKEEPER-211</ulink>
+  </entry>
+  <entry>
+    Not all Mock tests are working 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-223">
+      ZOOKEEPER-223</ulink>
+  </entry>
+  <entry>
+    change default level in root logger to INFO.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-212">
+      ZOOKEEPER-212</ulink>
+  </entry>
+  <entry>
+    fix the snapshot to be asynchronous. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-213">
+      ZOOKEEPER-213</ulink>
+  </entry>
+  <entry>
+    fix programmer guide C api docs to be  in sync with latest zookeeper.h 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-219">
+      ZOOKEEPER-219</ulink>
+  </entry>
+  <entry>
+    fix events.poll timeout in watcher test to be longer.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-217">
+      ZOOKEEPER-217</ulink>
+  </entry>
+  <entry>
+    Fix errors in config to be thrown as Exceptions. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-228">
+      ZOOKEEPER-228</ulink>
+  </entry>
+  <entry>
+    fix apache header missing in DBTest. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-218">
+      ZOOKEEPER-218</ulink>
+  </entry>
+  <entry>
+    fix the error in the barrier example code. 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-206">
+      ZOOKEEPER-206</ulink>
+  </entry>
+  <entry>
+    documentation tab should contain the version number and other small site changes.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-226">
+      ZOOKEEPER-226</ulink>
+  </entry>
+  <entry>
+    fix exists calls that fail on server if node has null data.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-204">
+      ZOOKEEPER-204</ulink>
+  </entry>
+  <entry>
+    SetWatches needs to be the first message after auth messages to the server 
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-208">
+      ZOOKEEPER-208</ulink>
+  </entry>
+  <entry>
+    Zookeeper C client uses API that are not thread safe, causing crashes when multiple instances are active.
+  </entry>
+</row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-227">
+      ZOOKEEPER-227</ulink>
+  </entry>
+  <entry>
+    gcc warning from recordio.h 
+  </entry>
+</row>
+</tbody></tgroup></table>
 
 <para>
 Version 2.2.1 code, documentation, binaries, etc... are still accessible on <ulink url="http://sourceforge.net/projects/zookeeper">SourceForge</ulink>
