@@ -39,6 +39,8 @@ daroch and ben reed via mahadev)
 
    ZOOKEEPER-227. gcc warning from recordio.h (chris darroch via mahadev)
 
+   ZOOKEEPER-232. fix apache licence header in TestableZookeeper (mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
