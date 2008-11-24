@@ -356,6 +356,15 @@ There is a significant change to the ZooKeeper server configuration file.
     gcc warning from recordio.h 
   </entry>
 </row>
+<row>
+  <entry>
+    <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-232">
+      ZOOKEEPER-232</ulink>
+  </entry>
+  <entry>
+    fix apache licence header in TestableZookeeper
+  </entry>
+</row>
 </tbody></tgroup></table>
 
 <para>
