@@ -1,9 +1,10 @@
-ZooKeeper Change Log
-
-Release 3.0.1 - 2008-11-19
+Trunk
   
-  BUGFIXES: 
+Non-backward compatible changes:
 
+Backward compatibile changes:
+
+BUGFIXES: 
    ZOOKEEPER-211 Not all Mock tests are working (ben via phunt)
 
    ZOOKEEPER-223. change default level in root logger to INFO.
@@ -30,13 +31,15 @@ Release 3.0.1 - 2008-11-19
    (mahadev) 
 
    ZOOKEEPER-204. SetWatches needs to be the first message after auth messages
-   to the server (ben via mahadev)
+to the server (ben via mahadev)
   
    ZOOKEEPER-208. Zookeeper C client uses API that are not thread safe,
-   causing crashes when multiple instances are active.
-   (austin shoemaker, chris daroch and ben reed via mahadev) 
+causing crashes when multiple instances are active. (austin shoemaker, chris
+daroch and ben reed via mahadev) 
 
    ZOOKEEPER-227. gcc warning from recordio.h (chris darroch via mahadev)
+
+   ZOOKEEPER-232. fix apache licence header in TestableZookeeper (mahadev)
 
 Release 3.0.0 - 2008-10-21
 
