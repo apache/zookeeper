@@ -36,10 +36,10 @@ import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
@@ -57,7 +57,13 @@ import org.apache.zookeeper.txn.TxnHeader;
  * PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
  */
 public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
-    private static final Logger LOG = Logger.getLogger(ZooKeeperServer.class);
+    private static final Logger LOG;
+    
+    static {
+        LOG = Logger.getLogger(ZooKeeperServer.class);
+        
+        Environment.logEnv("Server environment:", LOG);
+    }
 
     /**
      * Create an instance of Zookeeper server

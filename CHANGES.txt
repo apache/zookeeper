@@ -41,6 +41,12 @@ daroch and ben reed via mahadev)
 
    ZOOKEEPER-232. fix apache licence header in TestableZookeeper (mahadev)
 
+IMPROVEMENTS:
+   
+   ZOOKEEPER-64. Log system env information when initializing server and
+client (pat via mahadev)
+
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:

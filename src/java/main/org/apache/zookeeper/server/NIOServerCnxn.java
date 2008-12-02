@@ -35,18 +35,19 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import org.apache.log4j.Logger;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.log4j.Logger;
+import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Version;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.AuthPacket;
@@ -600,6 +601,20 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         append("\n");
                 }else
                     sb.append("ZooKeeperServer not running\n");
+
+                sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
+                k.interestOps(SelectionKey.OP_WRITE);
+                return;
+            } else if (len == enviCmd) {
+                StringBuffer sb = new StringBuffer();
+                
+                List<Environment.Entry> env = Environment.list();
+                
+                sb.append("Environment:\n");
+                for(Environment.Entry e : env) {
+                    sb.append(e.getKey()).append("=").append(e.getValue())
+                        .append("\n");
+                }
 
                 sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
                 k.interestOps(SelectionKey.OP_WRITE);

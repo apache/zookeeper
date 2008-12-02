@@ -96,7 +96,14 @@ import org.apache.zookeeper.server.DataTree;
  *
  */
 public class ZooKeeper {
-    private static final Logger LOG = Logger.getLogger(ZooKeeper.class);
+    private static final Logger LOG;
+    
+    static {
+        LOG = Logger.getLogger(ZooKeeper.class);
+        
+        Environment.logEnv("Client environment:", LOG);
+    }
+
 
     private final ZKWatchManager watchManager = new ZKWatchManager();
 

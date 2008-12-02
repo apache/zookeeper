@@ -49,6 +49,16 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#include "config.h"
+
+#ifdef HAVE_SYS_UTSNAME_H
+#include <sys/utsname.h>
+#endif
+
+#ifdef HAVE_GETPWUID_R
+#include <pwd.h>
+#endif
+
 #define IF_DEBUG(x) if(logLevel==ZOO_LOG_LEVEL_DEBUG) {x;}
 
 const int ZOOKEEPER_WRITE = 1 << 0;
@@ -415,12 +425,68 @@ watcher_fn zoo_set_watcher(zhandle_t *zh,watcher_fn newFn)
     return oldWatcher;
 }
 
+static void log_env() {
+  char buf[2048];
+
+  LOG_INFO(("Client environment:zookeeper.version=%s", PACKAGE_STRING));
+
+#ifdef HAVE_GETHOSTNAME
+  gethostname(buf, sizeof(buf));
+  LOG_INFO(("Client environment:host.name=%s", buf));
+#else
+  LOG_INFO(("Client environment:host.name=<not implemented>"));
+#endif
+
+#ifdef HAVE_SYS_UTSNAME_H
+  struct utsname utsname;
+  uname(&utsname);
+  LOG_INFO(("Client environment:os.name=%s", utsname.sysname));
+  LOG_INFO(("Client environment:os.arch=%s", utsname.release));
+  LOG_INFO(("Client environment:os.version=%s", utsname.version));
+#else
+  LOG_INFO(("Client environment:os.name=<not implemented>"));
+  LOG_INFO(("Client environment:os.arch=<not implemented>"));
+  LOG_INFO(("Client environment:os.version=<not implemented>"));
+#endif
+
+#ifdef HAVE_GETLOGIN
+  LOG_INFO(("Client environment:user.name=%s", getlogin()));
+#else
+  LOG_INFO(("Client environment:user.name=<not implemented>"));
+#endif
+
+#if defined(HAVE_GETUID) && defined(HAVE_GETPWUID_R)
+  uid_t uid = getuid();
+  struct passwd pw;
+  struct passwd *pwp;
+  if (!getpwuid_r(uid, &pw, buf, sizeof(buf), &pwp)) {
+    LOG_INFO(("Client environment:user.home=%s", pw.pw_dir));
+  } else {
+    LOG_INFO(("Client environment:user.home=<NA>"));
+  }
+#else
+  LOG_INFO(("Client environment:user.home=<not implemented>"));
+#endif
+
+#ifdef HAVE_GETCWD
+  if (!getcwd(buf, sizeof(buf))) {
+    LOG_INFO(("Client environment:user.dir=<toolong>"));
+  } else {
+    LOG_INFO(("Client environment:user.dir=%s", buf));
+  }
+#else
+  LOG_INFO(("Client environment:user.dir=<not implemented>"));
+#endif
+}
+
 /**
  * Create a zookeeper handle associated with the given host and port.
  */
 zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
   int recv_timeout, const clientid_t *clientid, void *context, int flags)
 {
+    log_env();
+
     int errnosave;
     zhandle_t *zh = calloc(1, sizeof(*zh));
     if (!zh) {
