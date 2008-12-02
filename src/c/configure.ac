@@ -60,7 +60,7 @@ AM_CONDITIONAL([WANT_SYNCAPI],[test "x$with_syncapi" != xno])
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h unistd.h sys/utsname.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -72,7 +72,7 @@ AC_CHECK_TYPE([nfds_t],
     [#include <poll.h>])
 
 # Checks for library functions.
-AC_CHECK_FUNCS([gethostbyname gettimeofday memmove memset poll socket strchr strdup strerror strtol])
+AC_CHECK_FUNCS([getcwd gethostbyname gethostname getlogin getpwuid_r gettimeofday getuid memmove memset poll socket strchr strdup strerror strtol])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

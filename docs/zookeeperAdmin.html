@@ -945,11 +945,27 @@ server.3=zoo3:2888:3888</span>
 
         
 <dt>
+<term>envi</term>
+</dt>
+<dd>
+<p>Print details about serving environment</p>
+</dd>
+
+        
+<dt>
 <term>kill</term>
 </dt>
 <dd>
 <p>Shuts down the server. This must be issued from the machine
             the ZooKeeper server is running on.</p>
+</dd>
+
+        
+<dt>
+<term>reqs</term>
+</dt>
+<dd>
+<p>List outstanding requests</p>
 </dd>
 
         
@@ -977,7 +993,7 @@ server.3=zoo3:2888:3888</span>
 <pre class="code">$ echo ruok | nc 127.0.0.1 5111
 imok
 </pre>
-<a name="N10307"></a><a name="sc_dataFileManagement"></a>
+<a name="N10315"></a><a name="sc_dataFileManagement"></a>
 <h3 class="h4">Data File Management</h3>
 <p>ZooKeeper stores its data in a data directory and its transaction
       log in a transaction log directory. By default these two directories are
@@ -985,7 +1001,7 @@ imok
       transaction log files in a separate directory than the data files.
       Throughput increases and latency decreases when transaction logs reside
       on a dedicated log devices.</p>
-<a name="N10310"></a><a name="The+Data+Directory"></a>
+<a name="N1031E"></a><a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
 <p>This directory has two files in it:</p>
 <ul>
@@ -1031,14 +1047,14 @@ imok
         idempotent nature of its updates. By replaying the transaction log
         against fuzzy snapshots ZooKeeper gets the state of the system at the
         end of the log.</p>
-<a name="N1034C"></a><a name="The+Log+Directory"></a>
+<a name="N1035A"></a><a name="The+Log+Directory"></a>
 <h4>The Log Directory</h4>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
         log file is started each time a snapshot is begun. The log file's
         suffix is the first zxid written to that log.</p>
-<a name="N10356"></a><a name="File+Management"></a>
+<a name="N10364"></a><a name="File+Management"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
         standalone ZooKeeper servers and different configurations of
@@ -1055,7 +1071,7 @@ imok
         needs the latest complete fuzzy snapshot and the log files from the
         start of that snapshot. The PurgeTxnLog utility implements a simple
         retention policy that administrators can use.</p>
-<a name="N10367"></a><a name="sc_commonProblems"></a>
+<a name="N10375"></a><a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
       ZooKeeper correctly:</p>
@@ -1109,7 +1125,7 @@ imok
 </dd>
       
 </dl>
-<a name="N1038B"></a><a name="sc_bestPractices"></a>
+<a name="N10399"></a><a name="sc_bestPractices"></a>
 <h3 class="h4">Best Practices</h3>
 <p>For best results, take note of the following list of good
       Zookeeper practices. <em>[tbd...]</em>

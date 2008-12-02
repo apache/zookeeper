@@ -47,6 +47,8 @@ public interface ServerCnxn extends Watcher {
     final static int getTraceMaskCmd = ByteBuffer.wrap("gtmk".getBytes())
             .getInt();
 
+    final static int enviCmd = ByteBuffer.wrap("envi".getBytes()).getInt();
+
     final static ByteBuffer imok = ByteBuffer.wrap("imok".getBytes());
 
     public abstract int getSessionTimeout();
