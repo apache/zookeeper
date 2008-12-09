@@ -38,7 +38,7 @@
     <abstract>
       <para>This guide contains detailed information about creating
       distributed applications that use ZooKeeper. It discusses the basic
-      operations Zookeeper supports, and how these can be used to build
+      operations ZooKeeper supports, and how these can be used to build
       higher-level abstractions. It contains solutions to common tasks, a
       troubleshooting guide, and links to other information.</para>
 
@@ -55,7 +55,7 @@
 
     <para>The first four sections of this guide present higher level
     discussions of various ZooKeeper concepts. These are necessary both for an
-    understanding of how Zookeeper works as well how to work with it. It does
+    understanding of how ZooKeeper works as well how to work with it. It does
     not contain source code, but it does assume a familiarity with the
     problems associated with distributed computing. The sections in this first
     group are:</para>
@@ -192,8 +192,7 @@
         the watch and then clear the watch. When a watch triggers, ZooKeeper
         sends the client a notification. More information about watches can be
         found in the section 
-	    <ulink url="#ch_zkWatches">ZooKeeper Watches</ulink>.
-        <emphasis>[tbd]</emphasis></para>
+	    <ulink url="#ch_zkWatches">ZooKeeper Watches</ulink>.</para>
       </section>
 
       <section>
@@ -215,12 +214,20 @@
       </section>
 
       <section>
-        <title>Unique Naming</title>
+        <title>Sequence Nodes -- Unique Naming</title>
 
-        <para>Finally you create a znode, you can request that ZooKeeper
-        append a monotonicly increasing counter be appended to the path name
-        of the znode to be requested. This counter is unique to the parent
-        znode.</para>
+        <para>When creating a znode you can also request that
+        ZooKeeper append a monotonicly increasing counter to the end
+        of path. This counter is unique to the parent znode. The
+        counter has a format of %010d -- that is 10 digits with 0
+        (zero) padding (the counter is formatted in this way to
+        simplify sorting), i.e. "&lt;path&gt;0000000001". See
+        <ulink url="recipes.html#sc_recipes_Queues">Queue
+        Recipe</ulink> for an example use of this feature. Note: the
+        counter used to store the next sequence number is a signed int
+        (4bytes) maintained by the parent node, the counter will
+        overflow when incremented beyond 2147483647 (resulting in a
+        name "&lt;path&gt;-2147483647").</para>
       </section>
     </section>
 
