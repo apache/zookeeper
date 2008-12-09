@@ -74,14 +74,19 @@ public class QuorumTest extends ClientBase {
         
         LOG.info("creating QuorumPeer 1");
         s1 = new QuorumPeer(peers, s1dir, s1dir, 2181, 0, 1, tickTime, initLimit, syncLimit);
+        assertEquals(2181, s1.getClientPort());
         LOG.info("creating QuorumPeer 2");
         s2 = new QuorumPeer(peers, s2dir, s2dir, 2182, 0, 2, tickTime, initLimit, syncLimit);
+        assertEquals(2182, s2.getClientPort());
         LOG.info("creating QuorumPeer 3");
         s3 = new QuorumPeer(peers, s3dir, s3dir, 2183, 0, 3, tickTime, initLimit, syncLimit);
+        assertEquals(2183, s3.getClientPort());
         LOG.info("creating QuorumPeer 4");
         s4 = new QuorumPeer(peers, s4dir, s4dir, 2184, 0, 4, tickTime, initLimit, syncLimit);
+        assertEquals(2184, s4.getClientPort());
         LOG.info("creating QuorumPeer 5");
         s5 = new QuorumPeer(peers, s5dir, s5dir, 2185, 0, 5, tickTime, initLimit, syncLimit);
+        assertEquals(2185, s5.getClientPort());
         LOG.info("start QuorumPeer 1");
         s1.start();
         LOG.info("start QuorumPeer 2");
