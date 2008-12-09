@@ -44,6 +44,9 @@ daroch and ben reed via mahadev)
    ZOOKEEPER-249. QuorumPeer.getClientPort() always returns -1. (nitay 
 joffe via mahadev)
 
+  ZOOKEEPER-248.  QuorumPeer should use Map interface instead of 
+HashMap implementation. (nitay joffe via mahadev)
+
 IMPROVEMENTS:
    
    ZOOKEEPER-64. Log system env information when initializing server and
