@@ -59,6 +59,9 @@ public class VerGen {
             w.write("    public static final int MAJOR=" + maj + ";\n");
             w.write("    public static final int MINOR=" + min + ";\n");
             w.write("    public static final int MICRO=" + micro + ";\n");
+            if (rev < 0) {
+                System.out.println("Unknown REVISION number, using " + rev);
+            }
             w.write("    public static final int REVISION=" + rev + ";\n");
             w.write("    public static final String BUILD_DATE=\"" + buildDate
                     + "\";\n");
@@ -108,7 +111,12 @@ public class VerGen {
             int maj = Integer.parseInt(v[0]);
             int min = Integer.parseInt(v[1]);
             int micro = Integer.parseInt(v[2]);
-            int rev = Integer.parseInt(args[1]);
+            int rev;
+            try {
+                rev = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                rev = -1;
+            }
             generateFile(new File("."), maj, min, micro, rev, args[2]);
         } catch (NumberFormatException e) {
             System.err
