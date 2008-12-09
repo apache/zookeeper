@@ -55,6 +55,9 @@ IMPROVEMENTS:
    ZOOKEEPER-64. Log system env information when initializing server and
 client (pat via mahadev)
 
+   ZOOKEEPER-243. add SEQUENCE flag documentation to the programming guide.
+(patrick hunt via mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
