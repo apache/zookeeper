@@ -574,7 +574,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     }
 
     public int getClientPort() {
-        return -1;
+        return cnxnFactory.getLocalPort();
     }
 
     public void setClientPort(int clientPort) {
