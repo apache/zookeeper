@@ -26,7 +26,7 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
@@ -107,7 +107,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     /**
      * The servers that make up the cluster
      */
-    HashMap<Long, QuorumServer> quorumPeers;
+    Map<Long, QuorumServer> quorumPeers;
     public int getQuorumSize(){
         return quorumPeers.size();
     }
@@ -261,7 +261,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         QuorumStats.getInstance().setStatsProvider(this);
     }
     
-    public QuorumPeer(HashMap<Long, QuorumServer> quorumPeers, File dataDir,
+    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
             NIOServerCnxn.Factory cnxnFactory) throws IOException {
@@ -316,7 +316,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * This constructor is only used by the existing unit test code.
      * It defaults to FileLogProvider persistence provider.
      */
-    public QuorumPeer(HashMap<Long,QuorumServer> quorumPeers, File snapDir,
+    public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
             File logDir, int clientPort, int electionAlg,
             long myid, int tickTime, int initLimit, int syncLimit) throws IOException {
         this(quorumPeers, snapDir, logDir, electionAlg,
@@ -569,7 +569,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         this.cnxnFactory = cnxnFactory;
     }
 
-    public void setQuorumPeers(HashMap<Long,QuorumServer> quorumPeers) {
+    public void setQuorumPeers(Map<Long,QuorumServer> quorumPeers) {
         this.quorumPeers = quorumPeers;
     }
 
