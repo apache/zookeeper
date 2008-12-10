@@ -282,7 +282,85 @@ server.3=zoo3:2888:3888</computeroutput></para>
     <section id="sc_designing">
       <title>Designing a ZooKeeper Deployment</title>
 
-      <para></para>
+      <para>The reliablity of ZooKeeper rests on two basic assumptions.</para>
+      <orderedlist>
+        <listitem><para> Only a minority of servers in a deployment
+            will fail. <emphasis>Failure</emphasis> in this context
+            means a machine crash, or some error in the network that
+            partitions a server off from the majority.</para>
+        </listitem>
+        <listitem><para> Deployed machines operate correctly. To
+            operate correctly means to execute code correctly, to have
+            clocks that work properly, and to have storage and network
+            components that perform consistently.</para>
+        </listitem>
+      </orderedlist>
+    
+    <para>The sections below contain considerations for ZooKeeper
+      administrators to maximize the probability for these assumptions
+      to hold true. Some of these are cross-machines considerations,
+      and others are things you should consider for each and every
+      machine in your deployment.</para>
+
+    <section id="sc_CrossMachineRequirements">
+      <title>Cross Machine Requirements</title>
+    
+      <para>For the ZooKeeper service to be active, there must be a
+        majority of non-failing machines that can communicate with
+        each other. To create a deployment that can tolerate the
+        failure of F machines, you should count on deploying 2xF+1
+        machines.  Thus, a deployment that consists of three machines
+        can handle one failure, and a deployment of five machines can
+        handle two failures. Note that a deployment of six machines
+        can only handle two failures since three machines is not a
+        majority.  For this reason, ZooKeeper deployments are usually
+        made up of an odd number of machines.</para>
+
+      <para>To achieve the highest probability of tolerating a failure
+        you should try to make machine failures independent. For
+        example, if most of the machines share the same switch,
+        failure of that switch could cause a correlated failure and
+        bring down the service. The same holds true of shared power
+        circuits, cooling systems, etc.</para>
+    </section>
+
+    <section>
+      <title>Single Machine Requirements</title>
+
+      <para>If ZooKeeper has to contend with other applications for
+        access to resourses like storage media, CPU, network, or
+        memory, its performance will suffer markedly.  ZooKeeper has
+        strong durability guarantees, which means it uses storage
+        media to log changes before the operation responsible for the
+        change is allowed to complete. You should be aware of this
+        dependency then, and take great care if you want to ensure
+        that ZooKeeper operations aren’t held up by your media. Here
+        are some things you can do to minimize that sort of
+        degradation:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>ZooKeeper's transaction log must be on a dedicated
+            device. (A dedicated partition is not enough.) ZooKeeper
+            writes the log sequentially, without seeking Sharing your
+            log device with other processes can cause seeks and
+            contention, which in turn can cause multi-second
+            delays.</para>
+        </listitem>
+
+        <listitem>
+          <para>Do not put ZooKeeper in a situation that can cause a
+            swap. In order for ZooKeeper to function with any sort of
+            timeliness, it simply cannot be allowed to swap.
+            Therefore, make certain that the maximum heap size given
+            to ZooKeeper is not bigger than the amount of real memory
+            available to ZooKeeper.  For more on this, see
+            <xref linkend="sc_commonProblems"/>
+            below. </para>
+        </listitem>
+      </itemizedlist>
+    </section>
     </section>
 
     <section id="sc_provisioning">
