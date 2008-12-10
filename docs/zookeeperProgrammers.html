@@ -1143,70 +1143,81 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<p>The ZOO_OPEN_ACL_UNSAFE is completely open free for all ACL: any application can execute any operation on the node and can create, list and delete its children. The ZOO_READ_ACL_UNSAFE is read-only access for any application. CREATE_ALL_ACL grants all permissions to the creator of the node. The creator must have been authenticated by the server (for example, using &ldquo;<em>digest</em>&rdquo; scheme) before it can create nodes with this ACL.</p>
+<p>The ZOO_OPEN_ACL_UNSAFE is completely open free for all
+      ACL: any application can execute any operation on the node and
+      can create, list and delete its children. The
+      ZOO_READ_ACL_UNSAFE is read-only access for any
+      application. CREATE_ALL_ACL grants all permissions to the
+      creator of the node. The creator must have been authenticated by
+      the server (for example, using &ldquo;<em>digest</em>&rdquo;
+      scheme) before it can create nodes with this ACL.</p>
 <p>The following ZooKeeper operations deal with ACLs:</p>
 <ul>
-        
 <li>
+          
 <p>
-<em>int</em> <em>zoo_add_auth</em>(zhandle_t *zh,<em>const</em> <em>char</em>* scheme,<em>const</em> <em>char</em>* cert,</p>
-</li>
-        
-<li>
-<p>
-<em>int</em> certLen, void_completion_t completion, <em>const</em> <em>void</em> *data);</p>
-</li>
+<em>int</em> <em>zoo_add_auth</em>
+            (zhandle_t *zh,<em>const</em> <em>char</em>*
+            scheme,<em>const</em> <em>char</em>*
+            cert, <em>int</em> certLen, void_completion_t
+            completion, <em>const</em> <em>void</em>
+            *data);</p>
       
+</li>
 </ul>
-<p>The application uses the zoo_add_auth function to authenticate itself to the server. The function can be called multiple times if the application wants to authenticate using different schemes and/or identities.</p>
+<p>The application uses the zoo_add_auth function to
+      authenticate itself to the server. The function can be called
+      multiple times if the application wants to authenticate using
+      different schemes and/or identities.</p>
 <ul>
-        
 <li>
+          
 <p>
-<em>int</em> <em>zoo_create</em>(zhandle_t *zh, <em>const</em> <em>char</em> *path, <em>const</em> <em>char</em> *value,</p>
-</li>
-        
-<li>
-<p>
-<em>int</em> valuelen, <em>const</em> <em>struct</em> ACL_vector *acl, <em>int</em> flags,</p>
-</li>
-        
-<li>
-<p>
-<em>char</em> *realpath, <em>int</em> max_realpath_len);</p>
-</li>
+<em>int</em> <em>zoo_create</em>
+            (zhandle_t *zh, <em>const</em> <em>char</em>
+            *path, <em>const</em> <em>char</em>
+            *value,<em>int</em>
+            valuelen, <em>const</em> <em>struct</em>
+            ACL_vector *acl, <em>int</em>
+            flags,<em>char</em>
+            *realpath, <em>int</em>
+            max_realpath_len);</p>
       
+</li>
 </ul>
-<p>zoo_create(...) operation creates a new node. The acl parameter is a list of ACLs associated with the node. The parent node must have the CREATE permission bit set.</p>
+<p>zoo_create(...) operation creates a new node. The acl
+      parameter is a list of ACLs associated with the node. The parent
+      node must have the CREATE permission bit set.</p>
 <ul>
-        
 <li>
+          
 <p>
-<em>int</em> <em>zoo_get_acl</em>(zhandle_t *zh, <em>const</em> <em>char</em> *path,</p>
-</li>
-        
-<li>
-<p>
-<em>struct</em> ACL_vector *acl, <em>struct</em> Stat *stat);</p>
-</li>
+<em>int</em> <em>zoo_get_acl</em>
+            (zhandle_t *zh, <em>const</em> <em>char</em>
+            *path,<em>struct</em> ACL_vector
+            *acl, <em>struct</em> Stat *stat);</p>
       
+</li>
 </ul>
 <p>This operation returns a node&rsquo;s ACL info.</p>
 <ul>
-        
 <li>
+          
 <p>
-<em>int</em> <em>zoo_set_acl</em>(zhandle_t *zh, <em>const</em> <em>char</em> *path, <em>int</em> version,</p>
-</li>
-        
-<li>
-<p>
-<em>const</em> <em>struct</em> ACL_vector *acl);</p>
-</li>
+<em>int</em> <em>zoo_set_acl</em>
+            (zhandle_t *zh, <em>const</em> <em>char</em>
+            *path, <em>int</em>
+            version,<em>const</em> <em>struct</em>
+            ACL_vector *acl);</p>
       
+</li>
 </ul>
-<p>This function replaces node&rsquo;s ACL list with a new one. The node must have the ADMIN permission set.</p>
-<p>Here is a sample code that makes use of the above APIs to authenticate itself using the &ldquo;<em>foo</em>&rdquo; scheme and create an ephemeral node &ldquo;/xyz&rdquo; with create-only permissions.</p>
+<p>This function replaces node&rsquo;s ACL list with a new one. The
+      node must have the ADMIN permission set.</p>
+<p>Here is a sample code that makes use of the above APIs to
+      authenticate itself using the &ldquo;<em>foo</em>&rdquo; scheme
+      and create an ephemeral node &ldquo;/xyz&rdquo; with create-only
+      permissions.</p>
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
@@ -1283,7 +1294,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10435"></a><a name="ch_zkGuarantees"></a>
+<a name="N10426"></a><a name="ch_zkGuarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -1409,12 +1420,12 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N1049C"></a><a name="ch_bindings"></a>
+<a name="N1048D"></a><a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N104A5"></a><a name="Java+Binding"></a>
+<a name="N10496"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1481,7 +1492,7 @@ int main(int argc, char argv) {
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid,
       the two threads shut down, and any further ZooKeeper calls throw
       errors.</p>
-<a name="N104EE"></a><a name="C+Binding"></a>
+<a name="N104DF"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1498,7 +1509,7 @@ int main(int argc, char argv) {
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N104FD"></a><a name="Installation"></a>
+<a name="N104EE"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1629,7 +1640,7 @@ int main(int argc, char argv) {
 </li>
         
 </ol>
-<a name="N105A6"></a><a name="Using+the+C+Client"></a>
+<a name="N10597"></a><a name="Using+the+C+Client"></a>
 <h4>Using the C Client</h4>
 <p>You can test your client by running a ZooKeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1687,7 +1698,7 @@ int main(int argc, char argv) {
 </div>
 
    
-<a name="N105EC"></a><a name="ch_guideToZkOperations"></a>
+<a name="N105DD"></a><a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>This section surveys all the operations a developer can perform
@@ -1705,25 +1716,25 @@ int main(int argc, char argv) {
 </li>
     
 </ul>
-<a name="N10600"></a><a name="sc_connectingToZk"></a>
+<a name="N105F1"></a><a name="sc_connectingToZk"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p></p>
-<a name="N10609"></a><a name="sc_readOps"></a>
+<a name="N105FA"></a><a name="sc_readOps"></a>
 <h3 class="h4">Read Operations</h3>
 <p></p>
-<a name="N10612"></a><a name="sc_writeOps"></a>
+<a name="N10603"></a><a name="sc_writeOps"></a>
 <h3 class="h4">Write Operations</h3>
 <p></p>
-<a name="N1061B"></a><a name="sc_handlingWatches"></a>
+<a name="N1060C"></a><a name="sc_handlingWatches"></a>
 <h3 class="h4">Handling Watches</h3>
 <p></p>
-<a name="N10624"></a><a name="sc_miscOps"></a>
+<a name="N10615"></a><a name="sc_miscOps"></a>
 <h3 class="h4">Miscelleaneous ZooKeeper Operations</h3>
 <p></p>
 </div>
 
   
-<a name="N1062E"></a><a name="ch_programStructureWithExample"></a>
+<a name="N1061F"></a><a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -1732,7 +1743,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10639"></a><a name="ch_gotchas"></a>
+<a name="N1062A"></a><a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application

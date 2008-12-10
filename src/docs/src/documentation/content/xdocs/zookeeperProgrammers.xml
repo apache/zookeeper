@@ -673,40 +673,71 @@
         <listitem><para><emphasis>struct</emphasis> ACL_vector ZOO_CREATOR_ALL_ACL; //(ZOO_PERM_ALL,ZOO_AUTH_IDS)</para></listitem>
       </itemizedlist>
 
-      <para>The ZOO_OPEN_ACL_UNSAFE is completely open free for all ACL: any application can execute any operation on the node and can create, list and delete its children. The ZOO_READ_ACL_UNSAFE is read-only access for any application. CREATE_ALL_ACL grants all permissions to the creator of the node. The creator must have been authenticated by the server (for example, using “<emphasis>digest</emphasis>” scheme) before it can create nodes with this ACL.</para>
+      <para>The ZOO_OPEN_ACL_UNSAFE is completely open free for all
+      ACL: any application can execute any operation on the node and
+      can create, list and delete its children. The
+      ZOO_READ_ACL_UNSAFE is read-only access for any
+      application. CREATE_ALL_ACL grants all permissions to the
+      creator of the node. The creator must have been authenticated by
+      the server (for example, using “<emphasis>digest</emphasis>”
+      scheme) before it can create nodes with this ACL.</para>
 
       <para>The following ZooKeeper operations deal with ACLs:</para>
 
-      <itemizedlist>
-        <listitem><para><emphasis>int</emphasis> <emphasis>zoo_add_auth</emphasis>(zhandle_t *zh,<emphasis>const</emphasis> <emphasis>char</emphasis>* scheme,<emphasis>const</emphasis> <emphasis>char</emphasis>* cert,</para></listitem>
-        <listitem><para><emphasis>int</emphasis> certLen, void_completion_t completion, <emphasis>const</emphasis> <emphasis>void</emphasis> *data);</para></listitem>
-      </itemizedlist>
+      <itemizedlist><listitem>
+          <para><emphasis>int</emphasis> <emphasis>zoo_add_auth</emphasis>
+            (zhandle_t *zh,<emphasis>const</emphasis> <emphasis>char</emphasis>*
+            scheme,<emphasis>const</emphasis> <emphasis>char</emphasis>*
+            cert, <emphasis>int</emphasis> certLen, void_completion_t
+            completion, <emphasis>const</emphasis> <emphasis>void</emphasis>
+            *data);</para>
+      </listitem></itemizedlist>
 
-      <para>The application uses the zoo_add_auth function to authenticate itself to the server. The function can be called multiple times if the application wants to authenticate using different schemes and/or identities.</para>
+      <para>The application uses the zoo_add_auth function to
+      authenticate itself to the server. The function can be called
+      multiple times if the application wants to authenticate using
+      different schemes and/or identities.</para>
 
-      <itemizedlist>
-        <listitem><para><emphasis>int</emphasis> <emphasis>zoo_create</emphasis>(zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis> *path, <emphasis>const</emphasis> <emphasis>char</emphasis> *value,</para></listitem>
-        <listitem><para><emphasis>int</emphasis> valuelen, <emphasis>const</emphasis> <emphasis>struct</emphasis> ACL_vector *acl, <emphasis>int</emphasis> flags,</para></listitem>
-        <listitem><para><emphasis>char</emphasis> *realpath, <emphasis>int</emphasis> max_realpath_len);</para></listitem>
-      </itemizedlist>
+      <itemizedlist><listitem>
+          <para><emphasis>int</emphasis> <emphasis>zoo_create</emphasis>
+            (zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis>
+            *path, <emphasis>const</emphasis> <emphasis>char</emphasis>
+            *value,<emphasis>int</emphasis>
+            valuelen, <emphasis>const</emphasis> <emphasis>struct</emphasis>
+            ACL_vector *acl, <emphasis>int</emphasis>
+            flags,<emphasis>char</emphasis>
+            *realpath, <emphasis>int</emphasis>
+            max_realpath_len);</para>
+      </listitem></itemizedlist>
 
-      <para>zoo_create(...) operation creates a new node. The acl parameter is a list of ACLs associated with the node. The parent node must have the CREATE permission bit set.</para>
+      <para>zoo_create(...) operation creates a new node. The acl
+      parameter is a list of ACLs associated with the node. The parent
+      node must have the CREATE permission bit set.</para>
 
-      <itemizedlist>
-        <listitem><para><emphasis>int</emphasis> <emphasis>zoo_get_acl</emphasis>(zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis> *path,</para></listitem>
-        <listitem><para><emphasis>struct</emphasis> ACL_vector *acl, <emphasis>struct</emphasis> Stat *stat);</para></listitem>
-      </itemizedlist>
+      <itemizedlist><listitem>
+          <para><emphasis>int</emphasis> <emphasis>zoo_get_acl</emphasis>
+            (zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis>
+            *path,<emphasis>struct</emphasis> ACL_vector
+            *acl, <emphasis>struct</emphasis> Stat *stat);</para>
+      </listitem></itemizedlist>
 
       <para>This operation returns a node’s ACL info.</para>
 
-      <itemizedlist>
-        <listitem><para><emphasis>int</emphasis> <emphasis>zoo_set_acl</emphasis>(zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis> *path, <emphasis>int</emphasis> version,</para></listitem>
-        <listitem><para><emphasis>const</emphasis> <emphasis>struct</emphasis> ACL_vector *acl);</para></listitem>
-      </itemizedlist>
+      <itemizedlist><listitem>
+          <para><emphasis>int</emphasis> <emphasis>zoo_set_acl</emphasis>
+            (zhandle_t *zh, <emphasis>const</emphasis> <emphasis>char</emphasis>
+            *path, <emphasis>int</emphasis>
+            version,<emphasis>const</emphasis> <emphasis>struct</emphasis>
+            ACL_vector *acl);</para>
+      </listitem></itemizedlist>
 
-      <para>This function replaces node’s ACL list with a new one. The node must have the ADMIN permission set.</para>
+      <para>This function replaces node’s ACL list with a new one. The
+      node must have the ADMIN permission set.</para>
 
-      <para>Here is a sample code that makes use of the above APIs to authenticate itself using the “<emphasis>foo</emphasis>” scheme and create an ephemeral node “/xyz” with create-only permissions.</para>
+      <para>Here is a sample code that makes use of the above APIs to
+      authenticate itself using the “<emphasis>foo</emphasis>” scheme
+      and create an ephemeral node “/xyz” with create-only
+      permissions.</para>
 
       <note><para>This is a very simple example which is intended to show
         how to interact with ZooKeeper ACLs

@@ -63,6 +63,9 @@ IMPROVEMENTS:
   
    ZOOKEEPER-161. Content needed: "Designing a ZooKeeper Deployment"
   (breed via phunt)
+   
+   ZOOKEEPER-247. fix formatting of C API in ACL section of programmer guide.
+(patrick hunt via mahadev)
 
 Release 3.0.0 - 2008-10-21
 
