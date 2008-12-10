@@ -127,7 +127,7 @@ public class QuorumTest extends ClientBase {
         LOG.info("FINISHED " + getName());
     }
 
-    private void shutdown(QuorumPeer qp) {
+    protected void shutdown(QuorumPeer qp) {
         try {
             qp.shutdown();
             qp.join(30000);

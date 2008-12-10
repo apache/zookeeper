@@ -51,7 +51,10 @@ BUGFIXES:
   (patrick hunt via mahadev)
 
   ZOOKEEPER-245. update readme/quickstart to be release tar, rather than
-source, based (patrick hunt via mahadev)
+  source, based (patrick hunt via mahadev)
+
+  ZOOKEEPER-251. NullPointerException stopping and starting Zookeeper servers
+  (mahadev via phunt)
   
 IMPROVEMENTS:
    

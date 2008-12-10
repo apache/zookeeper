@@ -85,6 +85,24 @@ public class FileTxnSnapLog {
     }
     
     /**
+     * get the datadir used by this filetxn
+     * snap log
+     * @return the data dir
+     */
+    public File getDataDir() {
+        return this.dataDir;
+    }
+    
+    /**
+     * get the snap dir used by this 
+     * filetxn snap log
+     * @return the snap dir
+     */
+    public File getSnapDir() {
+        return this.snapDir;
+    }
+    
+    /**
      * this function restors the server 
      * database after reading from the 
      * snapshots and transaction logs
