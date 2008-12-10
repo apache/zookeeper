@@ -186,7 +186,13 @@ document.write("Last Published: " + document.lastModified);
       ZooKeeper</a>
 <ul class="minitoc">
 <li>
-<a href="#sc_InstallingSingleMode">Installing and Running ZooKeeper in Single Server Mode</a>
+<a href="#sc_Prerequisites">Pre-requisites</a>
+</li>
+<li>
+<a href="#sc_Download">Download</a>
+</li>
+<li>
+<a href="#sc_InstallingSingleMode">Standalone Operation</a>
 </li>
 <li>
 <a href="#sc_ConnectingToZooKeeper">Connecting to ZooKeeper</a>
@@ -214,46 +220,44 @@ document.write("Last Published: " + document.lastModified);
       ZooKeeper</h2>
 <div class="section">
 <p>This document contains information to get you started quickly with
-    Zookeeper. It is aimed primarily at developers hoping to try it out, and
+    ZooKeeper. It is aimed primarily at developers hoping to try it out, and
     contains simple installation instructions for a single ZooKeeper server, a
     few commands to verify that it is running, and a simple programming
     example. Finally, as a convenience, there are a few sections regarding
     more complicated installations, for example running replicated
     deployments, and optimizing the transaction log. However for the complete
-    instructions for commercial deployments, please refer to the <a href="zookeeperAdmin.html">Zookeeper
+    instructions for commercial deployments, please refer to the <a href="zookeeperAdmin.html">ZooKeeper
     Administrator's Guide</a>.</p>
-<a name="N10016"></a><a name="sc_InstallingSingleMode"></a>
-<h3 class="h4">Installing and Running ZooKeeper in Single Server Mode</h3>
+<a name="N10016"></a><a name="sc_Prerequisites"></a>
+<h3 class="h4">Pre-requisites</h3>
+<p>See <a href="zookeeperAdmin.html#sc_systemReq">
+          System Requirements</a> in the Admin guide.</p>
+<a name="N10024"></a><a name="sc_Download"></a>
+<h3 class="h4">Download</h3>
+<p>To get a ZooKeeper distribution, download a recent
+        <a href="http://hadoop.apache.org/zookeeper/releases.html">
+          stable</a> release from one of the Apache Download
+        Mirrors.</p>
+<a name="N10032"></a><a name="sc_InstallingSingleMode"></a>
+<h3 class="h4">Standalone Operation</h3>
 <p>Setting up a ZooKeeper server in standalone mode is
-      straightforward. The server is contained in a single JAR file, so
-      installation consists of copying a JAR file and creating a
-      configuration.</p>
-<div class="note">
-<div class="label">Note</div>
-<div class="content">
-        
-<p>Zookeeper requires Java 1.5 or more recent.</p>
-      
-</div>
-</div>
-<p>Once you have downloaded the ZooKeeper source, cd to the root of
-      your ZooKeeper source, and run "ant jar". For example:</p>
-<pre class="code">
-$ cd ~/dev/zookeeper
-$ ~/dev/zookeeper/: ant jar
-</pre>
-<p>This should generate a JAR file called zookeeper.jar. To start
-      Zookeeper, compile and run zookeeper.jar.</p>
-<p>To start ZooKeeper you need a configuration file. Here is a sample
-      file:</p>
+      straightforward. The server is contained in a single JAR file,
+      so installation consists of creating a configuration.</p>
+<p>Once you've downloaded a stable ZooKeeper release unpack
+      it and cd to the root</p>
+<p>To start ZooKeeper you need a configuration file. Here is a sample,
+      create it in <strong>conf/zoo.cfg</strong>:</p>
 <pre class="code">
 tickTime=2000
 dataDir=/var/zookeeper
 clientPort=2181
 </pre>
 <p>This file can be called anything, but for the sake of this
-      discussion, call it <strong>zoo.cfg</strong>. Here are
-      the meanings for each of the fields:</p>
+      discussion call
+      it <strong>conf/zoo.cfg</strong>. Change the
+      value of <strong>dataDir</strong> to specify an
+      existing (empty to start with) directory.  Here are the meanings
+      for each of the fields:</p>
 <dl>
         
 <dt>
@@ -294,20 +298,19 @@ clientPort=2181
 </dl>
 <p>Now that you created the configuration file, you can start
       ZooKeeper:</p>
-<pre class="code">java -cp zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</pre>
+<pre class="code">bin/zkServer.sh start</pre>
 <p>ZooKeeper logs messages using log4j -- more detail
       available in the
       <a href="zookeeperProgrammers.html#Logging">Logging</a>
       section of the Programmer's Guide. You will see log messages
-      coming to the console and/or a log file depending on the log4j
-      configuration.</p>
+      coming to the console (default) and/or a log file depending on
+      the log4j configuration.</p>
 <p>The steps outlined here run ZooKeeper in standalone mode. There is
-      no replication, so if Zookeeper process fails, the service will go down.
-      This is fine for most development situations, but to run Zookeeper in
+      no replication, so if ZooKeeper process fails, the service will go down.
+      This is fine for most development situations, but to run ZooKeeper in
       replicated mode, please see <a href="#sc_RunningReplicatedZooKeeper">Running Replicated
-      Zookeeper</a>.</p>
-<p></p>
-<a name="N1006F"></a><a name="sc_ConnectingToZooKeeper"></a>
+      ZooKeeper</a>.</p>
+<a name="N10083"></a><a name="sc_ConnectingToZooKeeper"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p>Once ZooKeeper is running, you have several options for connection
       to it:</p>
@@ -316,12 +319,10 @@ clientPort=2181
 <li>
           
 <p>
-<strong>Java</strong>:
-          Use <span class="codefrag computeroutput">java -cp
-          zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar:conf
-          org.apache.zookeeper.ZooKeeperMain
-          127.0.0.1:2181</span>
-</p>
+<strong>Java</strong>: Use</p>
+
+          
+<pre class="code">bin/zkCli.sh 127.0.0.1:2181</pre>
 
           
 <p>This lets you perform simple, file-like operations.</p>
@@ -334,27 +335,40 @@ clientPort=2181
 <p>
 <strong>C</strong>: compile cli_mt
           (multi-threaded) or cli_st (single-threaded) by running
-          <span class="codefrag command">make cli_mt</span> or <span class="codefrag command">make cli_st</span>
-          in the c subdirectory in the ZooKeeper sources.</p>
+          <span class="codefrag command">make cli_mt</span> or <span class="codefrag command">make
+          cli_st</span> in
+          the <strong>src/c</strong> subdirectory in
+          the ZooKeeper sources. See the README contained within
+          <strong>src/c</strong> for full details.</p>
 
           
-<p>You can run the program using <em>LD_LIBRARY_PATH=.
-          cli_mt 127.0.0.1:2181</em> or <em>LD_LIBRARY_PATH=.
-          cli_st 127.0.0.1:2181</em>. This will give you a simple shell
-          to execute file system like operations on ZooKeeper.</p>
+<p>You can run the program
+          from <strong>src/c</strong> using:</p>
+
+          
+<pre class="code">LD_LIBRARY_PATH=. cli_mt 127.0.0.1:2181</pre>
+
+          
+<p>or</p>
+
+          
+<pre class="code">LD_LIBRARY_PATH=. cli_st 127.0.0.1:2181</pre>
+          
+<p>This will give you a simple shell to execute file
+          system like operations on ZooKeeper.</p>
         
 </li>
       
 </ul>
-<a name="N100A3"></a><a name="sc_ProgrammingToZooKeeper"></a>
+<a name="N100C6"></a><a name="sc_ProgrammingToZooKeeper"></a>
 <h3 class="h4">Programming to ZooKeeper</h3>
 <p>ZooKeeper has a Java bindings and C bindings. They are
       functionally equivalent. The C bindings exist in two variants: single
       threaded and multi-threaded. These differ only in how the messaging loop
       is done. For more information, see the <a href="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
-      Examples in the Zookeeper Programmer's Guide</a> for
+      Examples in the ZooKeeper Programmer's Guide</a> for
       sample code using of the different APIs.</p>
-<a name="N100B1"></a><a name="sc_RunningReplicatedZooKeeper"></a>
+<a name="N100D4"></a><a name="sc_RunningReplicatedZooKeeper"></a>
 <h3 class="h4">Running Replicated ZooKeeper</h3>
 <p>Running ZooKeeper in standalone mode is convenient for evaluation,
       some development, and testing. But in production, you should run
@@ -374,7 +388,7 @@ server.2=zoo2:2888:3888
 server.3=zoo3:2888:3888
 </pre>
 <p>The new entry, <strong>initLimit</strong> is
-      timeouts ZooKeeper uses to limit the length of time the Zookeeper
+      timeouts ZooKeeper uses to limit the length of time the ZooKeeper
       servers in quorum have to connect to a leader. The entry <strong>syncLimit</strong> limits how far out of date a server can
       be from a leader.</p>
 <p>With both of these timeouts, you specify the unit of time using
@@ -414,7 +428,7 @@ server.3=zoo3:2888:3888
       
 </div>
 </div>
-<a name="N100EE"></a><a name="Other+Optimizations"></a>
+<a name="N10111"></a><a name="Other+Optimizations"></a>
 <h3 class="h4">Other Optimizations</h3>
 <p>There are a couple of other configuration parameters that can
       greatly increase performance:</p>

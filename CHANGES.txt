@@ -50,17 +50,19 @@ BUGFIXES:
   ZOOKEEPER-241. Build of a distro fails after clean target is run.
   (patrick hunt via mahadev)
 
+  ZOOKEEPER-245. update readme/quickstart to be release tar, rather than
+source, based (patrick hunt via mahadev)
+  
 IMPROVEMENTS:
    
-  ZOOKEEPER-161. Content needed: "Designing a ZooKeeper Deployment"
-  (breed via phunt)
-
   ZOOKEEPER-64. Log system env information when initializing server and
   client (pat via mahadev)
 
   ZOOKEEPER-243. add SEQUENCE flag documentation to the programming guide.
   (patrick hunt via mahadev)
-
+  
+   ZOOKEEPER-161. Content needed: "Designing a ZooKeeper Deployment"
+  (breed via phunt)
 
 Release 3.0.0 - 2008-10-21
 
