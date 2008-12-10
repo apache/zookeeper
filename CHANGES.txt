@@ -5,58 +5,62 @@ Non-backward compatible changes:
 Backward compatibile changes:
 
 BUGFIXES: 
-   ZOOKEEPER-211 Not all Mock tests are working (ben via phunt)
+  ZOOKEEPER-211. Not all Mock tests are working (ben via phunt)
 
-   ZOOKEEPER-223. change default level in root logger to INFO.
-   (pat via mahadev) 
+  ZOOKEEPER-223. change default level in root logger to INFO.
+  (pat via mahadev) 
    
-   ZOOKEEPER-212. fix the snapshot to be asynchronous. (mahadev and ben)
+  ZOOKEEPER-212. fix the snapshot to be asynchronous. (mahadev and ben)
 
-   ZOOKEEPER-213. fix programmer guide C api docs to be  in sync with latest
-   zookeeper.h (pat via mahadev)
+  ZOOKEEPER-213. fix programmer guide C api docs to be  in sync with latest
+  zookeeper.h (pat via mahadev)
 
-   ZOOKEEPER-219. fix events.poll timeout in watcher test to be longer.
-   (pat via mahadev)
+  ZOOKEEPER-219. fix events.poll timeout in watcher test to be longer.
+  (pat via mahadev)
    
-   ZOOKEEPER-217. Fix errors in config to be thrown as Exceptions. (mahadev)
+  ZOOKEEPER-217. Fix errors in config to be thrown as Exceptions. (mahadev)
 
-   ZOOKEEPER-228. fix apache header missing in DBTest. (mahadev)
+  ZOOKEEPER-228. fix apache header missing in DBTest. (mahadev)
 
-   ZOOKEEPER-218. fix the error in the barrier example code. (pat via mahadev)
+  ZOOKEEPER-218. fix the error in the barrier example code. (pat via mahadev)
 
-   ZOOKEEPER-206. documentation tab should contain the version number and 
-   other small site changes. (pat via mahadev) 
+  ZOOKEEPER-206. documentation tab should contain the version number and 
+  other small site changes. (pat via mahadev) 
 
-   ZOOKEEPER-226. fix exists calls that fail on server if node has null data.
-   (mahadev) 
+  ZOOKEEPER-226. fix exists calls that fail on server if node has null data.
+  (mahadev) 
 
-   ZOOKEEPER-204. SetWatches needs to be the first message after auth messages
-to the server (ben via mahadev)
+  ZOOKEEPER-204. SetWatches needs to be the first message after auth
+  messages to the server (ben via mahadev)
   
-   ZOOKEEPER-208. Zookeeper C client uses API that are not thread safe,
-causing crashes when multiple instances are active. (austin shoemaker, chris
-daroch and ben reed via mahadev) 
+  ZOOKEEPER-208. Zookeeper C client uses API that are not thread safe,
+  causing crashes when multiple instances are active.
+  (austin shoemaker, chris daroch and ben reed via mahadev) 
 
-   ZOOKEEPER-227. gcc warning from recordio.h (chris darroch via mahadev)
+  ZOOKEEPER-227. gcc warning from recordio.h (chris darroch via mahadev)
 
-   ZOOKEEPER-232. fix apache licence header in TestableZookeeper (mahadev)
+  ZOOKEEPER-232. fix apache licence header in TestableZookeeper (mahadev)
 
-   ZOOKEEPER-249. QuorumPeer.getClientPort() always returns -1. (nitay 
-joffe via mahadev)
+  ZOOKEEPER-249. QuorumPeer.getClientPort() always returns -1.
+  (nitay joffe via mahadev)
 
-  ZOOKEEPER-248.  QuorumPeer should use Map interface instead of 
-HashMap implementation. (nitay joffe via mahadev)
+  ZOOKEEPER-248.  QuorumPeer should use Map interface instead of HashMap
+  implementation. (nitay joffe via mahadev)
 
-  ZOOKEEPER-241. Build of a distro fails after clean target is run. (patrick
-hunt via mahadev)
+  ZOOKEEPER-241. Build of a distro fails after clean target is run.
+  (patrick hunt via mahadev)
 
 IMPROVEMENTS:
    
-   ZOOKEEPER-64. Log system env information when initializing server and
-client (pat via mahadev)
+  ZOOKEEPER-161. Content needed: "Designing a ZooKeeper Deployment"
+  (breed via phunt)
 
-   ZOOKEEPER-243. add SEQUENCE flag documentation to the programming guide.
-(patrick hunt via mahadev)
+  ZOOKEEPER-64. Log system env information when initializing server and
+  client (pat via mahadev)
+
+  ZOOKEEPER-243. add SEQUENCE flag documentation to the programming guide.
+  (patrick hunt via mahadev)
+
 
 Release 3.0.0 - 2008-10-21
 
