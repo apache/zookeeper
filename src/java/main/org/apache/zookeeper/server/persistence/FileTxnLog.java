@@ -355,7 +355,8 @@ public class FileTxnLog implements TxnLog {
             if (!next())
                 return;
             while (hdr.getZxid() < zxid) {
-                next();
+                if (!next())
+                    return;
             }
         }
         
@@ -446,6 +447,7 @@ public class FileTxnLog implements TxnLog {
                 LOG.debug("EOF excepton " + e);
                 inputStream.close();
                 inputStream = null;
+                ia = null;
                 // thsi means that the file has ended 
                 // we shoud go to the next file
                 if (!goToNextLog()) {
