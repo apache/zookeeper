@@ -71,12 +71,46 @@
     <section id="sc_systemReq">
       <title>System Requirements</title>
 
-      <para>ZooKeeper runs in Java, release 1.5 or greater (JDK 5 or greater).
-      It runs as an <emphasis>ensemble</emphasis> of ZooKeeper servers. Three ZooKeeper
-      servers is the minimum recommended size for an ensemble, and we also recommend that
-      they run on separate machines. At Yahoo!, ZooKeeper is usually deployed on 
-      dedicated RHEL boxes, with dual-core processors, 2GB of RAM, and 80GB IDE hard 
-      drives.</para>
+      <section id="sc_supportedPlatforms">
+        <title>Supported Platforms</title>
+
+        <itemizedlist>
+          <listitem>
+            <para>GNU/Linux is supported as a development and production
+              platform for both server and client.</para>
+          </listitem>
+          <listitem>
+            <para>Sun Solaris is supported as a development and production
+              platform for both server and client.</para>
+          </listitem>
+          <listitem>
+            <para>FreeBSD is supported as a development and production
+              platform for clients only. Java NIO selector support in
+              the FreeBSD JVM is broken.</para>
+          </listitem>
+          <listitem>
+            <para>Win32 is supported as a <emphasis>development
+            platform</emphasis> only for both server and client.</para>
+          </listitem>
+          <listitem>
+            <para>MacOSX is supported as a <emphasis>development
+            platform</emphasis> only for both server and client.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section id="sc_requiredSoftware">
+        <title>Required Software </title>
+
+        <para>ZooKeeper runs in Java, release 1.5 or greater (JDK 5 or
+          greater).  It runs as an <emphasis>ensemble</emphasis> of
+          ZooKeeper servers. Three ZooKeeper servers is the minimum
+          recommended size for an ensemble, and we also recommend that
+          they run on separate machines. At Yahoo!, ZooKeeper is
+          usually deployed on dedicated RHEL boxes, with dual-core
+          processors, 2GB of RAM, and 80GB IDE hard drives.</para>
+      </section>
+
     </section>
 
     <section id="sc_zkMulitServerSetup">

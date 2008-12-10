@@ -37,7 +37,7 @@
     <abstract>
       <para>This guide contains detailed information about creating
       distributed applications that use ZooKeeper. It discusses the basic
-      operations Zookeeper supports, and how these can be used to build
+      operations ZooKeeper supports, and how these can be used to build
       higher-level abstractions. It contains solutions to common tasks, a
       troubleshooting guide, and links to other information.</para>
     </abstract>
@@ -48,40 +48,44 @@
       ZooKeeper</title>
 
     <para>This document contains information to get you started quickly with
-    Zookeeper. It is aimed primarily at developers hoping to try it out, and
+    ZooKeeper. It is aimed primarily at developers hoping to try it out, and
     contains simple installation instructions for a single ZooKeeper server, a
     few commands to verify that it is running, and a simple programming
     example. Finally, as a convenience, there are a few sections regarding
     more complicated installations, for example running replicated
     deployments, and optimizing the transaction log. However for the complete
     instructions for commercial deployments, please refer to the <ulink
-    url="zookeeperAdmin.html">Zookeeper
+    url="zookeeperAdmin.html">ZooKeeper
     Administrator's Guide</ulink>.</para>
 
+    <section id="sc_Prerequisites">
+      <title>Pre-requisites</title>
+
+      <para>See <ulink url="zookeeperAdmin.html#sc_systemReq">
+          System Requirements</ulink> in the Admin guide.</para>
+    </section>
+
+    <section id="sc_Download">
+      <title>Download</title>
+
+      <para>To get a ZooKeeper distribution, download a recent
+        <ulink url="http://hadoop.apache.org/zookeeper/releases.html">
+          stable</ulink> release from one of the Apache Download
+        Mirrors.</para>
+    </section>
+
     <section id="sc_InstallingSingleMode">
-      <title>Installing and Running ZooKeeper in Single Server Mode</title>
+      <title>Standalone Operation</title>
 
       <para>Setting up a ZooKeeper server in standalone mode is
-      straightforward. The server is contained in a single JAR file, so
-      installation consists of copying a JAR file and creating a
-      configuration.</para>
+      straightforward. The server is contained in a single JAR file,
+      so installation consists of creating a configuration.</para>
 
-      <note>
-        <para>Zookeeper requires Java 1.5 or more recent.</para>
-      </note>
+      <para>Once you've downloaded a stable ZooKeeper release unpack
+      it and cd to the root</para>
 
-      <para>Once you have downloaded the ZooKeeper source, cd to the root of
-      your ZooKeeper source, and run "ant jar". For example:</para>
-<programlisting>
-$ cd ~/dev/zookeeper
-$ ~/dev/zookeeper/: ant jar
-</programlisting>
-
-      <para>This should generate a JAR file called zookeeper.jar. To start
-      Zookeeper, compile and run zookeeper.jar.</para>
-
-      <para>To start ZooKeeper you need a configuration file. Here is a sample
-      file:</para>
+      <para>To start ZooKeeper you need a configuration file. Here is a sample,
+      create it in <emphasis role="bold">conf/zoo.cfg</emphasis>:</para>
 
 <programlisting>
 tickTime=2000
@@ -90,8 +94,11 @@ clientPort=2181
 </programlisting>
 
       <para>This file can be called anything, but for the sake of this
-      discussion, call it <emphasis role="bold">zoo.cfg</emphasis>. Here are
-      the meanings for each of the fields:</para>
+      discussion call
+      it <emphasis role="bold">conf/zoo.cfg</emphasis>. Change the
+      value of <emphasis role="bold">dataDir</emphasis> to specify an
+      existing (empty to start with) directory.  Here are the meanings
+      for each of the fields:</para>
 
       <variablelist>
         <varlistentry>
@@ -128,23 +135,21 @@ clientPort=2181
       <para>Now that you created the configuration file, you can start
       ZooKeeper:</para>
 
-      <programlisting>java -cp zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</programlisting>
+      <programlisting>bin/zkServer.sh start</programlisting>
 
       <para>ZooKeeper logs messages using log4j -- more detail
       available in the
       <ulink url="zookeeperProgrammers.html#Logging">Logging</ulink>
       section of the Programmer's Guide. You will see log messages
-      coming to the console and/or a log file depending on the log4j
-      configuration.</para>
+      coming to the console (default) and/or a log file depending on
+      the log4j configuration.</para>
 
       <para>The steps outlined here run ZooKeeper in standalone mode. There is
-      no replication, so if Zookeeper process fails, the service will go down.
-      This is fine for most development situations, but to run Zookeeper in
+      no replication, so if ZooKeeper process fails, the service will go down.
+      This is fine for most development situations, but to run ZooKeeper in
       replicated mode, please see <ulink
       url="#sc_RunningReplicatedZooKeeper">Running Replicated
-      Zookeeper</ulink>.</para>
-
-      <para></para>
+      ZooKeeper</ulink>.</para>
     </section>
 
     <section id="sc_ConnectingToZooKeeper">
@@ -155,11 +160,9 @@ clientPort=2181
 
       <itemizedlist>
         <listitem>
-          <para><emphasis role="bold">Java</emphasis>:
-          Use <computeroutput>java -cp
-          zookeeper-dev.jar:src/java/lib/log4j-1.2.15.jar:conf
-          org.apache.zookeeper.ZooKeeperMain
-          127.0.0.1:2181</computeroutput></para>
+          <para><emphasis role="bold">Java</emphasis>: Use</para>
+
+          <programlisting>bin/zkCli.sh 127.0.0.1:2181</programlisting>
 
           <para>This lets you perform simple, file-like operations.</para>
         </listitem>
@@ -167,13 +170,22 @@ clientPort=2181
         <listitem>
           <para><emphasis role="bold">C</emphasis>: compile cli_mt
           (multi-threaded) or cli_st (single-threaded) by running
-          <command>make cli_mt</command> or <command>make cli_st</command>
-          in the c subdirectory in the ZooKeeper sources.</para>
+          <command>make cli_mt</command> or <command>make
+          cli_st</command> in
+          the <emphasis role="bold">src/c</emphasis> subdirectory in
+          the ZooKeeper sources. See the README contained within
+          <emphasis role="bold">src/c</emphasis> for full details.</para>
 
-          <para>You can run the program using <emphasis>LD_LIBRARY_PATH=.
-          cli_mt 127.0.0.1:2181</emphasis> or <emphasis>LD_LIBRARY_PATH=.
-          cli_st 127.0.0.1:2181</emphasis>. This will give you a simple shell
-          to execute file system like operations on ZooKeeper.</para>
+          <para>You can run the program
+          from <emphasis role="bold">src/c</emphasis> using:</para>
+
+          <programlisting>LD_LIBRARY_PATH=. cli_mt 127.0.0.1:2181</programlisting>
+
+          <para>or</para>
+
+          <programlisting>LD_LIBRARY_PATH=. cli_st 127.0.0.1:2181</programlisting>
+          <para>This will give you a simple shell to execute file
+          system like operations on ZooKeeper.</para>
         </listitem>
       </itemizedlist>
     </section>
@@ -186,7 +198,7 @@ clientPort=2181
       threaded and multi-threaded. These differ only in how the messaging loop
       is done. For more information, see the <ulink
       url="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
-      Examples in the Zookeeper Programmer's Guide</ulink> for
+      Examples in the ZooKeeper Programmer's Guide</ulink> for
       sample code using of the different APIs.</para>
     </section>
 
@@ -213,7 +225,7 @@ server.3=zoo3:2888:3888
 </programlisting>
 
       <para>The new entry, <emphasis role="bold">initLimit</emphasis> is
-      timeouts ZooKeeper uses to limit the length of time the Zookeeper
+      timeouts ZooKeeper uses to limit the length of time the ZooKeeper
       servers in quorum have to connect to a leader. The entry <emphasis
       role="bold">syncLimit</emphasis> limits how far out of date a server can
       be from a leader.</para>
