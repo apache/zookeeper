@@ -109,8 +109,15 @@ public class FileSnap implements SnapShot {
     public File findMostRecentSnapshot() throws IOException {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), "snapshot", false);
         for (File f : files) {
-            if(Util.isValidSnapshot(f))
-                return f;
+            // we should catch the exceptions from 
+            // the valid snapshot and continue
+            // until we find a valid one
+            try {
+                if(Util.isValidSnapshot(f))
+                    return f;
+            } catch(IOException e) {
+                LOG.info("invalid snapshot " + f, e);
+            }
         }
         return null;
     }
