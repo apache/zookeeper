@@ -162,6 +162,11 @@ public class Util {
 
         // Check for a valid snapshot
         RandomAccessFile raf = new RandomAccessFile(f, "r");
+        // including the header and the last / bytes
+        // the snapshot should be atleast 10 bytes
+        if (raf.length() < 10) {
+            return false;
+        }
         try {
             raf.seek(raf.length() - 5);
             byte bytes[] = new byte[5];

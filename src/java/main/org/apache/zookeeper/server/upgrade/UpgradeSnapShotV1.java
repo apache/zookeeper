@@ -224,8 +224,12 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
         List<File> files = Util.sortDataDir(snapShotDir.listFiles(),
                 "snapshot", false);
         for (File f: files) {
-            if (Util.isValidSnapshot(f))
-                return f;
+            try {
+                if (Util.isValidSnapshot(f))
+                    return f;
+            } catch(IOException e) {
+                LOG.info("Invalid snapshot " + f, e);
+            }
         }
         return null;
     }

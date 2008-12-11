@@ -55,6 +55,9 @@ BUGFIXES:
 
   ZOOKEEPER-251. NullPointerException stopping and starting Zookeeper servers
   (mahadev via phunt)
+
+  ZOOKEEPER-250. isvalidsnapshot should handle the case of 0 snapshot
+  files better. (mahadev via phunt)
   
 IMPROVEMENTS:
    
@@ -68,7 +71,8 @@ IMPROVEMENTS:
   (breed via phunt)
    
    ZOOKEEPER-247. fix formatting of C API in ACL section of programmer guide.
-(patrick hunt via mahadev)
+   (patrick hunt via mahadev)
+
 
 Release 3.0.0 - 2008-10-21
 
