@@ -25,10 +25,10 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Enumeration;
 
 import org.apache.log4j.Logger;
 
@@ -120,7 +120,6 @@ public class QuorumCnxManager {
     }
 
     public QuorumCnxManager(QuorumPeer self) {
-        this.port = port;
         this.recvQueue = new ArrayBlockingQueue<Message>(CAPACITY);
         this.queueSendMap = new ConcurrentHashMap<Long, ArrayBlockingQueue<ByteBuffer>>();
         this.senderWorkerMap = new ConcurrentHashMap<Long, SendWorker>();
@@ -153,11 +152,7 @@ public class QuorumCnxManager {
      */
 
     boolean initiateConnection(SocketChannel s, Long sid) {
-        boolean challenged = true;
-        boolean wins = false;
-        long newChallenge;
-        
-        try {
+         try {
             // Sending id and challenge
             byte[] msgBytes = new byte[8];
             ByteBuffer msgBuffer = ByteBuffer.wrap(msgBytes);
@@ -173,11 +168,11 @@ public class QuorumCnxManager {
         // If lost the challenge, then drop the new connection
         if (sid > self.getId()) {
             try {
-                LOG.warn("Have smaller server identifier, so dropping the connection: (" + 
-                        sid + ", " + self.getId());
+                LOG.info("Have smaller server identifier, so dropping the connection: (" + 
+                        sid + ", " + self.getId() + ")");
                 s.socket().close();
             } catch (IOException e) {
-                LOG.warn("Error when closing socket or trying to reopen connection: "
+                LOG.error("Error when closing socket or trying to reopen connection: "
                                 + e.toString());
 
             }
@@ -220,9 +215,6 @@ public class QuorumCnxManager {
      * 
      */
     boolean receiveConnection(SocketChannel s) {
-        boolean challenged = true;
-        boolean wins = false;
-        long newChallenge;
         Long sid = null;
         
         try {
@@ -236,7 +228,7 @@ public class QuorumCnxManager {
             // Read server id
             sid = Long.valueOf(msgBuffer.getLong());
         } catch (IOException e) {
-            LOG.warn("Exception reading or writing challenge: "
+            LOG.info("Exception reading or writing challenge: "
                     + e.toString());
             return false;
         }
@@ -246,7 +238,7 @@ public class QuorumCnxManager {
             try {
                 SendWorker sw = senderWorkerMap.get(sid);
 
-                LOG.warn("Create new connection");
+                LOG.info("Create new connection to server: " + sid);
                 //sw.connect();
                 s.socket().close();
                 if(sw != null) sw.finish();
@@ -256,7 +248,7 @@ public class QuorumCnxManager {
                 }
                 
             } catch (IOException e) {
-                LOG.warn("Error when closing socket or trying to reopen connection: "
+                LOG.info("Error when closing socket or trying to reopen connection: "
                                 + e.toString());
             }
         //Otherwise start worker threads to receive data.
@@ -290,8 +282,8 @@ public class QuorumCnxManager {
     }
 
     /**
-     * Processes invoke this message to send a message. Currently, only leader
-     * election uses it.
+     * Processes invoke this message to queue a message to send. Currently, 
+     * only leader election uses it.
      */
     void toSend(Long sid, ByteBuffer b) {
         /*
@@ -322,39 +314,64 @@ public class QuorumCnxManager {
                         queueSendMap.get(sid).take();
                     }
                     queueSendMap.get(sid).put(b);
-                }
+                } 
                 
-                //synchronized (senderWorkerMap) {
-                    if ((senderWorkerMap.get(sid) == null)) {
-                        SocketChannel channel;
-                        try {
-                            channel = SocketChannel
-                                    .open(self.quorumPeers.get(sid).electionAddr);
-                            channel.socket().setTcpNoDelay(true);
-                            initiateConnection(channel, sid);
-                        } catch (IOException e) {
-                            LOG.warn("Cannot open channel to "
-                                    + sid + "( " + e.toString()
-                                    + ")");
-                        }
-                    }
-                //}     
+                connectOne(sid);
+                
             } catch (InterruptedException e) {
                 LOG.warn("Interrupted while waiting to put message in queue."
                                 + e.toString());
             }
     }
+    
+    /**
+     * Try to establish a connection to server with id sid.
+     * 
+     *  @param sid  server id
+     */
+    
+    void connectOne(long sid){
+        if ((senderWorkerMap.get(sid) == null)) {
+            SocketChannel channel;
+            try {
+                channel = SocketChannel
+                        .open(self.quorumPeers.get(sid).electionAddr);
+                channel.socket().setTcpNoDelay(true);
+                initiateConnection(channel, sid);
+            } catch (IOException e) {
+                LOG.warn("Cannot open channel to "
+                        + sid + "( " + e.toString()
+                        + ")");
+            }
+        }
+    }
+    
+    
+    /**
+     * Try to establish a connection with each server if one
+     * doesn't exist.
+     */
+    
+    void connectAll(){
+        long sid;
+        for(Enumeration<Long> en = queueSendMap.keys();
+            en.hasMoreElements();){
+            sid = en.nextElement();
+            connectOne(sid);
+        }      
+    }
+    
 
     /**
      * Check if all queues are empty, indicating that all messages have been delivered.
      */
     boolean haveDelivered() {
         for (ArrayBlockingQueue<ByteBuffer> queue : queueSendMap.values()) {
-            if (queue.size() == 0)
-                return true;
+            if (queue.size() != 0)
+                return false;
         }
 
-        return false;
+        return true;
     }
 
     /**
