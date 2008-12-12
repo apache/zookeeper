@@ -73,6 +73,7 @@ IMPROVEMENTS:
    ZOOKEEPER-247. fix formatting of C API in ACL section of programmer guide.
    (patrick hunt via mahadev)
 
+   ZOOKEEPER-230. Improvements to FLE. (Flavio via mahadev)
 
 Release 3.0.0 - 2008-10-21
 
