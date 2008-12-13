@@ -314,13 +314,16 @@ public class ZooKeeper {
 
     volatile States state;
 
-    protected ClientCnxn cnxn;
+    protected final ClientCnxn cnxn;
 
     /**
      * @see ZooKeeper(String, int, Watcher, long, byte[])
      */
     public ZooKeeper(String host, int sessionTimeout, Watcher watcher)
             throws IOException {
+        LOG.info("Initiating client connection, host=" + host
+                + " sessionTimeout=" + sessionTimeout + " watcher=" + watcher);
+
         watchManager.defaultWatcher = watcher;
         cnxn = new ClientCnxn(host, sessionTimeout, this, watchManager);
     }
@@ -358,6 +361,13 @@ public class ZooKeeper {
      */
     public ZooKeeper(String host, int sessionTimeout, Watcher watcher,
             long sessionId, byte[] sessionPasswd) throws IOException {
+        LOG.info("Initiating client connection, host=" + host
+                + " sessionTimeout=" + sessionTimeout
+                + " watcher=" + watcher
+                + " sessionId=" + sessionId
+                + " sessionPasswd="
+                + (sessionPasswd == null ? "<null>" : "<hidden>"));
+
         watchManager.defaultWatcher = watcher;
         cnxn = new ClientCnxn(host, sessionTimeout, this, watchManager,
                 sessionId, sessionPasswd);
