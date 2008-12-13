@@ -487,6 +487,16 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
 {
     log_env();
 
+    LOG_INFO(("Initiating client connection, host=%s sessionTimeout=%d watcher=%p"
+          " sessionId=0x%llx sessionPasswd=%s context=%p flags=%d",
+              host,
+              recv_timeout,
+              watcher,
+              clientid->client_id,
+              (clientid->passwd == 0 ? "<null>" : "<hidden>"),
+              context,
+              flags));
+
     int errnosave;
     zhandle_t *zh = calloc(1, sizeof(*zh));
     if (!zh) {
