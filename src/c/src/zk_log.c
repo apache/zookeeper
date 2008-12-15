@@ -23,8 +23,9 @@
 #include "zk_log.h"
 #include <unistd.h>
 #include <stdarg.h>
+#include <time.h>
 
-#define TIME_NOW_BUF_SIZE 128
+#define TIME_NOW_BUF_SIZE 1024
 #define FORMAT_LOG_BUF_SIZE 2048
 
 #ifdef THREADED
@@ -95,7 +96,24 @@ static const char* time_now(){
         return "time_now(): Failed to allocate memory buffer";
     
     gettimeofday(&tv,0);
-    sprintf(now_str,"%ld.%03d.%03d",tv.tv_sec,(int)(tv.tv_usec/1000),(int)(tv.tv_usec%1000));
+
+    const time_t now = tv.tv_sec;
+    struct tm lt;
+    localtime_r(&now, &lt);
+
+    // clone the format used by log4j ISO8601DateFormat
+    // specifically: "yyyy-MM-dd HH:mm:ss,SSS"
+
+    size_t len = strftime(now_str,
+                          TIME_NOW_BUF_SIZE,
+                          "%F %H:%M:%S",
+                          &lt);
+
+    len += snprintf(now_str + len,
+                    TIME_NOW_BUF_SIZE - len,
+                    ",%03d",
+                    (int)(tv.tv_usec/1000));
+
     return now_str;
 }
 
