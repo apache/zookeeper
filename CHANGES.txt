@@ -78,6 +78,9 @@ IMPROVEMENTS:
    ZOOKEEPER-225. c client should log an info message in zookeeper_init
 detailing connection parameters. (pat via mahadev)
 
+   ZOOKEEPER-222.  print C client log message timestamp in human readable
+form. (pat via mahadev) 
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
