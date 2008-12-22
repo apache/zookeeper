@@ -23,11 +23,12 @@ import static org.apache.zookeeper.server.ServerConfig.getClientPort;
 import java.io.File;
 import java.io.IOException;
 
+import javax.management.JMException;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.server.ConnectionMXBean;
 import org.apache.zookeeper.jmx.server.DataTreeMXBean;
 import org.apache.zookeeper.jmx.server.ZooKeeperServerMXBean;
-import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.util.ZooKeeperObserverManager;
 
@@ -62,6 +63,12 @@ public class ManagedZooKeeperServerMain extends ZooKeeperServerMain {
      * @param args command line parameters.
      */
     public static void main(String[] args) {
+        try {
+            ManagedUtil.registerLog4jMBeans();
+        } catch (JMException e) {
+            LOG.warn("Unable to register log4j JMX control", e);
+        }
+
         try {
             ServerConfig.parse(args);
         } catch(Exception e) {
