@@ -2,6 +2,10 @@ Trunk
   
 Non-backward compatible changes:
 
+BUGFIXES:
+  ZOOKEEPER-255. zoo_set() api does not return stat datastructure. (avery
+ching via mahadev)
+
 Backward compatibile changes:
 
 BUGFIXES: 

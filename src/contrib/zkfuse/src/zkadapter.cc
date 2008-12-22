@@ -866,7 +866,9 @@ ZooKeeperAdapter::setNodeData(const string &path,
         rc = zoo_set( mp_zkHandle,
                       path.c_str(),
                       value.c_str(),
-                      value.length(), version );
+                      value.length(),
+                      version,
+                      0);
     } while (rc != ZOK && rh.handleRC(rc));
     if (rc != ZOK) {
         LOG_ERROR( LOG, "Error %d for %s", rc, path.c_str() );
