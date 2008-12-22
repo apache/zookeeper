@@ -492,8 +492,9 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
               host,
               recv_timeout,
               watcher,
-              clientid->client_id,
-              (clientid->passwd == 0 ? "<null>" : "<hidden>"),
+              (clientid == 0 ? 0 : clientid->client_id),
+              ((clientid == 0) || (clientid->passwd == 0) ?
+               "<null>" : "<hidden>"),
               context,
               flags));
 
@@ -2426,7 +2427,7 @@ int zoo_wget(zhandle_t *zh, const char *path,
 }
 
 int zoo_set(zhandle_t *zh, const char *path, const char *buffer, int buflen,
-        int version)
+        int version, struct Stat *stat)
 {
     struct sync_completion *sc = alloc_sync_completion();
     int rc;
@@ -2437,6 +2438,9 @@ int zoo_set(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     if(rc==ZOK){
         wait_sync_completion(sc);
         rc = sc->rc;
+        if (rc == 0 && stat) {
+            *stat = sc->u.stat;
+        }
     }
     free_sync_completion(sc);
     return rc;

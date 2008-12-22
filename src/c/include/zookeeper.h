@@ -1084,6 +1084,7 @@ ZOOAPI int zoo_wget(zhandle_t *zh, const char *path,
  * \param version the expected version of the node. The function will fail if 
  * the actual version of the node does not match the expected version. If -1 is 
  * used the version check will not take place. 
+ * \param stat if not NULL, will hold the value of stat for the path on return.
  * \return the return code for the function call.
  * ZOK operation completed succesfully
  * ZNONODE the node does not exist.
@@ -1093,9 +1094,8 @@ ZOOAPI int zoo_wget(zhandle_t *zh, const char *path,
  * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-ZOOAPI int zoo_set(zhandle_t *zh, const char *path, const char *buffer, int buflen,
-                   int version);
-
+ZOOAPI int zoo_set(zhandle_t *zh, const char *path, const char *buffer,
+                   int buflen, int version, struct Stat *stat);
 
 /**
  * \brief lists the children of a node synchronously.

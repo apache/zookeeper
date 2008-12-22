@@ -390,7 +390,16 @@ public:
         CPPUNIT_ASSERT_MESSAGE(testName, ctxLocal->waitForConnected(zk));
 
         CPPUNIT_ASSERT(ctxLocal->countEvents() == 0);
-        rc = zoo_set(zk, "/watchtest/child", "1", 1, -1);
+
+        rc = zoo_set(zk, "/watchtest/child", "1", 1, -1, 0);
+        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        struct Stat stat1, stat2;
+        rc = zoo_set(zk, "/watchtest/child", "1", 1, -1, &stat1);
+        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        CPPUNIT_ASSERT(stat1.version >= 0);
+        rc = zoo_set(zk, "/watchtest/child", "1", 1, stat1.version, &stat2);
+        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        rc = zoo_set(zk, "/watchtest/child", "1", 1, stat2.version, 0);
         CPPUNIT_ASSERT_EQUAL(ZOK, rc);
         rc = zoo_create(zk, "/watchtest/child2", "", 0,
                         &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);

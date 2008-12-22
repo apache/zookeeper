@@ -266,7 +266,8 @@ void processline(char *line) {
             rc = zoo_aset(zh, line, ptr, strlen(ptr), -1, my_stat_completion,
                     strdup(line));
         } else {
-            rc = zoo_set(zh, line, ptr, strlen(ptr), -1);
+            struct Stat stat;
+            rc = zoo_set(zh, line, ptr, strlen(ptr), -1, &stat);
         }
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
