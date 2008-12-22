@@ -28,10 +28,12 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         return "ip";
     }
 
-    public int handleAuthentication(ServerCnxn cnxn, byte[] authData) {
+    public KeeperException.Code
+        handleAuthentication(ServerCnxn cnxn, byte[] authData)
+    {
         String id = cnxn.getRemoteAddress().getAddress().getHostAddress();
         cnxn.getAuthInfo().add(new Id(getScheme(), id));
-        return KeeperException.Code.Ok;
+        return KeeperException.Code.OK;
     }
 
     // This is a bit weird but we need to return the address and the number of

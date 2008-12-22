@@ -1181,6 +1181,12 @@ int main(int argc, char argv) {
       </listitem>
     </itemizedlist>
 
+    <section id="sc_errorsZk">
+      <title>Handling Errors</title>
+
+      <para>Both the Java and C client bindings may report errors. The Java client binding does so by throwing KeeperException, calling code() on the exception will return the specific error code. The C client binding returns an error code as defined in the enum ZOO_ERRORS. API callbacks indicate result code for both language bindings. See the API documentation (javadoc for Java, doxygen for C) for full details on the possible errors and their meaning.</para>
+    </section>
+    
     <section id="sc_connectingToZk">
       <title>Connecting to ZooKeeper</title>
 

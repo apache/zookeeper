@@ -278,7 +278,7 @@ public class ZooKeeper {
         
         @Override
         protected boolean shouldAddWatch(int rc) {
-            return rc == 0 || rc == KeeperException.Code.NoNode;
+            return rc == 0 || rc == KeeperException.Code.NONODE.intValue();
         }
     }
 
@@ -496,7 +496,8 @@ public class ZooKeeper {
         request.setAcl(acl);
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
-            throw KeeperException.create(r.getErr(), path);
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    path);
         }
         return response.getPath();
     }
@@ -557,7 +558,7 @@ public class ZooKeeper {
         request.setVersion(version);
         ReplyHeader r = cnxn.submitRequest(h, request, null, null);
         if (r.getErr() != 0) {
-            throw KeeperException.create(r.getErr());
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
         }
     }
 
@@ -607,10 +608,10 @@ public class ZooKeeper {
         }
         ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
         if (r.getErr() != 0) {
-            if (r.getErr() == KeeperException.Code.NoNode) {
+            if (r.getErr() == KeeperException.Code.NONODE.intValue()) {
                 return null;
             }
-            throw KeeperException.create(r.getErr());
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
         }
 
         return response.getStat().getCzxid() == -1 ? null : response.getStat();
@@ -705,7 +706,7 @@ public class ZooKeeper {
         }
         ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
         if (r.getErr() != 0) {
-            throw KeeperException.create(r.getErr());
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
         }
         if (stat != null) {
             DataTree.copyStat(response.getStat(), stat);
@@ -805,7 +806,7 @@ public class ZooKeeper {
         SetDataResponse response = new SetDataResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
-            throw KeeperException.create(r.getErr());
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
         }
         return response.getStat();
     }
@@ -853,7 +854,7 @@ public class ZooKeeper {
         GetACLResponse response = new GetACLResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
-            throw KeeperException.create(r.getErr());
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
         }
         DataTree.copyStat(response.getStat(), stat);
         return response.getAcl();
@@ -909,7 +910,7 @@ public class ZooKeeper {
         SetACLResponse response = new SetACLResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
-            throw KeeperException.create(r.getErr());
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
         }
         return response.getStat();
     }
@@ -968,7 +969,7 @@ public class ZooKeeper {
         }
         ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
         if (r.getErr() != 0) {
-            throw KeeperException.create(r.getErr());
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
         }
         return response.getChildren();
     }

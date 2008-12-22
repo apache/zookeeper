@@ -125,11 +125,12 @@ public class FinalRequestProcessor implements RequestProcessor {
             return;
         }
         zks.decInProcess();
-        int err = 0;
+        Code err = Code.OK;
         Record rsp = null;
         try {
             if (request.hdr != null && request.hdr.getType() == OpCode.error) {
-                throw KeeperException.create(((ErrorTxn) request.txn).getErr());
+                throw KeeperException.create(KeeperException.Code.get((
+                        (ErrorTxn) request.txn).getErr()));
             }
 
             if (LOG.isDebugEnabled()) {
@@ -145,21 +146,21 @@ public class FinalRequestProcessor implements RequestProcessor {
                 return;
             case OpCode.create:
                 rsp = new CreateResponse(rc.path);
-                err = rc.err;
+                err = Code.get(rc.err);
                 break;
             case OpCode.delete:
-                err = rc.err;
+                err = Code.get(rc.err);
                 break;
             case OpCode.setData:
                 rsp = new SetDataResponse(rc.stat);
-                err = rc.err;
+                err = Code.get(rc.err);
                 break;
             case OpCode.setACL:
                 rsp = new SetACLResponse(rc.stat);
-                err = rc.err;
+                err = Code.get(rc.err);
                 break;
             case OpCode.closeSession:
-                err = rc.err;
+                err = Code.get(rc.err);
                 break;
             case OpCode.sync:
                 SyncRequest syncRequest = new SyncRequest();
@@ -235,7 +236,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 break;
             }
         } catch (KeeperException e) {
-            err = e.getCode();
+            err = e.code();
         } catch (Exception e) {
             LOG.warn("****************************** " + request);
             StringBuffer sb = new StringBuffer();
@@ -246,9 +247,10 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             LOG.warn(sb.toString());
             LOG.error("FIXMSG",e);
-            err = Code.MarshallingError;
+            err = Code.MARSHALLINGERROR;
         }
-        ReplyHeader hdr = new ReplyHeader(request.cxid, request.zxid, err);
+        ReplyHeader hdr =
+            new ReplyHeader(request.cxid, request.zxid, err.intValue());
         ServerStats.getInstance().updateLatency(request.createTime);
         try {
             request.cnxn.sendResponse(hdr, rsp, "response");

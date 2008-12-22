@@ -458,13 +458,13 @@ public class ClientCnxn {
         }
         switch(zooKeeper.state) {
         case AUTH_FAILED:
-            p.replyHeader.setErr(KeeperException.Code.AuthFailed);
+            p.replyHeader.setErr(KeeperException.Code.AUTHFAILED.intValue());
             break;
         case CLOSED:
-            p.replyHeader.setErr(KeeperException.Code.SessionExpired);
+            p.replyHeader.setErr(KeeperException.Code.SESSIONEXPIRED.intValue());
             break;
         default:
-            p.replyHeader.setErr(KeeperException.Code.ConnectionLoss);
+            p.replyHeader.setErr(KeeperException.Code.CONNECTIONLOSS.intValue());
         }
         finishPacket(p);
     }
@@ -566,7 +566,8 @@ public class ClientCnxn {
              */
             try {
                 if (packet.header.getXid() != replyHdr.getXid()) {
-                    packet.replyHeader.setErr(KeeperException.Code.ConnectionLoss);
+                    packet.replyHeader.setErr(
+                            KeeperException.Code.CONNECTIONLOSS.intValue());
                     throw new IOException("Xid out of order. Got "
                             + replyHdr.getXid() + " expected "
                             + packet.header.getXid());

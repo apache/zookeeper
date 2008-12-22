@@ -136,15 +136,15 @@ public:
         timeval tv;
         // open the socket
         int rc=zookeeper_interest(zh,&fd,&interest,&tv);        
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);        
         CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTING_STATE,zoo_state(zh));
         // send the handshake packet to the server
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);        
         CPPUNIT_ASSERT_EQUAL(ZOO_ASSOCIATING_STATE,zoo_state(zh));
         // receive the server handshake response
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // verify connected
         CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,zoo_state(zh));
         CPPUNIT_ASSERT(watcher.connected_);
@@ -170,15 +170,15 @@ public:
         AsyncCompletion ignored;
         zkServer.addOperationResponse(new ZooGetResponse("1",1));
         int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // this will process the response and activate the watcher
         rc=zookeeper_process(zh,ZOOKEEPER_READ);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
 
         // now, disconnect
         zkServer.setConnectionLost();
         rc=zookeeper_process(zh,ZOOKEEPER_READ);
-        CPPUNIT_ASSERT_EQUAL(ZCONNECTIONLOSS,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,rc);
         // verify disconnected
         CPPUNIT_ASSERT(watcher.disconnected_);
         CPPUNIT_ASSERT_EQUAL(1,watcher.counter_);
@@ -205,15 +205,15 @@ public:
         zkServer.addOperationResponse(new ZooStatResponse);
         int rc=zoo_awexists(zh,"/x/y/1",activeWatcher,&wobject,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // this will process the response and activate the watcher
         rc=zookeeper_process(zh,ZOOKEEPER_READ);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
 
         // now, disconnect
         zkServer.setConnectionLost();
         rc=zookeeper_process(zh,ZOOKEEPER_READ);
-        CPPUNIT_ASSERT_EQUAL(ZCONNECTIONLOSS,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,rc);
 
         // verify the default watcher has been triggered
         CPPUNIT_ASSERT(defWatcher.disconnected_);
@@ -246,22 +246,22 @@ public:
         AsyncCompletion ignored;
         zkServer.addOperationResponse(new ZooStatResponse);
         int rc=zoo_aexists(zh,"/a/b/c",1,asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
 
         CountingDataWatcher wobject;
         zkServer.addOperationResponse(new ZooStatResponse);
         rc=zoo_awexists(zh,"/x/y/z",activeWatcher,&wobject,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         // this will process the response and activate the watcher
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
 
         // disconnect now
         zkServer.setConnectionLost();
         rc=zookeeper_process(zh,ZOOKEEPER_READ);
-        CPPUNIT_ASSERT_EQUAL(ZCONNECTIONLOSS,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,rc);
 
         // verify the default watcher has been triggered
         CPPUNIT_ASSERT(defWatcher.disconnected_);
@@ -294,24 +294,24 @@ public:
         zkServer.addOperationResponse(new ZooStatResponse);
         int rc=zoo_awexists(zh,"/a/b/c",activeWatcher,&wobject1,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
 
         CountingDataWatcher wobject2;
         zkServer.addOperationResponse(new ZooStatResponse);
         rc=zoo_awexists(zh,"/x/y/z",activeWatcher,&wobject2,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         // this will process the response and activate the watcher
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
 
         // we are all set now; let's trigger the watches
         zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/a/b/c"));
         zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/x/y/z"));
         // make sure all watchers have been processed
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
         
         CPPUNIT_ASSERT_EQUAL(1,wobject1.counter_);
         CPPUNIT_ASSERT_EQUAL(1,wobject2.counter_);        
@@ -339,7 +339,7 @@ public:
         zkServer.addOperationResponse(new ZooStatResponse);
         int rc=zoo_awexists(zh,"/a",activeWatcher,&wobject1,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
 
         typedef ZooGetChildrenResponse::StringVector ZooVector;
         zkServer.addOperationResponse(new ZooGetChildrenResponse(
@@ -348,17 +348,17 @@ public:
         DeletionCountingDataWatcher wobject2;
         rc=zoo_awget_children(zh,"/a",activeWatcher,
                 &wobject2,asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         // this will process the response and activate the watcher
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
 
         // we are all set now; let's trigger the watches
         zkServer.addRecvResponse(new ZNodeEvent(ZOO_DELETED_EVENT,"/a"));
         // make sure the watchers have been processed
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
 
         CPPUNIT_ASSERT_EQUAL(1,wobject1.counter_);
         CPPUNIT_ASSERT_EQUAL(1,wobject2.counter_);        
@@ -385,7 +385,7 @@ public:
         zkServer.addOperationResponse(new ZooStatResponse);
         int rc=zoo_awexists(zh,"/a",activeWatcher,&wobject1,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
 
         typedef ZooGetChildrenResponse::StringVector ZooVector;
         zkServer.addOperationResponse(new ZooGetChildrenResponse(
@@ -394,17 +394,17 @@ public:
         ChildEventCountingWatcher wobject2;
         rc=zoo_awget_children(zh,"/a",activeWatcher,
                 &wobject2,asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         // this will process the response and activate the watcher
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
 
         // we are all set now; let's trigger the watches
         zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHILD_EVENT,"/a"));
         // make sure the watchers have been processed
         while((rc=zookeeper_process(zh,ZOOKEEPER_READ))==ZOK);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
 
         CPPUNIT_ASSERT_EQUAL(0,wobject1.counter_);
         CPPUNIT_ASSERT_EQUAL(1,wobject2.counter_);        
@@ -461,7 +461,7 @@ public:
         // a successful server response will activate the watcher 
         zkServer.addOperationResponse(new ZooStatResponse);
         int rc=zoo_aexists(zh,"/x/y/z",1,asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
 
         // now, initiate a disconnect
         zkServer.setConnectionLost();
@@ -504,7 +504,7 @@ public:
         // set a path-specific watcher
         int rc=zoo_awexists(zh,"/x/y/z",activeWatcher,&wobject,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // make sure the watcher gets activated before we continue
         CPPUNIT_ASSERT(ensureCondition(activationTracker.isWatcherActivated(),1000)<1000);
         
@@ -553,7 +553,7 @@ public:
         zkServer.addOperationResponse(new ZooStatResponse);
         activationTracker.track(&defWatcher);
         int rc=zoo_aexists(zh,"/a/b/c",1,asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // make sure the watcher gets activated before we continue
         CPPUNIT_ASSERT(ensureCondition(activationTracker.isWatcherActivated(),1000)<1000);
 
@@ -564,7 +564,7 @@ public:
         // set a path-specific watcher
         rc=zoo_awexists(zh,"/x/y/z",activeWatcher,&wobject,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // make sure the watcher gets activated before we continue
         CPPUNIT_ASSERT(ensureCondition(activationTracker.isWatcherActivated(),1000)<1000);
         
@@ -615,7 +615,7 @@ public:
         activationTracker.track(&wobject1);
         int rc=zoo_awexists(zh,"/a/b/c",activeWatcher,&wobject1,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // make sure the watcher gets activated before we continue
         CPPUNIT_ASSERT(ensureCondition(activationTracker.isWatcherActivated(),1000)<1000);
 
@@ -626,7 +626,7 @@ public:
         // set a path-specific watcher
         rc=zoo_awexists(zh,"/x/y/z",activeWatcher,&wobject2,
                 asyncCompletion,&ignored);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // make sure the watcher gets activated before we continue
         CPPUNIT_ASSERT(ensureCondition(activationTracker.isWatcherActivated(),1000)<1000);
 
@@ -668,7 +668,7 @@ public:
         Stat stat;
         // add a node watch
         int rc=zoo_wexists(zh,"/a",activeWatcher,&wobject1,&stat);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         typedef ZooGetChildrenResponse::StringVector ZooVector;
         zkServer.addOperationResponse(new ZooGetChildrenResponse(
@@ -678,7 +678,7 @@ public:
         String_vector children;
         rc=zoo_wget_children(zh,"/a",activeWatcher,&wobject2,&children);
         deallocate_String_vector(&children);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         // we are all set now; let's trigger the watches
         zkServer.addRecvResponse(new ZNodeEvent(ZOO_DELETED_EVENT,"/a"));
@@ -715,7 +715,7 @@ public:
         Stat stat;
         // add a node watch
         int rc=zoo_wexists(zh,"/a",activeWatcher,&wobject1,&stat);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         typedef ZooGetChildrenResponse::StringVector ZooVector;
         zkServer.addOperationResponse(new ZooGetChildrenResponse(
@@ -725,7 +725,7 @@ public:
         String_vector children;
         rc=zoo_wget_children(zh,"/a",activeWatcher,&wobject2,&children);
         deallocate_String_vector(&children);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
 
         // we are all set now; let's trigger the watches
         zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHILD_EVENT,"/a"));

@@ -99,22 +99,22 @@ public:
         AsyncGetOperationCompletion res1;
         zkServer.addOperationResponse(new ZooGetResponse("1",1));
         int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // second operation
         AsyncGetOperationCompletion res2;
         zkServer.addOperationResponse(new ZooGetResponse("2",1));
         rc=zoo_aget(zh,"/x/y/2",0,asyncCompletion,&res2);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // process the send queue
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         while((rc=zookeeper_process(zh,interest))==ZOK) printf("%d\n", rc);
 	printf("RC = %d", rc);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
 
-        CPPUNIT_ASSERT_EQUAL(ZOK,res1.rc_);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,res1.rc_);
         CPPUNIT_ASSERT_EQUAL(string("1"),res1.value_);
-        CPPUNIT_ASSERT_EQUAL(ZOK,res2.rc_);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,res2.rc_);
         CPPUNIT_ASSERT_EQUAL(string("2"),res2.value_);
     }
     // send two getData requests and disconnect while the second request is
@@ -139,25 +139,25 @@ public:
         AsyncGetOperationCompletion res1;
         zkServer.addOperationResponse(new ZooGetResponse("1",1));
         int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // second operation
         AsyncGetOperationCompletion res2;
         zkServer.addOperationResponse(new ZooGetResponse("2",1));
         rc=zoo_aget(zh,"/x/y/2",0,asyncCompletion,&res2);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // process the send queue
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // simulate a disconnect
         zkServer.setConnectionLost();
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZCONNECTIONLOSS,rc);
-        CPPUNIT_ASSERT_EQUAL(ZOK,res1.rc_);
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,res1.rc_);
         CPPUNIT_ASSERT_EQUAL(string("1"),res1.value_);
-        CPPUNIT_ASSERT_EQUAL(ZCONNECTIONLOSS,res2.rc_);
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,res2.rc_);
         CPPUNIT_ASSERT_EQUAL(string(""),res2.value_);
     }
     // send two getData requests and simulate timeout while the both request
@@ -182,20 +182,20 @@ public:
         AsyncGetOperationCompletion res1;
         zkServer.addOperationResponse(new ZooGetResponse("1",1));
         int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // second operation
         AsyncGetOperationCompletion res2;
         zkServer.addOperationResponse(new ZooGetResponse("2",1));
         rc=zoo_aget(zh,"/x/y/2",0,asyncCompletion,&res2);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // simulate timeout
         timeMock.tick(+10); // advance system time by 10 secs
         // the next call to zookeeper_interest should return ZOPERATIONTIMEOUT
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOPERATIONTIMEOUT,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOPERATIONTIMEOUT,rc);
         // make sure the completions have been called
-        CPPUNIT_ASSERT_EQUAL(ZOPERATIONTIMEOUT,res1.rc_);
-        CPPUNIT_ASSERT_EQUAL(ZOPERATIONTIMEOUT,res2.rc_);
+        CPPUNIT_ASSERT_EQUAL((int)ZOPERATIONTIMEOUT,res1.rc_);
+        CPPUNIT_ASSERT_EQUAL((int)ZOPERATIONTIMEOUT,res2.rc_);
     }
 
     class PingCountingServer: public ZookeeperServer{
@@ -231,24 +231,24 @@ public:
         timeval tv;
         // Round 1.
         int rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // simulate waiting for the select() call to timeout; 
         // advance the system clock accordingly
         timeMock.tick(tv);  
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
         // verify no ping sent
         CPPUNIT_ASSERT(zkServer.pingCount_==0);
         
         // Round 2.
         // the client should have the idle threshold exceeded, by now
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // assume the socket is writable, so no idling here; move on to 
         // zookeeper_process immediately
         rc=zookeeper_process(zh,interest);
         // ZNOTHING means the client hasn't received a ping response yet
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
         // verify a ping is sent
         CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
         
@@ -257,11 +257,11 @@ public:
         // that the client has updated its last_recv timestamp 
         zkServer.addRecvResponse(new PingResponse);
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // pseudo-sleep for a short while (10 ms)
         timeMock.millitick(10);
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // only one ping so far?
         CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
         CPPUNIT_ASSERT(timeMock==zh->last_recv);
@@ -288,7 +288,7 @@ public:
         timeval tv;
         // Round 1.
         int rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // simulate waiting for the select() call to timeout; 
         // advance the system clock accordingly
         timeMock.tick(tv);
@@ -296,7 +296,7 @@ public:
         // trigger a watch now
         zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/x/y/z"));
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // arrival of a watch sets the last_recv to the current time
         CPPUNIT_ASSERT(timeMock==zh->last_recv);
         // spend 1 millisecond by processing the watch
@@ -305,10 +305,10 @@ public:
         // Round 2.
         // a ping is due; zookeeper_interest() must send it now
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // no delay here -- as if the socket is immediately writable
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
         // verify a ping is sent
         CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);        
     }
@@ -341,29 +341,29 @@ public:
         // send the queued up zoo_aget() request
         Mock_gettimeofday beginningOfTimes(now); // remember when we started
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // no delay -- the socket is writable
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc); // ZNOTHING -- no response yet
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc); // ZNOTHING -- no response yet
         
         // Round 2.
         // what's next?
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // no response from the server yet -- waiting in the select() call
         now.tick(tv);
         // a watch has arrived, thus preventing the connection from timing out 
         zkServer.addRecvResponse(new ZNodeEvent(ZOO_CHANGED_EVENT,"/x/y/z"));        
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc); // read the watch message
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc); // read the watch message
         CPPUNIT_ASSERT_EQUAL(0,zkServer.pingCount_); // not yet!
         
         //Round 3.
         // now is the time to send a ping; make sure it's actually sent
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZNOTHING,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
         // verify a ping is sent
         CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
         // make sure only 1/3 of the timeout has passed
@@ -407,7 +407,7 @@ public:
             return new TestConcurrentOpJob(svr_,zh_);
         }
         virtual void validate(const char* file, int line) const{
-            CPPUNIT_ASSERT_EQUAL_MESSAGE_LOC("ZOK != rc",ZOK,rc_,file,line);
+            CPPUNIT_ASSERT_EQUAL_MESSAGE_LOC("ZOK != rc",(int)ZOK,rc_,file,line);
         }
     };
     void testConcurrentOperations1()
@@ -454,7 +454,7 @@ public:
             //TEST_TRACE(("Finished %d iterations",i));
         }
         virtual void validate(const char* file, int line) const{
-            CPPUNIT_ASSERT_EQUAL_MESSAGE_LOC("ZOK != rc",ZOK,rc_,file,line);
+            CPPUNIT_ASSERT_EQUAL_MESSAGE_LOC("ZOK != rc",(int)ZOK,rc_,file,line);
         }
         zhandle_t* zh_;
         int rc_;
@@ -514,7 +514,7 @@ public:
             return new TestConcurrentOpWithDisconnectJob(svr_,zh_);
         }
         virtual void validate(const char* file, int line) const{
-            CPPUNIT_ASSERT_EQUAL_MESSAGE_LOC("ZCONNECTIONLOSS != rc",ZCONNECTIONLOSS,rc_,file,line);
+            CPPUNIT_ASSERT_EQUAL_MESSAGE_LOC("ZCONNECTIONLOSS != rc",(int)ZCONNECTIONLOSS,rc_,file,line);
         }
     };
 
@@ -570,10 +570,10 @@ public:
         AsyncGetOperationCompletion res1;
         zkServer.addOperationResponse(new ZooGetResponse("1",1));
         int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         CPPUNIT_ASSERT(ensureCondition(res1,1000)<1000);
-        CPPUNIT_ASSERT_EQUAL(ZOK,res1.rc_);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,res1.rc_);
         CPPUNIT_ASSERT_EQUAL(string("1"),res1.value_);        
     }
     class ChangeNodeWatcher: public WatcherAction{
@@ -625,7 +625,7 @@ public:
         // prepare a response for the zoo_aexists() request
         zkServer.addOperationResponse(new ZooStatResponse);
         int rc=zoo_aexists(zh,"/x/y/z",1,asyncCompletion,&completion);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         CPPUNIT_ASSERT(ensureCondition(action.isNodeChangedTriggered(),1000)<1000);
         CPPUNIT_ASSERT_EQUAL(string("/x/y/z"),action.path_);                

@@ -68,14 +68,14 @@ public class CreateModeTest extends TestCase {
             CreateMode cm = CreateMode.fromFlag(99);
             fail("Shouldn't be able to convert 99 to a CreateMode.");
         } catch(KeeperException ke) {
-            assertEquals(Code.BadArguments, ke.getCode());
+            assertEquals(Code.BADARGUMENTS, ke.code());
         }
 
         try {
             CreateMode cm = CreateMode.fromFlag(-1);
             fail("Shouldn't be able to convert -1 to a CreateMode.");
         } catch(KeeperException ke) {
-            assertEquals(Code.BadArguments, ke.getCode());
+            assertEquals(Code.BADARGUMENTS, ke.code());
         }
     }
 }
