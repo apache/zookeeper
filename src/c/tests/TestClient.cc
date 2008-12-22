@@ -235,24 +235,24 @@ public:
         for(int i = 0; i < 30; i++) {
             sprintf(path, "/%i", i);
             rc = zoo_create(zkWatchCreator, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
         for(int i = 0; i < 30; i++) {
             sprintf(path, "/%i", i);
             struct Stat stat;
             rc = zoo_exists(zkIdle, path, 1, &stat);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
         for(int i = 0; i < 30; i++) {
             sprintf(path, "/%i", i);
             usleep(500000);
             rc = zoo_delete(zkWatchCreator, path, -1);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
         struct Stat stat;
-        CPPUNIT_ASSERT_EQUAL(ZNONODE, zoo_exists(zkIdle, "/0", 0, &stat));
+        CPPUNIT_ASSERT_EQUAL((int)ZNONODE, zoo_exists(zkIdle, "/0", 0, &stat));
     }
 
     bool waitForEvent(zhandle_t *zh, watchctx_t *ctx, int seconds) {
@@ -299,7 +299,7 @@ public:
         for(i = 0; i < COUNT; i++) {
             sprintf(path, "/%d", i);
             rc = zoo_awexists(zk, path, watcher, &lctx[i], statCompletion, (void*)ZNONODE);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
         yield(zk, 0);
@@ -307,7 +307,7 @@ public:
         for(i = 0; i < COUNT/2; i++) {
             sprintf(path, "/%d", i);
             rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0, stringCompletion, strdup(path));
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
         yield(zk, 3);
@@ -322,7 +322,7 @@ public:
         for(i = COUNT/2 + 1; i < COUNT*10; i++) {
             sprintf(path, "/%d", i);
             rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0, stringCompletion, strdup(path));
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
         yield(zk, 1);
@@ -353,33 +353,33 @@ public:
 
         rc = zoo_create(zk, "/watchtest", "", 0, 
                         &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
-        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         rc = zoo_create(zk, "/watchtest/child", "", 0,
                         &ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL, 0, 0);
-        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         if (isGlobal) {
             testName = "GlobalTest";
             rc = zoo_get_children(zk, "/watchtest", 1, &strings);
             deallocate_String_vector(&strings);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
             blen = sizeof(buf);
             rc = zoo_get(zk, "/watchtest/child", 1, buf, &blen, &stat);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
             rc = zoo_exists(zk, "/watchtest/child2", 1, &stat);
-            CPPUNIT_ASSERT_EQUAL(ZNONODE, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZNONODE, rc);
         } else {
             testName = "LocalTest";
             rc = zoo_wget_children(zk, "/watchtest", watcher, ctxLocal,
                                  &strings);
             deallocate_String_vector(&strings);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
             blen = sizeof(buf);
             rc = zoo_wget(zk, "/watchtest/child", watcher, ctxLocal,
                          buf, &blen, &stat);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
             rc = zoo_wexists(zk, "/watchtest/child2", watcher, ctxLocal,
                             &stat);
-            CPPUNIT_ASSERT_EQUAL(ZNONODE, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZNONODE, rc);
         }
         
         CPPUNIT_ASSERT(ctxLocal->countEvents() == 0);
@@ -392,18 +392,18 @@ public:
         CPPUNIT_ASSERT(ctxLocal->countEvents() == 0);
 
         rc = zoo_set(zk, "/watchtest/child", "1", 1, -1, 0);
-        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         struct Stat stat1, stat2;
         rc = zoo_set(zk, "/watchtest/child", "1", 1, -1, &stat1);
-        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         CPPUNIT_ASSERT(stat1.version >= 0);
         rc = zoo_set(zk, "/watchtest/child", "1", 1, stat1.version, &stat2);
-        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         rc = zoo_set(zk, "/watchtest/child", "1", 1, stat2.version, 0);
-        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         rc = zoo_create(zk, "/watchtest/child2", "", 0,
                         &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
-        CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
         CPPUNIT_ASSERT_MESSAGE(testName, waitForEvent(zk, ctxLocal, 5));
         
@@ -434,25 +434,25 @@ public:
             testName = "GlobalTest";
             rc = zoo_get_children(zk, "/watchtest", 1, &strings);
             deallocate_String_vector(&strings);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
             blen = sizeof(buf);
             rc = zoo_get(zk, "/watchtest/child", 1, buf, &blen, &stat);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
             rc = zoo_exists(zk, "/watchtest/child2", 1, &stat);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         } else {
             testName = "LocalTest";
             rc = zoo_wget_children(zk, "/watchtest", watcher, ctxLocal,
                                  &strings);
             deallocate_String_vector(&strings);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
             blen = sizeof(buf);
             rc = zoo_wget(zk, "/watchtest/child", watcher, ctxLocal,
                          buf, &blen, &stat);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
             rc = zoo_wexists(zk, "/watchtest/child2", watcher, ctxLocal,
                             &stat);
-            CPPUNIT_ASSERT_EQUAL(ZOK, rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
         zoo_delete(zk, "/watchtest/child2", -1);

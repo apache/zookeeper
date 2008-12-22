@@ -23,7 +23,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.apache.log4j.Logger;
-
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
@@ -90,7 +89,9 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return parts[0] + ":" + base64Encode(digest);
     }
 
-    public int handleAuthentication(ServerCnxn cnxn, byte[] authData) {
+    public KeeperException.Code 
+        handleAuthentication(ServerCnxn cnxn, byte[] authData)
+    {
         String id = new String(authData);
         try {
             String digest = generateDigest(id);
@@ -98,11 +99,11 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
                 cnxn.getAuthInfo().add(new Id("super", ""));
             }
             cnxn.getAuthInfo().add(new Id(getScheme(), digest));
-            return KeeperException.Code.Ok;
+            return KeeperException.Code.OK;
         } catch (NoSuchAlgorithmException e) {
             LOG.error("Missing algorithm",e);
         }
-        return KeeperException.Code.AuthFailed;
+        return KeeperException.Code.AUTHFAILED;
     }
 
     public boolean isAuthenticated() {

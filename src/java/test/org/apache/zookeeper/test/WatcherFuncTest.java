@@ -140,7 +140,7 @@ public class WatcherFuncTest extends ClientBase {
             client.setData("/car", "missing".getBytes(), -1);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
 
         try {
@@ -148,7 +148,7 @@ public class WatcherFuncTest extends ClientBase {
             client.setData("/foo/car", "missing".getBytes(), -1);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
 
         client.setData("/foo", "parent".getBytes(), -1);
@@ -176,13 +176,13 @@ public class WatcherFuncTest extends ClientBase {
             lsnr.getData("/foo", true, null);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
         try {
             lsnr.getData("/foo/bar", true, null);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
 
         client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -215,13 +215,13 @@ public class WatcherFuncTest extends ClientBase {
             lsnr.getChildren("/foo", true);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
         try {
             lsnr.getChildren("/foo/bar", true);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
 
         client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -340,13 +340,13 @@ public class WatcherFuncTest extends ClientBase {
             lsnr.getData("/foo", w1, null);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
         try {
             lsnr.getData("/foo/bar", w2, null);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
 
         client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -406,13 +406,13 @@ public class WatcherFuncTest extends ClientBase {
             lsnr.getChildren("/foo", true);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
         try {
             lsnr.getChildren("/foo/bar", true);
             fail();
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NoNode, e.getCode());
+            assertEquals(KeeperException.Code.NONODE, e.code());
         }
 
         client.create("/foo", "parent".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

@@ -83,7 +83,7 @@ public:
         freeMock.disable(); // disable mock's fake free()- use libc's free() instead
         
         // verify that zookeeper_close has done its job
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // memory
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
@@ -109,7 +109,7 @@ public:
         freeMock.disable(); // disable mock's fake free()- use libc's free() instead
 
         // verify that zookeeper_close has done its job
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // memory
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
@@ -133,18 +133,18 @@ public:
         timeval tv;
         int rc=zookeeper_interest(zh,&fd,&interest,&tv);
         
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);        
         CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTING_STATE,zoo_state(zh));
         CPPUNIT_ASSERT_EQUAL(ZOOKEEPER_READ|ZOOKEEPER_WRITE,interest);
         
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);        
         CPPUNIT_ASSERT_EQUAL(ZOO_ASSOCIATING_STATE,zoo_state(zh));
         
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);        
         CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,zoo_state(zh));
         // do not actually free the memory while in zookeeper_close()
         Mock_free_noop freeMock;
@@ -182,15 +182,15 @@ public:
         timeval tv;
         // initiate connection
         int rc=zookeeper_interest(zh,&fd,&interest,&tv);        
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);        
         CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTING_STATE,zoo_state(zh));
         CPPUNIT_ASSERT_EQUAL(ZOOKEEPER_READ|ZOOKEEPER_WRITE,interest);
         rc=zookeeper_process(zh,interest);
         // make sure the handshake in progress 
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);        
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);        
         CPPUNIT_ASSERT_EQUAL(ZOO_ASSOCIATING_STATE,zoo_state(zh));
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         // do not actually free the memory while in zookeeper_close()
         Mock_free_noop freeMock;
@@ -230,7 +230,7 @@ public:
         freeMock.disable();
         
         // verify that zookeeper_close has done its job
-        CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // memory
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
@@ -264,7 +264,7 @@ public:
             CPPUNIT_ASSERT(adaptor!=0);
             int rc=zookeeper_close(zh);
             zh=0;
-            CPPUNIT_ASSERT_EQUAL(ZOK,rc);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         }
     }
     void testCloseConnected1()
@@ -293,7 +293,7 @@ public:
             // we're done, disable mock's fake free(), use libc's free() instead
             freeMock.disable();
             
-            CPPUNIT_ASSERT_EQUAL(ZOK,rc);            
+            CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);            
             adaptor_threads* adaptor=(adaptor_threads*)lzh.adaptor_priv;
             // memory
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
@@ -358,7 +358,7 @@ public:
             // we're done, disable mock's fake free(), use libc's free() instead
             freeMock.disable();
             
-            CPPUNIT_ASSERT_EQUAL(ZOK,closeAction.rc);          
+            CPPUNIT_ASSERT_EQUAL((int)ZOK,closeAction.rc);          
             adaptor_threads* adaptor=(adaptor_threads*)closeAction.lzh.adaptor_priv;
             // memory
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh));

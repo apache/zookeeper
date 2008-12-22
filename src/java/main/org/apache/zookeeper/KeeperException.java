@@ -18,196 +18,400 @@
 
 package org.apache.zookeeper;
 
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
 @SuppressWarnings("serial")
 public abstract class KeeperException extends Exception {
 
     /**
-     * All non-specific keeper exceptions should be constructed via this factory method
-     * in order to guarantee consistency in error codes and such.  If you know the error
-     * code, then you should construct the special purpose exception directly.  That will
-     * allow you to have the most specific possible declarations of what exceptions might
-     * actually be thrown.
-     * @param code  The error code.
-     * @param path  The zookeeper path being operated on.
-     * @return  The specialized exception, presumably to be thrown by the caller.
+     * All non-specific keeper exceptions should be constructed via
+     * this factory method in order to guarantee consistency in error
+     * codes and such.  If you know the error code, then you should
+     * construct the special purpose exception directly.  That will
+     * allow you to have the most specific possible declarations of
+     * what exceptions might actually be thrown.
+     *
+     * @param code The error code.
+     * @param path The ZooKeeper path being operated on.
+     * @return The specialized exception, presumably to be thrown by
+     *  the caller.
      */
-    public static KeeperException create(int code, String path) {
+    public static KeeperException create(Code code, String path) {
         KeeperException r = create(code);
         r.path = path;
         return r;
     }
 
     /**
-     * All non-specific keeper exceptions should be constructed via this factory method
-     * in order to guarantee consistency in error codes and such.  If you know the error
-     * code, then you should construct the special purpose exception directly.  That will
-     * allow you to have the most specific possible declarations of what exceptions might
-     * actually be thrown.
-     * @param code The error code of your new exception.  This will also determine the
-     * specific type of the exception that is returned.
-     * @return  The specialized exception, presumably to be thrown by the caller.
+     * @deprecated deprecated in 3.1.0, use {@link #create(Code, String)}
+     * instead
      */
+    @Deprecated
+    public static KeeperException create(int code, String path) {
+        KeeperException r = create(Code.get(code));
+        r.path = path;
+        return r;
+    }
+
+    /**
+     * @deprecated deprecated in 3.1.0, use {@link #create(Code)}
+     * instead
+     */
+    @Deprecated
     public static KeeperException create(int code) {
+        return create(Code.get(code));
+    }
+
+    /**
+     * All non-specific keeper exceptions should be constructed via
+     * this factory method in order to guarantee consistency in error
+     * codes and such.  If you know the error code, then you should
+     * construct the special purpose exception directly.  That will
+     * allow you to have the most specific possible declarations of
+     * what exceptions might actually be thrown.
+     *
+     * @param code The error code of your new exception.  This will
+     * also determine the specific type of the exception that is
+     * returned.
+     * @return The specialized exception, presumably to be thrown by
+     * the caller.
+     */
+    public static KeeperException create(Code code) {
         switch (code) {
-            case Code.SystemError:
+            case SYSTEMERROR:
                 return new SystemErrorException();
-            case Code.RuntimeInconsistency:
+            case RUNTIMEINCONSISTENCY:
                 return new RuntimeInconsistencyException();
-            case Code.DataInconsistency:
+            case DATAINCONSISTENCY:
                 return new DataInconsistencyException();
-            case Code.ConnectionLoss:
+            case CONNECTIONLOSS:
                 return new ConnectionLossException();
-            case Code.MarshallingError:
+            case MARSHALLINGERROR:
                 return new MarshallingErrorException();
-            case Code.Unimplemented:
+            case UNIMPLEMENTED:
                 return new UnimplementedException();
-            case Code.OperationTimeout:
+            case OPERATIONTIMEOUT:
                 return new OperationTimeoutException();
-            case Code.BadArguments:
+            case BADARGUMENTS:
                 return new BadArgumentsException();
-            case Code.APIError:
+            case APIERROR:
                 return new APIErrorException();
-            case Code.NoNode:
+            case NONODE:
                 return new NoNodeException();
-            case Code.NoAuth:
+            case NOAUTH:
                 return new NoAuthException();
-            case Code.BadVersion:
+            case BADVERSION:
                 return new BadVersionException();
-            case Code.NoChildrenForEphemerals:
+            case NOCHILDRENFOREPHEMERALS:
                 return new NoChildrenForEphemeralsException();
-            case Code.NodeExists:
+            case NODEEXISTS:
                 return new NodeExistsException();
-            case Code.InvalidACL:
+            case INVALIDACL:
                 return new InvalidACLException();
-            case Code.AuthFailed:
+            case AUTHFAILED:
                 return new AuthFailedException();
-            case Code.NotEmpty:
+            case NOTEMPTY:
                 return new NotEmptyException();
-            case Code.SessionExpired:
+            case SESSIONEXPIRED:
                 return new SessionExpiredException();
-            case Code.InvalidCallback:
+            case INVALIDCALLBACK:
                 return new InvalidCallbackException();
 
-            case 0:
+            case OK:
             default:
                 throw new IllegalArgumentException("Invalid exception code");
         }
     }
 
+    /**
+     * Set the code for this exception
+     * @param code error code
+     * @deprecated deprecated in 3.1.0, exceptions should be immutable, this
+     * method should not be used
+     */
+    @Deprecated
     public void setCode(int code) {
-        this.code = code;
+        this.code = Code.get(code);
     }
 
-    public interface Code {
-        int Ok = 0;
+    public static enum Code {
+        /** Everything is OK */
+        OK (0),
 
-        // System and server-side errors
-        int SystemError = -1;
+        /** System and server-side errors.
+         * This is never thrown by the server, it shouldn't be used other than
+         * to indicate a range. Specifically error codes greater than this
+         * value, but lesser than {@link #APIERROR}, are system errors.
+         */
+        SYSTEMERROR (-1),
 
-        int RuntimeInconsistency = SystemError - 1;
+        /** A runtime inconsistency was found */
+        RUNTIMEINCONSISTENCY (-2),
+        /** A data inconsistency was found */
+        DATAINCONSISTENCY (-3),
+        /** Connection to the server has been lost */
+        CONNECTIONLOSS (-4),
+        /** Error while marshalling or unmarshalling data */
+        MARSHALLINGERROR (-5),
+        /** Operation is unimplemented */
+        UNIMPLEMENTED (-6),
+        /** Operation timeout */
+        OPERATIONTIMEOUT (-7),
+        /** Invalid arguments */
+        BADARGUMENTS (-8),
 
-        int DataInconsistency = SystemError - 2;
+        /** API errors.
+         * This is never thrown by the server, it shouldn't be used other than
+         * to indicate a range. Specifically error codes greater than this
+         * value are API errors (while values less than this indicate a 
+         * {@link #SYSTEMERROR}).
+         */
+        APIERROR (-100),
 
-        int ConnectionLoss = SystemError - 3;
+        /** Node does not exist */
+        NONODE (-101),
+        /** Not authenticated */
+        NOAUTH (-102),
+        /** Version conflict */
+        BADVERSION (-103),
+        /** Ephemeral nodes may not have children */
+        NOCHILDRENFOREPHEMERALS (-108),
+        /** The node already exists */
+        NODEEXISTS (-110),
+        /** The node has children */
+        NOTEMPTY (-111),
+        /** The session has been expired by the server */
+        SESSIONEXPIRED (-112),
+        /** Invalid callback specified */
+        INVALIDCALLBACK (-113),
+        /** Invalid ACL specified */
+        INVALIDACL (-114),
+        /** Client authentication failed */
+        AUTHFAILED (-115);
 
-        int MarshallingError = SystemError - 4;
+        private static final Map<Integer,Code> lookup
+            = new HashMap<Integer,Code>();
 
-        int Unimplemented = SystemError - 5;
+        static {
+            for(Code c : EnumSet.allOf(Code.class))
+                lookup.put(c.code, c);
+        }
 
-        int OperationTimeout = SystemError - 6;
+        private final int code;
+        Code(int code) {
+            this.code = code;
+        }
 
-        int BadArguments = SystemError - 7;
+        /**
+         * Get the int value for a particular Code.
+         * @return error code as integer
+         */
+        public int intValue() { return code; }
 
-        // API errors
-        int APIError = -100; // Catch all, shouldn't be used other
-        // than range start
+        /**
+         * Get the Code value for a particular integer error code
+         * @param code int error code
+         * @return Code value corresponding to specified int code, or null
+         */
+        public static Code get(int code) {
+            return lookup.get(code);
+        }
 
-        int NoNode = APIError - 1; // Node does not exist
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #OK} instead
+         */
+        @Deprecated
+        public static final int Ok = OK.code;
 
-        int NoAuth = APIError - 2; // Current operation not permitted
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #SYSTEMERROR} instead
+         */
+        @Deprecated
+        public static final int SystemError = SYSTEMERROR.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #RUNTIMEINCONSISTENCY} instead
+         */
+        @Deprecated
+        public static final int RuntimeInconsistency = RUNTIMEINCONSISTENCY.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #DATAINCONSISTENCY}
+         * instead
+         */
+        @Deprecated
+        public static final int DataInconsistency = DATAINCONSISTENCY.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #CONNECTIONLOSS}
+         * instead
+         */
+        @Deprecated
+        public static final int ConnectionLoss = CONNECTIONLOSS.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #MARSHALLINGERROR}
+         * instead
+         */
+        @Deprecated
+        public static final int MarshallingError = MARSHALLINGERROR.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #UNIMPLEMENTED} instead
+         */
+        @Deprecated
+        public static final int Unimplemented = UNIMPLEMENTED.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #OPERATIONTIMEOUT}
+         * instead
+         */
+        @Deprecated
+        public static final int OperationTimeout = OPERATIONTIMEOUT.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #BADARGUMENTS} instead
+         */
+        @Deprecated
+        public static final int BadArguments = BADARGUMENTS.code;
 
-        int BadVersion = APIError - 3; // Version conflict
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #APIERROR} instead
+         */
+        @Deprecated
+        public static final int APIError = APIERROR.code;
 
-        int NoChildrenForEphemerals = APIError - 8;
-
-        int NodeExists = APIError - 10;
-
-        int NotEmpty = APIError - 11;
-
-        int SessionExpired = APIError - 12;
-
-        int InvalidCallback = APIError - 13;
-
-        int InvalidACL = APIError - 14;
-
-        int AuthFailed = APIError - 15; // client authentication failed
-
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #NONODE} instead
+         */
+        @Deprecated
+        public static final int NoNode = NONODE.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #NOAUTH} instead
+         */
+        @Deprecated
+        public static final int NoAuth = NOAUTH.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #BADVERSION} instead
+         */
+        @Deprecated
+        public static final int BadVersion = BADVERSION.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #NOCHILDRENFOREPHEMERALS}
+         * instead
+         */
+        @Deprecated
+        public static final int
+            NoChildrenForEphemerals = NOCHILDRENFOREPHEMERALS.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #NODEEXISTS} instead
+         */
+        @Deprecated
+        public static final int NodeExists = NODEEXISTS.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #NOTEMPTY} instead
+         */
+        @Deprecated
+        public static final int NotEmpty = NOTEMPTY.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #SESSIONEXPIRED} instead
+         */
+        @Deprecated
+        public static final int SessionExpired = SESSIONEXPIRED.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #INVALIDCALLBACK} instead
+         */
+        @Deprecated
+        public static final int InvalidCallback = INVALIDCALLBACK.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #INVALIDACL} instead
+         */
+        @Deprecated
+        public static final int InvalidACL = INVALIDACL.code;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link #AUTHFAILED} instead
+         */
+        @Deprecated
+        public static final int AuthFailed = AUTHFAILED.code;
     }
 
-    static String getCodeMessage(int code) {
+    static String getCodeMessage(Code code) {
         switch (code) {
-            case 0:
+            case OK:
                 return "ok";
-            case Code.SystemError:
+            case SYSTEMERROR:
                 return "SystemError";
-            case Code.RuntimeInconsistency:
+            case RUNTIMEINCONSISTENCY:
                 return "RuntimeInconsistency";
-            case Code.DataInconsistency:
+            case DATAINCONSISTENCY:
                 return "DataInconsistency";
-            case Code.ConnectionLoss:
+            case CONNECTIONLOSS:
                 return "ConnectionLoss";
-            case Code.MarshallingError:
+            case MARSHALLINGERROR:
                 return "MarshallingError";
-            case Code.Unimplemented:
+            case UNIMPLEMENTED:
                 return "Unimplemented";
-            case Code.OperationTimeout:
+            case OPERATIONTIMEOUT:
                 return "OperationTimeout";
-            case Code.BadArguments:
+            case BADARGUMENTS:
                 return "BadArguments";
-            case Code.APIError:
+            case APIERROR:
                 return "APIError";
-            case Code.NoNode:
+            case NONODE:
                 return "NoNode";
-            case Code.NoAuth:
+            case NOAUTH:
                 return "NoAuth";
-            case Code.BadVersion:
+            case BADVERSION:
                 return "BadVersion";
-            case Code.NoChildrenForEphemerals:
+            case NOCHILDRENFOREPHEMERALS:
                 return "NoChildrenForEphemerals";
-            case Code.NodeExists:
+            case NODEEXISTS:
                 return "NodeExists";
-            case Code.InvalidACL:
+            case INVALIDACL:
                 return "InvalidACL";
-            case Code.AuthFailed:
+            case AUTHFAILED:
                 return "AuthFailed";
-            case Code.NotEmpty:
+            case NOTEMPTY:
                 return "Directory not empty";
-            case Code.SessionExpired:
+            case SESSIONEXPIRED:
                 return "Session expired";
-            case Code.InvalidCallback:
+            case INVALIDCALLBACK:
                 return "Invalid callback";
             default:
                 return "Unknown error " + code;
         }
     }
 
-    private int code;
+    private Code code;
 
     private String path;
 
-    public KeeperException(int code) {
+    public KeeperException(Code code) {
         this.code = code;
     }
 
-    KeeperException(int code, String path) {
+    KeeperException(Code code, String path) {
         this.code = code;
         this.path = path;
     }
 
+    /**
+     * Read the error code for this exception
+     * @return the error code for this exception
+     * @deprecated deprecated in 3.1.0, use {@link #code()} instead
+     */
+    @Deprecated
     public int getCode() {
+        return code.code;
+    }
+
+    /**
+     * Read the error Code for this exception
+     * @return the error Code for this exception
+     */
+    public Code code() {
         return code;
     }
 
+    /**
+     * Read the path for this exception
+     * @return the path associated with this error, null if none
+     */
     public String getPath() {
         return path;
     }
@@ -220,117 +424,174 @@ public abstract class KeeperException extends Exception {
         return "KeeperErrorCode = " + getCodeMessage(code) + " for " + path;
     }
 
+    /**
+     *  @see Code.APIERROR
+     */
     public static class APIErrorException extends KeeperException {
         public APIErrorException() {
-            super(Code.APIError);
+            super(Code.APIERROR);
         }
     }
 
+    /**
+     *  @see Code.AUTHFAILED
+     */
     public static class AuthFailedException extends KeeperException {
         public AuthFailedException() {
-            super(Code.AuthFailed);
+            super(Code.AUTHFAILED);
         }
     }
 
+    /**
+     *  @see Code.BADARGUMENTS
+     */
     public static class BadArgumentsException extends KeeperException {
         public BadArgumentsException() {
-            super(Code.BadArguments);
+            super(Code.BADARGUMENTS);
         }
     }
 
+    /**
+     * @see Code.BADVERSION
+     */
     public static class BadVersionException extends KeeperException {
         public BadVersionException() {
-            super(Code.BadVersion);
+            super(Code.BADVERSION);
         }
     }
 
+    /**
+     * @see Code.CONNECTIONLOSS
+     */
     public static class ConnectionLossException extends KeeperException {
         public ConnectionLossException() {
-            super(Code.ConnectionLoss);
+            super(Code.CONNECTIONLOSS);
         }
     }
 
+    /**
+     * @see Code.DATAINCONSISTENCY
+     */
     public static class DataInconsistencyException extends KeeperException {
         public DataInconsistencyException() {
-            super(Code.DataInconsistency);
+            super(Code.DATAINCONSISTENCY);
         }
     }
 
+    /**
+     * @see Code.INVALIDACL
+     */
     public static class InvalidACLException extends KeeperException {
         public InvalidACLException() {
-            super(Code.InvalidACL);
+            super(Code.INVALIDACL);
         }
     }
 
+    /**
+     * @see Code.INVALIDCALLBACK
+     */
     public static class InvalidCallbackException extends KeeperException {
         public InvalidCallbackException() {
-            super(Code.InvalidCallback);
+            super(Code.INVALIDCALLBACK);
         }
     }
 
+    /**
+     * @see Code.MARSHALLINGERROR
+     */
     public static class MarshallingErrorException extends KeeperException {
         public MarshallingErrorException() {
-            super(Code.MarshallingError);
+            super(Code.MARSHALLINGERROR);
         }
     }
 
+    /**
+     * @see Code.NOAUTH
+     */
     public static class NoAuthException extends KeeperException {
         public NoAuthException() {
-            super(Code.NoAuth);
+            super(Code.NOAUTH);
         }
     }
 
+    /**
+     * @see Code.NOCHILDRENFOREPHEMERALS
+     */
     public static class NoChildrenForEphemeralsException extends KeeperException {
         public NoChildrenForEphemeralsException() {
-            super(Code.NoChildrenForEphemerals);
+            super(Code.NOCHILDRENFOREPHEMERALS);
         }
     }
 
+    /**
+     * @see Code.NODEEXISTS
+     */
     public static class NodeExistsException extends KeeperException {
         public NodeExistsException() {
-            super(Code.NodeExists);
+            super(Code.NODEEXISTS);
         }
     }
 
+    /**
+     * @see Code.NONODE
+     */
     public static class NoNodeException extends KeeperException {
         public NoNodeException() {
-            super(Code.NoNode);
+            super(Code.NONODE);
         }
     }
 
+    /**
+     * @see Code.NOTEMPTY
+     */
     public static class NotEmptyException extends KeeperException {
         public NotEmptyException() {
-            super(Code.NotEmpty);
+            super(Code.NOTEMPTY);
         }
     }
 
+    /**
+     * @see Code.OPERATIONTIMEOUT
+     */
     public static class OperationTimeoutException extends KeeperException {
         public OperationTimeoutException() {
-            super(Code.OperationTimeout);
+            super(Code.OPERATIONTIMEOUT);
         }
     }
 
+    /**
+     * @see Code.RUNTIMEINCONSISTENCY
+     */
     public static class RuntimeInconsistencyException extends KeeperException {
         public RuntimeInconsistencyException() {
-            super(Code.RuntimeInconsistency);
+            super(Code.RUNTIMEINCONSISTENCY);
         }
     }
 
+    /**
+     * @see Code.SESSIONEXPIRED
+     */
     public static class SessionExpiredException extends KeeperException {
         public SessionExpiredException() {
-            super(Code.SessionExpired);
+            super(Code.SESSIONEXPIRED);
         }
     }
 
+    /**
+     * @see Code.SYSTEMERROR
+     */
     public static class SystemErrorException extends KeeperException {
         public SystemErrorException() {
-            super(Code.SystemError);
+            super(Code.SYSTEMERROR);
         }
     }
 
+    /**
+     * @see Code.UNIMPLEMENTED
+     */
     public static class UnimplementedException extends KeeperException {
         public UnimplementedException() {
-            super(Code.Unimplemented);
+            super(Code.UNIMPLEMENTED);
         }
     }
 }

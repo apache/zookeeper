@@ -423,7 +423,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             String scheme = authPacket.getScheme();
             AuthenticationProvider ap = ProviderRegistry.getProvider(scheme);
             if (ap == null
-                    || ap.handleAuthentication(this, authPacket.getAuth()) != KeeperException.Code.Ok) {
+                    || (ap.handleAuthentication(this, authPacket.getAuth()) 
+                            != KeeperException.Code.OK)) {
                 if (ap == null)
                     LOG.error("No authentication provider for scheme: "
                             + scheme + " has " + ProviderRegistry.listProviders());
@@ -432,7 +433,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                             + scheme);
                 // send a response...
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
-                        KeeperException.Code.AuthFailed);
+                        KeeperException.Code.AUTHFAILED.intValue());
                 sendResponse(rh, null, null);
                 // ... and close connection
                 sendBuffer(NIOServerCnxn.closeConn);
@@ -441,7 +442,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 LOG.debug("Authentication succeeded for scheme: "
                         + scheme);
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
-                        KeeperException.Code.Ok);
+                        KeeperException.Code.OK.intValue());
                 sendResponse(rh, null, null);
             }
             return;

@@ -69,29 +69,43 @@
 
 /** zookeeper return constants **/
 
-#define ZOK                                    0
-#define ZSYSTEMERROR                          -1
-#define ZRUNTIMEINCONSISTENCY (ZSYSTEMERROR - 1)
-#define ZDATAINCONSISTENCY    (ZSYSTEMERROR - 2)
-#define ZCONNECTIONLOSS       (ZSYSTEMERROR - 3)
-#define ZMARSHALLINGERROR     (ZSYSTEMERROR - 4)
-#define ZUNIMPLEMENTED        (ZSYSTEMERROR - 5)
-#define ZOPERATIONTIMEOUT     (ZSYSTEMERROR - 6)
-#define ZBADARGUMENTS         (ZSYSTEMERROR - 7)
-#define ZINVALIDSTATE         (ZSYSTEMERROR - 8)
-#define ZAPIERROR                           -100
-#define ZNONODE                  (ZAPIERROR - 1)
-#define ZNOAUTH                  (ZAPIERROR - 2)
-#define ZBADVERSION              (ZAPIERROR - 3)
-#define ZNOCHILDRENFOREPHEMERALS (ZAPIERROR - 8)
-#define ZNODEEXISTS             (ZAPIERROR - 10)
-#define ZNOTEMPTY               (ZAPIERROR - 11)
-#define ZSESSIONEXPIRED         (ZAPIERROR - 12)
-#define ZINVALIDCALLBACK        (ZAPIERROR - 13)
-#define ZINVALIDACL             (ZAPIERROR - 14)
-#define ZAUTHFAILED             (ZAPIERROR - 15)
-#define ZCLOSING                (ZAPIERROR - 16)
-#define ZNOTHING                (ZAPIERROR - 17)
+enum ZOO_ERRORS {
+  ZOK = 0, /*!< Everything is OK */
+
+  /** System and server-side errors.
+   * This is never thrown by the server, it shouldn't be used other than
+   * to indicate a range. Specifically error codes greater than this
+   * value, but lesser than {@link #ZAPIERROR}, are system errors. */
+  ZSYSTEMERROR = -1,
+  ZRUNTIMEINCONSISTENCY = -2, /*!< A runtime inconsistency was found */
+  ZDATAINCONSISTENCY = -3, /*!< A data inconsistency was found */
+  ZCONNECTIONLOSS = -4, /*!< Connection to the server has been lost */
+  ZMARSHALLINGERROR = -5, /*!< Error while marshalling or unmarshalling data */
+  ZUNIMPLEMENTED = -6, /*!< Operation is unimplemented */
+  ZOPERATIONTIMEOUT = -7, /*!< Operation timeout */
+  ZBADARGUMENTS = -8, /*!< Invalid arguments */
+  ZINVALIDSTATE = -9, /*!< Invliad zhandle state */
+
+  /** API errors.
+   * This is never thrown by the server, it shouldn't be used other than
+   * to indicate a range. Specifically error codes greater than this
+   * value are API errors (while values less than this indicate a 
+   * {@link #ZSYSTEMERROR}).
+   */
+  ZAPIERROR = -100,
+  ZNONODE = -101, /*!< Node does not exist */
+  ZNOAUTH = -102, /*!< Not authenticated */
+  ZBADVERSION = -103, /*!< Version conflict */
+  ZNOCHILDRENFOREPHEMERALS = -108, /*!< Ephemeral nodes may not have children */
+  ZNODEEXISTS = -110, /*!< The node already exists */
+  ZNOTEMPTY = -111, /*!< The node has children */
+  ZSESSIONEXPIRED = -112, /*!< The session has been expired by the server */
+  ZINVALIDCALLBACK = -113, /*!< Invalid callback specified */
+  ZINVALIDACL = -114, /*!< Invalid ACL specified */
+  ZAUTHFAILED = -115, /*!< Client authentication failed */
+  ZCLOSING = -116, /*!< ZooKeeper is closing */
+  ZNOTHING = -117 /*!< (not error) no server responses to process */
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,6 +115,7 @@ extern "C" {
 *  @name Debug levels
 */
 typedef enum {ZOO_LOG_LEVEL_ERROR=1,ZOO_LOG_LEVEL_WARN=2,ZOO_LOG_LEVEL_INFO=3,ZOO_LOG_LEVEL_DEBUG=4} ZooLogLevel;
+
 /**
  * @name ACL Consts
  */

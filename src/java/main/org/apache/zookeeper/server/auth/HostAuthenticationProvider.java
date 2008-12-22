@@ -28,10 +28,12 @@ public class HostAuthenticationProvider implements AuthenticationProvider {
         return "host";
     }
 
-    public int handleAuthentication(ServerCnxn cnxn, byte[] authData) {
+    public KeeperException.Code
+        handleAuthentication(ServerCnxn cnxn, byte[] authData)
+    {
         String id = cnxn.getRemoteAddress().getAddress().getCanonicalHostName();
         cnxn.getAuthInfo().add(new Id(getScheme(), id));
-        return KeeperException.Code.Ok;
+        return KeeperException.Code.OK;
     }
 
     public boolean matches(String id, String aclExpr) {

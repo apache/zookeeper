@@ -125,7 +125,7 @@ public class ClientTest extends ClientBase {
                 zk.getData("/acltest", false, new Stat());
                 fail("Should have received a permission error");
             } catch (KeeperException e) {
-                assertEquals(Code.NoAuth, e.getCode());
+                assertEquals(Code.NOAUTH, e.code());
             }
             zk.addAuthInfo("digest", "ben:passwd".getBytes());
             zk.getData("/acltest", false, new Stat());
@@ -159,7 +159,7 @@ public class ClientTest extends ClientBase {
             }
         }
     }
-    
+
     /**
      * Register multiple watchers and verify that they all get notified and
      * in the right order.
@@ -201,13 +201,13 @@ public class ClientTest extends ClientBase {
                 assertEquals("/foo-" + i, event.getPath());
                 assertEquals(EventType.NodeDataChanged, event.getType());
                 assertEquals(KeeperState.SyncConnected, event.getState());
-                
+
                 // small chance that an unexpected message was delivered
                 //  after this check, but we would catch that next time
                 //  we check events
                 assertEquals(0, watchers[i].events.size());
             }
-            
+
             //
             // test get/exists with single set of watchers
             //  get/exists together
@@ -227,13 +227,13 @@ public class ClientTest extends ClientBase {
                 assertEquals("/foo-" + i, event.getPath());
                 assertEquals(EventType.NodeDataChanged, event.getType());
                 assertEquals(KeeperState.SyncConnected, event.getState());
-                
+
                 // small chance that an unexpected message was delivered
                 //  after this check, but we would catch that next time
                 //  we check events
                 assertEquals(0, watchers[i].events.size());
             }
-            
+
             //
             // test get/exists with two sets of watchers
             //
@@ -252,7 +252,7 @@ public class ClientTest extends ClientBase {
                 assertEquals("/foo-" + i, event.getPath());
                 assertEquals(EventType.NodeDataChanged, event.getType());
                 assertEquals(KeeperState.SyncConnected, event.getState());
-                
+
                 // small chance that an unexpected message was delivered
                 //  after this check, but we would catch that next time
                 //  we check events
@@ -264,13 +264,13 @@ public class ClientTest extends ClientBase {
                 assertEquals("/foo-" + i, event2.getPath());
                 assertEquals(EventType.NodeDataChanged, event2.getType());
                 assertEquals(KeeperState.SyncConnected, event2.getState());
-                
+
                 // small chance that an unexpected message was delivered
                 //  after this check, but we would catch that next time
                 //  we check events
                 assertEquals(0, watchers2[i].events.size());
             }
-            
+
         } finally {
             if (zk != null) {
                 zk.close();
@@ -303,7 +303,7 @@ public class ClientTest extends ClientBase {
             zk.close();
             //LOG.info("Closed client: " + zk.describeCNXN());
             Thread.sleep(2000);
-            
+
             zk = createClient(watcher, hostPort);
             //LOG.info("Created a new client: " + zk.describeCNXN());
             LOG.info("Before delete /");
@@ -392,7 +392,7 @@ public class ClientTest extends ClientBase {
             //    zk.create("/bad\u0000path", "".getBytes(), null, CreateMode.PERSISTENT);
             //    fail("created an invalid path");
             //} catch(KeeperException e) {
-            //    assertEquals(KeeperException.Code.BadArguments, e.getCode());
+            //    assertEquals(KeeperException.Code.BadArguments, e.code());
             //}
 
             zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -479,19 +479,19 @@ public class ClientTest extends ClientBase {
             zk.delete("/parent", -1);
             fail("Should have received a not equals message");
         } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.NotEmpty, e.getCode());
+            assertEquals(KeeperException.Code.NOTEMPTY, e.code());
         }
         zk.delete("/parent/child", -1);
         zk.delete("/parent", -1);
         zk.close();
     }
-    
+
     private static final long HAMMERTHREAD_LATENCY = 5;
-    
+
     private static abstract class HammerThread extends Thread {
         protected final int count;
         protected volatile int current = 0;
-        
+
         HammerThread(String name, int count) {
             super(name);
             this.count = count;
@@ -571,7 +571,7 @@ public class ClientTest extends ClientBase {
         try {
             final int threadCount = 10;
             final int childCount = 1000;
-            
+
             HammerThread[] threads = new HammerThread[threadCount];
             long start = System.currentTimeMillis();
             for (int i = 0; i < threads.length; i++) {
@@ -579,21 +579,21 @@ public class ClientTest extends ClientBase {
                 String prefix = "/test-" + i;
                 zk.create(prefix, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 prefix += "/";
-                HammerThread thread = 
+                HammerThread thread =
                     new BasicHammerThread("BasicHammerThread-" + i, zk, prefix,
                             childCount);
                 thread.start();
-                
+
                 threads[i] = thread;
             }
-            
+
             verifyHammer(start, threads, childCount);
         } catch (Throwable t) {
             LOG.error("test failed", t);
             throw t;
         }
     }
-    
+
     /**
      * Separate threads each creating a number of nodes. Each thread
      * is creating a new client for each node creation.
@@ -604,7 +604,7 @@ public class ClientTest extends ClientBase {
         try {
             final int threadCount = 5;
             final int childCount = 10;
-            
+
             HammerThread[] threads = new HammerThread[threadCount];
             long start = System.currentTimeMillis();
             for (int i = 0; i < threads.length; i++) {
@@ -618,23 +618,23 @@ public class ClientTest extends ClientBase {
                     }
                 }
                 prefix += "/";
-                HammerThread thread = 
+                HammerThread thread =
                     new SuperHammerThread("SuperHammerThread-" + i, this,
                             prefix, childCount);
                 thread.start();
-                
+
                 threads[i] = thread;
             }
-            
+
             verifyHammer(start, threads, childCount);
         } catch (Throwable t) {
             LOG.error("test failed", t);
             throw t;
         }
     }
-    
-    public void verifyHammer(long start, HammerThread[] threads, int childCount) 
-        throws IOException, InterruptedException, KeeperException 
+
+    public void verifyHammer(long start, HammerThread[] threads, int childCount)
+        throws IOException, InterruptedException, KeeperException
     {
         // look for the clients to finish their create operations
         LOG.info("Starting check for completed hammers");
@@ -653,25 +653,25 @@ public class ClientTest extends ClientBase {
         }
         if (workingCount > 0) {
             for (HammerThread h : threads) {
-                LOG.warn(h.getName() + " never finished creation, current:" 
+                LOG.warn(h.getName() + " never finished creation, current:"
                         + h.current);
             }
         } else {
             LOG.info("Hammer threads completed creation operations");
         }
-        
+
         for (HammerThread h : threads) {
             final int safetyFactor = 3;
             verifyThreadTerminated(h,
-                    threads.length * childCount 
+                    threads.length * childCount
                     * HAMMERTHREAD_LATENCY * safetyFactor);
         }
         LOG.info(new Date() + " Total time "
                 + (System.currentTimeMillis() - start));
-        
+
         ZooKeeper zk = createClient();
         try {
-            
+
             LOG.info("******************* Connected to ZooKeeper" + new Date());
             for (int i = 0; i < threads.length; i++) {
                 LOG.info("Doing thread: " + i + " " + new Date());
@@ -688,16 +688,16 @@ public class ClientTest extends ClientBase {
             zk.close();
         }
     }
-    
+
     private class VerifyClientCleanup extends Thread {
         int count;
         int current = 0;
-        
+
         VerifyClientCleanup(String name, int count) {
             super(name);
             this.count = count;
         }
-        
+
         public void run() {
             try {
                 for (; current < count; current++) {
@@ -714,21 +714,21 @@ public class ClientTest extends ClientBase {
      * Verify that the client is cleaning up properly. Open/close a large
      * number of sessions. Essentially looking to see if sockets/selectors
      * are being cleaned up properly during close.
-     * 
+     *
      * @throws Throwable
      */
     @Test
     public void testClientCleanup() throws Throwable {
         final int threadCount = 20;
         final int clientCount = 100;
-        
+
         VerifyClientCleanup threads[] = new VerifyClientCleanup[threadCount];
-        
+
         for (int i = 0; i < threads.length; i++) {
             threads[i] = new VerifyClientCleanup("VCC" + i, clientCount);
             threads[i].start();
         }
-        
+
         for (int i = 0; i < threads.length; i++) {
             threads[i].join(600000);
             assertTrue(threads[i].current == threads[i].count);

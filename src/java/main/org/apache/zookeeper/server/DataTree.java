@@ -558,7 +558,8 @@ public class DataTree {
         } catch (KeeperException e) {
             // These are expected errors since we take a lazy snapshot
             if (initialized
-                    || (e.getCode() != Code.NoNode && e.getCode() != Code.NodeExists)) {
+                    || (e.code() != Code.NONODE 
+                            && e.code() != Code.NODEEXISTS)) {
                 LOG.warn(debug);
                 LOG.error("FIXMSG",e);
             }

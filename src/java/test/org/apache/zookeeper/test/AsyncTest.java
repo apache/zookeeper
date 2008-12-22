@@ -58,7 +58,7 @@ public class AsyncTest extends TestCase
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
-        
+
         ClientBase.setupTestEnv();
 
         quorumTest.setUp();
@@ -85,7 +85,7 @@ public class AsyncTest extends TestCase
             }
         }
     }
-    
+
     private ZooKeeper createClient() throws IOException,InterruptedException {
         return createClient(quorumTest.hostPort);
     }
@@ -220,7 +220,7 @@ public class AsyncTest extends TestCase
                 }
             }
             assertEquals(0, (int) results.get(0));
-            assertEquals(Code.NoAuth, (int) results.get(1));
+            assertEquals(Code.NOAUTH, Code.get((int) results.get(1)));
             assertEquals(0, (int) results.get(2));
             assertEquals(0, (int) results.get(3));
             assertEquals(0, (int) results.get(4));
@@ -235,7 +235,7 @@ public class AsyncTest extends TestCase
                 zk.getData("/ben2", false, new Stat());
                 fail("Should have received a permission error");
             } catch (KeeperException e) {
-                assertEquals(Code.NoAuth, e.getCode());
+                assertEquals(Code.NOAUTH, e.code());
             }
         } finally {
             zk.close();

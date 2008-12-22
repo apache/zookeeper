@@ -358,7 +358,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         } catch (KeeperException e) {
             if (txnHeader != null) {
                 txnHeader.setType(OpCode.error);
-                txn = new ErrorTxn(e.getCode());
+                txn = new ErrorTxn(e.code().intValue());
             }
         } catch (Exception e) {
             LOG.error("*********************************" + request);
@@ -375,7 +375,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             LOG.error("Unexpected exception", e);
             if (txnHeader != null) {
                 txnHeader.setType(OpCode.error);
-                txn = new ErrorTxn(Code.MarshallingError);
+                txn = new ErrorTxn(Code.MARSHALLINGERROR.intValue());
             }
         }
         request.hdr = txnHeader;

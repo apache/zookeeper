@@ -84,7 +84,7 @@ public class AsyncOps {
         /** the latch is used to await the results from the server */
         CountDownLatch latch;
 
-        int rc = 0;
+        Code rc = Code.OK;
         String path = "/foo";
         String expected;
         
@@ -93,7 +93,7 @@ public class AsyncOps {
             this.latch = latch;
         }
         
-        public void setRC(int rc) {
+        public void setRC(Code rc) {
             this.rc = rc;
         }
         
@@ -101,7 +101,7 @@ public class AsyncOps {
             this.path = path;
         }
         
-        public void processResult(int rc, String path, Object ctx)
+        public void processResult(Code rc, String path, Object ctx)
         {
             this.rc = rc;
             this.path = path;
@@ -157,7 +157,7 @@ public class AsyncOps {
         public void processResult(int rc, String path, Object ctx, String name)
         {
             this.name = name;
-            super.processResult(rc, path, ctx);
+            super.processResult(Code.get(rc), path, ctx);
         }
 
         public AsyncCB create() {
@@ -173,7 +173,7 @@ public class AsyncOps {
         public void verifyCreateFailure_NodeExists() {
             new StringCB(zk).verifyCreate();
             
-            rc = Code.NodeExists;
+            rc = Code.NODEEXISTS;
             name = null;
             zk.create(path, data, acl, flags, this, toString());
             verify();
@@ -208,7 +208,7 @@ public class AsyncOps {
         {
             this.acl = acl;
             this.stat = stat;
-            super.processResult(rc, path, ctx);
+            super.processResult(Code.get(rc), path, ctx);
         }
         
         public void verifyGetACL() {
@@ -252,7 +252,7 @@ public class AsyncOps {
         {
             this.children =
                 (children == null ? new ArrayList<String>() : children);
-            super.processResult(rc, path, ctx);
+            super.processResult(Code.get(rc), path, ctx);
         }
         
         public StringCB createNode() {
@@ -306,7 +306,7 @@ public class AsyncOps {
         }
         
         public void verifyGetChildrenFailure_NoNode() {
-            rc = KeeperException.Code.NoNode;
+            rc = KeeperException.Code.NONODE;
             verify();
         }
         
@@ -344,7 +344,7 @@ public class AsyncOps {
         {
             this.data = data;
             this.stat = stat;
-            super.processResult(rc, path, ctx);
+            super.processResult(Code.get(rc), path, ctx);
         }
         
         public void verifyGetData() {
@@ -355,7 +355,7 @@ public class AsyncOps {
         }
         
         public void verifyGetDataFailure_NoNode() {
-            rc = KeeperException.Code.NoNode;
+            rc = KeeperException.Code.NONODE;
             data = null;
             stat = null;
             zk.getData(path, false, this, toString());
@@ -392,7 +392,7 @@ public class AsyncOps {
         
         public void processResult(int rc, String path, Object ctx, Stat stat) {
             this.stat = stat;
-            super.processResult(rc, path, ctx);
+            super.processResult(Code.get(rc), path, ctx);
         }
         
         public void verifySetACL() {
@@ -404,7 +404,7 @@ public class AsyncOps {
         }
         
         public void verifySetACLFailure_NoNode() {
-            rc = KeeperException.Code.NoNode;
+            rc = KeeperException.Code.NONODE;
             stat = null;
             zk.setACL(path, acl, version, this, toString());
             verify();
@@ -423,7 +423,7 @@ public class AsyncOps {
         }
         
         public void verifySetDataFailure_NoNode() {
-            rc = KeeperException.Code.NoNode;
+            rc = KeeperException.Code.NONODE;
             stat = null;
             zk.setData(path, data, version, this, toString());
             verify();
@@ -437,7 +437,7 @@ public class AsyncOps {
         }
         
         public void verifyExistsFailure_NoNode() {
-            rc = KeeperException.Code.NoNode;
+            rc = KeeperException.Code.NONODE;
             stat = null;
             zk.exists(path, false, this, toString());
             verify();
@@ -464,6 +464,10 @@ public class AsyncOps {
             super(zk, latch);
         }
         
+        public void processResult(int rc, String path, Object ctx) {
+            super.processResult(Code.get(rc), path, ctx);
+        }
+
         public void delete() {
             zk.delete(path, version, this, toString());
         }
@@ -476,7 +480,7 @@ public class AsyncOps {
         }
         
         public void verifyDeleteFailure_NoNode() {
-            rc = Code.NoNode;
+            rc = Code.NONODE;
             zk.delete(path, version, this, toString());
             verify();
         }

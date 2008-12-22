@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.auth;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.ServerCnxn;
 
 /**
@@ -45,7 +46,7 @@ public interface AuthenticationProvider {
      *                the authentication data received.
      * @return TODO
      */
-    int handleAuthentication(ServerCnxn cnxn, byte authData[]);
+    KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte authData[]);
 
     /**
      * This method is called to see if the given id matches the given id
