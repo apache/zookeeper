@@ -23,6 +23,8 @@ import static org.apache.zookeeper.server.ServerConfig.getClientPort;
 import java.io.File;
 import java.io.IOException;
 
+import javax.management.JMException;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.server.ConnectionMXBean;
 import org.apache.zookeeper.jmx.server.DataTreeMXBean;
@@ -31,18 +33,12 @@ import org.apache.zookeeper.jmx.server.quorum.LeaderElectionMXBean;
 import org.apache.zookeeper.jmx.server.quorum.LocalPeerMXBean;
 import org.apache.zookeeper.jmx.server.quorum.QuorumMXBean;
 import org.apache.zookeeper.jmx.server.quorum.RemotePeerMXBean;
+import org.apache.zookeeper.server.ManagedUtil;
 import org.apache.zookeeper.server.ManagedZooKeeperServerMain;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ObservableNIOServerCnxn;
 import org.apache.zookeeper.server.ServerConfig;
-import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.ZooTrace;
-import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.util.ConnectionObserver;
-import org.apache.zookeeper.server.util.ObserverManager;
-import org.apache.zookeeper.server.util.QuorumPeerObserver;
-import org.apache.zookeeper.server.util.ServerObserver;
 import org.apache.zookeeper.server.util.ZooKeeperObserverManager;
 
 /**
@@ -92,6 +88,12 @@ public class ManagedQuorumPeerMain {
             System.exit(2);
         }
         if (!QuorumPeerConfig.isStandalone()) {
+            try {
+                ManagedUtil.registerLog4jMBeans();
+            } catch (JMException e) {
+                LOG.warn("Unable to register log4j JMX control", e);
+            }
+
             ZooKeeperObserverManager.setAsConcrete();
             runPeer(new QuorumPeer.Factory() {
                 public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory)
