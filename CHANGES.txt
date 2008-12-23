@@ -91,6 +91,9 @@ via mahadev)
    ZOOKEEPER-256. support use of JMX to manage log4j configuration at runtime.
 (pat via mahadev)
 
+   ZOOKEEPER-214. add new "stat reset" command to server admin port. (pat via
+mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:

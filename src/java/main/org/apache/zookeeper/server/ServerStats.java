@@ -136,5 +136,10 @@ public class ServerStats {
     synchronized public void resetRequestCounters(){
         packetsReceived=packetsSent=0;
     }
+    
+    synchronized public void reset() {
+        resetLatency();
+        resetRequestCounters();
+    }
 
 }
