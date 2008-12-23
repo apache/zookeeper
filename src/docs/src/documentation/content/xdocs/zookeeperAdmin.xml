@@ -810,6 +810,14 @@ server.3=zoo3:2888:3888</computeroutput></para>
         </varlistentry>
 
         <varlistentry>
+          <term>srst</term>
+
+          <listitem>
+            <para>Reset statistics returned by stat command.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term>stat</term>
 
           <listitem>

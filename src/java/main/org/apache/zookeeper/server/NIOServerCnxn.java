@@ -526,13 +526,20 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             // We take advantage of the limited size of the length to look
             // for cmds. They are all 4-bytes which fits inside of an int
             if (len == ruokCmd) {
+                LOG.info("Processing ruok command from " 
+                        + sock.socket().getRemoteSocketAddress());
+
                 sendBuffer(imok.duplicate());
                 sendBuffer(NIOServerCnxn.closeConn);
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == killCmd) {
+                LOG.info("Processing kill command from " 
+                        + sock.socket().getRemoteSocketAddress());
                 System.exit(0);
             } else if (len == getTraceMaskCmd) {
+                LOG.info("Processing getracemask command from " 
+                        + sock.socket().getRemoteSocketAddress());
                 long traceMask = ZooTrace.getTextTraceLevel();
                 ByteBuffer resp = ByteBuffer.allocate(8);
                 resp.putLong(traceMask);
@@ -542,6 +549,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == setTraceMaskCmd) {
+                LOG.info("Processing settracemask command from " 
+                        + sock.socket().getRemoteSocketAddress());
                 incomingBuffer = ByteBuffer.allocate(8);
 
                 int rc = sock.read(incomingBuffer);
@@ -560,6 +569,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == dumpCmd) {
+                LOG.info("Processing dump command from " 
+                        + sock.socket().getRemoteSocketAddress());
                 if (zk == null) {
                     sendBuffer(ByteBuffer.wrap("ZooKeeper not active \n"
                             .getBytes()));
@@ -574,6 +585,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == reqsCmd) {
+                LOG.info("Processing reqs command from " 
+                        + sock.socket().getRemoteSocketAddress());
                 StringBuffer sb = new StringBuffer();
                 sb.append("Requests:\n");
                 synchronized (outstanding) {
@@ -586,6 +599,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == statCmd) {
+                LOG.info("Processing stat command from " 
+                        + sock.socket().getRemoteSocketAddress());
                 StringBuffer sb = new StringBuffer();
                 if(zk!=null){
                     sb.append("Zookeeper version: ").append(Version.getFullVersion())
@@ -607,6 +622,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == enviCmd) {
+                LOG.info("Processing envi command from " 
+                        + sock.socket().getRemoteSocketAddress());
                 StringBuffer sb = new StringBuffer();
                 
                 List<Environment.Entry> env = Environment.list();
@@ -618,6 +635,15 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 }
 
                 sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
+                k.interestOps(SelectionKey.OP_WRITE);
+                return;
+            } else if (len == srstCmd) {
+                LOG.info("Processing srst command from " 
+                        + sock.socket().getRemoteSocketAddress());
+                ServerStats stats = ServerStats.getInstance();
+                stats.reset();
+
+                sendBuffer(ByteBuffer.wrap("Stats reset.\n".getBytes()));
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             }

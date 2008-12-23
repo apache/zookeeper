@@ -31,24 +31,31 @@ import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
 
 public interface ServerCnxn extends Watcher {
+    
+    /**
+     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * Zk Admin</a>. this link is for all the commands.
+     */
     final static int killCmd = ByteBuffer.wrap("kill".getBytes()).getInt();
-
+    
     final static int ruokCmd = ByteBuffer.wrap("ruok".getBytes()).getInt();
 
     final static int dumpCmd = ByteBuffer.wrap("dump".getBytes()).getInt();
-
+    
     final static int statCmd = ByteBuffer.wrap("stat".getBytes()).getInt();
-
+    
     final static int reqsCmd = ByteBuffer.wrap("reqs".getBytes()).getInt();
 
     final static int setTraceMaskCmd = ByteBuffer.wrap("stmk".getBytes())
             .getInt();
-
+    
     final static int getTraceMaskCmd = ByteBuffer.wrap("gtmk".getBytes())
             .getInt();
-
+    
     final static int enviCmd = ByteBuffer.wrap("envi".getBytes()).getInt();
-
+    
+    final static int srstCmd = ByteBuffer.wrap("srst".getBytes()).getInt();
+    
     final static ByteBuffer imok = ByteBuffer.wrap("imok".getBytes());
 
     public abstract int getSessionTimeout();
