@@ -97,6 +97,9 @@ via mahadev)
    ZOOKEEPER-214. add new "stat reset" command to server admin port. (pat via
 mahadev)
 
+   ZOOKEEPER-258. docs incorrectly state max client timeout as 60 seconds
+(it's based on server ticktime). (phunt via mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
