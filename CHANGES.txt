@@ -62,7 +62,10 @@ BUGFIXES:
 
   ZOOKEEPER-250. isvalidsnapshot should handle the case of 0 snapshot
   files better. (mahadev via phunt)
-  
+ 
+  ZOOKEEPER-265. remove (deprecate) unused NoSyncConnected from KeeperState.
+(phunt via mahadev)
+ 
 IMPROVEMENTS:
    
   ZOOKEEPER-64. Log system env information when initializing server and
