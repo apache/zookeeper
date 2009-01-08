@@ -380,7 +380,7 @@
     <!-- ================================================================== -->
     <!--                                                                    -->
     <!-- ================================================================== -->
-    <target name="package" depends="release-jar, javadoc"
+    <target name="package" depends="release-jar, javadoc, compile-test"
             description="Build distribution">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>

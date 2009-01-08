@@ -100,6 +100,8 @@ mahadev)
    ZOOKEEPER-258. docs incorrectly state max client timeout as 60 seconds
 (it's based on server ticktime). (phunt via mahadev)
 
+   ZOOKEEPER-135. Fat jar build target. (phunt and breed via mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
