@@ -19,4 +19,34 @@
 
 <project name="zkfuse" default="compile">
   <import file="../build-contrib.xml"/>
+
+  <target name="init" depends="check-contrib" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+    <mkdir dir="${build.dir}"/>
+    <antcall target="init-contrib"/>
+  </target>
+
+  <target name="compile" depends="init" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+
+    <mkdir dir="${build.dir}"/>
+    <copy todir="${build.dir}">
+      <fileset dir="${basedir}">
+        <exclude name="**/VERSION"/>
+      </fileset>
+    </copy>
+    <exec executable="echo" output="${build.dir}/VERSION">
+      <arg line="${version}" />
+    </exec>
+  </target>
+
+  <target name="package" depends="compile" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+
+    <mkdir dir="${dist.dir}/contrib/${name}"/>
+    <copy todir="${dist.dir}/contrib/${name}">
+      <fileset dir="${build.dir}"/>
+    </copy>
+  </target>
+
 </project>

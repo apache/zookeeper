@@ -24,13 +24,34 @@
   <property name="name" value="${ant.project.name}"/>
   <property name="root" value="${basedir}"/>
 
-  <property name="hadoop.root" location="${root}/../../../"/>
+  <property name="zk.root" location="${root}/../../../"/>
 
-  <property name="build.dir" location="${hadoop.root}/build/contrib/${name}"/>
+  <property name="src.dir"  location="${root}/src/java"/>
+  <property name="src.test" location="${root}/src/test"/>
+
+  <property name="build.dir" location="${zk.root}/build/contrib/${name}"/>
+  <property name="build.classes" location="${build.dir}/classes"/>
+  <property name="build.test" location="${build.dir}/test"/>
+
+  <property name="javac.deprecation" value="on"/>
+  <property name="javac.debug" value="on"/>
+
+  <property name="build.encoding" value="ISO-8859-1"/>
 
   <!-- to be overridden by sub-projects -->
   <target name="check-contrib"/>
   <target name="init-contrib"/>
+
+  <fileset id="lib.jars" dir="${root}" includes="lib/*.jar"/>
+
+  <path id="classpath">
+    <pathelement location="${build.classes}"/>
+    <fileset refid="lib.jars"/>
+    <pathelement location="${zk.root}/build/classes"/>
+    <fileset dir="${zk.root}/src/java/lib">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
 
   <!-- ====================================================== -->
   <!-- Stuff needed by all targets                            -->
@@ -38,32 +59,51 @@
   <target name="init" depends="check-contrib" unless="skip.contrib">
     <echo message="contrib: ${name}"/>
     <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.classes}"/>
+    <mkdir dir="${build.test}"/>
     <antcall target="init-contrib"/>
   </target>
 
   <!-- ====================================================== -->
   <!-- Compile a contrib's files                              -->
   <!-- ====================================================== -->
-  <target name="compile" depends="init">
-    <mkdir dir="${build.dir}"/>
-    <copy todir="${build.dir}">
-      <fileset dir="${basedir}">
-        <exclude name="**/VERSION"/>
-      </fileset>
-    </copy>
-    <exec executable="echo" output="${build.dir}/VERSION">
-      <arg line="${version}" />
-    </exec>
+  <target name="compile" depends="init" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+
+    <javac
+     encoding="${build.encoding}"
+     srcdir="${src.dir}"
+     includes="**/*.java"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     deprecation="${javac.deprecation}">
+      <classpath refid="classpath"/>
+    </javac>
   </target>
 
+  <!-- ====================================================== -->
+  <!-- Make a contrib's jar                                   -->
+  <!-- ====================================================== -->
+  <target name="jar" depends="compile" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+    <jar
+      jarfile="${build.dir}/zookeeper-${version}-${name}.jar"
+      basedir="${build.classes}"      
+    />
+  </target>
 
   <!-- ====================================================== -->
   <!-- Package a contrib's files                              -->
   <!-- ====================================================== -->
-  <target name="package" depends="compile">
+  <target name="package" depends="jar" unless="skip.contrib"> 
+    <echo message="contrib: ${name}"/>
+
     <mkdir dir="${dist.dir}/contrib/${name}"/>
-    <copy todir="${dist.dir}/contrib/${name}">
-      <fileset dir="${build.dir}"/>
+    <copy todir="${dist.dir}/contrib/${name}" includeEmptyDirs="false"
+          flatten="true">
+      <fileset dir="${build.dir}">
+        <include name="zookeeper-${version}-${name}.jar" />
+      </fileset>
     </copy>
   </target>
 
