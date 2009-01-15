@@ -32,9 +32,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.log4j.Logger;
-
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -241,85 +240,91 @@ public class Leader {
      * @throws InterruptedException
      */
     void lead() throws IOException, InterruptedException {
-        self.tick = 0;
-        zk.loadData();
-        zk.startup();
-        long epoch = self.getLastLoggedZxid() >> 32L;
-        epoch++;
-        zk.setZxid(epoch << 32L);
-        zk.dataTree.lastProcessedZxid = zk.getZxid();
-        lastProposed = zk.getZxid();
-        newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
-                null, null);
-        if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
-            LOG.warn("NEWLEADER proposal has Zxid of "
-                    + newLeaderProposal.packet.getZxid());
-        }
-        outstandingProposals.add(newLeaderProposal);
-        
-        // Start thread that waits for connection requests from 
-        // new followers.
-        cnxAcceptor = new FollowerCnxAcceptor();
-        cnxAcceptor.start();
-        
-        // We have to get at least a majority of servers in sync with
-        // us. We do this by waiting for the NEWLEADER packet to get
-        // acknowledged
-        newLeaderProposal.ackCount++;
-        while (newLeaderProposal.ackCount <= self.quorumPeers.size() / 2) {
-            if (self.tick > self.initLimit) {
-                // Followers aren't syncing fast enough,
-                // renounce leadership!
-                shutdown("Waiting for " + (self.quorumPeers.size() / 2)
-                        + " followers, only synced with "
-                        + newLeaderProposal.ackCount);
-                if (followers.size() >= self.quorumPeers.size() / 2) {
-                    LOG.warn("Enough followers present. "+
-                            "Perhaps the initTicks need to be increased.");
-                }
-                return;
-            }
-            Thread.sleep(self.tickTime);
-            self.tick++;
-        }
-        if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
-            self.cnxnFactory.setZooKeeperServer(zk);
-        }
-        // Everything is a go, simply start counting the ticks
-        // WARNING: I couldn't find any wait statement on a synchronized
-        // block that would be notified by this notifyAll() call, so
-        // I commented it out
-        //synchronized (this) {
-        //    notifyAll();
-        //}
-        // We ping twice a tick, so we only update the tick every other
-        // iteration
-        boolean tickSkip = true;
+        zk.registerJMX(new LeaderBean(this, zk), self.jmxLocalPeerBean);
 
-        while (true) {
-            Thread.sleep(self.tickTime / 2);
-            if (!tickSkip) {
+        try {
+            self.tick = 0;
+            zk.loadData();
+            zk.startup();
+            long epoch = self.getLastLoggedZxid() >> 32L;
+            epoch++;
+            zk.setZxid(epoch << 32L);
+            zk.dataTree.lastProcessedZxid = zk.getZxid();
+            lastProposed = zk.getZxid();
+            newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
+                    null, null);
+            if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
+                LOG.warn("NEWLEADER proposal has Zxid of "
+                        + newLeaderProposal.packet.getZxid());
+            }
+            outstandingProposals.add(newLeaderProposal);
+            
+            // Start thread that waits for connection requests from 
+            // new followers.
+            cnxAcceptor = new FollowerCnxAcceptor();
+            cnxAcceptor.start();
+            
+            // We have to get at least a majority of servers in sync with
+            // us. We do this by waiting for the NEWLEADER packet to get
+            // acknowledged
+            newLeaderProposal.ackCount++;
+            while (newLeaderProposal.ackCount <= self.quorumPeers.size() / 2) {
+                if (self.tick > self.initLimit) {
+                    // Followers aren't syncing fast enough,
+                    // renounce leadership!
+                    shutdown("Waiting for " + (self.quorumPeers.size() / 2)
+                            + " followers, only synced with "
+                            + newLeaderProposal.ackCount);
+                    if (followers.size() >= self.quorumPeers.size() / 2) {
+                        LOG.warn("Enough followers present. "+
+                                "Perhaps the initTicks need to be increased.");
+                    }
+                    return;
+                }
+                Thread.sleep(self.tickTime);
                 self.tick++;
             }
-            int syncedCount = 0;
-            // lock on the followers when we use it.
-            synchronized (followers) {
-                for (FollowerHandler f : followers) {
-                    if (f.synced()) {
-                        syncedCount++;
-                    }
-                    f.ping();
+            if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
+                self.cnxnFactory.setZooKeeperServer(zk);
+            }
+            // Everything is a go, simply start counting the ticks
+            // WARNING: I couldn't find any wait statement on a synchronized
+            // block that would be notified by this notifyAll() call, so
+            // I commented it out
+            //synchronized (this) {
+            //    notifyAll();
+            //}
+            // We ping twice a tick, so we only update the tick every other
+            // iteration
+            boolean tickSkip = true;
+    
+            while (true) {
+                Thread.sleep(self.tickTime / 2);
+                if (!tickSkip) {
+                    self.tick++;
                 }
+                int syncedCount = 0;
+                // lock on the followers when we use it.
+                synchronized (followers) {
+                    for (FollowerHandler f : followers) {
+                        if (f.synced()) {
+                            syncedCount++;
+                        }
+                        f.ping();
+                    }
+                }
+                if (!tickSkip && syncedCount < self.quorumPeers.size() / 2) {
+                    // Lost quorum, shutdown
+                    shutdown("Only " + syncedCount + " followers, need "
+                            + (self.quorumPeers.size() / 2));
+                    // make sure the order is the same!
+                    // the leader goes to looking
+                    return;
+                }
+                tickSkip = !tickSkip;
             }
-            if (!tickSkip && syncedCount < self.quorumPeers.size() / 2) {
-                // Lost quorum, shutdown
-                shutdown("Only " + syncedCount + " followers, need "
-                        + (self.quorumPeers.size() / 2));
-                // make sure the order is the same!
-                // the leader goes to looking
-                return;
-            }
-            tickSkip = !tickSkip;
+        } finally {
+            zk.unregisterJMX(this);
         }
     }
 

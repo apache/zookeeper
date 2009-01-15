@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SyncRequestProcessor;

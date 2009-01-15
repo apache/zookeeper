@@ -251,7 +251,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         }
         ReplyHeader hdr =
             new ReplyHeader(request.cxid, request.zxid, err.intValue());
-        ServerStats.getInstance().updateLatency(request.createTime);
+        zks.serverStats().updateLatency(request.createTime);
         try {
             request.cnxn.sendResponse(hdr, rsp, "response");
         } catch (IOException e) {

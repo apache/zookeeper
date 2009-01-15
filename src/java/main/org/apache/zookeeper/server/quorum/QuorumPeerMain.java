@@ -22,7 +22,10 @@ import static org.apache.zookeeper.server.ServerConfig.getClientPort;
 import java.io.File;
 import java.io.IOException;
 
+import javax.management.JMException;
+
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
@@ -74,6 +77,12 @@ public class QuorumPeerMain {
             System.exit(2);
         }
         if (!QuorumPeerConfig.isStandalone()) {
+            try {
+                ManagedUtil.registerLog4jMBeans();
+            } catch (JMException e) {
+                LOG.warn("Unable to register log4j JMX control", e);
+            }
+
             runPeer(new QuorumPeer.Factory() {
                 public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory) throws IOException {
                     QuorumPeer peer = new QuorumPeer();
@@ -102,7 +111,6 @@ public class QuorumPeerMain {
     
     public static void runPeer(QuorumPeer.Factory qpFactory) {
         try {
-            QuorumStats.registerAsConcrete();
             QuorumPeer self = qpFactory.create(qpFactory.createConnectionFactory());
             self.start();
             self.join();

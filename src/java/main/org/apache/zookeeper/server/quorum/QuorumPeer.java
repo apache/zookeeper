@@ -28,19 +28,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.InputArchive;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-
-import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getElectionAlg;
-import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getInitLimit;
-import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getServerId;
-import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getServers;
-import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getSyncLimit;
-import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getTickTime;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -71,6 +64,10 @@ import static org.apache.zookeeper.server.quorum.QuorumPeerConfig.getTickTime;
  */
 public class QuorumPeer extends Thread implements QuorumStats.Provider {
     private static final Logger LOG = Logger.getLogger(QuorumPeer.class);
+
+    QuorumBean jmxQuorumBean;
+    LocalPeerBean jmxLocalPeerBean;
+    LeaderElectionBean jmxLeaderElectionBean;
 
     /**
      * Create an instance of a quorum peer
@@ -151,7 +148,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     /**
      * The number of ticks that can pass between sending a request and getting
-     * an acknowledgement
+     * an acknowledgment
      */
     int syncLimit;
 
@@ -255,17 +252,18 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     NIOServerCnxn.Factory cnxnFactory;
     private FileTxnSnapLog logFactory = null;
 
+    private final QuorumStats quorumStats;
     
     public QuorumPeer() {
         super("QuorumPeer");
-        QuorumStats.getInstance().setStatsProvider(this);
+        quorumStats = new QuorumStats(this);
     }
     
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
             NIOServerCnxn.Factory cnxnFactory) throws IOException {
-        super("QuorumPeer");
+        this();
         this.cnxnFactory = cnxnFactory;
         this.quorumPeers = quorumPeers;
         this.electionType = electionType;
@@ -274,7 +272,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         this.initLimit = initLimit;
         this.syncLimit = syncLimit;        
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
-        QuorumStats.getInstance().setStatsProvider(this);
+    }
+    
+    QuorumStats quorumStats() {
+        return quorumStats;
     }
     
     @Override
@@ -318,9 +319,12 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      */
     public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
             File logDir, int clientPort, int electionAlg,
-            long myid, int tickTime, int initLimit, int syncLimit) throws IOException {
+            long myid, int tickTime, int initLimit, int syncLimit)
+        throws IOException
+    {
         this(quorumPeers, snapDir, logDir, electionAlg,
-                myid,tickTime, initLimit,syncLimit,new NIOServerCnxn.Factory(clientPort));
+                myid,tickTime, initLimit,syncLimit,
+                new NIOServerCnxn.Factory(clientPort));
     }
     
     public long getLastLoggedZxid(){
@@ -362,6 +366,14 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     }
 
     protected Election makeLEStrategy(){
+        LOG.debug("Running leader election protocol...");
+        try {
+            jmxLeaderElectionBean = new LeaderElectionBean();
+            MBeanRegistry.getInstance().register(jmxLeaderElectionBean, jmxLocalPeerBean);        
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+        }
+
         if(electionAlg==null)
             return new LeaderElection(this);
         return electionAlg;
@@ -387,52 +399,79 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     public void run() {
         setName("QuorumPeer:" + cnxnFactory.getLocalAddress());
 
-        /*
-         * Main loop
-         */
-        while (running) {
-            switch (getPeerState()) {
-            case LOOKING:
-                try {
-                    LOG.info("LOOKING");
-                    setCurrentVote(makeLEStrategy().lookForLeader());
-                } catch (Exception e) {
-                    LOG.warn("Unexpected exception",e);
-                    setPeerState(ServerState.LOOKING);
+        LOG.debug("Starting quorum peer");
+        try {
+            jmxQuorumBean = new QuorumBean(this);
+            MBeanRegistry.getInstance().register(jmxQuorumBean, null);
+            for(QuorumServer s: quorumPeers.values()){
+                ZKMBeanInfo p;
+                if (getId() == s.id) {
+                    p = jmxLocalPeerBean = new LocalPeerBean(this);
+                } else {
+                    p = new RemotePeerBean(s);
                 }
-                break;
-            case FOLLOWING:
-                try {
-                    LOG.info("FOLLOWING");
-                    setFollower(makeFollower(logFactory));
-                    follower.followLeader();
-                } catch (Exception e) {
-                    LOG.warn("Unexpected exception",e);
-                } finally {
-                    follower.shutdown();
-                    setFollower(null);
-                    setPeerState(ServerState.LOOKING);
-                }
-                break;
-            case LEADING:
-                LOG.info("LEADING");
-                try {
-                    setLeader(makeLeader(logFactory));
-                    leader.lead();
-                    setLeader(null);
-                } catch (Exception e) {
-                    LOG.warn("Unexpected exception",e);
-                } finally {
-                    if (leader != null) {
-                        leader.shutdown("Forcing shutdown");
-                        setLeader(null);
-                    }
-                    setPeerState(ServerState.LOOKING);
-                }
-                break;
+                MBeanRegistry.getInstance().register(p, jmxQuorumBean);
             }
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
         }
-        LOG.warn("QuorumPeer main thread exited");
+
+        try {
+            /*
+             * Main loop
+             */
+            while (running) {
+                switch (getPeerState()) {
+                case LOOKING:
+                    try {
+                        LOG.info("LOOKING");
+                        setCurrentVote(makeLEStrategy().lookForLeader());
+                    } catch (Exception e) {
+                        LOG.warn("Unexpected exception",e);
+                        setPeerState(ServerState.LOOKING);
+                    }
+                    break;
+                case FOLLOWING:
+                    try {
+                        LOG.info("FOLLOWING");
+                        setFollower(makeFollower(logFactory));
+                        follower.followLeader();
+                    } catch (Exception e) {
+                        LOG.warn("Unexpected exception",e);
+                    } finally {
+                        follower.shutdown();
+                        setFollower(null);
+                        setPeerState(ServerState.LOOKING);
+                    }
+                    break;
+                case LEADING:
+                    LOG.info("LEADING");
+                    try {
+                        setLeader(makeLeader(logFactory));
+                        leader.lead();
+                        setLeader(null);
+                    } catch (Exception e) {
+                        LOG.warn("Unexpected exception",e);
+                    } finally {
+                        if (leader != null) {
+                            leader.shutdown("Forcing shutdown");
+                            setLeader(null);
+                        }
+                        setPeerState(ServerState.LOOKING);
+                    }
+                    break;
+                }
+            }
+        } finally {
+            LOG.warn("QuorumPeer main thread exited");
+            try {
+                MBeanRegistry.getInstance().unregisterAll();
+            } catch (Exception e) {
+                LOG.warn("Failed to unregister with JMX", e);
+            }
+            jmxQuorumBean = null;
+            jmxLocalPeerBean = null;
+        }
     }
 
     public void shutdown() {
@@ -523,6 +562,13 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         this.initLimit = initLimit;
     }
 
+    /**
+     * Get the current tick
+     */
+    public int getTick() {
+        return tick;
+    }
+    
     /**
      * Get an instance of LeaderElection
      */

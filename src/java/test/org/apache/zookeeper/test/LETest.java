@@ -21,17 +21,15 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.HashMap;
-
-import org.apache.log4j.Logger;
-import org.apache.zookeeper.server.quorum.LeaderElection;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumStats;
-import org.apache.zookeeper.server.quorum.Vote;
-import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import java.util.Random;
 
 import junit.framework.TestCase;
+
+import org.apache.zookeeper.server.quorum.LeaderElection;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.Vote;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 public class LETest extends TestCase {
     volatile Vote votes[];
@@ -92,7 +90,6 @@ public class LETest extends TestCase {
         File tmpdir[] = new File[count];
         int port[] = new int[count];
         votes = new Vote[count];
-        QuorumStats.registerAsConcrete();
         for(int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", baseport+100+i)));
             tmpdir[i] = File.createTempFile("letest", "test");

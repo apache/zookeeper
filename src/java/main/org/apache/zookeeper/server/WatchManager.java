@@ -23,12 +23,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.proto.WatcherEvent;
 
 /**
  * This class manages watches. It allows watches to be associated with a string

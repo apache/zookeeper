@@ -20,6 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -84,5 +86,56 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
 
     public void setZxid(long zxid) {
         hzxid = zxid;
+    }
+
+    @Override
+    protected void registerJMX() {
+        // register with JMX
+        try {
+            jmxDataTreeBean = new DataTreeBean(dataTree);
+            MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+        }
+    }
+
+    public void registerJMX(LeaderBean leaderBean,
+            LocalPeerBean localPeerBean)
+    {
+        // register with JMX
+        try {
+            MBeanRegistry.getInstance().unregister(self.jmxLeaderElectionBean);
+            self.jmxLeaderElectionBean = null;
+
+            jmxServerBean = leaderBean;
+            MBeanRegistry.getInstance().register(leaderBean, localPeerBean);
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+        }
+    }
+
+    @Override
+    protected void unregisterJMX() {
+        // unregister from JMX
+        try {
+            if (jmxDataTreeBean != null) {
+                MBeanRegistry.getInstance().unregister(jmxDataTreeBean);
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to unregister with JMX", e);
+        }
+        jmxDataTreeBean = null;
+    }
+
+    protected void unregisterJMX(Leader leader) {
+        // unregister from JMX
+        try {
+            if (jmxServerBean != null) {
+                MBeanRegistry.getInstance().unregister(jmxServerBean);
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to unregister with JMX", e);
+        }
+        jmxServerBean = null;
     }
 }

@@ -18,43 +18,29 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.server.ServerStats;
-
-public class QuorumStats extends ServerStats {
+public class QuorumStats {
+    private final Provider provider;
     
     public interface Provider {
-        static public final String UNKNOWN_STATE="unknown";
-        static public final String LOOKING_STATE="leaderelection";
-        static public final String LEADING_STATE="leading";
-        static public final String FOLLOWING_STATE="following";
+        static public final String UNKNOWN_STATE = "unknown";
+        static public final String LOOKING_STATE = "leaderelection";
+        static public final String LEADING_STATE = "leading";
+        static public final String FOLLOWING_STATE = "following";
         
         public String[] getQuorumPeers();
         public String getServerState();
     }
-    private Provider qprovider=null;
     
-    static public QuorumStats getInstance(){
-        ServerStats i=ServerStats.getInstance();
-        assert i==null || i instanceof QuorumStats;
-        return (QuorumStats)i;
-    }
-    static public void registerAsConcrete(){
-        assert getInstance()==null;
-        setInstance(new QuorumStats());
-    }
-    protected QuorumStats(){}
-    
-    public void setStatsProvider(Provider newProvider){
-        qprovider=newProvider;
+    protected QuorumStats(Provider provider) {
+        this.provider = provider;
     }
     
-    @Override
     public String getServerState(){
-        return (qprovider!=null)?qprovider.getServerState():Provider.UNKNOWN_STATE;
+        return provider.getServerState();
     }
     
     public String[] getQuorumPeers(){
-        return (qprovider!=null)?qprovider.getQuorumPeers():new String[0];
+        return provider.getQuorumPeers();
     }
 
     @Override

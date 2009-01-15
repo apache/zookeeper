@@ -21,6 +21,8 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.io.RandomAccessFile;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
@@ -28,8 +30,6 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
-
-import junit.framework.TestCase;
 
 /**
  * this test checks that the server works 
@@ -43,17 +43,6 @@ public class InvalidSnapshotTest extends TestCase implements Watcher {
     ZooKeeperServer zks = null;
     private static final int CONNECTION_TIMEOUT = 3000;
     
-    @Override
-    protected void setUp() throws Exception {
-        ServerStats.registerAsConcrete();
-    }
-    
-    @Override
-    protected void tearDown() throws Exception {
-        ServerStats.unregister();
-    }
-    
-   
     /**
      * this test does the main work of testing 
      * an invalid snapshot

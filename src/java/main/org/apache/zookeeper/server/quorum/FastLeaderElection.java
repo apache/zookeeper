@@ -19,7 +19,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;

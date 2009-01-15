@@ -21,9 +21,11 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.io.IOException;
 
+import javax.management.JMException;
+
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.ZooKeeperServer.BasicDataTreeBuilder;
 
 /**
  * This class starts and runs a standalone ZooKeeperServer.
@@ -38,6 +40,12 @@ public class ZooKeeperServerMain {
      * @param args the port and data directory
      */
     public static void main(String[] args) {
+        try {
+            ManagedUtil.registerLog4jMBeans();
+        } catch (JMException e) {
+            LOG.warn("Unable to register log4j JMX control", e);
+        }
+
         try {
             ServerConfig.parse(args);
         } catch(Exception e) {
@@ -64,17 +72,17 @@ public class ZooKeeperServerMain {
         });
     }
 
-    public static void runStandalone(ZooKeeperServer.Factory factory) {
+    public static void runStandalone(ZooKeeperServer.Factory serverFactory) {
         try {
             // Note that this thread isn't going to be doing anything else,
             // so rather than spawning another thread, we will just call
             // run() in this thread.
-            ServerStats.registerAsConcrete();
-            ZooKeeperServer zk = factory.createServer();
+            ZooKeeperServer zk = serverFactory.createServer();
             zk.startup();
-            NIOServerCnxn.Factory t = factory.createConnectionFactory();
-            t.setZooKeeperServer(zk);
-            t.join();
+            NIOServerCnxn.Factory cnxnFactory =
+                serverFactory.createConnectionFactory();
+            cnxnFactory.setZooKeeperServer(zk);
+            cnxnFactory.join();
             if (zk.isRunning()) {
                 zk.shutdown();
             }
