@@ -110,15 +110,13 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                     }
                 }
             }
-        } catch (Exception e) {
-            LOG.error("Severe error, exiting",e);
+        } catch (Throwable t) {
+            LOG.fatal("Severe unrecoverable error, exiting", t);
             System.exit(11);
         }
-        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                                     "SyncRequestProcessor exited!");
+        LOG.info("SyncRequestProcessor exited!");
     }
 
-    @SuppressWarnings("unchecked")
     private void flush(LinkedList<Request> toFlush) throws IOException {
         if (toFlush.size() == 0)
             return;

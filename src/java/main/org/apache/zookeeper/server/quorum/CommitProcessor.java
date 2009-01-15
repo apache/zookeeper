@@ -144,10 +144,9 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                 }
             }
         } catch (Exception e) {
-            LOG.error("FIXMSG",e);
+            LOG.error("Unexpected exception causing exit", e);
         }
-        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                                 "CommitProcessor exited loop!");
+        LOG.info("CommitProcessor exited loop!");
     }
 
     synchronized public void commit(Request request) {

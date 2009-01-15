@@ -37,6 +37,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -44,6 +45,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -98,9 +100,6 @@ public class DataTree {
      */
     protected long aclIndex = 0;
     
-    /** A debug string * */
-    private String debug = "debug";
-
     @SuppressWarnings("unchecked")
     public HashSet<String> getEphemerals(long sessionId) {
         HashSet<String> retv = ephemerals.get(sessionId);
@@ -521,10 +520,10 @@ public class DataTree {
 
     public volatile long lastProcessedZxid = 0;
 
-    @SuppressWarnings("unchecked")
     public ProcessTxnResult processTxn(TxnHeader header, Record txn) {
         ProcessTxnResult rc = new ProcessTxnResult();
 
+        String debug = "";
         try {
             rc.clientId = header.getClientId();
             rc.cxid = header.getCxid();
@@ -557,6 +556,7 @@ public class DataTree {
                 break;
             case OpCode.setACL:
                 SetACLTxn setACLTxn = (SetACLTxn) txn;
+                debug = "Set ACL for  transaction for " + setACLTxn.getPath();
                 rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(),
                         setACLTxn.getVersion());
                 break;
@@ -573,8 +573,7 @@ public class DataTree {
             if (initialized
                     || (e.code() != Code.NONODE 
                             && e.code() != Code.NODEEXISTS)) {
-                LOG.warn(debug);
-                LOG.error("FIXMSG",e);
+                LOG.warn("Failed:" + debug, e);
             }
         }
         return rc;
@@ -582,9 +581,9 @@ public class DataTree {
 
     void killSession(long session, long zxid) {
         // the list is already removed from the ephemerals
-        // so we do not have to worry about synchronyzing on
+        // so we do not have to worry about synchronizing on
         // the list. This is only called from FinalRequestProcessor
-        // so there is no need for synchornization. The list is not
+        // so there is no need for synchronization. The list is not
         // changed here. Only create and delete change the list which
         // are again called from FinalRequestProcessor in sequence.
         HashSet<String> list = ephemerals.remove(session);
@@ -592,13 +591,15 @@ public class DataTree {
             for (String path : list) {
                 try {
                     deleteNode(path, zxid);
-                    ZooTrace.logTraceMessage(LOG,
-                                             ZooTrace.SESSION_TRACE_MASK,
-                                             "Deleting ephemeral node "
-                                             + path + " for session 0x"
-                                             + Long.toHexString(session));
-                } catch (KeeperException e) {
-                    LOG.error("FIXMSG",e);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Deleting ephemeral node " + path
+                                + " for session 0x"
+                                + Long.toHexString(session));
+                    }
+                } catch (NoNodeException e) {
+                    LOG.warn("Ignoring NoNodeException for path " + path
+                            + " while removing ephemeral for dead session 0x"
+                            + Long.toHexString(session));
                 }
             }
         }

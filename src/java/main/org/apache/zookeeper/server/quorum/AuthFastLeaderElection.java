@@ -234,7 +234,7 @@ public class AuthFastLeaderElection implements Election {
                         responseBuffer.clear();
                         mySocket.receive(responsePacket);
                     } catch (IOException e) {
-                        LOG.warn("Exception receiving: " + e.toString());
+                        LOG.warn("Ignoring exception receiving", e);
                     }
                     // Receive new message
                     if (responsePacket.getLength() != responseBytes.length) {
@@ -370,7 +370,7 @@ public class AuthFastLeaderElection implements Election {
                         break;
                     // Default case
                     default:
-                        LOG.warn("Received message of incorrect type");
+                        LOG.warn("Received message of incorrect type " + type);
                         break;
                     }
                 }
@@ -459,8 +459,7 @@ public class AuthFastLeaderElection implements Election {
                             mySocket.send(requestPacket);
                         }
                     } catch (IOException e) {
-                        LOG.warn("Exception while sending challenge: "
-                                + e.toString());
+                        LOG.warn("Exception while sending challenge: ", e);
                     }
 
                     break;
@@ -492,8 +491,7 @@ public class AuthFastLeaderElection implements Election {
                     try {
                         mySocket.send(requestPacket);
                     } catch (IOException e) {
-                        LOG.warn("Exception while sending challenge: "
-                                + e.toString());
+                        LOG.warn("Exception while sending challenge: ", e);
                     }
 
                     break;
@@ -545,8 +543,7 @@ public class AuthFastLeaderElection implements Election {
                                                 .containsKey(m.tag);
                                     }
                                 } catch (InterruptedException e) {
-                                    LOG.warn("Challenge request exception: "
-                                                    + e.toString());
+                                    LOG.warn("Challenge request exception: ", e);
                                 } 
                             }
 
@@ -574,8 +571,7 @@ public class AuthFastLeaderElection implements Election {
                                     l.wait((int) timeout);
                                 }
                             } catch (InterruptedException e) {
-                                LOG.warn("Ack exception: "
-                                                + e.toString());
+                                LOG.warn("Ack exception: ", e);
                             }
                             synchronized (acksqueue) {
                                 for (int i = 0; i < acksqueue.size(); ++i) {
@@ -598,8 +594,7 @@ public class AuthFastLeaderElection implements Election {
                                 }
                             }
                         } catch (IOException e) {
-                            LOG.warn("Sending exception: "
-                                            + e.toString());
+                            LOG.warn("Sending exception: ", e);
                             /*
                              * Do nothing, just try again
                              */
@@ -639,8 +634,7 @@ public class AuthFastLeaderElection implements Election {
                     try {
                         mySocket.send(requestPacket);
                     } catch (IOException e) {
-                        LOG.warn("Exception while sending ack: "
-                                + e.toString());
+                        LOG.warn("Exception while sending ack: ", e);
                     }
                     break;
                 }
@@ -781,7 +775,7 @@ public class AuthFastLeaderElection implements Election {
         proposedLeader = self.getId();
         proposedZxid = self.getLastLoggedZxid();
 
-        LOG.warn("Election tally");
+        LOG.info("Election tally");
         sendNotifications();
 
         /*
@@ -838,7 +832,7 @@ public class AuthFastLeaderElection implements Election {
                     } else if (termPredicate(recvset, proposedLeader,
                             proposedZxid)) {
                         // Otherwise, wait for a fixed amount of time
-                        LOG.warn("Passed predicate");
+                        LOG.info("Passed predicate");
                         Thread.sleep(finalizeWait);
 
                         // Notification probe = recvqueue.peek();

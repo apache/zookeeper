@@ -238,15 +238,16 @@ public class FinalRequestProcessor implements RequestProcessor {
         } catch (KeeperException e) {
             err = e.code();
         } catch (Exception e) {
-            LOG.warn("****************************** " + request);
+            // log at error level as we are returning a marshalling
+            // error to the user
+            LOG.error("Failed to process " + request, e);
             StringBuffer sb = new StringBuffer();
             ByteBuffer bb = request.request;
             bb.rewind();
             while (bb.hasRemaining()) {
                 sb.append(Integer.toHexString(bb.get() & 0xff));
             }
-            LOG.warn(sb.toString());
-            LOG.error("FIXMSG",e);
+            LOG.error("Dumping request buffer: 0x" + sb.toString());
             err = Code.MARSHALLINGERROR;
         }
         ReplyHeader hdr =

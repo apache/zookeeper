@@ -129,7 +129,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
                 if (set != null) {
                     for (Session s : set.sessions) {
                         sessionsById.remove(s.sessionId);
-                        LOG.warn("Expiring session 0x"
+                        LOG.info("Expiring session 0x"
                                 + Long.toHexString(s.sessionId));
                         expirer.expire(s.sessionId);
                     }
@@ -137,10 +137,9 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
                 nextExpirationTime += expirationInterval;
             }
         } catch (InterruptedException e) {
-            LOG.error("FIXMSG",e);
+            LOG.error("Unexpected interruption", e);
         }
-        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                                 "SessionTrackerImpl exited loop!");
+        LOG.info("SessionTrackerImpl exited loop!");
     }
 
     synchronized public boolean touchSession(long sessionId, int timeout) {

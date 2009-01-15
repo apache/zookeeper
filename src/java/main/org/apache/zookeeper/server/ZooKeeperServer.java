@@ -242,8 +242,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
                 baos.close();
             } catch (IOException e) {
-                // This really should be impossible
-                LOG.error("FIXMSG",e);
+                LOG.error("This really should be impossible", e);
             }
             QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid,
                     baos.toByteArray(), null);
@@ -259,7 +258,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         try {
             txnLogFactory.save(dataTree, sessionsWithTimeouts);
         } catch (IOException e) {
-            LOG.error("Severe error, exiting",e);
+            LOG.fatal("Severe unrecoverable error, exiting", e);
             // This is a severe error that we cannot recover from,
             // so we need to exit
             System.exit(10);
@@ -293,13 +292,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return System.currentTimeMillis();
     }
 
-    public void closeSession(long sessionId) throws InterruptedException {
-        ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                                 "ZooKeeperServer --- Session to be closed: 0x"
-                + Long.toHexString(sessionId));
+    private void close(long sessionId) {
+        submitRequest(null, sessionId, OpCode.closeSession, 0, null, null);
+    }
+    
+    public void closeSession(long sessionId) {
+        LOG.info("Closing session 0x" + Long.toHexString(sessionId));
+        
         // we do not want to wait for a session close. send it as soon as we
         // detect it!
-        submitRequest(null, sessionId, OpCode.closeSession, 0, null, null);
+        close(sessionId);
     }
 
     protected void killSession(long sessionId, long zxid) {
@@ -313,15 +315,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void expire(long sessionId) {
-        try {
-            ZooTrace.logTraceMessage(LOG,
-                     ZooTrace.SESSION_TRACE_MASK,
-                    "ZooKeeperServer --- Session to expire: 0x" 
-                     + Long.toHexString(sessionId));
-            closeSession(sessionId);
-        } catch (Exception e) {
-            LOG.error("FIXMSG",e);
-        }
+        LOG.info("Expiring session 0x" + Long.toHexString(sessionId));
+        close(sessionId);
     }
 
     void touch(ServerCnxn cnxn) throws IOException {
@@ -502,8 +497,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-    public void closeSession(ServerCnxn cnxn, RequestHeader requestHeader)
-            throws InterruptedException {
+    public void closeSession(ServerCnxn cnxn, RequestHeader requestHeader) {
         closeSession(cnxn.getSessionId());
     }
 
@@ -531,7 +525,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                         wait(1000);
                     }
                 } catch (InterruptedException e) {
-                    LOG.error("FIXMSG",e);
+                    LOG.warn("Unexpected interruption", e);
                 }
                 if (firstProcessor == null) {
                     throw new RuntimeException("Not started");
@@ -548,10 +542,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             } else {
                 LOG.warn("Dropping packet at server of type " + si.type);
-                // if unvalid packet drop the packet.
+                // if invalid packet drop the packet.
             }
         } catch (IOException e) {
-            LOG.error("FIXMSG",e);
+            LOG.warn("Ignoring unexpected exception", e);
         }
     }
 

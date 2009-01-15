@@ -118,7 +118,7 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
                 Record txn = SerializeUtils.deserializeTxn(ia, hdr);
                 if (logStream.readByte("EOR") != 'B') {
                     LOG.warn("Last transaction was partial.");
-                    throw new EOFException();
+                    throw new EOFException("Last transaction was partial.");
                 }
                 if (hdr.getZxid() <= highestZxid && highestZxid != 0) {
                     LOG.error(highestZxid + "(higestZxid) >= "
@@ -175,7 +175,7 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
             File[] logFiles) throws IOException {
         long zxid = 0;
         for (File f: logFiles) { 
-            LOG.warn("Processing log file: " + f);
+            LOG.info("Processing log file: " + f);
             InputStream logIs = 
                 new BufferedInputStream(new FileInputStream(f));
             zxid = playLog(BinaryInputArchive.getArchive(logIs));

@@ -85,10 +85,9 @@ public class FollowerRequestProcessor extends Thread implements
                 }
             }
         } catch (Exception e) {
-            LOG.error("FIXMSG",e);
+            LOG.error("Unexpected exception causing exit", e);
         }
-        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                                 "FollowerRequestProcessor exited loop!");
+        LOG.info("FollowerRequestProcessor exited loop!");
     }
 
     public void processRequest(Request request) {

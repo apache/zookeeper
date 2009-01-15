@@ -99,10 +99,9 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 pRequest(request);
             }
         } catch (InterruptedException e) {
-            LOG.error("FIXMSG",e);
+            LOG.error("Unexpected interruption", e);
         }
-        ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                "PrepRequestProcessor exited loop!");
+        LOG.info("PrepRequestProcessor exited loop!");
     }
 
     ChangeRecord getRecordForPath(String path) throws KeeperException.NoNodeException {
@@ -360,18 +359,22 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 txn = new ErrorTxn(e.code().intValue());
             }
         } catch (Exception e) {
-            LOG.error("*********************************" + request);
+            // log at error level as we are returning a marshalling
+            // error to the user
+            LOG.error("Failed to process " + request, e);
+            
             StringBuffer sb = new StringBuffer();
             ByteBuffer bb = request.request;
-            if(bb!=null){
+            if(bb != null){
                 bb.rewind();
                 while (bb.hasRemaining()) {
                     sb.append(Integer.toHexString(bb.get() & 0xff));
                 }
-            }else
+            } else {
                 sb.append("request buffer is null");
-            LOG.error(sb.toString());
-            LOG.error("Unexpected exception", e);
+            }
+            
+            LOG.error("Dumping request buffer: 0x" + sb.toString());
             if (txnHeader != null) {
                 txnHeader.setType(OpCode.error);
                 txn = new ErrorTxn(Code.MARSHALLINGERROR.intValue());

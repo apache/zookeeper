@@ -113,7 +113,7 @@ public class Leader {
             ss = new ServerSocket(self.getQuorumAddress().getPort());
         } catch (BindException e) {
             LOG.error("Couldn't bind to port "
-                    + self.getQuorumAddress().getPort());
+                    + self.getQuorumAddress().getPort(), e);
             throw e;
         }
         this.zk=zk;
@@ -254,8 +254,8 @@ public class Leader {
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
                     null, null);
             if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
-                LOG.warn("NEWLEADER proposal has Zxid of "
-                        + newLeaderProposal.packet.getZxid());
+                LOG.info("NEWLEADER proposal has Zxid of "
+                        + Long.toHexString(newLeaderProposal.packet.getZxid()));
             }
             outstandingProposals.add(newLeaderProposal);
             
@@ -354,7 +354,7 @@ public class Leader {
         try {
             ss.close();
         } catch (IOException e) {
-            LOG.error("FIXMSG",e);
+            LOG.warn("Ignoring unexpected exception during close",e);
         }
         synchronized (followers) {
             for (Iterator<FollowerHandler> it = followers.iterator(); it

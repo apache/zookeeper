@@ -154,7 +154,7 @@ public class Follower {
                             LOG.error("Unexpected exception",e);
                             throw e;
                         } else {
-                            LOG.warn("Unexpected exception",e);
+                            LOG.warn("Unexpected exception, tries="+tries,e);
                             sock = new Socket();
                             sock.setSoTimeout(self.tickTime * self.initLimit);
                         }
@@ -199,7 +199,7 @@ public class Follower {
                         boolean truncated=zk.getLogWriter().truncateLog(qp.getZxid());
                         if (!truncated) {
                             // not able to truncate the log
-                            LOG.error("Not able to truncate the log "
+                            LOG.fatal("Not able to truncate the log "
                                     + Long.toHexString(qp.getZxid()));
                             System.exit(13);
                         }
@@ -207,7 +207,7 @@ public class Follower {
                         zk.loadData();
                     }
                     else {
-                        LOG.error("Got unexpected packet from leader "
+                        LOG.fatal("Got unexpected packet from leader "
                                 + qp.getType() + " exiting ... " );
                         System.exit(13);
                     }
@@ -398,6 +398,6 @@ public class Follower {
             zk.shutdown();
 
         }
-        LOG.error("FIXMSG",new Exception("shutdown Follower"));
+        LOG.info("shutdown called", new Exception("shutdown Follower"));
     }
 }

@@ -42,7 +42,7 @@ public class SendAckRequestProcessor implements RequestProcessor {
             try {
                 follower.writePacket(qp);
             } catch (IOException e) {
-                LOG.error("FIXMSG",e);
+                LOG.warn("Ignoring unexpected exception during packet send", e);
             }
         }
     }
