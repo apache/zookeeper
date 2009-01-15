@@ -420,7 +420,7 @@ public class ZooKeeper {
         try {
             cnxn.close();
         } catch (IOException e) {
-            LOG.warn("Unexpected exception", e);
+            LOG.warn("Ignoring unexpected exception", e);
         }
 
         LOG.info("Session: 0x" + Long.toHexString(getSessionId()) + " closed");

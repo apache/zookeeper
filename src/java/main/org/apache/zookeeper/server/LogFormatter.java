@@ -65,7 +65,7 @@ public class LogFormatter {
                     + " " + TraceFormatter.op2String(hdr.getType()));
             if (logStream.readByte("EOR") != 'B') {
                 LOG.error("Last transaction was partial.");
-                throw new EOFException();
+                throw new EOFException("Last transaction was partial.");
             }
         }
     }

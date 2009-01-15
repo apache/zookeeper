@@ -105,6 +105,8 @@ IMPROVEMENTS:
    ZOOKEEPER-234. Eliminate using statics to initialize the sever. Should
    allow server to be more embeddable in OSGi enviorments. (phunt)
 
+   ZOOKEEPER-259. cleanup the logging levels used (use the correct level)
+   and messages generated. (phunt via breed)
 
 Release 3.0.0 - 2008-10-21
 

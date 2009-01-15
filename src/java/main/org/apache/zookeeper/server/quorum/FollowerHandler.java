@@ -280,7 +280,7 @@ public class FollowerHandler extends Thread {
                     try {
                         sendPackets();
                     } catch (InterruptedException e) {
-                        LOG.warn("Interrupted",e);
+                        LOG.warn("Unexpected interruption",e);
                     }
                 }
             }.start();
@@ -353,10 +353,11 @@ public class FollowerHandler extends Thread {
             }
         } catch (IOException e) {
             if (sock != null && !sock.isClosed()) {
-                LOG.error("FIXMSG",e);
+                LOG.error("Unexpected exception causing shutdown while sock "
+                        + "still open", e);
             }
         } catch (InterruptedException e) {
-            LOG.error("FIXMSG",e);
+            LOG.error("Unexpected exception causing shutdown", e);
         } finally {
             LOG.warn("******* GOODBYE " 
                     + (sock != null ? sock.getRemoteSocketAddress() : "<null>")
@@ -365,7 +366,7 @@ public class FollowerHandler extends Thread {
             try {
                 queuedPackets.put(proposalOfDeath);
             } catch (InterruptedException e) {
-                LOG.error("FIXMSG",e);
+                LOG.warn("Ignoring unexpected exception", e);
             }
             shutdown();
         }
@@ -377,7 +378,7 @@ public class FollowerHandler extends Thread {
                 sock.close();
             }
         } catch (IOException e) {
-            LOG.error("FIXMSG",e);
+            LOG.warn("Ignoring unexpected exception during socket close", e);
         }
         leader.removeFollowerHandler(this);
     }

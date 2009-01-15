@@ -129,7 +129,7 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         }
         long firstElementZxid = pendingTxns.element().zxid;
         if (firstElementZxid != zxid) {
-            LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
+            LOG.fatal("Committing zxid 0x" + Long.toHexString(zxid)
                     + " but next pending txn 0x"
                     + Long.toHexString(firstElementZxid));
             System.exit(12);
@@ -166,14 +166,15 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         try {
             super.shutdown();
         } catch (Exception e) {
-            LOG.error("FIXMSG",e);
+            LOG.warn("Ignoring unexpected exception during shutdown", e);
         }
         try {
             if (syncProcessor != null) {
                 syncProcessor.shutdown();
             }
         } catch (Exception e) {
-            LOG.error("FIXMSG",e);
+            LOG.warn("Ignoring unexpected exception in syncprocessor shutdown",
+                    e);
         }
     }
 

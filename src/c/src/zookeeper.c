@@ -1060,6 +1060,7 @@ static struct timeval get_timeval(int interval)
 
     rc = serialize_RequestHeader(oa, "header", &h);
     enter_critical(zh);
+    gettimeofday(&zh->last_ping, 0);
     rc = rc < 0 ? rc : add_void_completion(zh, h.xid, 0, 0);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -1118,6 +1119,7 @@ static struct timeval get_timeval(int interval)
         *tv = get_timeval(zh->recv_timeout/3);
         zh->last_recv = now;
         zh->last_send = now;
+        zh->last_ping = now;
     }
     if (zh->fd != -1) {
         int idle_recv = calculate_interval(&zh->last_recv, &now);
@@ -1495,8 +1497,9 @@ int zookeeper_process(zhandle_t *zh, int events)
             // fprintf(stderr, "Got %llx for %x\n", hdr.zxid, hdr.xid);
         }
         
-        LOG_DEBUG(("Got response xid=%x", hdr.xid));
         if (hdr.xid == WATCHER_EVENT_XID) {
+            LOG_DEBUG(("Processing WATCHER_EVENT"));
+
             struct WatcherEvent evt;
             int type;
             char *path;
@@ -1514,8 +1517,11 @@ int zookeeper_process(zhandle_t *zh, int events)
             deallocate_WatcherEvent(&evt);
             queue_completion(&zh->completions_to_process, c, 0);
         } else if (hdr.xid == SET_WATCHES_XID) {
+            LOG_DEBUG(("Processing SET_WATCHES"));
             free_buffer(bptr);
         } else if (hdr.xid == AUTH_XID){
+            LOG_DEBUG(("Processing AUTH_XID"));
+
             /* special handling for the AUTH response as it may come back 
              * out-of-band */
             auth_completion_func(hdr.err,zh);
@@ -1534,6 +1540,8 @@ int zookeeper_process(zhandle_t *zh, int events)
             assert(cptr);
             /* The requests are going to come back in order */
             if (cptr->xid != hdr.xid) {
+                LOG_DEBUG(("Processing unexpected or out-of-order response!"));
+
                 // received unexpected (or out-of-order) response
                 close_buffer_iarchive(&ia);
                 free_buffer(bptr);
@@ -1549,10 +1557,17 @@ int zookeeper_process(zhandle_t *zh, int events)
 
             if (cptr->c.void_result != SYNCHRONOUS_MARKER) {
                 if(hdr.xid == PING_XID){
+                    struct timeval now;
+                    gettimeofday(&now, 0);
+                    int elapsed = calculate_interval(&zh->last_ping, &now);
+                    LOG_DEBUG(("Got ping response in %d ms", elapsed));
+
                     // Nothing to do with a ping response
                     free_buffer(bptr);
                     destroy_completion_entry(cptr);
                 } else { 
+                    LOG_DEBUG(("Queueing asynchronous response"));
+
                     cptr->buffer = bptr;
                     queue_completion(&zh->completions_to_process, cptr, 0);
                 }
@@ -1562,7 +1577,8 @@ int zookeeper_process(zhandle_t *zh, int events)
                 sc->rc = rc;
                 switch(cptr->completion_type) {
                 case COMPLETION_DATA:
-                    LOG_DEBUG(("Calling COMPLETION_DATA for xid=%x rc=%d",cptr->xid,rc));
+                    LOG_DEBUG(("Calling COMPLETION_DATA for xid=%x rc=%d",
+                               cptr->xid, rc));
                     if (rc==0) {
                         struct GetDataResponse res;
                         int len;
@@ -1579,7 +1595,8 @@ int zookeeper_process(zhandle_t *zh, int events)
                     }
                     break;
                 case COMPLETION_STAT:
-                    LOG_DEBUG(("Calling COMPLETION_STAT for xid=%x rc=%d",cptr->xid,rc));
+                    LOG_DEBUG(("Calling COMPLETION_STAT for xid=%x rc=%d",
+                               cptr->xid, rc));
                     if (rc == 0) {
                         struct SetDataResponse res;
                         deserialize_SetDataResponse(ia, "reply", &res);
@@ -1588,7 +1605,8 @@ int zookeeper_process(zhandle_t *zh, int events)
                     }
                     break;
                 case COMPLETION_STRINGLIST:
-                    LOG_DEBUG(("Calling COMPLETION_STRINGLIST for xid=%x rc=%d",cptr->xid,rc));
+                    LOG_DEBUG(("Calling COMPLETION_STRINGLIST for xid=%x rc=%d",
+                               cptr->xid, rc));
                     if (rc == 0) {
                         struct GetChildrenResponse res;
                         deserialize_GetChildrenResponse(ia, "reply", &res);
@@ -1598,7 +1616,8 @@ int zookeeper_process(zhandle_t *zh, int events)
                     }
                     break;
                 case COMPLETION_STRING:
-                    LOG_DEBUG(("Calling COMPLETION_STRING for xid=%x rc=%d",cptr->xid,rc));
+                    LOG_DEBUG(("Calling COMPLETION_STRING for xid=%x rc=%d",
+                               cptr->xid, rc));
                     if (rc == 0) {
                         struct CreateResponse res;
                         int len;
@@ -1616,7 +1635,8 @@ int zookeeper_process(zhandle_t *zh, int events)
                     }
                     break;
                 case COMPLETION_ACLLIST:
-                    LOG_DEBUG(("Calling COMPLETION_ACLLIST for xid=%x rc=%d",cptr->xid,rc));
+                    LOG_DEBUG(("Calling COMPLETION_ACLLIST for xid=%x rc=%d",
+                               cptr->xid, rc));
                     if (rc == 0) {
                         struct GetACLResponse res;
                         deserialize_GetACLResponse(ia, "reply", &res);
@@ -1628,7 +1648,12 @@ int zookeeper_process(zhandle_t *zh, int events)
                     }
                     break;
                 case COMPLETION_VOID:
-                    LOG_DEBUG(("Calling COMPLETION_VOID for xid=%x rc=%d",cptr->xid,rc));
+                    LOG_DEBUG(("Calling COMPLETION_VOID for xid=%x rc=%d",
+                               cptr->xid, rc));
+                    break;
+                default:
+                    LOG_DEBUG(("UNKNOWN response type xid=%x rc=%d",
+                               cptr->xid, rc));
                     break;
                 }
                 notify_sync_completion(sc);

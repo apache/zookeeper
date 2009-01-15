@@ -211,7 +211,7 @@ public class ClientCnxn {
                     this.bb.putInt(this.bb.capacity() - 4);
                     this.bb.rewind();
                 } catch (IOException e) {
-                    LOG.warn("Unexpected exception",e);
+                    LOG.warn("Ignoring unexpected exception", e);
                 }
             }
             this.watchRegistration = watchRegistration;
@@ -429,7 +429,7 @@ public class ClientCnxn {
                     }
                 }
             } catch (InterruptedException e) {
-                LOG.warn("Event thread exiting due to interruption", e);
+                LOG.error("Event thread exiting due to interruption", e);
             }
             
             LOG.info("EventThread shut down");
@@ -484,6 +484,8 @@ public class ClientCnxn {
 
         boolean initialized;
 
+        private long lastPingSentNs;
+
         void readLength() throws IOException {
             int len = incomingBuffer.getInt();
             if (len < 0 || len >= 4096 * 1024) {
@@ -524,16 +526,19 @@ public class ClientCnxn {
             replyHdr.deserialize(bbia, "header");
             if (replyHdr.getXid() == -2) {
                 // -2 is the xid for pings
-                LOG
-                    .debug("Got ping sessionid:0x"
-                    + Long.toHexString(sessionId));
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Got ping response for sessionid:0x"
+                            + Long.toHexString(sessionId)
+                            + " after " 
+                            + ((System.nanoTime() - lastPingSentNs) / 1000000)
+                            + "ms");
+                }
                 return;
             }
             if (replyHdr.getXid() == -4) {
                 // -2 is the xid for AuthPacket
                 // TODO: process AuthPacket here
-                LOG
-                    .debug("Got auth sessionid:0x"
+                LOG.debug("Got auth sessionid:0x"
                         + Long.toHexString(sessionId));
                 return;
             }
@@ -732,6 +737,7 @@ public class ClientCnxn {
         }
 
         private void sendPing() {
+            lastPingSentNs = System.nanoTime();
             RequestHeader h = new RequestHeader(-2, OpCode.ping);
             queuePacket(h, null, null, null, null, null, null, null);
         }

@@ -166,6 +166,7 @@ struct _zhandle {
     watcher_fn watcher; /* the registered watcher */
     struct timeval last_recv; /* The time that the last message was received */
     struct timeval last_send; /* The time that the last message was sent */
+    struct timeval last_ping; /* The time that the last PING was sent */
     struct timeval next_deadline; /* The time of the next deadline */
     int recv_timeout; /* The maximum amount of time that can go by without 
      receiving anything from the zookeeper server */

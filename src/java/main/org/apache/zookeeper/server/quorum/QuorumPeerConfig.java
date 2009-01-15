@@ -96,9 +96,8 @@ public class QuorumPeerConfig extends ServerConfig {
                 long sid = Long.parseLong(key.substring(dot + 1));
                 String parts[] = value.split(":");
                 if ((parts.length != 2) && (parts.length != 3)) {
-                    LOG
-                            .error(value
-                                    + " does not have the form host:port or host:port:port");
+                    LOG.error(value
+                       + " does not have the form host:port or host:port:port");
                 }
                 InetSocketAddress addr = new InetSocketAddress(parts[0],
                         Integer.parseInt(parts[1]));

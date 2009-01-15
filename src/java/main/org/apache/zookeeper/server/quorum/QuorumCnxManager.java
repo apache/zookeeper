@@ -21,14 +21,15 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Enumeration;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Enumeration;
 
 import org.apache.log4j.Logger;
 
@@ -160,8 +161,7 @@ public class QuorumCnxManager {
             msgBuffer.position(0);
             s.write(msgBuffer);
         } catch (IOException e) {
-            LOG.warn("Exception reading or writing challenge: "
-                    + e.toString());
+            LOG.warn("Exception reading or writing challenge: ", e);
             return false;
         }
         
@@ -172,9 +172,8 @@ public class QuorumCnxManager {
                         sid + ", " + self.getId() + ")");
                 s.socket().close();
             } catch (IOException e) {
-                LOG.error("Error when closing socket or trying to reopen connection: "
-                                + e.toString());
-
+                LOG.warn("Ignoring exception when closing socket or trying to "
+                        + "reopen connection: ", e);
             }
         // Otherwise proceed with the connection
         } else {
@@ -294,7 +293,7 @@ public class QuorumCnxManager {
                 b.position(0);
                 recvQueue.put(new Message(b.duplicate(), sid));
             } catch (InterruptedException e) {
-                LOG.warn("Exception when loopbacking");
+                LOG.warn("Exception when loopbacking", e);
             }
         /*
          * Otherwise send to the corresponding thread to send. 
@@ -319,8 +318,8 @@ public class QuorumCnxManager {
                 connectOne(sid);
                 
             } catch (InterruptedException e) {
-                LOG.warn("Interrupted while waiting to put message in queue."
-                                + e.toString());
+                LOG.warn("Interrupted while waiting to put message in queue.",
+                        e);
             }
     }
     
@@ -339,9 +338,7 @@ public class QuorumCnxManager {
                 channel.socket().setTcpNoDelay(true);
                 initiateConnection(channel, sid);
             } catch (IOException e) {
-                LOG.warn("Cannot open channel to "
-                        + sid + "( " + e.toString()
-                        + ")");
+                LOG.warn("Cannot open channel to " + sid, e);
             }
         }
     }
@@ -379,11 +376,11 @@ public class QuorumCnxManager {
      */
     public void halt() {
         shutdown = true;
-        LOG.warn("Halting listener");
+        LOG.info("Halting listener");
         listener.halt();
         
         for(SendWorker sw: senderWorkerMap.values()){
-            LOG.warn("Halting sender: " + sw);
+            LOG.info("Halting sender: " + sw);
             sw.finish();
         }
     }
@@ -403,17 +400,17 @@ public class QuorumCnxManager {
             try {
                 ss = ServerSocketChannel.open();
                 int port = self.quorumPeers.get(self.getId()).electionAddr.getPort();
-                LOG.warn("My election bind port: " + port);
+                LOG.info("My election bind port: " + port);
                 ss.socket().bind(new InetSocketAddress(port));
 
                 while (!shutdown) {
                     SocketChannel client = ss.accept();
-                    client.socket().setTcpNoDelay(true);
+                    Socket sock = client.socket();
+                    sock.setTcpNoDelay(true);
                     
-                    //synchronized(senderWorkerMap){
-                    LOG.warn("Connection request");
+                    LOG.info("Connection request "
+                            + sock.getRemoteSocketAddress());
                     receiveConnection(client);
-                    //}
                 }
             } catch (IOException e) {
                 System.err.println("Listener.run: " + e.getMessage());
@@ -434,7 +431,6 @@ public class QuorumCnxManager {
      * soon as there is one available. If connection breaks, then opens a new
      * one.
      */
-
     class SendWorker extends Thread {
         // Send msgs to peer
         Long sid;
@@ -473,8 +469,8 @@ public class QuorumCnxManager {
                 try {
                     b = queueSendMap.get(sid).take();
                 } catch (InterruptedException e) {
-                    LOG.warn("Interrupted while waiting for message on queue ("
-                                    + e.toString() + ")");
+                    LOG.warn("Interrupted while waiting for message on queue",
+                            e);
                     continue;
                 }
 
@@ -493,8 +489,7 @@ public class QuorumCnxManager {
                      * If reconnection doesn't work, then put the
                      * message back to the beginning of the queue and leave.
                      */
-                    LOG.warn("Exception when using channel: " + sid
-                            + ")" + e.toString());
+                    LOG.warn("Exception when using channel: " + sid, e);
                     running = false;
                     synchronized (senderWorkerMap) {
                         recvWorker.finish();
@@ -509,7 +504,7 @@ public class QuorumCnxManager {
                     }
                 }
             }
-            LOG.warn("Leaving thread");
+            LOG.warn("Send worker leaving thread");
         }
     }
 
@@ -569,12 +564,11 @@ public class QuorumCnxManager {
                 }
 
             } catch (IOException e) {
-                LOG.warn("Connection broken: " + e.toString());
+                LOG.warn("Connection broken: ", e);
 
             } catch (InterruptedException e) {
                 LOG.warn("Interrupted while trying to add new "
-                        + "message to the reception queue (" + e.toString()
-                        + ")");
+                        + "message to the reception queue", e);
             }
         }
     }

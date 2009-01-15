@@ -514,7 +514,7 @@ public class FastLeaderElection implements Election {
             updateProposal(self.getId(), self.getLastLoggedZxid());
         }
         
-        LOG.warn("New election: " + proposedZxid);
+        LOG.info("New election: " + proposedZxid);
         sendNotifications();
 
         /*

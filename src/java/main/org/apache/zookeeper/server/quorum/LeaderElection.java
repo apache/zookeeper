@@ -97,13 +97,13 @@ public class LeaderElection implements Election  {
             }
         }
         result.winningCount = 0;
-        LOG.warn("Election tally: ");
+        LOG.info("Election tally: ");
         for (Entry<Vote, Integer> entry : countTable.entrySet()) {
             if (entry.getValue() > result.winningCount) {
                 result.winningCount = entry.getValue();
                 result.winner = entry.getKey();
             }
-            LOG.warn(entry.getKey().id + "\t-> " + entry.getValue());
+            LOG.info(entry.getKey().id + "\t-> " + entry.getValue());
         }
         return result;
     }
@@ -139,7 +139,7 @@ public class LeaderElection implements Election  {
             HashSet<Long> heardFrom = new HashSet<Long>();
             for (QuorumServer server : self.quorumPeers.values()) {
                 requestPacket.setSocketAddress(server.addr);
-                LOG.warn("Server address: " + server.addr);
+                LOG.info("Server address: " + server.addr);
                 try {
                     s.send(requestPacket);
                     responsePacket.setLength(responseBytes.length);
@@ -166,10 +166,9 @@ public class LeaderElection implements Election  {
                         votes.put(addr, vote);
                     //}
                 } catch (IOException e) {
-                    LOG.error("Error in looking for leader", e);
+                    LOG.warn("Ignoring exception while looking for leader", e);
                     // Errors are okay, since hosts may be
                     // down
-                    // ZooKeeperServer.logException(e);
                 }
             }
             ElectionResult result = countVotes(votes, heardFrom);
