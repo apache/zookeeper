@@ -19,47 +19,37 @@
 package org.apache.zookeeper.server;
 
 
+/**
+ * Basic Server Statistics
+ */
 public class ServerStats {
-    private static ServerStats instance=null;
     private long packetsSent;
     private long packetsReceived;
     private long maxLatency;
     private long minLatency = Long.MAX_VALUE;
     private long totalLatency = 0;
     private long count = 0;
-    
-    public interface Provider{
+
+    private final Provider provider;
+
+    public interface Provider {
         public long getOutstandingRequests();
         public long getLastProcessedZxid();
     }
-    private Provider provider=null;
-    private Object mutex=new Object();
     
-    static public ServerStats getInstance(){
-        return instance;
-    }
-    static public void registerAsConcrete() {
-        setInstance(new ServerStats());
-    }
-    static synchronized public void unregister() {
-        instance=null;
-    }
-    static synchronized protected void setInstance(ServerStats newInstance){
-        assert instance==null;
-        instance = newInstance;
-    }
-    protected ServerStats() {
-        // protected constructor
+    public ServerStats(Provider provider) {
+        this.provider = provider;
     }
     
     // getters
     synchronized public long getMinLatency() {
-        return (minLatency == Long.MAX_VALUE) ? 0 : minLatency;
+        return minLatency == Long.MAX_VALUE ? 0 : minLatency;
     }
 
     synchronized public long getAvgLatency() {
-        if(count!=0)
+        if (count != 0) {
             return totalLatency / count;
+        }
         return 0;
     }
 
@@ -68,15 +58,13 @@ public class ServerStats {
     }
 
     public long getOutstandingRequests() {
-        synchronized(mutex){
-            return (provider!=null)?provider.getOutstandingRequests():-1;
-        }
+        return provider.getOutstandingRequests();
     }
+    
     public long getLastProcessedZxid(){
-        synchronized(mutex){
-            return (provider!=null)?provider.getLastProcessedZxid():-1;
-        }
+        return provider.getLastProcessedZxid();
     }
+    
     synchronized public long getPacketsReceived() {
         return packetsReceived;
     }
@@ -85,7 +73,7 @@ public class ServerStats {
         return packetsSent;
     }
 
-    public String getServerState(){
+    public String getServerState() {
         return "standalone";
     }
     
@@ -100,15 +88,10 @@ public class ServerStats {
             sb.append("Outstanding: " + getOutstandingRequests() + "\n");
             sb.append("Zxid: 0x"+ Long.toHexString(getLastProcessedZxid())+ "\n");
         }
-        sb.append("Mode: "+getServerState()+"\n");
+        sb.append("Mode: " + getServerState() + "\n");
         return sb.toString();
     }
     // mutators
-    public void setStatsProvider(Provider zk){
-        synchronized(mutex){
-            provider=zk;
-        }
-    }
     synchronized void updateLatency(long requestCreateTime) {
         long latency = System.currentTimeMillis() - requestCreateTime;
         totalLatency += latency;
@@ -121,11 +104,13 @@ public class ServerStats {
         }
     }
     synchronized public void resetLatency(){
-        totalLatency=count=maxLatency=0;
-        minLatency=Long.MAX_VALUE;
+        totalLatency = 0;
+        count = 0;
+        maxLatency = 0;
+        minLatency = Long.MAX_VALUE;
     }
     synchronized public void resetMaxLatency(){
-        maxLatency=getMinLatency();
+        maxLatency = getMinLatency();
     }
     synchronized public void incrementPacketsReceived() {
         packetsReceived++;
@@ -134,7 +119,8 @@ public class ServerStats {
         packetsSent++;
     }
     synchronized public void resetRequestCounters(){
-        packetsReceived=packetsSent=0;
+        packetsReceived = 0;
+        packetsSent = 0;
     }
     
     synchronized public void reset() {

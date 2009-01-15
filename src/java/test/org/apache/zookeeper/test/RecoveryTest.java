@@ -35,7 +35,6 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Test;
@@ -50,11 +49,9 @@ public class RecoveryTest extends TestCase implements Watcher {
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
-        ServerStats.registerAsConcrete();
     }
     @Override
     protected void tearDown() throws Exception {
-        ServerStats.unregister();
         LOG.info("FINISHED " + getName());
     }
 

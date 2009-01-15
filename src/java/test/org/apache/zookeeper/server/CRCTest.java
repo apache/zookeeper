@@ -51,11 +51,9 @@ public class CRCTest extends TestCase implements Watcher{
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
-        ServerStats.registerAsConcrete();
     }
     @Override
     protected void tearDown() throws Exception {
-        ServerStats.unregister();
         LOG.info("FINISHED " + getName());
     }
     

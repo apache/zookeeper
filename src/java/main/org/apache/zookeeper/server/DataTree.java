@@ -44,7 +44,6 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
-import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -68,7 +67,8 @@ public class DataTree {
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
      */
-    private ConcurrentHashMap<String, DataNode> nodes = new ConcurrentHashMap<String, DataNode>();
+    private ConcurrentHashMap<String, DataNode> nodes =
+        new ConcurrentHashMap<String, DataNode>();
 
     private WatchManager dataWatches = new WatchManager();
 
@@ -212,6 +212,19 @@ public class DataTree {
         return dataWatches.size()+childWatches.size();
     }
 
+    /**
+     * Get the size of the nodes based on path and data length.
+     * @return size of the data
+     */
+    public long approximateDataSize() {
+        long result = 0;
+        for (Map.Entry<String, DataNode> entry : nodes.entrySet()) {
+            result += entry.getKey().length();
+            result += entry.getValue().data.length;
+        }
+        return result;
+    }
+    
     /**
      * This is a pointer to the root of the DataTree. It is the source of truth,
      * but we usually use the nodes hashmap to find nodes in the tree.

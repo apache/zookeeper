@@ -26,7 +26,6 @@ import java.util.HashMap;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumStats;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.After;
 import org.junit.Before;
@@ -61,7 +60,6 @@ public class QuorumTest extends ClientBase {
         LOG.info("Setup finished");
     }
     void startServers() throws IOException, InterruptedException {
-        QuorumStats.registerAsConcrete();
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
@@ -123,7 +121,6 @@ public class QuorumTest extends ClientBase {
             LOG.info(hp + " is no longer accepting client connections");
         }
 
-        QuorumStats.unregister();
         LOG.info("FINISHED " + getName());
     }
 

@@ -20,11 +20,13 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -173,5 +175,57 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         } catch (Exception e) {
             LOG.error("FIXMSG",e);
         }
+    }
+
+
+    @Override
+    protected void registerJMX() {
+        // register with JMX
+        try {
+            jmxDataTreeBean = new DataTreeBean(dataTree);
+            MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+        }
+    }
+
+    public void registerJMX(FollowerBean followerBean,
+            LocalPeerBean localPeerBean)
+    {
+        // register with JMX
+        try {
+            MBeanRegistry.getInstance().unregister(self.jmxLeaderElectionBean);
+            self.jmxLeaderElectionBean = null;
+
+            jmxServerBean = followerBean;
+            MBeanRegistry.getInstance().register(followerBean, localPeerBean);
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+        }
+    }
+
+    @Override
+    protected void unregisterJMX() {
+        // unregister from JMX
+        try {
+            if (jmxDataTreeBean != null) {
+                MBeanRegistry.getInstance().unregister(jmxDataTreeBean);
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to unregister with JMX", e);
+        }
+        jmxDataTreeBean = null;
+    }
+
+    protected void unregisterJMX(Follower follower) {
+        // unregister from JMX
+        try {
+            if (jmxServerBean != null) {
+                MBeanRegistry.getInstance().unregister(jmxServerBean);
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to unregister with JMX", e);
+        }
+        jmxServerBean = null;
     }
 }

@@ -41,6 +41,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -57,7 +58,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
  */
 public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
-    private static final Logger LOG;
+    protected static final Logger LOG;
     
     static {
         LOG = Logger.getLogger(ZooKeeperServer.class);
@@ -65,8 +66,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         Environment.logEnv("Server environment:", LOG);
     }
 
+    protected ZooKeeperServerBean jmxServerBean;
+    protected DataTreeBean jmxDataTreeBean;
+
     /**
-     * Create an instance of Zookeeper server
+     * Create an instance of ZooKeeper server
      */
     static public interface Factory {
         public ZooKeeperServer createServer() throws IOException;
@@ -105,20 +109,23 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected RequestProcessor firstProcessor;
     LinkedBlockingQueue<Long> sessionsToDie = new LinkedBlockingQueue<Long>();
     protected volatile boolean running;
+
     /**
      * This is the secret that we use to generate passwords, for the moment it
      * is more of a sanity check.
      */
     final private long superSecret = 0XB3415C00L;
+
     int requestsInProcess;
     List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
     private NIOServerCnxn.Factory serverCnxnFactory;
     private int clientPort;
-    
+
+    private final ServerStats serverStats;
+
     void removeCnxn(ServerCnxn cnxn) {
         dataTree.removeCnxn(cnxn);
     }
-
  
     /**
      * Creates a ZooKeeperServer instance. Nothing is setup, use the setX
@@ -128,10 +135,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @throws IOException
      */
     public ZooKeeperServer() {
-        ServerStats.getInstance().setStatsProvider(this);
+        serverStats = new ServerStats(this);
         treeBuilder = new BasicDataTreeBuilder();
     }
-
     
     /**
      * Creates a ZooKeeperServer instance. It sets everything up, but doesn't
@@ -142,14 +148,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             DataTreeBuilder treeBuilder) throws IOException {
-        this.txnLogFactory=txnLogFactory;
-        this.tickTime = tickTime;
+        serverStats = new ServerStats(this);
         this.treeBuilder = treeBuilder;
-        ServerStats.getInstance().setStatsProvider(this);
+
+        this.txnLogFactory = txnLogFactory;
+        this.tickTime = tickTime;
         
         LOG.info("Created server");
     }
 
+    public ServerStats serverStats() {
+        return serverStats;
+    }
+    
     /**
      * This constructor is for backward compatibility with the existing unit
      * test code.
@@ -324,12 +335,27 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    protected void registerJMX() {
+        // register with JMX
+        try {
+            jmxServerBean = new ZooKeeperServerBean(this);
+            MBeanRegistry.getInstance().register(jmxServerBean, null);
+            jmxDataTreeBean = new DataTreeBean(dataTree);
+            MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+        }
+    }
+    
     public void startup() throws IOException, InterruptedException {
         if (dataTree == null) {
             loadData();
         }
         createSessionTracker();
         setupRequestProcessors();
+
+        registerJMX();
+
         synchronized (this) {
             running = true;
             notifyAll();
@@ -367,6 +393,24 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (dataTree != null) {
             dataTree.clear();
         }
+
+        unregisterJMX();
+    }
+
+    protected void unregisterJMX() {
+        // unregister from JMX
+        try {
+            if (jmxDataTreeBean != null) {
+                MBeanRegistry.getInstance().unregister(jmxDataTreeBean);
+            }
+            if (jmxServerBean != null) {
+                MBeanRegistry.getInstance().unregister(jmxServerBean);
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to unregister with JMX", e);
+        }
+        jmxServerBean = null;
+        jmxDataTreeBean = null;
     }
 
     synchronized public void incInProcess() {

@@ -50,6 +50,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
@@ -65,6 +66,8 @@ import org.apache.zookeeper.server.auth.ProviderRegistry;
  */
 public class NIOServerCnxn implements Watcher, ServerCnxn {
     private static final Logger LOG = Logger.getLogger(NIOServerCnxn.class);
+
+    private ConnectionBean jmxConnectionBean;
 
     static public class Factory extends Thread {
         ZooKeeperServer zks;
@@ -113,7 +116,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         public ZooKeeperServer getZooKeeperServer() {
             return this.zks;
         }
- 
+
         public InetSocketAddress getLocalAddress(){
             return (InetSocketAddress)ss.socket().getLocalSocketAddress();
         }
@@ -294,13 +297,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         readLength(k);
                     } else if (!initialized) {
                         stats.packetsReceived++;
-                        ServerStats.getInstance().incrementPacketsReceived();
+                        zk.serverStats().incrementPacketsReceived();
                         readConnectRequest();
                         lenBuffer.clear();
                         incomingBuffer = lenBuffer;
                     } else {
                         stats.packetsReceived++;
-                        ServerStats.getInstance().incrementPacketsReceived();
+                        zk.serverStats().incrementPacketsReceived();
                         readRequest();
                         lenBuffer.clear();
                         incomingBuffer = lenBuffer;
@@ -378,7 +381,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         stats.packetsSent++;
                         /* We've sent the whole buffer, so drop the buffer */
                         sent -= bb.remaining();
-                        ServerStats.getInstance().incrementPacketsSent();
+                        zk.serverStats().incrementPacketsSent();
                         outgoingBuffers.remove();
                     }
                     // ZooLog.logTraceMessage(LOG,
@@ -423,7 +426,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             String scheme = authPacket.getScheme();
             AuthenticationProvider ap = ProviderRegistry.getProvider(scheme);
             if (ap == null
-                    || (ap.handleAuthentication(this, authPacket.getAuth()) 
+                    || (ap.handleAuthentication(this, authPacket.getAuth())
                             != KeeperException.Code.OK)) {
                 if (ap == null)
                     LOG.error("No authentication provider for scheme: "
@@ -526,7 +529,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             // We take advantage of the limited size of the length to look
             // for cmds. They are all 4-bytes which fits inside of an int
             if (len == ruokCmd) {
-                LOG.info("Processing ruok command from " 
+                LOG.info("Processing ruok command from "
                         + sock.socket().getRemoteSocketAddress());
 
                 sendBuffer(imok.duplicate());
@@ -534,11 +537,11 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == killCmd) {
-                LOG.info("Processing kill command from " 
+                LOG.info("Processing kill command from "
                         + sock.socket().getRemoteSocketAddress());
                 System.exit(0);
             } else if (len == getTraceMaskCmd) {
-                LOG.info("Processing getracemask command from " 
+                LOG.info("Processing getracemask command from "
                         + sock.socket().getRemoteSocketAddress());
                 long traceMask = ZooTrace.getTextTraceLevel();
                 ByteBuffer resp = ByteBuffer.allocate(8);
@@ -549,7 +552,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == setTraceMaskCmd) {
-                LOG.info("Processing settracemask command from " 
+                LOG.info("Processing settracemask command from "
                         + sock.socket().getRemoteSocketAddress());
                 incomingBuffer = ByteBuffer.allocate(8);
 
@@ -569,7 +572,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == dumpCmd) {
-                LOG.info("Processing dump command from " 
+                LOG.info("Processing dump command from "
                         + sock.socket().getRemoteSocketAddress());
                 if (zk == null) {
                     sendBuffer(ByteBuffer.wrap("ZooKeeper not active \n"
@@ -585,7 +588,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == reqsCmd) {
-                LOG.info("Processing reqs command from " 
+                LOG.info("Processing reqs command from "
                         + sock.socket().getRemoteSocketAddress());
                 StringBuffer sb = new StringBuffer();
                 sb.append("Requests:\n");
@@ -599,7 +602,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == statCmd) {
-                LOG.info("Processing stat command from " 
+                LOG.info("Processing stat command from "
                         + sock.socket().getRemoteSocketAddress());
                 StringBuffer sb = new StringBuffer();
                 if(zk!=null){
@@ -612,7 +615,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         }
                     }
                     sb.append("\n");
-                    sb.append(ServerStats.getInstance().toString());
+                    sb.append(zk.serverStats().toString());
                     sb.append("Node count: ").append(zk.dataTree.getNodeCount()).
                         append("\n");
                 }else
@@ -622,12 +625,12 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == enviCmd) {
-                LOG.info("Processing envi command from " 
+                LOG.info("Processing envi command from "
                         + sock.socket().getRemoteSocketAddress());
                 StringBuffer sb = new StringBuffer();
-                
+
                 List<Environment.Entry> env = Environment.list();
-                
+
                 sb.append("Environment:\n");
                 for(Environment.Entry e : env) {
                     sb.append(e.getKey()).append("=").append(e.getValue())
@@ -638,10 +641,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == srstCmd) {
-                LOG.info("Processing srst command from " 
+                LOG.info("Processing srst command from "
                         + sock.socket().getRemoteSocketAddress());
-                ServerStats stats = ServerStats.getInstance();
-                stats.reset();
+                zk.serverStats().reset();
 
                 sendBuffer(ByteBuffer.wrap("Stats reset.\n".getBytes()));
                 k.interestOps(SelectionKey.OP_WRITE);
@@ -707,6 +709,16 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
      * @see org.apache.zookeeper.server.ServerCnxnIface#close()
      */
     public void close() {
+        // unregister from JMX
+        try {
+            if(jmxConnectionBean != null){
+                MBeanRegistry.getInstance().unregister(jmxConnectionBean);
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to unregister with JMX", e);
+        }
+        jmxConnectionBean = null;
+
         if (closed) {
             return;
         }
@@ -812,16 +824,24 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         ReplyHeader h = new ReplyHeader(-1, -1L, 0);
         ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                                  "Deliver event " + event + " to 0x"
-                                 + Long.toHexString(this.sessionId) 
+                                 + Long.toHexString(this.sessionId)
                                  + " through " + this);
 
         // Convert WatchedEvent to a type that can be sent over the wire
         WatcherEvent e = event.getWrapper();
-        
+
         sendResponse(h, e, "notification");
     }
 
     public void finishSessionInit(boolean valid) {
+        // register with JMX
+        try {
+            jmxConnectionBean = new ConnectionBean(this, zk);
+            MBeanRegistry.getInstance().register(jmxConnectionBean, zk.jmxServerBean);
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+        }
+
         try {
             ConnectResponse rsp = new ConnectResponse(0, valid ? sessionTimeout
                     : 0, valid ? sessionId : 0, // send 0 if session is no
@@ -850,7 +870,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             close();
         }
     }
-
+    
     /*
      * (non-Javadoc)
      *

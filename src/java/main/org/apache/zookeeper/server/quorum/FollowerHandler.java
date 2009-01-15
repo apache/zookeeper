@@ -47,16 +47,17 @@ import org.apache.zookeeper.txn.TxnHeader;
 public class FollowerHandler extends Thread {
     private static final Logger LOG = Logger.getLogger(FollowerHandler.class);
 
-    public Socket sock;
+    public final Socket sock;
 
-    Leader leader;
+    final Leader leader;
 
     long tickOfLastAck;
 
     /**
      * The packets to be sent to the follower
      */
-    LinkedBlockingQueue<QuorumPacket> queuedPackets = new LinkedBlockingQueue<QuorumPacket>();
+    final LinkedBlockingQueue<QuorumPacket> queuedPackets =
+        new LinkedBlockingQueue<QuorumPacket>();
 
     private BinaryInputArchive ia;
 
@@ -71,11 +72,21 @@ public class FollowerHandler extends Thread {
         leader.addFollowerHandler(this);
         start();
     }
+    
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("FollowerHandler ").append(sock);
+        sb.append(" tickOfLastAck:").append(tickOfLastAck());
+        sb.append(" synced?:").append(synced());
+        sb.append(" queuedPacketLength:").append(queuedPackets.size());
+        return sb.toString();
+    }
 
     /**
      * If this packet is queued, the sender thread will exit
      */
-    QuorumPacket proposalOfDeath = new QuorumPacket();
+    final QuorumPacket proposalOfDeath = new QuorumPacket();
 
     /**
      * This method will use the thread to send packets added to the

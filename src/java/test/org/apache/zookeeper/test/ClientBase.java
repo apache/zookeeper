@@ -39,7 +39,6 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 
@@ -288,8 +287,6 @@ public abstract class ClientBase extends TestCase {
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
 
-        ServerStats.registerAsConcrete();
-
         tmpDir = createTmpDir(BASETEST);
         
         setupTestEnv();
@@ -321,8 +318,6 @@ public abstract class ClientBase extends TestCase {
             // FIXME see ZOOKEEPER-121 replace following line with previous
             recursiveDelete(tmpDir);
         }
-
-        ServerStats.unregister();
 
         LOG.info("FINISHED " + getName());
     }

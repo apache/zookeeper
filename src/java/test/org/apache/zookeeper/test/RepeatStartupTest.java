@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.IOException;
-
 import junit.framework.TestCase;
 
 import org.apache.zookeeper.CreateMode;
@@ -27,7 +25,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 /**
  * this test fails quorum peers 

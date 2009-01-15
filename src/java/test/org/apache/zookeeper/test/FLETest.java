@@ -25,18 +25,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
-import org.apache.zookeeper.server.quorum.QuorumCnxManager;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumStats;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-
-import junit.framework.TestCase;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 public class FLETest extends TestCase {
@@ -93,7 +89,6 @@ public class FLETest extends TestCase {
         successCount = 0;
         finalObj = new Object();
         
-        QuorumStats.registerAsConcrete();
         LOG.info("SetUp " + getName());
     }
 
