@@ -67,7 +67,7 @@
     <property name="docs.dir" value="${basedir}/docs"/>
     <property name="docs.src" value="${basedir}/src/docs"/>
     <property name="javadoc.link.java"
-              value="http://java.sun.com/j2se/1.5/docs/api/" />
+              value="http://java.sun.com/javase/6/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
 
     <property name="build.docs" value="${build.dir}/docs" />
