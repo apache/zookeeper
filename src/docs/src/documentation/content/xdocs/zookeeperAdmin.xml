@@ -102,7 +102,7 @@
       <section id="sc_requiredSoftware">
         <title>Required Software </title>
 
-        <para>ZooKeeper runs in Java, release 1.5 or greater (JDK 5 or
+        <para>ZooKeeper runs in Java, release 1.6 or greater (JDK 6 or
           greater).  It runs as an <emphasis>ensemble</emphasis> of
           ZooKeeper servers. Three ZooKeeper servers is the minimum
           recommended size for an ensemble, and we also recommend that
@@ -197,7 +197,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
           ZooKeeper:</para>
 
           <para><computeroutput>$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf \
-        org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</computeroutput></para>
+        org.apache.zookeeper.server.quorum.ManagedQuorumPeerMain zoo.cfg</computeroutput></para>
         </listitem>
 
         <listitem>

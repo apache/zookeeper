@@ -21,6 +21,13 @@
 # relative to the canonical path of this script.
 #
 
+# by default we allow non-local JMX connection
+# set this to true if you wish to allow only local connections
+if [ "x$JMXLOCALONLY" = "x" ]
+then 
+    JMXLOCALONLY=false
+fi
+
 ZOOBIN=`readlink -f "$0"`
 ZOOBINDIR=`dirname "$ZOOBIN"`
 
@@ -30,7 +37,7 @@ case $1 in
 start) 
     echo -n "Starting zookeeper ... "
     java  "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp $CLASSPATH $JVMFLAGS org.apache.zookeeper.server.quorum.QuorumPeerMain $ZOOCFG &
+    -cp $CLASSPATH -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=$JMXLOCALONLY $JVMFLAGS org.apache.zookeeper.server.quorum.ManagedQuorumPeerMain $ZOOCFG &
     echo STARTED
     ;;
 stop) 

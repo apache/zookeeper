@@ -108,6 +108,8 @@ IMPROVEMENTS:
    ZOOKEEPER-259. cleanup the logging levels used (use the correct level)
    and messages generated. (phunt via breed)
 
+   ZOOKEEPER-210. Require Java 6. (phunt via breed)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
