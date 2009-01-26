@@ -68,6 +68,9 @@ BUGFIXES:
 
   ZOOKEEPER-273. Zookeeper c client build should not depend on CPPUNIT. (pat
 and runping via mahadev)
+
+ ZOOKEEPER-268.  tostring on jute generated objects can cause NPE. (pat via
+mahadev)
  
 IMPROVEMENTS:
    
