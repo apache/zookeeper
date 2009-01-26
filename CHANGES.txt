@@ -65,6 +65,9 @@ BUGFIXES:
  
   ZOOKEEPER-265. remove (deprecate) unused NoSyncConnected from KeeperState.
   (phunt via mahadev)
+
+  ZOOKEEPER-273. Zookeeper c client build should not depend on CPPUNIT. (pat
+and runping via mahadev)
  
 IMPROVEMENTS:
    
