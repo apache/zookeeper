@@ -19,20 +19,17 @@
 package org.apache.jute;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.CharacterCodingException;
 
 /**
- * Various utility functions for Hadooop record I/O runtime.
+ * Various utility functions for Hadoop record I/O runtime.
  * @author Milind Bhandarkar
  */
 public class Utils {
     
     /** Cannot create a new instance of Utils */
     private Utils() {
+        super();
     }
    
     /**
@@ -56,7 +53,7 @@ public class Utils {
         return true;
     }
     
-    public static final char[] hexchars = { '0', '1', '2', '3', '4', '5',
+    private static final char[] hexchars = { '0', '1', '2', '3', '4', '5',
                                             '6', '7', '8', '9', 'A', 'B',
                                             'C', 'D', 'E', 'F' };
     /**
@@ -64,8 +61,10 @@ public class Utils {
      * @param s 
      * @return 
      */
-    static String toXMLString(String t) {
-        String s = t.toString();
+    static String toXMLString(String s) {
+        if (s == null)
+            return "";
+
         StringBuffer sb = new StringBuffer();
         for (int idx = 0; idx < s.length(); idx++) {
           char ch = s.charAt(idx);
@@ -197,9 +196,12 @@ public class Utils {
      * @return 
      */
     static String toXMLBuffer(byte barr[]) {
+        if (barr == null || barr.length == 0) {
+            return "";
+        }
         StringBuffer sb = new StringBuffer(2*barr.length);
         for (int idx = 0; idx < barr.length; idx++) {
-            sb.append(Integer.toHexString((int)barr[idx]));
+            sb.append(Integer.toHexString(barr[idx]));
         }
         return sb.toString();
     }
@@ -231,10 +233,13 @@ public class Utils {
      * @return 
      */
     static String toCSVBuffer(byte barr[]) {
-        StringBuffer sb = new StringBuffer(barr.length+1);
+        if (barr == null || barr.length == 0) {
+            return "";
+        }
+        StringBuffer sb = new StringBuffer(barr.length + 1);
         sb.append('#');
         for(int idx = 0; idx < barr.length; idx++) {
-            sb.append(Integer.toHexString((int)barr[idx]));
+            sb.append(Integer.toHexString(barr[idx]));
         }
         return sb.toString();
     }
