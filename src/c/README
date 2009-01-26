@@ -53,6 +53,8 @@ tar downloaded from Apache please skip to step 2.
                       be built, enabled by default
    --disable-static   do not build static libraries, enabled by default
    --disable-shared   do not build shared libraries, enabled by default
+   --without-cppunit  do not build the test library, enabled by default.
+
 5) do a "make" or "make install" to build the libraries and install them. 
    Alternatively, you can also build and run a unit test suite (and
    you probably should).  Please make sure you have cppunit-1.10.x or
