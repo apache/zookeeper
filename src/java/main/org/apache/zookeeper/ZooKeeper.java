@@ -317,7 +317,24 @@ public class ZooKeeper {
     protected final ClientCnxn cnxn;
 
     /**
-     * @see ZooKeeper(String, int, Watcher, long, byte[])
+     * To create a client(ZooKeeper) object, the application needs to pass a
+     * string containing a comma separated list of host:port pairs, each 
+     * corresponding to a ZooKeeper server.
+     * <p>
+     * The client object will pick an arbitrary server and try to connect to it.
+     * If failed, it will try the next one in the list, until a connection is
+     * established, or all the servers have been tried.
+     *
+     * @param host
+     *            comma separated host:port pairs, each corresponding to a zk
+     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
+     * @param sessionTimeout
+     *            session timeout in milliseconds
+     * @param watcher
+     *            a watcher object which will be notified of state changes, may
+     *            also be notified for node events
+     *
+     * @throws IOException in cases of network failure
      */
     public ZooKeeper(String host, int sessionTimeout, Watcher watcher)
             throws IOException {
@@ -330,8 +347,8 @@ public class ZooKeeper {
 
     /**
      * To create a client(ZooKeeper) object, the application needs to pass a
-     * string containing a list of host:port pairs, each corresponding to a
-     * ZooKeeper server.
+     * string containing a comma separated list of host:port pairs, each
+     * corresponding to a ZooKeeper server.
      * <p>
      * The client object will pick an arbitrary server and try to connect to it.
      * If failed, it will try the next one in the list, until a connection is
@@ -345,7 +362,7 @@ public class ZooKeeper {
      *
      * @param host
      *            comma separated host:port pairs, each corresponding to a zk
-     *            server. eg. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
+     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -356,8 +373,7 @@ public class ZooKeeper {
      * @param sessionPasswd
      *            password for this session
      *
-     * @throws IOException
-     *             in cases of network failure
+     * @throws IOException in cases of network failure
      */
     public ZooKeeper(String host, int sessionTimeout, Watcher watcher,
             long sessionId, byte[] sessionPasswd) throws IOException {

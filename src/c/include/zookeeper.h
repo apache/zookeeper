@@ -280,8 +280,8 @@ typedef void (*watcher_fn)(zhandle_t *zh, int type,
  * to that handle. Session establishment is asynchronous, meaning that the
  * session should not be considered established until (and unless) an
  * event of state ZOO_CONNECTED_STATE is received.
- * \param host the host name to connect to. This may be a comma separated list
- *   of different hosts.
+ * \param host comma separated host:port pairs, each corresponding to a zk
+ *   server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
  * \param fn the global watcher callback function. When notifications are
  *   triggered this function will be invoked.
  * \param clientid the id of a previously established session that this
