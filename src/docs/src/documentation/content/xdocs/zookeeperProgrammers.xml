@@ -377,6 +377,16 @@
     the tickTime (as set in the server configuration) and a maximum of
     20 times the tickTime.</para>
 
+    <para>Another parameter to the ZooKeeper session establishment
+    call is the default watcher. Watchers are notified when any state
+    change occurs in the client. For example if the client loses
+    connectivity to the server the client will be notified, or if the
+    client's session expires, etc... This watcher should consider the
+    initial state to be disconnected (i.e. before any state changes
+    events are sent to the watcher by the client lib). In the case of
+    a new connection, the first event sent to the watcher is typically
+    the session connection event.</para>
+
     <para>The session is kept alive by requests sent by the client. If
     the session is idle for a period of time that would timeout the
     session, the client will send a PING request to keep the session

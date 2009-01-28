@@ -45,6 +45,8 @@ import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.Watcher.Event;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.ZooKeeper.WatchRegistration;
@@ -307,6 +309,12 @@ public class ClientCnxn {
         private final LinkedBlockingQueue<Object> waitingEvents = 
             new LinkedBlockingQueue<Object>();
 
+        /** This is really the queued session state until the event
+         * thread actually processes the event and hands it to the watcher.
+         * But for all intents and purposes this is the state.
+         */
+        private volatile KeeperState sessionState = KeeperState.Disconnected;
+
         EventThread() {
             super(currentThread().getName() + "-EventThread");
             setUncaughtExceptionHandler(uncaughtExceptionHandler);
@@ -314,6 +322,12 @@ public class ClientCnxn {
         }
         
         public void queueEvent(WatchedEvent event) {
+            if (event.getType() == EventType.None 
+                    && sessionState == event.getState()) {
+                return;
+            }
+            sessionState = event.getState();
+
             // materialize the watchers based on the event
             WatcherSetEventPair pair = new WatcherSetEventPair(
                     watcher.materialize(event.getState(), event.getType(),

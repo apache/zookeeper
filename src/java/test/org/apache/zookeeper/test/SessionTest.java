@@ -22,6 +22,7 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +33,8 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
@@ -88,11 +91,16 @@ public class SessionTest extends TestCase implements Watcher {
         throws IOException, InterruptedException
     {
         CountdownWatcher watcher = new CountdownWatcher();
+        return createClient(CONNECTION_TIMEOUT, watcher);
+    }
+
+    private DisconnectableZooKeeper createClient(int timeout,
+            CountdownWatcher watcher)
+        throws IOException, InterruptedException
+    {
         DisconnectableZooKeeper zk =
-                new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
-        if(!watcher.clientConnected.await(CONNECTION_TIMEOUT,
-                TimeUnit.MILLISECONDS))
-        {
+                new DisconnectableZooKeeper(HOSTPORT, timeout, watcher);
+        if(!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS)) {
             fail("Unable to connect to server");
         }
 
@@ -169,6 +177,49 @@ public class SessionTest extends TestCase implements Watcher {
         LOG.info("before close zk with session id 0x"
                 + Long.toHexString(zk.getSessionId()) + "!");
         zk.close();
+    }
+
+    @Test
+    /**
+     * This test makes sure that duplicate state changes are not communicated
+     * to the client watcher. For example we should not notify state as
+     * "disconnected" if the watch has already been disconnected. In general
+     * we don't consider a dup state notification if the event type is
+     * not "None" (ie non-None communicates an event).
+     */
+    public void testSessionStateNoDupStateReporting()
+        throws IOException, InterruptedException, KeeperException
+    {
+        final int TIMEOUT = 3000;
+        DupWatcher watcher = new DupWatcher();
+        ZooKeeper zk = createClient(TIMEOUT, watcher);
+
+        // shutdown the server
+        serverFactory.shutdown();
+
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            // ignore
+        }
+
+        // verify that the size is just 2 - ie connect then disconnect
+        // if the client attempts reconnect and we are not handling current
+        // state correctly (ie eventing on duplicate disconnects) then we'll
+        // see a disconnect for each failed connection attempt
+        assertEquals(2, watcher.states.size());
+
+        zk.close();
+    }
+    
+    private class DupWatcher extends CountdownWatcher {
+        public LinkedList<WatchedEvent> states = new LinkedList<WatchedEvent>();
+        public void process(WatchedEvent event) {
+            super.process(event);
+            if (event.getType() == EventType.None) {
+                states.add(event);
+            }
+        }
     }
 
     public void process(WatchedEvent event) {

@@ -371,7 +371,7 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 <a name="N10066"></a><a name="sc_requiredSoftware"></a>
 <h4>Required Software </h4>
-<p>ZooKeeper runs in Java, release 1.5 or greater (JDK 5 or
+<p>ZooKeeper runs in Java, release 1.6 or greater (JDK 6 or
           greater).  It runs as an <em>ensemble</em> of
           ZooKeeper servers. Three ZooKeeper servers is the minimum
           recommended size for an ensemble, and we also recommend that
@@ -482,7 +482,7 @@ server.3=zoo3:2888:3888</span>
           
 <p>
 <span class="codefrag computeroutput">$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf \
-        org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg</span>
+        org.apache.zookeeper.server.quorum.ManagedQuorumPeerMain zoo.cfg</span>
 </p>
         
 </li>
