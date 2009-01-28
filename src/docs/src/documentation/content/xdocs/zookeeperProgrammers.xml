@@ -358,6 +358,16 @@
   <section id="ch_zkSessions">
     <title>ZooKeeper Sessions</title>
 
+    <para>To create a client session the application code must provide
+    a string containing a comma separated list of host:port pairs,
+    each corresponding to a ZooKeeper server (e.g. "127.0.0.1:4545" or
+    "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"). The ZooKeeper
+    client library will pick an arbitrary server and try to connect to
+    it. If this connection fails, or if the client becomes
+    disconnected from the server for any reason, the client will
+    automatically try the next server in the list, until a connection
+    is (re-)established.</para>
+
     <para>When a client gets a handle to the ZooKeeper service,
     ZooKeeper creates a ZooKeeper session, represented as a 64-bit
     number, that it assigns to the client. If the client connects to a

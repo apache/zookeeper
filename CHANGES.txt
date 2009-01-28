@@ -72,6 +72,8 @@ and runping via mahadev)
   ZOOKEEPER-268.  tostring on jute generated objects can cause NPE. (pat via mahadev)
 
   ZOOKEEPER-267.  java client incorrectly generating syncdisconnected event when in disconnected state. (pat via breed)
+
+  ZOOKEEPER-263. document connection host:port as comma separated list in forrest docs (pat via breed)
  
 IMPROVEMENTS:
    
