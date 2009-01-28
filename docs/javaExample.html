@@ -231,11 +231,11 @@ document.write("Last Published: " + document.lastModified);
 </li>
 		
 <li> 
-<p> a znode, by name</p>
+<p>then name of a znode - the one to be watched</p>
 </li>
 		
 <li>
-<p> an executable with arguments.</p>
+<p>an executable with arguments.</p>
 </li>
 </ul>
 </li>
@@ -319,8 +319,7 @@ document.write("Last Published: " + document.lastModified);
     </p>
 <pre class="code">
 public class Executor implements Watcher, Runnable, DataMonitor.DataMonitorListener {
-...
-    </pre>
+...</pre>
 <p>The <strong>Watcher</strong> interface is defined by the ZooKeeper Java API.
     ZooKeeper uses it to communicate back to its container. It supports only one method, <span class="codefrag command">process()</span>, and ZooKeeper uses 
     it to communciates generic events that the main thread would be intersted in, such as the state of the ZooKeeper connection or the ZooKeeper session.The Executor 
@@ -516,8 +515,10 @@ the connection comes back up.
             // connection has changed
             switch (event.getState()) {
             case SyncConnected:
-                // Everything is happy. Lets kick things off
-                // again by checking the existence of the znode
+                // In this particular example we don't need to do anything
+                // here - watches are automatically re-registered with 
+                // server and any watches triggered while the client was 
+                // disconnected will be delivered (in order of course)
                 break;
             case Expired:
                 // It's all over
@@ -537,9 +538,14 @@ the connection comes back up.
     }
 </pre>
 <p>
-If the client-side ZooKeeper libraries can reestablish the communication channel to ZooKeeper, DataMonitor simply kicks
-everything off again with the call to <span class="codefrag command">ZooKeeper.exists()</span>. 
-If it gets an event for a znode, it calls <span class="codefrag command">ZooKeeper.exists()</span> to find out what has changed.
+If the client-side ZooKeeper libraries can re-establish the
+communication channel (SyncConnected event) to ZooKeeper before
+session expiration (Expired event) all of the session's watches will
+automatically be re-established with the server (auto-reset of watches
+is new in ZooKeeper 3.0.0). See <a href="zookeeperProgrammers.html#ch_zkWatches">ZooKeeper Watches</a>
+in the programmer guide for more on this. A bit lower down in this
+function, when DataMonitor gets an event for a znode, it calls
+<span class="codefrag command">ZooKeeper.exists()</span> to find out what has changed.
 </p>
 </div>
 
@@ -779,8 +785,10 @@ public class DataMonitor implements Watcher, StatCallback {
             // connection has changed
             switch (event.getState()) {
             case SyncConnected:
-                // Everything is happy. Lets kick things off
-                // again by checking the existence of the znode
+                // In this particular example we don't need to do anything
+                // here - watches are automatically re-registered with 
+                // server and any watches triggered while the client was 
+                // disconnected will be delivered (in order of course)
                 break;
             case Expired:
                 // It's all over

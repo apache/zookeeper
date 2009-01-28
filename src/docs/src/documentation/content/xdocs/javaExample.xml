@@ -54,8 +54,8 @@
     <itemizedlist><listitem><para>It takes as parameters:</para>
     	<itemizedlist>
 		<listitem><para>the address of the ZooKeeper service</para></listitem>
-		<listitem> <para> a znode, by name</para></listitem>
-		<listitem><para> an executable with arguments.</para></listitem></itemizedlist></listitem>
+		<listitem> <para>then name of a znode - the one to be watched</para></listitem>
+		<listitem><para>an executable with arguments.</para></listitem></itemizedlist></listitem>
 	<listitem><para>It fetches the data associated with the znode and starts the executable.</para></listitem>
 	<listitem><para>If the znode changes, the client refetches the contents and restarts the executable.</para></listitem>
 	<listitem><para>If the znode disappears, the client kills the executable.</para></listitem></itemizedlist>
@@ -134,8 +134,7 @@
     
     <programlisting>
 public class Executor implements Watcher, Runnable, DataMonitor.DataMonitorListener {
-...
-    </programlisting>
+...</programlisting>
     
     <para>The <emphasis role="bold">Watcher</emphasis> interface is defined by the ZooKeeper Java API.
     ZooKeeper uses it to communicate back to its container. It supports only one method, <command>process()</command>, and ZooKeeper uses 
@@ -334,8 +333,10 @@ the connection comes back up.
             // connection has changed
             switch (event.getState()) {
             case SyncConnected:
-                // Everything is happy. Lets kick things off
-                // again by checking the existence of the znode
+                // In this particular example we don't need to do anything
+                // here - watches are automatically re-registered with 
+                // server and any watches triggered while the client was 
+                // disconnected will be delivered (in order of course)
                 break;
             case Expired:
                 // It's all over
@@ -355,9 +356,15 @@ the connection comes back up.
     }
 </programlisting>
 <para>
-If the client-side ZooKeeper libraries can reestablish the communication channel to ZooKeeper, DataMonitor simply kicks
-everything off again with the call to <command>ZooKeeper.exists()</command>. 
-If it gets an event for a znode, it calls <command>ZooKeeper.exists()</command> to find out what has changed.
+If the client-side ZooKeeper libraries can re-establish the
+communication channel (SyncConnected event) to ZooKeeper before
+session expiration (Expired event) all of the session's watches will
+automatically be re-established with the server (auto-reset of watches
+is new in ZooKeeper 3.0.0). See <ulink
+url="zookeeperProgrammers.html#ch_zkWatches">ZooKeeper Watches</ulink>
+in the programmer guide for more on this. A bit lower down in this
+function, when DataMonitor gets an event for a znode, it calls
+<command>ZooKeeper.exists()</command> to find out what has changed.
 </para>
 </section>
 
@@ -586,8 +593,10 @@ public class DataMonitor implements Watcher, StatCallback {
             // connection has changed
             switch (event.getState()) {
             case SyncConnected:
-                // Everything is happy. Lets kick things off
-                // again by checking the existence of the znode
+                // In this particular example we don't need to do anything
+                // here - watches are automatically re-registered with 
+                // server and any watches triggered while the client was 
+                // disconnected will be delivered (in order of course)
                 break;
             case Expired:
                 // It's all over
