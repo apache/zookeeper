@@ -48,7 +48,8 @@ static int recvd=0;
 static int shutdownThisThing=0;
 
 static __attribute__ ((unused)) void 
-printProfileInfo(struct timeval start, struct timeval end,int thres,const char* msg)
+printProfileInfo(struct timeval start, struct timeval end, int thres,
+                 const char* msg)
 {
   int delay=(end.tv_sec*1000+end.tv_usec/1000)-
     (start.tv_sec*1000+start.tv_usec/1000);
@@ -56,14 +57,23 @@ printProfileInfo(struct timeval start, struct timeval end,int thres,const char* 
     fprintf(stderr,"%s: execution time=%dms\n",msg,delay);
 }
 
-void watcher(zhandle_t *zzh, int type, int state, const char *path,void* context) {
-    fprintf(stderr,"Watcher %d state = %d for %s\n", type, state, (path ? path: "null"));
+void watcher(zhandle_t *zzh, int type, int state, const char *path,
+             void* context)
+{
+    /* Be careful using zh here rather than zzh - as this may be mt code
+     * the client lib may call the watcher before zookeeper_init returns */
+
+    fprintf(stderr,
+            "Watcher %d state = %d for %s\n",
+            type, state, (path ? path: "null"));
+
     if (type == ZOO_SESSION_EVENT) {
         if (state == ZOO_CONNECTED_STATE) {
-            const clientid_t *id = zoo_client_id(zh);
-            if (myid.client_id == 0|| myid.client_id != id->client_id) {
+            const clientid_t *id = zoo_client_id(zzh);
+            if (myid.client_id == 0 || myid.client_id != id->client_id) {
                 myid = *id;
-                fprintf(stderr, "Got a new id: %llx\n", _LL_CAST_ myid.client_id);
+                fprintf(stderr, "Got a new id: %llx\n",
+                        _LL_CAST_ myid.client_id);
                 if (clientIdFile) {
                     FILE *fh = fopen(clientIdFile, "w");
                     if (!fh) {
@@ -79,12 +89,12 @@ void watcher(zhandle_t *zzh, int type, int state, const char *path,void* context
             }
         } else if (state == ZOO_AUTH_FAILED_STATE) {
             fprintf(stderr, "Authentication failure. Shutting down...\n");
-            zookeeper_close(zh);
+            zookeeper_close(zzh);
             shutdownThisThing=1;
             zh=0;
         } else if (state == ZOO_EXPIRED_SESSION_STATE) {
             fprintf(stderr, "Session expired. Shutting down...\n");
-            zookeeper_close(zh);
+            zookeeper_close(zzh);
             shutdownThisThing=1;
             zh=0;
         }

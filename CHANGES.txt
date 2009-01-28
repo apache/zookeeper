@@ -69,8 +69,9 @@ BUGFIXES:
   ZOOKEEPER-273. Zookeeper c client build should not depend on CPPUNIT. (pat
 and runping via mahadev)
 
- ZOOKEEPER-268.  tostring on jute generated objects can cause NPE. (pat via
-mahadev)
+  ZOOKEEPER-268.  tostring on jute generated objects can cause NPE. (pat via mahadev)
+
+  ZOOKEEPER-267.  java client incorrectly generating syncdisconnected event when in disconnected state. (pat via breed)
  
 IMPROVEMENTS:
    

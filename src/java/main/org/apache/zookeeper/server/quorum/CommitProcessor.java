@@ -22,11 +22,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
-
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
-import org.apache.zookeeper.server.ZooTrace;
 
 /**
  * This RequestProcessor matches the incoming committed requests with the
