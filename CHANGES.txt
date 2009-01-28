@@ -118,6 +118,8 @@ IMPROVEMENTS:
    and messages generated. (phunt via breed)
 
    ZOOKEEPER-210. Require Java 6. (phunt via breed)
+    
+   ZOOKEEPER-177.  needed: docs for JMX (phunt via mahadev)
 
 Release 3.0.0 - 2008-10-21
 

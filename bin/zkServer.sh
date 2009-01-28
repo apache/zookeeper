@@ -21,11 +21,25 @@
 # relative to the canonical path of this script.
 #
 
-# by default we allow non-local JMX connection
-# set this to true if you wish to allow only local connections
+# See the following page for extensive details on setting
+# up the JVM to accept JMX remote management:
+# http://java.sun.com/javase/6/docs/technotes/guides/management/agent.html
+# by default we allow local JMX connections
 if [ "x$JMXLOCALONLY" = "x" ]
 then 
     JMXLOCALONLY=false
+fi
+
+if [ "x$JMXDISABLE" = "x" ]
+then
+    echo "JMX enabled by default"
+    # for some reason these two options are necessary on jdk6 on Ubuntu
+    #   accord to the docs they are not necessary, but otw jconsole cannot
+    #   do a local attach
+    ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=$JMXLOCALONLY org.apache.zookeeper.server.quorum.QuorumPeerMain"
+else
+    echo "JMX disabled by user request"
+    ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
 fi
 
 ZOOBIN=`readlink -f "$0"`
@@ -37,7 +51,7 @@ case $1 in
 start) 
     echo -n "Starting zookeeper ... "
     java  "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp $CLASSPATH -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=$JMXLOCALONLY $JVMFLAGS org.apache.zookeeper.server.quorum.ManagedQuorumPeerMain $ZOOCFG &
+    -cp $CLASSPATH $JVMFLAGS $ZOOMAIN $ZOOCFG &
     echo STARTED
     ;;
 stop) 
