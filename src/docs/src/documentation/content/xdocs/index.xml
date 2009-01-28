@@ -24,17 +24,21 @@
   </header>
   
   <body>
-    <p>
-ZooKeeper is a high-performance coordination service for distributed applications. 
-It exposes common services - such as naming, configuration management, synchronization, 
-and group services - in a simple interface so you don't have to write them from scratch. 
-You can use it off-the-shelf to implement consensus, group management, leader election, 
-and presence protocols. And you can build on it for your own, specific needs.
-</p>
+    <p>ZooKeeper is a high-performance coordination service for
+      distributed applications.  It exposes common services - such as
+      naming, configuration management, synchronization, and group
+      services - in a simple interface so you don't have to write them
+      from scratch.  You can use it off-the-shelf to implement
+      consensus, group management, leader election, and presence
+      protocols. And you can build on it for your own, specific needs.
+    </p>
 
-<p>
-The following documents describe concepts and procedures to get you started using ZooKeeper. If you have more questions, please ask the <a href="ext:lists">mailing list</a> or browse the archives.
-</p>
+    <p>
+      The following documents describe concepts and procedures to get
+      you started using ZooKeeper. If you have more questions, please
+      ask the <a href="ext:lists">mailing list</a> or browse the
+      archives.
+    </p>
     <ul>
 
       <li><strong>ZooKeeper Overview</strong><p>Technical Overview Documents for Client Developers, Adminstrators, and Contributors</p>
@@ -56,7 +60,8 @@ The following documents describe concepts and procedures to get you started usin
       
       <li><strong>Administrators &amp; Operators</strong> <p> Documents for Administrators and Operations Engineers of ZooKeeper Deployments</p>
       <ul>
-      <li><a href="zookeeperAdmin.html">Administrator's Guide</a> - a guide for system administrators and anyone else who might deploy Zookeeer</li>
+      <li><a href="zookeeperAdmin.html">Administrator's Guide</a> - a guide for system administrators and anyone else who might deploy ZooKeeper</li>
+      <li><a href="zookeeperJMX.html">JMX</a> - how to enable JMX in ZooKeeper</li>
       </ul>
       </li>
       

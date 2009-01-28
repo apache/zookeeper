@@ -47,7 +47,8 @@ See http://forrest.apache.org/docs/linking.html for more info.
   </docs>
   
   <docs label="Admin &amp; Ops">
-      <admin     label="Administrator's Guide"  href="zookeeperAdmin.html" />
+      <admin label="Administrator's Guide"  href="zookeeperAdmin.html" />
+      <jmx   label="JMX"                    href="zookeeperJMX.html" />
   </docs>
   
   <docs label="Contributor">

@@ -193,11 +193,25 @@ server.3=zoo3:2888:3888</computeroutput></para>
         </listitem>
 
         <listitem>
-          <para>If your configuration file is set up, you can start
-          ZooKeeper:</para>
+          <para>If your configuration file is set up, you can start a
+          ZooKeeper server:</para>
 
-          <para><computeroutput>$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf \
-        org.apache.zookeeper.server.quorum.ManagedQuorumPeerMain zoo.cfg</computeroutput></para>
+          <para><computeroutput>$ java -cp zookeeper.jar:lib/log4j-1.2.15.jar:conf \
+              org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
+          </computeroutput></para>
+          
+          <para>QuorumPeerMain starts a ZooKeeper server,
+            <ulink url="http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/">JMX</ulink>
+            management beans are also registered which allows
+            management through a JMX management console. 
+            The <ulink url="zookeeperJMX.html">ZooKeeper JMX
+            document</ulink> contains details on managing ZooKeeper with JMX.
+          </para>
+
+          <para>See the script <emphasis>bin/zkServer.sh</emphasis>,
+            which is included in the release, for an example
+            of starting server instances.</para>
+
         </listitem>
 
         <listitem>

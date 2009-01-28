@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="bk_zookeeperjmx">
+  <title>ZooKeeper JMX</title>
+
+  <articleinfo>
+    <legalnotice>
+      <para>Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License. You may
+      obtain a copy of the License at <ulink
+      url="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</ulink>.</para>
+
+      <para>Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied. See the License for the specific language governing permissions
+      and limitations under the License.</para>
+    </legalnotice>
+
+    <abstract>
+      <para>ZooKeeper support for JMX</para>
+    </abstract>
+  </articleinfo>
+
+  <section id="ch_jmx">
+    <title>JMX</title>
+    <para>Apache ZooKeeper has extensive support for JMX, allowing you
+    to view and manage a ZooKeeper serving ensemble.</para>
+
+    <para>This document assumes that you have basic knowledge of
+    JMX. See <ulink
+    url="http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/">
+    Sun JMX Technology</ulink> page to get started with JMX.
+    </para>
+
+    <para>See the <ulink
+    url="http://java.sun.com/javase/6/docs/technotes/guides/management/agent.html">
+    JMX Management Guide</ulink> for details on setting up local and
+    remote management of VM instances. By default the included
+    <emphasis>zkServer.sh</emphasis> supports only local management -
+    review the linked document to enable support for remote management
+    (beyond the scope of this document).
+    </para>
+
+  </section>
+
+  <section id="ch_starting">
+    <title>Starting ZooKeeper with JMX enabled</title>
+
+    <para>The class
+      <emphasis>org.apache.zookeeper.server.quorum.QuorumPeerMain</emphasis>
+      will start a JMX manageable ZooKeeper server. This class
+      registers the proper MBeans during initalization to support JMX
+      monitoring and management of the
+      instance. See <emphasis>bin/zkServer.sh</emphasis> for one
+      example of starting ZooKeeper using QuorumPeerMain.</para>
+  </section>
+
+  <section id="ch_console">
+    <title>Run a JMX console</title>
+
+    <para>There are a number of JMX consoles available which can connect
+      to the running server. For this example we will use Sun's
+      <emphasis>jconsole</emphasis>.</para>
+
+    <para>The Java JDK ships with a simple JMX console
+      named <ulink url="http://java.sun.com/developer/technicalArticles/J2SE/jconsole.html">jconsole</ulink>
+      which can be used to connect to ZooKeeper and inspect a running
+      server. Once you've started ZooKeeper using QuorumPeerMain
+      start <emphasis>jconsole</emphasis>, which typically resides in
+      <emphasis>JDK_HOME/bin/jconsole</emphasis></para>
+
+    <para>When the "new connection" window is displayed either connect
+      to local process (if jconsole started on same host as Server) or
+      use the remote process connection.</para>
+
+    <para>By default the "overview" tab for the VM is displayed (this
+      is a great way to get insight into the VM btw). Select
+      the "MBeans" tab.</para>
+
+    <para>You should now see <emphasis>org.apache.ZooKeeperService</emphasis>
+      on the left hand side. Expand this item and depending on how you've
+      started the server you will be able to monitor and manage various
+      service related features.</para>
+
+    <para>Also note that ZooKeeper will register log4j MBeans as
+    well. In the same section along the left hand side you will see
+    "log4j". Expand that to manage log4j through JMX. Of particular
+    interest is the ability to dynamically change the logging levels
+    used by editing the appender and root thresholds. Log4j MBean
+    registration can be disabled by passing
+    <emphasis>-Dzookeeper.jmx.log4j.disable=true</emphasis> to the JVM
+    when starting ZooKeeper.
+    </para>
+
+  </section>
+
+  <section id="ch_reference">
+    <title>ZooKeeper MBean Reference</title>
+
+    <para>This table details JMX for a server participating in a
+    replicated ZooKeeper ensemble (ie not standalone). This is the
+    typical case for a production environment.</para>
+
+    <table>
+      <title>MBeans, their names and description</title>
+
+      <tgroup cols='4'>
+        <thead>
+          <row>
+            <entry>MBean</entry>
+            <entry>MBean Object Name</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>Quorum</entry>
+            <entry>ReplicatedServer_id&lt;#&gt;</entry>
+            <entry>Represents the Quorum, or Ensemble - parent of all
+            cluster members. Note that the object name includes the
+            "myid" of the server (name suffix) that your JMX agent has
+            connected to.</entry>
+          </row>
+          <row>
+            <entry>LocalPeer|RemotePeer</entry>
+            <entry>replica.&lt;#&gt;</entry>
+            <entry>Represents a local or remote peer (ie server
+            participating in the ensemble). Note that the object name
+            includes the "myid" of the server (name suffix).</entry>
+          </row>
+          <row>
+            <entry>LeaderElection</entry>
+            <entry>LeaderElection</entry>
+            <entry>Represents a ZooKeeper cluster leader election which is
+            in progress. Provides information about the election, such as
+            when it started.</entry>
+          </row>
+          <row>
+            <entry>Leader</entry>
+            <entry>Leader</entry>
+            <entry>Indicates that the parent replica is the leader and
+            provides attributes/operations for that server. Note that
+            Leader is a subclass of ZooKeeperServer, so it provides
+            all of the information normally associated with a
+            ZooKeeperServer node.</entry>
+          </row>
+          <row>
+            <entry>Follower</entry>
+            <entry>Follower</entry>
+            <entry>Indicates that the parent replica is a follower and
+            provides attributes/operations for that server. Note that
+            Follower is a subclass of ZooKeeperServer, so it provides
+            all of the information normally associated with a
+            ZooKeeperServer node.</entry>
+          </row>
+          <row>
+            <entry>DataTree</entry>
+            <entry>InMemoryDataTree</entry>
+            <entry>Statistics on the in memory znode database, also
+            operations to access finer (and more computationally
+            intensive) statistics on the data (such as ephemeral
+            count). InMemoryDataTrees are children of ZooKeeperServer
+            nodes.</entry>
+          </row>
+          <row>
+            <entry>ServerCnxn</entry>
+            <entry>&lt;session_id&gt;</entry>
+            <entry>Statistics on each client connection, also
+            operations on those connections (such as
+            termination). Note the object name is the session id of
+            the connection in hex form.</entry>
+          </row>
+    </tbody></tgroup></table>
+
+    <para>This table details JMX for a standalone server. Typically
+    standalone is only used in development situations.</para>
+
+    <table>
+      <title>MBeans, their names and description</title>
+
+      <tgroup cols='4'>
+        <thead>
+          <row>
+            <entry>MBean</entry>
+            <entry>MBean Object Name</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>ZooKeeperServer</entry>
+            <entry>StandaloneServer_port&lt;#&gt;</entry>
+            <entry>Statistics on the running server, also operations
+            to reset these attributes. Note that the object name
+            includes the client port of the server (name
+            suffix).</entry>
+          </row>
+          <row>
+            <entry>DataTree</entry>
+            <entry>InMemoryDataTree</entry>
+            <entry>Statistics on the in memory znode database, also
+            operations to access finer (and more computationally
+            intensive) statistics on the data (such as ephemeral
+            count).</entry>
+          </row>
+          <row>
+            <entry>ServerCnxn</entry>
+            <entry>&lt;session_id&gt;</entry>
+            <entry>Statistics on each client connection, also
+            operations on those connections (such as
+            termination). Note the object name is the session id of
+            the connection in hex form.</entry>
+          </row>
+    </tbody></tgroup></table>
+
+  </section>
+
+</article>
