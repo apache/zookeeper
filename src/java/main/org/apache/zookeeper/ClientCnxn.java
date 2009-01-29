@@ -81,12 +81,15 @@ public class ClientCnxn {
      * option allows the client to turn off this behavior by setting
      * the environment variable "zookeeper.disableAutoWatchReset" to "true" */
     public static boolean disableAutoWatchReset;
+   
+    public static int packetLen;
     static {
         // this var should not be public, but otw there is no easy way 
         // to test
         disableAutoWatchReset = 
             Boolean.getBoolean("zookeeper.disableAutoWatchReset");
         LOG.info("zookeeper.disableAutoWatchReset is " + disableAutoWatchReset);
+        packetLen = Integer.getInteger("jute.maxbuffer", 4096 * 1024);
     }
 
     private ArrayList<InetSocketAddress> serverAddrs = new ArrayList<InetSocketAddress>();
@@ -502,7 +505,7 @@ public class ClientCnxn {
 
         void readLength() throws IOException {
             int len = incomingBuffer.getInt();
-            if (len < 0 || len >= 4096 * 1024) {
+            if (len < 0 || len >= packetLen) {
                 throw new IOException("Packet len" + len + " is out of range!");
             }
             incomingBuffer = ByteBuffer.allocate(len);

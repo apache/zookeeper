@@ -76,6 +76,8 @@ and runping via mahadev)
   ZOOKEEPER-263. document connection host:port as comma separated list in forrest docs (pat via breed)
   
   ZOOKEEPER-275. Bug in FastLeaderElection. (flavio via mahadev)
+
+  ZOOKEEPER-272. getchildren can fail for large number of children. (mahadev)
  
 IMPROVEMENTS:
    
