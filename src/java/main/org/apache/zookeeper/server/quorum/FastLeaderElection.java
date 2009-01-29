@@ -186,6 +186,7 @@ public class FastLeaderElection implements Election {
             			response = manager.recvQueue.take();
             			
             			// Receive new message
+            			LOG.debug("Receive new message.");
             			if (response.buffer.capacity() < 28) {
             				LOG.error("Got a short response: "
             						+ response.buffer.capacity());
@@ -246,7 +247,7 @@ public class FastLeaderElection implements Election {
             			    Vote current = self.getCurrentVote();
             			    if(ackstate == QuorumPeer.ServerState.LOOKING){
 
-            			        
+            			     	LOG.info("Sending new notification.");   
             			        ToSend notmsg = new ToSend(
             			                ToSend.mType.notification, 
             			                current.id, 
@@ -395,11 +396,16 @@ public class FastLeaderElection implements Election {
     private void leaveInstance() {
         recvqueue.clear();
     }
-
+    
+    public QuorumCnxManager getCnxManager(){
+    	return manager;
+    }
+    
     public void shutdown(){
         manager.halt();
     }
 
+    
     /**
      * Send notifications to all peers upon a change in our vote
      */
@@ -425,9 +431,10 @@ public class FastLeaderElection implements Election {
      * @param id    Server identifier
      * @param zxid  Last zxid observed by the issuer of this vote
      */
-    private boolean totalOrderPredicate(long id, long zxid) {
-        if ((zxid > proposedZxid)
-                || ((zxid == proposedZxid) && (id > proposedLeader)))
+    private boolean totalOrderPredicate(long newId, long newZxid, long curId, long curZxid) {
+        LOG.debug("id: " + newId + ", proposed id: " + curId + ", zxid: " + newZxid + ", proposed zxid: " + curZxid);
+        if ((newZxid > curZxid)
+                || ((newZxid == curZxid) && (newId > curId)))
             return true;
         else
             return false;
@@ -557,15 +564,21 @@ public class FastLeaderElection implements Election {
                     if (n.epoch > logicalclock) {
                         logicalclock = n.epoch;
                         recvset.clear();
-                        updateProposal(self.getId(), self.getLastLoggedZxid());
+                        if(totalOrderPredicate(n.leader, n.zxid, self.getId(), self.getLastLoggedZxid()))
+                            updateProposal(n.leader, n.zxid);
+                        else
+                            updateProposal(self.getId(), self.getLastLoggedZxid());
                         sendNotifications();
                     } else if (n.epoch < logicalclock) {
+                        LOG.info("n.epoch < logicalclock");
                         break;
-                    } else if (totalOrderPredicate(n.leader, n.zxid)) {
+                    } else if (totalOrderPredicate(n.leader, n.zxid, proposedLeader, proposedZxid)) {
+                        LOG.info("Updating proposal");
                         updateProposal(n.leader, n.zxid);
                         sendNotifications();
                     }
                 
+                    LOG.info("Adding vote");
                     recvset.put(n.sid, new Vote(n.leader, n.zxid, n.epoch));
 
                     //If have received from all nodes, then terminate
@@ -581,7 +594,7 @@ public class FastLeaderElection implements Election {
 
                         // Verify if there is any change in the proposed leader
                         while((n = recvqueue.poll(finalizeWait, TimeUnit.MILLISECONDS)) != null){
-                            if(totalOrderPredicate(n.leader, n.zxid)){
+                            if(totalOrderPredicate(n.leader, n.zxid, proposedLeader, proposedZxid)){
                                 recvqueue.put(n);
                                 break;
                             }

@@ -483,7 +483,9 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             follower.shutdown();
         }
         cnxnFactory.shutdown();
-        udpSocket.close();
+        if(udpSocket != null) {
+            udpSocket.close();
+        }
     }
 
     public String[] getQuorumPeers() {

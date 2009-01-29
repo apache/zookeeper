@@ -128,7 +128,7 @@ public class QuorumCnxManager {
 
         // Generates a challenge to guarantee one connection between pairs of
         // servers
-        genChallenge();
+        //genChallenge();
 
         // Starts listener thread that waits for connection requests 
         listener = new Listener();
@@ -364,11 +364,12 @@ public class QuorumCnxManager {
      */
     boolean haveDelivered() {
         for (ArrayBlockingQueue<ByteBuffer> queue : queueSendMap.values()) {
-            if (queue.size() != 0)
-                return false;
+            LOG.debug("Queue size: " + queue.size());
+            if (queue.size() == 0)
+                return true;
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -376,13 +377,17 @@ public class QuorumCnxManager {
      */
     public void halt() {
         shutdown = true;
-        LOG.info("Halting listener");
+        LOG.debug("Halting listener");
         listener.halt();
         
-        for(SendWorker sw: senderWorkerMap.values()){
-            LOG.info("Halting sender: " + sw);
-            sw.finish();
-        }
+        softHalt();
+    }
+   
+    public void softHalt(){
+    	for(SendWorker sw: senderWorkerMap.values()){
+    		LOG.debug("Halting sender: " + sw);
+    		sw.finish();
+    	}   	
     }
 
     /**
@@ -401,6 +406,7 @@ public class QuorumCnxManager {
                 ss = ServerSocketChannel.open();
                 int port = self.quorumPeers.get(self.getId()).electionAddr.getPort();
                 LOG.info("My election bind port: " + port);
+                ss.socket().setReuseAddress(true); 
                 ss.socket().bind(new InetSocketAddress(port));
 
                 while (!shutdown) {
@@ -410,6 +416,8 @@ public class QuorumCnxManager {
                     
                     LOG.info("Connection request "
                             + sock.getRemoteSocketAddress());
+                    //synchronized(senderWorkerMap){
+                    LOG.info("Connection request: " + self.getId());
                     receiveConnection(client);
                 }
             } catch (IOException e) {
@@ -419,7 +427,7 @@ public class QuorumCnxManager {
         
         void halt(){
             try{
-                if(ss != null) ss.close();
+                if((ss != null) && (ss.isOpen())) ss.close();
             } catch (IOException e){
                 LOG.warn("Exception when shutting down listener: " + e);
             }
@@ -453,6 +461,7 @@ public class QuorumCnxManager {
         boolean finish() {
             running = false;
 
+            LOG.debug("Calling finish");
             this.interrupt();
             if (recvWorker != null)
                 recvWorker.finish();
