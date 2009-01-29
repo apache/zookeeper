@@ -406,6 +406,23 @@
     still active. The timing of the PING is conservative enough to
     ensure reasonable time to detect a dead connection and reconnect
     to a new server.</para>
+
+    <para>
+      Once a connection to the server is successfully established
+      (connected) there are basically two cases where the client lib generates
+      connectionloss (the result code in c binding, exception in Java -- see 
+      the API documentation for binding specific details) when either a synchronous or
+      asynchronous operation is performed and one of the following holds:
+    </para>
+
+    <orderedlist>
+      <listitem><para>The application calls an operation on a session that is no
+      longer alive/valid</para></listitem>
+      <listitem><para>The ZooKeeper client disconnects from a server when there
+      are pending operations to that server, i.e., there is a pending asynchronous call.
+      </para></listitem>
+    </orderedlist>
+
   </section>
 
   <section id="ch_zkWatches">
