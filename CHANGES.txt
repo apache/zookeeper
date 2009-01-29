@@ -128,6 +128,9 @@ IMPROVEMENTS:
    ZOOKEEPER-253. documentation of DataWatcher state transition is misleading
 regarding auto watch reset on reconnect. (phunt via mahadev)
 
+   ZOOKEEPER-269. connectionloss- add more documentation to detail. (phunt and
+flavio via mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
