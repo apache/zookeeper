@@ -40,6 +40,15 @@
     </exec>
   </target>
 
+	<target name="jar" depends="compile" >
+		<echo message="No jar target defined for this package"/>
+	</target>
+
+ 	<target name="test">
+        <echo message="No test target defined for this package" />
+    </target>
+
+
   <target name="package" depends="compile" unless="skip.contrib">
     <echo message="contrib: ${name}"/>
 

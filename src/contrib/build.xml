@@ -27,7 +27,7 @@
   <!-- Compile contribs.                                      -->
   <!-- ====================================================== -->
   <target name="compile">
-    <subant target="compile">
+    <subant target="jar">
       <fileset dir="." includes="*/build.xml"/>
     </subant>
   </target>
