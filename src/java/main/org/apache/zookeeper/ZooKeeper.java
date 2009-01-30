@@ -97,10 +97,10 @@ import org.apache.zookeeper.server.DataTree;
  */
 public class ZooKeeper {
     private static final Logger LOG;
-    
+
     static {
         LOG = Logger.getLogger(ZooKeeper.class);
-        
+
         Environment.logEnv("Client environment:", LOG);
     }
 
@@ -134,7 +134,7 @@ public class ZooKeeper {
             new HashMap<String, Set<Watcher>>();
         private final Map<String, Set<Watcher>> childWatches =
             new HashMap<String, Set<Watcher>>();
-        
+
         private volatile Watcher defaultWatcher;
 
         final private void addTo(Set<Watcher> from, Set<Watcher> to) {
@@ -142,7 +142,7 @@ public class ZooKeeper {
                 to.addAll(from);
             }
         }
-        
+
         /* (non-Javadoc)
          * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState, Event.EventType, java.lang.String)
          */
@@ -219,7 +219,7 @@ public class ZooKeeper {
             return result;
         }
     }
-    
+
     /**
      * Register a watcher for a particular path.
      */
@@ -233,7 +233,7 @@ public class ZooKeeper {
         }
 
         abstract protected Map<String, Set<Watcher>> getWatches(int rc);
-        
+
         /**
          * Register the watcher with the set of watches on path.
          * @param rc the result code of the operation that attempted to
@@ -270,12 +270,12 @@ public class ZooKeeper {
         public ExistsWatchRegistration(Watcher watcher, String path) {
             super(watcher, path);
         }
-        
+
         @Override
         protected Map<String, Set<Watcher>> getWatches(int rc) {
             return rc == 0 ?  watchManager.dataWatches : watchManager.existWatches;
         }
-        
+
         @Override
         protected boolean shouldAddWatch(int rc) {
             return rc == 0 || rc == KeeperException.Code.NONODE.intValue();
@@ -292,7 +292,7 @@ public class ZooKeeper {
             return watchManager.dataWatches;
         }
     }
-    
+
     class ChildWatchRegistration extends WatchRegistration {
         public ChildWatchRegistration(Watcher watcher, String path) {
             super(watcher, path);
@@ -493,12 +493,15 @@ public class ZooKeeper {
      * @return the actual path of the created node
      * @throws KeeperException if the server returns a non-zero error code
      * @throws org.apache.zookeeper.KeeperException.InvalidACLException if the ACL is invalid
-     * @throws InterruptedException if the transaction is interrrupted
+     * @throws InterruptedException if the transaction is interrupted
+     * @throws IllegalArgumentException if an invalid path is specified
      */
     public String create(String path, byte data[], List<ACL> acl,
             CreateMode createMode)
         throws KeeperException, InterruptedException
     {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.create);
         CreateRequest request = new CreateRequest();
@@ -519,6 +522,72 @@ public class ZooKeeper {
     }
 
     /**
+     * Validate the provided znode path string
+     * @param path znode path string
+     * @throws IllegalArgumentException if the path is invalid
+     */
+    public static void validatePath(String path) throws IllegalArgumentException {
+        if (path == null) {
+            throw new IllegalArgumentException("Path cannot be null");
+        }
+        if (path.length() == 0) {
+            throw new IllegalArgumentException("Path length must be > 0");
+        }
+        if (path.charAt(0) != '/') {
+            throw new IllegalArgumentException(
+                         "Path must start with / character");
+        }
+        if (path.length() == 1) { // done checking - it's the root
+            return;
+        }
+        if (path.charAt(path.length() - 1) == '/') {
+            throw new IllegalArgumentException(
+                         "Path must not end with / character");
+        }
+
+        String reason = null;
+        char lastc = '/';
+        char chars[] = path.toCharArray();
+        char c;
+        for (int i = 1; i < chars.length; lastc = chars[i], i++) {
+            c = chars[i];
+
+            if (c == 0) {
+                reason = "null character not allowed @" + i;
+                break;
+            } else if (c == '/' && lastc == '/') {
+                reason = "empty node name specified @" + i;
+                break;
+            } else if (c == '.' && lastc == '.') {
+                if (chars[i-2] == '/' &&
+                        ((i + 1 == chars.length)
+                                || chars[i+1] == '/')) {
+                    reason = "relative paths not allowed @" + i;
+                    break;
+                }
+            } else if (c == '.') {
+                if (chars[i-1] == '/' &&
+                        ((i + 1 == chars.length)
+                                || chars[i+1] == '/')) {
+                    reason = "relative paths not allowed @" + i;
+                    break;
+                }
+            } else if (c > '\u0000' && c < '\u001f'
+                    || c > '\u007f' && c < '\u009F'
+                    || c > '\ud800' && c < '\uf8ff'
+                    || c > '\ufff0' && c < '\uffff') {
+                reason = "invalid charater @" + i;
+                break;
+            }
+        }
+
+        if (reason != null) {
+            throw new IllegalArgumentException(
+                    "Invalid path string \"" + path + "\" caused by " + reason);
+        }
+    }
+
+    /**
      * The Asynchronous version of create. The request doesn't actually until
      * the asynchronous callback is called.
      *
@@ -528,6 +597,8 @@ public class ZooKeeper {
     public void create(String path, byte data[], List<ACL> acl,
             CreateMode createMode,  StringCallback cb, Object ctx)
     {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.create);
         CreateRequest request = new CreateRequest();
@@ -564,9 +635,12 @@ public class ZooKeeper {
      *                the expected node version.
      * @throws InterruptedException IF the server transaction is interrupted
      * @throws KeeperException If the server signals an error with a non-zero return code.
+     * @throws IllegalArgumentException if an invalid path is specified
      */
     public void delete(String path, int version) throws
             InterruptedException, KeeperException {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.delete);
         DeleteRequest request = new DeleteRequest();
@@ -585,6 +659,8 @@ public class ZooKeeper {
      * @see #delete(String, int)
      */
     public void delete(String path, int version, VoidCallback cb, Object ctx) {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.delete);
         DeleteRequest request = new DeleteRequest();
@@ -608,10 +684,13 @@ public class ZooKeeper {
      *         node exists.
      * @throws KeeperException If the server signals an error
      * @throws InterruptedException If the server transaction is interrupted.
+     * @throws IllegalArgumentException if an invalid path is specified
      */
     public Stat exists(String path, Watcher watcher) throws KeeperException,
         InterruptedException
     {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.exists);
         ExistsRequest request = new ExistsRequest();
@@ -666,6 +745,8 @@ public class ZooKeeper {
     public void exists(String path, Watcher watcher, StatCallback cb,
             Object ctx)
     {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.exists);
         ExistsRequest request = new ExistsRequest();
@@ -707,9 +788,12 @@ public class ZooKeeper {
      * @return the data of the node
      * @throws KeeperException If the server signals an error with a non-zero error code
      * @throws InterruptedException If the server transaction is interrupted.
+     * @throws IllegalArgumentException if an invalid path is specified
      */
     public byte[] getData(String path, Watcher watcher, Stat stat)
             throws KeeperException, InterruptedException {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.getData);
         GetDataRequest request = new GetDataRequest();
@@ -760,6 +844,8 @@ public class ZooKeeper {
      * @see #getData(String, Watcher, Stat)
      */
     public void getData(String path, Watcher watcher, DataCallback cb, Object ctx) {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.getData);
         GetDataRequest request = new GetDataRequest();
@@ -810,9 +896,12 @@ public class ZooKeeper {
      * @return the state of the node
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException if an invalid path is specified
      */
     public Stat setData(String path, byte data[], int version)
             throws KeeperException, InterruptedException {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.setData);
         SetDataRequest request = new SetDataRequest();
@@ -835,6 +924,8 @@ public class ZooKeeper {
      */
     public void setData(String path, byte data[], int version, StatCallback cb,
             Object ctx) {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.setData);
         SetDataRequest request = new SetDataRequest();
@@ -860,9 +951,12 @@ public class ZooKeeper {
      * @return the ACL array of the given node.
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException if an invalid path is specified
      */
     public List<ACL> getACL(String path, Stat stat)
             throws KeeperException, InterruptedException {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.getACL);
         GetACLRequest request = new GetACLRequest();
@@ -883,6 +977,8 @@ public class ZooKeeper {
      * @see #getACL(String, Stat)
      */
     public void getACL(String path, Stat stat, ACLCallback cb, Object ctx) {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.getACL);
         GetACLRequest request = new GetACLRequest();
@@ -911,9 +1007,12 @@ public class ZooKeeper {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      * @throws org.apache.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
+     * @throws IllegalArgumentException if an invalid path is specified
      */
     public Stat setACL(String path, List<ACL> acl, int version)
             throws KeeperException, InterruptedException {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.setACL);
         SetACLRequest request = new SetACLRequest();
@@ -939,6 +1038,8 @@ public class ZooKeeper {
      */
     public void setACL(String path, List<ACL> acl, int version,
             StatCallback cb, Object ctx) {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.setACL);
         SetACLRequest request = new SetACLRequest();
@@ -970,9 +1071,12 @@ public class ZooKeeper {
      * @return an unordered array of children of the node with the given path
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException if an invalid path is specified
      */
     public List<String> getChildren(String path, Watcher watcher)
             throws KeeperException, InterruptedException {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.getChildren);
         GetChildrenRequest request = new GetChildrenRequest();
@@ -1023,6 +1127,8 @@ public class ZooKeeper {
      */
     public void getChildren(String path, Watcher watcher, ChildrenCallback cb,
             Object ctx) {
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.getChildren);
         GetChildrenRequest request = new GetChildrenRequest();
@@ -1050,8 +1156,14 @@ public class ZooKeeper {
 
     /**
      * Asynchronous sync. Flushes channel between process and leader.
+     * @param path
+     * @param cb a handler for the callback
+     * @param ctx context to be provided to the callback
+     * @throws IllegalArgumentException if an invalid path is specified
      */
     public void sync(String path, VoidCallback cb, Object ctx){
+        validatePath(path);
+
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.sync);
         SyncRequest request = new SyncRequest();

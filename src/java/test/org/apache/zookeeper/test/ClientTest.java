@@ -40,6 +40,7 @@ import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.junit.Test;
 
 public class ClientTest extends ClientBase {
@@ -387,13 +388,7 @@ public class ClientTest extends ClientBase {
                 assertEquals(EventType.NodeDeleted, event.getType());
                 assertEquals(KeeperState.SyncConnected, event.getState());
             }
-            zk.create("/good\u0001path", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            //try {
-            //    zk.create("/bad\u0000path", "".getBytes(), null, CreateMode.PERSISTENT);
-            //    fail("created an invalid path");
-            //} catch(KeeperException e) {
-            //    assertEquals(KeeperException.Code.BadArguments, e.code());
-            //}
+            zk.create("/good\u0040path", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
             zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             try {
@@ -453,6 +448,67 @@ public class ClientTest extends ClientBase {
             if(zk != null)
                 zk.close();
         }
+    }
+
+    private void verifyCreateFails(String path, ZooKeeper zk) throws Exception {
+        try {
+            zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        } catch (IllegalArgumentException e) {
+            // this is good
+            return;
+        }
+        fail("bad path \"" + path + "\" not caught");
+    }
+
+    // Test that the path string is validated
+    @Test
+    public void testPathValidation() throws Exception {
+        ZooKeeper zk = createClient();
+
+        verifyCreateFails(null, zk);
+        verifyCreateFails("", zk);
+        verifyCreateFails("//", zk);
+        verifyCreateFails("///", zk);
+        verifyCreateFails("////", zk);
+        verifyCreateFails("/.", zk);
+        verifyCreateFails("/..", zk);
+        verifyCreateFails("/./", zk);
+        verifyCreateFails("/../", zk);
+        verifyCreateFails("/foo/./", zk);
+        verifyCreateFails("/foo/../", zk);
+        verifyCreateFails("/foo/.", zk);
+        verifyCreateFails("/foo/..", zk);
+        verifyCreateFails("/./.", zk);
+        verifyCreateFails("/../..", zk);
+        verifyCreateFails("/\u0001foo", zk);
+        verifyCreateFails("/foo/bar/", zk);
+        verifyCreateFails("/foo//bar", zk);
+        verifyCreateFails("/foo/bar//", zk);
+
+        verifyCreateFails("foo", zk);
+        verifyCreateFails("a", zk);
+        //check for the code path that throws at server
+        PrepRequestProcessor.failCreate = true;
+        try {
+            zk.create("/m", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            assertTrue(false);
+        } catch(KeeperException.BadArgumentsException be) {
+            // catch this.
+        }
+        PrepRequestProcessor.failCreate = false;
+        zk.create("/.foo", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/.f.", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/..f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/..f..", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/f.c", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/f\u0040f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/f/.f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/f/f.", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/f/..f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/f/f..", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/f/.f/f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/f/f./f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     }
 
 //    private void notestConnections()

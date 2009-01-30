@@ -30,6 +30,7 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
@@ -67,7 +68,13 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             LOG.info("zookeeper.skipACL==\"yes\", ACL checks will be skipped");
         }
     }
-
+    
+    /**
+     * this is only for testing purposes.
+     * should never be useed otherwise
+     */
+    public static boolean failCreate = false;
+    
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
     RequestProcessor nextProcessor;
@@ -189,7 +196,16 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         createRequest);
                 String path = createRequest.getPath();
                 int lastSlash = path.lastIndexOf('/');
-                if (lastSlash == -1 || path.indexOf('\0') != -1) {
+                if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
+                    LOG.warn("Invalid path " + path + " with session " +
+                            Long.toHexString(request.sessionId));
+                    throw new KeeperException.BadArgumentsException();
+                }
+                try {
+                    ZooKeeper.validatePath(path);
+                } catch(IllegalArgumentException ie) {
+                    LOG.warn("Invalid path " + path + " with session " +
+                            Long.toHexString(request.sessionId));
                     throw new KeeperException.BadArgumentsException();
                 }
                 if (!fixupACL(request.authInfo, createRequest.getAcl())) {

@@ -1863,6 +1863,45 @@ finish:
     return rc;
 }
 
+static int isValidPath(const char* path) {
+  if (path == 0)
+    return 0;
+  const int len = strlen(path);
+  if (len == 0)
+    return 0;
+  if (path[0] != '/')
+    return 0;
+  if (len == 1) // done checking - it's the root
+    return 1;
+  if (path[len - 1] == '/')
+    return 0;
+
+  char lastc = '/';
+  char c;
+  int i = 1;
+  for (; i < len; lastc = path[i], i++) {
+    c = path[i];
+            
+    if (c == 0) {
+      return 0;
+    } else if (c == '/' && lastc == '/') {
+      return 0;
+    } else if (c == '.' && lastc == '.') {
+      if (path[i-2] == '/' && ((i + 1 == len) || path[i+1] == '/')) {
+        return 0;
+      }
+    } else if (c == '.') {
+      if ((path[i-1] == '/') && ((i + 1 == len) || path[i+1] == '/')) {
+        return 0;
+      }
+    } else if (c > 0x00 && c < 0x1f) {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
 int zoo_aget(zhandle_t *zh, const char *path, int watch, data_completion_t dc,
         const void *data)
 {
@@ -1878,7 +1917,7 @@ int zoo_awget(zhandle_t *zh, const char *path,
     struct GetDataRequest req = { (char*)path, watcher!=0 };
     int rc;
     
-    if (zh==0 || path==0)
+    if (zh==0 || !isValidPath(path))
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1910,7 +1949,7 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     struct SetDataRequest req;
     int rc;
     
-    if (zh==0 || path==0)
+    if (zh==0 || !isValidPath(path))
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1945,7 +1984,7 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     struct CreateRequest req;
     int rc;
     
-    if (zh==0 || path==0)
+    if (zh==0 || !isValidPath(path))
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -1985,7 +2024,7 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
     struct DeleteRequest req;
     int rc;
     
-    if (zh==0 || path==0)
+    if (zh==0 || !isValidPath(path))
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -2024,7 +2063,7 @@ int zoo_awexists(zhandle_t *zh, const char *path,
     struct ExistsRequest req = {(char*)path, watcher!=0 };
     int rc;
     
-    if (zh==0 || path==0)
+    if (zh==0 || !isValidPath(path))
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -2063,7 +2102,7 @@ int zoo_awget_children(zhandle_t *zh, const char *path,
     struct GetChildrenRequest req={(char*)path, watcher!=0 };
     int rc;
     
-    if (zh==0 || path==0)
+    if (zh==0 || !isValidPath(path))
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -2094,7 +2133,7 @@ int zoo_async(zhandle_t *zh, const char *path,
     struct SyncRequest req;
     int rc;
 
-    if (zh==0 || path==0)
+    if (zh==0 || !isValidPath(path))
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -2126,7 +2165,7 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
     struct GetACLRequest req;
     int rc;
     
-    if (zh==0 || path==0)
+    if (zh==0 || !isValidPath(path))
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
@@ -2157,7 +2196,7 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     struct SetACLRequest req;
     int rc;
     
-    if (zh==0 || path==0)
+    if (zh==0 || !isValidPath(path))
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;

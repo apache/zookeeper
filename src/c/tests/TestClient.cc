@@ -157,6 +157,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Zookeeper_simpleSystem);
     CPPUNIT_TEST(testAsyncWatcherAutoReset);
 #ifdef THREADED
+    CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
     CPPUNIT_TEST(testWatcherAutoResetWithGlobal);
     CPPUNIT_TEST(testWatcherAutoResetWithLocal);
@@ -283,6 +284,57 @@ public:
         if (path) {
             free(path);
         }
+    }
+
+    static void verifyCreateFails(const char *path, zhandle_t *zk) {
+      CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS, zoo_create(zk,
+          path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
+    }
+    
+    static void verifyCreateOk(const char *path, zhandle_t *zk) {
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_create(zk,
+          path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
+    }
+    
+    void testPathValidation() {
+        watchctx_t ctx;
+        zhandle_t *zk = createClient(&ctx);
+        CPPUNIT_ASSERT(zk);
+
+        verifyCreateFails(0, zk);
+        verifyCreateFails("", zk);
+        verifyCreateFails("//", zk);
+        verifyCreateFails("///", zk);
+        verifyCreateFails("////", zk);
+        verifyCreateFails("/.", zk);
+        verifyCreateFails("/..", zk);
+        verifyCreateFails("/./", zk);
+        verifyCreateFails("/../", zk);
+        verifyCreateFails("/foo/./", zk);
+        verifyCreateFails("/foo/../", zk);
+        verifyCreateFails("/foo/.", zk);
+        verifyCreateFails("/foo/..", zk);
+        verifyCreateFails("/./.", zk);
+        verifyCreateFails("/../..", zk);
+        verifyCreateFails("/foo/bar/", zk);
+        verifyCreateFails("/foo//bar", zk);
+        verifyCreateFails("/foo/bar//", zk);
+
+        verifyCreateFails("foo", zk);
+        verifyCreateFails("a", zk);
+
+        verifyCreateOk("/.foo", zk);
+        verifyCreateOk("/.f.", zk);
+        verifyCreateOk("/..f", zk);
+        verifyCreateOk("/..f..", zk);
+        verifyCreateOk("/f.c", zk);
+        verifyCreateOk("/f", zk);
+        verifyCreateOk("/f/.f", zk);
+        verifyCreateOk("/f/f.", zk);
+        verifyCreateOk("/f/..f", zk);
+        verifyCreateOk("/f/f..", zk);
+        verifyCreateOk("/f/.f/f", zk);
+        verifyCreateOk("/f/f./f", zk);
     }
 
     void testAsyncWatcherAutoReset()

@@ -78,7 +78,9 @@ and runping via mahadev)
   ZOOKEEPER-275. Bug in FastLeaderElection. (flavio via mahadev)
 
   ZOOKEEPER-272. getchildren can fail for large number of children. (mahadev)
- 
+
+  ZOOKEEPER-16. Need to do path validation. (pat, mahadev) 
+
 IMPROVEMENTS:
    
   ZOOKEEPER-64. Log system env information when initializing server and
