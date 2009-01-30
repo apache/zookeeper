@@ -131,6 +131,10 @@ regarding auto watch reset on reconnect. (phunt via mahadev)
    ZOOKEEPER-269. connectionloss- add more documentation to detail. (phunt and
 flavio via mahadev)
 
+NEW FEATURES:
+
+   ZOOKEEPER-276. Bookkeeper contribution (Flavio and Luca Telloli via mahadev)
+
 Release 3.0.0 - 2008-10-21
 
 Non-backward compatible changes:
