@@ -131,6 +131,9 @@ regarding auto watch reset on reconnect. (phunt via mahadev)
    ZOOKEEPER-269. connectionloss- add more documentation to detail. (phunt and
 flavio via mahadev)
 
+   ZOOKEEPER-260. document the recommended values for server id's
+   (mahadev via phunt)
+
 NEW FEATURES:
 
    ZOOKEEPER-276. Bookkeeper contribution (Flavio and Luca Telloli via mahadev)

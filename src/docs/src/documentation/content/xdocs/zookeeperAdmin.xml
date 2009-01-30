@@ -189,7 +189,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
           consists of a single line containing only the text of that machine's
           id. So <filename>myid</filename> of server 1 would contain the text
           "1" and nothing else. The id must be unique within the
-          ensemble.</para>
+          ensemble and should have a value between 1 and 255.</para>
         </listitem>
 
         <listitem>
