@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.persistence;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -223,6 +224,18 @@ public class FileTxnSnapLog {
     public File findMostRecentSnapshot() throws IOException {
         FileSnap snaplog = new FileSnap(snapDir);
         return snaplog.findMostRecentSnapshot();
+    }
+    
+    /**
+     * the n most recent snapshots
+     * @param n the number of recent snapshots
+     * @return the list of n most recent snapshots, with
+     * the most recent in front
+     * @throws IOException
+     */
+    public List<File> findNRecentSnapshots(int n) throws IOException {
+        FileSnap snaplog = new FileSnap(snapDir);
+        return snaplog.findNRecentSnapshots(n);
     }
 
     /**
