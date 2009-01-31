@@ -333,6 +333,8 @@
           <include name="org/apache/zookeeper/Watcher.java"/>
           <include name="org/apache/zookeeper/ZooDefs.java"/>
           <include name="org/apache/zookeeper/ZooKeeper.java"/>
+          <include name="org/apache/zookeeper/server/LogFormatter.java"/>
+          <include name="org/apache/zookeeper/server/PurgeTxnLog.java"/>
           <exclude name="org/apache/zookeeper/server/quorum/QuorumPacket"/>
     	</fileset>
     	<packageset dir="${src_generated.dir}">

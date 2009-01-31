@@ -198,6 +198,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_InstallingSingleMode">Standalone Operation</a>
 </li>
 <li>
+<a href="#sc_FileManagement">Managing ZooKeeper Storage</a>
+</li>
+<li>
 <a href="#sc_ConnectingToZooKeeper">Connecting to ZooKeeper</a>
 </li>
 <li>
@@ -313,7 +316,13 @@ clientPort=2181
       This is fine for most development situations, but to run ZooKeeper in
       replicated mode, please see <a href="#sc_RunningReplicatedZooKeeper">Running Replicated
       ZooKeeper</a>.</p>
-<a name="N10083"></a><a name="sc_ConnectingToZooKeeper"></a>
+<a name="N10083"></a><a name="sc_FileManagement"></a>
+<h3 class="h4">Managing ZooKeeper Storage</h3>
+<p>For long running production systems ZooKeeper storage must
+      be managed externally (dataDir and logs). See the section on
+      <a href="zookeeperAdmin.html#sc_maintenance">maintenance</a> for
+      more details.</p>
+<a name="N10091"></a><a name="sc_ConnectingToZooKeeper"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p>Once ZooKeeper is running, you have several options for connection
       to it:</p>
@@ -363,7 +372,7 @@ clientPort=2181
 </li>
       
 </ul>
-<a name="N100C6"></a><a name="sc_ProgrammingToZooKeeper"></a>
+<a name="N100D4"></a><a name="sc_ProgrammingToZooKeeper"></a>
 <h3 class="h4">Programming to ZooKeeper</h3>
 <p>ZooKeeper has a Java bindings and C bindings. They are
       functionally equivalent. The C bindings exist in two variants: single
@@ -371,7 +380,7 @@ clientPort=2181
       is done. For more information, see the <a href="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
       Examples in the ZooKeeper Programmer's Guide</a> for
       sample code using of the different APIs.</p>
-<a name="N100D4"></a><a name="sc_RunningReplicatedZooKeeper"></a>
+<a name="N100E2"></a><a name="sc_RunningReplicatedZooKeeper"></a>
 <h3 class="h4">Running Replicated ZooKeeper</h3>
 <p>Running ZooKeeper in standalone mode is convenient for evaluation,
       some development, and testing. But in production, you should run
@@ -431,7 +440,7 @@ server.3=zoo3:2888:3888
       
 </div>
 </div>
-<a name="N10111"></a><a name="Other+Optimizations"></a>
+<a name="N1011F"></a><a name="Other+Optimizations"></a>
 <h3 class="h4">Other Optimizations</h3>
 <p>There are a couple of other configuration parameters that can
       greatly increase performance:</p>
