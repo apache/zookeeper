@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.Adler32;
@@ -120,6 +121,25 @@ public class FileSnap implements SnapShot {
             }
         }
         return null;
+    }
+    
+    /**
+     * find the last n snapshots.
+     * @param the number of most recent snapshots 
+     * @return the last n snapshots
+     * @throws IOException
+     */
+    public List<File> findNRecentSnapshots(int n) throws IOException {
+        List<File> files = Util.sortDataDir(snapDir.listFiles(), "snapshot", false);
+        int i = 0;
+        List<File> list = new ArrayList<File>();
+        for (File f: files) {
+            if (i==n)
+                break;
+            i++;
+            list.add(f);
+        }
+        return list;
     }
 
     /**

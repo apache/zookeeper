@@ -81,6 +81,9 @@ and runping via mahadev)
 
   ZOOKEEPER-16. Need to do path validation. (pat, mahadev) 
 
+  ZOOKEEPER-252. PurgeTxnLog is not handling the new dataDir directory
+  structure (mahadev via phunt)
+
 IMPROVEMENTS:
    
   ZOOKEEPER-64. Log system env information when initializing server and
