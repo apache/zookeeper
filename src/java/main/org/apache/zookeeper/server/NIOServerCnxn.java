@@ -205,6 +205,11 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             } catch (Exception e) {
                 LOG.warn("Ignoring unexpected exception during shutdown", e);
             }
+            try {
+                selector.close();
+            } catch (IOException e) {
+                LOG.warn("Selector closing", e);
+            }
             if (zks != null) {
                 zks.shutdown();
             }

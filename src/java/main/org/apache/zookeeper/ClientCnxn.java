@@ -530,6 +530,7 @@ public class ClientCnxn {
             connectTimeout = sessionTimeout / serverAddrs.size();
             sessionId = conRsp.getSessionId();
             sessionPasswd = conRsp.getPasswd();
+            zooKeeper.state = States.CONNECTED;
             eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
                     Watcher.Event.KeeperState.SyncConnected, null));
         }
@@ -750,7 +751,6 @@ public class ClientCnxn {
             synchronized (this) {
                 k.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
             }
-            zooKeeper.state = States.CONNECTED;
         }
 
         private void sendPing() {
