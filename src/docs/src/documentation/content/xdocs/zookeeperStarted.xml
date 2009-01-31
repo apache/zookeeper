@@ -73,7 +73,7 @@
           stable</ulink> release from one of the Apache Download
         Mirrors.</para>
     </section>
-
+	
     <section id="sc_InstallingSingleMode">
       <title>Standalone Operation</title>
 
@@ -150,6 +150,15 @@ clientPort=2181
       replicated mode, please see <ulink
       url="#sc_RunningReplicatedZooKeeper">Running Replicated
       ZooKeeper</ulink>.</para>
+    </section>
+	
+    <section id="sc_FileManagement">
+      <title>Managing ZooKeeper Storage</title>
+      <para>For long running production systems ZooKeeper storage must
+      be managed externally (dataDir and logs). See the section on
+      <ulink
+      url="zookeeperAdmin.html#sc_maintenance">maintenance</ulink> for
+      more details.</para>
     </section>
 
     <section id="sc_ConnectingToZooKeeper">

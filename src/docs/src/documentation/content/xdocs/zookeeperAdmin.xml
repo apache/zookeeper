@@ -295,6 +295,10 @@ server.3=zoo3:2888:3888</computeroutput></para>
         </listitem>
 
         <listitem>
+          <para><xref linkend="sc_maintenance" /></para>
+        </listitem>
+
+        <listitem>
           <para><xref linkend="sc_monitoring" /></para>
         </listitem>
 
@@ -429,6 +433,65 @@ server.3=zoo3:2888:3888</computeroutput></para>
       <para></para>
     </section>
 
+    <section id="sc_maintenance">
+      <title>Maintenance</title>
+
+      <para>Little long term maintenance is required for a ZooKeeper
+        cluster however you must be aware of the following:</para>
+
+      <section>
+        <title>Ongoing Data Directory Cleanup</title>
+
+        <para>The ZooKeeper <ulink url="#var_datadir">Data
+          Directory</ulink> contains files which are a persistent copy
+          of the znodes stored by a particular serving ensemble. These
+          are the snapshot and transactional log files. As changes are
+          made to the znodes these changes are appended to a
+          transaction log, occasionally, when a log grows large, a
+          snapshot of the current state of all znodes will be written
+          to the filesystem. This snapshot supercedes all previous
+          logs.
+        </para>
+
+        <para>A ZooKeeper server <emphasis role="bold">will not remove
+          old snapshots and log files</emphasis>, this is the
+          responsibility of the operator. Every serving environment is
+          different and therefore the requirements of managing these
+          files may differ from install to install (backup for example).
+        </para>
+
+        <para>The PurgeTxnLog utility implements a simple retention
+        policy that administrators can use. The <ulink
+        url="ext:api/index">API docs</ulink> contains details on
+        calling conventions (arguments, etc...).
+        </para>
+
+        <para>In the following example the last count snapshots and
+        their corresponding logs are retained and the others are
+        deleted.  The value of &lt;count&gt; should typically be
+        greater than 3 (although not required, this provides 3 backups
+        in the unlikely event a recent log has become corrupted). This
+        can be run as a cron job on the ZooKeeper server machines to
+        clean up the logs daily.</para>
+
+        <programlisting> java -cp zookeeper.jar:log4j.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</programlisting>
+
+      </section>
+
+      <section>
+        <title>Debug Log Cleanup (log4j)</title>
+
+        <para>See the section on <ulink
+        url="#sc_logging">logging</ulink> in this document. It is
+        expected that you will setup a rolling file appender using the
+        in-built log4j feature. The sample configuration file in the
+        release tar's conf/log4j.properties provides an example of
+        this.
+        </para>
+      </section>
+
+    </section>
+
     <section id="sc_monitoring">
       <title>Monitoring</title>
 
@@ -482,7 +545,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
             </listitem>
           </varlistentry>
 
-          <varlistentry>
+          <varlistentry id="var_datadir">
             <term>dataDir</term>
 
             <listitem>
@@ -914,7 +977,7 @@ imok
         suffix is the first zxid written to that log.</para>
       </section>
 
-      <section>
+      <section id="sc_filemanagement">
         <title>File Management</title>
 
         <para>The format of snapshot and log files does not change between
@@ -928,12 +991,15 @@ imok
         LogFormatter class allows an administrator to look at the transactions
         in a log.</para>
 
-        <para>The ZooKeeper server creates snapshot and log files, but never
-        deletes them. The retention policy of the data and log files is
-        implemented outside of the ZooKeeper server. The server itself only
-        needs the latest complete fuzzy snapshot and the log files from the
-        start of that snapshot. The PurgeTxnLog utility implements a simple
-        retention policy that administrators can use.</para>
+        <para>The ZooKeeper server creates snapshot and log files, but
+        never deletes them. The retention policy of the data and log
+        files is implemented outside of the ZooKeeper server. The
+        server itself only needs the latest complete fuzzy snapshot
+        and the log files from the start of that snapshot. See the
+        <ulink url="#sc_maintenance">maintenance</ulink> section in
+        this document for more details on setting a retention policy
+        and maintenance of ZooKeeper storage.
+        </para>
       </section>
     </section>
 
