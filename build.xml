@@ -51,6 +51,7 @@
     <property name="build.testclasses" value="${build.dir}/testclasses"/>
     <property name="test.build.dir" value="${build.dir}/test" />
     <property name="test.src.dir" value="${src.dir}/java/test"/>
+    <property name="systest.src.dir" value="${src.dir}/java/systest"/>
     <property name="test.log.dir" value="${test.build.dir}/logs" />
     <property name="test.data.dir" value="${test.build.dir}/data" />
     <property name="test.data.upgrade.dir" value="${test.data.dir}/upgrade" />
@@ -249,6 +250,10 @@
     <target name="compile-test" depends="jar,test-classpath">
       <mkdir dir="${build.testclasses}"/>
       <javac srcdir="${test.src.dir}" destdir="${build.testclasses}"
+             target="${target.jdk}" debug="on">
+        <classpath refid="test.classpath"/>
+      </javac>
+      <javac srcdir="${systest.src.dir}" destdir="${build.testclasses}"
              target="${target.jdk}" debug="on">
         <classpath refid="test.classpath"/>
       </javac>

@@ -136,6 +136,8 @@ flavio via mahadev)
    ZOOKEEPER-260. document the recommended values for server id's
    (mahadev via phunt)
 
+   ZOOKEEPER-215. expand system test environment (breed via phunt)
+
 NEW FEATURES:
 
    ZOOKEEPER-276. Bookkeeper contribution (Flavio and Luca Telloli via mahadev)

@@ -43,7 +43,6 @@
   <!-- Override jar target to specify main class -->
   <target name="jar" depends="checkMainCompiled, setjarname, compile">
     <echo message="contrib: ${name}"/>
-	<echo message="build classes: ${build.test}" />
     <jar jarfile="${jarname}">
       <manifest>
         <attribute name="Main-Class" value="org.apache.zookeeper.util.FatJarMain" />
@@ -54,14 +53,14 @@
         <attribute name="Implementation-Version" value="${revision}"/>
         <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
       </manifest>
-      <fileset file="${zk.root}/LICENSE.txt" />
-      <!--fileset dir="${zk.root}/build/classes" excludes="**/.generated"/-->
-      <!--fileset dir="${zk.root}/build/test"/-->
-      <zipgroupfileset dir="${zk.root}/src/java/lib" includes="*.jar" />
+      <fileset file="${basedir}/conf/mainClasses" />
       <fileset dir="${build.classes}"/>
       <fileset dir="${build.test}"/>
+      <fileset file="${zk.root}/LICENSE.txt" />
       <fileset file="${zk.root}/conf/log4j.properties" />
-      <fileset file="${basedir}/conf/mainClasses" />
+      <fileset dir="${zk.root}/build/classes" excludes="**/.generated"/>
+      <fileset dir="${zk.root}/build/testclasses"/>
+      <zipgroupfileset dir="${zk.root}/src/java/lib" includes="*.jar" />
     </jar>
   </target>
 
