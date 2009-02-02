@@ -56,7 +56,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
 
     public SyncRequestProcessor(ZooKeeperServer zks,
             RequestProcessor nextProcessor) {
-        super("SyncThread:" + zks.getClientPort());
+        super("SyncThread:" + zks.getServerId());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
         start();

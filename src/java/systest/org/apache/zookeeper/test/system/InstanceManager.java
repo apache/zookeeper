@@ -115,7 +115,7 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
             zk.create(readyNode, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         } catch(NodeExistsException e) { /* this is ok */ } 
     }
-    @Override
+    
     synchronized public void processResult(int rc, String path, Object ctx,
             List<String> children) {
         if (rc != KeeperException.Code.OK.intValue()) {
@@ -156,7 +156,7 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
             zk.delete(deadNode, -1);
         } catch(NoNodeException e) { /* this is ok */ }
     }
-    @Override
+    
     public void process(WatchedEvent event) {
         if (event.getPath().equals(statusNode)) {
             zk.getChildren(statusNode, this, this, null);
@@ -297,7 +297,6 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
                 synchronized(eventObj) {
                     // wait for the node to appear
                     Stat eStat = zk.exists(reportsNode + '/' + name, new Watcher() {
-                        @Override
                         public void process(WatchedEvent event) {
                             synchronized(eventObj) {
                                 eventObj.notifyAll();

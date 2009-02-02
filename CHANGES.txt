@@ -145,6 +145,8 @@ flavio via mahadev)
    cleanup datadir (snaps/logs) (mahadev via phunt)
 
    ZOOKEEPER-69. ZooKeeper logo
+   
+   ZOOKEEPER-286. Make GenerateLoad use InstanceContainers. (breed via mahadev)
 
 NEW FEATURES:
 

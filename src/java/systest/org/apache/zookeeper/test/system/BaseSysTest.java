@@ -23,17 +23,14 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.security.MessageDigest;
 import java.util.HashMap;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumStats;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.runner.JUnitCore;
 
@@ -121,14 +118,13 @@ public class BaseSysTest extends TestCase {
         StringBuilder sbServer = new StringBuilder();
         try {
             for(int i = 0; i < count; i++) {
-                String r = QuorumPeerInstance.createServer(im, i);
+                String r[] = QuorumPeerInstance.createServer(im, i);
                 if (i > 0) {
                     sbClient.append(',');
                     sbServer.append(',');
                 }
-                String parts[] = r.split(",");
-                sbClient.append(parts[0]);
-                sbServer.append(parts[1]);
+                sbClient.append(r[0]);
+                sbServer.append(r[1]);
             }
             serverHostPort = sbClient.toString();
             quorumHostPort = sbServer.toString();

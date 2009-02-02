@@ -376,7 +376,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         stats.packetsSent++;
                         /* We've sent the whole buffer, so drop the buffer */
                         sent -= bb.remaining();
-                        zk.serverStats().incrementPacketsSent();
+                        if (zk != null) {
+                            zk.serverStats().incrementPacketsSent();
+                        }
                         outgoingBuffers.remove();
                     }
                     // ZooLog.logTraceMessage(LOG,
@@ -589,6 +591,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     sb.append(zk.dataTree.dumpEphemerals()).append("\n");
                     sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
                 }
+                sendBuffer(NIOServerCnxn.closeConn);
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == reqsCmd) {
@@ -603,6 +606,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     }
                 }
                 sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
+                sendBuffer(NIOServerCnxn.closeConn);
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == statCmd) {
@@ -626,6 +630,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     sb.append("ZooKeeperServer not running\n");
 
                 sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
+                sendBuffer(NIOServerCnxn.closeConn);
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == enviCmd) {
@@ -642,6 +647,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 }
 
                 sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
+                sendBuffer(NIOServerCnxn.closeConn);
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             } else if (len == srstCmd) {
@@ -650,6 +656,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 zk.serverStats().reset();
 
                 sendBuffer(ByteBuffer.wrap("Stats reset.\n".getBytes()));
+                sendBuffer(NIOServerCnxn.closeConn);
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
             }

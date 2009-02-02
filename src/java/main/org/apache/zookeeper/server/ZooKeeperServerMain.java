@@ -61,7 +61,6 @@ public class ZooKeeperServerMain {
             public ZooKeeperServer createServer() throws IOException {
                 // create a file logger url from the command line args
                 ZooKeeperServer zks = new ZooKeeperServer();
-                zks.setClientPort(ServerConfig.getClientPort());
 
                FileTxnSnapLog ftxn = new FileTxnSnapLog(new 
                        File(ServerConfig.getDataLogDir()),

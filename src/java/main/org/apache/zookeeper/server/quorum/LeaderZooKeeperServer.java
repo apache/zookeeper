@@ -62,7 +62,7 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(
                 finalProcessor, getLeader().toBeApplied);
         commitProcessor = new CommitProcessor(toBeAppliedProcessor,
-                Integer.toString(getClientPort()), false);
+                Long.toString(getServerId()), false);
         RequestProcessor proposalProcessor = new ProposalRequestProcessor(this,
                 commitProcessor);
         firstProcessor = new PrepRequestProcessor(this, proposalProcessor);
@@ -137,5 +137,10 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
             LOG.warn("Failed to unregister with JMX", e);
         }
         jmxServerBean = null;
+    }
+    
+    @Override
+    public String getState() {
+        return "leader";
     }
 }

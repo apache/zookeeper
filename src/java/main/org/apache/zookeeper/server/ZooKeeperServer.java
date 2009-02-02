@@ -119,7 +119,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     int requestsInProcess;
     List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
     private NIOServerCnxn.Factory serverCnxnFactory;
-    private int clientPort;
 
     private final ServerStats serverStats;
 
@@ -637,18 +636,18 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
     
     public int getClientPort() {
-        return clientPort;
+        return serverCnxnFactory != null ? serverCnxnFactory.ss.socket().getLocalPort() : -1;
     }
 
-    public void setClientPort(int clientPort) {
-        this.clientPort = clientPort;
-    }
-    
     public void setTxnLogFactory(FileTxnSnapLog txnLog) {
         this.txnLogFactory = txnLog;
     }
     
     public FileTxnSnapLog getTxnLogFactory() {
         return this.txnLogFactory;
+    }
+
+    public String getState() {
+        return "standalone";
     }
 }

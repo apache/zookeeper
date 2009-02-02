@@ -35,6 +35,7 @@ public class ServerStats {
     public interface Provider {
         public long getOutstandingRequests();
         public long getLastProcessedZxid();
+        public String getState();
     }
     
     public ServerStats(Provider provider) {
@@ -74,7 +75,7 @@ public class ServerStats {
     }
 
     public String getServerState() {
-        return "standalone";
+        return provider.getState();
     }
     
     @Override
