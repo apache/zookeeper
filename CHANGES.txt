@@ -144,6 +144,8 @@ flavio via mahadev)
    ZOOKEEPER-229. improve documentation regarding user's responsibility to
    cleanup datadir (snaps/logs) (mahadev via phunt)
 
+   ZOOKEEPER-69. ZooKeeper logo
+
 NEW FEATURES:
 
    ZOOKEEPER-276. Bookkeeper contribution (Flavio and Luca Telloli via mahadev)

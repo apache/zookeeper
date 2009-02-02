@@ -65,7 +65,7 @@ which will be used to configure the chosen Forrest skin.
 
   <!-- project logo -->
   <project-name>ZooKeeper</project-name>
-  <project-description>The Hadoop database</project-description>
+  <project-description>ZooKeeper: distributed coordination</project-description>
   <project-url>http://hadoop.apache.org/zookeeper/</project-url>
   <project-logo>images/zookeeper_small.gif</project-logo>
 
