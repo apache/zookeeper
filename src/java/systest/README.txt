@@ -40,3 +40,23 @@ or you can specify a remote host:port using
 java -DsysTest.zkHostPort=hostA:2181  -jar build/contrib/fatjar/zookeeper-dev-fatjar.jar systest org.apache.zookeeper.test.system.SimpleSysTest
 
 where hostA is running the zk server started in step 2) above
+
+InstanceContainers can also be used to run a the saturation benchmark. The
+first two steps are the same as the system test. Step 3 is almost the same:
+
+3) start the InstanceContainer on each host:
+
+e.g. java -jar zookeeper-<version>-fatjar.jar ic <name> <zkHostPort> <prefix>
+
+note prefix can be /sysTest or any other path. If you do use /sysTest, make
+sure the system test isn't running when you run the benchmark.
+
+4) run GenerateLoad using the following
+
+java -jar build/contrib/fatjar/zookeeper-dev-fatjar.jar generateLoad <zkHostPort> <prefix> #servers #clients
+
+Once GenerateLoad is started, it will read commands from stdin. Usually
+the only command you need to know is "percentage" which sets the percentage
+of writes to use in the requests. Once a percentage is set, the benchmark
+will start. "percentage 0" will cause only reads to be issued and
+"percentage 100" will cause only writes to be issued.

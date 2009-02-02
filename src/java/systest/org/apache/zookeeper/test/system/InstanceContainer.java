@@ -53,7 +53,6 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
             this.myNode = myNode;
             this.dc = dc;
         }
-        @Override
         public void process(WatchedEvent event) {
             if (event.getPath() != null && event.getPath().equals(myNode)) {
                 zk.getData(myNode, this, dc, this);
@@ -70,7 +69,6 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
             this.myInstance = myInstance;
             lastVer = ver;
         }
-        @Override
         public void processResult(int rc, String path,
                 Object ctx, byte[] data, Stat stat) {
             if (rc == KeeperException.Code.NONODE.intValue()) {
@@ -95,7 +93,6 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
             myReportNode = reportsNode + '/' + child;
         }
 
-        @Override
         public void report(String report) throws KeeperException, InterruptedException {
             for(int j = 0; j < maxTries; j++) {
                 try {
@@ -217,7 +214,6 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
         }
     }
 
-    @Override
     public void process(WatchedEvent event) {
         if (KeeperState.Expired == event.getState()) {
             // It's all over
@@ -231,7 +227,6 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
     }
 
     HashMap<String, Instance> instances = new HashMap<String, Instance>();
-    @Override
     public void processResult(int rc, String path, Object ctx,
             List<String> children) {
         if (rc != KeeperException.Code.OK.intValue()) {
@@ -288,6 +283,9 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
                         zk.getData(myNode, watcher, dc, watcher);
                     } catch (Exception e) {
                         LOG.warn("Skipping " + child, e);
+                        if (e.getCause() != null) {
+                            LOG.warn("Caused by", e.getCause());
+                        }
                     }
                     
                 }

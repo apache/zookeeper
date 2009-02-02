@@ -83,7 +83,7 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         commitProcessor = new CommitProcessor(finalProcessor,
-                Integer.toString(getClientPort()), true);
+                Long.toString(getServerId()), true);
         firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
         syncProcessor = new SyncRequestProcessor(this,
                 new SendAckRequestProcessor(getFollower()));
@@ -228,5 +228,10 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
             LOG.warn("Failed to unregister with JMX", e);
         }
         jmxServerBean = null;
+    }
+    
+    @Override
+    public String getState() {
+        return "follower";
     }
 }

@@ -19,12 +19,14 @@
 package org.apache.zookeeper.test.system;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
@@ -41,7 +43,6 @@ class QuorumPeerInstance implements Instance {
     Reporter r;
     QuorumPeer peer;
 
-    @Override
     public void setReporter(Reporter r) {
         this.r = r;
     }
@@ -49,19 +50,33 @@ class QuorumPeerInstance implements Instance {
     InetSocketAddress clientAddr;
     InetSocketAddress quorumAddr;
     HashMap<Long, QuorumServer> peers;
-    File dir;
+    File snapDir, logDir;
 
     public QuorumPeerInstance() {
         try {
-            dir = File.createTempFile("test", ".dir");
+            File tmpFile = File.createTempFile("test", ".dir");
+            File tmpDir = tmpFile.getParentFile();
+            tmpFile.delete();
+            File zkDirs = new File(tmpDir, "zktmp.cfg");
+            logDir = tmpDir;
+            snapDir = tmpDir;
+            if (zkDirs.exists()) {
+                Properties p = new Properties();
+                p.load(new FileInputStream(zkDirs));
+                logDir = new File(p.getProperty("logDir", tmpDir.getAbsolutePath()));
+                snapDir = new File(p.getProperty("snapDir", tmpDir.getAbsolutePath()));
+            }
+            logDir = File.createTempFile("zktst", ".dir", logDir);
+            logDir.delete();
+            logDir.mkdir();
+            snapDir = File.createTempFile("zktst", ".dir", snapDir);
+            snapDir.delete();
+            snapDir.mkdir();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        dir.delete();
-        dir.mkdir();
     }
 
-    @Override
     public void configure(String params) {
         if (clientAddr == null) {
             // The first time we are configured, it is just to tell
@@ -140,7 +155,7 @@ class QuorumPeerInstance implements Instance {
                     LOG.warn("Peer " + serverId + " already started");
                     return;
                 }
-                peer = new QuorumPeer(peers, dir, dir, clientAddr.getPort(), 0, serverId, tickTime, initLimit, syncLimit);
+                peer = new QuorumPeer(peers, snapDir, logDir, clientAddr.getPort(), 0, serverId, tickTime, initLimit, syncLimit);
                 peer.start();
                 for(int i = 0; i < 5; i++) {
                     Thread.sleep(500);
@@ -157,7 +172,6 @@ class QuorumPeerInstance implements Instance {
         }
     }
 
-    @Override
     public void start() {
     }
 
@@ -171,7 +185,7 @@ class QuorumPeerInstance implements Instance {
         }
         dir.delete();
     }
-    @Override
+    
     public void stop() {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Stopping peer " + serverId);
@@ -179,7 +193,12 @@ class QuorumPeerInstance implements Instance {
         if (peer != null) {
             peer.shutdown();
         }
-        recursiveDelete(dir);
+        if (logDir != null) {
+            recursiveDelete(logDir);
+        }
+        if (snapDir != null) {
+            recursiveDelete(snapDir);
+        }
     }
 
     /**
@@ -192,9 +211,9 @@ class QuorumPeerInstance implements Instance {
      * @throws InterruptedException
      * @throws KeeperException
      */
-    public static String createServer(InstanceManager im, int i) throws NoAvailableContainers, DuplicateNameException, InterruptedException, KeeperException {
+    public static String[] createServer(InstanceManager im, int i) throws NoAvailableContainers, DuplicateNameException, InterruptedException, KeeperException {
         im.assignInstance("server"+i, QuorumPeerInstance.class, Integer.toString(i), 50);
-        return im.getStatus("server"+i, 3000);
+        return im.getStatus("server"+i, 3000).split(",");
         
     }
 

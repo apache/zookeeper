@@ -82,7 +82,6 @@ public class PurgeTxnTest extends TestCase implements  Watcher {
         assertTrue("exactly 3 snapshots ", (numSnaps == 3));
     }
     
-    @Override
     public void process(WatchedEvent event) {
         // do nothing
     }

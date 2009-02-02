@@ -31,7 +31,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 
 /**
- * The client that gets spawned for the SimpleSysTest
+ * The client that gets spawned for the SimpleSysTest 
  *
  */
 public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallback, StringCallback, StatCallback {
@@ -42,25 +42,23 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
     transient String myPath;
     byte data[];
     boolean createdEphemeral;
-    @Override
     public void configure(String params) {
         String parts[] = params.split(" ");
         hostPort = parts[1];
         this.index = Integer.parseInt(parts[0]);
         myPath = "/simpleCase/" + index;
     }
-    @Override
+    
     public void start() {
         try {
             zk = new ZooKeeper(hostPort, 15000, this);
             zk.getData("/simpleCase", true, this, null);
-            r.report("Client " + index + " connecting to " + hostPort);
+            r.report("Client " + index + " connecting to " + hostPort); 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-    @Override
+    
     public void stop() {
         try {
             if (zk != null) {
@@ -70,13 +68,12 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
             e.printStackTrace();
         }
     }
-    @Override
     public void process(WatchedEvent event) {
         if (event.getPath() != null && event.getPath().equals("/simpleCase")) {
             zk.getData("/simpleCase", true, this, null);
         }
     }
-    @Override
+    
     public void processResult(int rc, String path, Object ctx, byte[] data,
             Stat stat) {
         if (rc != 0) {
@@ -94,15 +91,14 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
             } else {
                 zk.setData(myPath, data, -1, this, null);
             }
-        }
+        }            
     }
-    @Override
+    
     public void processResult(int rc, String path, Object ctx, String name) {
         if (rc != 0) {
             zk.create(myPath, data, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, this, null);
         }
     }
-    @Override
     public void processResult(int rc, String path, Object ctx, Stat stat) {
         if (rc != 0) {
             zk.setData(myPath, data, -1, this, null);
@@ -112,9 +108,8 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
     public String toString() {
         return SimpleClient.class.getName() + "[" + index + "] using " + hostPort;
     }
-
+    
     Reporter r;
-    @Override
     public void setReporter(Reporter r) {
         this.r = r;
     }

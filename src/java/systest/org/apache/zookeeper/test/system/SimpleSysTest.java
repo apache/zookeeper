@@ -154,7 +154,6 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
         stopServers();
     }
 
-    @Override
     public void process(WatchedEvent event) {
         if (event.getState() == KeeperState.SyncConnected) {
             synchronized(this) {
