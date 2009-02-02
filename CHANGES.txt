@@ -148,6 +148,9 @@ flavio via mahadev)
    
    ZOOKEEPER-286. Make GenerateLoad use InstanceContainers. (breed via mahadev)
 
+   ZOOKEEPER-220. programming guide watches section should clarify
+   server/clientlib role in data/child watch maint. (breed via phunt)
+
 NEW FEATURES:
 
    ZOOKEEPER-276. Bookkeeper contribution (Flavio and Luca Telloli via mahadev)

@@ -467,15 +467,21 @@
         <para><emphasis role="bold">The data for which the watch was
         set</emphasis></para>
 
-        <para>This refers to the different ways a node can change. ZooKeeper
-        maintains two lists of watches: data watches and child watches.
-        getData() and exists() set data watches. getChildren() sets child
-        watches. Thus, setData() will trigger data watches for the znode being
-        set (assuming the set is successful). A successful create() will
-        trigger a data watch for the znode being created and a child watch for
-        the parent znode. A successful delete() will trigger both a data watch
-        and a child watch (since there can be no more children) for a znode
-        being deleted as well as a child watch for the parent znode.</para>
+        <para>This refers to the different ways a node can change.  It
+        helps to think of ZooKeeper as maintaining two lists of
+        watches: data watches and child watches.  getData() and
+        exists() set data watches. getChildren() sets child
+        watches. Alternatively, it may help to think of watches being
+        set according to the kind of data returned. getData() and
+        exists() return information about the data of the node,
+        whereas getChildren() returns a list of children.  Thus,
+        setData() will trigger data watches for the znode being set
+        (assuming the set is successful). A successful create() will
+        trigger a data watch for the znode being created and a child
+        watch for the parent znode. A successful delete() will trigger
+        both a data watch and a child watch (since there can be no
+        more children) for a znode being deleted as well as a child
+        watch for the parent znode.</para>
       </listitem>
     </itemizedlist>
 
