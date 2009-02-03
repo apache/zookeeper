@@ -150,6 +150,8 @@ flavio via mahadev)
 
    ZOOKEEPER-220. programming guide watches section should clarify
    server/clientlib role in data/child watch maint. (breed via phunt)
+ 
+   ZOOKEEPER-289. add debug messages to nioserver select loop. (mahadev)
 
 NEW FEATURES:
 
