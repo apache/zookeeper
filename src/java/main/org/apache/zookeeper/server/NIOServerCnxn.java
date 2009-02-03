@@ -160,6 +160,11 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
                             NIOServerCnxn c = (NIOServerCnxn) k.attachment();
                             c.doIO(k);
+                        } else {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Unexpected ops in select "
+                                          + k.readyOps());
+                            }
                         }
                     }
                     selected.clear();
@@ -279,6 +284,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     void doIO(SelectionKey k) throws InterruptedException {
         try {
             if (sock == null) {
+                LOG.warn("trying to do i/o on a null socket for session:0x"
+                         + Long.toHexString(sessionId));
+
                 return;
             }
             if (k.isReadable()) {
@@ -434,7 +442,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                             != KeeperException.Code.OK)) {
                 if (ap == null) {
                     LOG.warn("No authentication provider for scheme: "
-                            + scheme + " has " 
+                            + scheme + " has "
                             + ProviderRegistry.listProviders());
                 } else {
                     LOG.warn("Authentication failed for scheme: " + scheme);
@@ -502,7 +510,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 + Long.toHexString(connReq.getLastZxidSeen())
                 + " our last zxid is 0x"
                 + Long.toHexString(zk.dataTree.lastProcessedZxid);
-            
+
             LOG.error(msg);
             throw new IOException(msg);
         }
@@ -885,7 +893,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             close();
         }
     }
-    
+
     /*
      * (non-Javadoc)
      *
