@@ -38,20 +38,20 @@ public class RepeatStartupTest extends TestCase {
      * @throws Exception
      */
     public void testFail() throws Exception {
-        QuorumTest qt = new QuorumTest();
-        qt.setUp();
-        System.out.println("Comment: the servers are at " + qt.hostPort);
-        ZooKeeper zk = qt.createClient();
+        QuorumBase qb = new QuorumBase();
+        qb.setUp();
+        System.out.println("Comment: the servers are at " + qb.hostPort);
+        ZooKeeper zk = qb.createClient();
         zk.create("/test", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
-        qt.shutdown(qt.s1);
-        qt.shutdown(qt.s2);
-        qt.shutdown(qt.s3);
-        qt.shutdown(qt.s4);
-        qt.shutdown(qt.s5);
-        String hp = qt.hostPort.split(",")[0];
-        ZooKeeperServer zks = new ZooKeeperServer(qt.s1.getTxnFactory().getSnapDir(), 
-                qt.s1.getTxnFactory().getDataDir(), 3000);
+        qb.shutdown(qb.s1);
+        qb.shutdown(qb.s2);
+        qb.shutdown(qb.s3);
+        qb.shutdown(qb.s4);
+        qb.shutdown(qb.s5);
+        String hp = qb.hostPort.split(",")[0];
+        ZooKeeperServer zks = new ZooKeeperServer(qb.s1.getTxnFactory().getSnapDir(), 
+                qb.s1.getTxnFactory().getDataDir(), 3000);
         final int PORT = Integer.parseInt(hp.split(":")[1]);
         NIOServerCnxn.Factory factory = null;
         if (factory == null) {

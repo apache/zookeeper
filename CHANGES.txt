@@ -154,6 +154,8 @@ flavio via mahadev)
 NEW FEATURES:
 
    ZOOKEEPER-276. Bookkeeper contribution (Flavio and Luca Telloli via mahadev)
+  
+   ZOOKEEPER-231. Quotas in ZooKeeper. (mahadev)
 
 Release 3.0.0 - 2008-10-21
 

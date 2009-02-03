@@ -61,6 +61,7 @@
       <li><strong>Administrators &amp; Operators</strong> <p> Documents for Administrators and Operations Engineers of ZooKeeper Deployments</p>
       <ul>
       <li><a href="zookeeperAdmin.html">Administrator's Guide</a> - a guide for system administrators and anyone else who might deploy ZooKeeper</li>
+      <li><a href="zookeeperQuotas.html">Quota Guide</a> - a guide for system administrators on Quotas in ZooKeeper. </li>
       <li><a href="zookeeperJMX.html">JMX</a> - how to enable JMX in ZooKeeper</li>
       </ul>
       </li>
