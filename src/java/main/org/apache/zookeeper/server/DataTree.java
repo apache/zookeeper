@@ -34,6 +34,8 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Quotas;
+import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.KeeperException.Code;
@@ -42,6 +44,7 @@ import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
@@ -63,7 +66,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  */
 public class DataTree {
     private static final Logger LOG = Logger.getLogger(DataTree.class);
-
+    
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
@@ -75,10 +78,34 @@ public class DataTree {
 
     private WatchManager childWatches = new WatchManager();
 
+    /** the root of zookeeper tree */
+    private final String rootZookeeper = "/";
+    
+    /** the zookeeper nodes that acts as the management and status node **/
+    private final String procZookeeper = Quotas.procZookeeper;
+    
+    /** this will be the string thats stored as a child of root */
+    private final String procChildZookeeper = procZookeeper.substring(1);
+    
+    /** the zookeeper quota node that acts as the quota 
+     * management node for zookeeper */
+    private final String quotaZookeeper = Quotas.quotaZookeeper;
+
+    /** this will be the string thats stored as a child of /zookeeper */
+    private final String quotaChildZookeeper = quotaZookeeper.substring(
+            procZookeeper.length() + 1);
+    
+    /** 
+     * the path trie that keeps track fo the quota nodes in 
+     * this datatree
+     */
+    PathTrie pTrie = new PathTrie();
+    
     /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
      */
-    private Map<Long, HashSet<String>> ephemerals = new ConcurrentHashMap<Long, HashSet<String>>();
+    private Map<Long, HashSet<String>> ephemerals = new
+                            ConcurrentHashMap<Long, HashSet<String>>();
 
     /**
      * this is map from longs to acl's. It saves acl's being stored 
@@ -229,13 +256,48 @@ public class DataTree {
      */
     private DataNode root =
         new DataNode(null, new byte[0], -1L, new StatPersisted());
+    
+    /**
+     * create a /zookeeper filesystem that is the proc
+     * filesystem of zookeeper
+     */
+    private DataNode procDataNode = 
+        new DataNode(root, new byte[0], -1L, new StatPersisted());
+    
+    /** 
+     * create a /zookeeper/quota node for maintaining quota properties
+     * for zookeeper
+     */
+    private DataNode quotaDataNode = 
+        new DataNode(procDataNode, new byte[0], -1L, new StatPersisted());
 
     public DataTree() {
         /* Rather than fight it, let root have an alias */
         nodes.put("", root);
-        nodes.put("/", root);
+        nodes.put(rootZookeeper, root);
+        /** add the proc ndoe and quota node */
+        Set<String> children = root.getChildren();
+        
+        children.add(procChildZookeeper);
+        nodes.put(procZookeeper, procDataNode);
+        children = procDataNode.getChildren();
+        children.add(quotaChildZookeeper);
+        nodes.put(quotaZookeeper, quotaDataNode);
     }
-
+    
+    /**
+     * is the path one of the special paths owned by zookeeper.
+     * @param path the path to be checked
+     * @return true if a special path. false if not.
+     */
+    boolean isSpecialPath(String path) {
+        if (rootZookeeper.equals(path) || procZookeeper.equals(path)
+                || quotaZookeeper.equals(path)) {
+            return true;
+        }
+        return false;
+    }
+    
     static public void copyStatPersisted(StatPersisted from, StatPersisted to) {
         to.setAversion(from.getAversion());
         to.setCtime(from.getCtime());
@@ -261,22 +323,64 @@ public class DataTree {
         to.setDataLength(from.getDataLength());
         to.setNumChildren(from.getNumChildren());
     }
-
-    // public void remooveInterest(String path, Watcher nw) {
-    // DataNode n = nodes.get(path);
-    // if (n == null) {
-    // synchronized (nonExistentWatches) {
-    // HashSet<Watcher> list = nonExistentWatches.get(path);
-    // if (list != null) {
-    // list.remove(nw);
-    // }
-    // }
-    // }
-    // synchronized (n) {
-    // n.dataWatchers.remove(nw);
-    // n.childWatchers.remove(nw);
-    // }
-    // }
+    
+  
+    
+    /** 
+     * update the count of this stat datanode
+     * @param lastPrefix the path of the node that is quotaed.
+     * @param diff the diff to be added to the count
+     */
+    public void updateCount(String lastPrefix, int diff) {
+        String statNode = Quotas.statPath(lastPrefix);
+        DataNode node = nodes.get(statNode);
+        StatsTrack updatedStat = null;
+        synchronized(node) {
+            updatedStat = new StatsTrack(new String(node.data));
+            updatedStat.setCount(updatedStat.getCount() + diff);
+            node.data = updatedStat.toString().getBytes();
+        }
+        //now check if the counts match the quota
+        String quotaNode = Quotas.quotaPath(lastPrefix);
+        node = nodes.get(quotaNode);
+        StatsTrack thisStats = null;
+        synchronized(node) {
+            thisStats = new StatsTrack(new String(node.data));
+        }
+        if (thisStats.getCount() < updatedStat.getCount()) {
+            LOG.warn("Quota exceeded: " + lastPrefix + " count="
+                    + updatedStat.getCount() + " limit=" + 
+                    thisStats.getCount());
+        }
+    }
+    
+    /**
+     * update the count of bytes of this stat datanode
+     * @param lastPrefix the path of the node that is quotaed
+     * @param diff the diff to added to number of bytes
+     */
+    public void updateBytes(String lastPrefix, long diff) {
+        String statNode = Quotas.statPath(lastPrefix);
+        DataNode node = nodes.get(statNode);
+        StatsTrack updatedStat = null;
+        synchronized(node) {
+            updatedStat = new StatsTrack(new String(node.data));
+            updatedStat.setBytes(updatedStat.getBytes() + diff);
+            node.data = updatedStat.toString().getBytes();
+        }
+        // now check if the bytes match the quota
+        String quotaNode = Quotas.quotaPath(lastPrefix);
+        node = nodes.get(quotaNode);
+        StatsTrack thisStats = null;
+        synchronized(node) {
+            thisStats = new StatsTrack(new String(node.data));
+        }
+        if (thisStats.getBytes() < updatedStat.getBytes()) {
+            LOG.warn("Quota exceeded: " + lastPrefix + " bytes="
+                    + updatedStat.getBytes() + " limit=" + 
+                    thisStats.getBytes());
+        }
+    }
 
     /**
      * @param path
@@ -332,6 +436,25 @@ public class DataTree {
                 }
             }
         }
+        // now check if its one of the zookeeper node child
+        if (parentName.startsWith(quotaZookeeper)) {
+            //now check if its the limit node
+            if (Quotas.limitNode.equals(childName)) {
+                // this is the limit node
+                // get the parent and add it to the trie
+                pTrie.addPath(parentName.substring(quotaZookeeper.length()));
+            }
+            if (Quotas.statNode.equals(childName)) {
+                updateQuotaForPath(parentName.substring(quotaZookeeper.length()));
+            }
+        }
+        //also check to update the quotas for this node
+        String lastPrefix = pTrie.findMaxPrefix(path);
+        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+            // ok we have some match and need to update 
+            updateCount(lastPrefix, 1);
+            updateBytes(lastPrefix, data == null? 0:data.length);
+        }
         dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
         childWatches.triggerWatch(parentName.equals("")?"/":parentName, Event.EventType.NodeChildrenChanged);
         return path;
@@ -373,6 +496,22 @@ public class DataTree {
             }
             node.parent = null;
         }
+        if (parentName.startsWith(procZookeeper)) {
+            // delete the node in the trie.
+            if (Quotas.limitNode.equals(childName)) {
+                // we need to update the trie 
+                // as well
+                pTrie.deletePath(parentName.substring(quotaZookeeper.length()));
+            }
+        }
+        
+        //also check to update the quotas for this node
+        String lastPrefix = pTrie.findMaxPrefix(path);
+        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+            // ok we have some match and need to update 
+            updateCount(lastPrefix, -1);
+            updateBytes(lastPrefix, node.data == null? 0:-(node.data.length));
+        }
         ZooTrace.logTraceMessage(LOG,
                                  ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                                  "dataWatches.triggerWatch " + path);
@@ -392,12 +531,22 @@ public class DataTree {
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
+        byte lastdata[] = n.data;
         synchronized (n) {
             n.data = data;
             n.stat.setMtime(time);
             n.stat.setMzxid(zxid);
             n.stat.setVersion(version);
             n.copyStat(s);
+        }
+        // now update if the path is in a quota subtree.
+        String lastPrefix = pTrie.findMaxPrefix(path);
+        // do nothing for the root. 
+        // we are not keeping a quota on the zookeeper 
+        // root node for now.
+        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+            this.updateBytes(lastPrefix, (data == null?0:data.length) - 
+                    (lastdata == null?0:lastdata.length));
         }
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
         return s;
@@ -603,7 +752,110 @@ public class DataTree {
             }
         }
     }
+    
+    /** 
+     * a encapsultaing class 
+     * for return value
+     */
+    private static class Counts {
+        long bytes;
+        int count;
+    }
 
+    /**
+     * this method gets the count of nodes 
+     * and the bytes under a subtree
+     * @param path the path to be used
+     * @param bytes the long bytes
+     * @param count the int count
+     */
+    private void getCounts(String path, Counts counts) {
+        DataNode node = getNode(path);
+        if (node == null) {
+            return;
+        }
+        String[] children = null;
+        synchronized (node) {
+            children = node.children.toArray(new
+                    String[node.children.size()]);
+        }
+        // add itself
+        counts.count += 1;
+        counts.bytes += (long)node.data.length;
+        if (children.length == 0) {
+            return;
+        }
+        for (String child: children) {
+            getCounts(path + "/" + child, counts);
+        }
+    }
+    /** 
+     * update the quota for the given path
+     * @param path the path to be used
+     */
+    private void updateQuotaForPath(String path) {
+        Counts c = new Counts();
+        getCounts(path, c);
+        StatsTrack strack = new StatsTrack();
+        strack.setBytes(c.bytes);
+        strack.setCount(c.count);
+        String statPath = Quotas.quotaZookeeper + path + 
+                        "/" + Quotas.statNode;
+        DataNode node = getNode(statPath);
+        //it should exist
+        if (node == null) {
+            LOG.warn("Missing quota stat node " + statPath);
+            return;
+        }
+        synchronized(node) {
+            node.data = strack.toString().getBytes();
+        }
+    }
+    /**
+     * this method traverses the quota 
+     * path and update the path trie and sets
+     * @param path
+     */
+    private void traverseNode(String path) {
+       DataNode node = getNode(path);
+       String children[] = null;
+       synchronized (node) {
+           children = node.children.toArray(new
+                   String[node.children.size()]);
+       }
+       if (children.length == 0) {
+           // this node does not have a child
+           // is the leaf node 
+           // check if its the leaf node
+           String endString = "/" + Quotas.limitNode;
+           if (path.endsWith(endString)) {
+               //ok this is the limit node
+               // get the real node and update 
+               // the count and the bytes
+               String realPath = path.substring(Quotas.quotaZookeeper.length(), 
+                       path.indexOf(endString));
+               updateQuotaForPath(realPath);
+               this.pTrie.addPath(realPath);
+           }
+           return;
+       }
+       for (String child: children) {
+           traverseNode(path + "/" + child);
+       }
+    }
+    
+    /**
+     * this method sets up the path trie
+     * and sets up stats for quota nodes
+     */
+    private void setupQuota() {
+        String quotaPath = Quotas.quotaZookeeper;
+        DataNode node = getNode(quotaPath);
+        if (node == null) {
+            return;
+        }
+        traverseNode(quotaPath);
+    }
     /**
      * this method uses a stringbuilder to create a new
      * path for children. This is faster than string
@@ -721,6 +973,11 @@ public class DataTree {
             path = ia.readString("path");
         }
         nodes.put("/", root);
+        // we are done with deserializing the 
+        // the datatree
+        // update the quotas - create path trie
+        // and also update the stat nodes
+        setupQuota();
     }
 
     public String dumpEphemerals() {

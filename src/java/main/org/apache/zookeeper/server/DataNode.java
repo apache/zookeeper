@@ -20,7 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.util.HashSet;
-
+import java.util.Set;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -35,9 +35,32 @@ import org.apache.zookeeper.data.StatPersisted;
  * 
  */
 public class DataNode implements Record {
-    DataNode() {
-        // default rather than public constructor
-    }
+    /** the parent of this datanode */
+    DataNode parent; 
+    
+    /** the data for this datanode */
+    byte data[];     
+    
+    /** the acl map long for this datanode. 
+    the datatree has the map */
+    Long acl;       
+    
+    /** the stat for this node that is persisted 
+     * to disk.
+     */
+    public StatPersisted stat; 
+
+    /** the list of children for this node. note 
+     * that the list of children string does not 
+     * contain the parent path -- just the last
+     * part of the path.
+     */
+    Set<String> children = new HashSet<String>();
+
+    /**
+     * default constructor for the datanode
+     */
+    DataNode() {}
 
     /**
      * create a DataNode with parent, data, acls and stat
@@ -68,20 +91,11 @@ public class DataNode implements Record {
      * convenience methods to get the children
      * @return the children of this datanode
      */
-    public HashSet<String> getChildren() {
+    public Set<String> getChildren() {
         return this.children;
     }
     
-    DataNode parent;
-
-    byte data[];
-
-    Long acl;
-
-    public StatPersisted stat;
-
-    HashSet<String> children = new HashSet<String>();
-
+   
     public void copyStat(Stat to) {
         to.setAversion(stat.getAversion());
         to.setCtime(stat.getCtime());
@@ -113,9 +127,5 @@ public class DataNode implements Record {
         archive.writeLong(acl, "acl");
         stat.serialize(archive, "statpersisted");
         archive.endRecord(this, "node");
-    }
-    
-    public int compareTo(Object o) {
-        return -1;
     }
 }

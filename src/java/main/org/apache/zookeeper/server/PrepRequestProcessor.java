@@ -258,7 +258,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 path = deleteRequest.getPath();
                 lastSlash = path.lastIndexOf('/');
                 if (lastSlash == -1 || path.indexOf('\0') != -1
-                        || path.equals("/")) {
+                        || zks.dataTree.isSpecialPath(path)) {
                     throw new KeeperException.BadArgumentsException();
                 }
                 parentPath = path.substring(0, lastSlash);

@@ -50,7 +50,7 @@ public class AsyncTest extends TestCase
 {
     private static final Logger LOG = Logger.getLogger(AsyncTest.class);
 
-    private QuorumTest quorumTest = new QuorumTest();
+    private QuorumBase qb = new QuorumBase();
 
     private volatile boolean bang;
 
@@ -58,21 +58,18 @@ public class AsyncTest extends TestCase
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
-
-        ClientBase.setupTestEnv();
-
-        quorumTest.setUp();
+        qb.setUp();
     }
 
     protected void restart() throws Exception {
-        quorumTest.startServers();
+        qb.startServers();
     }
 
     @After
     @Override
     protected void tearDown() throws Exception {
         LOG.info("Test clients shutting down");
-        quorumTest.tearDown();
+        qb.tearDown();
         LOG.info("FINISHED " + getName());
     }
 
@@ -87,7 +84,7 @@ public class AsyncTest extends TestCase
     }
 
     private ZooKeeper createClient() throws IOException,InterruptedException {
-        return createClient(quorumTest.hostPort);
+        return createClient(qb.hostPort);
     }
 
     private ZooKeeper createClient(String hp)
@@ -120,7 +117,7 @@ public class AsyncTest extends TestCase
 
         public void run() {
             try {
-                zk = new ZooKeeper(quorumTest.hostPort, 30000, this);
+                zk = new ZooKeeper(qb.hostPort, 30000, this);
                 while(bang) {
                     incOutstanding(); // before create otw race
                     zk.create("/test-", new byte[0], Ids.OPEN_ACL_UNSAFE,
@@ -191,13 +188,14 @@ public class AsyncTest extends TestCase
             verifyThreadTerminated(hammers[i], 60000);
         }
         // before restart
-        quorumTest.verifyRootOfAllServersMatch(quorumTest.hostPort);
+        QuorumTest qt = new QuorumTest();
+        qt.verifyRootOfAllServersMatch(qb.hostPort);
         tearDown();
 
         restart();
 
         // after restart
-        quorumTest.verifyRootOfAllServersMatch(quorumTest.hostPort);
+        qt.verifyRootOfAllServersMatch(qb.hostPort);
     }
 
     LinkedList<Integer> results = new LinkedList<Integer>();

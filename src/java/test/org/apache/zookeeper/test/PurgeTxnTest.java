@@ -19,8 +19,6 @@
 package org.apache.zookeeper.test;
 
 import java.io.File;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.TestCase;
@@ -36,7 +34,6 @@ import org.apache.zookeeper.server.PurgeTxnLog;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.test.ClientBase;
 
 /** 
  * test the purging of the logs

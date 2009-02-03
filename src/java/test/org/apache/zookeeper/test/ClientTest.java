@@ -321,8 +321,8 @@ public class ClientTest extends ClientBase {
             zk.create("/ben", "Ben was here".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             LOG.info("Before getChildren /");
             List<String> children = zk.getChildren("/", false);
-            assertEquals(1, children.size());
-            assertEquals("ben", children.get(0));
+            assertEquals(2, children.size());
+            assertEquals("ben", children.get(1));
             String value = new String(zk.getData("/ben", false, stat));
             assertEquals("Ben was here", value);
             // Test stat and watch of non existent node
