@@ -1,8 +1,9 @@
-Trunk
+Release 3.1.0 - 2009-02-06
   
 Non-backward compatible changes:
 
-BUGFIXES:
+BUGFIXES: 
+
   ZOOKEEPER-255. zoo_set() api does not return stat datastructure.
   (avery ching via mahadev)
 
