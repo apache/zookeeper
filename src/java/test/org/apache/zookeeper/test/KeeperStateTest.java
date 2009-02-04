@@ -21,9 +21,10 @@ package org.apache.zookeeper.test;
 import java.util.EnumSet;
 
 import junit.framework.TestCase;
-import org.junit.Test;
 
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.junit.Test;
 
 public class KeeperStateTest extends TestCase {
     
@@ -46,5 +47,30 @@ public class KeeperStateTest extends TestCase {
             // we're good.
         }
 
+    }
+
+    /** Validate that the deprecated constant still works. There were issues
+     * found with switch statements - which need compile time constants.
+     */
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testDeprecatedCodeOkInSwitch() {
+        int test = 1;
+        switch (test) {
+        case Code.Ok:
+            assertTrue(true);
+            break;
+        }
+    }
+
+    /** Verify the enum works (paranoid) */
+    @Test
+    public void testCodeOKInSwitch() {
+        Code test = Code.OK;
+        switch (test) {
+        case OK:
+            assertTrue(true);
+            break;
+        }
     }
 }
