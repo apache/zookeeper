@@ -188,6 +188,9 @@ document.write("Last Published: " + document.lastModified);
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
+<a href="#migration">A note on API changes in 3.1</a>
+</li>
+<li>
 <a href="#changes">Changes Since ZooKeeper 3.0.1</a>
 </li>
 </ul>
@@ -203,13 +206,26 @@ incompatibilities, features, and major improvements.
 </p>
 
 
+<p>
+
+
+</p>
+
+
 <p>See <a href="http://hadoop.apache.org/zookeeper/docs/r3.0.1/releasenotes.html#migration">3.0
 release notes and migration instructions</a> if you are upgrading
 from version 2 of ZooKeeper (SourceForge) to version 3 or
 later.</p>
 
 
-<a name="N10013"></a><a name="changes"></a>
+<a name="N10016"></a><a name="migration"></a>
+<h2 class="h3">A note on API changes in 3.1</h2>
+<div class="section">
+<p>In Java there were no b/w incompatible changes made in this release. However the C client code fixed an issue where the zoo_set(...) method was not providing access to a Stat structure when the method returned. The C API was modified in 3.1 to support client access of this information. Legacy client code (pre 3.1) can be easily migrated by passing null for this parameter if you have no interest.</p>
+</div>
+
+
+<a name="N10020"></a><a name="changes"></a>
 <h2 class="h3">Changes Since ZooKeeper 3.0.1</h2>
 <div class="section">
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
@@ -236,6 +252,11 @@ later.</p>
 
 <tr>
 <td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-255">ZOOKEEPER-255</a></td><td>         zoo_set() api does not return stat datastructure.
+</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-246">ZOOKEEPER-246</a></td><td>         review error code definition in both source and docs
 </td>
 </tr>
 
@@ -477,6 +498,11 @@ later.</p>
 <td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-211">ZOOKEEPER-211</a></td><td>         Not all Mock tests are working
 </td>
 </tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-291">ZOOKEEPER-291</a></td><td>regression for legacy code using KeeperException.Code constants (due to 246)
+</td>
+</tr>
     
 
 <tr>
@@ -548,11 +574,6 @@ later.</p>
 
 <tr>
 <td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-243">ZOOKEEPER-243</a></td><td>         add SEQUENCE flag documentation to the programming guide
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-246">ZOOKEEPER-246</a></td><td>         review error code definition in both source and docs
 </td>
 </tr>
 
