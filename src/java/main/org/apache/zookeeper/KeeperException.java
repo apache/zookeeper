@@ -136,60 +136,195 @@ public abstract class KeeperException extends Exception {
         this.code = Code.get(code);
     }
 
-    public static enum Code {
+    /** This interface contains the original static final int constants
+     * which have now been replaced with an enumeration in Code. Do not
+     * reference this class directly, if necessary (legacy code) continue
+     * to access the constants through Code.
+     * Note: an interface is used here due to the fact that enums cannot
+     * reference constants defined within the same enum as said constants
+     * are considered initialized _after_ the enum itself. By using an
+     * interface as a super type this allows the deprecated constants to
+     * be initialized first and referenced when constructing the enums. I
+     * didn't want to have constants declared twice. This
+     * interface should be private, but it's declared public to enable
+     * javadoc to include in the user API spec.
+     */
+    @Deprecated
+    public interface CodeDeprecated {
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#OK} instead
+         */
+        @Deprecated
+        public static final int Ok = 0;
+
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#SYSTEMERROR} instead
+         */
+        @Deprecated
+        public static final int SystemError = -1;
+        /**
+         * @deprecated deprecated in 3.1.0, use
+         * {@link Code#RUNTIMEINCONSISTENCY} instead
+         */
+        @Deprecated
+        public static final int RuntimeInconsistency = -2;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#DATAINCONSISTENCY}
+         * instead
+         */
+        @Deprecated
+        public static final int DataInconsistency = -3;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#CONNECTIONLOSS}
+         * instead
+         */
+        @Deprecated
+        public static final int ConnectionLoss = -4;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#MARSHALLINGERROR}
+         * instead
+         */
+        @Deprecated
+        public static final int MarshallingError = -5;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#UNIMPLEMENTED}
+         * instead
+         */
+        @Deprecated
+        public static final int Unimplemented = -6;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#OPERATIONTIMEOUT}
+         * instead
+         */
+        @Deprecated
+        public static final int OperationTimeout = -7;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#BADARGUMENTS}
+         * instead
+         */
+        @Deprecated
+        public static final int BadArguments = -8;
+
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#APIERROR} instead
+         */
+        @Deprecated
+        public static final int APIError = -100;
+
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#NONODE} instead
+         */
+        @Deprecated
+        public static final int NoNode = -101;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#NOAUTH} instead
+         */
+        @Deprecated
+        public static final int NoAuth = -102;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#BADVERSION} instead
+         */
+        @Deprecated
+        public static final int BadVersion = -103;
+        /**
+         * @deprecated deprecated in 3.1.0, use
+         * {@link Code#NOCHILDRENFOREPHEMERALS}
+         * instead
+         */
+        @Deprecated
+        public static final int NoChildrenForEphemerals = -108;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#NODEEXISTS} instead
+         */
+        @Deprecated
+        public static final int NodeExists = -110;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#NOTEMPTY} instead
+         */
+        @Deprecated
+        public static final int NotEmpty = -111;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#SESSIONEXPIRED} instead
+         */
+        @Deprecated
+        public static final int SessionExpired = -112;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#INVALIDCALLBACK}
+         * instead
+         */
+        @Deprecated
+        public static final int InvalidCallback = -113;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#INVALIDACL} instead
+         */
+        @Deprecated
+        public static final int InvalidACL = -114;
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#AUTHFAILED} instead
+         */
+        @Deprecated
+        public static final int AuthFailed = -115;
+    }
+
+    /** Codes which represent the various KeeperException
+     * types. This enum replaces the deprecated earlier static final int
+     * constants. The old, deprecated, values are in "camel case" while the new
+     * enum values are in all CAPS.
+     */
+    public static enum Code implements CodeDeprecated {
         /** Everything is OK */
-        OK (0),
+        OK (Ok),
 
         /** System and server-side errors.
          * This is never thrown by the server, it shouldn't be used other than
          * to indicate a range. Specifically error codes greater than this
          * value, but lesser than {@link #APIERROR}, are system errors.
          */
-        SYSTEMERROR (-1),
+        SYSTEMERROR (SystemError),
 
         /** A runtime inconsistency was found */
-        RUNTIMEINCONSISTENCY (-2),
+        RUNTIMEINCONSISTENCY (RuntimeInconsistency),
         /** A data inconsistency was found */
-        DATAINCONSISTENCY (-3),
+        DATAINCONSISTENCY (DataInconsistency),
         /** Connection to the server has been lost */
-        CONNECTIONLOSS (-4),
+        CONNECTIONLOSS (ConnectionLoss),
         /** Error while marshalling or unmarshalling data */
-        MARSHALLINGERROR (-5),
+        MARSHALLINGERROR (MarshallingError),
         /** Operation is unimplemented */
-        UNIMPLEMENTED (-6),
+        UNIMPLEMENTED (Unimplemented),
         /** Operation timeout */
-        OPERATIONTIMEOUT (-7),
+        OPERATIONTIMEOUT (OperationTimeout),
         /** Invalid arguments */
-        BADARGUMENTS (-8),
+        BADARGUMENTS (BadArguments),
 
         /** API errors.
          * This is never thrown by the server, it shouldn't be used other than
          * to indicate a range. Specifically error codes greater than this
-         * value are API errors (while values less than this indicate a 
+         * value are API errors (while values less than this indicate a
          * {@link #SYSTEMERROR}).
          */
-        APIERROR (-100),
+        APIERROR (APIError),
 
         /** Node does not exist */
-        NONODE (-101),
+        NONODE (NoNode),
         /** Not authenticated */
-        NOAUTH (-102),
+        NOAUTH (NoAuth),
         /** Version conflict */
-        BADVERSION (-103),
+        BADVERSION (BadVersion),
         /** Ephemeral nodes may not have children */
-        NOCHILDRENFOREPHEMERALS (-108),
+        NOCHILDRENFOREPHEMERALS (NoChildrenForEphemerals),
         /** The node already exists */
-        NODEEXISTS (-110),
+        NODEEXISTS (NodeExists),
         /** The node has children */
-        NOTEMPTY (-111),
+        NOTEMPTY (NotEmpty),
         /** The session has been expired by the server */
-        SESSIONEXPIRED (-112),
+        SESSIONEXPIRED (SessionExpired),
         /** Invalid callback specified */
-        INVALIDCALLBACK (-113),
+        INVALIDCALLBACK (InvalidCallback),
         /** Invalid ACL specified */
-        INVALIDACL (-114),
+        INVALIDACL (InvalidACL),
         /** Client authentication failed */
-        AUTHFAILED (-115);
+        AUTHFAILED (AuthFailed);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
@@ -218,116 +353,6 @@ public abstract class KeeperException extends Exception {
         public static Code get(int code) {
             return lookup.get(code);
         }
-
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #OK} instead
-         */
-        @Deprecated
-        public static final int Ok = OK.code;
-
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #SYSTEMERROR} instead
-         */
-        @Deprecated
-        public static final int SystemError = SYSTEMERROR.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #RUNTIMEINCONSISTENCY} instead
-         */
-        @Deprecated
-        public static final int RuntimeInconsistency = RUNTIMEINCONSISTENCY.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #DATAINCONSISTENCY}
-         * instead
-         */
-        @Deprecated
-        public static final int DataInconsistency = DATAINCONSISTENCY.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #CONNECTIONLOSS}
-         * instead
-         */
-        @Deprecated
-        public static final int ConnectionLoss = CONNECTIONLOSS.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #MARSHALLINGERROR}
-         * instead
-         */
-        @Deprecated
-        public static final int MarshallingError = MARSHALLINGERROR.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #UNIMPLEMENTED} instead
-         */
-        @Deprecated
-        public static final int Unimplemented = UNIMPLEMENTED.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #OPERATIONTIMEOUT}
-         * instead
-         */
-        @Deprecated
-        public static final int OperationTimeout = OPERATIONTIMEOUT.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #BADARGUMENTS} instead
-         */
-        @Deprecated
-        public static final int BadArguments = BADARGUMENTS.code;
-
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #APIERROR} instead
-         */
-        @Deprecated
-        public static final int APIError = APIERROR.code;
-
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #NONODE} instead
-         */
-        @Deprecated
-        public static final int NoNode = NONODE.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #NOAUTH} instead
-         */
-        @Deprecated
-        public static final int NoAuth = NOAUTH.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #BADVERSION} instead
-         */
-        @Deprecated
-        public static final int BadVersion = BADVERSION.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #NOCHILDRENFOREPHEMERALS}
-         * instead
-         */
-        @Deprecated
-        public static final int
-            NoChildrenForEphemerals = NOCHILDRENFOREPHEMERALS.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #NODEEXISTS} instead
-         */
-        @Deprecated
-        public static final int NodeExists = NODEEXISTS.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #NOTEMPTY} instead
-         */
-        @Deprecated
-        public static final int NotEmpty = NOTEMPTY.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #SESSIONEXPIRED} instead
-         */
-        @Deprecated
-        public static final int SessionExpired = SESSIONEXPIRED.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #INVALIDCALLBACK} instead
-         */
-        @Deprecated
-        public static final int InvalidCallback = INVALIDCALLBACK.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #INVALIDACL} instead
-         */
-        @Deprecated
-        public static final int InvalidACL = INVALIDACL.code;
-        /**
-         * @deprecated deprecated in 3.1.0, use {@link #AUTHFAILED} instead
-         */
-        @Deprecated
-        public static final int AuthFailed = AUTHFAILED.code;
     }
 
     static String getCodeMessage(Code code) {

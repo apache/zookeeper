@@ -7,6 +7,9 @@ BUGFIXES:
   ZOOKEEPER-255. zoo_set() api does not return stat datastructure.
   (avery ching via mahadev)
 
+  ZOOKEEPER-246. review error code definition in both source and docs.
+  (pat via mahadev)
+
 Backward compatibile changes:
 
 BUGFIXES: 
@@ -107,9 +110,6 @@ IMPROVEMENTS:
    ZOOKEEPER-222.  print C client log message timestamp in human readable
    form. (pat via mahadev) 
   
-   ZOOKEEPER-246. review error code definition in both source and docs.
-   (pat via mahadev)
-
    ZOOKEEPER-256. support use of JMX to manage log4j configuration at runtime.
    (pat via mahadev)
 
@@ -153,6 +153,9 @@ flavio via mahadev)
    server/clientlib role in data/child watch maint. (breed via phunt)
  
    ZOOKEEPER-289. add debug messages to nioserver select loop. (mahadev)
+
+   ZOOKEEPER-291. regression for legacy code using KeeperException.
+   Code constants (due to 246) (pat via mahadev)
 
 NEW FEATURES:
 
