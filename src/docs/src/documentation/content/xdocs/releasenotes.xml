@@ -40,11 +40,22 @@ These release notes include new developer and user facing
 incompatibilities, features, and major improvements.
 </para>
 
+<para>
+
+</para>
+
 <para>See <ulink
 url="http://hadoop.apache.org/zookeeper/docs/r3.0.1/releasenotes.html#migration">3.0
 release notes and migration instructions</ulink> if you are upgrading
 from version 2 of ZooKeeper (SourceForge) to version 3 or
 later.</para>
+
+<section id="migration">
+<title>A note on API changes in 3.1</title>
+
+<para>In Java there were no b/w incompatible changes made in this release. However the C client code fixed an issue where the zoo_set(...) method was not providing access to a Stat structure when the method returned. The C API was modified in 3.1 to support client access of this information. Legacy client code (pre 3.1) can be easily migrated by passing null for this parameter if you have no interest.</para>
+
+</section>
 
 <section id="changes">
 <title>Changes Since ZooKeeper 3.0.1</title>
@@ -66,6 +77,8 @@ later.</para>
   <entry></entry>
 </row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-255">ZOOKEEPER-255</ulink></entry><entry>         zoo_set() api does not return stat datastructure.
+</entry></row>
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-246">ZOOKEEPER-246</ulink></entry><entry>         review error code definition in both source and docs
 </entry></row>
 
 <row>
@@ -168,6 +181,8 @@ later.</para>
 </entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-211">ZOOKEEPER-211</ulink></entry><entry>         Not all Mock tests are working
 </entry></row>
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-291">ZOOKEEPER-291</ulink></entry><entry>regression for legacy code using KeeperException.Code constants (due to 246)
+</entry></row>
     
 <row>
   <entry>Improvement</entry>
@@ -198,8 +213,6 @@ later.</para>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-234">ZOOKEEPER-234</ulink></entry><entry>         Eliminate using statics to initialize the sever.  Should allow server to be more embeddable in OSGi enviorments.
 </entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-243">ZOOKEEPER-243</ulink></entry><entry>         add SEQUENCE flag documentation to the programming guide
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-246">ZOOKEEPER-246</ulink></entry><entry>         review error code definition in both source and docs
 </entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-248">ZOOKEEPER-248</ulink></entry><entry>         QuorumPeer should use Map interface instead of HashMap implementation.
 </entry></row>
