@@ -4,9 +4,6 @@ Non-backward compatible changes:
 
 BUGFIXES: 
 
-  ZOOKEEPER-255. zoo_set() api does not return stat datastructure.
-  (avery ching via mahadev)
-
   ZOOKEEPER-246. review error code definition in both source and docs.
   (pat via mahadev)
 
@@ -87,6 +84,12 @@ and runping via mahadev)
 
   ZOOKEEPER-252. PurgeTxnLog is not handling the new dataDir directory
   structure (mahadev via phunt)
+
+  ZOOKEEPER-255. zoo_set() api does not return stat datastructure.
+  (avery ching via mahadev)
+ 
+  ZOOKEEPER-293. zoo_set needs to be abi compatible (3.1 changed the
+signature), fix this by adding zoo_set2 (pat via mahadev)
 
 IMPROVEMENTS:
    

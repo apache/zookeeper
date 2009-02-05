@@ -2491,6 +2491,12 @@ int zoo_wget(zhandle_t *zh, const char *path,
 }
 
 int zoo_set(zhandle_t *zh, const char *path, const char *buffer, int buflen,
+        int version)
+{
+  return zoo_set2(zh, path, buffer, buflen, version, 0);
+}
+
+int zoo_set2(zhandle_t *zh, const char *path, const char *buffer, int buflen,
         int version, struct Stat *stat)
 {
     struct sync_completion *sc = alloc_sync_completion();
