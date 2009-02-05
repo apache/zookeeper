@@ -21,6 +21,8 @@
 
 #include <sys/time.h>
 #include <stdio.h>
+
+#include "zookeeper_version.h"
 #include "recordio.h"
 #include "zookeeper.jute.h"
 
@@ -1089,7 +1091,33 @@ ZOOAPI int zoo_wget(zhandle_t *zh, const char *path,
         char *buffer, int* buffer_len, struct Stat *stat);
 
 /**
- * \brief sets the data associated with a node.
+ * \brief sets the data associated with a node. See zoo_set2 function if
+ * you require access to the stat information associated with the znode.
+ * 
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param buffer the buffer holding data to be written to the node.
+ * \param buflen the number of bytes from buffer to write.
+ * \param version the expected version of the node. The function will fail if 
+ * the actual version of the node does not match the expected version. If -1 is 
+ * used the version check will not take place. 
+ * \return the return code for the function call.
+ * ZOK operation completed succesfully
+ * ZNONODE the node does not exist.
+ * ZNOAUTH the client does not have permission.
+ * ZBADVERSION expected version does not match actual version.
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_set(zhandle_t *zh, const char *path, const char *buffer,
+                   int buflen, int version);
+
+/**
+ * \brief sets the data associated with a node. This function is the same
+ * as zoo_set except that it also provides access to stat information
+ * associated with the znode.
  * 
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path the name of the node. Expressed as a file name with slashes 
@@ -1109,7 +1137,7 @@ ZOOAPI int zoo_wget(zhandle_t *zh, const char *path,
  * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
-ZOOAPI int zoo_set(zhandle_t *zh, const char *path, const char *buffer,
+ZOOAPI int zoo_set2(zhandle_t *zh, const char *path, const char *buffer,
                    int buflen, int version, struct Stat *stat);
 
 /**
