@@ -106,6 +106,12 @@ and runping via mahadev)
   ZOOKEEPER-291. regression for legacy code using KeeperException.Code 
   constants (due to 246). (pat via mahadev)
 
+  ZOOKEEPER-255. zoo_set() api does not return stat datastructure.
+  (avery ching via mahadev)
+
+  ZOOKEEPER-293. zoo_set needs to be abi compatible (3.1 changed the
+signature), fix this by adding zoo_set2 (pat via mahadev)
+
 IMPROVEMENTS:
    
   ZOOKEEPER-64. Log system env information when initializing server and

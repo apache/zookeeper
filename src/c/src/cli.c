@@ -277,7 +277,7 @@ void processline(char *line) {
                     strdup(line));
         } else {
             struct Stat stat;
-            rc = zoo_set(zh, line, ptr, strlen(ptr), -1, &stat);
+            rc = zoo_set2(zh, line, ptr, strlen(ptr), -1, &stat);
         }
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
@@ -400,6 +400,11 @@ int main(int argc, char **argv) {
         fprintf(stderr,
                 "USAGE %s zookeeper_host_list [clientid_file|cmd:(ls|create|od|...)]\n", 
                 argv[0]);
+        fprintf(stderr,
+                "Version: ZooKeeper cli (c client) version %d.%d.%d\n", 
+                ZOO_MAJOR_VERSION,
+                ZOO_MINOR_VERSION,
+                ZOO_PATCH_VERSION);
         return 2;
     }
     if (argc > 2) {
