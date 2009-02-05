@@ -50,13 +50,6 @@ release notes and migration instructions</ulink> if you are upgrading
 from version 2 of ZooKeeper (SourceForge) to version 3 or
 later.</para>
 
-<section id="migration">
-<title>A note on API changes in 3.1</title>
-
-<para>In Java there were no b/w incompatible changes made in this release. However the C client code fixed an issue where the zoo_set(...) method was not providing access to a Stat structure when the method returned. The C API was modified in 3.1 to support client access of this information. Legacy client code (pre 3.1) can be easily migrated by passing null for this parameter if you have no interest.</para>
-
-</section>
-
 <section id="changes">
 <title>Changes Since ZooKeeper 3.0.1</title>
 
@@ -76,8 +69,6 @@ later.</para>
   <entry>Incompatibilities</entry>
   <entry></entry>
 </row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-255">ZOOKEEPER-255</ulink></entry><entry>         zoo_set() api does not return stat datastructure.
-</entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-246">ZOOKEEPER-246</ulink></entry><entry>         review error code definition in both source and docs
 </entry></row>
 
@@ -159,6 +150,8 @@ later.</para>
 </entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-254">ZOOKEEPER-254</ulink></entry><entry>         there is currently no way for a user to test session expiration in their code
 </entry></row>
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-255">ZOOKEEPER-255</ulink></entry><entry>         zoo_set() api does not return stat datastructure.
+</entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-257">ZOOKEEPER-257</ulink></entry><entry>         Review logging level for WARN/ERROR log messages, some misclassified
 </entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-258">ZOOKEEPER-258</ulink></entry><entry>         docs incorrectly state max client timeout as 60 seconds (it's based on server ticktime)
@@ -182,6 +175,8 @@ later.</para>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-211">ZOOKEEPER-211</ulink></entry><entry>         Not all Mock tests are working
 </entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-291">ZOOKEEPER-291</ulink></entry><entry>regression for legacy code using KeeperException.Code constants (due to 246)
+</entry></row>
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-293">ZOOKEEPER-293</ulink></entry><entry>zoo_set needs to be abi compatible (3.1 changed the signature), fix this by adding zoo_set2
 </entry></row>
     
 <row>
