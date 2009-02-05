@@ -1,4 +1,4 @@
-Release 3.1.0 - 2009-02-06
+Release 3.1.0 - 2009-02-10
   
 Non-backward compatible changes:
 

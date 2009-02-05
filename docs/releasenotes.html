@@ -188,9 +188,6 @@ document.write("Last Published: " + document.lastModified);
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#migration">A note on API changes in 3.1</a>
-</li>
-<li>
 <a href="#changes">Changes Since ZooKeeper 3.0.1</a>
 </li>
 </ul>
@@ -218,14 +215,7 @@ from version 2 of ZooKeeper (SourceForge) to version 3 or
 later.</p>
 
 
-<a name="N10016"></a><a name="migration"></a>
-<h2 class="h3">A note on API changes in 3.1</h2>
-<div class="section">
-<p>In Java there were no b/w incompatible changes made in this release. However the C client code fixed an issue where the zoo_set(...) method was not providing access to a Stat structure when the method returned. The C API was modified in 3.1 to support client access of this information. Legacy client code (pre 3.1) can be easily migrated by passing null for this parameter if you have no interest.</p>
-</div>
-
-
-<a name="N10020"></a><a name="changes"></a>
+<a name="N10016"></a><a name="changes"></a>
 <h2 class="h3">Changes Since ZooKeeper 3.0.1</h2>
 <div class="section">
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
@@ -248,11 +238,6 @@ later.</p>
 <td>Incompatibilities</td>
   <td></td>
 
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-255">ZOOKEEPER-255</a></td><td>         zoo_set() api does not return stat datastructure.
-</td>
 </tr>
 
 <tr>
@@ -445,6 +430,11 @@ later.</p>
 </tr>
 
 <tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-255">ZOOKEEPER-255</a></td><td>         zoo_set() api does not return stat datastructure.
+</td>
+</tr>
+
+<tr>
 <td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-257">ZOOKEEPER-257</a></td><td>         Review logging level for WARN/ERROR log messages, some misclassified
 </td>
 </tr>
@@ -501,6 +491,11 @@ later.</p>
 
 <tr>
 <td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-291">ZOOKEEPER-291</a></td><td>regression for legacy code using KeeperException.Code constants (due to 246)
+</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-293">ZOOKEEPER-293</a></td><td>zoo_set needs to be abi compatible (3.1 changed the signature), fix this by adding zoo_set2
 </td>
 </tr>
     
