@@ -334,10 +334,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         try {
             jmxServerBean = new ZooKeeperServerBean(this);
             MBeanRegistry.getInstance().register(jmxServerBean, null);
-            jmxDataTreeBean = new DataTreeBean(dataTree);
-            MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
+            
+            try {
+                jmxDataTreeBean = new DataTreeBean(dataTree);
+                MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to register with JMX", e);
+                jmxDataTreeBean = null;
+            }
         } catch (Exception e) {
             LOG.warn("Failed to register with JMX", e);
+            jmxServerBean = null;
         }
     }
     
@@ -397,6 +404,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             if (jmxDataTreeBean != null) {
                 MBeanRegistry.getInstance().unregister(jmxDataTreeBean);
             }
+        } catch (Exception e) {
+            LOG.warn("Failed to unregister with JMX", e);
+        }
+        try {
             if (jmxServerBean != null) {
                 MBeanRegistry.getInstance().unregister(jmxServerBean);
             }

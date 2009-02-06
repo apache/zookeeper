@@ -372,6 +372,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             MBeanRegistry.getInstance().register(jmxLeaderElectionBean, jmxLocalPeerBean);        
         } catch (Exception e) {
             LOG.warn("Failed to register with JMX", e);
+            jmxLeaderElectionBean = null;
         }
 
         if(electionAlg==null)
@@ -407,13 +408,24 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 ZKMBeanInfo p;
                 if (getId() == s.id) {
                     p = jmxLocalPeerBean = new LocalPeerBean(this);
+                    try {
+                        MBeanRegistry.getInstance().register(p, jmxQuorumBean);
+                    } catch (Exception e) {
+                        LOG.warn("Failed to register with JMX", e);
+                        jmxLocalPeerBean = null;
+                    }
                 } else {
                     p = new RemotePeerBean(s);
+                    try {
+                        MBeanRegistry.getInstance().register(p, jmxQuorumBean);
+                    } catch (Exception e) {
+                        LOG.warn("Failed to register with JMX", e);
+                    }
                 }
-                MBeanRegistry.getInstance().register(p, jmxQuorumBean);
             }
         } catch (Exception e) {
             LOG.warn("Failed to register with JMX", e);
+            jmxQuorumBean = null;
         }
 
         try {

@@ -24,8 +24,6 @@ import java.util.Date;
 
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.ServerStats;
-import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * This class implements the ZooKeeper server MBean interface.
@@ -45,7 +43,7 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public String getClientPort() {
         try {
             return InetAddress.getLocalHost().getHostAddress() + ":"
-                    + zks.getClientPort();
+                + zks.getClientPort();
         } catch (UnknownHostException e) {
             return "localhost:" + zks.getClientPort();
         }
