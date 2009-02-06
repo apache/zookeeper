@@ -861,6 +861,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             MBeanRegistry.getInstance().register(jmxConnectionBean, zk.jmxServerBean);
         } catch (Exception e) {
             LOG.warn("Failed to register with JMX", e);
+            jmxConnectionBean = null;
         }
 
         try {
