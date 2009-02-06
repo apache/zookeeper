@@ -112,6 +112,8 @@ and runping via mahadev)
   ZOOKEEPER-293. zoo_set needs to be abi compatible (3.1 changed the
 signature), fix this by adding zoo_set2 (pat via mahadev)
 
+  ZOOKEEPER-302. Quote values in JMX objectnames. (tom and pat via mahadev)
+
 IMPROVEMENTS:
    
   ZOOKEEPER-64. Log system env information when initializing server and
