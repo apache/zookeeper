@@ -18,8 +18,13 @@
 
 package org.apache.zookeeper.server;
 
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Date;
+
+import javax.management.ObjectName;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.MBeanRegistry;
@@ -44,15 +49,20 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
         return "0x" + Long.toHexString(connection.getSessionId());
     }
 
-    
     public String getSourceIP() {
-        return connection.getRemoteAddress().getAddress().getHostAddress()+
-            ":"+connection.getRemoteAddress().getPort();
+        InetSocketAddress sockAddr = connection.getRemoteAddress();
+        return sockAddr.getAddress().getHostAddress()
+            + ":" + sockAddr.getPort();
     }
-    
+
     public String getName() {
-        String ip=connection.getRemoteAddress().getAddress().getHostAddress();
-        return MBeanRegistry.getInstance().makeFullPath("Connections", ip,getSessionId());
+        InetAddress addr = connection.getRemoteAddress().getAddress();
+        String ip = addr.getHostAddress();
+        if (addr instanceof Inet6Address) {
+            ip = ObjectName.quote(ip);
+        }
+        return MBeanRegistry.getInstance().makeFullPath("Connections", ip,
+                getSessionId());
     }
     
     public boolean isHidden() {
@@ -61,7 +71,8 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     
     public String[] getEphemeralNodes() {
         if(zk.dataTree!=null){
-            String[] res=zk.dataTree.getEphemerals(connection.getSessionId()).toArray(new String[0]);
+            String[] res=zk.dataTree.getEphemerals(connection.getSessionId())
+                .toArray(new String[0]);
             Arrays.sort(res);
             return res;
         }
@@ -84,10 +95,11 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     public void terminateConnection() {
         connection.close();
     }
-    
+
     @Override
     public String toString() {
-        return "ConnectionBean{ClientIP="+getSourceIP()+",SessionId=0x"+getSessionId()+"}";
+        return "ConnectionBean{ClientIP=" + ObjectName.quote(getSourceIP())
+            + ",SessionId=0x" + getSessionId() + "}";
     }
     
     public long getOutstandingRequests() {

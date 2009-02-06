@@ -96,6 +96,7 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
             MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
         } catch (Exception e) {
             LOG.warn("Failed to register with JMX", e);
+            jmxDataTreeBean = null;
         }
     }
 
@@ -103,14 +104,21 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
             LocalPeerBean localPeerBean)
     {
         // register with JMX
-        try {
-            MBeanRegistry.getInstance().unregister(self.jmxLeaderElectionBean);
+        if (self.jmxLeaderElectionBean != null) {
+            try {
+                MBeanRegistry.getInstance().unregister(self.jmxLeaderElectionBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to register with JMX", e);
+            }
             self.jmxLeaderElectionBean = null;
+        }
 
+        try {
             jmxServerBean = leaderBean;
             MBeanRegistry.getInstance().register(leaderBean, localPeerBean);
         } catch (Exception e) {
             LOG.warn("Failed to register with JMX", e);
+            jmxServerBean = null;
         }
     }
 

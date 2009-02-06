@@ -22,7 +22,9 @@ import java.lang.management.ManagementFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.management.JMException;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import org.apache.log4j.Logger;
@@ -54,7 +56,9 @@ public class MBeanRegistry {
      * @param parent if not null, the new bean will be registered as a child
      * node of this parent.
      */
-    public void register(ZKMBeanInfo bean, ZKMBeanInfo parent) {
+    public void register(ZKMBeanInfo bean, ZKMBeanInfo parent)
+        throws JMException
+    {
         assert bean != null;
         String path = null;
         if (parent != null) {
@@ -70,9 +74,9 @@ public class MBeanRegistry {
         ObjectName oname = makeObjectName(path, bean);
         try {
             mbs.registerMBean(bean, oname);
-        } catch (Exception e) {
-            LOG.error("Failed to register MBean " + bean.getName());
-            e.printStackTrace();
+        } catch (JMException e) {
+            LOG.warn("Failed to register MBean " + bean.getName());
+            throw e;
         }
     }
 
@@ -81,16 +85,16 @@ public class MBeanRegistry {
      * @param path
      * @param bean
      */
-    private void unregister(String path,ZKMBeanInfo bean){
+    private void unregister(String path,ZKMBeanInfo bean) throws JMException {
         if(path==null)
             return;
         if (!bean.isHidden()) {
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
             try {
                 mbs.unregisterMBean(makeObjectName(path, bean));
-            } catch (Exception e) {
-                LOG.error("Failed to unregister MBean " + bean.getName());
-                e.printStackTrace();
+            } catch (JMException e) {
+                LOG.warn("Failed to unregister MBean " + bean.getName());
+                throw e;
             }
         }        
     }
@@ -99,20 +103,28 @@ public class MBeanRegistry {
      * Unregister MBean.
      * @param bean
      */
-    public void unregister(ZKMBeanInfo bean){
+    public void unregister(ZKMBeanInfo bean) {
         if(bean==null)
             return;
         String path=mapBean2Path.get(bean);
-        unregister(path,bean);
+        try {
+            unregister(path,bean);
+        } catch (JMException e) {
+            LOG.warn("Error during unregister", e);
+        }
         mapBean2Path.remove(bean);
         mapName2Bean.remove(bean.getName());
     }
     /**
      * Unregister all currently registered MBeans
      */
-    public void unregisterAll(){
-        for(Map.Entry<ZKMBeanInfo,String> e: mapBean2Path.entrySet()){
-            unregister(e.getValue(),e.getKey());
+    public void unregisterAll() {
+        for(Map.Entry<ZKMBeanInfo,String> e: mapBean2Path.entrySet()) {
+            try {
+                unregister(e.getValue(), e.getKey());
+            } catch (JMException e1) {
+                LOG.warn("Error during unregister", e1);
+            }
         }
         mapBean2Path.clear();
         mapName2Bean.clear();
@@ -123,7 +135,7 @@ public class MBeanRegistry {
      * @param name path elements
      * @return absolute path
      */
-    public String makeFullPath(String prefix, String... name){
+    public String makeFullPath(String prefix, String... name) {
         StringBuilder sb=new StringBuilder(prefix == null ? "/" : (prefix.equals("/")?prefix:prefix+"/"));
         boolean first=true;
         for (String s : name) {
@@ -159,9 +171,11 @@ public class MBeanRegistry {
      * Builds an MBean path and creates an ObjectName instance using the path. 
      * @param path MBean path
      * @param bean the MBean instance
-     * @return ObjectName to be registered with the paltform MBean server
+     * @return ObjectName to be registered with the platform MBean server
      */
-    protected ObjectName makeObjectName(String path, ZKMBeanInfo bean) {
+    protected ObjectName makeObjectName(String path, ZKMBeanInfo bean)
+        throws MalformedObjectNameException
+    {
         if(path==null)
             return null;
         StringBuilder beanName = new StringBuilder(CommonNames.DOMAIN + ":");
@@ -171,10 +185,10 @@ public class MBeanRegistry {
         beanName.deleteCharAt(beanName.length()-1);
         try {
             return new ObjectName(beanName.toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-            assert false;
+        } catch (MalformedObjectNameException e) {
+            LOG.warn("Invalid name \"" + beanName.toString() + "\" for class "
+                    + bean.getClass().toString());
+            throw e;
         }
-        return null;
     }
 }
