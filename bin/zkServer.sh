@@ -42,7 +42,13 @@ else
     ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
 fi
 
-ZOOBIN=`readlink -f "$0"`
+# Only follow symlinks if readlink supports it
+if readlink -f "$0" > /dev/null 2>&1
+then
+  ZOOBIN=`readlink -f "$0"`
+else
+  ZOOBIN="$0"
+fi
 ZOOBINDIR=`dirname "$ZOOBIN"`
 
 . $ZOOBINDIR/zkEnv.sh
