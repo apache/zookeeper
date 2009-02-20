@@ -91,6 +91,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             super("NIOServerCxn.Factory:" + port);
             setDaemon(true);
             this.ss = ServerSocketChannel.open();
+            ss.socket().setReuseAddress(true);
             ss.socket().bind(new InetSocketAddress(port));
             ss.configureBlocking(false);
             ss.register(selector, SelectionKey.OP_ACCEPT);
@@ -268,6 +269,19 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     LinkedList<Request> outstanding = new LinkedList<Request>();
 
     void sendBuffer(ByteBuffer bb) {
+        // We check if write interest here because if it is NOT set, nothing is queued, so
+        // we can try to send the buffer right away without waking up the selector
+        if ((sk.interestOps()&SelectionKey.OP_WRITE) == 0) {
+            try {
+                sock.write(bb);
+            } catch (IOException e) {
+                // we are just doing best effort right now
+            }
+        }
+        // if there is nothing left to send, we are done
+        if (bb.remaining() == 0) {
+            return;
+        }
         synchronized (factory) {
             sk.selector().wakeup();
             if (LOG.isTraceEnabled()) {
@@ -471,7 +485,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 outstandingRequests++;
                 // check throttling
                 if (zk.getInProcess() > factory.outstandingLimit) {
-                    LOG.warn("Throttling recv " + zk.getInProcess());
+                    LOG.debug("Throttling recv " + zk.getInProcess());
                     disableRecv();
                     // following lines should not be needed since we are already
                     // reading

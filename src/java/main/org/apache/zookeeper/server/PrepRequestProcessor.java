@@ -114,12 +114,15 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     ChangeRecord getRecordForPath(String path) throws KeeperException.NoNodeException {
         ChangeRecord lastChange = null;
         synchronized (zks.outstandingChanges) {
+            lastChange = zks.outstandingChangesForPath.get(path);
+            /*
             for (int i = 0; i < zks.outstandingChanges.size(); i++) {
                 ChangeRecord c = zks.outstandingChanges.get(i);
                 if (c.path.equals(path)) {
                     lastChange = c;
                 }
             }
+            */
             if (lastChange == null) {
                 DataNode n = zks.dataTree.getNode(path);
                 if (n != null) {
@@ -137,6 +140,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     void addChangeRecord(ChangeRecord c) {
         synchronized (zks.outstandingChanges) {
             zks.outstandingChanges.add(c);
+            zks.outstandingChangesForPath.put(c.path, c);
         }
     }
 

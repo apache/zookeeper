@@ -60,18 +60,21 @@ class QuorumPeerInstance implements Instance {
             File zkDirs = new File(tmpDir, "zktmp.cfg");
             logDir = tmpDir;
             snapDir = tmpDir;
+            Properties p;
             if (zkDirs.exists()) {
-                Properties p = new Properties();
+                p = new Properties();
                 p.load(new FileInputStream(zkDirs));
-                logDir = new File(p.getProperty("logDir", tmpDir.getAbsolutePath()));
-                snapDir = new File(p.getProperty("snapDir", tmpDir.getAbsolutePath()));
+            } else {
+                p = System.getProperties();
             }
+            logDir = new File(p.getProperty("logDir", tmpDir.getAbsolutePath()));
+            snapDir = new File(p.getProperty("snapDir", tmpDir.getAbsolutePath()));
             logDir = File.createTempFile("zktst", ".dir", logDir);
             logDir.delete();
-            logDir.mkdir();
+            logDir.mkdirs();
             snapDir = File.createTempFile("zktst", ".dir", snapDir);
             snapDir.delete();
-            snapDir.mkdir();
+            snapDir.mkdirs();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -79,11 +82,17 @@ class QuorumPeerInstance implements Instance {
 
     public void configure(String params) {
         if (clientAddr == null) {
+            String parts[] = params.split(" ");
             // The first time we are configured, it is just to tell
             // us which machine we are
-            serverId = Integer.parseInt(params);
+            serverId = Integer.parseInt(parts[0]);
             if (LOG.isDebugEnabled()) {
                 LOG.info("Setting up server " + serverId);
+            }
+            if (parts.length > 1 && parts[1].equals("false")) {
+                System.setProperty("zookeeper.leaderServes", "no");
+            } else {
+                System.setProperty("zookeeper.leaderServes", "yes");
             }
             // Let's grab two ports
             try {
@@ -155,6 +164,7 @@ class QuorumPeerInstance implements Instance {
                     LOG.warn("Peer " + serverId + " already started");
                     return;
                 }
+                System.err.println("SnapDir = " + snapDir + " LogDir = " + logDir);
                 peer = new QuorumPeer(peers, snapDir, logDir, clientAddr.getPort(), 0, serverId, tickTime, initLimit, syncLimit);
                 peer.start();
                 for(int i = 0; i < 5; i++) {
@@ -212,7 +222,22 @@ class QuorumPeerInstance implements Instance {
      * @throws KeeperException
      */
     public static String[] createServer(InstanceManager im, int i) throws NoAvailableContainers, DuplicateNameException, InterruptedException, KeeperException {
-        im.assignInstance("server"+i, QuorumPeerInstance.class, Integer.toString(i), 50);
+        return createServer(im, i, true);
+    }
+    
+    /**
+     * This method is used to configure a QuorumPeerInstance
+     * 
+     * @param im the InstanceManager that will be managing the new instance
+     * @param i the server number to configure (should be zero based)
+     * @param leaderServes if false, the leader will not accept client connections
+     * @throws NoAvailableContainers
+     * @throws DuplicateNameException
+     * @throws InterruptedException
+     * @throws KeeperException
+     */
+    public static String[] createServer(InstanceManager im, int i, boolean leaderServes) throws NoAvailableContainers, DuplicateNameException, InterruptedException, KeeperException {
+        im.assignInstance("server"+i, QuorumPeerInstance.class, Integer.toString(i) + " " + leaderServes, 50);
         return im.getStatus("server"+i, 3000).split(",");
         
     }

@@ -97,20 +97,23 @@ public class FollowerHandler extends Thread {
     private void sendPackets() throws InterruptedException {
         long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
         while (true) {
-            QuorumPacket p;
-            p = queuedPackets.take();
-
-            if (p == proposalOfDeath) {
-                // Packet of death!
-                break;
-            }
-            if (p.getType() == Leader.PING) {
-                traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
-            }
-            ZooTrace.logQuorumPacket(LOG, traceMask, 'o', p);
             try {
+                QuorumPacket p;
+                p = queuedPackets.poll();
+                if (p == null) {
+                    bufferedOutput.flush();
+                    p = queuedPackets.take();
+                }
+
+                if (p == proposalOfDeath) {
+                    // Packet of death!
+                    break;
+                }
+                if (p.getType() == Leader.PING) {
+                    traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
+                }
+                ZooTrace.logQuorumPacket(LOG, traceMask, 'o', p);
                 oa.writeRecord(p, "packet");
-                bufferedOutput.flush();
             } catch (IOException e) {
                 if (!sock.isClosed()) {
                     LOG.warn("Unexpected exception",e);

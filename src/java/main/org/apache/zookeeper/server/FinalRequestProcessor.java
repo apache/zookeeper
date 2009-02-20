@@ -88,7 +88,10 @@ public class FinalRequestProcessor implements RequestProcessor {
                             + zks.outstandingChanges.get(0).zxid
                             + " is less than current " + request.zxid);
                 }
-                zks.outstandingChanges.remove(0);
+                ZooKeeperServer.ChangeRecord cr = zks.outstandingChanges.remove(0);
+                if (zks.outstandingChangesForPath.get(cr.path) == cr) {
+                    zks.outstandingChangesForPath.remove(cr.path);
+                }
             }
             if (request.hdr != null) {
                 rc = zks.dataTree.processTxn(request.hdr, request.txn);

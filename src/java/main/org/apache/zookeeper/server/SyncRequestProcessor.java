@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.Flushable;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Random;
@@ -65,6 +66,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     @Override
     public void run() {
         try {
+            int randRoll = r.nextInt(snapCount/2);
             while (true) {
                 Request si = null;
                 if (toFlush.isEmpty()) {
@@ -82,8 +84,8 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                 if (si != null) {
                     zks.getLogWriter().append(si);
                         logCount++;
-                        if (logCount > snapCount / 2
-                                && r.nextInt(snapCount / 2) == 0) {
+                        if (logCount > (snapCount / 2 + randRoll)) {
+                            randRoll = r.nextInt(snapCount/2);
                             // roll the log
                             zks.getLogWriter().rollLog();
                             // take a snapshot
@@ -125,6 +127,9 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         while (toFlush.size() > 0) {
             Request i = toFlush.remove();
             nextProcessor.processRequest(i);
+        }
+        if (nextProcessor instanceof Flushable) {
+            ((Flushable)nextProcessor).flush();
         }
     }
 

@@ -180,7 +180,9 @@ public class CommitProcessor extends Thread implements RequestProcessor {
             queuedRequests.clear();
             notifyAll();
         }
-        nextProcessor.shutdown();
+        if (nextProcessor != null) {
+            nextProcessor.shutdown();
+        }
     }
 
 }

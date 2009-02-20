@@ -268,8 +268,9 @@ public class FileTxnSnapLog {
 
     /**
      * roll the transaction logs
+     * @throws IOException 
      */
-    public void rollLog() {
+    public void rollLog() throws IOException {
         txnLog.rollLog();
     }
     
