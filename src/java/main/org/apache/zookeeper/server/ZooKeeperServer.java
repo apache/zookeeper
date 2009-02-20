@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -118,6 +119,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     int requestsInProcess;
     List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
+    // this data structure must be accessed under the outstandingChanges lock
+    HashMap<String, ChangeRecord> outstandingChangesForPath = new HashMap<String, ChangeRecord>();
+    
     private NIOServerCnxn.Factory serverCnxnFactory;
 
     private final ServerStats serverStats;
@@ -571,7 +575,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         try {
             return Integer.parseInt(sc);
         } catch (Exception e) {
-            return 10000;
+            return 100000;
         }
     }
 

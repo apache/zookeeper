@@ -63,10 +63,10 @@ public class GenerateLoad {
 
     static Map<Long, Long> totalByTime = new HashMap<Long, Long>();
 
-    static long currentInterval;
+    volatile static long currentInterval;
 
     static long lastChange;
-
+    
     static PrintStream sf;
     static PrintStream tf;
     static {
@@ -208,7 +208,7 @@ public class GenerateLoad {
                     count = count * 1000 / INTERVAL; // Multiply by 1000 to get
                                                      // reqs/sec
                     if (lastChange != 0
-                            && (lastChange + INTERVAL * 4 + 5000) < now) {
+                            && (lastChange + INTERVAL * 3) < now) {
                         // We only want to print anything if things have had a
                         // chance to change
 
@@ -264,6 +264,8 @@ public class GenerateLoad {
 
     static public class GeneratorInstance implements Instance {
 
+        byte bytes[];
+        
         int percentage = -1;
 
         int errors;
@@ -319,7 +321,6 @@ public class GenerateLoad {
 
             public void run() {
                 try {
-                    byte bytes[] = new byte[1024];
                     zk = new ZooKeeper(host, 60000, this);
                     synchronized (this) {
                         if (!connected) {
@@ -461,6 +462,15 @@ public class GenerateLoad {
                     try {
                         String parts[] = params.split(" ");
                         String hostPort[] = parts[1].split(":");
+                        int bytesSize = 1024;
+                        if (parts.length == 3) {
+                            try {
+                                bytesSize = Integer.parseInt(parts[2]);
+                            } catch(Exception e) {
+                                System.err.println("Not an integer: " + parts[2]);
+                            }
+                        }
+                        bytes = new byte[bytesSize];
                         s = new Socket(hostPort[0], Integer.parseInt(hostPort[1]));
                         zkThread = new ZooKeeperThread(parts[0]);
                         sendThread = new SenderThread(s);
@@ -545,12 +555,16 @@ public class GenerateLoad {
     }
 
     private static boolean leaderOnly;
+    private static boolean leaderServes;
     
     private static String []processOptions(String args[]) {
         ArrayList<String> newArgs = new ArrayList<String>();
         for(String a: args) {
             if (a.equals("--leaderOnly")) {
                 leaderOnly = true;
+                leaderServes = true;
+            } else if (a.equals("--leaderServes")) {
+                leaderServes = true;
             } else {
                 newArgs.add(a);
             }
@@ -571,7 +585,7 @@ public class GenerateLoad {
             NoAssignmentException {
 
         args = processOptions(args);
-        if (args.length == 4) {
+        if (args.length == 5) {
             try {
                 StatusWatcher statusWatcher = new StatusWatcher();
                 ZooKeeper zk = new ZooKeeper(args[0], 15000, statusWatcher);
@@ -587,7 +601,7 @@ public class GenerateLoad {
                 StringBuilder quorumHostPort = new StringBuilder();
                 StringBuilder zkHostPort = new StringBuilder();
                 for (int i = 0; i < serverCount; i++) {
-                    String r[] = QuorumPeerInstance.createServer(im, i);
+                    String r[] = QuorumPeerInstance.createServer(im, i, leaderServes);
                     if (i > 0) {
                         quorumHostPort.append(',');
                         zkHostPort.append(',');
@@ -694,7 +708,7 @@ public class GenerateLoad {
 
     private static void doUsage() {
         System.err.println("USAGE: " + GenerateLoad.class.getName()
-                + " [--leaderOnly] zookeeper_host:port containerPrefix #ofServers #ofClients");
+                + " [--leaderOnly] [--leaderServes] zookeeper_host:port containerPrefix #ofServers #ofClients requestSize");
         System.exit(2);
     }
 }

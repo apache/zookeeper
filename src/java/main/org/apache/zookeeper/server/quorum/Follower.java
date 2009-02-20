@@ -43,6 +43,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -50,6 +51,11 @@ import org.apache.zookeeper.txn.TxnHeader;
  */
 public class Follower {
     private static final Logger LOG = Logger.getLogger(Follower.class);
+
+    static final private boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
+    static {
+        LOG.info("TCP NoDelay set to: " + nodelay);
+    }
 
     QuorumPeer self;
 
@@ -85,15 +91,14 @@ public class Follower {
      *                the proposal packet to be sent to the leader
      * @throws IOException
      */
-    void writePacket(QuorumPacket pp) throws IOException {
-        long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
-        if (pp.getType() == Leader.PING) {
-            traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
-        }
-        ZooTrace.logQuorumPacket(LOG, traceMask, 'o', pp);
+    void writePacket(QuorumPacket pp, boolean flush) throws IOException {
         synchronized (leaderOs) {
-            leaderOs.writeRecord(pp, "packet");
-            bufferedOutput.flush();
+            if (pp != null) {
+                leaderOs.writeRecord(pp, "packet");
+            }
+            if (flush) {
+                bufferedOutput.flush();
+            }
         }
     }
 
@@ -147,7 +152,7 @@ public class Follower {
                         //sock = new Socket();
                         //sock.setSoTimeout(self.tickTime * self.initLimit);
                         sock.connect(addr, self.tickTime * self.syncLimit);
-                        sock.setTcpNoDelay(true);
+                        sock.setTcpNoDelay(nodelay);
                         break;
                     } catch (ConnectException e) {
                         if (tries == 4) {
@@ -169,7 +174,7 @@ public class Follower {
                 qp.setType(Leader.LASTZXID);
                 long sentLastZxid = self.getLastLoggedZxid();
                 qp.setZxid(sentLastZxid);
-                writePacket(qp);
+                writePacket(qp, true);
                 readPacket(qp);
                 long newLeaderZxid = qp.getZxid();
     
@@ -214,7 +219,7 @@ public class Follower {
                     zk.dataTree.lastProcessedZxid = newLeaderZxid;
                 }
                 ack.setZxid(newLeaderZxid & ~0xffffffffL);
-                writePacket(ack);
+                writePacket(ack, true);
                 sock.setSoTimeout(self.tickTime * self.syncLimit);
                 zk.startup();
                 while (self.running) {
@@ -231,7 +236,7 @@ public class Follower {
                             dos.writeInt(entry.getValue());
                         }
                         qp.setData(bos.toByteArray());
-                        writePacket(qp);
+                        writePacket(qp, true);
                         break;
                     case Leader.PROPOSAL:
                         TxnHeader hdr = new TxnHeader();
@@ -334,7 +339,7 @@ public class Follower {
                                  ZooTrace.SESSION_TRACE_MASK,
                                  "To validate session 0x"
                                  + Long.toHexString(clientId));
-        writePacket(qp);
+        writePacket(qp, true);
     }
 
     /**
@@ -370,7 +375,7 @@ public class Follower {
 //        qp = new QuorumPacket(Leader.REQUEST, -1, baos
 //                .toByteArray(), request.authInfo);
 //        }
-        writePacket(qp);
+        writePacket(qp, true);
     }
 
     public long getZxid() {

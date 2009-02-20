@@ -32,8 +32,9 @@ public interface TxnLog {
     /**
      * roll the current
      * log being appended to
+     * @throws IOException 
      */
-    void rollLog();
+    void rollLog() throws IOException;
     /**
      * Append a request to the transaction log
      * @param hdr the transaction header

@@ -43,7 +43,7 @@ public class FLENewEpochTest extends TestCase {
     ArrayList<LEThread> threads;
     File tmpdir[];
     int port[];
-    int[] round;
+    volatile int [] round;
     
     @Override
     public void setUp() throws Exception {

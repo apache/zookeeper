@@ -18,6 +18,7 @@
 package org.apache.zookeeper.server.persistence;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.File;
@@ -49,8 +50,10 @@ import org.apache.zookeeper.txn.TxnHeader;
  */
 public class FileTxnLog implements TxnLog {
     long lastZxidSeen;
-    volatile FileOutputStream logStream = null;
+    volatile BufferedOutputStream logStream = null;
     volatile OutputArchive oa;
+    volatile FileOutputStream fos = null;
+    
     
     File logDir;
     public final static int TXNLOG_MAGIC =
@@ -104,10 +107,14 @@ public class FileTxnLog implements TxnLog {
 
     /**
      * rollover the current log file to a new one.
+     * @throws IOException 
      */
-    public void rollLog() {
-        this.logStream = null;
-        oa = null;
+    public void rollLog() throws IOException {
+        if (logStream != null) {
+            this.logStream.flush();
+            this.logStream = null;
+            oa = null;
+        }
     }
 
     /**
@@ -123,17 +130,18 @@ public class FileTxnLog implements TxnLog {
                         + " is <= " + lastZxidSeen + " for "
                         + hdr.getType());
             }
-           if (logStream==null) {
+            if (logStream==null) {
                logFileWrite = new File(logDir, ("log." + 
                        Long.toHexString(hdr.getZxid())));
-               logStream=new FileOutputStream(logFileWrite);
+               fos = new FileOutputStream(logFileWrite);
+               logStream=new BufferedOutputStream(fos);
                oa = BinaryOutputArchive.getArchive(logStream);
                FileHeader fhdr = new FileHeader(TXNLOG_MAGIC,VERSION, dbId);
                fhdr.serialize(oa, "fileheader");
-               currentSize = logStream.getChannel().position();
-               streamsToFlush.add(logStream);
+               currentSize = fos.getChannel().position();
+               streamsToFlush.add(fos);
             }
-            padFile(logStream);
+            padFile(fos);
             byte[] buf = Util.marshallTxnEntry(hdr, txn);
             if (buf == null || buf.length == 0) {
                 throw new IOException("Faulty serialization for header " +
@@ -229,6 +237,9 @@ public class FileTxnLog implements TxnLog {
      * disk
      */
     public synchronized void commit() throws IOException {
+        if (logStream != null) {
+            logStream.flush();
+        }
         for (FileOutputStream log : streamsToFlush) {
             log.flush();
             if (forceSync) {

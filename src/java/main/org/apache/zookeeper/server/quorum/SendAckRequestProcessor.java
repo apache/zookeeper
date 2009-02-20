@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.Flushable;
 import java.io.IOException;
 
 import org.apache.log4j.Logger;
@@ -26,7 +27,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 
-public class SendAckRequestProcessor implements RequestProcessor {
+public class SendAckRequestProcessor implements RequestProcessor, Flushable {
     private static final Logger LOG = Logger.getLogger(SendAckRequestProcessor.class);
     
     Follower follower;
@@ -40,11 +41,15 @@ public class SendAckRequestProcessor implements RequestProcessor {
             QuorumPacket qp = new QuorumPacket(Leader.ACK, si.hdr.getZxid(), null,
                 null);
             try {
-                follower.writePacket(qp);
+                follower.writePacket(qp, false);
             } catch (IOException e) {
                 LOG.warn("Ignoring unexpected exception during packet send", e);
             }
         }
+    }
+    
+    public void flush() throws IOException {
+        follower.writePacket(null, true);
     }
 
     public void shutdown() {

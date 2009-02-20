@@ -44,7 +44,7 @@ public class RecoveryTest extends TestCase implements Watcher {
 
     private static String HOSTPORT = "127.0.0.1:2344";
 
-    private CountDownLatch startSignal;
+    private volatile CountDownLatch startSignal;
 
     @Override
     protected void setUp() throws Exception {
@@ -86,7 +86,11 @@ public class RecoveryTest extends TestCase implements Watcher {
                        ClientBase.waitForServerUp(HOSTPORT,
                                        CONNECTION_TIMEOUT));
 
+            startSignal = new CountDownLatch(1);
             ZooKeeper zk = new ZooKeeper(HOSTPORT, 20000, this);
+            startSignal.await(CONNECTION_TIMEOUT,
+                    TimeUnit.MILLISECONDS);
+            assertTrue("count == 0", startSignal.getCount() == 0);
             String path;
             LOG.info("starting creating nodes");
             for (int i = 0; i < 10; i++) {

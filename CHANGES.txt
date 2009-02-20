@@ -10,6 +10,8 @@ BUGFIXES:
   ZOOKEEPER-303. Bin scripts dont work on a Mac. (tom white via mahadev)
  
 IMPROVEMENTS:
+  ZOOKEEPER-308. improve the atomic broadcast performance 3x. (breed via
+mahadev)
 
 NEW FEATURES:
 
