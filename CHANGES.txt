@@ -1,3 +1,20 @@
+Fix release
+
+Non-backward compatible changes:
+
+BUGFIXES:
+
+Backward compatibile changes:
+
+BUGFIXES:
+  
+  ZOOKEEPER-326. standalone server ignores tickTime configuration (chris
+darroch via mahadev)
+
+IMPROVEMENTS:
+
+NEW FEATURES:
+
 Release 3.1.0 - 2009-02-11
   
 Non-backward compatible changes:
