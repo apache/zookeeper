@@ -13,6 +13,9 @@ IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x. (breed via
 mahadev)
 
+ ZOOKEEPER-326. standalone server ignores tickTime configuration. (chris
+darroch via mahadev)
+
 NEW FEATURES:
 
 

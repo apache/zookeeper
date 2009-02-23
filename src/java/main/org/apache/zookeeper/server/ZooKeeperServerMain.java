@@ -26,6 +26,7 @@ import javax.management.JMException;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 
 /**
  * This class starts and runs a standalone ZooKeeperServer.
@@ -47,7 +48,7 @@ public class ZooKeeperServerMain {
         }
 
         try {
-            ServerConfig.parse(args);
+            QuorumPeerConfig.parse(args);
         } catch(Exception e) {
             LOG.fatal("Error in config", e);
             LOG.info(USAGE);
@@ -66,6 +67,7 @@ public class ZooKeeperServerMain {
                        File(ServerConfig.getDataLogDir()),
                         new File(ServerConfig.getDataDir()));
                zks.setTxnLogFactory(ftxn);
+               zks.setTickTime(QuorumPeerConfig.getTickTime());
                return zks;
             }
         });
