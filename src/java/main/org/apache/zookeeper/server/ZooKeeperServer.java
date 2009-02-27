@@ -93,7 +93,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-    private static final int DEFAULT_TICK_TIME = 3000;
+    public static final int DEFAULT_TICK_TIME = 3000;
     protected int tickTime = DEFAULT_TICK_TIME;
 
     public static final int commitLogCount = 500;
