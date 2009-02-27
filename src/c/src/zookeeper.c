@@ -856,21 +856,39 @@ static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
 
 static void auth_completion_func(int rc, zhandle_t* zh)
 {
+    void_completion_t auth_completion = NULL;
+    const char *auth_data = NULL;
+
     if(zh==NULL)
         return;
+
+    zoo_lock_auth(zh);
     
     if(rc!=0){
-        LOG_ERROR(("Authentication scheme %s failed. Connection closed.",
-                zh->auth.scheme));
         zh->state=ZOO_AUTH_FAILED_STATE;
     }else{
         zh->auth.state=1;  // active
+    }
+
+    if (zh->auth.completion) {
+        auth_completion = zh->auth.completion;
+        auth_data = zh->auth.data;
+        zh->auth.completion=0;
+    }
+
+    zoo_unlock_auth(zh);
+
+    if (rc) {
+        LOG_ERROR(("Authentication scheme %s failed. Connection closed.",
+                   zh->auth.scheme));
+    }
+    else {
         LOG_INFO(("Authentication scheme %s succeeded", zh->auth.scheme));
     }
+
     // chain call user's completion function
-    if(zh->auth.completion!=0){
-        zh->auth.completion(rc,zh->auth.data);
-        zh->auth.completion=0;
+    if (auth_completion) {
+        auth_completion(rc, auth_data);
     }
 }
 
@@ -881,15 +899,23 @@ static int send_auth_info(zhandle_t *zh)
     struct AuthPacket req;
     int rc;
 
-    if(zh->auth.scheme==NULL)
+    zoo_lock_auth(zh);
+
+    if(zh->auth.scheme==NULL) {
+      zoo_unlock_auth(zh);
       return ZOK; // there is nothing to send
+    }
 
     oa = create_buffer_oarchive();
+    rc = serialize_RequestHeader(oa, "header", &h);
+
     req.type=0;   // ignored by the server
     req.scheme = zh->auth.scheme;
     req.auth = zh->auth.auth;
-    rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_AuthPacket(oa, "req", &req);
+
+    zoo_unlock_auth(zh);
+
     /* add this buffer to the head of the send queue */
     rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -2334,24 +2360,34 @@ const char* zerror(int c)
 int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert, 
         int certLen,void_completion_t completion, const void *data)
 {
+    struct buffer auth;
+
     if(scheme==NULL || zh==NULL)
         return ZBADARGUMENTS;
     
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
     
+    if(cert!=NULL && certLen!=0){
+        auth.buff=calloc(1,certLen);
+        if(auth.buff==0) {
+            return ZSYSTEMERROR;
+        }
+        memcpy(auth.buff,cert,certLen);
+        auth.len=certLen;
+    }
+
+    zoo_lock_auth(zh);
+
     free_auth_info(&zh->auth);
     zh->auth.scheme=strdup(scheme);
-    if(cert!=NULL && certLen!=0){
-        zh->auth.auth.buff=calloc(1,certLen);
-        if(zh->auth.auth.buff==0)
-            return ZSYSTEMERROR;
-        memcpy(zh->auth.auth.buff,cert,certLen);
-        zh->auth.auth.len=certLen;
-    }
-    
+    if(cert!=NULL && certLen!=0)
+        zh->auth.auth=auth;
     zh->auth.completion=completion;
     zh->auth.data=data;
+
+    zoo_unlock_auth(zh);
+
     if(zh->state == ZOO_CONNECTED_STATE || zh->state == ZOO_ASSOCIATING_STATE)
         return send_auth_info(zh);
     
