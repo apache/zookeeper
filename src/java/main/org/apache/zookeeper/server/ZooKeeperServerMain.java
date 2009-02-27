@@ -34,7 +34,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 public class ZooKeeperServerMain {
 
     private static final Logger LOG = Logger.getLogger(ZooKeeperServerMain.class);
-    private static final String USAGE = "Usage: ZooKeeperServerMain port datadir";
+    private static final String USAGE = "Usage: ZooKeeperServerMain configfile | port datadir [ticktime]";
     /*
      * Start up the ZooKeeper server.
      *
@@ -48,7 +48,11 @@ public class ZooKeeperServerMain {
         }
 
         try {
-            QuorumPeerConfig.parse(args);
+            if (args.length == 1) {
+                QuorumPeerConfig.parse(args);
+            } else {
+                ServerConfig.parse(args);
+            }
         } catch(Exception e) {
             LOG.fatal("Error in config", e);
             LOG.info(USAGE);
@@ -67,7 +71,7 @@ public class ZooKeeperServerMain {
                        File(ServerConfig.getDataLogDir()),
                         new File(ServerConfig.getDataDir()));
                zks.setTxnLogFactory(ftxn);
-               zks.setTickTime(QuorumPeerConfig.getTickTime());
+               zks.setTickTime(ServerConfig.getTickTime());
                return zks;
             }
         });

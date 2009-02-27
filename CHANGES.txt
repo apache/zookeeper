@@ -8,6 +8,9 @@ Backward compatibile changes:
 
 BUGFIXES: 
   ZOOKEEPER-303. Bin scripts dont work on a Mac. (tom white via mahadev)
+  
+  ZOOKEEPER-330. zookeeper standalone server does not startup with just a port
+and datadir. (chris darroch and mahadev)
  
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x. (breed via
