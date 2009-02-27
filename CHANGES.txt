@@ -11,6 +11,9 @@ BUGFIXES:
   ZOOKEEPER-326. standalone server ignores tickTime configuration (chris
 darroch via mahadev)
 
+  ZOOKEEPER-330. zookeeper standalone server does not startup with just a port
+and datadir. (chris darroch and mahadev)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
