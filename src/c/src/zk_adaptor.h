@@ -107,6 +107,9 @@ typedef struct _auth_info {
     struct buffer auth;
     void_completion_t completion;
     const char* data;
+#ifdef THREADED
+    pthread_mutex_t lock;
+#endif
 } auth_info;
 
 /**
@@ -212,6 +215,9 @@ int adaptor_send_queue(zhandle_t *zh, int timeout);
 int process_async(int outstanding_sync);
 void process_completions(zhandle_t *zh);
 int flush_send_queue(zhandle_t*zh, int timeout);
+
+void zoo_lock_auth(zhandle_t *zh);
+void zoo_unlock_auth(zhandle_t *zh);
 
 // critical section guards
 void enter_critical(zhandle_t* zh);
