@@ -14,6 +14,9 @@ darroch via mahadev)
   ZOOKEEPER-330. zookeeper standalone server does not startup with just a port
 and datadir. (chris darroch and mahadev)
 
+  ZOOKEEPER-319. add locking around auth info in zhandle_t (chris darroch via
+mahadev)
+
 IMPROVEMENTS:
 
 NEW FEATURES:

@@ -24,6 +24,12 @@
 #include <stdlib.h>
 #include <time.h>
 
+void zoo_lock_auth(zhandle_t *zh)
+{
+}
+void zoo_unlock_auth(zhandle_t *zh)
+{
+}
 void lock_buffer_list(buffer_head_t *l)
 {
 }
