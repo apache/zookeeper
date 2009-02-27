@@ -14,6 +14,9 @@ and datadir. (chris darroch and mahadev)
 
   ZOOKEEPER-319. add locking around auth info in zhandle_t. (chris darroch via
 mahadev)
+
+  ZOOKEEPER-320. call auth completion in free_completions(). (chris darroch
+via mahadev)
  
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x. (breed via

@@ -761,6 +761,8 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
     completion_head_t tmp_list;
     struct oarchive *oa;
     struct ReplyHeader h;
+    void_completion_t auth_completion = NULL;
+    const char *auth_data = NULL;
 
     lock_completion_list(&zh->sent_requests);
     tmp_list = zh->sent_requests;
@@ -799,6 +801,18 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
                 queue_completion(&zh->completions_to_process, cptr, 0);
             }
         }
+    }
+
+    zoo_lock_auth(zh);
+    if (zh->auth.completion) {
+        auth_completion = zh->auth.completion;
+        auth_data = zh->auth.data;
+        zh->auth.completion = 0;
+    }
+    zoo_unlock_auth(zh);
+
+    if (auth_completion) {
+        auth_completion(reason, auth_data);
     }
 }
 
