@@ -22,12 +22,15 @@ public class ServerConfig {
     private int clientPort;
     private String dataDir;
     private String dataLogDir;
+    private int tickTime;
     
-    protected ServerConfig(int port, String dataDir,String dataLogDir) {
+    protected ServerConfig(int port, String dataDir,String dataLogDir, int tickTime) {
         this.clientPort = port;
         this.dataDir = dataDir;
         this.dataLogDir=dataLogDir;
+        this.tickTime = tickTime;
     }
+    
     protected boolean isStandaloneServer(){
         return true;
     }
@@ -49,16 +52,27 @@ public class ServerConfig {
         return instance.isStandaloneServer();
     }
     
+    public static int getTickTime() {
+        assert instance != null;
+        return instance.tickTime;
+    }
+    
     protected static ServerConfig instance=null;
     
     public static void parse(String[] args) throws Exception {
         if(instance!=null)
             return;
-        if (args.length != 2) {
+        if (args.length < 2) {
             throw new IllegalArgumentException("Invalid usage.");
         }
+        int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
+        if (args.length > 2) {
+            // the last parameter ticktime is optional
+            tickTime = Integer.parseInt(args[2]);
+        }
         try {
-              instance=new ServerConfig(Integer.parseInt(args[0]),args[1],args[1]);
+              instance=new ServerConfig(Integer.parseInt(args[0]),args[1],
+                      args[1], tickTime);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(args[0] + " is not a valid port number");
         }

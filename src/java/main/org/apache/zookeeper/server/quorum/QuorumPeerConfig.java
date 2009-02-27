@@ -30,6 +30,7 @@ import java.util.HashMap;
 import org.apache.log4j.Logger;
 
 import org.apache.zookeeper.server.ServerConfig;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 public class QuorumPeerConfig extends ServerConfig {
@@ -43,8 +44,8 @@ public class QuorumPeerConfig extends ServerConfig {
     private HashMap<Long,QuorumServer> servers = null;
     private long serverId;
 
-    private QuorumPeerConfig(int port, String dataDir, String dataLogDir) {
-        super(port, dataDir, dataLogDir);
+    private QuorumPeerConfig(int port, String dataDir, String dataLogDir, int tickTime) {
+        super(port, dataDir, dataLogDir, tickTime);
     }
 
     public static void parse(String[] args) throws Exception {
@@ -137,8 +138,7 @@ public class QuorumPeerConfig extends ServerConfig {
             throw new IllegalArgumentException("syncLimit is not set");
         }
         QuorumPeerConfig conf = new QuorumPeerConfig(clientPort, dataDir,
-                dataLogDir);
-        conf.tickTime = tickTime;
+                dataLogDir, tickTime);
         conf.initLimit = initLimit;
         conf.syncLimit = syncLimit;
         conf.electionAlg = electionAlg;
