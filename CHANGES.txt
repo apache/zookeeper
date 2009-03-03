@@ -17,6 +17,9 @@ mahadev)
 
   ZOOKEEPER-320. call auth completion in free_completions(). (chris darroch
 via mahadev)
+
+  ZOOKEEPER-334. bookkeeper benchmark (testclient.java) has compiling errros.
+(flavio and mahadev) 
  
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x. (breed via
