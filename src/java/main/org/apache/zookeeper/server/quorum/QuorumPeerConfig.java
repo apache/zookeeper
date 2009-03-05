@@ -23,14 +23,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.Map.Entry;
-import java.util.HashMap;
 
 import org.apache.log4j.Logger;
-
 import org.apache.zookeeper.server.ServerConfig;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 public class QuorumPeerConfig extends ServerConfig {
@@ -44,7 +42,9 @@ public class QuorumPeerConfig extends ServerConfig {
     private HashMap<Long,QuorumServer> servers = null;
     private long serverId;
 
-    private QuorumPeerConfig(int port, String dataDir, String dataLogDir, int tickTime) {
+    protected QuorumPeerConfig(int port, String dataDir, String dataLogDir,
+            int tickTime)
+    {
         super(port, dataDir, dataLogDir, tickTime);
     }
 
@@ -66,6 +66,11 @@ public class QuorumPeerConfig extends ServerConfig {
         } finally {
             zooCfgStream.close();
         }
+
+        parseProperties(cfg);
+    }
+
+    protected static void parseProperties(Properties zkProp) throws Exception {
         HashMap<Long, QuorumServer> servers = new HashMap<Long, QuorumServer>();
         String dataDir = null;
         String dataLogDir = null;
@@ -75,7 +80,7 @@ public class QuorumPeerConfig extends ServerConfig {
         int syncLimit = 0;
         int electionAlg = 3;
         int electionPort = 2182;
-        for (Entry<Object, Object> entry : cfg.entrySet()) {
+        for (Entry<Object, Object> entry : zkProp.entrySet()) {
             String key = entry.getKey().toString();
             String value = entry.getValue().toString();
             if (key.equals("dataDir")) {
