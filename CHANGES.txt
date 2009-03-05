@@ -9,24 +9,27 @@ Backward compatibile changes:
 BUGFIXES: 
   ZOOKEEPER-303. Bin scripts dont work on a Mac. (tom white via mahadev)
   
-  ZOOKEEPER-330. zookeeper standalone server does not startup with just a port
-and datadir. (chris darroch and mahadev)
+  ZOOKEEPER-330. zookeeper standalone server does not startup with just a
+  port and datadir. (chris darroch and mahadev)
 
-  ZOOKEEPER-319. add locking around auth info in zhandle_t. (chris darroch via
-mahadev)
+  ZOOKEEPER-319. add locking around auth info in zhandle_t.
+  (chris darroch via mahadev)
 
-  ZOOKEEPER-320. call auth completion in free_completions(). (chris darroch
-via mahadev)
+  ZOOKEEPER-320. call auth completion in free_completions().
+  (chris darroch via mahadev)
 
-  ZOOKEEPER-334. bookkeeper benchmark (testclient.java) has compiling errros.
-(flavio and mahadev) 
+  ZOOKEEPER-334. bookkeeper benchmark (testclient.java) has compiling errors.
+  (flavio and mahadev) 
  
 IMPROVEMENTS:
-  ZOOKEEPER-308. improve the atomic broadcast performance 3x. (breed via
-mahadev)
+  ZOOKEEPER-308. improve the atomic broadcast performance 3x.
+  (breed via mahadev)
 
- ZOOKEEPER-326. standalone server ignores tickTime configuration. (chris
-darroch via mahadev)
+  ZOOKEEPER-326. standalone server ignores tickTime configuration.
+  (chris darroch via mahadev)
+
+  ZOOKEEPER-279. Allow specialization of quorum config parsing
+  (e.g. variable expansion in zoo.cfg) (Jean-Daniel Cryans via phunt)
 
 NEW FEATURES:
 
