@@ -8,21 +8,25 @@ Backward compatibile changes:
 
 BUGFIXES:
   
-  ZOOKEEPER-326. standalone server ignores tickTime configuration (chris
-darroch via mahadev)
+  ZOOKEEPER-326. standalone server ignores tickTime configuration
+  (chris darroch via mahadev)
 
-  ZOOKEEPER-330. zookeeper standalone server does not startup with just a port
-and datadir. (chris darroch and mahadev)
+  ZOOKEEPER-330. zookeeper standalone server does not startup with just a
+  port and datadir. (chris darroch and mahadev)
 
-  ZOOKEEPER-319. add locking around auth info in zhandle_t (chris darroch via
-mahadev)
+  ZOOKEEPER-319. add locking around auth info in zhandle_t
+  (chris darroch via mahadev)
 
-  ZOOKEEPER-320. call auth completion in free_completions(). (chris darroch
-via mahadev)
+  ZOOKEEPER-320. call auth completion in free_completions().
+  (chris darroch via mahadev)
 
 IMPROVEMENTS:
 
+  ZOOKEEPER-279. Allow specialization of quorum config parsing
+  (e.g. variable expansion in zoo.cfg) (Jean-Daniel Cryans via phunt)
+
 NEW FEATURES:
+
 
 Release 3.1.0 - 2009-02-11
   
