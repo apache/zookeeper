@@ -20,6 +20,8 @@ BUGFIXES:
   ZOOKEEPER-320. call auth completion in free_completions().
   (chris darroch via mahadev)
 
+  ZOOKEEPER-281. autoreconf fails for /zookeeper-3.0.1/src/c/ (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-279. Allow specialization of quorum config parsing
