@@ -48,32 +48,10 @@ typedef struct _watcher_registration {
     const char* path;
 } watcher_registration_t;
 
-
-typedef struct _watcher_object {
-    watcher_fn watcher;
-    void* context;
-    struct _watcher_object* next;
-} watcher_object_t;
-
-watcher_object_t* create_watcher_object(watcher_fn watcher,void* ctx);
-watcher_object_t* clone_watcher_object(watcher_object_t* wo);
-
-    int add_to_list(watcher_object_list_t **list, watcher_object_t *obj, int clone);
-void free_list(watcher_object_t **list);
-
 zk_hashtable* create_zk_hashtable();
-void clean_zk_hashtable(zk_hashtable* ht);
 void destroy_zk_hashtable(zk_hashtable* ht);
 
-/**
- * The hashtable takes ownership of the watcher object instance.
- * 
- * \return 1 if the watcher object was succesfully inserted, 0 otherwise
- */
-int insert_watcher_object(zk_hashtable* ht, const char* path, watcher_object_t* wo);
-
-    void collect_session_watchers(zhandle_t *zh, struct watcher_object_list **list);
-    char **collect_keys(zk_hashtable *ht, int *count);
+char **collect_keys(zk_hashtable *ht, int *count);
 
 /**
  * check if the completion has a watcher object associated
@@ -83,11 +61,6 @@ int insert_watcher_object(zk_hashtable* ht, const char* path, watcher_object_t* 
     void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc);
     watcher_object_list_t *collectWatchers(zhandle_t *zh,int type, char *path);
     void deliverWatchers(zhandle_t *zh, int type, int state, char *path, struct watcher_object_list **list);
-
-/* the following functions are for testing only */
-typedef struct hashtable hashtable_impl;
-hashtable_impl* getImpl(zk_hashtable* ht);
-watcher_object_t* getFirstWatcher(zk_hashtable* ht,const char* path);
 
 #ifdef __cplusplus
 }
