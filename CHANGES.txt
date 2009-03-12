@@ -22,6 +22,9 @@ BUGFIXES:
 
   ZOOKEEPER-281. autoreconf fails for /zookeeper-3.0.1/src/c/ (phunt)
 
+  ZOOKEEPER-333. helgrind thread issues identified in mt c client code
+  (mahadev via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-279. Allow specialization of quorum config parsing
