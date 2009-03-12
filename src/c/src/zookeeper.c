@@ -1680,7 +1680,6 @@ int zookeeper_process(zhandle_t *zh, int events)
                     if (rc == 0) {
                         struct GetACLResponse res;
                         deserialize_GetACLResponse(ia, "reply", &res);
-                        cptr->c.acl_result(rc, &res.acl, &res.stat, cptr->data);
                         sc->u.acl.acl = res.acl;
                         sc->u.acl.stat = res.stat;
                         /* We don't deallocate since we are passing it back */
