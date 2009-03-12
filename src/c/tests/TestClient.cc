@@ -159,6 +159,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 #ifdef THREADED
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
+    CPPUNIT_TEST(testAcl);
     CPPUNIT_TEST(testWatcherAutoResetWithGlobal);
     CPPUNIT_TEST(testWatcherAutoResetWithLocal);
 #endif
@@ -222,7 +223,7 @@ public:
         sprintf(cmd, "%s stop %s", ZKSERVER_CMD, getHostPorts());
         CPPUNIT_ASSERT(system(cmd) == 0);
     }
-
+    
     void testPing()
     {
         watchctx_t ctxIdle;
@@ -296,6 +297,53 @@ public:
           path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
     }
     
+            
+    /**
+       returns false if the vectors dont match
+    **/
+    bool compareAcl(struct ACL_vector acl1, struct ACL_vector acl2) {
+        if (acl1.count != acl2.count) {
+            return false;
+        }
+        struct ACL *aclval1 = acl1.data;
+        struct ACL *aclval2 = acl2.data;
+        if (aclval1->perms != aclval2->perms) {
+            return false;
+        }
+        struct Id id1 = aclval1->id;
+        struct Id id2 = aclval2->id;
+        if (strcmp(id1.scheme, id2.scheme) != 0) {
+            return false;
+        }
+        if (strcmp(id1.id, id2.id) != 0) {
+            return false;
+        }
+        return true;
+    }
+
+    void testAcl() {
+        int rc;
+        struct String_vector strings;
+        struct ACL_vector aclvec;
+        struct Stat stat;
+        watchctx_t ctx;
+        zhandle_t *zk = createClient(&ctx);
+        rc = zoo_create(zk, "/acl", "", 0, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        rc = zoo_get_acl(zk, "/acl", &aclvec, &stat  );
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        bool cmp = compareAcl(ZOO_OPEN_ACL_UNSAFE, aclvec);
+        CPPUNIT_ASSERT_EQUAL(true, cmp);
+        rc = zoo_set_acl(zk, "/acl", -1, &ZOO_READ_ACL_UNSAFE);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        rc = zoo_get_acl(zk, "/acl", &aclvec, &stat);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        cmp = compareAcl(ZOO_READ_ACL_UNSAFE, aclvec);
+        CPPUNIT_ASSERT_EQUAL(true, cmp);
+    }
+
+
     void testPathValidation() {
         watchctx_t ctx;
         zhandle_t *zk = createClient(&ctx);
@@ -376,7 +424,7 @@ public:
             rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0, stringCompletion, strdup(path));
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
-
+        
         yield(zk, 1);
         stopServer();
         CPPUNIT_ASSERT(ctx.waitForDisconnected(zk));
@@ -409,6 +457,7 @@ public:
         rc = zoo_create(zk, "/watchtest/child", "", 0,
                         &ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
         if (isGlobal) {
             testName = "GlobalTest";
             rc = zoo_get_children(zk, "/watchtest", 1, &strings);
