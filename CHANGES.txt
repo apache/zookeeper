@@ -24,7 +24,10 @@ BUGFIXES:
   ZOOKEEPER-281. autoreconf fails for /zookeeper-3.0.1/src/c/ (phunt)
 
   ZOOKEEPER-318. remove locking in zk_hashtable.c or add locking in
-collect_keys() (chris darroch via mahadev)
+  collect_keys() (chris darroch via mahadev)
+
+  ZOOKEEPER-333. helgrind thread issues identified in mt c client code
+  (mahadev via phunt)
  
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
