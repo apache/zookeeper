@@ -54,7 +54,7 @@ struct _buffer_list;
 struct _completion_list;
 
 typedef struct _buffer_head {
-    struct _buffer_list *head;
+    struct _buffer_list *volatile head;
     struct _buffer_list *last;
 #ifdef THREADED
     pthread_mutex_t lock;
@@ -62,7 +62,7 @@ typedef struct _buffer_head {
 } buffer_head_t;
 
 typedef struct _completion_head {
-    struct _completion_list *head;
+    struct _completion_list *volatile head;
     struct _completion_list *last;
 #ifdef THREADED
     pthread_cond_t cond;
