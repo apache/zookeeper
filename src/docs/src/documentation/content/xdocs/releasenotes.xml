@@ -114,6 +114,10 @@ later.</para>
 <entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-333">ZOOKEEPER-333</ulink></entry><entry>         helgrind thread issues identified in mt c client code
 </entry>
 </row>
+<row>
+<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-341">ZOOKEEPER-341</ulink></entry><entry>         regression in QuorumPeerMain, tickTime from config is lost, cannot start quorum
+</entry>
+</row>
 
 </tbody></tgroup></table>
 
