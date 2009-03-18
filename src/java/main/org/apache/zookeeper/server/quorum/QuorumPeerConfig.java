@@ -34,7 +34,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 public class QuorumPeerConfig extends ServerConfig {
     private static final Logger LOG = Logger.getLogger(QuorumPeerConfig.class);
 
-    private int tickTime;
     private int initLimit;
     private int syncLimit;
     private int electionAlg;
@@ -187,11 +186,6 @@ public class QuorumPeerConfig extends ServerConfig {
     @Override
     protected boolean isStandaloneServer(){
         return QuorumPeerConfig.getServers().size() <= 1;
-    }
-
-    public static int getTickTime() {
-        assert instance instanceof QuorumPeerConfig;
-        return ((QuorumPeerConfig)instance).tickTime;
     }
 
     public static int getInitLimit() {
