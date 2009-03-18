@@ -30,7 +30,10 @@ BUGFIXES:
   (mahadev via phunt)
 
   ZOOKEEPER-309. core dump using zoo_get_acl() (mahadev via phunt)
- 
+
+  ZOOKEEPER-341.  regression in QuorumPeerMain, 
+  tickTime from config is lost, cannot start quorum (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
