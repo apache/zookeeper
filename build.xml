@@ -107,7 +107,15 @@
     <property name="rats_url" value="http://arat.googlecode.com/files/rat-lib-all-0.5.1.jar" />
     <property name="rat.reporting.classname" value="rat.Report"/>
 
-    <!-- ====================================================== -->
+        <!-- test patch properties -->
+    <property name="scratch.dir" value="${user.home}/tmp"/>
+    <property name="svn.cmd" value="svn"/>
+    <property name="grep.cmd" value="grep"/>
+    <property name="patch.cmd" value="patch"/>
+    <property name="make.cmd" value="make"/>
+    <property name="test_patch_sh" value="${test.src.dir}/bin/test-patch.sh"/>
+
+<!-- ====================================================== -->
     <!-- Macro definitions                                      -->
     <!-- ====================================================== -->
     <macrodef name="macro_tar" description="Worker Macro for tar">
@@ -578,7 +586,17 @@
     <target name="test-category">
       <property name="test.category" value=""/>
     </target>
-    <target name="test" depends="test-init,test-category,junit.run"/>
+
+    <target name="test" description="to run core and contrib tests">
+	<antcall target="test-core"/>
+	<antcall target="test-contrib"/>
+    </target>
+ 
+    <target name="test-contrib" description="to run contrib tests">
+	<!-- yet to implement -->
+    </target>
+    
+    <target name="test-core" depends="test-init,test-category,junit.run"/> 
 
     <!-- ====================================================== -->
     <!-- Run optional third-party tool targets                  -->
@@ -763,5 +781,59 @@
       		<arg value="${build.dir}/${final.name}"/>
     	</java>
     </target>
+
+    <target name="findbugs.check" depends="check-for-findbugs" unless="findbugs.present">
+    	<fail message="'findbugs.home' is not defined. Please pass -Dfindbugs.home=&lt;base of Findbugs installation&gt; 
+		to Ant on the command-line." />
+    </target>
+
+    <target name="patch.check" unless="patch.file">
+  	<fail message="'patch.file' is not defined. Please pass -Dpatch.file=&lt;location of patch file&gt; 
+		to Ant on the command-line." />
+    </target>
+
+    <target name="test-patch" depends="patch.check,findbugs.check,forrest.check">
+  	<exec executable="bash" failonerror="true">
+    		<arg value="${test_patch_sh}"/>
+    		<arg value="DEVELOPER"/>
+    		<arg value="${patch.file}"/>
+    		<arg value="${scratch.dir}"/>
+    		<arg value="${svn.cmd}"/>
+    		<arg value="${grep.cmd}"/>
+    		<arg value="${patch.cmd}"/>
+    		<arg value="${findbugs.home}"/>
+    		<arg value="${forrest.home}"/>
+    		<arg value="${basedir}"/>
+    		<arg value="${java5.home}"/>
+        	<arg value="${ant.project.name}"/>
+  	</exec>
+    </target>
+
+    <target name="hudson-test-patch" depends="findbugs.check,forrest.check">
+  	<exec executable="bash" failonerror="true">
+    		<arg value="${test_patch_sh}"/>
+    		<arg value="HUDSON"/>
+    		<arg value="${scratch.dir}"/>
+    		<arg value="${support.dir}"/>
+    		<arg value="${ps.cmd}"/>
+    		<arg value="${wget.cmd}"/>
+    		<arg value="${jiracli.cmd}"/>
+    		<arg value="${svn.cmd}"/>
+    		<arg value="${grep.cmd}"/>
+    		<arg value="${patch.cmd}"/>
+    		<arg value="${findbugs.home}"/>
+    		<arg value="${forrest.home}"/>
+    		<arg value="${eclipse.home}"/>
+    		<arg value="${python.home}"/>
+    		<arg value="${basedir}"/>
+    		<arg value="${trigger.url}"/>
+    		<arg value="${jira.passwd}"/>
+    		<arg value="${java5.home}"/>
+    		<arg value="${curl.cmd}"/>
+    		<arg value="${defect}"/>
+		<arg value="${ant.project.name}"/>
+    	</exec>
+     </target>
+
 
 </project>
