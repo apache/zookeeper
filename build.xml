@@ -103,6 +103,10 @@
     <property name="test.cobertura.output.format" value="html" />
     <property name="coveragereport.dir" value="${build.dir}/cobertura" />
 
+    <!-- rats properties -->
+    <property name="rats_url" value="http://arat.googlecode.com/files/rat-lib-all-0.5.1.jar" />
+    <property name="rat.reporting.classname" value="rat.Report"/>
+
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
     <!-- ====================================================== -->
@@ -494,6 +498,7 @@
       <delete dir="${docs.src}/build"/>
       <delete dir="${src_generated.dir}" />
       <delete dir="${csrc_generated.dir}" />
+      <delete file="${lib.dir}/rats.jar" />
       <delete file="${jar.name}" />
       <delete dir="${distribution}"/>
       <delete dir="${revision.dir}"/>
@@ -744,5 +749,19 @@
          	</fileset>
  	</path>
     </target>	
+
+    <!-- ================================================================== -->
+    <!-- Perform audit activities for the release                           -->
+    <!-- ================================================================== -->
+    
+    <target name="get-rats" depends="package" description="Downloads the release audit tool">
+    	<get src="${rats_url}" dest="${lib.dir}/rats.jar" usetimestamp="false" />
+    </target>
+   
+    <target name="releaseaudit" depends="get-rats" description="Release Audit activities">
+    	<java classname="${rat.reporting.classname}" fork="true" classpath="${lib.dir}/rats.jar">
+      		<arg value="${build.dir}/${final.name}"/>
+    	</java>
+    </target>
 
 </project>
