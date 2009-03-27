@@ -57,6 +57,8 @@ mahadev)
 
   ZOOKEEPER-354.  to fix javadoc warning in the source files. (mahadev)
 
+  ZOOKEEPER-349. to automate patch testing. (giridharan kesavan via mahadev)
+
 NEW FEATURES:
 
 
