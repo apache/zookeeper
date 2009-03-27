@@ -52,6 +52,9 @@ mahadev)
   ZOOKEEPER-352. to add standard ant targets required by test-patch.sh script
 (giridharan kesavan via mahadev)
 
+  ZOOKEEPER-353. javadoc warnings needs to be fixed. (giridharan kesavan via
+mahadev) 
+
 NEW FEATURES:
 
 
