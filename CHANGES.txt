@@ -46,6 +46,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-351. to run checkstyle (giridharan kesavan via mahadev)
 
+  ZOOKEEPER-350. to run rats for releaseaudit. (giridharan kesavan via
+mahadev)
+
 NEW FEATURES:
 
 
