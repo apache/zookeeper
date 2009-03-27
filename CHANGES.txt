@@ -49,6 +49,9 @@ IMPROVEMENTS:
   ZOOKEEPER-350. to run rats for releaseaudit. (giridharan kesavan via
 mahadev)
 
+  ZOOKEEPER-352. to add standard ant targets required by test-patch.sh script
+(giridharan kesavan via mahadev)
+
 NEW FEATURES:
 
 
