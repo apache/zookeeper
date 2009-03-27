@@ -487,7 +487,7 @@ public class ZooKeeper {
      *                the initial data for the node
      * @param acl
      *                the acl for the node
-     * @param flags
+     * @param createMode
      *                specifying whether the node to be created is ephemeral
      *                and/or sequential
      * @return the actual path of the created node
@@ -591,7 +591,7 @@ public class ZooKeeper {
      * The Asynchronous version of create. The request doesn't actually until
      * the asynchronous callback is called.
      *
-     * @see #create(String, byte[], List<ACL>, CreateMode)
+     * @see #create(String, byte[], List, CreateMode)
      */
 
     public void create(String path, byte data[], List<ACL> acl,
