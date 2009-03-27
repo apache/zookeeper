@@ -450,7 +450,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     *  @see Code.APIERROR
+     *  @see Code#APIERROR
      */
     public static class APIErrorException extends KeeperException {
         public APIErrorException() {
@@ -459,7 +459,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     *  @see Code.AUTHFAILED
+     *  @see Code#AUTHFAILED
      */
     public static class AuthFailedException extends KeeperException {
         public AuthFailedException() {
@@ -468,7 +468,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     *  @see Code.BADARGUMENTS
+     *  @see Code#BADARGUMENTS
      */
     public static class BadArgumentsException extends KeeperException {
         public BadArgumentsException() {
@@ -477,7 +477,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.BADVERSION
+     * @see Code#BADVERSION
      */
     public static class BadVersionException extends KeeperException {
         public BadVersionException() {
@@ -486,7 +486,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.CONNECTIONLOSS
+     * @see Code#CONNECTIONLOSS
      */
     public static class ConnectionLossException extends KeeperException {
         public ConnectionLossException() {
@@ -495,7 +495,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.DATAINCONSISTENCY
+     * @see Code#DATAINCONSISTENCY
      */
     public static class DataInconsistencyException extends KeeperException {
         public DataInconsistencyException() {
@@ -504,7 +504,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.INVALIDACL
+     * @see Code#INVALIDACL
      */
     public static class InvalidACLException extends KeeperException {
         public InvalidACLException() {
@@ -513,7 +513,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.INVALIDCALLBACK
+     * @see Code#INVALIDCALLBACK
      */
     public static class InvalidCallbackException extends KeeperException {
         public InvalidCallbackException() {
@@ -522,7 +522,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.MARSHALLINGERROR
+     * @see Code#MARSHALLINGERROR
      */
     public static class MarshallingErrorException extends KeeperException {
         public MarshallingErrorException() {
@@ -531,7 +531,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.NOAUTH
+     * @see Code#NOAUTH
      */
     public static class NoAuthException extends KeeperException {
         public NoAuthException() {
@@ -540,7 +540,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.NOCHILDRENFOREPHEMERALS
+     * @see Code#NOCHILDRENFOREPHEMERALS
      */
     public static class NoChildrenForEphemeralsException extends KeeperException {
         public NoChildrenForEphemeralsException() {
@@ -549,7 +549,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.NODEEXISTS
+     * @see Code#NODEEXISTS
      */
     public static class NodeExistsException extends KeeperException {
         public NodeExistsException() {
@@ -558,7 +558,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.NONODE
+     * @see Code#NONODE
      */
     public static class NoNodeException extends KeeperException {
         public NoNodeException() {
@@ -567,7 +567,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.NOTEMPTY
+     * @see Code#NOTEMPTY
      */
     public static class NotEmptyException extends KeeperException {
         public NotEmptyException() {
@@ -576,7 +576,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.OPERATIONTIMEOUT
+     * @see Code#OPERATIONTIMEOUT
      */
     public static class OperationTimeoutException extends KeeperException {
         public OperationTimeoutException() {
@@ -585,7 +585,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.RUNTIMEINCONSISTENCY
+     * @see Code#RUNTIMEINCONSISTENCY
      */
     public static class RuntimeInconsistencyException extends KeeperException {
         public RuntimeInconsistencyException() {
@@ -594,7 +594,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.SESSIONEXPIRED
+     * @see Code#SESSIONEXPIRED
      */
     public static class SessionExpiredException extends KeeperException {
         public SessionExpiredException() {
@@ -603,7 +603,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.SYSTEMERROR
+     * @see Code#SYSTEMERROR
      */
     public static class SystemErrorException extends KeeperException {
         public SystemErrorException() {
@@ -612,7 +612,7 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code.UNIMPLEMENTED
+     * @see Code#UNIMPLEMENTED
      */
     public static class UnimplementedException extends KeeperException {
         public UnimplementedException() {

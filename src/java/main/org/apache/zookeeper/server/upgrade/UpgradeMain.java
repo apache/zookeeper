@@ -129,7 +129,6 @@ public class UpgradeMain {
     
     /**
      * run the upgrade
-     * @return 0 if success else it failed
      * @throws IOException
      */
     public void runUpgrade() throws IOException {

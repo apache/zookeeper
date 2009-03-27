@@ -55,6 +55,8 @@ mahadev)
   ZOOKEEPER-353. javadoc warnings needs to be fixed. (giridharan kesavan via
 mahadev) 
 
+  ZOOKEEPER-354.  to fix javadoc warning in the source files. (mahadev)
+
 NEW FEATURES:
 
 
