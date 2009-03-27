@@ -298,7 +298,7 @@
     </target>
 	
     <!-- Javadoc -->
-    <target name="javadoc-dev" depends="compile"
+    <target name="javadoc-dev" depends="jar"
             description="Generate javadoc for zookeeper developers">
       <mkdir dir="${build.javadoc.dev}"/>
       <javadoc
@@ -322,7 +322,7 @@
       </javadoc>
     </target>	
 
-    <target name="javadoc" depends="compile" description="Generate javadoc">
+    <target name="javadoc" depends="jar" description="Generate javadoc">
       <mkdir dir="${build.javadoc}"/>
       <javadoc
          overview="${java.src.dir}/overview.html"
@@ -356,7 +356,12 @@
           <exclude name="org/apache/zookeeper/server/**"/>
     	</packageset>
         <link href="${javadoc.link.java}"/>
-        <classpath refid="project.classpath"/>
+        <classpath>
+		<fileset dir="${basedir}">
+			<include name="${jar.name}"/>
+		</fileset> 
+        <path refid="project.classpath"/>
+	</classpath>
       </javadoc>
     </target>	
 
@@ -834,6 +839,5 @@
 		<arg value="${ant.project.name}"/>
     	</exec>
      </target>
-
 
 </project>
