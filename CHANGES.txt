@@ -44,6 +44,8 @@ IMPROVEMENTS:
   ZOOKEEPER-279. Allow specialization of quorum config parsing
   (e.g. variable expansion in zoo.cfg) (Jean-Daniel Cryans via phunt)
 
+  ZOOKEEPER-351. to run checkstyle (giridharan kesavan via mahadev)
+
 NEW FEATURES:
 
 
