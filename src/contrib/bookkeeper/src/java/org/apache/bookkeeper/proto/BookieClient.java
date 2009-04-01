@@ -30,7 +30,12 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Semaphore;
-
+import java.util.Arrays;
+import java.security.NoSuchAlgorithmException;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import javax.crypto.Mac; 
+import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.bookkeeper.proto.ReadEntryCallback;
 import org.apache.bookkeeper.proto.WriteCallback;
@@ -51,7 +56,7 @@ public class BookieClient extends Thread {
     throws IOException, ConnectException {
         sock = SocketChannel.open(addr);
         setDaemon(true);
-        //sock.configureBlocking(false);
+   
         sock.socket().setSoTimeout(recvTimeout);
         sock.socket().setTcpNoDelay(true);
         start();
@@ -102,8 +107,8 @@ public class BookieClient extends Thread {
     ConcurrentHashMap<CompletionKey, Completion<WriteCallback>> addCompletions = new ConcurrentHashMap<CompletionKey, Completion<WriteCallback>>();
     ConcurrentHashMap<CompletionKey, Completion<ReadEntryCallback>> readCompletions = new ConcurrentHashMap<CompletionKey, Completion<ReadEntryCallback>>();
     
-    Object writeLock = new Object();
-    Object readLock = new Object();
+    //Object writeLock = new Object();
+    //Object readLock = new Object();
     
     /*
      * Use this semaphore to control the number of completion key in both addCompletions
@@ -114,6 +119,41 @@ public class BookieClient extends Thread {
     
    
     /**
+     * Message disgest instance
+     * 
+     */
+    MessageDigest digest = null;
+    
+    /** 
+     * Get digest instance if there is none.
+     * 
+     */
+    public MessageDigest getDigestInstance(String alg)
+    throws NoSuchAlgorithmException {
+        if(digest == null){
+            digest = MessageDigest.getInstance(alg);
+        }
+        
+        return digest;
+    }
+    
+    /**
+     * Mac instance
+     * 
+     */
+    Mac mac = null;
+    
+    public Mac getMac(String alg, byte[] key)
+    throws NoSuchAlgorithmException, InvalidKeyException {
+        if(mac == null){
+            mac = Mac.getInstance(alg);
+            mac.init(new SecretKeySpec(key, "HmacSHA1"));
+        }
+        
+        return mac;
+    }
+    
+    /**
      * Send addEntry operation to bookie.
      * 
      * @param ledgerId	ledger identifier
@@ -123,7 +163,7 @@ public class BookieClient extends Thread {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void addEntry(long ledgerId, long entryId,
+    synchronized public void addEntry(long ledgerId, byte[] masterKey, long entryId,
             ByteBuffer entry, WriteCallback cb, Object ctx) 
     throws IOException, InterruptedException {
         
@@ -132,12 +172,14 @@ public class BookieClient extends Thread {
         addCompletions.put(new CompletionKey(ledgerId, entryId),
                 new Completion<WriteCallback>(cb, ctx));
         //entry = entry.duplicate();
-        entry.position(0);
+        //entry.position(0);
         
-        ByteBuffer tmpEntry = ByteBuffer.allocate(entry.capacity() + 8 + 8 + 8);
+        ByteBuffer tmpEntry = ByteBuffer.allocate(entry.remaining() + 44);
 
         tmpEntry.position(4);
         tmpEntry.putInt(BookieProtocol.ADDENTRY);
+        tmpEntry.put(masterKey);
+        //LOG.debug("Master key: " + new String(masterKey));
         tmpEntry.putLong(ledgerId);
         tmpEntry.putLong(entryId);
         tmpEntry.put(entry);
@@ -147,14 +189,12 @@ public class BookieClient extends Thread {
         // 4 bytes for the message type
         tmpEntry.putInt(tmpEntry.remaining() - 4);
         tmpEntry.position(0);
-        synchronized(writeLock) {
-            //sock.write(len);
-            //len.clear();
-            //len.putInt(BookieProtocol.ADDENTRY);
-            //len.flip();
-            //sock.write(len);
-            sock.write(tmpEntry);
-        }
+        //sock.write(len);
+        //len.clear();
+        //len.putInt(BookieProtocol.ADDENTRY);
+        //len.flip();
+        //sock.write(len);
+        sock.write(tmpEntry);
         //LOG.debug("addEntry:finished");
     }
     
@@ -167,30 +207,30 @@ public class BookieClient extends Thread {
      * @param ctx		control object
      * @throws IOException
      */
-    public void readEntry(long ledgerId, long entryId,
+    synchronized public void readEntry(long ledgerId, long entryId,
             ReadEntryCallback cb, Object ctx) 
     throws IOException, InterruptedException {
     	
     	completionSemaphore.acquire();
         readCompletions.put(new CompletionKey(ledgerId, entryId),
                 new Completion<ReadEntryCallback>(cb, ctx));
-        ByteBuffer tmpEntry = ByteBuffer.allocate(8 + 8);
+        ByteBuffer tmpEntry = ByteBuffer.allocate(8 + 8 + 8);
+        tmpEntry.putInt(20);
+        tmpEntry.putInt(BookieProtocol.READENTRY);
         tmpEntry.putLong(ledgerId);
         tmpEntry.putLong(entryId);
         tmpEntry.position(0);
         
-        ByteBuffer len = ByteBuffer.allocate(4);
-        len.putInt(tmpEntry.remaining() + 4);
-        len.flip();
+        //ByteBuffer len = ByteBuffer.allocate(4);
+        //len.putInt(tmpEntry.remaining() + 4);
+        //len.flip();
         //LOG.debug("readEntry: Writing to socket");
-        synchronized(readLock) {
-            sock.write(len);
-            len.clear();
-            len.putInt(BookieProtocol.READENTRY);
-            len.flip();
-            sock.write(len);
-            sock.write(tmpEntry);
-        }
+        //sock.write(len);
+        //len.clear();
+        //len.putInt(BookieProtocol.READENTRY);
+        //len.flip();
+        //sock.write(len);
+        sock.write(tmpEntry);
         //LOG.error("Size of readCompletions: " + readCompletions.size());
     }
     
@@ -241,8 +281,8 @@ public class BookieClient extends Thread {
                     byte[] data = new byte[bb.capacity() - 24];
                     bb.get(data);
                     ByteBuffer entryData = ByteBuffer.wrap(data);
-                    
-                    LOG.info("Received entry: " + ledgerId + ", " + entryId + ", " + rc + ", " + entryData.array().length + ", " + bb.array().length + ", " + bb.remaining());
+                    //ByteBuffer entryData = bb;
+                    //LOG.info("Received entry: " + ledgerId + ", " + entryId + ", " + rc + ", " + entryData.array().length + ", " + bb.array().length + ", " + bb.remaining());
           
                     
                     CompletionKey key = new CompletionKey(ledgerId, entryId);
@@ -334,7 +374,7 @@ public class BookieClient extends Thread {
             entry.put(hello);
             entry.flip();
             counter.inc();
-            bc.addEntry(ledger, i, entry, cb, counter);
+            bc.addEntry(ledger, new byte[0], i, entry, cb, counter);
         }
         counter.wait(0);
         System.out.println("Total = " + counter.total());

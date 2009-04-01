@@ -62,7 +62,8 @@ public class LedgerHandle {
     private int threshold;
     private String digestAlg = "SHA1";
     
-    private byte[] passwdHash;
+    private byte[] macKey;
+    private byte[] ledgerKey;
     private byte[] passwd;
     
     LedgerHandle(BookKeeper bk, 
@@ -74,7 +75,8 @@ public class LedgerHandle {
         this.last = last;
         this.bookies = new ArrayList<BookieHandle>();
         this.passwd = passwd;
-        genPasswdHash(passwd);
+        genLedgerKey(passwd);
+        genMacKey(passwd);
 
         this.qSize = (bookies.size() + 1)/2;
     }
@@ -93,7 +95,8 @@ public class LedgerHandle {
         this.qSize = qSize;
         this.qMode = mode;
         this.passwd = passwd;
-        genPasswdHash(passwd);
+        genLedgerKey(passwd);
+        genMacKey(passwd);
     }
         
         
@@ -109,7 +112,8 @@ public class LedgerHandle {
 
         this.qSize = qSize;
         this.passwd = passwd;
-        genPasswdHash(passwd);
+        genLedgerKey(passwd);
+        genMacKey(passwd);
     }
     
     private void setBookies(ArrayList<InetSocketAddress> bookies)
@@ -135,17 +139,20 @@ public class LedgerHandle {
     }
     
     
+    
     /**
      * Create bookie handle and add it to the list
      * 
      * @param addr	socket address
      */
-    void addBookie(InetSocketAddress addr)
+    int addBookie(InetSocketAddress addr)
     throws IOException {
         BookieHandle bh = new BookieHandle(this, addr);
         this.bookies.add(bh);
         
         if(bookies.size() > qSize) setThreshold();
+        
+        return (this.bookies.size() - 1);
     }
     
     private void setThreshold(){
@@ -311,23 +318,50 @@ public class LedgerHandle {
     }
     
     /**
-     * Generates and stores password hash.
+     * Generates and stores Ledger key.
      * 
      * @param passwd
      */
     
-    private void genPasswdHash(byte[] passwd){
+    private void genLedgerKey(byte[] passwd){
         try{
-            MessageDigest digest = MessageDigest.getInstance("MD5");
+            MessageDigest digest = MessageDigest.getInstance("SHA");
+            String pad = "ledger";
+            
+            byte[] toProcess = new byte[passwd.length + pad.length()];
+            System.arraycopy(pad.getBytes(), 0, toProcess, 0, pad.length());
+            System.arraycopy(passwd, 0, toProcess, pad.length(), passwd.length);
         
-            digest.update(passwd);
-            this.passwdHash = digest.digest();
+            digest.update(toProcess);
+            this.ledgerKey = digest.digest();
         } catch(NoSuchAlgorithmException e){
             this.passwd = passwd;
             LOG.error("Storing password as plain text because secure hash implementation does not exist");
         }
     }
     
+    /**
+     * Generates and stores Mac key.
+     * 
+     * @param passwd
+     */
+    
+    private void genMacKey(byte[] passwd){
+        try{
+            MessageDigest digest = MessageDigest.getInstance("SHA");
+            String pad = "mac";
+            
+            byte[] toProcess = new byte[passwd.length + pad.length()];
+            System.arraycopy(pad.getBytes(), 0, toProcess, 0, pad.length());
+            System.arraycopy(passwd, 0, toProcess, pad.length(), passwd.length);
+        
+            digest.update(toProcess);
+            this.macKey = digest.digest();
+        } catch(NoSuchAlgorithmException e){
+            this.passwd = passwd;
+            LOG.error("Storing password as plain text because secure hash implementation does not exist");
+        }
+    }
     
     /**
      * Returns password in plain text
@@ -338,12 +372,21 @@ public class LedgerHandle {
     
     
     /**
-     * Returns password hash
+     * Returns MAC key
      * 
      * @return byte[]
      */
-    byte[] getPasswdHash(){
-       return passwdHash; 
+    byte[] getMacKey(){
+       return macKey; 
     }
    
+    /**
+     * Returns Ledger key
+     * 
+     * @return byte[]
+     */
+    byte[] getLedgerKey(){
+       return ledgerKey; 
+    }
+    
 }

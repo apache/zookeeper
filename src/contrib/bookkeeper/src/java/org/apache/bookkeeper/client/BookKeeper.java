@@ -278,9 +278,12 @@ implements ReadCallback, AddCallback, Watcher {
         	    String bookie = list.remove(index);
         	    LOG.info("Bookie: " + bookie);
         	    InetSocketAddress tAddr = parseAddr(bookie);
-        	    lh.addBookie(tAddr);         	
+        	    int bindex = lh.addBookie(tAddr); 
+        	    ByteBuffer bindexBuf = ByteBuffer.allocate(4);
+        	    bindexBuf.putInt(bindex);
+        	    
         	    String pBookie = "/" + bookie;
-        	    zk.create(prefix + getZKStringId(lId) + ensemble + pBookie, new byte[0], 
+        	    zk.create(prefix + getZKStringId(lId) + ensemble + pBookie, bindexBuf.array(), 
         	            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         	} catch (IOException e) {
         	    LOG.error(e);
@@ -382,12 +385,18 @@ implements ReadCallback, AddCallback, Watcher {
         
         List<String> list = 
             zk.getChildren(prefix + getZKStringId(lId) + ensemble, false);
-                
-        for(String s : list){
-            try{
-                lh.addBookie(parseAddr(s));
-            } catch (IOException e){
-                LOG.error(e);
+        
+        for(int i = 0 ; i < list.size() ; i++){
+            for(String s : list){
+                byte[] bindex = zk.getData(prefix + getZKStringId(lId) + ensemble + "/" + s, false, stat);
+                ByteBuffer bindexBuf = ByteBuffer.wrap(bindex);
+                if(bindexBuf.getInt() == i){                      
+                    try{
+                        lh.addBookie(parseAddr(s));
+                    } catch (IOException e){
+                        LOG.error(e);
+                    }
+                }
             }
         }
       
@@ -451,30 +460,12 @@ implements ReadCallback, AddCallback, Watcher {
      */
     public void asyncAddEntry(LedgerHandle lh, byte[] data, AddCallback cb, Object ctx)
     throws InterruptedException {
-        LOG.debug("Adding entry asynchronously: " + data);
-        //lh.incLast();
+       
         if(lh != null){
             AddOp r = new AddOp(lh, data, cb, ctx);
             engines.get(lh.getId()).sendOp(r);
         }
-        //qeMap.get(lh.getId()).put(r);
     }
-    
-    /**
-     * Add entry asynchronously to an open ledger.
-     */
-    //public  void asyncAddEntryVerifiable(LedgerHandle lh, byte[] data, AddCallback cb, Object ctx)
-    //throws InterruptedException, IOException, BKException, NoSuchAlgorithmException {
-    //    if(md == null)
-    //        throw BKException.create(Code.DigestNotInitializedException);
-    //        
-    //    LOG.info("Data size: " + data.length);
-    //    AddOp r = new AddOp(lh, data, cb, ctx);
-    //    //r.addDigest();
-    //    LOG.info("Data length: " + r.data.length);
-    //    engines.get(lh.getId()).sendOp(r);
-    //    //qeMap.get(lh.getId()).put(r);
-    //}
     
     
     /**
@@ -496,7 +487,7 @@ implements ReadCallback, AddCallback, Watcher {
         
         Operation r = new ReadOp(lh, firstEntry, lastEntry, this, counter);
         engines.get(lh.getId()).sendOp(r);
-        //qeMap.get(lh.getId()).put(r);
+        
         LOG.debug("Going to wait for read entries: " + counter.i);
         counter.block(0);
         LOG.debug("Done with waiting: " + counter.i + ", " + firstEntry);

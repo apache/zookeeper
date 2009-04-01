@@ -23,6 +23,7 @@ package org.apache.bookkeeper.test;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import org.junit.Test;
 import org.apache.bookkeeper.bookie.Bookie;
@@ -102,21 +103,24 @@ public class BookieClientTest extends TestCase {
     @Test
     public void testWriteGaps() throws Exception {
         final Object notifyObject = new Object();
+        byte[] passwd = new byte[20];
+        Arrays.fill(passwd, (byte) 'a');
+        
         BookieClient bc = new BookieClient("127.0.0.1", port, 50000);
         ByteBuffer bb;
         bb = createByteBuffer(1);
-        bc.addEntry(1, 1, bb, wrcb, null);
+        bc.addEntry(1, passwd, 1, bb, wrcb, null);
         bb = createByteBuffer(2);
-        bc.addEntry(1, 2, bb, wrcb, null);
+        bc.addEntry(1, passwd, 2, bb, wrcb, null);
         bb = createByteBuffer(3);
-        bc.addEntry(1, 3, bb, wrcb, null);
+        bc.addEntry(1, passwd, 3, bb, wrcb, null);
         bb = createByteBuffer(5);
-        bc.addEntry(1, 5, bb, wrcb, null);
+        bc.addEntry(1, passwd, 5, bb, wrcb, null);
         bb = createByteBuffer(7);
-        bc.addEntry(1, 7, bb, wrcb, null);
+        bc.addEntry(1, passwd, 7, bb, wrcb, null);
         synchronized(notifyObject) {
             bb = createByteBuffer(11);
-            bc.addEntry(1, 11, bb, wrcb, notifyObject);
+            bc.addEntry(1, passwd, 11, bb, wrcb, notifyObject);
             notifyObject.wait();
         }
         ResultStruct arc = new ResultStruct();

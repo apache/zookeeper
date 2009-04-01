@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.io.IOException;
 import java.lang.InterruptedException;
+import java.util.Arrays;
 
 import org.apache.bookkeeper.proto.BookieClient;
 import org.apache.bookkeeper.proto.WriteCallback;
@@ -73,7 +74,11 @@ class LoopbackClient implements WriteCallback {
     void write(long ledgerId, long entry, byte[] data, WriteCallback cb, Object ctx)
     throws IOException, InterruptedException {
         LOG.info("Ledger id: " + ledgerId + ", Entry: " + entry);
+        byte[] passwd = new byte[20];
+        Arrays.fill(passwd, (byte) 'a');
+        
         client.addEntry(ledgerId, 
+            passwd,
             entry, 
             ByteBuffer.wrap(data), 
             cb,

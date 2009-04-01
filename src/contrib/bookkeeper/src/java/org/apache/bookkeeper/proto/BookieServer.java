@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.apache.bookkeeper.bookie.Bookie;
+import org.apache.bookkeeper.bookie.BookieException;
 import org.apache.bookkeeper.client.AddCallback;
 import org.apache.bookkeeper.proto.NIOServerFactory.Cnxn;
 import org.apache.log4j.Logger;
@@ -90,10 +91,14 @@ public class BookieServer implements NIOServerFactory.PacketProcessor, AddCallba
         switch(type) {
         case BookieProtocol.ADDENTRY:
             try {
-                bookie.addEntry(packet.slice(), this, src);
+                byte[] masterKey = new byte[20];
+                packet.get(masterKey, 0, 20);
+                //LOG.debug("Master key: " + new String(masterKey));
+                bookie.addEntry(packet.slice(), this, src, masterKey);
             } catch(IOException e) {
                 if (LOG.isTraceEnabled()) {
                     ByteBuffer bb = packet.duplicate();
+    
                     long ledgerId = bb.getLong();
                     long entryId = bb.getLong();
                     LOG.trace("Error reading " + entryId + "@" + ledgerId, e);
@@ -101,6 +106,17 @@ public class BookieServer implements NIOServerFactory.PacketProcessor, AddCallba
                 ByteBuffer eio = ByteBuffer.allocate(8);
                 eio.putInt(type);
                 eio.putInt(BookieProtocol.EIO);
+                eio.flip();
+                src.sendResponse(new ByteBuffer[] {eio});
+            } catch(BookieException e){
+                ByteBuffer bb = packet.duplicate();
+                long ledgerId = bb.getLong();
+                
+                LOG.error("Unauthorized access to ledger " + ledgerId);
+                
+                ByteBuffer eio = ByteBuffer.allocate(8);
+                eio.putInt(type);
+                eio.putInt(BookieProtocol.EUA);
                 eio.flip();
                 src.sendResponse(new ByteBuffer[] {eio});
             }

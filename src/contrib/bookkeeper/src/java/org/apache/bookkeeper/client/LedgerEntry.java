@@ -31,7 +31,6 @@ import org.apache.log4j.Logger;
  * 
  */
 
-
 public class LedgerEntry {
     Logger LOG = Logger.getLogger(LedgerEntry.class);
     
@@ -43,10 +42,6 @@ public class LedgerEntry {
         this.lId = lId;
         this.eId = eId;
         this.entry = entry;
-        if(entry != null)
-            LOG.debug("Entry: " + entry.length + " , " + new String(entry));
-        else
-            LOG.debug("Entry is null");
     }
     
     public long getLedgerId(){
