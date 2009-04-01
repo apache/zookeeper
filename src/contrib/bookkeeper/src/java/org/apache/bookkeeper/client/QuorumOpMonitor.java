@@ -27,10 +27,14 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentHashMap;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.InvalidKeyException;
+import javax.crypto.Mac; 
+import javax.crypto.spec.SecretKeySpec;
 
 
 import org.apache.bookkeeper.client.BookieHandle;
@@ -44,6 +48,7 @@ import org.apache.bookkeeper.client.QuorumEngine.Operation.AddOp;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.ReadOp;
 import org.apache.bookkeeper.client.QuorumEngine.SubOp.SubAddOp;
 import org.apache.bookkeeper.client.QuorumEngine.SubOp.SubReadOp;
+import org.apache.bookkeeper.proto.BookieClient;
 import org.apache.bookkeeper.proto.ReadEntryCallback;
 import org.apache.bookkeeper.proto.WriteCallback;
 import org.apache.log4j.Logger;
@@ -77,6 +82,7 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
      * 
      */
     MessageDigest digest = null;
+    int dLength;
     
     /** 
      * Get digest instance if there is none.
@@ -101,36 +107,9 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
             this.bookieIdSent = new HashSet<Integer>();
             this.bookieIdRecv = new HashSet<Integer>();
         }
-
-        //PendingOp(Operation op){
-        //    this.op = op;
-        //    bookieIdSent = new HashSet<Integer>();
-        //    bookieIdRecv = new HashSet<Integer>();
-        //}
-        
-        //void setOp(Operation op){
-        //    this.op = op;
-        //}
-        
-        //Operation getOp(){
-        //    return this.op;
-        //}
         
     };
     
-    /**
-     * Objects of this type are used to keep track of the status of
-     * a given write request.
-     * 
-     *
-     */
-    //public static class PendingAddOp extends PendingOp{
-    //    AddOp op;  
-        
-    //    PendingAddOp(LedgerHandle lh, AddOp op){
-    //        this.op = op;
-    //    }
-    //}
     
     /**
      * Objects of this type are used to keep track of the status of
@@ -142,30 +121,27 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
         /*
          * Values for ongoing reads
          */
-        ConcurrentHashMap<Long, ArrayList<ByteBuffer>> proposedValues;
-        
-        /*
-         * Bookies from which received a response
-         */
-        //ConcurrentHashMap<Long, HashSet<Integer>> received;
-        
-        
+
+        ArrayList<ByteBuffer> proposedValues;
+                
         PendingReadOp(LedgerHandle lh){
-            this.proposedValues = 
-                new ConcurrentHashMap<Long, ArrayList<ByteBuffer>>();
-            //this.received = 
-            //    new ConcurrentHashMap<Long, HashSet<Integer>>();
+            this.proposedValues =
+                new ArrayList<ByteBuffer>();
         }    
       
     }
     
     QuorumOpMonitor(LedgerHandle lh){
         this.lh = lh;
+        try{
+            this.dLength = getDigestInstance(lh.getDigestAlg()).getDigestLength();
+        } catch(NoSuchAlgorithmException e){
+            LOG.error("Problem with message digest: " + e);
+            this.dLength = 0;
+        }
     }
     
-    
-    
-    
+   
     /**
      * Callback method for write operations. There is one callback for
      * each write to a server.
@@ -258,89 +234,96 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
          * Collect responses, and reply when there are sufficient 
          * answers.
          */
-        LOG.debug("New response: " + rc);
+        
         if(rc == 0){
             SubReadOp sRead = (SubReadOp) ctx;
             ReadOp rOp = (ReadOp) sRead.op;
             PendingReadOp pOp = sRead.pOp;
             if(pOp != null){
                 HashSet<Integer> received = pOp.bookieIdRecv;
-                //if(!received.containsKey(entryId)){
-                //    received.put(entryId, new HashSet<Integer>());
-                //}
+                
                 boolean result = received.add(sRead.bIndex);
                 int counter = -1;
                 if(result){
-
-                    if(!pOp.proposedValues.containsKey(entryId)){
-                        pOp.proposedValues.put(entryId, new ArrayList<ByteBuffer>());
-                    }
-                    ArrayList<ByteBuffer> list = pOp.proposedValues.get(entryId);
-                    list.add(bb);
-        
+                    
+                    ByteBuffer voted = null;
+                    ArrayList<ByteBuffer> list;
                     switch(lh.getQMode()){
-                        case VERIFIABLE:
-                            if(list.size() >= 1){
-                                try{
-                                    ByteBuffer voted = voteVerifiable(list);
-                                    if(voted != null){
-                                        LOG.debug("Voted: " + new String(voted.array()));
-                                    
-                                        MessageDigest md = getDigestInstance(lh.getDigestAlg());
-                                        int dlength = md.getDigestLength();
-                                        if(voted.capacity() - dlength > 0){
-                                            byte[] data = new byte[voted.capacity() - dlength - 24];
-                                            LOG.info("Digest length: " + dlength + ", " + data.length);
-                                            voted.position(24);
-                                            voted.get(data, 0, data.length);
-                                            counter = addNewEntry(new LedgerEntry(ledgerId, entryId, data), rOp);
-                                        } else {
-                                            LOG.error("Short message: " + voted.capacity());
-                                        }
-                                    }
-                                } catch(NoSuchAlgorithmException e){
-                                    LOG.error("Problem with message digest: " + e);
-                                } catch(BKException bke) {
-                                    LOG.error(bke.toString() + "( " + ledgerId + ", " + entryId + ", " + pOp.bookieIdRecv + ")");
-                                    countNacks((ReadOp) ((SubReadOp) ctx).op, (SubReadOp) ctx, ledgerId, entryId);
-                                }
+                    case VERIFIABLE:
+                        if(rOp.seq[(int) (entryId % (rOp.lastEntry - rOp.firstEntry + 1))] == null)
+                           try{
+                                voted = voteVerifiable(bb);
+                            } catch(NoSuchAlgorithmException e){
+                                LOG.error("Problem with message digest: " + e);
+                            } catch(BKException bke) {
+                                LOG.error(bke.toString() + "( " + ledgerId + ", " + entryId + ", " + pOp.bookieIdRecv + ")");
+                                countNacks((ReadOp) ((SubReadOp) ctx).op, (SubReadOp) ctx, ledgerId, entryId);
+                            } catch(InvalidKeyException e){
+                                LOG.error(e);
                             }
-                            break;
-                        case GENERIC:
-                            if(list.size() >= ((lh.getQuorumSize() + 1)/2)){
-                                ByteBuffer voted = voteGeneric(list, (lh.getQuorumSize() + 1)/2);
-                                if(voted != null){
-                                    LOG.debug("Voted: " + voted.array());
-                                    byte[] data = new byte[voted.capacity() - 24];
-                                    voted.position(24);
+ 
+                            if(voted != null) { 
+                                if(voted.capacity() - dLength > 0){
+                                    byte[] data = new byte[voted.capacity() - dLength - 24];
+                                    voted.position(24);                                    
                                     voted.get(data, 0, data.length);
                                     counter = addNewEntry(new LedgerEntry(ledgerId, entryId, data), rOp);
+                                } 
+                            }
+                               
+                        break;
+                    case GENERIC:
+                        list = pOp.proposedValues;
+                        LOG.debug("List length before: " + list.size());
+                        
+                        synchronized(list){
+                            if(rOp.seq[(int) (entryId % (rOp.lastEntry - rOp.firstEntry + 1))] == null){
+                                list.add(bb);
+                                bb.position(24);
+                                if(list.size() >= ((lh.getQuorumSize() + 1)/2)){
+                                    voted = voteGeneric(list, (lh.getQuorumSize() + 1)/2);
                                 }
                             }
-                            break;
-                        case FREEFORM:
-                        	if(list.size() == lh.getQuorumSize()){
-                        		ByteBuffer voted = voteFree(list);
-                                if(voted != null){
-                                    LOG.debug("Voted: " + voted.array());
-                                    byte[] data = new byte[voted.capacity() - 24];
-                                    voted.position(24);
-                                    voted.get(data, 0, data.length);
-                                    counter = addNewEntry(new LedgerEntry(ledgerId, entryId, voted.array()), rOp);
-                                }
-                        	}
-                    }
-                }    
+                        }
+                        
+                                    
+                        if(voted != null){
+                            LOG.debug("Voted: " + voted.array());
+                            byte[] data = new byte[voted.capacity() - 24];
+                            voted.position(24);
+                            voted.get(data, 0, data.length);
+                            counter = addNewEntry(new LedgerEntry(ledgerId, entryId, data), rOp);
+                        }
+                                
+                                
+                        break;
+                    case FREEFORM:
+                        list = pOp.proposedValues;
+                        LOG.debug("List length before: " + list.size());
+                        synchronized(list){
+                            if(list.size() == lh.getQuorumSize()){
+                                voted = voteFree(list);
+                            }
+                        }
+                        
+                        if(voted != null){
+                            LOG.debug("Voted: " + voted.array());
+                            byte[] data = new byte[voted.capacity() - 24];
+                            voted.position(24);
+                            voted.get(data, 0, data.length);
+                            counter = addNewEntry(new LedgerEntry(ledgerId, entryId, voted.array()), rOp);
+                        }                      
+                    }   
         
-                if((counter == (rOp.lastEntry - rOp.firstEntry + 1)) && 
-                        !sRead.op.isReady()){
-                    
-                    sRead.op.setReady();
-                    //sRead.op.cb.readComplete(0, ledgerId, new LedgerSequence(sRead.op.seq), sRead.op.ctx);
-                    //sRead.op.complete = true;
-                }
+                    if((counter == (rOp.lastEntry - rOp.firstEntry + 1)) && 
+                            !sRead.op.isReady()){
+                        
+                        sRead.op.setReady();
+                    }
             
-                LOG.debug("Counter: " + rOp.counter);
+                    long diff = rOp.lastEntry - rOp.firstEntry;
+                    //LOG.debug("Counter: " + rOp.counter + ", " + diff);
+                }
             }
         } else {
             /*
@@ -385,43 +368,40 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
      * @return
      */
     
-    private ByteBuffer voteVerifiable(ArrayList<ByteBuffer> list) 
-    throws NoSuchAlgorithmException, BKException{
+    
+    private ByteBuffer voteVerifiable(ByteBuffer bb) 
+    throws NoSuchAlgorithmException, InvalidKeyException, BKException{
         /*
          * Check if checksum matches
          */
-        ByteBuffer bb = list.get(0);
-        list.remove(0);
         
-        MessageDigest md = getDigestInstance(lh.getDigestAlg());
-        int dlength = md.getDigestLength();
+        Mac mac = ((BookieClient) Thread.currentThread()).getMac("HmacSHA1", lh.getMacKey());
+        int dlength = mac.getMacLength();
        
-        /*
-         * TODO: The if check below is legitimate, but in reality it should never happen,
-         * bt it showed up a few times in experiments. Have to check why it is happening.
-         */
         if(bb.capacity() <= dlength){
-        	LOG.warn("Something wrong with this entry, length smaller than digest length");
-        	return null;
+            LOG.warn("Something wrong with this entry, length smaller than digest length");
+            return null;
         }
         
         byte[] data = new byte[bb.capacity() - dlength];
         bb.get(data, 0, bb.capacity() - dlength);
         
+        
         byte[] sig = new byte[dlength];
         bb.position(bb.capacity() - dlength);
         bb.get(sig, 0, dlength);
-        
+
         bb.rewind();
         
-        //LOG.warn("Data: " + data.toString() + ", Signature: " + sig.toString());
-        md.update(lh.getPasswdHash());
-        md.update(data);
-        if(MessageDigest.isEqual(md.digest(), sig)){
+        byte[] msgDigest = mac.doFinal(data);
+        if(Arrays.equals(mac.doFinal(data), sig)){
+            
             return bb;
         } else {
+            LOG.error("Entry id: " + new String(msgDigest) + new String(sig));
             throw BKException.create(Code.DigestMatchException);
         }
+        
     }
     
     /**
@@ -434,15 +414,16 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
         
     private ByteBuffer voteGeneric(ArrayList<ByteBuffer> list, int threshold){  
         HashMap<ByteBuffer, Integer> map = new HashMap<ByteBuffer, Integer>();
-        for(ByteBuffer bb : list){
+        for(ByteBuffer bb : list){  
             if(!map.containsKey(bb)){
-                map.put(bb, Integer.valueOf(0));
-            }
+                map.put(bb, new Integer(0));
+            } else LOG.debug("Not equal");
             
-            map.put(bb, map.get(bb) + 1);
+            if(bb != null)
+                map.put(bb, map.get(bb) + 1);
             
             if(map.get(bb) >= threshold)
-                return bb;
+                return bb;  
         }
         
         return null;   
@@ -459,6 +440,7 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
     private ByteBuffer voteFree(ArrayList<ByteBuffer> list){  
         HashMap<ByteBuffer, Integer> map = new HashMap<ByteBuffer, Integer>();
         for(ByteBuffer bb : list){
+            bb.position(24);
             if(!map.containsKey(bb)){
                 map.put(bb, Integer.valueOf(0));
             }
@@ -482,11 +464,6 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
         long index = le.getEntryId() % (op.lastEntry - op.firstEntry + 1);
         if(op.seq[(int) index] == null){
             op.seq[(int) index] = le;
-            
-            if(le.getEntry() != null)
-                LOG.debug("Adding entry: " + le.getEntryId() + ", " + le.getEntry().length);
-            else
-                LOG.debug("Entry is null: " + le.getEntryId());
             
             return op.counter.incrementAndGet();
         }

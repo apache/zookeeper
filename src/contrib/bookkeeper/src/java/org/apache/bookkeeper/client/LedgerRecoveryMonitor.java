@@ -64,6 +64,15 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
     
     private int minimum;
     
+    /**
+     * Constructor simply initiates data structures
+     * 
+     * @param self  Instance of BookKeeper
+     * @param lId   Ledger identifier
+     * @param qSize Quorum size
+     * @param bookies   List of bookie addresses
+     * @param qMode     Quorum mode
+     */
     LedgerRecoveryMonitor(BookKeeper self,
             long lId, 
             int qSize, 
@@ -88,6 +97,13 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
         
     }
     
+    
+    /**
+     * Determines the last entry written to a ledger not closed properly
+     * due to a client crash
+     * 
+     * @param   passwd  
+     */
     boolean recover(byte[] passwd) throws 
     IOException, InterruptedException, BKException, KeeperException {
         /*
@@ -139,9 +155,11 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
                     //if(ls == null) throw BKException.create(Code.ReadException);
                     LOG.debug("Received entry for: " + lh.getLast());
                     
-                    if(ls.nextElement().getEntry() != null){
+                    byte[] le = ls.nextElement().getEntry();
+                    if(le != null){
                         if(notLegitimate) notLegitimate = false;
-                        lh.incLast();
+                        self.addEntry(lh, le);
+                        //lh.incLast();
                         hasMore = true;
                     }
                 }
@@ -165,7 +183,16 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
                 
     }
     
-    
+    /**
+     * Read callback implementation
+     * 
+     * @param rc    return code
+     * @param ledgerId  Ledger identifier
+     * @param entryId   Entry identifier
+     * @param bb        Data
+     * @param ctx       Control object
+     * 
+     */
     public void readEntryComplete(int rc, long ledgerId, long entryId, ByteBuffer bb, Object ctx){
         if(rc == 0){
             bb.rewind();

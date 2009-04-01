@@ -27,7 +27,10 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.security.NoSuchAlgorithmException;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
+import javax.crypto.Mac; 
+import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.bookkeeper.client.LedgerHandle.QMode;
 import org.apache.bookkeeper.client.QuorumEngine.Operation;
@@ -84,8 +87,10 @@ public class BookieHandle extends Thread{
         this.addr = addr;
         this.incomingQueue = new ArrayBlockingQueue<ToSend>(2000);
         
+        //genSecurePadding();
         start();
     }
+    
     
     /**
      * Restart BookieClient if can't talk to bookie
@@ -112,11 +117,6 @@ public class BookieHandle extends Thread{
         } catch(InterruptedException e){
             e.printStackTrace();
         }
-        //client.addEntry(self.getId(), 
-        //        r.entry, 
-        //        ByteBuffer.wrap(r.data), 
-        //        cb,
-        //        ctx);
     }
     
     /**
@@ -124,6 +124,7 @@ public class BookieHandle extends Thread{
      * 
      */
     MessageDigest digest = null;
+    Mac mac = null;
     
     /** 
      * Get digest instance if there is none.
@@ -138,40 +139,14 @@ public class BookieHandle extends Thread{
         return digest;
     }
     
-    /**
-     * Computes the digest for a given ByteBuffer.
-     * 
-     */
-    
-    public ByteBuffer addDigest(long entryId, ByteBuffer data)
-    throws NoSuchAlgorithmException, IOException {
-        if(digest == null)
-            getDigestInstance(self.getDigestAlg());
+    Mac getMac(String alg)
+    throws NoSuchAlgorithmException, InvalidKeyException {
+        if(mac == null){
+            mac = Mac.getInstance(alg);
+            mac.init(new SecretKeySpec(self.getMacKey(), "HmacSHA1"));
+        }
         
-        ByteBuffer bb = ByteBuffer.allocate(8 + 8);
-        bb.putLong(self.getId());
-        bb.putLong(entryId);
-        
-        byte[] msgDigest;
-        
-        // synchronized(LedgerHandle.digest){
-        digest.update(self.getPasswdHash());
-        digest.update(bb.array());
-        digest.update(data.array());
-            
-        //baos.write(data);
-        //baos.write(Operation.digest.digest());
-        msgDigest = digest.digest();
-        //}
-        ByteBuffer extendedData = ByteBuffer.allocate(data.capacity() + msgDigest.length);
-        data.rewind();
-        extendedData.put(data);
-        extendedData.put(msgDigest);
-        
-        //LOG.debug("Data length (" + self.getId() + ", " + entryId + "): " + data.capacity());
-        //LOG.debug("Digest: " + new String(msgDigest));
-        
-        return extendedData;
+        return mac;
     }
     
     /**
@@ -207,22 +182,38 @@ public class BookieHandle extends Thread{
                          * TODO: Really add the confirmed add to the op
                          */
                         long confirmed = self.getAddConfirmed();
-                        //LOG.info("Confirmed: " + confirmed);
-                        ByteBuffer extendedData = ByteBuffer.allocate(op.data.length + 8);
-                        extendedData.putLong(confirmed);
-                        extendedData.put(op.data);
-                        extendedData.rewind();
-                        
+                        ByteBuffer extendedData;
+    
                         if(self.getQMode() == QMode.VERIFIABLE){
-                            extendedData = addDigest(ts.entry, extendedData);
+                            extendedData = ByteBuffer.allocate(op.data.length + 28 + 16);
+                            extendedData.putLong(self.getId());
+                            extendedData.putLong(ts.entry);
+                            extendedData.putLong(confirmed);
+                            extendedData.put(op.data);
+                        
+                        
+                            extendedData.rewind();
+                            byte[] toProcess = new byte[op.data.length + 24];
+                            extendedData.get(toProcess, 0, op.data.length + 24);
+                            //extendedData.limit(extendedData.capacity() - 20);
+                            extendedData.position(extendedData.capacity() - 20);
+                            if(mac == null)
+                                getMac("HmacSHA1");
+                            extendedData.put(mac.doFinal(toProcess));
+                            extendedData.position(16);
+                        } else {
+                            extendedData = ByteBuffer.allocate(op.data.length + 8);
+                            extendedData.putLong(confirmed);
+                            extendedData.put(op.data);
+                            extendedData.flip();
                         }
                         
-                        //LOG.debug("Extended data: " + extendedData.capacity());
-                        client.addEntry(self.getId(), 
-                            ts.entry, 
-                            extendedData, 
-                            aOp.wcb,
-                            ts.ctx);
+                        client.addEntry(self.getId(),
+                                self.getLedgerKey(),
+                                ts.entry, 
+                                extendedData, 
+                                aOp.wcb,
+                                ts.ctx);
                         break;
                     case Operation.READ:
                         client.readEntry(self.getId(),
@@ -237,6 +228,8 @@ public class BookieHandle extends Thread{
             } catch (IOException e){
                 LOG.error(e);
             } catch (NoSuchAlgorithmException e){
+                LOG.error(e);
+            } catch (InvalidKeyException e) {
                 LOG.error(e);
             }
         }

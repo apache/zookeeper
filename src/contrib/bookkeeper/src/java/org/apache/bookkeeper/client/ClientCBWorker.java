@@ -54,28 +54,48 @@ class ClientCBWorker extends Thread{
         return instance;
     }
     
+    /**
+     * Constructor initiates queue of pending operations and
+     * runs thread.
+     * 
+     */
     ClientCBWorker(){
        pendingOps = new ArrayBlockingQueue<Operation>(4000);  
        start();
        LOG.debug("Have started cbWorker");
     }
     
+    
+    /**
+     * Adds operation to queue of pending.
+     * 
+     * @param   op  operation to add to queue
+     */
+    
     void addOperation(Operation op) 
     throws InterruptedException {
         pendingOps.put(op);
-        LOG.debug("Added operation to queue of pending");
     }
     
+    /**
+     * Gets thread out of its main loop.
+     * 
+     */
     synchronized void shutdown(){
         stop = true;
         instance = null;
         LOG.debug("Shutting down");
     }
     
+    
+    /**
+     * Main thread loop.
+     * 
+     */
+    
     public void run(){
         try{
             while(!stop){
-                LOG.debug("Going to sleep on queue");
                 Operation op = pendingOps.poll(1000, TimeUnit.MILLISECONDS);
                 if(op != null){
                     synchronized(op){
@@ -83,7 +103,6 @@ class ClientCBWorker extends Thread{
                             op.wait();
                         }
                     }
-                    LOG.debug("Request ready");
 
                     switch(op.type){
                     case Operation.ADD:
@@ -96,7 +115,7 @@ class ClientCBWorker extends Thread{
                         break;
                     case Operation.READ:
                         ReadOp rOp = (ReadOp) op;
-                        LOG.debug("Got one message from the queue: " + rOp.firstEntry);
+                        //LOG.debug("Got one message from the queue: " + rOp.firstEntry);
                         rOp.cb.readComplete(rOp.getErrorCode(), 
                             rOp.getLedger().getId(), 
                             new LedgerSequence(rOp.seq), 

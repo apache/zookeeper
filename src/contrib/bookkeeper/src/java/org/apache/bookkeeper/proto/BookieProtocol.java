@@ -66,5 +66,11 @@ public interface BookieProtocol {
     /**
      * General error occurred at the server
      */
-    public static final int EIO = 0;
+    public static final int EIO = 101;
+    
+    /**
+     * Unauthorized access to ledger
+     */
+    public static final int EUA = 102;
+    
 }

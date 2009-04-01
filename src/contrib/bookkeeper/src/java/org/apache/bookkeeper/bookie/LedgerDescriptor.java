@@ -76,7 +76,7 @@ public class LedgerDescriptor {
          */
         offsetBuffer.rewind();
         offsetBuffer.putLong(ledger.position());
-        LOG.debug("Offset: " + ledger.position() + ", " + entry.position() + ", " + calcEntryOffset(entryId) + ", " + entryId);
+        //LOG.debug("Offset: " + ledger.position() + ", " + entry.position() + ", " + calcEntryOffset(entryId) + ", " + entryId);
         offsetBuffer.flip();
         
         /*
