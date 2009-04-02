@@ -16,7 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 if [ "x$1" == "x" ]
 then
 	echo "USAGE: $0 startClean|start|stop hostPorts"
@@ -34,8 +33,13 @@ fuser -skn tcp 22181/tcp
 case $1 in
 start|startClean)
 	mkdir -p /tmp/zkdata
-	java -cp ../../zookeeper-dev.jar:../../src/java/lib/log4j-1.2.15.jar:../../conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
-	sleep 5
+	if [ "x${base_dir}" == "x" ]
+        then
+        java -cp ../../zookeeper-dev.jar:../../src/java/lib/log4j-1.2.15.jar:../../conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
+        else
+        java -cp ${base_dir}/zookeeper-dev.jar:${base_dir}/src/java/lib/log4j-1.2.15.jar:${base_dir}/conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
+	fi
+        sleep 5
 	;;
 stop)
 	# Already killed above

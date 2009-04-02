@@ -1,7 +1,7 @@
 # need this for Doxygen integration
 include $(top_srcdir)/aminclude.am
 
-AM_CPPFLAGS = -Iinclude -Igenerated
+AM_CPPFLAGS = -I${srcdir}/include -I${srcdir}/tests -I${srcdir}/generated
 AM_CFLAGS = -Wall -Werror 
 CXXFLAGS = -Wall -g
 
@@ -65,8 +65,8 @@ endif
 #########################################################################
 # build and run unit tests
 
-EXTRA_DIST+=$(wildcard tests/*.cc) $(wildcard tests/*.h) \
-    tests/wrappers.opt tests/wrappers-mt.opt
+EXTRA_DIST+=$(wildcard ${srcdir}/tests/*.cc) $(wildcard ${srcdir}/tests/*.h) \
+    ${srcdir}/tests/wrappers.opt ${srcdir}/tests/wrappers-mt.opt
 
 TEST_SOURCES = tests/TestDriver.cc tests/LibCMocks.cc tests/LibCSymTable.cc \
     tests/MocksBase.cc  tests/ZKMocks.cc tests/Util.cc tests/ThreadingUtil.cc \
@@ -74,7 +74,7 @@ TEST_SOURCES = tests/TestDriver.cc tests/LibCMocks.cc tests/LibCSymTable.cc \
     tests/TestOperations.cc tests/TestZookeeperInit.cc \
     tests/TestZookeeperClose.cc tests/TestClient.cc
 
-SYMBOL_WRAPPERS=$(shell cat tests/wrappers.opt)
+SYMBOL_WRAPPERS=$(shell cat ${srcdir}/tests/wrappers.opt)
 
 check_PROGRAMS = zktest-st
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
@@ -87,7 +87,7 @@ if WANT_SYNCAPI
   nodist_zktest_mt_SOURCES = $(TEST_SOURCES) tests/PthreadMocks.cc
   zktest_mt_LDADD = libzkmt.la libhashtable.la -lpthread $(CPPUNIT_LIBS)
   zktest_mt_CXXFLAGS = -DUSE_STATIC_LIB -DTHREADED $(CPPUNIT_CFLAGS)
-  SYMBOL_WRAPPERS_MT=$(SYMBOL_WRAPPERS) $(shell cat tests/wrappers-mt.opt)
+  SYMBOL_WRAPPERS_MT=$(SYMBOL_WRAPPERS) $(shell cat ${srcdir}/tests/wrappers-mt.opt)
   zktest_mt_LDFLAGS = -static-libtool-libs $(SYMBOL_WRAPPERS_MT)
 endif
 

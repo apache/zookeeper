@@ -64,6 +64,9 @@ mahadev)
   ZOOKEEPER-305.  Replace timers with semaphores in FLENewEpochTest.
 (flavio via mahadev)
 
+  ZOOKEEPER-60. Get cppunit tests running as part of Hudson CI. (girish via
+mahadev)
+
 NEW FEATURES:
 
 

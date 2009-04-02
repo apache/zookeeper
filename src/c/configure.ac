@@ -5,9 +5,6 @@ AC_PREREQ(2.59)
 
 AC_INIT([zookeeper C client],3.2.0,[zookeeper-user@hadoop.apache.org],[c-client-src])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
-AC_CHECK_FILES([generated/zookeeper.jute.c generated/zookeeper.jute.h],[],
-    [AC_MSG_ERROR([jute files are missing! Please run "ant compile_jute" while in the zookeeper top level directory.])
-])
 
 # initialize Doxygen support
 DX_HTML_FEATURE(ON)
@@ -35,6 +32,16 @@ if test "$with_cppunit" = "no" ; then
 else
    AM_PATH_CPPUNIT(1.10.2)
 fi
+
+if test "$CALLER" = "ANT" ; then
+CPPUNIT_CFLAGS="-DZKSERVER_CMD=\"\\\"${base_dir}/src/c/tests/zkServer.sh\\\"\""
+else
+CPPUNIT_CFLAGS="-DZKSERVER_CMD=\"\\\"./tests/zkServer.sh\\\"\""
+AC_CHECK_FILES([generated/zookeeper.jute.c generated/zookeeper.jute.h],[],
+    [AC_MSG_ERROR([jute files are missing! Please run "ant compile_jute" while in the zookeeper top level directory.])
+])
+fi
+AC_SUBST(CPPUNIT_CFLAGS)
 
 AC_PROG_CC
 AM_PROG_CC_C_O
