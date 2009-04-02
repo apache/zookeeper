@@ -22,6 +22,7 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.Semaphore;
 
 import junit.framework.TestCase;
 
@@ -45,6 +46,9 @@ public class FLENewEpochTest extends TestCase {
     int port[];
     volatile int [] round;
     
+    Semaphore start0;
+    Semaphore finish3;
+    
     @Override
     public void setUp() throws Exception {
         count = 3;
@@ -60,6 +64,10 @@ public class FLENewEpochTest extends TestCase {
         round[0] = 0;
         round[1] = 0;
         round[2] = 0;
+        
+        start0 = new Semaphore(0);
+        finish3 = new Semaphore(0);
+        
         LOG.info("SetUp " + getName());
     }
 
@@ -115,9 +123,8 @@ public class FLENewEpochTest extends TestCase {
             			LOG.info("Second entering case");
             			if(round[1] != 0) flag = false;
             			else{
-            				while(round[2] == 0){
-            					Thread.sleep(200);
-            				}
+            				finish3.acquire();
+            				start0.release();
             			}
             			LOG.info("Second is going to start second round");
             			round[1]++;
@@ -128,6 +135,7 @@ public class FLENewEpochTest extends TestCase {
             			peer.shutdown();
             			flag = false;
             			round[2] = 1;
+            			finish3.release();
             			LOG.info("Third leaving");
             			break;
             		}
@@ -159,7 +167,8 @@ public class FLENewEpochTest extends TestCase {
               thread.start();
               threads.add(thread);
           }
-          Thread.sleep(2000);
+          start0.acquire();
+
           QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 2, 2, 2);
           peer.startLeaderElection();
           LEThread thread = new LEThread(peer, 0);
