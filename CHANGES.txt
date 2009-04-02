@@ -60,6 +60,9 @@ mahadev)
   ZOOKEEPER-349. to automate patch testing. (giridharan kesavan via mahadev)
 
   ZOOKEEPER-288. Cleanup and fixes to BookKeeper (flavio via mahadev)
+ 
+  ZOOKEEPER-305.  Replace timers with semaphores in FLENewEpochTest.
+(flavio via mahadev)
 
 NEW FEATURES:
 
