@@ -197,7 +197,6 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     
 public:
 
-#define ZKSERVER_CMD "./tests/zkServer.sh"
 
     void setUp()
     {
