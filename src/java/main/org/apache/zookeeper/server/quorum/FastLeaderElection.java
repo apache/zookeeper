@@ -562,6 +562,7 @@ public class FastLeaderElection implements Election {
                             n.epoch + ", " + self.getId() + ", " + self.getPeerState() + 
                             ", " + n.state + ", " + n.sid);
                     if (n.epoch > logicalclock) {
+                        LOG.debug("Increasing logical clock: " + n.epoch);
                         logicalclock = n.epoch;
                         recvset.clear();
                         if(totalOrderPredicate(n.leader, n.zxid, self.getId(), self.getLastLoggedZxid()))

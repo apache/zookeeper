@@ -238,13 +238,8 @@ public class QuorumCnxManager {
                 SendWorker sw = senderWorkerMap.get(sid);
 
                 LOG.info("Create new connection to server: " + sid);
-                //sw.connect();
                 s.socket().close();
-                if(sw != null) sw.finish();
-                SocketChannel channel = SocketChannel.open(self.quorumPeers.get(sid).electionAddr);
-                if (channel.isConnected()) {
-                    initiateConnection(channel, sid);
-                }
+                connectOne(sid);
                 
             } catch (IOException e) {
                 LOG.info("Error when closing socket or trying to reopen connection: "
@@ -329,7 +324,7 @@ public class QuorumCnxManager {
      *  @param sid  server id
      */
     
-    void connectOne(long sid){
+    synchronized void connectOne(long sid){
         if ((senderWorkerMap.get(sid) == null)) {
             SocketChannel channel;
             try {
@@ -395,13 +390,13 @@ public class QuorumCnxManager {
      */
     class Listener extends Thread {
 
-        ServerSocketChannel ss = null;
+        volatile ServerSocketChannel ss = null;
         /**
          * Sleeps on accept().
          */
         @Override
         public void run() {
-            ServerSocketChannel ss = null;
+            //ss = null;
             try {
                 ss = ServerSocketChannel.open();
                 int port = self.quorumPeers.get(self.getId()).electionAddr.getPort();
@@ -421,13 +416,17 @@ public class QuorumCnxManager {
                     receiveConnection(client);
                 }
             } catch (IOException e) {
-                System.err.println("Listener.run: " + e.getMessage());
+                LOG.error("Listener.run: " + e.getMessage());
             }
         }
         
         void halt(){
             try{
-                if((ss != null) && (ss.isOpen())) ss.close();
+                LOG.debug("Trying to close listener: " + ss);
+                if(ss != null)/* && (ss.isOpen()))*/{
+                    LOG.debug("Closing listener: " + self.getId());
+                    ss.close();
+                }
             } catch (IOException e){
                 LOG.warn("Exception when shutting down listener: " + e);
             }

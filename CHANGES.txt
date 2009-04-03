@@ -35,7 +35,9 @@ BUGFIXES:
   tickTime from config is lost, cannot start quorum (phunt via mahadev)
 
   ZOOKEEPER-360. WeakHashMap in Bookie.java causes NPE (flavio via mahadev)
-
+  
+  ZOOKEEPER-362. Issues with FLENewEpochTest. (fix bug in Fast leader election)
+(flavio via mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.

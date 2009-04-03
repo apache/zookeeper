@@ -47,7 +47,7 @@ public class FLENewEpochTest extends TestCase {
     volatile int [] round;
     
     Semaphore start0;
-    Semaphore finish3;
+    Semaphore finish3, finish0;
     
     @Override
     public void setUp() throws Exception {
@@ -66,6 +66,7 @@ public class FLENewEpochTest extends TestCase {
         round[2] = 0;
         
         start0 = new Semaphore(0);
+        finish0 = new Semaphore(0);
         finish3 = new Semaphore(0);
         
         LOG.info("SetUp " + getName());
@@ -117,11 +118,18 @@ public class FLENewEpochTest extends TestCase {
             		switch(i){
             		case 0:
             			LOG.info("First peer, do nothing, just join");
-            			flag = false;
+            			if(finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)){
+            			//if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
+            			    LOG.info("Setting flag to false");
+            			    flag = false;
+            			}
             			break;
             		case 1:
             			LOG.info("Second entering case");
-            			if(round[1] != 0) flag = false;
+            			if(round[1] != 0){
+            			    finish0.release();
+            			    flag = false;
+            			}
             			else{
             				finish3.acquire();
             				start0.release();
@@ -167,7 +175,8 @@ public class FLENewEpochTest extends TestCase {
               thread.start();
               threads.add(thread);
           }
-          start0.acquire();
+          if(!start0.tryAcquire(4000, java.util.concurrent.TimeUnit.MILLISECONDS))
+              fail("First leader election failed");
 
           QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 2, 2, 2);
           peer.startLeaderElection();
