@@ -42,6 +42,17 @@ public class LedgerDescriptor {
         this.ledger = ledger;
         this.ledgerIndex = ledgerIndex;
     }
+    
+    private ByteBuffer masterKey = null;
+    
+    void setMasterKey(ByteBuffer masterKey){
+        this.masterKey = masterKey;
+    }
+    
+    boolean cmpMasterKey(ByteBuffer masterKey){
+        return this.masterKey.equals(masterKey);
+    }
+    
     private long ledgerId;
     private FileChannel ledger;
     private FileChannel ledgerIndex;

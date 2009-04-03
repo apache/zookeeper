@@ -27,7 +27,6 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
-import java.util.WeakHashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -54,8 +53,6 @@ public class Bookie extends Thread {
     final File journalDirectory;
 
     final File ledgerDirectories[];
-    
-    WeakHashMap<Long, ByteBuffer> masterKeys = new WeakHashMap<Long, ByteBuffer>();
     
     public static class NoLedgerException extends IOException {
         private static final long serialVersionUID = 1L;
@@ -104,7 +101,7 @@ public class Bookie extends Thread {
             if (handle == null) {
                 handle = createHandle(ledgerId, readonly);
                 ledgers.put(ledgerId, handle);
-                masterKeys.put(ledgerId, ByteBuffer.wrap(masterKey));
+                handle.setMasterKey(ByteBuffer.wrap(masterKey));
             } 
             handle.incRef();
         }
@@ -291,7 +288,7 @@ public class Bookie extends Thread {
         long ledgerId = entry.getLong();
         LedgerDescriptor handle = getHandle(ledgerId, false, masterKey);
         
-        if(!masterKeys.get(ledgerId).equals(ByteBuffer.wrap(masterKey))){
+        if(!handle.cmpMasterKey(ByteBuffer.wrap(masterKey))){
             throw BookieException.create(BookieException.Code.UnauthorizedAccessException);
         }
         try {
