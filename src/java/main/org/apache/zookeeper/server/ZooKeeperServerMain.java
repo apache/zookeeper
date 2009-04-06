@@ -26,74 +26,91 @@ import javax.management.JMException;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
 /**
  * This class starts and runs a standalone ZooKeeperServer.
  */
 public class ZooKeeperServerMain {
+    private static final Logger LOG =
+        Logger.getLogger(ZooKeeperServerMain.class);
 
-    private static final Logger LOG = Logger.getLogger(ZooKeeperServerMain.class);
-    private static final String USAGE = "Usage: ZooKeeperServerMain configfile | port datadir [ticktime]";
+    private static final String USAGE =
+        "Usage: ZooKeeperServerMain configfile | port datadir [ticktime]";
+
+    private NIOServerCnxn.Factory cnxnFactory;
+
     /*
      * Start up the ZooKeeper server.
      *
-     * @param args the port and data directory
+     * @param args the configfile or the port datadir [ticktime]
      */
     public static void main(String[] args) {
+        ZooKeeperServerMain main = new ZooKeeperServerMain();
+        try {
+            main.initializeAndRun(args);
+        } catch (IllegalArgumentException e) {
+            LOG.fatal("Invalid arguments, exiting abnormally", e);
+            LOG.info(USAGE);
+            System.err.println(USAGE);
+            System.exit(2);
+        } catch (ConfigException e) {
+            LOG.fatal("Invalid config, exiting abnormally", e);
+            System.err.println("Invalid config, exiting abnormally");
+            System.exit(2);
+        } catch (Exception e) {
+            LOG.fatal("Unexpected exception, exiting abnormally", e);
+            System.exit(1);
+        }
+        LOG.info("Exiting normally");
+        System.exit(0);
+    }
+
+    protected void initializeAndRun(String[] args)
+        throws ConfigException, IOException
+    {
         try {
             ManagedUtil.registerLog4jMBeans();
         } catch (JMException e) {
             LOG.warn("Unable to register log4j JMX control", e);
         }
 
-        try {
-            if (args.length == 1) {
-                QuorumPeerConfig.parse(args);
-            } else {
-                ServerConfig.parse(args);
-            }
-        } catch(Exception e) {
-            LOG.fatal("Error in config", e);
-            LOG.info(USAGE);
-            System.exit(2);
+        ServerConfig config = new ServerConfig();
+        if (args.length == 1) {
+            config.parse(args[0]);
+        } else {
+            config.parse(args);
         }
-        runStandalone(new ZooKeeperServer.Factory() {
-            public NIOServerCnxn.Factory createConnectionFactory() throws IOException {
-                return new NIOServerCnxn.Factory(ServerConfig.getClientPort());
-            }
 
-            public ZooKeeperServer createServer() throws IOException {
-                // create a file logger url from the command line args
-                ZooKeeperServer zks = new ZooKeeperServer();
-
-               FileTxnSnapLog ftxn = new FileTxnSnapLog(new 
-                       File(ServerConfig.getDataLogDir()),
-                        new File(ServerConfig.getDataDir()));
-               zks.setTxnLogFactory(ftxn);
-               zks.setTickTime(ServerConfig.getTickTime());
-               return zks;
-            }
-        });
-    }
-
-    public static void runStandalone(ZooKeeperServer.Factory serverFactory) {
+        LOG.info("Starting server");
         try {
             // Note that this thread isn't going to be doing anything else,
             // so rather than spawning another thread, we will just call
             // run() in this thread.
-            ZooKeeperServer zk = serverFactory.createServer();
-            zk.startup();
-            NIOServerCnxn.Factory cnxnFactory =
-                serverFactory.createConnectionFactory();
-            cnxnFactory.setZooKeeperServer(zk);
+            // create a file logger url from the command line args
+            ZooKeeperServer zkServer = new ZooKeeperServer();
+
+            FileTxnSnapLog ftxn = new FileTxnSnapLog(new
+                   File(config.dataLogDir), new File(config.dataDir));
+            zkServer.setTxnLogFactory(ftxn);
+            zkServer.setTickTime(config.tickTime);
+            zkServer.startup();
+            cnxnFactory = new NIOServerCnxn.Factory(config.clientPort);
+            cnxnFactory.setZooKeeperServer(zkServer);
             cnxnFactory.join();
-            if (zk.isRunning()) {
-                zk.shutdown();
+            if (zkServer.isRunning()) {
+                zkServer.shutdown();
             }
-        } catch (Exception e) {
-            LOG.fatal("Unexpected exception",e);
+        } catch (InterruptedException e) {
+            // warn, but generally this is ok
+            LOG.warn("Server interrupted", e);
         }
-        System.exit(0);
+    }
+
+    /**
+     * Shutdown the serving instance
+     */
+    protected void shutdown() {
+        cnxnFactory.shutdown();
     }
 }

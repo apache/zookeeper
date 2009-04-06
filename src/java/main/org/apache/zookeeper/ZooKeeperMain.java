@@ -194,6 +194,7 @@ public class ZooKeeperMain {
            data = zk.getData(quotaPath, false, new Stat());
         } catch(KeeperException.NoNodeException ne) {
             System.err.println("quota does not exist for " + path);
+            return true;
         }
         StatsTrack strack = new StatsTrack(new String(data));
         if (bytes && !numNodes) {
