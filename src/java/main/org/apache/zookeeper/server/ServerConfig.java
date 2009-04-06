@@ -18,64 +18,63 @@
 
 package org.apache.zookeeper.server;
 
-public class ServerConfig {
-    private int clientPort;
-    private String dataDir;
-    private String dataLogDir;
-    private int tickTime;
-    
-    protected ServerConfig(int port, String dataDir,String dataLogDir, int tickTime) {
-        this.clientPort = port;
-        this.dataDir = dataDir;
-        this.dataLogDir=dataLogDir;
-        this.tickTime = tickTime;
-    }
-    
-    protected boolean isStandaloneServer(){
-        return true;
-    }
+import java.util.Arrays;
 
-    public static int getClientPort(){
-        assert instance!=null;
-        return instance.clientPort;
-    }
-    public static String getDataDir(){
-        assert instance!=null;
-        return instance.dataDir;
-    }
-    public static String getDataLogDir(){
-        assert instance!=null;
-        return instance.dataLogDir;
-    }
-    public static boolean isStandalone(){
-        assert instance!=null;
-        return instance.isStandaloneServer();
-    }
-    
-    public static int getTickTime() {
-        assert instance != null;
-        return instance.tickTime;
-    }
-    
-    protected static ServerConfig instance=null;
-    
-    public static void parse(String[] args) throws Exception {
-        if(instance!=null)
-            return;
-        if (args.length < 2) {
-            throw new IllegalArgumentException("Invalid usage.");
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+
+/**
+ * Server configuration storage.
+ *
+ * We use this instead of Properties as it's typed.
+ *
+ */
+public class ServerConfig {
+    protected int clientPort;
+    protected String dataDir;
+    protected String dataLogDir;
+    protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
+
+    /**
+     * Parse arguments for server configuration
+     * @param args clientPort dataDir and optional tickTime
+     * @return ServerConfig configured wrt arguments
+     * @throws IllegalArgumentException on invalid usage
+     */
+    public void parse(String[] args) {
+        if (args.length < 2 || args.length > 3) {
+            throw new IllegalArgumentException("Invalid args:"
+                    + Arrays.toString(args));
         }
-        int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
-        if (args.length > 2) {
-            // the last parameter ticktime is optional
+
+        clientPort = Integer.parseInt(args[0]);
+        dataDir = args[1];
+        dataLogDir = dataDir;
+        if (args.length == 3) {
             tickTime = Integer.parseInt(args[2]);
         }
-        try {
-              instance=new ServerConfig(Integer.parseInt(args[0]),args[1],
-                      args[1], tickTime);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(args[0] + " is not a valid port number");
-        }
     }
 
+    /**
+     * Parse a ZooKeeper configuration file
+     * @param path the patch of the configuration file
+     * @return ServerConfig configured wrt arguments
+     * @throws ConfigException error processing configuration
+     */
+    public void parse(String path) throws ConfigException {
+        QuorumPeerConfig config = new QuorumPeerConfig();
+        config.parse(path);
+
+        // let qpconfig parse the file and then pull the stuff we are
+        // interested in
+        clientPort = config.getClientPort();
+        dataDir = config.getDataDir();
+        dataLogDir = config.getDataLogDir();
+        tickTime = config.getTickTime();
+    }
+
+    public int getClientPort() { return clientPort; }
+    public String getDataDir() { return dataDir; }
+    public String getDataLogDir() { return dataLogDir; }
+    public int getTickTime() { return tickTime; }
 }

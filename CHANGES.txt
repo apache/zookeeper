@@ -72,6 +72,9 @@ mahadev)
   ZOOKEEPER-60. Get cppunit tests running as part of Hudson CI. (girish via
 mahadev)
 
+  ZOOKEEPER-343. add tests that specifically verify the zkmain and 
+qpmain classes. (phunt via mahadev)
+
 NEW FEATURES:
 
 
