@@ -145,8 +145,8 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
         long readCounter = 0;
         while(notLegitimate){
             readCounter = getNextHint();
-            if(readCounter != -1){
-                lh.setLast(readCounter - 1);
+            if(readCounter > -1){
+                lh.setLast(readCounter);
                 boolean hasMore = true;
                 while(hasMore){
                     hasMore = false;
