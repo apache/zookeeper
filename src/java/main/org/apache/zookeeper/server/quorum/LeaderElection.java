@@ -39,7 +39,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 public class LeaderElection implements Election  {
     private static final Logger LOG = Logger.getLogger(LeaderElection.class);
-
+    private static Random epochGen = new Random();
+    
     QuorumPeer self;
 
     public LeaderElection(QuorumPeer self) {
@@ -130,7 +131,7 @@ public class LeaderElection implements Election  {
                 responseBytes.length);
         HashMap<InetSocketAddress, Vote> votes = new HashMap<InetSocketAddress, Vote>(
                 self.quorumPeers.size());
-        int xid = new Random().nextInt();
+        int xid = epochGen.nextInt();
         while (self.running) {
             votes.clear();
             requestBuffer.clear();
