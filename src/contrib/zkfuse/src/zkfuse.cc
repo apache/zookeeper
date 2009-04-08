@@ -4279,7 +4279,7 @@ main(int argc, char *argv[])
     /**
      * Initialize log4cxx 
      */
-    const String file("log4cxx.properties");
+    const std::string file("log4cxx.properties");
     PropertyConfigurator::configureAndWatch( file, 5000 );
     LOG_INFO(LOG, "Starting zkfuse");
 
