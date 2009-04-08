@@ -41,6 +41,8 @@ BUGFIXES:
 
   ZOOKEEPER-363. NPE when recovering ledger with no hint. (flavio via mahadev)
 
+  ZOOKEEPER-370. Fix critical problems reported by findbugs. (flavio via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
