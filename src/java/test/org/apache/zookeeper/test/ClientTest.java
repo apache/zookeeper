@@ -487,6 +487,49 @@ public class ClientTest extends ClientBase {
 
         verifyCreateFails("foo", zk);
         verifyCreateFails("a", zk);
+
+        zk.create("/createseqpar", null, Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        // next two steps - related to sequential processing
+        // 1) verify that empty child name fails if not sequential
+        try {
+            zk.create("/createseqpar/", null, Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            assertTrue(false);
+        } catch(IllegalArgumentException be) {
+            // catch this.
+        }
+
+        // 2) verify that empty child name success if sequential 
+        zk.create("/createseqpar/", null, Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL);
+        zk.create("/createseqpar/.", null, Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL);
+        zk.create("/createseqpar/..", null, Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL);
+        try {
+            zk.create("/createseqpar//", null, Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT_SEQUENTIAL);
+            assertTrue(false);
+        } catch(IllegalArgumentException be) {
+            // catch this.
+        }
+        try {
+            zk.create("/createseqpar/./", null, Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT_SEQUENTIAL);
+            assertTrue(false);
+        } catch(IllegalArgumentException be) {
+            // catch this.
+        }
+        try {
+            zk.create("/createseqpar/../", null, Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT_SEQUENTIAL);
+            assertTrue(false);
+        } catch(IllegalArgumentException be) {
+            // catch this.
+        }
+
+        
         //check for the code path that throws at server
         PrepRequestProcessor.failCreate = true;
         try {

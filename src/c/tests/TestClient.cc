@@ -296,6 +296,16 @@ public:
           path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
     }
     
+    static void verifyCreateFailsSeq(const char *path, zhandle_t *zk) {
+      CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS, zoo_create(zk,
+          path, "", 0, &ZOO_OPEN_ACL_UNSAFE, ZOO_SEQUENCE, 0, 0));
+    }
+    
+    static void verifyCreateOkSeq(const char *path, zhandle_t *zk) {
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_create(zk,
+          path, "", 0, &ZOO_OPEN_ACL_UNSAFE, ZOO_SEQUENCE, 0, 0));
+    }
+    
             
     /**
        returns false if the vectors dont match
@@ -369,6 +379,16 @@ public:
 
         verifyCreateFails("foo", zk);
         verifyCreateFails("a", zk);
+
+        // verify that trailing fails, except for seq which adds suffix
+        verifyCreateOk("/createseq", zk);
+        verifyCreateFails("/createseq/", zk);
+        verifyCreateOkSeq("/createseq/", zk);
+        verifyCreateOkSeq("/createseq/.", zk);
+        verifyCreateOkSeq("/createseq/..", zk);
+        verifyCreateFailsSeq("/createseq//", zk);
+        verifyCreateFailsSeq("/createseq/./", zk);
+        verifyCreateFailsSeq("/createseq/../", zk);
 
         verifyCreateOk("/.foo", zk);
         verifyCreateOk("/.f.", zk);

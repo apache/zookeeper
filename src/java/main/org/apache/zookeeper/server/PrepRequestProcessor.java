@@ -30,9 +30,9 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
@@ -205,13 +205,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                             Long.toHexString(request.sessionId));
                     throw new KeeperException.BadArgumentsException();
                 }
-                try {
-                    ZooKeeper.validatePath(path);
-                } catch(IllegalArgumentException ie) {
-                    LOG.warn("Invalid path " + path + " with session " +
-                            Long.toHexString(request.sessionId));
-                    throw new KeeperException.BadArgumentsException();
-                }
                 if (!fixupACL(request.authInfo, createRequest.getAcl())) {
                     throw new KeeperException.InvalidACLException();
                 }
@@ -221,9 +214,17 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 checkACL(zks, parentRecord.acl, ZooDefs.Perms.CREATE,
                         request.authInfo);
                 int parentCVersion = parentRecord.stat.getCversion();
-                CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
+                CreateMode createMode =
+                    CreateMode.fromFlag(createRequest.getFlags());
                 if (createMode.isSequential()) {
                     path = path + String.format("%010d", parentCVersion);
+                }
+                try {
+                    PathUtils.validatePath(path);
+                } catch(IllegalArgumentException ie) {
+                    LOG.warn("Invalid path " + path + " with session " +
+                            Long.toHexString(request.sessionId));
+                    throw new KeeperException.BadArgumentsException();
                 }
                 try {
                     if (getRecordForPath(path) != null) {
