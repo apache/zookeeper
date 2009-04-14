@@ -84,6 +84,9 @@ mahadev)
   ZOOKEEPER-343. add tests that specifically verify the zkmain and 
 qpmain classes. (phunt via mahadev)
 
+  ZOOKEEPER-361. integrate cppunit testing as part of hudson patch 
+process. (giri via mahadev)
+
 NEW FEATURES:
 
 

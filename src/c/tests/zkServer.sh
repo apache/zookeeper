@@ -24,7 +24,12 @@ fi
 
 if [ "x$1" == "xstartClean" ]
 then
-	rm -rf /tmp/zkdata
+    if [ "x${base_dir}" == "x" ]	
+    then
+    rm -rf /tmp/zkdata
+    else
+    rm -rf ${base_dir}/build/tmp
+    fi
 fi
 
 # Make sure nothing is left over from before
@@ -32,12 +37,13 @@ fuser -skn tcp 22181/tcp
 
 case $1 in
 start|startClean)
-	mkdir -p /tmp/zkdata
 	if [ "x${base_dir}" == "x" ]
         then
-        java -cp ../../zookeeper-dev.jar:../../src/java/lib/log4j-1.2.15.jar:../../conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
+      	mkdir -p /tmp/zkdata
+	java -cp ../../zookeeper-dev.jar:../../src/java/lib/log4j-1.2.15.jar:../../conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
         else
-        java -cp ${base_dir}/zookeeper-dev.jar:${base_dir}/src/java/lib/log4j-1.2.15.jar:${base_dir}/conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
+        mkdir -p ${base_dir}/build/tmp/zkdata
+        java -cp ${base_dir}/zookeeper-dev.jar:${base_dir}/src/java/lib/log4j-1.2.15.jar:${base_dir}/conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 ${base_dir}/build/tmp/zkdata &> ${base_dir}/build/tmp/zk.log &
 	fi
         sleep 5
 	;;

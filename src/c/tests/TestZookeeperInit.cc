@@ -78,7 +78,7 @@ public:
 
     void testBasic()
     {
-    	const string EXPECTED_HOST("localhost:2121");
+    	const string EXPECTED_HOST("127.0.0.1:2121");
     	const int EXPECTED_ADDRS_COUNT =1;
     	const int EXPECTED_RECV_TIMEOUT=10000;
         clientid_t cid;

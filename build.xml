@@ -597,6 +597,17 @@
     	</exec>
     </target>
 
+    <target name="call-test-cppunit" description="to execute cppunit tests">
+	<antcall target="create-cppunit-configure">
+		<param name="cppunit" value="true"/>
+        </antcall>
+	<antcall target="create-cppunit-makefile"/>
+	<antcall target="test-cppunit">
+		<param name="cppunit" value="true"/>
+	</antcall>
+    </target>			
+
+
     <target name="test-cppunit" depends="compile_jute, jar, create-cppunit-makefile" if="cppunit" 
 		description="to run cppunit test cases">
         <property name="fuser.bin" value="/sbin"/>
@@ -638,7 +649,7 @@
 	<!-- yet to implement -->
     </target>
     
-    <target name="test-core" depends="test-init,test-category,junit.run"/> 
+    <target name="test-core" depends="test-init, test-category, junit.run, call-test-cppunit"/> 
 
     <!-- ====================================================== -->
     <!-- Run optional third-party tool targets                  -->
