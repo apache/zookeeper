@@ -2390,13 +2390,16 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
         }
         memcpy(auth.buff,cert,certLen);
         auth.len=certLen;
+    } else {
+        auth.buff = 0;
+        auth.len = 0;
     }
 
     zoo_lock_auth(zh);
 
     free_auth_info(&zh->auth);
     zh->auth.scheme=strdup(scheme);
-    if(cert!=NULL && certLen!=0)
+    if(auth.buff)
         zh->auth.auth=auth;
     zh->auth.completion=completion;
     zh->auth.data=data;

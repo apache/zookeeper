@@ -48,6 +48,9 @@ BUGFIXES:
   ZOOKEEPER-355. make validatePath non public in Zookeeper client api. (phunt
 via mahadev)
 
+  ZOOKEEPER-374. Uninitialized struct variable in C causes warning which 
+is treated as an error (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

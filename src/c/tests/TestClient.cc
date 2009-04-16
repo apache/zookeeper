@@ -160,6 +160,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
     CPPUNIT_TEST(testAcl);
+    CPPUNIT_TEST(testAuth);
     CPPUNIT_TEST(testWatcherAutoResetWithGlobal);
     CPPUNIT_TEST(testWatcherAutoResetWithLocal);
 #endif
@@ -286,6 +287,10 @@ public:
         }
     }
 
+    static void voidCompletion(int rc, const void *data) {
+        CPPUNIT_ASSERT_EQUAL((int)data, rc);
+    }
+
     static void verifyCreateFails(const char *path, zhandle_t *zk) {
       CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS, zoo_create(zk,
           path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
@@ -332,7 +337,6 @@ public:
 
     void testAcl() {
         int rc;
-        struct String_vector strings;
         struct ACL_vector aclvec;
         struct Stat stat;
         watchctx_t ctx;
@@ -350,6 +354,50 @@ public:
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         cmp = compareAcl(ZOO_READ_ACL_UNSAFE, aclvec);
         CPPUNIT_ASSERT_EQUAL(true, cmp);
+    }
+
+
+    void testAuth() {
+        int rc;
+
+        watchctx_t ctx1;
+        zhandle_t *zk = createClient(&ctx1);
+
+        rc = zoo_add_auth(0, "", 0, 0, voidCompletion, (void*)-1);
+        CPPUNIT_ASSERT_EQUAL((int) ZBADARGUMENTS, rc);
+
+        rc = zoo_add_auth(zk, 0, 0, 0, voidCompletion, (void*)-1);
+        CPPUNIT_ASSERT_EQUAL((int) ZBADARGUMENTS, rc);
+
+        // auth as pat, create /tauth1, close session
+        rc = zoo_add_auth(zk, "digest", "pat:passwd", 10, voidCompletion,
+                          (void*)ZOK);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+
+        rc = zoo_create(zk, "/tauth1", "", 0, &ZOO_CREATOR_ALL_ACL, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        // auth as pat w/bad pass, access /tauth1, verify failure
+        watchctx_t ctx2;
+        zk = createClient(&ctx2);
+
+        rc = zoo_add_auth(zk, "digest", "pat:passwd2", 11, voidCompletion,
+                          (void*)ZOK);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+
+        char buf[1024];
+        int blen = sizeof(buf);
+        struct Stat stat;
+        rc = zoo_get(zk, "/tauth1", 0, buf, &blen, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOAUTH, rc);
+
+        // add auth pat w/correct pass verify success
+        rc = zoo_add_auth(zk, "digest", "pat:passwd", 10, voidCompletion,
+                          (void*)ZOK);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+
+        rc = zoo_get(zk, "/tauth1", 0, buf, &blen, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
     }
 
 
