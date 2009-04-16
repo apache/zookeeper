@@ -108,7 +108,7 @@ public class WatcherFuncTest extends ClientBase {
     protected ZooKeeper createClient(Watcher watcher, CountDownLatch latch)
         throws IOException, InterruptedException
     {
-        ZooKeeper zk = new ZooKeeper(hostPort, 20000, watcher);
+        ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
         if(!latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)){
             fail("Unable to connect to server");
         }

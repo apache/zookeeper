@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
+import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -40,7 +41,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 public class LeaderElection implements Election  {
     private static final Logger LOG = Logger.getLogger(LeaderElection.class);
     private static Random epochGen = new Random();
-    
+
     QuorumPeer self;
 
     public LeaderElection(QuorumPeer self) {
@@ -80,7 +81,7 @@ public class LeaderElection implements Election  {
                 }
             }
         }
-        
+
         HashMap<Vote, Integer> countTable = new HashMap<Vote, Integer>();
         // Now do the tally
         for (Vote v : votesCast) {
@@ -110,85 +111,120 @@ public class LeaderElection implements Election  {
     }
 
     public Vote lookForLeader() throws InterruptedException {
-        self.setCurrentVote(new Vote(self.getId(), self.getLastLoggedZxid()));
-        // We are going to look for a leader by casting a vote for ourself
-        byte requestBytes[] = new byte[4];
-        ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
-        byte responseBytes[] = new byte[28];
-        ByteBuffer responseBuffer = ByteBuffer.wrap(responseBytes);
-        /* The current vote for the leader. Initially me! */
-        DatagramSocket s = null;
         try {
-            s = new DatagramSocket();
-            s.setSoTimeout(200);
-        } catch (SocketException e1) {
-            e1.printStackTrace();
-            System.exit(4);
+            self.jmxLeaderElectionBean = new LeaderElectionBean();
+            MBeanRegistry.getInstance().register(
+                    self.jmxLeaderElectionBean, self.jmxLocalPeerBean);
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+            self.jmxLeaderElectionBean = null;
         }
-        DatagramPacket requestPacket = new DatagramPacket(requestBytes,
-                requestBytes.length);
-        DatagramPacket responsePacket = new DatagramPacket(responseBytes,
-                responseBytes.length);
-        HashMap<InetSocketAddress, Vote> votes = new HashMap<InetSocketAddress, Vote>(
-                self.quorumPeers.size());
-        int xid = epochGen.nextInt();
-        while (self.running) {
-            votes.clear();
-            requestBuffer.clear();
-            requestBuffer.putInt(xid);
-            requestPacket.setLength(4);
-            HashSet<Long> heardFrom = new HashSet<Long>();
-            for (QuorumServer server : self.quorumPeers.values()) {
-                requestPacket.setSocketAddress(server.addr);
-                LOG.info("Server address: " + server.addr);
-                try {
-                    s.send(requestPacket);
-                    responsePacket.setLength(responseBytes.length);
-                    s.receive(responsePacket);
-                    if (responsePacket.getLength() != responseBytes.length) {
-                        LOG.error("Got a short response: "
-                                + responsePacket.getLength());
-                        continue;
-                    }
-                    responseBuffer.clear();
-                    int recvedXid = responseBuffer.getInt();
-                    if (recvedXid != xid) {
-                        LOG.error("Got bad xid: expected " + xid
-                                + " got " + recvedXid);
-                        continue;
-                    }
-                    long peerId = responseBuffer.getLong();
-                    heardFrom.add(peerId);
-                    //if(server.id != peerId){
-                        Vote vote = new Vote(responseBuffer.getLong(),
-                            responseBuffer.getLong());
-                        InetSocketAddress addr = (InetSocketAddress) responsePacket
-                            .getSocketAddress();
-                        votes.put(addr, vote);
-                    //}
-                } catch (IOException e) {
-                    LOG.warn("Ignoring exception while looking for leader", e);
-                    // Errors are okay, since hosts may be
-                    // down
-                }
+
+        try {
+            self.setCurrentVote(new Vote(self.getId(),
+                    self.getLastLoggedZxid()));
+            // We are going to look for a leader by casting a vote for ourself
+            byte requestBytes[] = new byte[4];
+            ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
+            byte responseBytes[] = new byte[28];
+            ByteBuffer responseBuffer = ByteBuffer.wrap(responseBytes);
+            /* The current vote for the leader. Initially me! */
+            DatagramSocket s = null;
+            try {
+                s = new DatagramSocket();
+                s.setSoTimeout(200);
+            } catch (SocketException e1) {
+                e1.printStackTrace();
+                System.exit(4);
             }
-            ElectionResult result = countVotes(votes, heardFrom);
-            if (result.winner.id >= 0) {
-                self.setCurrentVote(result.vote);
-                if (result.winningCount > (self.quorumPeers.size() / 2)) {
-                    self.setCurrentVote(result.winner);
-                    s.close();
-                    Vote current = self.getCurrentVote();
-                    self.setPeerState((current.id == self.getId()) 
-                            ? ServerState.LEADING: ServerState.FOLLOWING);
-                    if (self.getPeerState() == ServerState.FOLLOWING) {
-                        Thread.sleep(100);
+            DatagramPacket requestPacket = new DatagramPacket(requestBytes,
+                    requestBytes.length);
+            DatagramPacket responsePacket = new DatagramPacket(responseBytes,
+                    responseBytes.length);
+            HashMap<InetSocketAddress, Vote> votes =
+                new HashMap<InetSocketAddress, Vote>(self.quorumPeers.size());
+            int xid = epochGen.nextInt();
+            while (self.running) {
+                votes.clear();
+                requestBuffer.clear();
+                requestBuffer.putInt(xid);
+                requestPacket.setLength(4);
+                HashSet<Long> heardFrom = new HashSet<Long>();
+                for (QuorumServer server : self.quorumPeers.values()) {
+                    LOG.info("Server address: " + server.addr);
+                    try {
+                        requestPacket.setSocketAddress(server.addr);
+                    } catch (IllegalArgumentException e) {
+                        // Sun doesn't include the address that causes this
+                        // exception to be thrown, so we wrap the exception
+                        // in order to capture this critical detail.
+                        throw new IllegalArgumentException(
+                                "Unable to set socket address on packet, msg:"
+                                + e.getMessage() + " with addr:" + server.addr,
+                                e);
                     }
-                    return current;
+
+                    try {
+                        s.send(requestPacket);
+                        responsePacket.setLength(responseBytes.length);
+                        s.receive(responsePacket);
+                        if (responsePacket.getLength() != responseBytes.length) {
+                            LOG.error("Got a short response: "
+                                    + responsePacket.getLength());
+                            continue;
+                        }
+                        responseBuffer.clear();
+                        int recvedXid = responseBuffer.getInt();
+                        if (recvedXid != xid) {
+                            LOG.error("Got bad xid: expected " + xid
+                                    + " got " + recvedXid);
+                            continue;
+                        }
+                        long peerId = responseBuffer.getLong();
+                        heardFrom.add(peerId);
+                        //if(server.id != peerId){
+                            Vote vote = new Vote(responseBuffer.getLong(),
+                                responseBuffer.getLong());
+                            InetSocketAddress addr =
+                                (InetSocketAddress) responsePacket
+                                .getSocketAddress();
+                            votes.put(addr, vote);
+                        //}
+                    } catch (IOException e) {
+                        LOG.warn("Ignoring exception while looking for leader",
+                                e);
+                        // Errors are okay, since hosts may be
+                        // down
+                    }
                 }
+                ElectionResult result = countVotes(votes, heardFrom);
+                if (result.winner.id >= 0) {
+                    self.setCurrentVote(result.vote);
+                    if (result.winningCount > (self.quorumPeers.size() / 2)) {
+                        self.setCurrentVote(result.winner);
+                        s.close();
+                        Vote current = self.getCurrentVote();
+                        self.setPeerState((current.id == self.getId())
+                                ? ServerState.LEADING: ServerState.FOLLOWING);
+                        if (self.getPeerState() == ServerState.FOLLOWING) {
+                            Thread.sleep(100);
+                        }
+                        return current;
+                    }
+                }
+                Thread.sleep(1000);
             }
-            Thread.sleep(1000);
+            return null;
+        } finally {
+            try {
+                if(self.jmxLeaderElectionBean != null){
+                    MBeanRegistry.getInstance().unregister(
+                            self.jmxLeaderElectionBean);
+                }
+            } catch (Exception e) {
+                LOG.warn("Failed to unregister with JMX", e);
+            }
+            self.jmxLeaderElectionBean = null;
         }
-        return null;
     }
 }

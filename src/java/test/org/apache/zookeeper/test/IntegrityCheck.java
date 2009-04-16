@@ -82,7 +82,7 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
 
     IntegrityCheck(String hostPort, String path, int count) throws
             IOException {
-        zk = new ZooKeeper(hostPort, 15000, this);
+        zk = new ZooKeeper(hostPort, 30000, this);
         this.path = path;
         this.count = count;
     }

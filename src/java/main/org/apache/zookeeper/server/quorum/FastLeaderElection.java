@@ -26,6 +26,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -510,146 +511,183 @@ public class FastLeaderElection implements Election {
      * sends notifications to al other peers.
      */
     public Vote lookForLeader() throws InterruptedException {
-        HashMap<Long, Vote> recvset = new HashMap<Long, Vote>();
-
-        HashMap<Long, Vote> outofelection = new HashMap<Long, Vote>();
-
-        int notTimeout = finalizeWait;
-        
-        synchronized(this){
-            logicalclock++;
-            updateProposal(self.getId(), self.getLastLoggedZxid());
+        try {
+            self.jmxLeaderElectionBean = new LeaderElectionBean();
+            MBeanRegistry.getInstance().register(
+                    self.jmxLeaderElectionBean, self.jmxLocalPeerBean);        
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+            self.jmxLeaderElectionBean = null;
         }
-        
-        LOG.info("New election: " + proposedZxid);
-        sendNotifications();
 
-        /*
-         * Loop in which we exchange notifications until we find a leader
-         */
-
-        while (self.getPeerState() == ServerState.LOOKING) {
-            /*
-             * Remove next notification from queue, times out after 2 times
-             * the termination time
-             */
-            Notification n = recvqueue.poll(notTimeout, TimeUnit.MILLISECONDS);
+        try {
+            HashMap<Long, Vote> recvset = new HashMap<Long, Vote>();
+    
+            HashMap<Long, Vote> outofelection = new HashMap<Long, Vote>();
+    
+            int notTimeout = finalizeWait;
             
-            /*
-             * Sends more notifications if haven't received enough.
-             * Otherwise processes new notification.
-             */
-            if(n == null){
-            	if(manager.haveDelivered()){
-            		sendNotifications();
-            	} else {
-            	    manager.connectAll();
-            	}
-            	
-            	/*
-            	 * Exponential backoff
-            	 */
-            	int tmpTimeOut = notTimeout*2;
-            	notTimeout = (tmpTimeOut < maxNotificationInterval? tmpTimeOut : maxNotificationInterval);
-            	LOG.info("Notification time out: " + notTimeout);
+            synchronized(this){
+                logicalclock++;
+                updateProposal(self.getId(), self.getLastLoggedZxid());
             }
-            else { 
-                //notTimeout = finalizeWait;
-                switch (n.state) { 
-                case LOOKING:
-                    // If notification > current, replace and send messages out
-                    LOG.info("Notification: " + n.leader + ", " + n.zxid + ", " + 
-                            n.epoch + ", " + self.getId() + ", " + self.getPeerState() + 
-                            ", " + n.state + ", " + n.sid);
-                    if (n.epoch > logicalclock) {
-                        LOG.debug("Increasing logical clock: " + n.epoch);
-                        logicalclock = n.epoch;
-                        recvset.clear();
-                        if(totalOrderPredicate(n.leader, n.zxid, self.getId(), self.getLastLoggedZxid()))
-                            updateProposal(n.leader, n.zxid);
-                        else
-                            updateProposal(self.getId(), self.getLastLoggedZxid());
-                        sendNotifications();
-                    } else if (n.epoch < logicalclock) {
-                        LOG.info("n.epoch < logicalclock");
-                        break;
-                    } else if (totalOrderPredicate(n.leader, n.zxid, proposedLeader, proposedZxid)) {
-                        LOG.info("Updating proposal");
-                        updateProposal(n.leader, n.zxid);
-                        sendNotifications();
-                    }
+            
+            LOG.info("New election: " + proposedZxid);
+            sendNotifications();
+    
+            /*
+             * Loop in which we exchange notifications until we find a leader
+             */
+    
+            while (self.getPeerState() == ServerState.LOOKING) {
+                /*
+                 * Remove next notification from queue, times out after 2 times
+                 * the termination time
+                 */
+                Notification n = recvqueue.poll(notTimeout,
+                        TimeUnit.MILLISECONDS);
                 
-                    LOG.info("Adding vote");
-                    recvset.put(n.sid, new Vote(n.leader, n.zxid, n.epoch));
-
-                    //If have received from all nodes, then terminate
-                    if (self.quorumPeers.size() == recvset.size()) {
-                        self.setPeerState((proposedLeader == self.getId()) ? 
-                                ServerState.LEADING: ServerState.FOLLOWING);
-                        leaveInstance();
-                        return new Vote(proposedLeader, proposedZxid);
-                        
-                    } else if (termPredicate(recvset, new Vote(proposedLeader, proposedZxid, logicalclock))) {
-                        //Otherwise, wait for a fixed amount of time
-                        LOG.debug("Passed predicate");
-
-                        // Verify if there is any change in the proposed leader
-                        while((n = recvqueue.poll(finalizeWait, TimeUnit.MILLISECONDS)) != null){
-                            if(totalOrderPredicate(n.leader, n.zxid, proposedLeader, proposedZxid)){
-                                recvqueue.put(n);
-                                break;
-                            }
+                /*
+                 * Sends more notifications if haven't received enough.
+                 * Otherwise processes new notification.
+                 */
+                if(n == null){
+                	if(manager.haveDelivered()){
+                		sendNotifications();
+                	} else {
+                	    manager.connectAll();
+                	}
+                	
+                	/*
+                	 * Exponential backoff
+                	 */
+                	int tmpTimeOut = notTimeout*2;
+                	notTimeout = (tmpTimeOut < maxNotificationInterval?
+                	        tmpTimeOut : maxNotificationInterval);
+                	LOG.info("Notification time out: " + notTimeout);
+                }
+                else { 
+                    //notTimeout = finalizeWait;
+                    switch (n.state) { 
+                    case LOOKING:
+                        // If notification > current, replace and send messages out
+                        LOG.info("Notification: " + n.leader + ", " + n.zxid
+                                + ", " + n.epoch + ", " + self.getId() + ", "
+                                + self.getPeerState() + ", " + n.state + ", "
+                                + n.sid);
+                        if (n.epoch > logicalclock) {
+                            logicalclock = n.epoch;
+                            recvset.clear();
+                            if(totalOrderPredicate(n.leader, n.zxid,
+                                    self.getId(), self.getLastLoggedZxid()))
+                                updateProposal(n.leader, n.zxid);
+                            else
+                                updateProposal(self.getId(),
+                                        self.getLastLoggedZxid());
+                            sendNotifications();
+                        } else if (n.epoch < logicalclock) {
+                            LOG.info("n.epoch < logicalclock");
+                            break;
+                        } else if (totalOrderPredicate(n.leader, n.zxid,
+                                proposedLeader, proposedZxid)) {
+                            LOG.info("Updating proposal");
+                            updateProposal(n.leader, n.zxid);
+                            sendNotifications();
                         }
                     
-                        if (n == null) {
+                        LOG.info("Adding vote");
+                        recvset.put(n.sid, new Vote(n.leader, n.zxid, n.epoch));
+    
+                        //If have received from all nodes, then terminate
+                        if (self.quorumPeers.size() == recvset.size()) {
                             self.setPeerState((proposedLeader == self.getId()) ? 
-                                ServerState.LEADING: ServerState.FOLLOWING);
-                            LOG.info("About to leave instance:" + proposedLeader + ", " + 
-                                    proposedZxid + ", " + self.getId() + ", " + self.getPeerState());
+                                    ServerState.LEADING: ServerState.FOLLOWING);
                             leaveInstance();
-                            return new Vote(proposedLeader,
-                                proposedZxid);
+                            return new Vote(proposedLeader, proposedZxid);
+                            
+                        } else if (termPredicate(recvset,
+                                new Vote(proposedLeader, proposedZxid,
+                                        logicalclock))) {
+                            //Otherwise, wait for a fixed amount of time
+                            LOG.debug("Passed predicate");
+    
+                            // Verify if there is any change in the proposed leader
+                            while((n = recvqueue.poll(finalizeWait,
+                                    TimeUnit.MILLISECONDS)) != null){
+                                if(totalOrderPredicate(n.leader, n.zxid,
+                                        proposedLeader, proposedZxid)){
+                                    recvqueue.put(n);
+                                    break;
+                                }
+                            }
+                        
+                            if (n == null) {
+                                self.setPeerState((proposedLeader == self.getId()) ? 
+                                    ServerState.LEADING: ServerState.FOLLOWING);
+                                LOG.info("About to leave instance:"
+                                        + proposedLeader + ", " + 
+                                        proposedZxid + ", " + self.getId()
+                                        + ", " + self.getPeerState());
+                                leaveInstance();
+                                return new Vote(proposedLeader,
+                                    proposedZxid);
+                            }
                         }
-                    }
-                    break;
-                case LEADING:
-                    /*
-                     * There is at most one leader for each epoch, so if a peer claims to
-                     * be the leader for an epoch, then that peer must be the leader (no
-                     * arbitrary failures assumed). Now, if there is no quorum supporting 
-                     * this leader, then processes will naturally move to a new epoch.
-                     */
-                    if(n.epoch == logicalclock){
-                        self.setPeerState((n.leader == self.getId()) ? 
-                                ServerState.LEADING: ServerState.FOLLOWING);
-                   
-                        leaveInstance();
-                        return new Vote(n.leader, n.zxid);
-                    }
-                case FOLLOWING:
-                    LOG.info("Notification: " + n.leader + ", " + n.zxid + 
-                            ", " + n.epoch + ", " + self.getId() + ", " + 
-                            self.getPeerState() + ", " + n.state + ", " + n.sid);
-       
-                    outofelection.put(n.sid, new Vote(n.leader, n.zxid, n.epoch, n.state));
-
-                    if (termPredicate(outofelection, new Vote(n.leader, n.zxid, n.epoch, n.state))
-                            && checkLeader(outofelection, n.leader, n.epoch)) {
-                        synchronized(this){
-                            logicalclock = n.epoch;
+                        break;
+                    case LEADING:
+                        /*
+                         * There is at most one leader for each epoch, so if a
+                         * peer claims to be the leader for an epoch, then that
+                         * peer must be the leader (no* arbitrary failures
+                         * assumed). Now, if there is no quorum supporting 
+                         * this leader, then processes will naturally move
+                         * to a new epoch.
+                         */
+                        if(n.epoch == logicalclock){
                             self.setPeerState((n.leader == self.getId()) ? 
                                     ServerState.LEADING: ServerState.FOLLOWING);
+                       
+                            leaveInstance();
+                            return new Vote(n.leader, n.zxid);
                         }
-                        leaveInstance();
-                        return new Vote(n.leader, n.zxid);
+                    case FOLLOWING:
+                        LOG.info("Notification: " + n.leader + ", " + n.zxid + 
+                                ", " + n.epoch + ", " + self.getId() + ", " + 
+                                self.getPeerState() + ", " + n.state + ", "
+                                + n.sid);
+           
+                        outofelection.put(n.sid, new Vote(n.leader, n.zxid,
+                                n.epoch, n.state));
+    
+                        if (termPredicate(outofelection, new Vote(n.leader,
+                                n.zxid, n.epoch, n.state))
+                                && checkLeader(outofelection, n.leader, n.epoch)) {
+                            synchronized(this){
+                                logicalclock = n.epoch;
+                                self.setPeerState((n.leader == self.getId()) ? 
+                                        ServerState.LEADING: ServerState.FOLLOWING);
+                            }
+                            leaveInstance();
+                            return new Vote(n.leader, n.zxid);
+                        }
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-                default:
-                    break;
                 }
             }
+    
+            return null;
+        } finally {
+            try {
+                if(self.jmxLeaderElectionBean != null){
+                    MBeanRegistry.getInstance().unregister(
+                            self.jmxLeaderElectionBean);
+                }
+            } catch (Exception e) {
+                LOG.warn("Failed to unregister with JMX", e);
+            }
+            self.jmxLeaderElectionBean = null;
         }
-
-        return null;
     }
 }

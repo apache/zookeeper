@@ -91,7 +91,7 @@ public class AsyncTest extends TestCase
         throws IOException, InterruptedException
     {
         CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(hp, 30000, watcher);
+        ZooKeeper zk = new ZooKeeper(hp, CONNECTION_TIMEOUT, watcher);
         if(!watcher.clientConnected.await(CONNECTION_TIMEOUT,
                 TimeUnit.MILLISECONDS))
         {
@@ -117,7 +117,7 @@ public class AsyncTest extends TestCase
 
         public void run() {
             try {
-                zk = new ZooKeeper(qb.hostPort, 30000, this);
+                zk = new ZooKeeper(qb.hostPort, CONNECTION_TIMEOUT, this);
                 while(bang) {
                     incOutstanding(); // before create otw race
                     zk.create("/test-", new byte[0], Ids.OPEN_ACL_UNSAFE,

@@ -32,6 +32,7 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 
+import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -452,7 +453,17 @@ public class AuthFastLeaderElection implements Election {
                     requestBuffer.put(zeroes);
 
                     requestPacket.setLength(48);
-                    requestPacket.setSocketAddress(m.addr);
+                    try {
+                        requestPacket.setSocketAddress(m.addr);
+                    } catch (IllegalArgumentException e) {
+                        // Sun doesn't include the address that causes this
+                        // exception to be thrown, so we wrap the exception
+                        // in order to capture this critical detail.
+                        throw new IllegalArgumentException(
+                                "Unable to set socket address on packet, msg:"
+                                + e.getMessage() + " with addr:" + m.addr,
+                                e);
+                    }
 
                     try {
                         if (challengeMap.get(m.tag) == null) {
@@ -486,7 +497,18 @@ public class AuthFastLeaderElection implements Election {
                     requestBuffer.put(zeroes);
 
                     requestPacket.setLength(48);
-                    requestPacket.setSocketAddress(m.addr);
+                    try {
+                        requestPacket.setSocketAddress(m.addr);
+                    } catch (IllegalArgumentException e) {
+                        // Sun doesn't include the address that causes this
+                        // exception to be thrown, so we wrap the exception
+                        // in order to capture this critical detail.
+                        throw new IllegalArgumentException(
+                                "Unable to set socket address on packet, msg:"
+                                + e.getMessage() + " with addr:" + m.addr,
+                                e);
+                    }
+
 
                     try {
                         mySocket.send(requestPacket);
@@ -512,7 +534,18 @@ public class AuthFastLeaderElection implements Election {
                     requestBuffer.put(zeroes);
 
                     requestPacket.setLength(48);
-                    requestPacket.setSocketAddress(m.addr);
+                    try {
+                        requestPacket.setSocketAddress(m.addr);
+                    } catch (IllegalArgumentException e) {
+                        // Sun doesn't include the address that causes this
+                        // exception to be thrown, so we wrap the exception
+                        // in order to capture this critical detail.
+                        throw new IllegalArgumentException(
+                                "Unable to set socket address on packet, msg:"
+                                + e.getMessage() + " with addr:" + m.addr,
+                                e);
+                    }
+
 
                     boolean myChallenge = false;
                     boolean myAck = false;
@@ -629,7 +662,18 @@ public class AuthFastLeaderElection implements Election {
                     requestBuffer.putLong(m.epoch);
 
                     requestPacket.setLength(48);
-                    requestPacket.setSocketAddress(m.addr);
+                    try {
+                        requestPacket.setSocketAddress(m.addr);
+                    } catch (IllegalArgumentException e) {
+                        // Sun doesn't include the address that causes this
+                        // exception to be thrown, so we wrap the exception
+                        // in order to capture this critical detail.
+                        throw new IllegalArgumentException(
+                                "Unable to set socket address on packet, msg:"
+                                + e.getMessage() + " with addr:" + m.addr,
+                                e);
+                    }
+
 
                     try {
                         mySocket.send(requestPacket);
@@ -764,129 +808,152 @@ public class AuthFastLeaderElection implements Election {
     }
 
     public Vote lookForLeader() throws InterruptedException {
-        HashMap<InetSocketAddress, Vote> recvset = 
-            new HashMap<InetSocketAddress, Vote>();
+        try {
+            self.jmxLeaderElectionBean = new LeaderElectionBean();
+            MBeanRegistry.getInstance().register(
+                    self.jmxLeaderElectionBean, self.jmxLocalPeerBean);        
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+            self.jmxLeaderElectionBean = null;
+        }
 
-        HashMap<InetSocketAddress, Vote> outofelection = 
-            new HashMap<InetSocketAddress, Vote>();
-
-        logicalclock++;
-
-        proposedLeader = self.getId();
-        proposedZxid = self.getLastLoggedZxid();
-
-        LOG.info("Election tally");
-        sendNotifications();
-
-        /*
-         * Loop in which we exchange notifications until we find a leader
-         */
-
-        while (self.getPeerState() == ServerState.LOOKING) {
+        try {
+            HashMap<InetSocketAddress, Vote> recvset = 
+                new HashMap<InetSocketAddress, Vote>();
+    
+            HashMap<InetSocketAddress, Vote> outofelection = 
+                new HashMap<InetSocketAddress, Vote>();
+    
+            logicalclock++;
+    
+            proposedLeader = self.getId();
+            proposedZxid = self.getLastLoggedZxid();
+    
+            LOG.info("Election tally");
+            sendNotifications();
+    
             /*
-             * Remove next notification from queue, times out after 2 times the
-             * termination time
+             * Loop in which we exchange notifications until we find a leader
              */
-            Notification n = recvqueue.poll(2 * finalizeWait,
-                    TimeUnit.MILLISECONDS);
-
-            /*
-             * Sends more notifications if haven't received enough. Otherwise
-             * processes new notification.
-             */
-            if (n == null) {
-                if (((!outofelection.isEmpty()) || (recvset.size() > 1)))
-                    sendNotifications();
-            } else
-                switch (n.state) {
-                case LOOKING:
-                    if (n.epoch > logicalclock) {
-                        logicalclock = n.epoch;
-                        recvset.clear();
-                        if (totalOrderPredicate(n.leader, n.zxid)) {
+    
+            while (self.getPeerState() == ServerState.LOOKING) {
+                /*
+                 * Remove next notification from queue, times out after 2 times
+                 * the termination time
+                 */
+                Notification n = recvqueue.poll(2 * finalizeWait,
+                        TimeUnit.MILLISECONDS);
+    
+                /*
+                 * Sends more notifications if haven't received enough.
+                 * Otherwise processes new notification.
+                 */
+                if (n == null) {
+                    if (((!outofelection.isEmpty()) || (recvset.size() > 1)))
+                        sendNotifications();
+                } else
+                    switch (n.state) {
+                    case LOOKING:
+                        if (n.epoch > logicalclock) {
+                            logicalclock = n.epoch;
+                            recvset.clear();
+                            if (totalOrderPredicate(n.leader, n.zxid)) {
+                                proposedLeader = n.leader;
+                                proposedZxid = n.zxid;
+                            }
+                            sendNotifications();
+                        } else if (n.epoch < logicalclock) {
+                            break;
+                        } else if (totalOrderPredicate(n.leader, n.zxid)) {
                             proposedLeader = n.leader;
                             proposedZxid = n.zxid;
+    
+                            sendNotifications();
                         }
-                        sendNotifications();
-                    } else if (n.epoch < logicalclock) {
-                        break;
-                    } else if (totalOrderPredicate(n.leader, n.zxid)) {
-                        proposedLeader = n.leader;
-                        proposedZxid = n.zxid;
-
-                        sendNotifications();
-                    }
-
-                    recvset.put(n.addr, new Vote(n.leader, n.zxid));
-
-                    // If have received from all nodes, then terminate
-                    if (self.quorumPeers.size() == recvset.size()) {
-                        self.setPeerState((proposedLeader == self.getId()) ? 
-                                ServerState.LEADING: ServerState.FOLLOWING);
-                        // if (self.state == ServerState.FOLLOWING) {
-                        // Thread.sleep(100);
-                        // }
-                        leaveInstance();
-                        return new Vote(proposedLeader, proposedZxid);
-
-                    } else if (termPredicate(recvset, proposedLeader,
-                            proposedZxid)) {
-                        // Otherwise, wait for a fixed amount of time
-                        LOG.info("Passed predicate");
-                        Thread.sleep(finalizeWait);
-
-                        // Notification probe = recvqueue.peek();
-
-                        // Verify if there is any change in the proposed leader
-                        while ((!recvqueue.isEmpty())
-                                && !totalOrderPredicate(
-                                        recvqueue.peek().leader, recvqueue
-                                                .peek().zxid)) {
-                            recvqueue.poll();
-                        }
-                        if (recvqueue.isEmpty()) {
-                            // LOG.warn("Proposed leader: " +
-                            // proposedLeader);
+    
+                        recvset.put(n.addr, new Vote(n.leader, n.zxid));
+    
+                        // If have received from all nodes, then terminate
+                        if (self.quorumPeers.size() == recvset.size()) {
                             self.setPeerState((proposedLeader == self.getId()) ? 
                                     ServerState.LEADING: ServerState.FOLLOWING);
                             // if (self.state == ServerState.FOLLOWING) {
                             // Thread.sleep(100);
                             // }
-
                             leaveInstance();
                             return new Vote(proposedLeader, proposedZxid);
+    
+                        } else if (termPredicate(recvset, proposedLeader,
+                                proposedZxid)) {
+                            // Otherwise, wait for a fixed amount of time
+                            LOG.info("Passed predicate");
+                            Thread.sleep(finalizeWait);
+    
+                            // Notification probe = recvqueue.peek();
+    
+                            // Verify if there is any change in the proposed leader
+                            while ((!recvqueue.isEmpty())
+                                    && !totalOrderPredicate(
+                                            recvqueue.peek().leader, recvqueue
+                                                    .peek().zxid)) {
+                                recvqueue.poll();
+                            }
+                            if (recvqueue.isEmpty()) {
+                                // LOG.warn("Proposed leader: " +
+                                // proposedLeader);
+                                self.setPeerState(
+                                        (proposedLeader == self.getId()) ? 
+                                         ServerState.LEADING :
+                                         ServerState.FOLLOWING);
+                                // if (self.state == ServerState.FOLLOWING) {
+                                // Thread.sleep(100);
+                                // }
+    
+                                leaveInstance();
+                                return new Vote(proposedLeader, proposedZxid);
+                            }
                         }
+                        break;
+                    case LEADING:
+                        outofelection.put(n.addr, new Vote(n.leader, n.zxid));
+    
+                        if (termPredicate(outofelection, n.leader, n.zxid)) {
+    
+                            self.setPeerState((n.leader == self.getId()) ? 
+                                    ServerState.LEADING: ServerState.FOLLOWING);
+    
+                            leaveInstance();
+                            return new Vote(n.leader, n.zxid);
+                        }
+                        break;
+                    case FOLLOWING:
+                        outofelection.put(n.addr, new Vote(n.leader, n.zxid));
+    
+                        if (termPredicate(outofelection, n.leader, n.zxid)) {
+    
+                            self.setPeerState((n.leader == self.getId()) ? 
+                                    ServerState.LEADING: ServerState.FOLLOWING);
+    
+                            leaveInstance();
+                            return new Vote(n.leader, n.zxid);
+                        }
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-                case LEADING:
-                    outofelection.put(n.addr, new Vote(n.leader, n.zxid));
-
-                    if (termPredicate(outofelection, n.leader, n.zxid)) {
-
-                        self.setPeerState((n.leader == self.getId()) ? 
-                                ServerState.LEADING: ServerState.FOLLOWING);
-
-                        leaveInstance();
-                        return new Vote(n.leader, n.zxid);
-                    }
-                    break;
-                case FOLLOWING:
-                    outofelection.put(n.addr, new Vote(n.leader, n.zxid));
-
-                    if (termPredicate(outofelection, n.leader, n.zxid)) {
-
-                        self.setPeerState((n.leader == self.getId()) ? 
-                                ServerState.LEADING: ServerState.FOLLOWING);
-
-                        leaveInstance();
-                        return new Vote(n.leader, n.zxid);
-                    }
-                    break;
-                default:
-                    break;
+            }
+    
+            return null;
+        } finally {
+            try {
+                if(self.jmxLeaderElectionBean != null){
+                    MBeanRegistry.getInstance().unregister(
+                            self.jmxLeaderElectionBean);
                 }
+            } catch (Exception e) {
+                LOG.warn("Failed to unregister with JMX", e);
+            }
+            self.jmxLeaderElectionBean = null;
         }
-
-        return null;
     }
 }
