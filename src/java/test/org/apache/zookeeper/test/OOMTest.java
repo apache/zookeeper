@@ -104,7 +104,8 @@ public class OOMTest extends TestCase implements Watcher {
     }
 
     private void utestExists() throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:33221", 30000, this);
+        ZooKeeper zk =
+            new ZooKeeper("127.0.0.1:33221", CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             zk.exists("/this/path/doesnt_exist!", true);
         }
@@ -113,7 +114,8 @@ public class OOMTest extends TestCase implements Watcher {
 
     private void utestPrep() throws IOException,
             InterruptedException, KeeperException {
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:33221", 30000, this);
+        ZooKeeper zk =
+            new ZooKeeper("127.0.0.1:33221", CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             zk.create("/" + i, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
@@ -121,7 +123,8 @@ public class OOMTest extends TestCase implements Watcher {
     }
 
     private void utestGet() throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:33221", 30000, this);
+        ZooKeeper zk =
+            new ZooKeeper("127.0.0.1:33221", CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             Stat stat = new Stat();
             zk.getData("/" + i, true, stat);
@@ -130,7 +133,8 @@ public class OOMTest extends TestCase implements Watcher {
     }
 
     private void utestChildren() throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:33221", 30000, this);
+        ZooKeeper zk =
+            new ZooKeeper("127.0.0.1:33221", CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             zk.getChildren("/" + i, true);
         }

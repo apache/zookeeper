@@ -58,7 +58,7 @@ public class PurgeTxnTest extends TestCase implements  Watcher {
         f.startup(zks);
         assertTrue("waiting for server being up ", 
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, 20000, this);
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         for (int i=0; i< 2000; i++) {
             zk.create("/invalidsnap-" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, 
                     CreateMode.PERSISTENT);

@@ -129,7 +129,8 @@ public abstract class ClientBase extends TestCase {
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp)
         throws IOException, InterruptedException
     {
-        TestableZooKeeper zk = new TestableZooKeeper(hp, 9000, watcher);
+        TestableZooKeeper zk =
+            new TestableZooKeeper(hp, CONNECTION_TIMEOUT, watcher);
         if (!watcher.clientConnected.await(CONNECTION_TIMEOUT,
                 TimeUnit.MILLISECONDS))
         {

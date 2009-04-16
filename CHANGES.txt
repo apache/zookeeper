@@ -51,6 +51,9 @@ via mahadev)
   ZOOKEEPER-374. Uninitialized struct variable in C causes warning which 
 is treated as an error (phunt via mahadev)
 
+  ZOOKEEPER-337. improve logging in leader election lookForLeader method when
+address resolution fails (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

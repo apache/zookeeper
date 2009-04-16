@@ -91,7 +91,7 @@ public class CRCTest extends TestCase implements Watcher{
         LOG.info("starting up the zookeeper server .. waiting");
         assertTrue("waiting for server being up", 
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, 20000, this);
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         for (int i =0; i < 2000; i++) {
             zk.create("/crctest- " + i , ("/crctest- " + i).getBytes(), 
                     Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

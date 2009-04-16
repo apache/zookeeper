@@ -20,13 +20,20 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.StringReader;
+import java.util.regex.Pattern;
 
 import junit.framework.TestCase;
 
+import org.apache.log4j.Layout;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -34,6 +41,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Test;
+
 
 /**
  * Test stand-alone server.
@@ -157,6 +165,67 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
         assertTrue("waiting for server 2 down",
                 ClientBase.waitForServerDown("localhost:" + CLIENT_PORT_QP2,
                         ClientBase.CONNECTION_TIMEOUT));
+    }
+
+    /**
+     * Verify handling of bad quorum address
+     */
+    @Test
+    public void testBadPeerAddressInQuorum() throws Exception {
+        LOG.info("STARTING " + getName());
+        ClientBase.setupTestEnv();
+
+        // setup the logger to capture all logs
+        Layout layout =
+            Logger.getRootLogger().getAppender("CONSOLE").getLayout();
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = new WriterAppender(layout, os);
+        appender.setThreshold(Level.WARN);
+        Logger.getLogger(org.apache.zookeeper.server.quorum.QuorumPeer.class)
+            .addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = 3181;
+            final int CLIENT_PORT_QP2 = CLIENT_PORT_QP1 + 3;
+
+            String quorumCfgSection =
+                "server.1=localhost:" + (CLIENT_PORT_QP1 + 1)
+                + ":" + (CLIENT_PORT_QP1 + 2)
+                + "\nserver.2=fee.fii.foo.fum:" + (CLIENT_PORT_QP2 + 1)
+                + ":" + (CLIENT_PORT_QP2 + 2);
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+            q1.start();
+
+            boolean isup =
+                ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP1,
+                        5000);
+
+            assertFalse(isup);
+            
+            q1.shutdown();
+
+            assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("localhost:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+            
+        } finally {
+            Logger.getLogger(org.apache.zookeeper.server.quorum.QuorumPeer.class)
+                .removeAppender(appender);
+        }
+
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean found = false;
+        Pattern p =
+            Pattern.compile(".*IllegalArgumentException.*fee.fii.foo.fum.*");
+        while ((line = r.readLine()) != null) {
+            found = p.matcher(line).matches();
+            if (found) {
+                break;
+            }
+        }
+        assertTrue("complains about host", found);
     }
 
     public void process(WatchedEvent event) {

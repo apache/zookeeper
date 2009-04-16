@@ -87,7 +87,7 @@ public class RecoveryTest extends TestCase implements Watcher {
                                        CONNECTION_TIMEOUT));
 
             startSignal = new CountDownLatch(1);
-            ZooKeeper zk = new ZooKeeper(HOSTPORT, 20000, this);
+            ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
             startSignal.await(CONNECTION_TIMEOUT,
                     TimeUnit.MILLISECONDS);
             assertTrue("count == 0", startSignal.getCount() == 0);

@@ -71,7 +71,7 @@ public class ACLTest extends TestCase implements Watcher {
         LOG.info("starting up the zookeeper server .. waiting");
         assertTrue("waiting for server being up", 
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, 20000, this);
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         String path;
         LOG.info("starting creating acls");
         for (int i = 0; i < 100; i++) {

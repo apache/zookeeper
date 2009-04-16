@@ -366,14 +366,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     }
 
     protected Election makeLEStrategy(){
-        LOG.debug("Running leader election protocol...");
-        try {
-            jmxLeaderElectionBean = new LeaderElectionBean();
-            MBeanRegistry.getInstance().register(jmxLeaderElectionBean, jmxLocalPeerBean);        
-        } catch (Exception e) {
-            LOG.warn("Failed to register with JMX", e);
-            jmxLeaderElectionBean = null;
-        }
+        LOG.debug("Initializing leader election protocol...");
 
         if(electionAlg==null)
             return new LeaderElection(this);

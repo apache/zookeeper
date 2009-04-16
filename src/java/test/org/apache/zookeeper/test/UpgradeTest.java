@@ -73,7 +73,7 @@ public class UpgradeTest extends TestCase implements Watcher {
         LOG.info("starting up the zookeeper server .. waiting");
         assertTrue("waiting for server being up", 
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, 20000, this);
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         Stat stat = zk.exists("/", false);
         List<String> children = zk.getChildren("/", false);
         Collections.sort(children);
