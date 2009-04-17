@@ -55,6 +55,7 @@
     <property name="test.log.dir" value="${test.build.dir}/logs" />
     <property name="test.data.dir" value="${test.build.dir}/data" />
     <property name="test.data.upgrade.dir" value="${test.data.dir}/upgrade" />
+    <property name="test.data.invalid.dir" value="${test.data.dir}/invalidsnap" />
     <property name="test.cppunit.dir" value="${test.build.dir}/test-cppunit"/>
     <property name="test.tmp.dir" value="${test.build.dir}/tmp" />
     <property name="test.output" value="no" />
@@ -534,14 +535,20 @@
         <delete dir="${test.log.dir}" />
         <delete dir="${test.tmp.dir}" />
         <delete dir="${test.data.upgrade.dir}" />
+        <delete dir="${test.data.invalid.dir}" />
         <delete dir="${test.data.dir}" />
         <mkdir dir="${test.log.dir}" />
         <mkdir dir="${test.tmp.dir}" />
         <mkdir dir="${test.data.dir}" />
         <mkdir dir="${test.data.upgrade.dir}" />
+        <mkdir dir="${test.data.invalid.dir}" />
         <copy todir="${test.data.upgrade.dir}">
             <fileset dir="${basedir}/src/java/test/data/upgrade"/>
-        </copy> 
+        </copy>
+        <copy todir="${test.data.invalid.dir}">
+            <fileset dir="${basedir}/src/java/test/data/invalidsnap"/>
+        </copy>
+       
     </target>
 
     <target name="junit.run">

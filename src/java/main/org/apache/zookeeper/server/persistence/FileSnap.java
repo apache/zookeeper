@@ -64,22 +64,44 @@ public class FileSnap implements SnapShot {
      */
     public long deserialize(DataTree dt, Map<Long, Integer> sessions)
             throws IOException {
-        File snap = findMostRecentSnapshot();
-        if (snap == null) {
+        // we run through 100 snapshots (not all of them)
+        // if we cannot get it running within 100 snapshots
+        // we should  give up
+        List<File> snapList = findNValidSnapshots(100);
+        if (snapList.size() == 0) {
             return -1L;
         }
-        LOG.info("Reading snapshot " + snap);
-        InputStream snapIS = new BufferedInputStream(new FileInputStream(snap));
-        CheckedInputStream crcIn = new CheckedInputStream(snapIS, new Adler32());
-        InputArchive ia=BinaryInputArchive.getArchive(crcIn);
-        deserialize(dt,sessions, ia);
-        long checkSum = crcIn.getChecksum().getValue();
-        long val = ia.readLong("val");
-        if (val != checkSum) {
-            throw new IOException("CRC corruption in snapshot :  " + snap);
+        File snap = null;
+        boolean foundValid = false;
+        for (int i = 0; i < snapList.size(); i++) {
+            snap = snapList.get(i);
+            InputStream snapIS = null;
+            CheckedInputStream crcIn = null;
+            try {
+                LOG.info("Reading snapshot " + snap);
+                snapIS = new BufferedInputStream(new FileInputStream(snap));
+                crcIn = new CheckedInputStream(snapIS, new Adler32());
+                InputArchive ia = BinaryInputArchive.getArchive(crcIn);
+                deserialize(dt,sessions, ia);
+                long checkSum = crcIn.getChecksum().getValue();
+                long val = ia.readLong("val");
+                if (val != checkSum) {
+                    throw new IOException("CRC corruption in snapshot :  " + snap);
+                }
+                foundValid = true;
+                break;
+            } catch(IOException e) {
+                LOG.warn("problem reading snap file " + snap, e);
+            } finally {
+                if (snapIS != null) 
+                    snapIS.close();
+                if (crcIn != null) 
+                    crcIn.close();
+            } 
         }
-        snapIS.close();
-        crcIn.close();
+        if (!foundValid) {
+            throw new IOException("Not able to find valid snapshots in " + snapDir);
+        }
         dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), "snapshot");
         return dt.lastProcessedZxid;
     }
@@ -91,7 +113,7 @@ public class FileSnap implements SnapShot {
      * @param ia the input archive to restore from
      * @throws IOException
      */
-    protected void deserialize(DataTree dt, Map<Long, Integer> sessions,
+    public void deserialize(DataTree dt, Map<Long, Integer> sessions,
             InputArchive ia) throws IOException {
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
@@ -108,23 +130,51 @@ public class FileSnap implements SnapShot {
      * @return the file containing the most recent snapshot
      */
     public File findMostRecentSnapshot() throws IOException {
-        List<File> files = Util.sortDataDir(snapDir.listFiles(), "snapshot", false);
-        for (File f : files) {
-            // we should catch the exceptions from 
-            // the valid snapshot and continue
-            // until we find a valid one
-            try {
-                if(Util.isValidSnapshot(f))
-                    return f;
-            } catch(IOException e) {
-                LOG.info("invalid snapshot " + f, e);
-            }
+        List<File> files = findNValidSnapshots(1);
+        if (files.size() == 0) {
+            return null;
         }
-        return null;
+        return files.get(0);
     }
     
     /**
-     * find the last n snapshots.
+     * find the last (maybe) valid n snapshots. this does some 
+     * minor checks on the validity of the snapshots. It just
+     * checks for / at the end of the snapshot. This does
+     * not mean that the snapshot is truly valid but is
+     * valid with a high probability. also, the most recent 
+     * will be first on the list. 
+     * @param n the number of most recent snapshots
+     * @return the last n snapshots (the number might be
+     * less than n in case enough snapshots are not available).
+     * @throws IOException
+     */
+    private List<File> findNValidSnapshots(int n) throws IOException {
+        List<File> files = Util.sortDataDir(snapDir.listFiles(),"snapshot", false);
+        int count = 0;
+        List<File> list = new ArrayList<File>();
+        for (File f : files) {
+            // we should catch the exceptions
+            // from the valid snapshot and continue
+            // until we find a valid one
+            try {
+                if (Util.isValidSnapshot(f)) {
+                    list.add(f);
+                    count++;
+                    if (count == n) {
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                LOG.info("invalid snapshot " + f, e);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * find the last n snapshots. this does not have
+     * any checks if the snapshot might be valid or not
      * @param the number of most recent snapshots 
      * @return the last n snapshots
      * @throws IOException

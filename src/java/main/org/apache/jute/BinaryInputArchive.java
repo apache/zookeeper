@@ -98,7 +98,7 @@ public class BinaryInputArchive implements InputArchive {
         int len = readInt(tag);
         if (len == -1) return null;
         if (len < 0 || len > maxBuffer) {
-            throw new RuntimeException("Unreasonable length = " + len);
+            throw new IOException("Unreasonable length = " + len);
         }
         byte[] arr = new byte[len];
         in.readFully(arr);

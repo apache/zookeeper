@@ -37,22 +37,26 @@ BUGFIXES:
   ZOOKEEPER-360. WeakHashMap in Bookie.java causes NPE (flavio via mahadev)
   
   ZOOKEEPER-362. Issues with FLENewEpochTest. (fix bug in Fast leader election)
-(flavio via mahadev)
+  (flavio via mahadev)
 
   ZOOKEEPER-363. NPE when recovering ledger with no hint. (flavio via mahadev)
 
-  ZOOKEEPER-370. Fix critical problems reported by findbugs. (flavio via mahadev)
+  ZOOKEEPER-370. Fix critical problems reported by findbugs.
+  (flavio via mahadev)
 
   ZOOKEEPER-347. zkfuse uses non-standard String. (patrick hunt via mahadev)
 
-  ZOOKEEPER-355. make validatePath non public in Zookeeper client api. (phunt
-via mahadev)
+  ZOOKEEPER-355. make validatePath non public in Zookeeper client api.
+  (phunt via mahadev)
 
   ZOOKEEPER-374. Uninitialized struct variable in C causes warning which 
-is treated as an error (phunt via mahadev)
+  is treated as an error (phunt via mahadev)
 
   ZOOKEEPER-337. improve logging in leader election lookForLeader method when
-address resolution fails (phunt via mahadev)
+  address resolution fails (phunt via mahadev)
+
+  ZOOKEEPER-367. RecoveryTest failure - "unreasonable length" IOException
+  (mahadev via phunt)
 
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
@@ -66,14 +70,14 @@ IMPROVEMENTS:
 
   ZOOKEEPER-351. to run checkstyle (giridharan kesavan via mahadev)
 
-  ZOOKEEPER-350. to run rats for releaseaudit. (giridharan kesavan via
-mahadev)
+  ZOOKEEPER-350. to run rats for releaseaudit.
+  (giridharan kesavan via mahadev)
 
   ZOOKEEPER-352. to add standard ant targets required by test-patch.sh script
-(giridharan kesavan via mahadev)
+  (giridharan kesavan via mahadev)
 
-  ZOOKEEPER-353. javadoc warnings needs to be fixed. (giridharan kesavan via
-mahadev) 
+  ZOOKEEPER-353. javadoc warnings needs to be fixed.
+  (giridharan kesavan via mahadev) 
 
   ZOOKEEPER-354.  to fix javadoc warning in the source files. (mahadev)
 
@@ -82,16 +86,16 @@ mahadev)
   ZOOKEEPER-288. Cleanup and fixes to BookKeeper (flavio via mahadev)
  
   ZOOKEEPER-305.  Replace timers with semaphores in FLENewEpochTest.
-(flavio via mahadev)
+  (flavio via mahadev)
 
-  ZOOKEEPER-60. Get cppunit tests running as part of Hudson CI. (girish via
-mahadev)
+  ZOOKEEPER-60. Get cppunit tests running as part of Hudson CI.
+  (girish via mahadev)
 
   ZOOKEEPER-343. add tests that specifically verify the zkmain and 
-qpmain classes. (phunt via mahadev)
+  qpmain classes. (phunt via mahadev)
 
-  ZOOKEEPER-361. integrate cppunit testing as part of hudson patch 
-process. (giri via mahadev)
+  ZOOKEEPER-361. integrate cppunit testing as part of hudson patch process.
+  (giri via mahadev)
 
 NEW FEATURES:
 
