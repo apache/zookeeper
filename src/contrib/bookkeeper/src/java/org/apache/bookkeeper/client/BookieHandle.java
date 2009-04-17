@@ -28,7 +28,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import javax.crypto.Mac; 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -55,22 +54,24 @@ public class BookieHandle extends Thread{
     Logger LOG = Logger.getLogger(BookieClient.class);
     
     boolean stop = false;
-    LedgerHandle self;
-    BookieClient client;
+    private BookieClient client;
     InetSocketAddress addr;
     static int recvTimeout = 2000;
-    ArrayBlockingQueue<ToSend> incomingQueue;
+    private ArrayBlockingQueue<ToSend> incomingQueue;
+    private int refCount = 0;
     
     /**
      * Objects of this class are queued waiting to be
      * processed.
      */
     class ToSend {
+    	LedgerHandle lh;
         long entry = -1;
         Object ctx;
         int type;
         
-        ToSend(SubOp sop, long entry){
+        ToSend(LedgerHandle lh, SubOp sop, long entry){
+        	this.lh = lh;
             this.type = sop.op.type;
             this.entry = entry;
             this.ctx = sop;
@@ -78,12 +79,10 @@ public class BookieHandle extends Thread{
     }
     
     /**
-     * @param lh	ledger handle
      * @param addr	address
      */
-    BookieHandle(LedgerHandle lh, InetSocketAddress addr) throws IOException {
+    BookieHandle(InetSocketAddress addr) throws IOException {
         this.client = new BookieClient(addr, recvTimeout);
-        this.self = lh;
         this.addr = addr;
         this.incomingQueue = new ArrayBlockingQueue<ToSend>(2000);
         
@@ -110,40 +109,26 @@ public class BookieHandle extends Thread{
      * @param ctx
      * @throws IOException
      */
-    public void sendAdd(SubAddOp r, long entry)
+    public void sendAdd(LedgerHandle lh, SubAddOp r, long entry)
     throws IOException {
         try{
-            incomingQueue.put(new ToSend(r, entry));
+            incomingQueue.put(new ToSend(lh, r, entry));
         } catch(InterruptedException e){
             e.printStackTrace();
         }
     }
     
     /**
-     * Message disgest instance
+     * MAC instance
      * 
      */
-    MessageDigest digest = null;
     Mac mac = null;
     
-    /** 
-     * Get digest instance if there is none.
-     * 
-     */
-    MessageDigest getDigestInstance(String alg)
-    throws NoSuchAlgorithmException {
-        if(digest == null){
-            digest = MessageDigest.getInstance(alg);
-        }
-        
-        return digest;
-    }
-    
-    Mac getMac(String alg)
+    Mac getMac(byte[] macKey, String alg)
     throws NoSuchAlgorithmException, InvalidKeyException {
         if(mac == null){
             mac = Mac.getInstance(alg);
-            mac.init(new SecretKeySpec(self.getMacKey(), "HmacSHA1"));
+            mac.init(new SecretKeySpec(macKey, "HmacSHA1"));
         }
         
         return mac;
@@ -158,11 +143,11 @@ public class BookieHandle extends Thread{
      * @param ctx
      * @throws IOException
      */
-    public void sendRead(SubReadOp r, long entry)
+    
+    public void sendRead(LedgerHandle lh, SubReadOp r, long entry)
     throws IOException {
-        //LOG.debug("readEntry: " + entry);
         try{
-            incomingQueue.put(new ToSend(r, entry));
+            incomingQueue.put(new ToSend(lh, r, entry));
         } catch(InterruptedException e){
             e.printStackTrace();
         }
@@ -173,6 +158,7 @@ public class BookieHandle extends Thread{
             try{
                 ToSend ts = incomingQueue.poll(1000, TimeUnit.MILLISECONDS);
                 if(ts != null){
+                	LedgerHandle self = ts.lh;
                     switch(ts.type){
                     case Operation.ADD:
                         SubAddOp aOp = (SubAddOp) ts.ctx;
@@ -198,7 +184,7 @@ public class BookieHandle extends Thread{
                             //extendedData.limit(extendedData.capacity() - 20);
                             extendedData.position(extendedData.capacity() - 20);
                             if(mac == null)
-                                getMac("HmacSHA1");
+                                getMac(self.getMacKey(), "HmacSHA1");
                             extendedData.put(mac.doFinal(toProcess));
                             extendedData.position(16);
                         } else {
@@ -235,8 +221,27 @@ public class BookieHandle extends Thread{
         }
     }
     
-    void halt(){
-        stop = true;
+    /**
+     * Multiple ledgers may use the same BookieHandle object, so we keep
+     * a count on the number of references.
+     */
+    int incRefCount(){
+        return ++refCount;
+    }
+    
+    /**
+     * Halts if there is no ledger using this object.
+     */
+    int halt(){
+        int currentCount = --refCount;
+        if(currentCount <= 0){
+            stop = true;
+        }
+        
+        if(currentCount < 0)
+            LOG.warn("Miscalculated the number of reference counts: " + addr);
+        
+        return currentCount;
     }
 }
 

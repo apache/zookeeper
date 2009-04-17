@@ -99,6 +99,8 @@ IMPROVEMENTS:
   ZOOKEEPER-361. integrate cppunit testing as part of hudson patch process.
   (giri via mahadev)
 
+  ZOOKEEPER-373. One thread per bookie (flavio via mahadev) 
+
 NEW FEATURES:
 
 

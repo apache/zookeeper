@@ -224,8 +224,7 @@ public class QuorumEngine {
                                 pROp, 
                                 index,
                                 opMonitor);
-                        lh.getBookies().get((index) % n).sendRead(sRead, entry);
-                                    
+                        lh.getBookies().get((index) % n).sendRead(lh, sRead, entry);            
                     } catch(IOException e){
                         LOG.error(e);
                     }
@@ -248,7 +247,7 @@ public class QuorumEngine {
                             pOp, 
                             index,
                             opMonitor);
-                    lh.getBookies().get((index) % n).sendAdd(sAdd, aOp.entry);
+                    lh.getBookies().get((index) % n).sendAdd(lh, sAdd, aOp.entry);
                 } catch (IOException io) {
                     LOG.error(io);
                     try{
