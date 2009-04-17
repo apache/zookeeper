@@ -35,8 +35,6 @@ public interface ServerCnxn extends Watcher {
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    final static int killCmd = ByteBuffer.wrap("kill".getBytes()).getInt();
-    
     final static int ruokCmd = ByteBuffer.wrap("ruok".getBytes()).getInt();
 
     final static int dumpCmd = ByteBuffer.wrap("dump".getBytes()).getInt();

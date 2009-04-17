@@ -860,15 +860,6 @@ server.3=zoo3:2888:3888</computeroutput></para>
         </varlistentry>
 
         <varlistentry>
-          <term>kill</term>
-
-          <listitem>
-            <para>Shuts down the server. This must be issued from the machine
-            the ZooKeeper server is running on.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
           <term>reqs</term>
 
           <listitem>
