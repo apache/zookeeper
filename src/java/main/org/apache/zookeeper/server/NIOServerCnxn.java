@@ -564,10 +564,6 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 sendBuffer(NIOServerCnxn.closeConn);
                 k.interestOps(SelectionKey.OP_WRITE);
                 return;
-            } else if (len == killCmd) {
-                LOG.info("Processing kill command from "
-                        + sock.socket().getRemoteSocketAddress());
-                System.exit(0);
             } else if (len == getTraceMaskCmd) {
                 LOG.info("Processing getracemask command from "
                         + sock.socket().getRemoteSocketAddress());

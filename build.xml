@@ -656,7 +656,11 @@
 	<!-- yet to implement -->
     </target>
     
-    <target name="test-core" depends="test-init, test-category, junit.run, call-test-cppunit"/> 
+    <target name="test-core-java" depends="test-init, test-category, junit.run"/> 
+
+    <target name="test-core-cppunit" depends="test-init, test-category, call-test-cppunit"/> 
+
+    <target name="test-core" depends="test-core-java, test-core-cppunit"/> 
 
     <!-- ====================================================== -->
     <!-- Run optional third-party tool targets                  -->

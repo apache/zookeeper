@@ -53,17 +53,28 @@ ZOOBINDIR=`dirname "$ZOOBIN"`
 
 . $ZOOBINDIR/zkEnv.sh
 
+ZOOPIDFILE=$(grep dataDir $ZOOCFG | sed -e 's/.*=//')/zookeeper_server.pid
+
+
 case $1 in
 start) 
-    echo -n "Starting zookeeper ... "
+    echo  "Starting zookeeper ... "
     java  "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -cp $CLASSPATH $JVMFLAGS $ZOOMAIN $ZOOCFG &
+    echo $! > $ZOOPIDFILE
     echo STARTED
     ;;
 stop) 
-    echo -n "Stopping zookeeper ... "
-    echo kill | nc localhost $(grep clientPort $ZOOCFG | sed -e 's/.*=//')
+    echo "Stopping zookeeper ... "
+    if [ ! -f $ZOOPIDFILE ]
+    then
+    echo "error: count not find file $ZOOPIDFILE"
+    exit 1
+    else 
+    kill -9 $(cat $ZOOPIDFILE)
+    rm $ZOOPIDFILE
     echo STOPPED
+    fi
     ;;
 upgrade)
     shift
