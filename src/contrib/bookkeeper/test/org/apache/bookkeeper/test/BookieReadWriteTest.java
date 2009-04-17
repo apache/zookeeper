@@ -87,7 +87,7 @@ public class BookieReadWriteTest
 	Integer initialPort = 5000;
 	BookKeeper bkc; // bookkeeper client
 	byte[] ledgerPassword = "aaa".getBytes();
-	LedgerHandle lh;
+	LedgerHandle lh, lh2;
 	long ledgerId;
 	LedgerSequence ls;
 	
@@ -117,7 +117,7 @@ public class BookieReadWriteTest
 			// Create a BookKeeper client and a ledger
 			bkc = new BookKeeper("127.0.0.1");
 			lh = bkc.createLedger(ledgerPassword);
-			bkc.initMessageDigest("SHA1");
+			//bkc.initMessageDigest("SHA1");
 			ledgerId = lh.getId();
 			LOG.info("Ledger ID: " + lh.getId());
 			for(int i = 0; i < numEntriesToWrite; i++){
@@ -138,11 +138,11 @@ public class BookieReadWriteTest
 				}
 			}
 			
-			LOG.debug("*** WRITE COMPLETED ***");
+			LOG.debug("*** WRITE COMPLETE ***");
 			// close ledger 
 			bkc.closeLedger(lh);
 			
-			//*** WRITING PART COMPLETED // READ PART BEGINS ***
+			//*** WRITING PART COMPLETE // READ PART BEGINS ***
 			
 			// open ledger
 			lh = bkc.openLedger(ledgerId, ledgerPassword);
@@ -160,7 +160,7 @@ public class BookieReadWriteTest
 			
 			assertTrue("Checking number of read entries", ls.size() == numEntriesToWrite);
 			
-			LOG.debug("*** READ COMPLETED ***");
+			LOG.debug("*** READ COMPLETE ***");
 			
 			// at this point, LedgerSequence ls is filled with the returned values
 			int i = 0;
@@ -185,9 +185,9 @@ public class BookieReadWriteTest
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
+		} //catch (NoSuchAlgorithmException e) {
+		//	e.printStackTrace();
+		//}
 		
 	}
 	
@@ -200,7 +200,7 @@ public class BookieReadWriteTest
 			// Create a BookKeeper client and a ledger
 			bkc = new BookKeeper("127.0.0.1");
 			lh = bkc.createLedger(ledgerPassword);
-			bkc.initMessageDigest("SHA1");
+			//bkc.initMessageDigest("SHA1");
 			ledgerId = lh.getId();
 			LOG.info("Ledger ID: " + lh.getId());
 			for(int i = 0; i < numEntriesToWrite; i++){
@@ -218,7 +218,7 @@ public class BookieReadWriteTest
 				}
 			}
 			
-			LOG.debug("*** ASYNC WRITE COMPLETED ***");
+			LOG.debug("*** ASYNC WRITE COMPLETE ***");
 			// close ledger 
 			bkc.closeLedger(lh);
 			
@@ -234,7 +234,7 @@ public class BookieReadWriteTest
 			
 			assertTrue("Checking number of read entries", ls.size() == numEntriesToWrite);
 			
-			LOG.debug("*** SYNC READ COMPLETED ***");
+			LOG.debug("*** SYNC READ COMPLETE ***");
 			
 			// at this point, LedgerSequence ls is filled with the returned values
 			int i = 0;
@@ -260,18 +260,19 @@ public class BookieReadWriteTest
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
+		} //catch (NoSuchAlgorithmException e) {
+		//	e.printStackTrace();
+		//}
 		
 	}
     
+    @Test
     public void testReadWriteSyncSingleClient() throws IOException {
 		try {
 			// Create a BookKeeper client and a ledger
 			bkc = new BookKeeper("127.0.0.1");
 			lh = bkc.createLedger(ledgerPassword);
-			bkc.initMessageDigest("SHA1");
+			//bkc.initMessageDigest("SHA1");
 			ledgerId = lh.getId();
 			LOG.info("Ledger ID: " + lh.getId());
 			for(int i = 0; i < numEntriesToWrite; i++){
@@ -306,17 +307,18 @@ public class BookieReadWriteTest
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
+		} //catch (NoSuchAlgorithmException e) {
+		//	e.printStackTrace();
+		//}
 	}
 	
+    @Test
     public void testReadWriteZero() throws IOException {
 		try {
 			// Create a BookKeeper client and a ledger
 			bkc = new BookKeeper("127.0.0.1");
 			lh = bkc.createLedger(ledgerPassword);
-			bkc.initMessageDigest("SHA1");
+			//bkc.initMessageDigest("SHA1");
 			ledgerId = lh.getId();
 			LOG.info("Ledger ID: " + lh.getId());
 			for(int i = 0; i < numEntriesToWrite; i++){				
@@ -352,10 +354,70 @@ public class BookieReadWriteTest
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
+		} //catch (NoSuchAlgorithmException e) {
+		//	e.printStackTrace();
+		//}
 	}
+    
+    @Test
+    public void testMultiLedger() throws IOException {
+        try {
+            // Create a BookKeeper client and a ledger
+            bkc = new BookKeeper("127.0.0.1");
+            lh = bkc.createLedger(ledgerPassword);
+            lh2 = bkc.createLedger(ledgerPassword);
+            
+            long ledgerId = lh.getId();
+            long ledgerId2 = lh2.getId();
+            
+            //bkc.initMessageDigest("SHA1");
+            LOG.info("Ledger ID 1: " + lh.getId() + ", Ledger ID 2: " + lh2.getId());
+            for(int i = 0; i < numEntriesToWrite; i++){             
+                bkc.addEntry(lh, new byte[0]);
+                bkc.addEntry(lh2, new byte[0]);
+            }
+            
+            bkc.closeLedger(lh);
+            bkc.closeLedger(lh2);
+            
+            lh = bkc.openLedger(ledgerId, ledgerPassword);
+            lh2 = bkc.openLedger(ledgerId2, ledgerPassword);
+            
+            LOG.debug("Number of entries written: " + lh.getLast() + ", " + lh2.getLast());
+            assertTrue("Verifying number of entries written lh (" + lh.getLast() + ")" , lh.getLast() == numEntriesToWrite);
+            assertTrue("Verifying number of entries written lh2 (" + lh2.getLast() + ")", lh2.getLast() == numEntriesToWrite);
+            
+            ls = bkc.readEntries(lh, 0, numEntriesToWrite - 1);
+            int i = 0;
+            while(ls.hasMoreElements()){
+                ByteBuffer result = ByteBuffer.wrap(ls.nextElement().getEntry());
+                LOG.debug("Length of result: " + result.capacity());
+                
+                assertTrue("Checking if entry " + i + " has zero bytes", result.capacity() == 0);
+            }
+            bkc.closeLedger(lh);
+            
+            ls = bkc.readEntries(lh2, 0, numEntriesToWrite - 1);
+            i = 0;
+            while(ls.hasMoreElements()){
+                ByteBuffer result = ByteBuffer.wrap(ls.nextElement().getEntry());
+                LOG.debug("Length of result: " + result.capacity());
+                
+                assertTrue("Checking if entry " + i + " has zero bytes", result.capacity() == 0);
+            }
+            
+            bkc.closeLedger(lh2);
+            
+        } catch (KeeperException e) {
+            e.printStackTrace();
+        } catch (BKException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } //catch (NoSuchAlgorithmException e) {
+           // e.printStackTrace();
+        //}
+    }
     
     
 	public void addComplete(int rc, long ledgerId, long entryId, Object ctx) {
@@ -451,7 +513,7 @@ public class BookieReadWriteTest
 	}
 	
 	protected void tearDown(){
-		LOG.debug("TearDown");
+		LOG.info("TearDown");
 
 		//shutdown bookie servers 
 		try {
@@ -478,7 +540,7 @@ public class BookieReadWriteTest
 	/*	Clean up a directory recursively */
 	protected boolean cleanUpDir(File dir){
 		if (dir.isDirectory()) {
-			System.err.println("Cleaning up " + dir.getName());
+			LOG.info("Cleaning up " + dir.getName());
             String[] children = dir.list();
             for (String string : children) {
 				boolean success = cleanUpDir(new File(dir, string));

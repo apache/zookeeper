@@ -204,7 +204,7 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
                     if(!ids.contains(Integer.valueOf(i))){
                         // and send it to new bookie
                         try{
-                            list.get(i).sendAdd(new SubAddOp(sAdd.op, 
+                            list.get(i).sendAdd(lh, new SubAddOp(sAdd.op, 
                                     pOp, 
                                     i, 
                                     this), ((AddOp) sAdd.op).entry);
@@ -234,7 +234,6 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
          * Collect responses, and reply when there are sufficient 
          * answers.
          */
-        
         if(rc == 0){
             SubReadOp sRead = (SubReadOp) ctx;
             ReadOp rOp = (ReadOp) sRead.op;
@@ -274,7 +273,6 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
                         break;
                     case GENERIC:
                         list = pOp.proposedValues;
-                        LOG.debug("List length before: " + list.size());
                         
                         synchronized(list){
                             if(rOp.seq[(int) (entryId % (rOp.lastEntry - rOp.firstEntry + 1))] == null){
@@ -317,10 +315,10 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
         
                     if((counter == (rOp.lastEntry - rOp.firstEntry + 1)) && 
                             !sRead.op.isReady()){
-                        
                         sRead.op.setReady();
                     }
             
+                    
                     long diff = rOp.lastEntry - rOp.firstEntry;
                     //LOG.debug("Counter: " + rOp.counter + ", " + diff);
                 }
@@ -394,8 +392,7 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
         bb.rewind();
         
         byte[] msgDigest = mac.doFinal(data);
-        if(Arrays.equals(mac.doFinal(data), sig)){
-            
+        if(Arrays.equals(msgDigest, sig)){
             return bb;
         } else {
             LOG.error("Entry id: " + new String(msgDigest) + new String(sig));

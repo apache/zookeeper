@@ -118,24 +118,24 @@ public class LedgerHandle {
     
     private void setBookies(ArrayList<InetSocketAddress> bookies)
     throws InterruptedException {
-        for(InetSocketAddress a : bookies){
-            LOG.debug("Opening bookieHandle: " + a);
-            try{
-                BookieHandle bh = new BookieHandle(this, a);
-                this.bookies.add(bh);
-            } catch(ConnectException e){
-                LOG.error(e + "(bookie: " + a + ")");
+    	try{
+    		for(InetSocketAddress a : bookies){
+    			LOG.debug("Opening bookieHandle: " + a);
+            
+    			//BookieHandle bh = new BookieHandle(this, a);
+    			this.bookies.add(bk.getBookieHandle(a));
+    		}
+    	} catch(ConnectException e){
+    		LOG.error(e);
                 
-                InetSocketAddress addr = null;
-                addr = bk.getNewBookie(bookies);
+    		InetSocketAddress addr = bk.getNewBookie(bookies);
                 
                 if(addr != null){
-                    bookies.add(addr);
+                	bookies.add(addr);
                 }
-            } catch(IOException e) {
-                LOG.error(e);
-            }
-        }
+    	} catch(IOException e) {
+    		LOG.error(e);
+    	}
     }
     
     
@@ -147,8 +147,9 @@ public class LedgerHandle {
      */
     int addBookie(InetSocketAddress addr)
     throws IOException {
-        BookieHandle bh = new BookieHandle(this, addr);
-        this.bookies.add(bh);
+        LOG.info("My address: " + addr.toString());
+        //BookieHandle bh = new BookieHandle(this, addr);
+        this.bookies.add(bk.getBookieHandle(addr));
         
         if(bookies.size() > qSize) setThreshold();
         
@@ -190,7 +191,7 @@ public class LedgerHandle {
             throw BKException.create(Code.NoBookieAvailableException);
         } else {           
             try{
-                BookieHandle bh = new BookieHandle(this, addr);
+                //BookieHandle bh = new BookieHandle(this, addr);
                 
                 /*
                  * TODO: Read from current bookies, and write to this one
@@ -199,7 +200,7 @@ public class LedgerHandle {
                 /*
                  * If successful in writing to new bookie, add it to the set
                  */
-                this.bookies.set(index, bh);
+                this.bookies.set(index, bk.getBookieHandle(addr));
             } catch(ConnectException e){
                 bk.blackListBookie(addr);
                 LOG.error(e);
@@ -224,9 +225,7 @@ public class LedgerHandle {
     void close(){
         ledger = -1;
         last = -1;
-        for(BookieHandle bh : bookies){
-            bh.halt();
-        }
+        bk.haltBookieHandles(bookies);
     }
     
     

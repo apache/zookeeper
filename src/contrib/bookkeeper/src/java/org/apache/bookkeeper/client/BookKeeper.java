@@ -22,6 +22,7 @@ package org.apache.bookkeeper.client;
 
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.io.ByteArrayOutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.nio.ByteBuffer;
@@ -35,6 +36,7 @@ import java.util.Random;
 import java.net.InetSocketAddress;
 
 import org.apache.bookkeeper.client.BKException;
+import org.apache.bookkeeper.client.BookieHandle;
 import org.apache.bookkeeper.client.LedgerSequence;
 import org.apache.bookkeeper.client.BKException.Code;
 import org.apache.bookkeeper.client.LedgerHandle.QMode;
@@ -77,8 +79,6 @@ implements ReadCallback, AddCallback, Watcher {
     
     ZooKeeper zk = null;
     QuorumEngine engine = null;
-    MessageDigest md = null;
-    //HashMap<Long, ArrayBlockingQueue<Operation> > qeMap;
     HashMap<Long, QuorumEngine> engines;
     HashSet<InetSocketAddress> bookieBlackList;
     
@@ -386,6 +386,7 @@ implements ReadCallback, AddCallback, Watcher {
         List<String> list = 
             zk.getChildren(prefix + getZKStringId(lId) + ensemble, false);
         
+        LOG.info("Length of list of bookies: " + list.size());
         for(int i = 0 ; i < list.size() ; i++){
             for(String s : list){
                 byte[] bindex = zk.getData(prefix + getZKStringId(lId) + ensemble + "/" + s, false, stat);
@@ -419,11 +420,6 @@ implements ReadCallback, AddCallback, Watcher {
         InetSocketAddress addr = new InetSocketAddress(parts[0],
                 Integer.parseInt(parts[1]));
         return addr;
-    }
-    
-    public void initMessageDigest(String alg)
-    throws NoSuchAlgorithmException {
-        md = MessageDigest.getInstance(alg);
     }
     
     /**
@@ -642,6 +638,38 @@ implements ReadCallback, AddCallback, Watcher {
         }
         
         return null;
+    }
+    
+    HashMap<InetSocketAddress, BookieHandle> bhMap = 
+    	new HashMap<InetSocketAddress, BookieHandle>();
+    
+    /**
+     *  Keeps a list of available BookieHandle objects and returns
+     *  the corresponding object given an address.
+     *  
+     *  @param	a	InetSocketAddress
+     */
+    
+    synchronized BookieHandle getBookieHandle(InetSocketAddress a)
+    throws ConnectException, IOException {
+    	if(!bhMap.containsKey(a)){
+    		bhMap.put(a, new BookieHandle(a));
+    	}
+    	bhMap.get(a).incRefCount();
+    	
+    	return bhMap.get(a);
+    }
+    
+    /**
+     * When there are no more references to a BookieHandle,
+     * remove it from the list. 
+     */
+    
+    synchronized void haltBookieHandles(ArrayList<BookieHandle> bookies){
+        for(BookieHandle bh : bookies){
+            if(bh.halt() <= 0)
+                bhMap.remove(bh.addr);
+        }
     }
     
     /**
