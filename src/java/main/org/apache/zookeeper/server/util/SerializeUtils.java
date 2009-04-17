@@ -78,25 +78,17 @@ public class SerializeUtils {
 
     public static void deserializeSnapshot(DataTree dt,InputArchive ia,
             Map<Long, Integer> sessions) throws IOException {
-        try {
-            int count = ia.readInt("count");
-            while (count > 0) {
-                long id = ia.readLong("id");
-                int to = ia.readInt("timeout");
-                sessions.put(id, to);
-                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                                         "loadData --- session in archive: " + id
-                                         + " with timeout: " + to);
-                count--;
-            }
-            dt.deserialize(ia, "tree");
-        } catch(IOException e) {
-            throw e;
-        } catch(Exception e) {
-            IOException ioe = new IOException(e.getMessage());
-            ioe.initCause(e);
-            throw ioe;
+        int count = ia.readInt("count");
+        while (count > 0) {
+            long id = ia.readLong("id");
+            int to = ia.readInt("timeout");
+            sessions.put(id, to);
+            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                    "loadData --- session in archive: " + id
+                    + " with timeout: " + to);
+            count--;
         }
+        dt.deserialize(ia, "tree");
     }
 
     public static void serializeSnapshot(DataTree dt,OutputArchive oa,

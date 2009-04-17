@@ -20,15 +20,22 @@ package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.zip.Adler32;
+import java.util.zip.CheckedInputStream;
 
 import junit.framework.TestCase;
 
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.InputArchive;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
@@ -133,13 +140,15 @@ public class CRCTest extends TestCase implements Watcher{
         DataTree dt = new DataTree();
         Map<Long, Integer> sessions = 
             new ConcurrentHashMap<Long, Integer>();
-        try {   
-            snap.deserialize(dt, sessions);
-            assertTrue(false);
-        } catch(IOException ie) {
-            LOG.info("checksu failure in snapshot", ie);    
-        }
-         
+        InputStream snapIS = new BufferedInputStream(new FileInputStream(snapFile));
+        CheckedInputStream crcIn = new CheckedInputStream(snapIS, new Adler32());
+        InputArchive ia=BinaryInputArchive.getArchive(crcIn);
+        snap.deserialize(dt,sessions, ia);
+        long checkSum = crcIn.getChecksum().getValue();
+        long val = ia.readLong("val");
+        snapIS.close();
+        crcIn.close();
+        assertTrue(val != checkSum);
    }
     
     public void process(WatchedEvent event) {
