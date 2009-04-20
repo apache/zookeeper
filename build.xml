@@ -619,7 +619,7 @@
 		description="to run cppunit test cases">
         <property name="fuser.bin" value="/sbin"/>
         <property name="lib.cppunit" value="/usr/local/lib"/>
-	<exec dir="${test.cppunit.dir}" executable="make">
+	<exec dir="${test.cppunit.dir}" executable="make" failonerror="true">
 		<env key="LD_LIBRARY_PATH" value="${lib.cppunit}"/>
 		<env key="PATH" path="${env.PATH};${c.src.dir};${fuser.bin};"/>
                 <env key="CALLER" value="ANT"/>
