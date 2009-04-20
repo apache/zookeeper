@@ -60,6 +60,9 @@ BUGFIXES:
 
   ZOOKEEPER-346. remove the kill command fro mthe client port. (phunt via mahadev)
 
+  ZOOKEEPER-377. running ant cppunit tests, a failure still results in BUILD
+SUCCESSFUL (giri via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
