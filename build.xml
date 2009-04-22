@@ -117,7 +117,25 @@
     <property name="make.cmd" value="make"/>
     <property name="test_patch_sh" value="${test.src.dir}/bin/test-patch.sh"/>
 
-<!-- ====================================================== -->
+	<!-- jdiff.home property set -->
+    <property name="jdiff.home" value="${lib.dir}"/>
+    <property name="jdiff.version" value="1.0.9"/>
+    <property name="xerces.version" value="1.4.4"/>	
+    <property name="jdiff.jar" value="${jdiff.home}/jdiff-${jdiff.version}.jar"/>
+    <property name="xerces.jar" value="${jdiff.home}/xerces-${xerces.version}.jar"/>
+    <property name="jdiff.build.dir" value="${build.docs}/jdiff"/>
+    <property name="jdiff.xml.dir" value="${lib.dir}/jdiff"/>
+    <property name="jdiff.stable" value="3.1.1"/>
+    <property name="jdiff.stable.javadoc" 
+            value="http://hadoop.apache.org/zookeeper/docs/r${jdiff.stable}/api/"/>
+    <property name="jdiff.download.url" 
+		value="http://mirrors.ibiblio.org/pub/mirrors/maven2/jdiff/jdiff/${jdiff.version}/jdiff-${jdiff.version}.jar"/>
+    <property name="jdiff.jar" value="${jdiff.home}/jdiff.jar"/>
+    <property name="xerces.download.url" 
+		value="http://mirrors.ibiblio.org/pub/mirrors/maven2/xerces/xerces/${xerces.version}/xerces-${xerces.version}.jar"/>
+    <property name="xerces.jar" value="${jdiff.home}/xerces.jar"/>
+
+    <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
     <!-- ====================================================== -->
     <macrodef name="macro_tar" description="Worker Macro for tar">
@@ -406,13 +424,14 @@
     <!-- ================================================================== -->
     <!--                                                                    -->
     <!-- ================================================================== -->
-    <target name="package" depends="release-jar, javadoc, compile-test"
+    <target name="package" depends="release-jar, api-report, compile-test"
             description="Build distribution">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
       <mkdir dir="${dist.dir}/contrib"/>
       <mkdir dir="${dist.dir}/bin"/>
       <mkdir dir="${dist.dir}/docs"/>
+      <mkdir dir="${dist.dir}/docs/jdiff"/>
       <mkdir dir="${dist.dir}/docs/api"/>
 
       <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
@@ -513,7 +532,11 @@
       <delete dir="${docs.src}/build"/>
       <delete dir="${src_generated.dir}" />
       <delete dir="${csrc_generated.dir}" />
+      <delete file="${jdiff.jar}" />
+      <delete file="${xerces.jar}" />
+      <delete file="${lib.dir}/Null.java"/>
       <delete file="${lib.dir}/rats.jar" />
+      <delete file="${jdiff.xml.dir}/${name}_${version}.xml"/>	
       <delete file="${jar.name}" />
       <delete dir="${distribution}"/>
       <delete dir="${revision.dir}"/>
@@ -898,5 +921,60 @@
 		<arg value="${ant.project.name}"/>
     	</exec>
      </target>
+
+     <target name="get-jdiff" description="download jdiff and its dependencies">
+	<get src="${jdiff.download.url}" dest="${jdiff.jar}" usetimestamp="true"/>
+	<get src="${xerces.download.url}" dest="${xerces.jar}" usetimestamp="true"/>
+     </target>	
+
+     <target name="api-xml" depends="get-jdiff, javadoc, write-null">
+    	<javadoc>
+       		<doclet name="jdiff.JDiff"
+               		path="${jdiff.jar}:${xerces.jar}">
+         		<param name="-apidir" value="${jdiff.xml.dir}"/>
+         		<param name="-apiname" value="${name} ${version}"/>
+       		</doclet>
+       		<packageset dir="${java.src.dir}">
+			<include name="org/apache/zookeeper"/>
+			<exclude name="org/apache/jute"/>
+                </packageset>
+       		<classpath>
+       			<fileset dir="${lib.dir}">
+        			<include name="**/*.jar"/>
+      			</fileset>
+			<pathelement path="${build.classes}" />	
+		</classpath>
+       	</javadoc>
+     </target>
+	
+     <target name="write-null">
+	<exec executable="touch">
+		<arg value="${jdiff.home}/Null.java"/>
+        </exec>
+     </target> 
+
+     <target name="api-report" depends="api-xml">
+	<mkdir dir="${jdiff.build.dir}"/>
+        <javadoc sourcepath="${java.src.dir}"
+             destdir="${jdiff.build.dir}"
+	     excludepackagenames="org.apache.jute"	
+             sourceFiles="${jdiff.home}/Null.java">
+       		<doclet name="jdiff.JDiff" path="${jdiff.jar}:${xerces.jar}">
+         		<param name="-oldapi" value="${name} ${jdiff.stable}"/>
+         		<param name="-newapi" value="${name} ${version}"/>
+         		<param name="-oldapidir" value="${jdiff.xml.dir}"/>
+         		<param name="-newapidir" value="${jdiff.xml.dir}"/>
+         		<param name="-javadocold" value="${jdiff.stable.javadoc}"/>
+         		<param name="-javadocnew" value="../../api/"/>
+         		<param name="-stats"/>
+       		</doclet>
+		<classpath>
+       			<fileset dir="${lib.dir}">
+        			<include name="**/*.jar"/>
+      			</fileset>
+			<pathelement path="${build.classes}" />	
+		</classpath>
+       </javadoc>
+  </target>
 
 </project>
