@@ -58,10 +58,11 @@ BUGFIXES:
   ZOOKEEPER-367. RecoveryTest failure - "unreasonable length" IOException
   (mahadev via phunt)
 
-  ZOOKEEPER-346. remove the kill command fro mthe client port. (phunt via mahadev)
+  ZOOKEEPER-346. remove the kill command fro mthe client port.
+  (phunt via mahadev)
 
-  ZOOKEEPER-377. running ant cppunit tests, a failure still results in BUILD
-SUCCESSFUL (giri via mahadev)
+  ZOOKEEPER-377. running ant cppunit tests, a failure still results in 
+  BUILD SUCCESSFUL (giri via mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
@@ -105,6 +106,8 @@ IMPROVEMENTS:
   ZOOKEEPER-373. One thread per bookie (flavio via mahadev) 
 
 NEW FEATURES:
+
+  ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
 
 
 Release 3.1.0 - 2009-02-06
