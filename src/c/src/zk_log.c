@@ -20,7 +20,7 @@
 #  define USE_STATIC_LIB
 #endif
 
-#include "zk_log.h"
+#include "zookeeper_log.h"
 #include <unistd.h>
 #include <stdarg.h>
 #include <time.h>

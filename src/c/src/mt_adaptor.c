@@ -28,7 +28,7 @@
 #endif
 
 #include "zk_adaptor.h"
-#include "zk_log.h"
+#include "zookeeper_log.h"
 
 #include <stdlib.h>
 #include <stdio.h>

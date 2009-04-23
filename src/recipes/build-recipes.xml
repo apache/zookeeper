@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- Imported by recipesb/*/build.xml files to share generic targets. -->
+
+<project name="zookeeperbuildrecipes">
+
+  <property name="name" value="${ant.project.name}"/>
+  <property name="root" value="${basedir}"/>
+
+  <property name="zk.root" location="${root}/../../../"/>
+
+  <property name="src.dir"  location="${root}/src/java"/>
+  <property name="src.test" location="${root}/src/test"/>
+
+  <property name="build.dir" location="${zk.root}/build/recipes/${name}"/>
+  <property name="build.classes" location="${build.dir}/classes"/>
+  <property name="build.test" location="${build.dir}/test"/>
+
+  <property name="javac.deprecation" value="on"/>
+  <property name="javac.debug" value="on"/>
+
+  <property name="build.encoding" value="ISO-8859-1"/>
+
+  <!-- to be overridden by sub-projects -->
+  <target name="check-recipes"/>
+  <target name="init-recipes"/>
+
+  <fileset id="lib.jars" dir="${root}" includes="lib/*.jar"/>
+
+  <path id="classpath">
+    <pathelement location="${build.classes}"/>
+    <fileset refid="lib.jars"/>
+    <pathelement location="${zk.root}/build/classes"/>
+    <fileset dir="${zk.root}/src/java/lib">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+
+  <!-- ====================================================== -->
+  <!-- Stuff needed by all targets                            -->
+  <!-- ====================================================== -->
+  <target name="init" depends="check-recipes" unless="skip.recipes">
+    <echo message="recipes: ${name}"/>
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.classes}"/>
+    <mkdir dir="${build.test}"/>
+    <antcall target="init-recipes"/>
+  </target>
+
+  <!-- ====================================================== -->
+  <!-- Compile a recipes files                                -->
+  <!-- ====================================================== -->
+  <target name="compile" depends="init" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+
+    <javac
+     encoding="${build.encoding}"
+     srcdir="${src.dir}"
+     includes="**/*.java"
+     destdir="${build.classes}"
+     debug="${javac.debug}"
+     deprecation="${javac.deprecation}">
+      <classpath refid="classpath"/>
+    </javac>
+  </target>
+
+  <!-- ====================================================== -->
+  <!-- Make a recipes jar                                     -->
+  <!-- ====================================================== -->
+  <target name="jar" depends="compile" unless="skip.recipes">
+    <echo message="recipes: ${name}"/>
+    <jar
+      jarfile="${build.dir}/zookeeper-${version}-${name}.jar"
+      basedir="${build.classes}"      
+    />
+  </target>
+
+  <!-- ====================================================== -->
+  <!-- Package a recipes files                                -->
+  <!-- ====================================================== -->
+  <target name="package" depends="jar" unless="skip.recipes"> 
+    <echo message="recipes: ${name}"/>
+
+    <mkdir dir="${dist.dir}/recipes/${name}"/>
+    <copy todir="${dist.dir}/recipes/${name}" includeEmptyDirs="false"
+          flatten="true">
+      <fileset dir="${build.dir}">
+        <include name="zookeeper-${version}-${name}.jar" />
+      </fileset>
+    </copy>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Clean.  Delete the build files, and their directories              -->
+  <!-- ================================================================== -->
+  <target name="clean">
+    <echo message="recipes: ${name}"/>
+    <delete dir="${build.dir}"/>
+  </target>
+
+</project>

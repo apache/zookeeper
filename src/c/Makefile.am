@@ -7,7 +7,7 @@ CXXFLAGS = -Wall -g
 
 LIB_LDFLAGS = -no-undefined -version-info 2
 
-pkginclude_HEADERS = include/zookeeper.h include/zookeeper_version.h include/recordio.h generated/zookeeper.jute.h
+pkginclude_HEADERS = include/zookeeper.h include/zookeeper_version.h include/zookeeper_log.h include/recordio.h generated/zookeeper.jute.h
 EXTRA_DIST=LICENSE
 
 HASHTABLE_SRC = src/hashtable/hashtable_itr.h src/hashtable/hashtable_itr.c \
@@ -16,10 +16,10 @@ HASHTABLE_SRC = src/hashtable/hashtable_itr.h src/hashtable/hashtable_itr.c \
 noinst_LTLIBRARIES = libhashtable.la
 libhashtable_la_SOURCES = $(HASHTABLE_SRC)
 
-COMMON_SRC = src/zookeeper.c include/zookeeper.h include/zookeeper_version.h \
+COMMON_SRC = src/zookeeper.c include/zookeeper.h include/zookeeper_version.h include/zookeeper_log.h\
     src/recordio.c include/recordio.h include/proto.h \
     src/zk_adaptor.h generated/zookeeper.jute.c \
-    src/zk_log.h src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c
+    src/zookeeper_log.h src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c
 
 noinst_LTLIBRARIES += libzkst.la
 libzkst_la_SOURCES =$(COMMON_SRC) src/st_adaptor.c
