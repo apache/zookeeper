@@ -28,7 +28,7 @@
 #include <zookeeper.jute.h>
 #include <proto.h>
 #include "zk_adaptor.h"
-#include "zk_log.h"
+#include "zookeeper_log.h"
 #include "zk_hashtable.h"
 
 #include <stdlib.h>

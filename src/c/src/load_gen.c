@@ -17,7 +17,7 @@
  */
 
 #include <zookeeper.h>
-#include "zk_log.h"
+#include "zookeeper_log.h"
 #include <errno.h>
 #include <pthread.h>
 #include <string.h>

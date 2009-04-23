@@ -86,6 +86,7 @@
               location="${test.build.dir}/clover/reports"/>
 
     <property name="contrib.dir" value="${src.dir}/contrib"/>
+    <property name="recipes.dir" value="${src.dir}/recipes"/>
 
     <available property="clover.present"
                classname="com.cenqua.clover.CloverInstr"
@@ -429,6 +430,7 @@
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
       <mkdir dir="${dist.dir}/contrib"/>
+      <mkdir dir="${dist.dir}/recipes"/>
       <mkdir dir="${dist.dir}/bin"/>
       <mkdir dir="${dist.dir}/docs"/>
       <mkdir dir="${dist.dir}/docs/jdiff"/>
@@ -444,6 +446,7 @@
         <property name="version" value="${version}"/>
         <property name="dist.dir" value="${dist.dir}"/>
         <fileset file="${contrib.dir}/build.xml"/>
+        <fileset file="${recipes.dir}/build.xml"/>
       </subant>  	
 
       <copy todir="${dist.dir}"> 
@@ -526,7 +529,7 @@
     <!-- ====================================================== -->
     <!-- Clean.  Delete the build files, and their directories  -->
     <!-- ====================================================== -->
-    <target name="clean" depends="clean-contrib"
+    <target name="clean" depends="clean-contrib,clean-recipes"
             description="Clean.  Delete the build files, and their directories">
       <delete dir="${build.dir}"/>
       <delete dir="${docs.src}/build"/>
@@ -550,6 +553,12 @@
         <fileset file="${contrib.dir}/build.xml"/>
       </subant>  	
     </target>
+
+   <target name="clean-recipes">
+     <subant target="clean">
+       <fileset file="${recipes.dir}/build.xml"/>
+     </subant>
+   </target>
 
     <!-- ====================================================== -->
     <!-- Run unit tests                                         -->
