@@ -170,10 +170,23 @@ public class Follower {
                         sock.getInputStream()));
                 bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
                 leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
+                
+                /*
+                 * Send follower info, including last zxid and sid
+                 */
                 QuorumPacket qp = new QuorumPacket();
-                qp.setType(Leader.LASTZXID);
+                qp.setType(Leader.FOLLOWERINFO);
                 long sentLastZxid = self.getLastLoggedZxid();
                 qp.setZxid(sentLastZxid);
+                
+                /*
+                 * Add sid to payload
+                 */
+                ByteArrayOutputStream bsid = new ByteArrayOutputStream();
+                DataOutputStream dsid = new DataOutputStream(bsid);
+                dsid.writeLong(self.getId());
+                qp.setData(bsid.toByteArray());
+                
                 writePacket(qp, true);
                 readPacket(qp);
                 long newLeaderZxid = qp.getZxid();
@@ -222,6 +235,7 @@ public class Follower {
                 writePacket(ack, true);
                 sock.setSoTimeout(self.tickTime * self.syncLimit);
                 zk.startup();
+                
                 while (self.running) {
                     readPacket(qp);
                     switch (qp.getType()) {

@@ -121,6 +121,7 @@ public class QuorumPeerMain {
                 quorumPeer.setTickTime(config.getTickTime());
                 quorumPeer.setInitLimit(config.getInitLimit());
                 quorumPeer.setSyncLimit(config.getSyncLimit());
+                quorumPeer.setQuorumVerifier(config.getQuorumVerifier());
                 quorumPeer.setCnxnFactory(cnxnFactory);
 
                 quorumPeer.start();

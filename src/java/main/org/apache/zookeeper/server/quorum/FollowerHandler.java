@@ -52,6 +52,15 @@ public class FollowerHandler extends Thread {
     final Leader leader;
 
     long tickOfLastAck;
+    
+    /**
+     * ZooKeeper server identifier of this follower
+     */
+    protected long sid = 0;
+    
+    long getSid(){
+        return sid;
+    }
 
     /**
      * The packets to be sent to the follower
@@ -129,6 +138,7 @@ public class FollowerHandler extends Thread {
         String type = null;
         String mess = null;
         Record txn = null;
+        
         switch (p.getType()) {
         case Leader.ACK:
             type = "ACK";
@@ -136,8 +146,8 @@ public class FollowerHandler extends Thread {
         case Leader.COMMIT:
             type = "COMMIT";
             break;
-        case Leader.LASTZXID:
-            type = "LASTZXID";
+        case Leader.FOLLOWERINFO:
+            type = "FOLLOWERINFO";
             break;
         case Leader.NEWLEADER:
             type = "NEWLEADER";
@@ -200,12 +210,21 @@ public class FollowerHandler extends Thread {
 
             QuorumPacket qp = new QuorumPacket();
             ia.readRecord(qp, "packet");
-            if (qp.getType() != Leader.LASTZXID) {
-                LOG.error("First packet " + qp.toString()
-                        + " is not LASTZXID!");
+            if(qp.getType() != leader.FOLLOWERINFO){
+            	LOG.error("First packet " + qp.toString()
+                        + " is not FOLLOWERINFO!");
                 return;
             }
+            if (qp.getData() != null) {
+            	ByteBuffer bbsid = ByteBuffer.wrap(qp.getData());
+                this.sid = bbsid.getLong();
+            } else {
+            	this.sid = leader.followerCounter.getAndDecrement();
+            }
+            LOG.info("The follower sid: " + this.sid);
+            
             long peerLastZxid = qp.getZxid();
+            
             int packetToSend = Leader.SNAP;
             boolean logTxns = true;
 
@@ -307,7 +326,7 @@ public class FollowerHandler extends Thread {
 
                 switch (qp.getType()) {
                 case Leader.ACK:
-                    leader.processAck(qp.getZxid(), sock.getLocalSocketAddress());
+                    leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
                     break;
                 case Leader.PING:
                     // Process the touches

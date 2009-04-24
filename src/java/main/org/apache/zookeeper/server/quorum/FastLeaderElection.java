@@ -21,7 +21,9 @@ package org.apache.zookeeper.server.quorum;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -454,19 +456,19 @@ public class FastLeaderElection implements Election {
             HashMap<Long, Vote> votes, 
             Vote vote) {
 
-        Collection<Vote> votesCast = votes.values();
-        int count = 0;
+        HashSet<Long> set = new HashSet<Long>();
         
         /*
          * First make the views consistent. Sometimes peers will have
          * different zxids for a server depending on timing.
          */
-        for (Vote v : votesCast) {
-            if (v.equals(vote))
-                count++;
+        for (Map.Entry<Long,Vote> entry : votes.entrySet()) {
+            if (vote.equals(entry.getValue())){
+                set.add(entry.getKey());
+            }
         }
                       
-        if (count > (self.quorumPeers.size() / 2))
+        if(self.getQuorumVerifier().containsQuorum(set))
             return true;
         else
             return false;
