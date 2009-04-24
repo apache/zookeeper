@@ -33,6 +33,9 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 
 public class QuorumPeerConfig {
     private static final Logger LOG = Logger.getLogger(QuorumPeerConfig.class);
@@ -50,6 +53,10 @@ public class QuorumPeerConfig {
         new HashMap<Long, QuorumServer>();
 
     protected long serverId;
+    protected HashMap<Long, Long> serverWeight = new HashMap<Long, Long>();
+    protected HashMap<Long, Long> serverGroup = new HashMap<Long, Long>();
+    protected int numGroups = 0;
+    protected QuorumVerifier quorumVerifier;
 
     @SuppressWarnings("serial")
     public static class ConfigException extends Exception {
@@ -93,7 +100,8 @@ public class QuorumPeerConfig {
         }
     }
 
-    protected void parseProperties(Properties zkProp) throws IOException {
+    protected void parseProperties(Properties zkProp)
+    throws IOException, ConfigException {
         for (Entry<Object, Object> entry : zkProp.entrySet()) {
             String key = entry.getKey().toString();
             String value = entry.getValue().toString();
@@ -129,6 +137,25 @@ public class QuorumPeerConfig {
                     servers.put(Long.valueOf(sid), new QuorumServer(sid, addr,
                             electionAddr));
                 }
+            } else if (key.startsWith("group")) {
+                int dot = key.indexOf('.');
+                long gid = Long.parseLong(key.substring(dot + 1));
+                
+                numGroups++;
+                
+                String parts[] = value.split(":");
+                for(String s : parts){
+                    long sid = Long.parseLong(s);
+                    if(serverGroup.containsKey(sid))
+                        throw new ConfigException("Server " + sid + "is in multiple groups");
+                    else
+                        serverGroup.put(sid, gid);
+                }       
+                
+            } else if(key.startsWith("weight")) {
+                int dot = key.indexOf('.');
+                long sid = Long.parseLong(key.substring(dot + 1));
+                serverWeight.put(sid, Long.parseLong(value));
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -169,6 +196,34 @@ public class QuorumPeerConfig {
                 }
             }
 
+            /*
+             * Default of quorum config is majority
+             */
+            if(serverGroup.size() > 0){  
+                if(servers.size() != serverGroup.size())
+                    throw new ConfigException("Every server must be in exactly one group");
+            	/*
+            	 * The deafult weight of a server is 1
+            	 */
+            	for(QuorumServer s : servers.values()){
+            		if(!serverWeight.containsKey(s.id))
+            			serverWeight.put(s.id, (long) 1);
+            	}
+            	
+            	/*
+            	 * Set the quorumVerifier to be QuorumHierarchical 
+            	 */
+                quorumVerifier = new QuorumHierarchical(numGroups, 
+                        serverWeight, serverGroup);
+            } else {
+            	/*
+            	 * The default QuorumVerifier is QuorumMaj
+            	 */
+            	
+                LOG.info("Defaulting to majority quorums");
+                quorumVerifier = new QuorumMaj(servers.size());
+            }
+            
             File myIdFile = new File(dataDir, "myid");
             if (!myIdFile.exists()) {
                 throw new IllegalArgumentException(myIdFile.toString()
@@ -199,7 +254,10 @@ public class QuorumPeerConfig {
     public int getSyncLimit() { return syncLimit; }
     public int getElectionAlg() { return electionAlg; }
     public int getElectionPort() { return electionPort; }
-
+    public QuorumVerifier getQuorumVerifier() {   
+        return quorumVerifier;
+    }
+    
     public Map<Long,QuorumServer> getServers() {
         return Collections.unmodifiableMap(servers);
     }

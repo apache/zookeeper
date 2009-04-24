@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.1 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.2 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -1107,10 +1107,38 @@ server.3=zoo3:2888:3888</span>
               with ZooKeeper. If followers fall too far behind a leader, they
               will be dropped.</p>
 </dd>
+
+          
+<dt>
+<term>group.x=nnnnn[:nnnnn]</term>
+</dt>
+<dd>
+<p>(No Java system property)</p>
+<p>Enables a hierarchical quorum construction."x" is a group identifier
+              and the numbers following the "=" sign correspond to server identifiers. 
+              The left-hand side of the assignment is a colon-separated list of server
+              identifiers. Note that groups must be disjoint and the union of all groups
+              must be the ZooKeeper ensemble. </p>
+</dd>
+
+	
+<dt>
+<term>weight.x=nnnnn</term>
+</dt>
+<dd>
+<p>(No Java system property)</p>
+<p>Used along with "group", it assigns a weight to a server when
+              forming quorums. Such a value corresponds to the weight of a server
+              when voting. There are a few parts of ZooKeeper that require voting
+              such as leader election and the atomic broadcast protocol. By default
+              the weight of server is 1. If the configuration defines groups, but not
+              weights, then a value of 1 will be assigned to all servers.  
+              </p>
+</dd>
         
 </dl>
 <p></p>
-<a name="N10368"></a><a name="Unsafe+Options"></a>
+<a name="N1037A"></a><a name="Unsafe+Options"></a>
 <h4>Unsafe Options</h4>
 <p>The following options can be useful, but be careful when you use
         them. The risk of each is explained along with the explanation of what
@@ -1155,7 +1183,7 @@ server.3=zoo3:2888:3888</span>
 </dd>
         
 </dl>
-<a name="N1039A"></a><a name="sc_zkCommands"></a>
+<a name="N103AC"></a><a name="sc_zkCommands"></a>
 <h3 class="h4">ZooKeeper Commands: The Four Letter Words</h3>
 <p>ZooKeeper responds to a small set of commands. Each command is
       composed of four letters. You issue the commands to ZooKeeper via telnet
@@ -1176,15 +1204,6 @@ server.3=zoo3:2888:3888</span>
 </dt>
 <dd>
 <p>Print details about serving environment</p>
-</dd>
-
-        
-<dt>
-<term>kill</term>
-</dt>
-<dd>
-<p>Shuts down the server. This must be issued from the machine
-            the ZooKeeper server is running on.</p>
 </dd>
 
         
@@ -1228,7 +1247,7 @@ server.3=zoo3:2888:3888</span>
 <pre class="code">$ echo ruok | nc 127.0.0.1 5111
 imok
 </pre>
-<a name="N103E1"></a><a name="sc_dataFileManagement"></a>
+<a name="N103EC"></a><a name="sc_dataFileManagement"></a>
 <h3 class="h4">Data File Management</h3>
 <p>ZooKeeper stores its data in a data directory and its transaction
       log in a transaction log directory. By default these two directories are
@@ -1236,7 +1255,7 @@ imok
       transaction log files in a separate directory than the data files.
       Throughput increases and latency decreases when transaction logs reside
       on a dedicated log devices.</p>
-<a name="N103EA"></a><a name="The+Data+Directory"></a>
+<a name="N103F5"></a><a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
 <p>This directory has two files in it:</p>
 <ul>
@@ -1282,14 +1301,14 @@ imok
         idempotent nature of its updates. By replaying the transaction log
         against fuzzy snapshots ZooKeeper gets the state of the system at the
         end of the log.</p>
-<a name="N10426"></a><a name="The+Log+Directory"></a>
+<a name="N10431"></a><a name="The+Log+Directory"></a>
 <h4>The Log Directory</h4>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
         log file is started each time a snapshot is begun. The log file's
         suffix is the first zxid written to that log.</p>
-<a name="N10430"></a><a name="sc_filemanagement"></a>
+<a name="N1043B"></a><a name="sc_filemanagement"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
         standalone ZooKeeper servers and different configurations of
@@ -1309,7 +1328,7 @@ imok
         this document for more details on setting a retention policy
         and maintenance of ZooKeeper storage.
         </p>
-<a name="N10445"></a><a name="sc_commonProblems"></a>
+<a name="N10450"></a><a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
       ZooKeeper correctly:</p>
@@ -1363,7 +1382,7 @@ imok
 </dd>
       
 </dl>
-<a name="N10469"></a><a name="sc_bestPractices"></a>
+<a name="N10474"></a><a name="sc_bestPractices"></a>
 <h3 class="h4">Best Practices</h3>
 <p>For best results, take note of the following list of good
       Zookeeper practices. <em>[tbd...]</em>

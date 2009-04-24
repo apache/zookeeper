@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.1 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.2 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -209,6 +209,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_comparisons">Comparisons</a>
 </li>
 </ul>
+</li>
+<li>
+<a href="#sc_quorum">Quorums</a>
 </li>
 <li>
 <a href="#sc_logging">Logging</a>
@@ -617,8 +620,42 @@ proposals and to not worry about duplicate proposals for a given zxid.
 </div>
 
 
+<a name="N10134"></a><a name="sc_quorum"></a>
+<h2 class="h3">Quorums</h2>
+<div class="section">
+<p>
+Atomic broadcast and leader election use the notion of quorum to guarantee a consistent
+view of the system. By default, ZooKeeper uses majority quorums, which means that every
+voting that happens in one of these protocols requires a majority to vote on. One example is
+acknowledging a leader proposal: the leader can only commit once it receives an
+acknowledgement from a quorum of servers.
+</p>
+<p>
+If we extract the properties that we really need from our use of majorities, we have that we only
+need to guarantee that groups of processes used to validate an operation by voting (e.g., acknowledging
+a leader proposal) pairwise intersect in at least one server. Using majorities guarantees such a property.
+However, there are other ways of constructing quorums different from majorities. For example, we can assign
+weights to the votes of servers, and say that the votes of some servers are more important. To obtain a quorum,
+we get enough votes so that the sum of weights of all votes is larger than half of the total sum of all weights.    
+</p>
+<p>
+A different construction that uses weights and is useful in wide-area deployments (co-locations) is a hierarchical
+one. With this construction, we split the servers into disjoint groups and assign weights to processes. To form 
+a quorum, we have to get a hold of enough servers from a majority of groups G, such that for each group g in G,
+the sum of votes from g is larger than half of the sum of weights in g. Interestingly, this construction enables
+smaller quorums. If we have, for example, 9 servers, we split them into 3 groups, and assign a weight of 1 to each
+server, then we are able to form quorums of size 4. Note that two subsets of processes composed each of a majority
+of servers from each of a majority of groups necessarily have a non-empty intersection. It is reasonable to expect
+that a majority of co-locations will have a majority of servers available with high probability. 
+</p>
+<p>
+With ZooKeeper, we provide a user with the ability of configuring servers to use majority quorums, weights, or a 
+hierarchy of groups.
+</p>
+</div>
 
-<a name="N10134"></a><a name="sc_logging"></a>
+
+<a name="N10147"></a><a name="sc_logging"></a>
 <h2 class="h3">Logging</h2>
 <div class="section">
 <p>
@@ -629,10 +666,10 @@ ZooKeeper, see the <a href="zookeeperAdmin.html#sc_logging">Logging</a> section
 of the <a href="zookeeperAdmin.html">ZooKeeper Administrator's Guide.</a>
 
 </p>
-<a name="N10149"></a><a name="sc_developerGuidelines"></a>
+<a name="N1015C"></a><a name="sc_developerGuidelines"></a>
 <h3 class="h4">Developer Guidelines</h3>
 <p>Please follow these guidelines when submitting code. Patch reviewers will look for the following:</p>
-<a name="N10151"></a><a name="sc_rightLevel"></a>
+<a name="N10164"></a><a name="sc_rightLevel"></a>
 <h4>Logging at the Right Level</h4>
 <p>
 There are <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html#FATAL">6 levels of logging in log4j</a>. 
@@ -667,7 +704,7 @@ It's important to pick the right one. In order of higher to lower severity:</p>
 <p>
 ZooKeeper is typically run in production such that log messages of INFO level 
 severity and higher (more severe) are output to the log.</p>
-<a name="N1017C"></a><a name="sc_log4jIdioms"></a>
+<a name="N1018F"></a><a name="sc_log4jIdioms"></a>
 <h4>Use of Standard log4j Idioms</h4>
 <p>
 <em>Static Message Logging</em>

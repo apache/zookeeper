@@ -16,30 +16,17 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum.flexible;
 
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.RequestProcessor;
+import java.util.HashSet;
 
 /**
- * This is a very simple RequestProcessor that simply forwards a request from a
- * previous stage to the leader as an ACK.
+ * All quorum validators have to implement a method called
+ * containsQuorum, which verifies if a HashSet of server 
+ * identifiers constitutes a quorum.
+ *
  */
-class AckRequestProcessor implements RequestProcessor {
-    Leader leader;
 
-    AckRequestProcessor(Leader leader) {
-        this.leader = leader;
-    }
-
-    /**
-     * Forward the request as an ACK to the leader
-     */
-    public void processRequest(Request request) {
-        leader.processAck(leader.self.getId(), request.zxid, null);
-    }
-
-    public void shutdown() {
-        // XXX No need to do anything
-    }
+public interface QuorumVerifier {
+    boolean containsQuorum(HashSet<Long> set);
 }

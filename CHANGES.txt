@@ -112,6 +112,7 @@ NEW FEATURES:
   ZOOKEEPER-78. added a high level protocol/feature - for easy Leader
   Election or exclusive Write Lock creation (mahadev via phunt)
 
+  ZOOKEEPER-29. Flexible quorums (flavio via mahadev) 
 
 Release 3.1.0 - 2009-02-06
   

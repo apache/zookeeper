@@ -34,6 +34,8 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -108,6 +110,13 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     public int getQuorumSize(){
         return quorumPeers.size();
     }
+    
+    /**
+     * QuorumVerifier implementation; default (majority). 
+     */
+    
+    private QuorumVerifier quorumConfig;
+    
     /**
      * My id
      */
@@ -259,10 +268,24 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         quorumStats = new QuorumStats(this);
     }
     
+   
+    /**
+     * For backward compatibility purposes, we instantiate QuorumMaj by default.
+     */
+    
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
             NIOServerCnxn.Factory cnxnFactory) throws IOException {
+        this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, 
+        		initLimit, syncLimit, cnxnFactory, new QuorumMaj(quorumPeers.size()));
+    }
+    
+    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
+            File dataLogDir, int electionType,
+            long myid, int tickTime, int initLimit, int syncLimit,
+            NIOServerCnxn.Factory cnxnFactory, 
+            QuorumVerifier quorumConfig) throws IOException {
         this();
         this.cnxnFactory = cnxnFactory;
         this.quorumPeers = quorumPeers;
@@ -272,6 +295,9 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         this.initLimit = initLimit;
         this.syncLimit = syncLimit;        
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
+        if(quorumConfig == null)
+            this.quorumConfig = new QuorumMaj(quorumPeers.size());
+        else this.quorumConfig = quorumConfig;
     }
     
     QuorumStats quorumStats() {
@@ -313,6 +339,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         this.electionAlg = createElectionAlgorithm(electionType);
     }
     
+    
     /**
      * This constructor is only used by the existing unit test code.
      * It defaults to FileLogProvider persistence provider.
@@ -324,7 +351,23 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit,
-                new NIOServerCnxn.Factory(clientPort));
+                new NIOServerCnxn.Factory(clientPort),
+                new QuorumMaj(quorumPeers.size()));
+    }
+    
+    /**
+     * This constructor is only used by the existing unit test code.
+     * It defaults to FileLogProvider persistence provider.
+     */
+    public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
+            File logDir, int clientPort, int electionAlg,
+            long myid, int tickTime, int initLimit, int syncLimit, 
+            QuorumVerifier quorumConfig)
+        throws IOException
+    {
+        this(quorumPeers, snapDir, logDir, electionAlg,
+                myid,tickTime, initLimit,syncLimit,
+                new NIOServerCnxn.Factory(clientPort), quorumConfig);
     }
     
     public long getLastLoggedZxid(){
@@ -574,6 +617,19 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      */
     public int getTick() {
         return tick;
+    }
+    
+    /**
+     * Return QuorumVerifier object
+     */
+    
+    public QuorumVerifier getQuorumVerifier(){
+        return quorumConfig;
+        
+    }
+    
+    public void setQuorumVerifier(QuorumVerifier quorumConfig){
+       this.quorumConfig = quorumConfig;
     }
     
     /**

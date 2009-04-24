@@ -775,8 +775,37 @@ server.3=zoo3:2888:3888</computeroutput></para>
               will be dropped.</para>
             </listitem>
           </varlistentry>
-        </variablelist>
 
+          <varlistentry>
+            <term>group.x=nnnnn[:nnnnn]</term>
+
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para>Enables a hierarchical quorum construction."x" is a group identifier
+              and the numbers following the "=" sign correspond to server identifiers. 
+              The left-hand side of the assignment is a colon-separated list of server
+              identifiers. Note that groups must be disjoint and the union of all groups
+              must be the ZooKeeper ensemble. </para>
+            </listitem>
+          </varlistentry>
+
+	<varlistentry>
+            <term>weight.x=nnnnn</term>
+
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para>Used along with "group", it assigns a weight to a server when
+              forming quorums. Such a value corresponds to the weight of a server
+              when voting. There are a few parts of ZooKeeper that require voting
+              such as leader election and the atomic broadcast protocol. By default
+              the weight of server is 1. If the configuration defines groups, but not
+              weights, then a value of 1 will be assigned to all servers.  
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
         <para></para>
       </section>
 

@@ -16,30 +16,31 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.quorum;
+package org.apache.zookeeper.server.quorum.flexible;
 
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.RequestProcessor;
+import java.util.HashSet;
+
 
 /**
- * This is a very simple RequestProcessor that simply forwards a request from a
- * previous stage to the leader as an ACK.
+ * This class implements a validator for majority quorums. The 
+ * implementation is straightforward.
+ *
  */
-class AckRequestProcessor implements RequestProcessor {
-    Leader leader;
-
-    AckRequestProcessor(Leader leader) {
-        this.leader = leader;
-    }
-
+public class QuorumMaj implements QuorumVerifier {
+    int half;
+    
     /**
-     * Forward the request as an ACK to the leader
+     * Defines a majority to avoid computing it every time.
      */
-    public void processRequest(Request request) {
-        leader.processAck(leader.self.getId(), request.zxid, null);
+    public QuorumMaj(int n){
+        this.half = n/2;
     }
-
-    public void shutdown() {
-        // XXX No need to do anything
+    
+    /**
+     * Verifies if a set is a majority.
+     */
+    public boolean containsQuorum(HashSet<Long> set){
+        return (set.size() > half);
     }
+    
 }

@@ -789,8 +789,9 @@ public class AuthFastLeaderElection implements Election {
     private boolean termPredicate(HashMap<InetSocketAddress, Vote> votes,
             long l, long zxid) {
 
-        int count = 0;
+
         Collection<Vote> votesCast = votes.values();
+        int count = 0;
         /*
          * First make the views consistent. Sometimes peers will have different
          * zxids for a server depending on timing.
