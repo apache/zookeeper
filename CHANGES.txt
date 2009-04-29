@@ -64,6 +64,9 @@ BUGFIXES:
   ZOOKEEPER-377. running ant cppunit tests, a failure still results in 
   BUILD SUCCESSFUL (giri via mahadev)
 
+  ZOOKEEPER-382. zookeeper cpp tests fails on 64 bit machines with gcc 4.1.2
+  (mahadev via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

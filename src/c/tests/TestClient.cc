@@ -270,7 +270,8 @@ public:
     static zhandle_t *async_zk;
 
     static void statCompletion(int rc, const struct Stat *stat, const void *data) {
-        CPPUNIT_ASSERT_EQUAL((int)data, rc);
+        int tmp = (int) (long) data;
+        CPPUNIT_ASSERT_EQUAL(tmp, rc);
     }
 
     static void stringCompletion(int rc, const char *value, const void *data) {
@@ -288,7 +289,8 @@ public:
     }
 
     static void voidCompletion(int rc, const void *data) {
-        CPPUNIT_ASSERT_EQUAL((int)data, rc);
+        int tmp = (int) (long) data;
+        CPPUNIT_ASSERT_EQUAL(tmp, rc);
     }
 
     static void verifyCreateFails(const char *path, zhandle_t *zk) {
