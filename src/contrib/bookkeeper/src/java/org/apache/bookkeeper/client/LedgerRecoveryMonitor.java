@@ -229,6 +229,14 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
         
     }
     
+    /**
+     * Returns one hint at a time. We add a new hint to
+     * the "hints" TreeMap used in this method upon a read
+     * callback. Such callbacks correspond to returned values from bookies upon a request
+     * for the last entry written hint.
+     * 
+     * @return long next hint
+     */
     private long getNextHint(){
         if(hints.size() == 0) return -1;
         

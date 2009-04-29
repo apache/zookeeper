@@ -254,8 +254,10 @@ public class LedgerHandle {
     }
     
     /**
-     * Returns the last entry identifier submitted and increments it.
-     * @return long
+     * Sets the last entry identifier submitted.
+     * 
+     * @param   last    last entry
+     * @return  long    returns the value just set
      */
     long setLast(long last){
         this.last = last;
