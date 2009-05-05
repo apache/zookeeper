@@ -111,6 +111,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-373. One thread per bookie (flavio via mahadev) 
 
+  ZOOKEEPER-384. keeper exceptions missing path (phunt via mahadev)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
