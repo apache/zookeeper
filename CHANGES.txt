@@ -113,6 +113,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-384. keeper exceptions missing path (phunt via mahadev)
 
+  ZOOKEEPER-380. bookkeeper should have a streaming api so that its easier to
+  store checpoints/snapshots in bookkeeper. (mahadev via flavio)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)

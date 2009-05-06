@@ -1,4 +1,4 @@
-package org.apache.bookkeeper.client;
+package org. apache.bookkeeper.client;
 /*
  * 
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -23,12 +23,8 @@ package org.apache.bookkeeper.client;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.io.ByteArrayOutputStream;
-import java.security.NoSuchAlgorithmException;
 import java.nio.ByteBuffer;
-import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.HashSet;
 import java.util.List;
 import java.util.HashMap;
@@ -40,10 +36,6 @@ import org.apache.bookkeeper.client.BookieHandle;
 import org.apache.bookkeeper.client.LedgerSequence;
 import org.apache.bookkeeper.client.BKException.Code;
 import org.apache.bookkeeper.client.LedgerHandle.QMode;
-import org.apache.bookkeeper.client.QuorumEngine.Operation;
-import org.apache.bookkeeper.client.QuorumEngine.Operation.AddOp;
-import org.apache.bookkeeper.client.QuorumEngine.Operation.ReadOp;
-import org.apache.bookkeeper.client.QuorumEngine.Operation.StopOp;
 import org.apache.log4j.Logger;
 
 import org.apache.zookeeper.data.Stat;
@@ -53,7 +45,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.server.ZooKeeperServer;
 
 
 /**
@@ -63,12 +54,17 @@ import org.apache.zookeeper.server.ZooKeeperServer;
  * There are three possible operations: start a new ledger, 
  * write to a ledger, and read from a ledger.
  * 
- *
  */
 
 public class BookKeeper 
-implements ReadCallback, AddCallback, Watcher {
-    
+implements Watcher {
+    /**
+     * the chain of classes to get a client 
+     * request from the bookeeper class to the 
+     * server is 
+     * bookkeeper->quorumengine->bookiehandle->bookieclient
+     * 
+     */
     Logger LOG = Logger.getLogger(BookKeeper.class);
 
     static public final String prefix = "/ledgers/L";
@@ -79,7 +75,6 @@ implements ReadCallback, AddCallback, Watcher {
     
     ZooKeeper zk = null;
     QuorumEngine engine = null;
-    HashMap<Long, QuorumEngine> engines;
     HashSet<InetSocketAddress> bookieBlackList;
     
     LedgerSequence responseRead;
@@ -93,7 +88,6 @@ implements ReadCallback, AddCallback, Watcher {
         
         //Create hashmap for quorum engines
         //this.qeMap = new HashMap<Long, ArrayBlockingQueue<Operation> >();
-        this.engines = new HashMap<Long, QuorumEngine >();
         //List to enable clients to blacklist bookies
         this.bookieBlackList = new HashSet<InetSocketAddress>();
     }
@@ -102,68 +96,27 @@ implements ReadCallback, AddCallback, Watcher {
      * Watcher method. 
      */
     synchronized public void process(WatchedEvent event) {
-        LOG.info("Process: " + event.getType() + " " + event.getPath());
+        LOG.debug("Process: " + event.getType() + " " + event.getPath());
     }
     
-    
-    /**
-     * Implements objects to help with the synchronization of asynchronous calls
-     * 
-     */
-    
-    private static class RetCounter {
-        int i;
-        int rc;
-        int total;
-        LedgerSequence seq = null;
-        
-        synchronized void inc() {
-            i++;
-            total++;
-        }
-        synchronized void dec() {
-            i--;
-            notifyAll();
-        }
-        synchronized void block(int limit) throws InterruptedException {
-            while(i > limit) {
-                int prev = i;
-                wait(15000);
-                if(i == prev){
-                    break;
-                }
-            }
-        }
-        synchronized int total() {
-            return total;
-        }
-        
-        void setrc(int rc){
-            this.rc = rc;
-        }
-        
-        int getrc(){
-            return rc;
-        }
-        
-        void setSequence(LedgerSequence seq){
-            this.seq = seq;
-        }
-        
-        LedgerSequence getSequence(){
-            return seq;
-        }
-    }
+
     
     /**
      * Formats ledger ID according to ZooKeeper rules
      * 
      * @param id	znode id
      */
-    private String getZKStringId(long id){
+    String getZKStringId(long id){
         return String.format("%010d", id);        
     }
     
+    /**
+     * return the zookeeper instance
+     * @return return the zookeeper instance
+     */
+    ZooKeeper getZooKeeper() {
+        return zk;
+    }
     
     /**
      * Creates a new ledger. To create a ledger, we need to specify the ensemble
@@ -179,8 +132,8 @@ implements ReadCallback, AddCallback, Watcher {
      * @param passwd    password
      */
     public LedgerHandle createLedger(int ensSize, int qSize, QMode mode,  byte passwd[])
-    throws KeeperException, InterruptedException, 
-    IOException, BKException {
+        throws KeeperException, InterruptedException, 
+        IOException, BKException {
         // Check that quorum size follows the minimum
         long t;
         switch(mode){
@@ -201,37 +154,29 @@ implements ReadCallback, AddCallback, Watcher {
         case FREEFORM:
             break;
         }
-        
         /*
          * Create ledger node on ZK.
          * We get the id from the sequence number on the node.
          */
-        
         String path = zk.create(prefix, new byte[0], 
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-        
         /* 
          * Extract ledger id.
          */
         String parts[] = path.split("/");
         String subparts[] = parts[2].split("L");
-        System.out.println("SubPath: " + subparts[0]);
         long lId = Long.parseLong(subparts[1]);
-               
         /* 
          * Get children from "/ledgers/available" on zk
          */
         List<String> list = 
             zk.getChildren("/ledgers/available", false);
         ArrayList<InetSocketAddress> lBookies = new ArrayList<InetSocketAddress>();
-        
         /* 
          * Select ensSize servers to form the ensemble
          */
-        System.out.println("create: " + (prefix + getZKStringId(lId) + ensemble));
         path = zk.create(prefix + getZKStringId(lId) + ensemble, new byte[0], 
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        
         /* 
          * Add quorum size to ZK metadata
          */
@@ -239,7 +184,6 @@ implements ReadCallback, AddCallback, Watcher {
         bb.putInt(qSize);
         zk.create(prefix + getZKStringId(lId) + quorumSize, bb.array(), 
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        
         /* 
          * Quorum mode
          */
@@ -247,15 +191,11 @@ implements ReadCallback, AddCallback, Watcher {
         bb.putInt(mode.ordinal());
         zk.create(prefix + getZKStringId(lId) + quorumMode, bb.array(), 
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        
         /* 
          * Create QuorumEngine
          */
         LedgerHandle lh = new LedgerHandle(this, lId, 0, qSize, mode, passwd);
-        //ArrayBlockingQueue<Operation> queue = new ArrayBlockingQueue<Operation>(200);
-        engines.put(lh.getId(), new QuorumEngine(lh)); //queue));
         //qeMap.put(lId, queue);
-        
         /*
          * Adding bookies to ledger handle
          */
@@ -269,7 +209,6 @@ implements ReadCallback, AddCallback, Watcher {
         	    index = 0;
         	else {
         	    LOG.error("Not enough bookies available");
-        	    engines.remove(lh.getId());
         	    
         	    return null;
         	}
@@ -290,7 +229,6 @@ implements ReadCallback, AddCallback, Watcher {
         	    i--;
         	} 
         }
-      
         LOG.debug("Created new ledger");
         // Return ledger handler
         return lh; 
@@ -377,7 +315,6 @@ implements ReadCallback, AddCallback, Watcher {
          *  Create QuorumEngine
          */
         LedgerHandle lh = new LedgerHandle(this, lId, last, qSize, qMode, passwd);
-        engines.put(lh.getId(), new QuorumEngine(lh));// queue));
         
         /*
          * Get children of "/ledgers/id/ensemble" 
@@ -422,124 +359,7 @@ implements ReadCallback, AddCallback, Watcher {
         return addr;
     }
     
-    /**
-     * Add entry synchronously to an open ledger.
-     * 
-     * @param	lh	LedgerHandle
-     * @param	data byte[]
-     */
-    
-    public long addEntry(LedgerHandle lh, byte[] data)
-    throws InterruptedException{
-        LOG.debug("Adding entry " + data);
-        RetCounter counter = new RetCounter();
-        counter.inc();
-        
-        if(lh != null){ 
-        	Operation r = new AddOp(lh, data, this, counter);
-        	engines.get(lh.getId()).sendOp(r);
-        	//qeMap.get(lh.getId()).put(r);
-        
-        	counter.block(0);
-        
-        	return counter.getrc();
-        } else return -1;
-    }
-    
-    /**
-     * Add entry asynchronously to an open ledger.
-     * 
-     * @param lh	ledger handle returned with create
-     * @param data	array of bytes to be written
-     * @param cb	object implementing callbackinterface
-     * @param ctx	some control object
-     */
-    public void asyncAddEntry(LedgerHandle lh, byte[] data, AddCallback cb, Object ctx)
-    throws InterruptedException {
-       
-        if(lh != null){
-            AddOp r = new AddOp(lh, data, cb, ctx);
-            engines.get(lh.getId()).sendOp(r);
-        }
-    }
-    
-    
-    /**
-     * Read a sequence of entries synchronously.
-     * 
-     * @param lh	ledger handle returned with create
-     * @param firstEntry	id of first entry of sequence
-     * @param lastEntry		id of last entry of sequence
-     *
-     */
-    public LedgerSequence readEntries(LedgerHandle lh, long firstEntry, long lastEntry) 
-    throws InterruptedException, BKException {
-        // Little sanity check
-        if((firstEntry > lh.getLast()) || (firstEntry > lastEntry))
-            throw BKException.create(Code.ReadException);
-        
-        RetCounter counter = new RetCounter();
-        counter.inc();
-        
-        Operation r = new ReadOp(lh, firstEntry, lastEntry, this, counter);
-        engines.get(lh.getId()).sendOp(r);
-        
-        LOG.debug("Going to wait for read entries: " + counter.i);
-        counter.block(0);
-        LOG.debug("Done with waiting: " + counter.i + ", " + firstEntry);
-        
-        if(counter.getSequence() == null) throw BKException.create(Code.ReadException);
-        return counter.getSequence();
-    }
-    
-    /**
-     * Read a sequence of entries asynchronously.
-     * 
-     * @param lh	ledger handle
-     * @param firstEntry	id of first entry of sequence
-     * @param lastEntry		id of last entry of sequence
-     * @param cb	object implementing read callback interface
-     * @param ctx	control object 
-     */
-    public void asyncReadEntries(LedgerHandle lh, long firstEntry, long lastEntry, ReadCallback cb, Object ctx)
-    throws BKException, InterruptedException {
-        // Little sanity check
-        if((firstEntry > lh.getLast()) || (firstEntry > lastEntry)) 
-            throw BKException.create(Code.ReadException);
-        
-        Operation r = new ReadOp(lh, firstEntry, lastEntry, cb, ctx);
-        engines.get(lh.getId()).sendOp(r); 
-        //qeMap.get(lh.getId()).put(r);
-    }
-    
-    /**
-     * Close ledger.
-     * 
-     * @param lh	handle of ledger to close
-     */
-    public void closeLedger(LedgerHandle lh) 
-    throws KeeperException, InterruptedException {
-        //Set data on zookeeper
-        ByteBuffer last = ByteBuffer.allocate(8);
-        last.putLong(lh.getLast());
-        LOG.info("Last saved on ZK is: " + lh.getLast());
-        String closePath = prefix + getZKStringId(lh.getId()) + close; 
-        if(zk.exists(closePath, false) == null){
-           zk.create(closePath, 
-                   last.array(), 
-                   Ids.OPEN_ACL_UNSAFE, 
-                   CreateMode.PERSISTENT); 
-        } else {
-            zk.setData(closePath, 
-                last.array(), -1);
-        }
-        lh.close();
-        for(QuorumEngine qe : engines.values()){
-        	StopOp sOp = new StopOp();
-        	qe.sendOp(sOp);
-        }
-    }
-    
+ 
     /**
      * Check if close node exists. 
      * 
@@ -619,7 +439,7 @@ implements ReadCallback, AddCallback, Watcher {
      * 
      * @param addrList	list of bookies to replace
      */
-    public InetSocketAddress getNewBookie(ArrayList<InetSocketAddress> addrList)
+    InetSocketAddress getNewBookie(ArrayList<InetSocketAddress> addrList)
     throws InterruptedException {
         try{
             // Get children from "/ledgers/available" on zk
@@ -681,40 +501,5 @@ implements ReadCallback, AddCallback, Watcher {
         bookieBlackList.add(addr);
     }
     
-    /**
-     * Implementation of callback interface for synchronous read method.
-     * 
-     * @param rc	return code
-     * @param leder	ledger identifier
-     * @param seq	sequence of entries
-     * @param ctx	control object
-     */
-    public void readComplete(int rc, 
-            long ledger, 
-            LedgerSequence seq,  
-            Object ctx){        
-        
-        RetCounter counter = (RetCounter) ctx;
-        counter.setSequence(seq);
-        LOG.debug("Read complete: " + seq.size() + ", " + counter.i);
-        counter.dec();
-    }
-    
-    /**
-     * Implementation of callback interface for synchronous read method.
-     * 
-     * @param rc	return code
-     * @param leder	ledger identifier
-     * @param entry	entry identifier
-     * @param ctx	control object
-     */
-    public void addComplete(int rc, 
-            long ledger, 
-            long entry, 
-            Object ctx){          
-        RetCounter counter = (RetCounter) ctx;
-        
-        counter.setrc(rc);
-        counter.dec();
-    }
+   
 }

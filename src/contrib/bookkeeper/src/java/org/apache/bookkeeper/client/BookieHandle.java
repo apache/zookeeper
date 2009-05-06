@@ -35,12 +35,9 @@ import org.apache.bookkeeper.client.LedgerHandle.QMode;
 import org.apache.bookkeeper.client.QuorumEngine.Operation;
 import org.apache.bookkeeper.client.QuorumEngine.SubOp;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.AddOp;
-import org.apache.bookkeeper.client.QuorumEngine.Operation.ReadOp;
 import org.apache.bookkeeper.client.QuorumEngine.SubOp.SubAddOp;
 import org.apache.bookkeeper.client.QuorumEngine.SubOp.SubReadOp;
 import org.apache.bookkeeper.proto.BookieClient;
-import org.apache.bookkeeper.proto.ReadEntryCallback;
-import org.apache.bookkeeper.proto.WriteCallback;
 import org.apache.log4j.Logger;
 
 
@@ -50,7 +47,7 @@ import org.apache.log4j.Logger;
  * 
  */
 
-public class BookieHandle extends Thread{
+class BookieHandle extends Thread{
     Logger LOG = Logger.getLogger(BookieClient.class);
     
     boolean stop = false;
@@ -64,7 +61,7 @@ public class BookieHandle extends Thread{
      * Objects of this class are queued waiting to be
      * processed.
      */
-    class ToSend {
+    private static class ToSend {
     	LedgerHandle lh;
         long entry = -1;
         Object ctx;
@@ -79,7 +76,8 @@ public class BookieHandle extends Thread{
     }
     
     /**
-     * @param addr	address
+     * @param addr	address of the bookkeeper server that this
+     * handle should connect to.
      */
     BookieHandle(InetSocketAddress addr) throws IOException {
         this.client = new BookieClient(addr, recvTimeout);

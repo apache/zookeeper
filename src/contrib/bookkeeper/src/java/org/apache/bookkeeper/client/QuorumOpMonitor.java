@@ -22,19 +22,16 @@ package org.apache.bookkeeper.client;
 
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.ConcurrentHashMap;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidKeyException;
 import javax.crypto.Mac; 
-import javax.crypto.spec.SecretKeySpec;
 
 
 import org.apache.bookkeeper.client.BookieHandle;
@@ -42,8 +39,6 @@ import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BKException.Code;
 import org.apache.bookkeeper.client.ErrorCodes;
 import org.apache.bookkeeper.client.LedgerHandle;
-import org.apache.bookkeeper.client.LedgerHandle.QMode;
-import org.apache.bookkeeper.client.QuorumEngine.Operation;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.AddOp;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.ReadOp;
 import org.apache.bookkeeper.client.QuorumEngine.SubOp.SubAddOp;
@@ -150,8 +145,6 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
     
     public void writeComplete(int rc, long ledgerId, long entryId, Object ctx){ 
         //PendingAddOp pOp;
-        String logmsg;
-        
         //synchronized(pendingAdds){
         //pOp = pendingAdds.get(entryId);
         //}
@@ -165,8 +158,6 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
         }
         
         ArrayList<BookieHandle> list = lh.getBookies();
-        int n = list.size();
-         
         if(rc == 0){
             // Everything went ok with this op
             synchronized(pOp){ 
@@ -319,7 +310,7 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
                     }
             
                     
-                    long diff = rOp.lastEntry - rOp.firstEntry;
+                    //long diff = rOp.lastEntry - rOp.firstEntry;
                     //LOG.debug("Counter: " + rOp.counter + ", " + diff);
                 }
             }
