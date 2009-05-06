@@ -50,12 +50,13 @@ import org.apache.zookeeper.ZooKeeper;
 
 
 /**
- * This unit test tests ledger recovery. 
+ * This unit test tests closing ledgers sequentially. 
+ * It creates 4 ledgers, then write 1000 entries to each 
+ * ledger and close it.
  * 
- *
  */
 
-public class LedgerRecoveryTest 
+public class CloseTest 
 extends TestCase 
 implements Watcher {
     static Logger LOG = Logger.getLogger(LedgerRecoveryTest.class);
@@ -174,9 +175,9 @@ implements Watcher {
         recursiveDelete(tmpDirZK);
         LOG.info("FINISHED " + getName());
     }
-    
+
     @Test
-    public void testLedgerRecovery(){
+    public void testClose(){
         /*
          * Instantiate BookKeeper object.
          */
@@ -192,11 +193,18 @@ implements Watcher {
         }
         
         /*
-         * Create ledger.
+         * Create 4 ledgers.
          */
-        LedgerHandle beforelh = null;
+        LedgerHandle lh1 = null;
+        LedgerHandle lh2 = null;
+        LedgerHandle lh3 = null;
+        LedgerHandle lh4 = null;
+        
         try{
-            beforelh = bk.createLedger("".getBytes());
+            lh1 = bk.createLedger("".getBytes());
+            lh2 = bk.createLedger("".getBytes());
+            lh3 = bk.createLedger("".getBytes());
+            lh4 = bk.createLedger("".getBytes());
         } catch (KeeperException ke){
             LOG.error("Error creating a ledger", ke);
             fail("ZooKeeper error");            
@@ -212,127 +220,72 @@ implements Watcher {
         }
         
         /*
-         * Write a 1000 entries.
+         * Write a 1000 entries to lh1.
          */
         try{
             String tmp = "BookKeeper is cool!";
             for(int i = 0; i < 1000; i++){
-                beforelh.addEntry(tmp.getBytes());
+                lh1.addEntry(tmp.getBytes());
             }
         } catch(InterruptedException e){
             LOG.error("Interrupted when adding entry", e);
             fail("Couldn't finish adding entries");
         }
         
-        ///*
-        // * Sleep.
-        // */
-        //try{
-        //    Thread.sleep(2000);
-        //} catch(InterruptedException e){
-        //    LOG.error("Interrupted while sleeping", e);
-        //    fail("Couldn't finish sleeping");
-        //}
-        
-        /*
-         * Try to open ledger.
-         */
         try{
-            LedgerHandle afterlh = bk.openLedger(beforelh.getId(), "".getBytes());
-            
-            /*
-             * Check if has recovered properly.
-             */
-            assertTrue("Has not recovered correctly: " + afterlh.getLast(), afterlh.getLast() == 1000);
-        } catch (KeeperException e) {
-            LOG.error("Error when opening ledger", e);
-            fail("Couldn't open ledger");
-        } catch (InterruptedException ie) {
-            LOG.error("Interrupted exception", ie);
-            fail("Failure due to interrupted exception");
-        } catch (IOException ioe) {
-            LOG.error("IO Exception", ioe);
-            fail("Failure due to IO exception");
-        } catch (BKException bke){
-            LOG.error("BookKeeper error", bke);
-            fail("BookKeeper error");
+            lh1.close();
+        } catch(Exception e) {
+            LOG.error(e);
+            fail("Exception while closing ledger 1");
         }
-        
-    }
-    
-    @Test
-    public void testEmptyLedgerRecovery(){
         /*
-         * Instantiate BookKeeper object.
-         */
-        BookKeeper bk = null;
-        try{
-            bk = new BookKeeper(HOSTPORT);
-        } catch (KeeperException ke){
-            LOG.error("Error instantiating BookKeeper", ke);
-            fail("ZooKeeper error");
-        } catch (IOException ioe){
-            LOG.error(ioe);
-            fail("Failure due to IOException");
-        }
-        
-        /*
-         * Create ledger.
-         */
-        LedgerHandle beforelh = null;
-        try{
-            beforelh = bk.createLedger("".getBytes());
-        } catch (KeeperException ke){
-            LOG.error("Error creating a ledger", ke);
-            fail("ZooKeeper error");            
-        } catch (BKException bke){
-            LOG.error("BookKeeper error");
-            fail("BookKeeper error");
-        } catch (InterruptedException ie) {
-            LOG.error(ie);
-            fail("Failure due to interrupted exception");
-        } catch (IOException ioe) {
-            LOG.error(ioe);
-            fail("Failure due to IO exception");
-        }
-        
-        /*
-         * Write a 1 entry.
+         * Write a 1000 entries to lh2.
          */
         try{
             String tmp = "BookKeeper is cool!";
-            for(int i = 0; i < 1; i++){
-                beforelh.addEntry(tmp.getBytes());
+            for(int i = 0; i < 1000; i++){
+                lh2.addEntry(tmp.getBytes());
             }
         } catch(InterruptedException e){
             LOG.error("Interrupted when adding entry", e);
             fail("Couldn't finish adding entries");
         }
         
-        ///*
-        // * Sleep.
-        // */
-        //try{
-        //    Thread.sleep(2000);
-        //} catch(InterruptedException e){
-        //    LOG.error("Interrupted while sleeping", e);
-        //    fail("Couldn't finish sleeping");
-        //}
+        try{
+            lh2.close();
+        } catch(Exception e){
+            LOG.error(e);
+            fail("Exception while closing ledger 2");
+        }
         
         /*
-         * Try to open ledger.
+         * Write a 1000 entries to lh3 and lh4.
          */
         try{
+            String tmp = "BookKeeper is cool!";
+            for(int i = 0; i < 1000; i++){
+                lh3.addEntry(tmp.getBytes());
+                lh4.addEntry(tmp.getBytes());
+            }
+        } catch(InterruptedException e){
+            LOG.error("Interrupted when adding entry", e);
+            fail("Couldn't finish adding entries");
+        }
+        
+        try{
+            lh3.close();
+            lh4.close();
+        } catch(Exception e){
+            LOG.error(e);
+            fail("Exception while closing ledger 4");
+        }
+        /*
             LedgerHandle afterlh = bk.openLedger(beforelh.getId(), "".getBytes());
             
-            /*
-             * Check if has recovered properly.
-             */
-            assertTrue("Has not recovered correctly: " + afterlh.getLast(), afterlh.getLast() == 1);
         } catch (KeeperException e) {
             LOG.error("Error when opening ledger", e);
             fail("Couldn't open ledger");
-        } catch (InterruptedException ie) {
+        } /* catch (InterruptedException ie) {
             LOG.error("Interrupted exception", ie);
             fail("Failure due to interrupted exception");
         } catch (IOException ioe) {
@@ -341,8 +294,8 @@ implements Watcher {
         } catch (BKException bke){
             LOG.error("BookKeeper error", bke);
             fail("BookKeeper error");
-        }
-        
-    }
-    
+        }*/
+    }      
 }
+    
+    

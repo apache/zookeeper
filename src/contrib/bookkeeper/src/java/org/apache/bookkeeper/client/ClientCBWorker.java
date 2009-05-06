@@ -23,6 +23,7 @@ package org.apache.bookkeeper.client;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.bookkeeper.client.QuorumEngine.Operation;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.AddOp;
@@ -41,6 +42,7 @@ class ClientCBWorker extends Thread{
     static ClientCBWorker instance = null;
     
     private boolean stop = false;
+    private static int instanceCounter= 0;
     
     ArrayBlockingQueue<Operation> pendingOps;
     QuorumOpMonitor monitor;
@@ -50,6 +52,7 @@ class ClientCBWorker extends Thread{
         if(instance == null){
             instance = new ClientCBWorker();
         }
+        instanceCounter++;
         
         return instance;
     }
@@ -82,9 +85,11 @@ class ClientCBWorker extends Thread{
      * 
      */
     synchronized void shutdown(){
-        stop = true;
-        instance = null;
-        LOG.debug("Shutting down");
+        if((--instanceCounter) == 0){
+            stop = true;
+            instance = null;
+            LOG.debug("Shutting down");
+        }
     }
     
     

@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Set;
@@ -37,6 +36,8 @@ import org.apache.bookkeeper.client.LedgerHandle;
 import org.apache.bookkeeper.client.LedgerSequence;
 import org.apache.bookkeeper.client.ReadCallback;
 import org.apache.bookkeeper.proto.BookieServer;
+import org.apache.bookkeeper.streaming.LedgerInputStream;
+import org.apache.bookkeeper.streaming.LedgerOutputStream;
 import org.apache.bookkeeper.util.ClientBase;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -48,7 +49,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -111,6 +111,63 @@ public class BookieReadWriteTest
 		}    	
     }
     
+    /**
+     * test the streaming api for reading
+     * and writing
+     * @throws {@link IOException}, {@link KeeperException}
+     */
+    @Test
+    public void testStreamingClients() throws IOException,
+        KeeperException, BKException, InterruptedException {
+        bkc = new BookKeeper("127.0.0.1");
+        lh = bkc.createLedger(ledgerPassword);
+        //write a string so that we cna
+        // create a buffer of a single bytes
+        // and check for corner cases
+        String toWrite = "we need to check for this string to match " +
+        		"and for the record mahadev is the best";
+        LedgerOutputStream lout = new LedgerOutputStream(lh , 1);
+        byte[] b = toWrite.getBytes();
+        lout.write(b);
+        lout.close();
+        long lId = lh.getId();
+        lh.close();
+        //check for sanity
+        lh = bkc.openLedger(lId, ledgerPassword);
+        LedgerInputStream lin = new LedgerInputStream(lh,  1);
+        byte[] bread = new byte[b.length];
+        int read = 0;
+        while (read < b.length) { 
+            read = read + lin.read(bread, read, b.length);
+        }
+        
+        String newString = new String(bread);
+        assertTrue("these two should same", toWrite.equals(newString));
+        lin.close();
+        lh.close();
+        //create another ledger to write one byte at a time
+        lh = bkc.createLedger(ledgerPassword);
+        lout = new LedgerOutputStream(lh);
+        for (int i=0; i < b.length;i++) {
+            lout.write(b[i]);
+        }
+        lout.close();
+        lId = lh.getId();
+        lh.close();
+        lh = bkc.openLedger(lId, ledgerPassword);
+        lin = new LedgerInputStream(lh);
+        bread = new byte[b.length];
+        read= 0;
+        while (read < b.length) {
+            read = read + lin.read(bread, read, b.length);
+        }
+        newString = new String(bread);
+        assertTrue("these two should be same ", toWrite.equals(newString));
+        lin.close();
+        lh.close();
+    }
+        
+    
     @Test
 	public void testReadWriteAsyncSingleClient() throws IOException{
 		try {
@@ -127,7 +184,7 @@ public class BookieReadWriteTest
 				
 				entries.add(entry.array());
 				entriesSize.add(entry.array().length);
-				bkc.asyncAddEntry(lh, entry.array(), this, sync);
+				lh.asyncAddEntry(entry.array(), this, sync);
 			}
 			
 			// wait for all entries to be acknowledged
@@ -140,7 +197,7 @@ public class BookieReadWriteTest
 			
 			LOG.debug("*** WRITE COMPLETE ***");
 			// close ledger 
-			bkc.closeLedger(lh);
+			lh.close();
 			
 			//*** WRITING PART COMPLETE // READ PART BEGINS ***
 			
@@ -150,7 +207,7 @@ public class BookieReadWriteTest
 			assertTrue("Verifying number of entries written", lh.getLast() == numEntriesToWrite);		
 			
 			//read entries
-			bkc.asyncReadEntries(lh, 0, numEntriesToWrite - 1, this, (Object) sync);
+			lh.asyncReadEntries(0, numEntriesToWrite - 1, this, (Object) sync);
 			
 			synchronized (sync) {
 				while(sync.value == false){
@@ -178,7 +235,7 @@ public class BookieReadWriteTest
 				assertTrue("Checking entry " + i + " for size", entry.length == entriesSize.get(i).intValue());
 				i++;
 			}
-			bkc.closeLedger(lh);
+			lh.close();
 		} catch (KeeperException e) {
 			e.printStackTrace();
 		} catch (BKException e) {
@@ -207,7 +264,7 @@ public class BookieReadWriteTest
 				int randomInt = rng.nextInt(maxInt);
 				byte[] entry = new String(Integer.toString(randomInt)).getBytes(charset);
 				entries.add(entry);
-				bkc.asyncAddEntry(lh, entry, this, sync);
+				lh.asyncAddEntry(entry, this, sync);
 			}
 			
 			// wait for all entries to be acknowledged
@@ -220,7 +277,7 @@ public class BookieReadWriteTest
 			
 			LOG.debug("*** ASYNC WRITE COMPLETE ***");
 			// close ledger 
-			bkc.closeLedger(lh);
+			lh.close();
 			
 			//*** WRITING PART COMPLETED // READ PART BEGINS ***
 			
@@ -230,7 +287,7 @@ public class BookieReadWriteTest
 			assertTrue("Verifying number of entries written", lh.getLast() == numEntriesToWrite);		
 			
 			//read entries			
-			ls = bkc.readEntries(lh, 0, numEntriesToWrite - 1);
+			ls = lh.readEntries(0, numEntriesToWrite - 1);
 			
 			assertTrue("Checking number of read entries", ls.size() == numEntriesToWrite);
 			
@@ -253,7 +310,7 @@ public class BookieReadWriteTest
 				
 				assertTrue("Checking entry " + i + " for equality", origEntry.equals(retrEntry));
 			}
-			bkc.closeLedger(lh);
+			lh.close();
 		} catch (KeeperException e) {
 			e.printStackTrace();
 		} catch (BKException e) {
@@ -280,14 +337,14 @@ public class BookieReadWriteTest
 				entry.putInt(rng.nextInt(maxInt));
 				entry.position(0);
 				entries.add(entry.array());				
-				bkc.addEntry(lh, entry.array());
+				lh.addEntry(entry.array());
 			}
-			bkc.closeLedger(lh);
+			lh.close();
 			lh = bkc.openLedger(ledgerId, ledgerPassword);
 			LOG.debug("Number of entries written: " + lh.getLast());
 			assertTrue("Verifying number of entries written", lh.getLast() == numEntriesToWrite);		
 			
-			ls = bkc.readEntries(lh, 0, numEntriesToWrite - 1);
+			ls = lh.readEntries(0, numEntriesToWrite - 1);
 			int i = 0;
 			while(ls.hasMoreElements()){
 			    ByteBuffer origbb = ByteBuffer.wrap(entries.get(i++));
@@ -300,7 +357,7 @@ public class BookieReadWriteTest
 				LOG.debug("Retrieved entry: " + retrEntry);
 				assertTrue("Checking entry " + i + " for equality", origEntry.equals(retrEntry));
 			}
-			bkc.closeLedger(lh);
+			lh.close();
 		} catch (KeeperException e) {
 			e.printStackTrace();
 		} catch (BKException e) {
@@ -322,7 +379,7 @@ public class BookieReadWriteTest
 			ledgerId = lh.getId();
 			LOG.info("Ledger ID: " + lh.getId());
 			for(int i = 0; i < numEntriesToWrite; i++){				
-				bkc.addEntry(lh, new byte[0]);
+			lh.addEntry(new byte[0]);
 			}
 			
 			/*
@@ -332,14 +389,14 @@ public class BookieReadWriteTest
 			entry.putInt(rng.nextInt(maxInt));
 			entry.position(0);
 			entries.add(entry.array());				
-			bkc.addEntry(lh, entry.array());
+			lh.addEntry( entry.array());
 			
-			bkc.closeLedger(lh);
+			lh.close();
 			lh = bkc.openLedger(ledgerId, ledgerPassword);
 			LOG.debug("Number of entries written: " + lh.getLast());
 			assertTrue("Verifying number of entries written", lh.getLast() == (numEntriesToWrite + 1));		
 			
-			ls = bkc.readEntries(lh, 0, numEntriesToWrite - 1);
+			ls = lh.readEntries(0, numEntriesToWrite - 1);
 			int i = 0;
 			while(ls.hasMoreElements()){
 				ByteBuffer result = ByteBuffer.wrap(ls.nextElement().getEntry());
@@ -347,7 +404,7 @@ public class BookieReadWriteTest
 				
 				assertTrue("Checking if entry " + i + " has zero bytes", result.capacity() == 0);
 			}
-			bkc.closeLedger(lh);
+			lh.close();
 		} catch (KeeperException e) {
 			e.printStackTrace();
 		} catch (BKException e) {
@@ -373,13 +430,13 @@ public class BookieReadWriteTest
             //bkc.initMessageDigest("SHA1");
             LOG.info("Ledger ID 1: " + lh.getId() + ", Ledger ID 2: " + lh2.getId());
             for(int i = 0; i < numEntriesToWrite; i++){             
-                bkc.addEntry(lh, new byte[0]);
-                bkc.addEntry(lh2, new byte[0]);
+                lh.addEntry( new byte[0]);
+                lh2.addEntry(new byte[0]);
             }
             
-            bkc.closeLedger(lh);
-            bkc.closeLedger(lh2);
-            
+            lh.close();
+            lh2.close();
+                
             lh = bkc.openLedger(ledgerId, ledgerPassword);
             lh2 = bkc.openLedger(ledgerId2, ledgerPassword);
             
@@ -387,7 +444,7 @@ public class BookieReadWriteTest
             assertTrue("Verifying number of entries written lh (" + lh.getLast() + ")" , lh.getLast() == numEntriesToWrite);
             assertTrue("Verifying number of entries written lh2 (" + lh2.getLast() + ")", lh2.getLast() == numEntriesToWrite);
             
-            ls = bkc.readEntries(lh, 0, numEntriesToWrite - 1);
+            ls = lh.readEntries(0, numEntriesToWrite - 1);
             int i = 0;
             while(ls.hasMoreElements()){
                 ByteBuffer result = ByteBuffer.wrap(ls.nextElement().getEntry());
@@ -395,9 +452,8 @@ public class BookieReadWriteTest
                 
                 assertTrue("Checking if entry " + i + " has zero bytes", result.capacity() == 0);
             }
-            bkc.closeLedger(lh);
-            
-            ls = bkc.readEntries(lh2, 0, numEntriesToWrite - 1);
+            lh.close();
+            ls = lh2.readEntries( 0, numEntriesToWrite - 1);
             i = 0;
             while(ls.hasMoreElements()){
                 ByteBuffer result = ByteBuffer.wrap(ls.nextElement().getEntry());
@@ -406,8 +462,7 @@ public class BookieReadWriteTest
                 assertTrue("Checking if entry " + i + " has zero bytes", result.capacity() == 0);
             }
             
-            bkc.closeLedger(lh2);
-            
+            lh2.close();
         } catch (KeeperException e) {
             e.printStackTrace();
         } catch (BKException e) {
