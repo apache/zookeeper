@@ -32,18 +32,26 @@ import java.util.ArrayList;
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookieHandle;
 import org.apache.bookkeeper.client.BKException.Code;
+import org.apache.bookkeeper.client.QuorumEngine.Operation;
+import org.apache.bookkeeper.client.QuorumEngine.Operation.AddOp;
+import org.apache.bookkeeper.client.QuorumEngine.Operation.ReadOp;
+import org.apache.bookkeeper.client.QuorumEngine.Operation.StopOp;
 import org.apache.log4j.Logger;
-
-
-
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs.Ids;
 
 /**
  * Ledger handle on the client side. Contains ledger metadata
- * used to access it.
- * 
+ * used to access it. This api exposes the read and write 
+ * to a ledger and also exposes a streaming api for the ledger.
  */
-
-public class LedgerHandle {
+public class LedgerHandle implements ReadCallback, AddCallback {
+    /**
+     * the call stack looks like --
+     * ledgerhandle->write->bookeeper->quorumengine->bookiehandle
+     * ->bookieclient
+     */
     Logger LOG = Logger.getLogger(LedgerHandle.class);
     
     public enum QMode {VERIFIABLE, GENERIC, FREEFORM};
@@ -55,7 +63,7 @@ public class LedgerHandle {
     private ArrayList<BookieHandle> bookies;
     private ArrayList<InetSocketAddress> bookieAddrList;
     private BookKeeper bk;
-
+    private QuorumEngine qe;
     private int qSize;
     private QMode qMode = QMode.VERIFIABLE;
 
@@ -66,6 +74,14 @@ public class LedgerHandle {
     private byte[] ledgerKey;
     private byte[] passwd;
     
+    /**
+     * @param bk the bookkeeper handle
+     * @param ledger the id for this ledger
+     * @param last the last id written 
+     * @param passwd the passwd to encode
+     * the entries
+     * @throws InterruptedException
+     */
     LedgerHandle(BookKeeper bk, 
             long ledger, 
             long last,
@@ -77,10 +93,21 @@ public class LedgerHandle {
         this.passwd = passwd;
         genLedgerKey(passwd);
         genMacKey(passwd);
-
         this.qSize = (bookies.size() + 1)/2;
+        this.qe = new QuorumEngine(this);
     }
     
+    /**
+     * @param bk the bookkeeper handle
+     * @param ledger the id for this ledger
+     * @param last the last entree written
+     * @param qSize the queuing size 
+     * for this ledger
+     * @param mode the quueuing mode
+     * for this ledger
+     * @param passwd the passwd to encode
+     * @throws InterruptedException
+     */
     LedgerHandle(BookKeeper bk, 
             long ledger, 
             long last,
@@ -97,9 +124,19 @@ public class LedgerHandle {
         this.passwd = passwd;
         genLedgerKey(passwd);
         genMacKey(passwd);
+        this.qe = new QuorumEngine(this);
     }
         
-        
+    /**
+     * 
+     * @param bk the bookkeeper handle
+     * @param ledger the id for this ledger
+     * @param last the last entree written
+     * @param qSize the queuing size 
+     * for this ledger
+     * @param passwd the passwd to encode
+     * @throws InterruptedException
+     */
     LedgerHandle(BookKeeper bk, 
             long ledger, 
             long last,
@@ -114,6 +151,7 @@ public class LedgerHandle {
         this.passwd = passwd;
         genLedgerKey(passwd);
         genMacKey(passwd);
+        this.qe = new QuorumEngine(this);
     }
     
     private void setBookies(ArrayList<InetSocketAddress> bookies)
@@ -127,18 +165,29 @@ public class LedgerHandle {
     		}
     	} catch(ConnectException e){
     		LOG.error(e);
-                
     		InetSocketAddress addr = bk.getNewBookie(bookies);
-                
-                if(addr != null){
-                	bookies.add(addr);
-                }
+    		if(addr != null){
+    		    bookies.add(addr);
+    		}
     	} catch(IOException e) {
     		LOG.error(e);
     	}
     }
     
+    /**
+     * set the quorum engine
+     * @param qe the quorum engine
+     */
+    void setQuorumEngine(QuorumEngine qe) {
+        this.qe = qe;
+    }
     
+    /** get the quorum engine
+     * @return return the quorum engine
+     */
+    QuorumEngine getQuorumEngine(QuorumEngine qe) {
+        return this.qe;
+    }
     
     /**
      * Create bookie handle and add it to the list
@@ -147,16 +196,14 @@ public class LedgerHandle {
      */
     int addBookie(InetSocketAddress addr)
     throws IOException {
-        LOG.info("My address: " + addr.toString());
+        LOG.debug("Bookie address: " + addr);
         //BookieHandle bh = new BookieHandle(this, addr);
         this.bookies.add(bk.getBookieHandle(addr));
-        
         if(bookies.size() > qSize) setThreshold();
-        
         return (this.bookies.size() - 1);
     }
     
-    private void setThreshold(){
+    private void setThreshold() {
         switch(qMode){
         case GENERIC:
             threshold = bookies.size() - qSize/2;
@@ -170,14 +217,13 @@ public class LedgerHandle {
         
     }
     
-    public int getThreshold(){
+    public int getThreshold() {
         return threshold;
     }
     
     /**
      * Replace bookie in the case of a failure 
      */
-    
     void replaceBookie(int index) 
     throws BKException {
         InetSocketAddress addr = null;
@@ -222,7 +268,7 @@ public class LedgerHandle {
         bookies.remove(index);
     }
     
-    void close(){
+    void closeUp(){
         ledger = -1;
         last = -1;
         bk.haltBookieHandles(bookies);
@@ -390,4 +436,198 @@ public class LedgerHandle {
        return ledgerKey; 
     }
     
+    /**
+     * Close ledger.
+     * 
+     */
+    public void close() 
+    throws KeeperException, InterruptedException {
+        //Set data on zookeeper
+        ByteBuffer last = ByteBuffer.allocate(8);
+        last.putLong(getLast());
+        LOG.info("Last saved on ZK is: " + getLast());
+        String closePath = BookKeeper.prefix + bk.getZKStringId(getId()) + BookKeeper.close; 
+        if(bk.getZooKeeper().exists(closePath, false) == null){
+           bk.getZooKeeper().create(closePath, 
+                   last.array(), 
+                   Ids.OPEN_ACL_UNSAFE, 
+                   CreateMode.PERSISTENT); 
+        } else {
+            bk.getZooKeeper().setData(closePath, 
+                last.array(), -1);
+        }
+        closeUp();
+        StopOp sOp = new StopOp();
+        qe.sendOp(sOp);
+    }
+    
+    /**
+     * Read a sequence of entries asynchronously.
+     * 
+     * @param firstEntry    id of first entry of sequence
+     * @param lastEntry     id of last entry of sequence
+     * @param cb    object implementing read callback interface
+     * @param ctx   control object 
+     */
+    public void asyncReadEntries(long firstEntry, 
+            long lastEntry, ReadCallback cb, Object ctx)
+    throws BKException, InterruptedException {
+        // Little sanity check
+        if((firstEntry > getLast()) || (firstEntry > lastEntry)) 
+            throw BKException.create(Code.ReadException);
+        
+        Operation r = new ReadOp(this, firstEntry, lastEntry, cb, ctx);
+        qe.sendOp(r); 
+        //qeMap.get(lh.getId()).put(r);
+    }
+    
+    
+    /**
+     * Read a sequence of entries synchronously.
+     * 
+     * @param firstEntry    id of first entry of sequence
+     * @param lastEntry     id of last entry of sequence
+     *
+     */
+    public LedgerSequence readEntries(long firstEntry, long lastEntry) 
+    throws InterruptedException, BKException {
+        // Little sanity check
+        if((firstEntry > getLast()) || (firstEntry > lastEntry))
+            throw BKException.create(Code.ReadException);
+        
+        RetCounter counter = new RetCounter();
+        counter.inc();
+        
+        Operation r = new ReadOp(this, firstEntry, lastEntry, this, counter);
+        qe.sendOp(r);
+        
+        LOG.debug("Going to wait for read entries: " + counter.i);
+        counter.block(0);
+        LOG.debug("Done with waiting: " + counter.i + ", " + firstEntry);
+        
+        if(counter.getSequence() == null) throw BKException.create(Code.ReadException);
+        return counter.getSequence();
+    }
+   
+    /**
+     * Add entry asynchronously to an open ledger.
+     * 
+     * @param data  array of bytes to be written
+     * @param cb    object implementing callbackinterface
+     * @param ctx   some control object
+     */
+    public void asyncAddEntry(byte[] data, AddCallback cb, Object ctx)
+    throws InterruptedException {
+        AddOp r = new AddOp(this, data, cb, ctx);
+        qe.sendOp(r);
+    }
+    
+    
+    /**
+     * Add entry synchronously to an open ledger.
+     * 
+     * @param   data byte[]
+     */
+    
+    public long addEntry(byte[] data)
+    throws InterruptedException{
+        LOG.debug("Adding entry " + data);
+        RetCounter counter = new RetCounter();
+        counter.inc();
+        
+        Operation r = new AddOp(this, data, this, counter);
+        qe.sendOp(r);   
+        //qeMap.get(lh.getId()).put(r);
+        counter.block(0);
+        return counter.getrc();
+    }
+    
+    
+    /**
+     * Implementation of callback interface for synchronous read method.
+     * 
+     * @param rc    return code
+     * @param leder ledger identifier
+     * @param seq   sequence of entries
+     * @param ctx   control object
+     */
+    public void readComplete(int rc, 
+            long ledger, 
+            LedgerSequence seq,  
+            Object ctx){        
+        
+        RetCounter counter = (RetCounter) ctx;
+        counter.setSequence(seq);
+        LOG.debug("Read complete: " + seq.size() + ", " + counter.i);
+        counter.dec();
+    }
+    
+    /**
+     * Implementation of callback interface for synchronous read method.
+     * 
+     * @param rc    return code
+     * @param leder ledger identifier
+     * @param entry entry identifier
+     * @param ctx   control object
+     */
+    public void addComplete(int rc, 
+            long ledger, 
+            long entry, 
+            Object ctx){          
+        RetCounter counter = (RetCounter) ctx;
+        
+        counter.setrc(rc);
+        counter.dec();
+    }
+    
+    
+    
+    /**
+     * Implements objects to help with the synchronization of asynchronous calls
+     * 
+     */
+    
+    private static class RetCounter {
+        int i;
+        int rc;
+        int total;
+        LedgerSequence seq = null;
+        
+        synchronized void inc() {
+            i++;
+            total++;
+        }
+        synchronized void dec() {
+            i--;
+            notifyAll();
+        }
+        synchronized void block(int limit) throws InterruptedException {
+            while(i > limit) {
+                int prev = i;
+                wait(15000);
+                if(i == prev){
+                    break;
+                }
+            }
+        }
+        synchronized int total() {
+            return total;
+        }
+        
+        void setrc(int rc){
+            this.rc = rc;
+        }
+        
+        int getrc(){
+            return rc;
+        }
+        
+        void setSequence(LedgerSequence seq){
+            this.seq = seq;
+        }
+        
+        LedgerSequence getSequence(){
+            return seq;
+        }
+    }
 }

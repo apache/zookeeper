@@ -34,7 +34,6 @@ import java.util.TreeMap;
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookKeeper;
 import org.apache.bookkeeper.client.LedgerSequence;
-import org.apache.bookkeeper.client.BKException.Code;
 import org.apache.bookkeeper.client.LedgerHandle.QMode;
 import org.apache.bookkeeper.proto.BookieClient;
 import org.apache.bookkeeper.proto.ReadEntryCallback;
@@ -136,7 +135,6 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
          */
         
         LedgerHandle lh = new LedgerHandle(self, lId, 0, qSize, qMode, passwd);
-        self.engines.put(lh.getId(), new QuorumEngine(lh));
         for(InetSocketAddress addr : bookies){
             lh.addBookie(addr);
         }
@@ -151,14 +149,14 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
                 while(hasMore){
                     hasMore = false;
                     LOG.debug("Recovering: " + lh.getLast());
-                    LedgerSequence ls = self.readEntries(lh, lh.getLast(), lh.getLast());
+                    LedgerSequence ls = lh.readEntries(lh.getLast(), lh.getLast());
                     //if(ls == null) throw BKException.create(Code.ReadException);
                     LOG.debug("Received entry for: " + lh.getLast());
                     
                     byte[] le = ls.nextElement().getEntry();
                     if(le != null){
                         if(notLegitimate) notLegitimate = false;
-                        self.addEntry(lh, le);
+                        lh.addEntry(le);
                         //lh.incLast();
                         hasMore = true;
                     }
@@ -171,12 +169,12 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
          */
         if(!notLegitimate){
             //lh.setLast(readCounter);
-            self.closeLedger(lh);
+            lh.close();
             
             return true;
         } else {
         	lh.setLast(0);
-        	self.closeLedger(lh);
+        	lh.close();
         	
         	return false;
         }

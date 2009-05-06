@@ -23,14 +23,11 @@ package org.apache.bookkeeper.proto;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.ConnectException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Semaphore;
-import java.util.Arrays;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -46,7 +43,7 @@ import org.apache.log4j.Logger;
 /**
  * Implements the client-side part of the BookKeeper protocol. 
  * 
- */
+ */    
 public class BookieClient extends Thread {
 	Logger LOG = Logger.getLogger(BookieClient.class);
     SocketChannel sock;
@@ -74,13 +71,11 @@ public class BookieClient extends Thread {
         }
 
         T cb;
-
         Object ctx;
     }
 
     private static class CompletionKey {
         long ledgerId;
-
         long entryId;
 
         CompletionKey(long ledgerId, long entryId) {
@@ -104,11 +99,12 @@ public class BookieClient extends Thread {
 
     }
 
-    ConcurrentHashMap<CompletionKey, Completion<WriteCallback>> addCompletions = new ConcurrentHashMap<CompletionKey, Completion<WriteCallback>>();
-    ConcurrentHashMap<CompletionKey, Completion<ReadEntryCallback>> readCompletions = new ConcurrentHashMap<CompletionKey, Completion<ReadEntryCallback>>();
+    ConcurrentHashMap<CompletionKey, Completion<WriteCallback>> addCompletions = 
+        new ConcurrentHashMap<CompletionKey, Completion<WriteCallback>>();
     
-    //Object writeLock = new Object();
-    //Object readLock = new Object();
+    ConcurrentHashMap<CompletionKey, Completion<ReadEntryCallback>> readCompletions =
+        new ConcurrentHashMap<CompletionKey, Completion<ReadEntryCallback>>();
+    
     
     /*
      * Use this semaphore to control the number of completion key in both addCompletions
@@ -282,8 +278,8 @@ public class BookieClient extends Thread {
                     bb.get(data);
                     ByteBuffer entryData = ByteBuffer.wrap(data);
                     //ByteBuffer entryData = bb;
-                    //LOG.info("Received entry: " + ledgerId + ", " + entryId + ", " + rc + ", " + entryData.array().length + ", " + bb.array().length + ", " + bb.remaining());
-          
+                    //LOG.info("Received entry: " + ledgerId + ", " + entryId
+                    // + ", " + rc + ", " + entryData.array().length + ", " + bb.array().length + ", " + bb.remaining());          
                     
                     CompletionKey key = new CompletionKey(ledgerId, entryId);
                     Completion<ReadEntryCallback> c;

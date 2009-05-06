@@ -26,8 +26,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.junit.Test;
-import org.apache.bookkeeper.bookie.Bookie;
-import org.apache.bookkeeper.client.AddCallback;
 import org.apache.bookkeeper.proto.BookieClient;
 import org.apache.bookkeeper.proto.BookieProtocol;
 import org.apache.bookkeeper.proto.BookieServer;
