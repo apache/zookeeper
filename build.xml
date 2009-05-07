@@ -613,11 +613,10 @@
         <fail if="tests.failed">Tests failed!</fail>
     </target>
 
-    <target name="create-cppunit-configure" depends="init" if="cppunit">
-   	<exec executable="autoreconf" dir="${c.src.dir}" searchpath="yes" 
-    		failonerror="yes">
-       		<arg value="-if"/>
-    	</exec>
+    <target name="check-cppunit-configure" depends="init" >
+      <condition property="need.cppunit.configure">
+        <not> <available file="${c.src.dir}/configure"/> </not>
+      </condition>
     </target>	
 
     <target name="check-cppunit-makefile" depends="init" >
@@ -626,8 +625,28 @@
     	</condition>
     </target>
 
+    <!--
+       1. If we have a Makefile it will handle up-to-date check and also
+          regenerate the configure script if missing. (done)
+       2. If we don't have a Makefile use the configure script to 
+          regenerate it. (done)
+       3. If we don't have a Makefile nor a configure script then it's
+          last resort and run autoreconf, then configure (done)
+      -->
+
+    <target name="create-cppunit-configure" depends="check-cppunit-configure"
+            if="need.cppunit.configure">
+      <exec executable="autoreconf" dir="${c.src.dir}" searchpath="yes"
+            failonerror="yes">
+        <arg value="-if"/>
+      </exec>
+    </target>
+
     <target name="create-cppunit-makefile" depends="check-cppunit-makefile" 
                                            if="need.cppunit.makefile">
+      <antcall target="create-cppunit-configure">
+        <param name="cppunit" value="true"/>
+      </antcall>
     	<mkdir dir="${test.cppunit.dir}"/>
     	<exec executable="${c.src.dir}/configure" dir="${test.cppunit.dir}"
           	failonerror="yes">
@@ -638,9 +657,6 @@
     </target>
 
     <target name="call-test-cppunit" description="to execute cppunit tests">
-	<antcall target="create-cppunit-configure">
-		<param name="cppunit" value="true"/>
-        </antcall>
 	<antcall target="create-cppunit-makefile"/>
 	<antcall target="test-cppunit">
 		<param name="cppunit" value="true"/>
@@ -648,7 +664,9 @@
     </target>			
 
 
-    <target name="test-cppunit" depends="compile_jute, jar, create-cppunit-makefile" if="cppunit" 
+    <target name="test-cppunit"
+            depends="compile_jute, jar, create-cppunit-makefile"
+            if="cppunit"
 		description="to run cppunit test cases">
         <property name="fuser.bin" value="/sbin"/>
         <property name="lib.cppunit" value="/usr/local/lib"/>
