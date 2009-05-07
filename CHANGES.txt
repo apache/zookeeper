@@ -120,6 +120,9 @@ IMPROVEMENTS:
  
   ZOOKEEPER-389. add help/usage to the c shell cli.c (phunt via mahadev)
 
+  ZOOKEEPER-376. ant test target re-compiles cppunit code every time (phunt
+via mahadev)
+  
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
