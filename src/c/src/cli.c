@@ -57,22 +57,41 @@ printProfileInfo(struct timeval start, struct timeval end, int thres,
     fprintf(stderr,"%s: execution time=%dms\n",msg,delay);
 }
 
+static const char* state2String(int state){
+  if (state == 0)
+    return "CLOSED_STATE";
+  if (state == ZOO_CONNECTING_STATE)
+    return "CONNECTING_STATE";
+  if (state == ZOO_ASSOCIATING_STATE)
+    return "ASSOCIATING_STATE";
+  if (state == ZOO_CONNECTED_STATE)
+    return "CONNECTED_STATE";
+  if (state == ZOO_EXPIRED_SESSION_STATE)
+    return "EXPIRED_SESSION_STATE";
+  if (state == ZOO_AUTH_FAILED_STATE)
+    return "AUTH_FAILED_STATE";
+
+  return "INVALID_STATE";
+}
+
 void watcher(zhandle_t *zzh, int type, int state, const char *path,
              void* context)
 {
     /* Be careful using zh here rather than zzh - as this may be mt code
      * the client lib may call the watcher before zookeeper_init returns */
 
-    fprintf(stderr,
-            "Watcher %d state = %d for %s\n",
-            type, state, (path ? path: "null"));
+    fprintf(stderr, "Watcher %d state = %s", type, state2String(state));
+    if (path && strlen(path) > 0) {
+      fprintf(stderr, " for path %s", path);
+    }
+    fprintf(stderr, "\n");
 
     if (type == ZOO_SESSION_EVENT) {
         if (state == ZOO_CONNECTED_STATE) {
             const clientid_t *id = zoo_client_id(zzh);
             if (myid.client_id == 0 || myid.client_id != id->client_id) {
                 myid = *id;
-                fprintf(stderr, "Got a new id: %llx\n",
+                fprintf(stderr, "Got a new session id: 0x%llx\n",
                         _LL_CAST_ myid.client_id);
                 if (clientIdFile) {
                     FILE *fh = fopen(clientIdFile, "w");
@@ -240,6 +259,7 @@ int startsWith(const char *line, const char *prefix) {
 }
 
 static const char *hostPort;
+static int verbose = 0;
 
 void processline(char *line) {
     int rc;
@@ -247,7 +267,32 @@ void processline(char *line) {
     if (async) {
         line++;
     }
-    if (startsWith(line, "get ")) {
+    if (startsWith(line, "help")) {
+      fprintf(stderr, "    create [+[e|s]] <path>\n");
+      fprintf(stderr, "    delete <path>\n");
+      fprintf(stderr, "    set <path> <data>\n");
+      fprintf(stderr, "    get <path>\n");
+      fprintf(stderr, "    ls <path>\n");
+      fprintf(stderr, "    sync <path>\n");
+      fprintf(stderr, "    exists <path>\n");
+      fprintf(stderr, "    myid\n");
+      fprintf(stderr, "    verbose\n");
+      fprintf(stderr, "    quit\n");
+      fprintf(stderr, "\n");
+      fprintf(stderr, "    prefix the command with the character 'a' to run the command asynchronously.\n");
+      fprintf(stderr, "    run the 'verbose' command to toggle verbose logging.\n");
+      fprintf(stderr, "    i.e. 'aget /foo' to get /foo asynchronously\n");
+    } else if (startsWith(line, "verbose")) {
+      if (verbose) {
+        verbose = 0;
+        zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
+        fprintf(stderr, "logging level set to WARN\n");
+      } else {
+        verbose = 1;
+        zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+        fprintf(stderr, "logging level set to DEBUG\n");
+      }
+    } else if (startsWith(line, "get ")) {
         line += 4;
         if (line[0] != '/') {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
@@ -369,7 +414,7 @@ void processline(char *line) {
         zookeeper_close(zh);
         // we can't send myid to the server here -- zookeeper_close() removes 
         // the session on the server. We must start anew.
-        zh = zookeeper_init(hostPort, watcher, 10000, 0, 0, 0);
+        zh = zookeeper_init(hostPort, watcher, 30000, 0, 0, 0);
     } else if (startsWith(line, "quit")) {
         fprintf(stderr, "Quitting...\n");
         shutdownThisThing=1;
@@ -437,10 +482,11 @@ int main(int argc, char **argv) {
 #else
     strcpy(p, "dummy");
 #endif
-    zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+    verbose = 0;
+    zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
     zoo_deterministic_conn_order(1); // enable deterministic order
     hostPort = argv[1];
-    zh = zookeeper_init(hostPort, watcher, 10000, &myid, 0, 0);
+    zh = zookeeper_init(hostPort, watcher, 30000, &myid, 0, 0);
     if (!zh) {
         return errno;
     }
