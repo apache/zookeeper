@@ -70,6 +70,8 @@ BUGFIXES:
   ZOOKEEPER-365. javadoc is wrong for setLast in LedgerHandle
   (flavio via phunt)
 
+  ZOOKEEPER-392. Change log4j properties in bookkeeper. (flavio via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
