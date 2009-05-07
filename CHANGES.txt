@@ -117,6 +117,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-380. bookkeeper should have a streaming api so that its easier to
   store checpoints/snapshots in bookkeeper. (mahadev via flavio)
+ 
+  ZOOKEEPER-389. add help/usage to the c shell cli.c (phunt via mahadev)
 
 NEW FEATURES:
 
