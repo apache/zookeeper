@@ -131,6 +131,8 @@ NEW FEATURES:
 
   ZOOKEEPER-378. perl binding for zookeeper (chris darroch via mahadev)
 
+  ZOOKEEPER-386. improve java cli shell. (henry robinson via mahadev)
+
 Release 3.1.0 - 2009-02-06
   
 Non-backward compatible changes:

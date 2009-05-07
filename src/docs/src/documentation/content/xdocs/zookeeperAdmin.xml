@@ -222,8 +222,8 @@ server.3=zoo3:2888:3888</computeroutput></para>
               <para>In Java, you can run the following command to execute
               simple operations:</para>
 
-              <para><computeroutput>$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf \
-      org.apache.zookeeper.ZooKeeperMain 127.0.0.1:2181</computeroutput></para>
+              <para><computeroutput>$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf:src/java/lib/jline-0.9.94.jar \
+      org.apache.zookeeper.ZooKeeperMain -server 127.0.0.1:2181</computeroutput></para>
             </listitem>
 
             <listitem>

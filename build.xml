@@ -169,6 +169,7 @@
             <fileset dir="${build.classes}" />
             <pathelement path="${lib.dir}/log4j-1.2.15.jar" />
             <pathelement path="${clover.jar}" />
+            <pathelement path="${lib.dir}/jline-0.9.94.jar" />
         </path>
     </target>
     
