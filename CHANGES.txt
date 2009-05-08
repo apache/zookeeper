@@ -136,6 +136,8 @@ NEW FEATURES:
 
   ZOOKEEPER-386. improve java cli shell. (henry robinson via mahadev)
 
+  ZOOKEEPER-36. REST access to ZooKeeper (phunt via mahadev)
+
 Release 3.1.0 - 2009-02-06
   
 Non-backward compatible changes:
