@@ -39,8 +39,10 @@ import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
+import org.apache.log4j.Logger;
+
 public class LocalBookKeeper {
-	Logger LOG;
+    Logger LOG = Logger.getLogger(LocalBookKeeper.class);
 	ConsoleAppender ca;
 	int numberOfBookies;
 	
@@ -87,13 +89,11 @@ public class LocalBookKeeper {
 			zks = new ZooKeeperServer(ZkTmpDir, ZkTmpDir, ZooKeeperDefaultPort);
 			serverFactory =  new NIOServerCnxn.Factory(ZooKeeperDefaultPort);
 			serverFactory.startup(zks);
-		} catch (IOException e1) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			LOG.fatal("Exception while instantiating ZooKeeper", e);
+		} 
+		
         boolean b = ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT);
         LOG.debug("ZooKeeper server up: " + b);
 	}
@@ -112,13 +112,13 @@ public class LocalBookKeeper {
 			}
 		} catch (KeeperException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.fatal("Exception while creating znodes", e);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.fatal("Interrupted while creating znodes", e);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.fatal("Exception while creating znodes", e);
 		}		
 	}
 	private void runBookies() throws IOException{
