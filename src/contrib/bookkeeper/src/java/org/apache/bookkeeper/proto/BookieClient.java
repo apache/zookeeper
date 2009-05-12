@@ -312,8 +312,7 @@ public class BookieClient extends Thread {
                 }
             }
         } catch(Exception e) {
-            LOG.error("Len = " + len + ", Type = " + type + ", rc = " + rc);
-            e.printStackTrace();
+            LOG.error("Len = " + len + ", Type = " + type + ", rc = " + rc, e);
         }
     }
 

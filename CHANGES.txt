@@ -122,6 +122,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-376. ant test target re-compiles cppunit code every time (phunt
 via mahadev)
+
+  ZOOKEEPER-391. bookeeper mainline code should not be calling
+printStackTrace. (flavio via mahadev) 
   
 NEW FEATURES:
 

@@ -112,7 +112,7 @@ class BookieHandle extends Thread{
         try{
             incomingQueue.put(new ToSend(lh, r, entry));
         } catch(InterruptedException e){
-            e.printStackTrace();
+            LOG.warn("Interrupted while waiting for room in the incoming queue");
         }
     }
     
@@ -147,7 +147,7 @@ class BookieHandle extends Thread{
         try{
             incomingQueue.put(new ToSend(lh, r, entry));
         } catch(InterruptedException e){
-            e.printStackTrace();
+            LOG.warn("Interrupted while waiting for room in the incoming queue");
         }
     }
     
