@@ -118,7 +118,6 @@ public class NIOServerFactory extends Thread {
                 selected.clear();
             } catch (Exception e) {
                 LOG.warn(e);
-                e.printStackTrace();
             }
         }
         LOG.debug("NIOServerCnxn factory exitedloop.");

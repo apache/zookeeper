@@ -267,10 +267,8 @@ public class Bookie extends Thread {
                 }
                 toFlush.add(qe);
             }
-        } catch (InterruptedException e) {
-            LOG.debug("Bookie thread exiting due to interrupt");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.fatal("Bookie thread exiting", e);
         }
     }
 
