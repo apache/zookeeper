@@ -150,14 +150,12 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
                     hasMore = false;
                     LOG.debug("Recovering: " + lh.getLast());
                     LedgerSequence ls = lh.readEntries(lh.getLast(), lh.getLast());
-                    //if(ls == null) throw BKException.create(Code.ReadException);
                     LOG.debug("Received entry for: " + lh.getLast());
                     
                     byte[] le = ls.nextElement().getEntry();
                     if(le != null){
                         if(notLegitimate) notLegitimate = false;
                         lh.addEntry(le);
-                        //lh.incLast();
                         hasMore = true;
                     }
                 }
@@ -168,7 +166,7 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
          * Write counter as the last entry of ledger
          */
         if(!notLegitimate){
-            //lh.setLast(readCounter);
+            lh.setAddConfirmed(readCounter);
             lh.close();
             
             return true;

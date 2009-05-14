@@ -72,6 +72,8 @@ BUGFIXES:
 
   ZOOKEEPER-392. Change log4j properties in bookkeeper. (flavio via mahadev)
 
+  ZOOKEEPER-400. Issues with procedure to close ledger. (flavio)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

@@ -189,7 +189,7 @@ public class BookieReadWriteTest
 			
 			// wait for all entries to be acknowledged
 			synchronized (sync) {
-				if (sync.counter < numEntriesToWrite){
+				while (sync.counter < numEntriesToWrite){
 					LOG.debug("Entries counter = " + sync.counter);
 					sync.wait();
 				}
@@ -204,7 +204,7 @@ public class BookieReadWriteTest
 			// open ledger
 			lh = bkc.openLedger(ledgerId, ledgerPassword);
 			LOG.debug("Number of entries written: " + lh.getLast());
-			assertTrue("Verifying number of entries written", lh.getLast() == numEntriesToWrite);		
+			assertTrue("Verifying number of entries written", lh.getLast() == (numEntriesToWrite - 1));		
 			
 			//read entries
 			lh.asyncReadEntries(0, numEntriesToWrite - 1, this, (Object) sync);
@@ -269,7 +269,7 @@ public class BookieReadWriteTest
 			
 			// wait for all entries to be acknowledged
 			synchronized (sync) {
-				if (sync.counter < numEntriesToWrite){
+				while (sync.counter < numEntriesToWrite){
 					LOG.debug("Entries counter = " + sync.counter);
 					sync.wait();
 				}
@@ -284,7 +284,7 @@ public class BookieReadWriteTest
 			// open ledger
 			lh = bkc.openLedger(ledgerId, ledgerPassword);
 			LOG.debug("Number of entries written: " + lh.getLast());
-			assertTrue("Verifying number of entries written", lh.getLast() == numEntriesToWrite);		
+			assertTrue("Verifying number of entries written", lh.getLast() == (numEntriesToWrite - 1));		
 			
 			//read entries			
 			ls = lh.readEntries(0, numEntriesToWrite - 1);
@@ -342,7 +342,7 @@ public class BookieReadWriteTest
 			lh.close();
 			lh = bkc.openLedger(ledgerId, ledgerPassword);
 			LOG.debug("Number of entries written: " + lh.getLast());
-			assertTrue("Verifying number of entries written", lh.getLast() == numEntriesToWrite);		
+			assertTrue("Verifying number of entries written", lh.getLast() == (numEntriesToWrite - 1));		
 			
 			ls = lh.readEntries(0, numEntriesToWrite - 1);
 			int i = 0;
@@ -394,7 +394,7 @@ public class BookieReadWriteTest
 			lh.close();
 			lh = bkc.openLedger(ledgerId, ledgerPassword);
 			LOG.debug("Number of entries written: " + lh.getLast());
-			assertTrue("Verifying number of entries written", lh.getLast() == (numEntriesToWrite + 1));		
+			assertTrue("Verifying number of entries written", lh.getLast() == numEntriesToWrite);		
 			
 			ls = lh.readEntries(0, numEntriesToWrite - 1);
 			int i = 0;
@@ -441,8 +441,8 @@ public class BookieReadWriteTest
             lh2 = bkc.openLedger(ledgerId2, ledgerPassword);
             
             LOG.debug("Number of entries written: " + lh.getLast() + ", " + lh2.getLast());
-            assertTrue("Verifying number of entries written lh (" + lh.getLast() + ")" , lh.getLast() == numEntriesToWrite);
-            assertTrue("Verifying number of entries written lh2 (" + lh2.getLast() + ")", lh2.getLast() == numEntriesToWrite);
+            assertTrue("Verifying number of entries written lh (" + lh.getLast() + ")" , lh.getLast() == (numEntriesToWrite - 1));
+            assertTrue("Verifying number of entries written lh2 (" + lh2.getLast() + ")", lh2.getLast() == (numEntriesToWrite - 1));
             
             ls = lh.readEntries(0, numEntriesToWrite - 1);
             int i = 0;

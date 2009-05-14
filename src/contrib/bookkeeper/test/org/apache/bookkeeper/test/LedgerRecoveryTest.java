@@ -243,7 +243,7 @@ implements Watcher {
             /*
              * Check if has recovered properly.
              */
-            assertTrue("Has not recovered correctly: " + afterlh.getLast(), afterlh.getLast() == 1000);
+            assertTrue("Has not recovered correctly: " + afterlh.getLast(), afterlh.getLast() == 999);
         } catch (KeeperException e) {
             LOG.error("Error when opening ledger", e);
             fail("Couldn't open ledger");
@@ -328,7 +328,7 @@ implements Watcher {
             /*
              * Check if has recovered properly.
              */
-            assertTrue("Has not recovered correctly: " + afterlh.getLast(), afterlh.getLast() == 1);
+            assertTrue("Has not recovered correctly: " + afterlh.getLast(), afterlh.getLast() == 0);
         } catch (KeeperException e) {
             LOG.error("Error when opening ledger", e);
             fail("Couldn't open ledger");
