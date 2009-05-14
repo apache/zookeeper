@@ -444,8 +444,8 @@ public class LedgerHandle implements ReadCallback, AddCallback {
     throws KeeperException, InterruptedException {
         //Set data on zookeeper
         ByteBuffer last = ByteBuffer.allocate(8);
-        last.putLong(getLast());
-        LOG.info("Last saved on ZK is: " + getLast());
+        last.putLong(lastAddConfirmed);
+        LOG.info("Last saved on ZK is: " + lastAddConfirmed);
         String closePath = BookKeeper.prefix + bk.getZKStringId(getId()) + BookKeeper.close; 
         if(bk.getZooKeeper().exists(closePath, false) == null){
            bk.getZooKeeper().create(closePath, 
