@@ -1,0 +1,83 @@
+Very early version of ZooKeeper bindings for Python. All functions are imported as methods into the zookeeper module.
+
+DEPENDENCIES:
+-------------
+
+This has only been tested against SVN (i.e. 3.2.0 in development) but should work against 3.1.1. 
+
+You will need the Python development headers installed to build the module - on many package-management systems, these can be found in python-devel.
+
+Python >= 2.3 is required. We have tested against 2.3, 2.5 and 2.6. We have not tested against 3.x. 
+
+BUILD AND INSTALL:
+-------------------
+
+To install, make sure that the C client has been built and that the libraries are installed in /usr/local/lib (or change this directory in setup.py). Then run:
+
+ant install
+
+from zookeeper/src/contrib/zkpython/.
+
+To test, run ant test from the same directory. 
+
+NAMING CONVENTIONS:
+--------------------
+
+All methods that in the C library are zoo_fn_name have been implemented as zookeeper.fn_name. The exception is any function that has a watch function argument is named without the 'w' prefix (for example, zoo_wexists becomes zookeeper.exists). The variants of these functions without the watch argument (i.e. zoo_exists) have not been implemented on the understanding that they are superceded by the zoo_w* API. 
+
+Enums and integer constants that begin ZOO_int_name are named as zookeeper.int_name.
+
+PARAMETER CHANGES:
+------------------
+
+Zookeeper handles are represented as integers to avoid marshalling the entire structure for every call. Therefore they are opaque from Python. 
+
+Any parameter that is used to provide arguments to callback methods is not exposed in the API. Python provides better mechanisms for providing a closure to be called in the future.
+
+Every callback gets passed the handle of the ZooKeeper instance used to register the callback.
+
+DATA TYPES:
+-----------
+
+ACL_vectors are lists of dictionaries. Stat structures are dictionaries. String_vectors are lists of strings.
+
+EXCEPTIONS AND ERROR HANDLING:
+------------------------------
+
+Currently synchronous calls indicate failure by throwing an exception (note that this includes the synchronous calls to set up asynchronous completion callbacks!). Success is returned as an integer. 
+
+Callbacks signify failure by having the integer response code passed in. 
+
+WHAT'S NEW IN 0.3:
+------------------
+
+Some tests in zkpython/test. More to follow!
+
+A variety of bugfixes.
+
+Changed the way methods return results - all responses are integers now, for the client to convert to a string if it needs.
+
+WHAT'S NEW IN 0.2:
+------------------
+
+The asynchronous API is now implemented (see zookeeper.a*).
+
+Most enums defined in zookeeper.h are now added as constants to the module.
+
+_set2 and a few other edge API calls have been implemented. The module is now nearly 100% feature complete!
+
+A reference count error was tracked down and killed. More probably lurk in there!
+
+WHAT'S NOT DONE / KNOWN ISSUES:
+-------------------------------
+
+1. There may well be memory leaks / reference count issues; I need to do a complete audit.
+2. There probably needs to be a more Pythonic Python-side wrapper for these functions (e.g. a zookeeper object, the ability to iterate through a tree of zk nodes)
+3. set_watcher is not implemented. 
+4. If you pass an invalid handle, the library will do anything from silent failure to segfaulting. This will be fixed and an exception will be raised in future versions.
+5. More tests aren't written yet, but should be. 
+6. Similarly for documentation, other than this README (in particular, docstrings)
+
+Bug reports / comments very welcome!
+
+Henry Robinson henry@cloudera.com
