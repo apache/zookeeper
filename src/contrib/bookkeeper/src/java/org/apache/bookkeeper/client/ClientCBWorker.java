@@ -113,10 +113,11 @@ class ClientCBWorker extends Thread{
                     case Operation.ADD:
                         AddOp aOp = (AddOp) op;
                     
+                        aOp.getLedger().setAddConfirmed(aOp.entry);
                         aOp.cb.addComplete(aOp.getErrorCode(),
                             aOp.getLedger().getId(), aOp.entry, 
                             aOp.ctx);
-                        aOp.getLedger().setAddConfirmed(aOp.entry);
+                        
                         break;
                     case Operation.READ:
                         ReadOp rOp = (ReadOp) op;
