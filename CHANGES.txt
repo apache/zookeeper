@@ -141,6 +141,8 @@ NEW FEATURES:
 
   ZOOKEEPER-36. REST access to ZooKeeper (phunt via mahadev)
 
+  ZOOKEEPER-395. Python bindings. (henry robinson via mahadev)
+
 Release 3.1.0 - 2009-02-06
   
 Non-backward compatible changes:
