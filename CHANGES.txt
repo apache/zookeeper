@@ -130,6 +130,9 @@ printStackTrace. (flavio via mahadev)
  
   ZOOKEEPER-300. zk jmx code is calling printStackTrace when creating bean
 name (should not be) (phunt via mahadev)
+
+  ZOOKEEPER-94. JMX tests are needed to verify that the JMX MBeans work
+properly (phunt via mahadev)
  
 NEW FEATURES:
 

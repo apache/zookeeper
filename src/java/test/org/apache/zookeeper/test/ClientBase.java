@@ -29,6 +29,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.management.MBeanServerConnection;
+
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
@@ -72,8 +74,16 @@ public abstract class ClientBase extends TestCase {
 
     protected static class CountdownWatcher implements Watcher {
         // XXX this doesn't need to be volatile! (Should probably be final)
-        volatile CountDownLatch clientConnected = new CountDownLatch(1);
+        volatile CountDownLatch clientConnected;
         volatile boolean connected;
+        
+        public CountdownWatcher() {
+            reset();
+        }
+        synchronized public void reset() {
+            clientConnected = new CountDownLatch(1);
+            connected = false;
+        }
         synchronized public void process(WatchedEvent event) {
             if (event.getState() == KeeperState.SyncConnected) {
                 connected = true;
@@ -129,6 +139,7 @@ public abstract class ClientBase extends TestCase {
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp)
         throws IOException, InterruptedException
     {
+        watcher.reset();
         TestableZooKeeper zk =
             new TestableZooKeeper(hp, CONNECTION_TIMEOUT, watcher);
         if (!watcher.clientConnected.await(CONNECTION_TIMEOUT,
@@ -136,6 +147,8 @@ public abstract class ClientBase extends TestCase {
         {
             fail("Unable to connect to server");
         }
+        JMXEnv.ensureAll("0x" + Long.toHexString(zk.getSessionId()));
+
         return zk;
     }
 
@@ -288,41 +301,53 @@ public abstract class ClientBase extends TestCase {
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
 
+        JMXEnv.setUp();
+        
         tmpDir = createTmpDir(BASETEST);
         
         setupTestEnv();
-        serverFactory =
-            createNewServerInstance(tmpDir, serverFactory, hostPort);
+
+        startServer();
         
         LOG.info("Client test setup finished");
     }
 
+    protected void startServer() throws Exception {
+        LOG.info("STARTING server");
+        serverFactory = createNewServerInstance(tmpDir, serverFactory, hostPort);
+        // ensure that only server and data bean are registered
+        JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
+    }
+    
     protected void stopServer() throws Exception {
         LOG.info("STOPPING server");
         shutdownServerInstance(serverFactory, hostPort);
         serverFactory = null;
-    }
-    
-    protected void startServer() throws Exception {
-        LOG.info("STARTING server");
-        serverFactory = createNewServerInstance(tmpDir, serverFactory, hostPort);
+        // ensure no beans are leftover
+        JMXEnv.ensureOnly();
     }
     
     @Override
     protected void tearDown() throws Exception {
         LOG.info("tearDown starting");
 
-        shutdownServerInstance(serverFactory, hostPort);
+        stopServer();
         
         if (tmpDir != null) {
             //assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
             // FIXME see ZOOKEEPER-121 replace following line with previous
             recursiveDelete(tmpDir);
         }
+        
+        JMXEnv.tearDown();
 
         LOG.info("FINISHED " + getName());
     }
 
+    public static MBeanServerConnection jmxConn() throws IOException {
+        return JMXEnv.conn();
+    }
+    
     private static boolean recursiveDelete(File d) {
         if (d.isDirectory()) {
             File children[] = d.listFiles();

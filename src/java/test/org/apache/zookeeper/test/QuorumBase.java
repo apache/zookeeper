@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.ZooKeeper;
@@ -40,6 +42,8 @@ public class QuorumBase extends ClientBase {
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
 
+        JMXEnv.setUp();
+
         setupTestEnv();
 
         hostPort = "127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183,127.0.0.1:2184,127.0.0.1:2185";
@@ -54,7 +58,7 @@ public class QuorumBase extends ClientBase {
 
         LOG.info("Setup finished");
     }
-    void startServers() throws IOException, InterruptedException {
+    void startServers() throws Exception {
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
@@ -98,6 +102,28 @@ public class QuorumBase extends ClientBase {
                                     CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
         }
+
+        // interesting to see what's there...
+        JMXEnv.dump();
+        // make sure we have these 5 servers listed
+        Set<String> ensureNames = new LinkedHashSet<String>();
+        for (int i = 1; i <= 5; i++) {
+            ensureNames.add("InMemoryDataTree"); 
+        }
+        for (int i = 1; i <= 5; i++) {
+            ensureNames.add("name0=ReplicatedServer_id" + i
+                 + ",name1=replica." + i + ",name2="); 
+        }
+        for (int i = 1; i <= 5; i++) {
+            for (int j = 1; j <= 5; j++) {
+                ensureNames.add("name0=ReplicatedServer_id" + i
+                     + ",name1=replica." + j);
+            }
+        }
+        for (int i = 1; i <= 5; i++) {
+            ensureNames.add("name0=ReplicatedServer_id" + i); 
+        }
+        JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
     }
 
     @After
@@ -117,6 +143,8 @@ public class QuorumBase extends ClientBase {
             LOG.info(hp + " is no longer accepting client connections");
         }
 
+        JMXEnv.tearDown();
+        
         LOG.info("FINISHED " + getName());
     }
 

@@ -62,6 +62,7 @@ public class AsyncTest extends TestCase
     }
 
     protected void restart() throws Exception {
+        JMXEnv.setUp();
         qb.startServers();
     }
 
