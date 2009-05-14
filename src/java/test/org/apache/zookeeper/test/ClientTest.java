@@ -59,6 +59,7 @@ public class ClientTest extends ClientBase {
         try {
             zkIdle = createClient();
             zkWatchCreator = createClient();
+
             for (int i = 0; i < 30; i++) {
                 zkWatchCreator.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
