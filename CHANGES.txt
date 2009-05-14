@@ -127,7 +127,10 @@ via mahadev)
 
   ZOOKEEPER-391. bookeeper mainline code should not be calling
 printStackTrace. (flavio via mahadev) 
-  
+ 
+  ZOOKEEPER-300. zk jmx code is calling printStackTrace when creating bean
+name (should not be) (phunt via mahadev)
+ 
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
