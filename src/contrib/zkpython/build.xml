@@ -61,22 +61,46 @@
 
     <target name="python-test">
       <exec executable="${test.src.dir}/run_tests.sh" failonerror="true">
-	<arg value="${test.src.dir}"/>
+        <arg value="${test.src.dir}"/>
       </exec>
     </target>
 
-    <target name="build">
+    <target name="compile">
       <exec executable="python" failonerror="true">
-	<arg value="${python.src.dir}/setup.py"/>
-	<arg value="build"/>
+        <arg value="${python.src.dir}/setup.py"/>
+        <arg value="build"/>
+        <arg value="--build-base=${build.dir}"/>
       </exec>
     </target>
 
-    <target name="install" depends="build">
+    <target name="install" depends="compile">
       <exec executable="python" failonerror="true">
-	<arg value="${python.src.dir}/setup.py"/>
-	<arg value="install"/>
+        <arg value="${python.src.dir}/setup.py"/>
+        <arg value="build"/>
+        <arg value="--build-base=${build.dir}"/>
+        <arg value="install"/>
       </exec>
+    </target>
+
+    <target name="package" unless="skip.contrib">
+      <echo message="contrib: ${name}"/>
+
+      <mkdir dir="${build.dir}"/>
+      <copy todir="${build.dir}">
+        <fileset dir="${basedir}">
+          <exclude name="**/VERSION"/>
+        </fileset>
+      </copy>
+      <exec executable="echo" output="${build.dir}/VERSION">
+        <arg line="${version}" />
+      </exec>
+
+      <mkdir dir="${dist.dir}/contrib/${name}"/>
+      <copy todir="${dist.dir}/contrib/${name}">
+        <fileset dir="${build.dir}">
+          <exclude name="**/temp*"/>
+        </fileset>
+      </copy>
     </target>
 </project>
 
