@@ -133,6 +133,9 @@ name (should not be) (phunt via mahadev)
 
   ZOOKEEPER-94. JMX tests are needed to verify that the JMX MBeans work
 properly (phunt via mahadev)
+
+  ZOOKEEPER-404. nightly build failed on hudson. (henry robinson and pat via
+mahadev)
  
 NEW FEATURES:
 
