@@ -74,13 +74,20 @@ BUGFIXES:
 
   ZOOKEEPER-400. Issues with procedure to close ledger. (flavio)
 
-  ZOOKEEPER-405. nullpointer exception in zookeeper java shell. (mahadev via breed)
+  ZOOKEEPER-405. nullpointer exception in zookeeper java shell.
+  (mahadev via breed)
 
-  ZOOKEEPER-410. address all findbugs warnings in client/server classes. (phunt via breed)
+  ZOOKEEPER-410. address all findbugs warnings in client/server classes.
+  (phunt via breed)
   
   ZOOKEEPER-403. cleanup javac compiler warnings. (flavio via breed)
 
-  ZOOKEEPER-407. address all findbugs warnings in org.apache.zookeeper.server.quorum.** packages. (flavio via breed)
+  ZOOKEEPER-407. address all findbugs warnings in
+  org.apache.zookeeper.server.quorum.** packages.
+  (flavio via breed)
+
+  ZOOKEEPER-411. Building zookeeper fails on RHEL 5 64 bit during test-cppunit
+  (mahadev via phunt)
 
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
@@ -130,24 +137,26 @@ IMPROVEMENTS:
  
   ZOOKEEPER-389. add help/usage to the c shell cli.c (phunt via mahadev)
 
-  ZOOKEEPER-376. ant test target re-compiles cppunit code every time (phunt
-via mahadev)
+  ZOOKEEPER-376. ant test target re-compiles cppunit code every time
+  (phunt via mahadev)
 
   ZOOKEEPER-391. bookeeper mainline code should not be calling
-printStackTrace. (flavio via mahadev) 
+  printStackTrace. (flavio via mahadev) 
  
   ZOOKEEPER-300. zk jmx code is calling printStackTrace when creating bean
-name (should not be) (phunt via mahadev)
+  name (should not be) (phunt via mahadev)
 
   ZOOKEEPER-94. JMX tests are needed to verify that the JMX MBeans work
-properly (phunt via mahadev)
+  properly (phunt via mahadev)
 
-  ZOOKEEPER-404. nightly build failed on hudson. (henry robinson and pat via
-mahadev)
+  ZOOKEEPER-404. nightly build failed on hudson.
+  (henry robinson and pat via mahadev)
 
-  ZOOKEEPER-345. the CLIs should allow addAuth to be invoked. (henry robinson via breed)
+  ZOOKEEPER-345. the CLIs should allow addAuth to be invoked.
+  (henry robinson via breed)
 
-  ZOOKEEPER-292. commit configure scripts (autotools) to svn for c projects and include in release (phunt via breed)
+  ZOOKEEPER-292. commit configure scripts (autotools) to svn for c projects and
+  include in release (phunt via breed)
  
 NEW FEATURES:
 
