@@ -74,6 +74,8 @@ BUGFIXES:
 
   ZOOKEEPER-400. Issues with procedure to close ledger. (flavio)
 
+  ZOOKEEPER-405. nullpointer exception in zookeeper java shell. (mahadev via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
