@@ -87,6 +87,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
         int outstandingLimit = 1;
 
+        /** Create the factory, startup(zks) must be called subsequently.
+         * @param port listener port
+         * @throws IOException
+         */
         public Factory(int port) throws IOException {
             super("NIOServerCxn.Factory:" + port);
             setDaemon(true);
@@ -95,11 +99,20 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             ss.socket().bind(new InetSocketAddress(port));
             ss.configureBlocking(false);
             ss.register(selector, SelectionKey.OP_ACCEPT);
-            start();
         }
 
-        public void startup(ZooKeeperServer zks) throws IOException,
-                InterruptedException {
+        @Override
+        public void start() {
+            // ensure thread is started once and only once
+            if (getState() == Thread.State.NEW) {
+                super.start();
+            }
+        }
+
+        public void startup(ZooKeeperServer zks)
+            throws IOException, InterruptedException
+        {
+            start();
             zks.startup();
             setZooKeeperServer(zks);
         }
@@ -482,15 +495,17 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         }
         if (h.getXid() >= 0) {
             synchronized (this) {
-                outstandingRequests++;
-                // check throttling
-                if (zk.getInProcess() > factory.outstandingLimit) {
-                    LOG.debug("Throttling recv " + zk.getInProcess());
-                    disableRecv();
-                    // following lines should not be needed since we are already
-                    // reading
-                    // } else {
-                    // enableRecv();
+                synchronized (this.factory) {
+                    outstandingRequests++;
+                    // check throttling
+                    if (zk.getInProcess() > factory.outstandingLimit) {
+                        LOG.debug("Throttling recv " + zk.getInProcess());
+                        disableRecv();
+                        // following lines should not be needed since we are
+                        // already reading
+                        // } else {
+                        // enableRecv();
+                    }
                 }
             }
         }
@@ -934,7 +949,11 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
          * The number of requests that have been submitted but not yet responded to.
          */
         public long getOutstandingRequests() {
-            return outstandingRequests;
+            synchronized (NIOServerCnxn.this) {
+                synchronized (NIOServerCnxn.this.factory) {
+                    return outstandingRequests;
+                }
+            }
         }
 
         public long getPacketsReceived() {

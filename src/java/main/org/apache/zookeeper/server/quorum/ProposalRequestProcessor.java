@@ -39,6 +39,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
         this.nextProcessor = nextProcessor;
         AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.getLeader());
         syncProcessor = new SyncRequestProcessor(zks, ackProcessor);
+        syncProcessor.start();
     }
 
     public void processRequest(Request request) {

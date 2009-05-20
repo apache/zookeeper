@@ -1,5 +1,40 @@
 <FindBugsFilter>
-     <Match>
-       <Package name="org.apache.jute.compiler.generated" />
-     </Match>
+  <!-- Allow command line utilities, which follow pattern *Main.java, to call
+       system exit -->
+  <Match>
+    <Class name="~org\.apache\.zookeeper\..*Main" />
+    <Bug pattern="DM_EXIT" />
+  </Match>
+
+  <!-- This is too complicated to resolve/ingrained into the architecture
+       In particular we want to make sure we exit if this occurs
+       Also notice logged as fatal error -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.SyncRequestProcessor" />
+    <Method name="run" />
+    <Bug pattern="DM_EXIT" />
+  </Match>
+
+  <!-- In particular we want to make sure we exit if this occurs, unrecoverable.
+       Also notice logged as fatal error -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.ZooKeeperServer" />
+    <Method name="takeSnapshot" />
+    <Bug pattern="DM_EXIT" />
+  </Match>
+
+
+  <!-- We want to catch all exceptions and cleanup, regardless of source
+       (incl runtime) -->
+  <Match>
+    <Class name="org.apache.zookeeper.ClientCnxn$SendThread" />
+    <Method name="run" />
+    <Bug pattern="REC_CATCH_EXCEPTION" />
+  </Match>
+
+
+  <Match>
+    <Package name="org.apache.jute.compiler.generated" />
+  </Match>
+
 </FindBugsFilter>

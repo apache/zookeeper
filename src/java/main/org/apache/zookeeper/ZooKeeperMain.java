@@ -447,6 +447,7 @@ public class ZooKeeperMain {
             try {
                 children = zk.getChildren(quotaPath, false);
             } catch(KeeperException.NoNodeException ne) {
+                LOG.debug("child removed during quota check", ne);
                 return;
             }
             if (children.size() == 0) {

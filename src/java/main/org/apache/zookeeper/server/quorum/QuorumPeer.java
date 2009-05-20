@@ -306,6 +306,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     
     @Override
     public synchronized void start() {
+        cnxnFactory.start();
         startLeaderElection();
         super.start();
     }
