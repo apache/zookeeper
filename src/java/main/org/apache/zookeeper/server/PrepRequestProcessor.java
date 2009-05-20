@@ -86,8 +86,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         super("ProcessThread:" + zks.getClientPort());
         this.nextProcessor = nextProcessor;
         this.zks = zks;
-
-        start();
     }
 
     @Override

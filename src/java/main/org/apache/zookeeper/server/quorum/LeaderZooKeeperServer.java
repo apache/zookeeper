@@ -66,6 +66,7 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
         RequestProcessor proposalProcessor = new ProposalRequestProcessor(this,
                 commitProcessor);
         firstProcessor = new PrepRequestProcessor(this, proposalProcessor);
+        ((PrepRequestProcessor)firstProcessor).start();
     }
 
     @Override
@@ -77,15 +78,12 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, sessionsWithTimeouts,
                 tickTime, self.getId());
+        ((SessionTrackerImpl)sessionTracker).start();
     }
 
 
     public boolean touch(long sess, int to) {
         return sessionTracker.touchSession(sess, to);
-    }
-
-    public void setZxid(long zxid) {
-        hzxid = zxid;
     }
 
     @Override

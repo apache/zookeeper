@@ -240,6 +240,20 @@ public class ClientCnxn {
     }
 
 
+    /**
+     * Creates a connection object. The actual network connect doesn't get
+     * established until needed. The start() instance method must be called
+     * subsequent to construction.
+     *
+     * @param hosts
+     *                a comma separated list of hosts that can be connected to.
+     * @param sessionTimeout
+     *                the timeout for connections.
+     * @param zooKeeper
+     *                the zookeeper object that this connection is related to.
+     * @param watcher watcher for this connection
+     * @throws IOException
+     */
     public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper,
             ClientWatchManager watcher)
         throws IOException
@@ -249,7 +263,8 @@ public class ClientCnxn {
 
     /**
      * Creates a connection object. The actual network connect doesn't get
-     * established until needed.
+     * established until needed. The start() instance method must be called
+     * subsequent to construction.
      *
      * @param hosts
      *                a comma separated list of hosts that can be connected to.
@@ -257,12 +272,15 @@ public class ClientCnxn {
      *                the timeout for connections.
      * @param zooKeeper
      *                the zookeeper object that this connection is related to.
-     * @throws KeeperException
+     * @param watcher watcher for this connection
+     * @param sessionId session id if re-establishing session
+     * @param sessionPasswd session passwd if re-establishing session
      * @throws IOException
      */
     public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper,
             ClientWatchManager watcher, long sessionId, byte[] sessionPasswd)
-        throws IOException {
+        throws IOException
+    {
         this.zooKeeper = zooKeeper;
         this.watcher = watcher;
         this.sessionId = sessionId;
@@ -286,10 +304,13 @@ public class ClientCnxn {
         Collections.shuffle(serverAddrs);
         sendThread = new SendThread();
         eventThread = new EventThread();
+    }
+
+    public void start() {
         sendThread.start();
         eventThread.start();
     }
-    
+
     Object eventOfDeath = new Object();
 
     final static UncaughtExceptionHandler uncaughtExceptionHandler = new UncaughtExceptionHandler() {
@@ -298,7 +319,7 @@ public class ClientCnxn {
         }
     };
 
-    private class WatcherSetEventPair {
+    private static class WatcherSetEventPair {
         private final Set<Watcher> watchers;
         private final WatchedEvent event;
         

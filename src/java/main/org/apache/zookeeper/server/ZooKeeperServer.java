@@ -200,8 +200,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         };
         sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
         dataTree = treeBuilder.build();
-        long zxid = txnLogFactory.restore(dataTree,sessionsWithTimeouts,listener);
-        this.hzxid = zxid;
+        setZxid(txnLogFactory.restore(dataTree,sessionsWithTimeouts,listener));
         // Clean up dead sessions
         LinkedList<Long> deadSessions = new LinkedList<Long>();
         for (long session : dataTree.getSessions()) {
@@ -283,12 +282,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     /**
      * This should be called from a synchronized block on this!
      */
-    public long getZxid() {
+    synchronized public long getZxid() {
         return hzxid;
     }
 
     synchronized long getNextZxid() {
         return ++hzxid;
+    }
+
+    synchronized public void setZxid(long zxid) {
+        hzxid = zxid;
     }
 
     long getTime() {
@@ -371,12 +374,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         RequestProcessor syncProcessor = new SyncRequestProcessor(this,
                 finalProcessor);
+        ((SyncRequestProcessor)syncProcessor).start();
         firstProcessor = new PrepRequestProcessor(this, syncProcessor);
+        ((PrepRequestProcessor)firstProcessor).start();
     }
 
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, sessionsWithTimeouts,
                 tickTime, 1);
+        ((SessionTrackerImpl)sessionTracker).start();
     }
 
     public boolean isRunning() {

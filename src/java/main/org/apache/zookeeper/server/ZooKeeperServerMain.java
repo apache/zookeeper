@@ -94,9 +94,8 @@ public class ZooKeeperServerMain {
                    File(config.dataLogDir), new File(config.dataDir));
             zkServer.setTxnLogFactory(ftxn);
             zkServer.setTickTime(config.tickTime);
-            zkServer.startup();
             cnxnFactory = new NIOServerCnxn.Factory(config.clientPort);
-            cnxnFactory.setZooKeeperServer(zkServer);
+            cnxnFactory.startup(zkServer);
             cnxnFactory.join();
             if (zkServer.isRunning()) {
                 zkServer.shutdown();
