@@ -29,13 +29,20 @@ then
 fi
 
 # Make sure nothing is left over from before
-fuser -skn tcp 22181/tcp
+if [ -r "/tmp/zk.pid" ]
+then
+pid=`cat /tmp/zk.pid`
+kill -9 $pid
+rm -f /tmp/zk.pid
+fi
+
 
 case $1 in
 start|startClean)
 	mkdir -p /tmp/zkdata
 	java -cp ../../../../../zookeeper-dev.jar:../../../../../src/java/lib/log4j-1.2.15.jar:../../../../../conf/ org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
-	sleep 5
+        echo $! > /tmp/zk.pid
+        sleep 5
 	;;
 stop)
 	# Already killed above
