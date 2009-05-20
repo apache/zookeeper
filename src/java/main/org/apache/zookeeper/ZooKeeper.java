@@ -344,6 +344,7 @@ public class ZooKeeper {
 
         watchManager.defaultWatcher = watcher;
         cnxn = new ClientCnxn(host, sessionTimeout, this, watchManager);
+        cnxn.start();
     }
 
     /**
@@ -388,6 +389,7 @@ public class ZooKeeper {
         watchManager.defaultWatcher = watcher;
         cnxn = new ClientCnxn(host, sessionTimeout, this, watchManager,
                 sessionId, sessionPasswd);
+        cnxn.start();
     }
 
     /**

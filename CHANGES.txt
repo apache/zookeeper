@@ -76,6 +76,8 @@ BUGFIXES:
 
   ZOOKEEPER-405. nullpointer exception in zookeeper java shell. (mahadev via breed)
 
+  ZOOKEEPER-410. address all findbugs warnings in client/server classes. (phunt via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

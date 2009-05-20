@@ -22,9 +22,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import org.apache.jute.Record;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.KeeperException.Code;
@@ -48,6 +47,7 @@ import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.NIOServerCnxn.Factory;
+import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
 
@@ -83,12 +83,12 @@ public class FinalRequestProcessor implements RequestProcessor {
         synchronized (zks.outstandingChanges) {
             while (!zks.outstandingChanges.isEmpty()
                     && zks.outstandingChanges.get(0).zxid <= request.zxid) {
-                if (zks.outstandingChanges.get(0).zxid < request.zxid) {
+                ChangeRecord cr = zks.outstandingChanges.remove(0);
+                if (cr.zxid < request.zxid) {
                     LOG.warn("Zxid outstanding "
-                            + zks.outstandingChanges.get(0).zxid
+                            + cr.zxid
                             + " is less than current " + request.zxid);
                 }
-                ZooKeeperServer.ChangeRecord cr = zks.outstandingChanges.remove(0);
                 if (zks.outstandingChangesForPath.get(cr.path) == cr) {
                     zks.outstandingChangesForPath.remove(cr.path);
                 }

@@ -23,10 +23,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
-
 import org.apache.zookeeper.KeeperException;
 
 /**
@@ -68,8 +68,6 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
     }
 
     static class SessionSet {
-        long expireTime;
-
         HashSet<Session> sessions = new HashSet<Session>();
     }
 
@@ -81,7 +79,9 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
     }
 
     public SessionTrackerImpl(SessionExpirer expirer,
-            ConcurrentHashMap<Long, Integer> sessionsWithTimeout, int tickTime, long sid) {
+            ConcurrentHashMap<Long, Integer> sessionsWithTimeout, int tickTime,
+            long sid)
+    {
         super("SessionTracker");
         this.expirer = expirer;
         this.expirationInterval = tickTime;
@@ -89,10 +89,9 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         nextExpirationTime = roundToInterval(System.currentTimeMillis());
         this.serverId = sid;
         this.nextSessionId = initializeNextSession(sid);
-        for (long id : sessionsWithTimeout.keySet()) {
-            addSession(id, sessionsWithTimeout.get(id));
+        for (Entry<Long, Integer> e : sessionsWithTimeout.entrySet()) {
+            addSession(e.getKey(), e.getValue());
         }
-        start();
     }
 
     volatile boolean running = true;
@@ -164,7 +163,6 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         set = sessionSets.get(s.tickTime);
         if (set == null) {
             set = new SessionSet();
-            set.expireTime = expireTime;
             sessionSets.put(expireTime, set);
         }
         set.sessions.add(s);

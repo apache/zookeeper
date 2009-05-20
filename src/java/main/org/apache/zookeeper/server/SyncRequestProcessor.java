@@ -60,7 +60,6 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         super("SyncThread:" + zks.getServerId());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
-        start();
     }
 
     @Override
