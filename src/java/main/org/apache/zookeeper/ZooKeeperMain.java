@@ -613,6 +613,7 @@ public class ZooKeeperMain {
         } else if (cmd.equals("get") && args.length >= 2) {
             path = args[1];
             byte data[] = zk.getData(path, watch, stat);
+            data = (data == null)? "null".getBytes() : data;
             System.out.println(new String(data));
             printStat(stat);
         } else if (cmd.equals("ls") && args.length >= 2) {
