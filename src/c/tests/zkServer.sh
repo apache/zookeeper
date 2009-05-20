@@ -33,17 +33,33 @@ then
 fi
 
 # Make sure nothing is left over from before
-fuser -skn tcp 22181/tcp
+if [ -r "/tmp/zk.pid" ]
+then
+pid=`cat /tmp/zk.pid`
+kill -9 $pid
+rm -f /tmp/zk.pid
+fi
+
+if [ -r "${base_dir}/build/tmp/zk.pid" ]
+then
+pid=`cat ${base_dir}/build/tmp/zk.pid`
+kill -9 $pid
+rm -f ${base_dir}/build/tmp/zk.pid
+fi
+
 
 case $1 in
 start|startClean)
 	if [ "x${base_dir}" == "x" ]
         then
       	mkdir -p /tmp/zkdata
-	java -cp ../../zookeeper-dev.jar:../../src/java/lib/log4j-1.2.15.jar:../../conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
+        java -cp ../../zookeeper-dev.jar:../../src/java/lib/log4j-1.2.15.jar:../../conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
+        pid=$!
+        echo $! > /tmp/zk.pid        
         else
         mkdir -p ${base_dir}/build/tmp/zkdata
         java -cp ${base_dir}/zookeeper-dev.jar:${base_dir}/src/java/lib/log4j-1.2.15.jar:${base_dir}/conf org.apache.zookeeper.server.ZooKeeperServerMain 22181 ${base_dir}/build/tmp/zkdata &> ${base_dir}/build/tmp/zk.log &
+        echo $! > ${base_dir}/build/tmp/zk.pid
 	fi
         sleep 5
 	;;
