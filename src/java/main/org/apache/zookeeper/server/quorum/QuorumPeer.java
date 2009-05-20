@@ -403,6 +403,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         case 3:
             le = new FastLeaderElection(this,
                         new QuorumCnxManager(this));
+            break;
         default:
             assert false;
         }

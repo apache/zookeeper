@@ -74,6 +74,8 @@ public class FollowerRequestProcessor extends Thread implements
                 switch (request.type) {
                 case OpCode.sync:
                     zks.pendingSyncs.add(request);
+                    zks.getFollower().request(request);
+                    break;
                 case OpCode.create:
                 case OpCode.delete:
                 case OpCode.setData:
