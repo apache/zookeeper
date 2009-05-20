@@ -27,6 +27,8 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
+
 import java.util.concurrent.TimeUnit;
 import java.util.Random;
 
@@ -37,6 +39,7 @@ import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+
 
 public class AuthFastLeaderElection implements Election {
     private static final Logger LOG = Logger.getLogger(AuthFastLeaderElection.class);
@@ -192,8 +195,8 @@ public class AuthFastLeaderElection implements Election {
         long lastEpoch;
         LinkedBlockingQueue<Long> acksqueue;
         HashMap<Long, Long> challengeMap;
-        HashMap<Long, Long> challengeMutex;
-        HashMap<Long, Long> ackMutex;
+        HashMap<Long, Semaphore> challengeMutex;
+        HashMap<Long, Semaphore> ackMutex;
         HashMap<InetSocketAddress, HashMap<Long, Long>> addrChallengeMap;
 
         class WorkerReceiver implements Runnable {
@@ -208,18 +211,20 @@ public class AuthFastLeaderElection implements Election {
 
             boolean saveChallenge(long tag, long challenge) {
 
-                Long l = challengeMutex.get(tag);
+                //Long l = challengeMutex.get(tag);
+                Semaphore s = challengeMutex.get(tag);
+                if (s != null) {
+                        synchronized (challengeMap) {
+                            challengeMap.put(tag, challenge);
+                            challengeMutex.remove(tag);
+                        }
 
-                synchronized (challengeMap) {
-                    challengeMap.put(tag, challenge);
-                    challengeMutex.remove(tag);
+                
+                        s.release();
+                } else {
+                    LOG.error("No challenge mutex object");
                 }
-
-                if (l != null) {
-                    synchronized(l){
-                        l.notify();
-                    }
-                }
+                
 
                 return true;
             }
@@ -343,12 +348,12 @@ public class AuthFastLeaderElection implements Election {
                     // Upon reception of an ack message, remove it from the
                     // queue
                     case 3:
-                        Long l = ackMutex.get(tag);
-                        if (l != null) {
-                            synchronized(l){
-                                l.notify();
-                            }
-                        }
+                        Semaphore s = ackMutex.get(tag);
+                        
+                        if(s != null)
+                            s.release();
+                        else LOG.error("Empty ack semaphore");
+                        
                         acksqueue.offer(tag);
 
                         if (authEnabled) {
@@ -568,10 +573,11 @@ public class AuthFastLeaderElection implements Election {
                                     double timeout = ackWait
                                             * java.lang.Math.pow(2, attempts);
 
-                                    Long l = Long.valueOf(m.tag);
-                                    synchronized (l) {
-                                        challengeMutex.put(m.tag, l);
-                                        l.wait((long) timeout);
+                                    //Long l = new Long(m.tag);
+                                    Semaphore s = new Semaphore(0);
+                                    synchronized (s) {
+                                        challengeMutex.put(m.tag, s);
+                                        s.tryAcquire((long) timeout, TimeUnit.MILLISECONDS);
                                         myChallenge = challengeMap
                                                 .containsKey(m.tag);
                                     }
@@ -596,13 +602,11 @@ public class AuthFastLeaderElection implements Election {
                             }
                             mySocket.send(requestPacket);
                             try {
-                                Long l = Long.valueOf(m.tag);
+                                Semaphore s = new Semaphore(0);
                                 double timeout = ackWait
                                         * java.lang.Math.pow(10, attempts);
-                                synchronized (l) {
-                                    ackMutex.put(m.tag, l);
-                                    l.wait((int) timeout);
-                                }
+                                ackMutex.put(m.tag, s);
+                                s.tryAcquire((int) timeout, TimeUnit.MILLISECONDS);
                             } catch (InterruptedException e) {
                                 LOG.warn("Ack exception: ", e);
                             }
@@ -694,8 +698,8 @@ public class AuthFastLeaderElection implements Election {
             mySocket = s;
             acksqueue = new LinkedBlockingQueue<Long>();
             challengeMap = new HashMap<Long, Long>();
-            challengeMutex = new HashMap<Long, Long>();
-            ackMutex = new HashMap<Long, Long>();
+            challengeMutex = new HashMap<Long, Semaphore>();
+            ackMutex = new HashMap<Long, Semaphore>();
             addrChallengeMap = new HashMap<InetSocketAddress, HashMap<Long, Long>>();
             lastProposedLeader = 0;
             lastProposedZxid = 0;
@@ -759,14 +763,10 @@ public class AuthFastLeaderElection implements Election {
 
     private void leaveInstance() {
         logicalclock++;
-        // sendqueue.clear();
-        // recvqueue.clear();
     }
 
     private void sendNotifications() {
         for (QuorumServer server : self.quorumPeers.values()) {
-            //InetSocketAddress saddr = new InetSocketAddress(server.addr
-            //        .getAddress(), port);
 
             ToSend notmsg = new ToSend(ToSend.mType.notification,
                     AuthFastLeaderElection.sequencer++, proposedLeader,
@@ -906,9 +906,6 @@ public class AuthFastLeaderElection implements Election {
                                         (proposedLeader == self.getId()) ? 
                                          ServerState.LEADING :
                                          ServerState.FOLLOWING);
-                                // if (self.state == ServerState.FOLLOWING) {
-                                // Thread.sleep(100);
-                                // }
     
                                 leaveInstance();
                                 return new Vote(proposedLeader, proposedZxid);

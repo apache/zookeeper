@@ -18,14 +18,18 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.log4j.Logger;
+
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+
 
 /**
  * This is a very simple RequestProcessor that simply forwards a request from a
  * previous stage to the leader as an ACK.
  */
 class AckRequestProcessor implements RequestProcessor {
+    private static final Logger LOG = Logger.getLogger(AckRequestProcessor.class);
     Leader leader;
 
     AckRequestProcessor(Leader leader) {
@@ -36,7 +40,11 @@ class AckRequestProcessor implements RequestProcessor {
      * Forward the request as an ACK to the leader
      */
     public void processRequest(Request request) {
-        leader.processAck(leader.self.getId(), request.zxid, null);
+        QuorumPeer self = leader.self;
+        if(self != null)
+            leader.processAck(self.getId(), request.zxid, null);
+        else
+            LOG.error("Null QuorumPeer");
     }
 
     public void shutdown() {

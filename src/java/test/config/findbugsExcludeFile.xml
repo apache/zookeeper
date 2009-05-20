@@ -33,6 +33,29 @@
   </Match>
 
 
+   <!-- If we cannot open a socket to elect a leader, then we should
+            simply exit -->
+   <Match>
+     <Class name="org.apache.zookeeper.server.quorum.LeaderElection" />
+       <Method name="lookForLeader" />
+       <Bug pattern="DM_EXIT" />
+   </Match>
+
+   <!-- Committing out of order is an unrecoverable error, so we should
+              really exit  -->
+   <Match>
+     <Class name="org.apache.zookeeper.server.quorum.FollowerZooKeeperServer" />
+       <Method name="commit" />
+       <Bug pattern="DM_EXIT" />
+     </Match>
+
+   <!-- Two unrecoverable errors while following the leader  -->
+   <Match>
+     <Class name="org.apache.zookeeper.server.quorum.Follower" />
+       <Method name="followLeader" />
+       <Bug pattern="DM_EXIT" />
+   </Match>
+
   <Match>
     <Package name="org.apache.jute.compiler.generated" />
   </Match>

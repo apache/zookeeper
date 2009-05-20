@@ -80,6 +80,8 @@ BUGFIXES:
   
   ZOOKEEPER-403. cleanup javac compiler warnings. (flavio via breed)
 
+  ZOOKEEPER-407. address all findbugs warnings in org.apache.zookeeper.server.quorum.** packages. (flavio via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

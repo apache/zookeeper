@@ -58,7 +58,6 @@ public class CommitProcessor extends Thread implements RequestProcessor {
         super("CommitProcessor:" + id);
         this.nextProcessor = nextProcessor;
         this.matchSyncs = matchSyncs;
-        start();
     }
 
     volatile boolean finished = false;
@@ -141,8 +140,8 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                     }
                 }
             }
-        } catch (Exception e) {
-            LOG.error("Unexpected exception causing exit", e);
+        } catch (InterruptedException e) {
+            LOG.warn("Interrupted exception while waiting", e);
         }
         LOG.info("CommitProcessor exited loop!");
     }
