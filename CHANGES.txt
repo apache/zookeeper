@@ -138,7 +138,10 @@ properly (phunt via mahadev)
 
   ZOOKEEPER-404. nightly build failed on hudson. (henry robinson and pat via
 mahadev)
+
   ZOOKEEPER-345. the CLIs should allow addAuth to be invoked. (henry robinson via breed)
+
+  ZOOKEEPER-292. commit configure scripts (autotools) to svn for c projects and include in release (phunt via breed)
  
 NEW FEATURES:
 
