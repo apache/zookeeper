@@ -84,7 +84,9 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         commitProcessor = new CommitProcessor(finalProcessor,
                 Long.toString(getServerId()), true);
+        commitProcessor.start();
         firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
+        ((FollowerRequestProcessor) firstProcessor).start();
         syncProcessor = new SyncRequestProcessor(this,
                 new SendAckRequestProcessor(getFollower()));
         syncProcessor.start();

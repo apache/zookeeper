@@ -48,7 +48,6 @@ public class FollowerRequestProcessor extends Thread implements
         super("FollowerRequestProcessor:" + zks.getServerId());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
-        start();
     }
 
     @Override

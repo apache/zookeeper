@@ -79,7 +79,6 @@ public class FollowerHandler extends Thread {
         this.sock = sock;
         this.leader = leader;
         leader.addFollowerHandler(this);
-        start();
     }
     
     @Override

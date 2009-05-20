@@ -228,6 +228,7 @@ public class Follower {
                         LOG.fatal("Got unexpected packet from leader "
                                 + qp.getType() + " exiting ... " );
                         System.exit(13);
+
                     }
                     zk.dataTree.lastProcessedZxid = newLeaderZxid;
                 }

@@ -220,7 +220,8 @@ public class Leader {
                         Socket s = ss.accept();
                         s.setSoTimeout(self.tickTime * self.syncLimit);
                         s.setTcpNoDelay(nodelay);
-                        new FollowerHandler(s, Leader.this);
+                        FollowerHandler fh = new FollowerHandler(s, Leader.this);
+                        fh.start();
                     } catch (SocketException e) {
                         if (stop) {
                             LOG.info("exception while shutting down acceptor: "
@@ -262,7 +263,11 @@ public class Leader {
             epoch++;
             zk.setZxid(epoch << 32L);
             zk.dataTree.lastProcessedZxid = zk.getZxid();
-            lastProposed = zk.getZxid();
+            
+            synchronized(this){
+                lastProposed = zk.getZxid();
+            }
+            
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
                     null, null);
             if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
@@ -547,7 +552,9 @@ public class Leader {
      * @param zxid
      */
     public void commit(long zxid) {
-        lastCommitted = zxid;
+        synchronized(this){
+            lastCommitted = zxid;
+        }
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
         sendPacket(qp);
     }
@@ -657,8 +664,9 @@ public class Leader {
         }
         synchronized (forwardingFollowers) {
             forwardingFollowers.add(handler);
-            return lastProposed;
         }
+        
+        return lastProposed;
     }
 
 }
