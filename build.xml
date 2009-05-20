@@ -426,7 +426,8 @@
     <!-- ================================================================== -->
     <!--                                                                    -->
     <!-- ================================================================== -->
-    <target name="package" depends="release-jar, api-report, compile-test"
+    <target name="package"
+            depends="release-jar,api-report,compile-test,create-cppunit-configure"
             description="Build distribution">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
@@ -493,14 +494,42 @@
     <target name="tar" depends="package" description="Make release tarball">
       <macro_tar param.destfile="${build.dir}/${final.name}.tar.gz">
         <param.listofitems>
+          <!-- it's unfortunate that the binaries have to be duplicated
+               however that's the only way ant currently supports afaik -->
           <tarfileset dir="${build.dir}" mode="664">
             <exclude name="${final.name}/bin/*" />
             <exclude name="${final.name}/contrib/*/bin/*" />
+
+            <exclude name="${final.name}/**/compile" />
+            <exclude name="${final.name}/**/config.guess" />
+            <exclude name="${final.name}/**/config.sub" />
+            <exclude name="${final.name}/**/configure" />
+            <exclude name="${final.name}/**/depcomp" />
+            <exclude name="${final.name}/**/install-sh" />
+            <exclude name="${final.name}/**/ltmain.sh" />
+            <exclude name="${final.name}/**/missing" />
+
+            <exclude name="${final.name}/**/*.sh" />
+
             <include name="${final.name}/**" />
           </tarfileset>
           <tarfileset dir="${build.dir}" mode="755">
+            <!-- be sure to add to exclude list above if you add here -->
             <include name="${final.name}/bin/*" />
             <include name="${final.name}/contrib/*/bin/*" />
+
+            <!-- autotools related commands -->
+            <include name="${final.name}/**/compile" />
+            <include name="${final.name}/**/config.guess" />
+            <include name="${final.name}/**/config.sub" />
+            <include name="${final.name}/**/configure" />
+            <include name="${final.name}/**/depcomp" />
+            <include name="${final.name}/**/install-sh" />
+            <include name="${final.name}/**/ltmain.sh" />
+            <include name="${final.name}/**/missing" />
+
+            <!-- any shell scripts -->
+            <include name="${final.name}/**/*.sh" />
           </tarfileset>
         </param.listofitems>
       </macro_tar>
