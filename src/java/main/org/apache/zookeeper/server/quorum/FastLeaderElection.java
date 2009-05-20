@@ -636,7 +636,7 @@ public class FastLeaderElection implements Election {
                             }
                         }
                         break;
-                    case LEADING:
+                    default:
                         /*
                          * There is at most one leader for each epoch, so if a
                          * peer claims to be the leader for an epoch, then that
@@ -645,14 +645,15 @@ public class FastLeaderElection implements Election {
                          * this leader, then processes will naturally move
                          * to a new epoch.
                          */
-                        if(n.epoch == logicalclock){
+                        if((n.state == ServerState.LEADING) && 
+                                (n.epoch == logicalclock)){
                             self.setPeerState((n.leader == self.getId()) ? 
                                     ServerState.LEADING: ServerState.FOLLOWING);
                        
                             leaveInstance();
                             return new Vote(n.leader, n.zxid);
                         }
-                    case FOLLOWING:
+                    
                         LOG.info("Notification: " + n.leader + ", " + n.zxid + 
                                 ", " + n.epoch + ", " + self.getId() + ", " + 
                                 self.getPeerState() + ", " + n.state + ", "
@@ -672,8 +673,6 @@ public class FastLeaderElection implements Election {
                             leaveInstance();
                             return new Vote(n.leader, n.zxid);
                         }
-                        break;
-                    default:
                         break;
                     }
                 }
