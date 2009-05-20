@@ -76,6 +76,7 @@ public class ZooKeeperMain {
         commandMap.put("redo"," cmdno");
         commandMap.put("printwatches", " on|off");
         commandMap.put("quit","");
+        commandMap.put("addauth", " scheme auth");
     }
 
     static void usage() {
@@ -719,6 +720,12 @@ public class ZooKeeperMain {
             } else {
                 printWatches = args[1].equals("on");
             }
+        } else if (cmd.equals("addauth") && args.length >=2 ) {
+            byte[] b = null;
+            if (args.length >= 3)
+                b = args[2].getBytes();
+
+            zk.addAuthInfo(args[1], b);
         } else {
             usage();
         }

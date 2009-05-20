@@ -263,7 +263,7 @@ static int verbose = 0;
 
 void processline(char *line) {
     int rc;
-    int async = (line[0] == 'a');
+    int async = ((line[0] == 'a') && !(startsWith(line, "addauth ")));
     if (async) {
         line++;
     }
@@ -277,6 +277,7 @@ void processline(char *line) {
       fprintf(stderr, "    exists <path>\n");
       fprintf(stderr, "    myid\n");
       fprintf(stderr, "    verbose\n");
+      fprintf(stderr, "    addauth <id> <scheme>\n");
       fprintf(stderr, "    quit\n");
       fprintf(stderr, "\n");
       fprintf(stderr, "    prefix the command with the character 'a' to run the command asynchronously.\n");
@@ -424,6 +425,15 @@ void processline(char *line) {
         rc = zoo_aset(zh, "/od", val, sizeof(val)-1, -1, od_completion, 0);
         if (rc)
             fprintf(stderr, "od command failed: %d\n", rc);
+    } else if (startsWith(line, "addauth ")) {
+      line += 8;
+      char *ptr;
+      ptr = strchr(line, ' ');
+      if (ptr) {
+        *ptr = '\0';
+        ptr++;
+      }
+      zoo_add_auth(zh, line, ptr, ptr ? strlen(ptr)-1 : 0, NULL, NULL);
     }
 }
 
@@ -476,8 +486,8 @@ int main(int argc, char **argv) {
         strncpy(p,cert,sizeof(p)-1);
         free(cert);
     } else {
-        fprintf(stderr,"Certificate for appid [%s] not found\n",appId);
-        strcpy(p,"dummy");
+      fprintf(stderr,"Certificate for appid [%s] not found\n",appId);
+      strcpy(p,"dummy");
     }
 #else
     strcpy(p, "dummy");
@@ -521,7 +531,7 @@ int main(int argc, char **argv) {
             bufoff = 0;
         }
     }
-#else 
+#else
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
     FD_ZERO(&efds);
