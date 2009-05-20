@@ -260,6 +260,8 @@
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" 
                target="${target.jdk}" debug="on">
             <classpath refid="project.classpath"/>
+            <compilerarg value="-Xlint:all"/>
+            <compilerarg value="-Xlint:-path"/>
         </javac>
         <copy todir="${build.classes}">
             <fileset dir="${java.src.dir}"/>
