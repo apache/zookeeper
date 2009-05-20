@@ -134,7 +134,7 @@ public class LeaderElection implements Election  {
                 s = new DatagramSocket();
                 s.setSoTimeout(200);
             } catch (SocketException e1) {
-                e1.printStackTrace();
+                LOG.error("Socket exception when creating socket for leader election", e1);
                 System.exit(4);
             }
             DatagramPacket requestPacket = new DatagramPacket(requestBytes,

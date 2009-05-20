@@ -123,7 +123,6 @@ public class QuorumCnxManager {
 
         // Starts listener thread that waits for connection requests 
         listener = new Listener();
-        listener.start();
     }
 
     /**
@@ -162,7 +161,10 @@ public class QuorumCnxManager {
         	
         	if (senderWorkerMap
         			.containsKey(sid)) {
-        		senderWorkerMap.get(sid).finish();
+        	    SendWorker vsw = senderWorkerMap.get(sid);
+        	    if(vsw != null)
+        	        vsw.finish();
+        	    else LOG.error("No SendWorker for this identifier (" + sid + ")");
         	}
 
         	if (!queueSendMap.containsKey(sid)) {
@@ -226,7 +228,10 @@ public class QuorumCnxManager {
         	sw.setRecv(rw);
 
         	if (senderWorkerMap.containsKey(sid)) {
-        		senderWorkerMap.get(sid).finish();
+        	    SendWorker vsw = senderWorkerMap.get(sid);
+        	    if(vsw != null)
+        	        vsw.finish();
+        	    else LOG.error("No SendWorker for this identifier (" + sid + ")");
         	}
                     
         	senderWorkerMap.put(sid, sw);
@@ -267,15 +272,21 @@ public class QuorumCnxManager {
                  * Start a new connection if doesn't have one already.
                  */
                 if (!queueSendMap.containsKey(sid)) {
-                    queueSendMap.put(sid, new ArrayBlockingQueue<ByteBuffer>(
-                            CAPACITY));
-                    queueSendMap.get(sid).put(b);
+                    ArrayBlockingQueue<ByteBuffer> bq = new ArrayBlockingQueue<ByteBuffer>(
+                            CAPACITY);
+                    queueSendMap.put(sid, bq);
+                    bq.put(b);
 
                 } else {
-                    if (queueSendMap.get(sid).remainingCapacity() == 0) {
-                        queueSendMap.get(sid).take();
+                    ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
+                    if(bq != null){
+                        if (bq.remainingCapacity() == 0) {
+                            bq.take();
+                        }
+                        bq.put(b);
+                    } else {
+                        LOG.error("No queue for server " + sid);
                     }
-                    queueSendMap.get(sid).put(b);
                 } 
                 
                 connectOne(sid);
@@ -443,7 +454,13 @@ public class QuorumCnxManager {
 
                 ByteBuffer b = null;
                 try {
-                    b = queueSendMap.get(sid).take();
+                    ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);                    
+                    if(bq != null) 
+                        b = bq.take();
+                    else {
+                        LOG.error("No queue of incoming messages for server " + sid);
+                        this.finish();
+                    }
                 } catch (InterruptedException e) {
                     LOG.warn("Interrupted while waiting for message on queue",
                             e);
@@ -472,11 +489,11 @@ public class QuorumCnxManager {
                         recvWorker = null;
                     
                         senderWorkerMap.remove(sid);
-                    
-                        if (queueSendMap.get(sid)
-                                    .size() == 0)
-                            queueSendMap.get(sid)
-                                    .offer(b);
+                        ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
+                        if(bq != null){
+                            if (bq.size() == 0)
+                                bq.offer(b);
+                        } else LOG.error("No queue for server " + sid);
                     }
                 }
             }

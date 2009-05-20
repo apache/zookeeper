@@ -28,7 +28,7 @@ import org.apache.zookeeper.server.SyncRequestProcessor;
  */
 public class ProposalRequestProcessor implements RequestProcessor {
     LeaderZooKeeperServer zks;
-
+    
     RequestProcessor nextProcessor;
 
     SyncRequestProcessor syncProcessor;

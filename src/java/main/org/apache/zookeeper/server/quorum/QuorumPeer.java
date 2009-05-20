@@ -313,7 +313,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     ResponderThread responder;
     
-    public void stopLeaderElection() {
+    synchronized public void stopLeaderElection() {
         responder.running = false;
         responder.interrupt();
     }
@@ -401,8 +401,14 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             le = new AuthFastLeaderElection(this, true);
             break;
         case 3:
-            le = new FastLeaderElection(this,
-                        new QuorumCnxManager(this));
+            QuorumCnxManager mng = new QuorumCnxManager(this);
+            QuorumCnxManager.Listener listener = mng.listener;
+            if(listener != null){
+                listener.start();
+                le = new FastLeaderElection(this,mng);
+            } else {
+                LOG.error("Null listener when initializing cnx manager");
+            }
             break;
         default:
             assert false;
