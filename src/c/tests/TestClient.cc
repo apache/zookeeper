@@ -157,6 +157,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Zookeeper_simpleSystem);
     CPPUNIT_TEST(testAsyncWatcherAutoReset);
 #ifdef THREADED
+    CPPUNIT_TEST(testNullData);
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
     CPPUNIT_TEST(testAcl);
@@ -402,6 +403,26 @@ public:
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
     }
 
+    void testNullData() {
+        watchctx_t ctx;
+        zhandle_t *zk = createClient(&ctx);
+        CPPUNIT_ASSERT(zk);
+        int rc = 0;
+        rc = zoo_create(zk, "/mahadev", NULL, -1, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        char buffer[512];
+        struct Stat stat;
+        int len = 512;
+        rc = zoo_wget(zk, "/mahadev", NULL, NULL, buffer, &len, &stat);
+        CPPUNIT_ASSERT_EQUAL( -1, len);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        rc = zoo_set(zk, "/mahadev", NULL, -1, -1);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        rc = zoo_wget(zk, "/mahadev", NULL, NULL, buffer, &len, &stat);
+        CPPUNIT_ASSERT_EQUAL( -1, len);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+    }
 
     void testPathValidation() {
         watchctx_t ctx;

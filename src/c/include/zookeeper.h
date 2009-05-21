@@ -946,7 +946,8 @@ ZOOAPI void zoo_deterministic_conn_order(int yesOrNo);
  * \param path The name of the node. Expressed as a file name with slashes 
  * separating ancestors of the node.
  * \param value The data to be stored in the node.
- * \param valuelen The number of bytes in data.
+ * \param valuelen The number of bytes in data. To set the data to be NULL use
+  * value as NULL and valuelen as -1.
  * \param acl The initial ACL of the node. If null, the ACL of the parent will be
  *    used.
  * \param flags this parameter can be set to 0 for normal create or an OR
@@ -1047,7 +1048,7 @@ ZOOAPI int zoo_wexists(zhandle_t *zh, const char *path,
  * the client if the node changes.
  * \param buffer the buffer holding the node data returned by the server
  * \param buffer_len is the size of the buffer pointed to by the buffer parameter.
- * It'll be set to the actual data length upon return.
+ * It'll be set to the actual data length upon return. If the data is NULL, length is -1.
  * \param stat if not NULL, will hold the value of stat for the path on return.
  * \return return value of the function call.
  * ZOK operation completed succesfully
@@ -1076,7 +1077,7 @@ ZOOAPI int zoo_get(zhandle_t *zh, const char *path, int watch, char *buffer,
  * is associated with the given instance of the watcher only.
  * \param buffer the buffer holding the node data returned by the server
  * \param buffer_len is the size of the buffer pointed to by the buffer parameter.
- * It'll be set to the actual data length upon return.
+ * It'll be set to the actual data length upon return. If the data is NULL, length is -1.
  * \param stat if not NULL, will hold the value of stat for the path on return.
  * \return return value of the function call.
  * ZOK operation completed succesfully
@@ -1098,7 +1099,8 @@ ZOOAPI int zoo_wget(zhandle_t *zh, const char *path,
  * \param path the name of the node. Expressed as a file name with slashes 
  * separating ancestors of the node.
  * \param buffer the buffer holding data to be written to the node.
- * \param buflen the number of bytes from buffer to write.
+ * \param buflen the number of bytes from buffer to write. To set NULL as data 
+ * use buffer as NULL and buflen as -1.
  * \param version the expected version of the node. The function will fail if 
  * the actual version of the node does not match the expected version. If -1 is 
  * used the version check will not take place. 
@@ -1123,7 +1125,8 @@ ZOOAPI int zoo_set(zhandle_t *zh, const char *path, const char *buffer,
  * \param path the name of the node. Expressed as a file name with slashes 
  * separating ancestors of the node.
  * \param buffer the buffer holding data to be written to the node.
- * \param buflen the number of bytes from buffer to write.
+ * \param buflen the number of bytes from buffer to write. To set NULL as data
+ * use buffer as NULL and buflen as -1.
  * \param version the expected version of the node. The function will fail if 
  * the actual version of the node does not match the expected version. If -1 is 
  * used the version check will not take place. 

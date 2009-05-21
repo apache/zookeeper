@@ -139,6 +139,12 @@ int oa_serialize_buffer(struct oarchive *oa, const char *name,
     rc = oa_serialize_int(oa, "len", &b->len);
     if (rc < 0)
         return rc;
+    // this means a buffer of NUll 
+    // with size of -1. This is 
+    // waht we use in java serialization for NULL
+    if (b->len == -1) {
+      return rc;
+    }
     if ((priv->len - priv->off) < b->len) {
         rc = resize_buffer(priv, priv->len + b->len);
         if (rc < 0)
@@ -233,6 +239,11 @@ int ia_deserialize_buffer(struct iarchive *ia, const char *name,
         return rc;
     if ((priv->len - priv->off) < b->len) {
         return -E2BIG;
+    }
+    // set the buffer to null
+    if (b->len == -1) {
+       b->buff = NULL;
+       return rc;
     }
     b->buff = malloc(b->len);
     if (!b->buff) {
