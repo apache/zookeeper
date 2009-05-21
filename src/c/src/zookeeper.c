@@ -1629,7 +1629,13 @@ int zookeeper_process(zhandle_t *zh, int events)
                             len = sc->u.data.buff_len;
                         }
                         sc->u.data.buff_len = len;
-                        memcpy(sc->u.data.buffer, res.data.buff, len);
+                        // check if len is negative 
+                        // just of NULL which is -1 int 
+                        if (len == -1) {
+                            sc->u.data.buffer = NULL;
+                        } else {
+                            memcpy(sc->u.data.buffer, res.data.buff, len);
+                        }
                         sc->u.data.stat = res.stat;
                         deallocate_GetDataResponse(&res);
                     }

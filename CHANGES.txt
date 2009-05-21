@@ -89,6 +89,9 @@ BUGFIXES:
   ZOOKEEPER-411. Building zookeeper fails on RHEL 5 64 bit during test-cppunit
   (mahadev via phunt)
 
+  ZOOKEEPER-402. zookeeper c library segfaults on data for a node in zookeeper
+  being null. (mahadev via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
