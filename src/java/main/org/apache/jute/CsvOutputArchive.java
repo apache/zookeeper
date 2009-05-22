@@ -19,15 +19,14 @@
 package org.apache.jute;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.TreeMap;
-import java.io.PrintStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 
 /**
  *
- * @author Milind Bhandarkar
  */
 public class CsvOutputArchive implements OutputArchive {
 

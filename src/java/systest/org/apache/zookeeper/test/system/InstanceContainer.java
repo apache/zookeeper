@@ -42,8 +42,6 @@ import org.apache.zookeeper.test.system.Instance.Reporter;
 
 /**
  * This class starts up, 
- * @author breed
- *
  */
 public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallback {
     private final class MyWatcher implements Watcher {

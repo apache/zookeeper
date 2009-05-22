@@ -18,19 +18,16 @@
 
 package org.apache.jute;
 
-import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.ArrayList;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.TreeMap;
 
 /**
  *
- * @author Milind Bhandarkar
  */
 public class BinaryOutputArchive implements OutputArchive {
     private ByteBuffer bb = ByteBuffer.allocate(1024);

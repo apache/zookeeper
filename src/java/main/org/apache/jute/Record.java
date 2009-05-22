@@ -23,7 +23,6 @@ import java.io.IOException;
 /**
  * Interface that is implemented by generated classes.
  * 
- * @author Milind Bhandarkar
  */
 public interface Record {
     public void serialize(OutputArchive archive, String tag)

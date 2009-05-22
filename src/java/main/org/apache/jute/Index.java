@@ -31,7 +31,6 @@ package org.apache.jute;
  * }
  * </code>
  *
- * @author Milind Bhandarkar
  */
 public interface Index {
     public boolean done();

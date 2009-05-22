@@ -27,7 +27,6 @@ import java.util.Iterator;
 
 /**
  *
- * @author Milind Bhandarkar
  */
 public class JRecord extends JCompType {
 
@@ -39,8 +38,9 @@ public class JRecord extends JCompType {
     /**
      * Creates a new instance of JRecord
      */
-    public JRecord(String name, ArrayList flist) {
-        super("struct " + name.substring(name.lastIndexOf('.')+1), name.replaceAll("\\.","::"), name, "Record", name);
+    public JRecord(String name, ArrayList<JField> flist) {
+        super("struct " + name.substring(name.lastIndexOf('.')+1),
+                name.replaceAll("\\.","::"), name, "Record", name);
         mFQName = name;
         int idx = name.lastIndexOf('.');
         mName = name.substring(idx+1);
@@ -68,15 +68,15 @@ public class JRecord extends JCompType {
         return mModule.replaceAll("\\.", "::");
     }
     
-    public ArrayList getFields() {
+    public ArrayList<JField> getFields() {
         return mFields;
     }
     
     public String getSignature() {
         StringBuffer sb = new StringBuffer();
         sb.append("L").append(mName).append("(");
-        for (Iterator i = mFields.iterator(); i.hasNext();) {
-            String s = ((JField) i.next()).getSignature();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
+            String s = i.next().getSignature();
             sb.append(s);
         }
         sb.append(")");
@@ -255,8 +255,8 @@ public class JRecord extends JCompType {
         hh.write("class "+getName()+" : public ::hadoop::Record {\n");
         hh.write("private:\n");
         
-        for (Iterator i = mFields.iterator(); i.hasNext();) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
+            JField jf = i.next();
             hh.write(jf.genCppDecl());
         }
         hh.write("  mutable std::bitset<"+mFields.size()+"> bs_;\n");
@@ -270,8 +270,8 @@ public class JRecord extends JCompType {
         hh.write("  virtual bool operator==(const "+getName()+"& peer_) const;\n");
         hh.write("  virtual ~"+getName()+"() {};\n");
         int fIdx = 0;
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             hh.write(jf.genCppGetSet(fIdx));
         }
         hh.write("}; // end record "+getName()+"\n");
@@ -282,8 +282,8 @@ public class JRecord extends JCompType {
         cc.write("  if (!validate()) throw new ::hadoop::IOException(\"All fields not set.\");\n");
         cc.write("  a_.startRecord(*this,tag);\n");
         fIdx = 0;
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             String name = jf.getName();
             if (jf.getType() instanceof JBuffer) {
                 cc.write("  a_.serialize("+name+","+name+".length(),\""+jf.getTag()+"\");\n");
@@ -299,8 +299,8 @@ public class JRecord extends JCompType {
         cc.write("void "+getCppFQName()+"::deserialize(::hadoop::IArchive& a_, const char* tag) {\n");
         cc.write("  a_.startRecord(*this,tag);\n");
         fIdx = 0;
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             String name = jf.getName();
             if (jf.getType() instanceof JBuffer) {
                 cc.write("  { size_t len=0; a_.deserialize("+name+",len,\""+jf.getTag()+"\");}\n");
@@ -327,8 +327,8 @@ public class JRecord extends JCompType {
         
         cc.write("bool "+getCppFQName()+"::operator< (const "+getCppFQName()+"& peer_) const {\n");
         cc.write("  return (1\n");
-        for (Iterator i = mFields.iterator(); i.hasNext();) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
+            JField jf = i.next();
             String name = jf.getName();
             cc.write("    && ("+name+" < peer_."+name+")\n");
         }
@@ -337,8 +337,8 @@ public class JRecord extends JCompType {
         
         cc.write("bool "+getCppFQName()+"::operator== (const "+getCppFQName()+"& peer_) const {\n");
         cc.write("  return (1\n");
-        for (Iterator i = mFields.iterator(); i.hasNext();) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
+            JField jf = i.next();
             String name = jf.getName();
             cc.write("    && ("+name+" == peer_."+name+")\n");
         }
@@ -363,24 +363,21 @@ public class JRecord extends JCompType {
         File pkgdir = new File(outputDirectory, pkgpath);
         if (!pkgdir.exists()) {
             // create the pkg directory
-            boolean ret = pkgdir.mkdirs();
-            if (!ret) {
-                System.out.println("Cannnot create directory: "+pkgpath);
-                System.exit(1);
+            if (!pkgdir.mkdirs()) {
+                throw new IOException("Cannnot create directory: " + pkgpath);
             }
         } else if (!pkgdir.isDirectory()) {
-            // not a directory
-            System.out.println(pkgpath+" is not a directory.");
-            System.exit(1);
+            throw new IOException(pkgpath + " is not a directory.");
         }
         File jfile = new File(pkgdir, getName()+".java");
         FileWriter jj = new FileWriter(jfile);
         jj.write("// File generated by hadoop record compiler. Do not edit.\n");
         jj.write("package "+getJavaPackage()+";\n\n");
+        jj.write("import java.util.*;\n");
         jj.write("import org.apache.jute.*;\n");
         jj.write("public class "+getName()+" implements Record {\n");
-        for (Iterator i = mFields.iterator(); i.hasNext();) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
+            JField jf = i.next();
             jj.write(jf.genJavaDecl());
         }
         jj.write("  public "+getName()+"() {\n");
@@ -389,28 +386,28 @@ public class JRecord extends JCompType {
         jj.write("  public "+getName()+"(\n");
         int fIdx = 0;
         int fLen = mFields.size();
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             jj.write(jf.genJavaConstructorParam(jf.getName()));
             jj.write((fLen-1 == fIdx)?"":",\n");
         }
         jj.write(") {\n");
         fIdx = 0;
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             jj.write(jf.genJavaConstructorSet(jf.getName()));
         }
         jj.write("  }\n");
         fIdx = 0;
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             jj.write(jf.genJavaGetSet(fIdx));
         }
         jj.write("  public void serialize(OutputArchive a_, String tag) throws java.io.IOException {\n");
         jj.write("    a_.startRecord(this,tag);\n");
         fIdx = 0;
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             jj.write(jf.genJavaWriteMethodName());
         }
         jj.write("    a_.endRecord(this,tag);\n");
@@ -419,8 +416,8 @@ public class JRecord extends JCompType {
         jj.write("  public void deserialize(InputArchive a_, String tag) throws java.io.IOException {\n");
         jj.write("    a_.startRecord(tag);\n");
         fIdx = 0;
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             jj.write(jf.genJavaReadMethodName());
         }
         jj.write("    a_.endRecord(tag);\n");
@@ -434,8 +431,8 @@ public class JRecord extends JCompType {
         jj.write("        new CsvOutputArchive(s);\n");
         jj.write("      a_.startRecord(this,\"\");\n");
         fIdx = 0;
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             jj.write(jf.genJavaWriteMethodName());
         }
         jj.write("      a_.endRecord(this,\"\");\n");
@@ -457,17 +454,30 @@ public class JRecord extends JCompType {
         jj.write("  }\n");
         
         jj.write("  public int compareTo (Object peer_) throws ClassCastException {\n");
-        jj.write("    if (!(peer_ instanceof "+getName()+")) {\n");
-        jj.write("      throw new ClassCastException(\"Comparing different types of records.\");\n");
-        jj.write("    }\n");
-        jj.write("    "+getName()+" peer = ("+getName()+") peer_;\n");
-        jj.write("    int ret = 0;\n");
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
-            jj.write(jf.genJavaCompareTo());
-            jj.write("    if (ret != 0) return ret;\n");
+        boolean unimplemented = false;
+        for (JField f : mFields) {
+            if ((f.getType() instanceof JMap) 
+                    || (f.getType() instanceof JVector))
+            {
+                unimplemented = true;
+            }
         }
-        jj.write("     return ret;\n");
+        if (unimplemented) {
+            jj.write("    throw new UnsupportedOperationException(\"comparing "
+                    + getName() + " is unimplemented\");\n");
+        } else {
+            jj.write("    if (!(peer_ instanceof "+getName()+")) {\n");
+            jj.write("      throw new ClassCastException(\"Comparing different types of records.\");\n");
+            jj.write("    }\n");
+            jj.write("    "+getName()+" peer = ("+getName()+") peer_;\n");
+            jj.write("    int ret = 0;\n");
+            for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+                JField jf = i.next();
+                jj.write(jf.genJavaCompareTo());
+                jj.write("    if (ret != 0) return ret;\n");
+            }
+            jj.write("     return ret;\n");
+        }
         jj.write("  }\n");
         
         jj.write("  public boolean equals(Object peer_) {\n");
@@ -479,8 +489,8 @@ public class JRecord extends JCompType {
         jj.write("    }\n");
         jj.write("    "+getName()+" peer = ("+getName()+") peer_;\n");
         jj.write("    boolean ret = false;\n");
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             jj.write(jf.genJavaEquals());
             jj.write("    if (!ret) return ret;\n");
         }
@@ -490,8 +500,8 @@ public class JRecord extends JCompType {
         jj.write("  public int hashCode() {\n");
         jj.write("    int result = 17;\n");
         jj.write("    int ret;\n");
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = (JField) i.next();
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+            JField jf = i.next();
             jj.write(jf.genJavaHashCode());
             jj.write("    result = 37*result + ret;\n");
         }

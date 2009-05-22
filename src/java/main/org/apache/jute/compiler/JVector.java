@@ -20,7 +20,6 @@ package org.apache.jute.compiler;
 
 /**
  *
- * @author Milind Bhandarkar
  */
 public class JVector extends JCompType {
     
@@ -47,7 +46,8 @@ public class JVector extends JCompType {
     }
     
     public String genJavaCompareTo(String fname) {
-        return "";
+        return "    throw new UnsupportedOperationException(\"comparing "
+            + fname + " is unimplemented\");\n";
     }
     
     public String genJavaReadWrapper(String fname, String tag, boolean decl) {

@@ -18,16 +18,14 @@
 
 package org.apache.jute;
 
-import java.io.InputStreamReader;
-import java.io.InputStream;
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PushbackReader;
 import java.io.UnsupportedEncodingException;
 
 /**
  *
- * @author Milind Bhandarkar
  */
 class CsvInputArchive implements InputArchive {
     
