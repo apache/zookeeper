@@ -20,7 +20,6 @@ package org.apache.jute.compiler;
 
 /**
  *
- * @author Milind Bhandarkar
  */
 public class JBoolean extends JType {
     

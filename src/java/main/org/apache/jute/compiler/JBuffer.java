@@ -20,7 +20,6 @@ package org.apache.jute.compiler;
 
 /**
  *
- * @author Milind Bhandarkar
  */
 public class JBuffer extends JCompType {
     
@@ -77,7 +76,7 @@ public class JBuffer extends JCompType {
     }
     
     public String genJavaHashCode(String fname) {
-        return "    ret = "+fname+".toString().hashCode();\n";
+        return "    ret = Arrays.toString("+fname+").hashCode();\n";
     }
     
     public String genJavaSlurpBytes(String b, String s, String l) {

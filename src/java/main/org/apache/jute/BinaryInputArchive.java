@@ -19,13 +19,12 @@
 package org.apache.jute;
 
 import java.io.DataInput;
-import java.io.IOException;
 import java.io.DataInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
  *
- * @author Milind Bhandarkar
  */
 public class BinaryInputArchive implements InputArchive {
     

@@ -18,19 +18,19 @@
 
 package org.apache.jute;
 
-import java.io.InputStream;
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 
-import org.xml.sax.*;
-import org.xml.sax.helpers.DefaultHandler;
-import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 /**
  *
- * @author Milind Bhandarkar
  */
 class XmlInputArchive implements InputArchive {
     
@@ -49,12 +49,12 @@ class XmlInputArchive implements InputArchive {
         public String getType() { return type; }
     }
     
-    private class XMLParser extends DefaultHandler {
+    private static class XMLParser extends DefaultHandler {
         private boolean charsValid = false;
         
-        private ArrayList valList;
+        private ArrayList<Value> valList;
         
-        private XMLParser(ArrayList vlist) {
+        private XMLParser(ArrayList<Value> vlist) {
             valList = vlist;
         }
         
@@ -96,7 +96,7 @@ class XmlInputArchive implements InputArchive {
         public void characters(char buf[], int offset, int len)
         throws SAXException {
             if (charsValid) {
-                Value v = (Value) valList.get(valList.size()-1);
+                Value v = valList.get(valList.size()-1);
                 v.addChars(buf, offset,len);
             }
         }
@@ -105,7 +105,7 @@ class XmlInputArchive implements InputArchive {
     
     private class XmlIndex implements Index {
         public boolean done() {
-            Value v = (Value) valList.get(vIdx);
+            Value v = valList.get(vIdx);
             if ("/array".equals(v.getType())) {
                 valList.set(vIdx, null);
                 vIdx++;
@@ -117,13 +117,13 @@ class XmlInputArchive implements InputArchive {
         public void incr() {}
     }
     
-    private ArrayList valList;
+    private ArrayList<Value> valList;
     private int vLen;
     private int vIdx;
     
     private Value next() throws IOException {
         if (vIdx < vLen) {
-            Value v = (Value) valList.get(vIdx);
+            Value v = valList.get(vIdx);
             valList.set(vIdx, null);
             vIdx++;
             return v;
@@ -140,7 +140,7 @@ class XmlInputArchive implements InputArchive {
     /** Creates a new instance of BinaryInputArchive */
     public XmlInputArchive(InputStream in)
     throws ParserConfigurationException, SAXException, IOException {
-        valList = new ArrayList();
+        valList = new ArrayList<Value>();
         DefaultHandler handler = new XMLParser(valList);
         SAXParserFactory factory = SAXParserFactory.newInstance();
         SAXParser parser = factory.newSAXParser();
