@@ -116,6 +116,7 @@ public:
     evt_t getEvent() {
         evt_t evt;
         mutex.acquire();
+        CPPUNIT_ASSERT( events.size() > 0);
         evt = events.front();
         events.pop_front();
         mutex.release();
@@ -602,11 +603,13 @@ public:
         CPPUNIT_ASSERT_EQUAL_MESSAGE(evt.path, ZOO_CHANGED_EVENT, evt.type);
         CPPUNIT_ASSERT_EQUAL(string("/watchtest/child"), evt.path);
 
+        CPPUNIT_ASSERT_MESSAGE(testName, waitForEvent(zk, ctxLocal, 5));
         // The create will trigget the get children and the
         // exists watches
         evt = ctxLocal->getEvent();
         CPPUNIT_ASSERT_EQUAL_MESSAGE(evt.path, ZOO_CREATED_EVENT, evt.type);
         CPPUNIT_ASSERT_EQUAL(string("/watchtest/child2"), evt.path);
+        CPPUNIT_ASSERT_MESSAGE(testName, waitForEvent(zk, ctxLocal, 5));
         evt = ctxLocal->getEvent();
         CPPUNIT_ASSERT_EQUAL_MESSAGE(evt.path, ZOO_CHILD_EVENT, evt.type);
         CPPUNIT_ASSERT_EQUAL(string("/watchtest"), evt.path);
@@ -653,7 +656,8 @@ public:
         evt = ctxLocal->getEvent();
         CPPUNIT_ASSERT_EQUAL_MESSAGE(evt.path, ZOO_DELETED_EVENT, evt.type);
         CPPUNIT_ASSERT_EQUAL(string("/watchtest/child2"), evt.path);
-
+        
+        CPPUNIT_ASSERT_MESSAGE(testName, waitForEvent(zk, ctxLocal, 5));
         evt = ctxLocal->getEvent();
         CPPUNIT_ASSERT_EQUAL_MESSAGE(evt.path, ZOO_CHILD_EVENT, evt.type);
         CPPUNIT_ASSERT_EQUAL(string("/watchtest"), evt.path);

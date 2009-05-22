@@ -92,6 +92,8 @@ BUGFIXES:
   ZOOKEEPER-402. zookeeper c library segfaults on data for a node in zookeeper
   being null. (mahadev via phunt)
 
+  ZOOKEEPER-415. zookeeper c tests hang. (mahadev via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
