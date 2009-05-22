@@ -19,12 +19,10 @@
 package org.apache.jute;
 
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
 
 /**
  * Interface that all the Deserializers have to implement.
  *
- * @author Milind Bhandarkar
  */
 public interface InputArchive {
     public byte readByte(String tag) throws IOException;

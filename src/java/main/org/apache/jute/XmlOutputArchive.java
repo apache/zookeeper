@@ -19,15 +19,14 @@
 package org.apache.jute;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.TreeMap;
-import java.io.PrintStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
+import java.util.List;
 import java.util.Stack;
+import java.util.TreeMap;
 
 /**
  *
- * @author Milind Bhandarkar
  */
 class XmlOutputArchive implements OutputArchive {
 
@@ -35,7 +34,7 @@ class XmlOutputArchive implements OutputArchive {
     
     private int indent = 0;
     
-    private Stack compoundStack;
+    private Stack<String> compoundStack;
     
     private void putIndent() {
         StringBuffer sb = new StringBuffer("");
@@ -55,7 +54,7 @@ class XmlOutputArchive implements OutputArchive {
     
     private void printBeginEnvelope(String tag) {
         if (!compoundStack.empty()) {
-            String s = (String) compoundStack.peek();
+            String s = compoundStack.peek();
             if ("struct".equals(s)) {
                 putIndent();
                 stream.print("<member>\n");
@@ -76,7 +75,7 @@ class XmlOutputArchive implements OutputArchive {
     
     private void printEndEnvelope(String tag) {
         if (!compoundStack.empty()) {
-            String s = (String) compoundStack.peek();
+            String s = compoundStack.peek();
             if ("struct".equals(s)) {
                 stream.print("</value>\n");
                 closeIndent();
@@ -98,7 +97,7 @@ class XmlOutputArchive implements OutputArchive {
     }
     
     private void outsideVector(String tag) throws IOException {
-        String s = (String) compoundStack.pop();
+        String s = compoundStack.pop();
         if (!"vector".equals(s)) {
             throw new IOException("Error serializing vector.");
         }
@@ -111,7 +110,7 @@ class XmlOutputArchive implements OutputArchive {
     }
     
     private void outsideMap(String tag) throws IOException {
-        String s = (String) compoundStack.pop();
+        String s = compoundStack.pop();
         if (!"map".equals(s)) {
             throw new IOException("Error serializing map.");
         }
@@ -124,7 +123,7 @@ class XmlOutputArchive implements OutputArchive {
     }
     
     private void outsideRecord(String tag) throws IOException {
-        String s = (String) compoundStack.pop();
+        String s = compoundStack.pop();
         if (!"struct".equals(s)) {
             throw new IOException("Error serializing record.");
         }
@@ -138,7 +137,7 @@ class XmlOutputArchive implements OutputArchive {
     /** Creates a new instance of XmlOutputArchive */
     public XmlOutputArchive(OutputStream out) {
         stream = new PrintStream(out);
-        compoundStack = new Stack();
+        compoundStack = new Stack<String>();
     }
     
     public void writeByte(byte b, String tag) throws IOException {

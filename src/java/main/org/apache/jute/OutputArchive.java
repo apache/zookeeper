@@ -25,7 +25,6 @@ import java.util.TreeMap;
 /**
  * Interface that alll the serializers have to implement.
  *
- * @author Milind Bhandarkar
  */
 public interface OutputArchive {
     public void writeByte(byte b, String tag) throws IOException;

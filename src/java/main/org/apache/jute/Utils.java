@@ -23,7 +23,6 @@ import java.io.IOException;
 
 /**
  * Various utility functions for Hadoop record I/O runtime.
- * @author Milind Bhandarkar
  */
 public class Utils {
     

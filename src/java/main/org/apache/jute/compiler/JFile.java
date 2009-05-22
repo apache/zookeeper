@@ -27,13 +27,12 @@ import java.util.ArrayList;
  * The main components of the file are filename, list of included files,
  * and records defined in that file.
  *
- * @author Milind Bhandarkar
  */
 public class JFile {
     
     private String mName;
-    private ArrayList mInclFiles;
-    private ArrayList mRecords;
+    private ArrayList<JFile> mInclFiles;
+    private ArrayList<JRecord> mRecords;
     
     /** Creates a new instance of JFile
      *
@@ -41,7 +40,9 @@ public class JFile {
      * @param inclFiles included files (as JFile)
      * @param recList List of records defined within this file
      */
-    public JFile(String name, ArrayList inclFiles, ArrayList recList) {
+    public JFile(String name, ArrayList<JFile> inclFiles,
+            ArrayList<JRecord> recList)
+    {
         mName = name;
         mInclFiles = inclFiles;
         mRecords = recList;
@@ -57,19 +58,23 @@ public class JFile {
      *  lowercase.
      * @param outputDirectory 
      */
-    public void genCode(String language, File outputDirectory) throws IOException {
+    public void genCode(String language, File outputDirectory)
+        throws IOException
+    {
         if ("c++".equals(language)) {
-            CppGenerator gen = new CppGenerator(mName, mInclFiles, mRecords, outputDirectory);
+            CppGenerator gen = new CppGenerator(mName, mInclFiles, mRecords,
+                    outputDirectory);
             gen.genCode();
         } else if ("java".equals(language)) {
-            JavaGenerator gen = new JavaGenerator(mName, mInclFiles, mRecords, outputDirectory);
+            JavaGenerator gen = new JavaGenerator(mName, mInclFiles, mRecords,
+                    outputDirectory);
             gen.genCode();
         } else if ("c".equals(language)) {
-        	CGenerator gen = new CGenerator(mName, mInclFiles, mRecords, outputDirectory);
+        	CGenerator gen = new CGenerator(mName, mInclFiles, mRecords,
+        	        outputDirectory);
         	gen.genCode();
         } else {
-            System.out.println("Cannnot recognize language:"+language);
-            System.exit(1);
+            throw new IOException("Cannnot recognize language:" + language);
         }
     }
 }

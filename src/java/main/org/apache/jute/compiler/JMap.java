@@ -18,9 +18,10 @@
 
 package org.apache.jute.compiler;
 
+import org.apache.zookeeper.KeeperException.UnimplementedException;
+
 /**
  *
- * @author Milind Bhandarkar
  */
 public class JMap extends JCompType {
    
@@ -50,7 +51,8 @@ public class JMap extends JCompType {
     }
     
     public String genJavaCompareTo(String fname) {
-        return "";
+        return "    throw new UnsupportedOperationException(\"comparing "
+            + fname + " is unimplemented\");\n";
     }
     
     public String genJavaReadWrapper(String fname, String tag, boolean decl) {

@@ -60,4 +60,9 @@
     <Package name="org.apache.jute.compiler.generated" />
   </Match>
 
+  <Match>
+    <Package name="~org\.apache\.zookeeper\.(proto|data|txn)" />
+    <Bug code="EI, EI2" />
+  </Match>
+
 </FindBugsFilter>
