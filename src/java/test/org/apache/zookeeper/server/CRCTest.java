@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -81,6 +82,33 @@ public class CRCTest extends TestCase implements Watcher{
         raf.close();
     }
 
+    /** return if checksum matches for a snapshot **/
+    private boolean getCheckSum(FileSnap snap, File snapFile) throws IOException {
+        DataTree dt = new DataTree();
+        Map<Long, Integer> sessions = new ConcurrentHashMap<Long, Integer>();
+        InputStream snapIS = new BufferedInputStream(new FileInputStream(
+                snapFile));
+        CheckedInputStream crcIn = new CheckedInputStream(snapIS, new Adler32());
+        InputArchive ia = BinaryInputArchive.getArchive(crcIn);
+        try {
+            snap.deserialize(dt, sessions, ia);
+        } catch (IOException ie) {
+            // we failed on the most recent snapshot
+            // must be incomplete
+            // try reading the next one
+            // after corrupting
+            snapIS.close();
+            crcIn.close();
+            throw ie;
+        }
+
+        long checksum = crcIn.getChecksum().getValue();
+        long val = ia.readLong("val");
+        snapIS.close();
+        crcIn.close();
+        return (val != checksum);
+    }
+    
     /** test checksums for the logs and snapshots.
      * the reader should fail on reading 
      * a corrupt snapshot and a corrupt log
@@ -134,21 +162,21 @@ public class CRCTest extends TestCase implements Watcher{
         itr.close();
         // find the last snapshot
         FileSnap snap = new FileSnap(versionDir);
-        snapFile = snap.findMostRecentSnapshot();
-        // corrupt this file
+        List<File> snapFiles = snap.findNRecentSnapshots(2);
+        snapFile = snapFiles.get(0);
         corruptFile(snapFile);
-        DataTree dt = new DataTree();
-        Map<Long, Integer> sessions = 
-            new ConcurrentHashMap<Long, Integer>();
-        InputStream snapIS = new BufferedInputStream(new FileInputStream(snapFile));
-        CheckedInputStream crcIn = new CheckedInputStream(snapIS, new Adler32());
-        InputArchive ia=BinaryInputArchive.getArchive(crcIn);
-        snap.deserialize(dt,sessions, ia);
-        long checkSum = crcIn.getChecksum().getValue();
-        long val = ia.readLong("val");
-        snapIS.close();
-        crcIn.close();
-        assertTrue(val != checkSum);
+        boolean cfile = false;
+        try {
+            cfile = getCheckSum(snap, snapFile);
+        } catch(IOException ie) {
+            //the last snapshot seems incompelte
+            // corrupt the last but one
+            // and use that
+            snapFile = snapFiles.get(1);
+            corruptFile(snapFile);
+            cfile = getCheckSum(snap, snapFile);
+        }
+        assertTrue(cfile);
    }
     
     public void process(WatchedEvent event) {
