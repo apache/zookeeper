@@ -103,8 +103,8 @@ public class QuorumPeerConfig {
     protected void parseProperties(Properties zkProp)
     throws IOException, ConfigException {
         for (Entry<Object, Object> entry : zkProp.entrySet()) {
-            String key = entry.getKey().toString();
-            String value = entry.getValue().toString();
+            String key = entry.getKey().toString().trim();
+            String value = entry.getValue().toString().trim();
             if (key.equals("dataDir")) {
                 dataDir = value;
             } else if (key.equals("dataLogDir")) {
