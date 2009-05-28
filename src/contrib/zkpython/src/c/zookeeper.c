@@ -190,7 +190,7 @@ void stat_completion_dispatch(int rc, const struct Stat *stat, const void *data)
   pywatcher_t *pyw = (pywatcher_t*)data;
   PyObject *callback = pyw->callback;
   gstate = PyGILState_Ensure();
-  PyObject *arglist = Py_BuildValue("(i,i,O)", pyw->zhandle,rc, build_stat(stat));
+  PyObject *arglist = Py_BuildValue("(i,i,N)", pyw->zhandle,rc, build_stat(stat));
   if (PyObject_CallObject((PyObject*)callback, arglist) == NULL)
     PyErr_Print();
   free_pywatcher(pyw);
@@ -655,7 +655,7 @@ static PyObject *pyzoo_set2(PyObject *self, PyObject *args)
       return NULL;
     }
 
-  return Py_BuildValue("O", build_stat(stat));
+  return build_stat(stat);
 }
 
 static PyObject *pyzoo_get(PyObject *self, PyObject *args)
@@ -684,7 +684,7 @@ static PyObject *pyzoo_get(PyObject *self, PyObject *args)
       return NULL;
     }
 
-  return Py_BuildValue( "(s#,O)", buffer,buffer_len, stat_dict );
+  return Py_BuildValue( "(s#,N)", buffer,buffer_len, stat_dict );
 }
 
 PyObject *pyzoo_get_acl(PyObject *self, PyObject *args)
@@ -703,7 +703,7 @@ PyObject *pyzoo_get_acl(PyObject *self, PyObject *args)
     }
   PyObject *pystat = build_stat( &stat );
   PyObject *acls = build_acls( &acl );
-  return Py_BuildValue( "(O,O)", pystat, acls );
+  return Py_BuildValue( "(N,N)", pystat, acls );
 }
 
 PyObject *pyzoo_set_acl(PyObject *self, PyObject *args)
