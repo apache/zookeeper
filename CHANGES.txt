@@ -96,11 +96,17 @@ BUGFIXES:
 
   ZOOKEEPER-385. crctest failed on hudson patch test (mahadev via phunt)
 
-  ZOOKEEPER-192.  trailing whitespace in config file can cause number format exceptions (phunt via breed)
+  ZOOKEEPER-192.  trailing whitespace in config file can cause number format
+  exceptions (phunt via breed)
  
-  ZOOKEEPER-409. address all findbugs warnings in jute related classes (phunt via breed)
+  ZOOKEEPER-409. address all findbugs warnings in jute related classes
+  (phunt via breed)
 
-  ZOOKEEPER-416. bookkeeper jar includes unnnecessary files. (flavio via mahadev)
+  ZOOKEEPER-416. bookkeeper jar includes unnnecessary files.
+  (flavio via mahadev)
+
+  ZOOKEEPER-419. Reference counting bug in Python bindings causes abort errors
+  (henry robinson via phunt)
 
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
