@@ -32,7 +32,7 @@ import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.bookkeeper.bookie.BookieException;
-import org.apache.bookkeeper.client.AddCallback;
+import org.apache.bookkeeper.proto.WriteCallback;
 import org.apache.log4j.Logger;
 
 
@@ -204,7 +204,7 @@ public class Bookie extends Thread {
 
     static class QueueEntry {
         QueueEntry(ByteBuffer entry, long ledgerId, long entryId, 
-                AddCallback cb, Object ctx) {
+                WriteCallback cb, Object ctx) {
             this.entry = entry.duplicate();
             this.cb = cb;
             this.ctx = ctx;
@@ -218,7 +218,7 @@ public class Bookie extends Thread {
         
         long entryId;
 
-        AddCallback cb;
+        WriteCallback cb;
 
         Object ctx;
     }
@@ -248,7 +248,7 @@ public class Bookie extends Thread {
                     if (qe == null || toFlush.size() > 100) {
                         logFile.force(false);
                         for (QueueEntry e : toFlush) {
-                            e.cb.addComplete(0, e.ledgerId, e.entryId, e.ctx);
+                            e.cb.writeComplete(0, e.ledgerId, e.entryId, e.ctx);
                         }
                         toFlush.clear();
                     }
@@ -280,7 +280,7 @@ public class Bookie extends Thread {
         }
     }
     
-    public void addEntry(ByteBuffer entry, AddCallback cb, Object ctx, byte[] masterKey)
+    public void addEntry(ByteBuffer entry, WriteCallback cb, Object ctx, byte[] masterKey)
             throws IOException, BookieException {
         
         long ledgerId = entry.getLong();
@@ -315,10 +315,10 @@ public class Bookie extends Thread {
     }
 
     // The rest of the code is test stuff
-    static class CounterCallback implements AddCallback {
+    static class CounterCallback implements WriteCallback {
         int count;
 
-        synchronized public void addComplete(int rc, long l, long e, Object ctx) {
+        synchronized public void writeComplete(int rc, long l, long e, Object ctx) {
             count--;
             if (count == 0) {
                 notifyAll();

@@ -37,7 +37,6 @@ import javax.crypto.Mac;
 import org.apache.bookkeeper.client.BookieHandle;
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BKException.Code;
-import org.apache.bookkeeper.client.ErrorCodes;
 import org.apache.bookkeeper.client.LedgerHandle;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.AddOp;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.ReadOp;
@@ -183,7 +182,7 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
                         //Call back with error code
                         //sAdd.op.cb.addComplete(ErrorCodes.ENUMRETRIES,
                         //        ledgerId, entryId, sAdd.op.ctx);
-                        sAdd.op.setErrorCode(ErrorCodes.ENUMRETRIES);
+                        sAdd.op.setErrorCode(BKDefs.ENR);
                         sAdd.op.setReady();
                         return;
                     }

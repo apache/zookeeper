@@ -27,7 +27,6 @@ import java.nio.ByteBuffer;
 
 import org.apache.bookkeeper.bookie.Bookie;
 import org.apache.bookkeeper.bookie.BookieException;
-import org.apache.bookkeeper.client.AddCallback;
 import org.apache.bookkeeper.proto.NIOServerFactory.Cnxn;
 import org.apache.log4j.Logger;
 
@@ -37,7 +36,7 @@ import org.apache.log4j.Logger;
  * Implements the server-side part of the BookKeeper protocol.
  *
  */
-public class BookieServer implements NIOServerFactory.PacketProcessor, AddCallback {
+public class BookieServer implements NIOServerFactory.PacketProcessor, WriteCallback {
     int port;
     NIOServerFactory nioServerFactory;
     Bookie bookie;
@@ -178,7 +177,7 @@ public class BookieServer implements NIOServerFactory.PacketProcessor, AddCallba
         }
     }
     
-    public void addComplete(int rc, long ledgerId, long entryId, Object ctx) {
+    public void writeComplete(int rc, long ledgerId, long entryId, Object ctx) {
         Cnxn src = (Cnxn)ctx;
         ByteBuffer bb = ByteBuffer.allocate(24);
         bb.putInt(BookieProtocol.ADDENTRY);

@@ -34,8 +34,12 @@ import java.net.InetSocketAddress;
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookieHandle;
 import org.apache.bookkeeper.client.LedgerSequence;
+import org.apache.bookkeeper.client.AsyncCallback.CreateCallback;
+import org.apache.bookkeeper.client.AsyncCallback.OpenCallback;
 import org.apache.bookkeeper.client.BKException.Code;
 import org.apache.bookkeeper.client.LedgerHandle.QMode;
+import org.apache.bookkeeper.client.LedgerManagementProcessor.CreateLedgerOp;
+import org.apache.bookkeeper.client.LedgerManagementProcessor.OpenLedgerOp;
 import org.apache.log4j.Logger;
 
 import org.apache.zookeeper.data.Stat;
@@ -58,23 +62,21 @@ import org.apache.zookeeper.WatchedEvent;
 
 public class BookKeeper 
 implements Watcher {
-    /**
-     * the chain of classes to get a client 
-     * request from the bookeeper class to the 
-     * server is 
-     * bookkeeper->quorumengine->bookiehandle->bookieclient
-     * 
-     */
+ 
     Logger LOG = Logger.getLogger(BookKeeper.class);
-
-    static public final String prefix = "/ledgers/L";
-    static public final String ensemble = "/ensemble"; 
-    static public final String quorumSize = "/quorum";
-    static public final String close = "/close";
-    static public final String quorumMode = "/mode";
     
     ZooKeeper zk = null;
-    QuorumEngine engine = null;
+    
+    /*
+     * The ledgerMngProcessor is a thread that processes
+     * asynchronously requests that handle ledgers, such
+     * as create, open, and close.
+     */
+    private static LedgerManagementProcessor ledgerMngProcessor;
+    
+    /*
+     * Blacklist of bookies
+     */
     HashSet<InetSocketAddress> bookieBlackList;
     
     LedgerSequence responseRead;
@@ -86,8 +88,6 @@ implements Watcher {
         //Create ZooKeeper object
         this.zk = new ZooKeeper(servers, 10000, this);
         
-        //Create hashmap for quorum engines
-        //this.qeMap = new HashMap<Long, ArrayBlockingQueue<Operation> >();
         //List to enable clients to blacklist bookies
         this.bookieBlackList = new HashSet<InetSocketAddress>();
     }
@@ -98,8 +98,6 @@ implements Watcher {
     synchronized public void process(WatchedEvent event) {
         LOG.debug("Process: " + event.getType() + " " + event.getPath());
     }
-    
-
     
     /**
      * Formats ledger ID according to ZooKeeper rules
@@ -116,6 +114,14 @@ implements Watcher {
      */
     ZooKeeper getZooKeeper() {
         return zk;
+    }
+    
+    LedgerManagementProcessor getMngProcessor(){
+        if (ledgerMngProcessor == null){
+            ledgerMngProcessor = new LedgerManagementProcessor(this);
+            ledgerMngProcessor.start();
+        }
+        return ledgerMngProcessor;
     }
     
     /**
@@ -158,7 +164,7 @@ implements Watcher {
          * Create ledger node on ZK.
          * We get the id from the sequence number on the node.
          */
-        String path = zk.create(prefix, new byte[0], 
+        String path = zk.create(BKDefs.prefix, new byte[0], 
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
         /* 
          * Extract ledger id.
@@ -175,21 +181,21 @@ implements Watcher {
         /* 
          * Select ensSize servers to form the ensemble
          */
-        path = zk.create(prefix + getZKStringId(lId) + ensemble, new byte[0], 
+        path = zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble, new byte[0], 
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         /* 
          * Add quorum size to ZK metadata
          */
         ByteBuffer bb = ByteBuffer.allocate(4);
         bb.putInt(qSize);
-        zk.create(prefix + getZKStringId(lId) + quorumSize, bb.array(), 
+        zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumSize, bb.array(), 
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         /* 
          * Quorum mode
          */
         bb = ByteBuffer.allocate(4);
         bb.putInt(mode.ordinal());
-        zk.create(prefix + getZKStringId(lId) + quorumMode, bb.array(), 
+        zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumMode, bb.array(), 
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         /* 
          * Create QuorumEngine
@@ -222,7 +228,7 @@ implements Watcher {
         	    bindexBuf.putInt(bindex);
         	    
         	    String pBookie = "/" + bookie;
-        	    zk.create(prefix + getZKStringId(lId) + ensemble + pBookie, bindexBuf.array(), 
+        	    zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble + pBookie, bindexBuf.array(), 
         	            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         	} catch (IOException e) {
         	    LOG.error(e);
@@ -246,7 +252,39 @@ implements Watcher {
         return createLedger(3, 2, QMode.VERIFIABLE, passwd);
     }
 
-
+    /**
+     * Asychronous call to create ledger
+     * 
+     * @param ensSize
+     * @param qSize
+     * @param mode
+     * @param passwd
+     * @param cb
+     * @param ctx
+     * @throws KeeperException
+     * @throws InterruptedException
+     * @throws IOException
+     * @throws BKException
+     */
+    public void asyncCreateLedger(int ensSize, 
+            int qSize, 
+            QMode mode,  
+            byte passwd[],
+            CreateCallback cb,
+            Object ctx
+            )
+    throws KeeperException, InterruptedException, 
+    IOException, BKException {
+        CreateLedgerOp op = new CreateLedgerOp(ensSize, 
+                qSize, 
+                mode, 
+                passwd, 
+                cb, 
+                ctx);
+        LedgerManagementProcessor lmp = getMngProcessor();
+        lmp.addOp(op);
+        
+    }
     
     /**
      * Open existing ledger for reading. Default for quorum size is 2.
@@ -263,7 +301,7 @@ implements Watcher {
         /*
          * Check if ledger exists
          */
-        if(zk.exists(prefix + getZKStringId(lId), false) == null){
+        if(zk.exists(BKDefs.prefix + getZKStringId(lId), false) == null){
             LOG.error("Ledger " + getZKStringId(lId) + " doesn't exist.");
             return null;
         }
@@ -271,7 +309,7 @@ implements Watcher {
         /*
          * Get quorum size.
          */
-        ByteBuffer bb = ByteBuffer.wrap(zk.getData(prefix + getZKStringId(lId) + quorumSize, false, stat));
+        ByteBuffer bb = ByteBuffer.wrap(zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumSize, false, stat));
         int qSize = bb.getInt();
          
         /*
@@ -279,21 +317,21 @@ implements Watcher {
          */
         
         long last = 0;
-        LOG.debug("Close path: " + prefix + getZKStringId(lId) + close);
-        if(zk.exists(prefix + getZKStringId(lId) + close, false) == null){
+        LOG.debug("Close path: " + BKDefs.prefix + getZKStringId(lId) + BKDefs.close);
+        if(zk.exists(BKDefs.prefix + getZKStringId(lId) + BKDefs.close, false) == null){
             recoverLedger(lId, passwd);
         }
             
         stat = null;
-        byte[] data = zk.getData(prefix + getZKStringId(lId) + close, false, stat);
+        byte[] data = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.close, false, stat);
         ByteBuffer buf = ByteBuffer.wrap(data);
         last = buf.getLong();
-        //zk.delete(prefix + getZKStringId(lId) + close, -1);
+        //zk.delete(BKDefs.prefix + getZKStringId(lId) + BKDefs.close, -1);
         
         /*
          * Quorum mode 
          */
-        data = zk.getData(prefix + getZKStringId(lId) + quorumMode, false, stat);
+        data = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumMode, false, stat);
         buf = ByteBuffer.wrap(data);
         //int ordinal = buf.getInt();
         
@@ -321,12 +359,12 @@ implements Watcher {
          */
         
         List<String> list = 
-            zk.getChildren(prefix + getZKStringId(lId) + ensemble, false);
+            zk.getChildren(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble, false);
         
         LOG.info("Length of list of bookies: " + list.size());
         for(int i = 0 ; i < list.size() ; i++){
             for(String s : list){
-                byte[] bindex = zk.getData(prefix + getZKStringId(lId) + ensemble + "/" + s, false, stat);
+                byte[] bindex = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble + "/" + s, false, stat);
                 ByteBuffer bindexBuf = ByteBuffer.wrap(bindex);
                 if(bindexBuf.getInt() == i){                      
                     try{
@@ -342,13 +380,23 @@ implements Watcher {
         return lh;
     }    
     
+    public void asyncOpenLedger(long lId, byte passwd[], OpenCallback cb, Object ctx)
+    throws InterruptedException{
+        OpenLedgerOp op = new OpenLedgerOp(lId, 
+                passwd,  
+                cb, 
+                ctx);
+        LedgerManagementProcessor lmp = getMngProcessor();
+        lmp.addOp(op);
+    }
+    
     /**
      * Parses address into IP and port.
      * 
      *  @param addr	String
      */
     
-    private InetSocketAddress parseAddr(String s){
+    InetSocketAddress parseAddr(String s){
         String parts[] = s.split(":");
         if (parts.length != 2) {
             System.out.println(s
@@ -367,7 +415,7 @@ implements Watcher {
      */
     public boolean hasClosed(long ledgerId)
     throws KeeperException, InterruptedException{
-        String closePath = prefix + getZKStringId(ledgerId) + close;
+        String closePath = BKDefs.prefix + getZKStringId(ledgerId) + BKDefs.close;
         if(zk.exists(closePath, false) == null) return false;
         else return true;
     }
@@ -379,7 +427,7 @@ implements Watcher {
      * @param passwd	password
      */
     
-    private boolean recoverLedger(long lId, byte passwd[])
+    boolean recoverLedger(long lId, byte passwd[])
     throws KeeperException, InterruptedException, IOException, BKException {
         
         Stat stat = null;
@@ -389,7 +437,7 @@ implements Watcher {
         /*
          * Get quorum size.
          */
-        ByteBuffer bb = ByteBuffer.wrap(zk.getData(prefix + getZKStringId(lId) + quorumSize, false, stat));
+        ByteBuffer bb = ByteBuffer.wrap(zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumSize, false, stat));
         int qSize = bb.getInt();
                 
         
@@ -398,7 +446,7 @@ implements Watcher {
          */
         
         List<String> list = 
-            zk.getChildren(prefix + getZKStringId(lId) + ensemble, false);
+            zk.getChildren(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble, false);
         
         ArrayList<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
         for(String s : list){
@@ -408,7 +456,7 @@ implements Watcher {
         /*
          * Quorum mode 
          */
-        byte[] data = zk.getData(prefix + getZKStringId(lId) + quorumMode, false, stat);
+        byte[] data = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumMode, false, stat);
         ByteBuffer buf = ByteBuffer.wrap(data);
         //int ordinal = buf.getInt();
             

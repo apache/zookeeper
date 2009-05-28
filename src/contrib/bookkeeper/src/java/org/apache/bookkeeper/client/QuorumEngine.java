@@ -27,6 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.bookkeeper.client.ClientCBWorker;
 import org.apache.bookkeeper.client.QuorumOpMonitor;
+import org.apache.bookkeeper.client.AsyncCallback.AddCallback;
+import org.apache.bookkeeper.client.AsyncCallback.ReadCallback;
 import org.apache.bookkeeper.client.QuorumOpMonitor.PendingOp;
 import org.apache.bookkeeper.client.QuorumOpMonitor.PendingReadOp;
 import org.apache.bookkeeper.proto.ReadEntryCallback;

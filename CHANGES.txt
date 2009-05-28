@@ -170,6 +170,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-292. commit configure scripts (autotools) to svn for c projects and
   include in release (phunt via breed)
+
+  ZOOKEEPER-383. Asynchronous version of createLedger(). (flavio via mahadev)
  
 NEW FEATURES:
 
