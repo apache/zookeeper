@@ -31,7 +31,11 @@ import java.util.ArrayList;
 
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookieHandle;
+import org.apache.bookkeeper.client.AsyncCallback.AddCallback;
+import org.apache.bookkeeper.client.AsyncCallback.CloseCallback;
+import org.apache.bookkeeper.client.AsyncCallback.ReadCallback;
 import org.apache.bookkeeper.client.BKException.Code;
+import org.apache.bookkeeper.client.LedgerManagementProcessor.CloseLedgerOp;
 import org.apache.bookkeeper.client.QuorumEngine.Operation;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.AddOp;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.ReadOp;
@@ -185,7 +189,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
     /** get the quorum engine
      * @return return the quorum engine
      */
-    QuorumEngine getQuorumEngine(QuorumEngine qe) {
+    QuorumEngine getQuorumEngine() {
         return this.qe;
     }
     
@@ -446,7 +450,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
         ByteBuffer last = ByteBuffer.allocate(8);
         last.putLong(lastAddConfirmed);
         LOG.info("Last saved on ZK is: " + lastAddConfirmed);
-        String closePath = BookKeeper.prefix + bk.getZKStringId(getId()) + BookKeeper.close; 
+        String closePath = BKDefs.prefix + bk.getZKStringId(getId()) + BKDefs.close; 
         if(bk.getZooKeeper().exists(closePath, false) == null){
            bk.getZooKeeper().create(closePath, 
                    last.array(), 
@@ -461,6 +465,20 @@ public class LedgerHandle implements ReadCallback, AddCallback {
         qe.sendOp(sOp);
     }
     
+    /**
+     * Asynchronous close
+     *
+     * @param cb    callback implementation
+     * @param ctx   control object
+     * @throws InterruptedException
+     */
+    public void asyncClose(CloseCallback cb, Object ctx)
+    throws InterruptedException {
+        CloseLedgerOp op = new CloseLedgerOp(this, cb, ctx);
+        LedgerManagementProcessor lmp = bk.getMngProcessor();
+        lmp.addOp(op);  
+    }
+       
     /**
      * Read a sequence of entries asynchronously.
      * 
@@ -552,7 +570,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
      * @param ctx   control object
      */
     public void readComplete(int rc, 
-            long ledger, 
+            LedgerHandle lh,
             LedgerSequence seq,  
             Object ctx){        
         
@@ -571,7 +589,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
      * @param ctx   control object
      */
     public void addComplete(int rc, 
-            long ledger, 
+            LedgerHandle lh,
             long entry, 
             Object ctx){          
         RetCounter counter = (RetCounter) ctx;
