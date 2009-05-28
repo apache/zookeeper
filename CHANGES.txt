@@ -100,6 +100,8 @@ BUGFIXES:
  
   ZOOKEEPER-409. address all findbugs warnings in jute related classes (phunt via breed)
 
+  ZOOKEEPER-416. bookkeeper jar includes unnnecessary files. (flavio via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
