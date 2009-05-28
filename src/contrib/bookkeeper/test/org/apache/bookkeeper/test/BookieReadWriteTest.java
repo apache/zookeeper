@@ -29,12 +29,12 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.bookkeeper.client.AddCallback;
+import org.apache.bookkeeper.client.AsyncCallback.AddCallback;
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookKeeper;
 import org.apache.bookkeeper.client.LedgerHandle;
 import org.apache.bookkeeper.client.LedgerSequence;
-import org.apache.bookkeeper.client.ReadCallback;
+import org.apache.bookkeeper.client.AsyncCallback.ReadCallback;
 import org.apache.bookkeeper.proto.BookieServer;
 import org.apache.bookkeeper.streaming.LedgerInputStream;
 import org.apache.bookkeeper.streaming.LedgerOutputStream;
@@ -475,7 +475,10 @@ public class BookieReadWriteTest
     }
     
     
-	public void addComplete(int rc, long ledgerId, long entryId, Object ctx) {
+	public void addComplete(int rc, 
+	        LedgerHandle lh, 
+	        long entryId, 
+	        Object ctx) {
 		SyncObj x = (SyncObj) ctx;
 		synchronized (x) {
 			x.counter++;
@@ -483,7 +486,9 @@ public class BookieReadWriteTest
 		}
 	}
 
-	public void readComplete(int rc, long ledgerId, LedgerSequence seq,
+	public void readComplete(int rc, 
+	        LedgerHandle lh, 
+	        LedgerSequence seq,
 			Object ctx) {
 		ls = seq;				
 		synchronized (sync) {

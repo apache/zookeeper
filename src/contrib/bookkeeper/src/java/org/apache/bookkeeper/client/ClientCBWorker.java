@@ -115,17 +115,18 @@ class ClientCBWorker extends Thread{
                     
                         aOp.getLedger().setAddConfirmed(aOp.entry);
                         aOp.cb.addComplete(aOp.getErrorCode(),
-                            aOp.getLedger().getId(), aOp.entry, 
-                            aOp.ctx);
+                                aOp.getLedger(),
+                                aOp.entry, 
+                                aOp.ctx);
                         
                         break;
                     case Operation.READ:
                         ReadOp rOp = (ReadOp) op;
                         //LOG.debug("Got one message from the queue: " + rOp.firstEntry);
                         rOp.cb.readComplete(rOp.getErrorCode(), 
-                            rOp.getLedger().getId(), 
-                            new LedgerSequence(rOp.seq), 
-                            rOp.ctx);
+                                rOp.getLedger(),
+                                new LedgerSequence(rOp.seq), 
+                                rOp.ctx);
                         break;
                     }
                 }
