@@ -1,3 +1,5 @@
+#!/usr/bin/python
+#
 #  Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -22,8 +24,12 @@ class TestBase(unittest.TestCase):
         self.host = "localhost:22182"
         self.connected = False
         self.handle = -1
-        f = open("build/test/logs/" + self.__class__.__name__ +".log","w")
-        zookeeper.set_log_stream(f)
+        try:
+            f = open("build/test/logs/" + self.__class__.__name__ +".log","w")
+            zookeeper.set_log_stream(f)
+        except IOError:
+            print "Couldn't open build/test/logs/" + self.__class__.__name__ +".log for writing"
+
     
     def setUp(self):
         self.callback_flag = False

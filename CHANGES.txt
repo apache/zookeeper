@@ -108,6 +108,9 @@ BUGFIXES:
   ZOOKEEPER-419. Reference counting bug in Python bindings causes abort errors
   (henry robinson via phunt)
 
+  ZOOKEEPER-421. zkpython run_tests.sh is missing #!
+  (henry robinson via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
