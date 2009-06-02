@@ -303,7 +303,7 @@ implements Watcher {
          */
         if(zk.exists(BKDefs.prefix + getZKStringId(lId), false) == null){
             LOG.error("Ledger " + getZKStringId(lId) + " doesn't exist.");
-            return null;
+            throw BKException.create(Code.NoSuchLedgerExistsException);
         }
         
         /*
