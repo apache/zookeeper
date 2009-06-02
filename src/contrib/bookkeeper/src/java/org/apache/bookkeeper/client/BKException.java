@@ -48,6 +48,8 @@ public abstract class BKException extends Exception {
             return new BKDigestNotInitializedException();
         case Code.DigestMatchException:
             return new BKDigestMatchException();
+        case Code.NoSuchLedgerExistsException:
+            return new BKNoSuchLedgerExistsException();
         default:
             return new BKIllegalOpException();
         }
@@ -60,6 +62,7 @@ public abstract class BKException extends Exception {
         int NoBookieAvailableException = -3;
         int DigestNotInitializedException = -4;
         int DigestMatchException = -5;
+        int NoSuchLedgerExistsException = -6;
         
         int IllegalOpException = -100;
     }
@@ -86,6 +89,8 @@ public abstract class BKException extends Exception {
             return "Digest engine not initialized";
         case Code.DigestMatchException:
             return "Entry digest does not match";
+        case Code.NoSuchLedgerExistsException:
+            return "No such ledger exists";
         default:
             return "Invalid operation";
         }
@@ -124,6 +129,12 @@ public abstract class BKException extends Exception {
     public static class BKIllegalOpException extends BKException {
         public BKIllegalOpException(){
             super(Code.IllegalOpException);
+        }   
+    }
+    
+    public static class BKNoSuchLedgerExistsException extends BKException {
+        public BKNoSuchLedgerExistsException(){
+            super(Code.NoSuchLedgerExistsException);
         }   
     }
 }

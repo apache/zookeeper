@@ -111,6 +111,18 @@ public class BookieReadWriteTest
 		}    	
     }
     
+    @Test
+    public void testOpenException() 
+    throws KeeperException, IOException, InterruptedException {
+        bkc = new BookKeeper("127.0.0.1");
+        try{
+            lh = bkc.openLedger(0, ledgerPassword);
+            fail("Haven't thrown exception");
+        } catch (BKException e) {
+            LOG.warn("Successfully thrown and caught exception:", e);
+        }
+    }
+    
     /**
      * test the streaming api for reading
      * and writing
