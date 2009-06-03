@@ -51,7 +51,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     /**
      * The number of log entries to log before starting a snapshot
      */
-    public static int snapCount = ZooKeeperServer.getSnapCount();
+    public static final int snapCount = ZooKeeperServer.getSnapCount();
 
     private Request requestOfDeath = Request.requestOfDeath;
 

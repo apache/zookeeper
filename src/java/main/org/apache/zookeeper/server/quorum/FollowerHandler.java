@@ -412,7 +412,11 @@ public class FollowerHandler extends Thread {
      * ping calls from the leader to the followers
      */
     public void ping() {
-        QuorumPacket ping = new QuorumPacket(Leader.PING, leader.lastProposed,
+        long id;
+        synchronized(leader) {
+            id = leader.lastProposed;
+        }
+        QuorumPacket ping = new QuorumPacket(Leader.PING, id,
                 null, null);
         queuePacket(ping);
     }
