@@ -45,10 +45,10 @@ public class FLENewEpochTest extends TestCase {
     File tmpdir[];
     int port[];
     volatile int [] round;
-    
+
     Semaphore start0;
     Semaphore finish3, finish0;
-    
+
     @Override
     public void setUp() throws Exception {
         count = 3;
@@ -64,11 +64,11 @@ public class FLENewEpochTest extends TestCase {
         round[0] = 0;
         round[1] = 0;
         round[2] = 0;
-        
+
         start0 = new Semaphore(0);
         finish0 = new Semaphore(0);
         finish3 = new Semaphore(0);
-        
+
         LOG.info("SetUp " + getName());
     }
 
@@ -82,7 +82,6 @@ public class FLENewEpochTest extends TestCase {
 
 
     class LEThread extends Thread {
-        FastLeaderElection le;
         int i;
         QuorumPeer peer;
 
@@ -90,67 +89,67 @@ public class FLENewEpochTest extends TestCase {
             this.i = i;
             this.peer = peer;
             LOG.info("Constructor: " + getName());
-            
+
         }
 
         public void run(){
-        	boolean flag = true;
+            boolean flag = true;
             try{
-            	while(flag){
-            		Vote v = null;
-            		peer.setPeerState(ServerState.LOOKING);
-            		LOG.info("Going to call leader election again: " + i);
-            		v = peer.getElectionAlg().lookForLeader();
+                while(flag){
+                    Vote v = null;
+                    peer.setPeerState(ServerState.LOOKING);
+                    LOG.info("Going to call leader election again: " + i);
+                    v = peer.getElectionAlg().lookForLeader();
 
-            		if(v == null){
-            			fail("Thread " + i + " got a null vote");
-            		}
+                    if(v == null){
+                        fail("Thread " + i + " got a null vote");
+                    }
 
-            		/*
-            		 * A real zookeeper would take care of setting the current vote. Here
-            		 * we do it manually.
-            		 */
-            		peer.setCurrentVote(v);
+                    /*
+                     * A real zookeeper would take care of setting the current vote. Here
+                     * we do it manually.
+                     */
+                    peer.setCurrentVote(v);
 
-            		LOG.info("Finished election: " + i + ", " + v.id);
-            		//votes[i] = v;
+                    LOG.info("Finished election: " + i + ", " + v.id);
+                    //votes[i] = v;
 
-            		switch(i){
-            		case 0:
-            			LOG.info("First peer, do nothing, just join");
-            			if(finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)){
-            			//if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
-            			    LOG.info("Setting flag to false");
-            			    flag = false;
-            			}
-            			break;
-            		case 1:
-            			LOG.info("Second entering case");
-            			if(round[1] != 0){
-            			    finish0.release();
-            			    flag = false;
-            			}
-            			else{
-            				finish3.acquire();
-            				start0.release();
-            			}
-            			LOG.info("Second is going to start second round");
-            			round[1]++;
-            			break;
-            		case 2:
-            			LOG.info("Third peer, shutting it down");
-            			((FastLeaderElection) peer.getElectionAlg()).shutdown();
-            			peer.shutdown();
-            			flag = false;
-            			round[2] = 1;
-            			finish3.release();
-            			LOG.info("Third leaving");
-            			break;
-            		}
-            	}
+                    switch(i){
+                    case 0:
+                        LOG.info("First peer, do nothing, just join");
+                        if(finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)){
+                        //if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
+                            LOG.info("Setting flag to false");
+                            flag = false;
+                        }
+                        break;
+                    case 1:
+                        LOG.info("Second entering case");
+                        if(round[1] != 0){
+                            finish0.release();
+                            flag = false;
+                        }
+                        else{
+                            finish3.acquire();
+                            start0.release();
+                        }
+                        LOG.info("Second is going to start second round");
+                        round[1]++;
+                        break;
+                    case 2:
+                        LOG.info("Third peer, shutting it down");
+                        ((FastLeaderElection) peer.getElectionAlg()).shutdown();
+                        peer.shutdown();
+                        flag = false;
+                        round[2] = 1;
+                        finish3.release();
+                        LOG.info("Third leaving");
+                        break;
+                    }
+                }
             } catch (Exception e){
-            	e.printStackTrace();
-            }    
+                e.printStackTrace();
+            }
         }
     }
 
@@ -164,7 +163,7 @@ public class FLENewEpochTest extends TestCase {
           for(int i = 0; i < count; i++) {
               peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(baseport+100+i),
                       new InetSocketAddress(baseLEport+100+i)));
-              tmpdir[i] = File.createTempFile("letest", "test");
+              tmpdir[i] = ClientBase.createTmpDir();
               port[i] = baseport+i;
           }
 
@@ -183,7 +182,7 @@ public class FLENewEpochTest extends TestCase {
           LEThread thread = new LEThread(peer, 0);
           thread.start();
           threads.add(thread);
-          
+
           LOG.info("Started threads " + getName());
 
           for(int i = 0; i < threads.size(); i++) {

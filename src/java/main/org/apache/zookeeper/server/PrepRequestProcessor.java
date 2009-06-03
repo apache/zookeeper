@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.Record;
@@ -73,7 +74,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      * this is only for testing purposes.
      * should never be useed otherwise
      */
-    public static boolean failCreate = false;
+    public static final boolean failCreate = false;
     
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
@@ -124,8 +125,14 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             if (lastChange == null) {
                 DataNode n = zks.dataTree.getNode(path);
                 if (n != null) {
-                    lastChange = new ChangeRecord(-1, path, n.stat, n.children
-                            .size(), zks.dataTree.convertLong(n.acl));
+                    Long acl;
+                    Set<String> children;
+                    synchronized(n) {
+                        acl = n.acl;
+                        children = n.children;
+                    }
+                    lastChange = new ChangeRecord(-1, path, n.stat, children
+                            .size(), zks.dataTree.convertLong(acl));
                 }
             }
         }
