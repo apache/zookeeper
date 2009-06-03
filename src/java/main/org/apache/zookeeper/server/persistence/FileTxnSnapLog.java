@@ -71,20 +71,14 @@ public class FileTxnSnapLog {
      * @param dataDir the trasaction directory
      * @param snapDir the snapshot directory
      */
-    public FileTxnSnapLog(File dataDir, File snapDir) throws IOException {
+    public FileTxnSnapLog(File dataDir, File snapDir) {
         this.dataDir = new File(dataDir, version + VERSION);
         this.snapDir = new File(snapDir, version + VERSION);
         if (!this.dataDir.exists()) {
-            if (!this.dataDir.mkdirs()) {
-                throw new IOException("Unable to create data directory "
-                        + this.dataDir);
-            }
+            this.dataDir.mkdirs();
         }
         if (!this.snapDir.exists()) {
-            if (!this.snapDir.mkdirs()) {
-                throw new IOException("Unable to create snap directory "
-                        + this.snapDir);
-            }
+            this.snapDir.mkdirs();
         }
         txnLog = new FileTxnLog(this.dataDir);
         snapLog = new FileSnap(this.snapDir);

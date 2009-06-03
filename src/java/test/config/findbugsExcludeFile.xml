@@ -65,43 +65,4 @@
     <Bug code="EI, EI2" />
   </Match>
 
-  <Match>
-    <Class name="org.apache.zookeeper.server.DataNode" />
-      <Bug code="EI2"/>
-  </Match>
-
-  <Match>
-    <Class name="org.apache.zookeeper.server.quorum.QuorumPacket" />
-       <Bug code="EI2, EI" />
-  </Match>
-
-  <Match>
-    <Class name="org.apache.zookeeper.ClientCnxn"/>
-      <Bug code="EI, EI2" />
-  </Match>
-
-  <Match>
-    <Class name="org.apache.zookeeper.server.DataNode"/>
-      <Field name="children"/> 
-      <Bug code="IS"/>
-  </Match>
-
-  <Match>
-     <Class name="org.apache.zookeeper.server.quorum.FollowerSessionTracker"/>
-       <Bug code="UrF"/>
-  </Match>
-
-  <!-- these are old classes just for upgrading and should go away -->
-  <Match>
-    <Class name="org.apache.zookeeper.server.upgrade.DataNodeV1"/>
-  </Match> 
-
-  <Match>
-    <Class name="org.apache.zookeeper.server.upgrade.DataTreeV1"/>
-  </Match>
-  
-  <Match>
-     <Class name="org.apache.zookeeper.server.quorum.AuthFastLeaderElection"/>
-  	<Bug code="SIC"/>
-  </Match>
 </FindBugsFilter>

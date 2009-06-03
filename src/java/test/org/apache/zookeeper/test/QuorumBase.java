@@ -34,14 +34,17 @@ import org.junit.After;
 public class QuorumBase extends ClientBase {
     private static final Logger LOG = Logger.getLogger(QuorumBase.class);
 
+
+
     File s1dir, s2dir, s3dir, s4dir, s5dir;
     QuorumPeer s1, s2, s3, s4, s5;
 
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
-        setupTestEnv();
 
         JMXEnv.setUp();
+
+        setupTestEnv();
 
         hostPort = "127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183,127.0.0.1:2184,127.0.0.1:2185";
 
@@ -105,11 +108,11 @@ public class QuorumBase extends ClientBase {
         // make sure we have these 5 servers listed
         Set<String> ensureNames = new LinkedHashSet<String>();
         for (int i = 1; i <= 5; i++) {
-            ensureNames.add("InMemoryDataTree");
+            ensureNames.add("InMemoryDataTree"); 
         }
         for (int i = 1; i <= 5; i++) {
             ensureNames.add("name0=ReplicatedServer_id" + i
-                 + ",name1=replica." + i + ",name2=");
+                 + ",name1=replica." + i + ",name2="); 
         }
         for (int i = 1; i <= 5; i++) {
             for (int j = 1; j <= 5; j++) {
@@ -118,7 +121,7 @@ public class QuorumBase extends ClientBase {
             }
         }
         for (int i = 1; i <= 5; i++) {
-            ensureNames.add("name0=ReplicatedServer_id" + i);
+            ensureNames.add("name0=ReplicatedServer_id" + i); 
         }
         JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
     }
@@ -141,7 +144,7 @@ public class QuorumBase extends ClientBase {
         }
 
         JMXEnv.tearDown();
-
+        
         LOG.info("FINISHED " + getName());
     }
 

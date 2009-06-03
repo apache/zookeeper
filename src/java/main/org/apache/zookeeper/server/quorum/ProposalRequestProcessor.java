@@ -39,15 +39,9 @@ public class ProposalRequestProcessor implements RequestProcessor {
         this.nextProcessor = nextProcessor;
         AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.getLeader());
         syncProcessor = new SyncRequestProcessor(zks, ackProcessor);
-    }
-    
-    /**
-     * initialize this processor
-     */
-    public void initialize() {
         syncProcessor.start();
     }
-    
+
     public void processRequest(Request request) {
         // LOG.warn("Ack>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = " + request.sessionId);
