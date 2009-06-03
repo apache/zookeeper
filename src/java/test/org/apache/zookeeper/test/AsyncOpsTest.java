@@ -35,19 +35,19 @@ import org.junit.Test;
 /**
  * Functional testing of asynchronous operations, both positive and negative
  * testing.
- *
+ * 
  * This just scratches the surface, but exercises the basic async functionality.
  */
 public class AsyncOpsTest extends ClientBase {
     private static final Logger LOG = Logger.getLogger(AsyncOpsTest.class);
 
     private ZooKeeper zk;
-
+    
     @Before
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-
+        
         LOG.info("STARTING " + getName());
 
         zk = createClient();
@@ -58,9 +58,9 @@ public class AsyncOpsTest extends ClientBase {
     @Override
     protected void tearDown() throws Exception {
         zk.close();
-
+        
         super.tearDown();
-
+        
         LOG.info("Test clients shutting down");
 
         LOG.info("FINISHED " + getName());
@@ -74,23 +74,23 @@ public class AsyncOpsTest extends ClientBase {
     @Test
     public void testAsyncCreateThree() {
         CountDownLatch latch = new CountDownLatch(3);
-
+        
         StringCB op1 = new StringCB(zk, latch);
         op1.setPath("/op1");
         StringCB op2 = new StringCB(zk, latch);
         op2.setPath("/op2");
         StringCB op3 = new StringCB(zk, latch);
         op3.setPath("/op3");
-
+        
         op1.create();
         op2.create();
         op3.create();
-
+        
         op1.verify();
         op2.verify();
         op3.verify();
     }
-
+    
     @Test
     public void testAsyncCreateFailure_NodeExists() {
         new StringCB(zk).verifyCreateFailure_NodeExists();

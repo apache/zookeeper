@@ -80,9 +80,9 @@ public class ClientCnxn {
      * Clients automatically reset watches during session reconnect, this
      * option allows the client to turn off this behavior by setting
      * the environment variable "zookeeper.disableAutoWatchReset" to "true" */
-    public static final boolean disableAutoWatchReset;
+    public static boolean disableAutoWatchReset;
    
-    public static final int packetLen;
+    public static int packetLen;
     static {
         // this var should not be public, but otw there is no easy way 
         // to test

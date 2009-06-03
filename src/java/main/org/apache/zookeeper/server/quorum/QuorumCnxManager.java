@@ -491,13 +491,8 @@ public class QuorumCnxManager {
                         senderWorkerMap.remove(sid);
                         ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
                         if(bq != null){
-                            if (bq.size() == 0) {
-                                boolean ret = bq.offer(b);
-                                if (!ret) {
-                                    // to appease findbugs
-                                    LOG.error("Not able to add to a quue of size 0");
-                                }
-                            }
+                            if (bq.size() == 0)
+                                bq.offer(b);
                         } else LOG.error("No queue for server " + sid);
                     }
                 }
