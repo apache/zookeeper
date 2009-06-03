@@ -76,7 +76,7 @@ public abstract class ClientBase extends TestCase {
         // XXX this doesn't need to be volatile! (Should probably be final)
         volatile CountDownLatch clientConnected;
         volatile boolean connected;
-        
+
         public CountdownWatcher() {
             reset();
         }
@@ -106,7 +106,7 @@ public abstract class ClientBase extends TestCase {
             }
             if (!connected) {
                 throw new TimeoutException("Did not connect");
-         
+
             }
         }
         synchronized void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
@@ -118,11 +118,11 @@ public abstract class ClientBase extends TestCase {
             }
             if (connected) {
                 throw new TimeoutException("Did not disconnect");
-         
+
             }
         }
     }
-    
+
     protected ZooKeeper createClient()
         throws IOException, InterruptedException
     {
@@ -225,7 +225,7 @@ public abstract class ClientBase extends TestCase {
         }
         return false;
     }
-    
+
     static void verifyThreadTerminated(Thread thread, long millis)
         throws InterruptedException
     {
@@ -233,7 +233,7 @@ public abstract class ClientBase extends TestCase {
         if (thread.isAlive()) {
             LOG.error("Thread " + thread.getName() + " : "
                     + Arrays.toString(thread.getStackTrace()));
-            assertFalse("thread " + thread.getName() 
+            assertFalse("thread " + thread.getName()
                     + " still alive after join", true);
         }
     }
@@ -246,17 +246,17 @@ public abstract class ClientBase extends TestCase {
         File tmpFile = File.createTempFile("test", ".junit", parentDir);
         // don't delete tmpFile - this ensures we don't attempt to create
         // a tmpDir with a duplicate name
-        
+
         File tmpDir = new File(tmpFile + ".dir");
         assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
         assertTrue(tmpDir.mkdirs());
-        
+
         return tmpDir;
     }
-    
+
     static NIOServerCnxn.Factory createNewServerInstance(File dataDir,
             NIOServerCnxn.Factory factory, String hostPort)
-        throws IOException, InterruptedException 
+        throws IOException, InterruptedException
     {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         final int PORT = Integer.parseInt(hostPort.split(":")[1]);
@@ -271,7 +271,7 @@ public abstract class ClientBase extends TestCase {
 
         return factory;
     }
-    
+
     static void shutdownServerInstance(NIOServerCnxn.Factory factory,
             String hostPort)
     {
@@ -284,7 +284,7 @@ public abstract class ClientBase extends TestCase {
                                                     CONNECTION_TIMEOUT));
         }
     }
-    
+
     /**
      * Test specific setup
      */
@@ -294,21 +294,20 @@ public abstract class ClientBase extends TestCase {
         // resulting in test failure (client timeout on first session).
         // set env and directly in order to handle static init/gc issues
         System.setProperty("zookeeper.preAllocSize", "100");
-        FileTxnLog.setPreallocSize(100);
+        FileTxnLog.setPreallocSize(100 * 1024);
     }
-    
+
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
-
-        JMXEnv.setUp();
-        
-        tmpDir = createTmpDir(BASETEST);
-        
         setupTestEnv();
 
+        JMXEnv.setUp();
+
+        tmpDir = createTmpDir(BASETEST);
+
         startServer();
-        
+
         LOG.info("Client test setup finished");
     }
 
@@ -318,7 +317,7 @@ public abstract class ClientBase extends TestCase {
         // ensure that only server and data bean are registered
         JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
     }
-    
+
     protected void stopServer() throws Exception {
         LOG.info("STOPPING server");
         shutdownServerInstance(serverFactory, hostPort);
@@ -326,19 +325,19 @@ public abstract class ClientBase extends TestCase {
         // ensure no beans are leftover
         JMXEnv.ensureOnly();
     }
-    
+
     @Override
     protected void tearDown() throws Exception {
         LOG.info("tearDown starting");
 
         stopServer();
-        
+
         if (tmpDir != null) {
             //assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
             // FIXME see ZOOKEEPER-121 replace following line with previous
             recursiveDelete(tmpDir);
         }
-        
+
         JMXEnv.tearDown();
 
         LOG.info("FINISHED " + getName());
@@ -347,7 +346,7 @@ public abstract class ClientBase extends TestCase {
     public static MBeanServerConnection jmxConn() throws IOException {
         return JMXEnv.conn();
     }
-    
+
     private static boolean recursiveDelete(File d) {
         if (d.isDirectory()) {
             File children[] = d.listFiles();

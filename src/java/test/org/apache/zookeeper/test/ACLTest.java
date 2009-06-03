@@ -45,7 +45,7 @@ public class ACLTest extends TestCase implements Watcher {
     private static String HOSTPORT = "127.0.0.1:2355";
     ZooKeeperServer zks;
     private CountDownLatch startSignal;
-    
+
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
@@ -56,8 +56,8 @@ public class ACLTest extends TestCase implements Watcher {
     }
 
     /**
-     * Verify that acl optimization of storing just 
-     * a few acls and there references in the data 
+     * Verify that acl optimization of storing just
+     * a few acls and there references in the data
      * node is actually working.
      */
     public void testAcls() throws Exception {
@@ -69,7 +69,7 @@ public class ACLTest extends TestCase implements Watcher {
         NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        assertTrue("waiting for server being up", 
+        assertTrue("waiting for server being up",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         String path;
@@ -102,17 +102,17 @@ public class ACLTest extends TestCase implements Watcher {
 
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         f = new NIOServerCnxn.Factory(PORT);
-        
+
         f.startup(zks);
 
         assertTrue("waiting for server up",
                    ClientBase.waitForServerUp(HOSTPORT,
                                        CONNECTION_TIMEOUT));
-        
+
         startSignal.await(CONNECTION_TIMEOUT,
                 TimeUnit.MILLISECONDS);
         assertTrue("count == 0", startSignal.getCount() == 0);
-        
+
         assertTrue("acl map ", (101 == zks.dataTree.longKeyMap.size()));
         for (int j =200; j < 205; j++) {
             path = "/" + j;
@@ -133,20 +133,20 @@ public class ACLTest extends TestCase implements Watcher {
         assertTrue("waiting for server down",
                    ClientBase.waitForServerDown(HOSTPORT,
                            ClientBase.CONNECTION_TIMEOUT));
-        
+
     }
-    
-    /*                  
-     * (non-Javadoc)    
-     *                          
+
+    /*
+     * (non-Javadoc)
+     *
      * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.WatcherEvent)
-     */         
+     */
     public void process(WatchedEvent event) {
         LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
         if (event.getState() == KeeperState.SyncConnected
                 && startSignal != null && startSignal.getCount() > 0)
-        {              
-            startSignal.countDown();      
+        {
+            startSignal.countDown();
         }
     }
 }

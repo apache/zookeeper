@@ -111,6 +111,8 @@ BUGFIXES:
   ZOOKEEPER-421. zkpython run_tests.sh is missing #!
   (henry robinson via phunt)
 
+  ZOOKEEPER-406. address all findbugs warnings in persistence classes. (phunt et al via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
