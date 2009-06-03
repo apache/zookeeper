@@ -192,11 +192,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                Long aclL;
-                synchronized(n) {
-                    aclL = n.acl;
-                }
-                PrepRequestProcessor.checkACL(zks, zks.dataTree.convertLong(aclL),
+                PrepRequestProcessor.checkACL(zks, zks.dataTree.convertLong(n.acl),
                         ZooDefs.Perms.READ,
                         request.authInfo);
                 stat = new Stat();
@@ -233,11 +229,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                Long aclG;
-                synchronized(n) {
-                    aclG = n.acl;
-                }
-                PrepRequestProcessor.checkACL(zks, zks.dataTree.convertLong(aclG), 
+                PrepRequestProcessor.checkACL(zks, zks.dataTree.convertLong(n.acl), 
                         ZooDefs.Perms.READ,
                         request.authInfo);
                 List<String> children = zks.dataTree.getChildren(

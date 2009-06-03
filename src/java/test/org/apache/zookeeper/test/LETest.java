@@ -34,7 +34,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 public class LETest extends TestCase {
     volatile Vote votes[];
     volatile boolean leaderDies;
-    volatile long leader = -1;
+    volatile long leader = -1; 
     Random rand = new Random();
     class LEThread extends Thread {
         LeaderElection le;
@@ -59,7 +59,7 @@ public class LETest extends TestCase {
                                 System.out.println("Leader " + i + " dying");
                                 leader = -2;
                             } else {
-                                leader = i;
+                                leader = i; 
                             }
                             LETest.this.notifyAll();
                         }
@@ -92,8 +92,8 @@ public class LETest extends TestCase {
         votes = new Vote[count];
         for(int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", baseport+100+i)));
-            tmpdir[i] = ClientBase.createTmpDir();
-            port[i] = baseport+i;
+            tmpdir[i] = File.createTempFile("letest", "test");
+            port[i] = baseport+i;    
         }
         LeaderElection le[] = new LeaderElection[count];
         leaderDies = true;

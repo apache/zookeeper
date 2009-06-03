@@ -46,7 +46,7 @@ import org.apache.zookeeper.data.Stat;
  */
 public class ZooKeeperMain {
     private static final Logger LOG = Logger.getLogger(ZooKeeperMain.class);
-    protected static final Map<String,String> commandMap = new HashMap<String,String>( );
+    protected static Map<String,String> commandMap = new HashMap<String,String>( );
 
     protected MyCommandOptions cl = new MyCommandOptions();
     protected HashMap<Integer,String> history = new HashMap<Integer,String>( );
@@ -522,11 +522,8 @@ public class ZooKeeperMain {
         // now create the direct children
         // and the stat and quota nodes
         String[] splits = path.split("/");
-        StringBuffer sb = new StringBuffer();
-        sb.append(quotaPath);
         for (int i=1; i<splits.length; i++) {
-            sb.append("/" + splits[i]);
-            quotaPath = sb.toString();
+            quotaPath = quotaPath + "/" + splits[i];
             try {
                 zk.create(quotaPath, null, Ids.OPEN_ACL_UNSAFE ,
                         CreateMode.PERSISTENT);
