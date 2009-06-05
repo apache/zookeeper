@@ -100,7 +100,13 @@ public class QuorumPeerConfig {
         }
     }
 
-    protected void parseProperties(Properties zkProp)
+    /**
+     * Parse config from a Properties.
+     * @param zkProp Properties to parse from.
+     * @throws IOException
+     * @throws ConfigException
+     */
+    public void parseProperties(Properties zkProp)
     throws IOException, ConfigException {
         for (Entry<Object, Object> entry : zkProp.entrySet()) {
             String key = entry.getKey().toString().trim();
@@ -263,4 +269,6 @@ public class QuorumPeerConfig {
     }
 
     public long getServerId() { return serverId; }
+
+    public boolean isDistributed() { return servers.size() > 1; }
 }
