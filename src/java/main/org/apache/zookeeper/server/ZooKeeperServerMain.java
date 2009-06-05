@@ -82,6 +82,15 @@ public class ZooKeeperServerMain {
             config.parse(args);
         }
 
+        runFromConfig(config);
+    }
+
+    /**
+     * Run from a ServerConfig.
+     * @param config ServerConfig to use.
+     * @throws IOException
+     */
+    public void runFromConfig(ServerConfig config) throws IOException {
         LOG.info("Starting server");
         try {
             // Note that this thread isn't going to be doing anything else,

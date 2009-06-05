@@ -185,6 +185,8 @@ IMPROVEMENTS:
   ZOOKEEPER-383. Asynchronous version of createLedger(). (flavio via mahadev)
 
   ZOOKEEPER-358. Throw exception when ledger does not exist. (flavio via breed)
+
+  ZOOKEEPER-431. Expose methods to ease ZK integration. (Jean-Daniel via breed)
  
 NEW FEATURES:
 

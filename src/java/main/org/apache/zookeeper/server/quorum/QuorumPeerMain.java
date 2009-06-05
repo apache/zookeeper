@@ -99,43 +99,47 @@ public class QuorumPeerMain {
         }
 
         if (args.length == 1 && config.servers.size() > 0) {
-            try {
-                ManagedUtil.registerLog4jMBeans();
-            } catch (JMException e) {
-                LOG.warn("Unable to register log4j JMX control", e);
-            }
-
-            LOG.info("Starting quorum peer");
-            try {
-                NIOServerCnxn.Factory cnxnFactory =
-                    new NIOServerCnxn.Factory(config.getClientPort());
-
-                quorumPeer = new QuorumPeer();
-                quorumPeer.setClientPort(config.getClientPort());
-                quorumPeer.setTxnFactory(new FileTxnSnapLog(
-                            new File(config.getDataLogDir()),
-                            new File(config.getDataDir())));
-                quorumPeer.setQuorumPeers(config.getServers());
-                quorumPeer.setElectionType(config.getElectionAlg());
-                quorumPeer.setMyid(config.getServerId());
-                quorumPeer.setTickTime(config.getTickTime());
-                quorumPeer.setInitLimit(config.getInitLimit());
-                quorumPeer.setSyncLimit(config.getSyncLimit());
-                quorumPeer.setQuorumVerifier(config.getQuorumVerifier());
-                quorumPeer.setCnxnFactory(cnxnFactory);
-
-                quorumPeer.start();
-                quorumPeer.join();
-            } catch (InterruptedException e) {
-                // warn, but generally this is ok
-                LOG.warn("Quorum Peer interrupted", e);
-            }
+            runFromConfig(config);
         } else {
             LOG.warn("Either no config or no quorum defined in config, running "
                     + " in standalone mode");
             // there is only server in the quorum -- run as standalone
             ZooKeeperServerMain.main(args);
         }
+    }
+
+    public void runFromConfig(QuorumPeerConfig config) throws IOException {
+      try {
+          ManagedUtil.registerLog4jMBeans();
+      } catch (JMException e) {
+          LOG.warn("Unable to register log4j JMX control", e);
+      }
+  
+      LOG.info("Starting quorum peer");
+      try {
+          NIOServerCnxn.Factory cnxnFactory =
+              new NIOServerCnxn.Factory(config.getClientPort());
+  
+          quorumPeer = new QuorumPeer();
+          quorumPeer.setClientPort(config.getClientPort());
+          quorumPeer.setTxnFactory(new FileTxnSnapLog(
+                      new File(config.getDataLogDir()),
+                      new File(config.getDataDir())));
+          quorumPeer.setQuorumPeers(config.getServers());
+          quorumPeer.setElectionType(config.getElectionAlg());
+          quorumPeer.setMyid(config.getServerId());
+          quorumPeer.setTickTime(config.getTickTime());
+          quorumPeer.setInitLimit(config.getInitLimit());
+          quorumPeer.setSyncLimit(config.getSyncLimit());
+          quorumPeer.setQuorumVerifier(config.getQuorumVerifier());
+          quorumPeer.setCnxnFactory(cnxnFactory);
+  
+          quorumPeer.start();
+          quorumPeer.join();
+      } catch (InterruptedException e) {
+          // warn, but generally this is ok
+          LOG.warn("Quorum Peer interrupted", e);
+      }
     }
 
     protected void shutdown() {
