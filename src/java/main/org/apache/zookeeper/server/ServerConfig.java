@@ -67,10 +67,18 @@ public class ServerConfig {
 
         // let qpconfig parse the file and then pull the stuff we are
         // interested in
-        clientPort = config.getClientPort();
-        dataDir = config.getDataDir();
-        dataLogDir = config.getDataLogDir();
-        tickTime = config.getTickTime();
+        readFrom(config);
+    }
+
+    /**
+     * Read attributes from a QuorumPeerConfig.
+     * @param config
+     */
+    public void readFrom(QuorumPeerConfig config) {
+      clientPort = config.getClientPort();
+      dataDir = config.getDataDir();
+      dataLogDir = config.getDataLogDir();
+      tickTime = config.getTickTime();
     }
 
     public int getClientPort() { return clientPort; }
