@@ -187,6 +187,9 @@ IMPROVEMENTS:
   ZOOKEEPER-358. Throw exception when ledger does not exist. (flavio via breed)
 
   ZOOKEEPER-431. Expose methods to ease ZK integration. (Jean-Daniel via breed)
+
+  ZOOKEEPER-396. race condition in zookeeper client library between
+zookeeper_close and zoo_synchronous api. (mahadev)
  
 NEW FEATURES:
 

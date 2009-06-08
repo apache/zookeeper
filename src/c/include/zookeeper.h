@@ -314,7 +314,8 @@ ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
  * block.
  *
  * This method should only be called only once on a zookeeper handle. Calling
- * twice will cause undefined (and probably undesirable behavior).
+ * twice will cause undefined (and probably undesirable behavior). Calling any other
+ * zookeeper method after calling close is undefined behaviour and should be avoided.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \return a result code. Regardless of the error code returned, the zhandle 

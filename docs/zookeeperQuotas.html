@@ -216,8 +216,8 @@ document.write("Last Published: " + document.lastModified);
 	are printed in the log of the ZooKeeper. 
 	</p>
 <p>
-<span class="codefrag computeroutput">$java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar/conf \
-	 org.apache.zookeeper.ZooKeeperMain host:port</span>
+<span class="codefrag computeroutput">$java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar/conf:src/java/lib/jline-0.9.94.jar \
+	 org.apache.zookeeper.ZooKeeperMain -server host:port</span>
 </p>
 <p> The above command gives you a command line option of using quotas.</p>
 <a name="N1001F"></a><a name="Setting+Quotas"></a>
