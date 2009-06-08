@@ -162,9 +162,7 @@ extern ZOOAPI const int ZOO_SEQUENCE;
 /**
  * @name State Consts
  * These constants represent the states of a zookeeper connection. They are
- * possible parameters of the watcher callback. If a connection moves from
- * the ZOO_CONNECTED_STATE to the ZOO_CONNECTING_STATE, all outstanding 
- * watches will be removed.
+ * possible parameters of the watcher callback.
  */
 // @{
 extern ZOOAPI const int ZOO_EXPIRED_SESSION_STATE;
@@ -266,8 +264,7 @@ typedef struct {
  * 
  * \param zh zookeeper handle
  * \param type event type. This is one of the *_EVENT constants. 
- * \param state connection state. If the type is ZOO_SESSION_EVENT, the state value 
- * will be one of the *_STATE constants, otherwise -1.
+ * \param state connection state. The state value will be one of the *_STATE constants.
  * \param path znode path for which the watcher is triggered. NULL if the event 
  * type is ZOO_SESSION_EVENT
  * \param watcherCtx watcher context.

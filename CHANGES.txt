@@ -190,6 +190,10 @@ IMPROVEMENTS:
 
   ZOOKEEPER-396. race condition in zookeeper client library between
 zookeeper_close and zoo_synchronous api. (mahadev)
+
+  ZOOKEEPER-196. doxygen comment for state argument of watcher_fn typedef and
+implementation differ ("...one of the *_STATE constants, otherwise -1") (breed
+via mahadev)
  
 NEW FEATURES:
 
