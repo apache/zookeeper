@@ -1547,9 +1547,9 @@ int main(int argc, char argv) {
 </ul>
 <p>Finally, the rules associated with shutdown are straightforward:
       once a ZooKeeper object is closed or receives a fatal event
-      (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid,
-      the two threads shut down, and any further ZooKeeper calls throw
-      errors.</p>
+      (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid.
+      On a close, the two threads shut down and any further access on zookeeper
+      handle is undefined behavior and should be avoided. </p>
 <a name="N104F3"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
