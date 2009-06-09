@@ -36,7 +36,7 @@ public class ZooKeeperServerMain {
         Logger.getLogger(ZooKeeperServerMain.class);
 
     private static final String USAGE =
-        "Usage: ZooKeeperServerMain configfile | port datadir [ticktime]";
+        "Usage: ZooKeeperServerMain configfile | port datadir [ticktime] [maxcnxns]";
 
     private NIOServerCnxn.Factory cnxnFactory;
 
@@ -103,7 +103,7 @@ public class ZooKeeperServerMain {
                    File(config.dataLogDir), new File(config.dataDir));
             zkServer.setTxnLogFactory(ftxn);
             zkServer.setTickTime(config.tickTime);
-            cnxnFactory = new NIOServerCnxn.Factory(config.clientPort);
+            cnxnFactory = new NIOServerCnxn.Factory(config.clientPort, config.getMaxClientCnxns());
             cnxnFactory.startup(zkServer);
             cnxnFactory.join();
             if (zkServer.isRunning()) {

@@ -49,6 +49,7 @@ public class QuorumPeerConfig {
     protected int syncLimit;
     protected int electionAlg;
     protected int electionPort;
+    protected int maxClientCnxns = 10;
     protected final HashMap<Long,QuorumServer> servers =
         new HashMap<Long, QuorumServer>();
 
@@ -125,6 +126,8 @@ public class QuorumPeerConfig {
                 syncLimit = Integer.parseInt(value);
             } else if (key.equals("electionAlg")) {
                 electionAlg = Integer.parseInt(value);
+            } else if (key.equals("maxClientCnxns")) {
+                maxClientCnxns = Integer.parseInt(value);
             } else if (key.startsWith("server.")) {
                 int dot = key.indexOf('.');
                 long sid = Long.parseLong(key.substring(dot + 1));
@@ -259,7 +262,9 @@ public class QuorumPeerConfig {
     public int getInitLimit() { return initLimit; }
     public int getSyncLimit() { return syncLimit; }
     public int getElectionAlg() { return electionAlg; }
-    public int getElectionPort() { return electionPort; }
+    public int getElectionPort() { return electionPort; }    
+    public int getMaxClientCnxns() { return maxClientCnxns; }
+    
     public QuorumVerifier getQuorumVerifier() {   
         return quorumVerifier;
     }
