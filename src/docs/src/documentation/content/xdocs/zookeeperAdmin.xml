@@ -822,6 +822,47 @@ server.3=zoo3:2888:3888</computeroutput></para>
         <para></para>
       </section>
 
+      <section id="sc_authOptions">
+        <title>Authentication &amp; Authorization Options</title>
+
+        <para>The options in this section allow control over
+        authentication/authorization performed by the service.</para>
+
+        <variablelist>
+          <varlistentry>
+            <term>zookeeper.DigestAuthenticationProvider.superDigest</term>
+
+            <listitem>
+              <para>(Java system property only: <emphasis
+              role="bold">zookeeper.DigestAuthenticationProvider.superDigest</emphasis>)</para>
+
+              <para>By default this feature is <emphasis
+              role="bold">disabled</emphasis></para>
+
+              <para><emphasis role="bold">New in 3.2:</emphasis>
+              Enables a ZooKeeper ensemble administrator to access the
+              znode hierarchy as a "super" user. In particular no ACL
+              checking occurs for a user authenticated as
+              super.</para>
+
+              <para>org.apache.zookeeper.server.auth.DigestAuthenticationProvider
+              can be used to generate the superDigest, call it with
+              one parameter of "super:&lt;password>". Provide the
+              generated "super:&lt;data>" as the system property value
+              when starting each server of the ensemble.</para>
+
+              <para>When authenticating to a ZooKeeper server (from a
+              ZooKeeper client) pass a scheme of "digest" and authdata
+              of "super:&lt;password>". Note that digest auth passes
+              the authdata in plaintext to the server, it would be
+              prudent to use this authentication method only on
+              localhost (not over the network) or over an encrypted
+              connection.</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+
       <section>
         <title>Unsafe Options</title>
 
