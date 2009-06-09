@@ -61,31 +61,31 @@ public class ZooKeeperMain {
     }
 
     static void populateCommandMap() {
-        commandMap.put("connect", " host:port");
+        commandMap.put("connect", "host:port");
         commandMap.put("close","");
         commandMap.put("create", "path data acl");
-        commandMap.put("delete"," path [version]");
-        commandMap.put("set"," path data [version]");
-        commandMap.put("get"," path [watch]");
-        commandMap.put("ls"," path [watch]");
-        commandMap.put("getAcl"," path");
-        commandMap.put("setAcl"," path acl");
-        commandMap.put("stat"," path [watch]");
-        commandMap.put("sync"," path");
-        commandMap.put("setquota"," -n|-b val path");
-        commandMap.put("listquota"," path");
-        commandMap.put("delquota"," [-n|-b] path");
+        commandMap.put("delete","path [version]");
+        commandMap.put("set","path data [version]");
+        commandMap.put("get","path [watch]");
+        commandMap.put("ls","path [watch]");
+        commandMap.put("getAcl","path");
+        commandMap.put("setAcl","path acl");
+        commandMap.put("stat","path [watch]");
+        commandMap.put("sync","path");
+        commandMap.put("setquota","-n|-b val path");
+        commandMap.put("listquota","path");
+        commandMap.put("delquota","[-n|-b] path");
         commandMap.put("history","");
-        commandMap.put("redo"," cmdno");
-        commandMap.put("printwatches", " on|off");
+        commandMap.put("redo","cmdno");
+        commandMap.put("printwatches", "on|off");
         commandMap.put("quit","");
-        commandMap.put("addauth", " scheme auth");
+        commandMap.put("addauth", "scheme auth");
     }
 
     static void usage() {
         System.err.println("ZooKeeper -server host:port cmd args");
         for (String cmd : commandMap.keySet()) {
-            System.err.println("\t"+cmd+commandMap.get(cmd));
+            System.err.println("\t"+cmd+ " " + commandMap.get(cmd));
         }
     }
 

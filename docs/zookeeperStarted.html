@@ -337,7 +337,7 @@ clientPort=2181
 <strong>Java</strong>: Use</p>
 
           
-<pre class="code">bin/zkCli.sh 127.0.0.1:2181</pre>
+<pre class="code">bin/zkCli.sh -server 127.0.0.1:2181</pre>
 
           
 <p>This lets you perform simple, file-like operations.</p>
@@ -375,7 +375,130 @@ clientPort=2181
 </li>
       
 </ul>
-<a name="N100D4"></a><a name="sc_ProgrammingToZooKeeper"></a>
+<p>Once you have connected, you should see something like:
+        </p>
+<pre class="code">
+
+Connecting to localhost:2181
+log4j:WARN No appenders could be found for logger (org.apache.zookeeper.ZooKeeper).
+log4j:WARN Please initialize the log4j system properly.
+Welcome to ZooKeeper!
+JLine support is enabled
+[zkshell: 0]
+        </pre>
+<p>
+        From the shell, type <span class="codefrag command">help</span> to get a listing of commands that can be executed from the client, as in:
+      </p>
+<pre class="code">
+
+[zkshell: 0] help
+ZooKeeper host:port cmd args
+        get path [watch]
+        ls path [watch]
+        set path data [version]
+        delquota [-n|-b] path
+        quit
+        printwatches on|off
+        createpath data acl
+        stat path [watch]
+        listquota path
+        history
+        setAcl path acl
+        getAcl path
+        sync path
+        redo cmdno
+        addauth scheme auth
+        delete path [version]
+        setquota -n|-b val path
+
+        </pre>
+<p>From here, you can try a few simple commands to get a feel for this simple command line interface.  First, start by issuing the list command, as
+      in <span class="codefrag command">ls</span>, yielding:
+      </p>
+<pre class="code">
+
+[zkshell: 8] ls /
+[zookeeper]
+        </pre>
+<p>Next, create a new znode by running <span class="codefrag command">create /zk_test my_data</span>. This creates a new znode and associates the string "my_data" with the node.
+      You should see:</p>
+<pre class="code">
+
+[zkshell: 9] create /zk_test my_data
+Created /zk_test
+      </pre>
+<p>  Issue another <span class="codefrag command">ls /</span> command to see what the directory looks like:
+        </p>
+<pre class="code">
+
+[zkshell: 11] ls /
+[zookeeper, zk_test]
+
+        </pre>
+<p>
+      Notice that the zk_test directory has now been created.
+      </p>
+<p>Next, verify that the data was associated with the znode by running the <span class="codefrag command">get</span> command, as in:
+      </p>
+<pre class="code">
+
+[zkshell: 12] get /zk_test
+my_data
+cZxid = 5
+ctime = Fri Jun 05 13:57:06 PDT 2009
+mZxid = 5
+mtime = Fri Jun 05 13:57:06 PDT 2009
+pZxid = 5
+cversion = 0
+dataVersion = 0
+aclVersion = 0
+ephemeralOwner = 0
+dataLength = 7
+numChildren = 0
+        </pre>
+<p>We can change the data associated with zk_test by issuing the <span class="codefrag command">set</span> command, as in:
+        </p>
+<pre class="code">
+
+[zkshell: 14] set /zk_test junk
+cZxid = 5
+ctime = Fri Jun 05 13:57:06 PDT 2009
+mZxid = 6
+mtime = Fri Jun 05 14:01:52 PDT 2009
+pZxid = 5
+cversion = 0
+dataVersion = 1
+aclVersion = 0
+ephemeralOwner = 0
+dataLength = 4
+numChildren = 0
+[zkshell: 15] get /zk_test
+junk
+cZxid = 5
+ctime = Fri Jun 05 13:57:06 PDT 2009
+mZxid = 6
+mtime = Fri Jun 05 14:01:52 PDT 2009
+pZxid = 5
+cversion = 0
+dataVersion = 1
+aclVersion = 0
+ephemeralOwner = 0
+dataLength = 4
+numChildren = 0
+      </pre>
+<p>
+       (Notice we did a <span class="codefrag command">get</span> after setting the data and it did, indeed, change.</p>
+<p>Finally, let's <span class="codefrag command">delete</span> the node by issuing:
+      </p>
+<pre class="code">
+
+[zkshell: 16] delete /zk_test
+[zkshell: 17] ls /
+[zookeeper]
+[zkshell: 18]
+</pre>
+<p>That's it for now.  To explore more, continue with the rest of this document and see the <a href="zookeeperProgrammers.html">Programmer's Guide</a>. </p>
+<a name="N10130"></a><a name="sc_ProgrammingToZooKeeper"></a>
 <h3 class="h4">Programming to ZooKeeper</h3>
 <p>ZooKeeper has a Java bindings and C bindings. They are
       functionally equivalent. The C bindings exist in two variants: single
@@ -383,7 +506,7 @@ clientPort=2181
       is done. For more information, see the <a href="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
       Examples in the ZooKeeper Programmer's Guide</a> for
       sample code using of the different APIs.</p>
-<a name="N100E2"></a><a name="sc_RunningReplicatedZooKeeper"></a>
+<a name="N1013E"></a><a name="sc_RunningReplicatedZooKeeper"></a>
 <h3 class="h4">Running Replicated ZooKeeper</h3>
 <p>Running ZooKeeper in standalone mode is convenient for evaluation,
       some development, and testing. But in production, you should run
@@ -443,7 +566,7 @@ server.3=zoo3:2888:3888
       
 </div>
 </div>
-<a name="N1011F"></a><a name="Other+Optimizations"></a>
+<a name="N1017B"></a><a name="Other+Optimizations"></a>
 <h3 class="h4">Other Optimizations</h3>
 <p>There are a couple of other configuration parameters that can
       greatly increase performance:</p>

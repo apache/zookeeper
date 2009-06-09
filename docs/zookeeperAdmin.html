@@ -266,6 +266,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_clusterOptions">Cluster Options</a>
 </li>
 <li>
+<a href="#sc_authOptions">Authentication &amp; Authorization Options</a>
+</li>
+<li>
 <a href="#Unsafe+Options">Unsafe Options</a>
 </li>
 </ul>
@@ -1018,9 +1021,22 @@ server.3=zoo3:2888:3888</span>
               and the configuration variable name is different from the system
               property. Yes - it's not consistent, and it's annoying.)</p>
 </dd>
+          
+<dt>
+<term>maxClientCnxns</term>
+</dt>
+<dd>
+<p>(No Java system property)</p>
+<p>Limits the number of concurrent connections (at the socket 
+              level) that a single client, identified by IP address, may make
+              to a single member of the ZooKeeper ensemble. This is used to 
+              prevent certain classes of DoS attacks, including file 
+              descriptor exhaustion. Setting this to 0 or omitting it entirely 
+              removes the limit on concurrent connections.</p>
+</dd>
         
 </dl>
-<a name="N1030B"></a><a name="sc_clusterOptions"></a>
+<a name="N10314"></a><a name="sc_clusterOptions"></a>
 <h4>Cluster Options</h4>
 <p>The options in this section are designed for use with an ensemble
         of servers -- that is, when deploying clusters of servers.</p>
@@ -1121,7 +1137,7 @@ server.3=zoo3:2888:3888</span>
               must be the ZooKeeper ensemble. </p>
 </dd>
 
-	
+          
 <dt>
 <term>weight.x=nnnnn</term>
 </dt>
@@ -1138,7 +1154,41 @@ server.3=zoo3:2888:3888</span>
         
 </dl>
 <p></p>
-<a name="N1037A"></a><a name="Unsafe+Options"></a>
+<a name="N10383"></a><a name="sc_authOptions"></a>
+<h4>Authentication &amp; Authorization Options</h4>
+<p>The options in this section allow control over
+        authentication/authorization performed by the service.</p>
+<dl>
+          
+<dt>
+<term>zookeeper.DigestAuthenticationProvider.superDigest</term>
+</dt>
+<dd>
+<p>(Java system property only: <strong>zookeeper.DigestAuthenticationProvider.superDigest</strong>)</p>
+<p>By default this feature is <strong>disabled</strong>
+</p>
+<p>
+<strong>New in 3.2:</strong>
+              Enables a ZooKeeper ensemble administrator to access the
+              znode hierarchy as a "super" user. In particular no ACL
+              checking occurs for a user authenticated as
+              super.</p>
+<p>org.apache.zookeeper.server.auth.DigestAuthenticationProvider
+              can be used to generate the superDigest, call it with
+              one parameter of "super:&lt;password&gt;". Provide the
+              generated "super:&lt;data&gt;" as the system property value
+              when starting each server of the ensemble.</p>
+<p>When authenticating to a ZooKeeper server (from a
+              ZooKeeper client) pass a scheme of "digest" and authdata
+              of "super:&lt;password&gt;". Note that digest auth passes
+              the authdata in plaintext to the server, it would be
+              prudent to use this authentication method only on
+              localhost (not over the network) or over an encrypted
+              connection.</p>
+</dd>
+        
+</dl>
+<a name="N103A6"></a><a name="Unsafe+Options"></a>
 <h4>Unsafe Options</h4>
 <p>The following options can be useful, but be careful when you use
         them. The risk of each is explained along with the explanation of what
@@ -1183,7 +1233,7 @@ server.3=zoo3:2888:3888</span>
 </dd>
         
 </dl>
-<a name="N103AC"></a><a name="sc_zkCommands"></a>
+<a name="N103D8"></a><a name="sc_zkCommands"></a>
 <h3 class="h4">ZooKeeper Commands: The Four Letter Words</h3>
 <p>ZooKeeper responds to a small set of commands. Each command is
       composed of four letters. You issue the commands to ZooKeeper via telnet
@@ -1247,7 +1297,7 @@ server.3=zoo3:2888:3888</span>
 <pre class="code">$ echo ruok | nc 127.0.0.1 5111
 imok
 </pre>
-<a name="N103EC"></a><a name="sc_dataFileManagement"></a>
+<a name="N10418"></a><a name="sc_dataFileManagement"></a>
 <h3 class="h4">Data File Management</h3>
 <p>ZooKeeper stores its data in a data directory and its transaction
       log in a transaction log directory. By default these two directories are
@@ -1255,7 +1305,7 @@ imok
       transaction log files in a separate directory than the data files.
       Throughput increases and latency decreases when transaction logs reside
       on a dedicated log devices.</p>
-<a name="N103F5"></a><a name="The+Data+Directory"></a>
+<a name="N10421"></a><a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
 <p>This directory has two files in it:</p>
 <ul>
@@ -1301,14 +1351,14 @@ imok
         idempotent nature of its updates. By replaying the transaction log
         against fuzzy snapshots ZooKeeper gets the state of the system at the
         end of the log.</p>
-<a name="N10431"></a><a name="The+Log+Directory"></a>
+<a name="N1045D"></a><a name="The+Log+Directory"></a>
 <h4>The Log Directory</h4>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
         log file is started each time a snapshot is begun. The log file's
         suffix is the first zxid written to that log.</p>
-<a name="N1043B"></a><a name="sc_filemanagement"></a>
+<a name="N10467"></a><a name="sc_filemanagement"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
         standalone ZooKeeper servers and different configurations of
@@ -1328,7 +1378,7 @@ imok
         this document for more details on setting a retention policy
         and maintenance of ZooKeeper storage.
         </p>
-<a name="N10450"></a><a name="sc_commonProblems"></a>
+<a name="N1047C"></a><a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
       ZooKeeper correctly:</p>
@@ -1382,7 +1432,7 @@ imok
 </dd>
       
 </dl>
-<a name="N10474"></a><a name="sc_bestPractices"></a>
+<a name="N104A0"></a><a name="sc_bestPractices"></a>
 <h3 class="h4">Best Practices</h3>
 <p>For best results, take note of the following list of good
       Zookeeper practices. <em>[tbd...]</em>

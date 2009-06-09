@@ -197,6 +197,128 @@ clientPort=2181
           system like operations on ZooKeeper.</para>
         </listitem>
       </itemizedlist>
+      <para>Once you have connected, you should see something like:
+        </para>
+      <programlisting>
+<![CDATA[
+Connecting to localhost:2181
+log4j:WARN No appenders could be found for logger (org.apache.zookeeper.ZooKeeper).
+log4j:WARN Please initialize the log4j system properly.
+Welcome to ZooKeeper!
+JLine support is enabled
+[zkshell: 0]
+]]>        </programlisting>
+      <para>
+        From the shell, type <command>help</command> to get a listing of commands that can be executed from the client, as in:
+      </para>
+      <programlisting>
+<![CDATA[
+[zkshell: 0] help
+ZooKeeper host:port cmd args
+        get path [watch]
+        ls path [watch]
+        set path data [version]
+        delquota [-n|-b] path
+        quit
+        printwatches on|off
+        createpath data acl
+        stat path [watch]
+        listquota path
+        history
+        setAcl path acl
+        getAcl path
+        sync path
+        redo cmdno
+        addauth scheme auth
+        delete path [version]
+        setquota -n|-b val path
+
+]]>        </programlisting>
+      <para>From here, you can try a few simple commands to get a feel for this simple command line interface.  First, start by issuing the list command, as
+      in <command>ls</command>, yielding:
+      </para>
+      <programlisting>
+<![CDATA[
+[zkshell: 8] ls /
+[zookeeper]
+]]>        </programlisting>
+      <para>Next, create a new znode by running <command>create /zk_test my_data</command>. This creates a new znode and associates the string "my_data" with the node.
+      You should see:</para>
+      <programlisting>
+<![CDATA[
+[zkshell: 9] create /zk_test my_data
+Created /zk_test
+]]>      </programlisting>
+      <para>  Issue another <command>ls /</command> command to see what the directory looks like:
+        </para>
+      <programlisting>
+<![CDATA[
+[zkshell: 11] ls /
+[zookeeper, zk_test]
+
+]]>        </programlisting><para>
+      Notice that the zk_test directory has now been created.
+      </para>
+      <para>Next, verify that the data was associated with the znode by running the <command>get</command> command, as in:
+      </para>
+      <programlisting>
+<![CDATA[
+[zkshell: 12] get /zk_test
+my_data
+cZxid = 5
+ctime = Fri Jun 05 13:57:06 PDT 2009
+mZxid = 5
+mtime = Fri Jun 05 13:57:06 PDT 2009
+pZxid = 5
+cversion = 0
+dataVersion = 0
+aclVersion = 0
+ephemeralOwner = 0
+dataLength = 7
+numChildren = 0
+]]>        </programlisting>
+      <para>We can change the data associated with zk_test by issuing the <command>set</command> command, as in:
+        </para>
+      <programlisting>
+<![CDATA[
+[zkshell: 14] set /zk_test junk
+cZxid = 5
+ctime = Fri Jun 05 13:57:06 PDT 2009
+mZxid = 6
+mtime = Fri Jun 05 14:01:52 PDT 2009
+pZxid = 5
+cversion = 0
+dataVersion = 1
+aclVersion = 0
+ephemeralOwner = 0
+dataLength = 4
+numChildren = 0
+[zkshell: 15] get /zk_test
+junk
+cZxid = 5
+ctime = Fri Jun 05 13:57:06 PDT 2009
+mZxid = 6
+mtime = Fri Jun 05 14:01:52 PDT 2009
+pZxid = 5
+cversion = 0
+dataVersion = 1
+aclVersion = 0
+ephemeralOwner = 0
+dataLength = 4
+numChildren = 0
+]]>      </programlisting>
+      <para>
+       (Notice we did a <command>get</command> after setting the data and it did, indeed, change.</para>
+      <para>Finally, let's <command>delete</command> the node by issuing:
+      </para>
+      <programlisting>
+<![CDATA[
+[zkshell: 16] delete /zk_test
+[zkshell: 17] ls /
+[zookeeper]
+[zkshell: 18]
+]]></programlisting>
+      <para>That's it for now.  To explore more, continue with the rest of this document and see the <ulink url="zookeeperProgrammers.html">Programmer's Guide</ulink>. </para>
     </section>
 
     <section id="sc_ProgrammingToZooKeeper">
