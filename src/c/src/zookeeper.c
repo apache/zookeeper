@@ -139,6 +139,12 @@ struct ACL_vector ZOO_CREATOR_ALL_ACL = { 1, _CREATOR_ALL_ACL_ACL};
 #define COMPLETION_ACLLIST 4
 #define COMPLETION_STRING 5
 
+typedef struct _auth_completion_list {
+    void_completion_t completion;
+    const char *auth_data;
+    struct _auth_completion_list *next;
+} auth_completion_list_t;
+
 typedef struct _completion_list {
     int xid;
     int completion_type; /* one of the COMPLETION_* values */
@@ -198,22 +204,123 @@ int zoo_recv_timeout(zhandle_t *zh)
     return zh->recv_timeout;
 }
 
-static void init_auth_info(auth_info *auth)
-{
-    auth->scheme=NULL;
-    auth->auth.buff=NULL;
-    auth->auth.len=0;
-    auth->state=0;
-    auth->completion=0;
-    auth->data=0;
+/** these functions are thread unsafe, so make sure that 
+    zoo_lock_auth is called before you access them **/
+static auth_info* get_last_auth(auth_list_head_t *auth_list) {
+    auth_info *element;
+    element = auth_list->auth;
+    if (element == NULL) {
+        return NULL;
+    }
+    while (element->next != NULL) {
+        element = element->next;
+    }
+    return element;
 }
 
-static void free_auth_info(auth_info *auth)
+static void free_auth_completion(auth_completion_list_t *a_list) {
+    auth_completion_list_t *tmp, *ftmp;
+    if (a_list == NULL) {
+        return;
+    }
+    tmp = a_list->next;
+    while (tmp != NULL) {
+        ftmp = tmp;
+        tmp = tmp->next;
+        ftmp->completion = NULL;
+        ftmp->auth_data = NULL;
+        free(ftmp);
+    }
+    a_list->completion = NULL;
+    a_list->auth_data = NULL;
+    a_list->next = NULL;
+    return;
+}
+        
+static void add_auth_completion(auth_completion_list_t* a_list, void_completion_t* completion,
+                                const char *data) {
+    auth_completion_list_t *element;
+    auth_completion_list_t *n_element;
+    element = a_list;
+    if (a_list->completion == NULL) {
+        //this is the first element
+        a_list->completion = *completion;
+        a_list->next = NULL;
+        a_list->auth_data = data;
+        return;
+    }
+    while (element->next != NULL) {
+        element = element->next;
+    }
+    n_element = (auth_completion_list_t*) malloc(sizeof(auth_completion_list_t));
+    n_element->next = NULL;
+    n_element->completion = *completion;
+    n_element->auth_data = data;
+    element->next = n_element;
+    return;
+}
+
+static void get_auth_completions(auth_list_head_t *auth_list, auth_completion_list_t *a_list) {
+    auth_info *element;
+    element = auth_list->auth;
+    if (element == NULL) {
+        return;
+    }
+    while (element) {
+        if (element->completion) {
+            add_auth_completion(a_list, &element->completion, element->data);
+        }
+        element->completion = NULL;
+        element = element->next;
+    }
+    return;
+}
+        
+static void add_last_auth(auth_list_head_t *auth_list, auth_info *add_el) {
+    auth_info  *element;
+    element = auth_list->auth;
+    if (element == NULL) { 
+        //first element in the list
+        auth_list->auth = add_el;
+        return;
+    }
+    while (element->next != NULL) {
+        element = element->next;
+    }
+    element->next = add_el;
+    return;
+}
+
+static void init_auth_info(auth_list_head_t *auth_list)
 {
-    if(auth->scheme!=NULL)
-        free(auth->scheme);
-    deallocate_Buffer(&auth->auth);
-    init_auth_info(auth);
+    auth_list->auth = NULL;
+}
+
+static void mark_active_auth(zhandle_t *zh) {
+    auth_list_head_t auth_h = zh->auth_h;
+    auth_info *element;
+    if (auth_h.auth == NULL) {
+        return;
+    }
+    element = auth_h.auth;
+    while (element->next != NULL) {
+        element->state = 1;
+        element = element->next;
+    }
+}
+
+static void free_auth_info(auth_list_head_t *auth_list)
+{
+    auth_info *auth = auth_list->auth;
+    while (auth != NULL) {
+        if(auth->scheme!=NULL)
+            free(auth->scheme);
+        deallocate_Buffer(&auth->auth);
+        auth_info *old_auth = auth;
+        auth = auth->next;
+        free(old_auth);
+    }
+    init_auth_info(auth_list);
 }
 
 int is_unrecoverable(zhandle_t *zh)
@@ -265,7 +372,7 @@ static void destroy(zhandle_t *zh)
         free(zh->addrs);
         zh->addrs = NULL;
     }
-    free_auth_info(&zh->auth);
+    free_auth_info(&zh->auth_h);
     destroy_zk_hashtable(zh->active_node_watchers);
     destroy_zk_hashtable(zh->active_exist_watchers);
     destroy_zk_hashtable(zh->active_child_watchers);
@@ -507,6 +614,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
     zh->state = 0;
     zh->context = context;
     zh->recv_timeout = recv_timeout;
+    init_auth_info(&zh->auth_h);
     if (watcher) {
        zh->watcher = watcher;
     } else {
@@ -762,8 +870,8 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
     struct oarchive *oa;
     struct ReplyHeader h;
     void_completion_t auth_completion = NULL;
-    const char *auth_data = NULL;
-
+    auth_completion_list_t a_list, *a_tmp;
+    
     lock_completion_list(&zh->sent_requests);
     tmp_list = zh->sent_requests;
     zh->sent_requests.head = 0;
@@ -802,18 +910,21 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
             }
         }
     }
-
+    a_list.completion = NULL;
+    a_list.next = NULL;
     zoo_lock_auth(zh);
-    if (zh->auth.completion) {
-        auth_completion = zh->auth.completion;
-        auth_data = zh->auth.data;
-        zh->auth.completion = 0;
-    }
+    get_auth_completions(&zh->auth_h, &a_list);
     zoo_unlock_auth(zh);
-
-    if (auth_completion) {
-        auth_completion(reason, auth_data);
+    a_tmp = &a_list;
+    // chain call user's completion function
+    while (a_tmp->completion != NULL) {
+        auth_completion = a_tmp->completion;
+        auth_completion(reason, a_tmp->auth_data);
+        a_tmp = a_tmp->next;
+        if (a_tmp == NULL) 
+            break;
     }
+    free_auth_completion(&a_list);
 }
 
 static void cleanup_bufs(zhandle_t *zh,int callCompletion,int rc)
@@ -871,8 +982,9 @@ static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
 static void auth_completion_func(int rc, zhandle_t* zh)
 {
     void_completion_t auth_completion = NULL;
-    const char *auth_data = NULL;
-
+    auth_completion_list_t a_list;
+    auth_completion_list_t *a_tmp;
+    
     if(zh==NULL)
         return;
 
@@ -881,61 +993,82 @@ static void auth_completion_func(int rc, zhandle_t* zh)
     if(rc!=0){
         zh->state=ZOO_AUTH_FAILED_STATE;
     }else{
-        zh->auth.state=1;  // active
+        //change state for all auths
+        mark_active_auth(zh);
     }
-
-    if (zh->auth.completion) {
-        auth_completion = zh->auth.completion;
-        auth_data = zh->auth.data;
-        zh->auth.completion=0;
-    }
-
+    a_list.completion = NULL;
+    a_list.next = NULL;
+    get_auth_completions(&zh->auth_h, &a_list);
     zoo_unlock_auth(zh);
-
     if (rc) {
         LOG_ERROR(("Authentication scheme %s failed. Connection closed.",
-                   zh->auth.scheme));
+                   zh->auth_h.auth->scheme));
     }
     else {
-        LOG_INFO(("Authentication scheme %s succeeded", zh->auth.scheme));
+        LOG_INFO(("Authentication scheme %s succeeded", zh->auth_h.auth->scheme));
     }
-
+    a_tmp = &a_list;
     // chain call user's completion function
-    if (auth_completion) {
-        auth_completion(rc, auth_data);
+    while (a_tmp->completion != NULL) {
+        auth_completion = a_tmp->completion;
+        auth_completion(rc, a_tmp->auth_data);
+        a_tmp = a_tmp->next;
+        if (a_tmp == NULL) 
+            break;
     }
+    free_auth_completion(&a_list);
 }
 
-static int send_auth_info(zhandle_t *zh)
-{    
+static int send_info_packet(zhandle_t *zh, auth_info* auth) {
     struct oarchive *oa;
     struct RequestHeader h = { .xid = AUTH_XID, .type = SETAUTH_OP};
     struct AuthPacket req;
     int rc;
-
-    zoo_lock_auth(zh);
-
-    if(zh->auth.scheme==NULL) {
-      zoo_unlock_auth(zh);
-      return ZOK; // there is nothing to send
-    }
-
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
-
     req.type=0;   // ignored by the server
-    req.scheme = zh->auth.scheme;
-    req.auth = zh->auth.auth;
+    req.scheme = auth->scheme;
+    req.auth = auth->auth;
     rc = rc < 0 ? rc : serialize_AuthPacket(oa, "req", &req);
-
-    zoo_unlock_auth(zh);
-
     /* add this buffer to the head of the send queue */
     rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     /* We queued the buffer, so don't free it */   
     close_buffer_oarchive(&oa, 0);
-    
+
+    return rc;
+}
+
+/** send all auths, not just the last one **/
+static int send_auth_info(zhandle_t *zh) {
+    int rc;
+    zoo_lock_auth(zh);
+    auth_info *auth;
+    auth = zh->auth_h.auth;
+    if (auth == NULL) {
+        zoo_unlock_auth(zh);
+        return ZOK;
+    }
+    while (auth->next != NULL) {
+        rc = send_info_packet(zh, auth);
+        auth = auth->next;
+    }
+    zoo_unlock_auth(zh);
+    LOG_DEBUG(("Sending all auth info request to %s", format_current_endpoint_info(zh)));
+    return (rc <0) ? ZMARSHALLINGERROR:ZOK;
+}
+
+static int send_last_auth_info(zhandle_t *zh)
+{    
+    int rc;
+    zoo_lock_auth(zh);
+    auth_info *auth = get_last_auth(&zh->auth_h);
+    if(auth==NULL) {
+      zoo_unlock_auth(zh);
+      return ZOK; // there is nothing to send
+    }
+    rc = send_info_packet(zh, auth);
+    zoo_unlock_auth(zh);
     LOG_DEBUG(("Sending auth info request to %s",format_current_endpoint_info(zh)));
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
@@ -2382,7 +2515,7 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
         int certLen,void_completion_t completion, const void *data)
 {
     struct buffer auth;
-
+    auth_info *authinfo;
     if(scheme==NULL || zh==NULL)
         return ZBADARGUMENTS;
     
@@ -2402,18 +2535,18 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
     }
 
     zoo_lock_auth(zh);
-
-    free_auth_info(&zh->auth);
-    zh->auth.scheme=strdup(scheme);
+    authinfo = (auth_info*) malloc(sizeof(auth_info));
+    authinfo->scheme=strdup(scheme);
     if(auth.buff)
-        zh->auth.auth=auth;
-    zh->auth.completion=completion;
-    zh->auth.data=data;
-
+        authinfo->auth=auth;
+    authinfo->completion=completion;
+    authinfo->data=data;
+    authinfo->next = NULL;
+    add_last_auth(&zh->auth_h, authinfo);
     zoo_unlock_auth(zh);
-
+    
     if(zh->state == ZOO_CONNECTED_STATE || zh->state == ZOO_ASSOCIATING_STATE)
-        return send_auth_info(zh);
+        return send_last_auth_info(zh);
     
     return ZOK;
 }
