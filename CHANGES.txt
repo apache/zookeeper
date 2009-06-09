@@ -113,6 +113,8 @@ BUGFIXES:
 
   ZOOKEEPER-406. address all findbugs warnings in persistence classes. (phunt et al via breed)
 
+  ZOOKEEPER-435. allow "super" admin digest based auth to be configurable (phunt via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

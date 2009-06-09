@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.auth;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -28,9 +27,16 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 
 public class DigestAuthenticationProvider implements AuthenticationProvider {
-    private static final Logger LOG = Logger.getLogger(DigestAuthenticationProvider.class);
+    private static final Logger LOG =
+        Logger.getLogger(DigestAuthenticationProvider.class);
 
-    public final static String superDigest = "super:1wZ8qIvQBMTq0KPxMc6RQ/PCXKM=";
+    /** specify a command line property with key of 
+     * "zookeeper.DigestAuthenticationProvider.superDigest"
+     * and value of "super:<base64encoded(SHA1(password))>" to enable
+     * super user access (i.e. acls disabled)
+     */
+    private final static String superDigest = System.getProperty(
+        "zookeeper.DigestAuthenticationProvider.superDigest");
 
     public String getScheme() {
         return "digest";
@@ -119,8 +125,12 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return id.equals(aclExpr);
     }
 
-    public static void main(String args[]) throws IOException,
-            NoSuchAlgorithmException {
+    /** Call with a single argument of user:pass to generate authdata.
+     * Authdata output can be used when setting superDigest for example. 
+     * @param args single argument of user:pass
+     * @throws NoSuchAlgorithmException
+     */
+    public static void main(String args[]) throws NoSuchAlgorithmException {
         for (int i = 0; i < args.length; i++) {
             System.out.println(args[i] + "->" + generateDigest(args[i]));
         }
