@@ -54,12 +54,15 @@ public class ZooKeeperMain {
     protected boolean printWatches = true;
 
     protected ZooKeeper zk;
+    protected String host = "";
 
     public boolean getPrintWatches( ) {
         return printWatches;
     }
 
     static void populateCommandMap() {
+        commandMap.put("connect", " host:port");
+        commandMap.put("close","");
         commandMap.put("create", "path data acl");
         commandMap.put("delete"," path [version]");
         commandMap.put("set"," path data [version]");
@@ -80,7 +83,7 @@ public class ZooKeeperMain {
     }
 
     static void usage() {
-        System.err.println("ZooKeeper host:port cmd args");
+        System.err.println("ZooKeeper -server host:port cmd args");
         for (String cmd : commandMap.keySet()) {
             System.err.println("\t"+cmd+commandMap.get(cmd));
         }
@@ -89,6 +92,7 @@ public class ZooKeeperMain {
     private class MyWatcher implements Watcher {
         public void process(WatchedEvent event) {
             if (getPrintWatches()) {
+                ZooKeeperMain.printMessage("WATCHER::");
                 ZooKeeperMain.printMessage("WATCHER::");
                 ZooKeeperMain.printMessage(event.toString());
             }
@@ -247,14 +251,24 @@ public class ZooKeeperMain {
         return new LinkedList<String>(commandMap.keySet());
     }
 
-    protected String getPrompt() {
-        return "[zkshell: " + commandCount + "] ";
+    protected String getPrompt() {       
+        return "[zk: " + host + "("+zk.getState()+")" + " " + commandCount + "] ";
     }
 
     public static void printMessage(String msg) {
         System.out.println("\n"+msg);
     }
 
+    protected void connectToZK(String newHost) throws InterruptedException, IOException {
+        if (zk != null && zk.getState().isAlive()) {
+            zk.close();
+        }
+        host = newHost;
+        zk = new ZooKeeper(host,
+                 Integer.parseInt(cl.getOption("timeout")),
+                 new MyWatcher());
+    }
+    
     public static void main(String args[])
         throws KeeperException, IOException, InterruptedException
     {
@@ -263,11 +277,12 @@ public class ZooKeeperMain {
         main.run();
     }
 
-    public ZooKeeperMain(String args[]) throws IOException {
+    public ZooKeeperMain(String args[]) throws IOException, InterruptedException {
         cl.parseOptions(args);
         System.out.println("Connecting to " + cl.getOption("server"));
-        zk = new ZooKeeper(cl.getOption("server"),
-                Integer.parseInt(cl.getOption("timeout")), new MyWatcher());
+        connectToZK(cl.getOption("server"));
+        //zk = new ZooKeeper(cl.getOption("server"),
+//                Integer.parseInt(cl.getOption("timeout")), new MyWatcher());
     }
 
     @SuppressWarnings("unchecked")
@@ -590,10 +605,58 @@ public class ZooKeeperMain {
             return false;
         }
 
+        if (!commandMap.containsKey(cmd)) {
+            usage();
+            return false;
+        }
+        
         boolean watch = args.length > 2;
         String path = null;
         List<ACL> acl = Ids.OPEN_ACL_UNSAFE;
         LOG.debug("Processing " + cmd);
+        
+        if (cmd.equals("quit")) {
+            System.out.println("Quitting...");
+            zk.close();
+            System.exit(0);
+        } else if (cmd.equals("redo") && args.length >= 2) {
+            Integer i = Integer.decode(args[1]);
+            if (commandCount <= i){ // don't allow redoing this redo
+                System.out.println("Command index out of range");
+                return false;
+            }
+            cl.parseCommand(history.get(i));
+            if (cl.getCommand().equals( "redo" )){
+                System.out.println("No redoing redos");
+                return false;
+            }
+            history.put(commandCount, history.get(i));
+            processCmd( cl);
+        } else if (cmd.equals("history")) {
+            for (int i=commandCount - 10;i<=commandCount;++i) {
+                if (i < 0) continue;
+                System.out.println(i + " - " + history.get(i));
+            }
+        } else if (cmd.equals("printwatches")) {
+            if (args.length == 1) {
+                System.out.println("printwatches is " + (printWatches ? "on" : "off"));
+            } else {
+                printWatches = args[1].equals("on");
+            }
+        } else if (cmd.equals("connect")) {
+            if (args.length >=2) {
+                connectToZK(args[1]);
+            } else {
+                connectToZK(host);                
+            }
+        } 
+        
+        // Below commands all need a live connection
+        if (zk == null || !zk.state.isAlive()) {
+            System.out.println("Not connected");
+            return false;
+        }
+        
         if (cmd.equals("create") && args.length >= 3) {
             if (args.length == 4) {
                 acl = parseACLs(args[3]);
@@ -657,10 +720,6 @@ public class ZooKeeperMain {
             } catch(KeeperException.NoNodeException ne) {
                 System.err.println("quota for " + path + " does not exist.");
             }
-        } else if (cmd.equals("quit")) {
-            System.out.println("Quitting...");
-            zk.close();
-            System.exit(0);
         } else if (cmd.equals("setquota") && args.length >= 4) {
             String option = args[1];
             path = args[3];
@@ -678,24 +737,6 @@ public class ZooKeeperMain {
                 usage();
             }
 
-        } else if (cmd.equals("redo") && args.length >= 2) {
-            Integer i = Integer.decode(args[1]);
-            if (commandCount <= i){ // don't allow redoing this redo
-                System.out.println("Command index out of range");
-                return false;
-            }
-            cl.parseCommand(history.get(i));
-            if (cl.getCommand().equals( "redo" )){
-                System.out.println("No redoing redos");
-                return false;
-            }
-            history.put(commandCount, history.get(i));
-            processCmd( cl);
-        } else if (cmd.equals("history")) {
-            for (int i=commandCount - 10;i<=commandCount;++i) {
-                if (i < 0) continue;
-                System.out.println(i + " - " + history.get(i));
-            }
         } else if (cmd.equals("delquota") && args.length >= 2) {
             //if neither option -n or -b is specified, we delete
             // the quota node for thsi node.
@@ -716,12 +757,8 @@ public class ZooKeeperMain {
             } else if (cmd.equals("help")) {
                 usage();
             }
-        } else if (cmd.equals("printwatches")) {
-            if (args.length == 1) {
-                System.out.println("printwatches is " + (printWatches ? "on" : "off"));
-            } else {
-                printWatches = args[1].equals("on");
-            }
+        } else if (cmd.equals("close")) {
+                zk.close();            
         } else if (cmd.equals("addauth") && args.length >=2 ) {
             byte[] b = null;
             if (args.length >= 3)
