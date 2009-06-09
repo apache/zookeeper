@@ -197,6 +197,8 @@ via mahadev)
 
   ZOOKEEPER-336. single bad client can cause server to stop accepting connections (henry robinson via breed)
  
+  ZOOKEEPER-434. the java shell should indicate connection status on command prompt (henry robinson via breed)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
