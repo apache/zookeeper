@@ -204,6 +204,8 @@ via mahadev)
  
   ZOOKEEPER-434. the java shell should indicate connection status on command prompt (henry robinson via breed)
 
+  ZOOKEEPER-437. Variety of Documentation Updates (grant via mahadev)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
