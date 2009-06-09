@@ -78,7 +78,7 @@
       </listitem>
     </itemizedlist>
 
-    <para>The next four sections of this provided practical programming
+    <para>The next four sections provide practical programming
     information. These are:</para>
 
     <itemizedlist>
@@ -110,7 +110,7 @@
     the <ulink url="#ch_zkDataModel">ZooKeeper Data Model</ulink> and <ulink
     url="#ch_guideToZkOperations">ZooKeeper Basic Operations</ulink>. Also,
     the <ulink url="#ch_programStructureWithExample">Simple Programmming
-    Example</ulink> <emphasis>[tbd]</emphasis> is helpful for understand the basic
+    Example</ulink> <emphasis>[tbd]</emphasis> is helpful for understanding the basic
     structure of a ZooKeeper client application.</para>
   </section>
 
@@ -158,7 +158,7 @@
     <section id="sc_zkDataModel_znodes">
       <title>ZNodes</title>
 
-      <para>Every node in a ZooKeeper tree is refered to as a
+      <para>Every node in a ZooKeeper tree is referred to as a
       <emphasis>znode</emphasis>. Znodes maintain a stat structure that
       includes version numbers for data changes, acl changes. The stat
       structure also has timestamps. The version number, together with the
