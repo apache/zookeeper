@@ -115,6 +115,9 @@ BUGFIXES:
 
   ZOOKEEPER-435. allow "super" admin digest based auth to be configurable (phunt via breed)
 
+  ZOOKEEPER-375. zoo_add_auth only retains most recent auth on re-sync.
+(mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

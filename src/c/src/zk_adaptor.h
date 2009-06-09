@@ -107,9 +107,7 @@ typedef struct _auth_info {
     struct buffer auth;
     void_completion_t completion;
     const char* data;
-#ifdef THREADED
-    pthread_mutex_t lock;
-#endif
+    struct _auth_info *next;
 } auth_info;
 
 /**
@@ -156,7 +154,15 @@ struct adaptor_threads {
      int self_pipe[2];
 };
 #endif
- 
+
+/** the auth list for adding auth */
+typedef struct _auth_list_head {
+     auth_info *auth;
+#ifdef THREADED
+     pthread_mutex_t lock;
+#endif
+} auth_list_head_t;
+
 /**
  * This structure represents the connection to zookeeper.
  */
@@ -187,7 +193,7 @@ struct _zhandle {
     char primer_storage_buffer[40]; /* the true size of primer_storage */
     volatile int state;
     void *context;
-    struct _auth_info auth; /* authentication data */
+    auth_list_head_t auth_h; /* authentication data list */
     /* zookeeper_close is not reentrant because it de-allocates the zhandler. 
      * This guard variable is used to defer the destruction of zhandle till 
      * right before top-level API call returns to the caller */
@@ -203,6 +209,7 @@ struct _zhandle {
     zk_hashtable* active_exist_watchers;
     zk_hashtable* active_child_watchers;
 };
+
 
 int adaptor_init(zhandle_t *zh);
 void adaptor_finish(zhandle_t *zh);
