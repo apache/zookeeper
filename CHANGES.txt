@@ -194,6 +194,8 @@ zookeeper_close and zoo_synchronous api. (mahadev)
   ZOOKEEPER-196. doxygen comment for state argument of watcher_fn typedef and
 implementation differ ("...one of the *_STATE constants, otherwise -1") (breed
 via mahadev)
+
+  ZOOKEEPER-336. single bad client can cause server to stop accepting connections (henry robinson via breed)
  
 NEW FEATURES:
 

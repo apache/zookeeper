@@ -33,7 +33,8 @@ public class ServerConfig {
     protected int clientPort;
     protected String dataDir;
     protected String dataLogDir;
-    protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
+    protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;    
+    protected int maxClientCnxns;
 
     /**
      * Parse arguments for server configuration
@@ -42,7 +43,7 @@ public class ServerConfig {
      * @throws IllegalArgumentException on invalid usage
      */
     public void parse(String[] args) {
-        if (args.length < 2 || args.length > 3) {
+        if (args.length < 2 || args.length > 4) {
             throw new IllegalArgumentException("Invalid args:"
                     + Arrays.toString(args));
         }
@@ -52,6 +53,9 @@ public class ServerConfig {
         dataLogDir = dataDir;
         if (args.length == 3) {
             tickTime = Integer.parseInt(args[2]);
+        }
+        if (args.length == 4) {
+            maxClientCnxns = Integer.parseInt(args[3]);
         }
     }
 
@@ -79,10 +83,12 @@ public class ServerConfig {
       dataDir = config.getDataDir();
       dataLogDir = config.getDataLogDir();
       tickTime = config.getTickTime();
+      maxClientCnxns = config.getMaxClientCnxns();
     }
 
     public int getClientPort() { return clientPort; }
     public String getDataDir() { return dataDir; }
     public String getDataLogDir() { return dataLogDir; }
     public int getTickTime() { return tickTime; }
+    public int getMaxClientCnxns() { return maxClientCnxns; }
 }

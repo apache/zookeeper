@@ -676,6 +676,19 @@ server.3=zoo3:2888:3888</computeroutput></para>
               property. Yes - it's not consistent, and it's annoying.)</para>
             </listitem>
           </varlistentry>
+          <varlistentry>
+            <term>maxClientCnxns</term>
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para>Limits the number of concurrent connections (at the socket 
+              level) that a single client, identified by IP address, may make
+              to a single member of the ZooKeeper ensemble. This is used to 
+              prevent certain classes of DoS attacks, including file 
+              descriptor exhaustion. Setting this to 0 or omitting it entirely 
+              removes the limit on concurrent connections.</para>
+            </listitem>
+           </varlistentry>
         </variablelist>
       </section>
 
@@ -790,7 +803,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
             </listitem>
           </varlistentry>
 
-	<varlistentry>
+          <varlistentry>
             <term>weight.x=nnnnn</term>
 
             <listitem>
