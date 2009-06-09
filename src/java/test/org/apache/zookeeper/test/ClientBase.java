@@ -52,6 +52,7 @@ public abstract class ClientBase extends TestCase {
         new File(System.getProperty("build.test.dir", "build"));
 
     protected String hostPort = "127.0.0.1:33221";
+    protected int maxCnxns = 0;
     protected NIOServerCnxn.Factory serverFactory = null;
     protected File tmpDir = null;
     public ClientBase() {
@@ -253,15 +254,15 @@ public abstract class ClientBase extends TestCase {
         
         return tmpDir;
     }
-    
+        
     static NIOServerCnxn.Factory createNewServerInstance(File dataDir,
-            NIOServerCnxn.Factory factory, String hostPort)
+            NIOServerCnxn.Factory factory, String hostPort, int maxCnxns)
         throws IOException, InterruptedException 
     {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         final int PORT = Integer.parseInt(hostPort.split(":")[1]);
         if (factory == null) {
-            factory = new NIOServerCnxn.Factory(PORT);
+            factory = new NIOServerCnxn.Factory(PORT,maxCnxns);
         }
         factory.startup(zks);
 
@@ -314,7 +315,7 @@ public abstract class ClientBase extends TestCase {
 
     protected void startServer() throws Exception {
         LOG.info("STARTING server");
-        serverFactory = createNewServerInstance(tmpDir, serverFactory, hostPort);
+        serverFactory = createNewServerInstance(tmpDir, serverFactory, hostPort, maxCnxns);
         // ensure that only server and data bean are registered
         JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
     }
@@ -326,7 +327,7 @@ public abstract class ClientBase extends TestCase {
         // ensure no beans are leftover
         JMXEnv.ensureOnly();
     }
-    
+        
     @Override
     protected void tearDown() throws Exception {
         LOG.info("tearDown starting");

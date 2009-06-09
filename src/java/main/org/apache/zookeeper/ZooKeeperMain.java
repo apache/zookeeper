@@ -89,6 +89,7 @@ public class ZooKeeperMain {
     private class MyWatcher implements Watcher {
         public void process(WatchedEvent event) {
             if (getPrintWatches()) {
+                ZooKeeperMain.printMessage("WATCHER::");
                 ZooKeeperMain.printMessage(event.toString());
             }
         }
