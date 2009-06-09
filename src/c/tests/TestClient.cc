@@ -97,6 +97,8 @@ typedef struct evt {
 typedef struct watchCtx {
 private:
     list<evt_t> events;
+    watchCtx(const watchCtx&);
+    watchCtx& operator=(const watchCtx&);
 public:
     bool connected;
     zhandle_t *zh;
@@ -270,7 +272,8 @@ public:
 #define COUNT 100
     
     static zhandle_t *async_zk;
-
+    static volatile int count;
+    
     static void statCompletion(int rc, const struct Stat *stat, const void *data) {
         int tmp = (int) (long) data;
         CPPUNIT_ASSERT_EQUAL(tmp, rc);
@@ -289,12 +292,21 @@ public:
             free(path);
         }
     }
-
+    
+    static void waitForVoidCompletion(int seconds) {
+        time_t expires = time(0) + seconds;
+        while(count == 0 && time(0) < expires) {
+            sleep(1);
+        }
+        count--;
+    }
+    
     static void voidCompletion(int rc, const void *data) {
         int tmp = (int) (long) data;
         CPPUNIT_ASSERT_EQUAL(tmp, rc);
+        count++;
     }
-
+    
     static void verifyCreateFails(const char *path, zhandle_t *zk) {
       CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS, zoo_create(zk,
           path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
@@ -363,47 +375,68 @@ public:
 
     void testAuth() {
         int rc;
-
-        watchctx_t ctx1;
+        count = 0;
+        watchctx_t ctx1, ctx2, ctx3;
         zhandle_t *zk = createClient(&ctx1);
-
+        
         rc = zoo_add_auth(0, "", 0, 0, voidCompletion, (void*)-1);
         CPPUNIT_ASSERT_EQUAL((int) ZBADARGUMENTS, rc);
-
+        
         rc = zoo_add_auth(zk, 0, 0, 0, voidCompletion, (void*)-1);
         CPPUNIT_ASSERT_EQUAL((int) ZBADARGUMENTS, rc);
-
+        
         // auth as pat, create /tauth1, close session
         rc = zoo_add_auth(zk, "digest", "pat:passwd", 10, voidCompletion,
                           (void*)ZOK);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-
+        waitForVoidCompletion(3);
+                
+        CPPUNIT_ASSERT(count == 0);
+        
         rc = zoo_create(zk, "/tauth1", "", 0, &ZOO_CREATOR_ALL_ACL, 0, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
-        // auth as pat w/bad pass, access /tauth1, verify failure
-        watchctx_t ctx2;
         zk = createClient(&ctx2);
 
         rc = zoo_add_auth(zk, "digest", "pat:passwd2", 11, voidCompletion,
                           (void*)ZOK);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-
+        waitForVoidCompletion(3);
+        CPPUNIT_ASSERT(count == 0);
+                
         char buf[1024];
         int blen = sizeof(buf);
         struct Stat stat;
         rc = zoo_get(zk, "/tauth1", 0, buf, &blen, &stat);
         CPPUNIT_ASSERT_EQUAL((int)ZNOAUTH, rc);
-
         // add auth pat w/correct pass verify success
         rc = zoo_add_auth(zk, "digest", "pat:passwd", 10, voidCompletion,
                           (void*)ZOK);
+        
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-
+        rc = zoo_get(zk, "/tauth1", 0, buf, &blen, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        waitForVoidCompletion(3);
+        CPPUNIT_ASSERT(count == 0);
+        //create a new client
+        zk = createClient(&ctx3);
+        rc = zoo_add_auth(zk, "digest", "pat:passwd", 10, voidCompletion, (void*) ZOK);
+        waitForVoidCompletion(3);
+        CPPUNIT_ASSERT(count == 0);
+        rc = zoo_add_auth(zk, "ip", "none", 4, voidCompletion, (void*)ZOK);
+        //make the server forget the auths
+        waitForVoidCompletion(3);
+        CPPUNIT_ASSERT(count == 0);
+     
+        stopServer();
+        CPPUNIT_ASSERT(ctx3.waitForDisconnected(zk));
+        startServer();
+        CPPUNIT_ASSERT(ctx3.waitForConnected(zk));
+        // now try getting the data
         rc = zoo_get(zk, "/tauth1", 0, buf, &blen, &stat);
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
     }
-
+    
     void testNullData() {
         watchctx_t ctx;
         zhandle_t *zk = createClient(&ctx);
@@ -697,6 +730,7 @@ public:
     }
 };
 
+volatile int Zookeeper_simpleSystem::count;
 zhandle_t *Zookeeper_simpleSystem::async_zk;
 const char Zookeeper_simpleSystem::hostPorts[] = "127.0.0.1:22181";
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_simpleSystem);
