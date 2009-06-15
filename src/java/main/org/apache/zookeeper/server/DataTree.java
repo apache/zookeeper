@@ -512,14 +512,16 @@ public class DataTree {
             updateCount(lastPrefix, -1);
             updateBytes(lastPrefix, node.data == null? 0:-(node.data.length));
         }
-        ZooTrace.logTraceMessage(LOG,
-                                 ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                                 "dataWatches.triggerWatch " + path);
-        ZooTrace.logTraceMessage(LOG,
-                                 ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                                 "childWatches.triggerWatch " + parentName);
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                                     ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                                     "dataWatches.triggerWatch " + path);
+            ZooTrace.logTraceMessage(LOG,
+                                     ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                                     "childWatches.triggerWatch " + parentName);
+        }
         Set<Watcher> processed =
-        dataWatches.triggerWatch(path, EventType.NodeDeleted);
+            dataWatches.triggerWatch(path, EventType.NodeDeleted);
         childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
         childWatches.triggerWatch(parentName.equals("")?"/":parentName, EventType.NodeChildrenChanged);
     }

@@ -88,9 +88,11 @@ public class WatchManager {
         synchronized (this) {
             watchers = watchTable.remove(path);
             if (watchers == null || watchers.isEmpty()) {
-                ZooTrace.logTraceMessage(LOG,
-                        ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                        "No watchers for " + path);
+                if (LOG.isTraceEnabled()) {
+                    ZooTrace.logTraceMessage(LOG,
+                            ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                            "No watchers for " + path);
+                }
                 return null;
             }
             for (Watcher w : watchers) {

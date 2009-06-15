@@ -78,7 +78,9 @@ public class FinalRequestProcessor implements RequestProcessor {
         if (request.type == OpCode.ping) {
             traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
         }
-        ZooTrace.logRequest(LOG, traceMask, 'E', request, "");
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logRequest(LOG, traceMask, 'E', request, "");
+        }
         ProcessTxnResult rc = null;
         synchronized (zks.outstandingChanges) {
             while (!zks.outstandingChanges.isEmpty()

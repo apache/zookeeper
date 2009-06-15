@@ -83,9 +83,11 @@ public class SerializeUtils {
             long id = ia.readLong("id");
             int to = ia.readInt("timeout");
             sessions.put(id, to);
-            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                    "loadData --- session in archive: " + id
-                    + " with timeout: " + to);
+            if (LOG.isTraceEnabled()) {
+                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                        "loadData --- session in archive: " + id
+                        + " with timeout: " + to);
+            }
             count--;
         }
         dt.deserialize(ia, "tree");
