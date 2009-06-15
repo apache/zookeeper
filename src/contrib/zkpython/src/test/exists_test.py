@@ -19,11 +19,12 @@
 import zookeeper, zktestbase, unittest, threading
 
 ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
-class SyncExistsTest(zktestbase.TestBase):
+class ExistsTest(zktestbase.TestBase):
     def setUp( self ):
         zktestbase.TestBase.setUp(self)
         try:
             zookeeper.create(self.handle, "/zk-python-existstest","existstest", [ZOO_OPEN_ACL_UNSAFE],zookeeper.EPHEMERAL)
+            zookeeper.create(self.handle, "/zk-python-aexiststest","existstest",[ZOO_OPEN_ACL_UNSAFE],zookeeper.EPHEMERAL)
         except:
             pass
 
@@ -31,14 +32,6 @@ class SyncExistsTest(zktestbase.TestBase):
         self.assertEqual(self.connected, True)
         ret = zookeeper.exists(self.handle, "/zk-python-existstest", None)
         self.assertNotEqual(ret, None, "/zk-python-existstest does not exist (possibly means creation failure)")
-
-class AsyncExistsTest(zktestbase.TestBase):
-    def setUp( self ):
-        zktestbase.TestBase.setUp(self)
-        try:
-            zookeeper.create(self.handle, "/zk-python-aexiststest","existstest",[ZOO_OPEN_ACL_UNSAFE],zookeeper.EPHEMERAL)
-        except:
-            pass
         
     def test_async_exists(self):
         self.cv = threading.Condition()

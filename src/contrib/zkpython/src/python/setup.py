@@ -26,6 +26,6 @@ zookeepermodule = Extension("zookeeper",
                             library_dirs=["/usr/local/lib"])
 
 setup( name="ZooKeeper",
-       version = "0.3",
+       version = "0.4",
        description = "ZooKeeper Python bindings",
        ext_modules=[zookeepermodule] )

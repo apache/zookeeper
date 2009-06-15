@@ -42,12 +42,32 @@ class TestBase(unittest.TestCase):
             self.cv.release()
 
         self.cv.acquire()
-        self.handle = zookeeper.init( self.host, connection_watcher, 10000, 0)
+        self.handle = zookeeper.init(self.host, connection_watcher)
         self.cv.wait(15.0)
         self.cv.release()
 
         if not self.connected:
             raise Exception("Couldn't connect to host -", self.host)
+            
+    def newConnection(self):
+        cv = threading.Condition()
+        self.pending_connection = False
+        def connection_watcher(handle, type, state, path):
+            print "CONNECTION WATCHER"
+            cv.acquire()
+            self.pending_connection = True
+            cv.notify()
+            cv.release()
+
+        cv.acquire()
+        handle = zookeeper.init(self.host, connection_watcher)
+        cv.wait(15.0)
+        cv.release()
+
+        if not self.pending_connection:
+            raise Exception("Couldn't connect to host -", self.host)
+        return handle
+    
         
     def tearDown(self):
         if self.connected:

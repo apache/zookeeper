@@ -209,6 +209,9 @@ via mahadev)
   ZOOKEEPER-443. trace logging in watch notification not wrapped with
 istraceneabled - inefficient (pat via mahadev)
 
+  ZOOKEEPER-432. Various improvements to zkpython bindings. (henry via
+mahadev)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
