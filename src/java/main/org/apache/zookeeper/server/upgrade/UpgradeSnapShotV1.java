@@ -88,9 +88,11 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
             long id = ia.readLong("id");
             int to = ia.readInt("timeout");
             sessions.put(id, to);
-            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                    "loadData --- session in archive: " + id
-                    + " with timeout: " + to);
+            if (LOG.isTraceEnabled()) {
+                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                        "loadData --- session in archive: " + id
+                        + " with timeout: " + to);
+            }
             count--;
         }
         oldTree.deserialize(ia, "tree");
@@ -131,21 +133,25 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
                 case OpCode.createSession:
                     sessionsWithTimeouts.put(hdr.getClientId(),
                             ((CreateSessionTxn) txn).getTimeOut());
-                    ZooTrace.logTraceMessage(LOG,
-                                             ZooTrace.SESSION_TRACE_MASK,
-                            "playLog --- create session in log: 0x"
-                                    + Long.toHexString(hdr.getClientId())
-                                    + " with timeout: "
-                                    + ((CreateSessionTxn) txn).getTimeOut());
+                    if (LOG.isTraceEnabled()) {
+                        ZooTrace.logTraceMessage(LOG,
+                                                 ZooTrace.SESSION_TRACE_MASK,
+                                "playLog --- create session in log: 0x"
+                                        + Long.toHexString(hdr.getClientId())
+                                        + " with timeout: "
+                                        + ((CreateSessionTxn) txn).getTimeOut());
+                    }
                     // give dataTree a chance to sync its lastProcessedZxid
                     oldDataTree.processTxn(hdr, txn);
                     break;
                 case OpCode.closeSession:
                     sessionsWithTimeouts.remove(hdr.getClientId());
-                    ZooTrace.logTraceMessage(LOG,
-                            ZooTrace.SESSION_TRACE_MASK,
-                            "playLog --- close session in log: 0x"
-                                    + Long.toHexString(hdr.getClientId()));
+                    if (LOG.isTraceEnabled()) {
+                        ZooTrace.logTraceMessage(LOG,
+                                ZooTrace.SESSION_TRACE_MASK,
+                                "playLog --- close session in log: 0x"
+                                        + Long.toHexString(hdr.getClientId()));
+                    }
                     oldDataTree.processTxn(hdr, txn);
                     break;
                 default:

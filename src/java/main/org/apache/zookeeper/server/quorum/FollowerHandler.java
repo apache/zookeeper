@@ -120,7 +120,9 @@ public class FollowerHandler extends Thread {
                 if (p.getType() == Leader.PING) {
                     traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
                 }
-                ZooTrace.logQuorumPacket(LOG, traceMask, 'o', p);
+                if (LOG.isTraceEnabled()) {
+                    ZooTrace.logQuorumPacket(LOG, traceMask, 'o', p);
+                }
                 oa.writeRecord(p, "packet");
             } catch (IOException e) {
                 if (!sock.isClosed()) {
@@ -314,7 +316,9 @@ public class FollowerHandler extends Thread {
                 if (qp.getType() == Leader.PING) {
                     traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
                 }
-                ZooTrace.logQuorumPacket(LOG, traceMask, 'i', qp);
+                if (LOG.isTraceEnabled()) {
+                    ZooTrace.logQuorumPacket(LOG, traceMask, 'i', qp);
+                }
                 tickOfLastAck = leader.self.tick;
 
 
@@ -347,10 +351,12 @@ public class FollowerHandler extends Thread {
                     DataOutputStream dos = new DataOutputStream(bos);
                     dos.writeLong(id);
                     boolean valid = leader.zk.touch(id, to);
-                    ZooTrace.logTraceMessage(LOG,
-                                             ZooTrace.SESSION_TRACE_MASK,
-                                             "Session 0x" + Long.toHexString(id)
-                                             + " is valid: "+ valid);
+                    if (LOG.isTraceEnabled()) {
+                        ZooTrace.logTraceMessage(LOG,
+                                                 ZooTrace.SESSION_TRACE_MASK,
+                                                 "Session 0x" + Long.toHexString(id)
+                                                 + " is valid: "+ valid);
+                    }
                     dos.writeBoolean(valid);
                     qp.setData(bos.toByteArray());
                     queuedPackets.add(qp);

@@ -97,7 +97,9 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if (request.type == OpCode.ping) {
                     traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
                 }
-                ZooTrace.logRequest(LOG, traceMask, 'P', request, "");
+                if (LOG.isTraceEnabled()) {
+                    ZooTrace.logRequest(LOG, traceMask, 'P', request, "");
+                }
                 if (Request.requestOfDeath == request) {
                     break;
                 }

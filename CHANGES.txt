@@ -206,6 +206,9 @@ via mahadev)
 
   ZOOKEEPER-437. Variety of Documentation Updates (grant via mahadev)
 
+  ZOOKEEPER-443. trace logging in watch notification not wrapped with
+istraceneabled - inefficient (pat via mahadev)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)

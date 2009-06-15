@@ -55,8 +55,10 @@ public class FollowerRequestProcessor extends Thread implements
         try {
             while (!finished) {
                 Request request = queuedRequests.take();
-                ZooTrace.logRequest(LOG, ZooTrace.CLIENT_REQUEST_TRACE_MASK,
-                        'F', request, "");
+                if (LOG.isTraceEnabled()) {
+                    ZooTrace.logRequest(LOG, ZooTrace.CLIENT_REQUEST_TRACE_MASK,
+                            'F', request, "");
+                }
                 if (request == Request.requestOfDeath) {
                     break;
                 }
