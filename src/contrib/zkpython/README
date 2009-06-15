@@ -1,4 +1,6 @@
-Very early version of ZooKeeper bindings for Python. All functions are imported as methods into the zookeeper module.
+Early version of ZooKeeper bindings for Python. All functions are imported as methods into the zookeeper module.
+
+Please do not rely on APIs staying constant in the short term. The handling of exceptions and failure modes is one area that is subject to change. 
 
 DEPENDENCIES:
 -------------
@@ -23,7 +25,7 @@ To test, run ant test from the same directory.
 NAMING CONVENTIONS:
 --------------------
 
-All methods that in the C library are zoo_fn_name have been implemented as zookeeper.fn_name. The exception is any function that has a watch function argument is named without the 'w' prefix (for example, zoo_wexists becomes zookeeper.exists). The variants of these functions without the watch argument (i.e. zoo_exists) have not been implemented on the understanding that they are superceded by the zoo_w* API. 
+All methods that in the C library are zoo_fn_name have been implemented as zookeeper.fn_name. The exception is any function that has a watch function argument is named without the 'w' prefix (for example, zoo_wexists becomes zookeeper.exists). The variants of these functions without the watch argument (i.e. zoo_exists) have not been implemented on the understanding that they are superseded by the zoo_w* API. 
 
 Enums and integer constants that begin ZOO_int_name are named as zookeeper.int_name.
 
@@ -48,6 +50,26 @@ Currently synchronous calls indicate failure by throwing an exception (note that
 
 Callbacks signify failure by having the integer response code passed in. 
 
+WHAT'S NEW IN 0.4:
+------------------
+
+More test coverage. 
+
+Better reference counting, fixing at least two serious bugs.
+
+Out-of-range zhandles are now checked, fixing a potential security hole.
+
+Docstrings! Editing and cleanup required, but most of the text is there.
+
+zookeeper.set_watcher is now implemented correctly.
+
+zookeeper.client_id is now implemented correctly. zookeeper.init now respects the client_id parameter.
+
+get_context and set_context have been removed from the API. The context mechanism is used by PyZK to store the callables that are dispatched by C-side watchers. Messing with this from Python-side causes bugs very quickly. You should wrap all desired context up in a callable and then use zookeeper.set_watcher to attach it to the global watcher. 
+
+Many methods now have optional parameters (usually if you can specify a watch, it's optional). The only time where genuinely optional parameters are still mandatory is when a required parameters comes after it. Currently we still respect the ZK C client parameter ordering. For example, you can simply connect with zookeeper.init("host:port") and ignore the other three parameters.
+
+
 WHAT'S NEW IN 0.3:
 ------------------
 
@@ -68,15 +90,13 @@ _set2 and a few other edge API calls have been implemented. The module is now ne
 
 A reference count error was tracked down and killed. More probably lurk in there!
 
-WHAT'S NOT DONE / KNOWN ISSUES:
--------------------------------
+WHAT'S NOT DONE / KNOWN ISSUES / FUTURE WORK:
+---------------------------------------------
 
-1. There may well be memory leaks / reference count issues; I need to do a complete audit.
+1. There may well be more memory leaks / reference count issues; however I am more confident that common paths are relatively safe. 
 2. There probably needs to be a more Pythonic Python-side wrapper for these functions (e.g. a zookeeper object, the ability to iterate through a tree of zk nodes)
-3. set_watcher is not implemented. 
-4. If you pass an invalid handle, the library will do anything from silent failure to segfaulting. This will be fixed and an exception will be raised in future versions.
-5. More tests aren't written yet, but should be. 
-6. Similarly for documentation, other than this README (in particular, docstrings)
+3. Docstrings need a cleanup.
+4. The way exceptions and error codes are returned needs looking at. Currently synchronous calls throw exceptions on everything but ZOK return, but asynchronous completions are simply passed the error code. Async. functions should never throw an exception on the C-side as they are practically impossible to catch. For the sync. functions, exceptions seem more reasonable, but some cases are certainly not exceptional. 
 
 Bug reports / comments very welcome!
 

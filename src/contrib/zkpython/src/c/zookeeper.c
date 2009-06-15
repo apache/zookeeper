@@ -24,18 +24,30 @@
 static zhandle_t* zhandles[MAX_ZHANDLES];
 static int num_zhandles = 0;
 
+#define CHECK_ZHANDLE(z) if ( (z) < 0 || (z) >= num_zhandles ) { \
+  PyErr_SetString( PyExc_ValueError, "zhandle out of range" ); \
+  return NULL; \
+  }
+
 /////////////////////////////////////////////
 // HELPER FUNCTIONS
 typedef struct {
   int zhandle;
   PyObject *callback;
+  int permanent;
 }pywatcher_t;
 
-pywatcher_t *create_pywatcher(int zh, PyObject* cb)
+// This array exists because we need to ref. count 
+// the global watchers for each connection - but they're 
+// inaccessible without pulling in zk_adaptor.h, which I'm
+// trying to avoid. 
+static pywatcher_t *watchers[MAX_ZHANDLES];
+
+pywatcher_t *create_pywatcher(int zh, PyObject* cb, int permanent)
 {
   pywatcher_t *ret = (pywatcher_t*)calloc(sizeof(pywatcher_t),1);
   Py_INCREF(cb);
-  ret->zhandle = zh; ret->callback = cb;
+  ret->zhandle = zh; ret->callback = cb; ret->permanent = permanent;
   return ret;
 }
 
@@ -124,7 +136,7 @@ void free_acls( struct ACL_vector *acls )
    a) acquires the global interpreter lock
    b) unpacks the PyObject to call from the passed context pointer, which
       handily includes the index of the relevant zookeeper handle to pass back to Python.
-   c) Makes the call into Python, checking for error conditions which we are responsible fro
+   c) Makes the call into Python, checking for error conditions which we are responsible for
       detecting and doing something about (we just print the error and plough right on)
    d) releases the lock after freeing up the context object, which is only used for one
       watch invocation (watches are one-shot)
@@ -138,24 +150,42 @@ void watcher_dispatch(zhandle_t *zzh, int type, int state, const char *path, voi
   PyObject *arglist = Py_BuildValue("(i,i,i,s)", pyw->zhandle,type, state, path);
   if (PyObject_CallObject((PyObject*)callback, arglist) == NULL)
     PyErr_Print();
-  free_pywatcher(pyw);
+  if (pyw->permanent == 0)
+    free_pywatcher(pyw);
   PyGILState_Release(gstate);
 }
 
 static PyObject *pyzookeeper_init(PyObject *self, PyObject *args)
 {
-  // TODO: Unpack clientid
   const char *host;
-  PyObject *watcherfn;
-  int recv_timeout;
-  PyObject *clientid;
+  PyObject *watcherfn = Py_None;
+  int recv_timeout = 10000;
+  //  int clientid = -1;
+  clientid_t cid;
+  cid.client_id = -1;
+  const char *passwd;
 
-  if (!PyArg_ParseTuple(args, "sOii", &host, &watcherfn, &recv_timeout, &clientid)) 
+  if (num_zhandles >= MAX_ZHANDLES) {
+    PyErr_SetString( PyExc_ValueError, "Too many ZooKeeper handles created, max is 256" );
     return NULL;
+  }
 
+  if (!PyArg_ParseTuple(args, "s|Oi(Ls)", &host, &watcherfn, &recv_timeout, &cid.client_id, &passwd)) 
+    return NULL;
+  
+
+  if (cid.client_id != -1) {
+    strncpy(cid.passwd, passwd, 16*sizeof(char));
+  }
+  pywatcher_t *pyw = NULL;
+  if (watcherfn != Py_None) {
+    pyw = create_pywatcher(num_zhandles, watcherfn,1);
+  }
+  watchers[num_zhandles] = pyw;
   zhandle_t *zh = zookeeper_init( host, watcherfn != Py_None ? watcher_dispatch : NULL, 
-				  recv_timeout, NULL, 
-				  create_pywatcher(num_zhandles,watcherfn), 0 ); 
+				  recv_timeout, cid.client_id == -1 ? 0 : &cid, 
+				  pyw,
+				  0 ); 
 
   if (zh == NULL)
     {
@@ -251,25 +281,26 @@ void acl_completion_dispatch(int rc, struct ACL_vector *acl, struct Stat *stat, 
 
 ///////////////////////////////////////////////////////
 // Asynchronous API
-
 PyObject *pyzoo_acreate(PyObject *self, PyObject *args)
 {
   int zkhid; char *path; char *value; int valuelen;
-  struct ACL_vector acl; int flags;
-  PyObject *completion_callback;
-  PyObject *pyacls;
-  if (!PyArg_ParseTuple(args, "iss#OiO", &zkhid, &path, &value, &valuelen, &pyacls, &flags, &completion_callback))
+  struct ACL_vector acl; int flags = 0;
+  PyObject *completion_callback = Py_None;
+  PyObject *pyacls = Py_None;
+  if (!PyArg_ParseTuple(args, "iss#O|iO", &zkhid, &path, &value, &valuelen, &pyacls, &flags, &completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
 
-  parse_acls(&acl, pyacls);
+  if (pyacls != Py_None)
+    parse_acls(&acl, pyacls);
   int err = zoo_acreate( zhandles[zkhid],
 			 path,
 			 value,
 			 valuelen,
-			 &acl,
+			 pyacls == Py_None ? NULL : &acl,
 			 flags,
 			 completion_callback != Py_None ? string_completion_dispatch : NULL,
-			 completion_callback != Py_None ? create_pywatcher(zkhid, completion_callback ) : NULL );
+			 completion_callback != Py_None ? create_pywatcher(zkhid, completion_callback,0 ) : NULL );
     
   free_acls(&acl);
   if (err != ZOK)
@@ -282,40 +313,44 @@ PyObject *pyzoo_acreate(PyObject *self, PyObject *args)
 
 PyObject *pyzoo_adelete(PyObject *self, PyObject *args)
 {
-  int zkhid; char *path; int version;
-  PyObject *completion_callback;
-  if (!PyArg_ParseTuple(args, "isiO", &zkhid, &path, &version, &completion_callback))
+  int zkhid; char *path; int version = -1;
+  PyObject *completion_callback = Py_None;
+  if (!PyArg_ParseTuple(args, "is|iO", &zkhid, &path, &version, &completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
 
   int err = zoo_adelete( zhandles[zkhid],
 			 path,
 			 version,
 			 completion_callback != Py_None ? void_completion_dispatch : NULL,
 			 completion_callback != Py_None ? create_pywatcher(zkhid, 
-									   completion_callback ) : NULL );
+									   completion_callback,
+									   0 ) : NULL );
     
   if (err != ZOK)
     {
       PyErr_SetString( PyExc_IOError, zerror(err));
       return NULL;
     }
-  return Py_BuildValue("i", err);;
+  return Py_BuildValue("i", err);
 }
 
 PyObject *pyzoo_aexists(PyObject *self, PyObject *args)
 {
   int zkhid; char *path; 
-  PyObject *completion_callback;
-  PyObject *exists_watch;
-  if (!PyArg_ParseTuple(args, "isOO", &zkhid, &path, 
+  PyObject *completion_callback = Py_None;
+  PyObject *exists_watch = Py_None;
+  if (!PyArg_ParseTuple(args, "is|OO", &zkhid, &path, 
 			&exists_watch, &completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
+
   int err = zoo_awexists( zhandles[zkhid],
 			  path,
 			  exists_watch != Py_None ? watcher_dispatch : NULL,
-			  exists_watch != Py_None ? create_pywatcher(zkhid, exists_watch) : NULL,
+			  exists_watch != Py_None ? create_pywatcher(zkhid, exists_watch,0) : NULL,
 			  (completion_callback != Py_None) ? stat_completion_dispatch : NULL,
-			  (completion_callback != Py_None) ? create_pywatcher(zkhid, completion_callback) : NULL );
+			  (completion_callback != Py_None) ? create_pywatcher(zkhid, completion_callback,0) : NULL );
     
   if (err != ZOK)
     {
@@ -328,19 +363,20 @@ PyObject *pyzoo_aexists(PyObject *self, PyObject *args)
 PyObject *pyzoo_aget(PyObject *self, PyObject *args)
 {
   int zkhid; char *path; 
-  PyObject *completion_callback;
-  PyObject *get_watch;
-  if (!PyArg_ParseTuple(args, "isOO", &zkhid, &path, 
+  PyObject *completion_callback = Py_None;
+  PyObject *get_watch = Py_None;
+  if (!PyArg_ParseTuple(args, "is|OO", &zkhid, &path, 
 			&get_watch, &completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
 
   int err = zoo_awget( zhandles[zkhid],
 		       path,
 		       get_watch != Py_None ? watcher_dispatch : NULL,
-		       get_watch != Py_None ? create_pywatcher(zkhid, get_watch) : NULL,
+		       get_watch != Py_None ? create_pywatcher(zkhid, get_watch,0) : NULL,
 		       completion_callback != Py_None ? data_completion_dispatch : NULL,
 		       completion_callback != Py_None ? 
-		       create_pywatcher(zkhid, completion_callback ) : NULL );
+		       create_pywatcher(zkhid, completion_callback,0 ) : NULL );
     
   if (err != ZOK)
     {
@@ -352,10 +388,11 @@ PyObject *pyzoo_aget(PyObject *self, PyObject *args)
 
 PyObject *pyzoo_aset(PyObject *self, PyObject *args)
 {
-  int zkhid; char *path; char *buffer; int buflen; int version;
-  PyObject *completion_callback;
-  if (!PyArg_ParseTuple(args, "iss#iO", &zkhid, &path, &buffer, &buflen, &version, &completion_callback))
+  int zkhid; char *path; char *buffer; int buflen; int version=-1;
+  PyObject *completion_callback = Py_None;
+  if (!PyArg_ParseTuple(args, "iss#|iO", &zkhid, &path, &buffer, &buflen, &version, &completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
 
   int err = zoo_aset( zhandles[zkhid],
 		      path,
@@ -364,7 +401,8 @@ PyObject *pyzoo_aset(PyObject *self, PyObject *args)
 		      version,
 		      completion_callback != Py_None ? stat_completion_dispatch : NULL,
 		      completion_callback != Py_None ? create_pywatcher(zkhid, 
-									completion_callback ) : NULL );
+									completion_callback,
+									0 ) : NULL );
     
   if (err != ZOK)
     {
@@ -377,19 +415,20 @@ PyObject *pyzoo_aset(PyObject *self, PyObject *args)
 PyObject *pyzoo_aget_children(PyObject *self, PyObject *args)
 {
   int zkhid; char *path; 
-  PyObject *completion_callback;
+  PyObject *completion_callback = Py_None;
   PyObject *get_watch;
-  if (!PyArg_ParseTuple(args, "isOO", &zkhid,  &path,
+  if (!PyArg_ParseTuple(args, "is|OO", &zkhid,  &path,
 			&get_watch, &completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
 
   int err = zoo_awget_children( zhandles[zkhid],
 				path,
 				get_watch != Py_None ? watcher_dispatch : NULL,
-				get_watch != Py_None ? create_pywatcher(zkhid, get_watch) : NULL,
+				get_watch != Py_None ? create_pywatcher(zkhid, get_watch,0) : NULL,
 				completion_callback != Py_None ? strings_completion_dispatch : NULL,
 				completion_callback != Py_None ? 
-				create_pywatcher(zkhid, completion_callback ) : NULL );    
+				create_pywatcher(zkhid, completion_callback,0) : NULL );    
   if (err != ZOK)
     {
       PyErr_SetString( PyExc_IOError, zerror(err));
@@ -401,16 +440,17 @@ PyObject *pyzoo_aget_children(PyObject *self, PyObject *args)
 PyObject *pyzoo_async(PyObject *self, PyObject *args)
 {
   int zkhid; char *path; 
-  PyObject *completion_callback;
-  if (!PyArg_ParseTuple(args, "isO", &zkhid, &path, 
+  PyObject *completion_callback = Py_None;
+  if (!PyArg_ParseTuple(args, "is|O", &zkhid, &path, 
 			&completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
 
   int err = zoo_async( zhandles[zkhid],
 		       path,
 		       completion_callback != Py_None ? string_completion_dispatch : NULL,
 		       completion_callback != Py_None ? 
-		       create_pywatcher(zkhid, completion_callback ) : NULL );    
+		       create_pywatcher(zkhid, completion_callback,0) : NULL );    
   if (err != ZOK)
     {
       PyErr_SetString( PyExc_IOError, zerror(err));
@@ -422,16 +462,17 @@ PyObject *pyzoo_async(PyObject *self, PyObject *args)
 PyObject *pyzoo_aget_acl(PyObject *self, PyObject *args)
 {
   int zkhid; char *path; 
-  PyObject *completion_callback;
-  if (!PyArg_ParseTuple(args, "isiOO", &zkhid, &path, 
+  PyObject *completion_callback = Py_None;
+  if (!PyArg_ParseTuple(args, "is|O", &zkhid, &path, 
 			&completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
 
   int err = zoo_aget_acl( zhandles[zkhid],
 			  path,
 			  completion_callback != Py_None ? acl_completion_dispatch : NULL,
 			  completion_callback != Py_None ? 
-			  create_pywatcher(zkhid, completion_callback ) : NULL );
+			  create_pywatcher(zkhid, completion_callback,0) : NULL );
     
   if (err != ZOK)
     {
@@ -444,11 +485,13 @@ PyObject *pyzoo_aget_acl(PyObject *self, PyObject *args)
 PyObject *pyzoo_aset_acl(PyObject *self, PyObject *args)
 {
   int zkhid; char *path; int version; 
-  PyObject *completion_callback, *pyacl;
+  PyObject *completion_callback = Py_None, *pyacl;
   struct ACL_vector aclv;
-  if (!PyArg_ParseTuple(args, "isiOO", &zkhid, &path, &version, 
+  if (!PyArg_ParseTuple(args, "isiO|O", &zkhid, &path, &version, 
 			&pyacl, &completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
+
   parse_acls( &aclv, pyacl );
   int err = zoo_aset_acl( zhandles[zkhid],
 			  path,
@@ -456,7 +499,7 @@ PyObject *pyzoo_aset_acl(PyObject *self, PyObject *args)
 			  &aclv,
 			  completion_callback != Py_None ? void_completion_dispatch : NULL,
 			  completion_callback != Py_None ? 
-			  create_pywatcher(zkhid, completion_callback ) : NULL );
+			  create_pywatcher(zkhid, completion_callback,0) : NULL );
   free_acls(&aclv);
   if (err != ZOK)
     {
@@ -465,31 +508,6 @@ PyObject *pyzoo_aset_acl(PyObject *self, PyObject *args)
     }
   return Py_BuildValue("i", err);;
 }
-
-/*PyObject *pyzoo_aget(PyObject *self, PyObject *args)
-{
-  int zkhid; char *path; 
-  PyObject *completion_callback;
-  PyObject *get_watch;
-  if (!PyArg_ParseTuple(args, "isiOO", &zkhid, &path, 
-			&get_watch, &completion_callback))
-    return NULL;
-
-  int err = zoo_awget( zhandles[zkhid],
-		       path,
-		       get_watch != Py_None ? watcher_dispatch : NULL,
-		       get_watch != Py_None ? create_pywatcher(zkhid, get_watch) : NULL,
-		       completion_callback != Py_None ? void_completion_dispatch : NULL,
-		       completion_callback != Py_None ? 
-		       create_pywatcher(zkhid, completion_callback ) : NULL );
-    
-  if (err != ZOK)
-    {
-      PyErr_SetString( PyExc_IOError, zerror(err));
-      return NULL;
-    }
-  return Py_BuildValue("i", err);;
-  }*/
 
 PyObject *pyzoo_add_auth(PyObject *self, PyObject *args)
 {
@@ -500,19 +518,20 @@ PyObject *pyzoo_add_auth(PyObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "iss#O", &zkhid, &scheme, &cert, &certLen, &completion_callback))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   
   int err = zoo_add_auth( zhandles[zkhid],
 			  scheme,
 			  cert,
 			  certLen,
 			  completion_callback != Py_None ? void_completion_dispatch : NULL,
-			  completion_callback != Py_None ? create_pywatcher(zkhid, completion_callback) : NULL );
+			  completion_callback != Py_None ? create_pywatcher(zkhid, completion_callback,0) : NULL );
   if (err != ZOK)
     {
       PyErr_SetString( PyExc_IOError, zerror(err));
       return NULL;
     }
-  return Py_BuildValue("i", err);;
+  return Py_BuildValue("i", err);
 }
 
 ///////////////////////////////////////////////////////
@@ -528,8 +547,9 @@ static PyObject *pyzoo_create(PyObject *self, PyObject *args)
   int flags = 0;
   char realbuf[256];
   const int maxbuf_len = 256;
-  if (!PyArg_ParseTuple(args, "iss#Oi",&zkhid, &path, &values, &valuelen,&acl,&flags))
+  if (!PyArg_ParseTuple(args, "iss#O|i",&zkhid, &path, &values, &valuelen,&acl,&flags))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   struct ACL_vector aclv;
   parse_acls(&aclv,acl);
   zhandle_t *zh = zhandles[zkhid];
@@ -540,16 +560,17 @@ static PyObject *pyzoo_create(PyObject *self, PyObject *args)
       return NULL;
     }
 
-  return Py_BuildValue("i", err);;
+  return Py_BuildValue("s", realbuf);
 }
 
 static PyObject *pyzoo_delete(PyObject *self, PyObject *args)
 {
   int zkhid;
   char *path;
-  int version;
-  if (!PyArg_ParseTuple(args, "isi",&zkhid,&path,&version))
+  int version = -1;
+  if (!PyArg_ParseTuple(args, "is|i",&zkhid,&path,&version))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   zhandle_t *zh = zhandles[zkhid];
   int err = zoo_delete(zh, path, version);
   if (err != ZOK)
@@ -557,19 +578,20 @@ static PyObject *pyzoo_delete(PyObject *self, PyObject *args)
       PyErr_SetString( PyExc_IOError, zerror(err));
       return NULL;
     }
-  return Py_BuildValue("i", err);;
+  return Py_BuildValue("i", err);
 }
 
 static PyObject *pyzoo_exists(PyObject *self, PyObject *args)
 {
-  int zkhid; char *path; PyObject *watcherfn = NULL;
+  int zkhid; char *path; PyObject *watcherfn = Py_None;
   struct Stat stat;
-  if (!PyArg_ParseTuple(args, "isO", &zkhid, &path, &watcherfn))
+  if (!PyArg_ParseTuple(args, "is|O", &zkhid, &path, &watcherfn))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   zhandle_t *zh = zhandles[zkhid];
   pywatcher_t *pw = NULL;
   if (watcherfn != Py_None) 
-    pw = create_pywatcher(zkhid, watcherfn);
+    pw = create_pywatcher(zkhid, watcherfn,0);
   int err = zoo_wexists(zh,  path, watcherfn != Py_None ? watcher_dispatch : NULL, pw, &stat);
   if (err != ZOK && err != ZNONODE)
     {
@@ -590,13 +612,14 @@ static PyObject *pyzoo_get_children(PyObject *self, PyObject *args)
   // we should free the String_vector
   int zkhid;
   char *path;
-  PyObject *watcherfn = NULL;
+  PyObject *watcherfn = Py_None;
   struct String_vector strings; 
-  if (!PyArg_ParseTuple(args, "isO", &zkhid, &path, &watcherfn))
+  if (!PyArg_ParseTuple(args, "is|O", &zkhid, &path, &watcherfn))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   pywatcher_t *pw = NULL;
   if (watcherfn != Py_None)
-    pw = create_pywatcher( zkhid, watcherfn );
+    pw = create_pywatcher( zkhid, watcherfn, 0 );
   int err = zoo_wget_children( zhandles[zkhid], path, 
 			       watcherfn != Py_None ? watcher_dispatch : NULL, 
 			       pw, &strings );
@@ -623,11 +646,11 @@ static PyObject *pyzoo_set(PyObject *self, PyObject *args)
   char *path;
   char *buffer;
   int buflen;
-  int version; 
-  if (!PyArg_ParseTuple(args, "iss#i", &zkhid, &path, &buffer, &buflen, &version))
+  int version = -1; 
+  if (!PyArg_ParseTuple(args, "iss#|i", &zkhid, &path, &buffer, &buflen, &version))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
 
-  assert(zkhid < num_zhandles);
   int err = zoo_set(zhandles[zkhid], path, buffer, buflen, version);
   if (err != ZOK)
     {
@@ -644,9 +667,10 @@ static PyObject *pyzoo_set2(PyObject *self, PyObject *args)
   char *path;
   char *buffer;
   int buflen;
-  int version; 
-  if (!PyArg_ParseTuple(args, "iss#i", &zkhid, &path, &buffer, &buflen, &version))
+  int version = -1; 
+  if (!PyArg_ParseTuple(args, "iss#|i", &zkhid, &path, &buffer, &buflen, &version))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   struct Stat *stat = NULL;
   int err = zoo_set2(zhandles[zkhid], path, buffer, buflen, version, stat);
   if (err != ZOK)
@@ -666,13 +690,13 @@ static PyObject *pyzoo_get(PyObject *self, PyObject *args)
   memset(buffer,0,sizeof(char)*512);
   int buffer_len=512;
   struct Stat stat;
-  PyObject *watcherfn = NULL;
+  PyObject *watcherfn = Py_None;
   pywatcher_t *pw = NULL;
-  if (!PyArg_ParseTuple(args, "isO", &zkhid, &path, &watcherfn))
+  if (!PyArg_ParseTuple(args, "is|O", &zkhid, &path, &watcherfn))
     return NULL;
-
+  CHECK_ZHANDLE(zkhid);
   if (watcherfn != Py_None)
-    pw = create_pywatcher( zkhid, watcherfn );
+    pw = create_pywatcher( zkhid, watcherfn,0 );
   int err = zoo_wget(zhandles[zkhid], path, 
 		     watcherfn != Py_None ? watcher_dispatch : NULL, 
 		     pw, buffer, 
@@ -695,6 +719,7 @@ PyObject *pyzoo_get_acl(PyObject *self, PyObject *args)
   struct Stat stat;
   if (!PyArg_ParseTuple(args, "is", &zkhid, &path))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   int err = zoo_get_acl( zhandles[zkhid], path, &acl, &stat );
   if (err != ZOK) 
     { 
@@ -715,7 +740,7 @@ PyObject *pyzoo_set_acl(PyObject *self, PyObject *args)
   struct ACL_vector acl;
   if (!PyArg_ParseTuple(args, "isiO", &zkhid, &path, &version, &pyacls))
     return NULL;
-
+  CHECK_ZHANDLE(zkhid);
   parse_acls(&acl, pyacls);
   int err = zoo_set_acl(zhandles[zkhid], path, version, &acl );
   free_acls(&acl);
@@ -734,6 +759,7 @@ PyObject *pyzoo_close(PyObject *self, PyObject *args)
   int zkhid;
   if (!PyArg_ParseTuple(args, "i", &zkhid))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   int ret = zookeeper_close(zhandles[zkhid]);
   return Py_BuildValue("i", ret);
 }
@@ -743,8 +769,9 @@ PyObject *pyzoo_client_id(PyObject *self, PyObject *args)
   int zkhid;
   if (!PyArg_ParseTuple(args, "i", &zkhid))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   const clientid_t *cid = zoo_client_id(zhandles[zkhid]);
-  return Py_BuildValue("(L,s)", cid->client_id, cid->passwd);
+  return Py_BuildValue("(Ls)", cid->client_id, cid->passwd);
 }
 
 PyObject *pyzoo_get_context(PyObject *self, PyObject *args)
@@ -752,6 +779,7 @@ PyObject *pyzoo_get_context(PyObject *self, PyObject *args)
   int zkhid;
   if (!PyArg_ParseTuple(args, "i", &zkhid))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   PyObject *context = NULL;
   context = (PyObject*)zoo_get_context(zhandles[zkhid]);
   if (context) return context;
@@ -764,27 +792,36 @@ PyObject *pyzoo_set_context(PyObject *self, PyObject *args)
   PyObject *context;
   if (!PyArg_ParseTuple(args, "iO", &zkhid, &context))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
+  PyObject *py_context = (PyObject*)zoo_get_context(zhandles[zkhid]);
+  if (py_context != NULL) {
+    Py_DECREF(py_context);
+  }
+  Py_INCREF(context);
   zoo_set_context(zhandles[zkhid], (void*)context);
   return Py_None;
 }
 ///////////////////////////////////////////////////////
 // misc
-// static PyObject *generic_python_callback = NULL;
-// void generic_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcherCtx)
-// {
-//   if (generic_python_callback == NULL)
-//     return;  
-// }
 
 PyObject *pyzoo_set_watcher(PyObject *self, PyObject *args)
 {
-  /*  int zkhid;
+  int zkhid;
   PyObject *watcherfn;
   if (!PyArg_ParseTuple(args, "iO", &zkhid, &watcherfn))
     return NULL;
-  watcher_fn cwatcher = zoo_set_watcher(
-  */
-  return NULL; // TODO
+  CHECK_ZHANDLE(zkhid);
+  pywatcher_t *pyw = watchers[zkhid];
+  if (pyw != NULL) {
+    free_pywatcher( pyw );
+  }
+  
+  pyw = create_pywatcher(zkhid, watcherfn,1);
+  watchers[zkhid] = pyw;
+  zoo_set_watcher(zhandles[zkhid], watcher_dispatch);
+  zoo_set_context(zhandles[zkhid], pyw);
+  
+  return Py_None; 
 }
 
 PyObject *pyzoo_state(PyObject *self, PyObject *args)
@@ -792,7 +829,7 @@ PyObject *pyzoo_state(PyObject *self, PyObject *args)
   int zkhid;
   if (!PyArg_ParseTuple(args,"i",&zkhid))
     return NULL;
-
+  CHECK_ZHANDLE(zkhid);
   int state = zoo_state(zhandles[zkhid]);
   return Py_BuildValue("i",state);
 }
@@ -813,7 +850,7 @@ PyObject *pyzoo_recv_timeout(PyObject *self, PyObject *args)
   int zkhid;
   if (!PyArg_ParseTuple(args,"i",&zkhid))
     return NULL;
-
+  CHECK_ZHANDLE(zkhid);
   int recv_timeout = zoo_recv_timeout(zhandles[zkhid]);
   return Py_BuildValue("i",recv_timeout);  
 }
@@ -823,6 +860,7 @@ PyObject *pyis_unrecoverable(PyObject *self, PyObject *args)
   int zkhid;
   if (!PyArg_ParseTuple(args,"i",&zkhid))
     return NULL;
+  CHECK_ZHANDLE(zkhid);
   int ret = is_unrecoverable(zhandles[zkhid]);
   return Py_BuildValue("i",ret); // TODO: make this a boolean
 }
@@ -865,38 +903,44 @@ PyObject *pyzoo_deterministic_conn_order(PyObject *self, PyObject *args)
 
 ///////////////////////////////////////////////////
 
+#include "pyzk_docstrings.h"
+
 static PyMethodDef ZooKeeperMethods[] = {
-  {"init", pyzookeeper_init, METH_VARARGS },
-  {"create",pyzoo_create, METH_VARARGS },
-  {"delete",pyzoo_delete, METH_VARARGS },
-  {"get_children", pyzoo_get_children, METH_VARARGS },
-  {"set", pyzoo_set, METH_VARARGS },
-  {"set2", pyzoo_set2, METH_VARARGS },
-  {"get",pyzoo_get, METH_VARARGS },
-  {"exists",pyzoo_exists, METH_VARARGS },
-  {"get_acl", pyzoo_get_acl, METH_VARARGS },
-  {"set_acl", pyzoo_set_acl, METH_VARARGS },
-  {"close", pyzoo_close, METH_VARARGS },
-  {"client_id", pyzoo_client_id, METH_VARARGS },
-  {"get_context", pyzoo_get_context, METH_VARARGS },
-  {"set_context", pyzoo_set_context, METH_VARARGS },
-  //  {"set_watcher", pyzoo_set_watcher, METH_VARARGS }, // Not yet implemented
-  {"state", pyzoo_state, METH_VARARGS },
+  {"init", pyzookeeper_init, METH_VARARGS, pyzk_init_doc },
+  {"create",pyzoo_create, METH_VARARGS, pyzk_create_doc },
+  {"delete",pyzoo_delete, METH_VARARGS, pyzk_delete_doc },
+  {"get_children", pyzoo_get_children, METH_VARARGS, pyzk_get_children_doc },
+  {"set", pyzoo_set, METH_VARARGS, pyzk_set_doc },
+  {"set2", pyzoo_set2, METH_VARARGS, pyzk_set2_doc },
+  {"get",pyzoo_get, METH_VARARGS, pyzk_get_doc },
+  {"exists",pyzoo_exists, METH_VARARGS, pyzk_exists_doc },
+  {"get_acl", pyzoo_get_acl, METH_VARARGS, pyzk_get_acl_doc },
+  {"set_acl", pyzoo_set_acl, METH_VARARGS, pyzk_set_acl_doc },
+  {"close", pyzoo_close, METH_VARARGS, pyzk_close_doc },
+  {"client_id", pyzoo_client_id, METH_VARARGS, pyzk_client_id_doc },
+  // DO NOT USE get / set_context. Context is used internally
+  // to pass the python watcher to a dispatch function. If you want 
+  // context, set it through set_watcher. 
+  //  {"get_context", pyzoo_get_context, METH_VARARGS, "" },
+  // {"set_context", pyzoo_set_context, METH_VARARGS, "" },
+  {"set_watcher", pyzoo_set_watcher, METH_VARARGS }, 
+  {"state", pyzoo_state, METH_VARARGS, pyzk_state_doc },
   {"recv_timeout",pyzoo_recv_timeout, METH_VARARGS },
-  {"is_unrecoverable",pyis_unrecoverable, METH_VARARGS },
-  {"set_debug_level",pyzoo_set_debug_level, METH_VARARGS }, 
-  {"set_log_stream",pyzoo_set_log_stream, METH_VARARGS },
-  {"deterministic_conn_order",pyzoo_deterministic_conn_order, METH_VARARGS },
-  {"acreate", pyzoo_acreate, METH_VARARGS },
-  {"adelete", pyzoo_adelete, METH_VARARGS },
-  {"aexists", pyzoo_aexists, METH_VARARGS },
-  {"aget", pyzoo_aget, METH_VARARGS },
-  {"aset", pyzoo_aset, METH_VARARGS },
-  {"aget_children", pyzoo_aget_children, METH_VARARGS },
-  {"async", pyzoo_async, METH_VARARGS },
-  {"aget_acl", pyzoo_aget_acl, METH_VARARGS },
-  {"aset_acl", pyzoo_aset_acl, METH_VARARGS },
-  {"zerror", pyzerror, METH_VARARGS },
+  {"is_unrecoverable",pyis_unrecoverable, METH_VARARGS, pyzk_is_unrecoverable_doc },
+  {"set_debug_level",pyzoo_set_debug_level, METH_VARARGS, pyzk_set_debug_level_doc }, 
+  {"set_log_stream",pyzoo_set_log_stream, METH_VARARGS, pyzk_set_log_stream_doc },
+  {"deterministic_conn_order",pyzoo_deterministic_conn_order, METH_VARARGS, pyzk_deterministic_conn_order_doc },
+  {"acreate", pyzoo_acreate, METH_VARARGS, pyzk_acreate_doc },
+  {"adelete", pyzoo_adelete, METH_VARARGS,pyzk_adelete_doc },
+  {"aexists", pyzoo_aexists, METH_VARARGS,pyzk_aexists_doc },
+  {"aget", pyzoo_aget, METH_VARARGS, pyzk_aget_doc },
+  {"aset", pyzoo_aset, METH_VARARGS, pyzk_aset_doc },
+  {"aget_children", pyzoo_aget_children, METH_VARARGS, pyzk_aget_children_doc },
+  {"async", pyzoo_async, METH_VARARGS, pyzk_async_doc },
+  {"aget_acl", pyzoo_aget_acl, METH_VARARGS, pyzk_aget_acl_doc },
+  {"aset_acl", pyzoo_aset_acl, METH_VARARGS, pyzk_aset_acl_doc },
+  {"zerror", pyzerror, METH_VARARGS, pyzk_zerror_doc },
+  {"add_auth", pyzoo_add_auth, METH_VARARGS, pyzk_add_auth_doc },
   {NULL, NULL}
 };
 

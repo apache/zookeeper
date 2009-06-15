@@ -20,13 +20,12 @@ import unittest, threading
 
 import zookeeper, zktestbase
 
-class ConnectionTest(zktestbase.TestBase):
-    """Test whether we can make a connection"""
+class ClientidTest(zktestbase.TestBase):
+    """Test whether clientids work"""
     def setUp(self):
         pass
-    
-    def testconnection(self):
-        print "testconnection"
+            
+    def testclientid(self):
         cv = threading.Condition()
         self.connected = False
         def connection_watcher(handle, type, state, path):
@@ -36,13 +35,14 @@ class ConnectionTest(zktestbase.TestBase):
             cv.release()
 
         cv.acquire()
-        ret = zookeeper.init(self.host, connection_watcher)
+        self.handle = zookeeper.init(self.host, connection_watcher,10000,(123456,"mypassword"))
+        self.assertEqual(self.handle, zookeeper.OK)
         cv.wait(15.0)
         cv.release()
         self.assertEqual(self.connected, True, "Connection timed out to " + self.host)
-        
-    def tearDown(self):
-        pass
-        
+        (cid,passwd) = zookeeper.client_id(self.handle)
+        self.assertEqual(cid,123456)
+        self.assertEqual(passwd,"mypassword")   
+
 if __name__ == '__main__':
     unittest.main()
