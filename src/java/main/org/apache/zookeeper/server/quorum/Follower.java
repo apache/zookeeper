@@ -117,7 +117,9 @@ public class Follower {
         if (pp.getType() == Leader.PING) {
             traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
         }
-        ZooTrace.logQuorumPacket(LOG, traceMask, 'i', pp);
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logQuorumPacket(LOG, traceMask, 'i', pp);
+        }
     }
 
     /**
@@ -291,10 +293,12 @@ public class Follower {
                                 cnxn.finishSessionInit(valid);
                             }
                         }
-                        ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                                                 "Session 0x" 
-                                                 + Long.toHexString(sessionId)
-                                                 + " is valid: " + valid);
+                        if (LOG.isTraceEnabled()) {
+                            ZooTrace.logTraceMessage(LOG,
+                                    ZooTrace.SESSION_TRACE_MASK,
+                                    "Session 0x" + Long.toHexString(sessionId)
+                                    + " is valid: " + valid);
+                        }
                         break;
                     case Leader.SYNC:
                         zk.sync();
@@ -350,10 +354,12 @@ public class Follower {
         QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos
                 .toByteArray(), null);
         pendingRevalidations.put(clientId, cnxn);
-        ZooTrace.logTraceMessage(LOG,
-                                 ZooTrace.SESSION_TRACE_MASK,
-                                 "To validate session 0x"
-                                 + Long.toHexString(clientId));
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                                     ZooTrace.SESSION_TRACE_MASK,
+                                     "To validate session 0x"
+                                     + Long.toHexString(clientId));
+        }
         writePacket(qp, true);
     }
 

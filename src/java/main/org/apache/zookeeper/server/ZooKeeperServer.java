@@ -312,9 +312,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     protected void killSession(long sessionId, long zxid) {
         dataTree.killSession(sessionId, zxid);
-        ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                                     "ZooKeeperServer --- killSession: 0x"
-                + Long.toHexString(sessionId));
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                                         "ZooKeeperServer --- killSession: 0x"
+                    + Long.toHexString(sessionId));
+        }
         if (sessionTracker != null) {
             sessionTracker.removeSession(sessionId);
         }
@@ -502,9 +504,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,
             int sessionTimeout) throws IOException, InterruptedException {
         boolean rc = sessionTracker.touchSession(sessionId, sessionTimeout);
-        ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
-                                 "Session 0x" + Long.toHexString(sessionId) +
-                " is valid: " + rc);
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
+                                     "Session 0x" + Long.toHexString(sessionId) +
+                    " is valid: " + rc);
+        }
         cnxn.finishSessionInit(rc);
     }
 
