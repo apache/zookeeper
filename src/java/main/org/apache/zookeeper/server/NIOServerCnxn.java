@@ -584,7 +584,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 + " our last zxid is 0x"
                 + Long.toHexString(zk.dataTree.lastProcessedZxid);
 
-            LOG.error(msg);
+            LOG.warn(msg);
             throw new IOException(msg);
         }
         sessionTimeout = connReq.getTimeOut();

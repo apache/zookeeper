@@ -212,6 +212,9 @@ istraceneabled - inefficient (pat via mahadev)
   ZOOKEEPER-432. Various improvements to zkpython bindings. (henry via
 mahadev)
 
+  ZOOKEEPER-428. logging should be makred as warn rathen than error in
+NIOServerCnxn. (phunt via mahadev)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
