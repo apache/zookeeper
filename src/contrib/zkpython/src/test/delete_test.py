@@ -18,45 +18,43 @@
 
 import zookeeper, zktestbase, unittest, threading
 
-class CreationTest(zktestbase.TestBase):
-    """Test whether we can create znodes"""
-    # to do: startup and teardown via scripts?
-    def setUp( self ):
-        zktestbase.TestBase.setUp(self)
-        try:
-            zookeeper.delete(self.handle, "/zk-python-createtest")
-            zookeeper.delete(self.handle, "/zk-python-acreatetest")
-        except:
-            pass
+class DeletionTest(zktestbase.TestBase):
+    """Test whether we can delete znodes"""
 
-    def test_sync_create(self):
+    def test_sync_delete(self):
         ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
         self.assertEqual(self.connected, True)
-        ret = zookeeper.create(self.handle, "/zk-python-createtest", "nodecontents", [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
-        self.assertEqual(ret, "/zk-python-createtest")
+        ret = zookeeper.create(self.handle, "/zk-python-deletetest", "nodecontents", [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
+        self.assertEqual(ret, "/zk-python-deletetest")
+        ret = zookeeper.delete(self.handle,"/zk-python-deletetest")
+        self.assertEqual(ret, zookeeper.OK)
+        children = zookeeper.get_children(self.handle, "/")
+        self.assertEqual(False, "zk-python-deletetest" in children)
+    
+    def test_async_delete(self):
+        ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
+        self.assertEqual(self.connected, True)
+        ret = zookeeper.create(self.handle, "/zk-python-adeletetest", "nodecontents", [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
+        self.assertEqual(ret, "/zk-python-adeletetest")
         
-    def test_async_create(self):
         self.cv = threading.Condition()
-        def callback(handle, rc, value):
+        self.callback_flag = False
+        self.rc = -1
+        def callback(handle, rc):
             self.cv.acquire()
-            self.callback_flag = True   
-            self.rc = rc         
+            self.callback_flag = True            
             self.cv.notify()
+            self.rc = rc # don't assert this here, as if the assertion fails, the test will block
             self.cv.release()
 
-        ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
-        self.assertEqual(self.connected, True, "Not connected!")
         self.cv.acquire()
-
-        ret = zookeeper.acreate(self.handle, "/zk-python-acreatetest", "nodecontents",
-                                [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL,
-                                callback )
-        self.assertEqual(ret, zookeeper.OK, "acreate failed")
+        ret = zookeeper.adelete(self.handle,"/zk-python-adeletetest",-1,callback)
+        self.assertEqual(ret, zookeeper.OK, "adelete failed")
         while not self.callback_flag:
             self.cv.wait(15)
         self.cv.release()
 
-        self.assertEqual(self.callback_flag, True, "acreate timed out")
+        self.assertEqual(self.callback_flag, True, "adelete timed out")
         self.assertEqual(self.rc, zookeeper.OK)
 
         

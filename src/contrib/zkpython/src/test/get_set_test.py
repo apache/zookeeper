@@ -19,11 +19,13 @@
 import zookeeper, zktestbase, unittest, threading
 ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
 
-class SyncGetSetTest(zktestbase.TestBase):
+class GetSetTest(zktestbase.TestBase):
     def setUp( self ):
         zktestbase.TestBase.setUp(self)
         try:
             zookeeper.create(self.handle, "/zk-python-getsettest", "on",[ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
+            zookeeper.create(self.handle, "/zk-python-agetsettest",
+                             "on",[ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
         except:
             pass
 
@@ -31,18 +33,11 @@ class SyncGetSetTest(zktestbase.TestBase):
         self.assertEqual(self.connected, True, "Not connected!")
         (data,stat) = zookeeper.get(self.handle, "/zk-python-getsettest", None)
         self.assertEqual(data, "on", "Data is not 'on' as expected: " + data)
-        ret = zookeeper.set(self.handle, "/zk-python-getsettest", "off", stat["version"])
+        ret = zookeeper.set(self.handle, "/zk-python-getsettest",
+                            "off", stat["version"])
         (data,stat) = zookeeper.get(self.handle, "/zk-python-getsettest", None)
         self.assertEqual(data, "off", "Data is not 'off' as expected: " + data)        
 
-class AsyncGetSetTest(zktestbase.TestBase):
-    def setUp( self ):
-        zktestbase.TestBase.setUp(self)
-        try:
-            zookeeper.create(self.handle, "/zk-python-agetsettest", "on",[ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)            
-        except:
-            pass
-        
     def test_async_getset(self):
         self.cv = threading.Condition()        
         def get_callback(handle, rc, value, stat):
@@ -81,9 +76,6 @@ class AsyncGetSetTest(zktestbase.TestBase):
         self.cv.release()
         self.assertEqual(self.callback_flag, True, "aget timed out")
         self.assertEqual(self.value[0], "off", "Data is not 'off' as expected: " + self.value[0])
-
-            
-
         
 if __name__ == '__main__':
     unittest.main()
