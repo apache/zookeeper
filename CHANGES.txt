@@ -3,6 +3,7 @@ Trunk
 Non-backward compatible changes:
 
 BUGFIXES: 
+  ZOOKEEPER-444. perms definition for PERMS_ALL differ in C and java (mahadev)
 
 Backward compatibile changes:
 

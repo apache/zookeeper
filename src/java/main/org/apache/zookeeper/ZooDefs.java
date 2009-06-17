@@ -70,7 +70,7 @@ public class ZooDefs {
 
         int ADMIN = 1 << 4;
 
-        int ALL = READ | WRITE | CREATE | DELETE;
+        int ALL = READ | WRITE | CREATE | DELETE | ADMIN;
     }
 
     public interface Ids {
@@ -86,7 +86,7 @@ public class ZooDefs {
         public final Id AUTH_IDS = new Id("auth", "");
 
         /**
-         * This is a completely open ACL with the exception of ADMIN permission.
+         * This is a completely open ACL .
          */
         public final ArrayList<ACL> OPEN_ACL_UNSAFE = new ArrayList<ACL>(
                 Collections.singletonList(new ACL(Perms.ALL, ANYONE_ID_UNSAFE)));
