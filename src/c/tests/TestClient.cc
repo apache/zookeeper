@@ -378,7 +378,8 @@ public:
         count = 0;
         watchctx_t ctx1, ctx2, ctx3;
         zhandle_t *zk = createClient(&ctx1);
-        
+        struct ACL_vector nodeAcl;
+        struct ACL acl_val;
         rc = zoo_add_auth(0, "", 0, 0, voidCompletion, (void*)-1);
         CPPUNIT_ASSERT_EQUAL((int) ZBADARGUMENTS, rc);
         
@@ -435,6 +436,19 @@ public:
         // now try getting the data
         rc = zoo_get(zk, "/tauth1", 0, buf, &blen, &stat);
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        // also check for get
+        rc = zoo_get_acl(zk, "/", &nodeAcl, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        // check if the acl has all the perms
+        CPPUNIT_ASSERT_EQUAL((int)1, nodeAcl.count);
+        acl_val = *(nodeAcl.data);
+        CPPUNIT_ASSERT_EQUAL((int) acl_val.perms, ZOO_PERM_ALL);
+        // verify on root node
+        rc = zoo_set_acl(zk, "/", -1, &ZOO_CREATOR_ALL_ACL);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+
+        rc = zoo_set_acl(zk, "/", -1, &ZOO_OPEN_ACL_UNSAFE);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
     }
     
     void testNullData() {
