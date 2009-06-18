@@ -119,7 +119,7 @@ public class CRCTest extends TestCase implements Watcher{
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        SyncRequestProcessor.snapCount = 150;
+        SyncRequestProcessor.setSnapCount(150);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
         f.startup(zks);

@@ -53,7 +53,9 @@ public class DataNode implements Record {
     /** the list of children for this node. note 
      * that the list of children string does not 
      * contain the parent path -- just the last
-     * part of the path.
+     * part of the path. This should be 
+     * synchronized on except deserializing 
+     * (for speed up issues).
      */
     Set<String> children = new HashSet<String>();
 
@@ -83,7 +85,7 @@ public class DataNode implements Record {
      * fully
      * @param children
      */
-    public void setChildren(HashSet<String> children) {
+    public synchronized void setChildren(HashSet<String> children) {
         this.children = children;
     }
     
@@ -91,12 +93,12 @@ public class DataNode implements Record {
      * convenience methods to get the children
      * @return the children of this datanode
      */
-    public Set<String> getChildren() {
+    public synchronized Set<String> getChildren() {
         return this.children;
     }
     
    
-    public void copyStat(Stat to) {
+    synchronized public void copyStat(Stat to) {
         to.setAversion(stat.getAversion());
         to.setCtime(stat.getCtime());
         to.setCversion(stat.getCversion());
@@ -110,7 +112,7 @@ public class DataNode implements Record {
         to.setNumChildren(children.size());
     }
 
-    public void deserialize(InputArchive archive, String tag)
+    synchronized public void deserialize(InputArchive archive, String tag)
             throws IOException {
         archive.startRecord("node");
         data = archive.readBuffer("data");

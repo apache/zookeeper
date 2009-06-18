@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -170,7 +171,17 @@ public class Util {
         try {
             raf.seek(raf.length() - 5);
             byte bytes[] = new byte[5];
-            raf.read(bytes);
+            int readlen = 0;
+            int l;
+            while(readlen < 5 &&
+                  (l = raf.read(bytes, readlen, bytes.length - readlen)) >= 0) {
+                readlen += l;
+            }
+            if (readlen != bytes.length) {
+                LOG.info("Invalid snapshot " + f
+                        + " too short, len = " + readlen);
+                return false;
+            }
             ByteBuffer bb = ByteBuffer.wrap(bytes);
             int len = bb.getInt();
             byte b = bb.get();
@@ -271,7 +282,11 @@ public class Util {
      * Compare file file names of form "prefix.version". Sort order result
      * returned in order of version.
      */
-    private static class DataDirFileComparator implements Comparator<File> {
+    private static class DataDirFileComparator
+        implements Comparator<File>, Serializable
+    {
+        private static final long serialVersionUID = -2648639884525140318L;
+
         private String prefix;
         private boolean ascending;
         public DataDirFileComparator(String prefix, boolean ascending) {

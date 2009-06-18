@@ -58,7 +58,7 @@ public class InvalidSnapshotTest extends TestCase implements Watcher {
     public void testSnapshot() throws Exception {
         File snapDir = new File(testData, "invalidsnap");
         zks = new ZooKeeperServer(snapDir, snapDir, 3000);
-        SyncRequestProcessor.snapCount = 1000;
+        SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
         f.startup(zks);

@@ -77,7 +77,7 @@ public abstract class ClientBase extends TestCase {
         // XXX this doesn't need to be volatile! (Should probably be final)
         volatile CountDownLatch clientConnected;
         volatile boolean connected;
-        
+
         public CountdownWatcher() {
             reset();
         }
@@ -107,7 +107,7 @@ public abstract class ClientBase extends TestCase {
             }
             if (!connected) {
                 throw new TimeoutException("Did not connect");
-         
+
             }
         }
         synchronized void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
@@ -119,11 +119,11 @@ public abstract class ClientBase extends TestCase {
             }
             if (connected) {
                 throw new TimeoutException("Did not disconnect");
-         
+
             }
         }
     }
-    
+
     protected ZooKeeper createClient()
         throws IOException, InterruptedException
     {
@@ -226,7 +226,7 @@ public abstract class ClientBase extends TestCase {
         }
         return false;
     }
-    
+
     static void verifyThreadTerminated(Thread thread, long millis)
         throws InterruptedException
     {
@@ -234,7 +234,7 @@ public abstract class ClientBase extends TestCase {
         if (thread.isAlive()) {
             LOG.error("Thread " + thread.getName() + " : "
                     + Arrays.toString(thread.getStackTrace()));
-            assertFalse("thread " + thread.getName() 
+            assertFalse("thread " + thread.getName()
                     + " still alive after join", true);
         }
     }
@@ -272,7 +272,7 @@ public abstract class ClientBase extends TestCase {
 
         return factory;
     }
-    
+
     static void shutdownServerInstance(NIOServerCnxn.Factory factory,
             String hostPort)
     {
@@ -285,7 +285,7 @@ public abstract class ClientBase extends TestCase {
                                                     CONNECTION_TIMEOUT));
         }
     }
-    
+
     /**
      * Test specific setup
      */
@@ -295,21 +295,20 @@ public abstract class ClientBase extends TestCase {
         // resulting in test failure (client timeout on first session).
         // set env and directly in order to handle static init/gc issues
         System.setProperty("zookeeper.preAllocSize", "100");
-        FileTxnLog.setPreallocSize(100);
+        FileTxnLog.setPreallocSize(100 * 1024);
     }
-    
+
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
-
-        JMXEnv.setUp();
-        
-        tmpDir = createTmpDir(BASETEST);
-        
         setupTestEnv();
 
+        JMXEnv.setUp();
+
+        tmpDir = createTmpDir(BASETEST);
+
         startServer();
-        
+
         LOG.info("Client test setup finished");
     }
 
@@ -319,7 +318,7 @@ public abstract class ClientBase extends TestCase {
         // ensure that only server and data bean are registered
         JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
     }
-    
+
     protected void stopServer() throws Exception {
         LOG.info("STOPPING server");
         shutdownServerInstance(serverFactory, hostPort);
@@ -348,7 +347,7 @@ public abstract class ClientBase extends TestCase {
     public static MBeanServerConnection jmxConn() throws IOException {
         return JMXEnv.conn();
     }
-    
+
     private static boolean recursiveDelete(File d) {
         if (d.isDirectory()) {
             File children[] = d.listFiles();

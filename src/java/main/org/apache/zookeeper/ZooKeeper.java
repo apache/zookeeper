@@ -165,7 +165,7 @@ public class ZooKeeper {
                 }
 
                 // clear the watches if auto watch reset is not enabled
-                if (ClientCnxn.disableAutoWatchReset &&
+                if (ClientCnxn.getDisableAutoResetWatch() &&
                         state != Watcher.Event.KeeperState.SyncConnected)
                 {
                     synchronized(dataWatches) {

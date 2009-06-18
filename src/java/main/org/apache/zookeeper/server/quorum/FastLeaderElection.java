@@ -20,7 +20,6 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -348,9 +347,7 @@ public class FastLeaderElection implements Election {
     }
 
     QuorumPeer self;
-    int port;
     volatile long logicalclock; /* Election instance */
-    Messenger messenger;
     long proposedLeader;
     long proposedZxid;
 
@@ -393,7 +390,7 @@ public class FastLeaderElection implements Election {
 
         sendqueue = new LinkedBlockingQueue<ToSend>();
         recvqueue = new LinkedBlockingQueue<Notification>();
-        messenger = new Messenger(manager);
+        new Messenger(manager);
     }
 
     private void leaveInstance() {

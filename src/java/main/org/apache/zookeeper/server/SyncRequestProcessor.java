@@ -37,7 +37,6 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     private ZooKeeperServer zks;
     private LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
     private RequestProcessor nextProcessor;
-    boolean timeToDie = false;
     Thread snapInProcess = null;
     
     /**
@@ -51,7 +50,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     /**
      * The number of log entries to log before starting a snapshot
      */
-    public static int snapCount = ZooKeeperServer.getSnapCount();
+    private static int snapCount = ZooKeeperServer.getSnapCount();
 
     private Request requestOfDeath = Request.requestOfDeath;
 
@@ -61,7 +60,24 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         this.zks = zks;
         this.nextProcessor = nextProcessor;
     }
-
+    
+    /**
+     * used by tests to check for changing 
+     * snapcounts
+     * @param count
+     */
+    public static void setSnapCount(int count) {
+        snapCount = count;
+    }
+    
+    /**
+     * used by tests to get the snapcount
+     * @return the snapcount
+     */
+    public static int getSnapCount() {
+        return snapCount;
+    }
+    
     @Override
     public void run() {
         try {
@@ -133,7 +149,6 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     }
 
     public void shutdown() {
-        timeToDie = true;
         queuedRequests.add(requestOfDeath);
         nextProcessor.shutdown();
     }
