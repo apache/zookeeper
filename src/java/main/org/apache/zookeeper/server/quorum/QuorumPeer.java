@@ -208,7 +208,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                         case LEADING:
                             responseBuffer.putLong(myid);
                             try {
-                                responseBuffer.putLong(leader.lastProposed);
+                                long proposed;
+                                synchronized(leader) {
+                                    proposed = leader.lastProposed;
+                                }
+                                responseBuffer.putLong(proposed);
                             } catch (NullPointerException npe) {
                                 // This can happen in state transitions,
                                 // just ignore the request

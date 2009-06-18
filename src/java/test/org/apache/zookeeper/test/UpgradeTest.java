@@ -66,7 +66,7 @@ public class UpgradeTest extends TestCase implements Watcher {
         UpgradeMain upgrade = new UpgradeMain(upgradeDir, upgradeDir);
         upgrade.runUpgrade();
         zks = new ZooKeeperServer(upgradeDir, upgradeDir, 3000);
-        SyncRequestProcessor.snapCount = 1000;
+        SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
         f.startup(zks);
