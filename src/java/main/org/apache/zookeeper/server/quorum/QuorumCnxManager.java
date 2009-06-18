@@ -527,7 +527,9 @@ public class QuorumCnxManager {
                      * message
                      */
                     while (msgLength.hasRemaining()) {
-                        channel.read(msgLength);
+                        if (channel.read(msgLength) < 0) {
+                            throw new IOException("Channel eof");
+                        }
                     }
                     msgLength.position(0);
                     int length = msgLength.getInt();
