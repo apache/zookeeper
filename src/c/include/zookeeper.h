@@ -128,11 +128,18 @@ extern ZOOAPI const int ZOO_PERM_DELETE;
 extern ZOOAPI const int ZOO_PERM_ADMIN;
 extern ZOOAPI const int ZOO_PERM_ALL;
 
+/** This Id represents anyone. */
 extern ZOOAPI struct Id ZOO_ANYONE_ID_UNSAFE;
+/** This Id is only usable to set ACLs. It will get substituted with the
+ * Id's the client authenticated with.
+ */
 extern ZOOAPI struct Id ZOO_AUTH_IDS;
 
+/** This is a completely open ACL*/
 extern ZOOAPI struct ACL_vector ZOO_OPEN_ACL_UNSAFE;
+/** This ACL gives the world the ability to read. */
 extern ZOOAPI struct ACL_vector ZOO_READ_ACL_UNSAFE;
+/** This ACL gives the creators authentication id's all permissions. */
 extern ZOOAPI struct ACL_vector ZOO_CREATOR_ALL_ACL;
 
 /**
