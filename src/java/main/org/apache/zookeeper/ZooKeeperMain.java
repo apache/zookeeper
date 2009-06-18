@@ -63,7 +63,7 @@ public class ZooKeeperMain {
     static void populateCommandMap() {
         commandMap.put("connect", "host:port");
         commandMap.put("close","");
-        commandMap.put("create", "path data acl");
+        commandMap.put("create", "[-s] [-e] path data acl");
         commandMap.put("delete","path [version]");
         commandMap.put("set","path data [version]");
         commandMap.put("get","path [watch]");
@@ -92,7 +92,6 @@ public class ZooKeeperMain {
     private class MyWatcher implements Watcher {
         public void process(WatchedEvent event) {
             if (getPrintWatches()) {
-                ZooKeeperMain.printMessage("WATCHER::");
                 ZooKeeperMain.printMessage("WATCHER::");
                 ZooKeeperMain.printMessage(event.toString());
             }
@@ -661,12 +660,25 @@ public class ZooKeeperMain {
         }
         
         if (cmd.equals("create") && args.length >= 3) {
-            if (args.length == 4) {
-                acl = parseACLs(args[3]);
+            int first = 0;
+            CreateMode flags = CreateMode.PERSISTENT;
+            if ((args[1].equals("-e") && args[2].equals("-s"))
+                    || (args[1]).equals("-s") && (args[2].equals("-e"))) {
+                first+=2;
+                flags = CreateMode.EPHEMERAL_SEQUENTIAL;
+            } else if (args[1].equals("-e")) {
+                first++;
+                flags = CreateMode.EPHEMERAL;
+            } else if (args[1].equals("-s")) {
+                first++;
+                flags = CreateMode.PERSISTENT_SEQUENTIAL;
             }
-            path = args[1];
-            String newPath = zk.create(path, args[2].getBytes(), acl,
-                    CreateMode.PERSISTENT);
+            if (args.length == first + 4) {
+                acl = parseACLs(args[first+3]);
+            }
+            path = args[first + 1];
+            String newPath = zk.create(path, args[first+2].getBytes(), acl,
+                    flags);
             System.err.println("Created " + newPath);
         } else if (cmd.equals("delete") && args.length >= 2) {
             path = args[1];

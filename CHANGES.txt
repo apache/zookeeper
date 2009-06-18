@@ -223,6 +223,8 @@ mahadev)
   ZOOKEEPER-428. logging should be makred as warn rathen than error in
 NIOServerCnxn. (phunt via mahadev)
 
+  ZOOKEEPER-422. Java CLI should support ephemeral and sequential node creation (henry via breed)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
