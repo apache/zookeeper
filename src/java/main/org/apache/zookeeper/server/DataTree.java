@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,7 +44,9 @@ import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -193,15 +196,17 @@ public class DataTree {
         aclKeyMap.put(acls, val);
         return val;
     }
-    
+
     /**
      * converts a list of longs to a list of acls. 
      * @param longs the list of longs 
      * @return a list of ACLs that map to longs
      */
     public synchronized List<ACL> convertLong(Long longVal) {
-        if (longVal == null || longVal == -1L) 
+        if (longVal == null) 
             return null;
+        if (longVal == -1L)
+            return Ids.OPEN_ACL_UNSAFE;
         List<ACL> acls = longKeyMap.get(longVal);
         if (acls == null) {
             LOG.error("ERROR: ACL not available for long " + longVal);

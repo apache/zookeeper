@@ -439,7 +439,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 }
                 boolean authIdValid = false;
                 for (Id cid : authInfo) {
-                    AuthenticationProvider ap = ProviderRegistry.getProvider(cid.getScheme());
+                    AuthenticationProvider ap =
+                        ProviderRegistry.getProvider(cid.getScheme());
                     if (ap == null) {
                         LOG.error("Missing AuthenticationProvider for "
                                 + cid.getScheme());
