@@ -80,9 +80,9 @@ public class ClientCnxn {
      * Clients automatically reset watches during session reconnect, this
      * option allows the client to turn off this behavior by setting
      * the environment variable "zookeeper.disableAutoWatchReset" to "true" */
-    public static boolean disableAutoWatchReset;
+    private static boolean disableAutoWatchReset;
    
-    public static int packetLen;
+    public static final int packetLen;
     static {
         // this var should not be public, but otw there is no easy way 
         // to test
@@ -104,7 +104,7 @@ public class ClientCnxn {
 
         byte data[];
     }
-
+    
     private ArrayList<AuthData> authInfo = new ArrayList<AuthData>();
 
     /**
@@ -305,7 +305,21 @@ public class ClientCnxn {
         sendThread = new SendThread();
         eventThread = new EventThread();
     }
-
+    
+    /**
+     * tests use this to check on reset of watches
+     * @return if the auto reset of watches are disabled
+     */
+    public static boolean getDisableAutoResetWatch() {
+        return disableAutoWatchReset;
+    }
+    /**
+     * tests use this to set the auto reset
+     * @param b the vaued to set disable watches to
+     */
+    public static void setDisableAutoResetWatch(boolean b) {
+        disableAutoWatchReset = b;
+    }
     public void start() {
         sendThread.start();
         eventThread.start();

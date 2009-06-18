@@ -532,14 +532,14 @@ public class ClientTest extends ClientBase {
 
         
         //check for the code path that throws at server
-        PrepRequestProcessor.failCreate = true;
+        PrepRequestProcessor.setFailCreate(true);
         try {
             zk.create("/m", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             assertTrue(false);
         } catch(KeeperException.BadArgumentsException be) {
             // catch this.
         }
-        PrepRequestProcessor.failCreate = false;
+        PrepRequestProcessor.setFailCreate(false);
         zk.create("/.foo", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/.f.", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/..f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

@@ -74,8 +74,8 @@ public class RecoveryTest extends TestCase implements Watcher {
         ClientBase.setupTestEnv();
         ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 
-        int oldSnapCount = SyncRequestProcessor.snapCount;
-        SyncRequestProcessor.snapCount = 1000;
+        int oldSnapCount = SyncRequestProcessor.getSnapCount();
+        SyncRequestProcessor.setSnapCount(1000);
         try {
             final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
             NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
@@ -190,7 +190,7 @@ public class RecoveryTest extends TestCase implements Watcher {
                        ClientBase.waitForServerDown(HOSTPORT,
                                                     CONNECTION_TIMEOUT));
         } finally {
-            SyncRequestProcessor.snapCount = oldSnapCount;
+            SyncRequestProcessor.setSnapCount(oldSnapCount);
         }
     }
 

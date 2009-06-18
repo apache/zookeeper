@@ -108,14 +108,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected long hzxid = 0;
     final public static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
-    LinkedBlockingQueue<Long> sessionsToDie = new LinkedBlockingQueue<Long>();
     protected volatile boolean running;
 
     /**
      * This is the secret that we use to generate passwords, for the moment it
      * is more of a sanity check.
      */
-    final private long superSecret = 0XB3415C00L;
+    static final private long superSecret = 0XB3415C00L;
 
     int requestsInProcess;
     List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();

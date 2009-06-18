@@ -121,6 +121,9 @@ BUGFIXES:
 
   ZOOKEEPER-433.  getacl on root znode (/) fails. (phunt via mahadev)
 
+  ZOOKEEPER-408. address all findbugs warnings in persistence classes.
+(phunt, mahadev, flavio via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

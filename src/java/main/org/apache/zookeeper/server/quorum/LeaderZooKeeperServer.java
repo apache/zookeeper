@@ -64,8 +64,9 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
         commitProcessor = new CommitProcessor(toBeAppliedProcessor,
                 Long.toString(getServerId()), false);
         commitProcessor.start();
-        RequestProcessor proposalProcessor = new ProposalRequestProcessor(this,
+        ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this,
                 commitProcessor);
+        proposalProcessor.initialize();
         firstProcessor = new PrepRequestProcessor(this, proposalProcessor);
         ((PrepRequestProcessor)firstProcessor).start();
     }

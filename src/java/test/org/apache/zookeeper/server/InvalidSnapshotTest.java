@@ -52,7 +52,7 @@ public class InvalidSnapshotTest extends TestCase implements Watcher {
        File tmpDir = ClientBase.createTmpDir();
        ClientBase.setupTestEnv();
        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-       SyncRequestProcessor.snapCount = 100;
+       SyncRequestProcessor.setSnapCount(100);
        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
        f.startup(zks);
@@ -73,7 +73,7 @@ public class InvalidSnapshotTest extends TestCase implements Watcher {
        raf.close();
        // now restart the server and see if it starts
        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-       SyncRequestProcessor.snapCount = 100;
+       SyncRequestProcessor.setSnapCount(100);
        f = new NIOServerCnxn.Factory(PORT);
        f.startup(zks);
        assertTrue("waiting for server being up ", 

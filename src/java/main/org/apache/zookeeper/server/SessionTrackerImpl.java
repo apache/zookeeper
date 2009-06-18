@@ -44,7 +44,6 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     ConcurrentHashMap<Long, Integer> sessionsWithTimeout;
     long nextSessionId = 0;
-    long serverId;
     long nextExpirationTime;
 
     int expirationInterval;
@@ -87,7 +86,6 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         this.expirationInterval = tickTime;
         this.sessionsWithTimeout = sessionsWithTimeout;
         nextExpirationTime = roundToInterval(System.currentTimeMillis());
-        this.serverId = sid;
         this.nextSessionId = initializeNextSession(sid);
         for (Entry<Long, Integer> e : sessionsWithTimeout.entrySet()) {
             addSession(e.getKey(), e.getValue());

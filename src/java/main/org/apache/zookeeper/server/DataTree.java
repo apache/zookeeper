@@ -82,20 +82,20 @@ public class DataTree {
     private WatchManager childWatches = new WatchManager();
 
     /** the root of zookeeper tree */
-    private final String rootZookeeper = "/";
+    private static final String rootZookeeper = "/";
     
     /** the zookeeper nodes that acts as the management and status node **/
-    private final String procZookeeper = Quotas.procZookeeper;
+    private static final String procZookeeper = Quotas.procZookeeper;
     
     /** this will be the string thats stored as a child of root */
-    private final String procChildZookeeper = procZookeeper.substring(1);
+    private static final String procChildZookeeper = procZookeeper.substring(1);
     
     /** the zookeeper quota node that acts as the quota 
      * management node for zookeeper */
-    private final String quotaZookeeper = Quotas.quotaZookeeper;
+    private static final String quotaZookeeper = Quotas.quotaZookeeper;
 
     /** this will be the string thats stored as a child of /zookeeper */
-    private final String quotaChildZookeeper = quotaZookeeper.substring(
+    private static final String quotaChildZookeeper = quotaZookeeper.substring(
             procZookeeper.length() + 1);
     
     /** 
@@ -249,8 +249,10 @@ public class DataTree {
     public long approximateDataSize() {
         long result = 0;
         for (Map.Entry<String, DataNode> entry : nodes.entrySet()) {
-            result += entry.getKey().length();
-            result += entry.getValue().data.length;
+            synchronized(entry.getValue()) {
+                result += entry.getKey().length();
+                result += (entry.getValue().data == null? 0 : entry.getValue().data.length);
+            }
         }
         return result;
     }
@@ -340,6 +342,11 @@ public class DataTree {
         String statNode = Quotas.statPath(lastPrefix);
         DataNode node = nodes.get(statNode);
         StatsTrack updatedStat = null;
+        if (node == null) {
+            //should not happen
+            LOG.error("Missing count node for stat " + statNode);
+            return;
+        }
         synchronized(node) {
             updatedStat = new StatsTrack(new String(node.data));
             updatedStat.setCount(updatedStat.getCount() + diff);
@@ -349,6 +356,11 @@ public class DataTree {
         String quotaNode = Quotas.quotaPath(lastPrefix);
         node = nodes.get(quotaNode);
         StatsTrack thisStats = null;
+        if (node == null) {
+            //should not happen
+            LOG.error("Missing count node for quota " + quotaNode);
+            return;
+        }
         synchronized(node) {
             thisStats = new StatsTrack(new String(node.data));
         }
@@ -363,10 +375,17 @@ public class DataTree {
      * update the count of bytes of this stat datanode
      * @param lastPrefix the path of the node that is quotaed
      * @param diff the diff to added to number of bytes
+     * @throws IOException if path is not found
      */
-    public void updateBytes(String lastPrefix, long diff) {
+    public void updateBytes(String lastPrefix, long diff)  {
         String statNode = Quotas.statPath(lastPrefix);
         DataNode node = nodes.get(statNode);
+        if (node == null) {
+            //should never be null but just to make 
+            // findbugs happy
+            LOG.error("Missing stat node for bytes " + statNode);
+            return;
+        }
         StatsTrack updatedStat = null;
         synchronized(node) {
             updatedStat = new StatsTrack(new String(node.data));
@@ -376,6 +395,12 @@ public class DataTree {
         // now check if the bytes match the quota
         String quotaNode = Quotas.quotaPath(lastPrefix);
         node = nodes.get(quotaNode);
+        if (node == null) {
+            //should never be null but just to make
+            // findbugs happy
+            LOG.error("Missing quota node for bytes " + quotaNode);
+            return;
+        }
         StatsTrack thisStats = null;
         synchronized(node) {
             thisStats = new StatsTrack(new String(node.data));
@@ -515,7 +540,11 @@ public class DataTree {
         if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
             // ok we have some match and need to update 
             updateCount(lastPrefix, -1);
-            updateBytes(lastPrefix, node.data == null? 0:-(node.data.length));
+            int bytes = 0;
+            synchronized (node) {
+                bytes = (node.data == null? 0:-(node.data.length));
+            }
+            updateBytes(lastPrefix, bytes);
         }
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(LOG,
@@ -538,8 +567,9 @@ public class DataTree {
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
-        byte lastdata[] = n.data;
+        byte lastdata[] = null;
         synchronized (n) {
+            lastdata = n.data;
             n.data = data;
             n.stat.setMtime(time);
             n.stat.setMzxid(zxid);
@@ -782,13 +812,15 @@ public class DataTree {
             return;
         }
         String[] children = null;
+        int len = 0;
         synchronized (node) {
             children = node.children.toArray(new
                     String[node.children.size()]);
+            len = (node.data == null? 0: node.data.length);
         }
         // add itself
         counts.count += 1;
-        counts.bytes += (long)node.data.length;
+        counts.bytes += len;
         if (children.length == 0) {
             return;
         }
@@ -966,6 +998,10 @@ public class DataTree {
             } else {
                 String parentPath = path.substring(0, lastSlash);
                 node.parent = nodes.get(parentPath);
+                if (node.parent == null) {
+                    throw new IOException("Invalid Datatree, unable to find " +
+                    		"parent " + parentPath + " of path " + path);
+                }
                 node.parent.children.add(path.substring(lastSlash + 1));
                 long eowner = node.stat.getEphemeralOwner();
                 if (eowner != 0) {

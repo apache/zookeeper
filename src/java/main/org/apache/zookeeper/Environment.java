@@ -56,7 +56,7 @@ public class Environment {
 
         try {
             put(l, "host.name",
-                InetAddress.getLocalHost().getCanonicalHostName().toString());
+                InetAddress.getLocalHost().getCanonicalHostName());
         } catch (UnknownHostException e) {
             put(l, "host.name", "<NA>");
         }
