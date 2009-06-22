@@ -126,6 +126,8 @@ BUGFIXES:
 
   ZOOKEEPER-427. ZooKeeper server unexpectedly high CPU utilisation (Sergey Zhuravlev via breed)
 
+  ZOOKEEPER-446. some traces of the host auth scheme left (breed via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
