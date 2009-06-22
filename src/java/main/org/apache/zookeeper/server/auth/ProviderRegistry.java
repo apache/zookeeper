@@ -37,10 +37,8 @@ public class ProviderRegistry {
             if (initialized)
                 return;
             IPAuthenticationProvider ipp = new IPAuthenticationProvider();
-            HostAuthenticationProvider hostp = new HostAuthenticationProvider();
             DigestAuthenticationProvider digp = new DigestAuthenticationProvider();
             authenticationProviders.put(ipp.getScheme(), ipp);
-            authenticationProviders.put(hostp.getScheme(), hostp);
             authenticationProviders.put(digp.getScheme(), digp);
             Enumeration<Object> en = System.getProperties().keys();
             while (en.hasMoreElements()) {
