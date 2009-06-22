@@ -80,13 +80,13 @@ public class ACLTest extends TestCase implements Watcher {
                     CreateMode.PERSISTENT);
         }
         assertTrue("size of the acl map ", (1 == zks.dataTree.longKeyMap.size()));
-        for (int j =100; j < 200; j++) {
+        for (int j = 100; j < 200; j++) {
             path = "/" + j;
             ACL acl = new ACL();
             acl.setPerms(0);
             Id id = new Id();
-            id.setId(j + "");
-            id.setScheme("host");
+            id.setId("1.1.1."+j);
+            id.setScheme("ip");
             acl.setId(id);
             ArrayList<ACL> list = new ArrayList<ACL>();
             list.add(acl);
@@ -119,8 +119,8 @@ public class ACLTest extends TestCase implements Watcher {
             ACL acl = new ACL();
             acl.setPerms(0);
             Id id = new Id();
-            id.setId(j + "");
-            id.setScheme("host");
+            id.setId("1.1.1."+j);
+            id.setScheme("ip");
             acl.setId(id);
             ArrayList<ACL> list = new ArrayList<ACL>();
             list.add(acl);

@@ -780,7 +780,6 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         InetAddress addr = ((InetSocketAddress) sock.socket()
                 .getRemoteSocketAddress()).getAddress();
         authInfo.add(new Id("ip", addr.getHostAddress()));
-        authInfo.add(new Id("host", addr.getCanonicalHostName()));
         sk.interestOps(SelectionKey.OP_READ);
     }
 
