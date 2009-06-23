@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper Quota's Guide</title>
+<title>BookKeeper Getting Started Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -135,10 +135,10 @@ document.write("Last Published: " + document.lastModified);
 <a href="recipes.html">Recipes</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">BookKeeper</div>
-<div id="menu_1.3" class="menuitemgroup">
-<div class="menuitem">
-<a href="bookkeeperStarted.html">Getting started</a>
+<div onclick="SwitchMenu('menu_selected_1.3', 'skin/')" id="menu_selected_1.3Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">BookKeeper</div>
+<div id="menu_selected_1.3" class="selectedmenuitemgroup" style="display: block;">
+<div class="menupage">
+<div class="menupagetitle">Getting started</div>
 </div>
 <div class="menuitem">
 <a href="bookkeeperOverview.html">Overview</a>
@@ -150,13 +150,13 @@ document.write("Last Published: " + document.lastModified);
 <a href="bookkeeperProgrammer.html">Programmer's guide</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_selected_1.4', 'skin/')" id="menu_selected_1.4Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Admin &amp; Ops</div>
-<div id="menu_selected_1.4" class="selectedmenuitemgroup" style="display: block;">
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.4" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperAdmin.html">Administrator's Guide</a>
 </div>
-<div class="menupage">
-<div class="menupagetitle">Quota Guide</div>
+<div class="menuitem">
+<a href="zookeeperQuotas.html">Quota Guide</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperJMX.html">JMX</a>
@@ -196,66 +196,219 @@ document.write("Last Published: " + document.lastModified);
     +-->
 <div id="content">
 <div title="Portable Document Format" class="pdflink">
-<a class="dida" href="zookeeperQuotas.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+<a class="dida" href="bookkeeperStarted.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper Quota's Guide</h1>
-<h3>A Guide to Deployment and Administration</h3>
+<h1>BookKeeper Getting Started Guide</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#zookeeper_quotas">Quotas</a>
+<a href="#bk_GettingStarted">Getting Started: Setting up BookKeeper to write logs.</a>
 <ul class="minitoc">
 <li>
-<a href="#Setting+Quotas">Setting Quotas</a>
+<a href="#bk_Prerequisites">Pre-requisites</a>
 </li>
 <li>
-<a href="#Listing+Quotas">Listing Quotas</a>
+<a href="#bk_Download">Download</a>
 </li>
 <li>
-<a href="#Deleting+Quotas"> Deleting Quotas</a>
+<a href="#bk_localBK">LocalBookKeeper</a>
+</li>
+<li>
+<a href="#bk_setupBookies">Setting up bookies</a>
+</li>
+<li>
+<a href="#bk_setupZK">Setting up ZooKeeper</a>
+</li>
+<li>
+<a href="#bk_example">Example</a>
 </li>
 </ul>
 </li>
 </ul>
 </div>
-	
-	
-	
-	
-<a name="N1000B"></a><a name="zookeeper_quotas"></a>
-<h2 class="h3">Quotas</h2>
+  
+
+  
+  
+<a name="N10009"></a><a name="bk_GettingStarted"></a>
+<h2 class="h3">Getting Started: Setting up BookKeeper to write logs.</h2>
 <div class="section">
-<p> ZooKeeper has both namespace and bytes quotas. You can use the ZooKeeperMain class to setup quotas.
-	ZooKeeper prints <em>WARN</em> messages if users exceed the quota assigned to them. The messages 
-	are printed in the log of the ZooKeeper. 
-	</p>
+<p>This document contains information to get you started quickly with
+    BookKeeper. It is aimed primarily at developers willing to try it out, and
+    contains simple installation instructions for a simple BookKeeper installation
+    and a simple programming example. For further programming detail, please refer to 
+    <a href="bookkeeperProgrammer.html">BookKeeper Programmer's Guide</a>.
+    </p>
+<a name="N10016"></a><a name="bk_Prerequisites"></a>
+<h3 class="h4">Pre-requisites</h3>
+<p>See <a href="bookkeeperConfig.html#bk_sysReq">
+    	      System Requirements</a> in the Admin guide.</p>
+<a name="N10024"></a><a name="bk_Download"></a>
+<h3 class="h4">Download</h3>
+<p> BookKeeper is distributed along with ZooKeeper. To get a ZooKeeper distribution, 
+			   download a recent
+    	    <a href="http://hadoop.apache.org/zookeeper/releases.html">
+        	  stable</a> release from one of the Apache Download
+       	 Mirrors.</p>
+<a name="N10032"></a><a name="bk_localBK"></a>
+<h3 class="h4">LocalBookKeeper</h3>
+<p> Under org.apache.bookkeeper.util, you'll find a java program
+		called LocalBookKeeper.java that sets you up to run BookKeeper on a 
+		single machine. This is far from ideal from a performance perspective,
+		but the program is useful for both test and educational purposes.
+		</p>
+<a name="N1003C"></a><a name="bk_setupBookies"></a>
+<h3 class="h4">Setting up bookies</h3>
+<p> If you're bold and you want more than just running things locally, then
+		you'll need to run bookies in different servers. You'll need at least three bookies
+		to start with.  
+		</p>
 <p>
-<span class="codefrag computeroutput">$java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar/conf:src/java/lib/jline-0.9.94.jar \
-	 org.apache.zookeeper.ZooKeeperMain -server host:port</span>
+		For each bookie, we need to execute a command like the following:
+		</p>
+<p>
+<span class="codefrag computeroutput">
+		java -cp .:./zookeeper-dev-bookkeeper.jar:./zookeeper-dev.jar:../log4j/apache-log4j-1.2.15/log4j-1.2.15.jar\
+		-Dlog4j.configuration=log4j.properties org.apache.bookkeeper.proto.BookieServer 3181 /path_to_log_device/\
+		/path_to_ledger_device/
+		</span>
 </p>
-<p> The above command gives you a command line option of using quotas.</p>
-<a name="N1001F"></a><a name="Setting+Quotas"></a>
-<h3 class="h4">Setting Quotas</h3>
-<p>You can use 
-	 <em>setquota</em> to set a quota on a ZooKeeper node. It has an option of setting quota with
-	  -n (for namespace)
-	 and -b (for bytes). </p>
-<p> The ZooKeeper quota are stored in ZooKeeper itself in /zookeeper/quota. To disable other people from
-	changing the quota's set the ACL for /zookeeper/quota such that only admins are able to read and write to it.
-	</p>
-<a name="N1002F"></a><a name="Listing+Quotas"></a>
-<h3 class="h4">Listing Quotas</h3>
-<p> You can use
-	<em>listquota</em> to list a quota on a ZooKeeper node.
-	</p>
-<a name="N1003C"></a><a name="Deleting+Quotas"></a>
-<h3 class="h4"> Deleting Quotas</h3>
-<p> You can use
-	<em>delquota</em> to delete quota on a ZooKeeper node.
-	</p>
+<p> "/path_to_log_device/" and "/path_to_ledger_device/" are different paths. Also, port 3181
+		is the port that a bookie listens on for connection requests from clients. 
+		</p>
+<a name="N10051"></a><a name="bk_setupZK"></a>
+<h3 class="h4">Setting up ZooKeeper</h3>
+<p> ZooKeeper stores metadata on behalf of BookKeeper clients and bookies. To get a minimal 
+	  	ZooKeeper installation to work with BookKeeper, we can set up one server running in
+	  	standalone mode. Once we have the server running, we need to create a few znodes:
+	  	</p>
+<ol>
+	  	
+<li>
+	  	
+<p>
+<span class="codefrag computeroutput">
+	  	/ledgers	
+	  	</span>
+</p>
+	  	
+</li>
+	  	
+	  	
+<li>
+	  	
+<p>
+<span class="codefrag computeroutput">
+	  	/ledgers/available
+	  	</span>
+</p>
+	  	
+</li>
+	  	
+	  	
+<li>
+	  	
+<p> For each bookie, we add one znode such that the name of the znode is the
+	  	concatenation of the machine name and the port number that the bookie is 
+	  	listening on. For example, if a bookie is running on bookie.foo.com an is listening 
+	  	on port 3181, we add a znode 
+	  	<span class="codefrag computeroutput">/ledgers/available/bookie.foo.com:3181</span>.  
+	  	</p>
+	  	
+</li>
+	  	
+</ol>
+<a name="N10078"></a><a name="bk_example"></a>
+<h3 class="h4">Example</h3>
+<p>
+	    In the following excerpt of code, we:
+	    </p>
+<ol>
+	    	
+<li>
+	    	
+<p>
+	    	Create a ledger;
+	    	</p>
+	    	
+</li>
+	    	
+	    	
+<li>
+	    	
+<p>
+	    	Write to the ledger;
+	    	</p>
+	    	
+</li>
+	    	
+	    	
+<li>
+	    	
+<p>
+	    	Close the ledger;
+	    	</p>
+	    	
+</li>
+	    	
+	    	
+<li>
+	    	
+<p>
+	    	Open the same ledger for reading;
+	    	</p>
+	    	
+</li>
+	    	
+	    	
+<li>
+	    	
+<p>
+	    	Read from the ledger;
+	    	</p>
+	    	
+</li>
+	    	
+	    	
+<li>
+	    	
+<p>
+	    	Close the ledger again;
+	    	</p>
+	    	
+</li>
+	    
+</ol>
+<pre class="code">
+LedgerHandle lh = bkc.createLedger(ledgerPassword);
+ledgerId = lh.getId();
+ByteBuffer entry = ByteBuffer.allocate(4);
+
+for(int i = 0; i &lt; 10; i++){
+	entry.putInt(i);
+	entry.position(0);
+	entries.add(entry.array());				
+	lh.addEntry(entry.array());
+}
+lh.close();
+lh = bkc.openLedger(ledgerId, ledgerPassword);		
+			
+LedgerSequence ls = lh.readEntries(0, 9);
+int i = 0;
+while(ls.hasMoreElements()){
+	ByteBuffer origbb = ByteBuffer.wrap(
+				entries.get(i++));
+	Integer origEntry = origbb.getInt();
+	ByteBuffer result = ByteBuffer.wrap(
+				ls.nextElement().getEntry());
+
+	Integer retrEntry = result.getInt();
+}
+lh.close();
+	    </pre>
 </div>
-	
+
 <p align="right">
 <font size="-2"></font>
 </p>
