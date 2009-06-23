@@ -135,8 +135,23 @@ document.write("Last Published: " + document.lastModified);
 <a href="recipes.html">Recipes</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">Admin &amp; Ops</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">BookKeeper</div>
 <div id="menu_1.3" class="menuitemgroup">
+<div class="menuitem">
+<a href="bookkeeperStarted.html">Getting started</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperOverview.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperConfig.html">Setup guide</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperProgrammer.html">Programmer's guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.4" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperAdmin.html">Administrator's Guide</a>
 </div>
@@ -147,14 +162,14 @@ document.write("Last Published: " + document.lastModified);
 <a href="zookeeperJMX.html">JMX</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Contributor</div>
-<div id="menu_1.4" class="menuitemgroup">
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Contributor</div>
+<div id="menu_1.5" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperInternals.html">ZooKeeper Internals</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Miscellaneous</div>
-<div id="menu_1.5" class="menuitemgroup">
+<div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
+<div id="menu_1.6" class="menuitemgroup">
 <div class="menuitem">
 <a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </div>
@@ -231,12 +246,10 @@ document.write("Last Published: " + document.lastModified);
                 zk = null;
             }
         }
-        //else mutex = new Integer(-1);
     }
 
     synchronized public void process(WatchedEvent event) {
         synchronized (mutex) {
-            //System.out.println("Process: " + event.getType());
             mutex.notify();
         }
     }

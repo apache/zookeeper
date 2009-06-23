@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper Quota's Guide</title>
+<title>BookKeeper overview</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -135,13 +135,13 @@ document.write("Last Published: " + document.lastModified);
 <a href="recipes.html">Recipes</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">BookKeeper</div>
-<div id="menu_1.3" class="menuitemgroup">
+<div onclick="SwitchMenu('menu_selected_1.3', 'skin/')" id="menu_selected_1.3Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">BookKeeper</div>
+<div id="menu_selected_1.3" class="selectedmenuitemgroup" style="display: block;">
 <div class="menuitem">
 <a href="bookkeeperStarted.html">Getting started</a>
 </div>
-<div class="menuitem">
-<a href="bookkeeperOverview.html">Overview</a>
+<div class="menupage">
+<div class="menupagetitle">Overview</div>
 </div>
 <div class="menuitem">
 <a href="bookkeeperConfig.html">Setup guide</a>
@@ -150,13 +150,13 @@ document.write("Last Published: " + document.lastModified);
 <a href="bookkeeperProgrammer.html">Programmer's guide</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_selected_1.4', 'skin/')" id="menu_selected_1.4Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Admin &amp; Ops</div>
-<div id="menu_selected_1.4" class="selectedmenuitemgroup" style="display: block;">
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.4" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperAdmin.html">Administrator's Guide</a>
 </div>
-<div class="menupage">
-<div class="menupagetitle">Quota Guide</div>
+<div class="menuitem">
+<a href="zookeeperQuotas.html">Quota Guide</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperJMX.html">JMX</a>
@@ -196,66 +196,121 @@ document.write("Last Published: " + document.lastModified);
     +-->
 <div id="content">
 <div title="Portable Document Format" class="pdflink">
-<a class="dida" href="zookeeperQuotas.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+<a class="dida" href="bookkeeperOverview.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper Quota's Guide</h1>
-<h3>A Guide to Deployment and Administration</h3>
+<h1>BookKeeper overview</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#zookeeper_quotas">Quotas</a>
+<a href="#bk_Overview">BookKeeper overview</a>
 <ul class="minitoc">
 <li>
-<a href="#Setting+Quotas">Setting Quotas</a>
+<a href="#bk_basicComponents">Basic elements</a>
 </li>
 <li>
-<a href="#Listing+Quotas">Listing Quotas</a>
-</li>
-<li>
-<a href="#Deleting+Quotas"> Deleting Quotas</a>
+<a href="#bk_moreDetail">In slightly more detail...</a>
 </li>
 </ul>
 </li>
 </ul>
 </div>
-	
-	
-	
-	
-<a name="N1000B"></a><a name="zookeeper_quotas"></a>
-<h2 class="h3">Quotas</h2>
+  
+
+  
+  
+<a name="N10009"></a><a name="bk_Overview"></a>
+<h2 class="h3">BookKeeper overview</h2>
 <div class="section">
-<p> ZooKeeper has both namespace and bytes quotas. You can use the ZooKeeperMain class to setup quotas.
-	ZooKeeper prints <em>WARN</em> messages if users exceed the quota assigned to them. The messages 
-	are printed in the log of the ZooKeeper. 
+<p>This document explains basic concepts of BookKeeper. We start by discussing
+    the basic elements of BookKeeper, and next we discuss how they work together. 
+    </p>
+<a name="N10012"></a><a name="bk_basicComponents"></a>
+<h3 class="h4">Basic elements</h3>
+<p> 
+	BookKeeper uses four basic elements:
+	</p>
+<ul>
+      
+<li>
+      
+<p> 
+		
+<strong>Ledger</strong>: A ledger is a sequence of entries, and each entry is a sequence of bytes. Entries are
+		written sequentially to a ledger and at most once. Consequently, ledgers have an append-only semantics;
+	  </p>
+	  
+</li>
+	
+	  
+<li>
+	  
+<p> 
+		
+<strong>BookKeeper client</strong>: A client runs along with a BookKeeper application, and it enables applications
+		to execute operations on ledgers, such as creating a ledger and writing to it; 
+	  </p>
+	  
+</li> 
+	
+	  
+<li>
+	  
+<p>
+		
+<strong>Bookie</strong>: A bookie is a BookKeeper storage server. Bookies store the content of ledgers. For any given
+		ledger L, we call an <em>ensemble</em> the group of bookies storing the content of L. For performance, we store on
+		each bookie of an ensemble only a fragment of a ledger. That is, we stripe when writing entries to a ledger such that
+		each entry is written to sub-group of bookies of the ensemble.
+	  </p>
+	  
+</li>
+
+	  
+<li>
+	  
+<p> 	
+		
+<strong>Metadata storage service</strong>: BookKeeper requires a metadata storage service to store information related 
+		to ledgers and available bookies. We currently use ZooKeeper for such a task.     
+   	  </p>
+   	  
+</li>
+    
+</ul>
+<a name="N10046"></a><a name="bk_moreDetail"></a>
+<h3 class="h4">In slightly more detail...</h3>
+<p> BookKeeper implements highly available logs, and it has been designed with write-ahead logging in mind. Besides high availability
+    due to the replicated nature of the service, it provides high throughput due to striping. As we write entries in a subset of bookies of an
+    ensemble and rotate writes across available quorums, we are able to increase throughput with the number of servers for both reads and writes. 
+    Scalability is a property that is possible to achieve in this case due to the use of quorums. Other replication techniques, such as 
+    state-machine replication, do not enable such a property. 
+    </p>
+<p> An application first creates a ledger before writing to bookies through a local BookKeeper client instance. To 
+	create a ledger, an application has to specify which kind of ledger it wants to use: self-verifying or generic. Self-verifying
+	includes a digest on every entry, which enables a reduction on the degree of replication. Generic ledgers do not store a digest
+	along with entries at the cost of using more bookies.   
+	</p>
+<p> Upon creating a ledger, a BookKeeper clients writes metadata about the ledger to ZooKeeper. A given client first creates
+	a znode named "L" as a child of "/ledger" with the SEQUENCE flag. ZooKeeper consequently assigns a unique sequence number to the 
+	node, naming the node "/Lx", where x is the sequence number assigned. We use this sequence number as the identifier of the ledger. 
+	This identifier is necessary when opening a ledger. We also store the ensemble composition so that readers know which set of bookies
+	of access for a given ledger. 	
 	</p>
 <p>
-<span class="codefrag computeroutput">$java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar/conf:src/java/lib/jline-0.9.94.jar \
-	 org.apache.zookeeper.ZooKeeperMain -server host:port</span>
-</p>
-<p> The above command gives you a command line option of using quotas.</p>
-<a name="N1001F"></a><a name="Setting+Quotas"></a>
-<h3 class="h4">Setting Quotas</h3>
-<p>You can use 
-	 <em>setquota</em> to set a quota on a ZooKeeper node. It has an option of setting quota with
-	  -n (for namespace)
-	 and -b (for bytes). </p>
-<p> The ZooKeeper quota are stored in ZooKeeper itself in /zookeeper/quota. To disable other people from
-	changing the quota's set the ACL for /zookeeper/quota such that only admins are able to read and write to it.
+	Each ledger currently has a single writer. This writer has to execute a close ledger operation before any other client can read
+	from it. If the writer of a ledger does not close a ledger properly because, for example, it has crashed before having the 
+	opportunity of closing the ledger, then the next client that tries to open a ledger executes an procedure to recover it. As closing a ledger
+	consists essentially of writing the last entry written to a ledger to ZooKeeper, the recovery procedure simply finds the last entry
+	written correctly and writes it to ZooKeeper in the form of a close znode as a child of "/Lx", where x is the identifier of the ledger.     
 	</p>
-<a name="N1002F"></a><a name="Listing+Quotas"></a>
-<h3 class="h4">Listing Quotas</h3>
-<p> You can use
-	<em>listquota</em> to list a quota on a ZooKeeper node.
+<p>
+	Note that currently this recovery procedure is executed automatically upon trying to open a ledger and no explicit action is necessary. 
+	Although two clients may try to recover a ledger concurrently, only one will succeed, the first one that is able to create the close znode
+	for the ledger.
 	</p>
-<a name="N1003C"></a><a name="Deleting+Quotas"></a>
-<h3 class="h4"> Deleting Quotas</h3>
-<p> You can use
-	<em>delquota</em> to delete quota on a ZooKeeper node.
-	</p>
-</div>
-	
+</div>  
+
 <p align="right">
 <font size="-2"></font>
 </p>
