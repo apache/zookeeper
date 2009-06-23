@@ -585,12 +585,19 @@
     znode. Instead, an ACL specifies sets of ids and permissions that
     are associated with those ids.</para>
 
+    <para>Note also that an ACL pertains only to a specific znode. In
+    particular it does not apply to children. For example, if
+    <emphasis>/app</emphasis> is only readable by ip:172.16.16.1 and
+    <emphasis>/app/status</emphasis> is world readable, anyone will
+    be able to read <emphasis>/app/status</emphasis>; ACLs are not
+    recursive.</para>
+
     <para>ZooKeeper supports pluggable authentication schemes. Ids are
     specified using the form <emphasis>scheme:id</emphasis>,
     where <emphasis>scheme</emphasis> is a the authentication scheme
     that the id corresponds to. For
-    example, <emphasis>host:host1.corp.com</emphasis> is an id for a
-    host named <emphasis>host1.corp.com</emphasis>.</para>
+    example, <emphasis>ip:172.16.16.1</emphasis> is an id for a
+    host with the address <emphasis>172.16.16.1</emphasis>.</para>
 
     <para>When a client connects to ZooKeeper and authenticates
     itself, ZooKeeper associates all the ids that correspond to a
@@ -668,14 +675,6 @@
         encoded <emphasis>SHA1</emphasis>
         password <emphasis>digest</emphasis>.</para>
         </listitem>
-
-        <listitem><para><emphasis role="bold">host</emphasis> uses the
-        client host name as an ACL ID identity. The ACL expression is
-        a hostname suffix. For example, the ACL
-        expression <emphasis>host:corp.com</emphasis> matches the
-        ids <emphasis>host:host1.corp.com</emphasis>
-        and <emphasis>host:host2.corp.com</emphasis>, but
-        not <emphasis>host:host1.store.com</emphasis>.</para></listitem>
 
         <listitem><para><emphasis role="bold">ip</emphasis> uses the
         client host IP as an ACL ID identity. The ACL expression is of
@@ -859,6 +858,99 @@ int main(int argc, char argv) {
     </section>
   </section>
 
+  <section id="sc_ZooKeeperPluggableAuthentication">
+    <title>Pluggable ZooKeeper authentication</title>
+
+    <para>ZooKeeper runs in a variety of different environments with
+    various different authentication schemes, so it has a completely
+    pluggable authentication framework. Even the builtin authentication
+    schemes use the pluggable authentication framework.</para>
+
+    <para>To understand how the authentication framework works, first you must
+    understand the two main authentication operations. The framework 
+    first must authenticate the client. This is usually done as soon as
+    the client connects to a server and consists of validating information
+    sent from or gathered about a client and associating it with the connection.
+    The second operation handled by the framework is finding the entries in an
+    ACL that correspond to client. ACL entries are &lt;<emphasis>idspec, 
+    permissions</emphasis>&gt; pairs. The <emphasis>idspec</emphasis> may be
+    a simple string match against the authentication information associated
+    with the connection or it may be a expression that is evaluated against that
+    information. It is up to the implementation of the authentication plugin
+    to do the match. Here is the interface that an authentication plugin must
+    implement:</para>
+
+    <programlisting>
+public interface AuthenticationProvider {
+    String getScheme();
+    KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte authData[]);
+    boolean isValid(String id);
+    boolean matches(String id, String aclExpr);
+    boolean isAuthenticated();
+}
+    </programlisting>
+
+    <para>The first method <emphasis>getScheme</emphasis> returns the string
+    that identifies the plugin. Because we support multiple methods of authentication,
+    an authentication credential or an <emphasis>idspec</emphasis> will always be
+    prefixed with <emphasis>scheme:</emphasis>. The ZooKeeper server uses the scheme
+    returned by the authentication plugin to determine which ids the scheme
+    applies to.</para>
+
+    <para><emphasis>handleAuthentication</emphasis> is called when a client
+    sends authentication information to be associated with a connection. The
+    client specifies the scheme to which the information corresponds. The
+    ZooKeeper server passes the information to the authentication plugin whose
+    <emphasis>getScheme</emphasis> matches the scheme passed by the client. The
+    implementor of <emphasis>handleAuthentication</emphasis> will usually return
+    an error if it determines that the information is bad, or it will associate information
+    with the connection using <emphasis>cnxn.getAuthInfo().add(new Id(getScheme(), data))</emphasis>.
+    </para>
+
+    <para>The authentication plugin is involved in both setting and using ACLs. When an
+    ACL is set for a znode, the ZooKeeper server will pass the id part of the entry to
+    the <emphasis>isValid(String id)</emphasis> method. It is up to the plugin to verify
+    that the id has a correct form. For example, <emphasis>ip:172.16.0.0/16</emphasis>
+    is a valid id, but <emphasis>ip:host.com</emphasis> is not. If the new ACL includes
+    an "auth" entry, <emphasis>isAuthenticated</emphasis> is used to see if the 
+    authentication information for this scheme that is assocatied with the connection
+    should be added to the ACL. Some schemes
+    should not be included in auth. For example, the IP address of the client is not
+    considered as an id that should be added to the ACL if auth is specified.</para>
+
+    <para>ZooKeeper invokes
+    <emphasis>matches(String id, String aclExpr)</emphasis> when checking an ACL. It
+    needs to match authentication information of the client against the relevant ACL
+    entries. To find the entries which apply to the client, the ZooKeeper server will
+    find the scheme of each entry and if there is authentication information
+    from that client for that scheme, <emphasis>matches(String id, String aclExpr)</emphasis>
+    will be called with <emphasis>id</emphasis> set to the authentication information
+    that was previously added to the connection by <emphasis>handleAuthentication</emphasis> and
+    <emphasis>aclExpr</emphasis> set to the id of the ACL entry. The authentication plugin
+    uses its own logic and matching scheme to determine if <emphasis>id</emphasis> is included
+    in <emphasis>aclExpr</emphasis>. 
+    </para>
+
+    <para>There are two built in authentication plugins: <emphasis>ip</emphasis> and
+    <emphasis>digest</emphasis>. Additional plugins can adding using system properties. At
+    startup the ZooKeeper server will look for system properties that start with
+    "zookeeper.authProvider." and interpret the value of those properties as the class name
+    of an authentication plugin. These properties can be set using the
+    <emphasis>-Dzookeeeper.authProvider.X=com.f.MyAuth</emphasis> or adding entries such as
+    the following in the server configuration file:</para>
+
+    <programlisting>
+authProvider.1=com.f.MyAuth
+authProvider.2=com.f.MyAuth2
+    </programlisting>
+ 
+    <para>Care should be taking to ensure that the suffix on the property is unique. If there are 
+    duplicates such as <emphasis>-Dzookeeeper.authProvider.X=com.f.MyAuth -Dzookeeper.authProvider.X=com.f.MyAuth2</emphasis>,
+    only one will be used. Also all servers must have the same plugins defined, otherwise clients using
+    the authentication schemes provided by the plugins will have problems connecting to some servers.
+    </para>
+  </section>
+      
   <section id="ch_zkGuarantees">
     <title>Consistency Guarantees</title>
 

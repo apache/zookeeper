@@ -265,6 +265,9 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 </li>
 <li>
+<a href="#sc_ZooKeeperPluggableAuthentication">Pluggable ZooKeeper authentication</a>
+</li>
+<li>
 <a href="#ch_zkGuarantees">Consistency Guarantees</a>
 </li>
 <li>
@@ -1012,12 +1015,18 @@ document.write("Last Published: " + document.lastModified);
     (other). ZooKeeper does not have a notion of an owner of a
     znode. Instead, an ACL specifies sets of ids and permissions that
     are associated with those ids.</p>
+<p>Note also that an ACL pertains only to a specific znode. In
+    particular it does not apply to children. For example, if
+    <em>/app</em> is only readable by ip:172.16.16.1 and
+    <em>/app/status</em> is world readable, anyone will
+    be able to read <em>/app/status</em>; ACLs are not
+    recursive.</p>
 <p>ZooKeeper supports pluggable authentication schemes. Ids are
     specified using the form <em>scheme:id</em>,
     where <em>scheme</em> is a the authentication scheme
     that the id corresponds to. For
-    example, <em>host:host1.corp.com</em> is an id for a
-    host named <em>host1.corp.com</em>.</p>
+    example, <em>ip:172.16.16.1</em> is an id for a
+    host with the address <em>172.16.16.1</em>.</p>
 <p>When a client connects to ZooKeeper and authenticates
     itself, ZooKeeper associates all the ids that correspond to a
     client with the clients connection. These ids are checked against
@@ -1028,7 +1037,7 @@ document.write("Last Published: " + document.lastModified);
     example, the pair <em>(ip:19.22.0.0/16, READ)</em>
     gives the <em>READ</em> permission to any clients with
     an IP address that starts with 19.22.</p>
-<a name="N10277"></a><a name="sc_ACLPermissions"></a>
+<a name="N10283"></a><a name="sc_ACLPermissions"></a>
 <h3 class="h4">ACL Permissions</h3>
 <p>ZooKeeper supports the following permissions:</p>
 <ul>
@@ -1084,7 +1093,7 @@ document.write("Last Published: " + document.lastModified);
       node, but nothing more. (The problem is, if you want to call
       zoo_exists() on a node that doesn't exist, there is no
       permission to check.)</p>
-<a name="N102CD"></a><a name="sc_BuiltinACLSchemes"></a>
+<a name="N102D9"></a><a name="sc_BuiltinACLSchemes"></a>
 <h4>Builtin ACL Schemes</h4>
 <p>ZooKeeeper has the following built in schemes:</p>
 <ul>
@@ -1122,18 +1131,6 @@ document.write("Last Published: " + document.lastModified);
         
 <li>
 <p>
-<strong>host</strong> uses the
-        client host name as an ACL ID identity. The ACL expression is
-        a hostname suffix. For example, the ACL
-        expression <em>host:corp.com</em> matches the
-        ids <em>host:host1.corp.com</em>
-        and <em>host:host2.corp.com</em>, but
-        not <em>host:host1.store.com</em>.</p>
-</li>
-
-        
-<li>
-<p>
 <strong>ip</strong> uses the
         client host IP as an ACL ID identity. The ACL expression is of
         the form <em>addr/bits</em> where the most
@@ -1145,7 +1142,7 @@ document.write("Last Published: " + document.lastModified);
 
       
 </ul>
-<a name="N10323"></a><a name="ZooKeeper+C+client+API"></a>
+<a name="N1031D"></a><a name="ZooKeeper+C+client+API"></a>
 <h4>ZooKeeper C client API</h4>
 <p>The following constants are provided by the ZooKeeper C
       library:</p>
@@ -1367,7 +1364,93 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N1043A"></a><a name="ch_zkGuarantees"></a>
+<a name="N10434"></a><a name="sc_ZooKeeperPluggableAuthentication"></a>
+<h2 class="h3">Pluggable ZooKeeper authentication</h2>
+<div class="section">
+<p>ZooKeeper runs in a variety of different environments with
+    various different authentication schemes, so it has a completely
+    pluggable authentication framework. Even the builtin authentication
+    schemes use the pluggable authentication framework.</p>
+<p>To understand how the authentication framework works, first you must
+    understand the two main authentication operations. The framework 
+    first must authenticate the client. This is usually done as soon as
+    the client connects to a server and consists of validating information
+    sent from or gathered about a client and associating it with the connection.
+    The second operation handled by the framework is finding the entries in an
+    ACL that correspond to client. ACL entries are &lt;<em>idspec, 
+    permissions</em>&gt; pairs. The <em>idspec</em> may be
+    a simple string match against the authentication information associated
+    with the connection or it may be a expression that is evaluated against that
+    information. It is up to the implementation of the authentication plugin
+    to do the match. Here is the interface that an authentication plugin must
+    implement:</p>
+<pre class="code">
+public interface AuthenticationProvider {
+    String getScheme();
+    KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte authData[]);
+    boolean isValid(String id);
+    boolean matches(String id, String aclExpr);
+    boolean isAuthenticated();
+}
+    </pre>
+<p>The first method <em>getScheme</em> returns the string
+    that identifies the plugin. Because we support multiple methods of authentication,
+    an authentication credential or an <em>idspec</em> will always be
+    prefixed with <em>scheme:</em>. The ZooKeeper server uses the scheme
+    returned by the authentication plugin to determine which ids the scheme
+    applies to.</p>
+<p>
+<em>handleAuthentication</em> is called when a client
+    sends authentication information to be associated with a connection. The
+    client specifies the scheme to which the information corresponds. The
+    ZooKeeper server passes the information to the authentication plugin whose
+    <em>getScheme</em> matches the scheme passed by the client. The
+    implementor of <em>handleAuthentication</em> will usually return
+    an error if it determines that the information is bad, or it will associate information
+    with the connection using <em>cnxn.getAuthInfo().add(new Id(getScheme(), data))</em>.
+    </p>
+<p>The authentication plugin is involved in both setting and using ACLs. When an
+    ACL is set for a znode, the ZooKeeper server will pass the id part of the entry to
+    the <em>isValid(String id)</em> method. It is up to the plugin to verify
+    that the id has a correct form. For example, <em>ip:172.16.0.0/16</em>
+    is a valid id, but <em>ip:host.com</em> is not. If the new ACL includes
+    an "auth" entry, <em>isAuthenticated</em> is used to see if the 
+    authentication information for this scheme that is assocatied with the connection
+    should be added to the ACL. Some schemes
+    should not be included in auth. For example, the IP address of the client is not
+    considered as an id that should be added to the ACL if auth is specified.</p>
+<p>ZooKeeper invokes
+    <em>matches(String id, String aclExpr)</em> when checking an ACL. It
+    needs to match authentication information of the client against the relevant ACL
+    entries. To find the entries which apply to the client, the ZooKeeper server will
+    find the scheme of each entry and if there is authentication information
+    from that client for that scheme, <em>matches(String id, String aclExpr)</em>
+    will be called with <em>id</em> set to the authentication information
+    that was previously added to the connection by <em>handleAuthentication</em> and
+    <em>aclExpr</em> set to the id of the ACL entry. The authentication plugin
+    uses its own logic and matching scheme to determine if <em>id</em> is included
+    in <em>aclExpr</em>. 
+    </p>
+<p>There are two built in authentication plugins: <em>ip</em> and
+    <em>digest</em>. Additional plugins can adding using system properties. At
+    startup the ZooKeeper server will look for system properties that start with
+    "zookeeper.authProvider." and interpret the value of those properties as the class name
+    of an authentication plugin. These properties can be set using the
+    <em>-Dzookeeeper.authProvider.X=com.f.MyAuth</em> or adding entries such as
+    the following in the server configuration file:</p>
+<pre class="code">
+authProvider.1=com.f.MyAuth
+authProvider.2=com.f.MyAuth2
+    </pre>
+<p>Care should be taking to ensure that the suffix on the property is unique. If there are 
+    duplicates such as <em>-Dzookeeeper.authProvider.X=com.f.MyAuth -Dzookeeper.authProvider.X=com.f.MyAuth2</em>,
+    only one will be used. Also all servers must have the same plugins defined, otherwise clients using
+    the authentication schemes provided by the plugins will have problems connecting to some servers.
+    </p>
+</div>
+      
+  
+<a name="N104A0"></a><a name="ch_zkGuarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -1493,12 +1576,12 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N104A1"></a><a name="ch_bindings"></a>
+<a name="N10507"></a><a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N104AA"></a><a name="Java+Binding"></a>
+<a name="N10510"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1565,7 +1648,7 @@ int main(int argc, char argv) {
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid.
       On a close, the two threads shut down and any further access on zookeeper
       handle is undefined behavior and should be avoided. </p>
-<a name="N104F3"></a><a name="C+Binding"></a>
+<a name="N10559"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1582,7 +1665,7 @@ int main(int argc, char argv) {
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N10502"></a><a name="Installation"></a>
+<a name="N10568"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1713,7 +1796,7 @@ int main(int argc, char argv) {
 </li>
         
 </ol>
-<a name="N105AB"></a><a name="Using+the+C+Client"></a>
+<a name="N10611"></a><a name="Using+the+C+Client"></a>
 <h4>Using the C Client</h4>
 <p>You can test your client by running a ZooKeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1771,7 +1854,7 @@ int main(int argc, char argv) {
 </div>
 
    
-<a name="N105F1"></a><a name="ch_guideToZkOperations"></a>
+<a name="N10657"></a><a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>This section surveys all the operations a developer can perform
@@ -1789,28 +1872,28 @@ int main(int argc, char argv) {
 </li>
     
 </ul>
-<a name="N10605"></a><a name="sc_errorsZk"></a>
+<a name="N1066B"></a><a name="sc_errorsZk"></a>
 <h3 class="h4">Handling Errors</h3>
 <p>Both the Java and C client bindings may report errors. The Java client binding does so by throwing KeeperException, calling code() on the exception will return the specific error code. The C client binding returns an error code as defined in the enum ZOO_ERRORS. API callbacks indicate result code for both language bindings. See the API documentation (javadoc for Java, doxygen for C) for full details on the possible errors and their meaning.</p>
-<a name="N1060F"></a><a name="sc_connectingToZk"></a>
+<a name="N10675"></a><a name="sc_connectingToZk"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p></p>
-<a name="N10618"></a><a name="sc_readOps"></a>
+<a name="N1067E"></a><a name="sc_readOps"></a>
 <h3 class="h4">Read Operations</h3>
 <p></p>
-<a name="N10621"></a><a name="sc_writeOps"></a>
+<a name="N10687"></a><a name="sc_writeOps"></a>
 <h3 class="h4">Write Operations</h3>
 <p></p>
-<a name="N1062A"></a><a name="sc_handlingWatches"></a>
+<a name="N10690"></a><a name="sc_handlingWatches"></a>
 <h3 class="h4">Handling Watches</h3>
 <p></p>
-<a name="N10633"></a><a name="sc_miscOps"></a>
+<a name="N10699"></a><a name="sc_miscOps"></a>
 <h3 class="h4">Miscelleaneous ZooKeeper Operations</h3>
 <p></p>
 </div>
 
   
-<a name="N1063D"></a><a name="ch_programStructureWithExample"></a>
+<a name="N106A3"></a><a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -1819,7 +1902,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10648"></a><a name="ch_gotchas"></a>
+<a name="N106AE"></a><a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application
