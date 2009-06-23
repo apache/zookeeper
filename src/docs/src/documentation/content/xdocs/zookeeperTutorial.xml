@@ -68,12 +68,10 @@
                 zk = null;
             }
         }
-        //else mutex = new Integer(-1);
     }
 
     synchronized public void process(WatchedEvent event) {
         synchronized (mutex) {
-            //System.out.println("Process: " + event.getType());
             mutex.notify();
         }
     }

@@ -227,6 +227,8 @@ NIOServerCnxn. (phunt via mahadev)
 
   ZOOKEEPER-422. Java CLI should support ephemeral and sequential node creation (henry via breed)
 
+  ZOOKEEPER-315. add forrest docs for bookkeeper. (flavio via mahadev)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
