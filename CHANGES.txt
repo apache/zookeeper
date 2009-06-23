@@ -229,6 +229,9 @@ NIOServerCnxn. (phunt via mahadev)
 
   ZOOKEEPER-315. add forrest docs for bookkeeper. (flavio via mahadev)
 
+  ZOOKEEPER-329. document how to integrate 3rd party authentication into ZK
+server ACLs. (breed via mahadev)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
