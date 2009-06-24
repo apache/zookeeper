@@ -50,6 +50,7 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.ZooKeeper.WatchRegistration;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
@@ -133,6 +134,8 @@ public class ClientCnxn {
 
     private byte sessionPasswd[] = new byte[16];
 
+    final String chrootPath;
+
     final SendThread sendThread;
 
     final EventThread eventThread;
@@ -176,7 +179,10 @@ public class ClientCnxn {
 
         ByteBuffer bb;
 
-        String path;
+        /** Client's view of the path (may differ due to chroot) **/
+        String clientPath;
+        /** Servers's view of the path (may differ due to chroot) **/
+        String serverPath;
 
         ReplyHeader replyHeader;
 
@@ -226,7 +232,8 @@ public class ClientCnxn {
         public String toString() {
             StringBuffer sb = new StringBuffer();
 
-            sb.append("path:" + path);
+            sb.append("clientPath:" + clientPath);
+            sb.append(" serverPath:" + serverPath);
             sb.append(" finished:" + finished);
 
             sb.append(" header:: " + header);
@@ -285,6 +292,23 @@ public class ClientCnxn {
         this.watcher = watcher;
         this.sessionId = sessionId;
         this.sessionPasswd = sessionPasswd;
+
+        // parse out chroot, if any
+        int off = hosts.indexOf('/');
+        if (off >= 0) {
+            String chrootPath = hosts.substring(off);
+            // ignore "/" chroot spec, same as null
+            if (chrootPath.length() == 1) {
+                this.chrootPath = null;
+            } else {
+                PathUtils.validatePath(chrootPath);
+                this.chrootPath = chrootPath;
+            }
+            hosts = hosts.substring(0,  off);
+        } else {
+            this.chrootPath = null;
+        }
+
         String hostsList[] = hosts.split(",");
         for (String host : hostsList) {
             int port = 2181;
@@ -406,7 +430,7 @@ public class ClientCnxn {
                         } else {
                             Packet p = (Packet) event;
                             int rc = 0;
-                            String path = p.path;
+                            String clientPath = p.clientPath;
                             if (p.replyHeader.getErr() != 0) {
                                 rc = p.replyHeader.getErr();
                             }
@@ -418,62 +442,65 @@ public class ClientCnxn {
                                 StatCallback cb = (StatCallback) p.cb;
                                 if (rc == 0) {
                                     if (p.response instanceof ExistsResponse) {
-                                        cb.processResult(rc, path, p.ctx,
+                                        cb.processResult(rc, clientPath, p.ctx,
                                                 ((ExistsResponse) p.response)
                                                         .getStat());
                                     } else if (p.response instanceof SetDataResponse) {
-                                        cb.processResult(rc, path, p.ctx,
+                                        cb.processResult(rc, clientPath, p.ctx,
                                                 ((SetDataResponse) p.response)
                                                         .getStat());
                                     } else if (p.response instanceof SetACLResponse) {
-                                        cb.processResult(rc, path, p.ctx,
+                                        cb.processResult(rc, clientPath, p.ctx,
                                                 ((SetACLResponse) p.response)
                                                         .getStat());
                                     }
                                 } else {
-                                    cb.processResult(rc, path, p.ctx, null);
+                                    cb.processResult(rc, clientPath, p.ctx, null);
                                 }
                             } else if (p.response instanceof GetDataResponse) {
                                 DataCallback cb = (DataCallback) p.cb;
                                 GetDataResponse rsp = (GetDataResponse) p.response;
                                 if (rc == 0) {
-                                    cb.processResult(rc, path, p.ctx, rsp
+                                    cb.processResult(rc, clientPath, p.ctx, rsp
                                             .getData(), rsp.getStat());
                                 } else {
-                                    cb.processResult(rc, path, p.ctx, null,
+                                    cb.processResult(rc, clientPath, p.ctx, null,
                                             null);
                                 }
                             } else if (p.response instanceof GetACLResponse) {
                                 ACLCallback cb = (ACLCallback) p.cb;
                                 GetACLResponse rsp = (GetACLResponse) p.response;
                                 if (rc == 0) {
-                                    cb.processResult(rc, path, p.ctx, rsp
+                                    cb.processResult(rc, clientPath, p.ctx, rsp
                                             .getAcl(), rsp.getStat());
                                 } else {
-                                    cb.processResult(rc, path, p.ctx, null,
+                                    cb.processResult(rc, clientPath, p.ctx, null,
                                             null);
                                 }
                             } else if (p.response instanceof GetChildrenResponse) {
                                 ChildrenCallback cb = (ChildrenCallback) p.cb;
                                 GetChildrenResponse rsp = (GetChildrenResponse) p.response;
                                 if (rc == 0) {
-                                    cb.processResult(rc, path, p.ctx, rsp
+                                    cb.processResult(rc, clientPath, p.ctx, rsp
                                             .getChildren());
                                 } else {
-                                    cb.processResult(rc, path, p.ctx, null);
+                                    cb.processResult(rc, clientPath, p.ctx, null);
                                 }
                             } else if (p.response instanceof CreateResponse) {
                                 StringCallback cb = (StringCallback) p.cb;
                                 CreateResponse rsp = (CreateResponse) p.response;
                                 if (rc == 0) {
-                                    cb.processResult(rc, path, p.ctx, rsp
-                                            .getPath());
+                                    cb.processResult(rc, clientPath, p.ctx,
+                                            (chrootPath == null
+                                                    ? rsp.getPath()
+                                                    : rsp.getPath()
+                                              .substring(chrootPath.length())));
                                 } else {
-                                    cb.processResult(rc, path, p.ctx, null);
+                                    cb.processResult(rc, clientPath, p.ctx, null);
                                 }
                             } else if (p.cb instanceof VoidCallback) {
                                 VoidCallback cb = (VoidCallback) p.cb;
-                                cb.processResult(rc, path, p.ctx);
+                                cb.processResult(rc, clientPath, p.ctx);
                             }
                         }
                     } catch (Throwable t) {
@@ -601,6 +628,13 @@ public class ClientCnxn {
                     + Long.toHexString(sessionId));
                 WatcherEvent event = new WatcherEvent();
                 event.deserialize(bbia, "response");
+
+                // convert from a server path to a client path
+                if (chrootPath != null) {
+                    String serverPath = event.getPath();
+                    event.setPath(serverPath.substring(chrootPath.length()));
+                }
+
                 WatchedEvent we = new WatchedEvent(event);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Got " + we + " for sessionid 0x"
@@ -791,7 +825,7 @@ public class ClientCnxn {
         private void sendPing() {
             lastPingSentNs = System.nanoTime();
             RequestHeader h = new RequestHeader(-2, OpCode.ping);
-            queuePacket(h, null, null, null, null, null, null, null);
+            queuePacket(h, null, null, null, null, null, null, null, null);
         }
 
         int lastConnectIndex = -1;
@@ -1059,7 +1093,7 @@ public class ClientCnxn {
             throws InterruptedException {
         ReplyHeader r = new ReplyHeader();
         Packet packet = queuePacket(h, r, request, response, null, null, null,
-                    watchRegistration);
+                    null, watchRegistration);
         synchronized (packet) {
             while (!packet.finished) {
                 packet.wait();
@@ -1069,8 +1103,9 @@ public class ClientCnxn {
     }
 
     Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
-            Record response, AsyncCallback cb, String path, Object ctx,
-            WatchRegistration watchRegistration) {
+            Record response, AsyncCallback cb, String clientPath,
+            String serverPath, Object ctx, WatchRegistration watchRegistration)
+    {
         Packet packet = null;
         synchronized (outgoingQueue) {
             if (h.getType() != OpCode.ping && h.getType() != OpCode.auth) {
@@ -1080,7 +1115,8 @@ public class ClientCnxn {
                     watchRegistration);
             packet.cb = cb;
             packet.ctx = ctx;
-            packet.path = path;
+            packet.clientPath = clientPath;
+            packet.serverPath = serverPath;
             if (!zooKeeper.state.isAlive()) {
                 conLossPacket(packet);
             } else {
@@ -1098,7 +1134,7 @@ public class ClientCnxn {
         if (zooKeeper.state == States.CONNECTED) {
             queuePacket(new RequestHeader(-4, OpCode.auth), null,
                     new AuthPacket(0, scheme, auth), null, null, null, null,
-                    null);
+                    null, null);
         }
     }
 }

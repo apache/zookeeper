@@ -758,7 +758,7 @@ document.write("Last Published: " + document.lastModified);
 <h2 class="h3">ZooKeeper Sessions</h2>
 <div class="section">
 <p>To create a client session the application code must provide
-    a string containing a comma separated list of host:port pairs,
+    a connection string containing a comma separated list of host:port pairs,
     each corresponding to a ZooKeeper server (e.g. "127.0.0.1:4545" or
     "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"). The ZooKeeper
     client library will pick an arbitrary server and try to connect to
@@ -766,6 +766,23 @@ document.write("Last Published: " + document.lastModified);
     disconnected from the server for any reason, the client will
     automatically try the next server in the list, until a connection
     is (re-)established.</p>
+<p> 
+<strong>Added in 3.2.0</strong>: An
+    optional "chroot" suffix may also be appended to the connection
+    string. This will run the client commands while interpreting all
+    paths relative to this root (similar to the unix chroot
+    command). If used the example would look like:
+    "127.0.0.1:4545/app/a" or
+    "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a" where the
+    client would be rooted at "/app/a" and all paths would be relative
+    to this root - ie getting/setting/etc...  "/foo/bar" would result
+    in operations being run on "/app/a/foo/bar" (from the server
+    perspective). This feature is particularly useful in multi-tenant
+    environments where each user of a particular ZooKeeper service
+    could be rooted differently. This makes re-use much simpler as
+    each user can code his/her application as if it were rooted at
+    "/", while actual location (say /app/a) could be determined at
+    deployment time.</p>
 <p>When a client gets a handle to the ZooKeeper service,
     ZooKeeper creates a ZooKeeper session, represented as a 64-bit
     number, that it assigns to the client. If the client connects to a
@@ -825,7 +842,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N101C9"></a><a name="ch_zkWatches"></a>
+<a name="N101CF"></a><a name="ch_zkWatches"></a>
 <h2 class="h3">ZooKeeper Watches</h2>
 <div class="section">
 <p>All of the read operations in ZooKeeper - <strong>getData()</strong>, <strong>getChildren()</strong>, and <strong>exists()</strong> - have the option of setting a watch as a
@@ -908,7 +925,7 @@ document.write("Last Published: " + document.lastModified);
     general this all occurs transparently. There is one case where a watch
     may be missed: a watch for the existance of a znode not yet created will
     be missed if the znode is created and deleted while disconnected.</p>
-<a name="N101FF"></a><a name="sc_WatchGuarantees"></a>
+<a name="N10205"></a><a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
 <p>With regard to watches, ZooKeeper maintains these
       guarantees:</p>
@@ -943,7 +960,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N10224"></a><a name="sc_WatchRememberThese"></a>
+<a name="N1022A"></a><a name="sc_WatchRememberThese"></a>
 <h3 class="h4">Things to Remember about Watches</h3>
 <ul>
         
@@ -1002,7 +1019,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N10250"></a><a name="sc_ZooKeeperAccessControl"></a>
+<a name="N10256"></a><a name="sc_ZooKeeperAccessControl"></a>
 <h2 class="h3">ZooKeeper access control using ACLs</h2>
 <div class="section">
 <p>ZooKeeper uses ACLs to control access to its znodes (the
@@ -1037,7 +1054,7 @@ document.write("Last Published: " + document.lastModified);
     example, the pair <em>(ip:19.22.0.0/16, READ)</em>
     gives the <em>READ</em> permission to any clients with
     an IP address that starts with 19.22.</p>
-<a name="N10283"></a><a name="sc_ACLPermissions"></a>
+<a name="N10289"></a><a name="sc_ACLPermissions"></a>
 <h3 class="h4">ACL Permissions</h3>
 <p>ZooKeeper supports the following permissions:</p>
 <ul>
@@ -1093,7 +1110,7 @@ document.write("Last Published: " + document.lastModified);
       node, but nothing more. (The problem is, if you want to call
       zoo_exists() on a node that doesn't exist, there is no
       permission to check.)</p>
-<a name="N102D9"></a><a name="sc_BuiltinACLSchemes"></a>
+<a name="N102DF"></a><a name="sc_BuiltinACLSchemes"></a>
 <h4>Builtin ACL Schemes</h4>
 <p>ZooKeeeper has the following built in schemes:</p>
 <ul>
@@ -1142,7 +1159,7 @@ document.write("Last Published: " + document.lastModified);
 
       
 </ul>
-<a name="N1031D"></a><a name="ZooKeeper+C+client+API"></a>
+<a name="N10323"></a><a name="ZooKeeper+C+client+API"></a>
 <h4>ZooKeeper C client API</h4>
 <p>The following constants are provided by the ZooKeeper C
       library:</p>
@@ -1364,7 +1381,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N10434"></a><a name="sc_ZooKeeperPluggableAuthentication"></a>
+<a name="N1043A"></a><a name="sc_ZooKeeperPluggableAuthentication"></a>
 <h2 class="h3">Pluggable ZooKeeper authentication</h2>
 <div class="section">
 <p>ZooKeeper runs in a variety of different environments with
@@ -1450,7 +1467,7 @@ authProvider.2=com.f.MyAuth2
 </div>
       
   
-<a name="N104A0"></a><a name="ch_zkGuarantees"></a>
+<a name="N104A6"></a><a name="ch_zkGuarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -1576,12 +1593,12 @@ authProvider.2=com.f.MyAuth2
 </div>
 
   
-<a name="N10507"></a><a name="ch_bindings"></a>
+<a name="N1050D"></a><a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N10510"></a><a name="Java+Binding"></a>
+<a name="N10516"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1648,7 +1665,7 @@ authProvider.2=com.f.MyAuth2
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid.
       On a close, the two threads shut down and any further access on zookeeper
       handle is undefined behavior and should be avoided. </p>
-<a name="N10559"></a><a name="C+Binding"></a>
+<a name="N1055F"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1665,7 +1682,7 @@ authProvider.2=com.f.MyAuth2
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N10568"></a><a name="Installation"></a>
+<a name="N1056E"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1796,7 +1813,7 @@ authProvider.2=com.f.MyAuth2
 </li>
         
 </ol>
-<a name="N10611"></a><a name="Using+the+C+Client"></a>
+<a name="N10617"></a><a name="Using+the+C+Client"></a>
 <h4>Using the C Client</h4>
 <p>You can test your client by running a ZooKeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1854,7 +1871,7 @@ authProvider.2=com.f.MyAuth2
 </div>
 
    
-<a name="N10657"></a><a name="ch_guideToZkOperations"></a>
+<a name="N1065D"></a><a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>This section surveys all the operations a developer can perform
@@ -1872,28 +1889,28 @@ authProvider.2=com.f.MyAuth2
 </li>
     
 </ul>
-<a name="N1066B"></a><a name="sc_errorsZk"></a>
+<a name="N10671"></a><a name="sc_errorsZk"></a>
 <h3 class="h4">Handling Errors</h3>
 <p>Both the Java and C client bindings may report errors. The Java client binding does so by throwing KeeperException, calling code() on the exception will return the specific error code. The C client binding returns an error code as defined in the enum ZOO_ERRORS. API callbacks indicate result code for both language bindings. See the API documentation (javadoc for Java, doxygen for C) for full details on the possible errors and their meaning.</p>
-<a name="N10675"></a><a name="sc_connectingToZk"></a>
+<a name="N1067B"></a><a name="sc_connectingToZk"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p></p>
-<a name="N1067E"></a><a name="sc_readOps"></a>
+<a name="N10684"></a><a name="sc_readOps"></a>
 <h3 class="h4">Read Operations</h3>
 <p></p>
-<a name="N10687"></a><a name="sc_writeOps"></a>
+<a name="N1068D"></a><a name="sc_writeOps"></a>
 <h3 class="h4">Write Operations</h3>
 <p></p>
-<a name="N10690"></a><a name="sc_handlingWatches"></a>
+<a name="N10696"></a><a name="sc_handlingWatches"></a>
 <h3 class="h4">Handling Watches</h3>
 <p></p>
-<a name="N10699"></a><a name="sc_miscOps"></a>
+<a name="N1069F"></a><a name="sc_miscOps"></a>
 <h3 class="h4">Miscelleaneous ZooKeeper Operations</h3>
 <p></p>
 </div>
 
   
-<a name="N106A3"></a><a name="ch_programStructureWithExample"></a>
+<a name="N106A9"></a><a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -1902,7 +1919,7 @@ authProvider.2=com.f.MyAuth2
 </div>
 
   
-<a name="N106AE"></a><a name="ch_gotchas"></a>
+<a name="N106B4"></a><a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application
