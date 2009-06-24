@@ -254,13 +254,21 @@ public abstract class ClientBase extends TestCase {
         
         return tmpDir;
     }
-        
+    private static int getPort(String hostPort) {
+        String portstr = hostPort.split(":")[1];
+        String[] pc = portstr.split("/");
+        if (pc.length > 1) {
+            portstr = pc[0];
+        }
+        return Integer.parseInt(portstr);
+    }
+    
     static NIOServerCnxn.Factory createNewServerInstance(File dataDir,
             NIOServerCnxn.Factory factory, String hostPort, int maxCnxns)
         throws IOException, InterruptedException 
     {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
-        final int PORT = Integer.parseInt(hostPort.split(":")[1]);
+        final int PORT = getPort(hostPort);
         if (factory == null) {
             factory = new NIOServerCnxn.Factory(PORT,maxCnxns);
         }
@@ -278,7 +286,7 @@ public abstract class ClientBase extends TestCase {
     {
         if (factory != null) {
             factory.shutdown();
-            final int PORT = Integer.parseInt(hostPort.split(":")[1]);
+            final int PORT = getPort(hostPort);
 
             assertTrue("waiting for server down",
                        ClientBase.waitForServerDown("127.0.0.1:" + PORT,

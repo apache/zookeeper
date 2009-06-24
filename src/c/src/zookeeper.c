@@ -186,6 +186,7 @@ static int disable_conn_permute=0; // permute enabled by default
 static __attribute__((unused)) void print_completion_queue(zhandle_t *zh);
 
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
+static int isValidPath(const char* path, const int flags);
 
 const void *zoo_get_context(zhandle_t *zh) 
 {
@@ -372,6 +373,12 @@ static void destroy(zhandle_t *zh)
         free(zh->addrs);
         zh->addrs = NULL;
     }
+
+    if (zh->chroot != 0) {
+        free(zh->chroot);
+        zh->chroot = NULL;
+    }
+    
     free_auth_info(&zh->auth_h);
     destroy_zk_hashtable(zh->active_node_watchers);
     destroy_zk_hashtable(zh->active_exist_watchers);
@@ -413,7 +420,7 @@ int getaddrs(zhandle_t *zh)
         zh->addrs = 0;
     }
     if (!hosts) {
-        LOG_ERROR(("out of memory"));
+         LOG_ERROR(("out of memory"));
         errno=ENOMEM;
         return ZSYSTEMERROR;
     }
@@ -607,6 +614,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
 
     int errnosave;
     zhandle_t *zh = calloc(1, sizeof(*zh));
+    char *index_chroot;
     if (!zh) {
         return 0;
     }
@@ -624,7 +632,28 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
         errno=EINVAL;
         goto abort;
     }
-    zh->hostname = strdup(host);
+    //parse the host to get the chroot if 
+    //available
+    index_chroot = strchr(host, '/');
+    if (index_chroot) {
+        zh->chroot = strdup(index_chroot);
+        // if chroot is just / set it to null
+        if (strlen(zh->chroot) == 1) {
+            zh->chroot = NULL;
+        }
+        // cannot use strndup so allocate and strcpy
+        zh->hostname = (char *) malloc(index_chroot - host + 1);
+        zh->hostname = strncpy(zh->hostname, host, (index_chroot - host));
+        //strncpy does not null terminate
+        *(zh->hostname + (index_chroot - host) +1) = '\0';
+        
+    } else {
+        zh->chroot = NULL;
+        zh->hostname = strdup(host);
+    }
+    if (zh->chroot && !isValidPath(zh->chroot, 0)) { 
+        goto abort;
+    }
     if (zh->hostname == 0) {
         goto abort;
     }
@@ -660,6 +689,54 @@ abort:
     errno=errnosave;
     return 0;
 }
+
+/**
+ * deallocated the free_path only its beeen allocated
+ * and not equal to path
+ */
+void free_duplicate_path(char *free_path, const char* path) {
+    if (free_path != path) {
+        free(free_path);
+    }
+}
+
+/**
+  prepend the chroot path if available else return the path
+*/
+static char* prepend_string(zhandle_t *zh, const char* client_path) {
+    char *ret_str;
+    if (zh->chroot == NULL) 
+        return (char *) client_path;
+    // handle the chroot itself, client_path = "/"
+    if (strlen(client_path) == 1) { 
+        return strdup(zh->chroot);
+    } 
+    ret_str = (char *) malloc(strlen(zh->chroot) + strlen(client_path) + 1);
+    strcpy(ret_str, zh->chroot);
+    return strcat(ret_str, client_path);
+}
+    
+/**
+   strip off the chroot string from the server path
+   if there is one else return the exact path
+ */
+char* sub_string(zhandle_t *zh, const char* server_path) {
+    char *ret_str;
+    if (zh->chroot == NULL)
+        return (char *) server_path;
+    if (strncmp(server_path, zh->chroot, strlen(zh->chroot) != 0)) {
+        LOG_ERROR(("server path %s does not include chroot path %s", 
+                   server_path, zh->chroot));
+        return NULL;
+    }
+    if (strlen(server_path) == strlen(zh->chroot)) {
+        //return "/"
+        ret_str = strdup("/");
+        return ret_str;
+    }
+    ret_str = strdup(server_path + strlen(zh->chroot));
+    return ret_str;
+} 
 
 static buffer_list_t *allocate_buffer(char *buff, int len)
 {
@@ -1679,7 +1756,6 @@ int zookeeper_process(zhandle_t *zh, int events)
             deserialize_WatcherEvent(ia, "event", &evt);
             type = evt.type;
             path = evt.path;
-
             /* We are doing a notification, so there is no pending request */
             completion_list_t *c = 
                 create_completion_entry(WATCHER_EVENT_XID,-1,0,0,0);
@@ -1847,8 +1923,7 @@ int zookeeper_process(zhandle_t *zh, int events)
     if (process_async(zh->outstanding_sync)) {
         process_completions(zh);
     }
-    return api_epilog(zh,ZOK);
-}
+    return api_epilog(zh,ZOK);}
 
 int zoo_state(zhandle_t *zh)
 {
@@ -2093,24 +2168,29 @@ int zoo_awget(zhandle_t *zh, const char *path,
         data_completion_t dc, const void *data)
 {
     struct oarchive *oa; 
+    char *server_path = prepend_string(zh, path);
     struct RequestHeader h = { .xid = get_xid(), .type = GETDATA_OP};
-    struct GetDataRequest req = { (char*)path, watcher!=0 };
+    struct GetDataRequest req =  { (char*)server_path, watcher!=0 };
     int rc;
-    
-    if (zh==0 || !isValidPath(path, 0))
+            
+    if (zh==0 || !isValidPath(server_path, 0)) {
+        free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
-    if (is_unrecoverable(zh))
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
+    }
     oa=create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetDataRequest(oa, "req", &req);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_data_completion(zh, h.xid, dc, data,
-        create_watcher_registration(path,data_result_checker,watcher,watcherCtx));
+        create_watcher_registration(server_path,data_result_checker,watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-
+    free_duplicate_path(server_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
     
@@ -2128,13 +2208,19 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     struct RequestHeader h = { .xid = get_xid(), .type = SETDATA_OP};
     struct SetDataRequest req;
     int rc;
+    char *server_path;
+    server_path = prepend_string(zh, path);
     
-    if (zh==0 || !isValidPath(path, 0))
+    if (zh==0 || !isValidPath(server_path, 0)) {
+        free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
-    if (is_unrecoverable(zh))
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
+    }
     oa = create_buffer_oarchive();
-    req.path = (char*)path;
+    req.path = (char*)server_path;
     req.data.buff = (char*)buffer;
     req.data.len = buflen;
     req.version = version;
@@ -2145,6 +2231,7 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
+    free_duplicate_path(server_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2163,13 +2250,19 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     struct RequestHeader h = { .xid = get_xid(), .type = CREATE_OP };
     struct CreateRequest req;
     int rc;
+    char *server_path;
     
-    if (zh==0 || !isValidPath(path, flags))
+    server_path = prepend_string(zh, path);
+    if (zh==0 || !isValidPath(server_path, flags)) {
+        free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
-    if (is_unrecoverable(zh))
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
+    }
     oa = create_buffer_oarchive();
-    req.path = (char*)path;
+    req.path = (char*)server_path;
     req.flags = flags;
     req.data.buff = (char*)value;
     req.data.len = valuelen;
@@ -2186,6 +2279,7 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
+    free_duplicate_path(server_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
     
@@ -2203,13 +2297,19 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
     struct RequestHeader h = { .xid = get_xid(), .type = DELETE_OP};
     struct DeleteRequest req;
     int rc;
+    char *server_path;
     
-    if (zh==0 || !isValidPath(path, 0))
+    server_path = prepend_string(zh, path);
+    if (zh==0 || !isValidPath(server_path, 0)) {
+        free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
-    if (is_unrecoverable(zh))
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
+    }
     oa = create_buffer_oarchive();
-    req.path = (char*)path;
+    req.path = (char*)server_path;
     req.version = version;
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_DeleteRequest(oa, "req", &req);
@@ -2218,6 +2318,7 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
+    free_duplicate_path(server_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2240,23 +2341,29 @@ int zoo_awexists(zhandle_t *zh, const char *path,
 {
     struct oarchive *oa;
     struct RequestHeader h = { .xid = get_xid(), .type = EXISTS_OP };
-    struct ExistsRequest req = {(char*)path, watcher!=0 };
+    char *server_path = prepend_string(zh, path);
+    struct ExistsRequest req  = {(char*)server_path, watcher!=0 }; 
     int rc;
     
-    if (zh==0 || !isValidPath(path, 0))
+    if (zh==0 || !isValidPath(server_path, 0)) {
+        free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
-    if (is_unrecoverable(zh))
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
+    }
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_ExistsRequest(oa, "req", &req);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_stat_completion(zh, h.xid, completion, data,
-        create_watcher_registration(path,exists_result_checker,
+        create_watcher_registration(server_path,exists_result_checker,
                 watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
+    free_duplicate_path(server_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2279,22 +2386,28 @@ int zoo_awget_children(zhandle_t *zh, const char *path,
 {
     struct oarchive *oa;
     struct RequestHeader h = { .xid = get_xid(), .type = GETCHILDREN_OP};
-    struct GetChildrenRequest req={(char*)path, watcher!=0 };
+    char * server_path = prepend_string(zh, path);
+    struct GetChildrenRequest req = {(char*)server_path, watcher!=0 }; 
     int rc;
-    
-    if (zh==0 || !isValidPath(path, 0))
+        
+    if (zh==0 || !isValidPath(server_path, 0)) {
+        free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
-    if (is_unrecoverable(zh))
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
+    }
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetChildrenRequest(oa, "req", &req);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_strings_completion(zh, h.xid, dc, data,
-            create_watcher_registration(path,child_result_checker,watcher,watcherCtx));
+            create_watcher_registration(server_path,child_result_checker,watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
+    free_duplicate_path(server_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2312,13 +2425,19 @@ int zoo_async(zhandle_t *zh, const char *path,
     struct RequestHeader h = { .xid = get_xid(), .type = SYNC_OP};
     struct SyncRequest req;
     int rc;
-
-    if (zh==0 || !isValidPath(path, 0))
+    char *server_path;
+    
+    server_path = prepend_string(zh, path);
+    if (zh==0 || !isValidPath(server_path, 0)) {
+        free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
-    if (is_unrecoverable(zh))
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
+    }
     oa = create_buffer_oarchive();
-    req.path = (char*)path;
+    req.path = (char*)server_path;
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SyncRequest(oa, "req", &req);
     enter_critical(zh);
@@ -2326,6 +2445,7 @@ int zoo_async(zhandle_t *zh, const char *path,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
+    free_duplicate_path(server_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2344,13 +2464,19 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
     struct RequestHeader h = { .xid = get_xid(), .type = GETACL_OP};
     struct GetACLRequest req;
     int rc;
+    char *server_path;
     
-    if (zh==0 || !isValidPath(path, 0))
+    server_path = prepend_string(zh, path);
+    if (zh==0 || !isValidPath(server_path, 0)) {
+        free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
-    if (is_unrecoverable(zh))
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
+    }
     oa = create_buffer_oarchive();
-    req.path = (char*)path;
+    req.path = (char*)server_path;
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetACLRequest(oa, "req", &req);
     enter_critical(zh);
@@ -2358,6 +2484,7 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
+    free_duplicate_path(server_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2375,13 +2502,19 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     struct RequestHeader h = { .xid = get_xid(), .type = SETACL_OP};
     struct SetACLRequest req;
     int rc;
-    
-    if (zh==0 || !isValidPath(path, 0))
+    char *server_path;
+
+    server_path = prepend_string(zh, path);
+    if (zh==0 || !isValidPath(server_path, 0)) {
+        free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
-    if (is_unrecoverable(zh))
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
+    }
     oa = create_buffer_oarchive();
-    req.path = (char*)path;
+    req.path = (char*)server_path;
     req.acl = *acl;
     req.version = version;
     rc = serialize_RequestHeader(oa, "header", &h);
@@ -2391,6 +2524,7 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
+    free_duplicate_path(server_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 

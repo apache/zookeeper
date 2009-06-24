@@ -266,10 +266,12 @@ static void add_for_event(zk_hashtable *ht, char *path, watcher_object_list_t **
 static void do_foreach_watcher(watcher_object_t* wo,zhandle_t* zh,
         const char* path,int type,int state)
 {
+    char *client_path = sub_string(zh, path);
     while(wo!=0){
-        wo->watcher(zh,type,state,path,wo->context);
+        wo->watcher(zh,type,state,client_path,wo->context);
         wo=wo->next;
     }    
+    free_duplicate_path(client_path, path);
 }
 
 watcher_object_list_t *collectWatchers(zhandle_t *zh,int type, char *path)

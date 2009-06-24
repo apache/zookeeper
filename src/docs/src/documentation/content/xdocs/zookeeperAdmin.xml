@@ -1139,7 +1139,15 @@ imok
       <title>Best Practices</title>
 
       <para>For best results, take note of the following list of good
-      Zookeeper practices. <emphasis>[tbd...]</emphasis></para>
+      Zookeeper practices:</para>
+
+
+      <para>For multi-tennant installations see the <ulink
+      url="zookeeperProgrammers.html#ch_zkSessions">section</ulink>
+      detailing ZooKeeper "chroot" support, this can be very useful
+      when deploying many applications/services interfacing to a
+      single ZooKeeper cluster.</para>
+
     </section>
   </section>
 </article>
