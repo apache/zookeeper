@@ -55,21 +55,12 @@ import org.apache.log4j.Logger;
  * 
  */
 public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
-    Logger LOG = Logger.getLogger(QuorumOpMonitor.class);
+    static Logger LOG = Logger.getLogger(QuorumOpMonitor.class);
     
     LedgerHandle lh;
     
     static final int MAXRETRIES = 2;
-    static HashMap<Long, QuorumOpMonitor> instances = 
-        new HashMap<Long, QuorumOpMonitor>();
     
-    public static QuorumOpMonitor getInstance(LedgerHandle lh){
-        if(instances.get(lh.getId()) == null) {
-            instances.put(lh.getId(), new QuorumOpMonitor(lh));
-        }
-        
-        return instances.get(lh.getId());
-    }
     
     /**
      * Message disgest instance
@@ -160,17 +151,22 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
         if(rc == 0){
             // Everything went ok with this op
             synchronized(pOp){ 
-                //pOp.bookieIdSent.add(sId);
                 pOp.bookieIdRecv.add(sId);
-                if(pOp.bookieIdRecv.size() == lh.getQuorumSize()){
-                    //pendingAdds.remove(entryId);
-                    //sAdd.op.cb.addComplete(sAdd.op.getErrorCode(),
-                    //        ledgerId, entryId, sAdd.op.ctx);
+                lh.setLastRecvCorrectly(sId, entryId);
+                if(pOp.bookieIdRecv.size() >= lh.getQuorumSize()){
                     sAdd.op.setReady();     
                 }
             }
         } else {
-            LOG.error("Error sending write request: " + rc + " : " + ledgerId);
+            //LOG.warn("Error sending write request: " + rc + " : " + ledgerId + ": " + lh.getBookies().size());
+            /*
+             * If ledger is closed already, then simply return
+             */
+            if(lh.getId() == -1){
+                LOG.warn("Ledger identifier is not valid");
+                return;
+            }
+            
             HashSet<Integer> ids;
               
             synchronized(pOp){
@@ -180,8 +176,7 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
                 if(ids.size() == lh.getBookies().size()){
                     if(pOp.retries++ >= MAXRETRIES){
                         //Call back with error code
-                        //sAdd.op.cb.addComplete(ErrorCodes.ENUMRETRIES,
-                        //        ledgerId, entryId, sAdd.op.ctx);
+  
                         sAdd.op.setErrorCode(BKDefs.ENR);
                         sAdd.op.setReady();
                         return;
@@ -190,25 +185,38 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
                     ids.clear();
                 }
                 // Select another bookie that we haven't contacted yet
-                for(int i = 0; i < lh.getBookies().size(); i++){
-                    if(!ids.contains(Integer.valueOf(i))){
-                        // and send it to new bookie
-                        try{
-                            list.get(i).sendAdd(lh, new SubAddOp(sAdd.op, 
-                                    pOp, 
-                                    i, 
-                                    this), ((AddOp) sAdd.op).entry);
-                            pOp.bookieIdRecv.add(sId.intValue());
-                                
-                            break;
-                        } catch(IOException e){
-                            LOG.error(e);
-                        }
+                try{
+                    //LOG.info("Selecting another bookie " + entryId);
+                    int bCounter;
+                    if(sId >= (entryId % (lh.getBookies().size() + 1))){
+                        bCounter = sId - (((int) entryId) % (lh.getBookies().size() + 1));
+                    } else {
+                        bCounter = (lh.getBookies().size() + 1) - (((int) entryId) % (lh.getBookies().size() + 1)) - sId;
                     }
-                }       
+                    
+                    int tmpId = (((int) entryId) + lh.getQuorumSize()) % (lh.getBookies().size() + 1);
+                    int newId = tmpId % lh.getBookies().size();
+                    //LOG.info("Sending a new add operation to bookie: " + newId + ", " + lh.getBookies().get(newId).addr);
+                    
+                    BookieHandle bh = lh.getBookies().get(newId);
+                    
+                    //LOG.info("Got handle for " + newId);
+                    
+                    bh.sendAdd(lh, new SubAddOp(sAdd.op, 
+                            pOp, 
+                            newId, 
+                            this), entryId);
+               
+                    //LOG.info("Ended " + entryId + ", " + newId);
+                } catch(IOException e){
+                    LOG.error(e);
+                } catch(BKException e){
+                    LOG.error(e);
+                }
             }
-        }
+        }       
     }
+
     
     /**
      * Callback method for read operations. There is one callback for
@@ -256,6 +264,7 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
                                     byte[] data = new byte[voted.capacity() - dLength - 24];
                                     voted.position(24);                                    
                                     voted.get(data, 0, data.length);
+                                    //LOG.warn("Data length (" + entryId + "): " + data.length);
                                     counter = addNewEntry(new LedgerEntry(ledgerId, entryId, data), rOp);
                                 } 
                             }
@@ -338,6 +347,7 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
         
         if(rOp.nacks.get(entryId).incrementAndGet() >= lh.getThreshold()){
             int counter = -1;
+            //LOG.warn("Giving up on " + entryId + "(" + lh.getThreshold() + ")");
             counter = addNewEntry(new LedgerEntry(ledgerId, entryId, null), rOp);
             
             if((counter == (rOp.lastEntry - rOp.firstEntry + 1)) && 
@@ -450,6 +460,8 @@ public class QuorumOpMonitor implements WriteCallback, ReadEntryCallback {
     private int addNewEntry(LedgerEntry le, ReadOp op){
         long index = le.getEntryId() % (op.lastEntry - op.firstEntry + 1);
         if(op.seq[(int) index] == null){
+            if(le.getEntry() == null) LOG.warn("Ledger entry is null (" + le.getEntryId() + ")");
+            //if(le.getEntryId() % 100 == 0) LOG.info("New entry: " + le.getEntryId() + ")");
             op.seq[(int) index] = le;
             
             return op.counter.incrementAndGet();

@@ -28,7 +28,11 @@ import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.TreeMap;
 
+import org.apache.bookkeeper.client.BKDefs;
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookieHandle;
 import org.apache.bookkeeper.client.AsyncCallback.AddCallback;
@@ -56,7 +60,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
      * ledgerhandle->write->bookeeper->quorumengine->bookiehandle
      * ->bookieclient
      */
-    Logger LOG = Logger.getLogger(LedgerHandle.class);
+   static Logger LOG = Logger.getLogger(LedgerHandle.class);
     
     public enum QMode {VERIFIABLE, GENERIC, FREEFORM};
     
@@ -64,12 +68,16 @@ public class LedgerHandle implements ReadCallback, AddCallback {
     private long ledger;
     private volatile long last;
     private volatile long lastAddConfirmed = 0;
-    private ArrayList<BookieHandle> bookies;
+    private HashMap<Integer, Long> lastRecvCorrectly;
+    private volatile ArrayList<BookieHandle> bookies;
     private ArrayList<InetSocketAddress> bookieAddrList;
+    private TreeMap<Long, ArrayList<BookieHandle> > bookieConfigMap;
+    private long[] entryChange;
     private BookKeeper bk;
     private QuorumEngine qe;
     private int qSize;
     private QMode qMode = QMode.VERIFIABLE;
+    private int lMode;
 
     private int threshold;
     private String digestAlg = "SHA1";
@@ -94,6 +102,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
         this.ledger = ledger;
         this.last = last;
         this.bookies = new ArrayList<BookieHandle>();
+        this.lastRecvCorrectly = new HashMap<Integer, Long>();
         this.passwd = passwd;
         genLedgerKey(passwd);
         genMacKey(passwd);
@@ -122,6 +131,8 @@ public class LedgerHandle implements ReadCallback, AddCallback {
         this.ledger = ledger;
         this.last = last;
         this.bookies = new ArrayList<BookieHandle>();
+        this.lastRecvCorrectly = new HashMap<Integer, Long>();
+
 
         this.qSize = qSize;
         this.qMode = mode;
@@ -150,6 +161,8 @@ public class LedgerHandle implements ReadCallback, AddCallback {
         this.ledger = ledger;
         this.last = last;
         this.bookies = new ArrayList<BookieHandle>();
+        this.lastRecvCorrectly = new HashMap<Integer, Long>();
+
 
         this.qSize = qSize;
         this.passwd = passwd;
@@ -165,7 +178,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
     			LOG.debug("Opening bookieHandle: " + a);
             
     			//BookieHandle bh = new BookieHandle(this, a);
-    			this.bookies.add(bk.getBookieHandle(a));
+    			this.bookies.add(bk.getBookieHandle(this, a));
     		}
     	} catch(ConnectException e){
     		LOG.error(e);
@@ -198,14 +211,36 @@ public class LedgerHandle implements ReadCallback, AddCallback {
      * 
      * @param addr	socket address
      */
-    int addBookie(InetSocketAddress addr)
+    int addBookieForWriting(InetSocketAddress addr)
     throws IOException {
         LOG.debug("Bookie address: " + addr);
+        lMode = BKDefs.WRITE;
         //BookieHandle bh = new BookieHandle(this, addr);
-        this.bookies.add(bk.getBookieHandle(addr));
+        this.bookies.add(bk.getBookieHandle(this, addr));
         if(bookies.size() > qSize) setThreshold();
         return (this.bookies.size() - 1);
     }
+    
+    /**
+     * Create bookie handle and add it to the list
+     * 
+     * @param addr  socket address
+     */
+    int addBookieForReading(InetSocketAddress addr)
+    throws IOException {
+        LOG.debug("Bookie address: " + addr);
+        lMode = BKDefs.READ;
+        //BookieHandle bh = new BookieHandle(this, addr);
+        try{
+            this.bookies.add(bk.getBookieHandle(this, addr));
+        } catch (IOException e){
+            LOG.info("Inserting a decoy bookie handle");
+            this.bookies.add(new BookieHandle(addr, false));
+        }
+        if(bookies.size() > qSize) setThreshold();
+        return (this.bookies.size() - 1);
+    }
+
     
     private void setThreshold() {
         switch(qMode){
@@ -223,6 +258,47 @@ public class LedgerHandle implements ReadCallback, AddCallback {
     
     public int getThreshold() {
         return threshold;
+    }
+    
+    
+    /**
+     * Writes to BookKeeper changes to the ensemble.
+     *         
+     * @param addr  Address of faulty bookie
+     * @param entry Last entry written before change of ensemble.
+     */
+    
+    void changeEnsemble(long entry){
+        String path = BKDefs.prefix + 
+        bk.getZKStringId(getId()) +  
+        BKDefs.quorumEvolution + "/" + 
+        String.format("%010d", entry);
+        
+        LOG.info("Report failure: " + String.format("%010d", entry));
+        try{
+            if(bk.getZooKeeper().exists(BKDefs.prefix + 
+                    bk.getZKStringId(getId()) +  
+                    BKDefs.quorumEvolution, false) == null)
+                bk.getZooKeeper().create(BKDefs.prefix + bk.getZKStringId(getId()) + 
+                        BKDefs.quorumEvolution, new byte[0], Ids.OPEN_ACL_UNSAFE, 
+                        CreateMode.PERSISTENT);
+        
+            boolean first = true;
+            String addresses = "";
+            for(BookieHandle bh : bookies){
+                if(first){ 
+                    addresses = bh.addr.toString();
+                    first = false;
+                }
+                else 
+                    addresses = addresses + " " + bh.addr.toString();
+            }
+            
+            bk.getZooKeeper() .create(path, addresses.getBytes(),
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        } catch(Exception e){
+            LOG.error("Could not write to ZooKeeper: " + path + ", " + e);
+        }
     }
     
     /**
@@ -250,7 +326,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
                 /*
                  * If successful in writing to new bookie, add it to the set
                  */
-                this.bookies.set(index, bk.getBookieHandle(addr));
+                this.bookies.set(index, bk.getBookieHandle(this, addr));
             } catch(ConnectException e){
                 bk.blackListBookie(addr);
                 LOG.error(e);
@@ -266,16 +342,23 @@ public class LedgerHandle implements ReadCallback, AddCallback {
      * to replace the current faulty one. In such cases,
      * we simply remove the bookie.
      * 
-     * @param index
+     * 
+     * @param BookieHandle
      */
-    void removeBookie(int index){
-        bookies.remove(index);
-    }
-    
-    void closeUp(){
-        ledger = -1;
-        last = -1;
-        bk.haltBookieHandles(bookies);
+    synchronized void removeBookie(BookieHandle bh){
+       if(lMode == BKDefs.WRITE){
+           LOG.info("Removing bookie: " + bh.addr);
+           int index = bookies.indexOf(bh);
+           if(index >= 0){
+               Long tmpLastRecv = lastRecvCorrectly.get(index);
+               bookies.remove(index);
+        
+               if(tmpLastRecv == null)
+                   changeEnsemble(0);
+               else
+                   changeEnsemble(tmpLastRecv);
+           }
+       }
     }
     
     
@@ -328,6 +411,11 @@ public class LedgerHandle implements ReadCallback, AddCallback {
         return lastAddConfirmed;
     }
     
+    void setLastRecvCorrectly(int sId, long entry){
+        //LOG.info("Setting last received correctly: " + entry);
+        lastRecvCorrectly.put(sId, entry);
+    }
+    
     /**
      * Returns the list of bookies
      * @return ArrayList<BookieHandle>
@@ -337,12 +425,109 @@ public class LedgerHandle implements ReadCallback, AddCallback {
     }
     
     /**
+     * For reads, there might be multiple operations.
+     * 
+     * @param entry
+     * @return ArrayList<BookieHandle>  returns list of bookies
+     */
+    ArrayList<BookieHandle> getBookies(long entry){
+        return getConfig(entry);
+    }
+    
+    /**
+     * Returns the bookie handle corresponding to the addresses in the input.
+     * 
+     * @param addr
+     * @return
+     */
+    BookieHandle getBookieHandleDup(InetSocketAddress addr){
+        for(BookieHandle bh : bookies){
+            if(bh.addr.equals(addr))
+                return bh;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Sets a new bookie configuration corresponding to a failure during
+     * writes to the ledger. We have one configuration for every failure.
+     * 
+     * @param entry
+     * @param list
+     */
+    
+    void setNewBookieConfig(long entry, ArrayList<BookieHandle> list){
+        if(bookieConfigMap == null)
+            bookieConfigMap = new TreeMap<Long, ArrayList<BookieHandle> >();
+        
+        /*
+         * If initial config is not in the list, we include it.
+         */
+        if(!bookieConfigMap.containsKey(new Long(0))){
+            bookieConfigMap.put(new Long(0), bookies);
+        }
+        
+        LOG.info("Adding new entry: " + entry + ", " + bookies.size() + ", " + list.size());
+        bookieConfigMap.put(entry, list);
+    }
+    
+    /**
+     * Once we read all changes to the bookie configuration, we
+     * have to call this method to generate an array that we use
+     * to determine the bookie configuration for an entry.
+     * 
+     * Note that this array is a performance optimization and 
+     * it is not necessary for correctness. We could just use 
+     * bookieConfigMap but it would be slower.
+     */
+    
+    void prepareEntryChange(){
+        entryChange = new long[bookieConfigMap.size()];
+    
+        int counter = 0;
+        for(Long l : bookieConfigMap.keySet()){
+            entryChange[counter++] = l;
+        }
+    }
+    
+    /**
      * Return the quorum size. By default, the size of a quorum is (n+1)/2, 
      * where n is the size of the set of bookies.
      * @return int
      */
     int getQuorumSize(){
         return qSize;   
+    }
+    
+    
+    /**
+     *  Returns the config corresponding to the entry
+     *  
+     * @param entry
+     * @return
+     */
+    private ArrayList<BookieHandle> getConfig(long entry){
+        if(bookieConfigMap == null)
+            return bookies;
+        
+        int index = Arrays.binarySearch(entryChange, entry);
+        
+        /*
+         * If not on the map, binarySearch returns a negative value
+         */
+        int before = index;
+        index = index >= 0? index : ((-1) - index);
+
+        if(index == 0){
+            if((entry % 10) == 0){
+                LOG.info("Index: " + index + ", " + before + ", " + entry + ", " + bookieConfigMap.get(entryChange[index]).size());
+            }
+            return bookieConfigMap.get(entryChange[index]); 
+        } else{
+            //LOG.warn("IndexDiff " + entry);
+            return bookieConfigMap.get(entryChange[index - 1]);
+        }
     }
     
     /**
@@ -440,12 +625,18 @@ public class LedgerHandle implements ReadCallback, AddCallback {
        return ledgerKey; 
     }
     
+    void closeUp(){
+        ledger = -1;
+        last = -1;
+        bk.haltBookieHandles(this, bookies);
+    }
+    
     /**
      * Close ledger.
      * 
      */
     public void close() 
-    throws KeeperException, InterruptedException {
+    throws KeeperException, InterruptedException, BKException {
         //Set data on zookeeper
         ByteBuffer last = ByteBuffer.allocate(8);
         last.putLong(lastAddConfirmed);
@@ -456,13 +647,12 @@ public class LedgerHandle implements ReadCallback, AddCallback {
                    last.array(), 
                    Ids.OPEN_ACL_UNSAFE, 
                    CreateMode.PERSISTENT); 
-        } else {
-            bk.getZooKeeper().setData(closePath, 
-                last.array(), -1);
-        }
+        } 
+        
         closeUp();
         StopOp sOp = new StopOp();
         qe.sendOp(sOp);
+        LOG.info("##### CB worker queue size: " + qe.cbWorker.pendingOps.size());
     }
     
     /**
@@ -515,7 +705,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
         
         RetCounter counter = new RetCounter();
         counter.inc();
-        
+     
         Operation r = new ReadOp(this, firstEntry, lastEntry, this, counter);
         qe.sendOp(r);
         
@@ -523,7 +713,10 @@ public class LedgerHandle implements ReadCallback, AddCallback {
         counter.block(0);
         LOG.debug("Done with waiting: " + counter.i + ", " + firstEntry);
         
-        if(counter.getSequence() == null) throw BKException.create(Code.ReadException);
+        if(counter.getSequence() == null){
+            LOG.error("Failed to read entries: " + firstEntry + ", " + lastEntry);
+            throw BKException.create(Code.ReadException);
+        }
         return counter.getSequence();
     }
    
@@ -535,7 +728,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
      * @param ctx   some control object
      */
     public void asyncAddEntry(byte[] data, AddCallback cb, Object ctx)
-    throws InterruptedException {
+    throws InterruptedException, BKException {
         AddOp r = new AddOp(this, data, cb, ctx);
         qe.sendOp(r);
     }
@@ -548,7 +741,7 @@ public class LedgerHandle implements ReadCallback, AddCallback {
      */
     
     public long addEntry(byte[] data)
-    throws InterruptedException{
+    throws InterruptedException, BKException{
         LOG.debug("Adding entry " + data);
         RetCounter counter = new RetCounter();
         counter.inc();

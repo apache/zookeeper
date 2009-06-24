@@ -28,12 +28,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.Enumeration;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import javax.crypto.Mac; 
 import javax.crypto.spec.SecretKeySpec;
 
+//import org.apache.bookkeeper.client.AsyncCallback.FailCallback;
+import org.apache.bookkeeper.client.BookieHandle;
 import org.apache.bookkeeper.proto.ReadEntryCallback;
 import org.apache.bookkeeper.proto.WriteCallback;
 import org.apache.log4j.Logger;
@@ -50,18 +54,23 @@ public class BookieClient extends Thread {
     int myCounter = 0;
 
     public BookieClient(InetSocketAddress addr, int recvTimeout)
-    throws IOException, ConnectException {
-        sock = SocketChannel.open(addr);
-        setDaemon(true);
-   
-        sock.socket().setSoTimeout(recvTimeout);
-        sock.socket().setTcpNoDelay(true);
-        start();
+    throws IOException, ConnectException { 
+        startConnection(addr, recvTimeout);
     }
     
     public BookieClient(String host, int port, int recvTimeout)
     throws IOException, ConnectException {
         this(new InetSocketAddress(host, port), recvTimeout);
+    }
+    
+    public void startConnection(InetSocketAddress addr, int recvTimeout)
+    throws IOException, ConnectException {
+        sock = SocketChannel.open(addr);
+        setDaemon(true);
+        //sock.configureBlocking(false);
+        sock.socket().setSoTimeout(recvTimeout);
+        sock.socket().setTcpNoDelay(true);
+        start();        
     }
     
     private static class Completion<T> {
@@ -105,13 +114,12 @@ public class BookieClient extends Thread {
     ConcurrentHashMap<CompletionKey, Completion<ReadEntryCallback>> readCompletions =
         new ConcurrentHashMap<CompletionKey, Completion<ReadEntryCallback>>();
     
-    
     /*
      * Use this semaphore to control the number of completion key in both addCompletions
      * and readCompletions. This is more of a problem for readCompletions because one
      * readEntries opertion is expanded into individual operations to read entries.
      */
-    Semaphore completionSemaphore = new Semaphore(1000);
+    Semaphore completionSemaphore = new Semaphore(3000);
     
    
     /**
@@ -150,7 +158,10 @@ public class BookieClient extends Thread {
     }
     
     /**
-     * Send addEntry operation to bookie.
+     * Send addEntry operation to bookie. It throws an IOException
+     * if either the write to the socket fails or it takes too long
+     * to obtain a permit to send another request, which possibly 
+     * implies that the corresponding bookie is down.
      * 
      * @param ledgerId	ledger identifier
      * @param entryId 	entry identifier
@@ -163,39 +174,37 @@ public class BookieClient extends Thread {
             ByteBuffer entry, WriteCallback cb, Object ctx) 
     throws IOException, InterruptedException {
         
-        //LOG.info("Data length: " + entry.capacity());
-    	completionSemaphore.acquire();
+        if(cb == null)
+            LOG.error("WriteCallback object is null: " + entryId);
         addCompletions.put(new CompletionKey(ledgerId, entryId),
                 new Completion<WriteCallback>(cb, ctx));
-        //entry = entry.duplicate();
-        //entry.position(0);
-        
+
         ByteBuffer tmpEntry = ByteBuffer.allocate(entry.remaining() + 44);
 
         tmpEntry.position(4);
         tmpEntry.putInt(BookieProtocol.ADDENTRY);
         tmpEntry.put(masterKey);
-        //LOG.debug("Master key: " + new String(masterKey));
         tmpEntry.putLong(ledgerId);
         tmpEntry.putLong(entryId);
         tmpEntry.put(entry);
         tmpEntry.position(0);
         
-        //ByteBuffer len = ByteBuffer.allocate(4);
         // 4 bytes for the message type
         tmpEntry.putInt(tmpEntry.remaining() - 4);
         tmpEntry.position(0);
-        //sock.write(len);
-        //len.clear();
-        //len.putInt(BookieProtocol.ADDENTRY);
-        //len.flip();
-        //sock.write(len);
-        sock.write(tmpEntry);
-        //LOG.debug("addEntry:finished");
+
+        
+        if(!sock.isConnected() || 
+                !completionSemaphore.tryAcquire(1000, TimeUnit.MILLISECONDS)){ 
+            throw new IOException();
+        } else sock.write(tmpEntry);
     }
     
     /**
-     * Send readEntry operation to bookie.
+     * Send readEntry operation to bookie. It throws an IOException
+     * if either the write to the socket fails or it takes too long
+     * to obtain a permit to send another request, which possibly 
+     * implies that the corresponding bookie is down.
      * 
      * @param ledgerId	ledger identifier
      * @param entryId	entry identifier
@@ -206,28 +215,22 @@ public class BookieClient extends Thread {
     synchronized public void readEntry(long ledgerId, long entryId,
             ReadEntryCallback cb, Object ctx) 
     throws IOException, InterruptedException {
-    	
-    	completionSemaphore.acquire();
+        //LOG.info("Entry id: " + entryId);
+    	//completionSemaphore.acquire();
         readCompletions.put(new CompletionKey(ledgerId, entryId),
                 new Completion<ReadEntryCallback>(cb, ctx));
+        
         ByteBuffer tmpEntry = ByteBuffer.allocate(8 + 8 + 8);
         tmpEntry.putInt(20);
         tmpEntry.putInt(BookieProtocol.READENTRY);
         tmpEntry.putLong(ledgerId);
         tmpEntry.putLong(entryId);
         tmpEntry.position(0);
-        
-        //ByteBuffer len = ByteBuffer.allocate(4);
-        //len.putInt(tmpEntry.remaining() + 4);
-        //len.flip();
-        //LOG.debug("readEntry: Writing to socket");
-        //sock.write(len);
-        //len.clear();
-        //len.putInt(BookieProtocol.READENTRY);
-        //len.flip();
-        //sock.write(len);
-        sock.write(tmpEntry);
-        //LOG.error("Size of readCompletions: " + readCompletions.size());
+
+        if(!sock.isConnected() || 
+                !completionSemaphore.tryAcquire(1000, TimeUnit.MILLISECONDS)){ 
+            throw new IOException();
+        } else sock.write(tmpEntry);
     }
     
     private void readFully(ByteBuffer bb) throws IOException {
@@ -236,6 +239,7 @@ public class BookieClient extends Thread {
         }
     }
     
+    Semaphore running = new Semaphore(0);
     public void run() {
         int len = -1;
         ByteBuffer lenBuffer = ByteBuffer.allocate(4);
@@ -254,47 +258,44 @@ public class BookieClient extends Thread {
  
                 switch(type) {
                 case BookieProtocol.ADDENTRY:
-                {
+                {                    
                     long ledgerId = bb.getLong();
                     long entryId = bb.getLong();
-                    Completion<WriteCallback> ac = addCompletions.remove(new CompletionKey(ledgerId, entryId));
+
+                    Completion<WriteCallback> ac;
+                    ac = addCompletions.remove(new CompletionKey(ledgerId, entryId));
                     completionSemaphore.release();
-                    
                     if (ac != null) {
                         ac.cb.writeComplete(rc, ledgerId, entryId, ac.ctx);
                     } else {
                         LOG.error("Callback object null: " + ledgerId + " : " + entryId);
                     }
+
                     break;
                 }
                 case BookieProtocol.READENTRY:
                 {
-                    //ByteBuffer entryData = bb.slice();
                     long ledgerId = bb.getLong();
                     long entryId = bb.getLong();
                     
                     bb.position(24);
                     byte[] data = new byte[bb.capacity() - 24];
                     bb.get(data);
-                    ByteBuffer entryData = ByteBuffer.wrap(data);
-                    //ByteBuffer entryData = bb;
-                    //LOG.info("Received entry: " + ledgerId + ", " + entryId
-                    // + ", " + rc + ", " + entryData.array().length + ", " + bb.array().length + ", " + bb.remaining());          
+                    ByteBuffer entryData = ByteBuffer.wrap(data);         
                     
                     CompletionKey key = new CompletionKey(ledgerId, entryId);
                     Completion<ReadEntryCallback> c;
                     
                     if(readCompletions.containsKey(key)){
-                        c = readCompletions.remove(key);
-                        //LOG.error("Found key");
+                            c = readCompletions.remove(key);
                     }
                     else{    
-                        /*
-                         * This is a special case. When recovering a ledger, a client submits
-                         * a read request with id -1, and receives a response with a different
-                         * entry id.
-                         */
-                        c = readCompletions.remove(new CompletionKey(ledgerId, -1));
+                            /*
+                             * This is a special case. When recovering a ledger, a client submits
+                             * a read request with id -1, and receives a response with a different
+                             * entry id.
+                             */
+                            c = readCompletions.remove(new CompletionKey(ledgerId, -1));
                     }
                     completionSemaphore.release();
                     
@@ -311,9 +312,72 @@ public class BookieClient extends Thread {
                     System.err.println("Got error " + rc + " for type " + type);
                 }
             }
+            
         } catch(Exception e) {
-            LOG.error("Len = " + len + ", Type = " + type + ", rc = " + rc, e);
+            LOG.error("Len = " + len + ", Type = " + type + ", rc = " + rc);
         }
+        running.release();
+        
+    }
+    
+    /**
+     * Errors out pending entries. We call this method from one thread to avoid
+     * concurrent executions to QuorumOpMonitor (implements callbacks). It seems
+     * simpler to call it from BookieHandle instead of calling directly from here.
+     */
+    
+    public void errorOut(){
+        LOG.info("Erroring out pending entries");
+    
+        for (Enumeration<CompletionKey> e = addCompletions.keys() ; e.hasMoreElements() ;) {
+            CompletionKey key = e.nextElement();
+            Completion<WriteCallback> ac = addCompletions.remove(key);
+            if(ac != null){
+                completionSemaphore.release();
+                ac.cb.writeComplete(-1, key.ledgerId, key.entryId, ac.ctx);
+            }
+        }
+        
+        LOG.info("Finished erroring out pending add entries");
+         
+        for (Enumeration<CompletionKey> e = readCompletions.keys() ; e.hasMoreElements() ;) {
+            CompletionKey key = e.nextElement();
+            Completion<ReadEntryCallback> ac = readCompletions.remove(key);
+                
+            if(ac != null){
+                completionSemaphore.release();
+                ac.cb.readEntryComplete(-1, key.ledgerId, key.entryId, null, ac.ctx);
+            }
+        }
+        
+        LOG.info("Finished erroring out pending read entries");
+    }
+
+    /**
+     * Halts client.
+     */
+    
+    public void halt() {
+        try{
+            sock.close();
+        } catch(IOException e) {
+            LOG.warn("Exception while closing socket");
+        }
+        
+        try{
+            running.acquire();
+        } catch(InterruptedException e){
+            LOG.error("Interrupted while waiting for running semaphore to acquire lock");
+        }
+    }
+    
+    /**
+     * Returns the status of the socket of this bookie client.
+     * 
+     * @return boolean
+     */
+    public boolean isConnected(){
+        return sock.isConnected();
     }
 
     private static class Counter {

@@ -48,8 +48,12 @@ public abstract class BKException extends Exception {
             return new BKDigestNotInitializedException();
         case Code.DigestMatchException:
             return new BKDigestMatchException();
+        case Code.NotEnoughBookiesException:
+            return new BKNotEnoughBookiesException();
         case Code.NoSuchLedgerExistsException:
             return new BKNoSuchLedgerExistsException();
+        case Code.BookieHandleNotAvailableException:
+            return new BKBookieHandleNotAvailableException();
         default:
             return new BKIllegalOpException();
         }
@@ -62,7 +66,9 @@ public abstract class BKException extends Exception {
         int NoBookieAvailableException = -3;
         int DigestNotInitializedException = -4;
         int DigestMatchException = -5;
-        int NoSuchLedgerExistsException = -6;
+        int NotEnoughBookiesException = -6;
+        int NoSuchLedgerExistsException = -7;
+        int BookieHandleNotAvailableException = -8;
         
         int IllegalOpException = -100;
     }
@@ -89,8 +95,12 @@ public abstract class BKException extends Exception {
             return "Digest engine not initialized";
         case Code.DigestMatchException:
             return "Entry digest does not match";
+        case Code.NotEnoughBookiesException:
+            return "Not enough non-faulty bookies available";
         case Code.NoSuchLedgerExistsException:
             return "No such ledger exists";
+        case Code.BookieHandleNotAvailableException:
+            return "Bookie handle is not available";
         default:
             return "Invalid operation";
         }
@@ -132,9 +142,21 @@ public abstract class BKException extends Exception {
         }   
     }
     
+    public static class BKNotEnoughBookiesException extends BKException {
+        public BKNotEnoughBookiesException(){
+            super(Code.NotEnoughBookiesException);
+        }
+    }
+
     public static class BKNoSuchLedgerExistsException extends BKException {
         public BKNoSuchLedgerExistsException(){
             super(Code.NoSuchLedgerExistsException);
+        }   
+    }
+    
+    public static class BKBookieHandleNotAvailableException extends BKException {
+        public BKBookieHandleNotAvailableException(){
+            super(Code.BookieHandleNotAvailableException);
         }   
     }
 }

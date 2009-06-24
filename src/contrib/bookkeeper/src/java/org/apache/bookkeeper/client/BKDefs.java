@@ -26,11 +26,49 @@ public interface BKDefs {
      * String used to construct znode paths. They are used in BookKeeper
      *  and LedgerManagementProcessor.
      */
+    
+    /*
+     * Path to ledger metadata. ZooKeeper appends a sequence number to L.
+     */
     static public final String prefix = "/ledgers/L";
+    
+    /*
+     * Parent node to store ensemble composition. Each child corresponds to
+     * one bookie.
+     */
     static public final String ensemble = "/ensemble"; 
+    
+    /*
+     * Quorum size.
+     */
     static public final String quorumSize = "/quorum";
+    
+    /*
+     * Close node.
+     */
     static public final String close = "/close";
+    
+    /*
+     * Quorum mode: VERIFYING or GENERIC
+     */
     static public final String quorumMode = "/mode";
+    
+    /*
+     * Marks failure points in during writes to the ledger.
+     */
+    static public final String quorumEvolution = "/quorum_evolution";
+    
+    /*
+     * Ledger is in write mode
+     */
+    
+    static public final int WRITE = 0;
+
+    /*
+     * Ledger is in read mode
+     */
+
+    static public final int READ = 1;
     
     /**
      * Status ok

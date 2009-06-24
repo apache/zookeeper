@@ -95,7 +95,7 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
         /**
          * Set value of action
          * 
-         * @return
+         * @return int  return action identifier
          */
         int setAction(int action){
             return this.action = action;
@@ -104,7 +104,7 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
         /**
          * Return value of action
          * 
-         * @return
+         * @return  int  return action identifier
          */
         int getAction(){
             return action;
@@ -122,7 +122,7 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
         /**
          * Return return code
          * 
-         * @return
+         * @return int return code
          */
         int getRC(){
             return rc;
@@ -365,7 +365,11 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
         private int qSize;
         private long last;
         private QMode qMode;
-        private List<String> bookieIds;
+        private List<String> children;
+        
+        private String dataString;
+        private String item;
+        private AtomicInteger counter;
 
         /**
          * Constructor of request to open a ledger.
@@ -468,8 +472,8 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
          * 
          * @param list  list of bbokie identifiers
          */
-        void addBookieIds(List<String> list){
-            this.bookieIds = list;
+        void addChildren(List<String> list){
+            this.children = list;
         }
         
         /**
@@ -477,8 +481,55 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
          * 
          * @return List<String> list of bookie identifiers
          */
-        List<String> getBookieIds(){
-            return bookieIds;
+        List<String> getChildren(){
+            return children;
+        }
+        
+        /**
+         * Returns the size of the children list. Used in processOpen.
+         * 
+         * @return int
+         */
+        int getListSize(){
+            return children.size();
+        }
+        
+        /**
+         * Sets the value of item. This is used in processOpen to
+         * keep the item value of the list of ensemble changes.
+         * 
+         * @param item
+         */
+        void setItem(String item){
+            this.item = item;
+        }
+        
+        /**
+         * Returns the value of item
+         * 
+         * @return String
+         */
+        
+        String getItem(){
+            return item;
+        }
+        
+        /**
+         * Sets the value of dataString
+         * 
+         * @param data  value to set
+         */
+        void setStringData(String data){
+            this.dataString = data;
+        }
+        
+        /**
+         * Returns the value of dataString
+         * 
+         * @return String
+         */
+        String getStringData(){
+            return dataString;
         }
     }
     
@@ -731,7 +782,7 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
                     String bookie = children.remove(index);
                     LOG.info("Bookie: " + bookie);
                     InetSocketAddress tAddr = bk.parseAddr(bookie);
-                    int bindex = cop.getLh().addBookie(tAddr); 
+                    int bindex = cop.getLh().addBookieForWriting(tAddr); 
                     ByteBuffer bindexBuf = ByteBuffer.allocate(4);
                     bindexBuf.putInt(bindex);
                 
@@ -772,6 +823,9 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
          */
         if(oop.getRC() != BKDefs.EOK)
             oop.getCb().openComplete(oop.getRC(), null, oop.getCtx());
+        
+        String path;
+        LedgerHandle lh;
         
         switch(oop.getAction()){
         case 0:                    
@@ -833,7 +887,7 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
             /*
              *  Create ledger handle
              */
-            LedgerHandle lh = new LedgerHandle(bk, oop.getLid(), oop.getLast(), oop.getQSize(), oop.getQMode(), oop.getPasswd());
+            lh = new LedgerHandle(bk, oop.getLid(), oop.getLast(), oop.getQSize(), oop.getQMode(), oop.getPasswd());
                 
             /*
              * Get children of "/ledgers/id/ensemble" 
@@ -846,7 +900,7 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
             break;
 
         case 7:
-            List<String> list = oop.getBookieIds();
+            List<String> list = oop.getChildren();
             LOG.info("Length of list of bookies: " + list.size());
             try{
                 for(int i = 0 ; i < list.size() ; i++){
@@ -855,19 +909,81 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
                                 false, new Stat());
                         ByteBuffer bindexBuf = ByteBuffer.wrap(bindex);
                         if(bindexBuf.getInt() == i){                      
-                            oop.getLh().addBookie(bk.parseAddr(s));
+                            oop.getLh().addBookieForReading(bk.parseAddr(s));
                         }
                     }
                 }
+
+                /*
+                 * Check if there has been any change to the ensemble of bookies
+                 * due to failures.
+                 */
+                bk.getZooKeeper().exists(BKDefs.prefix + 
+                        bk.getZKStringId(oop.getLid()) +  
+                        BKDefs.quorumEvolution, 
+                                false,
+                                this,
+                                oop);
+                        
             } catch(KeeperException e){
                 LOG.error("Exception while adding bookies", e);
                 oop.setRC(BKDefs.EZK);
+                oop.getCb().openComplete(oop.getRC(), oop.getLh(), oop.getCtx());
             } catch(IOException e){
                 LOG.error("Exception while trying to connect to bookie");
                 oop.setRC(BKDefs.EIO);
-            } finally {
+                oop.getCb().openComplete(oop.getRC(), oop.getLh(), oop.getCtx());
+            } 
+            
+             break;
+        
+        case 8:
+            path = BKDefs.prefix + 
+            bk.getZKStringId(oop.getLid()) +  
+            BKDefs.quorumEvolution;
+                
+            bk.getZooKeeper().getChildren(path, 
+                    false,
+                    this,
+                    oop);
+        case 9: 
+            oop.getCb().openComplete(oop.getRC(), oop.getLh(), oop.getCtx());
+            break;
+        case 10:        
+            path = BKDefs.prefix + 
+            bk.getZKStringId(oop.getLid()) +  
+            BKDefs.quorumEvolution;
+            
+            for(String s : oop.getChildren()){
+                oop.setItem(s);
+                bk.getZooKeeper().getData(path + "/" + s, 
+                        false, 
+                        this,
+                        oop);
+            }
+            
+            break;
+        case 11:
+            lh = oop.getLh();
+            
+            String parts[] = oop.getStringData().split(" ");
+
+            ArrayList<BookieHandle> newBookieSet = new ArrayList<BookieHandle>();
+            for(int i = 0 ; i < parts.length ; i++){
+                LOG.info("Address: " + parts[i]);
+                InetSocketAddress faultyBookie =  
+                    bk.parseAddr(parts[i].substring(1));                           
+        
+                newBookieSet.add(lh.getBookieHandleDup(faultyBookie));
+            }
+            lh.setNewBookieConfig(Long.parseLong(oop.getItem()), newBookieSet);
+        
+            if(oop.counter.incrementAndGet() == oop.getListSize()){
+                lh.prepareEntryChange();
                 oop.getCb().openComplete(oop.getRC(), oop.getLh(), oop.getCtx());
             }
+            
+            break;
         }
     }    
     
@@ -955,6 +1071,12 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
                     op.setAction(3);
                 else
                     op.setAction(4);
+                break;
+            case 8:
+                if(stat == null)
+                    op.setAction(9);
+                else
+                    op.setAction(10);
                 break;
             }
         case CLOSE:
@@ -1064,7 +1186,7 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
                   break;
               case OPEN:
                   OpenLedgerOp oop = (OpenLedgerOp) op;
-                  oop.addBookieIds(children);
+                  oop.addChildren(children);
                   break;
        }
        
@@ -1119,6 +1241,12 @@ implements StatCallback, StringCallback, ChildrenCallback, DataCallback {
                            oop.setQMode(QMode.VERIFIABLE);
                        LOG.info("Verifiable ledger");
                        }
+                       break;
+                   case 10:
+                       String addr = new String(data);
+                       oop.setStringData(addr);
+                       oop.setAction(11);
+                       break;
                    }
                    break;
                default:
