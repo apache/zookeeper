@@ -287,9 +287,9 @@ public class ClientTest extends ClientBase {
         try {
             MyWatcher watcher = new MyWatcher();
             zk = createClient(watcher, hostPort);
-            //LOG.info("Created client: " + zk.describeCNXN());
             LOG.info("Before create /benwashere");
-            zk.create("/benwashere", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/benwashere", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
             LOG.info("After create /benwashere");
             try {
                 zk.setData("/benwashere", "hi".getBytes(), 57);
@@ -301,7 +301,7 @@ public class ClientTest extends ClientBase {
             }
             LOG.info("Before delete /benwashere");
             zk.delete("/benwashere", 0);
-            LOG.info("Before delete /benwashere");
+            LOG.info("After delete /benwashere");
             zk.close();
             //LOG.info("Closed client: " + zk.describeCNXN());
             Thread.sleep(2000);
@@ -318,13 +318,16 @@ public class ClientTest extends ClientBase {
             }
             Stat stat = new Stat();
             // Test basic create, ls, and getData
+            zk.create("/pat", "Pat was here".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
             LOG.info("Before create /ben");
-            zk.create("/ben", "Ben was here".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            LOG.info("Before getChildren /");
-            List<String> children = zk.getChildren("/", false);
-            assertEquals(2, children.size());
-            assertEquals("ben", children.get(1));
-            String value = new String(zk.getData("/ben", false, stat));
+            zk.create("/pat/ben", "Ben was here".getBytes(),
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            LOG.info("Before getChildren /pat");
+            List<String> children = zk.getChildren("/pat", false);
+            assertEquals(1, children.size());
+            assertEquals("ben", children.get(0));
+            String value = new String(zk.getData("/pat/ben", false, stat));
             assertEquals("Ben was here", value);
             // Test stat and watch of non existent node
 
@@ -348,12 +351,12 @@ public class ClientTest extends ClientBase {
             assertEquals(EventType.NodeCreated, event.getType());
             assertEquals(KeeperState.SyncConnected, event.getState());
             // Test child watch and create with sequence
-            zk.getChildren("/ben", true);
+            zk.getChildren("/pat/ben", true);
             for (int i = 0; i < 10; i++) {
-                zk.create("/ben/" + i + "-", Integer.toString(i).getBytes(),
+                zk.create("/pat/ben/" + i + "-", Integer.toString(i).getBytes(),
                         Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             }
-            children = zk.getChildren("/ben", false);
+            children = zk.getChildren("/pat/ben", false);
             Collections.sort(children);
             assertEquals(10, children.size());
             for (int i = 0; i < 10; i++) {
@@ -361,39 +364,43 @@ public class ClientTest extends ClientBase {
                 assertTrue("starts with -", name.startsWith(i + "-"));
                 byte b[];
                 if (withWatcherObj) {
-                    b = zk.getData("/ben/" + name, watcher, stat);
+                    b = zk.getData("/pat/ben/" + name, watcher, stat);
                 } else {
-                    b = zk.getData("/ben/" + name, true, stat);
+                    b = zk.getData("/pat/ben/" + name, true, stat);
                 }
                 assertEquals(Integer.toString(i), new String(b));
-                zk.setData("/ben/" + name, "new".getBytes(), stat.getVersion());
+                zk.setData("/pat/ben/" + name, "new".getBytes(),
+                        stat.getVersion());
                 if (withWatcherObj) {
-                    stat = zk.exists("/ben/" + name, watcher);
+                    stat = zk.exists("/pat/ben/" + name, watcher);
                 } else {
-                stat = zk.exists("/ben/" + name, true);
+                stat = zk.exists("/pat/ben/" + name, true);
                 }
-                zk.delete("/ben/" + name, stat.getVersion());
+                zk.delete("/pat/ben/" + name, stat.getVersion());
             }
             event = watcher.events.poll(10, TimeUnit.SECONDS);
-            assertEquals("/ben", event.getPath());
+            assertEquals("/pat/ben", event.getPath());
             assertEquals(EventType.NodeChildrenChanged, event.getType());
             assertEquals(KeeperState.SyncConnected, event.getState());
             for (int i = 0; i < 10; i++) {
                 event = watcher.events.poll(10, TimeUnit.SECONDS);
                 final String name = children.get(i);
-                assertEquals("/ben/" + name, event.getPath());
+                assertEquals("/pat/ben/" + name, event.getPath());
                 assertEquals(EventType.NodeDataChanged, event.getType());
                 assertEquals(KeeperState.SyncConnected, event.getState());
                 event = watcher.events.poll(10, TimeUnit.SECONDS);
-                assertEquals("/ben/" + name, event.getPath());
+                assertEquals("/pat/ben/" + name, event.getPath());
                 assertEquals(EventType.NodeDeleted, event.getType());
                 assertEquals(KeeperState.SyncConnected, event.getState());
             }
-            zk.create("/good\u0040path", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/good\u0040path", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
 
-            zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
             try {
-                zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT);
                 fail("duplicate create allowed");
             } catch(KeeperException.NodeExistsException e) {
                 // OK, expected that

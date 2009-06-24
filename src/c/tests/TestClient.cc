@@ -164,6 +164,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
     CPPUNIT_TEST(testAcl);
+    CPPUNIT_TEST(testChroot);
     CPPUNIT_TEST(testAuth);
     CPPUNIT_TEST(testWatcherAutoResetWithGlobal);
     CPPUNIT_TEST(testWatcherAutoResetWithLocal);
@@ -191,7 +192,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     const char *getHostPorts() {
         return hostPorts;
     }
-
+    
     zhandle_t *createClient(watchctx_t *ctx) {
         zhandle_t *zk = zookeeper_init(hostPorts, watcher, 10000, 0,
                                        ctx, 0);
@@ -200,6 +201,14 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
         return zk;
     }
     
+    zhandle_t *createchClient(watchctx_t *ctx) {
+        zhandle_t *zk = zookeeper_init(hp_chroot, watcher, 10000, 0,
+                                       ctx, 0);
+        ctx->zh = zk;
+        sleep(1);
+        return zk;
+    }
+        
 public:
 
 
@@ -273,6 +282,7 @@ public:
     
     static zhandle_t *async_zk;
     static volatile int count;
+    static char* hp_chroot;
     
     static void statCompletion(int rc, const struct Stat *stat, const void *data) {
         int tmp = (int) (long) data;
@@ -293,6 +303,35 @@ public:
         }
     }
     
+    static void create_completion_fn(int rc, const char* value, const void *data) {
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        count++;
+    }
+    
+    static void waitForCreateCompletion(int seconds) {
+        time_t expires = time(0) + seconds;
+        while(count == 0 && time(0) < expires) {
+            sleep(1);
+        }
+        count--;
+    }
+
+    static void watcher_chroot_fn(zhandle_t *zh, int type,
+                                    int state, const char *path,void *watcherCtx) {
+        // check for path
+        char *client_path = (char *) watcherCtx;
+        CPPUNIT_ASSERT(strcmp(client_path, path) == 0);
+        count ++;
+    }
+    
+    static void waitForChrootWatch(int seconds) {
+        time_t expires = time(0) + seconds;
+        while (count == 0 && time(0) < expires) {
+            sleep(1);
+        }
+        count--;
+    }
+
     static void waitForVoidCompletion(int seconds) {
         time_t expires = time(0) + seconds;
         while(count == 0 && time(0) < expires) {
@@ -522,7 +561,93 @@ public:
         verifyCreateOk("/f/.f/f", zk);
         verifyCreateOk("/f/f./f", zk);
     }
-
+    
+    void testChroot() {
+        // the c client async callbacks do 
+        // not callback with the path, so 
+        // we dont need to test taht for now
+        // we should fix that though soon!
+        watchctx_t ctx, ctx_ch;
+        zhandle_t *zk, *zk_ch;
+        char buf[60];
+        int rc, len;
+        struct Stat stat;
+        const char* data = "garbage";
+        const char* retStr = "/chroot"; 
+        const char* root= "/";
+        hp_chroot = "127.0.0.1:22181/test/mahadev";
+        zk_ch = createchClient(&ctx_ch);
+        CPPUNIT_ASSERT(zk_ch != NULL);
+        zk = createClient(&ctx);
+        rc = zoo_create(zk, "/test", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        rc = zoo_create(zk, "/test/mahadev", data, 7, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        // try an exists with /
+        len = 60;
+        rc = zoo_get(zk_ch, "/", 0, buf, &len, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        //check if the data is the same
+        CPPUNIT_ASSERT(strncmp(buf, data, 7) == 0);
+        //check for watches 
+        rc = zoo_wexists(zk_ch, "/chroot", watcher_chroot_fn, (void *) retStr, &stat);
+        //now check if we can do create/delete/get/sets/acls/getChildren and others 
+        //check create
+        rc = zoo_create(zk_ch, "/chroot", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0,0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        waitForChrootWatch(3);
+        CPPUNIT_ASSERT(count == 0);
+        rc = zoo_create(zk_ch, "/chroot/child", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        rc = zoo_exists(zk, "/test/mahadev/chroot/child", 0, &stat);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        
+        rc = zoo_delete(zk_ch, "/chroot/child", -1);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        rc = zoo_exists(zk, "/test/mahadev/chroot/child", 0, &stat);
+        CPPUNIT_ASSERT_EQUAL((int) ZNONODE, rc);
+        rc = zoo_wget(zk_ch, "/chroot", watcher_chroot_fn, (char*) retStr,
+                      buf, &len, &stat);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        rc = zoo_set(zk_ch, "/chroot",buf, 3, -1);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        waitForChrootWatch(3);
+        CPPUNIT_ASSERT(count == 0);
+        // check for getchildren
+        struct String_vector children;
+        rc = zoo_get_children(zk_ch, "/", 0, &children);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)1, children.count);
+        //check if te child if chroot
+        CPPUNIT_ASSERT(strcmp((retStr+1), children.data[0]) == 0);
+        // check for get/set acl
+        struct ACL_vector acl;
+        rc = zoo_get_acl(zk_ch, "/", &acl, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)1, acl.count);
+        CPPUNIT_ASSERT_EQUAL(ZOO_PERM_ALL, acl.data->perms);
+        // set acl
+        rc = zoo_set_acl(zk_ch, "/chroot", -1,  &ZOO_READ_ACL_UNSAFE);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        // see if you add children
+        rc = zoo_create(zk_ch, "/chroot/child1", "",0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOAUTH, rc);
+        //add wget children test
+        rc = zoo_wget_children(zk_ch, "/", watcher_chroot_fn, (char*) root, &children);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        
+        //now create a node
+        rc = zoo_create(zk_ch, "/child2", "",0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        waitForChrootWatch(3);
+        CPPUNIT_ASSERT(count == 0);
+        //check for one async call just to make sure
+        rc = zoo_acreate(zk_ch, "/child3", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 
+                         create_completion_fn, 0);
+        waitForCreateCompletion(3);
+        CPPUNIT_ASSERT(count == 0);
+    }
+        
     void testAsyncWatcherAutoReset()
     {
         watchctx_t ctx;
@@ -747,4 +872,5 @@ public:
 volatile int Zookeeper_simpleSystem::count;
 zhandle_t *Zookeeper_simpleSystem::async_zk;
 const char Zookeeper_simpleSystem::hostPorts[] = "127.0.0.1:22181";
+char* Zookeeper_simpleSystem::hp_chroot;
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_simpleSystem);

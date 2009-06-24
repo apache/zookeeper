@@ -251,6 +251,8 @@ NEW FEATURES:
 
   ZOOKEEPER-395. Python bindings. (henry robinson via mahadev)
 
+  ZOOKEEPER-237. Add a Chroot request (phunt and mahadev)
+
 Release 3.1.0 - 2009-02-06
   
 Non-backward compatible changes:

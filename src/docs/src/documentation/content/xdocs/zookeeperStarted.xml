@@ -328,7 +328,7 @@ numChildren = 0
       functionally equivalent. The C bindings exist in two variants: single
       threaded and multi-threaded. These differ only in how the messaging loop
       is done. For more information, see the <ulink
-      url="zookeeperProgrammers.html#ch_programStructureWithExample.html">Programming
+      url="zookeeperProgrammers.html#ch_programStructureWithExample">Programming
       Examples in the ZooKeeper Programmer's Guide</ulink> for
       sample code using of the different APIs.</para>
     </section>

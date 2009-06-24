@@ -359,7 +359,7 @@
     <title>ZooKeeper Sessions</title>
 
     <para>To create a client session the application code must provide
-    a string containing a comma separated list of host:port pairs,
+    a connection string containing a comma separated list of host:port pairs,
     each corresponding to a ZooKeeper server (e.g. "127.0.0.1:4545" or
     "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"). The ZooKeeper
     client library will pick an arbitrary server and try to connect to
@@ -367,6 +367,23 @@
     disconnected from the server for any reason, the client will
     automatically try the next server in the list, until a connection
     is (re-)established.</para>
+
+    <para> <emphasis role="bold">Added in 3.2.0</emphasis>: An
+    optional "chroot" suffix may also be appended to the connection
+    string. This will run the client commands while interpreting all
+    paths relative to this root (similar to the unix chroot
+    command). If used the example would look like:
+    "127.0.0.1:4545/app/a" or
+    "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a" where the
+    client would be rooted at "/app/a" and all paths would be relative
+    to this root - ie getting/setting/etc...  "/foo/bar" would result
+    in operations being run on "/app/a/foo/bar" (from the server
+    perspective). This feature is particularly useful in multi-tenant
+    environments where each user of a particular ZooKeeper service
+    could be rooted differently. This makes re-use much simpler as
+    each user can code his/her application as if it were rooted at
+    "/", while actual location (say /app/a) could be determined at
+    deployment time.</para>
 
     <para>When a client gets a handle to the ZooKeeper service,
     ZooKeeper creates a ZooKeeper session, represented as a 64-bit
