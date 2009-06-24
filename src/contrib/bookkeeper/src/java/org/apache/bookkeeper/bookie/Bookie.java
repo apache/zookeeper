@@ -44,7 +44,7 @@ import org.apache.log4j.Logger;
 
 public class Bookie extends Thread {
     HashMap<Long, LedgerDescriptor> ledgers = new HashMap<Long, LedgerDescriptor>();
-    Logger LOG = Logger.getLogger(Bookie.class);
+    static Logger LOG = Logger.getLogger(Bookie.class);
     /**
      * 4 byte signature followed by 2-byte major and 2-byte minor versions
      */

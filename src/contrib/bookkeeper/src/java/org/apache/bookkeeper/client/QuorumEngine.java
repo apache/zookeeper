@@ -22,9 +22,12 @@ package org.apache.bookkeeper.client;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.bookkeeper.client.BKException;
+import org.apache.bookkeeper.client.BKException.Code;
 import org.apache.bookkeeper.client.ClientCBWorker;
 import org.apache.bookkeeper.client.QuorumOpMonitor;
 import org.apache.bookkeeper.client.AsyncCallback.AddCallback;
@@ -43,7 +46,7 @@ import org.apache.log4j.Logger;
  */
 
 public class QuorumEngine {
-    Logger LOG = Logger.getLogger(QuorumEngine.class);
+    static Logger LOG = Logger.getLogger(QuorumEngine.class);
 
     QuorumOpMonitor opMonitor;
     ClientCBWorker cbWorker;
@@ -56,6 +59,11 @@ public class QuorumEngine {
      * ADD, STOP.
      */
     
+    static long idCounter; 
+    static synchronized long getOpId(){
+        return idCounter++;
+    }
+    
     public static class Operation {
         public static final int READ = 0;
         public static final int ADD = 1;
@@ -64,9 +72,19 @@ public class QuorumEngine {
         
         int type;
         LedgerHandle ledger;
+        long id;
         int rc = 0;
         boolean ready = false;
         
+         public Operation(){
+             this.id = getOpId();
+         }
+            
+         long getId(){
+             return id;
+         }
+            
+
         public static class AddOp extends Operation {
             AddCallback cb;
             Object ctx;
@@ -178,11 +196,18 @@ public class QuorumEngine {
              this.rcb = rcb;
          }
      }
+     
+     public static class SubStopOp extends SubOp{
+         SubStopOp(Operation op){
+             this.op = op;
+         }
+     }
     }
     
     public QuorumEngine(LedgerHandle lh){ 
         this.lh = lh;
-        this.opMonitor = QuorumOpMonitor.getInstance(lh);
+        this.opMonitor = new QuorumOpMonitor(lh);
+        QuorumEngine.idCounter = 0;
         LOG.debug("Creating cbWorker");
         this.cbWorker = ClientCBWorker.getInstance();
         LOG.debug("Created cbWorker");
@@ -195,11 +220,12 @@ public class QuorumEngine {
      * @param r Operation descriptor
      */
     void sendOp(Operation r)
-    throws InterruptedException {
+    throws InterruptedException, BKException {
+        int n;    
         
-        int n = lh.getBookies().size();
         switch(r.type){
         case Operation.READ:
+            
             Operation.ReadOp rOp = (Operation.ReadOp) r;
             
             LOG.debug("Adding read operation to opMonitor: " + rOp.firstEntry + ", " + rOp.lastEntry);
@@ -211,6 +237,10 @@ public class QuorumEngine {
                 long counter = 0;
                 PendingReadOp pROp = new PendingReadOp(lh);
                 
+                n = lh.getBookies(entry).size();
+                if(n < lh.getQuorumSize())
+                    throw BKException.create(Code.NotEnoughBookiesException);
+                
                 //Send requests to bookies
                 while(counter < lh.getQuorumSize()){
                     int index = (int)((entry + counter++) % n);
@@ -219,7 +249,9 @@ public class QuorumEngine {
                                 pROp, 
                                 index,
                                 opMonitor);
-                        lh.getBookies().get((index) % n).sendRead(lh, sRead, entry);            
+   
+                        BookieHandle bh = lh.getBookies(entry).get((index) % n); 
+                        if(bh.isEnabled()) bh.sendRead(lh, sRead, entry);            
                     } catch(IOException e){
                         LOG.error(e);
                     }
@@ -228,11 +260,18 @@ public class QuorumEngine {
   
             break;
         case Operation.ADD:
+            n = lh.getBookies().size();
+
+            if(n < lh.getQuorumSize())
+                throw BKException.create(Code.NotEnoughBookiesException);
+            
             long counter = 0;
             
             cbWorker.addOperation(r);
             Operation.AddOp aOp = (Operation.AddOp) r;
             PendingOp pOp = new PendingOp();
+            ArrayList<BookieHandle> bookies;
+            
             while(counter < lh.getQuorumSize()  ){
                 int index = (int)((aOp.entry + counter++) % n);
                 
@@ -242,20 +281,14 @@ public class QuorumEngine {
                             pOp, 
                             index,
                             opMonitor);
+                   
                     lh.getBookies().get((index) % n).sendAdd(lh, sAdd, aOp.entry);
-                } catch (IOException io) {
-                    LOG.error(io);
-                    try{
-                        /*
-                         * Before getting a new bookie, try to reconnect
-                         */
-                        lh.getBookies().get((index) % n).restart();
-                    } catch (IOException nio){
-                        lh.removeBookie(index);
-                    }
+                } catch (Exception io) {
+                    LOG.error("Error when sending entry: " + aOp.entry + ", " + index + ", " + io);
+                    counter--;
+                    n = lh.getBookies().size();
                 }
             }
-            //qRef = (qRef + 1) % n;
             break;
                 case Operation.STOP:
                     cbWorker.shutdown();

@@ -24,6 +24,7 @@ package org. apache.bookkeeper.client;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.ByteBuffer;
+import java.nio.channels.UnresolvedAddressException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +58,8 @@ import org.apache.zookeeper.WatchedEvent;
  * 
  * There are three possible operations: start a new ledger, 
  * write to a ledger, and read from a ledger.
+ * 
+ * For the ZooKeeper layout, please refer to BKDefs.java.
  * 
  */
 
@@ -142,6 +145,8 @@ implements Watcher {
         IOException, BKException {
         // Check that quorum size follows the minimum
         long t;
+        LedgerHandle lh = null;
+        
         switch(mode){
         case VERIFIABLE:
             t = java.lang.Math.round(java.lang.Math.floor((ensSize - 1)/2));
@@ -171,71 +176,77 @@ implements Watcher {
          */
         String parts[] = path.split("/");
         String subparts[] = parts[2].split("L");
-        long lId = Long.parseLong(subparts[1]);
-        /* 
-         * Get children from "/ledgers/available" on zk
-         */
-        List<String> list = 
-            zk.getChildren("/ledgers/available", false);
-        ArrayList<InetSocketAddress> lBookies = new ArrayList<InetSocketAddress>();
-        /* 
-         * Select ensSize servers to form the ensemble
-         */
-        path = zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble, new byte[0], 
-                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        /* 
-         * Add quorum size to ZK metadata
-         */
-        ByteBuffer bb = ByteBuffer.allocate(4);
-        bb.putInt(qSize);
-        zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumSize, bb.array(), 
-                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        /* 
-         * Quorum mode
-         */
-        bb = ByteBuffer.allocate(4);
-        bb.putInt(mode.ordinal());
-        zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumMode, bb.array(), 
-                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        /* 
-         * Create QuorumEngine
-         */
-        LedgerHandle lh = new LedgerHandle(this, lId, 0, qSize, mode, passwd);
-        //qeMap.put(lId, queue);
-        /*
-         * Adding bookies to ledger handle
-         */
-        Random r = new Random();
-        
-        for(int i = 0; i < ensSize; i++){
-        	int index = 0;
-        	if(list.size() > 1) 
-        		index = r.nextInt(list.size() - 1);
-        	else if(list.size() == 1)
-        	    index = 0;
-        	else {
-        	    LOG.error("Not enough bookies available");
-        	    
-        	    return null;
-        	}
+        try{
+            long lId = Long.parseLong(subparts[1]);
+       
+            /* 
+             * Get children from "/ledgers/available" on zk
+             */
+            List<String> list = 
+                zk.getChildren("/ledgers/available", false);
+            ArrayList<InetSocketAddress> lBookies = new ArrayList<InetSocketAddress>();
+            /* 
+             * Select ensSize servers to form the ensemble
+             */
+            path = zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble, new byte[0], 
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+         
+            /* 
+             * Add quorum size to ZK metadata
+             */
+            ByteBuffer bb = ByteBuffer.allocate(4);
+            bb.putInt(qSize);
+            zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumSize, bb.array(), 
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            /* 
+             * Quorum mode
+             */
+            bb = ByteBuffer.allocate(4);
+            bb.putInt(mode.ordinal());
+            zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumMode, bb.array(), 
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            /* 
+             * Create QuorumEngine
+             */
+            lh = new LedgerHandle(this, lId, 0, qSize, mode, passwd);
             
-        	try{
-        	    String bookie = list.remove(index);
-        	    LOG.info("Bookie: " + bookie);
-        	    InetSocketAddress tAddr = parseAddr(bookie);
-        	    int bindex = lh.addBookie(tAddr); 
-        	    ByteBuffer bindexBuf = ByteBuffer.allocate(4);
-        	    bindexBuf.putInt(bindex);
+            /*
+             * Adding bookies to ledger handle
+             */
+            Random r = new Random();
+        
+            for(int i = 0; i < ensSize; i++){
+                int index = 0;
+                if(list.size() > 1) 
+                    index = r.nextInt(list.size() - 1);
+                else if(list.size() == 1)
+                    index = 0;
+                else {
+                    LOG.error("Not enough bookies available");
         	    
-        	    String pBookie = "/" + bookie;
-        	    zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble + pBookie, bindexBuf.array(), 
-        	            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        	} catch (IOException e) {
-        	    LOG.error(e);
-        	    i--;
-        	} 
+                    return null;
+                }
+            
+                try{
+                    String bookie = list.remove(index);
+                    LOG.info("Bookie: " + bookie);
+                    InetSocketAddress tAddr = parseAddr(bookie);
+                    int bindex = lh.addBookieForWriting(tAddr); 
+                    ByteBuffer bindexBuf = ByteBuffer.allocate(4);
+                    bindexBuf.putInt(bindex);
+        	    
+                    String pBookie = "/" + bookie;
+                    zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble + pBookie, bindexBuf.array(), 
+                            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                } catch (IOException e) {
+                    LOG.error(e);
+                    i--;
+                } 
+            }
+            LOG.debug("Created new ledger");
+        } catch (NumberFormatException e) {
+            LOG.error("Error when parsing the ledger identifier", e);
         }
-        LOG.debug("Created new ledger");
         // Return ledger handler
         return lh; 
     }
@@ -333,7 +344,6 @@ implements Watcher {
          */
         data = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumMode, false, stat);
         buf = ByteBuffer.wrap(data);
-        //int ordinal = buf.getInt();
         
         QMode qMode;
         switch(buf.getInt()){
@@ -361,22 +371,62 @@ implements Watcher {
         List<String> list = 
             zk.getChildren(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble, false);
         
-        LOG.info("Length of list of bookies: " + list.size());
+        LOG.debug("Length of list of bookies: " + list.size());
         for(int i = 0 ; i < list.size() ; i++){
             for(String s : list){
+                LOG.debug("Extracting bookie: " + s);
                 byte[] bindex = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble + "/" + s, false, stat);
                 ByteBuffer bindexBuf = ByteBuffer.wrap(bindex);
                 if(bindexBuf.getInt() == i){                      
                     try{
-                        lh.addBookie(parseAddr(s));
+                        lh.addBookieForReading(parseAddr(s));
                     } catch (IOException e){
                         LOG.error(e);
                     }
                 }
             }
         }
+        
+        /*
+         * Read changes to quorum over time. To determine if there has been changes during
+         * writes to the ledger, check if there is a znode called quorumEvolution.
+         */
+        if(zk.exists(BKDefs.prefix + 
+                getZKStringId(lh.getId()) +  
+                BKDefs.quorumEvolution, false) != null){
+                    String path = BKDefs.prefix + 
+                    getZKStringId(lh.getId()) +  
+                    BKDefs.quorumEvolution;
+                    
+                    List<String> faultList = zk.getChildren(path, false);
+                    try{
+                        for(String s : faultList){
+                            LOG.debug("Faulty list child: " + s);
+                            long entry = Long.parseLong(s);
+                            String addresses = new String(zk.getData(path + "/" + s, false, stat));
+                            String parts[] = addresses.split(" ");
+
+                            ArrayList<BookieHandle> newBookieSet = new ArrayList<BookieHandle>();
+                            for(int i = 0 ; i < parts.length ; i++){
+                                LOG.debug("Address: " + parts[i]);
+                                InetSocketAddress faultyBookie =  
+                                    parseAddr(parts[i].substring(1));                           
+                        
+                                newBookieSet.add(lh.getBookieHandleDup(faultyBookie));
+                            }
+                            lh.setNewBookieConfig(entry, newBookieSet);
+                            LOG.debug("NewBookieSet size: " + newBookieSet.size());
+                        }
+
+                        lh.prepareEntryChange();
+                    } catch (NumberFormatException e) {
+                        LOG.error("Error when parsing the ledger identifier", e);
+                    }
+                }
       
-        // Return ledger handler
+        /*
+         *  Return ledger handler
+         */
         return lh;
     }    
     
@@ -518,12 +568,14 @@ implements Watcher {
      *  @param	a	InetSocketAddress
      */
     
-    synchronized BookieHandle getBookieHandle(InetSocketAddress a)
+    synchronized BookieHandle getBookieHandle(LedgerHandle lh, InetSocketAddress a)
     throws ConnectException, IOException {
     	if(!bhMap.containsKey(a)){
-    		bhMap.put(a, new BookieHandle(a));
+    	    BookieHandle bh = new BookieHandle(a, true); 
+    		bhMap.put(a, bh);
+    		bh.start();
     	}
-    	bhMap.get(a).incRefCount();
+    	bhMap.get(a).incRefCount(lh);
     	
     	return bhMap.get(a);
     }
@@ -533,9 +585,10 @@ implements Watcher {
      * remove it from the list. 
      */
     
-    synchronized void haltBookieHandles(ArrayList<BookieHandle> bookies){
-        for(BookieHandle bh : bookies){
-            if(bh.halt() <= 0)
+    synchronized void haltBookieHandles(LedgerHandle lh, ArrayList<BookieHandle> bookies){
+        while(bookies.size() > 0){
+            BookieHandle bh = bookies.remove(0);
+            if(bh.halt(lh) <= 0)
                 bhMap.remove(bh.addr);
         }
     }
@@ -549,5 +602,15 @@ implements Watcher {
         bookieBlackList.add(addr);
     }
     
-   
+    /**
+     * Halts all bookie handles
+     * 
+     */
+    public void halt() throws InterruptedException{
+        
+        for(BookieHandle bh: bhMap.values()){
+            bh.shutdown();
+        }
+        zk.close();
+    }
 }

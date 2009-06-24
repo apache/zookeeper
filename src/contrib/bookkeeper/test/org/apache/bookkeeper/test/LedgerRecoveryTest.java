@@ -140,6 +140,7 @@ implements Watcher {
             zk.create("/ledgers/available/" + BOOKIEADDR1, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT );
             zk.create("/ledgers/available/" + BOOKIEADDR2, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT );
             zk.create("/ledgers/available/" + BOOKIEADDR3, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT );
+            zk.close();
         } catch (KeeperException ke) {
             LOG.error(ke);
             fail("Couldn't execute ZooKeeper start procedure");
@@ -219,20 +220,15 @@ implements Watcher {
             for(int i = 0; i < 1000; i++){
                 beforelh.addEntry(tmp.getBytes());
             }
+            
+            //bk.resetLedger(beforelh);
         } catch(InterruptedException e){
             LOG.error("Interrupted when adding entry", e);
             fail("Couldn't finish adding entries");
+        } catch(BKException e){
+            LOG.error("BookKeeper exception", e);
+            fail("BookKeeper exception while adding entries");
         }
-        
-        ///*
-        // * Sleep.
-        // */
-        //try{
-        //    Thread.sleep(2000);
-        //} catch(InterruptedException e){
-        //    LOG.error("Interrupted while sleeping", e);
-        //    fail("Couldn't finish sleeping");
-        //}
         
         /*
          * Try to open ledger.
@@ -307,17 +303,11 @@ implements Watcher {
         } catch(InterruptedException e){
             LOG.error("Interrupted when adding entry", e);
             fail("Couldn't finish adding entries");
+        } catch(BKException e){
+            LOG.error("BookKeeper exception", e);
+            fail("BookKeeper exception while adding entries");
         }
         
-        ///*
-        // * Sleep.
-        // */
-        //try{
-        //    Thread.sleep(2000);
-        //} catch(InterruptedException e){
-        //    LOG.error("Interrupted while sleeping", e);
-        //    fail("Couldn't finish sleeping");
-        //}
         
         /*
          * Try to open ledger.

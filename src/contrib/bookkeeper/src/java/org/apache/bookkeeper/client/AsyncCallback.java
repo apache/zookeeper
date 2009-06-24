@@ -78,5 +78,4 @@ public interface AsyncCallback {
          */
         void readComplete(int rc, LedgerHandle lh, LedgerSequence seq, Object ctx);
     }
-    
 }

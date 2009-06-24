@@ -141,6 +141,7 @@ implements Watcher {
             zk.create("/ledgers/available/" + BOOKIEADDR1, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT );
             zk.create("/ledgers/available/" + BOOKIEADDR2, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT );
             zk.create("/ledgers/available/" + BOOKIEADDR3, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT );
+            zk.close();
         } catch (KeeperException ke) {
             LOG.error(ke);
             fail("Couldn't execute ZooKeeper start procedure");
@@ -230,6 +231,9 @@ implements Watcher {
         } catch(InterruptedException e){
             LOG.error("Interrupted when adding entry", e);
             fail("Couldn't finish adding entries");
+        } catch(BKException e){
+            LOG.error("BookKeeper exception", e);
+            fail("BookKeeper exception when adding entries");
         }
         
         try{
@@ -249,6 +253,9 @@ implements Watcher {
         } catch(InterruptedException e){
             LOG.error("Interrupted when adding entry", e);
             fail("Couldn't finish adding entries");
+        } catch(BKException e){
+            LOG.error("BookKeeper exception", e);
+            fail("CBookKeeper exception while adding entries");
         }
         
         try{
@@ -270,6 +277,9 @@ implements Watcher {
         } catch(InterruptedException e){
             LOG.error("Interrupted when adding entry", e);
             fail("Couldn't finish adding entries");
+        } catch(BKException e){
+            LOG.error("BookKeeper exception", e);
+            fail("BookKeeper exception when adding entries");
         }
         
         try{
@@ -279,22 +289,6 @@ implements Watcher {
             LOG.error(e);
             fail("Exception while closing ledger 4");
         }
-        /*
-            LedgerHandle afterlh = bk.openLedger(beforelh.getId(), "".getBytes());
-            
-        } catch (KeeperException e) {
-            LOG.error("Error when opening ledger", e);
-            fail("Couldn't open ledger");
-        } /* catch (InterruptedException ie) {
-            LOG.error("Interrupted exception", ie);
-            fail("Failure due to interrupted exception");
-        } catch (IOException ioe) {
-            LOG.error("IO Exception", ioe);
-            fail("Failure due to IO exception");
-        } catch (BKException bke){
-            LOG.error("BookKeeper error", bke);
-            fail("BookKeeper error");
-        }*/
     }      
 }
     

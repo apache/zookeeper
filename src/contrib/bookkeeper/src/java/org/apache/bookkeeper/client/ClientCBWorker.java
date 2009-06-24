@@ -38,17 +38,17 @@ import org.apache.log4j.Logger;
  */
 
 class ClientCBWorker extends Thread{
-    Logger LOG = Logger.getLogger(ClientCBWorker.class);
+    static Logger LOG = Logger.getLogger(ClientCBWorker.class);
     static ClientCBWorker instance = null;
     
-    private boolean stop = false;
+    private volatile boolean stop;
     private static int instanceCounter= 0;
     
     ArrayBlockingQueue<Operation> pendingOps;
     QuorumOpMonitor monitor;
     
     
-    static synchronized ClientCBWorker getInstance(){
+    static ClientCBWorker getInstance(){
         if(instance == null){
             instance = new ClientCBWorker();
         }
@@ -63,9 +63,10 @@ class ClientCBWorker extends Thread{
      * 
      */
     ClientCBWorker(){
-       pendingOps = new ArrayBlockingQueue<Operation>(4000);  
+       pendingOps = new ArrayBlockingQueue<Operation>(6000);  
+       stop = false;
        start();
-       LOG.debug("Have started cbWorker");
+       LOG.info("Have started cbWorker");
     }
     
     
@@ -84,11 +85,11 @@ class ClientCBWorker extends Thread{
      * Gets thread out of its main loop.
      * 
      */
-    synchronized void shutdown(){
+    void shutdown(){
         if((--instanceCounter) == 0){
             stop = true;
             instance = null;
-            LOG.debug("Shutting down");
+            LOG.info("Shutting down CBWorker");
         }
     }
     
@@ -105,14 +106,14 @@ class ClientCBWorker extends Thread{
                 if(op != null){
                     synchronized(op){
                         while(!op.isReady()){
-                            op.wait();
+                            op.wait(1000);
                         }
                     }
-
+                    
                     switch(op.type){
                     case Operation.ADD:
                         AddOp aOp = (AddOp) op;
-                    
+                       
                         aOp.getLedger().setAddConfirmed(aOp.entry);
                         aOp.cb.addComplete(aOp.getErrorCode(),
                                 aOp.getLedger(),
@@ -122,14 +123,13 @@ class ClientCBWorker extends Thread{
                         break;
                     case Operation.READ:
                         ReadOp rOp = (ReadOp) op;
-                        //LOG.debug("Got one message from the queue: " + rOp.firstEntry);
                         rOp.cb.readComplete(rOp.getErrorCode(), 
                                 rOp.getLedger(),
                                 new LedgerSequence(rOp.seq), 
                                 rOp.ctx);
                         break;
                     }
-                }
+                } 
             }
         } catch (InterruptedException e){
            LOG.error("Exception while waiting on queue or operation"); 
