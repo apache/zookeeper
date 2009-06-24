@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
+import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.LedgerHandle;
 import org.apache.log4j.Logger;
 
@@ -87,6 +88,8 @@ public class LedgerOutputStream extends OutputStream {
             } catch(InterruptedException ie) {
                 LOG.warn("Interrupted while flusing " + ie);
                 Thread.currentThread().interrupt();
+            } catch(BKException bke) {
+                LOG.warn("BookKeeper exception ", bke);
             }
         }
     }
@@ -120,6 +123,8 @@ public class LedgerOutputStream extends OutputStream {
             } catch(InterruptedException ie) {
                 LOG.warn("Interrupted while writing", ie);
                 Thread.currentThread().interrupt();
+            } catch(BKException bke) {
+                LOG.warn("BookKeeper exception", bke);
             }
         }
     }

@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.HashMap;
 import java.util.TreeMap;
 
+//import org.apache.bookkeeper.client.AsyncCallback.FailCallback;
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookKeeper;
 import org.apache.bookkeeper.client.LedgerSequence;
@@ -48,7 +49,7 @@ import org.apache.zookeeper.KeeperException;
  * 
  */
 
-class LedgerRecoveryMonitor implements ReadEntryCallback{
+class LedgerRecoveryMonitor implements ReadEntryCallback {
     Logger LOG = Logger.getLogger(LedgerRecoveryMonitor.class);
     
     BookKeeper self;
@@ -132,11 +133,10 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
         
         /*
          * Obtain largest hint 
-         */
-        
+         */ 
         LedgerHandle lh = new LedgerHandle(self, lId, 0, qSize, qMode, passwd);
         for(InetSocketAddress addr : bookies){
-            lh.addBookie(addr);
+            lh.addBookieForReading(addr);
         }
         
         boolean notLegitimate = true;
@@ -241,4 +241,5 @@ class LedgerRecoveryMonitor implements ReadEntryCallback{
         
         return hint;
     }
+    
 }

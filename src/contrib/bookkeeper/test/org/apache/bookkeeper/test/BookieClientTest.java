@@ -106,18 +106,18 @@ public class BookieClientTest extends TestCase {
         
         BookieClient bc = new BookieClient("127.0.0.1", port, 50000);
         ByteBuffer bb;
-        bb = createByteBuffer(1);
+        bb = createByteBuffer(1,1,1);
         bc.addEntry(1, passwd, 1, bb, wrcb, null);
-        bb = createByteBuffer(2);
+        bb = createByteBuffer(2,1,2);
         bc.addEntry(1, passwd, 2, bb, wrcb, null);
-        bb = createByteBuffer(3);
+        bb = createByteBuffer(3,1,3);
         bc.addEntry(1, passwd, 3, bb, wrcb, null);
-        bb = createByteBuffer(5);
+        bb = createByteBuffer(5,1,5);
         bc.addEntry(1, passwd, 5, bb, wrcb, null);
-        bb = createByteBuffer(7);
+        bb = createByteBuffer(7,1,7);
         bc.addEntry(1, passwd, 7, bb, wrcb, null);
         synchronized(notifyObject) {
-            bb = createByteBuffer(11);
+            bb = createByteBuffer(11,1,11);
             bc.addEntry(1, passwd, 11, bb, wrcb, notifyObject);
             notifyObject.wait();
         }
@@ -184,10 +184,12 @@ public class BookieClientTest extends TestCase {
             assertEquals(BookieProtocol.ENOENTRY, arc.rc);
         }
     }
-    private ByteBuffer createByteBuffer(int i) {
+    private ByteBuffer createByteBuffer(int i, long lid, long eid) {
         ByteBuffer bb;
-        bb = ByteBuffer.allocate(4);
+        bb = ByteBuffer.allocate(4+16);
         bb.putInt(i);
+        bb.putLong(lid);
+        bb.putLong(eid);
         bb.flip();
         return bb;
     }

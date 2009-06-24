@@ -24,6 +24,8 @@ package org.apache.bookkeeper.client;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.security.NoSuchAlgorithmException;
@@ -31,12 +33,15 @@ import java.security.InvalidKeyException;
 import javax.crypto.Mac; 
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.bookkeeper.client.BKException.Code;
 import org.apache.bookkeeper.client.LedgerHandle.QMode;
 import org.apache.bookkeeper.client.QuorumEngine.Operation;
+import org.apache.bookkeeper.client.QuorumEngine.Operation.StopOp;
 import org.apache.bookkeeper.client.QuorumEngine.SubOp;
 import org.apache.bookkeeper.client.QuorumEngine.Operation.AddOp;
 import org.apache.bookkeeper.client.QuorumEngine.SubOp.SubAddOp;
 import org.apache.bookkeeper.client.QuorumEngine.SubOp.SubReadOp;
+import org.apache.bookkeeper.client.QuorumEngine.SubOp.SubStopOp;
 import org.apache.bookkeeper.proto.BookieClient;
 import org.apache.log4j.Logger;
 
@@ -47,15 +52,17 @@ import org.apache.log4j.Logger;
  * 
  */
 
-class BookieHandle extends Thread{
-    Logger LOG = Logger.getLogger(BookieClient.class);
+public class BookieHandle extends Thread {
+    static Logger LOG = Logger.getLogger(BookieClient.class);
     
-    boolean stop = false;
+    volatile boolean stop = false;
+    boolean noreception = false;
     private BookieClient client;
     InetSocketAddress addr;
     static int recvTimeout = 2000;
     private ArrayBlockingQueue<ToSend> incomingQueue;
     private int refCount = 0;
+    HashSet<LedgerHandle> ledgers;
     
     /**
      * Objects of this class are queued waiting to be
@@ -79,13 +86,17 @@ class BookieHandle extends Thread{
      * @param addr	address of the bookkeeper server that this
      * handle should connect to.
      */
-    BookieHandle(InetSocketAddress addr) throws IOException {
-        this.client = new BookieClient(addr, recvTimeout);
+    BookieHandle(InetSocketAddress addr, boolean enabled) throws IOException {
+        this.stop = !enabled;
+        this.noreception = !enabled;
+        if(!stop)
+            this.client = new BookieClient(addr, recvTimeout);
+        else
+            this.client = null;
+        
         this.addr = addr;
         this.incomingQueue = new ArrayBlockingQueue<ToSend>(2000);
-        
-        //genSecurePadding();
-        start();
+        this.ledgers = new HashSet<LedgerHandle>();
     }
     
     
@@ -100,22 +111,39 @@ class BookieHandle extends Thread{
     }
 
     /**
-     * Sending add operation to bookie
+     * Sending add operation to bookie. We have to synchronize the send to guarantee
+     * that requests will either get a response or throw an exception. 
      * 
      * @param r
      * @param cb
      * @param ctx
      * @throws IOException
      */
-    public void sendAdd(LedgerHandle lh, SubAddOp r, long entry)
-    throws IOException {
+    public synchronized void sendAdd(LedgerHandle lh, SubAddOp r, long entry)
+    throws IOException, BKException {
         try{
-            incomingQueue.put(new ToSend(lh, r, entry));
+            if(!noreception){
+                ToSend ts = new ToSend(lh, r, entry);
+                if(!incomingQueue.offer(ts, 1000, TimeUnit.MILLISECONDS))
+                    throw BKException.create(Code.BookieHandleNotAvailableException);
+            } else {
+                throw BKException.create(Code.BookieHandleNotAvailableException);
+            }
         } catch(InterruptedException e){
             LOG.warn("Interrupted while waiting for room in the incoming queue");
         }
     }
     
+    private synchronized void sendStop(){
+        try{
+            noreception = true;
+            LOG.debug("Sending stop signal");
+            incomingQueue.put(new ToSend(null, new SubStopOp(new StopOp()), -1));
+            LOG.debug("Sent stop signal");
+        } catch(InterruptedException e) {
+            LOG.fatal("Interrupted while sending stop signal to bookie handle");
+        }       
+    }
     /**
      * MAC instance
      * 
@@ -142,29 +170,41 @@ class BookieHandle extends Thread{
      * @throws IOException
      */
     
-    public void sendRead(LedgerHandle lh, SubReadOp r, long entry)
-    throws IOException {
+    public synchronized void sendRead(LedgerHandle lh, SubReadOp r, long entry)
+    throws IOException, BKException {
         try{
-            incomingQueue.put(new ToSend(lh, r, entry));
+            if(!noreception){           
+                ToSend ts = new ToSend(lh, r, entry);
+                if(!incomingQueue.offer(ts, 1000, TimeUnit.MILLISECONDS))
+                    throw BKException.create(Code.BookieHandleNotAvailableException);
+            } else {
+                throw BKException.create(Code.BookieHandleNotAvailableException);
+            }
         } catch(InterruptedException e){
             LOG.warn("Interrupted while waiting for room in the incoming queue");
         }
     }
     
     public void run(){
-        while(!stop){
-            try{
-                ToSend ts = incomingQueue.poll(1000, TimeUnit.MILLISECONDS);
+        ToSend ts;
+        
+        try{
+            while(!stop){
+                ts = incomingQueue.poll(1000, TimeUnit.MILLISECONDS);
+                    
                 if(ts != null){
                 	LedgerHandle self = ts.lh;
                     switch(ts.type){
+                    case Operation.STOP:
+                        LOG.info("Stopping BookieHandle: " + addr);
+                        client.errorOut();                   
+                        cleanQueue();
+                        LOG.debug("Stopped");
+                        break;
                     case Operation.ADD:
                         SubAddOp aOp = (SubAddOp) ts.ctx;
                         AddOp op = ((AddOp) aOp.op);
                         
-                        /*
-                         * TODO: Really add the confirmed add to the op
-                         */
                         long confirmed = self.getAddConfirmed();
                         ByteBuffer extendedData;
     
@@ -179,7 +219,6 @@ class BookieHandle extends Thread{
                             extendedData.rewind();
                             byte[] toProcess = new byte[op.data.length + 24];
                             extendedData.get(toProcess, 0, op.data.length + 24);
-                            //extendedData.limit(extendedData.capacity() - 20);
                             extendedData.position(extendedData.capacity() - 20);
                             if(mac == null)
                                 getMac(self.getMacKey(), "HmacSHA1");
@@ -200,46 +239,132 @@ class BookieHandle extends Thread{
                                 ts.ctx);
                         break;
                     case Operation.READ:
-                        client.readEntry(self.getId(),
-                            ts.entry,
-                            ((SubReadOp) ts.ctx).rcb,
-                            ts.ctx);
+                        if(client != null)
+                            client.readEntry(self.getId(),
+                                    ts.entry,
+                                    ((SubReadOp) ts.ctx).rcb,
+                                    ts.ctx);
+                        else ((SubReadOp) ts.ctx).rcb.readEntryComplete(-1, ts.lh.getId(), ts.entry, null, ts.ctx);
                         break;
                     }
-                }
-            } catch (InterruptedException e){
-                LOG.error(e);
-            } catch (IOException e){
-                LOG.error(e);
-            } catch (NoSuchAlgorithmException e){
-                LOG.error(e);
-            } catch (InvalidKeyException e) {
-                LOG.error(e);
+                } else LOG.warn("Empty queue: " + addr);
             }
-        }
+        } catch (Exception e){
+            LOG.error("Handling exception before halting BookieHandle", e);
+            for(LedgerHandle lh : ledgers)
+                lh.removeBookie(this);
+            
+            /*
+             * We only need to synchronize when setting noreception to avoid that
+             * a client thread add another request to the incomingQueue after we
+             * have cleaned it.
+             */
+            synchronized(this){
+                noreception = true;
+            }
+            client.halt();
+            client.errorOut();
+            cleanQueue();
+        } 
+        
+        LOG.info("Exiting bookie handle thread: " + addr);
     }
+        
     
     /**
      * Multiple ledgers may use the same BookieHandle object, so we keep
      * a count on the number of references.
      */
-    int incRefCount(){
+    int incRefCount(LedgerHandle lh){
+        ledgers.add(lh);
         return ++refCount;
     }
     
     /**
      * Halts if there is no ledger using this object.
+     *
+     * @return  int reference counter
      */
-    int halt(){
+    synchronized int halt(LedgerHandle lh){
+        LOG.info("Calling halt");
+        ledgers.remove(lh);
         int currentCount = --refCount;
         if(currentCount <= 0){
-            stop = true;
+            shutdown();
         }
         
         if(currentCount < 0)
             LOG.warn("Miscalculated the number of reference counts: " + addr);
-        
+
         return currentCount;
+    }
+    
+    /**
+     * Halt this bookie handle independent of the number of ledgers using it. Called upon a 
+     * failure to write. This method cannot be called by this thread because it may cause a
+     * deadlock as shutdown invokes sendStop. The deadlock comes from sendAdd blocking on
+     * incomingQueue when the queue is full and the thread also blocking on it when
+     * trying to send the stop marker. Because this thread is actually the consumer, if it
+     * does not make progress, then we have a deadlock. 
+     * 
+     * @return int  reference counter
+     */
+    synchronized public int halt(){
+        if(!stop){
+            LOG.info("Calling halt");
+            for(LedgerHandle lh : ledgers)
+                lh.removeBookie(this);
+            refCount = 0;
+            shutdown();
+        }
+     
+        return refCount;
+    }
+    
+    /**
+     * Stop this bookie handle completely.
+     * 
+     */
+    public void shutdown(){
+        if(!stop){
+            LOG.info("Calling shutdown");
+            LOG.debug("Halting client");
+            client.halt();
+            LOG.debug("Cleaning queue");
+            sendStop();
+            LOG.debug("Finished shutdown"); 
+        }
+    }
+    
+    /**
+     * Invokes the callback method for pending requests in the queue
+     * of this BookieHandle.
+     */
+    private void cleanQueue(){
+        stop = true;
+        ToSend ts = incomingQueue.poll();
+        while(ts != null){
+            switch(ts.type){
+            case Operation.ADD:
+                SubAddOp aOp = (SubAddOp) ts.ctx;
+                aOp.wcb.writeComplete(-1, ts.lh.getId(), ts.entry, ts.ctx);
+     
+                break;
+            case Operation.READ:                
+                ((SubReadOp) ts.ctx).rcb.readEntryComplete(-1, ts.lh.getId(), ts.entry, null, ts.ctx);
+                break;
+            }
+            ts = incomingQueue.poll();
+        }
+    }
+                
+    /**
+     * Returns the negated value of stop, which gives the status of the
+     * BookieHandle.
+     */
+    
+    boolean isEnabled(){
+        return !stop;
     }
 }
 

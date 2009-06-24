@@ -39,6 +39,7 @@ import org.apache.log4j.Logger;
 public class BookieServer implements NIOServerFactory.PacketProcessor, WriteCallback {
     int port;
     NIOServerFactory nioServerFactory;
+    volatile boolean down = false;
     Bookie bookie;
     static Logger LOG = Logger.getLogger(BookieServer.class);
     
@@ -50,8 +51,12 @@ public class BookieServer implements NIOServerFactory.PacketProcessor, WriteCall
         nioServerFactory = new NIOServerFactory(port, this);
     }
     public void shutdown() throws InterruptedException {
+        down = true;
         nioServerFactory.shutdown();
         bookie.shutdown();
+    }
+    public boolean isDown(){
+        return down;
     }
     public void join() throws InterruptedException {
         nioServerFactory.join();
