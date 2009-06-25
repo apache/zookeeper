@@ -55,6 +55,32 @@ public class ACLTest extends TestCase implements Watcher {
         LOG.info("FINISHED " + getName());
     }
 
+    public void testDisconnectedAddAuth() throws Exception {
+        File tmpDir = ClientBase.createTmpDir();
+        ClientBase.setupTestEnv();
+        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        SyncRequestProcessor.setSnapCount(1000);
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
+        f.startup(zks);
+        LOG.info("starting up the zookeeper server .. waiting");
+        assertTrue("waiting for server being up", 
+                ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+        try {
+            zk.addAuthInfo("digest", "pat:test".getBytes());
+            zk.setACL("/", Ids.CREATOR_ALL_ACL, -1);
+        } finally {
+            zk.close();
+        }
+
+        f.shutdown();
+
+        assertTrue("waiting for server down",
+                   ClientBase.waitForServerDown(HOSTPORT,
+                           ClientBase.CONNECTION_TIMEOUT));
+    }
+    
     /**
      * Verify that acl optimization of storing just
      * a few acls and there references in the data
