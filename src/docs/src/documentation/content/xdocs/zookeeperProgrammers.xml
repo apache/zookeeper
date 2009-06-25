@@ -202,6 +202,21 @@
         atomically. Reads get all the data bytes associated with a znode and a
         write replaces all the data. Each node has an Access Control List
         (ACL) that restricts who can do what.</para>
+        
+        <para>ZooKeeper was not designed to be a general database or large
+        object store. Instead, it manages coordination data. This data can
+        come in the form of configuration, status information, rendezvous, etc.
+        A common property of the various forms of coordination data is that
+        they are relatively small: measured in kilobytes.
+        The ZooKeeper client and the server implementations have sanity checks
+        to ensure that znodes have less than 1M of data, but the data should
+        be much less than that on average. Operating on relatively large data
+        sizes will cause some operations to take much more time than others and
+        will affect the latencies of some operations because of the extra time
+        needed to move more data over the network and onto storage media. If
+        large data storage is needed, the usually pattern of dealing with such
+        data is to store it on a bulk storage system, such as NFS or HDFS, and
+        store pointers to the storage locations in ZooKeeper.</para> 
       </section>
 
       <section>
