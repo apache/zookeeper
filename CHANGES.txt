@@ -234,6 +234,9 @@ server ACLs. (breed via mahadev)
 
   ZOOKEEPER-356. Masking bookie failure during writes to a ledger (flavio via breed)
 
+  ZOOKEEPER-327. document effects (latency) of storing large amounts of data
+in znodes. (breed via mahadev)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
