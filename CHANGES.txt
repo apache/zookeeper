@@ -240,6 +240,9 @@ server ACLs. (breed via mahadev)
   ZOOKEEPER-327. document effects (latency) of storing large amounts of data
 in znodes. (breed via mahadev)
 
+  ZOOKEEPER-264. docs should include a state transition diagram for client
+state (breed via mahadev)
+
 NEW FEATURES:
 
   ZOOKEEPER-371. jdiff documentation included in build/release (giri via phunt)
