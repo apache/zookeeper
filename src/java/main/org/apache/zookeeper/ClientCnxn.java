@@ -1130,11 +1130,12 @@ public class ClientCnxn {
     }
 
     public void addAuthInfo(String scheme, byte auth[]) {
-        authInfo.add(new AuthData(scheme, auth));
-        if (zooKeeper.state == States.CONNECTED) {
-            queuePacket(new RequestHeader(-4, OpCode.auth), null,
-                    new AuthPacket(0, scheme, auth), null, null, null, null,
-                    null, null);
+        if (!zooKeeper.state.isAlive()) {
+            return;
         }
+        authInfo.add(new AuthData(scheme, auth));
+        queuePacket(new RequestHeader(-4, OpCode.auth), null,
+                new AuthPacket(0, scheme, auth), null, null, null, null,
+                null, null);
     }
 }

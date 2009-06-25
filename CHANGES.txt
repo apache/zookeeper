@@ -128,6 +128,9 @@ BUGFIXES:
 
   ZOOKEEPER-446. some traces of the host auth scheme left (breed via mahadev)
 
+  ZOOKEEPER-438.  addauth fails to register auth on new client that's not yet
+connected (breed via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
