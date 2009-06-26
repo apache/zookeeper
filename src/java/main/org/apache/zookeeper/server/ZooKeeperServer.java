@@ -534,7 +534,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param xid
      * @param bb
      */
-    public void submitRequest(ServerCnxn cnxn, long sessionId, int type,
+    private void submitRequest(ServerCnxn cnxn, long sessionId, int type,
             int xid, ByteBuffer bb, List<Id> authInfo) {
         Request si = new Request(cnxn, sessionId, xid, type, bb, authInfo);
         submitRequest(si);

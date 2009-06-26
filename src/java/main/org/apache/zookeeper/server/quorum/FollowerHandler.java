@@ -33,7 +33,9 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.util.SerializeUtils;
@@ -351,6 +353,13 @@ public class FollowerHandler extends Thread {
                     DataOutputStream dos = new DataOutputStream(bos);
                     dos.writeLong(id);
                     boolean valid = leader.zk.touch(id, to);
+                    if (valid) {
+                        try {
+                            leader.zk.setOwner(id, this);
+                        } catch (SessionExpiredException e) {
+                            LOG.error("Somehow session " + Long.toHexString(id) + " expired right after being renewed! (impossible)", e);
+                        }
+                    }
                     if (LOG.isTraceEnabled()) {
                         ZooTrace.logTraceMessage(LOG,
                                                  ZooTrace.SESSION_TRACE_MASK,
@@ -371,8 +380,9 @@ public class FollowerHandler extends Thread {
                      	leader.zk.submitRequest(new FollowerSyncRequest(this, sessionId, cxid, type, bb,
                                 qp.getAuthinfo()));
                     } else {
-                    leader.zk.submitRequest(null, sessionId, type, cxid, bb,
-                            qp.getAuthinfo());
+                        Request si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
+                        si.setOwner(this);
+                        leader.zk.submitRequest(si);
                     }
                     break;
                 default:

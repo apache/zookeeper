@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -74,6 +75,18 @@ public class Request {
     public List<Id> authInfo;
 
     public long createTime = System.currentTimeMillis();
+    
+    private Object owner;
+    
+    private KeeperException e;
+    
+    public Object getOwner() {
+        return owner;
+    }
+    
+    public void setOwner(Object owner) {
+        this.owner = owner;
+    }
 
     /**
      * is the packet type a valid packet in zookeeper
@@ -193,5 +206,13 @@ public class Request {
         sb.append(path).append(" ");
 
         return sb.toString();
+    }
+
+    public void setException(KeeperException e) {
+        this.e = e;
+    }
+	
+    public KeeperException getException() {
+        return e;
     }
 }
