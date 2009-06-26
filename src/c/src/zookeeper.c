@@ -2638,6 +2638,8 @@ const char* zerror(int c)
       return "zookeeper is closing";
     case ZNOTHING:
       return "(not error) no server responses to process";
+    case ZSESSIONMOVED:
+      return "session moved to another server, so operation is ignored";
     }
     if (c > 0) {
       return strerror(c);
