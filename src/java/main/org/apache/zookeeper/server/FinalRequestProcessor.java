@@ -137,6 +137,11 @@ public class FinalRequestProcessor implements RequestProcessor {
                 throw KeeperException.create(KeeperException.Code.get((
                         (ErrorTxn) request.txn).getErr()));
             }
+            
+            KeeperException ke = request.getException();
+            if (ke != null) {
+                throw ke;
+            }
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug(request);

@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.SessionExpiredException;
+import org.apache.zookeeper.KeeperException.SessionMovedException;
 
 /**
  * This is the basic interface that ZooKeeperServer uses to track sessions. The
@@ -54,5 +56,7 @@ public interface SessionTracker {
      */
     void removeSession(long sessionId);
 
-    void checkSession(long sessionId) throws KeeperException.SessionExpiredException;
+    void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, SessionMovedException;
+
+    void setOwner(long id, Object owner) throws SessionExpiredException;
 }

@@ -189,7 +189,7 @@ public class AsyncTest extends TestCase
             verifyThreadTerminated(hammers[i], 60000);
         }
         // before restart
-        QuorumTest qt = new QuorumTest();
+        QuorumBase qt = new QuorumBase();
         qt.verifyRootOfAllServersMatch(qb.hostPort);
         tearDown();
 

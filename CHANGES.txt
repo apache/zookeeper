@@ -133,6 +133,9 @@ connected (breed via mahadev)
 
   ZOOKEEPER-448. png files do nto work with forrest. (mahadev)
 
+  ZOOKEEPER-417. stray message problem when changing servers (breed via
+mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

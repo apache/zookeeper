@@ -79,7 +79,11 @@ public class FollowerSessionTracker implements SessionTracker {
         return (nextSessionId++);
     }
 
-    public void checkSession(long sessionId)  {
+    public void checkSession(long sessionId, Object owner)  {
+        // Nothing to do here. Sessions are checked at the Leader
+    }
+    
+    public void setOwner(long sessionId, Object owner) {
         // Nothing to do here. Sessions are checked at the Leader
     }
 }

@@ -118,7 +118,9 @@ public abstract class KeeperException extends Exception {
                 return new SessionExpiredException();
             case INVALIDCALLBACK:
                 return new InvalidCallbackException();
-
+            case SESSIONMOVED:
+                return new SessionMovedException();
+            	
             case OK:
             default:
                 throw new IllegalArgumentException("Invalid exception code");
@@ -264,6 +266,10 @@ public abstract class KeeperException extends Exception {
          */
         @Deprecated
         public static final int AuthFailed = -115;
+        /**
+         * This value will be used directly in {@link CODE#SESSIONMOVED}
+         */
+        // public static final int SessionMoved = -116;
     }
 
     /** Codes which represent the various KeeperException
@@ -296,7 +302,7 @@ public abstract class KeeperException extends Exception {
         OPERATIONTIMEOUT (OperationTimeout),
         /** Invalid arguments */
         BADARGUMENTS (BadArguments),
-
+        
         /** API errors.
          * This is never thrown by the server, it shouldn't be used other than
          * to indicate a range. Specifically error codes greater than this
@@ -324,7 +330,9 @@ public abstract class KeeperException extends Exception {
         /** Invalid ACL specified */
         INVALIDACL (InvalidACL),
         /** Client authentication failed */
-        AUTHFAILED (AuthFailed);
+        AUTHFAILED (AuthFailed),
+        /** Session moved to another server, so operation is ignored */
+        SESSIONMOVED (-116);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
@@ -397,6 +405,8 @@ public abstract class KeeperException extends Exception {
                 return "Session expired";
             case INVALIDCALLBACK:
                 return "Invalid callback";
+            case SESSIONMOVED:
+                return "Session moved";
             default:
                 return "Unknown error " + code;
         }
@@ -599,6 +609,15 @@ public abstract class KeeperException extends Exception {
     public static class SessionExpiredException extends KeeperException {
         public SessionExpiredException() {
             super(Code.SESSIONEXPIRED);
+        }
+    }
+    
+    /**
+     * @see Code#SESSIONMOVED
+     */
+    public static class SessionMovedException extends KeeperException {
+        public SessionMovedException() {
+            super(Code.SESSIONMOVED);
         }
     }
 
