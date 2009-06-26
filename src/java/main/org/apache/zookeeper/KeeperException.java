@@ -269,7 +269,7 @@ public abstract class KeeperException extends Exception {
         /**
          * This value will be used directly in {@link CODE#SESSIONMOVED}
          */
-        // public static final int SessionMoved = -116;
+        // public static final int SessionMoved = -118;
     }
 
     /** Codes which represent the various KeeperException
@@ -332,7 +332,7 @@ public abstract class KeeperException extends Exception {
         /** Client authentication failed */
         AUTHFAILED (AuthFailed),
         /** Session moved to another server, so operation is ignored */
-        SESSIONMOVED (-116);
+        SESSIONMOVED (-118);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
