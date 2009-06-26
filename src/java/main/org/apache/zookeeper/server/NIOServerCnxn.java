@@ -70,6 +70,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     private ConnectionBean jmxConnectionBean;
 
+    // This is just an arbitrary object to represent requests issued by
+    // (aka owned by) this class
+    final private static Object me = new Object();
+
     static public class Factory extends Thread {
         ZooKeeperServer zks;
 
@@ -280,7 +284,12 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
         synchronized void closeSession(long sessionId) {
             selector.wakeup();
-            synchronized (cnxns) {
+            closeSessionWithoutWakeup(sessionId);
+        }
+
+
+		private void closeSessionWithoutWakeup(long sessionId) {
+			synchronized (cnxns) {
                 for (Iterator<NIOServerCnxn> it = cnxns.iterator(); it
                         .hasNext();) {
                     NIOServerCnxn cnxn = it.next();
@@ -534,8 +543,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             }
             return;
         } else {
-            zk.submitRequest(this, sessionId, h.getType(), h.getXid(),
-                    incomingBuffer, authInfo);
+            Request si = new Request(this, sessionId, h.getXid(), h.getType(), incomingBuffer, authInfo);
+            si.setOwner(me);
+            zk.submitRequest(si);
         }
         if (h.getXid() >= 0) {
             synchronized (this) {
@@ -599,6 +609,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         // session is setup
         disableRecv();
         if (connReq.getSessionId() != 0) {
+        	factory.closeSessionWithoutWakeup(connReq.getSessionId());
             setSessionId(connReq.getSessionId());
             zk.reopenSession(this, sessionId, passwd, sessionTimeout);
             LOG.info("Renewing session 0x" + Long.toHexString(sessionId));

@@ -28,6 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.SessionExpiredException;
+import org.apache.zookeeper.KeeperException.SessionMovedException;
 
 /**
  * This is a full featured SessionTracker. It tracks session in grouped by tick
@@ -57,6 +59,8 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         long tickTime;
 
         long sessionId;
+        
+        Object owner;
     }
 
     public static long initializeNextSession(long id) {
@@ -216,9 +220,24 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         touchSession(id, sessionTimeout);
     }
 
-    public void checkSession(long sessionId) throws KeeperException.SessionExpiredException {
-        if (sessionsById.get(sessionId) == null) {
+    synchronized public void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException {
+        Session session = sessionsById.get(sessionId);
+		if (session == null) {
             throw new KeeperException.SessionExpiredException();
         }
+		if (session.owner == null) {
+			session.owner = owner;
+		} else if (session.owner != owner) {
+			throw new KeeperException.SessionMovedException();
+		}
     }
+
+	@Override
+	synchronized public void setOwner(long id, Object owner) throws SessionExpiredException {
+		Session session = sessionsById.get(id);
+		if (session == null) {
+            throw new KeeperException.SessionExpiredException();
+        }
+		session.owner = owner;
+	}
 }

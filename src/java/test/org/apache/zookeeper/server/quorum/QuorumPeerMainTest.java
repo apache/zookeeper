@@ -201,7 +201,7 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
                 ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP1,
                         5000);
 
-            assertFalse(isup);
+            assertFalse("Server never came up", isup);
             
             q1.shutdown();
 

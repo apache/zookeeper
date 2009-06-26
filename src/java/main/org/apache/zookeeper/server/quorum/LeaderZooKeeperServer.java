@@ -20,11 +20,13 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 
+import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.SessionTrackerImpl;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -150,5 +152,20 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
     @Override
     public String getState() {
         return "leader";
+    }
+
+    public void setOwner(long id, Object owner) throws SessionExpiredException {
+        sessionTracker.setOwner(id, owner);
+    }
+
+    @Override
+    protected void revalidateSession(ServerCnxn cnxn, long sessionId,
+        int sessionTimeout) throws IOException, InterruptedException {
+        super.revalidateSession(cnxn, sessionId, sessionTimeout);
+        try {
+            setOwner(sessionId, this);
+        } catch (SessionExpiredException e) {
+            // this is ok, it just means that the session revalidation failed.
+        }
     }
 }
