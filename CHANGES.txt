@@ -131,6 +131,8 @@ BUGFIXES:
   ZOOKEEPER-438.  addauth fails to register auth on new client that's not yet
 connected (breed via mahadev)
 
+  ZOOKEEPER-448. png files do nto work with forrest. (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
