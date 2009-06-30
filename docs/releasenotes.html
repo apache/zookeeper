@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.0.0 Release Notes</title>
+<title>ZooKeeper 3.2.0 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -199,36 +199,11 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.0.0 Release Notes</h1>
+<h1>ZooKeeper 3.2.0 Release Notes</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#migration">Migration Instructions when Upgrading to 3.0.0</a>
-<ul class="minitoc">
-<li>
-<a href="#migration_code">Migrating Client Code</a>
-<ul class="minitoc">
-<li>
-<a href="#Watch+Management">Watch Management</a>
-</li>
-<li>
-<a href="#Java+API">Java API</a>
-</li>
-<li>
-<a href="#C+API">C API</a>
-</li>
-</ul>
-</li>
-<li>
-<a href="#migration_data">Migrating Server Data</a>
-</li>
-<li>
-<a href="#migration_config">Migrating Server Configuration</a>
-</li>
-</ul>
-</li>
-<li>
-<a href="#changes">Changes Since ZooKeeper 2.2.1</a>
+<a href="#changes">Changes Since ZooKeeper 3.1</a>
 </li>
 </ul>
 </div>
@@ -238,299 +213,32 @@ document.write("Last Published: " + document.lastModified);
 
 
 <p>
-These release notes include new developer and user facing incompatibilities, features, and major improvements.
+These release notes include new developer and user facing
+incompatibilities, features, and major improvements.
 </p>
 
 
-<ul>
-  
-<li>
 <p>
-<a href="#migration">Migration Instructions</a>
+Note that there is a user visible semantic change to an existing API in this release: 
+<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-444">ZOOKEEPER-444</a>
+"perms definition for PERMS_ALL differ in C and java", a bug fix which required a change to the JAVA
+definition of ALL to include ADMIN.
 </p>
-</li>
-  
-<li>
-<p>
-<a href="#changes">Changes</a>
-</p>
-</li>
-
-</ul>
 
 
-<a name="N1001B"></a><a name="migration"></a>
-<h2 class="h3">Migration Instructions when Upgrading to 3.0.0</h2>
+<p>See <a href="http://hadoop.apache.org/zookeeper/docs/r3.0.1/releasenotes.html#migration">3.0
+release notes and migration instructions</a> if you are upgrading
+from version 2 of ZooKeeper (SourceForge) to version 3 or
+later.</p>
+
+
+<a name="N1001A"></a><a name="changes"></a>
+<h2 class="h3">Changes Since ZooKeeper 3.1</h2>
 <div class="section">
-<p>
-
-<em>You should only have to read this section if you are upgrading from a previous version of ZooKeeper to version 3.0.0, otw skip down to <a href="#changes">changes</a></em>
-
-</p>
-<p>
-A small number of changes in this release have resulted in non-backward compatible Zookeeper client user code and server instance data. The following instructions provide details on how to migrate code and date from version 2.2.1 to version 3.0.0.
-</p>
-<p>
-Note: ZooKeeper increments the major version number (major.minor.fix) when backward incompatible changes are made to the source base. As part of the migration from SourceForge we changed the package structure (com.yahoo.zookeeper.* to org.apache.zookeeper.*) and felt it was a good time to incorporate some changes that we had been withholding. As a result the following will be required when migrating from 2.2.1 to 3.0.0 version of ZooKeeper.
-</p>
-<ul>
-  
-<li>
-<p>
-<a href="#migration_code">Migrating Client Code</a>
-</p>
-</li>
-  
-<li>
-<p>
-<a href="#migration_data">Migrating Server Data</a>
-</p>
-</li>
-  
-<li>
-<p>
-<a href="#migration_config">Migrating Server Configuration</a>
-</p>
-</li>
-
-</ul>
-<a name="N10045"></a><a name="migration_code"></a>
-<h3 class="h4">Migrating Client Code</h3>
-<p>
-  The underlying client-server protocol has changed in version 3.0.0
-  of ZooKeeper. As a result clients must be upgraded along with
-  serving clusters to ensure proper operation of the system (old
-  pre-3.0.0 clients are not guaranteed to operate against upgraded
-  3.0.0 servers and vice-versa).
-</p>
-<a name="N1004E"></a><a name="Watch+Management"></a>
-<h4>Watch Management</h4>
-<p>
-In previous releases of ZooKeeper any watches registered by clients were lost if the client lost a connection to a ZooKeeper server.
-This meant that developers had to track watches they were interested in and reregister them if a session disconnect event was recieved.
-In this release the client library tracks watches that a client has registered and reregisters the watches when a connection is made to a new server.
-Applications that still manually reregister interest should continue working properly as long as they are able to handle unsolicited watches.
-For example, an old application may register a watch for /foo and /goo, lose the connection, and reregister only /goo.
-As long as the application is able to recieve a notification for /foo, (probably ignoring it) the applications does not to be changes.
-One caveat to the watch management: it is possible to miss an event for the creation and deletion of a znode if watching for creation and both the create and delete happens while the client is disconnected from ZooKeeper.
-</p>
-<p>
-This release also allows clients to specify call specific watch functions.
-This gives the developer the ability to modularize logic in different watch functions rather than cramming everything in the watch function attached to the ZooKeeper handle.
-Call specific watch functions receive all session events for as long as they are active, but will only receive the watch callbacks for which they are registered.
-</p>
-<a name="N1005B"></a><a name="Java+API"></a>
-<h4>Java API</h4>
-<ol>
-  
-<li>
-<p>The java package structure has changed from <strong>com.yahoo.zookeeper*</strong> to <strong>org.apache.zookeeper*</strong>. This will probably effect all of your java code which makes use of ZooKeeper APIs (typically import statements)</p>
-</li>
-  
-<li>
-<p>A number of constants used in the client ZooKeeper API were re-specified using enums (rather than ints). See <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-7">ZOOKEEPER-7</a>, <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-132">ZOOKEEPER-132</a> and <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-139">ZOOKEEPER-139</a> for full details</p>
-</li>
-  
-<li>
-<p>
-<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-18">ZOOKEEPER-18</a> removed KeeperStateChanged, use KeeperStateDisconnected instead</p>
-</li>
-
-</ol>
-<p>
-Also see <a href="http://hadoop.apache.org/zookeeper/docs/current/api/index.html">the current java API</a>
-
-</p>
-<a name="N1008D"></a><a name="C+API"></a>
-<h4>C API</h4>
-<ol>
-  
-<li>
-<p>A number of constants used in the client ZooKeeper API were renamed in order to reduce namespace collision, see <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-6">ZOOKEEPER-6</a> for full details</p>
-</li>
-
-</ol>
-<a name="N100A0"></a><a name="migration_data"></a>
-<h3 class="h4">Migrating Server Data</h3>
-<p>
-The following issues resulted in changes to the on-disk data format (the snapshot and transaction log files contained within the ZK data directory) and require a migration utility to be run. 
-</p>
-<ul>
-  
-<li>
-<p>
-<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-27">ZOOKEEPER-27 Unique DB identifiers for servers and clients</a>
-</p>
-</li>
-  
-<li>
-<p>
-<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-32">ZOOKEEPER-32 CRCs for ZooKeeper data</a>
-</p>
-</li>
-  
-<li>
-<p>
-<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-33">ZOOKEEPER-33 Better ACL management</a>
-</p>
-</li>
-  
-<li>
-<p>
-<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-38">ZOOKEEPER-38 headers (version+) in log/snap files</a>
-</p>
-</li>
-
-</ul>
-<p>
-  
-<strong>The following must be run once, and only once, when upgrading the ZooKeeper server instances to version 3.0.0.</strong>
-
-</p>
-<div class="note">
-<div class="label">Note</div>
-<div class="content">
-  
-<p>
-    The &lt;dataLogDir&gt; and &lt;dataDir&gt; directories referenced
-    below are specified by the <em>dataLogDir</em>
-    and <em>dataDir</em> specification in your
-    ZooKeeper config file
-    respectively. <em>dataLogDir</em> defaults to the
-    value of <em>dataDir</em> if not specified explicitly
-    in the ZooKeeper server config file (in which case provide the
-    same directory for both parameters to the upgrade utility).
-  </p>
-
-</div>
-</div>
-<ol>
-  
-<li>
-<p>Shutdown the ZooKeeper server cluster.</p>
-</li>
-  
-<li>
-<p>Backup your &lt;dataLogDir&gt; and &lt;dataDir&gt; directories</p>
-</li>
-  
-<li>
-<p>Run upgrade using</p>
-    
-<ul>
-      
-<li>
-<p>
-<span class="codefrag computeroutput">bin/zkServer.sh upgrade &lt;dataLogDir&gt; &lt;dataDir&gt;</span>
-</p>
-</li>
-    
-</ul>
-    
-<p>or</p>
-    
-<ul>
-      
-<li>
-<p>
-<span class="codefrag computeroutput">java -classpath pathtolog4j:pathtozookeeper.jar UpgradeMain &lt;dataLogDir&gt; &lt;dataDir&gt;</span>
-</p>
-</li>
-    
-</ul>
-    
-<p>where &lt;dataLogDir&gt; is the directory where all transaction logs (log.*) are stored. &lt;dataDir&gt; is the directory where all the snapshots (snapshot.*) are stored.</p>
-  
-</li>
-  
-<li>
-<p>Restart the cluster. </p>
-</li>
- 
-</ol>
-<p>
- If you have any failure during the upgrade procedure keep reading to sanitize your database. 
- </p>
-<p>This is how upgrade works in ZooKeeper. This will help you troubleshoot in case you have problems while upgrading</p>
-<ol>
-
-<li>
-<p>Upgrade moves files from &lt;dataLogDir&gt; and &lt;dataDir&gt; to &lt;dataLogDir&gt;/version-1/ and &lt;dataDir&gt;/version-1 respectively (version-1 sub-directory is created by the upgrade utility). </p>
-</li>
- 
-<li>
-<p>Upgrade creates a new version sub-directory &lt;dataDir&gt;/version-2 and &lt;dataLogDir&gt;/version-2</p>
-</li>
- 
-<li>
-<p>Upgrade reads the old database from &lt;dataDir&gt;/version-1 and &lt;dataLogDir&gt;/version-1 into the memory and creates a new upgraded snapshot. </p>
-</li>
- 
-<li>
-<p>Upgrade writes the new database in &lt;dataDir&gt;/version-2.  </p>
-</li>
- 
-</ol>
-<p>Troubleshooting.</p>
-<ol>
- 
-<li>
-<p>In case you start ZooKeeper 3.0 without upgrading from 2.0 on a 2.0 database - the servers will start up with an empty database.
- This is because the servers assume that &lt;dataDir&gt;/version-2 and &lt;dataLogDir&gt;/version-2 will have the database to start with. Since this will be empty
- in case of no upgrade, the servers will start with an empty database. In such a case, shutdown the ZooKeeper servers, remove the version-2 directory (remember
- this will lead to loss of updates after you started 3.0.)
- and then start the upgrade procedure.</p>
-</li>
- 
-<li>
-<p>If the upgrade fails while trying to rename files into the version-1 directory, you should try and move all the files under &lt;dataDir&gt;/version-1
- and &lt;dataLogDir&gt;/version-1 to &lt;dataDir&gt; and &lt;dataLogDir&gt; respectively. Then try upgrade again.
- </p>
- 
-</li>
- 
-<li>
-<p> If you do not wish to run with ZooKeeper 3.0 and prefer to run with ZooKeeper 2.0 and have already upgraded - you can run ZooKeeper 2 with 
- the &lt;dataDir&gt; and &lt;dataLogDir&gt; directories changed to &lt;dataDir&gt;/version-1 and &lt;dataLogDir&gt;/version-1. Remember that you will lose all the updates that you made after the upgrade.
-</p>
-</li> 
- 
-</ol>
-<a name="N10135"></a><a name="migration_config"></a>
-<h3 class="h4">Migrating Server Configuration</h3>
-<p>
-There is a significant change to the ZooKeeper server configuration file.
-</p>
-<p>The default election algorithm, specified by
-  the <em>electionAlg</em> configuration attribute, has
-  changed from a default of <em>0</em> to a default
-  of <em>3</em>. See
-  <a href="zookeeperAdmin.html#sc_clusterOptions">Cluster
-  Options</a> section of the administrators guide, specifically
-  the <em>electionAlg</em>
-  and <em>server.X</em> properties.
-</p>
-<p>
-  You will either need to explicitly
-  set <em>electionAlg</em> to it's previous default value
-  of <em>0</em> or change
-  your <em>server.X</em> options to include the leader
-  election port.
-</p>
-</div>
-
-
-<a name="N10162"></a><a name="changes"></a>
-<h2 class="h3">Changes Since ZooKeeper 2.2.1</h2>
-<div class="section">
-<p>
-Version 2.2.1 code, documentation, binaries, etc... are still accessible on <a href="http://sourceforge.net/projects/zookeeper">SourceForge</a>
-
-</p>
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
-<caption>Changes Since ZooKeeper 2.2.1</caption>
+<caption>Changes Since ZooKeeper 3.1</caption>
 
-<title>Changes Since ZooKeeper 2.2.1</title>
+<title>Changes Since ZooKeeper 3.1</title>
 
 
 <tr>
@@ -541,1338 +249,659 @@ Version 2.2.1 code, documentation, binaries, etc... are still accessible on <a h
 </tr>
 
 
+
 <tr>
   
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-43">
-      ZOOKEEPER-43</a>
-  </td>
-  <td>
-    Server side of auto reset watches.
-  </td>
+<td>Incompatibilities</td>
+  <td></td>
 
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-132">
-      ZOOKEEPER-132</a>
-  </td>
-  <td>
-    Create Enum to replace CreateFlag in ZooKepper.create method 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-444">ZOOKEEPER-444</a></td><td>perms definition for PERMS_ALL differ in C and java
+</td>
 </tr>
 
+
 <tr>
   
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-139">
-      ZOOKEEPER-139</a>
-  </td>
-  <td>
-    Create Enums for WatcherEvent's KeeperState and EventType
-  </td>
+<td>New Feature</td>
+  <td></td>
 
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-18">
-      ZOOKEEPER-18</a>
-  </td>
-  <td>
-    keeper state inconsistency 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-29">ZOOKEEPER-29</a></td><td>Flexible quorums
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-38">
-      ZOOKEEPER-38</a>
-  </td>
-  <td>
-    headers  in log/snap files
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-36">ZOOKEEPER-36</a></td><td>REST access to ZooKeeper
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-8">
-      ZOOKEEPER-8</a>
-  </td>
-  <td>
-    Stat enchaned to include num of children and size
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-78">ZOOKEEPER-78</a></td><td>added a high level protocol/feature - for easy Leader Election or exclusive Write Lock creation
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-6">
-      ZOOKEEPER-6</a>
-  </td>
-  <td>
-    List of problem identifiers in zookeeper.h
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-237">ZOOKEEPER-237</a></td><td>Add a Chroot request
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-7">
-      ZOOKEEPER-7</a>
-  </td>
-  <td>
-    Use enums rather than ints for types and state
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-361">ZOOKEEPER-361</a></td><td>integrate cppunit testing as part of hudson patch process.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-27">
-      ZOOKEEPER-27</a>
-  </td>
-  <td>
-    Unique DB identifiers for servers and clients
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-378">ZOOKEEPER-378</a></td><td>contribution of Net::ZooKeeper Perl module
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-32">
-      ZOOKEEPER-32</a>
-  </td>
-  <td>
-    CRCs for ZooKeeper data
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-383">ZOOKEEPER-383</a></td><td>Asynchronous version of createLedger()
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-33">
-      ZOOKEEPER-33</a>
-  </td>
-  <td>
-    Better ACL management
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-395">ZOOKEEPER-395</a></td><td>Python bindings
+</td>
 </tr>
+                
 
 <tr>
   
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-203">
-      ZOOKEEPER-203</a>
-  </td>
-  <td>
-    fix datadir typo in releasenotes
-  </td>
+<td>Task</td>
+  <td></td>
 
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-145">
-      ZOOKEEPER-145</a>
-  </td>
-  <td>
-    write detailed release notes for users migrating from 2.x to 3.0
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-440">ZOOKEEPER-440</a></td><td>update the performance documentation in forrest
+</td>
 </tr>
 
+
 <tr>
   
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-23">
-      ZOOKEEPER-23</a>
-  </td>
-  <td>
-    Auto reset of watches on reconnect
-  </td>
+<td>Bug</td>
+  <td></td>
 
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-191">
-      ZOOKEEPER-191</a>
-  </td>
-  <td>
-    forrest docs for upgrade.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-94">ZOOKEEPER-94</a></td><td>JMX tests are needed to verify that the JMX MBeans work properly
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-201">
-      ZOOKEEPER-201</a>
-  </td>
-  <td>
-    validate magic number when reading snapshot and transaction logs 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-192">ZOOKEEPER-192</a></td><td>trailing whitespace in config file can cause number format exceptions
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-200">
-      ZOOKEEPER-200</a>
-  </td>
-  <td>
-    the magic number for snapshot and log must be different
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-196">ZOOKEEPER-196</a></td><td>doxygen comment for state argument of watcher_fn typedef and implementation differ ("...one of the *_STATE constants, otherwise -1")
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-199">
-      ZOOKEEPER-199</a>
-  </td>
-  <td>
-    fix log messages in persistence code 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-244">ZOOKEEPER-244</a></td><td>AsyncOpsTest fails when running consecutively
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-197">
-      ZOOKEEPER-197</a>
-  </td>
-  <td>
-    create checksums for snapshots 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-273">ZOOKEEPER-273</a></td><td>Zookeeper c client build should not depend on CPPUNIT
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-198">
-      ZOOKEEPER-198</a>
-  </td>
-  <td>
-    apache license header missing from FollowerSyncRequest.java
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-281">ZOOKEEPER-281</a></td><td>autoreconf fails for /zookeeper-3.0.1/src/c/
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-5">
-      ZOOKEEPER-5</a>
-  </td>
-  <td>
-    Upgrade Feature in Zookeeper server. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-298">ZOOKEEPER-298</a></td><td>some excecutables (scripts typ.) are not marked as such in tar generated by "ant tar"
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-194">
-      ZOOKEEPER-194</a>
-  </td>
-  <td>
-    Fix terminology in zookeeperAdmin.xml
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-299">ZOOKEEPER-299</a></td><td>server startup scripts fail on a mac.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-151">
-      ZOOKEEPER-151</a>
-  </td>
-  <td>
-    Document change to server configuration
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-300">ZOOKEEPER-300</a></td><td>zk jmx code is calling printStackTrace when creating bean name (should not be)
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-193">
-      ZOOKEEPER-193</a>
-  </td>
-  <td>
-    update java example doc to compile with latest zookeeper
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-303">ZOOKEEPER-303</a></td><td>Bin scripts don't work on Mac
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-187">
-      ZOOKEEPER-187</a>
-  </td>
-  <td>
-    CreateMode api docs missing 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-309">ZOOKEEPER-309</a></td><td>core dump using zoo_get_acl() 
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-186">
-      ZOOKEEPER-186</a>
-  </td>
-  <td>
-    add new "releasenotes.xml" to forrest documentation
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-318">ZOOKEEPER-318</a></td><td>remove locking in zk_hashtable.c or add locking in collect_keys()
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-190">
-      ZOOKEEPER-190</a>
-  </td>
-  <td>
-    Reorg links to docs and navs to docs into related sections
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-319">ZOOKEEPER-319</a></td><td>add locking around auth info in zhandle_t
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-189">
-      ZOOKEEPER-189</a>
-  </td>
-  <td>
-    forrest build not validated xml of input documents
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-320">ZOOKEEPER-320</a></td><td>call auth completion in free_completions()
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-188">
-      ZOOKEEPER-188</a>
-  </td>
-  <td>
-    Check that election port is present for all servers
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-325">ZOOKEEPER-325</a></td><td>FLENewEpoch test fails.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-185">
-      ZOOKEEPER-185</a>
-  </td>
-  <td>
-    Improved version of FLETest 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-326">ZOOKEEPER-326</a></td><td>standalone server ignores tickTime configuration
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-184">
-      ZOOKEEPER-184</a>
-  </td>
-  <td>
-    tests: An explicit include derective is needed for the usage of memcpy functions
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-330">ZOOKEEPER-330</a></td><td>zookeeper standalone server does not startup with just a port and datadir.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-183">
-      ZOOKEEPER-183</a>
-  </td>
-  <td>
-    Array subscript is above array bounds in od_completion, src/cli.c. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-332">ZOOKEEPER-332</a></td><td>c client issues (memory leaks) reported by valgrind
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-182">
-      ZOOKEEPER-182</a>
-  </td>
-  <td>
-     zookeeper_init accepts empty host-port string and returns valid pointer to zhandle_t. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-333">ZOOKEEPER-333</a></td><td>helgrind thread issues identified in mt c client code
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-17">
-      ZOOKEEPER-17</a>
-  </td>
-  <td>
-    zookeeper_init doc needs clarification 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-334">ZOOKEEPER-334</a></td><td>bookkeeper benchmark (testclient.java) has compiling errros.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-181">
-      ZOOKEEPER-181</a>
-  </td>
-  <td>
-    Some Source Forge Documents did not get moved over: javaExample, zookeeperTutorial, zookeeperInternals 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-340">ZOOKEEPER-340</a></td><td>binaryinputarchive throws out runtimeexceptions for unreasonable length datastructures.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-180">
-      ZOOKEEPER-180</a>
-  </td>
-  <td>
-    Placeholder sections needed in document for new topics that the umbrella jira discusses 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-341">ZOOKEEPER-341</a></td><td>regression in QuorumPeerMain, tickTime from config is lost, cannot start quorum
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-179">
-      ZOOKEEPER-179</a>
-  </td>
-  <td>
-    Programmer's Guide "Basic Operations" section is missing content 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-344">ZOOKEEPER-344</a></td><td>doIO in NioServerCnxn: Exception causing close of session : cause is "read error"
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-178">
-      ZOOKEEPER-178</a>
-  </td>
-  <td>
-    FLE test. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-346">ZOOKEEPER-346</a></td><td>remove the kill command fro mthe client port.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-159">
-      ZOOKEEPER-159</a>
-  </td>
-  <td>
-    Cover two corner cases of leader election
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-347">ZOOKEEPER-347</a></td><td>zkfuse uses non-standard String
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-156">
-      ZOOKEEPER-156</a>
-  </td>
-  <td>
-    update programmer guide with acl details from old wiki page
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-348">ZOOKEEPER-348</a></td><td>Creating node with path ending in "/" with sequence flag set
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-154">
-      ZOOKEEPER-154</a>
-  </td>
-  <td>
-    reliability graph diagram in overview doc needs context
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-355">ZOOKEEPER-355</a></td><td>make  validatePath non public in Zookeeper client api.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-157">
-      ZOOKEEPER-157</a>
-  </td>
-  <td>
-    Peer can't find existing leader 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-360">ZOOKEEPER-360</a></td><td>WeakHashMap in Bookie.java causes NPE
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-155">
-      ZOOKEEPER-155</a>
-  </td>
-  <td>
-    improve "the zookeeper project" section of overview doc
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-362">ZOOKEEPER-362</a></td><td>Issues with FLENewEpochTest
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-140">
-      ZOOKEEPER-140</a>
-  </td>
-  <td>
-    Deadlock in QuorumCnxManager 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-363">ZOOKEEPER-363</a></td><td>NPE when recovering ledger with no hint 
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-147">
-      ZOOKEEPER-147</a>
-  </td>
-  <td>
-    This is version of the documents with most of the [tbd...] scrubbed out 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-365">ZOOKEEPER-365</a></td><td>javadoc is wrong for setLast in LedgerHandle
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-150">
-      ZOOKEEPER-150</a>
-  </td>
-  <td>
-    zookeeper build broken 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-367">ZOOKEEPER-367</a></td><td>RecoveryTest failure - "unreasonable length" IOException
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-136">
-      ZOOKEEPER-136</a>
-  </td>
-  <td>
-    sync causes hang in all followers of quorum. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-370">ZOOKEEPER-370</a></td><td>Fix critical problems reported by findbugs
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-134">
-      ZOOKEEPER-134</a>
-  </td>
-  <td>
-    findbugs cleanup 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-374">ZOOKEEPER-374</a></td><td>Uninitialized struct variable in C causes warning which is treated as an error
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-133">
-      ZOOKEEPER-133</a>
-  </td>
-  <td>
-    hudson tests failing intermittently 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-375">ZOOKEEPER-375</a></td><td>zoo_add_auth only retains most recent auth on re-sync
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-144">
-      ZOOKEEPER-144</a>
-  </td>
-  <td>
-    add tostring support for watcher event, and enums for event type/state 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-376">ZOOKEEPER-376</a></td><td>ant test target re-compiles cppunit code every time
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-21">
-      ZOOKEEPER-21</a>
-  </td>
-  <td>
-    Improve zk ctor/watcher 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-377">ZOOKEEPER-377</a></td><td>running ant cppunit tests, a failure still results in BUILD SUCCESSFUL
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-142">
-      ZOOKEEPER-142</a>
-  </td>
-  <td>
-    Provide Javadoc as to the maximum size of the data byte array that may be stored within a znode 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-379">ZOOKEEPER-379</a></td><td>cppunit tests failed during hudson patch tests 
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-93">
-      ZOOKEEPER-93</a>
-  </td>
-  <td>
-    Create Documentation for Zookeeper 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-382">ZOOKEEPER-382</a></td><td>zookeeper cpp tests fails on 64 bit machines with gcc 4.1.2
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-117">
-      ZOOKEEPER-117</a>
-  </td>
-  <td>
-    threading issues in Leader election 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-384">ZOOKEEPER-384</a></td><td>keeper exceptions missing path
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-137">
-      ZOOKEEPER-137</a>
-  </td>
-  <td>
-    client watcher objects can lose events 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-385">ZOOKEEPER-385</a></td><td>crctest failed on hudson patch test
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-131">
-      ZOOKEEPER-131</a>
-  </td>
-  <td>
-    Old leader election can elect a dead leader over and over again 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-391">ZOOKEEPER-391</a></td><td>bookeeper mainline code should not be calling printStackTrace
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-130">
-      ZOOKEEPER-130</a>
-  </td>
-  <td>
-    update build.xml to support apache release process
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-396">ZOOKEEPER-396</a></td><td>race condition in zookeeper client library between zookeeper_close and zoo_synchronous api
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-118">
-      ZOOKEEPER-118</a>
-  </td>
-  <td>
-    findbugs flagged switch statement in followerrequestprocessor.run
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-400">ZOOKEEPER-400</a></td><td>Issues with procedure to close ledger
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-115">
-      ZOOKEEPER-115</a>
-  </td>
-  <td>
-    Potential NPE in QuorumCnxManager
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-402">ZOOKEEPER-402</a></td><td>zookeeper c library segfaults on data for a node in zookeeper being null.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-114">
-      ZOOKEEPER-114</a>
-  </td>
-  <td>
-    cleanup ugly event messages in zookeeper client 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-404">ZOOKEEPER-404</a></td><td>nightly build failed on hudson.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-112">
-      ZOOKEEPER-112</a>
-  </td>
-  <td>
-    src/java/main ZooKeeper.java has test code embedded into it.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-405">ZOOKEEPER-405</a></td><td>nullpointer exception in zookeeper java shell.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-39">
-      ZOOKEEPER-39</a>
-  </td>
-  <td>
-    Use Watcher objects rather than boolean on read operations.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-411">ZOOKEEPER-411</a></td><td>Building zookeeper fails on RHEL 5 64 bit during test-cppunit
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-97">
-      ZOOKEEPER-97</a>
-  </td>
-  <td>
-    supports optional output directory in code generator.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-415">ZOOKEEPER-415</a></td><td>zookeeper c tests hang.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-101">
-      ZOOKEEPER-101</a>
-  </td>
-  <td>
-    Integrate ZooKeeper with "violations" feature on hudson
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-416">ZOOKEEPER-416</a></td><td>BookKeeper jar includes unnecessary files
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-105">
-      ZOOKEEPER-105</a>
-  </td>
-  <td>
-    Catch Zookeeper exceptions and print on the stderr. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-417">ZOOKEEPER-417</a></td><td>stray message problem when changing servers
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-42">
-      ZOOKEEPER-42</a>
-  </td>
-  <td>
-    Change Leader Election to fast tcp.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-419">ZOOKEEPER-419</a></td><td>Reference counting bug in Python bindings causes abort errors
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-48">
-      ZOOKEEPER-48</a>
-  </td>
-  <td>
-    auth_id now handled correctly when no auth ids present
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-421">ZOOKEEPER-421</a></td><td>zkpython run_tests.sh is missing #!
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-44">
-      ZOOKEEPER-44</a>
-  </td>
-  <td>
-    Create sequence flag children with prefixes of 0's so that they can be lexicographically sorted. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-427">ZOOKEEPER-427</a></td><td>ZooKeeper server unexpectedly high CPU utilisation
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-108">
-      ZOOKEEPER-108</a>
-  </td>
-  <td>
-    Fix sync operation reordering on a Quorum. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-433">ZOOKEEPER-433</a></td><td>getacl on root znode (/) fails
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-25">
-      ZOOKEEPER-25</a>
-  </td>
-  <td>
-    Fuse module for Zookeeper.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-435">ZOOKEEPER-435</a></td><td>allow "super" admin digest based auth to be configurable
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-58">
-      ZOOKEEPER-58</a>
-  </td>
-  <td>
-    Race condition on ClientCnxn.java 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-438">ZOOKEEPER-438</a></td><td>addauth fails to register auth on new client that's not yet connected
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-56">
-      ZOOKEEPER-56</a>
-  </td>
-  <td>
-    Add clover support to build.xml. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-446">ZOOKEEPER-446</a></td><td>some traces of the host auth scheme left
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-75">
-      ZOOKEEPER-75</a>
-  </td>
-  <td>
-    register the ZooKeeper mailing lists with nabble.com 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-448">ZOOKEEPER-448</a></td><td>png files do nto work with forrest.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-54">
-      ZOOKEEPER-54</a>
-  </td>
-  <td>
-    remove sleeps in the tests. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-449">ZOOKEEPER-449</a></td><td>sesssionmoved in java code and ZCLOSING in C have the same value.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-55">
-      ZOOKEEPER-55</a>
-  </td>
-  <td>
-    build.xml failes to retrieve a release number from SVN and the ant target "dist" fails 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-450">ZOOKEEPER-450</a></td><td>emphemeral cleanup not happening with session timeout
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-89">
-      ZOOKEEPER-89</a>
-  </td>
-  <td>
-    invoke WhenOwnerListener.whenNotOwner when the ZK connection fails 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-452">ZOOKEEPER-452</a></td><td>zookeeper performance graph should have percentage of reads rather than percentage of writes -  zkperfRW-3.2.jpg
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-90">
-      ZOOKEEPER-90</a>
-  </td>
-  <td>
-    invoke WhenOwnerListener.whenNotOwner when the ZK session expires and the znode is the leader 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-453">ZOOKEEPER-453</a></td><td>Worker is not removed in QuorumCnxManager upon crash
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-82">
-      ZOOKEEPER-82</a>
-  </td>
-  <td>
-    Make the ZooKeeperServer more DI friendly.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-454">ZOOKEEPER-454</a></td><td>allow compilation with jdk1.5
+</td>
 </tr>
+    
 
 <tr>
   
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-110">
-      ZOOKEEPER-110</a>
-  </td>
-  <td>
-    Build script relies on svnant, which is not compatible with subversion 1.5 working copies 
-  </td>
+<td>Improvement</td>
+  <td></td>
 
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-111">
-      ZOOKEEPER-111</a>
-  </td>
-  <td>
-    Significant cleanup of existing tests.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-60">ZOOKEEPER-60</a></td><td>Get cppunit tests running as part of Hudson CI
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-122">
-      ZOOKEEPER-122</a>
-  </td>
-  <td>
-    Fix  NPE in jute's Utils.toCSVString.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-148">ZOOKEEPER-148</a></td><td>add jdiff support to zookeeper release process
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-123">
-      ZOOKEEPER-123</a>
-  </td>
-  <td>
-    Fix  the wrong class is specified for the logger.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-264">ZOOKEEPER-264</a></td><td>docs should include a state transition diagram for client state
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-2">
-      ZOOKEEPER-2</a>
-  </td>
-  <td>
-    Fix synchronization issues in QuorumPeer and FastLeader election. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-274">ZOOKEEPER-274</a></td><td>Document options to connect Jconsole remotely
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-125">
-      ZOOKEEPER-125</a>
-  </td>
-  <td>
-    Remove unwanted class declaration in FastLeaderElection. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-279">ZOOKEEPER-279</a></td><td>Allow specialization of quorum config parsing (e.g. variable expansion in zoo.cfg)
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-61">
-      ZOOKEEPER-61</a>
-  </td>
-  <td>
-    Address  in client/server test cases.
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-288">ZOOKEEPER-288</a></td><td>Cleanup and fixes to BookKeeper
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-75">
-      ZOOKEEPER-75</a>
-  </td>
-  <td>
-    cleanup the library directory 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-292">ZOOKEEPER-292</a></td><td>commit configure scripts (autotools) to svn for c projects and include in release
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-109">
-      ZOOKEEPER-109</a>
-  </td>
-  <td>
-    cleanup of NPE and Resource issue nits found by static analysis 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-305">ZOOKEEPER-305</a></td><td>Replace timers with semaphores in FLENewEpochTest
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-76">
-      ZOOKEEPER-76</a>
-  </td>
-  <td>
-    Commit 677109 removed the cobertura library, but not the build targets. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-306">ZOOKEEPER-306</a></td><td>Add BookKeeper documentation
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-63">
-      ZOOKEEPER-63</a>
-  </td>
-  <td>
-    Race condition in client close
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-307">ZOOKEEPER-307</a></td><td>Log exception stack traces
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-70">
-      ZOOKEEPER-70</a>
-  </td>
-  <td>
-    Add skeleton forrest doc structure for ZooKeeper 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-314">ZOOKEEPER-314</a></td><td>add wiki docs for bookeeper.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-79">
-      ZOOKEEPER-79</a>
-  </td>
-  <td>
-    Document jacob's leader election on the wiki recipes page 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-315">ZOOKEEPER-315</a></td><td>add forrest docs for bookkeeper.
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-73">
-      ZOOKEEPER-73</a>
-  </td>
-  <td>
-    Move ZK wiki from SourceForge to Apache 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-327">ZOOKEEPER-327</a></td><td>document effects (latency) of storing large amounts of data in znodes
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-72">
-      ZOOKEEPER-72</a>
-  </td>
-  <td>
-    Initial creation/setup of ZooKeeper ASF site. 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-329">ZOOKEEPER-329</a></td><td>document how to integrate 3rd party authentication into ZK server ACLs
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-71">
-      ZOOKEEPER-71</a>
-  </td>
-  <td>
-    Determine what to do re ZooKeeper Changelog
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-336">ZOOKEEPER-336</a></td><td>single bad client can cause server to stop accepting connections
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-68">
-      ZOOKEEPER-68</a>
-  </td>
-  <td>
-    parseACLs in ZooKeeper.java fails to parse elements of ACL, should be lastIndexOf rather than IndexOf 
-  </td>
-
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-337">ZOOKEEPER-337</a></td><td>improve logging in leader election lookForLeader method when address resolution fails
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-130">
-      ZOOKEEPER-130</a>
-  </td>
-  <td>
-    update build.xml to support apache release process. 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-342">ZOOKEEPER-342</a></td><td>improve configuration code - remove static config and use java properties
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-343">ZOOKEEPER-343</a></td><td>add tests that specifically verify the zkmain and qpmain classes
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-131">
-      ZOOKEEPER-131</a>
-  </td>
-  <td>
-    Fix Old leader election can elect a dead leader over and over again. 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-345">ZOOKEEPER-345</a></td><td>the CLIs should allow addAuth to be invoked
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-349">ZOOKEEPER-349</a></td><td>to automate patch testing 
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-137">
-      ZOOKEEPER-137</a>
-  </td>
-  <td>
-    client watcher objects can lose events 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-356">ZOOKEEPER-356</a></td><td>Masking bookie failure during writes to a ledger
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-358">ZOOKEEPER-358</a></td><td>Throw exception when ledger does not exist
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-117">
-      ZOOKEEPER-117</a>
-  </td>
-  <td>
-    threading issues in Leader election
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-371">ZOOKEEPER-371</a></td><td>to implement jdiff 
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-373">ZOOKEEPER-373</a></td><td>One thread per bookie
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-128">
-      ZOOKEEPER-128</a>
-  </td>
-  <td>
-    test coverage on async client operations needs to be improved
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-380">ZOOKEEPER-380</a></td><td>bookkeeper should have a streaming api so that its easier to store checpoints/snapshots in bookkeeper.
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-381">ZOOKEEPER-381</a></td><td>The ZooKeeper front page tells us nothing about what ZooKeeper does
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-127">
-      ZOOKEEPER-127</a>
-  </td>
-  <td>
-     Use of non-standard election ports in config breaks services
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-386">ZOOKEEPER-386</a></td><td>improve java cli shell
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-389">ZOOKEEPER-389</a></td><td>add help/usage to the c shell cli.c
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-53">
-      ZOOKEEPER-53</a>
-  </td>
-  <td>
-    tests failing on solaris. 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-392">ZOOKEEPER-392</a></td><td>Change log4j properties
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-403">ZOOKEEPER-403</a></td><td>cleanup javac compiler warnings
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-172">
-      ZOOKEEPER-172</a>
-  </td>
-  <td>
-    FLE Test 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-406">ZOOKEEPER-406</a></td><td>address all findbugs warnings in mainline java code
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-422">ZOOKEEPER-422</a></td><td>Java CLI should support ephemeral and sequential node creation
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-41">
-      ZOOKEEPER-41</a>
-  </td>
-  <td>
-    Sample startup script 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-428">ZOOKEEPER-428</a></td><td>logging should be makred as warn rathen than error in NIOServerCnxn.
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-431">ZOOKEEPER-431</a></td><td>Expose methods to ease ZK integration
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-33">
-      ZOOKEEPER-33</a>
-  </td>
-  <td>
-    Better ACL management 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-432">ZOOKEEPER-432</a></td><td>Various improvements to zkpython bindings
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-434">ZOOKEEPER-434</a></td><td>the java shell should indicate connection status on command prompt
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-49">
-      ZOOKEEPER-49</a>
-  </td>
-  <td>
-    SetACL does not work 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-437">ZOOKEEPER-437</a></td><td>Variety of Documentation Updates
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-443">ZOOKEEPER-443</a></td><td>trace logging in watch notification not wrapped with istraceneabled - inefficient
+</td>
 </tr>
 
+
 <tr>
   
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-20">
-      ZOOKEEPER-20</a>
-  </td>
-  <td>
-    Child watches are not triggered when the node is deleted
-  </td>
+<td>Subtask</td>
+  <td></td>
 
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-15">
-      ZOOKEEPER-15</a>
-  </td>
-  <td>
-    handle failure better in build.xml:test 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-350">ZOOKEEPER-350</a></td><td>to run rats for releaseaudit 
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-351">ZOOKEEPER-351</a></td><td>to run checkstyle
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-11">
-      ZOOKEEPER-11</a>
-  </td>
-  <td>
-    ArrayList is used instead of List 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-352">ZOOKEEPER-352</a></td><td>to add standard ant targets required by test-patch.sh script
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-353">ZOOKEEPER-353</a></td><td>javadoc warnings needs to be fixed 
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-45">
-      ZOOKEEPER-45</a>
-  </td>
-  <td>
-    Restructure the SVN repository after initial import 
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-354">ZOOKEEPER-354</a></td><td>to fix javadoc warning in the source files
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-407">ZOOKEEPER-407</a></td><td>address all findbugs warnings in org.apache.zookeeper.server.quorum.** packages
+</td>
 </tr>
 
 <tr>
-  
-<td>
-    <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1">
-      ZOOKEEPER-1</a>
-  </td>
-  <td>
-    Initial ZooKeeper code contribution from Yahoo!
-  </td>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-408">ZOOKEEPER-408</a></td><td>address all findbugs warnings in persistence classes
+</td>
+</tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-409">ZOOKEEPER-409</a></td><td>address all findbugs warnings in jute related classes
+</td>
 </tr>
 
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-410">ZOOKEEPER-410</a></td><td>address all findbugs warnings in client/server classes
+</td>
+</tr>
+    
 
 </table>
 </div>
