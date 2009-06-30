@@ -155,6 +155,8 @@ public class QuorumCnxManager {
         	    if(vsw != null)
         	        vsw.finish();
         	    else LOG.error("No SendWorker for this identifier (" + sid + ")");
+        	} else {
+        	    LOG.error("Cannot open channel to server "  + sid);
         	}
 
         	if (!queueSendMap.containsKey(sid)) {
@@ -201,9 +203,19 @@ public class QuorumCnxManager {
         //If wins the challenge, then close the new connection.
         if (sid < self.getId()) {
             try {
+                /*
+                 * This replica might still believe that the connection to sid
+                 * is up, so we have to shut down the workers before trying to
+                 * open a new connection.
+                 */
                 SendWorker sw = senderWorkerMap.get(sid);
-
-                LOG.info("Create new connection to server: " + sid);
+                if(sw != null)
+                    sw.finish();
+                
+                /*
+                 * Now we start a new connection
+                 */
+                LOG.debug("Create new connection to server: " + sid);
                 s.socket().close();
                 connectOne(sid);
                 
@@ -297,6 +309,7 @@ public class QuorumCnxManager {
         if ((senderWorkerMap.get(sid) == null)) {
             SocketChannel channel;
             try {
+                LOG.debug("Opening channel to server "  + sid);
                 channel = SocketChannel
                         .open(self.quorumPeers.get(sid).electionAddr);
                 channel.socket().setTcpNoDelay(true);
@@ -304,6 +317,8 @@ public class QuorumCnxManager {
             } catch (IOException e) {
                 LOG.warn("Cannot open channel to " + sid, e);
             }
+        } else {
+            LOG.error("There is a connection for server " + sid);
         }
     }
     
@@ -412,7 +427,7 @@ public class QuorumCnxManager {
         Long sid;
         SocketChannel channel;
         RecvWorker recvWorker;
-        boolean running = true;
+        volatile boolean running = true;
 
         SendWorker(SocketChannel channel, Long sid) {
             this.sid = sid;
@@ -426,7 +441,7 @@ public class QuorumCnxManager {
             this.recvWorker = recvWorker;
         }
 
-        boolean finish() {
+        synchronized boolean finish() {
             running = false;
 
             LOG.debug("Calling finish");
@@ -473,23 +488,20 @@ public class QuorumCnxManager {
                      * message back to the beginning of the queue and leave.
                      */
                     LOG.warn("Exception when using channel: " + sid, e);
-                    running = false;
-                    synchronized (senderWorkerMap) {
-                        recvWorker.finish();
-                        recvWorker = null;
+                    finish();
+                    recvWorker.finish();
+                    recvWorker = null;
                     
-                        senderWorkerMap.remove(sid);
-                        ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
-                        if(bq != null){
-                            if (bq.size() == 0) {
-                                boolean ret = bq.offer(b);
-                                if (!ret) {
-                                    // to appease findbugs
-                                    LOG.error("Not able to add to a quue of size 0");
-                                }
+                    ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
+                    if(bq != null){
+                        if (bq.size() == 0) {
+                            boolean ret = bq.offer(b);
+                            if (!ret) {
+                                // to appease findbugs
+                                LOG.error("Not able to add to a quue of size 0");
                             }
-                        } else LOG.error("No queue for server " + sid);
-                    }
+                        }
+                    } else LOG.error("No queue for server " + sid);
                 }
             }
             LOG.warn("Send worker leaving thread");
@@ -503,14 +515,14 @@ public class QuorumCnxManager {
     class RecvWorker extends Thread {
         Long sid;
         SocketChannel channel;
-        boolean running = true;
+        volatile boolean running = true;
 
         RecvWorker(SocketChannel channel, Long sid) {
             this.sid = sid;
             this.channel = channel;
         }
 
-        boolean finish() {
+        synchronized boolean finish() {
             running = false;
             this.interrupt();
             return running;
@@ -555,7 +567,6 @@ public class QuorumCnxManager {
 
             } catch (IOException e) {
                 LOG.warn("Connection broken: ", e);
-
             } catch (InterruptedException e) {
                 LOG.warn("Interrupted while trying to add new "
                         + "message to the reception queue", e);

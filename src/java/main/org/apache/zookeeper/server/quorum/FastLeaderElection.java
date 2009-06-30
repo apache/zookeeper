@@ -402,6 +402,7 @@ public class FastLeaderElection implements Election {
     }
     
     public void shutdown(){
+        LOG.debug("Shutting down connection manager");
         manager.halt();
     }
 
