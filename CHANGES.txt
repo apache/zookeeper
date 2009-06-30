@@ -143,13 +143,15 @@ BUGFIXES:
   value. (mahadev)
 
   ZOOKEEPER-452. zookeeper performance graph should have percentage of reads
-rather than percentage of writes - zkperfRW-3.2.jpg (mahadev)
+  rather than percentage of writes - zkperfRW-3.2.jpg (mahadev)
 
-  ZOOKEEPER-450. emphemeral cleanup not happening with session timeout. (breed
-via mahadev)
+  ZOOKEEPER-450. emphemeral cleanup not happening with session timeout.
+  (breed via mahadev)
 
-  ZOOKEEPER-453. Worker is not removed in QuorumCnxManager upon crash. (flavio
-via mahadev)
+  ZOOKEEPER-453. Worker is not removed in QuorumCnxManager upon crash.
+  (flavio via mahadev)
+
+  ZOOKEEPER-454. allow compilation with jdk1.5
 
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
