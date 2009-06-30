@@ -20,7 +20,7 @@ BUGFIXES:
   (chris darroch via mahadev)
 
   ZOOKEEPER-334. bookkeeper benchmark (testclient.java) has compiling errors.
-  (flavio and mahadev) 
+  (flavio and mahadev)
 
   ZOOKEEPER-281. autoreconf fails for /zookeeper-3.0.1/src/c/ (phunt)
 
