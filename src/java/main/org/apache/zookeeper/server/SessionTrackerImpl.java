@@ -232,7 +232,6 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 		}
     }
 
-	@Override
 	synchronized public void setOwner(long id, Object owner) throws SessionExpiredException {
 		Session session = sessionsById.get(id);
 		if (session == null) {
