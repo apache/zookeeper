@@ -50,11 +50,15 @@ public class SessionTest extends TestCase implements Watcher {
     
     private CountDownLatch startSignal;
 
+    File tmpDir;
+    
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
 
-        File tmpDir = ClientBase.createTmpDir();
+        if (tmpDir == null) {
+            tmpDir = ClientBase.createTmpDir();
+        }
 
         ClientBase.setupTestEnv();
         ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
@@ -179,6 +183,35 @@ public class SessionTest extends TestCase implements Watcher {
         zk.close();
     }
 
+    @Test
+    /**
+     * Make sure ephemerals get cleaned up when a session times out.
+     */
+    public void testSessionTimeout() throws Exception {
+        int oldTimeout = CONNECTION_TIMEOUT;
+        CONNECTION_TIMEOUT = 5000;
+        try {
+            DisconnectableZooKeeper zk = createClient();
+            zk.create("/stest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            zk.disconnect();
+            Thread.sleep(CONNECTION_TIMEOUT*2);
+            zk = createClient();
+            System.err.println("This test fails");
+            zk.create("/stest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            tearDown();
+            zk.close();
+            zk.disconnect();
+            setUp();
+            zk = createClient();
+            assertTrue(zk.exists("/stest", false) != null);
+            Thread.sleep(CONNECTION_TIMEOUT * 2);
+            assertTrue(zk.exists("/stest", false) == null);
+            zk.close();
+        } finally {
+            CONNECTION_TIMEOUT = oldTimeout;
+        }
+    }
+    
     /**
      * Make sure that we cannot have two connections with the same
      * session id.
