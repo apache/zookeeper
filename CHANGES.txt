@@ -1,11 +1,11 @@
-Trunk
+Release 3.2.0 - 2009-06-30
 
 Non-backward compatible changes:
 
 BUGFIXES: 
   ZOOKEEPER-444. perms definition for PERMS_ALL differ in C and java (mahadev)
 
-Backward compatibile changes:
+Backward compatible changes:
 
 BUGFIXES: 
   ZOOKEEPER-303. Bin scripts dont work on a Mac. (tom white via mahadev)
@@ -304,7 +304,7 @@ BUGFIXES:
   ZOOKEEPER-246. review error code definition in both source and docs. 
   (pat via mahadev)
 
-Backward compatibile changes:
+Backward compatible changes:
 
 BUGFIXES: 
   ZOOKEEPER-211. Not all Mock tests are working (ben via phunt)
@@ -500,7 +500,7 @@ Non-backward compatible changes:
   ZOOKEEPER-33. Better ACL management
   (mahadev)
    
-Backward compatibile changes:
+Backward compatible changes:
 
   BUGFIXES: 
 
