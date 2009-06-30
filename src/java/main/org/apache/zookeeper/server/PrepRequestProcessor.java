@@ -361,7 +361,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             case OpCode.closeSession:
                 txnHeader = new TxnHeader(request.sessionId, request.cxid, zks
                         .getNextZxid(), zks.getTime(), OpCode.closeSession);
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                // We don't want to do this check since the session expiration thread
+                // queues up this operation without being the session owner.
+                // this request is the last of the session so it should be ok
+                //zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 HashSet<String> es = zks.dataTree
                         .getEphemerals(request.sessionId);
                 synchronized (zks.outstandingChanges) {

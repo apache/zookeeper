@@ -47,7 +47,7 @@ import org.apache.zookeeper.server.persistence.FileTxnLog;
 public abstract class ClientBase extends TestCase {
     protected static final Logger LOG = Logger.getLogger(ClientBase.class);
 
-    public static final int CONNECTION_TIMEOUT = 30000;
+    public static int CONNECTION_TIMEOUT = 30000;
     static final File BASETEST =
         new File(System.getProperty("build.test.dir", "build"));
 
