@@ -142,6 +142,9 @@ BUGFIXES:
   ZOOKEEPER-449. sesssionmoved in java code and ZCLOSING in C have the same
   value. (mahadev)
 
+  ZOOKEEPER-452. zookeeper performance graph should have percentage of reads
+rather than percentage of writes - zkperfRW-3.2.jpg (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
