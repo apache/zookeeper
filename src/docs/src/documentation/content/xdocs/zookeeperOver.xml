@@ -358,10 +358,25 @@
 
         <mediaobject>
           <imageobject>
-            <imagedata fileref="images/zkperfRW.jpg" />
+            <imagedata fileref="images/zkperfRW-3.2.jpg" />
           </imageobject>
         </mediaobject>
       </figure>
+      <para>The figure <xref linkend="fg_zkPerfRW"/> is a throughput
+      graph of ZooKeeper release 3.2 running on servers with dual 2Ghz
+      Xeon and two SATA 15K RPM drives.  One drive was used as a
+      dedicated ZooKeeper log device. The snapshots were written to
+      the OS drive. Write requests were 1K writes and the reads were
+      1K reads.  "Servers" indicate the size of the ZooKeeper
+      ensemble, the number of servers that make up the
+      service. Approximately 30 other servers were used to simulate
+      the clients. The ZooKeeper ensemble was configured such that
+      leaders do not allow connections from clients.</para>
+
+      <note><para>In version 3.2 r/w performance improved by ~2x
+      compared to the <ulink
+      url="http://hadoop.apache.org/zookeeper/docs/r3.1.1/zookeeperOver.html#Performance">previous
+      3.1 release</ulink>.</para></note>
 
       <para>Benchmarks also indicate that it is reliable, too. <xref
       linkend="fg_zkPerfReliability" /> shows how a deployment responds to

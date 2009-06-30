@@ -112,32 +112,35 @@ BUGFIXES:
   ZOOKEEPER-421. zkpython run_tests.sh is missing #!
   (henry robinson via phunt)
 
-  ZOOKEEPER-406. address all findbugs warnings in persistence classes. (phunt et al via breed)
+  ZOOKEEPER-406. address all findbugs warnings in persistence classes.
+  (phunt et al via breed)
 
-  ZOOKEEPER-435. allow "super" admin digest based auth to be configurable (phunt via breed)
+  ZOOKEEPER-435. allow "super" admin digest based auth to be configurable
+  (phunt via breed)
 
   ZOOKEEPER-375. zoo_add_auth only retains most recent auth on re-sync.
-(mahadev)
+  (mahadev)
 
   ZOOKEEPER-433.  getacl on root znode (/) fails. (phunt via mahadev)
 
   ZOOKEEPER-408. address all findbugs warnings in persistence classes.
-(phunt, mahadev, flavio via mahadev)
+  (phunt, mahadev, flavio via mahadev)
 
-  ZOOKEEPER-427. ZooKeeper server unexpectedly high CPU utilisation (Sergey Zhuravlev via breed)
+  ZOOKEEPER-427. ZooKeeper server unexpectedly high CPU utilisation
+  (Sergey Zhuravlev via breed)
 
   ZOOKEEPER-446. some traces of the host auth scheme left (breed via mahadev)
 
   ZOOKEEPER-438.  addauth fails to register auth on new client that's not yet
-connected (breed via mahadev)
+  connected (breed via mahadev)
 
   ZOOKEEPER-448. png files do nto work with forrest. (mahadev)
 
-  ZOOKEEPER-417. stray message problem when changing servers (breed via
-mahadev)
+  ZOOKEEPER-417. stray message problem when changing servers
+  (breed via mahadev)
 
   ZOOKEEPER-449. sesssionmoved in java code and ZCLOSING in C have the same
-value. (mahadev)
+  value. (mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
@@ -215,41 +218,48 @@ IMPROVEMENTS:
   ZOOKEEPER-431. Expose methods to ease ZK integration. (Jean-Daniel via breed)
 
   ZOOKEEPER-396. race condition in zookeeper client library between
-zookeeper_close and zoo_synchronous api. (mahadev)
+  zookeeper_close and zoo_synchronous api. (mahadev)
 
   ZOOKEEPER-196. doxygen comment for state argument of watcher_fn typedef and
-implementation differ ("...one of the *_STATE constants, otherwise -1") (breed
-via mahadev)
+  implementation differ ("...one of the *_STATE constants, otherwise -1")
+  (breed via mahadev)
 
-  ZOOKEEPER-336. single bad client can cause server to stop accepting connections (henry robinson via breed)
+  ZOOKEEPER-336. single bad client can cause server to stop accepting
+  connections (henry robinson via breed)
  
-  ZOOKEEPER-434. the java shell should indicate connection status on command prompt (henry robinson via breed)
+  ZOOKEEPER-434. the java shell should indicate connection status on command
+  prompt (henry robinson via breed)
 
   ZOOKEEPER-437. Variety of Documentation Updates (grant via mahadev)
 
   ZOOKEEPER-443. trace logging in watch notification not wrapped with
-istraceneabled - inefficient (pat via mahadev)
+  istraceneabled - inefficient (pat via mahadev)
 
-  ZOOKEEPER-432. Various improvements to zkpython bindings. (henry via
-mahadev)
+  ZOOKEEPER-432. Various improvements to zkpython bindings.
+  (henry via mahadev)
 
   ZOOKEEPER-428. logging should be makred as warn rathen than error in
-NIOServerCnxn. (phunt via mahadev)
+  NIOServerCnxn. (phunt via mahadev)
 
-  ZOOKEEPER-422. Java CLI should support ephemeral and sequential node creation (henry via breed)
+  ZOOKEEPER-422. Java CLI should support ephemeral and sequential node creation
+  (henry via breed)
 
   ZOOKEEPER-315. add forrest docs for bookkeeper. (flavio via mahadev)
 
   ZOOKEEPER-329. document how to integrate 3rd party authentication into ZK
-server ACLs. (breed via mahadev)
+  server ACLs. (breed via mahadev)
 
-  ZOOKEEPER-356. Masking bookie failure during writes to a ledger (flavio via breed)
+  ZOOKEEPER-356. Masking bookie failure during writes to a ledger
+  (flavio via breed)
 
   ZOOKEEPER-327. document effects (latency) of storing large amounts of data
-in znodes. (breed via mahadev)
+  in znodes. (breed via mahadev)
 
   ZOOKEEPER-264. docs should include a state transition diagram for client
-state (breed via mahadev)
+  state (breed via mahadev)
+
+  ZOOKEEPER-440. update the performance documentation in forrest
+  (breed via phunt)
 
 NEW FEATURES:
 
@@ -269,6 +279,7 @@ NEW FEATURES:
   ZOOKEEPER-395. Python bindings. (henry robinson via mahadev)
 
   ZOOKEEPER-237. Add a Chroot request (phunt and mahadev)
+
 
 Release 3.1.0 - 2009-02-06
   
