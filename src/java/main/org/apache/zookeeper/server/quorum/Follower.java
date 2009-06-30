@@ -156,7 +156,7 @@ public class Follower {
                         sock.connect(addr, self.tickTime * self.syncLimit);
                         sock.setTcpNoDelay(nodelay);
                         break;
-                    } catch (ConnectException e) {
+                    } catch (IOException e) {
                         if (tries == 4) {
                             LOG.error("Unexpected exception",e);
                             throw e;
