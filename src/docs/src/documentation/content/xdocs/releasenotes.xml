@@ -235,6 +235,8 @@ later.</para>
 </entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-454">ZOOKEEPER-454</ulink></entry><entry>allow compilation with jdk1.5
 </entry></row>
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-455">ZOOKEEPER-455</ulink></entry><entry>zookeeper c client crashes with chroot specified in the string.
+</entry></row>
     
 <row>
   <entry>Improvement</entry>
