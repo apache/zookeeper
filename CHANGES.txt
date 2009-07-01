@@ -151,7 +151,10 @@ BUGFIXES:
   ZOOKEEPER-453. Worker is not removed in QuorumCnxManager upon crash.
   (flavio via mahadev)
 
-  ZOOKEEPER-454. allow compilation with jdk1.5
+  ZOOKEEPER-454. allow compilation with jdk1.5 (phunt)
+
+  ZOOKEEPER-455. zookeeper c client crashes with chroot specified in the string.
+  (phunt via mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.

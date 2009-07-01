@@ -645,13 +645,14 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
         zh->hostname = (char *) malloc(index_chroot - host + 1);
         zh->hostname = strncpy(zh->hostname, host, (index_chroot - host));
         //strncpy does not null terminate
-        *(zh->hostname + (index_chroot - host) +1) = '\0';
+        *(zh->hostname + (index_chroot - host)) = '\0';
         
     } else {
         zh->chroot = NULL;
         zh->hostname = strdup(host);
     }
     if (zh->chroot && !isValidPath(zh->chroot, 0)) { 
+        errno = EINVAL;
         goto abort;
     }
     if (zh->hostname == 0) {
