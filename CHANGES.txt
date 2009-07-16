@@ -7,6 +7,8 @@ BUGFIXES:
 Backward compatible changes:
 
 BUGFIXES: 
+  ZOOKEEPER-469. make sure CPPUNIT_CFLAGS isn't overwritten (chris via
+mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
