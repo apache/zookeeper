@@ -1,3 +1,17 @@
+Release 3.2.1
+
+Backward compatibile changes:
+
+BUGFIXES:
+  ZOOKEEPER-468. avoid compile warning in send_auth_info(). (chris via flavio)
+
+  ZOOKEEPER-469. make sure CPPUNIT_CFLAGS isn't overwritten (chris via mahadev)
+
+IMPROVEMENTS:
+
+NEW FEATURES:
+
+
 Release 3.2.0 - 2009-06-30
 
 Non-backward compatible changes:
@@ -156,8 +170,7 @@ BUGFIXES:
   ZOOKEEPER-455. zookeeper c client crashes with chroot specified in the string.
   (phunt via mahadev)
 
-  ZOOKEEPER-468. avoid compile warning in send_auth_info(). (chris via flavio)
-
+  
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)

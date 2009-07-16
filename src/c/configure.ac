@@ -34,9 +34,9 @@ else
 fi
 
 if test "$CALLER" = "ANT" ; then
-CPPUNIT_CFLAGS="-DZKSERVER_CMD=\"\\\"${base_dir}/src/c/tests/zkServer.sh\\\"\""
+CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"${base_dir}/src/c/tests/zkServer.sh\\\"\""
 else
-CPPUNIT_CFLAGS="-DZKSERVER_CMD=\"\\\"./tests/zkServer.sh\\\"\""
+CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"./tests/zkServer.sh\\\"\""
 AC_CHECK_FILES([generated/zookeeper.jute.c generated/zookeeper.jute.h],[],
     [AC_MSG_ERROR([jute files are missing! Please run "ant compile_jute" while in the zookeeper top level directory.])
 ])
