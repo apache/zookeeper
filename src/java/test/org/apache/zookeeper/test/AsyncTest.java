@@ -190,6 +190,7 @@ public class AsyncTest extends TestCase
         }
         // before restart
         QuorumBase qt = new QuorumBase();
+        qt.setUp();
         qt.verifyRootOfAllServersMatch(qb.hostPort);
         tearDown();
 

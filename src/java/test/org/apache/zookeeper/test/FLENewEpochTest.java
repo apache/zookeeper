@@ -27,6 +27,7 @@ import java.util.concurrent.Semaphore;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
@@ -38,8 +39,6 @@ public class FLENewEpochTest extends TestCase {
     protected static final Logger LOG = Logger.getLogger(FLENewEpochTest.class);
 
     int count;
-    int baseport;
-    int baseLEport;
     HashMap<Long,QuorumServer> peers;
     ArrayList<LEThread> threads;
     File tmpdir[];
@@ -52,8 +51,6 @@ public class FLENewEpochTest extends TestCase {
     @Override
     public void setUp() throws Exception {
         count = 3;
-        baseport= 33303;
-        baseLEport = 43303;
 
         peers = new HashMap<Long,QuorumServer>(count);
         threads = new ArrayList<LEThread>(count);
@@ -101,7 +98,7 @@ public class FLENewEpochTest extends TestCase {
                     LOG.info("Going to call leader election again: " + i);
                     v = peer.getElectionAlg().lookForLeader();
 
-                    if(v == null){
+                    if (v == null){
                         fail("Thread " + i + " got a null vote");
                     }
 
@@ -114,7 +111,7 @@ public class FLENewEpochTest extends TestCase {
                     LOG.info("Finished election: " + i + ", " + v.id);
                     //votes[i] = v;
 
-                    switch(i){
+                    switch (i) {
                     case 0:
                         LOG.info("First peer, do nothing, just join");
                         if(finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)){
@@ -128,8 +125,7 @@ public class FLENewEpochTest extends TestCase {
                         if(round[1] != 0){
                             finish0.release();
                             flag = false;
-                        }
-                        else{
+                        } else {
                             finish3.acquire();
                             start0.release();
                         }
@@ -147,7 +143,7 @@ public class FLENewEpochTest extends TestCase {
                         break;
                     }
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -161,10 +157,12 @@ public class FLENewEpochTest extends TestCase {
 
           LOG.info("TestLE: " + getName()+ ", " + count);
           for(int i = 0; i < count; i++) {
-              peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(baseport+100+i),
-                      new InetSocketAddress(baseLEport+100+i)));
+              peers.put(Long.valueOf(i),
+                      new QuorumServer(i,
+                              new InetSocketAddress(PortAssignment.unique()),
+                      new InetSocketAddress(PortAssignment.unique())));
               tmpdir[i] = ClientBase.createTmpDir();
-              port[i] = baseport+i;
+              port[i] = PortAssignment.unique();
           }
 
           for(int i = 1; i < le.length; i++) {

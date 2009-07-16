@@ -21,12 +21,14 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.util.List;
 
-import org.apache.zookeeper.server.persistence.FileTxnLog;
-import org.apache.zookeeper.server.persistence.Util;
-
 import junit.framework.TestCase;
 
+import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.server.persistence.Util;
+import org.junit.Test;
+
 public class ZooKeeperServerTest extends TestCase {
+    @Test
     public void testSortDataDirAscending() {
         File[] files = new File[5];
 
@@ -47,6 +49,7 @@ public class ZooKeeperServerTest extends TestCase {
         assertEquals(orig[4], filelist.get(4));
     }
 
+    @Test
     public void testSortDataDirDescending() {
         File[] files = new File[5];
 
@@ -67,6 +70,7 @@ public class ZooKeeperServerTest extends TestCase {
         assertEquals(orig[2], filelist.get(4));
     }
 
+    @Test
     public void testGetLogFiles() {
         File[] files = new File[5];
 

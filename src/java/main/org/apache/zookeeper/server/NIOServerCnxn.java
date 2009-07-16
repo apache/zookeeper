@@ -89,13 +89,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         ByteBuffer directBuffer = ByteBuffer.allocateDirect(64 * 1024);
 
         HashSet<NIOServerCnxn> cnxns = new HashSet<NIOServerCnxn>();
-        HashMap<InetAddress, Set<NIOServerCnxn>> ipMap = new HashMap<InetAddress, Set<NIOServerCnxn>>( ); 
+        HashMap<InetAddress, Set<NIOServerCnxn>> ipMap = new HashMap<InetAddress, Set<NIOServerCnxn>>( );
 
         int outstandingLimit = 1;
 
-        int maxClientCnxns = 10;  
-        
-        
+        int maxClientCnxns = 10;
+
+
         /**
          * Construct a new server connection factory which will accept an unlimited number
          * of concurrent connections from each client (up to the file descriptor
@@ -106,13 +106,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         public Factory(int port) throws IOException {
             this(port,0);
         }
-        
-        
+
+
         /**
          * Constructs a new server connection factory where the number of concurrent connections
          * from a single IP address is limited to maxcc (or unlimited if 0).
          * startup(zks) must be called subsequently.
-         * @param port - the port to listen on for connections. 
+         * @param port - the port to listen on for connections.
          * @param maxcc - the number of concurrent connections allowed from a single client.
          * @throws IOException
          */
@@ -122,9 +122,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             maxClientCnxns = maxcc;
             this.ss = ServerSocketChannel.open();
             ss.socket().setReuseAddress(true);
+            LOG.info("binding to port " + port);
             ss.socket().bind(new InetSocketAddress(port));
             ss.configureBlocking(false);
-            ss.register(selector, SelectionKey.OP_ACCEPT);         
+            ss.register(selector, SelectionKey.OP_ACCEPT);
         }
 
         @Override
@@ -175,7 +176,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     }
                     s.add(cnxn);
                     ipMap.put(addr,s);
-                }                
+                }
             }
         }
 
@@ -189,8 +190,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             if (s == null) return 0;
             return s.size();
         }
-        
-        public void run() {         
+
+        public void run() {
             while (!ss.socket().isClosed()) {
                 try {
                     selector.select(1000);
@@ -204,13 +205,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     for (SelectionKey k : selectedList) {
                         if ((k.readyOps() & SelectionKey.OP_ACCEPT) != 0) {
                             SocketChannel sc = ((ServerSocketChannel) k
-                                    .channel()).accept();     
+                                    .channel()).accept();
                             InetAddress ia = sc.socket().getInetAddress();
-                            int cnxncount = getClientCnxnCount(ia); 
-                            if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns){                                  
-                                LOG.warn("Too many connections from " + ia 
+                            int cnxncount = getClientCnxnCount(ia);
+                            if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns){
+                                LOG.warn("Too many connections from " + ia
                                          + " - max is " + maxClientCnxns );
-                                sc.close();                 
+                                sc.close();
                             } else {
                                 sc.configureBlocking(false);
                                 SelectionKey sk = sc.register(selector,
@@ -218,7 +219,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                                 NIOServerCnxn cnxn = createConnection(sc, sk);
                                 sk.attach(cnxn);
                                 addCnxn(cnxn);
-                            }                            
+                            }
                         } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
                             NIOServerCnxn c = (NIOServerCnxn) k.attachment();
                             c.doIO(k);
@@ -288,8 +289,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         }
 
 
-		private void closeSessionWithoutWakeup(long sessionId) {
-			synchronized (cnxns) {
+        private void closeSessionWithoutWakeup(long sessionId) {
+            synchronized (cnxns) {
                 for (Iterator<NIOServerCnxn> it = cnxns.iterator(); it
                         .hasNext();) {
                     NIOServerCnxn cnxn = it.next();
@@ -609,7 +610,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         // session is setup
         disableRecv();
         if (connReq.getSessionId() != 0) {
-        	factory.closeSessionWithoutWakeup(connReq.getSessionId());
+            factory.closeSessionWithoutWakeup(connReq.getSessionId());
             setSessionId(connReq.getSessionId());
             zk.reopenSession(this, sessionId, passwd, sessionTimeout);
             LOG.info("Renewing session 0x" + Long.toHexString(sessionId));
@@ -816,7 +817,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             LOG.warn("Failed to unregister with JMX", e);
         }
         jmxConnectionBean = null;
-        
+
         if (closed) {
             return;
         }
@@ -824,7 +825,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         synchronized (factory.ipMap)
         {
             Set<NIOServerCnxn> s = factory.ipMap.get(sock.socket().getInetAddress());
-            s.remove(this);           
+            s.remove(this);
         }
         synchronized (factory.cnxns) {
             factory.cnxns.remove(this);

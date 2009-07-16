@@ -28,6 +28,7 @@ import java.util.Random;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
@@ -43,8 +44,6 @@ public class HierarchicalQuorumTest extends TestCase {
     Properties qp;
 
     int count;
-    int baseport;
-    int baseLEport;
     HashMap<Long,QuorumServer> peers;
     ArrayList<LEThread> threads;
     File tmpdir[];
@@ -61,8 +60,6 @@ public class HierarchicalQuorumTest extends TestCase {
     @Override
     protected void setUp() throws Exception {
         count = 9;
-        baseport= 33003;
-        baseLEport = 43003;
 
         peers = new HashMap<Long,QuorumServer>(count);
         threads = new ArrayList<LEThread>(count);
@@ -93,7 +90,12 @@ public class HierarchicalQuorumTest extends TestCase {
 
     protected void tearDown() throws Exception {
         for(int i = 0; i < threads.size(); i++) {
-            ((FastLeaderElection) threads.get(i).peer.getElectionAlg()).shutdown();
+            LEThread leThread = threads.get(i);
+            ((FastLeaderElection) leThread.peer.getElectionAlg()).shutdown();
+            // shutdown() has to be explicitly called for every thread to
+            // make sure that resources are freed properly and all fixed network ports
+            // are available for other test cases
+            leThread.peer.shutdown();
         }
         LOG.info("FINISHED " + getName());
     }
@@ -148,10 +150,12 @@ public class HierarchicalQuorumTest extends TestCase {
 
         LOG.info("TestHierarchicalQuorum: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(baseport+100+i),
-                    new InetSocketAddress(baseLEport+100+i)));
+            peers.put(Long.valueOf(i),
+                    new QuorumServer(i,
+                            new InetSocketAddress(PortAssignment.unique()),
+                    new InetSocketAddress(PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
-            port[i] = baseport+i;
+            port[i] = PortAssignment.unique();
         }
 
         for(int i = 0; i < le.length; i++) {

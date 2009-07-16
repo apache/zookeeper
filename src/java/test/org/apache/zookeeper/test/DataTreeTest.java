@@ -21,10 +21,11 @@ package org.apache.zookeeper.test;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.server.DataTree;
+import org.junit.Test;
 
 public class DataTreeTest extends TestCase {
     protected static final Logger LOG = Logger.getLogger(DataTreeTest.class);
@@ -43,6 +44,7 @@ public class DataTreeTest extends TestCase {
         LOG.info("FINISHED " + getName());
     }
 
+    @Test
     public void testRootWatchTriggered() throws Exception {
         class MyWatcher implements Watcher{
             boolean fired=false;

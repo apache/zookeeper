@@ -31,6 +31,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -45,13 +46,14 @@ import org.junit.Test;
 public class SessionTest extends TestCase implements Watcher {
     protected static final Logger LOG = Logger.getLogger(SessionTest.class);
 
-    private static final String HOSTPORT = "127.0.0.1:33299";
+    private static final String HOSTPORT = "127.0.0.1:" +
+            PortAssignment.unique();
     private NIOServerCnxn.Factory serverFactory;
-    
+
     private CountDownLatch startSignal;
 
     File tmpDir;
-    
+
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
@@ -62,7 +64,7 @@ public class SessionTest extends TestCase implements Watcher {
 
         ClientBase.setupTestEnv();
         ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        
+
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         serverFactory = new NIOServerCnxn.Factory(PORT);
         serverFactory.startup(zs);
@@ -211,31 +213,31 @@ public class SessionTest extends TestCase implements Watcher {
             CONNECTION_TIMEOUT = oldTimeout;
         }
     }
-    
+
     /**
      * Make sure that we cannot have two connections with the same
      * session id.
-     * 
+     *
      * @throws IOException
      * @throws InterruptedException
      * @throws KeeperException
      */
     @Test
     public void testSessionMove() throws IOException, InterruptedException, KeeperException {
-    	ZooKeeper zk = createClient();
-    	zk.getChildren("/", false);
-    	// This should stomp the zk handle
-    	ZooKeeper zknew = new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this,
+        ZooKeeper zk = createClient();
+        zk.getChildren("/", false);
+        // This should stomp the zk handle
+        ZooKeeper zknew = new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this,
                    zk.getSessionId(),
                    zk.getSessionPasswd());
-    	zknew.getChildren("/", false);
-    	try {
-    	    zk.getChildren("/", false);
-    	    fail("Should have lost the connection");
-    	} catch(KeeperException.ConnectionLossException e) {
-    	}
-    	zknew.close();
-    	zk.close();
+        zknew.getChildren("/", false);
+        try {
+            zk.getChildren("/", false);
+            fail("Should have lost the connection");
+        } catch(KeeperException.ConnectionLossException e) {
+        }
+        zknew.close();
+        zk.close();
     }
     @Test
     /**
@@ -269,7 +271,7 @@ public class SessionTest extends TestCase implements Watcher {
 
         zk.close();
     }
-    
+
     private class DupWatcher extends CountdownWatcher {
         public LinkedList<WatchedEvent> states = new LinkedList<WatchedEvent>();
         public void process(WatchedEvent event) {

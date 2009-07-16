@@ -36,17 +36,16 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.log4j.Logger;
-
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.WatchedEvent;
 
 public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
     private static final Logger LOG = Logger.getLogger(IntegrityCheck.class);

@@ -20,9 +20,9 @@ package org.apache.zookeeper.test;
 
 import java.io.IOException;
 
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
-import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 
 public class TestHammer implements VoidCallback {

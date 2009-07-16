@@ -23,8 +23,8 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -35,33 +35,36 @@ import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
-/** 
+/**
  * test the purging of the logs
  * and purging of the snapshots.
  */
 public class PurgeTxnTest extends TestCase implements  Watcher {
-    private static final Logger LOG = Logger.getLogger(PurgeTxnTest.class);
-    private static String HOSTPORT = "127.0.0.1:2357";
-    ZooKeeperServer zks = null;
+    //private static final Logger LOG = Logger.getLogger(PurgeTxnTest.class);
+    private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final int CONNECTION_TIMEOUT = 3000;
     /**
      * test the purge
-     * @throws Exception
+     * @throws Exception an exception might be thrown here
      */
     public void testPurge() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(100);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
         f.startup(zks);
-        assertTrue("waiting for server being up ", 
+        assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
-        for (int i=0; i< 2000; i++) {
-            zk.create("/invalidsnap-" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, 
-                    CreateMode.PERSISTENT);
+        try {
+            for (int i = 0; i< 2000; i++) {
+                zk.create("/invalidsnap-" + i, new byte[0], Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT);
+            }
+        } finally {
+            zk.close();
         }
         f.shutdown();
         assertTrue("waiting for server to shutdown",
@@ -78,9 +81,9 @@ public class PurgeTxnTest extends TestCase implements  Watcher {
         }
         assertTrue("exactly 3 snapshots ", (numSnaps == 3));
     }
-    
+
     public void process(WatchedEvent event) {
         // do nothing
     }
-    
+
 }
