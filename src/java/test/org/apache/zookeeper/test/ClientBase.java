@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -35,6 +36,7 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -51,16 +53,12 @@ public abstract class ClientBase extends TestCase {
     static final File BASETEST =
         new File(System.getProperty("build.test.dir", "build"));
 
-    protected String hostPort = "127.0.0.1:33221";
+    protected String hostPort = "127.0.0.1:" + PortAssignment.unique();
     protected int maxCnxns = 0;
     protected NIOServerCnxn.Factory serverFactory = null;
     protected File tmpDir = null;
     public ClientBase() {
         super();
-    }
-
-    public ClientBase(String name) {
-        super(name);
     }
 
     /**
@@ -137,6 +135,9 @@ public abstract class ClientBase extends TestCase {
         return createClient(watcher, hp);
     }
 
+    private LinkedList<ZooKeeper> allClients;
+    private boolean allClientsSetup = false;
+
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp)
         throws IOException, InterruptedException
     {
@@ -148,6 +149,19 @@ public abstract class ClientBase extends TestCase {
         {
             fail("Unable to connect to server");
         }
+        synchronized(this) {
+            if (!allClientsSetup) {
+                LOG.error("allClients never setup");
+                fail("allClients never setup");
+            }
+            if (allClients != null) {
+                allClients.add(zk);
+            } else {
+                // test done - close the zk, not needed
+                zk.close();
+            }
+        }
+
         JMXEnv.ensureAll("0x" + Long.toHexString(zk.getSessionId()));
 
         return zk;
@@ -247,11 +261,11 @@ public abstract class ClientBase extends TestCase {
         File tmpFile = File.createTempFile("test", ".junit", parentDir);
         // don't delete tmpFile - this ensures we don't attempt to create
         // a tmpDir with a duplicate name
-        
+
         File tmpDir = new File(tmpFile + ".dir");
         assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
         assertTrue(tmpDir.mkdirs());
-        
+
         return tmpDir;
     }
     private static int getPort(String hostPort) {
@@ -262,10 +276,10 @@ public abstract class ClientBase extends TestCase {
         }
         return Integer.parseInt(portstr);
     }
-    
+
     static NIOServerCnxn.Factory createNewServerInstance(File dataDir,
             NIOServerCnxn.Factory factory, String hostPort, int maxCnxns)
-        throws IOException, InterruptedException 
+        throws IOException, InterruptedException
     {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         final int PORT = getPort(hostPort);
@@ -306,12 +320,19 @@ public abstract class ClientBase extends TestCase {
         FileTxnLog.setPreallocSize(100 * 1024);
     }
 
+    protected void setUpAll() throws Exception {
+        allClients = new LinkedList<ZooKeeper>();
+        allClientsSetup = true;
+    }
+
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
         setupTestEnv();
 
         JMXEnv.setUp();
+
+        setUpAll();
 
         tmpDir = createTmpDir(BASETEST);
 
@@ -334,19 +355,37 @@ public abstract class ClientBase extends TestCase {
         // ensure no beans are leftover
         JMXEnv.ensureOnly();
     }
-        
+
+    protected void tearDownAll() throws Exception {
+        synchronized (this) {
+            for (ZooKeeper zk : allClients) {
+                try {
+                    if (zk != null)
+                        zk.close();
+                } catch (InterruptedException e) {
+                    LOG.warn("ignoring interrupt", e);
+                }
+            }
+            allClients = null;
+        }
+    }
+
     @Override
     protected void tearDown() throws Exception {
         LOG.info("tearDown starting");
+        tearDownAll();
 
         stopServer();
-        
+
         if (tmpDir != null) {
             //assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
             // FIXME see ZOOKEEPER-121 replace following line with previous
             recursiveDelete(tmpDir);
         }
-        
+
+        // This has to be set to null when the same instance of this class is reused between test cases
+        serverFactory = null;
+
         JMXEnv.tearDown();
 
         LOG.info("FINISHED " + getName());

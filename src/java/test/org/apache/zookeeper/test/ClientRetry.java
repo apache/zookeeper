@@ -19,10 +19,11 @@ package org.apache.zookeeper.test;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
+
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 
-public class ClientRetry extends ClientBase{
+public class ClientRetry extends ClientBase {
 
     public void setUp() throws Exception {
         maxCnxns = 1;
@@ -44,17 +45,24 @@ public class ClientRetry extends ClientBase{
         CountdownWatcher cdw1 = new CountdownWatcher();
         CountdownWatcher cdw2 = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(hostPort, 10000, cdw1);
-        cdw1.waitForConnected(CONNECTION_TIMEOUT);
-        ZooKeeper zk2 = new ZooKeeper(hostPort, 10000, cdw2);
-        States s1 = zk.getState();
-        States s2 = zk2.getState();
-        assertSame(s1,States.CONNECTED);
-        assertSame(s2,States.CONNECTING);
-        cdw1.reset();
-        zk.close();
-        cdw1.waitForDisconnected(CONNECTION_TIMEOUT);
-        cdw2.waitForConnected(CONNECTION_TIMEOUT);
-        assertSame(zk2.getState(),States.CONNECTED);
+        try {
+            cdw1.waitForConnected(CONNECTION_TIMEOUT);
+            ZooKeeper zk2 = new ZooKeeper(hostPort, 10000, cdw2);
+            try {
+                States s1 = zk.getState();
+                States s2 = zk2.getState();
+                assertSame(s1,States.CONNECTED);
+                assertSame(s2,States.CONNECTING);
+                cdw1.reset();
+                cdw1.waitForDisconnected(CONNECTION_TIMEOUT);
+                cdw2.waitForConnected(CONNECTION_TIMEOUT);
+                assertSame(zk2.getState(),States.CONNECTED);
+            } finally {
+                zk2.close();
+            }
+        } finally {
+            zk.close();
+        }
     }
 }
            

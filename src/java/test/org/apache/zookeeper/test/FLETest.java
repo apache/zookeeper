@@ -28,6 +28,7 @@ import java.util.Random;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
@@ -37,6 +38,7 @@ import org.junit.Test;
 
 public class FLETest extends TestCase {
     protected static final Logger LOG = Logger.getLogger(FLETest.class);
+    private FLETest.LEThread leThread;
 
     static class TestVote {
         TestVote(int id, long leader) {
@@ -56,8 +58,6 @@ public class FLETest extends TestCase {
     }
 
     int count;
-    int baseport;
-    int baseLEport;
     HashMap<Long,QuorumServer> peers;
     ArrayList<LEThread> threads;
     HashMap<Integer, HashSet<TestVote> > voteMap;
@@ -75,8 +75,6 @@ public class FLETest extends TestCase {
     @Override
     public void setUp() throws Exception {
         count = 7;
-        baseport= 33003;
-        baseLEport = 43003;
 
         peers = new HashMap<Long,QuorumServer>(count);
         threads = new ArrayList<LEThread>(count);
@@ -92,8 +90,10 @@ public class FLETest extends TestCase {
 
     @Override
     public void tearDown() throws Exception {
-        for(int i = 0; i < threads.size(); i++) {
-            ((FastLeaderElection) threads.get(i).peer.getElectionAlg()).shutdown();
+        for (int i = 0; i < threads.size(); i++) {
+            leThread = threads.get(i);
+            ((FastLeaderElection) leThread.peer.getElectionAlg()).shutdown();
+            leThread.peer.shutdown();
         }
         LOG.info("FINISHED " + getName());
     }
@@ -264,14 +264,17 @@ public class FLETest extends TestCase {
 
         LOG.info("TestLE: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(baseport+100+i),
-                    new InetSocketAddress(baseLEport+100+i)));
+            peers.put(Long.valueOf(i),
+                    new QuorumServer(i,
+                            new InetSocketAddress(PortAssignment.unique()),
+                    new InetSocketAddress(PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
-            port[i] = baseport+i;
+            port[i] = PortAssignment.unique();
         }
 
         for(int i = 0; i < le.length; i++) {
-            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2);
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
+                    port[i], 3, i, 2, 2, 2);
             peer.startLeaderElection();
             LEThread thread = new LEThread(peer, i);
             thread.start();
@@ -288,12 +291,13 @@ public class FLETest extends TestCase {
             }
         }
 
-       /*
-        * Lists what threads haven-t joined. A thread doesn't join if it hasn't decided
-        * upon a leader yet. It can happen that a peer is slow or disconnected, and it can
-        * take longer to nominate and connect to the current leader.
+        /*
+        * Lists what threads haven-t joined. A thread doesn't join if
+        * it hasn't decided upon a leader yet. It can happen that a
+        * peer is slow or disconnected, and it can take longer to
+        * nominate and connect to the current leader.
         */
-       for(int i = 0; i < threads.size(); i++) {
+       for (int i = 0; i < threads.size(); i++) {
             if (threads.get(i).isAlive()) {
                 LOG.info("Threads didn't join: " + i);
             }

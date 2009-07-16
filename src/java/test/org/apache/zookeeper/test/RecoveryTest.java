@@ -28,6 +28,7 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -42,7 +43,8 @@ import org.junit.Test;
 public class RecoveryTest extends TestCase implements Watcher {
     protected static final Logger LOG = Logger.getLogger(RecoveryTest.class);
 
-    private static String HOSTPORT = "127.0.0.1:2344";
+    private static final String HOSTPORT =
+        "127.0.0.1:" + PortAssignment.unique();
 
     private volatile CountDownLatch startSignal;
 
@@ -72,14 +74,14 @@ public class RecoveryTest extends TestCase implements Watcher {
         File tmpDir = ClientBase.createTmpDir();
 
         ClientBase.setupTestEnv();
-        ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 
         int oldSnapCount = SyncRequestProcessor.getSnapCount();
         SyncRequestProcessor.setSnapCount(1000);
         try {
             final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
             NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
-            f.startup(zs);
+            f.startup(zks);
             LOG.info("starting up the the server, waiting");
 
             assertTrue("waiting for server up",
@@ -115,12 +117,12 @@ public class RecoveryTest extends TestCase implements Watcher {
                        ClientBase.waitForServerDown(HOSTPORT,
                                           CONNECTION_TIMEOUT));
 
-            zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+            zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
             f = new NIOServerCnxn.Factory(PORT);
 
             startSignal = new CountDownLatch(1);
 
-            f.startup(zs);
+            f.startup(zks);
 
             assertTrue("waiting for server up",
                        ClientBase.waitForServerUp(HOSTPORT,
@@ -153,12 +155,12 @@ public class RecoveryTest extends TestCase implements Watcher {
                        ClientBase.waitForServerDown(HOSTPORT,
                                           ClientBase.CONNECTION_TIMEOUT));
 
-            zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+            zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
             f = new NIOServerCnxn.Factory(PORT);
 
             startSignal = new CountDownLatch(1);
 
-            f.startup(zs);
+            f.startup(zks);
 
             assertTrue("waiting for server up",
                        ClientBase.waitForServerUp(HOSTPORT,
@@ -184,6 +186,8 @@ public class RecoveryTest extends TestCase implements Watcher {
                     }
                 }
             }
+            zk.close();
+
             f.shutdown();
 
             assertTrue("waiting for server down",

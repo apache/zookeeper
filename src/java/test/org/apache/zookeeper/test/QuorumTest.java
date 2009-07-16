@@ -20,8 +20,6 @@ package org.apache.zookeeper.test;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -32,20 +30,23 @@ import org.apache.zookeeper.ZooKeeper;
 import org.junit.Before;
 import org.junit.Test;
 
-public class QuorumTest extends TestCase {
+public class QuorumTest extends QuorumBase {
     private static final Logger LOG = Logger.getLogger(QuorumTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
-    private QuorumBase qb = new QuorumBase();
+
+    private final QuorumBase qb = new QuorumBase();
     private final ClientTest ct = new ClientTest();
-    
+
     @Before
     @Override
     protected void setUp() throws Exception {
-        qb.setUp();        
+        qb.setUp();
         ct.hostPort = qb.hostPort;
+        ct.setUpAll();
     }
-    
+
     protected void tearDown() throws Exception {
+        ct.tearDownAll();
         qb.tearDown();
     }
 
@@ -95,7 +96,7 @@ public class QuorumTest extends TestCase {
     {
         ct.testMutipleWatcherObjs();
     }
-    
+
     @Test
     /**
      * Connect to two different servers with two different handles using the same session and
@@ -117,7 +118,7 @@ public class QuorumTest extends TestCase {
             fail("Should have lost the connection");
         } catch(KeeperException.SessionMovedException e) {
         }
-        
+
         ArrayList<ZooKeeper> toClose = new ArrayList<ZooKeeper>();
         toClose.add(zknew);
         // Let's just make sure it can still move
@@ -128,7 +129,7 @@ public class QuorumTest extends TestCase {
             toClose.add(zknew);
             zknew.create("/t-"+i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         }
-	for(ZooKeeper z: toClose) {
+    for(ZooKeeper z: toClose) {
             z.close();
         }
         zk.close();

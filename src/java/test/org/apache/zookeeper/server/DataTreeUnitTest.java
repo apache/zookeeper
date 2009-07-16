@@ -20,14 +20,13 @@ package org.apache.zookeeper.server;
 
 import junit.framework.TestCase;
 
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.server.DataTree;
 
 public class DataTreeUnitTest extends TestCase {
     DataTree dt;
-    
+
     public void setUp() throws Exception {
         dt=new DataTree();
     }
@@ -36,7 +35,7 @@ public class DataTreeUnitTest extends TestCase {
         dt=null;
     }
 
-   
+
     public void testRootWatchTriggered() throws Exception {
         class MyWatcher implements Watcher{
             boolean fired=false;
@@ -44,7 +43,7 @@ public class DataTreeUnitTest extends TestCase {
                 if(event.getPath().equals("/"))
                     fired=true;
             }
-        };
+        }
         MyWatcher watcher=new MyWatcher();
         // set a watch on the root node
         dt.getChildren("/", new Stat(), watcher);

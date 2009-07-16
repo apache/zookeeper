@@ -33,6 +33,7 @@ public class ChrootClientTest extends ClientTest {
         String hp = hostPort;
         hostPort = hostPort + "/chrootclienttest";
 
+        System.out.println(hostPort);
         super.setUp();
 
         LOG.info("STARTING " + getName());

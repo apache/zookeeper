@@ -27,16 +27,8 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.test.AsyncOps.ACLCB;
-import org.apache.zookeeper.test.AsyncOps.ChildrenCB;
-import org.apache.zookeeper.test.AsyncOps.DataCB;
-import org.apache.zookeeper.test.AsyncOps.StatCB;
-import org.apache.zookeeper.test.AsyncOps.StringCB;
-import org.apache.zookeeper.test.AsyncOps.VoidCB;
-import org.junit.Test;
 
 public class ChrootTest extends ClientBase {
     private class MyWatcher implements Watcher {

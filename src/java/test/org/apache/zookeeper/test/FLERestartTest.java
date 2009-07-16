@@ -26,10 +26,10 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 
-
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
@@ -58,8 +58,8 @@ public class FLERestartTest extends TestCase {
     }
 
     int count;
-    int baseport;
-    int baseLEport;
+    //    int baseport;
+    //    int baseLEport;
     HashMap<Long,QuorumServer> peers;
     ArrayList<FLERestartThread> restartThreads;
     HashMap<Integer, HashSet<TestVote> > voteMap;
@@ -67,7 +67,7 @@ public class FLERestartTest extends TestCase {
     int port[];
     int successCount;
     Semaphore finish;
-    
+
     volatile Vote votes[];
     volatile boolean leaderDies;
     volatile long leader = -1;
@@ -77,8 +77,6 @@ public class FLERestartTest extends TestCase {
     @Override
     public void setUp() throws Exception {
         count = 3;
-        baseport= 33003;
-        baseLEport = 43003;
 
         peers = new HashMap<Long,QuorumServer>(count);
         restartThreads = new ArrayList<FLERestartThread>(count);
@@ -137,23 +135,23 @@ public class FLERestartTest extends TestCase {
                             LOG.info("First peer, shutting it down");
                             peer.shutdown();
                             ((FastLeaderElection) restartThreads.get(i).peer.getElectionAlg()).shutdown();
-                            
+
                             peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2);
                             peer.startLeaderElection();
                             peerRound++;
-                        } else { 
+                        } else {
                             finish.release(2);
                             return;
-                        }    
-                        
+                        }
+
                         break;
                     case 1:
                         LOG.info("Second entering case");
                         finish.acquire();
                         //if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
                         LOG.info("Release");
-                        
-                        return;                   
+
+                        return;
                     case 2:
                         LOG.info("First peer, do nothing, just join");
                         finish.acquire();
@@ -168,8 +166,8 @@ public class FLERestartTest extends TestCase {
             }
         }
     }
-    
-    
+
+
     @Test
     public void testLERestart() throws Exception {
 
@@ -179,10 +177,12 @@ public class FLERestartTest extends TestCase {
 
         LOG.info("TestLE: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(baseport+100+i),
-                    new InetSocketAddress(baseLEport+100+i)));
+            peers.put(Long.valueOf(i),
+                    new QuorumServer(i,
+                            new InetSocketAddress(PortAssignment.unique()),
+                    new InetSocketAddress(PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
-            port[i] = baseport+i;
+            port[i] = PortAssignment.unique();
         }
 
         for(int i = 0; i < count; i++) {

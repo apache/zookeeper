@@ -29,6 +29,7 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -42,12 +43,12 @@ import org.apache.zookeeper.server.upgrade.UpgradeMain;
 
 public class UpgradeTest extends TestCase implements Watcher {
     private final static Logger LOG = Logger.getLogger(UpgradeTest.class);
-    private static String HOSTPORT = "127.0.0.1:2359";
-    ZooKeeperServer zks;
+
+    private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final File testData = new File(
             System.getProperty("test.data.dir", "build/test/data"));
     private CountDownLatch startSignal;
-    
+
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
@@ -56,7 +57,7 @@ public class UpgradeTest extends TestCase implements Watcher {
     protected void tearDown() throws Exception {
         LOG.info("FINISHED " + getName());
     }
-    
+
     /**
      * test the upgrade
      * @throws Exception
@@ -65,43 +66,46 @@ public class UpgradeTest extends TestCase implements Watcher {
         File upgradeDir = new File(testData, "upgrade");
         UpgradeMain upgrade = new UpgradeMain(upgradeDir, upgradeDir);
         upgrade.runUpgrade();
-        zks = new ZooKeeperServer(upgradeDir, upgradeDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(upgradeDir, upgradeDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        assertTrue("waiting for server being up", 
-                ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         Stat stat = zk.exists("/", false);
         List<String> children = zk.getChildren("/", false);
         Collections.sort(children);
-        for (int i=0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
             assertTrue("data tree sanity check",
-                    ("test-"+ i).equals(children.get(i)));
+                    ("test-" + i).equals(children.get(i)));
         }
         //try creating one node
-        zk.create("/upgrade","upgrade".getBytes(), Ids.OPEN_ACL_UNSAFE,
+        zk.create("/upgrade", "upgrade".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
         // check if its there
-        if (zk.exists("/upgrade",false) == null) {
+        if (zk.exists("/upgrade", false) == null) {
             assertTrue(false);
         }
+
+        zk.close();
+
         // bring down the server
         f.shutdown();
         assertTrue("waiting for server down",
                    ClientBase.waitForServerDown(HOSTPORT,
                            ClientBase.CONNECTION_TIMEOUT));
-        
+
     }
-    
+
     public void process(WatchedEvent event) {
         LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
         if (event.getState() == KeeperState.SyncConnected
                 && startSignal != null && startSignal.getCount() > 0)
-        {              
-            startSignal.countDown();      
+        {
+            startSignal.countDown();
         }
     }
 }

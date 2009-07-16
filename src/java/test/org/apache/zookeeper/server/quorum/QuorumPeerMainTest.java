@@ -202,13 +202,13 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
                         5000);
 
             assertFalse("Server never came up", isup);
-            
+
             q1.shutdown();
 
             assertTrue("waiting for server 1 down",
                     ClientBase.waitForServerDown("localhost:" + CLIENT_PORT_QP1,
                             ClientBase.CONNECTION_TIMEOUT));
-            
+
         } finally {
             Logger.getLogger(org.apache.zookeeper.server.quorum.QuorumPeer.class)
                 .removeAppender(appender);

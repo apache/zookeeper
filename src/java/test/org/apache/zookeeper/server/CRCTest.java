@@ -39,6 +39,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -48,14 +49,15 @@ import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.test.ClientBase;
+import org.junit.Test;
 
 public class CRCTest extends TestCase implements Watcher{
-    
     private static final Logger LOG = Logger.getLogger(CRCTest.class);
-    private static String HOSTPORT = "127.0.0.1:2357";
-    ZooKeeperServer zks;
-    private CountDownLatch startSignal;
-    
+
+    private static final String HOSTPORT =
+        "127.0.0.1:" + PortAssignment.unique();
+    private volatile CountDownLatch startSignal;
+
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
@@ -64,7 +66,7 @@ public class CRCTest extends TestCase implements Watcher{
     protected void tearDown() throws Exception {
         LOG.info("FINISHED " + getName());
     }
-    
+
     /**
      * corrupt a file by writing m at 500 b
      * offset
@@ -77,7 +79,7 @@ public class CRCTest extends TestCase implements Watcher{
         byte[] b = "mahadev".getBytes();
         long writeLen = 500L;
         raf.seek(writeLen);
-        //corruptting the data
+        //corrupting the data
         raf.write(b);
         raf.close();
     }
@@ -108,28 +110,33 @@ public class CRCTest extends TestCase implements Watcher{
         crcIn.close();
         return (val != checksum);
     }
-    
+
     /** test checksums for the logs and snapshots.
-     * the reader should fail on reading 
+     * the reader should fail on reading
      * a corrupt snapshot and a corrupt log
      * file
      * @throws Exception
      */
-   public void testChecksums() throws Exception {
+    @Test
+    public void testChecksums() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(150);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        assertTrue("waiting for server being up", 
+        assertTrue("waiting for server being up",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
-        for (int i =0; i < 2000; i++) {
-            zk.create("/crctest- " + i , ("/crctest- " + i).getBytes(), 
-                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        try {
+            for (int i =0; i < 2000; i++) {
+                zk.create("/crctest- " + i , ("/crctest- " + i).getBytes(),
+                        Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
+        } finally {
+            zk.close();
         }
         f.shutdown();
         assertTrue("waiting for server down",
@@ -138,7 +145,7 @@ public class CRCTest extends TestCase implements Watcher{
 
         File versionDir = new File(tmpDir, "version-2");
         File[] list = versionDir.listFiles();
-        //there should be only two files 
+        //there should be only two files
         // one the snapshot and the other logFile
         File snapFile = null;
         File logFile = null;
@@ -178,13 +185,13 @@ public class CRCTest extends TestCase implements Watcher{
         }
         assertTrue(cfile);
    }
-    
+
     public void process(WatchedEvent event) {
         LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
         if (event.getState() == KeeperState.SyncConnected
                 && startSignal != null && startSignal.getCount() > 0)
-        {              
-            startSignal.countDown();      
+        {
+            startSignal.countDown();
         }
     }
 }
