@@ -26,9 +26,13 @@ import junit.framework.TestCase;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
+import org.junit.Test;
 
 public class DeserializationPerfTest extends TestCase {
+    protected static final Logger LOG = Logger.getLogger(DeserializationPerfTest.class);
+
     private static void deserializeTree(int depth, int width, int len)
             throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
         BinaryInputArchive ia;
@@ -58,46 +62,54 @@ public class DeserializationPerfTest extends TestCase {
 
         assertEquals(count, dserTree.getNodeCount());
 
-        System.out.println("Deserialized " + count + " nodes in " + durationms
+        LOG.info("Deserialized " + count + " nodes in " + durationms
                 + " ms (" + pernodeus + "us/node), depth=" + depth + " width="
                 + width + " datalen=" + len);
     }
 
+    @Test
     public void testSingleDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
         deserializeTree(1, 0, 20);
     }
 
+    @Test
     public void testWideDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
         deserializeTree(2, 50000, 20);
     }
 
+    @Test
     public void testDeepDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
         deserializeTree(1000, 1, 20);
     }
 
+    @Test
     public void test10Wide5DeepDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
         deserializeTree(5, 10, 20);
     }
 
+    @Test
     public void test15Wide5DeepDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
         deserializeTree(5, 15, 20);
     }
 
+    @Test
     public void test25Wide4DeepDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
         deserializeTree(4, 25, 20);
     }
 
+    @Test
     public void test40Wide4DeepDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
         deserializeTree(4, 40, 20);
     }
 
+    @Test
     public void test300Wide3DeepDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
         deserializeTree(3, 300, 20);

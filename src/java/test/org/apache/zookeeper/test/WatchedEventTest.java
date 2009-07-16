@@ -21,12 +21,12 @@ package org.apache.zookeeper.test;
 import java.util.EnumSet;
 
 import junit.framework.TestCase;
-import org.junit.Test;
 
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.proto.WatcherEvent;
+import org.junit.Test;
 
 public class WatchedEventTest extends TestCase {
     

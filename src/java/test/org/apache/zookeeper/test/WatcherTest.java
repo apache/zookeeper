@@ -132,7 +132,7 @@ public class WatcherTest extends ClientBase {
     /**
      * This test checks that watches for pending requests do not get triggered,
      * but watches set by previous requests do.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -154,14 +154,14 @@ public class WatcherTest extends ClientBase {
        Thread.sleep(50);
        zk2.close();
        stopServer();
-       watches[0].waitForDisconnected(3000);
+       watches[0].waitForDisconnected(60000);
        for(int i = COUNT/2; i < COUNT; i++) {
            watches[i] = new MyWatcher();
            cbs[i] = new MyStatCallback();
            zk.exists("/test", watches[i], cbs[i], count);
        }
        startServer();
-       watches[49].waitForConnected(4000);
+       watches[COUNT/2-1].waitForConnected(60000);
        assertEquals(null, zk.exists("/test", false));
        Thread.sleep(10);
        for(int i = 0; i < COUNT/2; i++) {
@@ -177,7 +177,7 @@ public class WatcherTest extends ClientBase {
        assertEquals(COUNT, count[0]);
        zk.close();
     }
-    
+
     @Test
     public void testWatcherAutoResetWithGlobal() throws Exception {
         ZooKeeper zk = null;

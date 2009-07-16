@@ -23,19 +23,17 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.WatchedEvent;
-import org.junit.Test;
 
 public class ZooKeeperTestClient extends TestCase implements Watcher {
   protected String hostPort = "127.0.0.1:22801";
@@ -133,7 +131,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     if (stat == null) {
       fail("node " + nodeName + " should exist");
     }
-    System.out.println("Closing client with sessionid: 0x" 
+    System.out.println("Closing client with sessionid: 0x"
             + Long.toHexString(zk.getSessionId()));
     zk.close();
     zk = new ZooKeeper(hostPort, 10000, this);
@@ -262,7 +260,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
 
     event = this.getEvent(10);
     if (event == null) {
-      throw new AssertionFailedError("First event was not delivered promptly");
+      throw new Error("First event was not delivered promptly");
     }
     if (!((event.getType() == EventType.NodeChildrenChanged &&
            event.getPath().equalsIgnoreCase(parentName)) ||
@@ -276,7 +274,7 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     event = this.getEvent(10);
 
     if (event == null) {
-      throw new AssertionFailedError("Second event was not delivered promptly");
+      throw new Error("Second event was not delivered promptly");
     }
     if (!((event.getType() == EventType.NodeChildrenChanged &&
         event.getPath().equalsIgnoreCase(parentName)) ||
@@ -364,7 +362,6 @@ public class ZooKeeperTestClient extends TestCase implements Watcher {
     zk.close();
   }
 
-  @Test
   public void my_test_1() throws IOException,
           InterruptedException, KeeperException {
     enode_test_1();

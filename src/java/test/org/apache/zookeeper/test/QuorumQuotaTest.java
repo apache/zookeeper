@@ -34,8 +34,8 @@ import org.apache.zookeeper.data.Stat;
  */
 
 public class QuorumQuotaTest extends QuorumBase {
-    private static final Logger LOG = Logger.getLogger(
-            QuorumQuotaTest.class);
+    private static final Logger LOG =
+        Logger.getLogger(QuorumQuotaTest.class);
 
     @Override
     protected void setUp() throws Exception {

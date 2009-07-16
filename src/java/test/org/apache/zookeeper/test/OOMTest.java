@@ -26,20 +26,23 @@ import java.util.ArrayList;
 
 import junit.framework.TestCase;
 
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.junit.Test;
 
 /**
  *
  */
 public class OOMTest extends TestCase implements Watcher {
+    @Test
     public void testOOM() throws IOException, InterruptedException, KeeperException {
         // This test takes too long to run!
         if (true)
@@ -58,8 +61,8 @@ public class OOMTest extends TestCase implements Watcher {
         }
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        
-        final int PORT = 33221;
+
+        final int PORT = PortAssignment.unique();
         NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
         f.startup(zks);
         assertTrue("waiting for server up",
@@ -67,14 +70,14 @@ public class OOMTest extends TestCase implements Watcher {
                                               CONNECTION_TIMEOUT));
 
         System.err.println("OOM Stage 0");
-        utestPrep();
+        utestPrep(PORT);
         System.out.println("Free = " + Runtime.getRuntime().freeMemory()
                 + " total = " + Runtime.getRuntime().totalMemory() + " max = "
                 + Runtime.getRuntime().maxMemory());
         System.err.println("OOM Stage 1");
         for (int i = 0; i < 1000; i++) {
             System.out.println(i);
-            utestExists();
+            utestExists(PORT);
         }
         System.out.println("Free = " + Runtime.getRuntime().freeMemory()
                 + " total = " + Runtime.getRuntime().totalMemory() + " max = "
@@ -82,7 +85,7 @@ public class OOMTest extends TestCase implements Watcher {
         System.err.println("OOM Stage 2");
         for (int i = 0; i < 1000; i++) {
             System.out.println(i);
-            utestGet();
+            utestGet(PORT);
         }
         System.out.println("Free = " + Runtime.getRuntime().freeMemory()
                 + " total = " + Runtime.getRuntime().totalMemory() + " max = "
@@ -90,7 +93,7 @@ public class OOMTest extends TestCase implements Watcher {
         System.err.println("OOM Stage 3");
         for (int i = 0; i < 1000; i++) {
             System.out.println(i);
-            utestChildren();
+            utestChildren(PORT);
         }
         System.out.println("Free = " + Runtime.getRuntime().freeMemory()
                 + " total = " + Runtime.getRuntime().totalMemory() + " max = "
@@ -103,28 +106,33 @@ public class OOMTest extends TestCase implements Watcher {
                                                 CONNECTION_TIMEOUT));
     }
 
-    private void utestExists() throws IOException, InterruptedException, KeeperException {
+    private void utestExists(int port)
+        throws IOException, InterruptedException, KeeperException
+    {
         ZooKeeper zk =
-            new ZooKeeper("127.0.0.1:33221", CONNECTION_TIMEOUT, this);
+            new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             zk.exists("/this/path/doesnt_exist!", true);
         }
         zk.close();
     }
 
-    private void utestPrep() throws IOException,
-            InterruptedException, KeeperException {
+    private void utestPrep(int port)
+        throws IOException, InterruptedException, KeeperException
+    {
         ZooKeeper zk =
-            new ZooKeeper("127.0.0.1:33221", CONNECTION_TIMEOUT, this);
+            new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             zk.create("/" + i, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         zk.close();
     }
 
-    private void utestGet() throws IOException, InterruptedException, KeeperException {
+    private void utestGet(int port)
+        throws IOException, InterruptedException, KeeperException
+    {
         ZooKeeper zk =
-            new ZooKeeper("127.0.0.1:33221", CONNECTION_TIMEOUT, this);
+            new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             Stat stat = new Stat();
             zk.getData("/" + i, true, stat);
@@ -132,9 +140,11 @@ public class OOMTest extends TestCase implements Watcher {
         zk.close();
     }
 
-    private void utestChildren() throws IOException, InterruptedException, KeeperException {
+    private void utestChildren(int port)
+        throws IOException, InterruptedException, KeeperException
+    {
         ZooKeeper zk =
-            new ZooKeeper("127.0.0.1:33221", CONNECTION_TIMEOUT, this);
+            new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             zk.getChildren("/" + i, true);
         }

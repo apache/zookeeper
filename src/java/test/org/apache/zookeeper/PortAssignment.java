@@ -16,35 +16,19 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper;
 
-import java.util.EnumSet;
+import org.apache.log4j.Logger;
 
-import junit.framework.TestCase;
+/** Assign ports to tests */
+public class PortAssignment {
+    private static final Logger LOG = Logger.getLogger(PortAssignment.class);
 
-import org.apache.zookeeper.Watcher.Event.EventType;
-import org.junit.Test;
+    private static int nextPort = 11221;
 
-public class EventTypeTest extends TestCase {
-    
-    @Test
-    public void testIntConversion() {
-        // Ensure that we can convert all valid integers to EventTypes
-        EnumSet<EventType> allTypes = EnumSet.allOf(EventType.class);
-
-        for(EventType et : allTypes) {
-            assertEquals(et, EventType.fromInt( et.getIntValue() ) );
-        }
-    }
-
-    @Test
-    public void testInvalidIntConversion() {
-        try {
-            EventType et = EventType.fromInt(324242);
-            fail("Was able to create an invalid EventType via an integer");
-        } catch(RuntimeException re) {
-            // we're good.
-        }
-
+    /** Assign a new, unique port to the test */
+    public synchronized static int unique() {
+        LOG.info("assigning port " + nextPort);
+        return nextPort++;
     }
 }
