@@ -1119,7 +1119,7 @@ static int send_info_packet(zhandle_t *zh, auth_info* auth) {
 
 /** send all auths, not just the last one **/
 static int send_auth_info(zhandle_t *zh) {
-    int rc;
+    int rc = 0;
     zoo_lock_auth(zh);
     auth_info *auth;
     auth = zh->auth_h.auth;
