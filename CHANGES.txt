@@ -156,6 +156,8 @@ BUGFIXES:
   ZOOKEEPER-455. zookeeper c client crashes with chroot specified in the string.
   (phunt via mahadev)
 
+  ZOOKEEPER-468. avoid compile warning in send_auth_info(). (chris via flavio)
+
 IMPROVEMENTS:
   ZOOKEEPER-308. improve the atomic broadcast performance 3x.
   (breed via mahadev)
