@@ -22,22 +22,25 @@ use Config;
 use ExtUtils::MakeMaker;
 use Getopt::Long;
 
-my $zk_inc_path;
-my $zk_lib_path;
+my @zk_inc_paths;
+my @zk_lib_paths;
 
 GetOptions(
-    'zookeeper-include=s' => \$zk_inc_path,
-    'zookeeper-lib=s' => \$zk_lib_path
+    'zookeeper-include=s' => \@zk_inc_paths,
+    'zookeeper-lib=s' => \@zk_lib_paths
 );
 
-$zk_inc_path = defined($zk_inc_path) ? "-I$zk_inc_path " : '';
-$zk_lib_path = defined($zk_lib_path) ? "-L$zk_lib_path " : '';
+my $zk_inc_paths = join(' ', map("-I$_", @zk_inc_paths));
+my $zk_lib_paths = join(' ', map("-L$_", @zk_lib_paths));
+
+$zk_inc_paths .= ' ' unless ($zk_inc_paths eq '');
+$zk_lib_paths .= ' ' unless ($zk_lib_paths eq '');
 
 my $cc = $Config{'cc'};
 my $check_file = 'build/check_zk_version';
 
 my $check_out =
-    qx($cc -c $zk_inc_path -I. -c $check_file.c -o $check_file.o 2>&1);
+    qx($cc -c $zk_inc_paths -I. -c $check_file.c -o $check_file.o 2>&1);
 
 if ($?) {
     if ($check_out =~ /zookeeper_version\.h/) {
@@ -50,8 +53,8 @@ if ($?) {
 }
 
 WriteMakefile(
-    'INC'          => "$zk_inc_path-I.",
-    'LIBS'         => [ "$zk_lib_path-lzookeeper_mt" ],
+    'INC'          => "$zk_inc_paths-I.",
+    'LIBS'         => [ "$zk_lib_paths-lzookeeper_mt" ],
     'NAME'         => 'Net::ZooKeeper',
     'VERSION_FROM' => 'ZooKeeper.pm',
     'clean'        => { 'FILES' => 'build/check_zk_version.o' }
