@@ -26,7 +26,7 @@ package Net::ZooKeeper;
 require Exporter;
 require XSLoader;
 
-our $VERSION = '0.33';
+our $VERSION = '0.35';
 
 our @ISA = qw(Exporter);
 
@@ -299,8 +299,8 @@ array as the value of the C<'acl'> option to the C<create()> method,
 and may be updated by passing an ACL array to the C<set_acl()> method.
 
 When a client connects to a ZooKeeper cluster it is automatically
-assigned authentication credentials based on its IP address and
-hostname.  Additional authentication credentials may be added using
+assigned authentication credentials based on its IP address.
+Additional authentication credentials may be added using
 the C<add_auth()> method.  Once a credential has been added for
 the current session, there is no way to disable it.
 

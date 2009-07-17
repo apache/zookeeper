@@ -203,8 +203,8 @@ SKIP: {
 
         push @{$digest_acl}, {
             'perms'  => (ZOO_PERM_CREATE | ZOO_PERM_DELETE),
-            'scheme' => 'host',
-            'id'     => 'foo.bar.123'
+            'scheme' => 'ip',
+            'id'     => '0.0.0.0'
         };
 
         $ret = $zkh->set_acl($acl_node_path, $digest_acl);
