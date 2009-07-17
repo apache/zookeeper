@@ -51,5 +51,11 @@ Revision history
         - initial documentation completed, first public release
 
 0.33  Apr 20, 2009
-	- copyright donated to ASF
+        - copyright donated to ASF
+
+0.34  Jul 14, 2009
+        - support ZooKeeper 3.2.0 release
+
+0.35  Jul 15, 2009
+        - support multiple include and library locations
 
