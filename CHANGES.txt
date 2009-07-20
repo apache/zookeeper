@@ -9,6 +9,8 @@ BUGFIXES:
 
   ZOOKEEPER-471. update zkperl for 3.2.x branch. (chris via mahadev)
 
+  ZOOKEEPER-470. include unistd.h for sleep() in c tests (chris via mahadev)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
