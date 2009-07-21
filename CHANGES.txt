@@ -11,6 +11,9 @@ BUGFIXES:
 
   ZOOKEEPER-470. include unistd.h for sleep() in c tests (chris via mahadev)
 
+  ZOOKEEPER-460. bad testRetry in cppunit tests (hudson failure) (giri via
+mahadev)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
