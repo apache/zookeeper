@@ -14,6 +14,9 @@ mahadev)
 
   ZOOKEEPER-470. include unistd.h for sleep() in c tests (chris via mahadev)
 
+  ZOOKEEPR-460. bad testRetry in cppunit tests (hudson failure) (giri via
+mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
 "socket reuse" and failure to close client (phunt via mahadev)
