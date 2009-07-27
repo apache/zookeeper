@@ -704,7 +704,7 @@
 		<env key="LD_LIBRARY_PATH" value="${lib.cppunit}"/>
 		<env key="PATH" path="${env.PATH};${c.src.dir};"/>
                 <env key="CALLER" value="ANT"/>
-                <env key="CLOVER_HOME" value="{clover.home}"/>
+                <env key="CLOVER_HOME" value="${clover.home}"/>
                 <env key="base_dir" value="${basedir}"/>
 		<arg line="clean run-check"/>
 	</exec>
