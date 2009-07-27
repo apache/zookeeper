@@ -20,6 +20,9 @@ mahadev)
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
 "socket reuse" and failure to close client (phunt via mahadev)
+ 
+  ZOOKEEPER-488. Fix zkServer.sh to add clover.jar in classpath
+  (Giridharan Kesavan via gkesavan)  
 
 NEW FEATURES:
 
