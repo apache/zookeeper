@@ -247,7 +247,7 @@ public class BookieHandle extends Thread {
                         else ((SubReadOp) ts.ctx).rcb.readEntryComplete(-1, ts.lh.getId(), ts.entry, null, ts.ctx);
                         break;
                     }
-                } else LOG.warn("Empty queue: " + addr);
+                } else LOG.debug("Empty queue: " + addr);
             }
         } catch (Exception e){
             LOG.error("Handling exception before halting BookieHandle", e);
