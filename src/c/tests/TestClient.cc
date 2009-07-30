@@ -19,6 +19,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "CppAssertHelper.h"
 
+#include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/select.h>
@@ -218,6 +219,12 @@ public:
         char cmd[1024];
         sprintf(cmd, "%s startClean %s", ZKSERVER_CMD, getHostPorts());
         CPPUNIT_ASSERT(system(cmd) == 0);
+
+        struct sigaction act;
+        act.sa_handler = SIG_IGN;
+        sigemptyset(&act.sa_mask);
+        act.sa_flags = 0;
+        CPPUNIT_ASSERT(sigaction(SIGPIPE, &act, NULL) == 0);
     }
     
 
