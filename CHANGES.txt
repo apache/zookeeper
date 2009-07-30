@@ -16,6 +16,9 @@ mahadev)
   
   ZOOKEEPER-467.  Change log level in BookieHandle (flavio via mahadev)
 
+  ZOOKEEPER-482. ignore sigpipe in testRetry to avoid silent immediate
+failure. (chris via mahadev) 
+
 IMPROVEMENTS:
 
 NEW FEATURES:
