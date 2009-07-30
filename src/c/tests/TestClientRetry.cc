@@ -19,6 +19,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "CppAssertHelper.h"
 
+#include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/select.h>
@@ -200,19 +201,14 @@ public:
         char cmd[1024];
         sprintf(cmd, "export ZKMAXCNXNS=1;%s startClean %s", ZKSERVER_CMD, getHostPorts());
         CPPUNIT_ASSERT(system(cmd) == 0);
+
+        struct sigaction act;
+        act.sa_handler = SIG_IGN;
+        sigemptyset(&act.sa_mask);
+        act.sa_flags = 0;
+        CPPUNIT_ASSERT(sigaction(SIGPIPE, &act, NULL) == 0);
     }
     
-
-    void startServer() {
-        char cmd[1024];
-        sprintf(cmd, "export ZKMAXCNXNS=1;%s start %s", ZKSERVER_CMD, getHostPorts());
-        CPPUNIT_ASSERT(system(cmd) == 0);
-    }
-
-    void stopServer() {
-        tearDown();
-    }
-
     void tearDown()
     {
         char cmd[1024];
@@ -228,13 +224,12 @@ public:
         return ctx->countEvents() > 0;
     }
 
-#define COUNT 100
-    
     static zhandle_t *async_zk;
 
     void testRetry()
     {
       watchctx_t ctx1, ctx2;
+      zoo_set_debug_level((ZooLogLevel)0); // disable logging
       zhandle_t *zk1 = createClient(&ctx1);
       CPPUNIT_ASSERT_EQUAL(true, ctx1.waitForConnected(zk1));
       zhandle_t *zk2 = createClient(&ctx2);
