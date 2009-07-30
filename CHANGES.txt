@@ -13,6 +13,8 @@ BUGFIXES:
 
   ZOOKEEPER-460. bad testRetry in cppunit tests (hudson failure) (giri via
 mahadev)
+  
+  ZOOKEEPER-467.  Change log level in BookieHandle (flavio via mahadev)
 
 IMPROVEMENTS:
 
