@@ -21,6 +21,9 @@ BUGFIXES:
 
   ZOOKEEPER-487. setdata on root (/) crashes the servers (mahadev via phunt)
 
+  ZOOKEEPER-457. Make ZookeeperMain public, support for HBase (and other)
+  embedded clients (ryan rawson via phunt)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
