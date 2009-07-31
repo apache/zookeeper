@@ -248,6 +248,9 @@ public class PathTrie {
         if (path == null) {
             return null;
         }
+        if ("/".equals(path)) {
+            return path;
+        }
         String[] pathComponents = path.split("/");
         TrieNode parent = rootNode;
         List<String> components = new ArrayList<String>();

@@ -53,7 +53,8 @@ public class ZooKeeperQuotaTest extends ClientBase {
         InterruptedException, KeeperException {
         final ZooKeeper zk = createClient();
         final String path = "/a/b/v";
-
+        // making sure setdata works on /
+        zk.setData("/", "some".getBytes(), -1);
         zk.create("/a", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
 
