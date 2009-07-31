@@ -7,24 +7,26 @@ BUGFIXES:
 Backward compatible changes:
 
 BUGFIXES: 
-  ZOOKEEPER-469. make sure CPPUNIT_CFLAGS isn't overwritten (chris via
-mahadev)
+  ZOOKEEPER-469. make sure CPPUNIT_CFLAGS isn't overwritten
+  (chris via mahadev)
 
   ZOOKEEPER-471. update zkperl for 3.2.x branch (chris via mahadev)
 
   ZOOKEEPER-470. include unistd.h for sleep() in c tests (chris via mahadev)
 
-  ZOOKEEPR-460. bad testRetry in cppunit tests (hudson failure) (giri via
-mahadev)
+  ZOOKEEPR-460. bad testRetry in cppunit tests (hudson failure)
+  (giri via mahadev)
 
   ZOOKEEPER-467.  Change log level in BookieHandle. (flavio via mahadev)
 
   ZOOKEEPER-482. ignore sigpipe in testRetry to avoid silent immediate
-failure. (chris via mahadev)
+  failure. (chris via mahadev)
+
+  ZOOKEEPER-487. setdata on root (/) crashes the servers (mahadev via phunt)
 
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
-"socket reuse" and failure to close client (phunt via mahadev)
+  "socket reuse" and failure to close client (phunt via mahadev)
  
   ZOOKEEPER-488. Fix zkServer.sh to add clover.jar in classpath
   (Giridharan Kesavan via gkesavan)  

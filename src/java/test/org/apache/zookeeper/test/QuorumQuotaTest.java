@@ -49,6 +49,7 @@ public class QuorumQuotaTest extends QuorumBase {
 
     public void testQuotaWithQuorum() throws Exception {
         ZooKeeper zk = createClient();
+        zk.setData("/", "some".getBytes(), -1);
         zk.create("/a", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
         int i = 0;
