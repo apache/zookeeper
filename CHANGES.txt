@@ -11,13 +11,15 @@ BUGFIXES:
 
   ZOOKEEPER-470. include unistd.h for sleep() in c tests (chris via mahadev)
 
-  ZOOKEEPER-460. bad testRetry in cppunit tests (hudson failure) (giri via
-mahadev)
+  ZOOKEEPER-460. bad testRetry in cppunit tests (hudson failure)
+  (giri via mahadev)
   
   ZOOKEEPER-467.  Change log level in BookieHandle (flavio via mahadev)
 
   ZOOKEEPER-482. ignore sigpipe in testRetry to avoid silent immediate
-failure. (chris via mahadev) 
+  failure. (chris via mahadev) 
+
+  ZOOKEEPER-487. setdata on root (/) crashes the servers (mahadev via phunt)
 
 IMPROVEMENTS:
 
