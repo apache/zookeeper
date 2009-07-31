@@ -60,7 +60,7 @@ public class ZooKeeperMain {
         return printWatches;
     }
 
-    static void populateCommandMap() {
+    static {
         commandMap.put("connect", "host:port");
         commandMap.put("close","");
         commandMap.put("create", "[-s] [-e] path data acl");
@@ -145,12 +145,13 @@ public class ZooKeeperMain {
      */
     static private class MyCommandOptions {
 
-        private Map<String,String> options = null;
+        private Map<String,String> options = new HashMap<String,String>();
         private List<String> cmdArgs = null;
         private String command = null;
 
         public MyCommandOptions() {
-            options = null; command = null;
+          options.put("server", "localhost:2181");
+          options.put("timeout", "30000");
         }
 
         public String getOption(String opt) {
@@ -173,13 +174,6 @@ public class ZooKeeperMain {
             return cmdArgs.toArray(new String[0]);
         }
 
-        private Map<String,String> buildDefaults( ) {
-            options = new HashMap<String,String>( );
-            options.put("server", "localhost:2181");
-            options.put("timeout", "30000");
-            return options;
-        }
-
         /**
          * Parses a command line that may contain one or more flags
          * before an optional command string
@@ -187,7 +181,6 @@ public class ZooKeeperMain {
          * @return true if parsing succeeded, false otherwise.
          */
         public boolean parseOptions(String[] args) {
-            Map<String, String> ret = buildDefaults();
             List<String> argList = Arrays.asList(args);
             Iterator<String> it = argList.iterator();
 
@@ -195,9 +188,9 @@ public class ZooKeeperMain {
                 String opt = it.next();
                 try {
                     if (opt.equals("-server")) {
-                        ret.put("server", it.next());
+                        options.put("server", it.next());
                     } else if (opt.equals("-timeout")) {
-                        ret.put("timeout", it.next());
+                        options.put("timeout", it.next());
                     }
                 } catch (NoSuchElementException e){
                     System.err.println("Error: no argument found for option "
@@ -271,7 +264,6 @@ public class ZooKeeperMain {
     public static void main(String args[])
         throws KeeperException, IOException, InterruptedException
     {
-        populateCommandMap();
         ZooKeeperMain main = new ZooKeeperMain(args);
         main.run();
     }
@@ -282,6 +274,10 @@ public class ZooKeeperMain {
         connectToZK(cl.getOption("server"));
         //zk = new ZooKeeper(cl.getOption("server"),
 //                Integer.parseInt(cl.getOption("timeout")), new MyWatcher());
+    }
+
+    public ZooKeeperMain(ZooKeeper zk) {
+      this.zk = zk;
     }
 
     @SuppressWarnings("unchecked")
@@ -310,12 +306,7 @@ public class ZooKeeperMain {
                 String line;
                 Method readLine = consoleC.getMethod("readLine", String.class);
                 while ((line = (String)readLine.invoke(console, getPrompt())) != null) {
-                    if (!line.equals("")) {
-                        cl.parseCommand(line);
-                        addToHistory(commandCount,line);
-                        processCmd(cl);
-                        commandCount++;
-                    }
+                    executeLine(line);
                 }
             } catch (ClassNotFoundException e) {
                 LOG.debug("Unable to start jline", e);
@@ -341,12 +332,7 @@ public class ZooKeeperMain {
 
                 String line;
                 while ((line = br.readLine()) != null) {
-                    if (!line.equals("")) {
-                        cl.parseCommand(line);
-                        addToHistory(commandCount,line);
-                        processCmd(cl);
-                        commandCount++;
-                    }
+                    executeLine(line);
                 }
             }
         }
@@ -355,6 +341,16 @@ public class ZooKeeperMain {
         if (!watch) {
             System.exit(0);
         }
+    }
+
+    public void executeLine(String line)
+    throws InterruptedException, IOException, KeeperException {
+      if (!line.equals("")) {
+        cl.parseCommand(line);
+        addToHistory(commandCount,line);
+        processCmd(cl);
+        commandCount++;
+      }
     }
 
     private static DataCallback dataCallback = new DataCallback() {
