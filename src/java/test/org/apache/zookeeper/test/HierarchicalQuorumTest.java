@@ -93,6 +93,7 @@ public class HierarchicalQuorumTest extends TestCase {
 
     protected void tearDown() throws Exception {
         for(int i = 0; i < threads.size(); i++) {
+            threads.get(i).peer.shutdown();
             ((FastLeaderElection) threads.get(i).peer.getElectionAlg()).shutdown();
         }
         LOG.info("FINISHED " + getName());
@@ -144,17 +145,26 @@ public class HierarchicalQuorumTest extends TestCase {
 
     @Test
     public void testHierarchicalQuorum() throws Exception {
+        runTest(0);
+    }
+    
+    @Test
+    public void testHierarchicalQuorumPartial() throws Exception {
+        runTest(3);
+    }
+    
+    private void runTest(int delta) throws Exception {
         FastLeaderElection le[] = new FastLeaderElection[count];
 
         LOG.info("TestHierarchicalQuorum: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(baseport+100+i),
-                    new InetSocketAddress(baseLEport+100+i)));
+            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(baseport+i),
+                    new InetSocketAddress(baseLEport+i)));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = baseport+i;
         }
 
-        for(int i = 0; i < le.length; i++) {
+        for(int i = 0; i < (le.length - delta); i++) {
             QuorumHierarchical hq = new QuorumHierarchical(qp);
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2, hq);
             peer.startLeaderElection();
