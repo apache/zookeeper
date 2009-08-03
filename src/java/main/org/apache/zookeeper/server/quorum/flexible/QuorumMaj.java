@@ -31,9 +31,20 @@ public class QuorumMaj implements QuorumVerifier {
     
     /**
      * Defines a majority to avoid computing it every time.
+     * 
+     * @param n number of servers
      */
     public QuorumMaj(int n){
         this.half = n/2;
+    }
+    
+    /**
+     * Returns weight of 1 by default.
+     * 
+     * @param id 
+     */
+    public long getWeight(long id){
+        return (long) 1;
     }
     
     /**
