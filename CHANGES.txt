@@ -24,6 +24,8 @@ BUGFIXES:
   ZOOKEEPER-457. Make ZookeeperMain public, support for HBase (and other)
   embedded clients (ryan rawson via phunt)
 
+  ZOOKEEPER-481. Add lastMessageSent to QuorumCnxManager. (flavio via mahadev)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
