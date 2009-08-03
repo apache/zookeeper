@@ -104,12 +104,15 @@ public class QuorumHierarchical implements QuorumVerifier {
         LOG.info(serverWeight.size() + ", " + serverGroup.size() + ", " + groupWeight.size());
     }
     
-    /**
-     * This contructor takes the two hash maps needed to enable 
-     * validating quorums. We use it with QuorumPeerConfig. That is,
-     * we declare weights and groups in the server configuration
-     * file along with the other parameters.
-     */
+   /**
+    *  This contructor takes the two hash maps needed to enable 
+    *  validating quorums. We use it with QuorumPeerConfig. That is,
+    *  we declare weights and groups in the server configuration
+    *  file along with the other parameters.
+    * @param numGroups
+    * @param serverWeight
+    * @param serverGroup
+    */
     public QuorumHierarchical(int numGroups,
             HashMap<Long, Long> serverWeight,
             HashMap<Long, Long> serverGroup)
@@ -122,6 +125,15 @@ public class QuorumHierarchical implements QuorumVerifier {
         this.numGroups = numGroups;
     }
     
+    
+    /**
+     * Returns the weight of a server.
+     * 
+     * @param id
+     */
+    public long getWeight(long id){
+        return serverWeight.get(id);
+    }
     
     /**
      * Reads a configration file. Called from the constructor
@@ -200,9 +212,15 @@ public class QuorumHierarchical implements QuorumVerifier {
             else {
                 long totalWeight = serverWeight.get(sid) + groupWeight.get(gid);
                 groupWeight.put(gid, totalWeight);
-            }
-            
-        }        
+            } 
+        }    
+        
+        /*
+         * Do not consider groups with weight zero
+         */
+        for(long weight: groupWeight.values()){
+            if(weight == 0) numGroups--;
+        }
     }
     
     /**
@@ -230,14 +248,14 @@ public class QuorumHierarchical implements QuorumVerifier {
         /*
          * Check if all groups have majority
          */
-        boolean majPerGroup = true;
+        int majGroupCounter = 0;
         for(long gid : expansion.keySet()) {
             LOG.info("gid: " + expansion.get(gid));
-            if(expansion.get(gid) <= (groupWeight.get(gid) / 2) )
-                majPerGroup = false;
+            if(expansion.get(gid) > (groupWeight.get(gid) / 2) )
+                majGroupCounter++;
         }
         
-        if((expansion.size() > (numGroups / 2)) && majPerGroup){
+        if((majGroupCounter > (numGroups / 2))){
             LOG.info("Positive set size: " + set.size());
             return true;
         }

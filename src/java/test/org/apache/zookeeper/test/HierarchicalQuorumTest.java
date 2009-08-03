@@ -146,19 +146,29 @@ public class HierarchicalQuorumTest extends TestCase {
 
     @Test
     public void testHierarchicalQuorum() throws Exception {
+        runTest(0);
+    }
+    
+    @Test
+    public void testHierarchicalQuorumPartial() throws Exception {
+        runTest(3);
+    }
+    
+    private void runTest(int delta) throws Exception {
         FastLeaderElection le[] = new FastLeaderElection[count];
 
         LOG.info("TestHierarchicalQuorum: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
+            int clientport = PortAssignment.unique();
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
-                            new InetSocketAddress(PortAssignment.unique()),
+                            new InetSocketAddress(clientport),
                     new InetSocketAddress(PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
-            port[i] = PortAssignment.unique();
+            port[i] = clientport;
         }
 
-        for(int i = 0; i < le.length; i++) {
+        for(int i = 0; i < (le.length - delta); i++) {
             QuorumHierarchical hq = new QuorumHierarchical(qp);
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2, hq);
             peer.startLeaderElection();
