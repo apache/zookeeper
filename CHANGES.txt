@@ -30,6 +30,9 @@ BUGFIXES:
   ZOOKEEPER-481. Add lastMessageSent to QuorumCnxManager. (flavio via
 mahadev)
 
+  ZOOKEEPER-479.  QuorumHierarchical does not count groups correctly (flavio
+via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
