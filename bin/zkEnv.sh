@@ -32,6 +32,13 @@ then
     fi
 fi
 
+if [ "x$ZOOCFG" = "x" ]
+then
+    ZOOCFG="zoo.cfg"
+fi
+
+ZOOCFG="$ZOOCFGDIR/$ZOOCFG"
+
 if [ -e "$ZOOCFGDIR/java.env" ]
 then
     . "$ZOOCFGDIR/java.env"
@@ -64,4 +71,3 @@ do
 done
 #add the zoocfg dir to classpath
 CLASSPATH=$ZOOCFGDIR:$CLASSPATH
-ZOOCFG="$ZOOCFGDIR/zoo.cfg"
