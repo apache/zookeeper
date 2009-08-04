@@ -490,9 +490,20 @@ public class FastLeaderElection implements Election {
             long epoch){
         
         boolean predicate = true;
-        if(votes.get(leader) == null) predicate = false;
-        else if(votes.get(leader).state != ServerState.LEADING) predicate = false;
+
+        /*
+         * If everyone else thinks I'm the leader, I must be the leader.
+         * The other two checks are just for the case in which I'm not the
+         * leader. If I'm not the leader and I haven't received a message 
+         * from leader stating that it is leading, then predicate is false.          
+         */
         
+        if(leader != self.getId()){
+            if(votes.get(leader) == null) predicate = false;
+            else if(votes.get(leader).state != ServerState.LEADING) predicate = false;
+        }
+        
+        //LOG.info("Leader predicate: " + predicate);
         return predicate;
     }
     
@@ -643,13 +654,18 @@ public class FastLeaderElection implements Election {
                          * this leader, then processes will naturally move
                          * to a new epoch.
                          */
-                        if((n.state == ServerState.LEADING) && 
-                                (n.epoch == logicalclock)){
-                            self.setPeerState((n.leader == self.getId()) ? 
-                                    ServerState.LEADING: ServerState.FOLLOWING);
+                        if(n.epoch == logicalclock){
+                            recvset.put(n.sid, new Vote(n.leader, n.zxid, n.epoch));
+                            if((n.state == ServerState.LEADING) ||
+                                    (termPredicate(recvset, new Vote(n.leader,
+                                            n.zxid, n.epoch, n.state))
+                                            && checkLeader(outofelection, n.leader, n.epoch)) ){
+                                self.setPeerState((n.leader == self.getId()) ? 
+                                        ServerState.LEADING: ServerState.FOLLOWING);
                        
-                            leaveInstance();
-                            return new Vote(n.leader, n.zxid);
+                                leaveInstance();
+                                return new Vote(n.leader, n.zxid);
+                            } 
                         }
                     
                         LOG.info("Notification: " + n.leader + ", " + n.zxid + 
@@ -671,6 +687,7 @@ public class FastLeaderElection implements Election {
                             leaveInstance();
                             return new Vote(n.leader, n.zxid);
                         }
+                        
                         break;
                     }
                 }

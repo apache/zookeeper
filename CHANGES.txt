@@ -32,6 +32,9 @@ BUGFIXES:
   ZOOKEEPER-466. crash on zookeeper_close() when using auth with empty cert
   (Chris Darroch via phunt)
 
+  ZOOKEEPER-480. FLE should perform leader check when node is not leading and
+  add vote of follower (flavio via mahadev)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
