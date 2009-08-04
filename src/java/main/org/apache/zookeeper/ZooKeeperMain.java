@@ -733,11 +733,12 @@ public class ZooKeeperMain {
             }
         } else if (cmd.equals("setquota") && args.length >= 4) {
             String option = args[1];
+            String val = args[2];
             path = args[3];
             System.err.println("Comment: the parts are " +
-                    "option " + option + " path " +
-                    args[3] + " val " + args[2]);
-            String val = args[3];
+                               "option " + option +
+                               " val " + val +
+                               " path " + path);
             if ("-b".equals(option)) {
                 // we are setting the bytes quota
                 createQuota(zk, path, Long.parseLong(val), -1);
