@@ -53,6 +53,12 @@ ZOOBINDIR=`dirname "$ZOOBIN"`
 
 . $ZOOBINDIR/zkEnv.sh
 
+if [ "x$2" != "x" ]
+then
+    ZOOCFG=$ZOOCFGDIR/$2
+fi
+echo "Using config: $ZOOCFG"
+
 ZOOPIDFILE=$(grep dataDir $ZOOCFG | sed -e 's/.*=//')/zookeeper_server.pid
 
 

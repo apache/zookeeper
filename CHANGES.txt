@@ -38,8 +38,11 @@ BUGFIXES:
   ZOOKEEPER-480. FLE should perform leader check when node is not leading and
   add vote of follower (flavio via mahadev)
 
-  ZOOKEEPER-491. Prevent zero-weight servers from being elected. (flavio via
-  mahadev)
+  ZOOKEEPER-491. Prevent zero-weight servers from being elected.
+  (flavio via mahadev)
+
+  ZOOKEEPER-447. zkServer.sh doesn't allow different config files to be
+  specified on the command line (henry robinson via phunt)
 
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
