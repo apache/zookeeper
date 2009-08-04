@@ -423,7 +423,7 @@ public:
     void testAuth() {
         int rc;
         count = 0;
-        watchctx_t ctx1, ctx2, ctx3;
+        watchctx_t ctx1, ctx2, ctx3, ctx4;
         zhandle_t *zk = createClient(&ctx1);
         struct ACL_vector nodeAcl;
         struct ACL acl_val;
@@ -444,6 +444,21 @@ public:
         rc = zoo_create(zk, "/tauth1", "", 0, &ZOO_CREATOR_ALL_ACL, 0, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
+        {
+            //create a new client
+            zk = createClient(&ctx4);
+            rc = zoo_add_auth(zk, "digest", "", 0, voidCompletion, (void*)ZOK);
+            CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+            waitForVoidCompletion(3);
+            CPPUNIT_ASSERT(count == 0);
+
+            rc = zoo_add_auth(zk, "digest", "", 0, voidCompletion, (void*)ZOK);
+            CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+            waitForVoidCompletion(3);
+            CPPUNIT_ASSERT(count == 0);
+        }
+
+        //create a new client
         zk = createClient(&ctx2);
 
         rc = zoo_add_auth(zk, "digest", "pat:passwd2", 11, voidCompletion,
