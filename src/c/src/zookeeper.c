@@ -2674,8 +2674,7 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
     zoo_lock_auth(zh);
     authinfo = (auth_info*) malloc(sizeof(auth_info));
     authinfo->scheme=strdup(scheme);
-    if(auth.buff)
-        authinfo->auth=auth;
+    authinfo->auth=auth;
     authinfo->completion=completion;
     authinfo->data=data;
     authinfo->next = NULL;
