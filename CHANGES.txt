@@ -41,6 +41,8 @@ BUGFIXES:
   ZOOKEEPER-447. zkServer.sh doesn't allow different config files to be
   specified on the command line (henry robinson via phunt)
 
+  ZOOKEEPER-493. patch for command line setquota (steve bendiola via phunt)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
