@@ -577,8 +577,7 @@ public class FastLeaderElection implements Election {
                 	        tmpTimeOut : maxNotificationInterval);
                 	LOG.info("Notification time out: " + notTimeout);
                 }
-                else { 
-                    //notTimeout = finalizeWait;
+                else{                    
                     switch (n.state) { 
                     case LOOKING:
                         // If notification > current, replace and send messages out
@@ -607,7 +606,11 @@ public class FastLeaderElection implements Election {
                         }
                     
                         LOG.info("Adding vote");
-                        recvset.put(n.sid, new Vote(n.leader, n.zxid, n.epoch));
+                        /*
+                         * Skip zero-weight servers
+                         */
+                        if(self.getQuorumVerifier().getWeight(n.sid) != 0) 
+                            recvset.put(n.sid, new Vote(n.leader, n.zxid, n.epoch));
     
                         //If have received from all nodes, then terminate
                         if (self.quorumPeers.size() == recvset.size()) {
