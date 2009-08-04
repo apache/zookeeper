@@ -26,8 +26,11 @@ BUGFIXES:
 
   ZOOKEEPER-481. Add lastMessageSent to QuorumCnxManager. (flavio via mahadev)
 
-  ZOOKEEPER-479.  QuorumHierarchical does not count groups correctly (flavio
-via mahadev)
+  ZOOKEEPER-479.  QuorumHierarchical does not count groups correctly
+  (flavio via mahadev)
+
+  ZOOKEEPER-466. crash on zookeeper_close() when using auth with empty cert
+  (Chris Darroch via phunt)
 
 IMPROVEMENTS:
 
