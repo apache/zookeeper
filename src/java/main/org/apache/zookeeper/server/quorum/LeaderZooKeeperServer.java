@@ -154,16 +154,14 @@ public class LeaderZooKeeperServer extends ZooKeeperServer {
         return "leader";
     }
 
-    public void setOwner(long id, Object owner) throws SessionExpiredException {
-        sessionTracker.setOwner(id, owner);
-    }
-
     @Override
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,
         int sessionTimeout) throws IOException, InterruptedException {
         super.revalidateSession(cnxn, sessionId, sessionTimeout);
         try {
-            setOwner(sessionId, this);
+            // setowner as the leader itself, unless updated
+            // via the follower handlers
+            setOwner(sessionId, ServerCnxn.me);
         } catch (SessionExpiredException e) {
             // this is ok, it just means that the session revalidation failed.
         }

@@ -55,6 +55,10 @@ public interface ServerCnxn extends Watcher {
     
     final static ByteBuffer imok = ByteBuffer.wrap("imok".getBytes());
 
+    // This is just an arbitrary object to represent requests issued by
+    // (aka owned by) this class
+    final public static Object me = new Object();
+
     public abstract int getSessionTimeout();
 
     public abstract void close();
