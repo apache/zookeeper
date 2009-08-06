@@ -38,6 +38,7 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.Environment;
+import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
@@ -498,6 +499,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         cnxn.setSessionId(sessionId);
         submitRequest(cnxn, sessionId, OpCode.createSession, 0, to, null);
         return sessionId;
+    }
+
+    /**
+     * set the owner of this session as owner
+     * @param id the session id
+     * @param owner the owner of the session
+     * @throws SessionExpiredException
+     */
+    public void setOwner(long id, Object owner) throws SessionExpiredException {
+        sessionTracker.setOwner(id, owner);
     }
 
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,

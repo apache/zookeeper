@@ -17,6 +17,8 @@
  */
 
 package org.apache.zookeeper.test;
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -27,6 +29,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.ZooDefs.Ids;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -97,6 +100,40 @@ public class QuorumTest extends QuorumBase {
         ct.testMutipleWatcherObjs();
     }
 
+    /**
+     * Make sure that we can change sessions 
+     *  from follower to leader.
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws KeeperException
+     */
+    @Test
+    public void testSessionMoved() throws IOException, InterruptedException, KeeperException {
+        String hostPorts[] = qb.hostPort.split(",");
+        ZooKeeper zk = new DisconnectableZooKeeper(hostPorts[0], ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+            public void process(WatchedEvent event) {
+            }});
+        zk.create("/sessionMoveTest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        // we want to loop through the list twice
+        for(int i = 0; i < hostPorts.length*2; i++) {
+            // This should stomp the zk handle
+            ZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[(i+1)%hostPorts.length], ClientBase.CONNECTION_TIMEOUT, 
+                    new Watcher() {public void process(WatchedEvent event) {
+                    }},
+                    zk.getSessionId(),
+                    zk.getSessionPasswd());
+            zknew.setData("/", new byte[1], -1);
+            try {
+                zk.setData("/", new byte[1], -1);
+                fail("Should have lost the connection");
+            } catch(KeeperException.SessionMovedException e) {
+            }
+            //zk.close();
+            zk = zknew;
+        }
+        zk.close();
+    }
     @Test
     /**
      * Connect to two different servers with two different handles using the same session and

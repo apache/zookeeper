@@ -355,6 +355,9 @@ public class FollowerHandler extends Thread {
                     boolean valid = leader.zk.touch(id, to);
                     if (valid) {
                         try {
+                            //set the session owner
+                            // as the follower that
+                            // owns the session
                             leader.zk.setOwner(id, this);
                         } catch (SessionExpiredException e) {
                             LOG.error("Somehow session " + Long.toHexString(id) + " expired right after being renewed! (impossible)", e);
