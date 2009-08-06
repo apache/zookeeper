@@ -1878,14 +1878,13 @@ int zookeeper_process(zhandle_t *zh, int events)
                         struct CreateResponse res;
                         int len;
                         deserialize_CreateResponse(ia, "reply", &res);
-                        if (sc->u.str.str_len > strlen(res.path)) {
-                            len = strlen(res.path);
-                        } else {
-                            len = sc->u.str.str_len-1;
+                        len = strlen(res.path) + 1;
+                        if (len > sc->u.str.str_len) {
+                            len = sc->u.str.str_len;
                         }
                         if (len > 0) {
-                            memcpy(sc->u.str.str, res.path, len);
-                            sc->u.str.str[len] = '\0';
+                            memcpy(sc->u.str.str, res.path, len - 1);
+                            sc->u.str.str[len - 1] = '\0';
                         }
                         deallocate_CreateResponse(&res);
                     }
@@ -2724,16 +2723,16 @@ void zoo_deterministic_conn_order(int yesOrNo)
  * sync API
  */
 int zoo_create(zhandle_t *zh, const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl, int flags, char *realpath,
-        int max_realpath_len)
+        int valuelen, const struct ACL_vector *acl, int flags,
+        char *path_buffer, int path_buffer_len)
 {
     struct sync_completion *sc = alloc_sync_completion();
     int rc;
     if (!sc) {
         return ZSYSTEMERROR;
     }
-    sc->u.str.str = realpath;
-    sc->u.str.str_len = max_realpath_len;
+    sc->u.str.str = path_buffer;
+    sc->u.str.str_len = path_buffer_len;
     rc=zoo_acreate(zh, path, value, valuelen, acl, flags, SYNCHRONOUS_MARKER, sc);
     if(rc==ZOK){
         wait_sync_completion(sc);

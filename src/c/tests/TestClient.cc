@@ -163,6 +163,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testAsyncWatcherAutoReset);
 #ifdef THREADED
     CPPUNIT_TEST(testNullData);
+    CPPUNIT_TEST(testPath);
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
     CPPUNIT_TEST(testAcl);
@@ -532,6 +533,45 @@ public:
         rc = zoo_wget(zk, "/mahadev", NULL, NULL, buffer, &len, &stat);
         CPPUNIT_ASSERT_EQUAL( -1, len);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+    }
+
+    void testPath() {
+        watchctx_t ctx;
+        char pathbuf[10];
+        zhandle_t *zk = createClient(&ctx);
+        CPPUNIT_ASSERT(zk);
+        int rc = 0;
+
+        memset(pathbuf, 'X', 10);
+        rc = zoo_create(zk, "/path0", "", 0, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL('X', pathbuf[0]);
+
+        rc = zoo_create(zk, "/path1", "", 0, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 1);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT(strlen(pathbuf) == 0);
+
+        rc = zoo_create(zk, "/path2", "", 0, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 2);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT(strcmp(pathbuf, "/") == 0);
+
+        rc = zoo_create(zk, "/path3", "", 0, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 3);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT(strcmp(pathbuf, "/p") == 0);
+
+        rc = zoo_create(zk, "/path7", "", 0, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 7);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT(strcmp(pathbuf, "/path7") == 0);
+
+        rc = zoo_create(zk, "/path8", "", 0, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 8);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT(strcmp(pathbuf, "/path8") == 0);
     }
 
     void testPathValidation() {
