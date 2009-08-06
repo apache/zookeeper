@@ -70,10 +70,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     private ConnectionBean jmxConnectionBean;
 
-    // This is just an arbitrary object to represent requests issued by
-    // (aka owned by) this class
-    final private static Object me = new Object();
-
+   
     static public class Factory extends Thread {
         ZooKeeperServer zks;
 
@@ -545,7 +542,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             return;
         } else {
             Request si = new Request(this, sessionId, h.getXid(), h.getType(), incomingBuffer, authInfo);
-            si.setOwner(me);
+            si.setOwner(ServerCnxn.me);
             zk.submitRequest(si);
         }
         if (h.getXid() >= 0) {

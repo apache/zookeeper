@@ -224,19 +224,24 @@ public class SessionTest extends TestCase implements Watcher {
      */
     @Test
     public void testSessionMove() throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = createClient();
-        zk.getChildren("/", false);
-        // This should stomp the zk handle
-        ZooKeeper zknew = new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this,
-                   zk.getSessionId(),
-                   zk.getSessionPasswd());
-        zknew.getChildren("/", false);
-        try {
-            zk.getChildren("/", false);
-            fail("Should have lost the connection");
-        } catch(KeeperException.ConnectionLossException e) {
+        String hostPorts[] = HOSTPORT.split(",");
+        ZooKeeper zk = new DisconnectableZooKeeper(hostPorts[0], CONNECTION_TIMEOUT, this);
+        zk.create("/sessionMoveTest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        // we want to loop through the list twice
+        for(int i = 0; i < hostPorts.length*2; i++) {
+            // This should stomp the zk handle
+            ZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[(i+1)%hostPorts.length], CONNECTION_TIMEOUT, this,
+                    zk.getSessionId(),
+                    zk.getSessionPasswd());
+            zknew.setData("/", new byte[1], -1);
+            try {
+                zk.setData("/", new byte[1], -1);
+                fail("Should have lost the connection");
+            } catch(KeeperException.ConnectionLossException e) {
+            }
+            //zk.close();
+            zk = zknew;
         }
-        zknew.close();
         zk.close();
     }
     @Test
