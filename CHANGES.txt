@@ -46,6 +46,8 @@ BUGFIXES:
 
   ZOOKEEPER-493. patch for command line setquota (steve bendiola via phunt)
 
+  ZOOKEEPER-311. handle small path lengths in zoo_create() (chris barroch via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
