@@ -43,6 +43,8 @@ BUGFIXES:
 
   ZOOKEEPER-493. patch for command line setquota (steve bendiola via phunt)
 
+  ZOOKEEPER-311. handle small path lengths in zoo_create() (chris barroch via breed)
+
 IMPROVEMENTS:
 
 NEW FEATURES:

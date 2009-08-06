@@ -958,9 +958,15 @@ ZOOAPI void zoo_deterministic_conn_order(int yesOrNo);
  *    used.
  * \param flags this parameter can be set to 0 for normal create or an OR
  *    of the Create Flags
- * \param realpath the real path that is created (this might be different than the
- *    path to create because of the ZOO_SEQUENCE flag.
- * \param the maximum length of real path you would want.
+ * \param path_buffer Buffer which will be filled with the path of the
+ *    new node (this might be different than the supplied path
+ *    because of the ZOO_SEQUENCE flag).  The path string will always be
+ *    null-terminated.
+ * \param path_buffer_len Size of path buffer; if the path of the new
+ *    node (including space for the null terminator) exceeds the buffer size,
+ *    the path string will be truncated to fit.  The actual path of the
+ *    new node in the server will not be affected by the truncation.
+ *    The path string will always be null-terminated.
  * \return  one of the following codes are returned:
  * ZOK operation completed succesfully
  * ZNONODE the parent node does not exist.
@@ -972,8 +978,8 @@ ZOOAPI void zoo_deterministic_conn_order(int yesOrNo);
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
 ZOOAPI int zoo_create(zhandle_t *zh, const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl, int flags, char *realpath,	 
-        int max_realpath_len);
+        int valuelen, const struct ACL_vector *acl, int flags,
+        char *path_buffer, int path_buffer_len);
 
 /**
  * \brief delete a node in zookeeper synchronously.
