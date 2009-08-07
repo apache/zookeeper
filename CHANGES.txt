@@ -45,6 +45,9 @@ BUGFIXES:
 
   ZOOKEEPER-311. handle small path lengths in zoo_create() (chris barroch via breed)
 
+  ZOOKEEPER-484.  Clients get SESSION MOVED exception when switching from
+  follower to a leader. (mahadev)
+
 IMPROVEMENTS:
 
 NEW FEATURES:

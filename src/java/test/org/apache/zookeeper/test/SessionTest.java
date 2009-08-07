@@ -212,31 +212,6 @@ public class SessionTest extends TestCase implements Watcher {
         }
     }
     
-    /**
-     * Make sure that we cannot have two connections with the same
-     * session id.
-     * 
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws KeeperException
-     */
-    @Test
-    public void testSessionMove() throws IOException, InterruptedException, KeeperException {
-    	ZooKeeper zk = createClient();
-    	zk.getChildren("/", false);
-    	// This should stomp the zk handle
-    	ZooKeeper zknew = new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this,
-                   zk.getSessionId(),
-                   zk.getSessionPasswd());
-    	zknew.getChildren("/", false);
-    	try {
-    	    zk.getChildren("/", false);
-    	    fail("Should have lost the connection");
-    	} catch(KeeperException.ConnectionLossException e) {
-    	}
-    	zknew.close();
-    	zk.close();
-    }
     @Test
     /**
      * This test makes sure that duplicate state changes are not communicated
