@@ -96,7 +96,7 @@ public class QuorumCnxManager {
      */
     public Listener listener;
 
-    static class Message {
+    static public class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
             this.sid = sid;
@@ -339,7 +339,7 @@ public class QuorumCnxManager {
      * doesn't exist.
      */
     
-    void connectAll(){
+    public void connectAll(){
         long sid;
         for(Enumeration<Long> en = queueSendMap.keys();
             en.hasMoreElements();){
