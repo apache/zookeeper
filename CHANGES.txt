@@ -51,6 +51,8 @@ BUGFIXES:
   ZOOKEEPER-490. the java docs for session creation are misleading/incomplete
   (phunt)
 
+  ZOOKEEPER-501. CnxManagerTest failed on hudson. (flavio via mahadev) 
+
 IMPROVEMENTS:
 
 NEW FEATURES:
