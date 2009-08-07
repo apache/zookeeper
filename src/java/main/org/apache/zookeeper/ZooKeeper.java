@@ -60,6 +60,7 @@ import org.apache.zookeeper.server.DataTree;
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
  * service, an application must first instantiate an object of ZooKeeper class.
  * All the iterations will be done by calling the methods of ZooKeeper class.
+ * The methods of this class are thread-safe unless otherwise noted.
  * <p>
  * Once a connection to a server is established, a session ID is assigned to the
  * client. The client will send heart beats to the server periodically to keep
@@ -324,18 +325,28 @@ public class ZooKeeper {
      * connection string containing a comma separated list of host:port pairs,
      * each corresponding to a ZooKeeper server.
      * <p>
-     * The client object will pick an arbitrary server and try to connect to it.
-     * If failed, it will try the next one in the list, until a connection is
-     * established, or all the servers have been tried.
+     * Session establishment is asynchronous. This constructor will initiate
+     * connection to the server and return immediately - potentially (usually)
+     * before the session is fully established. The watcher argument specifies
+     * the watcher that will be notified of any changes in state. This
+     * notification can come at any point before or after the constructor call
+     * has returned.
+     * <p>
+     * The instantiated ZooKeeper client object will pick an arbitrary server
+     * from the connectString and attempt to connect to it. If establishment of
+     * the connection fails, another server in the connect string will be tried
+     * (the order is non-deterministic, as we random shuffle the list), until a
+     * connection is established. The client will continue attempts until the
+     * session is explicitly closed.
      * <p>
      * Added in 3.2.0: An optional "chroot" suffix may also be appended to the
      * connection string. This will run the client commands while interpreting
      * all paths relative to this root (similar to the unix chroot command).
-     *
+     * 
      * @param connectString
      *            comma separated host:port pairs, each corresponding to a zk
-     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
-     *            If the optional chroot suffix is used the example would look
+     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002" If
+     *            the optional chroot suffix is used the example would look
      *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
      *            where the client would be rooted at "/app/a" and all paths
      *            would be relative to this root - ie getting/setting/etc...
@@ -346,9 +357,11 @@ public class ZooKeeper {
      * @param watcher
      *            a watcher object which will be notified of state changes, may
      *            also be notified for node events
-     *
-     * @throws IOException in cases of network failure
-     * @throws IllegalArgumentException if an invalid chroot path is specified
+     * 
+     * @throws IOException
+     *             in cases of network failure
+     * @throws IllegalArgumentException
+     *             if an invalid chroot path is specified
      */
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher)
         throws IOException
@@ -366,9 +379,19 @@ public class ZooKeeper {
      * connection string containing a comma separated list of host:port pairs,
      * each corresponding to a ZooKeeper server.
      * <p>
-     * The client object will pick an arbitrary server and try to connect to it.
-     * If failed, it will try the next one in the list, until a connection is
-     * established, or all the servers have been tried.
+     * Session establishment is asynchronous. This constructor will initiate
+     * connection to the server and return immediately - potentially (usually)
+     * before the session is fully established. The watcher argument specifies
+     * the watcher that will be notified of any changes in state. This
+     * notification can come at any point before or after the constructor call
+     * has returned.
+     * <p>
+     * The instantiated ZooKeeper client object will pick an arbitrary server
+     * from the connectString and attempt to connect to it. If establishment of
+     * the connection fails, another server in the connect string will be tried
+     * (the order is non-deterministic, as we random shuffle the list), until a
+     * connection is established. The client will continue attempts until the
+     * session is explicitly closed (or the session is expired by the server).
      * <p>
      * Added in 3.2.0: An optional "chroot" suffix may also be appended to the
      * connection string. This will run the client commands while interpreting
@@ -424,6 +447,8 @@ public class ZooKeeper {
      * not valid until the client connects to a server and may change after a
      * re-connect.
      *
+     * This method is NOT thread safe
+     * 
      * @return current session id
      */
     public long getSessionId() {
@@ -435,16 +460,32 @@ public class ZooKeeper {
      * returned is not valid until the client connects to a server and may
      * change after a re-connect.
      *
+     * This method is NOT thread safe
+     * 
      * @return current session password
      */
     public byte[] getSessionPasswd() {
         return cnxn.getSessionPasswd();
     }
 
+    /**
+     * Add the specified scheme:auth information to this connection.
+     * 
+     * This method is NOT thread safe
+     * 
+     * @param scheme
+     * @param auth
+     */
     public void addAuthInfo(String scheme, byte auth[]) {
         cnxn.addAuthInfo(scheme, auth);
     }
 
+    /**
+     * Specify the default watcher for the connection (overrides the one
+     * specified during construction).
+     * 
+     * @param watcher
+     */
     public synchronized void register(Watcher watcher) {
         watchManager.defaultWatcher = watcher;
     }

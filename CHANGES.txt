@@ -48,6 +48,9 @@ BUGFIXES:
   ZOOKEEPER-484.  Clients get SESSION MOVED exception when switching from
   follower to a leader. (mahadev)
 
+  ZOOKEEPER-490. the java docs for session creation are misleading/incomplete
+  (phunt)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
