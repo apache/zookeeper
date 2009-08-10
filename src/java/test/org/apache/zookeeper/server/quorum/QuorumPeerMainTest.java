@@ -181,11 +181,11 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         WriterAppender appender = new WriterAppender(layout, os);
         appender.setThreshold(Level.WARN);
-        Logger.getLogger(org.apache.zookeeper.server.quorum.QuorumPeer.class)
-            .addAppender(appender);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
 
         try {
-            final int CLIENT_PORT_QP1 = 3181;
+            final int CLIENT_PORT_QP1 = 3191;
             final int CLIENT_PORT_QP2 = CLIENT_PORT_QP1 + 3;
 
             String quorumCfgSection =
@@ -202,23 +202,22 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
                         5000);
 
             assertFalse("Server never came up", isup);
-            
+
             q1.shutdown();
 
             assertTrue("waiting for server 1 down",
                     ClientBase.waitForServerDown("localhost:" + CLIENT_PORT_QP1,
                             ClientBase.CONNECTION_TIMEOUT));
-            
+
         } finally {
-            Logger.getLogger(org.apache.zookeeper.server.quorum.QuorumPeer.class)
-                .removeAppender(appender);
+            qlogger.removeAppender(appender);
         }
 
         LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
         String line;
         boolean found = false;
         Pattern p =
-            Pattern.compile(".*IllegalArgumentException.*fee.fii.foo.fum.*");
+            Pattern.compile(".*Cannot open channel to .* at election address .*");
         while ((line = r.readLine()) != null) {
             found = p.matcher(line).matches();
             if (found) {
@@ -226,6 +225,75 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
             }
         }
         assertTrue("complains about host", found);
+    }
+
+
+    /**
+     * Verify handling of quorum defaults
+     * * default electionAlg is fast leader election
+     */
+    @Test
+    public void testQuorumDefaults() throws Exception {
+        LOG.info("STARTING " + getName());
+        ClientBase.setupTestEnv();
+
+        // setup the logger to capture all logs
+        Layout layout =
+            Logger.getRootLogger().getAppender("CONSOLE").getLayout();
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = new WriterAppender(layout, os);
+        appender.setThreshold(Level.WARN);
+        Logger zlogger = Logger.getLogger("org.apache.zookeeper");
+        zlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = 3171;
+            final int CLIENT_PORT_QP2 = CLIENT_PORT_QP1 + 3;
+
+            String quorumCfgSection =
+                "server.1=localhost:" + (CLIENT_PORT_QP1 + 1)
+                + ":" + (CLIENT_PORT_QP1 + 2)
+                + "\nserver.2=localhost:" + (CLIENT_PORT_QP2 + 1)
+                + ":" + (CLIENT_PORT_QP2 + 2);
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
+            q1.start();
+            q2.start();
+
+            assertTrue("waiting for server 1 being up",
+                    ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP1,
+                            CONNECTION_TIMEOUT));
+            assertTrue("waiting for server 2 being up",
+                    ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP2,
+                            CONNECTION_TIMEOUT));
+
+            q1.shutdown();
+            q2.shutdown();
+
+            assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("localhost:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("waiting for server 2 down",
+                    ClientBase.waitForServerDown("localhost:" + CLIENT_PORT_QP2,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+        } finally {
+            zlogger.removeAppender(appender);
+        }
+
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean found = false;
+        Pattern p =
+            Pattern.compile(".*FastLeaderElection.*");
+        while ((line = r.readLine()) != null) {
+            found = p.matcher(line).matches();
+            if (found) {
+                break;
+            }
+        }
+        assertTrue("fastleaderelection used", found);
     }
 
     public void process(WatchedEvent event) {
