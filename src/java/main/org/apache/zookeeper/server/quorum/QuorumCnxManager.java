@@ -19,15 +19,13 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
 import java.util.Enumeration;
-import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -316,17 +314,28 @@ public class QuorumCnxManager {
      */
     
     synchronized void connectOne(long sid){
-        
-        if ((senderWorkerMap.get(sid) == null)){ 
+        if (senderWorkerMap.get(sid) == null){ 
+            InetSocketAddress electionAddr =
+                self.quorumPeers.get(sid).electionAddr;
             try {
                 SocketChannel channel;
                 LOG.debug("Opening channel to server "  + sid);
-                channel = SocketChannel
-                        .open(self.quorumPeers.get(sid).electionAddr);
+                channel = SocketChannel.open(electionAddr);
                 channel.socket().setTcpNoDelay(true);
                 initiateConnection(channel, sid);
+            } catch (UnresolvedAddressException e) {
+                // Sun doesn't include the address that causes this
+                // exception to be thrown, also UAE cannot be wrapped cleanly
+                // so we log the exception in order to capture this critical
+                // detail.
+                LOG.warn("Cannot open channel to " + sid
+                        + " at election address " + electionAddr,
+                        e);
+                throw e;
             } catch (IOException e) {
-                LOG.warn("Cannot open channel to " + sid, e);
+                LOG.warn("Cannot open channel to " + sid
+                        + " at election address " + electionAddr,
+                        e);
             }
         } else {
             LOG.error("There is a connection for server " + sid);

@@ -47,8 +47,8 @@ public class QuorumPeerConfig {
 
     protected int initLimit;
     protected int syncLimit;
-    protected int electionAlg;
-    protected int electionPort;
+    protected int electionAlg = 3;
+    protected int electionPort = 2182;
     protected int maxClientCnxns = 10;
     protected final HashMap<Long,QuorumServer> servers =
         new HashMap<Long, QuorumServer>();
