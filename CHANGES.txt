@@ -60,6 +60,9 @@ BUGFIXES:
   ZOOKEEPER-499. electionAlg should default to FLE (3) - regression (phunt via
   mahadev) 
 
+  ZOOKEEPER-477. zkCleanup.sh is flaky (fernando via mahadev)
+
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
