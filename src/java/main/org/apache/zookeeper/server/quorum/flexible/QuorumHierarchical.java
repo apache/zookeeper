@@ -121,8 +121,8 @@ public class QuorumHierarchical implements QuorumVerifier {
         this.serverGroup = serverGroup;
         this.groupWeight = new HashMap<Long, Long>();
         
-        computeGroupWeight();
         this.numGroups = numGroups;
+        computeGroupWeight();   
     }
     
     
@@ -219,7 +219,11 @@ public class QuorumHierarchical implements QuorumVerifier {
          * Do not consider groups with weight zero
          */
         for(long weight: groupWeight.values()){
-            if(weight == 0) numGroups--;
+            LOG.debug("Group weight: " + weight);
+            if(weight == ((long) 0)){
+                numGroups--;
+                LOG.debug("One zero-weight group: " + 1 + ", " + numGroups);
+            }
         }
     }
     
@@ -233,7 +237,7 @@ public class QuorumHierarchical implements QuorumVerifier {
          * Adds up weights per group
          */
         if(set.size() == 0) return false;
-        else LOG.info("Set size: " + set.size());
+        else LOG.debug("Set size: " + set.size());
         
         for(long sid : set){
             Long gid = serverGroup.get(sid);
@@ -250,17 +254,18 @@ public class QuorumHierarchical implements QuorumVerifier {
          */
         int majGroupCounter = 0;
         for(long gid : expansion.keySet()) {
-            LOG.info("gid: " + expansion.get(gid));
+            LOG.debug("Group info: " + expansion.get(gid) + ", " + gid + ", " + groupWeight.get(gid));
             if(expansion.get(gid) > (groupWeight.get(gid) / 2) )
                 majGroupCounter++;
         }
         
+        LOG.debug("Majority group counter: " + majGroupCounter + ", " + numGroups); 
         if((majGroupCounter > (numGroups / 2))){
-            LOG.info("Positive set size: " + set.size());
+            LOG.debug("Positive set size: " + set.size());
             return true;
         }
         else {
-            LOG.info("Negative set size: " + set.size());
+            LOG.debug("Negative set size: " + set.size());
             return false;
         }
     }

@@ -338,7 +338,7 @@ public class QuorumCnxManager {
                         e);
             }
         } else {
-            LOG.error("There is a connection for server " + sid);
+            LOG.debug("There is a connection already for server " + sid);
         }
     }
     

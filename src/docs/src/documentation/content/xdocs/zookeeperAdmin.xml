@@ -800,6 +800,9 @@ server.3=zoo3:2888:3888</computeroutput></para>
               The left-hand side of the assignment is a colon-separated list of server
               identifiers. Note that groups must be disjoint and the union of all groups
               must be the ZooKeeper ensemble. </para>
+              
+              <para> You will find an example <ulink url="zookeeperHierarchicalQuorums.html">here</ulink>
+              </para>
             </listitem>
           </varlistentry>
 
@@ -815,6 +818,9 @@ server.3=zoo3:2888:3888</computeroutput></para>
               such as leader election and the atomic broadcast protocol. By default
               the weight of server is 1. If the configuration defines groups, but not
               weights, then a value of 1 will be assigned to all servers.  
+              </para>
+              
+              <para> You will find an example <ulink url="zookeeperHierarchicalQuorums.html">here</ulink>
               </para>
             </listitem>
           </varlistentry>

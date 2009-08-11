@@ -172,20 +172,22 @@ public class FastLeaderElection implements Election {
          */
         
         class WorkerReceiver implements Runnable {
-
+            volatile boolean stop;
         	QuorumCnxManager manager;
 
             WorkerReceiver(QuorumCnxManager manager) {
+                this.stop = false;
                 this.manager = manager;
             }
 
             public void run() {
                 
             	Message response;
-            	while (true) {
+            	while (!stop) {
                     // Sleeps on receive
             		try{
-            			response = manager.recvQueue.take();
+            			response = manager.recvQueue.poll(3000, TimeUnit.MILLISECONDS);
+            			if(response == null) continue;
             			
             			// Receive new message
             			LOG.debug("Receive new message.");
@@ -266,6 +268,7 @@ public class FastLeaderElection implements Election {
             					e.toString());
             		}
             	}
+                LOG.info("WorkerReceiver is down");
             }
         }
 
@@ -276,23 +279,26 @@ public class FastLeaderElection implements Election {
          */
         
         class WorkerSender implements Runnable {
-        	
+        	volatile boolean stop;
             QuorumCnxManager manager;
 
             WorkerSender(QuorumCnxManager manager){ 
+                this.stop = false;
                 this.manager = manager;
             }
             
             public void run() {
-                while (true) {
+                while (!stop) {
                     try {
-                        ToSend m = sendqueue.take();
+                        ToSend m = sendqueue.poll(3000, TimeUnit.MILLISECONDS);
+                        if(m == null) continue;
+                        
                         process(m);
                     } catch (InterruptedException e) {
                         break;
                     }
-
                 }
+                LOG.info("WorkerSender is down");
             }
 
             /**
@@ -326,6 +332,10 @@ public class FastLeaderElection implements Election {
             return (sendqueue.isEmpty() || recvqueue.isEmpty());
         }
 
+        
+        WorkerSender ws;
+        WorkerReceiver wr;
+        
         /**
          * Constructor of class Messenger.
          * 
@@ -333,20 +343,33 @@ public class FastLeaderElection implements Election {
          */
         Messenger(QuorumCnxManager manager) {
 
-            Thread t = new Thread(new WorkerSender(manager),
+            this.ws = new WorkerSender(manager);
+            
+            Thread t = new Thread(this.ws,
             		"WorkerSender Thread");
             t.setDaemon(true);
             t.start();
 
-            t = new Thread(new WorkerReceiver(manager),
+            this.wr = new WorkerReceiver(manager);
+        
+            t = new Thread(this.wr,
                     				"WorkerReceiver Thread");
             t.setDaemon(true);
             t.start();
         }
+        
+        /**
+         * Stops instances of WorkerSender and WorkerReceiver
+         */
+        void halt(){
+            this.ws.stop = true;
+            this.wr.stop = true;
+        }
 
     }
 
-    QuorumPeer self;
+    QuorumPeer self;    
+    Messenger messenger;
     volatile long logicalclock; /* Election instance */
     long proposedLeader;
     long proposedZxid;
@@ -369,7 +392,8 @@ public class FastLeaderElection implements Election {
      * @param manager   Connection manager
      */
     public FastLeaderElection(QuorumPeer self, QuorumCnxManager manager){
-    	this.manager = manager;
+    	this.stop = false;
+        this.manager = manager;
     	starter(self, manager);
     }
     
@@ -390,7 +414,7 @@ public class FastLeaderElection implements Election {
 
         sendqueue = new LinkedBlockingQueue<ToSend>();
         recvqueue = new LinkedBlockingQueue<Notification>();
-        new Messenger(manager);
+        this.messenger = new Messenger(manager);
     }
 
     private void leaveInstance() {
@@ -401,9 +425,14 @@ public class FastLeaderElection implements Election {
     	return manager;
     }
     
+    volatile boolean stop;
     public void shutdown(){
+        stop = true;
         LOG.debug("Shutting down connection manager");
         manager.halt();
+        LOG.debug("Shutting down messenger");
+        messenger.halt();
+        LOG.debug("FLE is down");
     }
 
     
@@ -434,6 +463,10 @@ public class FastLeaderElection implements Election {
      */
     private boolean totalOrderPredicate(long newId, long newZxid, long curId, long curZxid) {
         LOG.debug("id: " + newId + ", proposed id: " + curId + ", zxid: " + newZxid + ", proposed zxid: " + curZxid);
+        if(self.getQuorumVerifier().getWeight(newId) == 0){
+            return false;
+        }
+        
         if ((newZxid > curZxid)
                 || ((newZxid == curZxid) && (newId > curId)))
             return true;
@@ -550,7 +583,8 @@ public class FastLeaderElection implements Election {
              * Loop in which we exchange notifications until we find a leader
              */
     
-            while (self.getPeerState() == ServerState.LOOKING) {
+            while ((self.getPeerState() == ServerState.LOOKING) &&
+                    (!stop)){
                 /*
                  * Remove next notification from queue, times out after 2 times
                  * the termination time
@@ -606,14 +640,12 @@ public class FastLeaderElection implements Election {
                         }
                     
                         LOG.info("Adding vote");
-                        /*
-                         * Skip zero-weight servers
-                         */
-                        if(self.getQuorumVerifier().getWeight(n.sid) != 0) 
-                            recvset.put(n.sid, new Vote(n.leader, n.zxid, n.epoch));
+
+                        recvset.put(n.sid, new Vote(n.leader, n.zxid, n.epoch));
     
                         //If have received from all nodes, then terminate
-                        if (self.quorumPeers.size() == recvset.size()) {
+                        if ((self.quorumPeers.size() == recvset.size()) &&
+                                (self.getQuorumVerifier().getWeight(proposedLeader) != 0)){
                             self.setPeerState((proposedLeader == self.getId()) ? 
                                     ServerState.LEADING: ServerState.FOLLOWING);
                             leaveInstance();
