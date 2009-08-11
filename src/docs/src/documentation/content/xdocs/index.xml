@@ -63,6 +63,7 @@
       <li><a href="zookeeperAdmin.html">Administrator's Guide</a> - a guide for system administrators and anyone else who might deploy ZooKeeper</li>
       <li><a href="zookeeperQuotas.html">Quota Guide</a> - a guide for system administrators on Quotas in ZooKeeper. </li>
       <li><a href="zookeeperJMX.html">JMX</a> - how to enable JMX in ZooKeeper</li>
+      <li><a href="zookeeperHierarchicalQuorums.html">Hierarchical quorums</a></li>
       </ul>
       </li>
       
