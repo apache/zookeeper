@@ -56,6 +56,8 @@ BUGFIXES:
   ZOOKEEPER-499. electionAlg should default to FLE (3) - regression (phunt via
   mahadev)
 
+  ZOOKEEPER-477. zkCleanup.sh is flaky (fernando via mahadev)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
