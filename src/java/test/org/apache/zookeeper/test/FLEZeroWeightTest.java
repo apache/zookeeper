@@ -105,7 +105,7 @@ public class FLEZeroWeightTest extends TestCase {
     class LEThread extends Thread {
         int i;
         QuorumPeer peer;
-        //int peerRound = 1;
+        boolean fail;
 
         LEThread(QuorumPeer peer, int i) {
             this.i = i;
@@ -116,6 +116,7 @@ public class FLEZeroWeightTest extends TestCase {
         public void run() {
             try {
                 Vote v = null;
+                fail = false;
                 while(true){
 
                     //while(true) {
@@ -137,7 +138,7 @@ public class FLEZeroWeightTest extends TestCase {
                     votes[i] = v;
 
                     if((peer.getPeerState() == ServerState.LEADING) &&
-                            (peer.getId() > 2)) fail("Elected zero-weight server");
+                            (peer.getId() > 2)) fail = true;
                     
                     if((peer.getPeerState() == ServerState.FOLLOWING) ||
                             (peer.getPeerState() == ServerState.LEADING)) break;
@@ -150,10 +151,10 @@ public class FLEZeroWeightTest extends TestCase {
     }
 
     @Test
-    public void testHierarchicalQuorum() throws Exception {
+    public void testZeroWeightQuorum() throws Exception {
         FastLeaderElection le[] = new FastLeaderElection[count];
 
-        LOG.info("TestHierarchicalQuorum: " + getName()+ ", " + count);
+        LOG.info("TestZeroWeightQuorum: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
@@ -177,6 +178,9 @@ public class FLEZeroWeightTest extends TestCase {
             threads.get(i).join(15000);
             if (threads.get(i).isAlive()) {
                 fail("Threads didn't join");
+            } else {
+                if(threads.get(i).fail)
+                    fail("Elected zero-weight server");
             }
         }
     }

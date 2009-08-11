@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+<title>Introduction to hierarchical quorums</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -102,10 +102,10 @@ document.write("Last Published: " + document.lastModified);
     |start Menu
     +-->
 <div id="menu">
-<div onclick="SwitchMenu('menu_selected_1.1', 'skin/')" id="menu_selected_1.1Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Overview</div>
-<div id="menu_selected_1.1" class="selectedmenuitemgroup" style="display: block;">
-<div class="menupage">
-<div class="menupagetitle">Welcome</div>
+<div onclick="SwitchMenu('menu_1.1', 'skin/')" id="menu_1.1Title" class="menutitle">Overview</div>
+<div id="menu_1.1" class="menuitemgroup">
+<div class="menuitem">
+<a href="index.html">Welcome</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperOver.html">Overview</a>
@@ -180,10 +180,7 @@ document.write("Last Published: " + document.lastModified);
 <a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">Mailing Lists</a>
 </div>
 </div>
-<div id="credit">
-<hr>
-<a href="http://forrest.apache.org/"><img border="0" title="Built with Apache Forrest" alt="Built with Apache Forrest - logo" src="images/built-with-forrest-button.png" style="width: 88px;height: 31px;"></a>
-</div>
+<div id="credit"></div>
 <div id="roundbottom">
 <img style="display: none" class="corner" height="15" width="15" alt="" src="skin/images/rc-b-l-15-1body-2menu-3menu.png"></div>
 <!--+
@@ -199,159 +196,55 @@ document.write("Last Published: " + document.lastModified);
     +-->
 <div id="content">
 <div title="Portable Document Format" class="pdflink">
-<a class="dida" href="index.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+<a class="dida" href="zookeeperHierarchicalQuorums.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</h1>
-    
-<p>ZooKeeper is a high-performance coordination service for
-      distributed applications.  It exposes common services - such as
-      naming, configuration management, synchronization, and group
-      services - in a simple interface so you don't have to write them
-      from scratch.  You can use it off-the-shelf to implement
-      consensus, group management, leader election, and presence
-      protocols. And you can build on it for your own, specific needs.
-    </p>
+<h1>Introduction to hierarchical quorums</h1>
+  
+
+  
 
     
 <p>
-      The following documents describe concepts and procedures to get
-      you started using ZooKeeper. If you have more questions, please
-      ask the <a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">mailing list</a> or browse the
-      archives.
+    This document gives an example of how to use hierarchical quorums. The basic idea is
+    very simple. First, we split servers into groups, and add a line for each group listing
+    the servers that form this group. Next we have to assign a weight to each server.  
     </p>
     
-<ul>
-
-      
-<li>
-<strong>ZooKeeper Overview</strong>
-<p>Technical Overview Documents for Client Developers, Adminstrators, and Contributors</p>
-      
-<ul>
-<li>
-<a href="zookeeperOver.html">Overview</a> - a bird's eye view of ZooKeeper, including design concepts and architecture</li>
-      
-<li>
-<a href="zookeeperStarted.html">Getting Started</a> - a tutorial-style guide for developers to install, run, and program to ZooKeeper</li>
-      
-<li>
-<a href="releasenotes.html">Release Notes</a> - new developer and user facing features, improvements, and incompatibilities</li>
-      
-</ul>
-      
-</li>
-      
-      
-<li>
-<strong>Developers</strong>
-<p> Documents for Developers using the ZooKeeper Client API</p>
-      
-<ul>
-            
-<li>
-<a href="api/index.html">API Docs</a> - the technical reference to ZooKeeper Client APIs</li>
-      
-<li>
-<a href="zookeeperProgrammers.html">Programmer's Guide</a> - a client application developer's guide to ZooKeeper</li>
-      
-<li>
-<a href="javaExample.html">ZooKeeper Java Example</a> - a simple Zookeeper client appplication, written in Java</li>
-      
-<li>
-<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a> - sample implementations of barriers and queues</li>  
-      
-<li>
-<a href="recipes.html">ZooKeeper Recipes</a> - higher level solutions to common problems in distributed applications</li>
-      
-</ul>
-      
-</li>
-      
-      
-<li>
-<strong>Administrators &amp; Operators</strong> 
-<p> Documents for Administrators and Operations Engineers of ZooKeeper Deployments</p>
-      
-<ul>
-      
-<li>
-<a href="zookeeperAdmin.html">Administrator's Guide</a> - a guide for system administrators and anyone else who might deploy ZooKeeper</li>
-      
-<li>
-<a href="zookeeperQuotas.html">Quota Guide</a> - a guide for system administrators on Quotas in ZooKeeper. </li>
-      
-<li>
-<a href="zookeeperJMX.html">JMX</a> - how to enable JMX in ZooKeeper</li>
-      
-<li>
-<a href="zookeeperHierarchicalQuorums.html">Hierarchical quorums</a>
-</li>
-      
-</ul>
-      
-</li>
-      
-      
-<li>
-<strong>Contributors</strong>
-<p> Documents for Developers Contributing to the ZooKeeper Open Source Project</p>
-      
-<ul>
-      
-<li>
-<a href="zookeeperInternals.html">ZooKeeper Internals</a> - assorted topics on the inner workings of ZooKeeper</li>
-      
-</ul>
-      
-</li>
-      
-      
-<li>
-<strong>Miscellaneous ZooKeeper Documentation</strong>
-      
-<ul>
-      
-<li>
-<a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
-</li>
-      
-<li>
-<a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a>
-</li>    
-      
-</ul>
-      
-</li>
-
-	  
-<li>
-<strong>BookKeeper Documentation</strong>
-	  
-<p> BookKeeper is a highly-available system that implements high-performance write-ahead logging. It uses ZooKeeper for metadata, 
-	  which is the main reason for being a ZooKeeper contrib.
-	  </p>
-      
-<ul>
-      
-<li>
-<a href="bookkeeperOverview.html">henn, what's it again?</a>
-</li>
-	  
-<li>
-<a href="bookkeeperStarted.html">Ok, now how do I try it out</a>
-</li>
-	  
-<li>
-<a href="bookkeeperProgrammer.html">Awesome, but how do I integrate it with my app?</a>
-</li>
-      
-</ul>
-      
-</li>
     
-</ul>
-  
+<p>
+    The following example shows how to configure a system with three groups of three servers
+    each, and we assign a weight of 1 to each server:
+    </p>
+    
+    
+<pre class="code">
+    group.1=1:2:3
+    group.2=4:5:6
+    group.3=7:8:9
+   
+    weight.1=1
+    weight.2=1
+    weight.3=1
+    weight.4=1
+    weight.5=1
+    weight.6=1
+    weight.7=1
+    weight.8=1
+    weight.9=1
+ 	</pre>
+
+	
+<p>    
+    When running the system, we are able to form a quorum once we have a majority of votes from
+    a majority of non-zero-weight groups. Groups that have zero weight are discarded and not
+    considered when forming quorums. Looking at the example, we are able to form a quorum once
+    we have votes from at least two servers from each of two different groups.
+    </p> 
+ 
+<p align="right">
+<font size="-2"></font>
+</p>
 </div>
 <!--+
     |end content
@@ -371,7 +264,6 @@ document.write("Last Published: " + document.lastModified);
         Copyright &copy;
          2008 <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
 </div>
-<div id="logos"></div>
 <!--+
     |end bottomstrip
     +-->

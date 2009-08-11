@@ -58,6 +58,9 @@ BUGFIXES:
 
   ZOOKEEPER-477. zkCleanup.sh is flaky (fernando via mahadev)
 
+  ZOOKEEPER-498. Unending Leader Elections : WAN configuration (flavio via
+  mahadev) 
+
 IMPROVEMENTS:
 
 NEW FEATURES:
