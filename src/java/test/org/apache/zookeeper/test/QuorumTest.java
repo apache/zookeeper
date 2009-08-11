@@ -23,16 +23,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
-import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.quorum.FollowerHandler;
-import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,42 +92,6 @@ public class QuorumTest extends QuorumBase {
             InterruptedException, KeeperException
     {
         ct.testClientWithWatcherObj();
-    }
-    volatile int counter = 0;
-    volatile int errors = 0;
-    @Test
-    public void testLeaderShutdown() throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = new DisconnectableZooKeeper(qb.hostPort, ClientBase.CONNECTION_TIMEOUT, new Watcher() {
-            public void process(WatchedEvent event) {
-        }});
-        zk.create("/blah", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.create("/blah/blah", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        Leader leader = qb.s1.leader;
-        if (leader == null) leader = qb.s2.leader;
-        if (leader == null) leader = qb.s3.leader;
-        if (leader == null) leader = qb.s4.leader;
-        if (leader == null) leader = qb.s5.leader;
-        assertNotNull(leader);
-        for(int i = 0; i < 10000; i++) {
-            zk.setData("/blah/blah", new byte[0], -1, new AsyncCallback.StatCallback() {
-                public void processResult(int rc, String path, Object ctx,
-                        Stat stat) {
-                    counter++;
-                    if (rc != 0) {
-                        errors++;
-                    }
-                }
-            }, null);
-        }
-        ArrayList<FollowerHandler> fhs = new ArrayList<FollowerHandler>(leader.forwardingFollowers);
-        for(FollowerHandler f: fhs) {
-            f.sock.shutdownInput();
-        }
-        while(counter + errors < 10000) {
-            Thread.sleep(200);
-        }
-        assertTrue("We should have had some errors", errors != 0);
-        zk.close();
     }
     @Test
     public void testMultipleWatcherObjs() throws IOException,
