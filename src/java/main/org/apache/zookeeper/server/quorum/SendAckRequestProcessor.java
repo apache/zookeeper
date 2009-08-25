@@ -43,13 +43,33 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
             try {
                 follower.writePacket(qp, false);
             } catch (IOException e) {
-                LOG.warn("Ignoring unexpected exception during packet send", e);
+                LOG.warn("Closing connection to leader, exception during packet send", e);
+                try {
+                    if (!follower.sock.isClosed()) {
+                        follower.sock.close();
+                    }
+                } catch (IOException e1) {
+                    // Nothing to do, we are shutting things down, so an exception here is irrelevant
+                    LOG.debug("Ignoring error closing the connection", e1);
+                }
             }
         }
     }
     
     public void flush() throws IOException {
-        follower.writePacket(null, true);
+        try {
+            follower.writePacket(null, true);
+        } catch(IOException e) {
+            LOG.warn("Closing connection to leader, exception during packet send", e);
+            try {
+                if (!follower.sock.isClosed()) {
+                    follower.sock.close();
+                }
+            } catch (IOException e1) {
+                    // Nothing to do, we are shutting things down, so an exception here is irrelevant
+                    LOG.debug("Ignoring error closing the connection", e1);
+            }
+        }
     }
 
     public void shutdown() {

@@ -261,7 +261,7 @@ public abstract class ClientBase extends TestCase {
         File tmpFile = File.createTempFile("test", ".junit", parentDir);
         // don't delete tmpFile - this ensures we don't attempt to create
         // a tmpDir with a duplicate name
-
+        tmpFile.delete();
         File tmpDir = new File(tmpFile + ".dir");
         assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
         assertTrue(tmpDir.mkdirs());
@@ -395,7 +395,7 @@ public abstract class ClientBase extends TestCase {
         return JMXEnv.conn();
     }
 
-    private static boolean recursiveDelete(File d) {
+    public static boolean recursiveDelete(File d) {
         if (d.isDirectory()) {
             File children[] = d.listFiles();
             for (File f : children) {
