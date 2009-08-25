@@ -200,7 +200,7 @@ public class Follower {
                 readPacket(qp);
                 synchronized (zk) {
                     if (qp.getType() == Leader.DIFF) {
-                        LOG.info("Getting a diff from the leader!");
+                        LOG.info("Getting a diff from the leader 0x" + Long.toHexString(qp.getZxid()));
                         zk.loadData();
                     }
                     else if (qp.getType() == Leader.SNAP) {
