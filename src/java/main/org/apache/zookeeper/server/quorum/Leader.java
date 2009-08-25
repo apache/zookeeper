@@ -647,8 +647,7 @@ public class Leader {
                 }
                 handler.queuePacket(p.packet);
                 // Since the proposal has been committed we need to send the
-                // commit message
-                // also
+                // commit message also
                 QuorumPacket qp = new QuorumPacket(Leader.COMMIT, p.packet
                         .getZxid(), null, null);
                 handler.queuePacket(qp);

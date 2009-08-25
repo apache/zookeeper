@@ -25,12 +25,16 @@ import java.util.ArrayList;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.quorum.FollowerHandler;
+import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +55,7 @@ public class QuorumTest extends TestCase {
     protected void tearDown() throws Exception {
         qb.tearDown();
     }
-
+    
     @Test
     public void testDeleteWithChildren() throws Exception {
         ct.testDeleteWithChildren();
@@ -92,6 +96,7 @@ public class QuorumTest extends TestCase {
     {
         ct.testClientWithWatcherObj();
     }
+    
     @Test
     public void testMultipleWatcherObjs() throws IOException,
             InterruptedException, KeeperException
@@ -99,6 +104,56 @@ public class QuorumTest extends TestCase {
         ct.testMutipleWatcherObjs();
     }
     
+    volatile int counter = 0;
+    volatile int errors = 0;
+    @Test
+    public void testLeaderShutdown() throws IOException, InterruptedException, KeeperException {
+        ZooKeeper zk = new DisconnectableZooKeeper(qb.hostPort, ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+            public void process(WatchedEvent event) {
+        }});
+        zk.create("/blah", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/blah/blah", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        Leader leader = qb.s1.leader;
+        if (leader == null) leader = qb.s2.leader;
+        if (leader == null) leader = qb.s3.leader;
+        if (leader == null) leader = qb.s4.leader;
+        if (leader == null) leader = qb.s5.leader;
+        assertNotNull(leader);
+        for(int i = 0; i < 5000; i++) {
+            zk.setData("/blah/blah", new byte[0], -1, new AsyncCallback.StatCallback() {
+                public void processResult(int rc, String path, Object ctx,
+                        Stat stat) {
+                    counter++;
+                    if (rc != 0) {
+                        errors++;
+                    }
+                }
+            }, null);
+        }
+        ArrayList<FollowerHandler> fhs = new ArrayList<FollowerHandler>(leader.forwardingFollowers);
+        for(FollowerHandler f: fhs) {
+            f.sock.shutdownInput();
+        }
+        for(int i = 0; i < 5000; i++) {
+            zk.setData("/blah/blah", new byte[0], -1, new AsyncCallback.StatCallback() {
+                public void processResult(int rc, String path, Object ctx,
+                        Stat stat) {
+                    counter++;
+                    if (rc != 0) {
+                        errors++;
+                    }
+                }
+            }, null);
+        }
+        // check if all the followers are alive
+        assertTrue(qb.s1.isAlive());
+        assertTrue(qb.s2.isAlive());
+        assertTrue(qb.s3.isAlive());
+        assertTrue(qb.s4.isAlive());
+        assertTrue(qb.s5.isAlive());
+        zk.close();
+    }
+
     /**
      * Make sure that we can change sessions
      *  from follower to leader.
@@ -171,6 +226,5 @@ public class QuorumTest extends TestCase {
         }
         zk.close();
     }
-
-    // skip superhammer and clientcleanup as they are too expensive for quorum
+	// skip superhammer and clientcleanup as they are too expensive for quorum
 }

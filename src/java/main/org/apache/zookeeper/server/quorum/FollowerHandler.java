@@ -62,7 +62,7 @@ public class FollowerHandler extends Thread {
     
     long getSid(){
         return sid;
-    }
+    }                    
 
     /**
      * The packets to be sent to the follower
@@ -224,15 +224,23 @@ public class FollowerHandler extends Thread {
             } else {
             	this.sid = leader.followerCounter.getAndDecrement();
             }
-            LOG.info("The follower sid: " + this.sid);
+            LOG.info("Follower sid: " + this.sid + " : info : "
+                    + leader.self.quorumPeers.get(this.sid));
             
+            /* this is the last zxid from the follower but the leader might have to
+              restart the follower from a different zxid depending on truncate and diff. */
             long peerLastZxid = qp.getZxid();
-            
+            /* the default to send to the follower */
             int packetToSend = Leader.SNAP;
             boolean logTxns = true;
-
             long zxidToSend = 0;
-            // we are sending the diff
+            
+            /** the packets that the follower needs to get updates from **/
+            long updates = peerLastZxid;
+            
+            /* we are sending the diff check if we have proposals in memory to be able to 
+             * send a diff to the 
+             */ 
             synchronized(leader.zk.committedLog) {
                 if (leader.zk.committedLog.size() != 0) {
                     if ((leader.zk.maxCommittedLog >= peerLastZxid)
@@ -252,16 +260,7 @@ public class FollowerHandler extends Thread {
                 }
                 else {
                     logTxns = false;
-                }            }
-            long leaderLastZxid = leader.startForwarding(this, peerLastZxid);
-            QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
-                    leaderLastZxid, null, null);
-            oa.writeRecord(newLeaderQP, "packet");
-            bufferedOutput.flush();
-            // a special case when both the ids are the same
-            if (peerLastZxid == leaderLastZxid) {
-                packetToSend = Leader.DIFF;
-                zxidToSend = leaderLastZxid;
+                }            
             }
             //check if we decided to send a diff or we need to send a truncate
             // we avoid using epochs for truncating because epochs make things
@@ -274,11 +273,31 @@ public class FollowerHandler extends Thread {
                 // we can ask the follower to truncate the log
                 packetToSend = Leader.TRUNC;
                 zxidToSend = leader.zk.maxCommittedLog;
-
+                updates = zxidToSend;
             }
+            
+            /* see what other packets from the proposal
+             * and tobeapplied queues need to be sent
+             * and then decide if we can just send a DIFF
+             * or we actually need to send the whole snapshot
+             */
+            long leaderLastZxid = leader.startForwarding(this, updates);
+            // a special case when both the ids are the same 
+            if (peerLastZxid == leaderLastZxid) {
+                packetToSend = Leader.DIFF;
+                zxidToSend = leaderLastZxid;
+            }
+
+            QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
+                    leaderLastZxid, null, null);
+            oa.writeRecord(newLeaderQP, "packet");
+            bufferedOutput.flush();
+            
+           
             oa.writeRecord(new QuorumPacket(packetToSend, zxidToSend, null, null), "packet");
             bufferedOutput.flush();
-            // only if we are not truncating or fast sycning
+            
+            /* if we are not truncating or sending a diff just send a snapshot */
             if (packetToSend == Leader.SNAP) {
                 LOG.warn("Sending snapshot last zxid of peer is 0x"
                         + Long.toHexString(peerLastZxid) + " " 
@@ -289,7 +308,7 @@ public class FollowerHandler extends Thread {
                 oa.writeString("BenWasHere", "signature");
             }
             bufferedOutput.flush();
-            //
+            
             // Mutation packets will be queued during the serialize,
             // so we need to mark when the follower can actually start
             // using the data
