@@ -24,6 +24,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -271,8 +272,8 @@ public class FileTxnLog implements TxnLog {
      */
     public boolean truncate(long zxid) throws IOException {
         FileTxnIterator itr = new FileTxnIterator(this.logDir, zxid);
-        FileInputStream input = itr.inputStream;
-        long pos = input.getChannel().position();
+        PositionInputStream input = itr.inputStream;
+        long pos = input.getPosition();
         // now, truncate at the current position
         RandomAccessFile raf=new RandomAccessFile(itr.logFile,"rw");
         raf.setLength(pos);
@@ -322,6 +323,48 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
+     * a class that keeps track of the position 
+     * in the input stream. The position points to offset
+     * that has been consumed by the applications. It can 
+     * wrap buffered input streams to provide the right offset 
+     * for the application.
+     */
+    static class PositionInputStream extends FilterInputStream {
+        long position;
+        protected PositionInputStream(InputStream in) {
+            super(in);
+        }
+        
+        @Override
+        public int read() throws IOException {
+            int rc = super.read();
+            if (rc > 0) {
+                position++;
+            }
+            return rc;
+        }
+        
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int rc = super.read(b, off, len);
+            position += rc;
+            return rc;
+        }
+        
+        @Override
+        public long skip(long n) throws IOException {
+            long rc = super.skip(n);
+            if (rc > 0) {
+                position += rc;
+            }
+            return rc;
+        }
+        public long getPosition() {
+            return position;
+        }
+    }
+    
+    /**
      * this class implements the txnlog iterator interface
      * which is used for reading the transaction logs
      */
@@ -333,7 +376,8 @@ public class FileTxnLog implements TxnLog {
         File logFile;
         InputArchive ia;
         static final String CRC_ERROR="CRC check failed";
-        FileInputStream inputStream=null;
+       
+        PositionInputStream inputStream=null;
         //stored files is the list of files greater than
         //the zxid we are looking for.
         private ArrayList<File> storedFiles;
@@ -398,7 +442,7 @@ public class FileTxnLog implements TxnLog {
          * @param is the inputstream
          * @throws IOException
          */
-        protected void inStreamCreated(InputArchive ia, FileInputStream is)
+        protected void inStreamCreated(InputArchive ia, InputStream is)
             throws IOException{
             FileHeader header= new FileHeader();
             header.deserialize(ia, "fileheader");
@@ -416,9 +460,9 @@ public class FileTxnLog implements TxnLog {
          **/
         protected InputArchive createInputArchive(File logFile) throws IOException {
             if(inputStream==null){
-                inputStream= new FileInputStream(logFile);
+                inputStream= new PositionInputStream(new BufferedInputStream(new FileInputStream(logFile)));
                 LOG.debug("Created new input stream " + logFile);
-                ia  = BinaryInputArchive.getArchive(new BufferedInputStream(inputStream));
+                ia  = BinaryInputArchive.getArchive(inputStream);
                 inStreamCreated(ia,inputStream);
                 LOG.debug("created new input archive " + logFile);
             }
