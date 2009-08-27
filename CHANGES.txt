@@ -64,6 +64,9 @@ BUGFIXES:
   ZOOKEEPER-508. proposals and commits for DIFF and Truncate messages from the 
   leader to followers is buggy. (mahadev and ben via mahadev)
 
+  ZOOKEEPER-518. DEBUG message for outstanding proposals in leader should be
+   moved to trace. (phunt)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
