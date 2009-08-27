@@ -1,6 +1,6 @@
-Release 3.2.1
+Release 3.2.1 - 2009-08-27
 
-Backward compatibile changes:
+Backward compatible changes:
 
 BUGFIXES:
   ZOOKEEPER-468. avoid compile warning in send_auth_info(). (chris via flavio)
