@@ -410,14 +410,14 @@ public class Leader {
     synchronized public void processAck(long sid, long zxid, SocketAddress followerAddr) {
         boolean first = true;
         
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Ack zxid: 0x" + Long.toHexString(zxid));
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Ack zxid: 0x" + Long.toHexString(zxid));
             for (Proposal p : outstandingProposals.values()) {
                 long packetZxid = p.packet.getZxid();
-                LOG.debug("outstanding proposal: 0x"
+                LOG.trace("outstanding proposal: 0x"
                         + Long.toHexString(packetZxid));
             }
-            LOG.debug("outstanding proposals all");
+            LOG.trace("outstanding proposals all");
         }
         
         if (outstandingProposals.size() == 0) {
