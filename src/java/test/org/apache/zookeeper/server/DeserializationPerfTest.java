@@ -76,13 +76,13 @@ public class DeserializationPerfTest extends TestCase {
     @Test
     public void testWideDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
-        deserializeTree(2, 50000, 20);
+        deserializeTree(2, 10000, 20);
     }
 
     @Test
     public void testDeepDeserialize() throws
             InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
-        deserializeTree(1000, 1, 20);
+        deserializeTree(400, 1, 20);
     }
 
     @Test

@@ -92,6 +92,7 @@ bool getValue(const std::map<K,V>& map,const K& k,V& v){
 
 // millisecond sleep
 void millisleep(int ms);
+FILE *openlogfile(const char* name);
 // evaluate given predicate until it returns true or the timeout 
 // (in millis) has expired
 template<class Predicate>

@@ -60,9 +60,10 @@ public class DBSizeTest extends ClientBase {
             zk.create(path, data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             long baseLatency = System.currentTimeMillis() - startTime;
             
-            for(int i = 0; i < 16; i++) {
+            for(int i = 0; i < 1 /* was 16 */; i++) {
                 startTime = System.currentTimeMillis();
-                zk.create(path + '/' + i, data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create(path + '/' + i, data, Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT);
                 long latency = System.currentTimeMillis() - startTime;
                 System.out.println("Latency = " + latency);
                 //assertTrue(latency < baseLatency + 10);
@@ -71,12 +72,14 @@ public class DBSizeTest extends ClientBase {
                             CreateMode.EPHEMERAL, new AsyncCallback.StringCallback() {
                         public void processResult(int rc, String path,
                                 Object ctx, String name) {
+                            // empty
                         }}, null);
                 }
             }
         } finally {
-            if(zk != null)
+            if (zk != null) {
                 zk.close();
+            }
         }
     }
 

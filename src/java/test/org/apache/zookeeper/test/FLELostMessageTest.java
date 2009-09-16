@@ -22,9 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.Semaphore;
 
 import junit.framework.TestCase;
 

@@ -17,39 +17,32 @@
  */
 
 package org.apache.zookeeper.test;
-
 import org.apache.log4j.Logger;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooDefs.Ids;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ChrootClientTest extends ClientTest {
-    private static final Logger LOG = Logger.getLogger(ChrootClientTest.class);
+public class QuorumHammerTest extends QuorumBase {
+    private static final Logger LOG = Logger.getLogger(QuorumHammerTest.class);
+    public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
+
+    private final QuorumBase qb = new QuorumBase();
+    private final ClientHammerTest cht = new ClientHammerTest();
 
     @Before
     @Override
     protected void setUp() throws Exception {
-        String hp = hostPort;
-        hostPort = hostPort + "/chrootclienttest";
+        qb.setUp();
+        cht.hostPort = qb.hostPort;
+        cht.setUpAll();
+    }
 
-        System.out.println(hostPort);
-        super.setUp();
-
-        LOG.info("STARTING " + getName());
-
-        ZooKeeper zk = createClient(hp);
-        try {
-            zk.create("/chrootclienttest", null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
-        } finally {
-            zk.close();
-        }
+    protected void tearDown() throws Exception {
+        cht.tearDownAll();
+        qb.tearDown();
     }
     
     @Test
-    public void testPing() throws Exception {
-        // not necessary to repeat this, expensive and not chroot related
+    public void testHammerBasic() throws Throwable {
+        cht.testHammerBasic();
     }
 }

@@ -26,7 +26,7 @@
 #include <time.h>
 
 #define TIME_NOW_BUF_SIZE 1024
-#define FORMAT_LOG_BUF_SIZE 2048
+#define FORMAT_LOG_BUF_SIZE 4096
 
 #ifdef THREADED
 #include <pthread.h>

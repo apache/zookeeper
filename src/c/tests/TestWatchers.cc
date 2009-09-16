@@ -36,12 +36,26 @@ class Zookeeper_watchers : public CPPUNIT_NS::TestFixture
 
     static void watcher(zhandle_t *, int, int, const char *,void*){}
     zhandle_t *zh;
+    FILE *logfile;
     
 public:
 
+    Zookeeper_watchers() {
+      logfile = openlogfile("Zookeeper_watchers");
+    }
+
+    ~Zookeeper_watchers() {
+      if (logfile) {
+        fflush(logfile);
+        fclose(logfile);
+        logfile = 0;
+      }
+    }
+
     void setUp()
     {
-        zoo_set_debug_level((ZooLogLevel)0); // disable logging
+        zoo_set_log_stream(logfile);
+
         zoo_deterministic_conn_order(0);
         zh=0;
     }

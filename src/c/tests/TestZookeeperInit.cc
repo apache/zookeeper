@@ -54,12 +54,24 @@ class Zookeeper_init : public CPPUNIT_NS::TestFixture
     zhandle_t *zh;
     MockPthreadsNull* pthreadMock;   
     static void watcher(zhandle_t *, int , int , const char *,void*){}
+    FILE *logfile;
 public: 
-    Zookeeper_init():zh(0),pthreadMock(0){}
-    
+    Zookeeper_init():zh(0),pthreadMock(0){
+      logfile = openlogfile("Zookeeper_init");
+    }
+
+    ~Zookeeper_init() {
+      if (logfile) {
+        fflush(logfile);
+        fclose(logfile);
+        logfile = 0;
+      }
+    }
+
     void setUp()
     {
-    	zoo_set_debug_level((ZooLogLevel)0); // disable logging
+        zoo_set_log_stream(logfile);
+
         zoo_deterministic_conn_order(0);
 #ifdef THREADED
         // disable threading

@@ -37,6 +37,8 @@ using namespace std;
 
 #include <zookeeper.h>
 
+#include "Util.h"
+
 #ifdef THREADED
     static void yield(zhandle_t *zh, int i)
     {
@@ -197,35 +199,37 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     }
     
     zhandle_t *createClient(watchctx_t *ctx) {
-        zhandle_t *zk = zookeeper_init(hostPorts, watcher, 10000, 0,
-                                       ctx, 0);
+        zhandle_t *zk = zookeeper_init(hostPorts, watcher, 10000, 0, ctx, 0);
         ctx->zh = zk;
         sleep(1);
         return zk;
     }
     
-    zhandle_t *createchClient(watchctx_t *ctx) {
-        zhandle_t *zk = zookeeper_init(hp_chroot, watcher, 10000, 0,
-                                       ctx, 0);
+    zhandle_t *createchClient(watchctx_t *ctx, const char* chroot) {
+        zhandle_t *zk = zookeeper_init(chroot, watcher, 10000, 0, ctx, 0);
         ctx->zh = zk;
         sleep(1);
         return zk;
     }
         
+    FILE *logfile;
 public:
 
+    Zookeeper_simpleSystem() {
+      logfile = openlogfile("Zookeeper_simpleSystem");
+    }
+
+    ~Zookeeper_simpleSystem() {
+      if (logfile) {
+        fflush(logfile);
+        fclose(logfile);
+        logfile = 0;
+      }
+    }
 
     void setUp()
     {
-        char cmd[1024];
-        sprintf(cmd, "%s startClean %s", ZKSERVER_CMD, getHostPorts());
-        CPPUNIT_ASSERT(system(cmd) == 0);
-
-        struct sigaction act;
-        act.sa_handler = SIG_IGN;
-        sigemptyset(&act.sa_mask);
-        act.sa_flags = 0;
-        CPPUNIT_ASSERT(sigaction(SIGPIPE, &act, NULL) == 0);
+        zoo_set_log_stream(logfile);
     }
     
 
@@ -236,14 +240,13 @@ public:
     }
 
     void stopServer() {
-        tearDown();
+        char cmd[1024];
+        sprintf(cmd, "%s stop %s", ZKSERVER_CMD, getHostPorts());
+        CPPUNIT_ASSERT(system(cmd) == 0);
     }
 
     void tearDown()
     {
-        char cmd[1024];
-        sprintf(cmd, "%s stop %s", ZKSERVER_CMD, getHostPorts());
-        CPPUNIT_ASSERT(system(cmd) == 0);
     }
     
     void testPing()
@@ -252,31 +255,36 @@ public:
         watchctx_t ctxWC;
         zhandle_t *zkIdle = createClient(&ctxIdle);
         zhandle_t *zkWatchCreator = createClient(&ctxWC);
-        int rc;
-        char path[80];
+
         CPPUNIT_ASSERT(zkIdle);
         CPPUNIT_ASSERT(zkWatchCreator);
+
+        char path[80];
+        sprintf(path, "/testping");
+        int rc = zoo_create(zkWatchCreator, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
         for(int i = 0; i < 30; i++) {
-            sprintf(path, "/%i", i);
+            sprintf(path, "/testping/%i", i);
             rc = zoo_create(zkWatchCreator, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
         for(int i = 0; i < 30; i++) {
-            sprintf(path, "/%i", i);
+            sprintf(path, "/testping/%i", i);
             struct Stat stat;
             rc = zoo_exists(zkIdle, path, 1, &stat);
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
         for(int i = 0; i < 30; i++) {
-            sprintf(path, "/%i", i);
+            sprintf(path, "/testping/%i", i);
             usleep(500000);
             rc = zoo_delete(zkWatchCreator, path, -1);
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
         struct Stat stat;
-        CPPUNIT_ASSERT_EQUAL((int)ZNONODE, zoo_exists(zkIdle, "/0", 0, &stat));
+        CPPUNIT_ASSERT_EQUAL((int)ZNONODE, zoo_exists(zkIdle, "/testping/0", 0, &stat));
     }
 
     bool waitForEvent(zhandle_t *zh, watchctx_t *ctx, int seconds) {
@@ -291,7 +299,7 @@ public:
     
     static zhandle_t *async_zk;
     static volatile int count;
-    static char* hp_chroot;
+    static const char* hp_chroot;
     
     static void statCompletion(int rc, const struct Stat *stat, const void *data) {
         int tmp = (int) (long) data;
@@ -537,41 +545,41 @@ public:
 
     void testPath() {
         watchctx_t ctx;
-        char pathbuf[10];
+        char pathbuf[20];
         zhandle_t *zk = createClient(&ctx);
         CPPUNIT_ASSERT(zk);
         int rc = 0;
 
-        memset(pathbuf, 'X', 10);
-        rc = zoo_create(zk, "/path0", "", 0, 
+        memset(pathbuf, 'X', 20);
+        rc = zoo_create(zk, "/testpathpath0", "", 0, 
                         &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 0);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         CPPUNIT_ASSERT_EQUAL('X', pathbuf[0]);
 
-        rc = zoo_create(zk, "/path1", "", 0, 
+        rc = zoo_create(zk, "/testpathpath1", "", 0, 
                         &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 1);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         CPPUNIT_ASSERT(strlen(pathbuf) == 0);
 
-        rc = zoo_create(zk, "/path2", "", 0, 
+        rc = zoo_create(zk, "/testpathpath2", "", 0, 
                         &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 2);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         CPPUNIT_ASSERT(strcmp(pathbuf, "/") == 0);
 
-        rc = zoo_create(zk, "/path3", "", 0, 
+        rc = zoo_create(zk, "/testpathpath3", "", 0, 
                         &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 3);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-        CPPUNIT_ASSERT(strcmp(pathbuf, "/p") == 0);
+        CPPUNIT_ASSERT(strcmp(pathbuf, "/t") == 0);
 
-        rc = zoo_create(zk, "/path7", "", 0, 
-                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 7);
+        rc = zoo_create(zk, "/testpathpath7", "", 0, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 15);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-        CPPUNIT_ASSERT(strcmp(pathbuf, "/path7") == 0);
+        CPPUNIT_ASSERT(strcmp(pathbuf, "/testpathpath7") == 0);
 
-        rc = zoo_create(zk, "/path8", "", 0, 
-                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 8);
+        rc = zoo_create(zk, "/testpathpath8", "", 0, 
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, 16);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-        CPPUNIT_ASSERT(strcmp(pathbuf, "/path8") == 0);
+        CPPUNIT_ASSERT(strcmp(pathbuf, "/testpathpath8") == 0);
     }
 
     void testPathValidation() {
@@ -638,13 +646,12 @@ public:
         const char* data = "garbage";
         const char* retStr = "/chroot"; 
         const char* root= "/";
-        hp_chroot = "127.0.0.1:22181/test/mahadev";
-        zk_ch = createchClient(&ctx_ch);
+        zk_ch = createchClient(&ctx_ch, "127.0.0.1:22181/testch1/mahadev");
         CPPUNIT_ASSERT(zk_ch != NULL);
         zk = createClient(&ctx);
-        rc = zoo_create(zk, "/test", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        rc = zoo_create(zk, "/testch1", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-        rc = zoo_create(zk, "/test/mahadev", data, 7, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        rc = zoo_create(zk, "/testch1/mahadev", data, 7, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         // try an exists with /
         len = 60;
@@ -662,12 +669,12 @@ public:
         CPPUNIT_ASSERT(count == 0);
         rc = zoo_create(zk_ch, "/chroot/child", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-        rc = zoo_exists(zk, "/test/mahadev/chroot/child", 0, &stat);
+        rc = zoo_exists(zk, "/testch1/mahadev/chroot/child", 0, &stat);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         
         rc = zoo_delete(zk_ch, "/chroot/child", -1);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-        rc = zoo_exists(zk, "/test/mahadev/chroot/child", 0, &stat);
+        rc = zoo_exists(zk, "/testch1/mahadev/chroot/child", 0, &stat);
         CPPUNIT_ASSERT_EQUAL((int) ZNONODE, rc);
         rc = zoo_wget(zk_ch, "/chroot", watcher_chroot_fn, (char*) retStr,
                       buf, &len, &stat);
@@ -723,7 +730,7 @@ public:
 
         async_zk = zk;
         for(i = 0; i < COUNT; i++) {
-            sprintf(path, "/%d", i);
+            sprintf(path, "/awar%d", i);
             rc = zoo_awexists(zk, path, watcher, &lctx[i], statCompletion, (void*)ZNONODE);
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
@@ -731,14 +738,14 @@ public:
         yield(zk, 0);
 
         for(i = 0; i < COUNT/2; i++) {
-            sprintf(path, "/%d", i);
+            sprintf(path, "/awar%d", i);
             rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0, stringCompletion, strdup(path));
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
         yield(zk, 3);
         for(i = 0; i < COUNT/2; i++) {
-            sprintf(path, "/%d", i);
+            sprintf(path, "/awar%d", i);
             CPPUNIT_ASSERT_MESSAGE(path, waitForEvent(zk, &lctx[i], 5));
             evt = lctx[i].getEvent();
             CPPUNIT_ASSERT_EQUAL_MESSAGE(evt.path.c_str(), ZOO_CREATED_EVENT, evt.type);
@@ -746,7 +753,7 @@ public:
         }
 
         for(i = COUNT/2 + 1; i < COUNT*10; i++) {
-            sprintf(path, "/%d", i);
+            sprintf(path, "/awar%d", i);
             rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0, stringCompletion, strdup(path));
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
@@ -758,7 +765,7 @@ public:
         CPPUNIT_ASSERT(ctx.waitForConnected(zk));
         yield(zk, 3);
         for(i = COUNT/2+1; i < COUNT; i++) {
-            sprintf(path, "/%d", i);
+            sprintf(path, "/awar%d", i);
             CPPUNIT_ASSERT_MESSAGE(path, waitForEvent(zk, &lctx[i], 5));
             evt = lctx[i].getEvent();
             CPPUNIT_ASSERT_EQUAL_MESSAGE(evt.path, ZOO_CREATED_EVENT, evt.type);
@@ -918,22 +925,44 @@ public:
 
     void testWatcherAutoResetWithGlobal()
     {
+      {
         watchctx_t ctx;
         zhandle_t *zk = createClient(&ctx);
+        int rc = zoo_create(zk, "/testarwg", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        rc = zoo_create(zk, "/testarwg/arwg", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+      }
+
+      {
+        watchctx_t ctx;
+        zhandle_t *zk = createchClient(&ctx, "127.0.0.1:22181/testarwg/arwg");
+
         testWatcherAutoReset(zk, &ctx, &ctx);
+      }
     }
 
     void testWatcherAutoResetWithLocal()
     {
+      {
+        watchctx_t ctx;
+        zhandle_t *zk = createClient(&ctx);
+        int rc = zoo_create(zk, "/testarwl", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        rc = zoo_create(zk, "/testarwl/arwl", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+      }
+
+      {
         watchctx_t ctx;
         watchctx_t lctx;
-        zhandle_t *zk = createClient(&ctx);
+        zhandle_t *zk = createchClient(&ctx, "127.0.0.1:22181/testarwl/arwl");
         testWatcherAutoReset(zk, &ctx, &lctx);
+      }
     }
 };
 
 volatile int Zookeeper_simpleSystem::count;
 zhandle_t *Zookeeper_simpleSystem::async_zk;
 const char Zookeeper_simpleSystem::hostPorts[] = "127.0.0.1:22181";
-char* Zookeeper_simpleSystem::hp_chroot;
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_simpleSystem);

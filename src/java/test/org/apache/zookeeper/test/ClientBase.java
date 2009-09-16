@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -45,6 +47,8 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
+
+import com.sun.management.UnixOperatingSystemMXBean;
 
 public abstract class ClientBase extends TestCase {
     protected static final Logger LOG = Logger.getLogger(ClientBase.class);
@@ -141,11 +145,16 @@ public abstract class ClientBase extends TestCase {
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp)
         throws IOException, InterruptedException
     {
+        return createClient(watcher, hp, CONNECTION_TIMEOUT);
+    }
+
+    protected TestableZooKeeper createClient(CountdownWatcher watcher,
+            String hp, int timeout)
+        throws IOException, InterruptedException
+    {
         watcher.reset();
-        TestableZooKeeper zk =
-            new TestableZooKeeper(hp, CONNECTION_TIMEOUT, watcher);
-        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT,
-                TimeUnit.MILLISECONDS))
+        TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
+        if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS))
         {
             fail("Unable to connect to server");
         }
@@ -261,7 +270,6 @@ public abstract class ClientBase extends TestCase {
         File tmpFile = File.createTempFile("test", ".junit", parentDir);
         // don't delete tmpFile - this ensures we don't attempt to create
         // a tmpDir with a duplicate name
-        tmpFile.delete();
         File tmpDir = new File(tmpFile + ".dir");
         assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
         assertTrue(tmpDir.mkdirs());
@@ -338,6 +346,20 @@ public abstract class ClientBase extends TestCase {
 
         startServer();
 
+        /* some useful information - log the number of fds used before
+         * and after a test is run. Helps to verify we are freeing resources
+         * correctly. Unfortunately this only works on unix systems (the
+         * only place sun has implemented as part of the mgmt bean api.
+         */
+        OperatingSystemMXBean osMbean =
+            ManagementFactory.getOperatingSystemMXBean();
+        if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
+            UnixOperatingSystemMXBean unixos =
+                (UnixOperatingSystemMXBean)osMbean;
+            LOG.info("Initial fdcount is: "
+                    + unixos.getOpenFileDescriptorCount());
+        }
+
         LOG.info("Client test setup finished");
     }
 
@@ -373,6 +395,21 @@ public abstract class ClientBase extends TestCase {
     @Override
     protected void tearDown() throws Exception {
         LOG.info("tearDown starting");
+
+        /* some useful information - log the number of fds used before
+         * and after a test is run. Helps to verify we are freeing resources
+         * correctly. Unfortunately this only works on unix systems (the
+         * only place sun has implemented as part of the mgmt bean api.
+         */
+        OperatingSystemMXBean osMbean =
+            ManagementFactory.getOperatingSystemMXBean();
+        if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
+            UnixOperatingSystemMXBean unixos =
+                (UnixOperatingSystemMXBean)osMbean;
+            LOG.info("fdcount after test is: "
+                    + unixos.getOpenFileDescriptorCount());
+        }
+
         tearDownAll();
 
         stopServer();
