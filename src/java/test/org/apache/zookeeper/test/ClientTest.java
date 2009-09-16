@@ -19,9 +19,10 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +44,8 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.junit.Test;
 
+import com.sun.management.UnixOperatingSystemMXBean;
+
 public class ClientTest extends ClientBase {
     protected static final Logger LOG = Logger.getLogger(ClientTest.class);
 
@@ -52,21 +55,25 @@ public class ClientTest extends ClientBase {
         LOG.info("FINISHED " + getName());
     }
 
+    /** Verify that pings are sent, keeping the "idle" client alive */
     @Test
     public void testPing() throws Exception {
         ZooKeeper zkIdle = null;
         ZooKeeper zkWatchCreator = null;
         try {
-            zkIdle = createClient();
+            CountdownWatcher watcher = new CountdownWatcher();
+            zkIdle = createClient(watcher, hostPort, 10000);
+
             zkWatchCreator = createClient();
 
-            for (int i = 0; i < 30; i++) {
-                zkWatchCreator.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            for (int i = 0; i < 10; i++) {
+                zkWatchCreator.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT);
             }
-            for (int i = 0; i < 30; i++) {
+            for (int i = 0; i < 10; i++) {
                 zkIdle.exists("/" + i, true);
             }
-            for (int i = 0; i < 30; i++) {
+            for (int i = 0; i < 10; i++) {
                 Thread.sleep(1000);
                 zkWatchCreator.delete("/" + i, -1);
             }
@@ -593,209 +600,6 @@ public class ClientTest extends ClientBase {
         zk.close();
     }
 
-    private static final long HAMMERTHREAD_LATENCY = 5;
-
-    private static abstract class HammerThread extends Thread {
-        protected final int count;
-        protected volatile int current = 0;
-
-        HammerThread(String name, int count) {
-            super(name);
-            this.count = count;
-        }
-    }
-
-    private static class BasicHammerThread extends HammerThread {
-        private final ZooKeeper zk;
-        private final String prefix;
-
-        BasicHammerThread(String name, ZooKeeper zk, String prefix, int count) {
-            super(name, count);
-            this.zk = zk;
-            this.prefix = prefix;
-        }
-
-        public void run() {
-            byte b[] = new byte[256];
-            try {
-                for (; current < count; current++) {
-                    // Simulate a bit of network latency...
-                    Thread.sleep(HAMMERTHREAD_LATENCY);
-                    zk.create(prefix + current, b, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                }
-            } catch (Throwable t) {
-                LOG.error("Client create operation failed", t);
-            } finally {
-                try {
-                    zk.close();
-                } catch (InterruptedException e) {
-                    LOG.warn("Unexpected", e);
-                }
-            }
-        }
-    }
-
-    private static class SuperHammerThread extends HammerThread {
-        private final ClientTest parent;
-        private final String prefix;
-
-        SuperHammerThread(String name, ClientTest parent, String prefix,
-                int count)
-        {
-            super(name, count);
-            this.parent = parent;
-            this.prefix = prefix;
-        }
-
-        public void run() {
-            byte b[] = new byte[256];
-            try {
-                for (; current < count; current++) {
-                    ZooKeeper zk = parent.createClient();
-                    try {
-                        zk.create(prefix + current, b, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                    } finally {
-                        try {
-                            zk.close();
-                        } catch (InterruptedException e) {
-                            LOG.warn("Unexpected", e);
-                        }
-                    }
-                }
-            } catch (Throwable t) {
-                LOG.error("Client create operation failed", t);
-            }
-        }
-    }
-
-    /**
-     * Separate threads each creating a number of nodes. Each thread
-     * is using a non-shared (owned by thread) client for all node creations.
-     * @throws Throwable
-     */
-    @Test
-    public void testHammerBasic() throws Throwable {
-        try {
-            final int threadCount = 10;
-            final int childCount = 1000;
-
-            HammerThread[] threads = new HammerThread[threadCount];
-            long start = System.currentTimeMillis();
-            for (int i = 0; i < threads.length; i++) {
-                ZooKeeper zk = createClient();
-                String prefix = "/test-" + i;
-                zk.create(prefix, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                prefix += "/";
-                HammerThread thread =
-                    new BasicHammerThread("BasicHammerThread-" + i, zk, prefix,
-                            childCount);
-                thread.start();
-
-                threads[i] = thread;
-            }
-
-            verifyHammer(start, threads, childCount);
-        } catch (Throwable t) {
-            LOG.error("test failed", t);
-            throw t;
-        }
-    }
-
-    /**
-     * Separate threads each creating a number of nodes. Each thread
-     * is creating a new client for each node creation.
-     * @throws Throwable
-     */
-    @Test
-    public void testHammerSuper() throws Throwable {
-        try {
-            final int threadCount = 5;
-            final int childCount = 10;
-
-            HammerThread[] threads = new HammerThread[threadCount];
-            long start = System.currentTimeMillis();
-            for (int i = 0; i < threads.length; i++) {
-                String prefix = "/test-" + i;
-                {
-                    ZooKeeper zk = createClient();
-                    try {
-                        zk.create(prefix, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                    } finally {
-                        zk.close();
-                    }
-                }
-                prefix += "/";
-                HammerThread thread =
-                    new SuperHammerThread("SuperHammerThread-" + i, this,
-                            prefix, childCount);
-                thread.start();
-
-                threads[i] = thread;
-            }
-
-            verifyHammer(start, threads, childCount);
-        } catch (Throwable t) {
-            LOG.error("test failed", t);
-            throw t;
-        }
-    }
-
-    public void verifyHammer(long start, HammerThread[] threads, int childCount)
-        throws IOException, InterruptedException, KeeperException
-    {
-        // look for the clients to finish their create operations
-        LOG.info("Starting check for completed hammers");
-        int workingCount = threads.length;
-        for (int i = 0; i < 120; i++) {
-            Thread.sleep(10000);
-            for (HammerThread h : threads) {
-                if (!h.isAlive() || h.current == h.count) {
-                    workingCount--;
-                }
-            }
-            if (workingCount == 0) {
-                break;
-            }
-            workingCount = threads.length;
-        }
-        if (workingCount > 0) {
-            for (HammerThread h : threads) {
-                LOG.warn(h.getName() + " never finished creation, current:"
-                        + h.current);
-            }
-        } else {
-            LOG.info("Hammer threads completed creation operations");
-        }
-
-        for (HammerThread h : threads) {
-            final int safetyFactor = 3;
-            verifyThreadTerminated(h,
-                    threads.length * childCount
-                    * HAMMERTHREAD_LATENCY * safetyFactor);
-        }
-        LOG.info(new Date() + " Total time "
-                + (System.currentTimeMillis() - start));
-
-        ZooKeeper zk = createClient();
-        try {
-
-            LOG.info("******************* Connected to ZooKeeper" + new Date());
-            for (int i = 0; i < threads.length; i++) {
-                LOG.info("Doing thread: " + i + " " + new Date());
-                List<String> children =
-                    zk.getChildren("/test-" + i, false);
-                assertEquals(childCount, children.size());
-            }
-            for (int i = 0; i < threads.length; i++) {
-                List<String> children =
-                    zk.getChildren("/test-" + i, false);
-                assertEquals(childCount, children.size());
-            }
-        } finally {
-            zk.close();
-        }
-    }
-
     private class VerifyClientCleanup extends Thread {
         int count;
         int current = 0;
@@ -826,8 +630,26 @@ public class ClientTest extends ClientBase {
      */
     @Test
     public void testClientCleanup() throws Throwable {
-        final int threadCount = 20;
-        final int clientCount = 100;
+        OperatingSystemMXBean osMbean =
+            ManagementFactory.getOperatingSystemMXBean();
+        if (osMbean == null 
+                || !(osMbean instanceof UnixOperatingSystemMXBean))
+        {
+            LOG.warn("skipping testClientCleanup, only available on Unix");
+            return;
+        }
+
+        final int threadCount = 3;
+        final int clientCount = 10;
+
+        /* Log the number of fds used before and after a test is run. Verifies
+         * we are freeing resources correctly. Unfortunately this only works
+         * on unix systems (the only place sun has implemented as part of the
+         * mgmt bean api).
+         */
+        UnixOperatingSystemMXBean unixos =
+            (UnixOperatingSystemMXBean) osMbean;
+        long initialFdCount = unixos.getOpenFileDescriptorCount();
 
         VerifyClientCleanup threads[] = new VerifyClientCleanup[threadCount];
 
@@ -840,5 +662,10 @@ public class ClientTest extends ClientBase {
             threads[i].join(600000);
             assertTrue(threads[i].current == threads[i].count);
         }
+        
+        // if this fails it means we are not cleaning up after the closed
+        // sessions.
+        assertTrue("open fds after test are not significantly higher than before",
+                unixos.getOpenFileDescriptorCount() <= initialFdCount + 10);
     }
 }

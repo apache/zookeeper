@@ -34,7 +34,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -64,7 +63,7 @@ public class HierarchicalQuorumTest extends ClientBase {
     private int leport5;
 
     Properties qp;
-    private final ClientTest ct = new ClientTest();
+    private final ClientHammerTest cht = new ClientHammerTest();
     
     @Override
     protected void setUp() throws Exception {
@@ -113,8 +112,8 @@ public class HierarchicalQuorumTest extends ClientBase {
         qp.load(is);
         startServers();
 
-        ct.hostPort = hostPort;
-        ct.setUpAll();
+        cht.hostPort = hostPort;
+        cht.setUpAll();
         
         LOG.info("Setup finished");
     }
@@ -212,7 +211,7 @@ public class HierarchicalQuorumTest extends ClientBase {
     @Override
     protected void tearDown() throws Exception {
         LOG.info("TearDown started");
-        ct.tearDownAll();
+        cht.tearDownAll();
 
         LOG.info("Shutting down server 1");
         shutdown(s1);
@@ -267,6 +266,6 @@ public class HierarchicalQuorumTest extends ClientBase {
 
     @Test
     public void testHierarchicalQuorum() throws Throwable {
-        ct.testHammerBasic();
+        cht.runHammer(5, 10);
     }
 }

@@ -37,6 +37,8 @@ using namespace std;
 
 #include <zookeeper.h>
 
+#include "Util.h"
+
 #ifdef THREADED
     static void yield(zhandle_t *zh, int i)
     {
@@ -193,12 +195,30 @@ class Zookeeper_clientretry : public CPPUNIT_NS::TestFixture
         return zk;
     }
     
+    FILE *logfile;
 public:
 
+    Zookeeper_clientretry() {
+      logfile = openlogfile("Zookeeper_clientretry");
+    }
+
+    ~Zookeeper_clientretry() {
+      if (logfile) {
+        fflush(logfile);
+        fclose(logfile);
+        logfile = 0;
+      }
+    }
 
     void setUp()
     {
+        zoo_set_log_stream(logfile);
+
         char cmd[1024];
+        sprintf(cmd, "%s stop %s", ZKSERVER_CMD, getHostPorts());
+        CPPUNIT_ASSERT(system(cmd) == 0);
+
+        /* we are testing that if max cnxns is exceeded the server does the right thing */
         sprintf(cmd, "export ZKMAXCNXNS=1;%s startClean %s", ZKSERVER_CMD, getHostPorts());
         CPPUNIT_ASSERT(system(cmd) == 0);
 
@@ -214,6 +234,16 @@ public:
         char cmd[1024];
         sprintf(cmd, "%s stop %s", ZKSERVER_CMD, getHostPorts());
         CPPUNIT_ASSERT(system(cmd) == 0);
+
+        /* restart the server in "normal" mode */
+        sprintf(cmd, "%s startClean %s", ZKSERVER_CMD, getHostPorts());
+        CPPUNIT_ASSERT(system(cmd) == 0);
+
+        struct sigaction act;
+        act.sa_handler = SIG_IGN;
+        sigemptyset(&act.sa_mask);
+        act.sa_flags = 0;
+        CPPUNIT_ASSERT(sigaction(SIGPIPE, &act, NULL) == 0);
     }
 
     bool waitForEvent(zhandle_t *zh, watchctx_t *ctx, int seconds) {
@@ -229,7 +259,6 @@ public:
     void testRetry()
     {
       watchctx_t ctx1, ctx2;
-      zoo_set_debug_level((ZooLogLevel)0); // disable logging
       zhandle_t *zk1 = createClient(&ctx1);
       CPPUNIT_ASSERT_EQUAL(true, ctx1.waitForConnected(zk1));
       zhandle_t *zk2 = createClient(&ctx2);

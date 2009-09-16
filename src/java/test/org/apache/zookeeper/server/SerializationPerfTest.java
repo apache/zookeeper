@@ -84,13 +84,13 @@ public class SerializationPerfTest extends TestCase {
     @Test
     public void testWideSerialize()
             throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
-        serializeTree(2, 50000, 20);
+        serializeTree(2, 10000, 20);
     }
 
     @Test
     public void testDeepSerialize()
             throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
-        serializeTree(1000, 1, 20);
+        serializeTree(400, 1, 20);
     }
 
     @Test

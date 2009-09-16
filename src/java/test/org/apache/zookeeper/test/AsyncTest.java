@@ -19,7 +19,6 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.apache.zookeeper.test.ClientBase.verifyThreadTerminated;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -51,8 +50,6 @@ public class AsyncTest extends TestCase
     private static final Logger LOG = Logger.getLogger(AsyncTest.class);
 
     private QuorumBase qb = new QuorumBase();
-
-    private volatile boolean bang;
 
     @Before
     @Override
@@ -101,105 +98,6 @@ public class AsyncTest extends TestCase
         return zk;
     }
 
-    /**
-     * Create /test- sequence nodes asynchronously, max 30 outstanding
-     */
-    class HammerThread extends Thread
-        implements Watcher, StringCallback, VoidCallback
-    {
-        private static final int MAX_OUTSTANDING = 30;
-
-        private ZooKeeper zk;
-        private int outstanding;
-
-        public HammerThread(String name) {
-            super(name);
-        }
-
-        public void run() {
-            try {
-                zk = new ZooKeeper(qb.hostPort, CONNECTION_TIMEOUT, this);
-                while(bang) {
-                    incOutstanding(); // before create otw race
-                    zk.create("/test-", new byte[0], Ids.OPEN_ACL_UNSAFE,
-                            CreateMode.PERSISTENT_SEQUENTIAL, this, null);
-                }
-            } catch (InterruptedException e) {
-                if (bang) {
-                    LOG.error("sanity check failed!!!"); // sanity check
-                    return;
-                }
-            } catch (Exception e) {
-                LOG.error("Client create operation failed", e);
-                return;
-            } finally {
-                if (zk != null) {
-                    try {
-                        zk.close();
-                    } catch (InterruptedException e) {
-                        LOG.warn("Unexpected", e);
-                    }
-                }
-            }
-        }
-
-        private synchronized void incOutstanding() throws InterruptedException {
-            outstanding++;
-            while(outstanding > MAX_OUTSTANDING) {
-                wait();
-            }
-        }
-
-        private synchronized void decOutstanding() {
-            outstanding--;
-            assertTrue("outstanding >= 0", outstanding >= 0);
-            notifyAll();
-        }
-
-        public void process(WatchedEvent event) {
-            // ignore for purposes of this test
-        }
-
-        public void processResult(int rc, String path, Object ctx, String name) {
-            try {
-                decOutstanding();
-                zk.delete(path, -1, this, null);
-            } catch (Exception e) {
-                LOG.error("Client delete failed", e);
-            }
-        }
-
-        public void processResult(int rc, String path, Object ctx) {
-            // ignore for purposes of this test
-        }
-    }
-
-    @Test
-    public void testHammer() throws Exception {
-        bang = true;
-        Thread[] hammers = new Thread[100];
-        for (int i = 0; i < hammers.length; i++) {
-            hammers[i] = new HammerThread("HammerThread-" + i);
-            hammers[i].start();
-        }
-        Thread.sleep(5000); // allow the clients to run for max 5sec
-        bang = false;
-        for (int i = 0; i < hammers.length; i++) {
-            hammers[i].interrupt();
-            verifyThreadTerminated(hammers[i], 60000);
-        }
-        // before restart
-        QuorumBase qt = new QuorumBase();
-        qt.setUp();
-        qt.verifyRootOfAllServersMatch(qb.hostPort);
-        tearDown();
-
-        restart();
-
-        // after restart
-        qt.verifyRootOfAllServersMatch(qb.hostPort);
-    }
-
     LinkedList<Integer> results = new LinkedList<Integer>();
     @Test
     public void testAsync()
@@ -220,7 +118,7 @@ public class AsyncTest extends TestCase
                 }
             }
             assertEquals(0, (int) results.get(0));
-            assertEquals(Code.NOAUTH, Code.get((int) results.get(1)));
+            assertEquals(Code.NOAUTH, Code.get(results.get(1)));
             assertEquals(0, (int) results.get(2));
             assertEquals(0, (int) results.get(3));
             assertEquals(0, (int) results.get(4));

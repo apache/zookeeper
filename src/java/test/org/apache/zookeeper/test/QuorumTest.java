@@ -17,8 +17,6 @@
  */
 
 package org.apache.zookeeper.test;
-import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -30,10 +28,10 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.FollowerHandler;
 import org.apache.zookeeper.server.quorum.Leader;
-import org.apache.zookeeper.ZooDefs.Ids;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,11 +58,6 @@ public class QuorumTest extends QuorumBase {
     @Test
     public void testDeleteWithChildren() throws Exception {
         ct.testDeleteWithChildren();
-    }
-
-    @Test
-    public void testHammerBasic() throws Throwable {
-        ct.testHammerBasic();
     }
 
     @Test
