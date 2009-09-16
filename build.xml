@@ -66,6 +66,7 @@
     <property name="test.junit.haltonfailure" value="no" />
     <property name="config.dir" value="${src.dir}/java/test/config" />
     <property name="test.junit.maxmem" value="512m" />
+    <property name="test.quick" value="no" />
     <property name="conf.dir" value="${basedir}/conf"/>
     <property name="docs.dir" value="${basedir}/docs"/>
     <property name="docs.src" value="${basedir}/src/docs"/>
@@ -615,6 +616,23 @@
        
     </target>
 
+    <condition property="quicktest">
+      <and>
+        <equals arg1="${test.quick}" arg2="yes"/>
+        <not>
+          <isset property="testcase"/>
+        </not>
+      </and>
+    </condition>
+    <condition property="fulltest">
+      <and>
+        <equals arg1="${test.quick}" arg2="no"/>
+        <not>
+          <isset property="testcase"/>
+        </not>
+      </and>
+    </condition>
+
     <target name="junit.run">
         <junit showoutput="${test.output}"
                printsummary="${test.junit.printsummary}"
@@ -628,14 +646,27 @@
           <sysproperty key="test.data.dir" value="${test.data.dir}" />
           <sysproperty key="log4j.configuration"
                        value="file:${basedir}/conf/log4j.properties" />
+          <!-- superDigest is used by the tests/main code. If this is not set
+               as part of starting the jvm there is no guarantee that the static
+               initializers in the java code will see this (esp when running
+               with junit fork mode set to "once")-->
+          <sysproperty key="zookeeper.DigestAuthenticationProvider.superDigest"
+                       value="super:D/InIHSb7yEEbrWz8b9l71RjZJU=" />
           <classpath refid="test.classpath"/>
           <classpath>
             <pathelement path="${build.testclasses}" />
           </classpath>
           <formatter type="${test.junit.output.format}" />
-          <batchtest todir="${test.log.dir}" unless="testcase">
-            <fileset dir="${test.src.dir}"
-                     includes="**/*${test.category}Test.java"/>
+          <batchtest todir="${test.log.dir}" if="quicktest">
+            <fileset dir="${test.src.dir}">
+              <include name="**/*${test.category}Test.java"/>
+              <exclude name="**/*HammerTest.java"/>
+            </fileset>
+          </batchtest>
+          <batchtest todir="${test.log.dir}" if="fulltest">
+            <fileset dir="${test.src.dir}">
+              <include name="**/*${test.category}Test.java"/>
+            </fileset>
           </batchtest>
           <batchtest todir="${test.log.dir}" if="testcase">
             <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
@@ -700,7 +731,7 @@
             if="cppunit"
 		description="to run cppunit test cases">
         <property name="lib.cppunit" value="/usr/local/lib"/>
-	<exec dir="${test.cppunit.dir}" executable="make" failonerror="true">
+        <exec dir="${test.cppunit.dir}" executable="make" failonerror="true">
 		<env key="LD_LIBRARY_PATH" value="${lib.cppunit}"/>
 		<env key="PATH" path="${env.PATH};${c.src.dir};"/>
                 <env key="CALLER" value="ANT"/>

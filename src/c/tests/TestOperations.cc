@@ -40,12 +40,26 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testConcurrentOperations1);
     CPPUNIT_TEST_SUITE_END();
     zhandle_t *zh;
+    FILE *logfile;
 
     static void watcher(zhandle_t *, int, int, const char *,void*){}
 public: 
+    Zookeeper_operations() {
+      logfile = openlogfile("Zookeeper_operations");
+    }
+
+    ~Zookeeper_operations() {
+      if (logfile) {
+        fflush(logfile);
+        fclose(logfile);
+        logfile = 0;
+      }
+    }
+
     void setUp()
     {
-        zoo_set_debug_level((ZooLogLevel)0); // disable logging
+        zoo_set_log_stream(logfile);
+
         zoo_deterministic_conn_order(0);
         zh=0;
     }
@@ -108,8 +122,8 @@ public:
         // process the send queue
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
         CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
-        while((rc=zookeeper_process(zh,interest))==ZOK) printf("%d\n", rc);
-	printf("RC = %d", rc);
+        while((rc=zookeeper_process(zh,interest))==ZOK) millisleep(100); //printf("%d\n", rc);
+        //printf("RC = %d", rc);
         CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
 
         CPPUNIT_ASSERT_EQUAL((int)ZOK,res1.rc_);

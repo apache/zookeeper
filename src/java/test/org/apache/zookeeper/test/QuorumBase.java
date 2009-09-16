@@ -20,6 +20,8 @@ package org.apache.zookeeper.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -31,6 +33,8 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.After;
+
+import com.sun.management.UnixOperatingSystemMXBean;
 
 public class QuorumBase extends ClientBase {
     private static final Logger LOG = Logger.getLogger(QuorumBase.class);
@@ -71,6 +75,15 @@ public class QuorumBase extends ClientBase {
         s5dir = ClientBase.createTmpDir();
 
         startServers();
+
+        OperatingSystemMXBean osMbean =
+            ManagementFactory.getOperatingSystemMXBean();
+        if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
+            UnixOperatingSystemMXBean unixos =
+                (UnixOperatingSystemMXBean)osMbean;
+            LOG.info("Initial fdcount is: "
+                    + unixos.getOpenFileDescriptorCount());
+        }
 
         LOG.info("Setup finished");
     }
@@ -147,6 +160,16 @@ public class QuorumBase extends ClientBase {
     @Override
     protected void tearDown() throws Exception {
         LOG.info("TearDown started");
+        
+        OperatingSystemMXBean osMbean =
+            ManagementFactory.getOperatingSystemMXBean();
+        if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
+            UnixOperatingSystemMXBean unixos =
+                (UnixOperatingSystemMXBean)osMbean;
+            LOG.info("fdcount after test is: "
+                    + unixos.getOpenFileDescriptorCount());
+        }
+
         shutdown(s1);
         shutdown(s2);
         shutdown(s3);

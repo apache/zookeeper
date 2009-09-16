@@ -24,13 +24,20 @@
 #include <cppunit/TextTestProgressListener.h>
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
+#include <signal.h>
+#include <stdlib.h>
 #include <stdexcept>
+#include <unistd.h>
+#include <sys/select.h>
 #include <cppunit/Exception.h>
 #include <cppunit/TestFailure.h>
 #include <cppunit/XmlOutputter.h>
+#include <cppunit/TestAssert.h>
 #include <fstream>
+#include <time.h> 
 
 #include "Util.h"
+#include "zookeeper_log.h"
 
 using namespace std;
 
@@ -65,11 +72,59 @@ public:
 
 CPPUNIT_NS_END
 
+class TimingListener : public CPPUNIT_NS::BriefTestProgressListener {
+ public:
+   void startTest( CPPUNIT_NS::Test *test )
+   {
+     gettimeofday(&_start_time, NULL);
+
+     CPPUNIT_NS::BriefTestProgressListener::startTest(test);
+   }
+  
+   void endTest( CPPUNIT_NS::Test *test )
+   {
+     struct timeval end;
+     gettimeofday(&end, NULL);
+
+     long seconds = end.tv_sec - _start_time.tv_sec;
+     long useconds = end.tv_usec - _start_time.tv_usec;
+
+     long mtime = seconds * 1000 + useconds/1000.0;
+     CPPUNIT_NS::stdCOut()  <<  " : elapsed " <<  mtime;
+     CPPUNIT_NS::BriefTestProgressListener::endTest(test);
+   }
+
+ private:
+   struct timeval _start_time;
+};
+
+class ZKServer {
+public:
+    ZKServer() {
+        char cmd[1024];
+        sprintf(cmd, "%s startClean %s", ZKSERVER_CMD, "127.0.0.1:22181");
+        CPPUNIT_ASSERT(system(cmd) == 0);
+
+        struct sigaction act;
+        act.sa_handler = SIG_IGN;
+        sigemptyset(&act.sa_mask);
+        act.sa_flags = 0;
+        CPPUNIT_ASSERT(sigaction(SIGPIPE, &act, NULL) == 0);
+    }
+    virtual ~ZKServer(){
+        char cmd[1024];
+        sprintf(cmd, "%s stop %s", ZKSERVER_CMD, "127.0.0.1:22181");
+        CPPUNIT_ASSERT(system(cmd) == 0);
+    }
+};
+
 int main( int argc, char* argv[] ) { 
    // if command line contains "-ide" then this is the post build check
    // => the output must be in the compiler error format.
    //bool selfTest = (argc > 1) && (std::string("-ide") == argv[1]);
    globalTestConfig.addConfigFromCmdLine(argc,argv);
+
+   ZKServer zkserver;
 
    // Create the event manager and test controller
    CPPUNIT_NS::TestResult controller;
@@ -77,19 +132,24 @@ int main( int argc, char* argv[] ) {
    CPPUNIT_NS::TestResultCollector result;
    controller.addListener( &result );
    
-   // Add a listener that print dots as tests run.
-//   CPPUNIT_NS::TextTestProgressListener progress;
-   CPPUNIT_NS::BriefTestProgressListener progress;
+   // A listener that print dots as tests run.
+   // CPPUNIT_NS::TextTestProgressListener progress;
+   // CPPUNIT_NS::BriefTestProgressListener progress;
+
+   // brief + elapsed time
+   TimingListener progress;
    controller.addListener( &progress );
  
    CPPUNIT_NS::TestRunner runner;
    runner.addTest( CPPUNIT_NS::TestFactoryRegistry::getRegistry().makeTest() );
  
-   try
-   {
-     cout << "Running "  <<  globalTestConfig.getTestName();
+   try {
+     CPPUNIT_NS::stdCOut() << "Running " << endl;
+
+     zoo_set_debug_level(ZOO_LOG_LEVEL_INFO);
+     //zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+
      runner.run( controller, globalTestConfig.getTestName());
-     cout<<endl;
 
      // Print test in a compiler compatible format.
      CPPUNIT_NS::EclipseOutputter outputter( &result,cout);
@@ -103,9 +163,8 @@ int main( int argc, char* argv[] ) {
      xml.write();
      file.close();
 #endif
-   }
-   catch ( std::invalid_argument &e )  // Test path not resolved
-   {
+   } catch ( std::invalid_argument &e ) {
+     // Test path not resolved
      cout<<"\nERROR: "<<e.what()<<endl;
      return 0;
    }

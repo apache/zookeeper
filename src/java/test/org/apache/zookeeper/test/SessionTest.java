@@ -100,6 +100,13 @@ public class SessionTest extends TestCase implements Watcher {
         return createClient(CONNECTION_TIMEOUT, watcher);
     }
 
+    private DisconnectableZooKeeper createClient(int timeout)
+        throws IOException, InterruptedException
+    {
+        CountdownWatcher watcher = new CountdownWatcher();
+        return createClient(timeout, watcher);
+    }
+
     private DisconnectableZooKeeper createClient(int timeout,
             CountdownWatcher watcher)
         throws IOException, InterruptedException
@@ -190,28 +197,27 @@ public class SessionTest extends TestCase implements Watcher {
      * Make sure ephemerals get cleaned up when a session times out.
      */
     public void testSessionTimeout() throws Exception {
-        int oldTimeout = CONNECTION_TIMEOUT;
-        CONNECTION_TIMEOUT = 5000;
-        try {
-            DisconnectableZooKeeper zk = createClient();
-            zk.create("/stest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            zk.disconnect();
-            Thread.sleep(CONNECTION_TIMEOUT*2);
-            zk = createClient();
-            System.err.println("This test fails");
-            zk.create("/stest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            tearDown();
-            zk.close();
-            zk.disconnect();
-            setUp();
-            zk = createClient();
-            assertTrue(zk.exists("/stest", false) != null);
-            Thread.sleep(CONNECTION_TIMEOUT * 2);
-            assertTrue(zk.exists("/stest", false) == null);
-            zk.close();
-        } finally {
-            CONNECTION_TIMEOUT = oldTimeout;
-        }
+        final int TIMEOUT = 5000;
+        DisconnectableZooKeeper zk = createClient(TIMEOUT);
+        zk.create("/stest", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                CreateMode.EPHEMERAL);
+        zk.disconnect();
+
+        Thread.sleep(TIMEOUT*2);
+
+        zk = createClient(TIMEOUT);
+        zk.create("/stest", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                CreateMode.EPHEMERAL);
+        tearDown();
+        zk.close();
+        zk.disconnect();
+        setUp();
+
+        zk = createClient(TIMEOUT);
+        assertTrue(zk.exists("/stest", false) != null);
+        Thread.sleep(TIMEOUT*2);
+        assertTrue(zk.exists("/stest", false) == null);
+        zk.close();
     }
 
     /**

@@ -17,6 +17,7 @@
  */
 
 #include "Util.h"
+#include "string.h"
 
 const std::string EMPTY_STRING;
 
@@ -27,4 +28,24 @@ void millisleep(int ms){
     ts.tv_sec=ms/1000;
     ts.tv_nsec=(ms%1000)*1000000; // to nanoseconds
     nanosleep(&ts,0);
+}
+
+FILE *openlogfile(const char* testname) {
+  char name[1024];
+  strcpy(name, "TEST-");
+  strncpy(name + 5, testname, sizeof(name) - 5);
+#ifdef THREADED
+  strcpy(name + strlen(name), "-mt.txt");
+#else
+  strcpy(name + strlen(name), "-st.txt");
+#endif
+
+  FILE *logfile = fopen(name, "a");
+
+  if (logfile == 0) {
+    fprintf(stderr, "Can't open log file %s!\n", name);
+    return 0;
+  }
+
+  return logfile;
 }

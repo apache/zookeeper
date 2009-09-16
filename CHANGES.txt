@@ -78,6 +78,8 @@ IMPROVEMENTS:
   ZOOKEEPER-488. Fix zkServer.sh to add clover.jar in classpath
   (Giridharan Kesavan via gkesavan)  
 
+  ZOOKEEPER-516. add support for 10 minute test ie "pre-commit" test (phunt)
+
 NEW FEATURES:
 
 
