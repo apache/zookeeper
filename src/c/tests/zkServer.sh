@@ -47,18 +47,39 @@ kill -9 $pid
 rm -f ${base_dir}/build/tmp/zk.pid
 fi
 
+if [ "x${base_dir}" == "x" ]	
+then
+zk_base="../../"
+else
+zk_base="${base_dir}"
+fi
+
+CLASSPATH="$CLASSPATH:${zk_base}/build/classes"
+CLASSPATH="$CLASSPATH:${zk_base}/conf"
+
+for i in "${zk_base}"/build/lib/*.jar
+do
+    CLASSPATH="$CLASSPATH:$i"
+done
+
+for i in "${zk_base}"/src/java/lib/*.jar
+do
+    CLASSPATH="$CLASSPATH:$i"
+done
+
+CLASSPATH="$CLASSPATH:${CLOVER_HOME}/lib/clover.jar"
 
 case $1 in
 start|startClean)
 	if [ "x${base_dir}" == "x" ]
         then
       	mkdir -p /tmp/zkdata
-        java -cp ../../zookeeper-dev.jar:../../src/java/lib/log4j-1.2.15.jar:${CLOVER_HOME}/lib/clover.jar org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
+        java -cp $CLASSPATH org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
         pid=$!
         echo $! > /tmp/zk.pid        
         else
         mkdir -p ${base_dir}/build/tmp/zkdata
-        java -cp ${base_dir}/zookeeper-dev.jar:${base_dir}/src/java/lib/log4j-1.2.15.jar:${base_dir}/conf:${CLOVER_HOME}/lib/clover.jar org.apache.zookeeper.server.ZooKeeperServerMain 22181 ${base_dir}/build/tmp/zkdata 3000 $ZKMAXCNXNS &> ${base_dir}/build/tmp/zk.log &
+        java -cp $CLASSPATH org.apache.zookeeper.server.ZooKeeperServerMain 22181 ${base_dir}/build/tmp/zkdata 3000 $ZKMAXCNXNS &> ${base_dir}/build/tmp/zk.log &
         echo $! > ${base_dir}/build/tmp/zk.pid
 	fi
         sleep 5

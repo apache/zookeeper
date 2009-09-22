@@ -65,6 +65,14 @@ do
     CLASSPATH="$CLASSPATH:$i"
 done
 #make it work for developers
+for d in ${ZOOBINDIR}/../build/classes
+do
+   CLASSPATH="$CLASSPATH:$d"
+done
+for d in ${ZOOBINDIR}/../build/lib/*.jar
+do
+   CLASSPATH="$CLASSPATH:$d"
+done
 for d in ${ZOOBINDIR}/../src/java/lib/*.jar
 do
    CLASSPATH="$CLASSPATH:$d"

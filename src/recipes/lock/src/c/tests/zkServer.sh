@@ -36,11 +36,27 @@ kill -9 $pid
 rm -f /tmp/zk.pid
 fi
 
+base_dir = "../../../../.."
+
+CLASSPATH="$CLASSPATH:${base_dir}/build/classes"
+CLASSPATH="$CLASSPATH:${base_dir}/conf"
+
+for i in "${base_dir}"/build/lib/*.jar
+do
+    CLASSPATH="$CLASSPATH:$i"
+done
+
+for i in "${base_dir}"/src/java/lib/*.jar
+do
+    CLASSPATH="$CLASSPATH:$i"
+done
+
+CLASSPATH="$CLASSPATH:${CLOVER_HOME}/lib/clover.jar"
 
 case $1 in
 start|startClean)
 	mkdir -p /tmp/zkdata
-	java -cp ../../../../../zookeeper-dev.jar:../../../../../src/java/lib/log4j-1.2.15.jar:../../../../../conf/ org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
+	java -cp $CLASSPATH org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata &> /tmp/zk.log &
         echo $! > /tmp/zk.pid
         sleep 5
 	;;

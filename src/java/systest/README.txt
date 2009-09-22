@@ -30,14 +30,14 @@ zkHostPort : the host:port of the server from step 2)
 
 4) initiate the system test using the fatjar:
 
-java -jar build/contrib/fatjar/zookeeper-dev-fatjar.jar systest org.apache.zookeeper.test.system.SimpleSysTest
+java -jar build/contrib/fatjar/zookeeper-<version>-fatjar.jar systest org.apache.zookeeper.test.system.SimpleSysTest
 
 by default it will access the zk server started in 2) on localhost:2181 
 
 or you can specify a remote host:port using
   -DsysTest.zkHostPort=<host>:<port>,<host>:<port>,...
 
-java -DsysTest.zkHostPort=hostA:2181  -jar build/contrib/fatjar/zookeeper-dev-fatjar.jar systest org.apache.zookeeper.test.system.SimpleSysTest
+java -DsysTest.zkHostPort=hostA:2181  -jar build/contrib/fatjar/zookeeper-<version>-fatjar.jar systest org.apache.zookeeper.test.system.SimpleSysTest
 
 where hostA is running the zk server started in step 2) above
 
@@ -53,7 +53,7 @@ sure the system test isn't running when you run the benchmark.
 
 4) run GenerateLoad using the following
 
-java -jar build/contrib/fatjar/zookeeper-dev-fatjar.jar generateLoad <zkHostPort> <prefix> #servers #clients
+java -jar build/contrib/fatjar/zookeeper-<version>-fatjar.jar generateLoad <zkHostPort> <prefix> #servers #clients
 
 Once GenerateLoad is started, it will read commands from stdin. Usually
 the only command you need to know is "percentage" which sets the percentage
