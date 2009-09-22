@@ -42,18 +42,11 @@
     <fail message="ZooKeeper main must first be compiled (toplevel build.xml)"/>
   </target>
 
-  <target name="versionedjarname" if="version">
+  <target name="setjarname">
     <property name="main.jarname"
               value="${zk.root}/build/zookeeper-${version}.jar"/>
     <property name="jarname"
               value="${build.dir}/zookeeper-${version}-${name}.jar"/>
-  </target>
-
-  <target name="unversionedjarname" unless="version">
-    <property name="main.jarname"
-              value="${zk.root}/zookeeper-dev.jar"/>
-    <property name="jarname"
-              value="${build.dir}/zookeeper-dev-${name}.jar"/>
   </target>
 
   <target name="test"
@@ -125,8 +118,6 @@
        </junit>
        <fail if="tests.failed">Tests failed!</fail>
     </target>
-
-  <target name="setjarname" depends="versionedjarname, unversionedjarname"/>
 
   <target name="jar" depends="checkMainCompiled, setjarname, compile">
     <echo message="contrib: ${name}"/>

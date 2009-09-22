@@ -80,6 +80,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-516. add support for 10 minute test ie "pre-commit" test (phunt)
 
+  ZOOKEEPER-529. Use Ivy to pull dependencies and also generate pom (phunt
+  via mahadev)
+
 NEW FEATURES:
 
 
