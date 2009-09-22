@@ -41,17 +41,10 @@
     <fail message="ZooKeeper main must first be compiled (toplevel build.xml)"/>
   </target>
 
-  <target name="versionedjarname" if="version">
+  <target name="setjarname">
     <property name="jarname"
               value="${build.dir}/zookeeper-${version}-${name}.jar"/>
   </target>
-
-  <target name="unversionedjarname" unless="version">
-    <property name="jarname"
-              value="${build.dir}/zookeeper-dev-${name}.jar"/>
-  </target>
-
-  <target name="setjarname" depends="versionedjarname, unversionedjarname"/>
 
   <!-- Override jar target to specify main class -->
   <target name="jar" depends="checkMainCompiled, setjarname, compile">

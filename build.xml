@@ -17,7 +17,7 @@
    limitations under the License.
 -->
 
-<project name="ZooKeeper" default="jar">
+<project name="ZooKeeper" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
 
     <property name="Name" value="ZooKeeper" />
     <property name="name" value="zookeeper" />
@@ -36,28 +36,30 @@
 
     <property name="src.dir" value="${basedir}/src" />
     <property name="java.src.dir" value="${src.dir}/java/main" />
-    <property name="jmx.src.dir" value="${src.dir}/java/jmx" />
     <property name="lib.dir" value="${src.dir}/java/lib" />
     <property name="build.dir" value="${basedir}/build" />
     <property name="distribution" value="${basedir}/distribution" />
     <property name="src_generated.dir" value="${src.dir}/java/generated" />
     <property name="c.src.dir" value="${src.dir}/c" />    
     <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
-    <property name="build.classes" value="${build.dir}/classes" />
-    <property name="jar.name" value="zookeeper-dev.jar" />
 
     <property name="jute.file" value="${src.dir}/zookeeper.jute" />
 
-    <property name="build.testclasses" value="${build.dir}/testclasses"/>
-    <property name="test.build.dir" value="${build.dir}/test" />
+    <property name="build.classes" value="${build.dir}/classes"/>
+    <property name="build.docs" value="${build.dir}/docs" />
+    <property name="build.javadoc" value="${build.docs}/api" />
+    <property name="build.javadoc.dev" value="${build.docs}/dev-api"/>
+
+    <property name="test.java.build.dir" value="${build.dir}/test"/>
+    <property name="test.java.classes" value="${test.java.build.dir}/classes"/>
     <property name="test.src.dir" value="${src.dir}/java/test"/>
     <property name="systest.src.dir" value="${src.dir}/java/systest"/>
-    <property name="test.log.dir" value="${test.build.dir}/logs" />
-    <property name="test.data.dir" value="${test.build.dir}/data" />
+    <property name="test.log.dir" value="${test.java.build.dir}/logs" />
+    <property name="test.data.dir" value="${test.java.build.dir}/data" />
     <property name="test.data.upgrade.dir" value="${test.data.dir}/upgrade" />
     <property name="test.data.invalid.dir" value="${test.data.dir}/invalidsnap" />
-    <property name="test.cppunit.dir" value="${test.build.dir}/test-cppunit"/>
-    <property name="test.tmp.dir" value="${test.build.dir}/tmp" />
+    <property name="test.cppunit.dir" value="${test.java.build.dir}/test-cppunit"/>
+    <property name="test.tmp.dir" value="${test.java.build.dir}/tmp" />
     <property name="test.output" value="no" />
     <property name="test.timeout" value="900000" />
     <property name="test.junit.output.format" value="plain" />
@@ -74,20 +76,24 @@
               value="http://java.sun.com/javase/6/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
 
-    <property name="build.docs" value="${build.dir}/docs" />
-    <property name="build.javadoc" value="${build.docs}/api" />
-    <property name="build.javadoc.dev" value="${build.docs}/dev-api"/>
-
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
 
     <property name="clover.home" location="${env.CLOVER_HOME}"/>
     <property name="clover.jar" location="${clover.home}/lib/clover.jar" />
-    <property name="clover.db.dir" location="${test.build.dir}/clover/db"/>
+    <property name="clover.db.dir" location="${test.java.build.dir}/clover/db"/>
     <property name="clover.report.dir"
-              location="${test.build.dir}/clover/reports"/>
+              location="${test.java.build.dir}/clover/reports"/>
 
     <property name="contrib.dir" value="${src.dir}/contrib"/>
     <property name="recipes.dir" value="${src.dir}/recipes"/>
+
+    <property name="ivy.version" value="2.1.0-rc2"/>
+    <property name="ivy.url"
+              value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
+    <property name="ivy.home" value="${user.home}/.ant" />
+    <property name="ivy.lib" value="${build.dir}/lib"/>
+    <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
+    <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
 
     <available property="clover.present"
                classname="com.cenqua.clover.CloverInstr"
@@ -120,22 +126,12 @@
     <property name="test_patch_sh" value="${test.src.dir}/bin/test-patch.sh"/>
 
 	<!-- jdiff.home property set -->
-    <property name="jdiff.home" value="${lib.dir}"/>
-    <property name="jdiff.version" value="1.0.9"/>
-    <property name="xerces.version" value="1.4.4"/>	
-    <property name="jdiff.jar" value="${jdiff.home}/jdiff-${jdiff.version}.jar"/>
-    <property name="xerces.jar" value="${jdiff.home}/xerces-${xerces.version}.jar"/>
+    <property name="jdiff.home" value="${ivy.jdiff.lib}"/>
     <property name="jdiff.build.dir" value="${build.docs}/jdiff"/>
     <property name="jdiff.xml.dir" value="${lib.dir}/jdiff"/>
     <property name="jdiff.stable" value="3.1.1"/>
     <property name="jdiff.stable.javadoc" 
             value="http://hadoop.apache.org/zookeeper/docs/r${jdiff.stable}/api/"/>
-    <property name="jdiff.download.url" 
-		value="http://mirrors.ibiblio.org/pub/mirrors/maven2/jdiff/jdiff/${jdiff.version}/jdiff-${jdiff.version}.jar"/>
-    <property name="jdiff.jar" value="${jdiff.home}/jdiff.jar"/>
-    <property name="xerces.download.url" 
-		value="http://mirrors.ibiblio.org/pub/mirrors/maven2/xerces/xerces/${xerces.version}/xerces-${xerces.version}.jar"/>
-    <property name="xerces.jar" value="${jdiff.home}/xerces.jar"/>
 
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
@@ -151,27 +147,46 @@
       </sequential>
     </macrodef>
 
+    <!-- the normal classpath -->
+    <path id="java.classpath">
+      <pathelement location="${build.classes}"/>
+      <fileset dir="${lib.dir}">
+        <include name="**/*.jar" />
+        <exclude name="**/excluded/" />
+      </fileset>
+      <fileset dir="${ant.home}/lib">
+        <include name="ant.jar" />
+      </fileset>
+      <fileset dir="${ivy.lib}">
+        <include name="**/*.jar" />
+      </fileset>
+      <pathelement path="${clover.jar}" />
+    </path>
+
+    <path id="test.java.classpath">
+      <pathelement location="${test.java.classes}" />
+      <fileset dir="${ivy.test.lib}">
+        <include name="**/*.jar" />
+      </fileset>
+      <path refid="java.classpath"/>
+    </path>
+
     <!-- ====================================================== -->
     <!-- Generate and compile the Java files                    -->
     <!-- ====================================================== -->
     <target name="init">    
         <mkdir dir="${build.classes}" />
+
+        <mkdir dir="${ivy.lib}"/>
+        <mkdir dir="${ivy.test.lib}"/>
+        <condition property="ivy.jar.exists">
+          <available file="${lib.dir}/ivy-${ivy.version}.jar"/>
+        </condition>
+
         <tstamp>
             <format property="build.time" pattern="MM/dd/yyyy HH:mm zz" timezone="GMT"/>
             <format property="year" pattern="yyyy" timezone="GMT"/>
         </tstamp>
-        <condition property="extra.src.dir" value="${jmx.src.dir}">
-            <and>
-                <equals arg1="${target.jdk}" arg2="1.6"/>
-                <available file="${jmx.src.dir}" type="dir"/>
-            </and>
-        </condition>
-        <path id="project.classpath">
-            <fileset dir="${build.classes}" />
-            <pathelement path="${lib.dir}/log4j-1.2.15.jar" />
-            <pathelement path="${clover.jar}" />
-            <pathelement path="${lib.dir}/jline-0.9.94.jar" />
-        </path>
     </target>
     
     <target name="jute" depends="init">
@@ -247,20 +262,38 @@
             target="${target.jdk}" debug="on" />
     </target>
     
-    <target name="compile-extra" depends="compile-main" if="extra.src.dir">
-         <javac srcdir="${extra.src.dir}" destdir="${build.classes}" 
-                target="${target.jdk}" debug="on">
-            <classpath refid="project.classpath"/>
-        </javac>
-        <copy todir="${build.classes}">
-            <fileset dir="${extra.src.dir}"/>
-        </copy>
-   </target>
-    
-    <target name="compile-main" depends="build-generated">
+    <target name="ivy-download" unless="ivy.jar.exists" depends="init">
+      <delete dir="${lib.dir}"
+              includes="ivy-*.jar" excludes="ivy-${ivy.version}.jar"/>
+      <get src="${ivy.url}/${ivy.version}/ivy-${ivy.version}.jar"
+           dest="${lib.dir}/ivy-${ivy.version}.jar" usetimestamp="true"/>
+    </target>
+
+    <target name="ivy-init" depends="ivy-download">
+      <taskdef resource="org/apache/ivy/ant/antlib.xml"
+               uri="antlib:org.apache.ivy.ant" classpathref="java.classpath"/>
+    </target>
+
+    <target name="ivy-retrieve" depends="init,ivy-init">
+      <ivy:retrieve type="jar" conf="default"
+                    pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+    </target>
+
+    <target name="ivy-retrieve-test" depends="init,ivy-init">
+      <ivy:retrieve type="jar" conf="test"
+                    pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+    </target>
+
+    <target name="ivy-retrieve-jdiff" depends="init,ivy-init">
+      <mkdir dir="${ivy.jdiff.lib}"/>
+      <ivy:retrieve type="jar" conf="jdiff"
+                    pattern="${ivy.jdiff.lib}/[artifact]-[revision].[ext]"/>
+    </target>
+
+    <target name="compile" depends="ivy-retrieve,clover,build-generated">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" 
                target="${target.jdk}" debug="on">
-            <classpath refid="project.classpath"/>
+            <classpath refid="java.classpath"/>
             <compilerarg value="-Xlint:all"/>
             <compilerarg value="-Xlint:-path"/>
         </javac>
@@ -270,29 +303,15 @@
         </copy>
     </target>
 
-    <target name="compile" depends="clover,compile-main,compile-extra"/>
-
-    <target name="test-classpath">
-      <path id="test.classpath">
-        <fileset dir="${basedir}">
-           <include name="*.jar"/>
-        </fileset>
-        <fileset dir="${lib.dir}">
-          <include name="*.jar"/>
-        </fileset>
-        <pathelement path="${clover.jar}" />
-      </path>
-    </target>
-
-    <target name="compile-test" depends="jar,test-classpath">
-      <mkdir dir="${build.testclasses}"/>
-      <javac srcdir="${test.src.dir}" destdir="${build.testclasses}"
+    <target name="compile-test" depends="ivy-retrieve-test,compile">
+      <mkdir dir="${test.java.classes}"/>
+      <javac srcdir="${test.src.dir}" destdir="${test.java.classes}"
              target="${target.jdk}" debug="on">
-        <classpath refid="test.classpath"/>
+        <classpath refid="test.java.classpath"/>
       </javac>
-      <javac srcdir="${systest.src.dir}" destdir="${build.testclasses}"
+      <javac srcdir="${systest.src.dir}" destdir="${test.java.classes}"
              target="${target.jdk}" debug="on">
-        <classpath refid="test.classpath"/>
+        <classpath refid="test.java.classpath"/>
       </javac>
     </target>
 
@@ -343,7 +362,7 @@
     	</packageset>
     	<packageset dir="${src_generated.dir}"/>
         <link href="${javadoc.link.java}"/>
-        <classpath refid="project.classpath"/>
+        <classpath refid="java.classpath"/>
       </javadoc>
     </target>	
 
@@ -385,7 +404,7 @@
 		<fileset dir="${basedir}">
 			<include name="${jar.name}"/>
 		</fileset> 
-        <path refid="project.classpath"/>
+        <path refid="java.classpath"/>
 	</classpath>
       </javadoc>
     </target>	
@@ -403,7 +422,7 @@
             </classpath>
         </java>
         <exec executable="hostname" outputproperty="host.name"/>
-        <jar jarfile="${jar.name}"> 
+        <jar jarfile="${build.dir}/${final.name}.jar">
             <fileset file="LICENSE" />
             <fileset dir="${build.classes}" excludes="**/.generated"/>
             <manifest>
@@ -417,12 +436,6 @@
             </manifest>
         </jar>
     </target>
-
-    <target name="release-jar">
-        <antcall target="jar">
-            <param name="jar.name" value="${build.dir}/${final.name}.jar" />
-        </antcall>
-    </target>
     
     <!-- ================================================================== -->
     <!-- D I S T R I B U T I O N                                            -->
@@ -430,7 +443,7 @@
     <!--                                                                    -->
     <!-- ================================================================== -->
     <target name="package"
-            depends="release-jar,api-report,compile-test,create-cppunit-configure"
+            depends="jar,api-report,create-cppunit-configure,compile-test"
             description="Build distribution">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
@@ -442,7 +455,10 @@
       <mkdir dir="${dist.dir}/docs/api"/>
 
       <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
-        <fileset dir="${lib.dir}"/>
+        <fileset dir="${lib.dir}">
+          <exclude name="**/ivy*.jar" />
+        </fileset>
+        <fileset dir="${ivy.lib}"/>
       </copy>
 
       <subant target="package">
@@ -458,6 +474,18 @@
         <fileset file="${build.dir}/${final.name}.jar"/>
       </copy>
       
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="sha1"/>
+
+      <ivy:makepom ivyfile="${basedir}/ivy.xml"
+                   pomfile="${dist.dir}/${final.name}.pom">
+        <mapping conf="default" scope="compile"/>
+        <mapping conf="test" scope="test"/>
+      </ivy:makepom>
+
+      <checksum file="${dist.dir}/${final.name}.pom" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}.pom" algorithm="sha1"/>
+
       <copy todir="${dist.dir}/bin">
         <fileset dir="bin"/>
       </copy>
@@ -475,14 +503,14 @@
         <fileset dir=".">
           <include name="*.txt" />
         </fileset>
+        <fileset file="build.xml"/>
+        <fileset file="ivy.xml"/>
       </copy>
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
-        <fileset dir="src" excludes="**/*.template **/docs/build/**/*"/>
+        <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
       </copy>
   	  
-      <copy todir="${dist.dir}/" file="build.xml"/>
-
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/src/contrib/">
@@ -568,8 +596,6 @@
       <delete dir="${docs.src}/build"/>
       <delete dir="${src_generated.dir}" />
       <delete dir="${csrc_generated.dir}" />
-      <delete file="${jdiff.jar}" />
-      <delete file="${xerces.jar}" />
       <delete file="${lib.dir}/Null.java"/>
       <delete file="${lib.dir}/rats.jar" />
       <delete file="${jdiff.xml.dir}/${name}_${version}.xml"/>	
@@ -652,9 +678,9 @@
                with junit fork mode set to "once")-->
           <sysproperty key="zookeeper.DigestAuthenticationProvider.superDigest"
                        value="super:D/InIHSb7yEEbrWz8b9l71RjZJU=" />
-          <classpath refid="test.classpath"/>
+          <classpath refid="test.java.classpath"/>
           <classpath>
-            <pathelement path="${build.testclasses}" />
+            <pathelement path="${test.java.classes}" />
           </classpath>
           <formatter type="${test.junit.output.format}" />
           <batchtest todir="${test.log.dir}" if="quicktest">
@@ -826,7 +852,7 @@
     <!-- Run with 'ant -Dfindbugs.home="path to Findbugs directory" findbugs -->
     <property name="findbugs.home" value="" />
     <target name="findbugs" depends="check-for-findbugs, jar" if="findbugs.present">
-        <property name="findbugs.out.dir" value="${test.build.dir}/findbugs" />
+        <property name="findbugs.out.dir" value="${test.java.build.dir}/findbugs" />
         <property name="findbugs.exclude.file" value="${config.dir}/findbugsExcludeFile.xml" />
         <property name="findbugs.report.htmlfile" value="${findbugs.out.dir}/zookeeper-findbugs-report.html" />
         <property name="findbugs.report.xmlfile" value="${findbugs.out.dir}/zookeeper-findbugs-report.xml" />
@@ -835,9 +861,9 @@
         <mkdir dir="${findbugs.out.dir}" />
         <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" 
                 outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
-            <auxClasspath path="${lib.dir}/log4j-1.2.15.jar" />
+            <auxClasspath path="${ivy.lib}/log4j-1.2.15.jar" />
             <sourcePath path="${java.src.dir}" />
-            <class location="${basedir}/${jar.name}" />
+            <class location="${build.dir}/${final.name}.jar" />
         </findbugs>
         <xslt style="${findbugs.home}/src/xsl/default.xsl" in="${findbugs.report.xmlfile}" 
                 out="${findbugs.report.htmlfile}" />
@@ -857,6 +883,9 @@
           </fileset>
           <fileset dir="${lib.dir}">
             <include name="*.jar"/>
+          </fileset>
+          <fileset dir="${ivy.lib}">
+            <include name="**/*.jar" />
           </fileset>
         </classpath>
       </taskdef>
@@ -885,11 +914,14 @@
                 <fileset dir="${lib.dir}">
                     <include name="*.jar"/>
                 </fileset>
+                <fileset dir="${ivy.lib}">
+                  <include name="**/*.jar" />
+                </fileset>
             </classpath>
             <classpath>
-                <pathelement path="${build.testclasses}" />
+                <pathelement path="${test.java.classes}" />
             </classpath>
-            <classpath refid="test.classpath"/>
+            <classpath refid="test.java.classpath"/>
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
@@ -923,13 +955,13 @@
     	<taskdef resource="checkstyletask.properties">
         	<classpath refid="checkstyle-classpath"/>
         </taskdef>
-        <mkdir dir="${test.build.dir}"/>
+        <mkdir dir="${test.java.build.dir}"/>
         <checkstyle config="${test.src.dir}/checkstyle.xml" failOnViolation="false">
         	<fileset dir="${src.dir}/java" includes="**/*.java" excludes="**/generated/**"/>
-        	<formatter type="xml" toFile="${test.build.dir}/checkstyle-errors.xml"/>
+        	<formatter type="xml" toFile="${test.java.build.dir}/checkstyle-errors.xml"/>
         </checkstyle>
-        <xslt style="${test.src.dir}/checkstyle-noframes-sorted.xsl" in="${test.build.dir}/checkstyle-errors.xml"
-        	out="${test.build.dir}/checkstyle-errors.html"/>
+        <xslt style="${test.src.dir}/checkstyle-noframes-sorted.xsl" in="${test.java.build.dir}/checkstyle-errors.xml"
+        	out="${test.java.build.dir}/checkstyle-errors.html"/>
     </target>
 
     <target name="checkstyle.check" unless="checkstyle.home">
@@ -1012,59 +1044,63 @@
     	</exec>
      </target>
 
-     <target name="get-jdiff" description="download jdiff and its dependencies">
-	<get src="${jdiff.download.url}" dest="${jdiff.jar}" usetimestamp="true"/>
-	<get src="${xerces.download.url}" dest="${xerces.jar}" usetimestamp="true"/>
-     </target>	
-
-     <target name="api-xml" depends="get-jdiff, javadoc, write-null">
-    	<javadoc>
-       		<doclet name="jdiff.JDiff"
-               		path="${jdiff.jar}:${xerces.jar}">
-         		<param name="-apidir" value="${jdiff.xml.dir}"/>
-         		<param name="-apiname" value="${name} ${version}"/>
-       		</doclet>
-       		<packageset dir="${java.src.dir}">
-			<include name="org/apache/zookeeper"/>
-			<exclude name="org/apache/jute"/>
-                </packageset>
-       		<classpath>
-       			<fileset dir="${lib.dir}">
-        			<include name="**/*.jar"/>
-      			</fileset>
-			<pathelement path="${build.classes}" />	
-		</classpath>
-       	</javadoc>
+     <target name="api-xml" depends="ivy-retrieve-jdiff, javadoc, write-null">
+       <javadoc>
+         <doclet name="jdiff.JDiff"
+                 path="${ivy.jdiff.lib}/jdiff-1.0.9.jar:${ivy.jdiff.lib}/xerces-1.4.4.jar">
+           <param name="-apidir" value="${jdiff.xml.dir}"/>
+           <param name="-apiname" value="${name} ${version}"/>
+         </doclet>
+         <packageset dir="${java.src.dir}">
+           <include name="org/apache/zookeeper"/>
+           <exclude name="org/apache/jute"/>
+         </packageset>
+         <classpath>
+           <pathelement location="${build.classes}"/>
+           <fileset dir="${lib.dir}">
+             <include name="**/*.jar" />
+             <exclude name="**/excluded/" />
+           </fileset>
+           <fileset dir="${ivy.lib}">
+             <include name="**/*.jar" />
+           </fileset>
+         </classpath>
+       </javadoc>
      </target>
-	
+     
      <target name="write-null">
-	<exec executable="touch">
-		<arg value="${jdiff.home}/Null.java"/>
-        </exec>
+       <exec executable="touch">
+         <arg value="${jdiff.home}/Null.java"/>
+       </exec>
      </target> 
 
      <target name="api-report" depends="api-xml">
-	<mkdir dir="${jdiff.build.dir}"/>
-        <javadoc sourcepath="${java.src.dir}"
-             destdir="${jdiff.build.dir}"
-	     excludepackagenames="org.apache.jute"	
-             sourceFiles="${jdiff.home}/Null.java">
-       		<doclet name="jdiff.JDiff" path="${jdiff.jar}:${xerces.jar}">
-         		<param name="-oldapi" value="${name} ${jdiff.stable}"/>
-         		<param name="-newapi" value="${name} ${version}"/>
-         		<param name="-oldapidir" value="${jdiff.xml.dir}"/>
-         		<param name="-newapidir" value="${jdiff.xml.dir}"/>
-         		<param name="-javadocold" value="${jdiff.stable.javadoc}"/>
-         		<param name="-javadocnew" value="../../api/"/>
-         		<param name="-stats"/>
-       		</doclet>
-		<classpath>
-       			<fileset dir="${lib.dir}">
-        			<include name="**/*.jar"/>
-      			</fileset>
-			<pathelement path="${build.classes}" />	
-		</classpath>
+       <mkdir dir="${jdiff.build.dir}"/>
+       <javadoc sourcepath="${java.src.dir}"
+                destdir="${jdiff.build.dir}"
+                excludepackagenames="org.apache.jute"	
+                sourceFiles="${jdiff.home}/Null.java">
+         <doclet name="jdiff.JDiff"
+                 path="${ivy.jdiff.lib}/jdiff-1.0.9.jar:${ivy.jdiff.lib}/xerces-1.4.4.jar">
+           <param name="-oldapi" value="${name} ${jdiff.stable}"/>
+           <param name="-newapi" value="${name} ${version}"/>
+           <param name="-oldapidir" value="${jdiff.xml.dir}"/>
+           <param name="-newapidir" value="${jdiff.xml.dir}"/>
+           <param name="-javadocold" value="${jdiff.stable.javadoc}"/>
+           <param name="-javadocnew" value="../../api/"/>
+           <param name="-stats"/>
+         </doclet>
+         <classpath>
+           <pathelement location="${build.classes}"/>
+           <fileset dir="${lib.dir}">
+             <include name="**/*.jar" />
+             <exclude name="**/excluded/" />
+           </fileset>
+           <fileset dir="${ivy.lib}">
+             <include name="**/*.jar" />
+           </fileset>
+         </classpath>
        </javadoc>
-  </target>
+     </target>
 
 </project>
