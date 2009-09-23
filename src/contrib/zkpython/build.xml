@@ -26,15 +26,6 @@
   <property name="test.output" value="no" />
   <property name="test.timeout" value="900000" />
 
-  <available classname="org.apache.zookeeper.ZooKeeperMain"
-             classpathref="classpath"
-             property="mainIsCompiled"/>
-
-  <target name="checkMainCompiled" unless="mainIsCompiled">
-    <fail message="ZooKeeper main must first be compiled (toplevel build.xml)"/>
-  </target>
-
-
   <target name="test"
           depends="test-init,test-category,test-start,python-test,test-stop" />
 	

@@ -48,10 +48,10 @@
     <pathelement location="${build.classes}"/>
     <fileset refid="lib.jars"/>
     <pathelement location="${zk.root}/build/classes"/>
-    <fileset dir="${zk.root}/build/lib">
+    <fileset dir="${zk.root}/build/lib" erroronmissingdir="false">
       <include name="**/*.jar" />
     </fileset>
-    <fileset dir="${zk.root}/build/test/lib">
+    <fileset dir="${zk.root}/build/test/lib" erroronmissingdir="false">
       <include name="**/*.jar" />
     </fileset>
     <fileset dir="${zk.root}/src/java/lib">
@@ -119,6 +119,21 @@
   <target name="clean">
     <echo message="contrib: ${name}"/>
     <delete dir="${build.dir}"/>
+  </target>
+
+
+  <!-- ================================================================== -->
+  <!-- Utility features                                                   -->
+  <!-- ================================================================== -->
+
+  <target name="checkMainIsAvailable">
+    <available classname="org.apache.zookeeper.ZooKeeperMain"
+               classpathref="classpath"
+               property="mainIsCompiled"/>
+  </target>
+
+  <target name="checkMainCompiled" unless="mainIsCompiled" depends="checkMainIsAvailable">
+    <fail message="ZooKeeper main must first be compiled (toplevel build.xml)"/>
   </target>
 
 </project>

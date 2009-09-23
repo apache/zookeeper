@@ -32,15 +32,6 @@
     <property name="test.junit.haltonfailure" value="no" />
     <property name="test.junit.maxmem" value="512m" />
 
-  
-  <available classname="org.apache.zookeeper.ZooKeeperMain"
-             classpathref="classpath"
-             property="mainIsCompiled"/>
-
-  <target name="checkMainCompiled" unless="mainIsCompiled">
-    <fail message="ZooKeeper main must first be compiled (toplevel build.xml)"/>
-  </target>
-
   <target name="setjarname">
     <property name="jarname"
               value="${build.dir}/zookeeper-${version}-recipes-${name}.jar"/>
