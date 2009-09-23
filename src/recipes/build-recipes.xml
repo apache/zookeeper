@@ -48,7 +48,7 @@
     <pathelement location="${build.classes}"/>
     <fileset refid="lib.jars"/>
     <pathelement location="${zk.root}/build/classes"/>
-    <fileset dir="${zk.root}/build/lib" erroronmissingdir="false">
+    <fileset dir="${zk.root}/build/lib">
       <include name="**/*.jar" />
     </fileset>
     <fileset dir="${zk.root}/src/java/lib">
@@ -125,8 +125,13 @@
 
   <target name="checkMainIsAvailable">
     <available classname="org.apache.zookeeper.ZooKeeperMain"
-               classpathref="classpath"
-               property="mainIsCompiled"/>
+               property="mainIsCompiled">
+      <!-- we can't use id=classpath, because available fails if fileset directory
+           doesn't exist -->
+      <classpath>
+        <pathelement location="${zk.root}/build/classes"/>
+      </classpath>
+    </available>
   </target>
 
   <target name="checkMainCompiled" unless="mainIsCompiled" depends="checkMainIsAvailable">
