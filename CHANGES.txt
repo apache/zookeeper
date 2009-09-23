@@ -71,6 +71,8 @@ BUGFIXES:
   ZOOKEEPER-518. DEBUG message for outstanding proposals in leader should be
    moved to trace. (phunt)
 
+  ZOOKEEPER-533.  ant error running clean twice (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
