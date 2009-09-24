@@ -73,6 +73,9 @@ BUGFIXES:
 
   ZOOKEEPER-533.  ant error running clean twice (phunt via mahadev)
 
+  ZOOKEEPER-535. ivy task does not enjoy being defined twice 
+  (build error) (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)

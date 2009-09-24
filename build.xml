@@ -269,9 +269,11 @@
            dest="${lib.dir}/ivy-${ivy.version}.jar" usetimestamp="true"/>
     </target>
 
-    <target name="ivy-init" depends="ivy-download">
+    <target name="ivy-init" depends="ivy-download" unless="ivy.initialized">
       <taskdef resource="org/apache/ivy/ant/antlib.xml"
                uri="antlib:org.apache.ivy.ant" classpathref="java.classpath"/>
+      <!-- ensure that ivy taskdef is only run once, otw ant will error -->
+      <property name="ivy.initialized" value="true"/>
     </target>
 
     <target name="ivy-retrieve" depends="init,ivy-init">
@@ -1043,6 +1045,9 @@
 		<arg value="${ant.project.name}"/>
     	</exec>
      </target>
+
+     <!-- this target runs the hudson trunk build -->
+     <target name="hudson-test-trunk" depends="docs,tar,findbugs"/>
 
      <target name="api-xml" depends="ivy-retrieve-jdiff, javadoc, write-null">
        <javadoc>
