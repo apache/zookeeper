@@ -15,8 +15,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Find the build directory containing zookeeper.so
+SO_PATH=`find ../../../build/ -name "zookeeper.so" | head -1`
+PYTHONPATH=`dirname $SO_PATH`
+LIB_PATH=../../c/.libs/:../../../build/test/test-cppunit/.libs
 for test in `ls $1/*_test.py`; 
 do
     echo "Running $test"
-    python $test
+    LD_LIBRARY_PATH=$LIB_PATH:$LD_LIBRARY_PATH DYLD_LIBRARY_PATH=$LIB_PATH:$DYLD_LIBRARY_PATH PYTHONPATH=$PYTHONPATH python $test
 done

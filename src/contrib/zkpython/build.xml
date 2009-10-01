@@ -27,7 +27,7 @@
   <property name="test.timeout" value="900000" />
 
   <target name="test"
-          depends="test-init,test-category,test-start,python-test,test-stop" />
+          depends="compile,test-init,test-category,test-start,python-test,test-stop" />
 	
     <target name="test-init" depends="checkMainCompiled">
         <delete dir="${test.log.dir}" />
