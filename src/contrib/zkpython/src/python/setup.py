@@ -23,7 +23,10 @@ zookeepermodule = Extension("zookeeper",
                             include_dirs=[zookeeper_basedir + "/src/c/include",
                                           zookeeper_basedir + "/src/c/generated"],
                             libraries=["zookeeper_mt"],
-                            library_dirs=["/usr/local/lib"])
+                            library_dirs=[zookeeper_basedir + "/src/c/.libs/",
+                                          zookeeper_basedir + "/build/test/test-cppunit/.libs",
+                                          "/usr/local/lib"
+                                          ])
 
 setup( name="ZooKeeper",
        version = "0.4",

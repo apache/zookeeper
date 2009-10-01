@@ -22,6 +22,12 @@ from zookeeper/src/contrib/zkpython/.
 
 To test, run ant test from the same directory. 
 
+You can compile the module without installing by running
+
+ant compile
+
+In order to use the module, zookeeper.so must be in your PYTHONPATH or in one of the directories referenced by sys.path. Running ant install should make sure that this is the case, but if you only run ant compile you probably need to add build/contrib/zkpython/* to PYTHONPATH to find the module. The C client libraries must be in a system library path, or LD_LIBRARY_PATH or DYLD_LIBRARY_PATH (Mac OS) for the module to work correctly, otherwise you will see a library not found error when trying to import the module. 
+
 NAMING CONVENTIONS:
 --------------------
 
