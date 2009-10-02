@@ -205,6 +205,8 @@ void void_completion_dispatch(int rc, const void *data)
 {
   PyGILState_STATE gstate;
   pywatcher_t *pyw = (pywatcher_t*)data;
+  if (pyw == NULL)
+    return;
   PyObject *callback = pyw->callback;
   gstate = PyGILState_Ensure();
   PyObject *arglist = Py_BuildValue("(i,i)", pyw->zhandle, rc);
@@ -218,6 +220,8 @@ void stat_completion_dispatch(int rc, const struct Stat *stat, const void *data)
 {
   PyGILState_STATE gstate;
   pywatcher_t *pyw = (pywatcher_t*)data;
+  if (pyw == NULL)
+    return;
   PyObject *callback = pyw->callback;
   gstate = PyGILState_Ensure();
   PyObject *arglist = Py_BuildValue("(i,i,N)", pyw->zhandle,rc, build_stat(stat));
@@ -231,6 +235,8 @@ void data_completion_dispatch(int rc, const char *value, int value_len, const st
 {
   PyGILState_STATE gstate;
   pywatcher_t *pyw = (pywatcher_t*)data;
+  if (pyw == NULL)
+    return;
   PyObject *callback = pyw->callback;
   gstate = PyGILState_Ensure();
   PyObject *arglist = Py_BuildValue("(i,i,s#,O)", pyw->zhandle,rc, value,value_len, build_stat(stat));
@@ -244,6 +250,8 @@ void strings_completion_dispatch(int rc, const struct String_vector *strings, co
 {
   PyGILState_STATE gstate;
   pywatcher_t *pyw = (pywatcher_t*)data;
+  if (pyw == NULL)
+    return;
   PyObject *callback = pyw->callback;
   gstate = PyGILState_Ensure();
   PyObject *arglist = Py_BuildValue("(i,i,O)", pyw->zhandle,rc, build_string_vector(strings));
@@ -257,6 +265,8 @@ void string_completion_dispatch(int rc, const char *value, const void *data)
 {
   PyGILState_STATE gstate;
   pywatcher_t *pyw = (pywatcher_t*)data;
+  if (pyw == NULL)
+    return;
   PyObject *callback = pyw->callback;
   gstate = PyGILState_Ensure();
   PyObject *arglist = Py_BuildValue("(i,i,s)", pyw->zhandle,rc, value);
@@ -270,6 +280,8 @@ void acl_completion_dispatch(int rc, struct ACL_vector *acl, struct Stat *stat, 
 {
   PyGILState_STATE gstate;
   pywatcher_t *pyw = (pywatcher_t*)data;
+  if (pyw == NULL)
+    return;
   PyObject *callback = pyw->callback;
   gstate = PyGILState_Ensure();
   PyObject *arglist = Py_BuildValue("(i,i,O,O)", pyw->zhandle,rc, build_acls(acl), build_stat(stat));
@@ -299,7 +311,7 @@ PyObject *pyzoo_acreate(PyObject *self, PyObject *args)
 			 valuelen,
 			 pyacls == Py_None ? NULL : &acl,
 			 flags,
-			 completion_callback != Py_None ? string_completion_dispatch : NULL,
+			 string_completion_dispatch,
 			 completion_callback != Py_None ? create_pywatcher(zkhid, completion_callback,0 ) : NULL );
     
   free_acls(&acl);
@@ -322,7 +334,7 @@ PyObject *pyzoo_adelete(PyObject *self, PyObject *args)
   int err = zoo_adelete( zhandles[zkhid],
 			 path,
 			 version,
-			 completion_callback != Py_None ? void_completion_dispatch : NULL,
+			 void_completion_dispatch,
 			 completion_callback != Py_None ? create_pywatcher(zkhid, 
 									   completion_callback,
 									   0 ) : NULL );
@@ -349,7 +361,7 @@ PyObject *pyzoo_aexists(PyObject *self, PyObject *args)
 			  path,
 			  exists_watch != Py_None ? watcher_dispatch : NULL,
 			  exists_watch != Py_None ? create_pywatcher(zkhid, exists_watch,0) : NULL,
-			  (completion_callback != Py_None) ? stat_completion_dispatch : NULL,
+			  stat_completion_dispatch,
 			  (completion_callback != Py_None) ? create_pywatcher(zkhid, completion_callback,0) : NULL );
     
   if (err != ZOK)
@@ -374,7 +386,7 @@ PyObject *pyzoo_aget(PyObject *self, PyObject *args)
 		       path,
 		       get_watch != Py_None ? watcher_dispatch : NULL,
 		       get_watch != Py_None ? create_pywatcher(zkhid, get_watch,0) : NULL,
-		       completion_callback != Py_None ? data_completion_dispatch : NULL,
+		       data_completion_dispatch,
 		       completion_callback != Py_None ? 
 		       create_pywatcher(zkhid, completion_callback,0 ) : NULL );
     
@@ -399,7 +411,7 @@ PyObject *pyzoo_aset(PyObject *self, PyObject *args)
 		      buffer,
 		      buflen,
 		      version,
-		      completion_callback != Py_None ? stat_completion_dispatch : NULL,
+		      stat_completion_dispatch,
 		      completion_callback != Py_None ? create_pywatcher(zkhid, 
 									completion_callback,
 									0 ) : NULL );
@@ -426,7 +438,7 @@ PyObject *pyzoo_aget_children(PyObject *self, PyObject *args)
 				path,
 				get_watch != Py_None ? watcher_dispatch : NULL,
 				get_watch != Py_None ? create_pywatcher(zkhid, get_watch,0) : NULL,
-				completion_callback != Py_None ? strings_completion_dispatch : NULL,
+				strings_completion_dispatch,
 				completion_callback != Py_None ? 
 				create_pywatcher(zkhid, completion_callback,0) : NULL );    
   if (err != ZOK)
@@ -448,7 +460,7 @@ PyObject *pyzoo_async(PyObject *self, PyObject *args)
 
   int err = zoo_async( zhandles[zkhid],
 		       path,
-		       completion_callback != Py_None ? string_completion_dispatch : NULL,
+		       string_completion_dispatch,
 		       completion_callback != Py_None ? 
 		       create_pywatcher(zkhid, completion_callback,0) : NULL );    
   if (err != ZOK)
@@ -470,7 +482,7 @@ PyObject *pyzoo_aget_acl(PyObject *self, PyObject *args)
 
   int err = zoo_aget_acl( zhandles[zkhid],
 			  path,
-			  completion_callback != Py_None ? acl_completion_dispatch : NULL,
+			  acl_completion_dispatch,
 			  completion_callback != Py_None ? 
 			  create_pywatcher(zkhid, completion_callback,0) : NULL );
     
@@ -497,7 +509,7 @@ PyObject *pyzoo_aset_acl(PyObject *self, PyObject *args)
 			  path,
 			  version,
 			  &aclv,
-			  completion_callback != Py_None ? void_completion_dispatch : NULL,
+			  void_completion_dispatch,
 			  completion_callback != Py_None ? 
 			  create_pywatcher(zkhid, completion_callback,0) : NULL );
   free_acls(&aclv);
