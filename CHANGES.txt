@@ -79,6 +79,9 @@ BUGFIXES:
   ZOOKEEPER-420. build/test should not require install in zkpython
   (henry robinson via phunt)
 
+  ZOOKEEPER-538. zookeeper.async causes python to segfault
+  (henry robinson via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
