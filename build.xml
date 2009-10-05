@@ -133,6 +133,12 @@
     <property name="jdiff.stable.javadoc" 
             value="http://hadoop.apache.org/zookeeper/docs/r${jdiff.stable}/api/"/>
 
+    <!-- eclipse property set -->
+    <property name="build.dir.eclipse" value=".eclipse"/>
+    <property name="build.dir.eclipse-main-classes" value="${build.dir.eclipse}/classes-main"/>
+    <property name="build.dir.eclipse-test-classes" value="${build.dir.eclipse}/classes-test"/>
+
+
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
     <!-- ====================================================== -->
@@ -1106,6 +1112,67 @@
            </fileset>
          </classpath>
        </javadoc>
+     </target>
+
+     <condition property="ant-eclipse.jar.exists">
+       <available file="${lib.dir}/ant-eclipse-1.0-jvm1.2.jar"/>
+     </condition>
+
+     <target name="ant-eclipse-download" unless="ant-eclipse.jar.exists">
+       <get src="http://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
+            dest="${src.dir}/java/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
+
+       <bunzip2 src="${src.dir}/java/ant-eclipse-1.0.bin.tar.bz2"/>
+
+       <untar src="${src.dir}/java/ant-eclipse-1.0.bin.tar"
+              dest="${src.dir}/java">
+         <patternset>
+           <include name="lib/ant-eclipse-1.0-jvm1.2.jar"/>
+         </patternset>
+       </untar>
+
+       <delete file="${src.dir}/java/ant-eclipse-1.0.bin.tar" />
+       <delete file="${src.dir}/java/ant-eclipse-1.0.bin.tar.bz2" />
+     </target>
+
+     <target name="eclipse"
+             depends="ant-eclipse-download,init,ivy-retrieve,build-generated,ivy-retrieve-test"
+             description="Create eclipse project files">
+       <ivy:resolve useOrigin="true" conf="test"/>
+       <ivy:cachepath pathid="default.path.id" conf="default" />
+       <ivy:cachepath pathid="junit.path.id" conf="test" transitive="false"/>
+       <taskdef name="eclipse"
+                classname="prantl.ant.eclipse.EclipseTask"
+                classpathref="java.classpath" />
+       <eclipse updatealways="true">
+         <settings>
+           <jdtcore compilercompliance="6.0" />
+           <resources encoding="UTF-8" />
+         </settings>
+         <project name="${ant.project.name}" />
+         <classpath>
+           <source path="${java.src.dir}"
+                   output="${build.dir.eclipse-main-classes}" />
+           <source path="${src_generated.dir}"
+                   output="${build.dir.eclipse-main-classes}" />
+           <source path="${test.src.dir}"
+                   output="${build.dir.eclipse-test-classes}" />
+           <source path="${systest.src.dir}"
+                   output="${build.dir.eclipse-test-classes}" />
+
+           <output path="${build.dir.eclipse-main-classes}" />
+           <library pathref="default.path.id" exported="true" />
+           <library pathref="junit.path.id" exported="false" />
+         </classpath>
+       </eclipse>
+     </target>
+
+     <target name="clean-eclipse" description="Clean eclipse files">
+       <delete file=".classpath" />
+       <delete file=".eclipse" />
+       <delete file=".project" />
+       <delete dir=".settings" />
+       <delete dir="${build.dir.eclipse}" />
      </target>
 
 </project>

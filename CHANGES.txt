@@ -95,7 +95,7 @@ IMPROVEMENTS:
   via mahadev)
 
 NEW FEATURES:
-
+  ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
 Release 3.2.0 - 2009-06-30
 
