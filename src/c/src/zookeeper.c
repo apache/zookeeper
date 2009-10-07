@@ -1353,6 +1353,9 @@ static struct timeval get_timeval(int interval)
             rc = connect(zh->fd, &zh->addrs[zh->connect_index],
                     sizeof(struct sockaddr));
             if (rc == -1) {
+                /* we are handling the non-blocking connect according to
+                 * the description in section 16.3 "Non-blocking connect"
+                 * in UNIX Network Programming vol 1, 3rd edition */
                 if (errno == EWOULDBLOCK || errno == EINPROGRESS)
                     zh->state = ZOO_CONNECTING_STATE;
                 else
@@ -1412,7 +1415,10 @@ static struct timeval get_timeval(int interval)
             zh->next_deadline.tv_usec = zh->next_deadline.tv_usec % 1000000;
         }
         *interest = ZOOKEEPER_READ;
-        if (zh->to_send.head || zh->state == ZOO_CONNECTING_STATE) {
+        /* we are interested in a write if we are connected and have something
+         * to send, or we are waiting for a connect to finish. */
+        if ((zh->to_send.head && (zh->state == ZOO_CONNECTED_STATE))
+	    || zh->state == ZOO_CONNECTING_STATE) {
             *interest |= ZOOKEEPER_WRITE;
         }
     }
@@ -1427,6 +1433,9 @@ static int check_events(zhandle_t *zh, int events)
         int rc, error;
         socklen_t len = sizeof(error);
         rc = getsockopt(zh->fd, SOL_SOCKET, SO_ERROR, &error, &len);
+        /* the description in section 16.4 "Non-blocking connect"
+         * in UNIX Network Programming vol 1, 3rd edition, points out
+         * that sometimes the error is in errno and sometimes in error */
         if (rc < 0 || error) {
             if (rc == 0)
                 errno = error;
