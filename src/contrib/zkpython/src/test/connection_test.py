@@ -24,14 +24,15 @@ class ConnectionTest(zktestbase.TestBase):
     """Test whether we can make a connection"""
     def setUp(self):
         pass
-    
+
     def testconnection(self):
-        print "testconnection"
         cv = threading.Condition()
         self.connected = False
         def connection_watcher(handle, type, state, path):
             cv.acquire()
             self.connected = True
+            self.assertEqual(zookeeper.CONNECTED_STATE, state)
+            self.handle = handle
             cv.notify()
             cv.release()
 
@@ -40,9 +41,22 @@ class ConnectionTest(zktestbase.TestBase):
         cv.wait(15.0)
         cv.release()
         self.assertEqual(self.connected, True, "Connection timed out to " + self.host)
-        
+        self.assertEqual(zookeeper.CONNECTED_STATE, zookeeper.state(self.handle))
+
+        self.assertEqual(zookeeper.close(self.handle), zookeeper.OK)
+        # Trying to close the same handle twice is an error, and the C library will segfault on it
+        # so make sure this is caught at the Python module layer
+        self.assertRaises(zookeeper.ZooKeeperException,
+                          zookeeper.close,
+                          self.handle)
+
+        self.assertRaises(zookeeper.ZooKeeperException,
+                          zookeeper.get,
+                          self.handle,
+                          "/")
+
     def tearDown(self):
         pass
-        
+
 if __name__ == '__main__':
     unittest.main()
