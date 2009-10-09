@@ -32,19 +32,23 @@ class ExistsTest(zktestbase.TestBase):
         self.assertEqual(self.connected, True)
         ret = zookeeper.exists(self.handle, "/zk-python-existstest", None)
         self.assertNotEqual(ret, None, "/zk-python-existstest does not exist (possibly means creation failure)")
-        
+
+    def test_sync_nexists(self):
+        self.assertEqual(None, zookeeper.exists(self.handle, "/i-dont-exist", None))
+
+
     def test_async_exists(self):
         self.cv = threading.Condition()
         def callback(handle, rc, stat):
             self.cv.acquire()
-            self.callback_flag = True            
+            self.callback_flag = True
             self.cv.notify()
             self.cv.release()
             self.rc = rc
-            
+
         self.assertEqual(self.connected, True)
 
-        self.cv.acquire()        
+        self.cv.acquire()
         ret = zookeeper.aexists(self.handle, "/zk-python-aexiststest", None,
                                 callback )
         self.assertEqual(ret, zookeeper.OK)

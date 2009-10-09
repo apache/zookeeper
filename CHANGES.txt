@@ -84,6 +84,9 @@ BUGFIXES:
 
   ZOOKEEPER-542. c-client can spin when server unresponsive (Christian
   Wiedmann via mahadev)
+
+  ZOOKEEEPER-510. zkpython lumps all exceptions as IOError, needs specialized
+  exceptions for KeeperException types (henry & pat via mahadev)
  
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to

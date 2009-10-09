@@ -30,19 +30,25 @@ class DeletionTest(zktestbase.TestBase):
         self.assertEqual(ret, zookeeper.OK)
         children = zookeeper.get_children(self.handle, "/")
         self.assertEqual(False, "zk-python-deletetest" in children)
-    
+
+        # test exception
+        self.assertRaises(zookeeper.NoNodeException,
+                          zookeeper.delete,
+                          self.handle,
+                          "/zk-python-deletetest")
+
     def test_async_delete(self):
         ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
         self.assertEqual(self.connected, True)
         ret = zookeeper.create(self.handle, "/zk-python-adeletetest", "nodecontents", [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
         self.assertEqual(ret, "/zk-python-adeletetest")
-        
+
         self.cv = threading.Condition()
         self.callback_flag = False
         self.rc = -1
         def callback(handle, rc):
             self.cv.acquire()
-            self.callback_flag = True            
+            self.callback_flag = True
             self.cv.notify()
             self.rc = rc # don't assert this here, as if the assertion fails, the test will block
             self.cv.release()
@@ -57,6 +63,6 @@ class DeletionTest(zktestbase.TestBase):
         self.assertEqual(self.callback_flag, True, "adelete timed out")
         self.assertEqual(self.rc, zookeeper.OK)
 
-        
+
 if __name__ == '__main__':
     unittest.main()

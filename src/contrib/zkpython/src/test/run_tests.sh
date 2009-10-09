@@ -16,6 +16,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Usage: run_tests.sh testdir [logdir]
+# logdir is optional, defaults to cwd
+
+# get the number of command-line arguments given
+ARGC=$#
+
+# check to make sure enough arguments were given or exit
+if [ $ARGC -lt 2 ]; then
+    export ZKPY_LOG_DIR="."
+else
+    export ZKPY_LOG_DIR=$2
+fi
+
 # Find the build directory containing zookeeper.so
 SO_PATH=`find ../../../build/ -name "zookeeper.so" | head -1`
 PYTHONPATH=`dirname $SO_PATH`
