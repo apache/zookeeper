@@ -87,6 +87,8 @@ BUGFIXES:
 
   ZOOKEEEPER-510. zkpython lumps all exceptions as IOError, needs specialized
   exceptions for KeeperException types (henry & pat via mahadev)
+
+  ZOOKEEPER-541. zkpython limited to 256 handles (henry robinson via phunt)
  
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to

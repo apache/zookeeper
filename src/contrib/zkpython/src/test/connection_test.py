@@ -19,6 +19,7 @@
 import unittest, threading
 
 import zookeeper, zktestbase
+ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
 
 class ConnectionTest(zktestbase.TestBase):
     """Test whether we can make a connection"""
@@ -54,6 +55,69 @@ class ConnectionTest(zktestbase.TestBase):
                           zookeeper.get,
                           self.handle,
                           "/")
+
+    def testhandlereuse(self):
+        """
+        Test a) multiple concurrent connections b) reuse of closed handles
+        """
+        cv = threading.Condition()
+        self.connected = False
+        def connection_watcher(handle, type, state, path):
+            cv.acquire()
+            self.connected = True
+            self.assertEqual(zookeeper.CONNECTED_STATE, state)
+            self.handle = handle
+            cv.notify()
+            cv.release()
+
+        cv.acquire()
+        handles = [ zookeeper.init(self.host) for i in xrange(10) ]
+        ret = zookeeper.init(self.host, connection_watcher)
+        cv.wait(15.0)
+        cv.release()
+        self.assertEqual(self.connected, True, "Connection timed out to " + self.host)
+        self.assertEqual(True, all( [ zookeeper.state(handle) == zookeeper.CONNECTED_STATE for handle in handles ] ),
+                         "Not all connections succeeded")
+        oldhandle = handles[3]
+        zookeeper.close(oldhandle)
+        newhandle = zookeeper.init(self.host)
+
+        # This assertion tests *internal* behaviour; i.e. that the module
+        # correctly reuses closed handles. This is therefore implementation
+        # dependent.
+        self.assertEqual(newhandle, oldhandle, "Didn't get reused handle")
+
+    def testmanyhandles(self):
+        """
+        Test the ability of the module to support many handles.
+        """
+        # We'd like to do more, but currently the C client doesn't
+        # work with > 83 handles (fails to create a pipe) on MacOS 10.5.8
+        handles = [ zookeeper.init(self.host) for i in xrange(63) ]
+
+        cv = threading.Condition()
+        self.connected = False
+        def connection_watcher(handle, type, state, path):
+            cv.acquire()
+            self.connected = True
+            self.assertEqual(zookeeper.CONNECTED_STATE, state)
+            self.handle = handle
+            cv.notify()
+            cv.release()
+
+        cv.acquire()
+        ret = zookeeper.init(self.host, connection_watcher)
+        cv.wait(15.0)
+        cv.release()
+        self.assertEqual(self.connected, True, "Connection timed out to " + self.host)
+
+        for i,h in enumerate(handles):
+            path = "/zkpython-test-handles-%s" % str(i)
+            self.assertEqual(path, zookeeper.create(h, path, "", [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL))
+
+        self.assertEqual(True, all( zookeeper.close(h) == zookeeper.OK for h in handles ))
+
+
 
     def tearDown(self):
         pass
