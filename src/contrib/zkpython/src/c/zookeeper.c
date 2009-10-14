@@ -1114,6 +1114,7 @@ static PyMethodDef ZooKeeperMethods[] = {
 
 
 #define ADD_EXCEPTION(x) x = PyErr_NewException("zookeeper."#x, ZooKeeperException, NULL); \
+	Py_INCREF(x); \
   PyModule_AddObject(module, #x, x);
 
 
@@ -1126,8 +1127,8 @@ PyMODINIT_FUNC initzookeeper() {
 					  PyExc_Exception,
 					  NULL);
 
-  PyModule_AddObject(module, "ZooKeeperException", ZooKeeperException);
-  
+	PyModule_AddObject(module, "ZooKeeperException", ZooKeeperException);
+  Py_INCREF(ZooKeeperException);
 
   ADD_INTCONSTANT(PERM_READ);
   ADD_INTCONSTANT(PERM_WRITE);
