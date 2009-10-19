@@ -89,6 +89,9 @@ BUGFIXES:
   exceptions for KeeperException types (henry & pat via mahadev)
 
   ZOOKEEPER-541. zkpython limited to 256 handles (henry robinson via phunt)
+
+  ZOOKEEPER-554. zkpython can segfault when statting a deleted node
+  (henry robinson via phunt)
  
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
