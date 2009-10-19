@@ -72,7 +72,7 @@ class TestBase(unittest.TestCase):
         return handle
 
     def ensureDeleted(self,path):
-        self.assertEqual(zookeeper.STATE_CONNECTED, zookeeper.state(self.handle), "Not connected!")
+        self.assertEqual(zookeeper.CONNECTED_STATE, zookeeper.state(self.handle), "Not connected!")
         try:
             self.assertEqual(zookeeper.OK, zookeeper.delete(self.handle, path))
         except zookeeper.NoNodeException:
