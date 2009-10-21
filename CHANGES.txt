@@ -104,6 +104,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-529. Use Ivy to pull dependencies and also generate pom (phunt
   via mahadev)
+  
+  ZOOKEEPER-530. Memory corruption: Zookeeper c client IPv6 implementation
+  does not honor struct sockaddr_in6 size (isabel drost via mahadev)
 
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
