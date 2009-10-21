@@ -170,7 +170,7 @@ typedef struct _auth_list_head {
 struct _zhandle {
     int fd; /* the descriptor used to talk to zookeeper */
     char *hostname; /* the hostname of zookeeper */
-    struct sockaddr *addrs; /* the addresses that correspond to the hostname */
+    struct sockaddr_storage *addrs; /* the addresses that correspond to the hostname */
     int addrs_count; /* The number of addresses in the addrs array */
     watcher_fn watcher; /* the registered watcher */
     struct timeval last_recv; /* The time that the last message was received */

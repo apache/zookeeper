@@ -165,7 +165,7 @@ typedef struct _completion_list {
 
 const char*err2string(int err);
 static int queue_session_event(zhandle_t *zh, int state);
-static const char* format_endpoint_info(const struct sockaddr* ep);
+static const char* format_endpoint_info(const struct sockaddr_storage* ep);
 static const char* format_current_endpoint_info(zhandle_t* zh);
 
 /* completion routine forward declarations */
@@ -406,7 +406,7 @@ static void setup_random()
 int getaddrs(zhandle_t *zh)
 {
     struct addrinfo hints, *res, *res0;
-    struct sockaddr *addr;
+    struct sockaddr_storage *addr;
     char *hosts = strdup(zh->hostname);
     char *host;
     char *strtok_last;
@@ -500,10 +500,10 @@ int getaddrs(zhandle_t *zh)
         setup_random();
         /* Permute */
         for(i = 0; i < zh->addrs_count; i++) {
-            struct sockaddr *s1 = zh->addrs + random()%zh->addrs_count;
-            struct sockaddr *s2 = zh->addrs + random()%zh->addrs_count;
+            struct sockaddr_storage *s1 = zh->addrs + random()%zh->addrs_count;
+            struct sockaddr_storage *s2 = zh->addrs + random()%zh->addrs_count;
             if (s1 != s2) {
-                struct sockaddr t = *s1;
+                struct sockaddr_storage t = *s1;
                 *s1 = *s2;
                 *s2 = t;
             }
@@ -1347,11 +1347,18 @@ static struct timeval get_timeval(int interval)
             int rc;
             int on = 1;
             
-            zh->fd = socket(PF_INET, SOCK_STREAM, 0);
+            zh->fd = socket(zh->addrs[zh->connect_index].ss_family, SOCK_STREAM, 0);
+            if (zh->fd < 0) {
+                return api_epilog(zh,handle_socket_error_msg(zh,__LINE__,
+                                                             ZSYSTEMERROR, "socket() call failed"));
+            }
             setsockopt(zh->fd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(int));
             fcntl(zh->fd, F_SETFL, O_NONBLOCK|fcntl(zh->fd, F_GETFL, 0));
-            rc = connect(zh->fd, &zh->addrs[zh->connect_index],
-                    sizeof(struct sockaddr));
+            if (zh->addrs[zh->connect_index].ss_family == AF_INET6) {
+                rc = connect(zh->fd, (struct sockaddr*) &zh->addrs[zh->connect_index], sizeof(struct sockaddr_in6));
+            } else {
+                rc = connect(zh->fd, (struct sockaddr*) &zh->addrs[zh->connect_index], sizeof(struct sockaddr_in));
+            }
             if (rc == -1) {
                 /* we are handling the non-blocking connect according to
                  * the description in section 16.3 "Non-blocking connect"
@@ -2695,7 +2702,7 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
     return ZOK;
 }
 
-static const char* format_endpoint_info(const struct sockaddr* ep)
+static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 {
     static char buf[128];
     char addrstr[128];
@@ -2704,16 +2711,18 @@ static const char* format_endpoint_info(const struct sockaddr* ep)
     if(ep==0)
         return "null";
 
-    inaddr=&((struct sockaddr_in*)ep)->sin_addr;
-    port=((struct sockaddr_in*)ep)->sin_port;
 #if defined(AF_INET6)
-    if(ep->sa_family==AF_INET6){
+    if(ep->ss_family==AF_INET6){
         inaddr=&((struct sockaddr_in6*)ep)->sin6_addr;
         port=((struct sockaddr_in6*)ep)->sin6_port;
+    } else {
+#endif
+        inaddr=&((struct sockaddr_in*)ep)->sin_addr;
+        port=((struct sockaddr_in*)ep)->sin_port;
+#if defined(AF_INET6)
     }
 #endif
-    
-    inet_ntop(ep->sa_family,inaddr,addrstr,sizeof(addrstr)-1);
+    inet_ntop(ep->ss_family,inaddr,addrstr,sizeof(addrstr)-1);
     sprintf(buf,"%s:%d",addrstr,ntohs(port));
     return buf;
 }
