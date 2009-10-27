@@ -92,6 +92,8 @@ BUGFIXES:
 
   ZOOKEEPER-554. zkpython can segfault when statting a deleted node
   (henry robinson via phunt)
+
+  ZOOKEEPER-512. FLE election fails to elect leader (flavio via mahadev)
  
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
