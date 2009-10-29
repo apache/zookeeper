@@ -1402,7 +1402,7 @@ static struct timeval get_timeval(int interval)
         // a PING
         if (zh->state==ZOO_CONNECTED_STATE) {
             send_to = zh->recv_timeout/3 - idle_send;
-            if (send_to <= 0) {
+            if (send_to <= 0 && zh->sent_requests.head==0) {
 //                LOG_DEBUG(("Sending PING to %s (exceeded idle by %dms)",
 //                                format_current_endpoint_info(zh),-send_to));
                 int rc=send_ping(zh);
