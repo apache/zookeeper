@@ -94,6 +94,8 @@ BUGFIXES:
   (henry robinson via phunt)
 
   ZOOKEEPER-512. FLE election fails to elect leader (flavio via mahadev)
+
+  ZOOKEEPER-563. ant test for recipes is broken. (mahadev via phunt)
  
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
