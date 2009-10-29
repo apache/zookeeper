@@ -67,6 +67,9 @@ BUGFIXES:
   ZOOKEEPER-518. DEBUG message for outstanding proposals in leader should be
    moved to trace. (phunt)
 
+  ZOOKEEPER-562. c client can flood server with pings if tcp send queue
+  filled (ben reed via mahadev)
+
 IMPROVEMENTS:
 
 NEW FEATURES:
