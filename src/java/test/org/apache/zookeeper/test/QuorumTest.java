@@ -30,7 +30,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.quorum.FollowerHandler;
+import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.junit.Before;
 import org.junit.Test;
@@ -91,6 +91,27 @@ public class QuorumTest extends QuorumBase {
         ct.testClientWithWatcherObj();
     }
     
+    @Test
+    public void testGetView() {                
+        ct.assertEquals(5,qb.s1.getView().size());        
+        ct.assertEquals(5,qb.s2.getView().size());        
+        ct.assertEquals(5,qb.s3.getView().size());        
+        ct.assertEquals(5,qb.s4.getView().size());
+        ct.assertEquals(5,qb.s5.getView().size());
+    }
+    
+    @Test
+    public void testViewContains() {
+        // Test view contains self
+        ct.assertTrue(qb.s1.viewContains(qb.s1.getId()));
+        
+        // Test view contains other servers
+        ct.assertTrue(qb.s1.viewContains(qb.s2.getId()));
+        
+        // Test view does not contain non-existant servers
+        ct.assertFalse(qb.s1.viewContains(-1L));
+    }
+    
     volatile int counter = 0;
     volatile int errors = 0;
     @Test
@@ -117,9 +138,9 @@ public class QuorumTest extends QuorumBase {
                 }
             }, null);
         }
-        ArrayList<FollowerHandler> fhs = new ArrayList<FollowerHandler>(leader.forwardingFollowers);
-        for(FollowerHandler f: fhs) {
-            f.sock.shutdownInput();
+        ArrayList<LearnerHandler> fhs = new ArrayList<LearnerHandler>(leader.forwardingFollowers);
+        for(LearnerHandler f: fhs) {
+            f.getSocket().shutdownInput();
         }
         for(int i = 0; i < 5000; i++) {
             zk.setData("/blah/blah", new byte[0], -1, new AsyncCallback.StatCallback() {

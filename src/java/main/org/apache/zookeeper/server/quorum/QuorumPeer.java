@@ -452,7 +452,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         try {
             jmxQuorumBean = new QuorumBean(this);
             MBeanRegistry.getInstance().register(jmxQuorumBean, null);
-            for(QuorumServer s: quorumPeers.values()){
+            for(QuorumServer s: getView().values()){
                 ZKMBeanInfo p;
                 if (getId() == s.id) {
                     p = jmxLocalPeerBean = new LocalPeerBean(this);
@@ -548,16 +548,33 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         }
     }
 
+    /**
+     * A 'view' is a node's current opinion of the membership of the
+     * ensemble. 
+     */
+    public Map<Long,QuorumPeer.QuorumServer> getView() {
+        return this.quorumPeers;
+    }
+    
+    /**
+     * Check if a node is in the current view. With static membership, the
+     * result of this check will never change; only when dynamic membership
+     * is introduced will this be more useful.
+     */
+    public boolean viewContains(Long sid) {
+        return this.quorumPeers.containsKey(sid);
+    }
+    
     public String[] getQuorumPeers() {
         List<String> l = new ArrayList<String>();
         synchronized (this) {
             if (leader != null) {
-                synchronized (leader.followers) {
-                    for (FollowerHandler fh : leader.followers) {
-                        if (fh.sock == null)
+                synchronized (leader.learners) {
+                    for (LearnerHandler fh : leader.learners) {
+                        if (fh.getSocket() == null)
                             continue;
-                        String s = fh.sock.getRemoteSocketAddress().toString();
-                        if (leader.isFollowerSynced(fh))
+                        String s = fh.getSocket().getRemoteSocketAddress().toString();
+                        if (leader.isLearnerSynced(fh))
                             s += "*";
                         l.add(s);
                     }

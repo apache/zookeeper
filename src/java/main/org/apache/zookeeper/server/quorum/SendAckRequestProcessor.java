@@ -30,10 +30,10 @@ import org.apache.zookeeper.server.RequestProcessor;
 public class SendAckRequestProcessor implements RequestProcessor, Flushable {
     private static final Logger LOG = Logger.getLogger(SendAckRequestProcessor.class);
     
-    Follower follower;
+    Learner learner;
 
-    SendAckRequestProcessor(Follower follower) {
-        this.follower = follower;
+    SendAckRequestProcessor(Learner peer) {
+        this.learner = peer;
     }
 
     public void processRequest(Request si) {
@@ -41,12 +41,12 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
             QuorumPacket qp = new QuorumPacket(Leader.ACK, si.hdr.getZxid(), null,
                 null);
             try {
-                follower.writePacket(qp, false);
+                learner.writePacket(qp, false);
             } catch (IOException e) {
                 LOG.warn("Closing connection to leader, exception during packet send", e);
                 try {
-                    if (!follower.sock.isClosed()) {
-                        follower.sock.close();
+                    if (!learner.sock.isClosed()) {
+                        learner.sock.close();
                     }
                 } catch (IOException e1) {
                     // Nothing to do, we are shutting things down, so an exception here is irrelevant
@@ -58,12 +58,12 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
     
     public void flush() throws IOException {
         try {
-            follower.writePacket(null, true);
+            learner.writePacket(null, true);
         } catch(IOException e) {
             LOG.warn("Closing connection to leader, exception during packet send", e);
             try {
-                if (!follower.sock.isClosed()) {
-                    follower.sock.close();
+                if (!learner.sock.isClosed()) {
+                    learner.sock.close();
                 }
             } catch (IOException e1) {
                     // Nothing to do, we are shutting things down, so an exception here is irrelevant
