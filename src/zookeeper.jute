@@ -131,6 +131,10 @@ module org.apache.zookeeper.proto {
         ustring path;
         boolean watch;
     }
+    class GetChildren2Request {
+        ustring path;
+        boolean watch;
+    }
     class GetMaxChildrenRequest {
         ustring path;
     }
@@ -179,7 +183,11 @@ module org.apache.zookeeper.proto {
         org.apache.zookeeper.data.Stat stat;
     }
     class GetChildrenResponse {
-        vector<ustring>children;
+        vector<ustring> children;
+    }
+    class GetChildren2Response {
+        vector<ustring> children;
+        org.apache.zookeeper.data.Stat stat;
     }
     class GetACLResponse {
         vector<org.apache.zookeeper.data.ACL> acl;

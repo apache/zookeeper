@@ -136,8 +136,9 @@ struct ACL_vector ZOO_CREATOR_ALL_ACL = { 1, _CREATOR_ALL_ACL_ACL};
 #define COMPLETION_STAT 1
 #define COMPLETION_DATA 2
 #define COMPLETION_STRINGLIST 3
-#define COMPLETION_ACLLIST 4
-#define COMPLETION_STRING 5
+#define COMPLETION_STRINGLIST_STAT 4
+#define COMPLETION_ACLLIST 5
+#define COMPLETION_STRING 6
 
 typedef struct _auth_completion_list {
     void_completion_t completion;
@@ -153,6 +154,7 @@ typedef struct _completion_list {
         stat_completion_t stat_result;
         data_completion_t data_result;
         strings_completion_t strings_result;
+        strings_stat_completion_t strings_stat_result;
         acl_completion_t acl_result;
         string_completion_t string_result;
         struct watcher_object_list *watcher_result;
@@ -1670,6 +1672,17 @@ void process_completions(zhandle_t *zh)
                     deallocate_GetChildrenResponse(&res);
                 }
                 break;
+            case COMPLETION_STRINGLIST_STAT:
+                LOG_DEBUG(("Calling COMPLETION_STRINGLIST_STAT for xid=%#x rc=%d",cptr->xid,rc));
+                if (rc) {
+                    cptr->c.strings_stat_result(rc, 0, 0, cptr->data);
+                } else {
+                    struct GetChildren2Response res;
+                    deserialize_GetChildren2Response(ia, "reply", &res);
+                    cptr->c.strings_stat_result(rc, &res.children, &res.stat, cptr->data);
+                    deallocate_GetChildren2Response(&res);
+                }
+                break;
             case COMPLETION_STRING:
                 LOG_DEBUG(("Calling COMPLETION_STRING for xid=%#x rc=%d",cptr->xid,rc));
                 if (rc) {
@@ -1882,9 +1895,21 @@ int zookeeper_process(zhandle_t *zh, int events)
                     if (rc == 0) {
                         struct GetChildrenResponse res;
                         deserialize_GetChildrenResponse(ia, "reply", &res);
-                        sc->u.strs = res.children;
+                        sc->u.strs2 = res.children;
                         /* We don't deallocate since we are passing it back */
                         // deallocate_GetChildrenResponse(&res);
+                    }
+                    break;
+                case COMPLETION_STRINGLIST_STAT:
+                    LOG_DEBUG(("Calling COMPLETION_STRINGLIST_STAT for xid=%#x rc=%d",
+                               cptr->xid, rc));
+                    if (rc == 0) {
+                        struct GetChildren2Response res;
+                        deserialize_GetChildren2Response(ia, "reply", &res);
+                        sc->u.strs_stat.strs2 = res.children;
+                        sc->u.strs_stat.stat2 = res.stat;
+                        /* We don't deallocate since we are passing it back */
+                        // deallocate_GetChildren2Response(&res);
                     }
                     break;
                 case COMPLETION_STRING:
@@ -1994,6 +2019,9 @@ static completion_list_t* create_completion_entry(int xid, int completion_type,
     case COMPLETION_STRINGLIST:
         c->c.strings_result = (strings_completion_t)dc;
         break;
+    case COMPLETION_STRINGLIST_STAT:
+        c->c.strings_stat_result = (strings_stat_completion_t)dc;
+        break;
     case COMPLETION_ACLLIST:
         c->c.acl_result = (acl_completion_t)dc;
         break;
@@ -2069,6 +2097,12 @@ static int add_strings_completion(zhandle_t *zh, int xid,
         strings_completion_t dc, const void *data,watcher_registration_t* wo)
 {
     return add_completion(zh, xid, COMPLETION_STRINGLIST, dc, data, 0,wo);
+}
+
+static int add_strings_stat_completion(zhandle_t *zh, int xid,
+        strings_stat_completion_t dc, const void *data,watcher_registration_t* wo)
+{
+    return add_completion(zh, xid, COMPLETION_STRINGLIST_STAT, dc, data, 0,wo);
 }
 
 static int add_acl_completion(zhandle_t *zh, int xid, acl_completion_t dc,
@@ -2390,15 +2424,10 @@ int zoo_awexists(zhandle_t *zh, const char *path,
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
 
-int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
-        strings_completion_t dc, const void *data)
-{
-    return zoo_awget_children(zh,path,watch?zh->watcher:0,zh->context,dc,data);
-}
-
-int zoo_awget_children(zhandle_t *zh, const char *path,
-        watcher_fn watcher, void* watcherCtx, 
-        strings_completion_t dc, const void *data)
+static int zoo_awget_children_(zhandle_t *zh, const char *path,
+         watcher_fn watcher, void* watcherCtx, 
+         strings_completion_t sc,
+         const void *data)
 {
     struct oarchive *oa;
     struct RequestHeader h = { .xid = get_xid(), .type = GETCHILDREN_OP};
@@ -2418,7 +2447,7 @@ int zoo_awget_children(zhandle_t *zh, const char *path,
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetChildrenRequest(oa, "req", &req);
     enter_critical(zh);
-    rc = rc < 0 ? rc : add_strings_completion(zh, h.xid, dc, data,
+    rc = rc < 0 ? rc : add_strings_completion(zh, h.xid, sc, data,
             create_watcher_registration(server_path,child_result_checker,watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -2432,6 +2461,74 @@ int zoo_awget_children(zhandle_t *zh, const char *path,
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
+}
+
+int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
+        strings_completion_t dc, const void *data)
+{
+    return zoo_awget_children_(zh,path,watch?zh->watcher:0,zh->context,dc,data);
+}
+
+int zoo_awget_children(zhandle_t *zh, const char *path,
+         watcher_fn watcher, void* watcherCtx, 
+         strings_completion_t dc,
+         const void *data)
+{
+    return zoo_awget_children_(zh,path,watcher,watcherCtx,dc,data);
+}
+
+static int zoo_awget_children2_(zhandle_t *zh, const char *path,
+         watcher_fn watcher, void* watcherCtx, 
+         strings_stat_completion_t ssc,
+         const void *data)
+{
+    /* invariant: (sc == NULL) != (sc == NULL) */
+    struct oarchive *oa;
+    struct RequestHeader h = { .xid = get_xid(), .type = GETCHILDREN2_OP};
+    char * server_path = prepend_string(zh, path);
+    struct GetChildren2Request req2 = {(char*)server_path, watcher!=0 }; 
+    int rc;
+        
+    if (zh==0 || !isValidPath(server_path, 0)) {
+        free_duplicate_path(server_path, path);
+        return ZBADARGUMENTS;
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(server_path, path);
+        return ZINVALIDSTATE;
+    }
+    oa = create_buffer_oarchive();
+    rc = serialize_RequestHeader(oa, "header", &h);
+    rc = rc < 0 ? rc : serialize_GetChildren2Request(oa, "req", &req2);
+    enter_critical(zh);
+    rc = rc < 0 ? rc : add_strings_stat_completion(zh, h.xid, ssc, data,
+            create_watcher_registration(server_path,child_result_checker,watcher,watcherCtx));
+    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
+            get_buffer_len(oa));
+    leave_critical(zh);
+    free_duplicate_path(server_path, path);
+    /* We queued the buffer, so don't free it */
+    close_buffer_oarchive(&oa, 0);
+
+    LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
+            format_current_endpoint_info(zh)));
+    /* make a best (non-blocking) effort to send the requests asap */
+    adaptor_send_queue(zh, 0);
+    return (rc < 0)?ZMARSHALLINGERROR:ZOK;
+}
+
+int zoo_aget_children2(zhandle_t *zh, const char *path, int watch,
+        strings_stat_completion_t dc, const void *data)
+{
+    return zoo_awget_children2_(zh,path,watch?zh->watcher:0,zh->context,dc,data);
+}
+
+int zoo_awget_children2(zhandle_t *zh, const char *path,
+         watcher_fn watcher, void* watcherCtx, 
+         strings_stat_completion_t dc,
+         const void *data)
+{
+    return zoo_awget_children2_(zh,path,watcher,watcherCtx,dc,data);
 }
 
 int zoo_async(zhandle_t *zh, const char *path,
@@ -2862,13 +2959,7 @@ int zoo_set2(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     return rc;
 }
 
-int zoo_get_children(zhandle_t *zh, const char *path, int watch,
-        struct String_vector *strings)
-{
-    return zoo_wget_children(zh,path,watch?zh->watcher:0,zh->context,strings);
-}
-
-int zoo_wget_children(zhandle_t *zh, const char *path, 
+static int zoo_wget_children_(zhandle_t *zh, const char *path, 
         watcher_fn watcher, void* watcherCtx,
         struct String_vector *strings)
 {
@@ -2877,20 +2968,73 @@ int zoo_wget_children(zhandle_t *zh, const char *path,
     if (!sc) {
         return ZSYSTEMERROR;
     }
-    rc=zoo_awget_children(zh, path, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
+    rc= zoo_awget_children (zh, path, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
     if(rc==ZOK){
         wait_sync_completion(sc);
         rc = sc->rc;
         if (rc == 0) {
             if (strings) {
-                *strings = sc->u.strs;
+                *strings = sc->u.strs2;
             } else {
-                deallocate_String_vector(&sc->u.strs);
+                deallocate_String_vector(&sc->u.strs2);
             }
         }
     }
     free_sync_completion(sc);
     return rc;
+}
+
+static int zoo_wget_children2_(zhandle_t *zh, const char *path, 
+        watcher_fn watcher, void* watcherCtx,
+        struct String_vector *strings, struct Stat *stat)
+{
+    struct sync_completion *sc = alloc_sync_completion();
+    int rc;
+    if (!sc) {
+        return ZSYSTEMERROR;
+    }
+    rc= zoo_awget_children2(zh, path, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
+
+    if(rc==ZOK){
+        wait_sync_completion(sc);
+        rc = sc->rc;
+        if (rc == 0) {
+            *stat = sc->u.strs_stat.stat2;
+            if (strings) {
+                *strings = sc->u.strs_stat.strs2;
+            } else {
+                deallocate_String_vector(&sc->u.strs_stat.strs2);
+            }
+        }
+    }
+    free_sync_completion(sc);
+    return rc;
+}
+
+int zoo_get_children(zhandle_t *zh, const char *path, int watch,
+        struct String_vector *strings)
+{
+    return zoo_wget_children_(zh,path,watch?zh->watcher:0,zh->context,strings);
+}
+
+int zoo_wget_children(zhandle_t *zh, const char *path, 
+        watcher_fn watcher, void* watcherCtx,
+        struct String_vector *strings)
+{
+    return zoo_wget_children_(zh,path,watcher,watcherCtx,strings);
+}
+
+int zoo_get_children2(zhandle_t *zh, const char *path, int watch,
+        struct String_vector *strings, struct Stat *stat)
+{
+    return zoo_wget_children2_(zh,path,watch?zh->watcher:0,zh->context,strings,stat);
+}
+
+int zoo_wget_children2(zhandle_t *zh, const char *path, 
+        watcher_fn watcher, void* watcherCtx,
+        struct String_vector *strings, struct Stat *stat)
+{
+    return zoo_wget_children2_(zh,path,watcher,watcherCtx,strings,stat);
 }
 
 int zoo_get_acl(zhandle_t *zh, const char *path, struct ACL_vector *acl,

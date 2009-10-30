@@ -334,6 +334,8 @@ public class ClientTest extends ClientBase {
             List<String> children = zk.getChildren("/pat", false);
             assertEquals(1, children.size());
             assertEquals("ben", children.get(0));
+            List<String> children2 = zk.getChildren("/pat", false, null);
+            assertEquals(children, children2);
             String value = new String(zk.getData("/pat/ben", false, stat));
             assertEquals("Ben was here", value);
             // Test stat and watch of non existent node

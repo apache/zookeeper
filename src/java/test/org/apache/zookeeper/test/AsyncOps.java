@@ -32,6 +32,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -278,11 +279,10 @@ public class AsyncOps {
         
         public void verifyGetChildrenEmpty() {
             StringCB parent = createNode();
-
             path = parent.path;
             verify();
         }
-        
+
         public void verifyGetChildrenSingle() {
             StringCB parent = createNode();
             StringCB child = createNode(parent);
@@ -297,7 +297,7 @@ public class AsyncOps {
             StringCB parent = createNode();
             StringCB child1 = createNode(parent, "child1");
             StringCB child2 = createNode(parent, "child2");
-
+        
             path = parent.path;
             children.add(child1.nodeName());
             children.add(child2.nodeName());
@@ -313,7 +313,91 @@ public class AsyncOps {
         @Override
         public void verify() {
             zk.getChildren(path, false, this, toString());
+            super.verify();
+        }
 
+        @Override
+        public String toString() {
+            return super.toString() + children.toString();
+        }
+    }
+
+    public static class Children2CB extends AsyncCB implements Children2Callback {
+        List<String> children = new ArrayList<String>();
+
+        Children2CB(ZooKeeper zk) {
+            this(zk, new CountDownLatch(1));
+        }
+
+        Children2CB(ZooKeeper zk, CountDownLatch latch) {
+            super(zk, latch);
+        }
+
+        public void processResult(int rc, String path, Object ctx,
+                List<String> children, Stat stat)
+        {
+            this.children =
+                (children == null ? new ArrayList<String>() : children);
+            super.processResult(Code.get(rc), path, ctx);
+        }
+        
+        public StringCB createNode() {
+            StringCB parent = new StringCB(zk);
+            parent.verifyCreate();
+
+            return parent;
+        }
+        
+        public StringCB createNode(StringCB parent) {
+            String childName = "bar";
+
+            return createNode(parent, childName);
+        }
+
+        public StringCB createNode(StringCB parent, String childName) {
+            StringCB child = new StringCB(zk);
+            child.setPath(parent.path + "/" + childName);
+            child.verifyCreate();
+            
+            return child;
+        }
+        
+        public void verifyGetChildrenEmpty() {
+            StringCB parent = createNode();
+            path = parent.path;
+            verify();
+        }
+
+        public void verifyGetChildrenSingle() {
+            StringCB parent = createNode();
+            StringCB child = createNode(parent);
+
+            path = parent.path;
+            children.add(child.nodeName());
+            
+            verify();
+        }
+        
+        public void verifyGetChildrenTwo() {
+            StringCB parent = createNode();
+            StringCB child1 = createNode(parent, "child1");
+            StringCB child2 = createNode(parent, "child2");
+        
+            path = parent.path;
+            children.add(child1.nodeName());
+            children.add(child2.nodeName());
+            
+            verify();
+        }
+        
+        public void verifyGetChildrenFailure_NoNode() {
+            rc = KeeperException.Code.NONODE;
+            verify();
+        }
+        
+        @Override
+        public void verify() {
+            zk.getChildren(path, false, this, toString());
             super.verify();
         }
         

@@ -110,6 +110,7 @@ public class Request {
         case OpCode.getACL:
         case OpCode.setACL:
         case OpCode.getChildren:
+        case OpCode.getChildren2:
         case OpCode.ping:
         case OpCode.closeSession:
         case OpCode.setWatches:
@@ -124,6 +125,7 @@ public class Request {
         case OpCode.exists:
         case OpCode.getACL:
         case OpCode.getChildren:
+        case OpCode.getChildren2:
         case OpCode.getData:
             return false;
         case OpCode.error:
@@ -163,6 +165,8 @@ public class Request {
             return "setACL";
         case OpCode.getChildren:
             return "getChildren";
+        case OpCode.getChildren2:
+            return "getChildren2";
         case OpCode.ping:
             return "ping";
         case OpCode.createSession:

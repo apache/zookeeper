@@ -92,7 +92,11 @@ struct sync_completion {
             struct ACL_vector acl;
             struct Stat stat;
         } acl;
-        struct String_vector strs;
+        struct String_vector strs2;
+        struct {
+            struct String_vector strs2;
+            struct Stat stat2;
+        } strs_stat;
     } u;
     int complete;
 #ifdef THREADED

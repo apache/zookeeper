@@ -49,6 +49,8 @@ public class TraceFormatter {
             return "setACL";
         case OpCode.getChildren:
             return "getChildren";
+        case OpCode.getChildren2:
+            return "getChildren2";
         case OpCode.ping:
             return "ping";
         case OpCode.createSession:
