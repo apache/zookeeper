@@ -72,48 +72,48 @@ public class Leader {
     QuorumPeer self;
 
     // the follower acceptor thread
-    FollowerCnxAcceptor cnxAcceptor;
+    LearnerCnxAcceptor cnxAcceptor;
     
     // list of all the followers
-    public HashSet<FollowerHandler> followers = new HashSet<FollowerHandler>();
+    public HashSet<LearnerHandler> learners = new HashSet<LearnerHandler>();
 
-    // list of followers that are ready to follow (i.e synced with the leader)
-    public HashSet<FollowerHandler> forwardingFollowers = new HashSet<FollowerHandler>();
-    
+    // list of followers that are ready to follow (i.e synced with the leader)    
+    public HashSet<LearnerHandler> forwardingFollowers = new HashSet<LearnerHandler>();
+        
     //Pending sync requests
-    public HashMap<Long,List<FollowerSyncRequest>> pendingSyncs = new HashMap<Long,List<FollowerSyncRequest>>();
+    public HashMap<Long,List<LearnerSyncRequest>> pendingSyncs = new HashMap<Long,List<LearnerSyncRequest>>();
     
     //Follower counter
     AtomicLong followerCounter = new AtomicLong(-1);
     /**
-     * Adds follower to the leader.
+     * Adds peer to the leader.
      * 
-     * @param follower
-     *                instance of follower handle
+     * @param learner
+     *                instance of learner handle
      */
-    void addFollowerHandler(FollowerHandler follower) {
-        synchronized (followers) {
-            followers.add(follower);
+    void addLearnerHandler(LearnerHandler learner) {
+        synchronized (learners) {
+            learners.add(learner);
         }
     }
 
     /**
-     * Remove the follower from the followers list
+     * Remove the learner from the learner list
      * 
-     * @param follower
+     * @param peer
      */
-    void removeFollowerHandler(FollowerHandler follower) {
+    void removeLearnerHandler(LearnerHandler peer) {
         synchronized (forwardingFollowers) {
-            forwardingFollowers.remove(follower);
-        }
-        synchronized (followers) {
-            followers.remove(follower);
+            forwardingFollowers.remove(peer);            
+        }        
+        synchronized (learners) {
+            learners.remove(peer);
         }
     }
 
-    boolean isFollowerSynced(FollowerHandler follower){
+    boolean isLearnerSynced(LearnerHandler peer){
         synchronized (forwardingFollowers) {
-            return forwardingFollowers.contains(follower);
+            return forwardingFollowers.contains(peer);
         }        
     }
     
@@ -209,7 +209,7 @@ public class Leader {
 
     Proposal newLeaderProposal = new Proposal();
     
-    class FollowerCnxAcceptor extends Thread{
+    class LearnerCnxAcceptor extends Thread{
         private volatile boolean stop = false;
         
         @Override
@@ -217,10 +217,10 @@ public class Leader {
             try {
                 while (!stop) {
                     try{
-                        Socket s = ss.accept();
+                        Socket s = ss.accept();                        
                         s.setSoTimeout(self.tickTime * self.syncLimit);
                         s.setTcpNoDelay(nodelay);
-                        FollowerHandler fh = new FollowerHandler(s, Leader.this);
+                        LearnerHandler fh = new LearnerHandler(s, Leader.this);
                         fh.start();
                     } catch (SocketException e) {
                         if (stop) {
@@ -267,9 +267,10 @@ public class Leader {
             synchronized(this){
                 lastProposed = zk.getZxid();
             }
-            
+                      
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
-                    null, null);
+                    null, null);            
+
             if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
                 LOG.info("NEWLEADER proposal has Zxid of "
                         + Long.toHexString(newLeaderProposal.packet.getZxid()));
@@ -278,7 +279,7 @@ public class Leader {
             
             // Start thread that waits for connection requests from 
             // new followers.
-            cnxAcceptor = new FollowerCnxAcceptor();
+            cnxAcceptor = new LearnerCnxAcceptor();
             cnxAcceptor.start();
             
             // We have to get at least a majority of servers in sync with
@@ -296,7 +297,7 @@ public class Leader {
                     
                     shutdown("Waiting for a quorum of followers, only synced with: " + ackToString);
                     HashSet<Long> followerSet = new HashSet<Long>();
-                    for(FollowerHandler f : followers)
+                    for(LearnerHandler f : learners)
                         followerSet.add(f.getSid());
                     
                     if (self.getQuorumVerifier().containsQuorum(followerSet)) {
@@ -333,8 +334,8 @@ public class Leader {
                 
                 // lock on the followers when we use it.
                 syncedSet.add(self.getId());
-                synchronized (followers) {
-                    for (FollowerHandler f : followers) {
+                synchronized (learners) {
+                    for (LearnerHandler f : learners) {
                         if (f.synced()) {
                             syncedCount++;
                             syncedSet.add(f.getSid());
@@ -388,10 +389,10 @@ public class Leader {
         } catch (IOException e) {
             LOG.warn("Ignoring unexpected exception during close",e);
         }
-        synchronized (followers) {
-            for (Iterator<FollowerHandler> it = followers.iterator(); it
+        synchronized (learners) {
+            for (Iterator<LearnerHandler> it = learners.iterator(); it
                     .hasNext();) {
-                FollowerHandler f = it.next();
+                LearnerHandler f = it.next();
                 it.remove();
                 f.shutdown();
             }
@@ -466,7 +467,7 @@ public class Leader {
                 commit(zxid);
                 zk.commitProcessor.commit(p.request);
                 if(pendingSyncs.containsKey(zxid)){
-                    for(FollowerSyncRequest r: pendingSyncs.remove(zxid)) {
+                    for(LearnerSyncRequest r: pendingSyncs.remove(zxid)) {
                         sendSync(r);
                     }
                 }
@@ -538,12 +539,12 @@ public class Leader {
      */
     void sendPacket(QuorumPacket qp) {
         synchronized (forwardingFollowers) {
-            for (FollowerHandler f : forwardingFollowers) {
+            for (LearnerHandler f : forwardingFollowers) {                
                 f.queuePacket(qp);
             }
         }
     }
-
+    
     long lastCommitted = -1;
 
     /**
@@ -604,13 +605,13 @@ public class Leader {
      * @param r the request
      */
     
-    synchronized public void processSync(FollowerSyncRequest r){
+    synchronized public void processSync(LearnerSyncRequest r){
         if(outstandingProposals.isEmpty()){
             sendSync(r);
         } else {
-            List<FollowerSyncRequest> l = pendingSyncs.get(lastProposed);
+            List<LearnerSyncRequest> l = pendingSyncs.get(lastProposed);
             if (l == null) {
-                l = new ArrayList<FollowerSyncRequest>();
+                l = new ArrayList<LearnerSyncRequest>();
             }
             l.add(r);
             pendingSyncs.put(lastProposed, l);
@@ -624,7 +625,7 @@ public class Leader {
      * @param r
      */
             
-    public void sendSync(FollowerSyncRequest r){
+    public void sendSync(LearnerSyncRequest r){
         QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
         r.fh.queuePacket(qp);
     }
@@ -636,7 +637,7 @@ public class Leader {
      * @param handler handler of the follower
      * @return last proposed zxid
      */
-    synchronized public long startForwarding(FollowerHandler handler,
+    synchronized public long startForwarding(LearnerHandler handler,
             long lastSeenZxid) {
         // Queue up any outstanding requests enabling the receipt of
         // new requests

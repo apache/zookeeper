@@ -51,8 +51,8 @@
 
    <!-- Two unrecoverable errors while following the leader  -->
    <Match>
-     <Class name="org.apache.zookeeper.server.quorum.Follower" />
-       <Method name="followLeader" />
+     <Class name="org.apache.zookeeper.server.quorum.Learner" />
+       <Method name="syncWithLeader" />
        <Bug pattern="DM_EXIT" />
    </Match>
 
@@ -91,7 +91,7 @@
      <Bug code="IS"/>
   </Match>
   <Match>
-     <Class name="org.apache.zookeeper.server.quorum.FollowerSessionTracker"/>
+     <Class name="org.apache.zookeeper.server.quorum.LearnerSessionTracker"/>
        <Bug code="UrF"/>
   </Match>
   <Match>

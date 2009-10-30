@@ -28,7 +28,7 @@ import org.apache.zookeeper.server.SessionTrackerImpl;
  * This is really just a shell of a SessionTracker that tracks session activity
  * to be forwarded to the Leader using a PING.
  */
-public class FollowerSessionTracker implements SessionTracker {
+public class LearnerSessionTracker implements SessionTracker {
     SessionExpirer expirer;
 
     HashMap<Long, Integer> touchTable = new HashMap<Long, Integer>();
@@ -41,7 +41,7 @@ public class FollowerSessionTracker implements SessionTracker {
     /**
      * 
      */
-    public FollowerSessionTracker(SessionExpirer expirer,
+    public LearnerSessionTracker(SessionExpirer expirer,
             ConcurrentHashMap<Long, Integer> sessionsWithTimeouts, long id) {
         this.expirer = expirer;
         this.sessionsWithTimeouts = sessionsWithTimeouts;
