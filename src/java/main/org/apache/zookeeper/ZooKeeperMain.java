@@ -68,6 +68,7 @@ public class ZooKeeperMain {
         commandMap.put("set","path data [version]");
         commandMap.put("get","path [watch]");
         commandMap.put("ls","path [watch]");
+        commandMap.put("ls2","path [watch]");
         commandMap.put("getAcl","path");
         commandMap.put("setAcl","path acl");
         commandMap.put("stat","path [watch]");
@@ -697,6 +698,11 @@ public class ZooKeeperMain {
             path = args[1];
             List<String> children = zk.getChildren(path, watch);
             System.out.println(children);
+        } else if (cmd.equals("ls2") && args.length >= 2) {
+            path = args[1];
+            List<String> children = zk.getChildren(path, watch, stat);
+            System.out.println(children);
+            printStat(stat);
         } else if (cmd.equals("getAcl") && args.length >= 2) {
             path = args[1];
             acl = zk.getACL(path, stat);

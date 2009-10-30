@@ -128,8 +128,8 @@ void log_message(ZooLogLevel curLevel,int line,const char* funcName,
     fprintf(LOGSTREAM, "%s:%d:%s@%s@%d: %s\n", time_now(),pid,
             dbgLevelStr[curLevel],funcName,line,message);
 #else
-    fprintf(LOGSTREAM, "%s:%d(0x%x):%s@%s@%d: %s\n", time_now(),pid,
-            (unsigned long)pthread_self(),
+    fprintf(LOGSTREAM, "%s:%d(0x%lx):%s@%s@%d: %s\n", time_now(),pid,
+            (unsigned long int)pthread_self(),
             dbgLevelStr[curLevel],funcName,line,message);
 #endif
     fflush(LOGSTREAM);

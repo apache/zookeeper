@@ -33,6 +33,7 @@ static const int SETACL_OP=7;
 static const int GETCHILDREN_OP=8;
 static const int SYNC_OP=9;
 static const int PING_OP=11;
+static const int GETCHILDREN2_OP=12;
 static const int CLOSE_OP=-11;
 static const int SETAUTH_OP=100;
 static const int SETWATCHES_OP=101;

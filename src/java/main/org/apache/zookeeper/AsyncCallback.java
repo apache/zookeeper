@@ -42,6 +42,11 @@ public interface AsyncCallback {
                 List<String> children);
     }
 
+    interface Children2Callback extends AsyncCallback {
+        public void processResult(int rc, String path, Object ctx,
+                List<String> children, Stat stat);
+    }
+
     interface StringCallback extends AsyncCallback {
         public void processResult(int rc, String path, Object ctx, String name);
     }

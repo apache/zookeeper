@@ -231,10 +231,14 @@ public class ClientHammerTest extends ClientBase {
                 List<String> children =
                     zk.getChildren("/test-" + i, false);
                 assertEquals(childCount, children.size());
+                children = zk.getChildren("/test-" + i, false, null);
+                assertEquals(childCount, children.size());
             }
             for (int i = 0; i < threads.length; i++) {
                 List<String> children =
                     zk.getChildren("/test-" + i, false);
+                assertEquals(childCount, children.size());
+                children = zk.getChildren("/test-" + i, false, null);
                 assertEquals(childCount, children.size());
             }
         } finally {

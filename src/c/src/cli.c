@@ -209,6 +209,14 @@ void my_strings_completion(int rc, const struct String_vector *strings,
       shutdownThisThing=1;
 }
 
+void my_strings_stat_completion(int rc, const struct String_vector *strings,
+        const struct Stat *stat, const void *data) {
+    my_strings_completion(rc, strings, data);
+    dumpStat(stat);
+    if(batchMode)
+      shutdownThisThing=1;
+}
+
 void my_void_completion(int rc, const void *data) {
     fprintf(stderr, "%s: rc = %d\n", (char*)data, rc);
     free((void*)data);
@@ -273,6 +281,7 @@ void processline(char *line) {
       fprintf(stderr, "    set <path> <data>\n");
       fprintf(stderr, "    get <path>\n");
       fprintf(stderr, "    ls <path>\n");
+      fprintf(stderr, "    ls2 <path>\n");
       fprintf(stderr, "    sync <path>\n");
       fprintf(stderr, "    exists <path>\n");
       fprintf(stderr, "    myid\n");
@@ -336,6 +345,17 @@ void processline(char *line) {
         }
         gettimeofday(&startTime, 0);
         rc= zoo_aget_children(zh, line, 1, my_strings_completion, strdup(line));
+        if (rc) {
+            fprintf(stderr, "Error %d for %s\n", rc, line);
+        }
+    } else if (startsWith(line, "ls2 ")) {
+        line += 4;
+        if (line[0] != '/') {
+            fprintf(stderr, "Path must start with /, found: %s\n", line);
+            return;
+        }
+        gettimeofday(&startTime, 0);
+        rc= zoo_aget_children2(zh, line, 1, my_strings_stat_completion, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
@@ -453,7 +473,7 @@ int main(int argc, char **argv) {
 
     if (argc < 2) {
         fprintf(stderr,
-                "USAGE %s zookeeper_host_list [clientid_file|cmd:(ls|create|od|...)]\n", 
+                "USAGE %s zookeeper_host_list [clientid_file|cmd:(ls|ls2|create|od|...)]\n", 
                 argv[0]);
         fprintf(stderr,
                 "Version: ZooKeeper cli (c client) version %d.%d.%d\n", 

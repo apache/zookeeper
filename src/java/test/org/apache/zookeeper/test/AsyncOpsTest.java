@@ -24,6 +24,7 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.AsyncOps.ACLCB;
 import org.apache.zookeeper.test.AsyncOps.ChildrenCB;
+import org.apache.zookeeper.test.AsyncOps.Children2CB;
 import org.apache.zookeeper.test.AsyncOps.DataCB;
 import org.apache.zookeeper.test.AsyncOps.StatCB;
 import org.apache.zookeeper.test.AsyncOps.StringCB;
@@ -164,6 +165,26 @@ public class AsyncOpsTest extends ClientBase {
     @Test
     public void testAsyncGetChildrenFailure_NoNode() {
         new ChildrenCB(zk).verifyGetChildrenFailure_NoNode();
+    }
+
+    @Test
+    public void testAsyncGetChildren2Empty() {
+        new ChildrenCB(zk).verifyGetChildrenEmpty();
+    }
+
+    @Test
+    public void testAsyncGetChildren2Single() {
+        new Children2CB(zk).verifyGetChildrenSingle();
+    }
+
+    @Test
+    public void testAsyncGetChildren2Two() {
+        new Children2CB(zk).verifyGetChildrenTwo();
+    }
+
+    @Test
+    public void testAsyncGetChildren2Failure_NoNode() {
+        new Children2CB(zk).verifyGetChildrenFailure_NoNode();
     }
 
     @Test
