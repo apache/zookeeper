@@ -62,8 +62,8 @@ public class ProposalRequestProcessor implements RequestProcessor {
          * call processRequest on the next processor.
          */
         
-        if(request instanceof FollowerSyncRequest){
-            zks.getLeader().processSync((FollowerSyncRequest)request);
+        if(request instanceof LearnerSyncRequest){
+            zks.getLeader().processSync((LearnerSyncRequest)request);
         } else {
                 nextProcessor.processRequest(request);
             if (request.hdr != null) {

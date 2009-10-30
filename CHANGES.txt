@@ -115,6 +115,9 @@ IMPROVEMENTS:
   ZOOKEEPER-530. Memory corruption: Zookeeper c client IPv6 implementation
   does not honor struct sockaddr_in6 size (isabel drost via mahadev)
 
+  ZOOKEEPER-549. Refactor Followers and related classes into a Peer->Follower
+  hierarchy in preparation for Observers (henry robinson via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 

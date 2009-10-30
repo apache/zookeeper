@@ -19,20 +19,15 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
-import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
-import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.SyncRequestProcessor;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.TxnHeader;
 
@@ -41,12 +36,10 @@ import org.apache.zookeeper.txn.TxnHeader;
  * processors: FollowerRequestProcessor -> CommitProcessor ->
  * FinalRequestProcessor
  * 
- * A SyncRequestProcessor is also spawn off to log proposals from the leader.
+ * A SyncRequestProcessor is also spawned off to log proposals from the leader.
  */
-public class FollowerZooKeeperServer extends ZooKeeperServer {
+public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     private static final Logger LOG = Logger.getLogger(FollowerZooKeeperServer.class);
-
-    private QuorumPeer self;
 
     CommitProcessor commitProcessor;
 
@@ -65,19 +58,13 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
     FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
             DataTreeBuilder treeBuilder) throws IOException {
         super(logFactory, self.tickTime,treeBuilder);
-        this.self = self;
+        this.self = self;        
         this.pendingSyncs = new ConcurrentLinkedQueue<Request>();
     }
 
     public Follower getFollower(){
         return self.follower;
-    }
-    
-    @Override
-    protected void createSessionTracker() {
-        sessionTracker = new FollowerSessionTracker(this, sessionsWithTimeouts,
-                self.getId());
-    }
+    }      
 
     @Override
     protected void setupRequestProcessors() {
@@ -88,28 +75,10 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
         ((FollowerRequestProcessor) firstProcessor).start();
         syncProcessor = new SyncRequestProcessor(this,
-                new SendAckRequestProcessor(getFollower()));
+                new SendAckRequestProcessor((Learner)getFollower()));
         syncProcessor.start();
     }
-
-    @Override
-    protected void revalidateSession(ServerCnxn cnxn, long sessionId,
-            int sessionTimeout) throws IOException, InterruptedException {
-        getFollower().validateSession(cnxn, sessionId, sessionTimeout);
-    }
-
-    public HashMap<Long, Integer> getTouchSnapshot() {
-        if (sessionTracker != null) {
-            return ((FollowerSessionTracker) sessionTracker).snapshot();
-        }
-        return new HashMap<Long, Integer>();
-    }
-
-    @Override
-    public long getServerId() {
-        return self.getId();
-    }
-
+    
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<Request>();
 
     public void logRequest(TxnHeader hdr, Record txn) {
@@ -124,6 +93,12 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
         syncProcessor.processRequest(request);
     }
 
+    /**
+     * When a COMMIT message is received, eventually this method is called, 
+     * which matches up the zxid from the COMMIT with (hopefully) the head of
+     * the pendingTxns queue and hands it to the commitProcessor to commit.
+     * @param zxid - must correspond to the head of pendingTxns if it exists
+     */
     public void commit(long zxid) {
         if (pendingTxns.size() == 0) {
             LOG.warn("Committing " + Long.toHexString(zxid)
@@ -155,14 +130,6 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
     public int getGlobalOutstandingLimit() {
         return super.getGlobalOutstandingLimit() / (self.getQuorumSize() - 1);
     }
-
-    /**
-     * Do not do anything in the follower.
-     */
-    @Override
-    public void addCommittedProposal(Request r) {
-        //do nothing
-    }
     
     @Override
     public void shutdown() {
@@ -180,69 +147,14 @@ public class FollowerZooKeeperServer extends ZooKeeperServer {
                     e);
         }
     }
-
-
-    @Override
-    protected void registerJMX() {
-        // register with JMX
-        try {
-            jmxDataTreeBean = new DataTreeBean(dataTree);
-            MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
-        } catch (Exception e) {
-            LOG.warn("Failed to register with JMX", e);
-            jmxDataTreeBean = null;
-        }
-    }
-
-    public void registerJMX(FollowerBean followerBean,
-            LocalPeerBean localPeerBean)
-    {
-        // register with JMX
-        if (self.jmxLeaderElectionBean != null) {
-            try {
-                MBeanRegistry.getInstance().unregister(self.jmxLeaderElectionBean);
-            } catch (Exception e) {
-                LOG.warn("Failed to register with JMX", e);
-            }
-            self.jmxLeaderElectionBean = null;
-        }
-
-        try {
-            jmxServerBean = followerBean;
-            MBeanRegistry.getInstance().register(followerBean, localPeerBean);
-        } catch (Exception e) {
-            LOG.warn("Failed to register with JMX", e);
-            jmxServerBean = null;
-        }
-    }
-
-    @Override
-    protected void unregisterJMX() {
-        // unregister from JMX
-        try {
-            if (jmxDataTreeBean != null) {
-                MBeanRegistry.getInstance().unregister(jmxDataTreeBean);
-            }
-        } catch (Exception e) {
-            LOG.warn("Failed to unregister with JMX", e);
-        }
-        jmxDataTreeBean = null;
-    }
-
-    protected void unregisterJMX(Follower follower) {
-        // unregister from JMX
-        try {
-            if (jmxServerBean != null) {
-                MBeanRegistry.getInstance().unregister(jmxServerBean);
-            }
-        } catch (Exception e) {
-            LOG.warn("Failed to unregister with JMX", e);
-        }
-        jmxServerBean = null;
-    }
     
     @Override
     public String getState() {
         return "follower";
+    }
+
+    @Override
+    public Learner getLearner() {
+        return getFollower();
     }
 }

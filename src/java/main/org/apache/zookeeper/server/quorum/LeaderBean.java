@@ -20,7 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.quorum.FollowerHandler;
+import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.Leader;
 
 /**
@@ -44,7 +44,7 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     
     public String followerInfo() {
         StringBuffer sb = new StringBuffer();
-        for (FollowerHandler handler : leader.followers) {
+        for (LearnerHandler handler : leader.learners) {
             sb.append(handler.toString()).append("\n");
         }
         return sb.toString();
