@@ -626,6 +626,9 @@ public class DataTree {
         }
         synchronized (n) {
             ArrayList<String> children = new ArrayList<String>();
+            if (stat != null) {
+                n.copyStat(stat);
+            }
             children.addAll(n.children);
             if (watcher != null) {
                 childWatches.addWatch(path, watcher);

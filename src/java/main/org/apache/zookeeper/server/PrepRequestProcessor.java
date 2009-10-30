@@ -389,6 +389,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             case OpCode.getData:
             case OpCode.getACL:
             case OpCode.getChildren:
+            case OpCode.getChildren2:
             case OpCode.ping:
             case OpCode.setWatches:
             	zks.sessionTracker.checkSession(request.sessionId, request.getOwner());

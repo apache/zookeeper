@@ -28,14 +28,16 @@ import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.data.Stat;
 import org.junit.Test;
 
 
 public class SyncCallTest extends ClientBase
-    implements ChildrenCallback, StringCallback, VoidCallback
+    implements ChildrenCallback, Children2Callback, StringCallback, VoidCallback
 {
     private CountDownLatch opsCount;
     
@@ -57,8 +59,11 @@ public class SyncCallTest extends ClientBase
             for(int i = 0; i < 100; i++)
                 zk.delete("/test" + i, 0, this, results);
             for(int i = 0; i < 100; i++)
-                zk.getChildren("/", new NullWatcher(), this, results);
-
+                zk.getChildren("/", new NullWatcher(), (ChildrenCallback)this,
+                        results);
+            for(int i = 0; i < 100; i++)
+                zk.getChildren("/", new NullWatcher(), (Children2Callback)this,
+                        results);
             LOG.info("Submitted all operations:" + (new Date()).toString());
             
             if(!opsCount.await(10000, TimeUnit.MILLISECONDS))
@@ -76,6 +81,13 @@ public class SyncCallTest extends ClientBase
     @SuppressWarnings("unchecked")
     public void processResult(int rc, String path, Object ctx,
             List<String> children) { 
+        ((List<Integer>)ctx).add(rc);
+        opsCount.countDown();
+    }
+
+    @SuppressWarnings("unchecked")
+    public void processResult(int rc, String path, Object ctx,
+            List<String> children, Stat stat) { 
         ((List<Integer>)ctx).add(rc);
         opsCount.countDown();
     }

@@ -39,6 +39,21 @@ using namespace std;
 
 #include "Util.h"
 
+static int Stat_eq(struct Stat* a, struct Stat* b)
+{
+    if (a->czxid != b->czxid) return 0;
+    if (a->mzxid != b->mzxid) return 0;
+    if (a->ctime != b->ctime) return 0;
+    if (a->mtime != b->mtime) return 0;
+    if (a->version != b->version) return 0;
+    if (a->cversion != b->cversion) return 0;
+    if (a->aversion != b->aversion) return 0;
+    if (a->ephemeralOwner != b->ephemeralOwner) return 0;
+    if (a->dataLength != b->dataLength) return 0;
+    if (a->numChildren != b->numChildren) return 0;
+    if (a->pzxid != b->pzxid) return 0;
+    return 1;
+}
 #ifdef THREADED
     static void yield(zhandle_t *zh, int i)
     {
@@ -173,6 +188,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testAuth);
     CPPUNIT_TEST(testWatcherAutoResetWithGlobal);
     CPPUNIT_TEST(testWatcherAutoResetWithLocal);
+    CPPUNIT_TEST(testGetChildren2);
 #endif
     CPPUNIT_TEST_SUITE_END();
 
@@ -521,7 +537,40 @@ public:
         rc = zoo_set_acl(zk, "/", -1, &ZOO_OPEN_ACL_UNSAFE);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
     }
-    
+
+    void testGetChildren2() {
+        int rc;
+        watchctx_t ctx;
+        zhandle_t *zk = createClient(&ctx);
+
+        rc = zoo_create(zk, "/parent", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        rc = zoo_create(zk, "/parent/child_a", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        rc = zoo_create(zk, "/parent/child_b", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        rc = zoo_create(zk, "/parent/child_c", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        rc = zoo_create(zk, "/parent/child_d", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        struct String_vector strings;
+        struct Stat stat_a, stat_b;
+
+        rc = zoo_get_children2(zk, "/parent", 0, &strings, &stat_a);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        rc = zoo_exists(zk, "/parent", 0, &stat_b);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        CPPUNIT_ASSERT(Stat_eq(&stat_a, &stat_b));
+        CPPUNIT_ASSERT(stat_a.numChildren == 4);
+    }
+
     void testNullData() {
         watchctx_t ctx;
         zhandle_t *zk = createClient(&ctx);
@@ -717,7 +766,7 @@ public:
         waitForCreateCompletion(3);
         CPPUNIT_ASSERT(count == 0);
     }
-        
+
     void testAsyncWatcherAutoReset()
     {
         watchctx_t ctx;
