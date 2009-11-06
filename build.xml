@@ -305,10 +305,6 @@
             <compilerarg value="-Xlint:all"/>
             <compilerarg value="-Xlint:-path"/>
         </javac>
-        <copy todir="${build.classes}">
-            <fileset dir="${java.src.dir}"/>
-            <fileset dir="${src_generated.dir}"/>
-        </copy>
     </target>
 
     <target name="compile-test" depends="ivy-retrieve-test,compile">
@@ -431,8 +427,10 @@
         </java>
         <exec executable="hostname" outputproperty="host.name"/>
         <jar jarfile="${build.dir}/${final.name}.jar">
-            <fileset file="LICENSE" />
+            <fileset file="LICENSE.txt" />
             <fileset dir="${build.classes}" excludes="**/.generated"/>
+            <fileset dir="${java.src.dir}"/>
+            <fileset dir="${src_generated.dir}" excludes="**/.generated"/>
             <manifest>
                 <attribute name="Main-Class" value="org.apache.zookeeper.server.quorum.QuorumPeer" />
                 <attribute name="Built-By" value="${user.name}"/>
@@ -445,13 +443,78 @@
         </jar>
     </target>
     
-    <!-- ================================================================== -->
+    <!-- ====================================================== -->
+    <!-- Make zookeeper-bin.jar                                 -->
+    <!-- ====================================================== -->
+    <target name="bin-jar" depends="compile">
+        <java classname="org.apache.zookeeper.Version" fork="true"
+              outputproperty="revision" failonerror="true">
+            <arg value="--revision" />
+            <classpath>
+                <pathelement path="${build.classes}" />
+                <pathelement path="${clover.jar}" />
+            </classpath>
+        </java>
+        <exec executable="hostname" outputproperty="host.name"/>
+        <jar jarfile="${build.dir}/${final.name}-bin.jar">
+            <fileset file="LICENSE.txt" />
+            <fileset dir="${build.classes}" excludes="**/.generated"/>
+            <manifest>
+                <attribute name="Main-Class" value="org.apache.zookeeper.server.quorum.QuorumPeer" />
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${build.time}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
+                <attribute name="Implementation-Version" value="${revision}"/> 
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            </manifest>
+        </jar>
+    </target>
+
+	<!-- ====================================================== -->
+    <!-- Make zookeeper-src.jar                                 -->
+    <!-- ====================================================== -->
+    <target name="src-jar" depends="build-generated">
+        <jar jarfile="${build.dir}/${final.name}-src.jar">
+            <fileset file="LICENSE.txt" />
+            <fileset dir="${java.src.dir}"/>
+            <fileset dir="${src_generated.dir}" excludes="**/.generated"/>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${build.time}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
+                <attribute name="Implementation-Version" value="${revision}"/> 
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            </manifest>
+        </jar>
+    </target>
+
+	<!-- ====================================================== -->
+    <!-- Make zookeeper-javadoc.jar                                 -->
+    <!-- ====================================================== -->
+    <target name="javadoc-jar" depends="javadoc">
+        <jar jarfile="${build.dir}/${final.name}-javadoc.jar">
+            <fileset file="LICENSE.txt" />
+            <fileset dir="${build.javadoc}"/>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${build.time}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
+                <attribute name="Implementation-Version" value="${revision}"/> 
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            </manifest>
+        </jar>
+    </target>
+
+	<!-- ================================================================== -->
     <!-- D I S T R I B U T I O N                                            -->
     <!-- ================================================================== -->
     <!--                                                                    -->
     <!-- ================================================================== -->
     <target name="package"
-            depends="jar,api-report,create-cppunit-configure,compile-test"
+            depends="jar,bin-jar,src-jar,javadoc-jar,api-report,create-cppunit-configure,compile-test"
             description="Build distribution">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
@@ -480,19 +543,25 @@
 
       <copy todir="${dist.dir}"> 
         <fileset file="${build.dir}/${final.name}.jar"/>
+        <fileset file="${build.dir}/${final.name}-bin.jar"/>
+        <fileset file="${build.dir}/${final.name}-src.jar"/>
+        <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
       </copy>
       
       <checksum file="${dist.dir}/${final.name}.jar" algorithm="md5"/>
       <checksum file="${dist.dir}/${final.name}.jar" algorithm="sha1"/>
+      <checksum file="${dist.dir}/${final.name}-bin.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}-bin.jar" algorithm="sha1"/>
+      <checksum file="${dist.dir}/${final.name}-src.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}-src.jar" algorithm="sha1"/>
+      <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom ivyfile="${basedir}/ivy.xml"
                    pomfile="${dist.dir}/${final.name}.pom">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
-
-      <checksum file="${dist.dir}/${final.name}.pom" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}.pom" algorithm="sha1"/>
 
       <copy todir="${dist.dir}/bin">
         <fileset dir="bin"/>
