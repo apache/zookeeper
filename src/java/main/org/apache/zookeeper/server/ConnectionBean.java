@@ -93,7 +93,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     }
     
     public void terminateConnection() {
-        connection.close();
+        connection.sendCloseSession();
     }
 
     @Override

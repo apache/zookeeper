@@ -69,13 +69,13 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             LOG.info("zookeeper.skipACL==\"yes\", ACL checks will be skipped");
         }
     }
-    
+
     /**
      * this is only for testing purposes.
      * should never be useed otherwise
      */
     private static  boolean failCreate = false;
-    
+
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
     RequestProcessor nextProcessor;
@@ -88,7 +88,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         this.nextProcessor = nextProcessor;
         this.zks = zks;
     }
-    
+
     /**
      * method for tests to set failCreate
      * @param b
@@ -215,7 +215,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 String path = createRequest.getPath();
                 int lastSlash = path.lastIndexOf('/');
                 if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
-                    LOG.warn("Invalid path " + path + " with session " +
+                    LOG.info("Invalid path " + path + " with session " +
                             Long.toHexString(request.sessionId));
                     throw new KeeperException.BadArgumentsException();
                 }
@@ -236,7 +236,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 try {
                     PathUtils.validatePath(path);
                 } catch(IllegalArgumentException ie) {
-                    LOG.warn("Invalid path " + path + " with session " +
+                    LOG.info("Invalid path " + path + " with session " +
                             Long.toHexString(request.sessionId));
                     throw new KeeperException.BadArgumentsException();
                 }
@@ -381,7 +381,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                                 path2Delete, null, 0, null));
                     }
                 }
-                LOG.info("Processed session termination request for id: 0x"
+                LOG.info("Processed session termination for sessionid: 0x"
                         + Long.toHexString(request.sessionId));
                 break;
             case OpCode.sync:
@@ -392,7 +392,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             case OpCode.getChildren2:
             case OpCode.ping:
             case OpCode.setWatches:
-            	zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 break;
             }
         } catch (KeeperException e) {
@@ -400,13 +400,14 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 txnHeader.setType(OpCode.error);
                 txn = new ErrorTxn(e.code().intValue());
             }
-            LOG.warn("Got exception when processing " + request.toString(), e);
+            LOG.info("Got user-level KeeperException when processing "
+                    + request.toString() + " Error:" + e.getMessage());
             request.setException(e);
         } catch (Exception e) {
             // log at error level as we are returning a marshalling
             // error to the user
             LOG.error("Failed to process " + request, e);
-            
+
             StringBuffer sb = new StringBuffer();
             ByteBuffer bb = request.request;
             if(bb != null){
@@ -417,7 +418,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             } else {
                 sb.append("request buffer is null");
             }
-            
+
             LOG.error("Dumping request buffer: 0x" + sb.toString());
             if (txnHeader != null) {
                 txnHeader.setType(OpCode.error);

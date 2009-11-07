@@ -126,13 +126,13 @@ public abstract class ClientBase extends TestCase {
         }
     }
 
-    protected ZooKeeper createClient()
+    protected TestableZooKeeper createClient()
         throws IOException, InterruptedException
     {
         return createClient(hostPort);
     }
 
-    protected ZooKeeper createClient(String hp)
+    protected TestableZooKeeper createClient(String hp)
         throws IOException, InterruptedException
     {
         CountdownWatcher watcher = new CountdownWatcher();

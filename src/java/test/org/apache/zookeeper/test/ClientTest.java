@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.Code;
@@ -614,8 +615,12 @@ public class ClientTest extends ClientBase {
         public void run() {
             try {
                 for (; current < count; current++) {
-                    ZooKeeper zk = createClient();
+                    TestableZooKeeper zk = createClient();
                     zk.close();
+                    // we've asked to close, wait for it to finish closing
+                    // all the sub-threads otw the selector may not be
+                    // closed when we check (false positive on test failure
+                    zk.testableWaitForShutdown(CONNECTION_TIMEOUT);
                 }
             } catch (Throwable t) {
                 LOG.error("test failed", t);
@@ -661,10 +666,10 @@ public class ClientTest extends ClientBase {
         }
 
         for (int i = 0; i < threads.length; i++) {
-            threads[i].join(600000);
+            threads[i].join(CONNECTION_TIMEOUT);
             assertTrue(threads[i].current == threads[i].count);
         }
-        
+
         // if this fails it means we are not cleaning up after the closed
         // sessions.
         assertTrue("open fds after test are not significantly higher than before",
