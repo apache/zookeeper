@@ -262,10 +262,11 @@ public class FileTxnSnapLog {
     /**
      * append the request to the transaction logs
      * @param si the request to be appended
+     * returns true iff something appended, otw false 
      * @throws IOException
      */
-    public void append(Request si) throws IOException {
-        txnLog.append(si.hdr, si.txn);
+    public boolean append(Request si) throws IOException {
+        return txnLog.append(si.hdr, si.txn);
     }
 
     /**
