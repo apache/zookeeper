@@ -123,8 +123,13 @@ public class FinalRequestProcessor implements RequestProcessor {
             Factory scxn = zks.getServerCnxnFactory();
             // this might be possible since
             // we might just be playing diffs from the leader
-            if (scxn != null) {
+            if (scxn != null && request.cnxn == null) {
+                // calling this if we have the cnxn results in the client's
+                // close session response being lost - we've already closed
+                // the session/socket here before we can send the closeSession
+                // in the switch block below
                 scxn.closeSession(request.sessionId);
+                return;
             }
         }
 
@@ -134,6 +139,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         zks.decInProcess();
         Code err = Code.OK;
         Record rsp = null;
+        boolean closeSession = false;
         try {
             if (request.hdr != null && request.hdr.getType() == OpCode.error) {
                 throw KeeperException.create(KeeperException.Code.get((
@@ -178,6 +184,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 break;
             }
             case OpCode.closeSession: {
+                closeSession = true;
                 err = Code.get(rc.err);
                 break;
             }
@@ -309,6 +316,9 @@ public class FinalRequestProcessor implements RequestProcessor {
         zks.serverStats().updateLatency(request.createTime);
         try {
             request.cnxn.sendResponse(hdr, rsp, "response");
+            if (closeSession) {
+                request.cnxn.sendCloseSession();
+            }
         } catch (IOException e) {
             LOG.error("FIXMSG",e);
         }

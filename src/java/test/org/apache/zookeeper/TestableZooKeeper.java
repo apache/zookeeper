@@ -69,4 +69,10 @@ public class TestableZooKeeper extends ZooKeeper {
             }
         }.start();
     }
+    
+    public boolean testableWaitForShutdown(int wait)
+        throws InterruptedException
+    {
+        return super.testableWaitForShutdown(wait);
+    }
 }

@@ -502,12 +502,23 @@ public class ZooKeeper {
      * @throws InterruptedException
      */
     public synchronized void close() throws InterruptedException {
-        LOG.info("Closing session: 0x" + Long.toHexString(getSessionId()));
+        if (!state.isAlive()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Close called on already closed client");
+            }
+            return;
+        }
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Closing session: 0x" + Long.toHexString(getSessionId()));
+        }
 
         try {
             cnxn.close();
         } catch (IOException e) {
-            LOG.warn("Ignoring unexpected exception", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Ignoring unexpected exception during close", e);
+            }
         }
 
         LOG.info("Session: 0x" + Long.toHexString(getSessionId()) + " closed");
@@ -1435,5 +1446,27 @@ public class ZooKeeper {
 
     public States getState() {
         return state;
+    }
+    
+    /*
+     * Methods to aid in testing follow.
+     * 
+     * THESE METHODS ARE EXPECTED TO BE USED FOR TESTING ONLY!!!
+     */
+
+    /**
+     * Wait up to wait milliseconds for the underlying threads to shutdown.
+     * THIS METHOD IS EXPECTED TO BE USED FOR TESTING ONLY!!!
+     * @param wait max wait in milliseconds
+     * @return true iff all threads are shutdown, otw false
+     */
+    protected boolean testableWaitForShutdown(int wait)
+        throws InterruptedException
+    {
+        cnxn.sendThread.join(wait);
+        if (cnxn.sendThread.isAlive()) return false;
+        cnxn.eventThread.join(wait);
+        if (cnxn.eventThread.isAlive()) return false;
+        return true;
     }
 }
