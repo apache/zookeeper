@@ -29,7 +29,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -45,6 +44,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener;
@@ -322,19 +322,31 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-    public void expire(long sessionId) {
-        LOG.info("Expiring session 0x" + Long.toHexString(sessionId));
+    public void expire(Session session) {
+        long sessionId = session.getSessionId();
+        LOG.info("Expiring session 0x" + Long.toHexString(sessionId)
+                + ", timeout of " + session.getTimeout() + "ms exceeded");
         close(sessionId);
     }
 
-    void touch(ServerCnxn cnxn) throws IOException {
+    public static class MissingSessionException extends IOException {
+        private static final long serialVersionUID = 7467414635467261007L;
+
+        public MissingSessionException(String msg) {
+            super(msg);
+        }
+    }
+    
+    void touch(ServerCnxn cnxn) throws MissingSessionException {
         if (cnxn == null) {
             return;
         }
         long id = cnxn.getSessionId();
         int to = cnxn.getSessionTimeout();
         if (!sessionTracker.touchSession(id, to)) {
-            throw new IOException("Missing session 0x" + Long.toHexString(id));
+            throw new MissingSessionException(
+                    "No session with sessionid 0x" + Long.toHexString(id)
+                    + " exists, probably expired and removed");
         }
     }
 
@@ -578,8 +590,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 LOG.warn("Dropping packet at server of type " + si.type);
                 // if invalid packet drop the packet.
             }
-        } catch (IOException e) {
-            LOG.warn("Ignoring unexpected exception", e);
+        } catch (MissingSessionException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Dropping request: " + e.getMessage());
+            }
         }
     }
 

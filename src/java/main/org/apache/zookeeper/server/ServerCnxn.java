@@ -59,30 +59,30 @@ public interface ServerCnxn extends Watcher {
     // (aka owned by) this class
     final public static Object me = new Object();
 
-    public abstract int getSessionTimeout();
+    int getSessionTimeout();
 
-    public abstract void close();
+    void sendResponse(ReplyHeader h, Record r, String tag) throws IOException;
 
-    public abstract void sendResponse(ReplyHeader h, Record r, String tag)
-            throws IOException;
-
-    public void finishSessionInit(boolean valid);
-
-    public abstract void process(WatchedEvent event);
-
-    public abstract long getSessionId();
-
-    public abstract void setSessionId(long sessionId);
-
-    public abstract ArrayList<Id> getAuthInfo();
-
-    public InetSocketAddress getRemoteAddress();
+    /* notify the client the session is closing and close/cleanup socket */
+    void sendCloseSession(); 
     
-    public interface Stats{
+    void finishSessionInit(boolean valid);
+
+    void process(WatchedEvent event);
+
+    long getSessionId();
+
+    void setSessionId(long sessionId);
+
+    ArrayList<Id> getAuthInfo();
+
+    InetSocketAddress getRemoteAddress();
+    
+    interface Stats {
         public long getOutstandingRequests();
         public long getPacketsReceived();
         public long getPacketsSent();
     }
     
-    public Stats getStats();
+    Stats getStats();
 }

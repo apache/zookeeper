@@ -29,10 +29,14 @@ import org.apache.zookeeper.KeeperException.SessionMovedException;
  * shell to track information to be forwarded to the leader.
  */
 public interface SessionTracker {
+    public static interface Session {
+        long getSessionId();
+        int getTimeout();
+    }
     public static interface SessionExpirer {
-        public void expire(long sessionId);
+        void expire(Session session);
 
-        public long getServerId();
+        long getServerId();
     }
 
     long createSession(int sessionTimeout);

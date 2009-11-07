@@ -28,7 +28,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -251,13 +251,13 @@ public class HierarchicalQuorumTest extends ClientBase {
         }
     }
 
-    protected ZooKeeper createClient()
+    protected TestableZooKeeper createClient()
         throws IOException, InterruptedException
     {
         return createClient(hostPort);
     }
 
-    protected ZooKeeper createClient(String hp)
+    protected TestableZooKeeper createClient(String hp)
         throws IOException, InterruptedException
     {
         CountdownWatcher watcher = new CountdownWatcher();

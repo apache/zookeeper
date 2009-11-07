@@ -70,7 +70,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     private ConnectionBean jmxConnectionBean;
 
-   
+
     static public class Factory extends Thread {
         ZooKeeperServer zks;
 
@@ -210,6 +210,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                                          + " - max is " + maxClientCnxns );
                                 sc.close();
                             } else {
+                                LOG.info("Accepted socket connection from "
+                                        + sc.socket().getRemoteSocketAddress());
                                 sc.configureBlocking(false);
                                 SelectionKey sk = sc.register(selector,
                                         SelectionKey.OP_READ);
@@ -228,6 +230,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         }
                     }
                     selected.clear();
+                } catch (RuntimeException e) {
+                    LOG.warn("Ignoring unexpected runtime exception", e);
                 } catch (Exception e) {
                     LOG.warn("Ignoring exception", e);
                 }
@@ -312,7 +316,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     Factory factory;
 
-    ZooKeeperServer zk;
+    private final ZooKeeperServer zk;
 
     private SocketChannel sock;
 
@@ -332,19 +336,30 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     LinkedList<Request> outstanding = new LinkedList<Request>();
 
+    /* Send close connection packet to the client, doIO will eventually
+     * close the underlying machinery (like socket, selectorkey, etc...)
+     */
+    public void sendCloseSession() {
+        sendBuffer(closeConn);
+    }
+
     void sendBuffer(ByteBuffer bb) {
-        // We check if write interest here because if it is NOT set, nothing is queued, so
-        // we can try to send the buffer right away without waking up the selector
-        if ((sk.interestOps()&SelectionKey.OP_WRITE) == 0) {
-            try {
-                sock.write(bb);
-            } catch (IOException e) {
-                // we are just doing best effort right now
+        if (bb != closeConn) {
+            // We check if write interest here because if it is NOT set,
+            // nothing is queued, so we can try to send the buffer right
+            // away without waking up the selector
+            if ((sk.interestOps() & SelectionKey.OP_WRITE) == 0) {
+                try {
+                    sock.write(bb);
+                } catch (IOException e) {
+                    // we are just doing best effort right now
+                }
             }
-        }
-        // if there is nothing left to send, we are done
-        if (bb.remaining() == 0) {
-            return;
+            // if there is nothing left to send, we are done
+            if (bb.remaining() == 0) {
+                packetSent();
+                return;
+            }
         }
         synchronized (factory) {
             sk.selector().wakeup();
@@ -359,6 +374,51 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         }
     }
 
+    private static class CloseRequestException extends IOException {
+        private static final long serialVersionUID = -7854505709816442681L;
+
+        public CloseRequestException(String msg) {
+            super(msg);
+        }
+    }
+
+    private static class EndOfStreamException extends IOException {
+        private static final long serialVersionUID = -8255690282104294178L;
+
+        public EndOfStreamException(String msg) {
+            super(msg);
+        }
+        
+        public String toString() {
+            return "EndOfStreamException: " + getMessage();
+        }
+    }
+
+    /** Read the request payload (everything followng the length prefix) */
+    private void readPayload() throws IOException, InterruptedException {
+        if (incomingBuffer.remaining() != 0) { // have we read length bytes?
+            int rc = sock.read(incomingBuffer); // sock is non-blocking, so ok
+            if (rc < 0) {
+                throw new EndOfStreamException(
+                        "Unable to read additional data from client sessionid 0x"
+                        + Long.toHexString(sessionId)
+                        + ", likely client has closed socket");
+            }
+        }
+
+        if (incomingBuffer.remaining() == 0) { // have we read length bytes?
+            packetReceived();
+            incomingBuffer.flip();
+            if (!initialized) {
+                readConnectRequest();
+            } else {
+                readRequest();
+            }
+            lenBuffer.clear();
+            incomingBuffer = lenBuffer;
+        }
+    }
+    
     void doIO(SelectionKey k) throws InterruptedException {
         try {
             if (sock == null) {
@@ -370,24 +430,22 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             if (k.isReadable()) {
                 int rc = sock.read(incomingBuffer);
                 if (rc < 0) {
-                    throw new IOException("Read error");
+                    throw new EndOfStreamException(
+                            "Unable to read additional data from client sessionid 0x"
+                            + Long.toHexString(sessionId)
+                            + ", likely client has closed socket");
                 }
                 if (incomingBuffer.remaining() == 0) {
-                    incomingBuffer.flip();
-                    if (incomingBuffer == lenBuffer) {
-                        readLength(k);
-                    } else if (!initialized) {
-                        stats.packetsReceived++;
-                        zk.serverStats().incrementPacketsReceived();
-                        readConnectRequest();
-                        lenBuffer.clear();
-                        incomingBuffer = lenBuffer;
+                    boolean isPayload;
+                    if (incomingBuffer == lenBuffer) { // start of next request
+                        incomingBuffer.flip();
+                        isPayload = readLength(k);
                     } else {
-                        stats.packetsReceived++;
-                        zk.serverStats().incrementPacketsReceived();
-                        readRequest();
-                        lenBuffer.clear();
-                        incomingBuffer = lenBuffer;
+                        // continuation
+                        isPayload = true;
+                    }
+                    if (isPayload) { // not the case for 4letterword
+                        readPayload();
                     }
                 }
             }
@@ -448,7 +506,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     while (outgoingBuffers.size() > 0) {
                         bb = outgoingBuffers.peek();
                         if (bb == closeConn) {
-                            throw new IOException("closing");
+                            throw new CloseRequestException("close requested");
                         }
                         int left = bb.remaining() - sent;
                         if (left > 0) {
@@ -459,12 +517,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                             bb.position(bb.position() + sent);
                             break;
                         }
-                        stats.packetsSent++;
+                        packetSent();
                         /* We've sent the whole buffer, so drop the buffer */
                         sent -= bb.remaining();
-                        if (zk != null) {
-                            zk.serverStats().incrementPacketsSent();
-                        }
                         outgoingBuffers.remove();
                     }
                     // ZooLog.logTraceMessage(LOG,
@@ -475,7 +530,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     if (outgoingBuffers.size() == 0) {
                         if (!initialized
                                 && (sk.interestOps() & SelectionKey.OP_READ) == 0) {
-                            throw new IOException("Responded to info probe");
+                            throw new CloseRequestException("responded to info probe");
                         }
                         sk.interestOps(sk.interestOps()
                                 & (~SelectionKey.OP_WRITE));
@@ -489,13 +544,25 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             LOG.warn("Exception causing close of session 0x"
                     + Long.toHexString(sessionId)
                     + " due to " + e);
-            LOG.debug("CancelledKeyException stack trace", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("CancelledKeyException stack trace", e);
+            }
+            close();
+        } catch (CloseRequestException e) {
+            // expecting close to log session closure
+            close();
+        } catch (EndOfStreamException e) {
+            LOG.warn(e); // tell user why
+
+            // expecting close to log session closure
             close();
         } catch (IOException e) {
             LOG.warn("Exception causing close of session 0x"
                     + Long.toHexString(sessionId)
                     + " due to " + e);
-            LOG.debug("IOException stack trace", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("IOException stack trace", e);
+            }
             close();
         }
     }
@@ -530,11 +597,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                         KeeperException.Code.AUTHFAILED.intValue());
                 sendResponse(rh, null, null);
                 // ... and close connection
-                sendBuffer(NIOServerCnxn.closeConn);
+                sendCloseSession();
                 disableRecv();
             } else {
-                LOG.debug("Authentication succeeded for scheme: "
-                        + scheme);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Authentication succeeded for scheme: "
+                              + scheme);
+                }
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
                         KeeperException.Code.OK.intValue());
                 sendResponse(rh, null, null);
@@ -551,7 +620,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     outstandingRequests++;
                     // check throttling
                     if (zk.getInProcess() > factory.outstandingLimit) {
-                        LOG.debug("Throttling recv " + zk.getInProcess());
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Throttling recv " + zk.getInProcess());
+                        }
                         disableRecv();
                         // following lines should not be needed since we are
                         // already reading
@@ -581,19 +652,26 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 .getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
         connReq.deserialize(bia, "connect");
-        LOG.info("Connected to " + sock.socket().getRemoteSocketAddress()
-                + " lastZxid " + connReq.getLastZxidSeen());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Session establishment request from client "
+                    + sock.socket().getRemoteSocketAddress()
+                    + " client's lastZxid is 0x"
+                    + Long.toHexString(connReq.getLastZxidSeen()));
+        }
         if (zk == null) {
             throw new IOException("ZooKeeperServer not running");
         }
         if (connReq.getLastZxidSeen() > zk.dataTree.lastProcessedZxid) {
-            String msg = "Client has seen zxid 0x"
+            String msg = "Refusing session request for client "
+                + sock.socket().getRemoteSocketAddress()
+                + " as it has seen zxid 0x"
                 + Long.toHexString(connReq.getLastZxidSeen())
                 + " our last zxid is 0x"
-                + Long.toHexString(zk.dataTree.lastProcessedZxid);
+                + Long.toHexString(zk.dataTree.lastProcessedZxid)
+                + " client must try another server";
 
-            LOG.warn(msg);
-            throw new IOException(msg);
+            LOG.info(msg);
+            throw new CloseRequestException(msg);
         }
         sessionTimeout = connReq.getTimeOut();
         byte passwd[] = connReq.getPasswd();
@@ -607,145 +685,186 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         // session is setup
         disableRecv();
         if (connReq.getSessionId() != 0) {
-            factory.closeSessionWithoutWakeup(connReq.getSessionId());
-            setSessionId(connReq.getSessionId());
+            long clientSessionId = connReq.getSessionId();
+            LOG.info("Client attempting to renew session 0x"
+                    + Long.toHexString(clientSessionId)
+                    + " at " + sock.socket().getRemoteSocketAddress());
+            factory.closeSessionWithoutWakeup(clientSessionId);
+            setSessionId(clientSessionId);
             zk.reopenSession(this, sessionId, passwd, sessionTimeout);
-            LOG.info("Renewing session 0x" + Long.toHexString(sessionId));
         } else {
+            LOG.info("Client attempting to establish new session at "
+                    + sock.socket().getRemoteSocketAddress());
             zk.createSession(this, passwd, sessionTimeout);
-            LOG.info("Creating new session 0x" + Long.toHexString(sessionId));
         }
         initialized = true;
     }
 
-    private void readLength(SelectionKey k) throws IOException {
+    private void packetReceived() {
+        stats.packetsReceived++;
+        if (zk != null) {
+            zk.serverStats().incrementPacketsReceived();
+        }
+    }
+
+    private void packetSent() {
+        stats.packetsSent++;
+        if (zk != null) {
+            zk.serverStats().incrementPacketsSent();
+        }
+    }
+
+    /** Return if four letter word found and responded to, otw false **/
+    private boolean checkFourLetterWord(SelectionKey k, int len)
+        throws IOException
+    {
+        // We take advantage of the limited size of the length to look
+        // for cmds. They are all 4-bytes which fits inside of an int
+        if (len == ruokCmd) {
+            LOG.info("Processing ruok command from "
+                    + sock.socket().getRemoteSocketAddress());
+            packetReceived();
+
+            sendBuffer(imok.duplicate());
+            k.interestOps(SelectionKey.OP_WRITE);
+            return true;
+        } else if (len == getTraceMaskCmd) {
+            LOG.info("Processing getracemask command from "
+                    + sock.socket().getRemoteSocketAddress());
+            packetReceived();
+
+            long traceMask = ZooTrace.getTextTraceLevel();
+            ByteBuffer resp = ByteBuffer.allocate(8);
+            resp.putLong(traceMask);
+            resp.flip();
+            sendBuffer(resp);
+            k.interestOps(SelectionKey.OP_WRITE);
+            return true;
+        } else if (len == setTraceMaskCmd) {
+            LOG.info("Processing settracemask command from "
+                    + sock.socket().getRemoteSocketAddress());
+            incomingBuffer = ByteBuffer.allocate(8);
+
+            int rc = sock.read(incomingBuffer);
+            if (rc < 0) {
+                throw new IOException("Read error");
+            }
+            packetReceived();
+
+            System.out.println("rc=" + rc);
+            incomingBuffer.flip();
+            long traceMask = incomingBuffer.getLong();
+            ZooTrace.setTextTraceLevel(traceMask);
+            ByteBuffer resp = ByteBuffer.allocate(8);
+            resp.putLong(traceMask);
+            resp.flip();
+            sendBuffer(resp);
+            k.interestOps(SelectionKey.OP_WRITE);
+            return true;
+        } else if (len == dumpCmd) {
+            LOG.info("Processing dump command from "
+                    + sock.socket().getRemoteSocketAddress());
+            packetReceived();
+
+            if (zk == null) {
+                sendBuffer(ByteBuffer.wrap("ZooKeeper not active \n"
+                        .getBytes()));
+            } else {
+                StringBuffer sb = new StringBuffer();
+                sb.append("SessionTracker dump: \n");
+                sb.append(zk.sessionTracker.toString()).append("\n");
+                sb.append("ephemeral nodes dump:\n");
+                sb.append(zk.dataTree.dumpEphemerals()).append("\n");
+                sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
+            }
+            k.interestOps(SelectionKey.OP_WRITE);
+            return true;
+        } else if (len == reqsCmd) {
+            LOG.info("Processing reqs command from "
+                    + sock.socket().getRemoteSocketAddress());
+            packetReceived();
+
+            StringBuffer sb = new StringBuffer();
+            sb.append("Requests:\n");
+            synchronized (outstanding) {
+                for (Request r : outstanding) {
+                    sb.append(r.toString());
+                    sb.append('\n');
+                }
+            }
+            sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
+            k.interestOps(SelectionKey.OP_WRITE);
+            return true;
+        } else if (len == statCmd) {
+            LOG.info("Processing stat command from "
+                    + sock.socket().getRemoteSocketAddress());
+            packetReceived();
+
+            StringBuffer sb = new StringBuffer();
+            if(zk != null){
+                sb.append("Zookeeper version: ").append(Version.getFullVersion())
+                    .append("\n");
+                sb.append("Clients:\n");
+                synchronized(factory.cnxns){
+                    for(NIOServerCnxn c : factory.cnxns){
+                        sb.append(c.getStats().toString());
+                    }
+                }
+                sb.append("\n");
+                sb.append(zk.serverStats().toString());
+                sb.append("Node count: ").append(zk.dataTree.getNodeCount()).
+                    append("\n");
+            } else {
+                sb.append("ZooKeeperServer not running\n");
+            }
+
+            sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
+            k.interestOps(SelectionKey.OP_WRITE);
+            return true;
+        } else if (len == enviCmd) {
+            LOG.info("Processing envi command from "
+                    + sock.socket().getRemoteSocketAddress());
+            packetReceived();
+
+            StringBuffer sb = new StringBuffer();
+
+            List<Environment.Entry> env = Environment.list();
+
+            sb.append("Environment:\n");
+            for(Environment.Entry e : env) {
+                sb.append(e.getKey()).append("=").append(e.getValue())
+                    .append("\n");
+            }
+
+            sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
+            k.interestOps(SelectionKey.OP_WRITE);
+            return true;
+        } else if (len == srstCmd) {
+            LOG.info("Processing srst command from "
+                    + sock.socket().getRemoteSocketAddress());
+            packetReceived();
+
+            zk.serverStats().reset();
+
+            sendBuffer(ByteBuffer.wrap("Stats reset.\n".getBytes()));
+            k.interestOps(SelectionKey.OP_WRITE);
+            return true;
+        }
+        return false;
+    }
+
+    /** Reads the first 4 bytes of lenBuffer, which could be true length or
+     *  four letter word.
+     *
+     * @param k selection key
+     * @return true if length read, otw false (wasn't really the length)
+     * @throws IOException if buffer size exceeds maxBuffer size
+     */
+    private boolean readLength(SelectionKey k) throws IOException {
         // Read the length, now get the buffer
         int len = lenBuffer.getInt();
-        if (!initialized) {
-            // We take advantage of the limited size of the length to look
-            // for cmds. They are all 4-bytes which fits inside of an int
-            if (len == ruokCmd) {
-                LOG.info("Processing ruok command from "
-                        + sock.socket().getRemoteSocketAddress());
-
-                sendBuffer(imok.duplicate());
-                sendBuffer(NIOServerCnxn.closeConn);
-                k.interestOps(SelectionKey.OP_WRITE);
-                return;
-            } else if (len == getTraceMaskCmd) {
-                LOG.info("Processing getracemask command from "
-                        + sock.socket().getRemoteSocketAddress());
-                long traceMask = ZooTrace.getTextTraceLevel();
-                ByteBuffer resp = ByteBuffer.allocate(8);
-                resp.putLong(traceMask);
-                resp.flip();
-                sendBuffer(resp);
-                sendBuffer(NIOServerCnxn.closeConn);
-                k.interestOps(SelectionKey.OP_WRITE);
-                return;
-            } else if (len == setTraceMaskCmd) {
-                LOG.info("Processing settracemask command from "
-                        + sock.socket().getRemoteSocketAddress());
-                incomingBuffer = ByteBuffer.allocate(8);
-
-                int rc = sock.read(incomingBuffer);
-                if (rc < 0) {
-                    throw new IOException("Read error");
-                }
-                System.out.println("rc=" + rc);
-                incomingBuffer.flip();
-                long traceMask = incomingBuffer.getLong();
-                ZooTrace.setTextTraceLevel(traceMask);
-                ByteBuffer resp = ByteBuffer.allocate(8);
-                resp.putLong(traceMask);
-                resp.flip();
-                sendBuffer(resp);
-                sendBuffer(NIOServerCnxn.closeConn);
-                k.interestOps(SelectionKey.OP_WRITE);
-                return;
-            } else if (len == dumpCmd) {
-                LOG.info("Processing dump command from "
-                        + sock.socket().getRemoteSocketAddress());
-                if (zk == null) {
-                    sendBuffer(ByteBuffer.wrap("ZooKeeper not active \n"
-                            .getBytes()));
-                } else {
-                    StringBuffer sb = new StringBuffer();
-                    sb.append("SessionTracker dump: \n");
-                    sb.append(zk.sessionTracker.toString()).append("\n");
-                    sb.append("ephemeral nodes dump:\n");
-                    sb.append(zk.dataTree.dumpEphemerals()).append("\n");
-                    sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
-                }
-                sendBuffer(NIOServerCnxn.closeConn);
-                k.interestOps(SelectionKey.OP_WRITE);
-                return;
-            } else if (len == reqsCmd) {
-                LOG.info("Processing reqs command from "
-                        + sock.socket().getRemoteSocketAddress());
-                StringBuffer sb = new StringBuffer();
-                sb.append("Requests:\n");
-                synchronized (outstanding) {
-                    for (Request r : outstanding) {
-                        sb.append(r.toString());
-                        sb.append('\n');
-                    }
-                }
-                sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
-                sendBuffer(NIOServerCnxn.closeConn);
-                k.interestOps(SelectionKey.OP_WRITE);
-                return;
-            } else if (len == statCmd) {
-                LOG.info("Processing stat command from "
-                        + sock.socket().getRemoteSocketAddress());
-                StringBuffer sb = new StringBuffer();
-                if(zk!=null){
-                    sb.append("Zookeeper version: ").append(Version.getFullVersion())
-                        .append("\n");
-                    sb.append("Clients:\n");
-                    synchronized(factory.cnxns){
-                        for(NIOServerCnxn c : factory.cnxns){
-                            sb.append(c.getStats().toString());
-                        }
-                    }
-                    sb.append("\n");
-                    sb.append(zk.serverStats().toString());
-                    sb.append("Node count: ").append(zk.dataTree.getNodeCount()).
-                        append("\n");
-                }else
-                    sb.append("ZooKeeperServer not running\n");
-
-                sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
-                sendBuffer(NIOServerCnxn.closeConn);
-                k.interestOps(SelectionKey.OP_WRITE);
-                return;
-            } else if (len == enviCmd) {
-                LOG.info("Processing envi command from "
-                        + sock.socket().getRemoteSocketAddress());
-                StringBuffer sb = new StringBuffer();
-
-                List<Environment.Entry> env = Environment.list();
-
-                sb.append("Environment:\n");
-                for(Environment.Entry e : env) {
-                    sb.append(e.getKey()).append("=").append(e.getValue())
-                        .append("\n");
-                }
-
-                sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
-                sendBuffer(NIOServerCnxn.closeConn);
-                k.interestOps(SelectionKey.OP_WRITE);
-                return;
-            } else if (len == srstCmd) {
-                LOG.info("Processing srst command from "
-                        + sock.socket().getRemoteSocketAddress());
-                zk.serverStats().reset();
-
-                sendBuffer(ByteBuffer.wrap("Stats reset.\n".getBytes()));
-                sendBuffer(NIOServerCnxn.closeConn);
-                k.interestOps(SelectionKey.OP_WRITE);
-                return;
-            }
+        if (!initialized && checkFourLetterWord(k, len)) {
+            return false;
         }
         if (len < 0 || len > BinaryInputArchive.maxBuffer) {
             throw new IOException("Len error " + len);
@@ -754,6 +873,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             throw new IOException("ZooKeeperServer not running");
         }
         incomingBuffer = ByteBuffer.allocate(len);
+        return true;
     }
 
     /**
@@ -831,8 +951,11 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             zk.removeCnxn(this);
         }
 
-        LOG.info("closing session:0x" + Long.toHexString(sessionId)
-                + " NIOServerCnxn: " + sock);
+        LOG.info("Closed socket connection for client "
+                + sock.socket().getRemoteSocketAddress()
+                + (sessionId != 0 ?
+                        " which had sessionid 0x" + Long.toHexString(sessionId) :
+                        " (no session established for client)"));
         try {
             /*
              * The following sequence of code is stupid! You would think that
@@ -843,18 +966,24 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             sock.socket().shutdownOutput();
         } catch (IOException e) {
             // This is a relatively common exception that we can't avoid
-            LOG.debug("ignoring exception during output shutdown", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("ignoring exception during output shutdown", e);
+            }
         }
         try {
             sock.socket().shutdownInput();
         } catch (IOException e) {
             // This is a relatively common exception that we can't avoid
-            LOG.debug("ignoring exception during input shutdown", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("ignoring exception during input shutdown", e);
+            }
         }
         try {
             sock.socket().close();
         } catch (IOException e) {
-            LOG.warn("ignoring exception during socket close", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("ignoring exception during socket close", e);
+            }
         }
         try {
             sock.close();
@@ -863,7 +992,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             // this section arise.
             // factory.selector.wakeup();
         } catch (IOException e) {
-            LOG.warn("ignoring exception during socketchannel close", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("ignoring exception during socketchannel close", e);
+            }
         }
         sock = null;
         if (sk != null) {
@@ -871,7 +1002,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 // need to cancel this selection key from the selector
                 sk.cancel();
             } catch (Exception e) {
-                LOG.warn("ignoring exception during selectionkey cancel", e);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("ignoring exception during selectionkey cancel", e);
+                }
             }
         }
     }
@@ -886,6 +1019,11 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
      */
     synchronized public void sendResponse(ReplyHeader h, Record r, String tag) {
         if (closed) {
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("send called on closed session 0x"
+                          + Long.toHexString(sessionId)
+                          + " with record " + r);
+            }
             return;
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -962,12 +1100,20 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             bb.putInt(bb.remaining() - 4).rewind();
             sendBuffer(bb);
 
-            LOG.info("Finished init of 0x" + Long.toHexString(sessionId)
-                    + " valid:" + valid);
-
             if (!valid) {
-                sendBuffer(closeConn);
+                LOG.info("Invalid session 0x"
+                        + Long.toHexString(sessionId)
+                        + " for client "
+                        + sock.socket().getRemoteSocketAddress()
+                        + ", probably expired");
+                sendCloseSession();
+            } else {
+                LOG.info("Established session 0x"
+                        + Long.toHexString(sessionId)
+                        + " for client "
+                        + sock.socket().getRemoteSocketAddress());
             }
+
             // Now that the session is ready we can start receiving packets
             synchronized (this.factory) {
                 sk.selector().wakeup();
