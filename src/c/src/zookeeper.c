@@ -1170,6 +1170,12 @@ static int send_set_watches(zhandle_t *zh)
     struct SetWatches req;
     int rc;
 
+    // return if there are no pending watches
+    if (!req.dataWatches.count && !req.existWatches.count &&
+        !req.childWatches.count) {
+        return ZOK;
+    }
+
     oa = create_buffer_oarchive();
     req.relativeZxid = zh->last_zxid;
     req.dataWatches.data = collect_keys(zh->active_node_watchers, &req.dataWatches.count);
