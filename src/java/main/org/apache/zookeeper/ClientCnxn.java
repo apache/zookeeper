@@ -851,7 +851,12 @@ public class ClientCnxn {
             bb.rewind();
             synchronized (outgoingQueue) {
                 // We add backwards since we are pushing into the front
-                if (!disableAutoWatchReset) {
+                // Only send if there's a pending watch
+                if (!disableAutoWatchReset &&
+                        (!zooKeeper.getDataWatches().isEmpty()
+                         || !zooKeeper.getExistWatches().isEmpty()
+                         || !zooKeeper.getChildWatches().isEmpty()))
+                {
                     SetWatches sw = new SetWatches(lastZxid,
                             zooKeeper.getDataWatches(),
                             zooKeeper.getExistWatches(),
