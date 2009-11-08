@@ -103,6 +103,9 @@ BUGFIXES:
   ZOOKEEPER-537. The zookeeper jar includes the java source files
   (Thomas Dudziak via phunt)
 
+  ZOOKEEPER-551. unnecessary SetWatches message on new session.
+  (phunt via flavio)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
