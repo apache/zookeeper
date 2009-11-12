@@ -136,6 +136,8 @@ NEW FEATURES:
   ZOOKEEPER-555. Add stat information to GetChildrenResponse. (Arni Jonson and
   phunt via mahadev)
 
+  ZOOKEEPER-550.  Java Queue Recipe. (steven cheng via mahadev)
+
 Release 3.2.0 - 2009-06-30
 
 Non-backward compatible changes:
