@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -36,68 +37,100 @@ import org.apache.zookeeper.data.StatPersisted;
  */
 public class DataNode implements Record {
     /** the parent of this datanode */
-    DataNode parent; 
-    
-    /** the data for this datanode */
-    byte data[];     
-    
-    /** the acl map long for this datanode. 
-    the datatree has the map */
-    Long acl;       
-    
-    /** the stat for this node that is persisted 
-     * to disk.
-     */
-    public StatPersisted stat; 
+    DataNode parent;
 
-    /** the list of children for this node. note 
-     * that the list of children string does not 
-     * contain the parent path -- just the last
-     * part of the path. This should be 
-     * synchronized on except deserializing 
-     * (for speed up issues).
+    /** the data for this datanode */
+    byte data[];
+
+    /**
+     * the acl map long for this datanode. the datatree has the map
      */
-    Set<String> children = new HashSet<String>();
+    Long acl;
+
+    /**
+     * the stat for this node that is persisted to disk.
+     */
+    public StatPersisted stat;
+
+    /**
+     * the list of children for this node. note that the list of children string
+     * does not contain the parent path -- just the last part of the path. This
+     * should be synchronized on except deserializing (for speed up issues).
+     */
+    private Set<String> children = null;
 
     /**
      * default constructor for the datanode
      */
-    DataNode() {}
+    DataNode() {
+        // default constructor
+    }
 
     /**
      * create a DataNode with parent, data, acls and stat
-     * @param parent the parent of this DataNode
-     * @param data the data to be set
-     * @param acl the acls for this node
-     * @param stat the stat for this node.
+     * 
+     * @param parent
+     *            the parent of this DataNode
+     * @param data
+     *            the data to be set
+     * @param acl
+     *            the acls for this node
+     * @param stat
+     *            the stat for this node.
      */
-  
     public DataNode(DataNode parent, byte data[], Long acl, StatPersisted stat) {
         this.parent = parent;
         this.data = data;
         this.acl = acl;
         this.stat = stat;
-        this.children = new HashSet<String>();
     }
 
     /**
-     * convenience method for creating DataNode
-     * fully
+     * Method that inserts a child into the children set
+     * 
+     * @param child
+     *            to be inserted
+     * @return true if this set did not already contain the specified element
+     */
+    public synchronized boolean addChild(String child) {
+        if (children == null) {
+            // let's be conservative on the typical number of children
+            children = new HashSet<String>(8);
+        }
+        return children.add(child);
+    }
+
+    /**
+     * Method that removes a child from the children set
+     * 
+     * @param child
+     * @return true if this set contained the specified element
+     */
+    public synchronized boolean removeChild(String child) {
+        if (children == null) {
+            return false;
+        }
+        return children.remove(child);
+    }
+
+    /**
+     * convenience method for setting the children for this datanode
+     * 
      * @param children
      */
     public synchronized void setChildren(HashSet<String> children) {
         this.children = children;
     }
-    
+
     /**
      * convenience methods to get the children
+     * 
      * @return the children of this datanode
      */
     public synchronized Set<String> getChildren() {
-        return this.children;
+        return children;
     }
-    
-   
+
     synchronized public void copyStat(Stat to) {
         to.setAversion(stat.getAversion());
         to.setCtime(stat.getCtime());
@@ -109,7 +142,11 @@ public class DataNode implements Record {
         to.setVersion(stat.getVersion());
         to.setEphemeralOwner(stat.getEphemeralOwner());
         to.setDataLength(data == null ? 0 : data.length);
-        to.setNumChildren(children.size());
+        if (this.children == null) {
+            to.setNumChildren(0);
+        } else {
+            to.setNumChildren(children.size());
+        }
     }
 
     synchronized public void deserialize(InputArchive archive, String tag)
