@@ -106,6 +106,12 @@ BUGFIXES:
   ZOOKEEPER-551. unnecessary SetWatches message on new session.
   (phunt via flavio)
 
+  ZOOKEEPER-566. "reqs" four letter word (command port) returns no information
+  (phunt via breed)
+
+  ZOOKEEPER-567. javadoc for getchildren2 needs to mention "new in 3.3.0"
+  (phunt via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
