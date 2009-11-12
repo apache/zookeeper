@@ -15,3 +15,11 @@ zkr_recipe-name_methodname
 6) The various recipes are in ../../docs/recipes.html or
 ../../docs/reciped.pdf. Also, this is not an exhaustive list by any chance.
 Zookeeper is used (and can be used) for more than what we have listed in the docs.
+
+7) To run the c tests in all the recipes, 
+- make sure the main zookeeper c libraries in
+{top}/src/c/ are compiled. Run autoreconf -if;./configure; make. The libaries
+will be installed in {top}/src/c/.libs. 
+- run autoreconf if;./configure;make run-check 
+  in src/recipes/$recipename/src/c
+
