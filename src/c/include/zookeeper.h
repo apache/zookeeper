@@ -830,6 +830,8 @@ ZOOAPI int zoo_awget_children(zhandle_t *zh, const char *path,
 /**
  * \brief lists the children of a node, and get the parent stat.
  * 
+ * This function is new in version 3.3.0
+ *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path the name of the node. Expressed as a file name with slashes 
  * separating ancestors of the node.
@@ -856,6 +858,8 @@ ZOOAPI int zoo_aget_children2(zhandle_t *zh, const char *path, int watch,
  * This function is similar to \ref zoo_aget_children2 except it allows one specify 
  * a watcher object rather than a boolean watch flag.
  *  
+ * This function is new in version 3.3.0
+ *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path the name of the node. Expressed as a file name with slashes 
  * separating ancestors of the node.
@@ -1288,6 +1292,8 @@ ZOOAPI int zoo_wget_children(zhandle_t *zh, const char *path,
 /**
  * \brief lists the children of a node and get its stat synchronously.
  * 
+ * This function is new in version 3.3.0
+ *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path the name of the node. Expressed as a file name with slashes 
  * separating ancestors of the node.
@@ -1312,6 +1318,8 @@ ZOOAPI int zoo_get_children2(zhandle_t *zh, const char *path, int watch,
  * This function is similar to \ref zoo_get_children except it allows one specify 
  * a watcher object rather than a boolean watch flag.
  * 
+ * This function is new in version 3.3.0
+ *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path the name of the node. Expressed as a file name with slashes 
  * separating ancestors of the node.
