@@ -29,20 +29,23 @@ import javax.management.ObjectName;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.NIOServerCnxn.CnxnStats;
 
 /**
  * Implementation of connection MBean interface.
  */
 public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     private static final Logger LOG = Logger.getLogger(ConnectionBean.class);
-    private ServerCnxn connection;
-    private ZooKeeperServer zk;
-    private Date timeCreated;
-    
+
+    private final ServerCnxn connection;
+    private final CnxnStats stats;
+
+    private final ZooKeeperServer zk;
+
     public ConnectionBean(ServerCnxn connection,ZooKeeperServer zk){
-        this.connection=connection;
-        this.zk=zk;
-        timeCreated=new Date();
+        this.connection = connection;
+        this.stats = (CnxnStats)connection.getStats();
+        this.zk = zk;
     }
     
     public String getSessionId() {
@@ -80,7 +83,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     }
     
     public String getStartedTime() {
-        return timeCreated.toString();
+        return stats.getEstablished().toString();
     }
     
     public void terminateSession() {
@@ -96,6 +99,10 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
         connection.sendCloseSession();
     }
 
+    public void resetCounters() {
+        stats.reset();
+    }
+
     @Override
     public String toString() {
         return "ConnectionBean{ClientIP=" + ObjectName.quote(getSourceIP())
@@ -103,19 +110,50 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     }
     
     public long getOutstandingRequests() {
-        return connection.getStats().getOutstandingRequests();
+        return stats.getOutstandingRequests();
     }
     
     public long getPacketsReceived() {
-        return connection.getStats().getPacketsReceived();
+        return stats.getPacketsReceived();
     }
     
     public long getPacketsSent() {
-        return connection.getStats().getPacketsSent();
+        return stats.getPacketsSent();
     }
     
     public int getSessionTimeout() {
         return connection.getSessionTimeout();
     }
 
+    public long getMinLatency() {
+        return stats.getMinLatency();
+    }
+
+    public long getAvgLatency() {
+        return stats.getAvgLatency();
+    }
+
+    public long getMaxLatency() {
+        return stats.getMaxLatency();
+    }
+    
+    public String getLastOperation() {
+        return stats.getLastOperation();
+    }
+
+    public String getLastCxid() {
+        return "0x" + Long.toHexString(stats.getLastCxid());
+    }
+
+    public String getLastZxid() {
+        return "0x" + Long.toHexString(stats.getLastZxid());
+    }
+
+    public String getLastResponseTime() {
+        return new Date(stats.getLastResponseTime()).toString();
+    }
+
+    public long getLastLatency() {
+        return stats.getLastLatency();
+    }
 }

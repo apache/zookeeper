@@ -105,15 +105,16 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     @Override
     synchronized public String toString() {
-        StringBuffer sb = new StringBuffer("Session Sets ("
-                + sessionSets.size() + "):\n");
+        StringBuffer sb = new StringBuffer("Session Sets (")
+                .append(sessionSets.size()).append("):\n");
         ArrayList<Long> keys = new ArrayList<Long>(sessionSets.keySet());
         Collections.sort(keys);
         for (long time : keys) {
-            sb.append(sessionSets.get(time).sessions.size() + " expire at "
-                    + new Date(time) + ":\n");
+            sb.append(sessionSets.get(time).sessions.size())
+                .append(" expire at ").append(new Date(time)).append(":\n");
             for (SessionImpl s : sessionSets.get(time).sessions) {
-                sb.append("\t" + s.sessionId + "\n");
+                sb.append("\t0x").append(Long.toHexString(s.sessionId))
+                    .append("\n");
             }
         }
         return sb.toString();

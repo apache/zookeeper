@@ -65,4 +65,34 @@ public interface ConnectionMXBean {
      * reconnect with the same session id.
      */
     public void terminateConnection();
+
+
+    /** Min latency in ms
+     * @since 3.3.0 */
+    long getMinLatency();
+    /** Average latency in ms
+     * @since 3.3.0 */
+    long getAvgLatency();
+    /** Max latency in ms
+     * @since 3.3.0 */
+    long getMaxLatency();
+    /** Last operation performed by this connection
+     * @since 3.3.0 */
+    String getLastOperation();
+    /** Last cxid of this connection
+     * @since 3.3.0 */
+    String getLastCxid();
+    /** Last zxid of this connection
+     * @since 3.3.0 */
+    String getLastZxid();
+    /** Last time server sent a response to client on this connection
+     * @since 3.3.0 */
+    String getLastResponseTime();
+    /** Latency of last response to client on this connection in ms
+     * @since 3.3.0 */
+    long getLastLatency();
+
+    /** Reset counters
+     * @since 3.3.0 */
+    void resetCounters();
 }
