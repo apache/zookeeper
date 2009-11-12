@@ -1312,6 +1312,8 @@ public class ZooKeeper {
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
      *
+     * @since 3.3.0
+     * 
      * @param path
      * @param watcher explicit watcher
      * @param stat stat of the znode designated by path
@@ -1366,6 +1368,8 @@ public class ZooKeeper {
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
      *
+     * @since 3.3.0
+     * 
      * @param path
      * @param watch
      * @param stat stat of the znode designated by path
@@ -1384,7 +1388,9 @@ public class ZooKeeper {
      * The Asynchronous version of getChildren. The request doesn't actually
      * until the asynchronous callback is called.
      *
-     * @see #getChildren(String, Watcher)
+     * @since 3.3.0
+     * 
+     * @see #getChildren(String, Watcher, Stat)
      */
     public void getChildren(final String path, Watcher watcher,
             Children2Callback cb, Object ctx)
@@ -1414,7 +1420,9 @@ public class ZooKeeper {
      * The Asynchronous version of getChildren. The request doesn't actually
      * until the asynchronous callback is called.
      *
-     * @see #getChildren(String, boolean)
+     * @since 3.3.0
+     * 
+     * @see #getChildren(String, boolean, Stat)
      */
     public void getChildren(String path, boolean watch, Children2Callback cb,
             Object ctx)
