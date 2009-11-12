@@ -176,32 +176,44 @@ public abstract class ClientBase extends TestCase {
         return zk;
     }
 
-    public static boolean waitForServerUp(String hp, long timeout) {
-        long start = System.currentTimeMillis();
+    public static String send4LetterWord(String hp, String cmd)
+        throws IOException
+    {
         String split[] = hp.split(":");
         String host = split[0];
         int port = Integer.parseInt(split[1]);
+
+        Socket sock = new Socket(host, port);
+        BufferedReader reader = null;
+        try {
+            OutputStream outstream = sock.getOutputStream();
+            outstream.write(cmd.getBytes());
+            outstream.flush();
+
+            reader =
+                new BufferedReader(
+                        new InputStreamReader(sock.getInputStream()));
+            StringBuffer sb = new StringBuffer();
+            String line;
+            while((line = reader.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+            return sb.toString();
+        } finally {
+            sock.close();
+            if (reader != null) {
+                reader.close();
+            }
+        }
+    }
+
+    public static boolean waitForServerUp(String hp, long timeout) {
+        long start = System.currentTimeMillis();
         while (true) {
             try {
-                Socket sock = new Socket(host, port);
-                BufferedReader reader = null;
-                try {
-                    OutputStream outstream = sock.getOutputStream();
-                    outstream.write("stat".getBytes());
-                    outstream.flush();
-
-                    reader =
-                        new BufferedReader(
-                                new InputStreamReader(sock.getInputStream()));
-                    String line = reader.readLine();
-                    if (line != null && line.startsWith("Zookeeper version:")) {
-                        return true;
-                    }
-                } finally {
-                    sock.close();
-                    if (reader != null) {
-                        reader.close();
-                    }
+                String result = send4LetterWord(hp, "stat");
+                if (result.startsWith("Zookeeper version:")) {
+                    return true;
                 }
             } catch (IOException e) {
                 // ignore as this is expected
@@ -221,19 +233,9 @@ public abstract class ClientBase extends TestCase {
     }
     public static boolean waitForServerDown(String hp, long timeout) {
         long start = System.currentTimeMillis();
-        String split[] = hp.split(":");
-        String host = split[0];
-        int port = Integer.parseInt(split[1]);
         while (true) {
             try {
-                Socket sock = new Socket(host, port);
-                try {
-                    OutputStream outstream = sock.getOutputStream();
-                    outstream.write("stat".getBytes());
-                    outstream.flush();
-                } finally {
-                    sock.close();
-                }
+                send4LetterWord(hp, "stat");
             } catch (IOException e) {
                 return true;
             }
