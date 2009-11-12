@@ -130,6 +130,9 @@ IMPROVEMENTS:
   ZOOKEEPER-549. Refactor Followers and related classes into a Peer->Follower
   hierarchy in preparation for Observers (henry robinson via mahadev)
 
+  ZOOKEEPER-472.  Making DataNode not instantiate a HashMap when the node is
+  ephmeral (Erik Holstad via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 

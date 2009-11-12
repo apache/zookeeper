@@ -138,10 +138,11 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     Set<String> children;
                     synchronized(n) {
                         acl = n.acl;
-                        children = n.children;
+                        children = n.getChildren();
                     }
-                    lastChange = new ChangeRecord(-1, path, n.stat, children
-                            .size(), zks.dataTree.convertLong(acl));
+                    lastChange = new ChangeRecord(-1, path, n.stat, 
+                        children != null ? children.size() : 0, 
+                            zks.dataTree.convertLong(acl));
                 }
             }
         }
