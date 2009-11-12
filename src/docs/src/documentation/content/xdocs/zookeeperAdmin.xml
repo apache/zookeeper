@@ -930,7 +930,31 @@ server.3=zoo3:2888:3888</computeroutput></para>
       composed of four letters. You issue the commands to ZooKeeper via telnet
       or nc, at the client port.</para>
 
+      <para>Three of the more interesting commands: "stat" gives some
+      general information about the server and connected clients,
+      while "srvr" and "cons" give extended details on server and
+      connections respectively.</para>
+
       <variablelist>
+        <varlistentry>
+          <term>cons</term>
+
+          <listitem>
+            <para>List full connection/session details for all clients
+            connected to this server. Includes information on numbers
+            of packets received/sent, session id, operation latencies,
+            last operation performed, etc...</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>crst</term>
+
+          <listitem>
+            <para>Reset connection/session statistics for all connections.</para>
+          </listitem>
+        </varlistentry>
+
         <varlistentry>
           <term>dump</term>
 
@@ -949,14 +973,6 @@ server.3=zoo3:2888:3888</computeroutput></para>
         </varlistentry>
 
         <varlistentry>
-          <term>reqs</term>
-
-          <listitem>
-            <para>List outstanding requests</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
           <term>ruok</term>
 
           <listitem>
@@ -970,7 +986,15 @@ server.3=zoo3:2888:3888</computeroutput></para>
           <term>srst</term>
 
           <listitem>
-            <para>Reset statistics returned by stat command.</para>
+            <para>Reset server statistics.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>srvr</term>
+
+          <listitem>
+            <para>Lists full details for the server.</para>
           </listitem>
         </varlistentry>
 
@@ -978,7 +1002,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
           <term>stat</term>
 
           <listitem>
-            <para>Lists statistics about performance and connected
+            <para>Lists brief details for the server and connected
             clients.</para>
           </listitem>
         </varlistentry>

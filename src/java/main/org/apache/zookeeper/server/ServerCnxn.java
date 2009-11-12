@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.WatchedEvent;
@@ -29,8 +30,11 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.ReplyHeader;
 
+/**
+ * Interface to a Server connection - represents a connection from a client
+ * to the server.
+ */
 public interface ServerCnxn extends Watcher {
-    
     /**
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
@@ -38,21 +42,25 @@ public interface ServerCnxn extends Watcher {
     final static int ruokCmd = ByteBuffer.wrap("ruok".getBytes()).getInt();
 
     final static int dumpCmd = ByteBuffer.wrap("dump".getBytes()).getInt();
-    
+
     final static int statCmd = ByteBuffer.wrap("stat".getBytes()).getInt();
-    
-    final static int reqsCmd = ByteBuffer.wrap("reqs".getBytes()).getInt();
+
+    final static int srvrCmd = ByteBuffer.wrap("srvr".getBytes()).getInt();
+
+    final static int consCmd = ByteBuffer.wrap("cons".getBytes()).getInt();
 
     final static int setTraceMaskCmd = ByteBuffer.wrap("stmk".getBytes())
             .getInt();
-    
+
     final static int getTraceMaskCmd = ByteBuffer.wrap("gtmk".getBytes())
             .getInt();
-    
+
     final static int enviCmd = ByteBuffer.wrap("envi".getBytes()).getInt();
-    
+
     final static int srstCmd = ByteBuffer.wrap("srst".getBytes()).getInt();
-    
+
+    final static int crstCmd = ByteBuffer.wrap("crst".getBytes()).getInt();
+
     final static ByteBuffer imok = ByteBuffer.wrap("imok".getBytes());
 
     // This is just an arbitrary object to represent requests issued by
@@ -64,8 +72,8 @@ public interface ServerCnxn extends Watcher {
     void sendResponse(ReplyHeader h, Record r, String tag) throws IOException;
 
     /* notify the client the session is closing and close/cleanup socket */
-    void sendCloseSession(); 
-    
+    void sendCloseSession();
+
     void finishSessionInit(boolean valid);
 
     void process(WatchedEvent event);
@@ -77,12 +85,53 @@ public interface ServerCnxn extends Watcher {
     ArrayList<Id> getAuthInfo();
 
     InetSocketAddress getRemoteAddress();
-    
+
+    /**
+     * Statistics on the ServerCnxn
+     */
     interface Stats {
-        public long getOutstandingRequests();
-        public long getPacketsReceived();
-        public long getPacketsSent();
+        /** Date/time the connection was established
+         * @since 3.3.0 */
+        Date getEstablished();
+
+        /**
+         * The number of requests that have been submitted but not yet
+         * responded to.
+         */
+        long getOutstandingRequests();
+        /** Number of packets received */
+        long getPacketsReceived();
+        /** Number of packets sent (incl notifications) */
+        long getPacketsSent();
+        /** Min latency in ms
+         * @since 3.3.0 */
+        long getMinLatency();
+        /** Average latency in ms
+         * @since 3.3.0 */
+        long getAvgLatency();
+        /** Max latency in ms
+         * @since 3.3.0 */
+        long getMaxLatency();
+        /** Last operation performed by this connection
+         * @since 3.3.0 */
+        String getLastOperation();
+        /** Last cxid of this connection
+         * @since 3.3.0 */
+        long getLastCxid();
+        /** Last zxid of this connection
+         * @since 3.3.0 */
+        long getLastZxid();
+        /** Last time server sent a response to client on this connection
+         * @since 3.3.0 */
+        long getLastResponseTime();
+        /** Latency of last response to client on this connection in ms
+         * @since 3.3.0 */
+        long getLastLatency();
+
+        /** Reset counters
+         * @since 3.3.0 */
+        void reset();
     }
-    
+
     Stats getStats();
 }
