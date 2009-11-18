@@ -117,6 +117,9 @@ BUGFIXES:
 
   ZOOKEEPER-532. java compiler should be target Java 1.5 (hiram chirino and phunt via breed)
 
+  ZOOKEEPER-519. Followerhandler should close the socket if it gets an exception on a write.
+  (mahadev via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
