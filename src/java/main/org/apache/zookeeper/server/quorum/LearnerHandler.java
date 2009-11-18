@@ -420,6 +420,13 @@ public class LearnerHandler extends Thread {
             if (sock != null && !sock.isClosed()) {
                 LOG.error("Unexpected exception causing shutdown while sock "
                         + "still open", e);
+            	//close the socket to make sure the 
+            	//other side can see it being close
+            	try {
+            		sock.close();
+            	} catch(IOException ie) {
+            		// do nothing
+            	}
             }
         } catch (InterruptedException e) {
             LOG.error("Unexpected exception causing shutdown", e);
