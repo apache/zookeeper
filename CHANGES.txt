@@ -120,6 +120,9 @@ BUGFIXES:
   ZOOKEEPER-519. Followerhandler should close the socket if it gets an exception on a write.
   (mahadev via breed)
 
+  ZOOKEEPER-3. syncLimit has slightly different comments in the class header, and > inline with the variable.
+  (mahadev via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)

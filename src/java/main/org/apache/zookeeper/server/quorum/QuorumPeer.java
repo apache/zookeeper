@@ -670,16 +670,14 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     }
         
     /**
-     * Get the number of ticks that can pass between sending a request and getting
-     * an acknowledgement
+     * Get the synclimit
      */
     public int getSyncLimit() {
         return syncLimit;
     }
 
     /**
-     * Set the number of ticks that can pass between sending a request and getting
-     * an acknowledgement
+     * Set the synclimit
      */
     public void setSyncLimit(int syncLimit) {
         this.syncLimit = syncLimit;
