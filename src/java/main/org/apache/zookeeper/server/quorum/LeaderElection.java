@@ -35,6 +35,7 @@ import org.apache.log4j.Logger;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.quorum.Vote;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
@@ -142,7 +143,7 @@ public class LeaderElection implements Election  {
             DatagramPacket responsePacket = new DatagramPacket(responseBytes,
                     responseBytes.length);
             HashMap<InetSocketAddress, Vote> votes =
-                new HashMap<InetSocketAddress, Vote>(self.quorumPeers.size());
+                new HashMap<InetSocketAddress, Vote>(self.getVotingView().size());
             int xid = epochGen.nextInt();
             while (self.running) {
                 votes.clear();
@@ -150,7 +151,7 @@ public class LeaderElection implements Election  {
                 requestBuffer.putInt(xid);
                 requestPacket.setLength(4);
                 HashSet<Long> heardFrom = new HashSet<Long>();
-                for (QuorumServer server : self.quorumPeers.values()) {
+                for (QuorumServer server : self.getVotingView().values()) {
                     LOG.info("Server address: " + server.addr);
                     try {
                         requestPacket.setSocketAddress(server.addr);
@@ -200,16 +201,38 @@ public class LeaderElection implements Election  {
                 ElectionResult result = countVotes(votes, heardFrom);
                 if (result.winner.id >= 0) {
                     self.setCurrentVote(result.vote);
-                    if (result.winningCount > (self.quorumPeers.size() / 2)) {
+                    // To do: this doesn't use a quorum verifier
+                    if (result.winningCount > (self.getVotingView().size() / 2)) {
                         self.setCurrentVote(result.winner);
                         s.close();
                         Vote current = self.getCurrentVote();
-                        self.setPeerState((current.id == self.getId())
-                                ? ServerState.LEADING: ServerState.FOLLOWING);
-                        if (self.getPeerState() == ServerState.FOLLOWING) {
-                            Thread.sleep(100);
+                        LOG.info("Found leader: my type is: " + self.getPeerType());
+                        /**
+                         * We want to make sure we implement the state machine
+                         * correctly. If we are a PARTICIPANT, once a leader
+                         * is elected we can move either to LEADING or 
+                         * FOLLOWING. However if we are an OBSERVER, it is an
+                         * error to be elected as a Leader.
+                         */
+                        if (self.getPeerType() == LearnerType.OBSERVER) {
+                            if (current.id == self.getId()) {
+                                // This should never happen!
+                                LOG.error("OBSERVER elected as leader!");
+                                Thread.sleep(100);
+                            }
+                            else {
+                                self.setPeerState(ServerState.OBSERVING);
+                                Thread.sleep(100);
+                                return current;
+                            }
+                        } else {
+                            self.setPeerState((current.id == self.getId())
+                                    ? ServerState.LEADING: ServerState.FOLLOWING);
+                            if (self.getPeerState() == ServerState.FOLLOWING) {
+                                Thread.sleep(100);
+                            }                            
+                            return current;
                         }
-                        return current;
                     }
                 }
                 Thread.sleep(1000);

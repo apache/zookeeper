@@ -440,7 +440,7 @@ public class FastLeaderElection implements Election {
      * Send notifications to all peers upon a change in our vote
      */
     private void sendNotifications() {
-        for (QuorumServer server : self.quorumPeers.values()) {
+        for (QuorumServer server : self.getVotingView().values()) {
             long sid = server.id;
 
             ToSend notmsg = new ToSend(ToSend.mType.notification, 

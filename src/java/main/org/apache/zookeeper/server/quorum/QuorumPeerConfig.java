@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
@@ -52,12 +53,16 @@ public class QuorumPeerConfig {
     protected int maxClientCnxns = 10;
     protected final HashMap<Long,QuorumServer> servers =
         new HashMap<Long, QuorumServer>();
+    protected final HashMap<Long,QuorumServer> observers =
+        new HashMap<Long, QuorumServer>();
 
     protected long serverId;
     protected HashMap<Long, Long> serverWeight = new HashMap<Long, Long>();
     protected HashMap<Long, Long> serverGroup = new HashMap<Long, Long>();
     protected int numGroups = 0;
     protected QuorumVerifier quorumVerifier;
+    
+    protected LearnerType peerType = LearnerType.PARTICIPANT;
 
     @SuppressWarnings("serial")
     public static class ConfigException extends Exception {
@@ -128,13 +133,23 @@ public class QuorumPeerConfig {
                 electionAlg = Integer.parseInt(value);
             } else if (key.equals("maxClientCnxns")) {
                 maxClientCnxns = Integer.parseInt(value);
+            } else if (key.equals("peerType")) {
+                if (value.toLowerCase().equals("observer")) {
+                    peerType = LearnerType.OBSERVER;
+                } else if (value.toLowerCase().equals("participant")) {
+                    peerType = LearnerType.PARTICIPANT;
+                } else
+                {
+                    throw new ConfigException("Unrecognised peertype: " + value);                      
+                }
             } else if (key.startsWith("server.")) {
                 int dot = key.indexOf('.');
                 long sid = Long.parseLong(key.substring(dot + 1));
                 String parts[] = value.split(":");
-                if ((parts.length != 2) && (parts.length != 3)) {
+                if ((parts.length != 2) && (parts.length != 3) && (parts.length !=4)) {
                     LOG.error(value
-                       + " does not have the form host:port or host:port:port");
+                       + " does not have the form host:port or host:port:port " +
+                       " or host:port:port:type");
                 }
                 InetSocketAddress addr = new InetSocketAddress(parts[0],
                         Integer.parseInt(parts[1]));
@@ -145,6 +160,21 @@ public class QuorumPeerConfig {
                             parts[0], Integer.parseInt(parts[2]));
                     servers.put(Long.valueOf(sid), new QuorumServer(sid, addr,
                             electionAddr));
+                } else if (parts.length == 4) {
+                    InetSocketAddress electionAddr = new InetSocketAddress(
+                            parts[0], Integer.parseInt(parts[2]));
+                    LearnerType type = LearnerType.PARTICIPANT;
+                    if (parts[3].toLowerCase().equals("observer")) {
+                        type = LearnerType.OBSERVER;
+                        observers.put(Long.valueOf(sid), new QuorumServer(sid, addr,
+                                electionAddr,type));
+                    } else if (parts[3].toLowerCase().equals("participant")) {
+                        type = LearnerType.PARTICIPANT;
+                        servers.put(Long.valueOf(sid), new QuorumServer(sid, addr,
+                                electionAddr,type));
+                    } else {
+                        throw new ConfigException("Unrecognised peertype: " + value);
+                    }                    
                 }
             } else if (key.startsWith("group")) {
                 int dot = key.indexOf('.');
@@ -168,6 +198,10 @@ public class QuorumPeerConfig {
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
+        }
+        if (observers.size() > 0 && electionAlg != 0) {
+            throw new IllegalArgumentException("Observers must currently be used with simple leader election" +
+            		" (set electionAlg=0)");
         }
         if (dataDir == null) {
             throw new IllegalArgumentException("dataDir is not set");
@@ -233,6 +267,10 @@ public class QuorumPeerConfig {
                 quorumVerifier = new QuorumMaj(servers.size());
             }
             
+            // Now add observers to servers, once the quorums have been 
+            // figured out
+            servers.putAll(observers);
+            
             File myIdFile = new File(dataDir, "myid");
             if (!myIdFile.exists()) {
                 throw new IllegalArgumentException(myIdFile.toString()
@@ -276,4 +314,8 @@ public class QuorumPeerConfig {
     public long getServerId() { return serverId; }
 
     public boolean isDistributed() { return servers.size() > 1; }
+
+    public LearnerType getPeerType() {
+        return peerType;
+    }
 }

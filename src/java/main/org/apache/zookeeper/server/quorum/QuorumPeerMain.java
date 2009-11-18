@@ -133,6 +133,7 @@ public class QuorumPeerMain {
           quorumPeer.setSyncLimit(config.getSyncLimit());
           quorumPeer.setQuorumVerifier(config.getQuorumVerifier());
           quorumPeer.setCnxnFactory(cnxnFactory);
+          quorumPeer.setPeerType(config.getPeerType());
   
           quorumPeer.start();
           quorumPeer.join();

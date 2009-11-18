@@ -21,26 +21,21 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
-public class QuorumHammerTest extends QuorumBase {
-    protected static final Logger LOG = Logger.getLogger(QuorumHammerTest.class);
+/**
+ * Mimics QuorumHammerTest, but with 2 observers in the 5 Learner ensemble.
+ */
+public class ObserverQuorumHammerTest extends QuorumHammerTest {
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
-    protected final QuorumBase qb = new QuorumBase();
-    protected final ClientHammerTest cht = new ClientHammerTest();
-
+    
     @Before
     @Override
     protected void setUp() throws Exception {
-        qb.setUp();
+        qb.setUp(true);
         cht.hostPort = qb.hostPort;
         cht.setUpAll();
     }
-
-    protected void tearDown() throws Exception {
-        cht.tearDownAll();
-        qb.tearDown();
-    }
-    
+   
     @Test
     public void testHammerBasic() throws Throwable {
         cht.testHammerBasic();

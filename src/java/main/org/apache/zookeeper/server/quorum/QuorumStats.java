@@ -26,7 +26,7 @@ public class QuorumStats {
         static public final String LOOKING_STATE = "leaderelection";
         static public final String LEADING_STATE = "leading";
         static public final String FOLLOWING_STATE = "following";
-        
+        static public final String OBSERVING_STATE = "observing";
         public String[] getQuorumPeers();
         public String getServerState();
     }
@@ -53,7 +53,8 @@ public class QuorumStats {
                 sb.append(" ").append(f);
             }
             sb.append("\n");            
-        }else if(state.equals(Provider.FOLLOWING_STATE)){
+        }else if(state.equals(Provider.FOLLOWING_STATE) 
+                || state.equals(Provider.OBSERVING_STATE)){
             sb.append("Leader: ");
             String[] ldr=getQuorumPeers();
             if(ldr.length>0)

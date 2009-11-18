@@ -126,7 +126,7 @@ public class QuorumCnxManager {
         SocketChannel channel;
         LOG.debug("Opening channel to server "  + sid);
         channel = SocketChannel
-                .open(self.quorumPeers.get(sid).electionAddr);
+                .open(self.getVotingView().get(sid).electionAddr);
         channel.socket().setTcpNoDelay(true);
         initiateConnection(channel, sid);
     }
@@ -327,7 +327,8 @@ public class QuorumCnxManager {
             try {
                 SocketChannel channel;
                 LOG.debug("Opening channel to server "  + sid);
-                channel = SocketChannel.open(electionAddr);
+                channel = SocketChannel
+                        .open(self.getView().get(sid).electionAddr);
                 channel.socket().setTcpNoDelay(true);
                 initiateConnection(channel, sid);
             } catch (UnresolvedAddressException e) {
@@ -510,7 +511,7 @@ public class QuorumCnxManager {
                 LOG.warn("Exception while closing socket");
             }
             //channel = null;
-            
+
             this.interrupt();
             if (recvWorker != null)
                 recvWorker.finish();

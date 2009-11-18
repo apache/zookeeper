@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.After;
 
@@ -49,6 +50,10 @@ public class QuorumBase extends ClientBase {
 
     @Override
     protected void setUp() throws Exception {
+        setUp(false);
+    }
+        
+    protected void setUp(boolean withObservers) throws Exception {
         LOG.info("STARTING " + getName());
         setupTestEnv();
 
@@ -74,7 +79,7 @@ public class QuorumBase extends ClientBase {
         s4dir = ClientBase.createTmpDir();
         s5dir = ClientBase.createTmpDir();
 
-        startServers();
+        startServers(withObservers);
 
         OperatingSystemMXBean osMbean =
             ManagementFactory.getOperatingSystemMXBean();
@@ -87,7 +92,12 @@ public class QuorumBase extends ClientBase {
 
         LOG.info("Setup finished");
     }
+    
     void startServers() throws Exception {
+        startServers(false);        
+    }
+    
+    void startServers(boolean withObservers) throws Exception {
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
@@ -97,6 +107,11 @@ public class QuorumBase extends ClientBase {
         peers.put(Long.valueOf(3), new QuorumServer(3, new InetSocketAddress("127.0.0.1", port3 + 1000)));
         peers.put(Long.valueOf(4), new QuorumServer(4, new InetSocketAddress("127.0.0.1", port4 + 1000)));
         peers.put(Long.valueOf(5), new QuorumServer(5, new InetSocketAddress("127.0.0.1", port5 + 1000)));
+        
+        if (withObservers) {
+            peers.get(Long.valueOf(4)).type = LearnerType.OBSERVER;        
+            peers.get(Long.valueOf(5)).type = LearnerType.OBSERVER;
+        }
 
         LOG.info("creating QuorumPeer 1 port " + port1);
         s1 = new QuorumPeer(peers, s1dir, s1dir, port1, 0, 1, tickTime, initLimit, syncLimit);
@@ -113,6 +128,12 @@ public class QuorumBase extends ClientBase {
         LOG.info("creating QuorumPeer 5 port " + port5);
         s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 0, 5, tickTime, initLimit, syncLimit);
         assertEquals(port5, s5.getClientPort());
+        
+        if (withObservers) {
+            s4.setPeerType(LearnerType.OBSERVER);
+            s5.setPeerType(LearnerType.OBSERVER);
+        }
+        
         LOG.info("start QuorumPeer 1");
         s1.start();
         LOG.info("start QuorumPeer 2");

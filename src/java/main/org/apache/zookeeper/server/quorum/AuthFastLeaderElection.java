@@ -712,7 +712,7 @@ public class AuthFastLeaderElection implements Election {
                 t.start();
             }
 
-            for (QuorumServer server : self.quorumPeers.values()) {
+            for (QuorumServer server : self.getVotingView().values()) {
                 InetSocketAddress saddr = new InetSocketAddress(server.addr
                         .getAddress(), port);
                 addrChallengeMap.put(saddr, new HashMap<Long, Long>());
@@ -744,7 +744,7 @@ public class AuthFastLeaderElection implements Election {
 
     private void starter(QuorumPeer self) {
         this.self = self;
-        port = self.quorumPeers.get(self.getId()).electionAddr.getPort();
+        port = self.getVotingView().get(self.getId()).electionAddr.getPort();
         proposedLeader = -1;
         proposedZxid = -1;
 
@@ -755,10 +755,10 @@ public class AuthFastLeaderElection implements Election {
             e1.printStackTrace();
             throw new RuntimeException();
         }
-        sendqueue = new LinkedBlockingQueue<ToSend>(2 * self.quorumPeers.size());
-        recvqueue = new LinkedBlockingQueue<Notification>(2 * self.quorumPeers
+        sendqueue = new LinkedBlockingQueue<ToSend>(2 * self.getVotingView().size());
+        recvqueue = new LinkedBlockingQueue<Notification>(2 * self.getVotingView()
                 .size());
-        new Messenger(self.quorumPeers.size() * 2, mySocket);
+        new Messenger(self.getVotingView().size() * 2, mySocket);
     }
 
     private void leaveInstance() {
@@ -766,12 +766,12 @@ public class AuthFastLeaderElection implements Election {
     }
 
     private void sendNotifications() {
-        for (QuorumServer server : self.quorumPeers.values()) {
+        for (QuorumServer server : self.getView().values()) {
 
             ToSend notmsg = new ToSend(ToSend.mType.notification,
                     AuthFastLeaderElection.sequencer++, proposedLeader,
                     proposedZxid, logicalclock, QuorumPeer.ServerState.LOOKING,
-                    self.quorumPeers.get(server.id).electionAddr);
+                    self.getView().get(server.id).electionAddr);
 
             sendqueue.offer(notmsg);
         }
@@ -801,7 +801,7 @@ public class AuthFastLeaderElection implements Election {
                 count++;
         }
 
-        if (count > (self.quorumPeers.size() / 2))
+        if (count > (self.getVotingView().size() / 2))
             return true;
         else
             return false;
@@ -875,7 +875,7 @@ public class AuthFastLeaderElection implements Election {
                         recvset.put(n.addr, new Vote(n.leader, n.zxid));
     
                         // If have received from all nodes, then terminate
-                        if (self.quorumPeers.size() == recvset.size()) {
+                        if (self.getVotingView().size() == recvset.size()) {
                             self.setPeerState((proposedLeader == self.getId()) ? 
                                     ServerState.LEADING: ServerState.FOLLOWING);
                             // if (self.state == ServerState.FOLLOWING) {
