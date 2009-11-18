@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper Quota's Guide</title>
+<title>ZooKeeper Observers</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -155,14 +155,14 @@ document.write("Last Published: " + document.lastModified);
 <div class="menuitem">
 <a href="zookeeperAdmin.html">Administrator's Guide</a>
 </div>
-<div class="menupage">
-<div class="menupagetitle">Quota Guide</div>
+<div class="menuitem">
+<a href="zookeeperQuotas.html">Quota Guide</a>
 </div>
 <div class="menuitem">
 <a href="zookeeperJMX.html">JMX</a>
 </div>
-<div class="menuitem">
-<a href="zookeeperObservers.html">Observers Guide</a>
+<div class="menupage">
+<div class="menupagetitle">Observers Guide</div>
 </div>
 </div>
 <div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Contributor</div>
@@ -199,66 +199,176 @@ document.write("Last Published: " + document.lastModified);
     +-->
 <div id="content">
 <div title="Portable Document Format" class="pdflink">
-<a class="dida" href="zookeeperQuotas.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+<a class="dida" href="zookeeperObservers.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper Quota's Guide</h1>
-<h3>A Guide to Deployment and Administration</h3>
+<h1>ZooKeeper Observers</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#zookeeper_quotas">Quotas</a>
-<ul class="minitoc">
-<li>
-<a href="#Setting+Quotas">Setting Quotas</a>
+<a href="#ch_Introduction">Observers: Scaling ZooKeeper Without Hurting Write Performance
+      </a>
 </li>
 <li>
-<a href="#Listing+Quotas">Listing Quotas</a>
+<a href="#sc_UsingObservers">How to use Observers</a>
 </li>
 <li>
-<a href="#Deleting+Quotas"> Deleting Quotas</a>
-</li>
-</ul>
+<a href="#ch_UseCases">Example use cases</a>
 </li>
 </ul>
 </div>
-	
-	
-	
-	
-<a name="N1000B"></a><a name="zookeeper_quotas"></a>
-<h2 class="h3">Quotas</h2>
+  
+
+  
+
+  
+<a name="N10009"></a><a name="ch_Introduction"></a>
+<h2 class="h3">Observers: Scaling ZooKeeper Without Hurting Write Performance
+      </h2>
 <div class="section">
-<p> ZooKeeper has both namespace and bytes quotas. You can use the ZooKeeperMain class to setup quotas.
-	ZooKeeper prints <em>WARN</em> messages if users exceed the quota assigned to them. The messages 
-	are printed in the log of the ZooKeeper. 
-	</p>
 <p>
-<span class="codefrag computeroutput">$java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar/conf:src/java/lib/jline-0.9.94.jar \
-	 org.apache.zookeeper.ZooKeeperMain -server host:port</span>
+      
+<em>
+	Please note: the Observers feature currently only works with the basic
+	leader election protocol, not fast leader election or authenticated fast
+	leader election. This will be remedied when a bug in the leader election
+	protocol code is fixed in the near future. An exception will be thrown
+	if you try to start a cluster containing Observers without
+	electionAlg=0. See below for more details.
+      </em>
+    
 </p>
-<p> The above command gives you a command line option of using quotas.</p>
-<a name="N1001F"></a><a name="Setting+Quotas"></a>
-<h3 class="h4">Setting Quotas</h3>
-<p>You can use 
-	 <em>setquota</em> to set a quota on a ZooKeeper node. It has an option of setting quota with
-	  -n (for namespace)
-	 and -b (for bytes). </p>
-<p> The ZooKeeper quota are stored in ZooKeeper itself in /zookeeper/quota. To disable other people from
-	changing the quota's set the ACL for /zookeeper/quota such that only admins are able to read and write to it.
-	</p>
-<a name="N1002F"></a><a name="Listing+Quotas"></a>
-<h3 class="h4">Listing Quotas</h3>
-<p> You can use
-	<em>listquota</em> to list a quota on a ZooKeeper node.
-	</p>
-<a name="N1003C"></a><a name="Deleting+Quotas"></a>
-<h3 class="h4"> Deleting Quotas</h3>
-<p> You can use
-	<em>delquota</em> to delete quota on a ZooKeeper node.
-	</p>
+<p>
+      Although ZooKeeper performs very well by having clients connect directly
+      to voting members of the ensemble, this architecture makes it hard to
+      scale out to huge numbers of clients. The problem is that as we add more
+      voting members, the write performance drops. This is due to the fact that
+      a write operation requires the agreement of (in general) at least half the
+      nodes in an ensemble and therefore the cost of a vote can increase
+      significantly as more voters are added.
+    </p>
+<p>
+      We have introduced a new type of ZooKeeper node called
+      an <em>Observer</em> which helps address this problem and
+      further improves ZooKeeper's scalability. Observers are non-voting members
+      of an ensemble which only hear the results of votes, not the agreement
+      protocol that leads up to them. Other than this simple distinction,
+      Observers function exactly the same as Followers - clients may connect to
+      them and send read and write requests to them. Observers forward these
+      requests to the Leader like Followers do, but they then simply wait to
+      hear the result of the vote. Because of this, we can increase the number
+      of Observers as much as we like without harming the performance of votes.
+    </p>
+<p>
+      Observers have other advantages. Because they do not vote, they are not a
+      critical part of the ZooKeeper ensemble. Therefore they can fail, or be
+      disconnected from the cluster, without harming the availability of the
+      ZooKeeper service. The benefit to the user is that Observers may connect
+      over less reliable network links than Followers. In fact, Observers may be
+      used to talk to a ZooKeeper server from another data center. Clients of
+      the Observer will see fast reads, as all reads are served locally, and
+      writes result in minimal network traffic as the number of messages
+      required in the absence of the vote protocol is smaller.
+    </p>
 </div>
+  
+<a name="N10022"></a><a name="sc_UsingObservers"></a>
+<h2 class="h3">How to use Observers</h2>
+<div class="section">
+<p>
+      
+<em>
+	Note that
+	until <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-578">ZOOKEEPER-578</a>
+	is resolved, you must set electionAlg=0 in every server configuration
+	file. Otherwise an exception will be thrown when you try to start your
+	ensemble.
+      </em>
+    
+</p>
+<p>
+      
+<em>
+	The reason: because Observers do not participate in leader elections,
+	they rely on voting Followers to inform them of changes to the
+	Leader. Currently, only the basic leader election algorithm starts a
+	thread that responds to requests from Observers to identify the current
+	Leader. Work is in progress on other JIRAs to bring this functionality
+	to all leader election protocols.
+      </em>
+    
+</p>
+<p>Setting up a ZooKeeper ensemble that uses Observers is very simple,
+    and requires just two changes to your config files. Firstly, in the config
+    file of every node that is to be an Observer, you must place this line:
+    </p>
+<pre class="code">
+      peerType=observer
+    </pre>
+<p>
+      This line tells ZooKeeper that the server is to be an Observer. Secondly,
+      in every server config file, you must add :observer to the server
+      definition line of each Observer. For example:
+    </p>
+<pre class="code">
+      server.1:localhost:2181:3181:observer
+    </pre>
+<p>
+      This tells every other server that server.1 is an Observer, and that they
+      should not expect it to vote. This is all the configuration you need to do
+      to add an Observer to your ZooKeeper cluster. Now you can connect to it as
+      though it were an ordinary Follower. Try it out, by running:</p>
+<pre class="code">
+      bin/zkCli.sh -server localhost:2181
+    </pre>
+<p>
+      where localhost:2181 is the hostname and port number of the Observer as
+      specified in every config file. You should see a command line prompt
+      through which you can issue commands like <em>ls</em> to query
+      the ZooKeeper service.
+    </p>
+</div>
+  
+  
+<a name="N10051"></a><a name="ch_UseCases"></a>
+<h2 class="h3">Example use cases</h2>
+<div class="section">
+<p>
+      Two example use cases for Observers are listed below. In fact, wherever
+      you wish to scale the numbe of clients of your ZooKeeper ensemble, or
+      where you wish to insulate the critical part of an ensemble from the load
+      of dealing with client requests, Observers are a good architectural
+      choice.
+    </p>
+<ul>
+      
+<li>
 	
+<p> As a datacenter bridge: Forming a ZK ensemble between two
+	datacenters is a problematic endeavour as the high variance in latency
+	between the datacenters could lead to false positive failure detection
+	and partitioning. However if the ensemble runs entirely in one
+	datacenter, and the second datacenter runs only Observers, partitions
+	aren't problematic as the ensemble remains connected. Clients of the
+	Observers may still see and issue proposals.</p>
+      
+</li>
+      
+<li>
+	
+<p>As a link to a message bus: Some companies have expressed an
+	interest in using ZK as a component of a persistent reliable message
+	bus. Observers would give a natural integration point for this work: a
+	plug-in mechanism could be used to attach the stream of proposals an
+	Observer sees to a publish-subscribe system, again without loading the
+	core ensemble.
+	</p>
+      
+</li>
+    
+</ul>
+</div>
+
 <p align="right">
 <font size="-2"></font>
 </p>

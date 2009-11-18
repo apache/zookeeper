@@ -50,20 +50,20 @@ public class HierarchicalQuorumTest extends ClientBase {
 
     File s1dir, s2dir, s3dir, s4dir, s5dir;
     QuorumPeer s1, s2, s3, s4, s5;
-    private int port1;
-    private int port2;
-    private int port3;
-    private int port4;
-    private int port5;
+    protected int port1;
+    protected int port2;
+    protected int port3;
+    protected int port4;
+    protected int port5;
 
-    private int leport1;
-    private int leport2;
-    private int leport3;
-    private int leport4;
-    private int leport5;
+    protected int leport1;
+    protected int leport2;
+    protected int leport3;
+    protected int leport4;
+    protected int leport5;
 
     Properties qp;
-    private final ClientHammerTest cht = new ClientHammerTest();
+    protected final ClientHammerTest cht = new ClientHammerTest();
     
     @Override
     protected void setUp() throws Exception {
@@ -118,15 +118,29 @@ public class HierarchicalQuorumTest extends ClientBase {
         LOG.info("Setup finished");
     }
     
-    
+    /**
+     * This method is here to keep backwards compatibility with the test code 
+     * written before observers. 
+     * @throws Exception
+     */
     void startServers() throws Exception {
+        startServers(false);
+    }
+    
+    /**
+     * Starts 5 Learners. When withObservers == false, all 5 are Followers.
+     * When withObservers == true, 3 are Followers and 2 Observers.
+     * @param withObservers
+     * @throws Exception
+     */
+    void startServers(boolean withObservers) throws Exception {
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1, 
                 new InetSocketAddress("127.0.0.1", port1 + 1000),
-                new InetSocketAddress("127.0.0.1", leport1 + 1000)));
+                new InetSocketAddress("127.0.0.1", leport1 + 1000)));        
         peers.put(Long.valueOf(2), new QuorumServer(2, 
                 new InetSocketAddress("127.0.0.1", port2 + 1000),
                 new InetSocketAddress("127.0.0.1", leport2 + 1000)));
@@ -135,10 +149,14 @@ public class HierarchicalQuorumTest extends ClientBase {
                 new InetSocketAddress("127.0.0.1", leport3 + 1000)));
         peers.put(Long.valueOf(4), new QuorumServer(4,
                 new InetSocketAddress("127.0.0.1", port4 + 1000),
-                new InetSocketAddress("127.0.0.1", leport4 + 1000)));
+                new InetSocketAddress("127.0.0.1", leport4 + 1000),
+                withObservers ? QuorumPeer.LearnerType.OBSERVER
+                        : QuorumPeer.LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(5), new QuorumServer(5,
                 new InetSocketAddress("127.0.0.1", port5 + 1000),
-                new InetSocketAddress("127.0.0.1", leport5 + 1000)));
+                new InetSocketAddress("127.0.0.1", leport5 + 1000),
+                withObservers ? QuorumPeer.LearnerType.OBSERVER
+                        : QuorumPeer.LearnerType.PARTICIPANT));
 
         LOG.info("creating QuorumPeer 1 port " + port1);
         QuorumHierarchical hq1 = new QuorumHierarchical(qp); 
@@ -158,21 +176,37 @@ public class HierarchicalQuorumTest extends ClientBase {
         LOG.info("creating QuorumPeer 4 port " + port4);
         QuorumHierarchical hq4 = new QuorumHierarchical(qp); 
         s4 = new QuorumPeer(peers, s4dir, s4dir, port4, 3, 4, tickTime, initLimit, syncLimit, hq4);
+        if (withObservers) {
+            s4.setPeerType(QuorumPeer.LearnerType.OBSERVER);
+        }
         assertEquals(port4, s4.getClientPort());
-        
+                       
         LOG.info("creating QuorumPeer 5 port " + port5);
         QuorumHierarchical hq5 = new QuorumHierarchical(qp); 
         s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 3, 5, tickTime, initLimit, syncLimit, hq5);
+        if (withObservers) {
+            s5.setPeerType(QuorumPeer.LearnerType.OBSERVER);
+        }
         assertEquals(port5, s5.getClientPort());
+        
+        // Observers are currently only compatible with LeaderElection
+        if (withObservers) {
+            s1.setElectionType(0);
+            s2.setElectionType(0);
+            s3.setElectionType(0);
+            s4.setElectionType(0);
+            s5.setElectionType(0);
+        }
+        
         LOG.info("start QuorumPeer 1");
         s1.start();
         LOG.info("start QuorumPeer 2");
         s2.start();
         LOG.info("start QuorumPeer 3");
         s3.start();
-        LOG.info("start QuorumPeer 4");
+        LOG.info("start QuorumPeer 4" + (withObservers ? "(observer)" : ""));
         s4.start();
-        LOG.info("start QuorumPeer 5");
+        LOG.info("start QuorumPeer 5" + (withObservers ? "(observer)" : ""));
         s5.start();
         LOG.info("started QuorumPeer 5");
 
