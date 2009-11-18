@@ -59,7 +59,7 @@ public class QuorumCnxManager {
      */
 
     static final int CAPACITY = 100;
-
+    static final int PACKETMAXSIZE = 1024 * 1024; 
     /*
      * Maximum number of attempts to connect to a peer
      */
@@ -597,11 +597,13 @@ public class QuorumCnxManager {
                     }
                     msgLength.position(0);
                     int length = msgLength.getInt();
-
                     /**
                      * Allocates a new ByteBuffer to receive the message
                      */
                     if (length > 0) {
+                        if (length > PACKETMAXSIZE) {
+                            throw new IOException("Invalid packet of length " + length);
+                        }
                         byte[] msgArray = new byte[length];
                         ByteBuffer message = ByteBuffer.wrap(msgArray);
                         int numbytes = 0;

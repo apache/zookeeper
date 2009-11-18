@@ -22,10 +22,16 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.StringReader;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.regex.Pattern;
 
 import junit.framework.TestCase;
@@ -35,11 +41,13 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.ClientTest;
 import org.junit.Test;
 
 
@@ -227,6 +235,60 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
         assertTrue("complains about host", found);
     }
 
+    /**
+     * verify if bad packets are being handled properly 
+     * at the quorum port
+     * @throws Exception
+     */
+    public void testBadPackets() throws Exception {
+        LOG.info("STARTING " + getName());
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
+        int electionPort1 = PortAssignment.unique();
+        int electionPort2 = PortAssignment.unique();
+        String quorumCfgSection =
+            "server.1=localhost:" + PortAssignment.unique()
+            + ":" + electionPort1
+            + "\nserver.2=localhost:" + PortAssignment.unique()
+            + ":" +  electionPort2;
+        
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+        MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
+        q1.start();
+        q2.start();
+        
+        assertTrue("waiting for server 1 being up",
+                ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP1,
+                        CONNECTION_TIMEOUT));
+        assertTrue("waiting for server 2 being up",
+                    ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP2,
+                            CONNECTION_TIMEOUT));
+            
+        byte[] b = new byte[4];
+        int length = 1024*1024*1024;
+        ByteBuffer buff = ByteBuffer.wrap(b);
+        buff.putInt(length);
+        buff.position(0);
+        SocketChannel s = SocketChannel.open(new InetSocketAddress("localhost", electionPort1));
+        s.write(buff);
+        s.close();
+        buff.position(0);
+        s = SocketChannel.open(new InetSocketAddress("localhost", electionPort2));
+        s.write(buff);
+        s.close();
+        
+        ZooKeeper zk = new ZooKeeper("localhost:" + CLIENT_PORT_QP1,
+                ClientBase.CONNECTION_TIMEOUT, this);
+
+        zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
+        zk.close();
+        q1.shutdown();
+        q2.shutdown();
+    }
+
 
     /**
      * Verify handling of quorum defaults
@@ -242,7 +304,8 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
             Logger.getRootLogger().getAppender("CONSOLE").getLayout();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         WriterAppender appender = new WriterAppender(layout, os);
-        appender.setThreshold(Level.WARN);
+        appender.setImmediateFlush(true);
+        appender.setThreshold(Level.INFO);
         Logger zlogger = Logger.getLogger("org.apache.zookeeper");
         zlogger.addAppender(appender);
 
@@ -281,7 +344,7 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
         } finally {
             zlogger.removeAppender(appender);
         }
-
+        os.close();
         LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
         String line;
         boolean found = false;
