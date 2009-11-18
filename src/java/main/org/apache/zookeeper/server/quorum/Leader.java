@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 
 /**
  * This class has the control logic for the Leader.
@@ -79,6 +80,8 @@ public class Leader {
 
     // list of followers that are ready to follow (i.e synced with the leader)    
     public HashSet<LearnerHandler> forwardingFollowers = new HashSet<LearnerHandler>();
+    
+    protected HashSet<LearnerHandler> observingLearners = new HashSet<LearnerHandler>();
         
     //Pending sync requests
     public HashMap<Long,List<LearnerSyncRequest>> pendingSyncs = new HashMap<Long,List<LearnerSyncRequest>>();
@@ -147,6 +150,11 @@ public class Leader {
     final static int SNAP = 15;
     
     /**
+     * This tells the leader that the connecting peer is actually an observer
+     */
+    final static int OBSERVERINFO = 16;
+    
+    /**
      * This message type is sent by the leader to indicate it's zxid and if
      * needed, its database.
      */
@@ -202,6 +210,11 @@ public class Leader {
      * between the leader and the follower.
      */
     final static int SYNC = 7;
+        
+    /**
+     * This message type informs observers of a committed proposal.
+     */
+    final static int INFORM = 8;
     
     private ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
 
@@ -267,9 +280,10 @@ public class Leader {
             synchronized(this){
                 lastProposed = zk.getZxid();
             }
-                      
+                        
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
-                    null, null);            
+                    null, null);
+
 
             if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
                 LOG.info("NEWLEADER proposal has Zxid of "
@@ -346,8 +360,9 @@ public class Leader {
               if (!tickSkip && !self.getQuorumVerifier().containsQuorum(syncedSet)) {
                 //if (!tickSkip && syncedCount < self.quorumPeers.size() / 2) {
                     // Lost quorum, shutdown
+                  // TODO: message is wrong unless majority quorums used
                     shutdown("Only " + syncedCount + " followers, need "
-                            + (self.quorumPeers.size() / 2));
+                            + (self.getVotingView().size() / 2));
                     // make sure the order is the same!
                     // the leader goes to looking
                     return;
@@ -362,7 +377,7 @@ public class Leader {
     boolean isShutdown;
 
     /**
-     * Close down all the FollowerHandlers
+     * Close down all the LearnerHandlers
      */
     void shutdown(String reason) {
         if (isShutdown) {
@@ -465,6 +480,7 @@ public class Leader {
                     LOG.warn("Going to commmit null: " + p);
                 }
                 commit(zxid);
+                inform(p);
                 zk.commitProcessor.commit(p.request);
                 if(pendingSyncs.containsKey(zxid)){
                     for(LearnerSyncRequest r: pendingSyncs.remove(zxid)) {
@@ -545,6 +561,17 @@ public class Leader {
         }
     }
     
+    /**
+     * send a packet to all observers     
+     */
+    void sendObserverPacket(QuorumPacket qp) {        
+        synchronized(observingLearners) {
+            for (LearnerHandler f : observingLearners) {                
+                f.queuePacket(qp);
+            }
+        }
+    }
+
     long lastCommitted = -1;
 
     /**
@@ -559,6 +586,17 @@ public class Leader {
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
         sendPacket(qp);
     }
+    
+    /**
+     * Create an inform packet and send it to all observers.
+     * @param zxid
+     * @param proposal
+     */
+    public void inform(Proposal proposal) {   
+        QuorumPacket qp = new QuorumPacket(Leader.INFORM, proposal.request.zxid, 
+                                            proposal.packet.getData(), null);
+        sendObserverPacket(qp);
+    }
 
     long lastProposed;
 
@@ -569,7 +607,6 @@ public class Leader {
      * @return the proposal that is queued to send to all the members
      */
     public Proposal propose(Request request) {
-        
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         try {
@@ -662,10 +699,16 @@ public class Leader {
                 handler.queuePacket(outstandingProposals.get(zxid).packet);
             }
         }
-        synchronized (forwardingFollowers) {
-            forwardingFollowers.add(handler);
+        if (handler.getLearnerType() == LearnerType.PARTICIPANT) {
+            synchronized (forwardingFollowers) {
+                forwardingFollowers.add(handler);
+            }
+        } else {
+            synchronized (observingLearners) {
+                observingLearners.add(handler);
+            }
         }
-        
+                
         return lastProposed;
     }
 

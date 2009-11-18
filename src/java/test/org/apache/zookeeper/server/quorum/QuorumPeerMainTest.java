@@ -55,63 +55,8 @@ import org.junit.Test;
  * Test stand-alone server.
  *
  */
-public class QuorumPeerMainTest extends TestCase implements Watcher {
-    protected static final Logger LOG =
-        Logger.getLogger(QuorumPeerMainTest.class);
-
-    public static class MainThread extends Thread {
-        final File confFile;
-        final TestQPMain main;
-
-        public MainThread(int myid, int clientPort, String quorumCfgSection)
-            throws IOException
-        {
-            super("QuorumPeer with myid:" + myid
-                    + " and clientPort:" + clientPort);
-            File tmpDir = ClientBase.createTmpDir();
-            confFile = new File(tmpDir, "zoo.cfg");
-
-            FileWriter fwriter = new FileWriter(confFile);
-            fwriter.write("tickTime=2000\n");
-            fwriter.write("initLimit=10\n");
-            fwriter.write("syncLimit=5\n");
-
-            File dataDir = new File(tmpDir, "data");
-            if (!dataDir.mkdir()) {
-                throw new IOException("Unable to mkdir " + dataDir);
-            }
-            fwriter.write("dataDir=" + dataDir.toString() + "\n");
-
-            fwriter.write("clientPort=" + clientPort + "\n");
-            fwriter.write(quorumCfgSection + "\n");
-            fwriter.flush();
-            fwriter.close();
-
-            File myidFile = new File(dataDir, "myid");
-            fwriter = new FileWriter(myidFile);
-            fwriter.write(Integer.toString(myid));
-            fwriter.flush();
-            fwriter.close();
-
-            main = new TestQPMain();
-        }
-
-        public void run() {
-            String args[] = new String[1];
-            args[0] = confFile.toString();
-            try {
-                main.initializeAndRun(args);
-            } catch (Exception e) {
-                // test will still fail even though we just log/ignore
-                LOG.error("unexpected exception in run", e);
-            }
-        }
-
-        public void shutdown() {
-            main.shutdown();
-        }
-    }
-
+public class QuorumPeerMainTest extends QuorumPeerTestBase {
+   
     public static  class TestQPMain extends QuorumPeerMain {
         public void shutdown() {
             super.shutdown();
@@ -358,8 +303,5 @@ public class QuorumPeerMainTest extends TestCase implements Watcher {
         }
         assertTrue("fastleaderelection used", found);
     }
-
-    public void process(WatchedEvent event) {
-        // ignore for this test
-    }
+   
 }

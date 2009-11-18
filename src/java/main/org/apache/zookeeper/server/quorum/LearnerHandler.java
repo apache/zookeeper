@@ -38,6 +38,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
@@ -101,7 +102,12 @@ public class LearnerHandler extends Thread {
      * If this packet is queued, the sender thread will exit
      */
     final QuorumPacket proposalOfDeath = new QuorumPacket();
-   
+
+    private LearnerType  learnerType = LearnerType.PARTICIPANT;
+    public LearnerType getLearnerType() {
+        return learnerType;
+    }
+
     /**
      * This method will use the thread to send packets added to the
      * queuedPackets list
@@ -217,9 +223,9 @@ public class LearnerHandler extends Thread {
 
             QuorumPacket qp = new QuorumPacket();
             ia.readRecord(qp, "packet");
-            if(qp.getType() != Leader.FOLLOWERINFO) {
+            if(qp.getType() != Leader.FOLLOWERINFO && qp.getType() != Leader.OBSERVERINFO){
             	LOG.error("First packet " + qp.toString()
-                        + " is not FOLLOWERINFO!");
+                        + " is not FOLLOWERINFO or OBSERVERINFO!");
                 return;
             }
             if (qp.getData() != null) {
@@ -231,9 +237,11 @@ public class LearnerHandler extends Thread {
 
             LOG.info("Follower sid: " + this.sid + " : info : "
                     + leader.self.quorumPeers.get(this.sid));
+                        
+            if (qp.getType() == Leader.OBSERVERINFO) {
+                  learnerType = LearnerType.OBSERVER;
+            }            
             
-            /* this is the last zxid from the follower but the leader might have to
-              restart the follower from a different zxid depending on truncate and diff. */
             long peerLastZxid = qp.getZxid();
             /* the default to send to the follower */
             int packetToSend = Leader.SNAP;
@@ -356,6 +364,9 @@ public class LearnerHandler extends Thread {
 
                 switch (qp.getType()) {
                 case Leader.ACK:
+                    if (this.learnerType == LearnerType.OBSERVER) {
+                        LOG.error("Received ACK from Observer  " + this.sid);
+                    }
                     leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
                     break;
                 case Leader.PING:

@@ -152,6 +152,8 @@ NEW FEATURES:
 
   ZOOKEEPER-550.  Java Queue Recipe. (steven cheng via mahadev)
 
+  ZOOKEEPER-368. Observers: core functionality (henry robinson via mahadev)
+
 Release 3.2.0 - 2009-06-30
 
 Non-backward compatible changes:

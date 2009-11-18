@@ -16,33 +16,30 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
-import org.apache.log4j.Logger;
-import org.junit.Before;
-import org.junit.Test;
+package org.apache.zookeeper.server;
 
-public class QuorumHammerTest extends QuorumBase {
-    protected static final Logger LOG = Logger.getLogger(QuorumHammerTest.class);
-    public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
+import org.apache.zookeeper.server.quorum.Observer;
+import org.apache.zookeeper.server.quorum.ObserverMXBean;
 
-    protected final QuorumBase qb = new QuorumBase();
-    protected final ClientHammerTest cht = new ClientHammerTest();
+/**
+ * ObserverBean
+ *
+ */
+public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean{
 
-    @Before
-    @Override
-    protected void setUp() throws Exception {
-        qb.setUp();
-        cht.hostPort = qb.hostPort;
-        cht.setUpAll();
-    }
-
-    protected void tearDown() throws Exception {
-        cht.tearDownAll();
-        qb.tearDown();
-    }
+    private Observer observer;
     
-    @Test
-    public void testHammerBasic() throws Throwable {
-        cht.testHammerBasic();
+    public ObserverBean(Observer observer, ZooKeeperServer zks) {
+        super(zks);        
+        this.observer = observer;
     }
+
+    public int getPendingRevalidationCount() {
+       return this.observer.getPendingRevalidationsCount(); 
+    }
+
+    public String getQuorumAddress() {
+        return observer.getSocket().toString();
+    }
+
 }

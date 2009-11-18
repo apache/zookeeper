@@ -202,6 +202,26 @@ public class AsyncHammerTest extends TestCase
         LOG.info("Verifying hammers 2");
         qb.verifyRootOfAllServersMatch(qb.hostPort);
     }
+    
+    @Test
+    public void testObserversHammer() throws Exception {
+        qb.tearDown();
+        qb.setUp(true);
+        bang = true;
+        Thread[] hammers = new Thread[100];
+        for (int i = 0; i < hammers.length; i++) {
+            hammers[i] = new HammerThread("HammerThread-" + i);
+            hammers[i].start();
+        }
+        Thread.sleep(5000); // allow the clients to run for max 5sec
+        bang = false;
+        for (int i = 0; i < hammers.length; i++) {
+            hammers[i].interrupt();
+            verifyThreadTerminated(hammers[i], 60000);
+        }
+        // before restart
+        qb.verifyRootOfAllServersMatch(qb.hostPort);          
+    }
 
     @SuppressWarnings("unchecked")
     public void processResult(int rc, String path, Object ctx, String name) {

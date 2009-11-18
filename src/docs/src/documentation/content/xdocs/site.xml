@@ -57,6 +57,7 @@ See http://forrest.apache.org/docs/linking.html for more info.
       <admin label="Administrator's Guide"  href="zookeeperAdmin.html" />
       <quota label="Quota Guide"            href="zookeeperQuotas.html" />
       <jmx   label="JMX"                    href="zookeeperJMX.html" />
+      <observers label="Observers Guide" href="zookeeperObservers.html" />
   </docs>
   
   <docs label="Contributor">
