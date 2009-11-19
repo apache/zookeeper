@@ -13,6 +13,11 @@ BUGFIXES:
   ZOOKEEPER-510. zkpython lumps all exceptions as IOError, needs specialized
   exceptions for KeeperException types (henry & pat via mahadev)
 
+  ZOOKEEPER-540. zkpython needs better tracking of handle validity
+  (henry via phunt)
+
+  ZOOKEEPER-541. zkpython limited to 256 handles (henry robinson via phunt)
+
   ZOOKEEPER-562. c client can flood server with pings if tcp send queue
   filled. (ben reed via mahadev)
 
