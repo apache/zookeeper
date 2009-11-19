@@ -203,6 +203,9 @@ void free_pywatcher( pywatcher_t *pw)
 
 PyObject *build_stat( const struct Stat *stat )
 {
+	if (stat == NULL) { 
+		return Py_None;
+	}
   return Py_BuildValue( "{s:K, s:K, s:K, s:K,"
 			"s:i, s:i, s:i, s:K,"
 			"s:i, s:i, s:K}",

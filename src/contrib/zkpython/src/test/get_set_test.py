@@ -44,6 +44,33 @@ class GetSetTest(zktestbase.TestBase):
                           "test",
                           stat["version"]+1)
 
+    def test_stat_deleted_node(self):
+        """
+        Test for a bug that surfaced when trying to build a
+        stat object from a non-existant node.
+
+        """
+        self.ensureDeleted("/zk-python-test-deleteme")
+        self.assertRaises(zookeeper.NoNodeException,
+                          zookeeper.get,
+                          self.handle,
+                          "/zk-python-test-deleteme")
+        self.cv = threading.Condition()
+        def callback(handle, rc, value, stat):
+            self.cv.acquire()
+            self.stat = stat
+            self.rc = rc
+            self.value = value
+            self.callback_flag = True
+            self.cv.notify()
+            self.cv.release()
+        self.cv.acquire()
+        zookeeper.aget(self.handle, "/zk-python-test-deleteme", None, callback)
+        self.cv.wait(15)
+        self.assertEqual(self.callback_flag, True, "aget timed out!")
+        self.assertEqual(self.stat, None, "Stat should be none!")
+        self.assertEqual(self.value, None, "Value should be none!")
+
     def test_async_getset(self):
         self.cv = threading.Condition()
         def get_callback(handle, rc, value, stat):
