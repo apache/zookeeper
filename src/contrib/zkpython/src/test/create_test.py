@@ -18,10 +18,12 @@
 
 import zookeeper, zktestbase, unittest, threading
 
+ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
+
 class CreationTest(zktestbase.TestBase):
     """Test whether we can create znodes"""
     # to do: startup and teardown via scripts?
-    def setUp( self ):
+    def setUp(self):
         zktestbase.TestBase.setUp(self)
         try:
             zookeeper.delete(self.handle, "/zk-python-createtest")
@@ -30,21 +32,59 @@ class CreationTest(zktestbase.TestBase):
             pass
 
     def test_sync_create(self):
-        ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
         self.assertEqual(self.connected, True)
         ret = zookeeper.create(self.handle, "/zk-python-createtest", "nodecontents", [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
         self.assertEqual(ret, "/zk-python-createtest")
-        
+        self.assertRaises(zookeeper.NoChildrenForEphemeralsException,
+                          zookeeper.create,
+                          self.handle,
+                          "/zk-python-createtest/invalid-child",
+                          "",
+                          [ZOO_OPEN_ACL_UNSAFE],
+                          zookeeper.EPHEMERAL)
+
+    def test_sync_create_existing(self):
+        self.assertEqual(self.connected, True)
+        ret = zookeeper.create(self.handle, "/zk-python-createtest-existing", "nodecontents", [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
+        self.assertEqual(ret, "/zk-python-createtest-existing")
+
+        self.assertRaises(zookeeper.NodeExistsException,
+                          zookeeper.create,
+                          self.handle,
+                          "/zk-python-createtest-existing",
+                          "nodecontents",
+                          [ZOO_OPEN_ACL_UNSAFE],
+                          zookeeper.EPHEMERAL)
+
+
+    def test_exception_paths(self):
+        """
+        Make sure common exceptions due to API misuse are correctly propogated
+        """
+        self.assertRaises(zookeeper.BadArgumentsException,
+                          zookeeper.create,
+                          self.handle,
+                          "/zk-python-badargs-test",
+                          "",
+                          [ZOO_OPEN_ACL_UNSAFE],
+                          -1)
+        self.assertRaises(zookeeper.InvalidACLException,
+                          zookeeper.create,
+                          self.handle,
+                          "/zk-python-invalidacl-test",
+                          "",
+                          ZOO_OPEN_ACL_UNSAFE) # Error - not a list
+
+
     def test_async_create(self):
         self.cv = threading.Condition()
         def callback(handle, rc, value):
             self.cv.acquire()
-            self.callback_flag = True   
-            self.rc = rc         
+            self.callback_flag = True
+            self.rc = rc
             self.cv.notify()
             self.cv.release()
 
-        ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
         self.assertEqual(self.connected, True, "Not connected!")
         self.cv.acquire()
 
@@ -59,6 +99,6 @@ class CreationTest(zktestbase.TestBase):
         self.assertEqual(self.callback_flag, True, "acreate timed out")
         self.assertEqual(self.rc, zookeeper.OK)
 
-        
+
 if __name__ == '__main__':
     unittest.main()

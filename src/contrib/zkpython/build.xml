@@ -22,7 +22,7 @@
   <property name="python.src.dir" value="src/python"/>
   <property name="test.build.dir" value="build/test/" />
   <property name="test.src.dir" value="src/test"/>
-  <property name="test.log.dir" value="${test.build.dir}/logs" />
+  <property name="test.log.dir" value="${build.test}/logs" />
   <property name="test.output" value="no" />
   <property name="test.timeout" value="900000" />
 
@@ -62,6 +62,7 @@
     <target name="python-test">
       <exec executable="${test.src.dir}/run_tests.sh" failonerror="true">
         <arg value="${test.src.dir}"/>
+        <arg value="${test.log.dir}"/>
       </exec>
     </target>
 

@@ -24,10 +24,91 @@
 static zhandle_t* zhandles[MAX_ZHANDLES];
 static int num_zhandles = 0;
 
-#define CHECK_ZHANDLE(z) if ( (z) < 0 || (z) >= num_zhandles ) { \
-  PyErr_SetString( PyExc_ValueError, "zhandle out of range" ); \
-  return NULL; \
-  }
+//////////////////////////////////////////////
+// EXCEPTIONS
+PyObject *ZooKeeperException = NULL;
+PyObject *SystemErrorException;
+PyObject *RuntimeInconsistencyException;
+PyObject *DataInconsistencyException;
+PyObject *ConnectionLossException;
+PyObject *MarshallingErrorException;
+PyObject *UnimplementedException;
+PyObject *OperationTimeoutException;
+PyObject *BadArgumentsException;
+PyObject *InvalidStateException;
+
+PyObject *ApiErrorException;
+PyObject *NoNodeException;
+PyObject *NoAuthException;
+PyObject *NodeExistsException;
+PyObject *BadVersionException;
+PyObject *NoChildrenForEphemeralsException;
+PyObject *NotEmptyException;
+PyObject *SessionExpiredException;
+PyObject *SessionMovedException;
+PyObject *InvalidCallbackException;
+PyObject *InvalidACLException;
+PyObject *AuthFailedException;
+PyObject *ClosingException;
+PyObject *NothingException;
+
+PyObject *err_to_exception(int errcode) {
+  switch (errcode) {
+    case ZSYSTEMERROR:
+      return SystemErrorException;
+    case ZRUNTIMEINCONSISTENCY:
+      return RuntimeInconsistencyException;
+    case ZDATAINCONSISTENCY:
+      return DataInconsistencyException;
+    case ZCONNECTIONLOSS:
+      return ConnectionLossException;
+    case ZMARSHALLINGERROR:
+      return MarshallingErrorException;
+    case ZUNIMPLEMENTED:
+      return UnimplementedException;
+    case ZOPERATIONTIMEOUT:
+      return OperationTimeoutException;
+    case ZBADARGUMENTS:
+      return BadArgumentsException;
+    case ZAPIERROR:
+      return ApiErrorException;
+    case ZNONODE:
+      return NoNodeException;
+    case ZNOAUTH:
+      return NoAuthException;
+    case ZBADVERSION:
+      return BadVersionException;
+    case ZNOCHILDRENFOREPHEMERALS:
+      return NoChildrenForEphemeralsException;
+    case ZNODEEXISTS:
+      return NodeExistsException;
+    case ZINVALIDACL:
+      return InvalidACLException;
+    case ZAUTHFAILED:
+      return AuthFailedException;
+    case ZNOTEMPTY:
+      return NotEmptyException;
+    case ZSESSIONEXPIRED:
+      return SessionExpiredException;
+    case ZINVALIDCALLBACK:
+      return InvalidCallbackException;
+    case ZSESSIONMOVED:
+      return SessionMovedException;
+      
+    case ZOK:
+    default:
+      return NULL;
+    }
+}
+
+
+#define CHECK_ZHANDLE(z) if ( (z) < 0 || (z) >= num_zhandles) {			\
+  PyErr_SetString( ZooKeeperException, "zhandle out of range" ); \	
+return NULL;																											\
+} else if ( zhandles[(z)] == NULL ) {															\
+		PyErr_SetString(ZooKeeperException, "zhandle already freed"); \
+		return NULL;																									\
+	}
 
 /////////////////////////////////////////////
 // HELPER FUNCTIONS
@@ -78,6 +159,9 @@ PyObject *build_stat( const struct Stat *stat )
 
 PyObject *build_string_vector(const struct String_vector *sv)
 {
+	if (!sv) {
+		return PyList_New(0);
+	}
   PyObject *ret = PyList_New(sv->count);
   int i;
   for (i=0;i<sv->count;++i) 
@@ -166,14 +250,13 @@ static PyObject *pyzookeeper_init(PyObject *self, PyObject *args)
   const char *passwd;
 
   if (num_zhandles >= MAX_ZHANDLES) {
-    PyErr_SetString( PyExc_ValueError, "Too many ZooKeeper handles created, max is 256" );
+    PyErr_SetString( ZooKeeperException, "Too many ZooKeeper handles created, max is 256" );
     return NULL;
   }
 
   if (!PyArg_ParseTuple(args, "s|Oi(Ls)", &host, &watcherfn, &recv_timeout, &cid.client_id, &passwd)) 
     return NULL;
   
-
   if (cid.client_id != -1) {
     strncpy(cid.passwd, passwd, 16*sizeof(char));
   }
@@ -189,7 +272,7 @@ static PyObject *pyzookeeper_init(PyObject *self, PyObject *args)
 
   if (zh == NULL)
     {
-      PyErr_SetString( PyExc_IOError, "Unknown error" );
+      PyErr_SetString( ZooKeeperException, "Unknown error" );
       return NULL;
     }
 
@@ -317,7 +400,7 @@ PyObject *pyzoo_acreate(PyObject *self, PyObject *args)
   free_acls(&acl);
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);;
@@ -341,7 +424,7 @@ PyObject *pyzoo_adelete(PyObject *self, PyObject *args)
     
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);
@@ -366,7 +449,7 @@ PyObject *pyzoo_aexists(PyObject *self, PyObject *args)
     
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);;
@@ -392,7 +475,7 @@ PyObject *pyzoo_aget(PyObject *self, PyObject *args)
     
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);
@@ -418,7 +501,7 @@ PyObject *pyzoo_aset(PyObject *self, PyObject *args)
     
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);
@@ -443,7 +526,7 @@ PyObject *pyzoo_aget_children(PyObject *self, PyObject *args)
 				create_pywatcher(zkhid, completion_callback,0) : NULL );    
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);;
@@ -465,7 +548,7 @@ PyObject *pyzoo_async(PyObject *self, PyObject *args)
 		       create_pywatcher(zkhid, completion_callback,0) : NULL );    
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);;
@@ -488,7 +571,7 @@ PyObject *pyzoo_aget_acl(PyObject *self, PyObject *args)
     
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);;
@@ -515,7 +598,7 @@ PyObject *pyzoo_aset_acl(PyObject *self, PyObject *args)
   free_acls(&aclv);
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);;
@@ -540,7 +623,7 @@ PyObject *pyzoo_add_auth(PyObject *self, PyObject *args)
 			  completion_callback != Py_None ? create_pywatcher(zkhid, completion_callback,0) : NULL );
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);
@@ -568,7 +651,7 @@ static PyObject *pyzoo_create(PyObject *self, PyObject *args)
   int err = zoo_create(zh, path, values, valuelen, &aclv, flags, realbuf, maxbuf_len);
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
 
@@ -587,12 +670,13 @@ static PyObject *pyzoo_delete(PyObject *self, PyObject *args)
   int err = zoo_delete(zh, path, version);
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err));
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);
 }
 
+// Returns None if the node does not exists
 static PyObject *pyzoo_exists(PyObject *self, PyObject *args)
 {
   int zkhid; char *path; PyObject *watcherfn = Py_None;
@@ -607,7 +691,7 @@ static PyObject *pyzoo_exists(PyObject *self, PyObject *args)
   int err = zoo_wexists(zh,  path, watcherfn != Py_None ? watcher_dispatch : NULL, pw, &stat);
   if (err != ZOK && err != ZNONODE)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err) );
+      PyErr_SetString(err_to_exception(err), zerror(err));
       free_pywatcher( pw );
       return NULL;
     }
@@ -632,13 +716,13 @@ static PyObject *pyzoo_get_children(PyObject *self, PyObject *args)
   pywatcher_t *pw = NULL;
   if (watcherfn != Py_None)
     pw = create_pywatcher( zkhid, watcherfn, 0 );
-  int err = zoo_wget_children( zhandles[zkhid], path, 
+  int err = zoo_wget_children(zhandles[zkhid], path, 
 			       watcherfn != Py_None ? watcher_dispatch : NULL, 
 			       pw, &strings );
 
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err) );
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
 
@@ -666,7 +750,7 @@ static PyObject *pyzoo_set(PyObject *self, PyObject *args)
   int err = zoo_set(zhandles[zkhid], path, buffer, buflen, version);
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err) );
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
 
@@ -687,7 +771,7 @@ static PyObject *pyzoo_set2(PyObject *self, PyObject *args)
   int err = zoo_set2(zhandles[zkhid], path, buffer, buflen, version, stat);
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err) );
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
 
@@ -716,7 +800,7 @@ static PyObject *pyzoo_get(PyObject *self, PyObject *args)
   PyObject *stat_dict = build_stat( &stat );
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err) );
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
 
@@ -735,7 +819,7 @@ PyObject *pyzoo_get_acl(PyObject *self, PyObject *args)
   int err = zoo_get_acl( zhandles[zkhid], path, &acl, &stat );
   if (err != ZOK) 
     { 
-      PyErr_SetString( PyExc_IOError, zerror(err) ); 
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL; 
     }
   PyObject *pystat = build_stat( &stat );
@@ -758,7 +842,7 @@ PyObject *pyzoo_set_acl(PyObject *self, PyObject *args)
   free_acls(&acl);
   if (err != ZOK)
     {
-      PyErr_SetString( PyExc_IOError, zerror(err) );
+      PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
   return Py_BuildValue("i", err);;
@@ -773,6 +857,7 @@ PyObject *pyzoo_close(PyObject *self, PyObject *args)
     return NULL;
   CHECK_ZHANDLE(zkhid);
   int ret = zookeeper_close(zhandles[zkhid]);
+	zhandles[zkhid] = NULL; // The zk C client frees the zhandle
   return Py_BuildValue("i", ret);
 }
 
@@ -959,9 +1044,24 @@ static PyMethodDef ZooKeeperMethods[] = {
 #define ADD_INTCONSTANT(x) PyModule_AddIntConstant(module, #x, ZOO_##x)
 #define ADD_INTCONSTANTZ(x) PyModule_AddIntConstant(module, #x, Z##x)
 
+
+
+#define ADD_EXCEPTION(x) x = PyErr_NewException("zookeeper."#x, ZooKeeperException, NULL); \
+	Py_INCREF(x); \
+  PyModule_AddObject(module, #x, x);
+
+
 PyMODINIT_FUNC initzookeeper() {
   PyEval_InitThreads();
   PyObject *module = Py_InitModule("zookeeper", ZooKeeperMethods );
+
+  ZooKeeperException = PyErr_NewException("zookeeper.ZooKeeperException",
+					  PyExc_Exception,
+					  NULL);
+
+	PyModule_AddObject(module, "ZooKeeperException", ZooKeeperException);
+  Py_INCREF(ZooKeeperException);
+
   ADD_INTCONSTANT(PERM_READ);
   ADD_INTCONSTANT(PERM_WRITE);
   ADD_INTCONSTANT(PERM_CREATE);
@@ -1000,6 +1100,16 @@ PyMODINIT_FUNC initzookeeper() {
   ADD_INTCONSTANTZ(BADARGUMENTS);
   ADD_INTCONSTANTZ(INVALIDSTATE);
 
+  ADD_EXCEPTION(SystemErrorException);
+  ADD_EXCEPTION(RuntimeInconsistencyException);
+  ADD_EXCEPTION(DataInconsistencyException);
+  ADD_EXCEPTION(ConnectionLossException);
+  ADD_EXCEPTION(MarshallingErrorException);
+  ADD_EXCEPTION(UnimplementedException);
+  ADD_EXCEPTION(OperationTimeoutException);
+  ADD_EXCEPTION(BadArgumentsException);
+  ADD_EXCEPTION(InvalidStateException);  
+
   ADD_INTCONSTANTZ(OK);  
   ADD_INTCONSTANTZ(APIERROR);
   ADD_INTCONSTANTZ(NONODE);
@@ -1014,6 +1124,22 @@ PyMODINIT_FUNC initzookeeper() {
   ADD_INTCONSTANTZ(AUTHFAILED);
   ADD_INTCONSTANTZ(CLOSING);
   ADD_INTCONSTANTZ(NOTHING);
+  ADD_INTCONSTANTZ(SESSIONMOVED);
+
+  ADD_EXCEPTION(ApiErrorException);
+  ADD_EXCEPTION(NoNodeException);
+  ADD_EXCEPTION(NoAuthException);
+  ADD_EXCEPTION(BadVersionException);
+  ADD_EXCEPTION(NoChildrenForEphemeralsException);
+  ADD_EXCEPTION(NodeExistsException);
+  ADD_EXCEPTION(NotEmptyException);
+  ADD_EXCEPTION(SessionExpiredException);
+  ADD_EXCEPTION(InvalidCallbackException);
+  ADD_EXCEPTION(InvalidACLException);
+  ADD_EXCEPTION(AuthFailedException);
+  ADD_EXCEPTION(ClosingException);
+  ADD_EXCEPTION(NothingException);
+  ADD_EXCEPTION(SessionMovedException);
 }
 
 int main(int argc, char **argv)
