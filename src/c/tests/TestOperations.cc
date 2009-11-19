@@ -265,6 +265,27 @@ public:
         // only one ping so far?
         CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
         CPPUNIT_ASSERT(timeMock==zh->last_recv);
+
+        // Round 4
+        // make sure that a ping is not sent if something is outstanding
+        AsyncGetOperationCompletion res1;
+        rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        timeMock.tick(tv);  
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        // pseudo-sleep for a short while (10 ms)
+        timeMock.millitick(10);
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
+        // only one ping so far?
+        CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
     }
 
     // simulate a watch arriving right before a ping is due
@@ -332,6 +353,7 @@ public:
         
         // queue up a request; keep it pending (as if the server is busy or has died)
         AsyncGetOperationCompletion res1;
+        zkServer.addOperationResponse(new ZooGetResponse("2",1));
         int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
 
         int fd=0;
@@ -344,7 +366,7 @@ public:
         CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         // no delay -- the socket is writable
         rc=zookeeper_process(zh,interest);
-        CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc); // ZNOTHING -- no response yet
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc); 
         
         // Round 2.
         // what's next?
