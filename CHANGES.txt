@@ -1,3 +1,20 @@
+Release 3.2.2 - 2009-11-24
+
+Backward compatible changes:
+
+BUGFIXES:
+
+  ZOOKEEPER-420. build/test should not require install in zkpython
+  (henry robinson via phunt)
+
+  ZOOKEEPER-562. c client can flood server with pings if tcp send queue
+  filled. (ben reed via mahadev)
+
+  ZOOKEEPER-547. Sanity check in QuorumCnxn Manager and quorum communication port.
+  (mahadev via breed)
+
+
+
 Release 3.2.1 - 2009-08-27
 
 Backward compatible changes:
