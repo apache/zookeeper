@@ -112,16 +112,20 @@ BUGFIXES:
   ZOOKEEPER-567. javadoc for getchildren2 needs to mention "new in 3.3.0"
   (phunt via breed)
 
-  ZOOKEEPER-547. Sanity check in QuorumCnxn Manager and quorum communication port.
-  (mahadev via breed)
+  ZOOKEEPER-547. Sanity check in QuorumCnxn Manager and quorum communication
+  port. (mahadev via breed)
 
-  ZOOKEEPER-532. java compiler should be target Java 1.5 (hiram chirino and phunt via breed)
+  ZOOKEEPER-532. java compiler should be target Java 1.5
+  (hiram chirino and phunt via breed)
 
-  ZOOKEEPER-519. Followerhandler should close the socket if it gets an exception on a write.
-  (mahadev via breed)
+  ZOOKEEPER-519. Followerhandler should close the socket if it gets an exception
+  on a write. (mahadev via breed)
 
-  ZOOKEEPER-3. syncLimit has slightly different comments in the class header, and > inline with the variable.
-  (mahadev via breed)
+  ZOOKEEPER-570. AsyncHammerTest is broken, callbacks need to validate rc
+  parameter (phunt via breed)
+
+  ZOOKEEPER-3. syncLimit has slightly different comments in the class header,
+  and > inline with the variable. (mahadev via breed)
 
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
