@@ -473,6 +473,19 @@
       </para></listitem>
     </orderedlist>
 
+    <para> <emphasis role="bold">Added in 3.2.0 -- SessionMovedException</emphasis>. There is an internal
+      exception that is generally not seen by clients called the SessionMovedException.
+      This exception occurs because a request was received on a connection for a session
+      which has be reestablished on a different server. The normal cause of this error is
+      a client that sends a request to a server, but the network packet gets delayed, so
+      the client times out and connects to a new server. When the delayed packet arrives at
+      the first server, the old server detects that the session has moved and sends back
+      the SESSION_MOVED error. Clients normally do not see this error since they do not read
+      from those old connections. (Old connections are usually closed.) One situation in which this
+      error can be seen is when two clients try to reestablish the same connection using
+      a saved session id and password. One of the clients will reestablish the connection
+      and the second client will get the SessionMovedException.</para>
+
   </section>
 
   <section id="ch_zkWatches">
