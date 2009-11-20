@@ -7,6 +7,8 @@ BUGFIXES:
   ZOOKEEPER-562. c client can flood server with pings if tcp send queue
   filled. (ben reed via mahadev)
 
+  ZOOKEEPER-582. ZooKeeper can revert to old data when a snapshot is created
+  outside of normal processing (ben reed and mahadev via mahadev)
 
 Release 3.1.1 - 2009-03-17
 
