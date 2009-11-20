@@ -140,6 +140,8 @@ public abstract class ClientBase extends TestCase {
 
     public static boolean waitForServerUp(String hp, long timeout) {
         long start = System.currentTimeMillis();
+        // if there are multiple host ports just take the first one
+        hp = hp.split(",")[0];
         String split[] = hp.split(":");
         String host = split[0];
         int port = Integer.parseInt(split[1]);
