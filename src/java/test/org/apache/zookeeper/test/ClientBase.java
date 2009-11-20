@@ -181,7 +181,12 @@ public abstract class ClientBase extends TestCase {
     {
         String split[] = hp.split(":");
         String host = split[0];
-        int port = Integer.parseInt(split[1]);
+        int port;
+        try {
+            port = Integer.parseInt(split[1]);
+        } catch(RuntimeException e) {
+            throw new RuntimeException("Problem parsing " + hp + e.toString());
+        }
 
         Socket sock = new Socket(host, port);
         BufferedReader reader = null;
@@ -211,6 +216,8 @@ public abstract class ClientBase extends TestCase {
         long start = System.currentTimeMillis();
         while (true) {
             try {
+                // if there are multiple hostports, just take the first one
+                hp = hp.split(",")[0];
                 String result = send4LetterWord(hp, "stat");
                 if (result.startsWith("Zookeeper version:")) {
                     return true;

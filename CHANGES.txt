@@ -130,6 +130,9 @@ BUGFIXES:
   ZOOKEEPER-576. docs need to be updated for session moved exception and how
   to handle it (breed via phunt)
 
+  ZOOKEEPER-582. ZooKeeper can revert to old data when a snapshot is created
+  outside of normal processing (ben reed and mahadev via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
