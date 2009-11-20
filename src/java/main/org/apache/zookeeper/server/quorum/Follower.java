@@ -192,7 +192,16 @@ public class Follower {
                 writePacket(qp, true);
                 readPacket(qp);
                 long newLeaderZxid = qp.getZxid();
-    
+                
+                //check to see if the leader zxid is lower than ours
+                //this should never happen but is just a safety check
+                long lastLoggedZxid = sentLastZxid;
+                if ((newLeaderZxid >> 32L) < (lastLoggedZxid >> 32L)) {
+                    LOG.fatal("Leader epoch " + Long.toHexString(newLeaderZxid >> 32L)
+                            + " is less than our zxid " + Long.toHexString(lastLoggedZxid >> 32L));
+                    throw new IOException("Error: Epoch of leader is lower");
+                }
+
                 if (qp.getType() != Leader.NEWLEADER) {
                     LOG.error("First packet should have been NEWLEADER");
                     throw new IOException("First packet should have been NEWLEADER");

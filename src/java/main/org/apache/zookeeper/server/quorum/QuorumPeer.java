@@ -34,6 +34,7 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 
@@ -375,9 +376,35 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 new NIOServerCnxn.Factory(clientPort), quorumConfig);
     }
     
-    public long getLastLoggedZxid(){
-        return logFactory.getLastLoggedZxid();
+    /**
+     * returns the highest zxid that this host has seen
+     * 
+     * @return the highest zxid for this host
+     */
+    public long getLastLoggedZxid() {
+        /*
+         * it is possible to have the last zxid with just a snapshot and no log
+         * related to it. one example is during upgrade wherein the there is no
+         * corresponding log to the snapshot. in that case just use the snapshot
+         * zxid
+         */
+
+        File lastSnapshot = null;
+        long maxZxid = -1L;
+        long maxLogZxid = logFactory.getLastLoggedZxid();
+        try {
+            lastSnapshot = logFactory.findMostRecentSnapshot();
+            if (lastSnapshot != null) {
+                maxZxid = Math.max(Util.getZxidFromName(lastSnapshot.getName(),
+                        "snapshot"), maxLogZxid);
+            }
+        } catch (IOException ie) {
+            LOG.warn("Exception finding last snapshot ", ie);
+            maxZxid = maxLogZxid;
+        }
+        return maxZxid;
     }
+    
     public Follower follower;
     public Leader leader;
 

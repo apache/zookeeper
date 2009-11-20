@@ -28,9 +28,12 @@ BUGFIXES:
   (mahadev via breed)
 
   ZOOKEEPER-585. Update README for zkpython in 3.2.2 (henry robinson via phunt)
-
+  
   ZOOKEEPER-576. docs need to be updated for session moved exception and how
   to handle it (breed via phunt)
+
+  ZOOKEEPER-582. ZooKeeper can revert to old data when a snapshot is created
+  outside of normal processing (ben reed and mahadev via mahadev)
 
 Release 3.2.1 - 2009-08-27
 
