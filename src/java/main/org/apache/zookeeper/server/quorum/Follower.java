@@ -64,6 +64,14 @@ public class Follower extends Learner{
             try {
                 connectToLeader(addr);
                 long newLeaderZxid = registerWithLeader(Leader.FOLLOWERINFO);
+                //check to see if the leader zxid is lower than ours
+                //this should never happen but is just a safety check
+                long lastLoggedZxid = self.getLastLoggedZxid();
+                if ((newLeaderZxid >> 32L) < (lastLoggedZxid >> 32L)) {
+                    LOG.fatal("Leader epoch " + Long.toHexString(newLeaderZxid >> 32L)
+                            + " is less than our epoch " + Long.toHexString(lastLoggedZxid >> 32L));
+                    throw new IOException("Error: Epoch of leader is lower");
+                }
                 syncWithLeader(newLeaderZxid);                
                 QuorumPacket qp = new QuorumPacket();
                 while (self.running) {
