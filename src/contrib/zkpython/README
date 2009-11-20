@@ -1,11 +1,9 @@
-Early version of ZooKeeper bindings for Python. All functions are imported as methods into the zookeeper module.
-
-Please do not rely on APIs staying constant in the short term. The handling of exceptions and failure modes is one area that is subject to change. 
+ZooKeeper bindings for Python. All functions are imported as methods into the zookeeper module.
 
 DEPENDENCIES:
 -------------
 
-This has only been tested against SVN (i.e. 3.2.0 in development) but should work against 3.1.1. 
+zkPython has been tested against ZooKeeper 3.2.x and ZooKeeper 3.3.x (which is currently in development in trunk).
 
 You will need the Python development headers installed to build the module - on many package-management systems, these can be found in python-devel.
 
@@ -55,6 +53,15 @@ EXCEPTIONS AND ERROR HANDLING:
 Currently synchronous calls indicate failure by throwing an exception (note that this includes the synchronous calls to set up asynchronous completion callbacks!). Success is returned as an integer. 
 
 Callbacks signify failure by having the integer response code passed in. 
+
+WHAT'S NEW IN 0.5:
+------------------
+
+Two serious bugs were found and fixed. 
+
+The number of zhandles is no longer limited to 256. Now up to 32768 concurrent connections to ZooKeeper may be used per Python process. Correctly closed connections are re-used. 
+
+zkPython now closely follows the Java ZooKeeper client's exception hierarchy (previously, every exception was thrown as an IOException with a customised message). 
 
 WHAT'S NEW IN 0.4:
 ------------------

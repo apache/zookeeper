@@ -1,4 +1,4 @@
-Release 3.2.2 - 2009-11-24
+Release 3.2.2 - 2009-11-25
 
 Backward compatible changes:
 
@@ -27,6 +27,7 @@ BUGFIXES:
   ZOOKEEPER-547. Sanity check in QuorumCnxn Manager and quorum communication port.
   (mahadev via breed)
 
+  ZOOKEEPER-585. Update README for zkpython in 3.2.2 (henry robinson via phunt)
 
 
 Release 3.2.1 - 2009-08-27
