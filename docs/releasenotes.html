@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.1.1 Release Notes</title>
+<title>ZooKeeper 3.1.2 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -184,11 +184,11 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.1.1 Release Notes</h1>
+<h1>ZooKeeper 3.1.2 Release Notes</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#changes">Changes Since ZooKeeper 3.1.0</a>
+<a href="#changes">Changes Since ZooKeeper 3.1.1</a>
 </li>
 </ul>
 </div>
@@ -216,12 +216,12 @@ later.</p>
 
 
 <a name="N10016"></a><a name="changes"></a>
-<h2 class="h3">Changes Since ZooKeeper 3.1.0</h2>
+<h2 class="h3">Changes Since ZooKeeper 3.1.1</h2>
 <div class="section">
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
-<caption>Changes Since ZooKeeper 3.1.0</caption>
+<caption>Changes Since ZooKeeper 3.1.1</caption>
 
-<title>Changes Since ZooKeeper 3.1.0</title>
+<title>Changes Since ZooKeeper 3.1.1</title>
 
 
 <tr>
@@ -236,91 +236,20 @@ later.</p>
 
 <tr>
   
-<td>Improvement</td>
-  <td></td>
-
-</tr>
-
-<tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-279">ZOOKEEPER-279</a></td><td>         Allow specialization of quorum config parsing (e.g. variable expansion in zoo.cfg)
-</td>
-
-</tr>
-                                
-
-<tr>
-  
 <td>Bug</td>
   <td></td>
 
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-281">ZOOKEEPER-281</a></td><td>         autoreconf fails for /zookeeper-3.0.1/src/c/
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-582">ZOOKEEPER-582</a></td><td>ZooKeeper can revert to old data when a snapshot is created outside of normal processing
 </td>
 
 </tr>
 
-<tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-309">ZOOKEEPER-309</a></td><td>         core dump using zoo_get_acl() 
-</td>
-
-</tr>
 
 <tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-313">ZOOKEEPER-313</a></td><td>         Problem with successive leader failures when no client is connected 
-</td>
-
-</tr>
-
-<tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-319">ZOOKEEPER-319</a></td><td>         add locking around auth info in zhandle_t
-</td>
-
-</tr>
-
-<tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-320">ZOOKEEPER-320</a></td><td>         call auth completion in free_completions()
-</td>
-
-</tr>
-
-<tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-326">ZOOKEEPER-326</a></td><td>         standalone server ignores tickTime configuration
-</td>
-
-</tr>
-
-<tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-330">ZOOKEEPER-330</a></td><td>         zookeeper standalone server does not startup with just a port and datadir.
-</td>
-
-</tr>
-
-<tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-332">ZOOKEEPER-332</a></td><td>         c client issues (memory leaks) reported by valgrind
-</td>
-
-</tr>
-
-<tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-333">ZOOKEEPER-333</a></td><td>         helgrind thread issues identified in mt c client code
-</td>
-
-</tr>
-
-<tr>
-
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-341">ZOOKEEPER-341</a></td><td>         regression in QuorumPeerMain, tickTime from config is lost, cannot start quorum
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-562">ZOOKEEPER-562</a></td><td>c client can flood server with pings if tcp send queue filled 
 </td>
 
 </tr>
