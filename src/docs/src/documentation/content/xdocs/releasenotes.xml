@@ -18,7 +18,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
 "http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
 <article id="ar_ReleaseNotes">
-  <title>ZooKeeper 3.1.1 Release Notes</title>
+  <title>ZooKeeper 3.1.2 Release Notes</title>
 
   <articleinfo>
     <legalnotice>
@@ -51,10 +51,10 @@ from version 2 of ZooKeeper (SourceForge) to version 3 or
 later.</para>
 
 <section id="changes">
-<title>Changes Since ZooKeeper 3.1.0</title>
+<title>Changes Since ZooKeeper 3.1.1</title>
 
 <table>
-<title>Changes Since ZooKeeper 3.1.0</title>
+<title>Changes Since ZooKeeper 3.1.1</title>
 <tgroup cols='2'>
 <colspec colname='c1'/><colspec colname='c2'/>
 <thead>
@@ -67,55 +67,14 @@ later.</para>
 
     
 <row>
-  <entry>Improvement</entry>
-  <entry></entry>
-</row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-279">ZOOKEEPER-279</ulink></entry><entry>         Allow specialization of quorum config parsing (e.g. variable expansion in zoo.cfg)
-</entry>
-</row>
-                                
-<row>
   <entry>Bug</entry>
   <entry></entry>
 </row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-281">ZOOKEEPER-281</ulink></entry><entry>         autoreconf fails for /zookeeper-3.0.1/src/c/
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-582">ZOOKEEPER-582</ulink></entry><entry>ZooKeeper can revert to old data when a snapshot is created outside of normal processing
 </entry>
 </row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-309">ZOOKEEPER-309</ulink></entry><entry>         core dump using zoo_get_acl() 
-</entry>
-</row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-313">ZOOKEEPER-313</ulink></entry><entry>         Problem with successive leader failures when no client is connected 
-</entry>
-</row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-319">ZOOKEEPER-319</ulink></entry><entry>         add locking around auth info in zhandle_t
-</entry>
-</row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-320">ZOOKEEPER-320</ulink></entry><entry>         call auth completion in free_completions()
-</entry>
-</row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-326">ZOOKEEPER-326</ulink></entry><entry>         standalone server ignores tickTime configuration
-</entry>
-</row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-330">ZOOKEEPER-330</ulink></entry><entry>         zookeeper standalone server does not startup with just a port and datadir.
-</entry>
-</row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-332">ZOOKEEPER-332</ulink></entry><entry>         c client issues (memory leaks) reported by valgrind
-</entry>
-</row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-333">ZOOKEEPER-333</ulink></entry><entry>         helgrind thread issues identified in mt c client code
-</entry>
-</row>
-<row>
-<entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-341">ZOOKEEPER-341</ulink></entry><entry>         regression in QuorumPeerMain, tickTime from config is lost, cannot start quorum
+
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-562">ZOOKEEPER-562</ulink></entry><entry>c client can flood server with pings if tcp send queue filled 
 </entry>
 </row>
 
