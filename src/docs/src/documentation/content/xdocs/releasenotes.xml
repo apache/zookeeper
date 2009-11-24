@@ -18,7 +18,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
 "http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
 <article id="ar_ReleaseNotes">
-  <title>ZooKeeper 3.2.1 Release Notes</title>
+  <title>ZooKeeper 3.2.2 Release Notes</title>
 
   <articleinfo>
     <legalnotice>
@@ -54,10 +54,10 @@ from version 2 of ZooKeeper (SourceForge) to version 3 or
 later.</para>
 
 <section id="changes">
-<title>Changes Since ZooKeeper 3.2.0</title>
+<title>Changes Since ZooKeeper 3.2.1</title>
 
 <table>
-<title>Changes Since ZooKeeper 3.2.0</title>
+<title>Changes Since ZooKeeper 3.2.1</title>
 <tgroup cols='2'>
 <colspec colname='c1'/><colspec colname='c2'/>
 <thead>
@@ -72,72 +72,29 @@ later.</para>
   <entry>Bug</entry>
   <entry></entry>
 </row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-238">ZOOKEEPER-238</ulink></entry><entry>HostAuthenicationProvider should be removed
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-582">ZOOKEEPER-582</ulink></entry><entry>ZooKeeper can revert to old data when a snapshot is created outside of normal processing
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-457">ZOOKEEPER-457</ulink></entry><entry>Make ZookeeperMain public, support for HBase (and other) embedded clients
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-562">ZOOKEEPER-562</ulink></entry><entry>c client can flood server with pings if tcp send queue filled
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-460">ZOOKEEPER-460</ulink></entry><entry>bad testRetry in cppunit tests (hudson failure)
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-538">ZOOKEEPER-538</ulink></entry><entry>zookeeper.async causes python to segfault
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-466">ZOOKEEPER-466</ulink></entry><entry>crash on zookeeper_close() when using auth with empty cert
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-547">ZOOKEEPER-547</ulink></entry><entry>Sanity check in QuorumCnxn Manager and quorum communication port.
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-467">ZOOKEEPER-467</ulink></entry><entry>Change log level in BookieHandle
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-420">ZOOKEEPER-420</ulink></entry><entry>build/test should not require install in zkpython
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-468">ZOOKEEPER-468</ulink></entry><entry>avoid compile warning in send_auth_info()
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-576">ZOOKEEPER-576</ulink></entry><entry>docs need to be updated for session moved exception and how to handle it
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-469">ZOOKEEPER-469</ulink></entry><entry>make sure CPPUNIT_CFLAGS isn't overwritten
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-554">ZOOKEEPER-554</ulink></entry><entry>zkpython can segfault when statting a deleted node
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-470">ZOOKEEPER-470</ulink></entry><entry>include unistd.h for sleep() in c tests
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-541">ZOOKEEPER-541</ulink></entry><entry>zkpython limited to 256 handles
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-475">ZOOKEEPER-475</ulink></entry><entry>FLENewEpochTest failed on nightly builds.
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-510">ZOOKEEPER-510</ulink></entry><entry>zkpython lumps all exceptions as IOError, needs specialized exceptions for KeeperException types
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-477">ZOOKEEPER-477</ulink></entry><entry>zkCleanup.sh is flaky
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-540">ZOOKEEPER-540</ulink></entry><entry>zkpython needs better tracking of handle validity
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-479">ZOOKEEPER-479</ulink></entry><entry>QuorumHierarchical does not count groups correctly
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-480">ZOOKEEPER-480</ulink></entry><entry>FLE should perform leader check when node is not leading and add vote of follower
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-481">ZOOKEEPER-481</ulink></entry><entry>Add lastMessageSent to QuorumCnxManager
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-482">ZOOKEEPER-482</ulink></entry><entry>ignore sigpipe in testRetry to avoid silent immediate failure
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-483">ZOOKEEPER-483</ulink></entry><entry>ZK fataled on me, and ugly
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-484">ZOOKEEPER-484</ulink></entry><entry>Clients get SESSION MOVED exception when switching from follower to a leader.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-487">ZOOKEEPER-487</ulink></entry><entry>setdata on root (/) crashes the servers.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-490">ZOOKEEPER-490</ulink></entry><entry>the java docs for session creation are misleading/incomplete
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-493">ZOOKEEPER-493</ulink></entry><entry>patch for command line setquota 
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-498">ZOOKEEPER-498</ulink></entry><entry>Unending Leader Elections : WAN configuration
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-499">ZOOKEEPER-499</ulink></entry><entry>electionAlg should default to FLE (3) - regression
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-501">ZOOKEEPER-501</ulink></entry><entry>CnxManagerTest failed on hudson
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-508">ZOOKEEPER-508</ulink></entry><entry>proposals and commits for DIFF and Truncate messages from the leader to followers is buggy.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-509">ZOOKEEPER-509</ulink></entry><entry>Truncating of logs does not work right at the followers.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-514">ZOOKEEPER-514</ulink></entry><entry>test failure on trunk in testCnxManager - NPE
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-518">ZOOKEEPER-518</ulink></entry><entry>DEBUG message for outstanding proposals in leader should be moved to trace.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-491">ZOOKEEPER-491</ulink></entry><entry>Prevent zero-weight servers from being elected
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-585">ZOOKEEPER-585</ulink></entry><entry>Update README for zkpython in 3.2.2
 </entry></row>
 
-<row>
-  <entry>Improvement</entry>
-  <entry></entry>
-</row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-311">ZOOKEEPER-311</ulink></entry><entry>handle small path lengths in zoo_create()
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-447">ZOOKEEPER-447</ulink></entry><entry>zkServer.sh doesn't allow different config files to be specified on the command line
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-471">ZOOKEEPER-471</ulink></entry><entry>update zkperl for 3.2.x branch
-</entry></row>
-    
 </tbody></tgroup></table>
 
 </section>

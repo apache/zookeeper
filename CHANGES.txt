@@ -1,4 +1,4 @@
-Release 3.2.2 - 2009-11-25
+Release 3.2.2 - 2009-11-27
 
 Backward compatible changes:
 

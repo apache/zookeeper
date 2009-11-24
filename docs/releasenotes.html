@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.2.1 Release Notes</title>
+<title>ZooKeeper 3.2.2 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -199,11 +199,11 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.2.1 Release Notes</h1>
+<h1>ZooKeeper 3.2.2 Release Notes</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#changes">Changes Since ZooKeeper 3.2.0</a>
+<a href="#changes">Changes Since ZooKeeper 3.2.1</a>
 </li>
 </ul>
 </div>
@@ -233,12 +233,12 @@ later.</p>
 
 
 <a name="N1001A"></a><a name="changes"></a>
-<h2 class="h3">Changes Since ZooKeeper 3.2.0</h2>
+<h2 class="h3">Changes Since ZooKeeper 3.2.1</h2>
 <div class="section">
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
-<caption>Changes Since ZooKeeper 3.2.0</caption>
+<caption>Changes Since ZooKeeper 3.2.1</caption>
 
-<title>Changes Since ZooKeeper 3.2.0</title>
+<title>Changes Since ZooKeeper 3.2.1</title>
 
 
 <tr>
@@ -258,163 +258,60 @@ later.</p>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-238">ZOOKEEPER-238</a></td><td>HostAuthenicationProvider should be removed
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-582">ZOOKEEPER-582</a></td><td>ZooKeeper can revert to old data when a snapshot is created outside of normal processing
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-457">ZOOKEEPER-457</a></td><td>Make ZookeeperMain public, support for HBase (and other) embedded clients
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-562">ZOOKEEPER-562</a></td><td>c client can flood server with pings if tcp send queue filled
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-460">ZOOKEEPER-460</a></td><td>bad testRetry in cppunit tests (hudson failure)
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-538">ZOOKEEPER-538</a></td><td>zookeeper.async causes python to segfault
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-466">ZOOKEEPER-466</a></td><td>crash on zookeeper_close() when using auth with empty cert
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-547">ZOOKEEPER-547</a></td><td>Sanity check in QuorumCnxn Manager and quorum communication port.
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-467">ZOOKEEPER-467</a></td><td>Change log level in BookieHandle
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-420">ZOOKEEPER-420</a></td><td>build/test should not require install in zkpython
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-468">ZOOKEEPER-468</a></td><td>avoid compile warning in send_auth_info()
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-576">ZOOKEEPER-576</a></td><td>docs need to be updated for session moved exception and how to handle it
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-469">ZOOKEEPER-469</a></td><td>make sure CPPUNIT_CFLAGS isn't overwritten
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-554">ZOOKEEPER-554</a></td><td>zkpython can segfault when statting a deleted node
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-470">ZOOKEEPER-470</a></td><td>include unistd.h for sleep() in c tests
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-541">ZOOKEEPER-541</a></td><td>zkpython limited to 256 handles
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-475">ZOOKEEPER-475</a></td><td>FLENewEpochTest failed on nightly builds.
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-510">ZOOKEEPER-510</a></td><td>zkpython lumps all exceptions as IOError, needs specialized exceptions for KeeperException types
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-477">ZOOKEEPER-477</a></td><td>zkCleanup.sh is flaky
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-540">ZOOKEEPER-540</a></td><td>zkpython needs better tracking of handle validity
 </td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-479">ZOOKEEPER-479</a></td><td>QuorumHierarchical does not count groups correctly
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-585">ZOOKEEPER-585</a></td><td>Update README for zkpython in 3.2.2
 </td>
 </tr>
 
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-480">ZOOKEEPER-480</a></td><td>FLE should perform leader check when node is not leading and add vote of follower
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-481">ZOOKEEPER-481</a></td><td>Add lastMessageSent to QuorumCnxManager
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-482">ZOOKEEPER-482</a></td><td>ignore sigpipe in testRetry to avoid silent immediate failure
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-483">ZOOKEEPER-483</a></td><td>ZK fataled on me, and ugly
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-484">ZOOKEEPER-484</a></td><td>Clients get SESSION MOVED exception when switching from follower to a leader.
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-487">ZOOKEEPER-487</a></td><td>setdata on root (/) crashes the servers.
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-490">ZOOKEEPER-490</a></td><td>the java docs for session creation are misleading/incomplete
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-493">ZOOKEEPER-493</a></td><td>patch for command line setquota 
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-498">ZOOKEEPER-498</a></td><td>Unending Leader Elections : WAN configuration
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-499">ZOOKEEPER-499</a></td><td>electionAlg should default to FLE (3) - regression
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-501">ZOOKEEPER-501</a></td><td>CnxManagerTest failed on hudson
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-508">ZOOKEEPER-508</a></td><td>proposals and commits for DIFF and Truncate messages from the leader to followers is buggy.
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-509">ZOOKEEPER-509</a></td><td>Truncating of logs does not work right at the followers.
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-514">ZOOKEEPER-514</a></td><td>test failure on trunk in testCnxManager - NPE
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-518">ZOOKEEPER-518</a></td><td>DEBUG message for outstanding proposals in leader should be moved to trace.
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-491">ZOOKEEPER-491</a></td><td>Prevent zero-weight servers from being elected
-</td>
-</tr>
-
-
-<tr>
-  
-<td>Improvement</td>
-  <td></td>
-
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-311">ZOOKEEPER-311</a></td><td>handle small path lengths in zoo_create()
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-447">ZOOKEEPER-447</a></td><td>zkServer.sh doesn't allow different config files to be specified on the command line
-</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-471">ZOOKEEPER-471</a></td><td>update zkperl for 3.2.x branch
-</td>
-</tr>
-    
 
 </table>
 </div>
