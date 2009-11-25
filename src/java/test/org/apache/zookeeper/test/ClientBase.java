@@ -28,6 +28,8 @@ import java.lang.management.OperatingSystemMXBean;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -453,6 +455,20 @@ public abstract class ClientBase extends TestCase {
         return d.delete();
     }
 
+    private static void logAllStackTraces() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("Starting logAllStackTraces()\n");
+        Map<Thread, StackTraceElement[]> threads = Thread.getAllStackTraces();
+        for (Entry<Thread, StackTraceElement[]> e: threads.entrySet()) {
+            sb.append("Thread " + e.getKey().getName() + "\n");
+            for (StackTraceElement elem: e.getValue()) {
+                sb.append("\tat " + elem + "\n");
+            }
+        }
+        sb.append("Ending logAllStackTraces()\n");
+        LOG.error(sb.toString());
+    }
+
     /*
      * Verify that all of the servers see the same number of nodes
      * at the root
@@ -465,15 +481,24 @@ public abstract class ClientBase extends TestCase {
         // run through till the counts no longer change on each server
         // max 15 tries, with 2 second sleeps, so approx 30 seconds
         int[] counts = new int[parts.length];
+        int failed = 0;
         for (int j = 0; j < 100; j++) {
             int newcounts[] = new int[parts.length];
             int i = 0;
             for (String hp : parts) {
-                ZooKeeper zk = createClient(hp);
                 try {
-                    newcounts[i++] = zk.getChildren("/", false).size();
-                } finally {
-                    zk.close();
+                    ZooKeeper zk = createClient(hp);
+                   
+                    try {
+                        newcounts[i++] = zk.getChildren("/", false).size();
+                    } finally {
+                        zk.close();
+                    }
+                } catch (Throwable t) {
+                    failed++;
+                    // if session creation fails dump the thread stack
+                    // and try the next server
+                    logAllStackTraces();
                 }
             }
 
@@ -485,6 +510,11 @@ public abstract class ClientBase extends TestCase {
             } else {
                 counts = newcounts;
                 Thread.sleep(10000);
+            }
+            
+            // don't keep this up too long, will assert false below
+            if (failed > 10) {
+                break;
             }
         }
 
