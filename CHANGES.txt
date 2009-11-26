@@ -157,6 +157,8 @@ IMPROVEMENTS:
   ZOOKEEPER-472.  Making DataNode not instantiate a HashMap when the node is
   ephmeral (Erik Holstad via mahadev)
 
+  ZOOKEEPER-425. Add OSGi metadata to zookeeper.jar (david bosschaert via breed)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
