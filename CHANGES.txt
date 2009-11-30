@@ -136,6 +136,9 @@ BUGFIXES:
   ZOOKEEPER-597. ASyncHammerTest is failing intermittently on hudson trunk
   (Patrick Hunt via mahadev)
 
+  ZOOKEEPER-598. LearnerHandler is misspelt in the thread's constructor 
+  (Henry Robinson via fpj)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
