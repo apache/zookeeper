@@ -71,6 +71,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     private ConnectionBean jmxConnectionBean;
 
+    static {
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            public void uncaughtException(Thread t, Throwable e) {
+                LOG.error("Thread " + t + " died", e);
+            }
+        });
+    }
 
     static public class Factory extends Thread {
         ZooKeeperServer zks;
@@ -937,8 +944,6 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         return "NIOServerCnxn object with sock = " + sock + " and sk = " + sk;
     }
 
-    boolean closed;
-
     /*
      * (non-Javadoc)
      *
@@ -955,12 +960,6 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         }
         jmxConnectionBean = null;
 
-        synchronized(this) {
-            if (closed) {
-                return;
-            }
-            closed = true;
-        }
         synchronized (factory.ipMap)
         {
             Set<NIOServerCnxn> s = factory.ipMap.get(sock.socket().getInetAddress());
@@ -1041,14 +1040,6 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
      */
     synchronized public void sendResponse(ReplyHeader h, Record r, String tag) {
         try {
-            if (closed) {
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("send called on closed session 0x"
-                              + Long.toHexString(sessionId)
-                              + " with record " + r);
-                }
-                return;
-            }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             // Make space for length
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
@@ -1078,7 +1069,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 }
             }
          } catch(Exception e) {
-            LOG.error("Unexpected exception. Destruction averted.", e);
+            LOG.warn("Unexpected exception. Destruction averted.", e);
          }
     }
 
