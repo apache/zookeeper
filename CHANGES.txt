@@ -151,6 +151,8 @@ BUGFIXES:
   ZOOKEEPER-597. ASyncHammerTest is failing intermittently on hudson trunk 
   (take 5) (mahadev)
 
+  ZOOKEEPER-611.  hudson build failiure (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
