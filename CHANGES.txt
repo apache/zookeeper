@@ -1,4 +1,4 @@
-Release 3.2.2 - 2009-11-27
+Release 3.2.2 - 2009-12-11
 
 Backward compatible changes:
 
@@ -36,7 +36,7 @@ BUGFIXES:
   outside of normal processing (ben reed and mahadev via mahadev)
 
   ZOOKEEPER-597. ASyncHammerTest is failing intermittently on hudson trunk. 
-  (pat, ben and mahadev)
+  (phunt, ben and mahadev)
 
   ZOOKEEPER-611. hudson build failiure. (mahadev)
 

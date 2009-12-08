@@ -94,6 +94,10 @@ later.</para>
 </entry></row>
 <row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-585">ZOOKEEPER-585</ulink></entry><entry>Update README for zkpython in 3.2.2
 </entry></row>
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-597">ZOOKEEPER-597</ulink></entry><entry>ASyncHammerTest is failing intermittently on hudson trunk.
+</entry></row>
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-611">ZOOKEEPER-611</ulink></entry><entry>hudson build failiure.
+</entry></row>
 
 </tbody></tgroup></table>
 
