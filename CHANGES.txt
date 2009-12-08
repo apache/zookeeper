@@ -153,6 +153,8 @@ BUGFIXES:
 
   ZOOKEEPER-611.  hudson build failiure (mahadev)
 
+  ZOOKEEPER-611. hudson build failure (take 2) (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
