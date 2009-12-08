@@ -143,6 +143,8 @@ public class CommitProcessor extends Thread implements RequestProcessor {
             }
         } catch (Exception e) {
             LOG.error("Unexpected exception causing exit", e);
+        } catch (Throwable e) {
+            LOG.error("Unexpected exception causing CommitProcessor to exit", e);
         }
         LOG.info("CommitProcessor exited loop!");
     }
