@@ -71,22 +71,25 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     private ConnectionBean jmxConnectionBean;
 
-    static {
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            public void uncaughtException(Thread t, Throwable e) {
-                LOG.error("Thread " + t + " died", e);
-            }
-        });
-        /**
-         * this is to avoid the jvm bug:
-         * NullPointerException in Selector.open()
-         * http://bugs.sun.com/view_bug.do?bug_id=6427854
-         */
-        System.setProperty("sun.nio.ch.bugLevel", 
-                System.getProperty("sun.nio.ch.bugLevel",""));
-    }
-
     static public class Factory extends Thread {
+        static {
+            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                public void uncaughtException(Thread t, Throwable e) {
+                    LOG.error("Thread " + t + " died", e);
+                }
+            });
+            /**
+             * this is to avoid the jvm bug:
+             * NullPointerException in Selector.open()
+             * http://bugs.sun.com/view_bug.do?bug_id=6427854
+             */
+            try {
+                Selector.open().close();
+            } catch(IOException ie) {
+                LOG.error("Selector failed to open", ie);
+            }
+        }
+
         ZooKeeperServer zks;
 
         ServerSocketChannel ss;
