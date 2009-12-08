@@ -35,6 +35,9 @@ BUGFIXES:
   ZOOKEEPER-582. ZooKeeper can revert to old data when a snapshot is created
   outside of normal processing (ben reed and mahadev via mahadev)
 
+  ZOOKEEPER-597. ASyncHammerTest is failing intermittently on hudson trunk. 
+  (pat, ben and mahadev)
+
 Release 3.2.1 - 2009-08-27
 
 Backward compatible changes:

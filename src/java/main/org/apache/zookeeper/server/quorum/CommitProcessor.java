@@ -142,6 +142,8 @@ public class CommitProcessor extends Thread implements RequestProcessor {
             }
         } catch (InterruptedException e) {
             LOG.warn("Interrupted exception while waiting", e);
+        } catch(Throwable t) {
+            LOG.warn("Unexpected exception. Destruction averted.", t);
         }
         LOG.info("CommitProcessor exited loop!");
     }

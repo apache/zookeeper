@@ -332,29 +332,35 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     LinkedList<Request> outstanding = new LinkedList<Request>();
 
     void sendBuffer(ByteBuffer bb) {
-        // We check if write interest here because if it is NOT set, nothing is queued, so
-        // we can try to send the buffer right away without waking up the selector
-        if ((sk.interestOps()&SelectionKey.OP_WRITE) == 0) {
-            try {
-                sock.write(bb);
-            } catch (IOException e) {
-                // we are just doing best effort right now
+        try {
+            // We check if write interest here because if it is NOT set, nothing
+            // is queued, so
+            // we can try to send the buffer right away without waking up the
+            // selector
+            if ((sk.interestOps() & SelectionKey.OP_WRITE) == 0) {
+                try {
+                    sock.write(bb);
+                } catch (IOException e) {
+                    // we are just doing best effort right now
+                }
             }
-        }
-        // if there is nothing left to send, we are done
-        if (bb.remaining() == 0) {
-            return;
-        }
-        synchronized (factory) {
-            sk.selector().wakeup();
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Add a buffer to outgoingBuffers, sk " + sk
-                        + " is valid: " + sk.isValid());
+            // if there is nothing left to send, we are done
+            if (bb.remaining() == 0) {
+                return;
             }
-            outgoingBuffers.add(bb);
-            if (sk.isValid()) {
-                sk.interestOps(sk.interestOps() | SelectionKey.OP_WRITE);
+            synchronized (factory) {
+                sk.selector().wakeup();
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Add a buffer to outgoingBuffers, sk " + sk
+                            + " is valid: " + sk.isValid());
+                }
+                outgoingBuffers.add(bb);
+                if (sk.isValid()) {
+                    sk.interestOps(sk.interestOps() | SelectionKey.OP_WRITE);
+                }
             }
+        } catch (Exception e) {
+            LOG.warn("Unexpected Exception: ", e);
         }
     }
 
@@ -884,36 +890,40 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
      *      org.apache.jute.Record, java.lang.String)
      */
     synchronized public void sendResponse(ReplyHeader h, Record r, String tag) {
-        if (closed) {
-            return;
-        }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        // Make space for length
-        BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
         try {
-            baos.write(fourBytes);
-            bos.writeRecord(h, "header");
-            if (r != null) {
-                bos.writeRecord(r, tag);
+            if (closed) {
+                return;
             }
-            baos.close();
-        } catch (IOException e) {
-            LOG.error("Error serializing response");
-        }
-        byte b[] = baos.toByteArray();
-        ByteBuffer bb = ByteBuffer.wrap(b);
-        bb.putInt(b.length - 4).rewind();
-        sendBuffer(bb);
-        if (h.getXid() > 0) {
-            synchronized (this.factory) {
-                outstandingRequests--;
-                // check throttling
-                if (zk.getInProcess() < factory.outstandingLimit
-                        || outstandingRequests < 1) {
-                    sk.selector().wakeup();
-                    enableRecv();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            // Make space for length
+            BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
+            try {
+                baos.write(fourBytes);
+                bos.writeRecord(h, "header");
+                if (r != null) {
+                    bos.writeRecord(r, tag);
+                }
+                baos.close();
+            } catch (IOException e) {
+                LOG.error("Error serializing response");
+            }
+            byte b[] = baos.toByteArray();
+            ByteBuffer bb = ByteBuffer.wrap(b);
+            bb.putInt(b.length - 4).rewind();
+            sendBuffer(bb);
+            if (h.getXid() > 0) {
+                synchronized (this.factory) {
+                    outstandingRequests--;
+                    // check throttling
+                    if (zk.getInProcess() < factory.outstandingLimit
+                            || outstandingRequests < 1) {
+                        sk.selector().wakeup();
+                        enableRecv();
+                    }
                 }
             }
+        } catch (Exception e) {
+            LOG.warn("Unexpected exception. Destruction averted.", e);
         }
     }
 
