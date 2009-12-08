@@ -13,6 +13,8 @@ BUGFIXES:
   ZOOKEEPER-597. ZOOKEEPER-597. ASyncHammerTest is failing intermittently on
   hudson trunk. (pat, ben and mahadev)
 
+  ZOOKEEPER-611. hudson build failiure (mahadev)
+
 Release 3.1.1 - 2009-03-17
 
 Backward compatibile changes:
