@@ -166,6 +166,9 @@ BUGFIXES:
   ZOOKEEPER-587.  client should log timeout negotiated with server (phunt via
   mahadev)
 
+  ZOOKEEPER-614. Improper synchronisation in getClientCnxnCount (henry via
+  mahadev) 
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)

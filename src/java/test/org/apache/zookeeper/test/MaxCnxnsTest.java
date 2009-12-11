@@ -23,17 +23,78 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.proto.ConnectRequest;
 
 public class MaxCnxnsTest extends ClientBase {
-
-    final private int numCnxns = 5;
+    final private int numCnxns = 30;
+    AtomicInteger numConnected = new AtomicInteger(0); 
+    String host;
+    int port;
     
     protected void setUp() throws Exception {
         maxCnxns = numCnxns;
         super.setUp();
+    }
+    
+    class CnxnThread extends Thread {
+        int i;
+        SocketChannel socket;
+        public CnxnThread(int i) {
+            super("CnxnThread-"+i);
+            this.i = i;
+        }
+        
+        public void run() {
+            try {
+                /*
+                 * For future unwary socket programmers: although connect 'blocks' it 
+                 * does not require an accept on the server side to return. Therefore
+                 * you can not assume that all the sockets are connected at the end of
+                 * this for loop.
+                 */                
+                SocketChannel sChannel = SocketChannel.open();
+                sChannel.connect(new InetSocketAddress(host,port));                          
+                // Construct a connection request
+                ConnectRequest conReq = new ConnectRequest(0, 0,
+                        10000, 0, "password".getBytes());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+                boa.writeInt(-1, "len");
+                conReq.serialize(boa, "connect");
+                baos.close();
+                ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+                bb.putInt(bb.capacity() - 4);                
+                bb.rewind();
+                
+                /* Send a connect request. Any socket that has been closed (or at least
+                 * not added to the cnxn list on the server) will not have any bytes to
+                 * read and get an eof.
+                 * 
+                 *  The trick here was finding a call that caused the server to put
+                 *  bytes in the input stream without closing the cnxn. None of
+                 *  the four letter commands do that, so we actually try to create
+                 *  a session which should send us something back, while maintaining
+                 *  the connection.
+                 */
+                
+                int eof = sChannel.write(bb);
+                // If the socket times out, we count that as failed - 
+                // the server should respond within 10s
+                sChannel.socket().setSoTimeout(10000);                
+                if (!sChannel.socket().isClosed()){
+                    eof = sChannel.socket().getInputStream().read(); 
+                    if (eof != -1) {
+                        numConnected.incrementAndGet();
+                    }
+                }                   
+            }
+            catch (IOException io) {
+                // "Connection reset by peer"
+            }
+        }
     }
     
     /**
@@ -41,63 +102,24 @@ public class MaxCnxnsTest extends ClientBase {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void testMaxCnxns() throws IOException, InterruptedException{
-        SocketChannel[] sockets = new SocketChannel[numCnxns+5];
+    public void testMaxCnxns() throws IOException, InterruptedException{        
         String split[] = hostPort.split(":");
-        String host = split[0];
-        int port = Integer.parseInt(split[1]);
-        int numConnected = 0;
+        host = split[0];
+        port = Integer.parseInt(split[1]);
+        int numThreads = numCnxns + 5;
+        CnxnThread[] threads = new CnxnThread[numThreads];
 
-        /*
-         * For future unwary socket programmers: although connect 'blocks' it 
-         * does not require an accept on the server side to return. Therefore
-         * you can not assume that all the sockets are connected at the end of
-         * this for loop.
-         */
-        for (int i=0;i<sockets.length;++i) {            
-          SocketChannel sChannel = SocketChannel.open();
-          sChannel.connect(new InetSocketAddress(host,port));          
-          sockets[i] = sChannel;
+        for (int i=0;i<numCnxns;++i) {            
+          threads[i] = new CnxnThread(i);
         }
-        // Construct a connection request
-        ConnectRequest conReq = new ConnectRequest(0, 0,
-                10000, 0, "password".getBytes());
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        boa.writeInt(-1, "len");
-        conReq.serialize(boa, "connect");
-        baos.close();
-        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-        bb.putInt(bb.capacity() - 4);
         
-        /* Send a connect request. Any socket that has been closed (or at least
-         * not added to the cnxn list on the server) will not have any bytes to
-         * read and get an eof.
-         * 
-         *  The trick here was finding a call that caused the server to put
-         *  bytes in the input stream without closing the cnxn. None of
-         *  the four letter commands do that, so we actually try to create
-         *  a session which should send us something back, while maintaining
-         *  the connection.
-         */
-        for (int i=0;i<sockets.length;++i) {
-            try {
-                bb.rewind();
-                int eof = sockets[i].write(bb);
-                // If the socket times out, we count that as failed - 
-                // the server should respond within 10s
-                sockets[i].socket().setSoTimeout(10000);                
-                if (!sockets[i].socket().isClosed()){
-                    eof = sockets[i].socket().getInputStream().read(); 
-                    if (eof != -1) {
-                        numConnected++;
-                    }
-                }
-            }            
-            catch (IOException io) {
-                // "Connection reset by peer"
-            }
+        for (int i=0;i<numCnxns;++i) {
+            threads[i].start();
         }
-        assertSame(numCnxns,numConnected);
+                        
+        for (int i=0;i<numCnxns;++i) {
+            threads[i].join();
+        }
+        assertSame(numCnxns,numConnected.get());
     }
 }
