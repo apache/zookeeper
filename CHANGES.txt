@@ -7,6 +7,9 @@ BUGFIXES:
 Backward compatible changes:
 
 BUGFIXES: 
+  ZOOKEEPER-610. cleanup final fields, esp those used for locking
+  (phunt via henry)
+
   ZOOKEEPER-469. make sure CPPUNIT_CFLAGS isn't overwritten
   (chris via mahadev)
 

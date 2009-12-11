@@ -70,19 +70,19 @@ public class QuorumCnxManager {
     /*
      * Local IP address
      */
-    QuorumPeer self;
+    final QuorumPeer self;
 
     /*
      * Mapping from Peer to Thread number
      */
-    ConcurrentHashMap<Long, SendWorker> senderWorkerMap;
-    ConcurrentHashMap<Long, ArrayBlockingQueue<ByteBuffer>> queueSendMap;
-    ConcurrentHashMap<Long, ByteBuffer> lastMessageSent;
+    final ConcurrentHashMap<Long, SendWorker> senderWorkerMap;
+    final ConcurrentHashMap<Long, ArrayBlockingQueue<ByteBuffer>> queueSendMap;
+    final ConcurrentHashMap<Long, ByteBuffer> lastMessageSent;
 
     /*
      * Reception queue
      */
-    public ArrayBlockingQueue<Message> recvQueue;
+    public final ArrayBlockingQueue<Message> recvQueue;
 
     /*
      * Shutdown flag
@@ -93,7 +93,7 @@ public class QuorumCnxManager {
     /*
      * Listener thread
      */
-    public Listener listener;
+    public final Listener listener;
 
     static public class Message {
         Message(ByteBuffer buffer, long sid) {

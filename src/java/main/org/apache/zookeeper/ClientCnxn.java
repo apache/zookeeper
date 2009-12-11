@@ -98,7 +98,8 @@ public class ClientCnxn {
         packetLen = Integer.getInteger("jute.maxbuffer", 4096 * 1024);
     }
 
-    private ArrayList<InetSocketAddress> serverAddrs = new ArrayList<InetSocketAddress>();
+    private final ArrayList<InetSocketAddress> serverAddrs =
+        new ArrayList<InetSocketAddress>();
 
     static class AuthData {
         AuthData(String scheme, byte data[]) {
@@ -111,17 +112,17 @@ public class ClientCnxn {
         byte data[];
     }
 
-    private ArrayList<AuthData> authInfo = new ArrayList<AuthData>();
+    private final ArrayList<AuthData> authInfo = new ArrayList<AuthData>();
 
     /**
      * These are the packets that have been sent and are waiting for a response.
      */
-    private LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
+    private final LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
 
     /**
      * These are the packets that need to be sent.
      */
-    private LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
+    private final LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
 
     private int nextAddrToTry = 0;
 
@@ -599,7 +600,7 @@ public class ClientCnxn {
     class SendThread extends Thread {
         SelectionKey sockKey;
 
-        ByteBuffer lenBuffer = ByteBuffer.allocateDirect(4);
+        final ByteBuffer lenBuffer = ByteBuffer.allocateDirect(4);
 
         ByteBuffer incomingBuffer = lenBuffer;
 

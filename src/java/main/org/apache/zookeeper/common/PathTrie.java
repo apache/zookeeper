@@ -48,11 +48,11 @@ public class PathTrie {
     /**
      * the root node of PathTrie
      */
-    private TrieNode rootNode ;
+    private final TrieNode rootNode ;
     
     static class TrieNode {
         boolean property = false;
-        HashMap<String, TrieNode> children;
+        final HashMap<String, TrieNode> children;
         TrieNode parent = null;
         /**
          * create a trienode with parent
