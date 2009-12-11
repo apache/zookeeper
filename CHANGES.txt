@@ -157,7 +157,11 @@ BUGFIXES:
 
   ZOOKEEPER-615. wrong javadoc for create with a sequence flag (mahadev via breed)
 
-  ZOOKEEPER-588. remove unnecessary/annoying log of tostring error in Request.toString() (phunt via breed)
+  ZOOKEEPER-588. remove unnecessary/annoying log of tostring error in 
+  Request.toString() (phunt via breed)
+
+  ZOOKEEPER-587.  client should log timeout negotiated with server (phunt via
+  mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to

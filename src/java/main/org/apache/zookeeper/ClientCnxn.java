@@ -637,8 +637,12 @@ public class ClientCnxn {
             sessionId = conRsp.getSessionId();
             sessionPasswd = conRsp.getPasswd();
             zooKeeper.state = States.CONNECTED;
-            LOG.info("Session establishment complete, sessionid = 0x"
-                    + Long.toHexString(sessionId));
+            LOG.info("Session establishment complete on server "
+                    + ((SocketChannel)sockKey.channel())
+                        .socket().getRemoteSocketAddress()
+                    + ", sessionid = 0x"
+                    + Long.toHexString(sessionId)
+                    + ", negotiated timeout = " + sessionTimeout);
             eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
                     Watcher.Event.KeeperState.SyncConnected, null));
         }
