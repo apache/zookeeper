@@ -555,7 +555,8 @@ public class ZooKeeper {
      * <p>
      * The flags argument can also specify to create a sequential node. The
      * actual path name of a sequential node will be the given path plus a
-     * suffix "_i" where i is the current sequential number of the node. Once
+     * suffix "i" where i is the current sequential number of the node. The sequence
+     * number is always fixed length of 10 digits, 0 padded. Once
      * such a node is created, the sequential number will be incremented by one.
      * <p>
      * If a node with the same actual path already exists in the ZooKeeper, a

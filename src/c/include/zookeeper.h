@@ -580,7 +580,8 @@ ZOOAPI int zoo_state(zhandle_t *zh);
  * it does not already exists. The Create Flags affect the creation of nodes.
  * If ZOO_EPHEMERAL flag is set, the node will automatically get removed if the
  * client session goes away. If the ZOO_SEQUENCE flag is set, a unique
- * monotonically increasing sequence number is appended to the path name.
+ * monotonically increasing sequence number is appended to the path name. The
+ * sequence number is always fixed length of 10 digits, 0 padded.
  * 
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path The name of the node. Expressed as a file name with slashes 
