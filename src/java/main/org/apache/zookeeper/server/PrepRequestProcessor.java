@@ -147,7 +147,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             }
         }
         if (lastChange == null || lastChange.stat == null) {
-            throw new KeeperException.NoNodeException();
+            throw new KeeperException.NoNodeException(path);
         }
         return lastChange;
     }
@@ -218,10 +218,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
                     LOG.info("Invalid path " + path + " with session " +
                             Long.toHexString(request.sessionId));
-                    throw new KeeperException.BadArgumentsException();
+                    throw new KeeperException.BadArgumentsException(path);
                 }
                 if (!fixupACL(request.authInfo, createRequest.getAcl())) {
-                    throw new KeeperException.InvalidACLException();
+                    throw new KeeperException.InvalidACLException(path);
                 }
                 String parentPath = path.substring(0, lastSlash);
                 ChangeRecord parentRecord = getRecordForPath(parentPath);
@@ -239,18 +239,18 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 } catch(IllegalArgumentException ie) {
                     LOG.info("Invalid path " + path + " with session " +
                             Long.toHexString(request.sessionId));
-                    throw new KeeperException.BadArgumentsException();
+                    throw new KeeperException.BadArgumentsException(path);
                 }
                 try {
                     if (getRecordForPath(path) != null) {
-                        throw new KeeperException.NodeExistsException();
+                        throw new KeeperException.NodeExistsException(path);
                     }
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
                 boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
                 if (ephemeralParent) {
-                    throw new KeeperException.NoChildrenForEphemeralsException();
+                    throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
                 txn = new CreateTxn(path, createRequest.getData(),
                         createRequest.getAcl(),
@@ -279,7 +279,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 lastSlash = path.lastIndexOf('/');
                 if (lastSlash == -1 || path.indexOf('\0') != -1
                         || zks.dataTree.isSpecialPath(path)) {
-                    throw new KeeperException.BadArgumentsException();
+                    throw new KeeperException.BadArgumentsException(path);
                 }
                 parentPath = path.substring(0, lastSlash);
                 parentRecord = getRecordForPath(parentPath);
@@ -288,10 +288,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         request.authInfo);
                 int version = deleteRequest.getVersion();
                 if (version != -1 && nodeRecord.stat.getVersion() != version) {
-                    throw new KeeperException.BadVersionException();
+                    throw new KeeperException.BadVersionException(path);
                 }
                 if (nodeRecord.childCount > 0) {
-                    throw new KeeperException.NotEmptyException();
+                    throw new KeeperException.NotEmptyException(path);
                 }
                 txn = new DeleteTxn(path);
                 parentRecord = parentRecord.duplicate(txnHeader.getZxid());
@@ -316,7 +316,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 version = setDataRequest.getVersion();
                 int currentVersion = nodeRecord.stat.getVersion();
                 if (version != -1 && version != currentVersion) {
-                    throw new KeeperException.BadVersionException();
+                    throw new KeeperException.BadVersionException(path);
                 }
                 version = currentVersion + 1;
                 txn = new SetDataTxn(path, setDataRequest.getData(), version);
@@ -331,17 +331,17 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 SetACLRequest setAclRequest = new SetACLRequest();
                 ZooKeeperServer.byteBuffer2Record(request.request,
                         setAclRequest);
-                if (!fixupACL(request.authInfo, setAclRequest.getAcl())) {
-                    throw new KeeperException.InvalidACLException();
-                }
                 path = setAclRequest.getPath();
+                if (!fixupACL(request.authInfo, setAclRequest.getAcl())) {
+                    throw new KeeperException.InvalidACLException(path);
+                }
                 nodeRecord = getRecordForPath(path);
                 checkACL(zks, nodeRecord.acl, ZooDefs.Perms.ADMIN,
                         request.authInfo);
                 version = setAclRequest.getVersion();
                 currentVersion = nodeRecord.stat.getAversion();
                 if (version != -1 && version != currentVersion) {
-                    throw new KeeperException.BadVersionException();
+                    throw new KeeperException.BadVersionException(path);
                 }
                 version = currentVersion + 1;
                 txn = new SetACLTxn(path, setAclRequest.getAcl(), version);
@@ -393,7 +393,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             case OpCode.getChildren2:
             case OpCode.ping:
             case OpCode.setWatches:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                zks.sessionTracker.checkSession(request.sessionId,
+                        request.getOwner());
                 break;
             }
         } catch (KeeperException e) {
@@ -402,7 +403,9 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 txn = new ErrorTxn(e.code().intValue());
             }
             LOG.info("Got user-level KeeperException when processing "
-                    + request.toString() + " Error:" + e.getMessage());
+                    + request.toString()
+                    + " Error Path:" + e.getPath()
+                    + " Error:" + e.getMessage());
             request.setException(e);
         } catch (Exception e) {
             // log at error level as we are returning a marshalling
