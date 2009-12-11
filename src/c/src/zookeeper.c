@@ -1502,10 +1502,12 @@ static int check_events(zhandle_t *zh, int events)
                     zh->recv_timeout = zh->primer_storage.timeOut;
                     zh->client_id.client_id = newid;
                  
-                    memcpy(zh->client_id.passwd, &zh->primer_storage.passwd, sizeof(zh->client_id.passwd));
+                    memcpy(zh->client_id.passwd, &zh->primer_storage.passwd,
+                           sizeof(zh->client_id.passwd));
                     zh->state = ZOO_CONNECTED_STATE;
-                    LOG_INFO(("connected to server [%s] with sessionId=%#llx",
-                            format_endpoint_info(&zh->addrs[zh->connect_index]),newid));
+                    LOG_INFO(("session establishment complete on server [%s], sessionId=%#llx, negotiated timeout=%d",
+                              format_endpoint_info(&zh->addrs[zh->connect_index]),
+                              newid, zh->recv_timeout));
                     /* we want the auth to be sent for, but since both call push to front
                        we need to call send_watch_set first */
                     send_set_watches(zh);
