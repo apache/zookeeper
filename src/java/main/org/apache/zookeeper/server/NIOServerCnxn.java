@@ -1141,6 +1141,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             } else {
                 LOG.info("Established session 0x"
                         + Long.toHexString(sessionId)
+                        + " with negotiated timeout " + sessionTimeout
                         + " for client "
                         + sock.socket().getRemoteSocketAddress());
             }
