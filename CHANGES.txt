@@ -155,6 +155,10 @@ BUGFIXES:
 
   ZOOKEEPER-611. hudson build failure (take 2) (mahadev)
 
+  ZOOKEEPER-615. wrong javadoc for create with a sequence flag (mahadev via breed)
+
+  ZOOKEEPER-588. remove unnecessary/annoying log of tostring error in Request.toString() (phunt via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
@@ -177,8 +181,6 @@ IMPROVEMENTS:
   ephmeral (Erik Holstad via mahadev)
 
   ZOOKEEPER-425. Add OSGi metadata to zookeeper.jar (david bosschaert via breed)
-
-  ZOOKEEPER-615. wrong javadoc for create with a sequence flag (mahadev via breed)
 
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)

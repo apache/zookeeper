@@ -484,6 +484,9 @@ public abstract class KeeperException extends Exception {
         public BadArgumentsException() {
             super(Code.BADARGUMENTS);
         }
+        public BadArgumentsException(String path) {
+            super(Code.BADARGUMENTS, path);
+        }
     }
 
     /**
@@ -492,6 +495,9 @@ public abstract class KeeperException extends Exception {
     public static class BadVersionException extends KeeperException {
         public BadVersionException() {
             super(Code.BADVERSION);
+        }
+        public BadVersionException(String path) {
+            super(Code.BADVERSION, path);
         }
     }
 
@@ -519,6 +525,9 @@ public abstract class KeeperException extends Exception {
     public static class InvalidACLException extends KeeperException {
         public InvalidACLException() {
             super(Code.INVALIDACL);
+        }
+        public InvalidACLException(String path) {
+            super(Code.INVALIDACL, path);
         }
     }
 
@@ -556,6 +565,9 @@ public abstract class KeeperException extends Exception {
         public NoChildrenForEphemeralsException() {
             super(Code.NOCHILDRENFOREPHEMERALS);
         }
+        public NoChildrenForEphemeralsException(String path) {
+            super(Code.NOCHILDRENFOREPHEMERALS, path);
+        }
     }
 
     /**
@@ -564,6 +576,9 @@ public abstract class KeeperException extends Exception {
     public static class NodeExistsException extends KeeperException {
         public NodeExistsException() {
             super(Code.NODEEXISTS);
+        }
+        public NodeExistsException(String path) {
+            super(Code.NODEEXISTS, path);
         }
     }
 
@@ -574,6 +589,9 @@ public abstract class KeeperException extends Exception {
         public NoNodeException() {
             super(Code.NONODE);
         }
+        public NoNodeException(String path) {
+            super(Code.NONODE, path);
+        }
     }
 
     /**
@@ -582,6 +600,9 @@ public abstract class KeeperException extends Exception {
     public static class NotEmptyException extends KeeperException {
         public NotEmptyException() {
             super(Code.NOTEMPTY);
+        }
+        public NotEmptyException(String path) {
+            super(Code.NOTEMPTY, path);
         }
     }
 
