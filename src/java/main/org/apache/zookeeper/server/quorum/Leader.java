@@ -68,26 +68,30 @@ public class Leader {
         }
     }
 
-    LeaderZooKeeperServer zk;
+    final LeaderZooKeeperServer zk;
 
-    QuorumPeer self;
+    final QuorumPeer self;
 
     // the follower acceptor thread
     LearnerCnxAcceptor cnxAcceptor;
     
     // list of all the followers
-    public HashSet<LearnerHandler> learners = new HashSet<LearnerHandler>();
+    public final HashSet<LearnerHandler> learners =
+        new HashSet<LearnerHandler>();
 
     // list of followers that are ready to follow (i.e synced with the leader)    
-    public HashSet<LearnerHandler> forwardingFollowers = new HashSet<LearnerHandler>();
+    public final HashSet<LearnerHandler> forwardingFollowers =
+        new HashSet<LearnerHandler>();
     
-    protected HashSet<LearnerHandler> observingLearners = new HashSet<LearnerHandler>();
+    protected final HashSet<LearnerHandler> observingLearners =
+        new HashSet<LearnerHandler>();
         
     //Pending sync requests
-    public HashMap<Long,List<LearnerSyncRequest>> pendingSyncs = new HashMap<Long,List<LearnerSyncRequest>>();
+    public final HashMap<Long,List<LearnerSyncRequest>> pendingSyncs =
+        new HashMap<Long,List<LearnerSyncRequest>>();
     
     //Follower counter
-    AtomicLong followerCounter = new AtomicLong(-1);
+    final AtomicLong followerCounter = new AtomicLong(-1);
     /**
      * Adds peer to the leader.
      * 

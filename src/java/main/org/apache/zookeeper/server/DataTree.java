@@ -250,10 +250,11 @@ public class DataTree {
     public long approximateDataSize() {
         long result = 0;
         for (Map.Entry<String, DataNode> entry : nodes.entrySet()) {
-            synchronized (entry.getValue()) {
+            DataNode value = entry.getValue();
+            synchronized (value) {
                 result += entry.getKey().length();
-                result += (entry.getValue().data == null ? 0
-                        : entry.getValue().data.length);
+                result += (value.data == null ? 0
+                        : value.data.length);
             }
         }
         return result;

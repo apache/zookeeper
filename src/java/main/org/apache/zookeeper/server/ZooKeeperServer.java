@@ -99,7 +99,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public static final int commitLogCount = 500;
     public int commitLogBuffer = 700;
-    public LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
+    public final LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
     public long minCommittedLog, maxCommittedLog;
     private DataTreeBuilder treeBuilder;
     public DataTree dataTree;
@@ -107,7 +107,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private FileTxnSnapLog txnLogFactory = null;
     protected ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
     protected long hzxid = 0;
-    final public static Exception ok = new Exception("No prob");
+    public final static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
     protected volatile boolean running;
 
@@ -118,9 +118,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     static final private long superSecret = 0XB3415C00L;
 
     int requestsInProcess;
-    List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
+    final List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
     // this data structure must be accessed under the outstandingChanges lock
-    HashMap<String, ChangeRecord> outstandingChangesForPath = new HashMap<String, ChangeRecord>();
+    final HashMap<String, ChangeRecord> outstandingChangesForPath =
+        new HashMap<String, ChangeRecord>();
     
     private NIOServerCnxn.Factory serverCnxnFactory;
 
