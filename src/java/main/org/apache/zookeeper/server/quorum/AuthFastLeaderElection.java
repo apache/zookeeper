@@ -189,15 +189,15 @@ public class AuthFastLeaderElection implements Election {
 
     private class Messenger {
 
-        DatagramSocket mySocket;
+        final DatagramSocket mySocket;
         long lastProposedLeader;
         long lastProposedZxid;
         long lastEpoch;
-        LinkedBlockingQueue<Long> acksqueue;
-        HashMap<Long, Long> challengeMap;
-        HashMap<Long, Semaphore> challengeMutex;
-        HashMap<Long, Semaphore> ackMutex;
-        HashMap<InetSocketAddress, HashMap<Long, Long>> addrChallengeMap;
+        final LinkedBlockingQueue<Long> acksqueue;
+        final HashMap<Long, Long> challengeMap;
+        final HashMap<Long, Semaphore> challengeMutex;
+        final HashMap<Long, Semaphore> ackMutex;
+        final HashMap<InetSocketAddress, HashMap<Long, Long>> addrChallengeMap;
 
         class WorkerReceiver implements Runnable {
 

@@ -92,19 +92,20 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
         ZooKeeperServer zks;
 
-        ServerSocketChannel ss;
+        final ServerSocketChannel ss;
 
-        Selector selector = Selector.open();
+        final Selector selector = Selector.open();
 
         /**
          * We use this buffer to do efficient socket I/O. Since there is a single
          * sender thread per NIOServerCnxn instance, we can use a member variable to
          * only allocate it once.
         */
-        ByteBuffer directBuffer = ByteBuffer.allocateDirect(64 * 1024);
+        final ByteBuffer directBuffer = ByteBuffer.allocateDirect(64 * 1024);
 
-        HashSet<NIOServerCnxn> cnxns = new HashSet<NIOServerCnxn>();
-        HashMap<InetAddress, Set<NIOServerCnxn>> ipMap = new HashMap<InetAddress, Set<NIOServerCnxn>>( );
+        final HashSet<NIOServerCnxn> cnxns = new HashSet<NIOServerCnxn>();
+        final HashMap<InetAddress, Set<NIOServerCnxn>> ipMap =
+            new HashMap<InetAddress, Set<NIOServerCnxn>>( );
 
         int outstandingLimit = 1;
 
@@ -332,7 +333,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
      */
     static final ByteBuffer closeConn = ByteBuffer.allocate(0);
 
-    Factory factory;
+    final Factory factory;
 
     private final ZooKeeperServer zk;
 
