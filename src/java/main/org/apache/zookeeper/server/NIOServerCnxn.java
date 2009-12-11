@@ -201,10 +201,15 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             return new NIOServerCnxn(zks, sock, sk, this);
         }
 
-        private int getClientCnxnCount( InetAddress cl) {
-            Set<NIOServerCnxn> s = ipMap.get(cl);
-            if (s == null) return 0;
-            return s.size();
+        private int getClientCnxnCount(InetAddress cl) {
+            // The ipMap lock covers both the map, and its contents
+            // (that is, the cnxn sets shouldn't be modified outside of
+            // this lock)
+            synchronized (ipMap) {
+                Set<NIOServerCnxn> s = ipMap.get(cl);
+                if (s == null) return 0;
+                return s.size();
+            }
         }
 
         public void run() {
