@@ -199,10 +199,7 @@ public class QuorumPeerConfig {
                 System.setProperty("zookeeper." + key, value);
             }
         }
-        if (observers.size() > 0 && electionAlg != 0) {
-            throw new IllegalArgumentException("Observers must currently be used with simple leader election" +
-            		" (set electionAlg=0)");
-        }
+       
         if (dataDir == null) {
             throw new IllegalArgumentException("dataDir is not set");
         }

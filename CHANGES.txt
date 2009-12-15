@@ -192,6 +192,10 @@ IMPROVEMENTS:
 
   ZOOKEEPER-425. Add OSGi metadata to zookeeper.jar (david bosschaert via breed)
 
+  ZOOKEEPER-599. Changes to FLE and QuorumCnxManager to support Observers (fpj via breed)
+
+  ZOOKEEPER-506. QuorumBase should use default leader election (fpj via breed)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
