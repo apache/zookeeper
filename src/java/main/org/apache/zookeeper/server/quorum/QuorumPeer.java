@@ -117,7 +117,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         LOOKING, FOLLOWING, LEADING, OBSERVING;
     }
     
-    /**
+    /*
      * A peer can either be participating, which implies that it is willing to
      * both vote in instances of consensus and to elect or become a Leader, or
      * it may be observing in which case it isn't.
@@ -129,6 +129,17 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         PARTICIPANT, OBSERVER;
     }
     
+    /*
+     * To enable observers to have no identifier, we need a generic identifier
+     * at least for QuorumCnxManager. We use the following constant to as the
+     * value of such a generic identifier. 
+     */
+    
+    static final long OBSERVER_ID = Long.MAX_VALUE;
+    
+    /*
+     * Default value of peer is participant
+     */
     private LearnerType peerType = LearnerType.PARTICIPANT;
     
     public LearnerType getPeerType() {
@@ -352,9 +363,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     @Override
     public synchronized void start() {
         cnxnFactory.start();        
-        if (getPeerType() == LearnerType.PARTICIPANT) {
-            startLeaderElection();
-        }
+        startLeaderElection();
         super.start();
     }
 
@@ -513,10 +522,9 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     protected Election makeLEStrategy(){
         LOG.debug("Initializing leader election protocol...");
 
-        // LeaderElection is the only implementation that correctly
-        // transitions between LOOKING and OBSERVER
-        if(electionAlg==null)
+        if(electionAlg==null){
             return new LeaderElection(this);
+        }
         return electionAlg;
     }
 

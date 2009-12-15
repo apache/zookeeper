@@ -26,6 +26,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.Enumeration;
+import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +67,12 @@ public class QuorumCnxManager {
      */
 
     static final int MAX_CONNECTION_ATTEMPTS = 2;
+    
+    /*
+     * Negative counter for observer server ids.
+     */
+    
+    private long observerCounter = -1;
     
     /*
      * Local IP address
@@ -185,6 +192,8 @@ public class QuorumCnxManager {
         return false;
     }
 
+    
+    
     /**
      * If this server receives a connection request, then it gives up on the new
      * connection if it wins. Notice that it checks whether it has a connection
@@ -196,7 +205,6 @@ public class QuorumCnxManager {
         Long sid = null;
         
         try {
-            // Sending challenge and sid
             byte[] msgBytes = new byte[8];
             ByteBuffer msgBuffer = ByteBuffer.wrap(msgBytes);
                 
@@ -205,8 +213,17 @@ public class QuorumCnxManager {
                 
             // Read server id
             sid = Long.valueOf(msgBuffer.getLong());
+            if(sid == QuorumPeer.OBSERVER_ID){
+                /*
+                 * Choose identifier at random. We need a value to identify
+                 * the connection.
+                 */
+                
+                sid = observerCounter--;
+                LOG.info("Setting arbitrary identifier to observer: " + sid);
+            }
         } catch (IOException e) {
-            LOG.info("Exception reading or writing challenge: "
+            LOG.warn("Exception reading or writing challenge: "
                     + e.toString());
             return false;
         }

@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -63,18 +64,27 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
     @Test
     public void testObserver() throws Exception {
         ClientBase.setupTestEnv();
-        final int CLIENT_PORT_QP1 = 3181;
-        final int CLIENT_PORT_QP2 = CLIENT_PORT_QP1 + 3;
-        final int CLIENT_PORT_OBS = CLIENT_PORT_QP2 + 3;
+        
+        final int PORT_QP1 = PortAssignment.unique();
+        final int PORT_QP2 = PortAssignment.unique();
+        final int PORT_OBS = PortAssignment.unique();
+        final int PORT_QP_LE1 = PortAssignment.unique();
+        final int PORT_QP_LE2 = PortAssignment.unique();
+        final int PORT_OBS_LE = PortAssignment.unique();
 
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
+        final int CLIENT_PORT_OBS = PortAssignment.unique();
+
+        
         String quorumCfgSection =
-            "electionAlg=0\n" + 
-            "server.1=localhost:" + (CLIENT_PORT_QP1 + 1)
-            + ":" + (CLIENT_PORT_QP1 + 2)
-            + "\nserver.2=localhost:" + (CLIENT_PORT_QP2 + 1)
-            + ":" + (CLIENT_PORT_QP2 + 2)
+            "electionAlg=3\n" + 
+            "server.1=localhost:" + (PORT_QP1)
+            + ":" + (PORT_QP_LE1)
+            + "\nserver.2=localhost:" + (PORT_QP2)
+            + ":" + (PORT_QP_LE2)
             + "\nserver.3=localhost:" 
-            + (CLIENT_PORT_OBS+1)+ ":" + (CLIENT_PORT_OBS + 2) + ":observer";
+            + (PORT_OBS)+ ":" + (PORT_OBS_LE) + ":observer";
         String obsCfgSection =  quorumCfgSection + "\npeerType=observer";
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
@@ -175,11 +185,12 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
     @Test
     public void testSingleObserver() throws IOException{
         ClientBase.setupTestEnv();
-        final int CLIENT_PORT_QP1 = 3181;        
-
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();        
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
+        
         String quorumCfgSection =
-            "server.1=localhost:" + (CLIENT_PORT_QP1 + 1)
-            + ":" + (CLIENT_PORT_QP1 + 2) + "\npeerType=observer";
+            "server.1=localhost:" + (CLIENT_PORT_QP1)
+            + ":" + (CLIENT_PORT_QP2) + "\npeerType=observer";
                     
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();
@@ -190,53 +201,4 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         q1.shutdown();
     }    
     
-    /**
-     * Check that an attempt to instantiate an ensemble with observers and
-     * electionAlg != 0 fails (this will be removed when the restriction is). 
-     * @throws Exception
-     */
-    @Test
-    public void testLeaderElectionFail() throws Exception {        
-        ClientBase.setupTestEnv();
-        final int CLIENT_PORT_QP1 = 3181;
-        final int CLIENT_PORT_QP2 = CLIENT_PORT_QP1 + 3;
-        final int CLIENT_PORT_OBS = CLIENT_PORT_QP2 + 3;
-
-        String quorumCfgSection =
-            "electionAlg=1\n" + 
-            "server.1=localhost:" + (CLIENT_PORT_QP1 + 1)
-            + ":" + (CLIENT_PORT_QP1 + 2)
-            + "\nserver.2=localhost:" + (CLIENT_PORT_QP2 + 1)
-            + ":" + (CLIENT_PORT_QP2 + 2)
-            + "\nserver.3=localhost:" 
-            + (CLIENT_PORT_OBS+1)+ ":" + (CLIENT_PORT_OBS + 2) + ":observer";
-        QuorumPeerConfig qpc = new QuorumPeerConfig();
-        
-        File tmpDir = ClientBase.createTmpDir();
-        File confFile = new File(tmpDir, "zoo.cfg");
-
-        FileWriter fwriter = new FileWriter(confFile);
-        fwriter.write("tickTime=2000\n");
-        fwriter.write("initLimit=10\n");
-        fwriter.write("syncLimit=5\n");
-
-        File dataDir = new File(tmpDir, "data");
-        if (!dataDir.mkdir()) {
-            throw new IOException("Unable to mkdir " + dataDir);
-        }
-        fwriter.write("dataDir=" + dataDir.toString() + "\n");
-
-        fwriter.write("clientPort=" + CLIENT_PORT_QP1 + "\n");
-        fwriter.write(quorumCfgSection + "\n");
-        fwriter.flush();
-        fwriter.close();
-        try {
-            qpc.parse(confFile.toString());
-        } catch (ConfigException e) {
-            LOG.info("Config exception caught as expected: " + e.getCause());
-            return;
-        }
-        
-        assertTrue("Didn't get the expected config exception", false);        
-    } 
 }
