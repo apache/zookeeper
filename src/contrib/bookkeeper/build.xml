@@ -37,8 +37,10 @@
               value="${build.dir}/zookeeper-${version}-${name}.jar"/>
   </target>
 
+  <target name="init" depends="checkMainCompiled, zookeeperbuildcontrib.init"/>
+
   <!-- Override jar target to specify main class -->
-  <target name="jar" depends="checkMainCompiled, setjarname, compile">
+  <target name="jar" depends="setjarname, compile">
     <echo message="contrib: ${name}"/>
 
     <jar jarfile="${jarname}">
@@ -56,9 +58,11 @@
     </jar>
   </target>
 
-	<target name="test" depends="compile-test,test-init,test-category,junit.run" />
+  <target name="compile" depends="ivy-retrieve,zookeeperbuildcontrib.compile"/>
 
-	<target name="compile-test" depends="compile">
+  <target name="test" depends="compile-test,test-init,test-category,junit.run" />
+
+	<target name="compile-test" depends="ivy-retrieve-test,compile">
   		<property name="target.jdk" value="${ant.java.version}" />	
 		<property name="src.test.local" location="${basedir}/test" />
 		<mkdir dir="${build.test}"/>

@@ -179,6 +179,9 @@ BUGFIXES:
   ZOOKEEPER-627. zkpython arbitrarily restricts the size of a 'get' to 512
   bytes (henry robinson via mahadev)
 
+  ZOOKEEPER-534. The test target in contib/bookkeeper does not depend on jar
+  target. (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
