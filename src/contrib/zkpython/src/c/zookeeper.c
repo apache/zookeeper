@@ -848,33 +848,49 @@ static PyObject *pyzoo_set2(PyObject *self, PyObject *args)
   return build_stat(stat);
 }
 
+// As per ZK documentation, datanodes are limited
+// to 1Mb. Why not do a stat followed by a get, to 
+// determine how big the buffer should be? Because the znode
+// may get updated between calls, so we can't guarantee a 
+// complete get anyhow. 
+#define GET_BUFFER_SIZE 1024*1024
+
+// pyzoo_get has an extra parameter over the java/C equivalents.
+// If you set the fourth integer parameter buffer_len, we return 
+// min(buffer_len, datalength) bytes. This is set by default to 
+// GET_BUFFER_SIZE
 static PyObject *pyzoo_get(PyObject *self, PyObject *args)
 {
   int zkhid;
   char *path;
-  char buffer[512];
-  memset(buffer,0,sizeof(char)*512);
-  int buffer_len=512;
+  char *buffer; 
+  int buffer_len=GET_BUFFER_SIZE;
   struct Stat stat;
   PyObject *watcherfn = Py_None;
   pywatcher_t *pw = NULL;
-  if (!PyArg_ParseTuple(args, "is|O", &zkhid, &path, &watcherfn))
+  if (!PyArg_ParseTuple(args, "is|Oi", &zkhid, &path, &watcherfn, &buffer_len))
     return NULL;
   CHECK_ZHANDLE(zkhid);
-  if (watcherfn != Py_None)
-    pw = create_pywatcher( zkhid, watcherfn,0 );
+  if (watcherfn != Py_None) 
+		{
+			pw = create_pywatcher( zkhid, watcherfn,0 );
+		}
+	buffer = malloc(sizeof(char)*buffer_len);
   int err = zoo_wget(zhandles[zkhid], path, 
 		     watcherfn != Py_None ? watcher_dispatch : NULL, 
 		     pw, buffer, 
 		     &buffer_len, &stat);
+	
   PyObject *stat_dict = build_stat( &stat );
+
   if (err != ZOK)
-    {
+		{
       PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
-
-  return Py_BuildValue( "(s#,N)", buffer,buffer_len, stat_dict );
+	PyObject *ret = Py_BuildValue( "(s#,N)", buffer,buffer_len, stat_dict );
+	free(buffer);
+  return ret;
 }
 
 PyObject *pyzoo_get_acl(PyObject *self, PyObject *args)

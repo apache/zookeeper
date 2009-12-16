@@ -71,6 +71,25 @@ class GetSetTest(zktestbase.TestBase):
         self.assertEqual(self.stat, None, "Stat should be none!")
         self.assertEqual(self.value, None, "Value should be none!")
 
+    def test_sync_get_large_datanode(self):
+        """
+        Test that we can retrieve datanode sizes up to
+        1Mb with default parameters (depends on ZooKeeper server).
+        """
+
+        data = ''.join(["A" for x in xrange(1024*1023)])
+        self.ensureDeleted("/zk-python-test-large-datanode")
+        zookeeper.create(self.handle, "/zk-python-test-large-datanode", data,
+                         [{"perms":0x1f, "scheme":"world", "id" :"anyone"}])
+        (ret,stat) = zookeeper.get(self.handle, "/zk-python-test-large-datanode")
+        self.assertEqual(len(ret), 1024*1023,
+                         "Should have got 1Mb returned, instead got %s" % len(ret))
+        (ret,stat) = zookeeper.get(self.handle, "/zk-python-test-large-datanode",None,500)
+        self.assertEqual(len(ret), 500,
+                         "Should have got 500 bytes returned, instead got %s" % len(ret))
+
+
+
     def test_async_getset(self):
         self.cv = threading.Condition()
         def get_callback(handle, rc, value, stat):
