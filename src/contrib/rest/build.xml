@@ -41,10 +41,12 @@
               value="${build.dir}/zookeeper-${version}-${name}.jar"/>
   </target>
 
+  <target name="compile" depends="ivy-retrieve,zookeeperbuildcontrib.compile"/>
+
   <target name="test"
           depends="compile-test,test-init,test-category,test-start,junit.run,test-stop" />
 
-	<target name="compile-test" depends="compile">
+	<target name="compile-test" depends="ivy-retrieve-test,compile">
   		<property name="target.jdk" value="${ant.java.version}" />	
 		<property name="src.test.local" location="${basedir}/src/test" />
 		<mkdir dir="${build.test}"/>
