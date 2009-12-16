@@ -48,8 +48,7 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
     protected static final Logger LOG =
         Logger.getLogger(ObserverTest.class);    
       
-    // We expect two notifications before we want to continue
-    CountDownLatch latch = new CountDownLatch(2);
+    CountDownLatch latch;
     ZooKeeper zk;
     WatchedEvent lastEvent = null;
           
@@ -64,6 +63,8 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
     @Test
     public void testObserver() throws Exception {
         ClientBase.setupTestEnv();
+        // We expect two notifications before we want to continue        
+        latch = new CountDownLatch(2);
         
         final int PORT_QP1 = PortAssignment.unique();
         final int PORT_QP2 = PortAssignment.unique();
@@ -126,7 +127,8 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         
         // Now the resulting ensemble shouldn't be quorate         
         latch.await();        
-        assertNotSame("zk should not be connected", KeeperState.SyncConnected,lastEvent.getState());
+        assertNotSame("Client is still connected to non-quorate cluster", 
+                KeeperState.SyncConnected,lastEvent.getState());
 
         try {
             assertFalse("Shouldn't get a response when cluster not quorate!",
@@ -137,10 +139,11 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         }
         
         latch = new CountDownLatch(1);
-        
+
         // Bring it back
         q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
         q2.start();
+        LOG.info("Waiting for server 2 to come up");
         assertTrue("waiting for server 2 being up",
                 ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP2,
                         CONNECTION_TIMEOUT));
@@ -148,7 +151,8 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         latch.await();
         // It's possible our session expired - but this is ok, shows we 
         // were able to talk to the ensemble
-        assertTrue("Didn't reconnect", 
+        assertTrue("Client didn't reconnect to quorate ensemble (state was" +
+                lastEvent.getState() + ")",
                 (KeeperState.SyncConnected==lastEvent.getState() ||
                 KeeperState.Expired==lastEvent.getState())); 
                        
@@ -173,8 +177,9 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
      * Implementation of watcher interface.
      */
     public void process(WatchedEvent event) {
-        latch.countDown();
         lastEvent = event;
+        latch.countDown();
+        LOG.info("Latch got event :: " + event);        
     }    
     
     /**
