@@ -176,6 +176,9 @@ BUGFIXES:
   ZOOKEEPER-630. Trunk has duplicate ObserverTest.java files
   (henry robinson via phunt)
 
+  ZOOKEEPER-627. zkpython arbitrarily restricts the size of a 'get' to 512
+  bytes (henry robinson via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
