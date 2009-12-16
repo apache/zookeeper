@@ -19,15 +19,18 @@
 
 <!-- Imported by contrib/*/build.xml files to share generic targets. -->
 
-<project name="zookeeperbuildcontrib">
+<project name="zookeeperbuildcontrib" xmlns:ivy="antlib:org.apache.ivy.ant">
 
   <property name="name" value="${ant.project.name}"/>
+  <property name="version" value="dev"/>
   <property name="root" value="${basedir}"/>
 
   <property name="zk.root" location="${root}/../../../"/>
 
   <property name="src.dir"  location="${root}/src/java"/>
   <property name="src.test" location="${root}/src/test"/>
+
+  <property name="lib.dir"  location="${zk.root}/src/java/lib"/>
 
   <property name="build.dir" location="${zk.root}/build/contrib/${name}"/>
   <property name="build.classes" location="${build.dir}/classes"/>
@@ -37,6 +40,13 @@
   <property name="javac.debug" value="on"/>
 
   <property name="build.encoding" value="ISO-8859-1"/>
+
+  <property name="ivy.version" value="2.1.0-rc2"/>
+  <property name="ivy.url"
+            value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
+  <property name="ivy.home" value="${user.home}/.ant" />
+  <property name="ivy.lib" value="${build.dir}/lib"/>
+  <property name="ivy.test.lib" value="${build.test}/lib"/>
 
   <!-- to be overridden by sub-projects -->
   <target name="check-contrib"/>
@@ -48,14 +58,17 @@
     <pathelement location="${build.classes}"/>
     <fileset refid="lib.jars"/>
     <pathelement location="${zk.root}/build/classes"/>
-    <fileset dir="${zk.root}/build/lib">
+    <fileset dir="${ivy.lib}">
       <include name="**/*.jar" />
     </fileset>
-    <fileset dir="${zk.root}/build/test/lib">
+    <fileset dir="${ivy.test.lib}">
       <include name="**/*.jar" />
     </fileset>
     <fileset dir="${zk.root}/src/java/lib">
       <include name="**/*.jar" />
+    </fileset>
+    <fileset dir="${ant.home}/lib">
+      <include name="ant.jar" />
     </fileset>
   </path>
 
@@ -67,13 +80,21 @@
     <mkdir dir="${build.dir}"/>
     <mkdir dir="${build.classes}"/>
     <mkdir dir="${build.test}"/>
+
+    <mkdir dir="${ivy.lib}"/>
+    <mkdir dir="${ivy.test.lib}"/>
+    <condition property="ivy.jar.exists">
+      <available file="${lib.dir}/ivy-${ivy.version}.jar"/>
+    </condition>
+
     <antcall target="init-contrib"/>
   </target>
 
   <!-- ====================================================== -->
   <!-- Compile a contrib's files                              -->
   <!-- ====================================================== -->
-  <target name="compile" depends="init" unless="skip.contrib">
+  <target name="compile" depends="init"
+          unless="skip.contrib">
     <echo message="contrib: ${name}"/>
 
     <javac
@@ -140,5 +161,34 @@
   <target name="checkMainCompiled" unless="mainIsCompiled" depends="checkMainIsAvailable">
     <fail message="ZooKeeper main must first be compiled (toplevel build.xml)"/>
   </target>
+
+
+  <!-- ====================================================== -->
+  <!-- Ivy                                                    -->
+  <!-- ====================================================== -->
+  <target name="ivy-download" unless="ivy.jar.exists" depends="init">
+    <delete dir="${lib.dir}"
+            includes="ivy-*.jar" excludes="ivy-${ivy.version}.jar"/>
+    <get src="${ivy.url}/${ivy.version}/ivy-${ivy.version}.jar"
+         dest="${lib.dir}/ivy-${ivy.version}.jar" usetimestamp="true"/>
+  </target>
+
+  <target name="ivy-init" depends="ivy-download" unless="ivy.initialized">
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant" classpathref="classpath"/>
+    <!-- ensure that ivy taskdef is only run once, otw ant will error -->
+    <property name="ivy.initialized" value="true"/>
+  </target>
+
+  <target name="ivy-retrieve" depends="init,ivy-init">
+    <ivy:retrieve type="jar" conf="default"
+                  pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+  </target>
+
+  <target name="ivy-retrieve-test" depends="init,ivy-init">
+    <ivy:retrieve type="jar" conf="test"
+                  pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+  </target>
+
 
 </project>
