@@ -21,7 +21,7 @@ package org.apache.bookkeeper.test;
  */
 
 
-import static org.apache.bookkeeper.util.ClientBase.CONNECTION_TIMEOUT;
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.lang.InterruptedException;
 import java.io.File;
@@ -35,19 +35,18 @@ import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookKeeper;
 import org.apache.bookkeeper.client.LedgerHandle;
 import org.apache.bookkeeper.proto.BookieServer;
-import org.apache.bookkeeper.util.ClientBase;
 import org.apache.log4j.Logger;
 
-import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooKeeper;
-
+import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.test.ClientBase;
 
 /**
  * This unit test tests closing ledgers sequentially. 
