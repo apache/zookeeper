@@ -182,6 +182,8 @@ BUGFIXES:
   ZOOKEEPER-534. The test target in contib/bookkeeper does not depend on jar
   target. (phunt via mahadev)
 
+  ZOOKEEPER-623. ClientBase in bookkeeper.util requires junit (fpj via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
