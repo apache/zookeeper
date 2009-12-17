@@ -163,6 +163,16 @@
   </target>
 
 
+  <target name="checkMainTestIsAvailable">
+    <available file="${zk.root}/build/test/classes/org/apache/zookeeper/test/ClientBase.class"
+               property="mainTestIsCompiled">
+    </available>
+  </target>
+
+  <target name="checkMainTestCompiled" unless="mainTestIsCompiled" depends="checkMainTestIsAvailable">
+    <fail message="ZooKeeper test must first be compiled (toplevel build.xml) using 'ant compile-test'"/>
+  </target>
+
   <!-- ====================================================== -->
   <!-- Ivy                                                    -->
   <!-- ====================================================== -->
