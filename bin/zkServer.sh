@@ -26,7 +26,7 @@
 # http://java.sun.com/javase/6/docs/technotes/guides/management/agent.html
 # by default we allow local JMX connections
 if [ "x$JMXLOCALONLY" = "x" ]
-then 
+then
     JMXLOCALONLY=false
 fi
 
@@ -51,34 +51,44 @@ else
 fi
 ZOOBINDIR=`dirname "$ZOOBIN"`
 
-. $ZOOBINDIR/zkEnv.sh
+. "$ZOOBINDIR"/zkEnv.sh
 
 if [ "x$2" != "x" ]
 then
-    ZOOCFG=$ZOOCFGDIR/$2
+    ZOOCFG="$ZOOCFGDIR/$2"
 fi
+
+if $cygwin
+then
+    ZOOCFG=`cygpath -wp "$ZOOCFG"`
+    # cygwin has a "kill" in the shell itself, gets confused
+    KILL=/bin/kill
+else
+    KILL=kill
+fi
+
 echo "Using config: $ZOOCFG"
 
-ZOOPIDFILE=$(grep dataDir $ZOOCFG | sed -e 's/.*=//')/zookeeper_server.pid
+ZOOPIDFILE=$(grep dataDir "$ZOOCFG" | sed -e 's/.*=//')/zookeeper_server.pid
 
 
 case $1 in
-start) 
+start)
     echo  "Starting zookeeper ... "
     java  "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp $CLASSPATH $JVMFLAGS $ZOOMAIN $ZOOCFG &
-    echo $! > $ZOOPIDFILE
+    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" &
+    echo -n $! > "$ZOOPIDFILE"
     echo STARTED
     ;;
-stop) 
+stop)
     echo "Stopping zookeeper ... "
-    if [ ! -f $ZOOPIDFILE ]
+    if [ ! -f "$ZOOPIDFILE" ]
     then
-    echo "error: count not find file $ZOOPIDFILE"
+    echo "error: could not find file $ZOOPIDFILE"
     exit 1
-    else 
-    kill -9 $(cat $ZOOPIDFILE)
-    rm $ZOOPIDFILE
+    else
+    $KILL -9 $(cat "$ZOOPIDFILE")
+    rm "$ZOOPIDFILE"
     echo STOPPED
     fi
     ;;
@@ -86,20 +96,20 @@ upgrade)
     shift
     echo "upgrading the servers to 3.*"
     java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp $CLASSPATH $JVMFLAGS org.apache.zookeeper.server.upgrade.UpgradeMain ${@} 
+    -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.server.upgrade.UpgradeMain ${@}
     echo "Upgrading ... "
     ;;
 restart)
     shift
-    $0 stop ${@}
+    "$0" stop ${@}
     sleep 3
-    $0 start ${@}
+    "$0" start ${@}
     ;;
 status)
-    STAT=`echo stat | nc localhost $(grep clientPort $ZOOCFG | sed -e 's/.*=//') 2> /dev/null| grep Mode`
+    STAT=`echo stat | nc localhost $(grep clientPort "$ZOOCFG" | sed -e 's/.*=//') 2> /dev/null| grep Mode`
     if [ "x$STAT" = "x" ]
     then
-        echo "Error contacting service. It is probably not running." 
+        echo "Error contacting service. It is probably not running."
     else
         echo $STAT
     fi
