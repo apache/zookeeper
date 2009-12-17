@@ -44,38 +44,53 @@ then
     . "$ZOOCFGDIR/java.env"
 fi
 
-if [ "x$ZOO_LOG_DIR" = "x" ]
-then 
+if [ "x${ZOO_LOG_DIR}" = "x" ]
+then
     ZOO_LOG_DIR="."
 fi
 
-if [ "x$ZOO_LOG4J_PROP" = "x" ]
-then 
+if [ "x${ZOO_LOG4J_PROP}" = "x" ]
+then
     ZOO_LOG4J_PROP="INFO,CONSOLE"
 fi
 
-for f in ${ZOOBINDIR}/../zookeeper-*.jar
-do 
-    CLASSPATH="$CLASSPATH:$f"
+#add the zoocfg dir to classpath
+CLASSPATH="$ZOOCFGDIR:$CLASSPATH"
+
+for i in "$ZOOBINDIR"/../src/java/lib/*.jar
+do
+    CLASSPATH="$i:$CLASSPATH"
 done
 
-ZOOLIBDIR=${ZOOLIBDIR:-$ZOOBINDIR/../lib}
-for i in "$ZOOLIBDIR"/*.jar
+#make it work in the release
+for i in "$ZOOBINDIR"/../lib/*.jar
 do
-    CLASSPATH="$CLASSPATH:$i"
+    CLASSPATH="$i:$CLASSPATH"
 done
+
+#make it work in the release
+for i in "$ZOOBINDIR"/../zookeeper-*.jar
+do
+    CLASSPATH="$i:$CLASSPATH"
+done
+
 #make it work for developers
-for d in ${ZOOBINDIR}/../build/classes
+for d in "$ZOOBINDIR"/../build/lib/*.jar
 do
-   CLASSPATH="$CLASSPATH:$d"
+   CLASSPATH="$d:$CLASSPATH"
 done
-for d in ${ZOOBINDIR}/../build/lib/*.jar
-do
-   CLASSPATH="$CLASSPATH:$d"
-done
-for d in ${ZOOBINDIR}/../src/java/lib/*.jar
-do
-   CLASSPATH="$CLASSPATH:$d"
-done
-#add the zoocfg dir to classpath
-CLASSPATH=$ZOOCFGDIR:$CLASSPATH
+
+#make it work for developers
+CLASSPATH="$ZOOBINDIR/../build/classes:$CLASSPATH"
+
+case "`uname`" in
+    CYGWIN*) cygwin=true ;;
+    *) cygwin=false ;;
+esac
+
+if $cygwin
+then
+    CLASSPATH=`cygpath -wp "$CLASSPATH"`
+fi
+
+#echo "CLASSPATH=$CLASSPATH"
