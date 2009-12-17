@@ -60,7 +60,7 @@
 
   <target name="compile" depends="ivy-retrieve,zookeeperbuildcontrib.compile"/>
 
-  <target name="test" depends="compile-test,test-init,test-category,junit.run" />
+  <target name="test" depends="checkMainTestCompiled,compile-test,test-init,test-category,junit.run" />
 
 	<target name="compile-test" depends="ivy-retrieve-test,compile">
   		<property name="target.jdk" value="${ant.java.version}" />	
@@ -71,6 +71,9 @@
 			target="${target.jdk}" 
 			debug="on" >
 			<classpath refid="classpath" />
+			<classpath>
+				<pathelement location="${zk.root}/build/test/classes"/>
+			</classpath>
 		</javac>
 	</target>
 	
@@ -104,6 +107,7 @@
           <classpath refid="classpath"/>
           <classpath>
              <pathelement path="${build.test}" />
+             <pathelement location="${zk.root}/build/test/classes"/>
           </classpath>
           <formatter type="${test.junit.output.format}" />
           <batchtest todir="${test.log.dir}" unless="testcase">
