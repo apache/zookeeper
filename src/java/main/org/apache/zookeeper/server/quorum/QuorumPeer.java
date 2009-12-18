@@ -33,7 +33,9 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
@@ -73,7 +75,15 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     QuorumBean jmxQuorumBean;
     LocalPeerBean jmxLocalPeerBean;
     LeaderElectionBean jmxLeaderElectionBean;
-
+    
+    /* ZKDatabase is a top level member of quorumpeer 
+     * which will be used in all the zookeeperservers
+     * instantiated later. Also, it is created once on 
+     * bootup and only thrown away in case of a truncate
+     * message from the leader
+     */
+    private ZKDatabase zkDb;
+    
     /**
      * Create an instance of a quorum peer
      */
@@ -351,6 +361,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         this.initLimit = initLimit;
         this.syncLimit = syncLimit;        
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
+        this.zkDb = new ZKDatabase(this.logFactory);
         if(quorumConfig == null)
             this.quorumConfig = new QuorumMaj(countParticipants(quorumPeers));
         else this.quorumConfig = quorumConfig;
@@ -362,6 +373,12 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     
     @Override
     public synchronized void start() {
+        try {
+            zkDb.loadDataBase();
+        } catch(IOException ie) {
+            LOG.fatal("Unable to load database on disk", ie);
+            throw new RuntimeException("Unable to run quorum server ", ie);
+        }
         cnxnFactory.start();        
         startLeaderElection();
         super.start();
@@ -447,27 +464,16 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * @return the highest zxid for this host
      */
     public long getLastLoggedZxid() {
-        /*
-         * it is possible to have the last zxid with just a snapshot and no log
-         * related to it. one example is during upgrade wherein the there is no
-         * corresponding log to the snapshot. in that case just use the snapshot
-         * zxid
-         */
-
-        File lastSnapshot = null;
-        long maxZxid = -1L;
-        long maxLogZxid = logFactory.getLastLoggedZxid();
+        long lastLogged= -1L;
         try {
-            lastSnapshot = logFactory.findMostRecentSnapshot();
-            if (lastSnapshot != null) {
-                maxZxid = Math.max(Util.getZxidFromName(lastSnapshot.getName(),
-                        "snapshot"), maxLogZxid);
+            if (!zkDb.isInitialized()) {
+                zkDb.loadDataBase();
             }
-        } catch (IOException ie) {
-            LOG.warn("Exception finding last snapshot ", ie);
-            maxZxid = maxLogZxid;
+            lastLogged = zkDb.getDataTreeLastProcessedZxid();
+        } catch(IOException ie) {
+            LOG.warn("Unable to load database ", ie);
         }
-        return maxZxid;
+        return lastLogged;
     }
     
     public Follower follower;
@@ -476,17 +482,17 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
         return new Follower(this, new FollowerZooKeeperServer(logFactory, 
-                this,new ZooKeeperServer.BasicDataTreeBuilder()));
+                this,new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
     }
      
     protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
         return new Leader(this, new LeaderZooKeeperServer(logFactory,
-                this,new ZooKeeperServer.BasicDataTreeBuilder()));
+                this,new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
     }
     
     protected Observer makeObserver(FileTxnSnapLog logFactory) throws IOException {
         return new Observer(this, new ObserverZooKeeperServer(logFactory,
-                this, new ZooKeeperServer.BasicDataTreeBuilder()));
+                this, new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
     }
 
     private Election createElectionAlgorithm(int electionAlgorithm){
@@ -877,5 +883,13 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     
     public FileTxnSnapLog getTxnFactory() {
         return this.logFactory;
+    }
+
+    /**
+     * set zk database for this node
+     * @param database
+     */
+    public void setZKDatabase(ZKDatabase database) {
+        this.zkDb = database;
     }
 }

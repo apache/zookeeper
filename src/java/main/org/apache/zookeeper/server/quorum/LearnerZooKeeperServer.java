@@ -24,6 +24,7 @@ import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -36,8 +37,8 @@ public abstract class LearnerZooKeeperServer extends ZooKeeperServer {
     protected QuorumPeer self;
     
     public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
-            DataTreeBuilder treeBuilder) throws IOException {
-        super(logFactory,tickTime,treeBuilder);
+            DataTreeBuilder treeBuilder, ZKDatabase zkDb) throws IOException {
+        super(logFactory,tickTime,treeBuilder, zkDb);
     }
 
     /**
@@ -68,17 +69,9 @@ public abstract class LearnerZooKeeperServer extends ZooKeeperServer {
         return self.getId();
     }    
     
-    /**
-     * Learners don't make use of this method, only Leaders.
-     */
-    @Override
-    public void addCommittedProposal(Request request) {
-        // Don't do anything!
-    }
-    
     @Override
     protected void createSessionTracker() {
-        sessionTracker = new LearnerSessionTracker(this, sessionsWithTimeouts,
+        sessionTracker = new LearnerSessionTracker(this, getZKDatabase().getSessionWithTimeOuts(),
                 self.getId());
     }
     
@@ -92,7 +85,7 @@ public abstract class LearnerZooKeeperServer extends ZooKeeperServer {
     protected void registerJMX() {
         // register with JMX
         try {
-            jmxDataTreeBean = new DataTreeBean(dataTree);
+            jmxDataTreeBean = new DataTreeBean(getZKDatabase().getDataTree());
             MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
         } catch (Exception e) {
             LOG.warn("Failed to register with JMX", e);

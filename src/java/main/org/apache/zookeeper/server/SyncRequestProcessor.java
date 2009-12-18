@@ -104,12 +104,12 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                 }
                 if (si != null) {
                     // track the number of records written to the log
-                    if (zks.getLogWriter().append(si)) {
+                    if (zks.getZKDatabase().append(si)) {
                         logCount++;
                         if (logCount > (snapCount / 2 + randRoll)) {
                             randRoll = r.nextInt(snapCount/2);
                             // roll the log
-                            zks.getLogWriter().rollLog();
+                            zks.getZKDatabase().rollLog();
                             // take a snapshot
                             if (snapInProcess != null && snapInProcess.isAlive()) {
                                 LOG.warn("Too busy to snap, skipping");
@@ -155,7 +155,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         if (toFlush.isEmpty())
             return;
 
-        zks.getLogWriter().commit();
+        zks.getZKDatabase().commit();
         while (!toFlush.isEmpty()) {
             Request i = toFlush.remove();
             nextProcessor.processRequest(i);

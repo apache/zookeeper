@@ -27,6 +27,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.BinaryInputArchive;
@@ -254,13 +255,14 @@ public class LearnerHandler extends Thread {
             /* we are sending the diff check if we have proposals in memory to be able to 
              * send a diff to the 
              */ 
-            synchronized(leader.zk.committedLog) {
-                if (leader.zk.committedLog.size() != 0) {
-                    if ((leader.zk.maxCommittedLog >= peerLastZxid)
-                            && (leader.zk.minCommittedLog <= peerLastZxid)) {
+            LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
+            synchronized(proposals) {
+                if (proposals.size() != 0) {
+                    if ((leader.zk.getZKDatabase().getmaxCommittedLog() >= peerLastZxid)
+                            && (leader.zk.getZKDatabase().getminCommittedLog() <= peerLastZxid)) {
                         packetToSend = Leader.DIFF;
-                        zxidToSend = leader.zk.maxCommittedLog;
-                        for (Proposal propose: leader.zk.committedLog) {
+                        zxidToSend = leader.zk.getZKDatabase().getmaxCommittedLog();
+                        for (Proposal propose: proposals) {
                             if (propose.packet.getZxid() > peerLastZxid) {
                                 queuePacket(propose.packet);
                                 QuorumPacket qcommit = new QuorumPacket(Leader.COMMIT, propose.packet.getZxid(),
@@ -274,7 +276,7 @@ public class LearnerHandler extends Thread {
                 else {
                     logTxns = false;
                 }            
-						}
+            }
             
             //check if we decided to send a diff or we need to send a truncate
             // we avoid using epochs for truncating because epochs make things
@@ -282,11 +284,11 @@ public class LearnerHandler extends Thread {
             // only if we know that there is a committed zxid in the queue that
             // is less than the one the peer has we send a trunc else to make
             // things simple we just send sanpshot.
-            if (logTxns && (peerLastZxid > leader.zk.maxCommittedLog)) {
+            if (logTxns && (peerLastZxid > leader.zk.getZKDatabase().getmaxCommittedLog())) {
                 // this is the only case that we are sure that
                 // we can ask the peer to truncate the log
                 packetToSend = Leader.TRUNC;
-                zxidToSend = leader.zk.maxCommittedLog;
+                zxidToSend = leader.zk.getZKDatabase().getmaxCommittedLog();
                 updates = zxidToSend;
             }
             
@@ -318,7 +320,7 @@ public class LearnerHandler extends Thread {
                         + " zxid of leader is 0x"
                         + Long.toHexString(leaderLastZxid));
                 // Dump data to peer
-                leader.zk.serializeSnapshot(oa);
+                leader.zk.getZKDatabase().serializeSnapshot(oa);
                 oa.writeString("BenWasHere", "signature");
             }
             bufferedOutput.flush();
