@@ -132,7 +132,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             }
             */
             if (lastChange == null) {
-                DataNode n = zks.dataTree.getNode(path);
+                DataNode n = zks.getZKDatabase().getNode(path);
                 if (n != null) {
                     Long acl;
                     Set<String> children;
@@ -142,7 +142,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     }
                     lastChange = new ChangeRecord(-1, path, n.stat, 
                         children != null ? children.size() : 0, 
-                            zks.dataTree.convertLong(acl));
+                            zks.getZKDatabase().convertLong(acl));
                 }
             }
         }
@@ -278,7 +278,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 path = deleteRequest.getPath();
                 lastSlash = path.lastIndexOf('/');
                 if (lastSlash == -1 || path.indexOf('\0') != -1
-                        || zks.dataTree.isSpecialPath(path)) {
+                        || zks.getZKDatabase().isSpecialPath(path)) {
                     throw new KeeperException.BadArgumentsException(path);
                 }
                 parentPath = path.substring(0, lastSlash);
@@ -366,7 +366,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 // queues up this operation without being the session owner.
                 // this request is the last of the session so it should be ok
                 //zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                HashSet<String> es = zks.dataTree
+                HashSet<String> es = zks.getZKDatabase()
                         .getEphemerals(request.sessionId);
                 synchronized (zks.outstandingChanges) {
                     for (ChangeRecord c : zks.outstandingChanges) {

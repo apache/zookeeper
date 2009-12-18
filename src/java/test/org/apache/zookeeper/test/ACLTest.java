@@ -106,7 +106,7 @@ public class ACLTest extends TestCase implements Watcher {
             zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
         }
-        assertTrue("size of the acl map ", (1 == zks.dataTree.longKeyMap.size()));
+        assertTrue("size of the acl map ", (1 == zks.getZKDatabase().getAclSize()));
         for (int j = 100; j < 200; j++) {
             path = "/" + j;
             ACL acl = new ACL();
@@ -119,7 +119,7 @@ public class ACLTest extends TestCase implements Watcher {
             list.add(acl);
             zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
         }
-        assertTrue("size of the acl map ", (101 == zks.dataTree.longKeyMap.size()));
+        assertTrue("size of the acl map ", (101 == zks.getZKDatabase().getAclSize()));
         // now shutdown the server and restart it
         f.shutdown();
         assertTrue("waiting for server down",
@@ -138,7 +138,7 @@ public class ACLTest extends TestCase implements Watcher {
                 TimeUnit.MILLISECONDS);
         assertTrue("count == 0", startSignal.getCount() == 0);
 
-        assertTrue("acl map ", (101 == zks.dataTree.longKeyMap.size()));
+        assertTrue("acl map ", (101 == zks.getZKDatabase().getAclSize()));
         for (int j = 200; j < 205; j++) {
             path = "/" + j;
             ACL acl = new ACL();
@@ -151,7 +151,7 @@ public class ACLTest extends TestCase implements Watcher {
             list.add(acl);
             zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
         }
-        assertTrue("acl map ", (106 == zks.dataTree.longKeyMap.size()));
+        assertTrue("acl map ", (106 == zks.getZKDatabase().getAclSize()));
 
         zk.close();
 

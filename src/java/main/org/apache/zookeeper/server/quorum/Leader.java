@@ -279,7 +279,7 @@ public class Leader {
             long epoch = self.getLastLoggedZxid() >> 32L;
             epoch++;
             zk.setZxid(epoch << 32L);
-            zk.dataTree.lastProcessedZxid = zk.getZxid();
+            zk.getZKDatabase().setlastProcessedZxid(zk.getZxid());
             
             synchronized(this){
                 lastProposed = zk.getZxid();
