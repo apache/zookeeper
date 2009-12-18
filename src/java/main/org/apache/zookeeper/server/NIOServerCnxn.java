@@ -687,13 +687,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         if (zk == null) {
             throw new IOException("ZooKeeperServer not running");
         }
-        if (connReq.getLastZxidSeen() > zk.dataTree.lastProcessedZxid) {
+        if (connReq.getLastZxidSeen() > zk.getZKDatabase().getDataTreeLastProcessedZxid()) {
             String msg = "Refusing session request for client "
                 + sock.socket().getRemoteSocketAddress()
                 + " as it has seen zxid 0x"
                 + Long.toHexString(connReq.getLastZxidSeen())
                 + " our last zxid is 0x"
-                + Long.toHexString(zk.dataTree.lastProcessedZxid)
+                + Long.toHexString(zk.getZKDatabase().getDataTreeLastProcessedZxid())
                 + " client must try another server";
 
             LOG.info(msg);
@@ -800,7 +800,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 sb.append("SessionTracker dump: \n");
                 sb.append(zk.sessionTracker.toString()).append("\n");
                 sb.append("ephemeral nodes dump:\n");
-                sb.append(zk.dataTree.dumpEphemerals()).append("\n");
+                sb.append(zk.getZKDatabase().dumpEphemerals()).append("\n");
                 sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
             }
             k.interestOps(SelectionKey.OP_WRITE);
@@ -825,7 +825,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     sb.append("\n");
                 }
                 sb.append(zk.serverStats().toString());
-                sb.append("Node count: ").append(zk.dataTree.getNodeCount()).
+                sb.append("Node count: ").append(zk.getZKDatabase().getNodeCount()).
                     append("\n");
             } else {
                 sb.append("ZooKeeperServer not running\n");

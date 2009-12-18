@@ -28,6 +28,7 @@ import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.TxnHeader;
 
@@ -56,8 +57,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
      * @throws IOException
      */
     FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
-            DataTreeBuilder treeBuilder) throws IOException {
-        super(logFactory, self.tickTime,treeBuilder);
+            DataTreeBuilder treeBuilder, ZKDatabase zkDb) throws IOException {
+        super(logFactory, self.tickTime,treeBuilder, zkDb);
         this.self = self;        
         this.pendingSyncs = new ConcurrentLinkedQueue<Request>();
     }

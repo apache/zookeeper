@@ -187,6 +187,9 @@ BUGFIXES:
   ZOOKEEPER-600. TODO pondering about allocation behavior in zkpython may be
   removed (gustavo via mahadev)
 
+  ZOOKEEPER-596. The last logged zxid calculated by zookeeper servers could
+  cause problems in leader election if data gets corrupted. (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)

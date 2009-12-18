@@ -280,12 +280,13 @@ public class Learner {
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
                 LOG.info("Getting a diff from the leader 0x" + Long.toHexString(qp.getZxid()));                
-                zk.loadData();
             }
             else if (qp.getType() == Leader.SNAP) {
                 LOG.info("Getting a snapshot from leader");
                 // The leader is going to dump the database
-                zk.deserializeSnapshot(leaderIs);
+                // clear our own database and read
+                zk.getZKDatabase().clear();
+                zk.getZKDatabase().deserializeSnapshot(leaderIs);
                 String signature = leaderIs.readString("signature");
                 if (!signature.equals("BenWasHere")) {
                     LOG.error("Missing signature. Got " + signature);
@@ -295,7 +296,7 @@ public class Learner {
                 //we need to truncate the log to the lastzxid of the leader
                 LOG.warn("Truncating log to get in sync with the leader 0x"
                         + Long.toHexString(qp.getZxid()));
-                boolean truncated=zk.getLogWriter().truncateLog(qp.getZxid());
+                boolean truncated=zk.getZKDatabase().truncateLog(qp.getZxid());
                 if (!truncated) {
                     // not able to truncate the log
                     LOG.fatal("Not able to truncate the log "
@@ -303,7 +304,6 @@ public class Learner {
                     System.exit(13);
                 }
 
-                zk.loadData();
             }
             else {
                 LOG.fatal("Got unexpected packet from leader "
@@ -311,7 +311,7 @@ public class Learner {
                 System.exit(13);
 
             }
-            zk.dataTree.lastProcessedZxid = newLeaderZxid;
+            zk.getZKDatabase().setlastProcessedZxid(newLeaderZxid);
         }
         ack.setZxid(newLeaderZxid & ~0xffffffffL);
         writePacket(ack, true);
