@@ -219,6 +219,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-633. Fetch netty using ivy for bookkeeper (giri via fpj)
 
+  ZOOKEEPER-544. improve client testability - allow test client to access connected server location (phunt via breed)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 

@@ -1019,6 +1019,8 @@ ZOOAPI void zoo_set_log_stream(FILE* logStream);
 /**
  * \brief enable/disable quorum endpoint order randomization
  * 
+ * Note: typically this method should NOT be used outside of testing.
+ *
  * If passed a non-zero value, will make the client connect to quorum peers
  * in the order as specified in the zookeeper_init() call.
  * A zero value causes zookeeper_init() to permute the peer endpoints
