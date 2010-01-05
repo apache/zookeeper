@@ -217,6 +217,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-506. QuorumBase should use default leader election (fpj via breed)
 
+  ZOOKEEPER-633. Fetch netty using ivy for bookkeeper (giri via fpj)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
