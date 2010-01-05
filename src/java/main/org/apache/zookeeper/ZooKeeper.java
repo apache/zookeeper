@@ -19,6 +19,7 @@
 package org.apache.zookeeper;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1456,7 +1457,21 @@ public class ZooKeeper {
     public States getState() {
         return state;
     }
-    
+
+    /**
+     * String representation of this ZooKeeper client. Suitable for things
+     * like logging.
+     * 
+     * Do NOT count on the format of this string, it may change without
+     * warning.
+     * 
+     * @since 3.3.0
+     */
+    @Override
+    public String toString() {
+        return ("State:" + getState().toString() + " " + cnxn);
+    }
+
     /*
      * Methods to aid in testing follow.
      * 
@@ -1466,6 +1481,9 @@ public class ZooKeeper {
     /**
      * Wait up to wait milliseconds for the underlying threads to shutdown.
      * THIS METHOD IS EXPECTED TO BE USED FOR TESTING ONLY!!!
+     * 
+     * @since 3.3.0
+     * 
      * @param wait max wait in milliseconds
      * @return true iff all threads are shutdown, otw false
      */
@@ -1477,5 +1495,34 @@ public class ZooKeeper {
         cnxn.eventThread.join(wait);
         if (cnxn.eventThread.isAlive()) return false;
         return true;
+    }
+
+    /**
+     * Returns the address to which the socket is connected. Useful for testing
+     * against an ensemble - test client may need to know which server
+     * to shutdown if interested in verifying that the code handles
+     * disconnection/reconnection correctly.
+     * THIS METHOD IS EXPECTED TO BE USED FOR TESTING ONLY!!!
+     *
+     * @since 3.3.0
+     * 
+     * @return ip address of the remote side of the connection or null if
+     *         not connected
+     */
+    protected SocketAddress testableRemoteSocketAddress() {
+        return cnxn.getRemoteSocketAddress();
+    }
+
+    /** 
+     * Returns the local address to which the socket is bound.
+     * THIS METHOD IS EXPECTED TO BE USED FOR TESTING ONLY!!!
+     *
+     * @since 3.3.0
+     * 
+     * @return ip address of the remote side of the connection or null if
+     *         not connected
+     */
+    protected SocketAddress testableLocalSocketAddress() {
+        return cnxn.getLocalSocketAddress();
     }
 }

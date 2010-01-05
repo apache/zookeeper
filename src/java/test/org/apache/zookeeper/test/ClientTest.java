@@ -104,6 +104,23 @@ public class ClientTest extends ClientBase {
         performClientTest(true);
     }
 
+    /** Exercise the testable functions, verify tostring, etc... */
+    @Test
+    public void testTestability() throws Exception {
+        TestableZooKeeper zk = createClient();
+        try {
+            LOG.info(zk.testableLocalSocketAddress());
+            LOG.info(zk.testableRemoteSocketAddress());
+            LOG.info(zk.toString());
+        } finally {
+            zk.close();
+            zk.testableWaitForShutdown(CONNECTION_TIMEOUT);
+            LOG.info(zk.testableLocalSocketAddress());
+            LOG.info(zk.testableRemoteSocketAddress());
+            LOG.info(zk.toString());
+        }
+    }
+
     @Test
     public void testACLs() throws Exception {
         ZooKeeper zk = null;
