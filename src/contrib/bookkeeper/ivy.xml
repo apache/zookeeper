@@ -33,7 +33,7 @@
   <dependencies>
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
     <dependency org="log4j" name="log4j" rev="1.2.15" transitive="false"/>
-
+    <dependency org="org.jboss.netty" name="netty" rev="3.1.5.GA" />
     <dependency org="junit" name="junit" rev="4.7" conf="test->default"/>
   </dependencies>
 

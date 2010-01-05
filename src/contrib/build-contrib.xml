@@ -47,6 +47,7 @@
   <property name="ivy.home" value="${user.home}/.ant" />
   <property name="ivy.lib" value="${build.dir}/lib"/>
   <property name="ivy.test.lib" value="${build.test}/lib"/>
+  <property name="ivysettings.xml" value="${zk.root}/ivysettings.xml"/>
 
   <!-- to be overridden by sub-projects -->
   <target name="check-contrib"/>
@@ -188,15 +189,18 @@
              uri="antlib:org.apache.ivy.ant" classpathref="classpath"/>
     <!-- ensure that ivy taskdef is only run once, otw ant will error -->
     <property name="ivy.initialized" value="true"/>
+    <ivy:settings id="${ant.project.name}" file="${ivysettings.xml}"/> 
   </target>
 
   <target name="ivy-retrieve" depends="init,ivy-init">
-    <ivy:retrieve type="jar" conf="default"
+    <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="default"
                   pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+    <ivy:retrieve settingsRef="${ant.project.name}" type="bundle" conf="default"
+  				  pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
   </target>
 
   <target name="ivy-retrieve-test" depends="init,ivy-init">
-    <ivy:retrieve type="jar" conf="test"
+    <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="test"
                   pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
   </target>
 
