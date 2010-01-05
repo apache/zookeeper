@@ -93,6 +93,7 @@
     <property name="ivy.lib" value="${build.dir}/lib"/>
     <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
+    <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
 
     <available property="clover.present"
                classname="com.cenqua.clover.CloverInstr"
@@ -279,21 +280,22 @@
                uri="antlib:org.apache.ivy.ant" classpathref="java.classpath"/>
       <!-- ensure that ivy taskdef is only run once, otw ant will error -->
       <property name="ivy.initialized" value="true"/>
+      <ivy:settings id="${ant.project.name}" file="${ivysettings.xml}"/>
     </target>
 
     <target name="ivy-retrieve" depends="init,ivy-init">
-      <ivy:retrieve type="jar" conf="default"
+      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="default"
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
     <target name="ivy-retrieve-test" depends="init,ivy-init">
-      <ivy:retrieve type="jar" conf="test"
+      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="test"
                     pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
     <target name="ivy-retrieve-jdiff" depends="init,ivy-init">
       <mkdir dir="${ivy.jdiff.lib}"/>
-      <ivy:retrieve type="jar" conf="jdiff"
+      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="jdiff"
                     pattern="${ivy.jdiff.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
@@ -569,7 +571,7 @@
       <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
       <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
-      <ivy:makepom ivyfile="${basedir}/ivy.xml"
+      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
                    pomfile="${dist.dir}/${final.name}.pom">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
