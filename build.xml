@@ -279,7 +279,8 @@
       <taskdef resource="org/apache/ivy/ant/antlib.xml"
                uri="antlib:org.apache.ivy.ant" classpathref="java.classpath"/>
       <!-- ensure that ivy taskdef is only run once, otw ant will error -->
-      <property name="ivy.initialized" value="true"/>
+      <!-- we need to make sure ivy:settings is run. the initialized flag seems to break it -->
+      <!-- <property name="ivy.initialized" value="true"/> -->
       <ivy:settings id="${ant.project.name}" file="${ivysettings.xml}"/>
     </target>
 
