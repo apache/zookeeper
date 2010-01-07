@@ -191,6 +191,8 @@ BUGFIXES:
   cause problems in leader election if data gets corrupted. (mahadev)
 
   ZOOKEEPER-637. Trunk build is failing (fpj via breed)
+  
+  ZOOKEEPER-637. Trunk build is failing - second patch (breed via fpj)
 
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
