@@ -275,12 +275,14 @@
            dest="${lib.dir}/ivy-${ivy.version}.jar" usetimestamp="true"/>
     </target>
 
-    <target name="ivy-init" depends="ivy-download" unless="ivy.initialized">
+    <target name="ivy-taskdef" unless="ivy.initialized">
       <taskdef resource="org/apache/ivy/ant/antlib.xml"
                uri="antlib:org.apache.ivy.ant" classpathref="java.classpath"/>
       <!-- ensure that ivy taskdef is only run once, otw ant will error -->
-      <!-- we need to make sure ivy:settings is run. the initialized flag seems to break it -->
-      <!-- <property name="ivy.initialized" value="true"/> -->
+      <property name="ivy.initialized" value="true"/> 
+    </target>
+
+    <target name="ivy-init" depends="ivy-download,ivy-taskdef">
       <ivy:settings id="${ant.project.name}" file="${ivysettings.xml}"/>
     </target>
 
