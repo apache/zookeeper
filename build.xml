@@ -86,7 +86,7 @@
     <property name="contrib.dir" value="${src.dir}/contrib"/>
     <property name="recipes.dir" value="${src.dir}/recipes"/>
 
-    <property name="ivy.version" value="2.1.0-rc2"/>
+    <property name="ivy.version" value="2.1.0"/>
     <property name="ivy.url"
               value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
     <property name="ivy.home" value="${user.home}/.ant" />

@@ -227,6 +227,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-426. Windows versions of zookeeper scripts (David Bosschaert via breed)
 
+  ZOOKEEPER-638. upgrade ivy to 2.1.0 final from 2.1.0 release candidate (phunt via breed)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
