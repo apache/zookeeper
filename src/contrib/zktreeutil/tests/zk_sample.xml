@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <zknode name="myapp">
+    <zknode name="version-1.0">
+      <zknode name="clientConfig">
+        <zknode name="testClient" value="cluster.id=local;server.host=localhost;server.port=4080"/>
+      </zknode>
+      <zknode name="configuration" value="v4.0">
+        <zknode name="cacheControl" value="on"/>
+        <zknode name="healthCheck" value="on"/>
+      </zknode>
+      <zknode name="distributions">
+        <zknode name="http">
+          <zknode name="goldenShards" value="0,4294967296,server,localhost:8085;"/>
+          <zknode name="versionedShards" value="33;0,4294967296,server,localhost:8086;"/>
+          <zknode name="shards" value="0,4294967296,server,localhost:8086;"/>
+        </zknode>
+      </zknode>
+      <zknode name="tmp" ignore="yes">
+        <zknode name="alerts" value="test"/>
+        <zknode name="locks"/>
+        <zknode name="transactions"/>
+      </zknode>
+    </zknode>
+  </zknode>
+  <zknode name="zookeeper" ignore="true"/>
+</root>
