@@ -556,7 +556,7 @@ public class QuorumCnxManager {
                 ByteBuffer b = lastMessageSent.get(sid); 
                 if(b != null) send(b);   
             } catch (IOException e) {
-                LOG.error("Failed to send last message. Shutting down thread.");
+                LOG.error("Failed to send last message. Shutting down thread.", e);
                 this.finish();
             }
             
