@@ -367,7 +367,9 @@ public class LearnerHandler extends Thread {
                 switch (qp.getType()) {
                 case Leader.ACK:
                     if (this.learnerType == LearnerType.OBSERVER) {
-                        LOG.error("Received ACK from Observer  " + this.sid);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Received ACK from Observer  " + this.sid);
+                        }
                     }
                     leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
                     break;
