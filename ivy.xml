@@ -29,6 +29,7 @@
     <conf name="default"/>
     <conf name="test"/>
     <conf name="jdiff" visibility="private"/>
+    <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
   </configurations>
 
   <dependencies>
@@ -44,6 +45,13 @@
                 conf="jdiff->default"/>
     <dependency org="xerces" name="xerces" rev="1.4.4"
                 conf="jdiff->default"/>
+
+    <dependency org="org.apache.rat" name="apache-rat-tasks" 
+                rev="0.6" conf="releaseaudit->default"/>
+    <dependency org="commons-lang" name="commons-lang" 
+                rev="2.4" conf="releaseaudit->default"/>
+    <dependency org="commons-collections" name="commons-collections" 
+                rev="3.1" conf="releaseaudit->default"/>
   </dependencies>
 
 </ivy-module>
