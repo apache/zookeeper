@@ -302,6 +302,12 @@
                     pattern="${ivy.jdiff.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
+    <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
+      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="releaseaudit"
+                    pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+      <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
+    </target>
+
     <target name="compile" depends="ivy-retrieve,clover,build-generated">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" 
                target="${javac.target}" debug="on">
@@ -1074,15 +1080,47 @@
     <!-- ================================================================== -->
     <!-- Perform audit activities for the release                           -->
     <!-- ================================================================== -->
-    
-    <target name="get-rats" depends="package" description="Downloads the release audit tool">
-    	<get src="${rats_url}" dest="${lib.dir}/rats.jar" usetimestamp="false" />
+    <target name="rats-taskdef" depends="ivy-retrieve-releaseaudit">
+      <typedef format="xml" resource="org/apache/rat/anttasks/antlib.xml" uri="antlib:org.apache.rat.anttasks"
+               classpathref="releaseaudit-classpath"/>
     </target>
-   
-    <target name="releaseaudit" depends="get-rats" description="Release Audit activities">
-    	<java classname="${rat.reporting.classname}" fork="true" classpath="${lib.dir}/rats.jar">
-      		<arg value="${build.dir}/${final.name}"/>
-    	</java>
+
+    <target name="releaseaudit" depends="package,rats-taskdef" description="Release Audit activities">
+      <rat:report xmlns:rat="antlib:org.apache.rat.anttasks">
+        <fileset dir="${dist.dir}">
+          <exclude name="**/*.m4"/>
+          <exclude name="**/*.md5"/>
+          <exclude name="**/*.pom"/>
+          <exclude name="**/*.sha1"/>
+          <exclude name="**/.gitignore"/>
+          <exclude name="**/Makefile**"/>
+          <exclude name="**/configure**"/>
+          <exclude name="**/*Doxyfile"/>
+          <exclude name="**/*.am"/>
+          <exclude name="**/compile"/>
+          <exclude name="**/depcomp"/>
+          <exclude name="**/install-sh"/>
+          <exclude name="**/ltmain.sh"/>
+          <exclude name="**/missing"/>
+          <exclude name="**/wrappers*.opt"/>
+          <exclude name="CHANGES.txt"/>
+          <exclude name="**/VERSION"/>
+          <exclude name="**/ChangeLog"/>
+          <exclude name="**/OldChangeLog"/>
+          <exclude name="**/Changes"/>
+          <exclude name="**/contrib/zkperl/MANIFEST"/>
+          <exclude name="**/conf/*"/>
+          <exclude name="**/docs/"/>
+          <exclude name="**/lib/jdiff/"/>
+          <exclude name="src/c/autom4te.cache/**"/>
+          <exclude name="src/c/config**"/>
+          <exclude name="src/c/src/hashtable/"/>
+          <exclude name="src/java/generated/.generated/"/>
+          <exclude name="src/java/test/checkstyle*.xml"/>
+          <exclude name="src/java/test/checkstyle*.xsl"/>
+          <exclude name="src/java/test/config/findbugs*.xml"/>
+        </fileset>
+      </rat:report>
     </target>
 
     <target name="findbugs.check" depends="check-for-findbugs" unless="findbugs.present">
