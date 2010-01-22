@@ -127,15 +127,16 @@ public class ZooKeeperMain {
     }
 
     private static void printStat(Stat stat) {
-        System.err.println("cZxid = " + stat.getCzxid());
+        System.err.println("cZxid = 0x" + Long.toHexString(stat.getCzxid()));
         System.err.println("ctime = " + new Date(stat.getCtime()).toString());
-        System.err.println("mZxid = " + stat.getMzxid());
+        System.err.println("mZxid = 0x" + Long.toHexString(stat.getMzxid()));
         System.err.println("mtime = " + new Date(stat.getMtime()).toString());
-        System.err.println("pZxid = " + stat.getPzxid());
+        System.err.println("pZxid = 0x" + Long.toHexString(stat.getPzxid()));
         System.err.println("cversion = " + stat.getCversion());
         System.err.println("dataVersion = " + stat.getVersion());
         System.err.println("aclVersion = " + stat.getAversion());
-        System.err.println("ephemeralOwner = " + stat.getEphemeralOwner());
+        System.err.println("ephemeralOwner = 0x"
+        		+ Long.toHexString(stat.getEphemeralOwner()));
         System.err.println("dataLength = " + stat.getDataLength());
         System.err.println("numChildren = " + stat.getNumChildren());
     }
