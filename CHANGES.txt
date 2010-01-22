@@ -242,6 +242,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-648. Fix releaseaudit warning count to zero (phunt via henry)
 
+  ZOOKEEPER-626. ensure the c/java cli's print xid/sessionid/etc... in hex (pat via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
