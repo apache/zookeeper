@@ -207,6 +207,8 @@ BUGFIXES:
   ZOOKEEPER-574. the documentation on snapcount in the admin guide has the
   wrong default (phunt via mahadev)
 
+  ZOOKEEPER-656. SledgeHammer test - thread.run() deprecated (kay kay via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
