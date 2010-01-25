@@ -412,7 +412,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             // error to the user
             LOG.error("Failed to process " + request, e);
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             ByteBuffer bb = request.request;
             if(bb != null){
                 bb.rewind();

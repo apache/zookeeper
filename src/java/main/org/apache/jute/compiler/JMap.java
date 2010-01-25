@@ -56,7 +56,7 @@ public class JMap extends JCompType {
     }
     
     public String genJavaReadWrapper(String fname, String tag, boolean decl) {
-        StringBuffer ret = new StringBuffer("");
+        StringBuilder ret = new StringBuilder("");
         if (decl) {
             ret.append("    java.util.TreeMap "+fname+";\n");
         }
@@ -80,7 +80,7 @@ public class JMap extends JCompType {
     }
     
     public String genJavaWriteWrapper(String fname, String tag) {
-        StringBuffer ret = new StringBuffer("    {\n");
+        StringBuilder ret = new StringBuilder("    {\n");
         incrLevel();
         ret.append("      a_.startMap("+fname+",\""+tag+"\");\n");
         ret.append("      java.util.Set "+getId("es")+" = "+fname+".entrySet();\n");

@@ -84,7 +84,7 @@ public class MySqlClient {
 	 */
 	public static void main(String[] args) throws ClassNotFoundException, SQLException {		
 		int lenght = Integer.parseInt(args[1]);
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		while(lenght-- > 0){
 			sb.append('a');
 		}

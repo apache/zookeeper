@@ -73,7 +73,7 @@ public class JRecord extends JCompType {
     }
 
     public String getSignature() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("L").append(mName).append("(");
         for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
             String s = i.next().getSignature();
@@ -92,7 +92,7 @@ public class JRecord extends JCompType {
     }
 
     public String genJavaReadWrapper(String fname, String tag, boolean decl) {
-        StringBuffer ret = new StringBuffer("");
+        StringBuilder ret = new StringBuilder("");
         if (decl) {
             ret.append("    "+getJavaFQName()+" "+fname+";\n");
         }

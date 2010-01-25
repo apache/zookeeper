@@ -182,7 +182,7 @@ public class Request {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("sessionid:0x").append(Long.toHexString(sessionId))
             .append(" type:").append(op2String(type))
             .append(" cxid:0x").append(Long.toHexString(cxid))

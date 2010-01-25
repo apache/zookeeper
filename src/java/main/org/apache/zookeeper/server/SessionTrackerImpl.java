@@ -105,7 +105,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     @Override
     synchronized public String toString() {
-        StringBuffer sb = new StringBuffer("Session Sets (")
+        StringBuilder sb = new StringBuilder("Session Sets (")
                 .append(sessionSets.size()).append("):\n");
         ArrayList<Long> keys = new ArrayList<Long>(sessionSets.keySet());
         Collections.sort(keys);

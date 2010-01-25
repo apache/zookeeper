@@ -43,7 +43,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
     }
 
     static final private String base64Encode(byte b[]) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < b.length;) {
             int pad = 0;
             int v = (b[i++] & 0xff) << 16;
