@@ -200,7 +200,7 @@ public abstract class ClientBase extends TestCase {
             reader =
                 new BufferedReader(
                         new InputStreamReader(sock.getInputStream()));
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             String line;
             while((line = reader.readLine()) != null) {
                 sb.append(line + "\n");
@@ -456,7 +456,7 @@ public abstract class ClientBase extends TestCase {
     }
 
     private static void logAllStackTraces() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("Starting logAllStackTraces()\n");
         Map<Thread, StackTraceElement[]> threads = Thread.getAllStackTraces();
         for (Entry<Thread, StackTraceElement[]> e: threads.entrySet()) {

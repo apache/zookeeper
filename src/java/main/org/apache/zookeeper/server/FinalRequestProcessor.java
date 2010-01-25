@@ -333,7 +333,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             // log at error level as we are returning a marshalling
             // error to the user
             LOG.error("Failed to process " + request, e);
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             ByteBuffer bb = request.request;
             bb.rewind();
             while (bb.hasRemaining()) {

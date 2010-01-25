@@ -51,7 +51,7 @@ public class JVector extends JCompType {
     }
     
     public String genJavaReadWrapper(String fname, String tag, boolean decl) {
-        StringBuffer ret = new StringBuffer("");
+        StringBuilder ret = new StringBuilder("");
         if (decl) {
             ret.append("      java.util.List "+fname+";\n");
         }
@@ -76,7 +76,7 @@ public class JVector extends JCompType {
     }
     
     public String genJavaWriteWrapper(String fname, String tag) {
-        StringBuffer ret = new StringBuffer("    {\n");
+        StringBuilder ret = new StringBuilder("    {\n");
         incrLevel();
         ret.append("      a_.startVector("+fname+",\""+tag+"\");\n");
         ret.append("      if ("+fname+"!= null) {");

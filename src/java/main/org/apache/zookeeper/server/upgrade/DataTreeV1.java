@@ -553,7 +553,7 @@ public class DataTreeV1 {
 
     public String dumpEphemerals() {
         Set<Long> keys = ephemerals.keySet();
-        StringBuffer sb = new StringBuffer("Sessions with Ephemerals ("
+        StringBuilder sb = new StringBuilder("Sessions with Ephemerals ("
                 + keys.size() + "):\n");
         for (long k : keys) {
             sb.append("0x" + Long.toHexString(k));

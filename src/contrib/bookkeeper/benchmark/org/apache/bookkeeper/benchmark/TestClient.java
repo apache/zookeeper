@@ -127,7 +127,7 @@ public class TestClient
     public static void main(String[] args) {
         
         int lenght = Integer.parseInt(args[1]);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while(lenght-- > 0){
             sb.append('a');
         }
@@ -135,7 +135,7 @@ public class TestClient
         Integer selection = Integer.parseInt(args[0]);
         switch(selection){
         case 0:           
-            StringBuffer servers_sb = new StringBuffer();
+            StringBuilder servers_sb = new StringBuilder();
             for (int i = 4; i < args.length; i++){
                 servers_sb.append(args[i] + " ");
             }

@@ -44,7 +44,7 @@ public class Follower extends Learner{
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("Follower ").append(sock);
         sb.append(" lastQueuedZxid:").append(lastQueued);
         sb.append(" pendingRevalidationCount:")

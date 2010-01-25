@@ -220,7 +220,7 @@ public class AsyncOps {
         }
         
         public String toString(List<ACL> acls) {
-            StringBuffer result = new StringBuffer();
+            StringBuilder result = new StringBuilder();
             for(ACL acl : acls) {
                 result.append(acl.getPerms() + "::");
             }

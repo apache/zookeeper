@@ -796,7 +796,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                 sendBuffer(ByteBuffer.wrap("ZooKeeper not active \n"
                         .getBytes()));
             } else {
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 sb.append("SessionTracker dump: \n");
                 sb.append(zk.sessionTracker.toString()).append("\n");
                 sb.append("ephemeral nodes dump:\n");
@@ -811,7 +811,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     + sock.socket().getRemoteSocketAddress());
             packetReceived();
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             if (zk != null){
                 sb.append("Zookeeper version: ").append(Version.getFullVersion())
                     .append("\n");
@@ -839,7 +839,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     + sock.socket().getRemoteSocketAddress());
             packetReceived();
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             if (zk != null){
                 synchronized(factory.cnxns){
                     for(NIOServerCnxn c : factory.cnxns){
@@ -859,7 +859,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     + sock.socket().getRemoteSocketAddress());
             packetReceived();
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
 
             List<Environment.Entry> env = Environment.list();
 

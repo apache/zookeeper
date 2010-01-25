@@ -247,6 +247,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-626. ensure the c/java cli's print xid/sessionid/etc... in hex (pat via mahadev)
 
+  ZOOKEEPER-655. StringBuffer -> StringBuilder - conversion of references as necessary (Kay Kay via henry)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
