@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.StringBuffer;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -309,7 +308,7 @@ public class Leader {
                 if (self.tick > self.initLimit) {
                     // Followers aren't syncing fast enough,
                     // renounce leadership!
-                    StringBuffer ackToString = new StringBuffer();
+                    StringBuilder ackToString = new StringBuilder();
                     for(Long id : newLeaderProposal.ackSet)
                         ackToString.append(id + ": ");
                     

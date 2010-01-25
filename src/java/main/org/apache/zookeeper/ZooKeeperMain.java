@@ -535,7 +535,7 @@ public class ZooKeeperMain {
         // now create the direct children
         // and the stat and quota nodes
         String[] splits = path.split("/");
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(quotaPath);
         for (int i=1; i<splits.length; i++) {
             sb.append("/" + splits[i]);
@@ -791,7 +791,7 @@ public class ZooKeeperMain {
     }
 
     private static String getPermString(int perms) {
-        StringBuffer p = new StringBuffer();
+        StringBuilder p = new StringBuilder();
         if ((perms & ZooDefs.Perms.CREATE) != 0) {
             p.append('c');
         }

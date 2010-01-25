@@ -47,7 +47,7 @@ public class Observer extends Learner{
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("Observer ").append(sock);        
         sb.append(" pendingRevalidationCount:")
             .append(pendingRevalidations.size());

@@ -55,7 +55,7 @@ public class JBuffer extends JCompType {
     }
     
     public String genJavaCompareTo(String fname, String other) {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append("    {\n");
       sb.append("      byte[] my = "+fname+";\n");
       sb.append("      byte[] ur = "+other+";\n");
@@ -80,7 +80,7 @@ public class JBuffer extends JCompType {
     }
     
     public String genJavaSlurpBytes(String b, String s, String l) {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append("        {\n");
       sb.append("           int i = org.apache.jute.Utils.readVInt("+b+", "+s+");\n");
       sb.append("           int z = WritableUtils.getVIntSize(i);\n");
@@ -90,7 +90,7 @@ public class JBuffer extends JCompType {
     }
     
     public String genJavaCompareBytes() {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append("        {\n");
       sb.append("           int i1 = org.apache.jute.Utils.readVInt(b1, s1);\n");
       sb.append("           int i2 = org.apache.jute.Utils.readVInt(b2, s2);\n");

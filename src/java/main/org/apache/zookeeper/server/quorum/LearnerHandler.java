@@ -91,7 +91,7 @@ public class LearnerHandler extends Thread {
     
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("LearnerHandler ").append(sock);
         sb.append(" tickOfLastAck:").append(tickOfLastAck());
         sb.append(" synced?:").append(synced());

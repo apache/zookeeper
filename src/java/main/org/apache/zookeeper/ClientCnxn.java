@@ -167,7 +167,7 @@ public class ClientCnxn {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         SocketAddress local = getLocalSocketAddress();
         SocketAddress remote = getRemoteSocketAddress();
@@ -279,7 +279,7 @@ public class ClientCnxn {
 
         @Override
         public String toString() {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
 
             sb.append("clientPath:" + clientPath);
             sb.append(" serverPath:" + serverPath);
