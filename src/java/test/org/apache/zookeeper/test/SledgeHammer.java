@@ -102,7 +102,7 @@ public class SledgeHammer extends Thread implements Watcher {
         }
         SledgeHammer h = new SledgeHammer(args[0], Integer.parseInt(args[1]),
                 Integer.parseInt(args[2]));
-        h.run();
+        h.start();
         System.exit(0);
     }
 
