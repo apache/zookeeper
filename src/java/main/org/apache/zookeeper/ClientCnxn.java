@@ -129,6 +129,13 @@ public class ClientCnxn {
 
     private int connectTimeout;
 
+    /** The timeout in ms the client negotiated with the server. This is the 
+     *  "real" timeout, not the timeout request by the client (which may
+     *  have been increased/decreased by the server which applies bounds
+     *  to this value.
+     */
+    private volatile int negotiatedSessionTimeout;
+
     private int readTimeout;
 
     private final int sessionTimeout;
@@ -163,6 +170,10 @@ public class ClientCnxn {
 
     public byte[] getSessionPasswd() {
         return sessionPasswd;
+    }
+
+    public int getSessionTimeout() {
+        return negotiatedSessionTimeout;
     }
 
     @Override
@@ -668,8 +679,8 @@ public class ClientCnxn {
             BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
             ConnectResponse conRsp = new ConnectResponse();
             conRsp.deserialize(bbia, "connect");
-            int sessionTimeout = conRsp.getTimeOut();
-            if (sessionTimeout <= 0) {
+            negotiatedSessionTimeout = conRsp.getTimeOut();
+            if (negotiatedSessionTimeout <= 0) {
                 zooKeeper.state = States.CLOSED;
 
                 eventThread.queueEvent(new WatchedEvent(
@@ -679,8 +690,8 @@ public class ClientCnxn {
                         "Unable to reconnect to ZooKeeper service, session 0x"
                         + Long.toHexString(sessionId) + " has expired");
             }
-            readTimeout = sessionTimeout * 2 / 3;
-            connectTimeout = sessionTimeout / serverAddrs.size();
+            readTimeout = negotiatedSessionTimeout * 2 / 3;
+            connectTimeout = negotiatedSessionTimeout / serverAddrs.size();
             sessionId = conRsp.getSessionId();
             sessionPasswd = conRsp.getPasswd();
             zooKeeper.state = States.CONNECTED;
@@ -689,7 +700,7 @@ public class ClientCnxn {
                         .socket().getRemoteSocketAddress()
                     + ", sessionid = 0x"
                     + Long.toHexString(sessionId)
-                    + ", negotiated timeout = " + sessionTimeout);
+                    + ", negotiated timeout = " + negotiatedSessionTimeout);
             eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
                     Watcher.Event.KeeperState.SyncConnected, null));
         }

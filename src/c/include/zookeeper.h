@@ -343,10 +343,21 @@ ZOOAPI int zookeeper_close(zhandle_t *zh);
  */
 ZOOAPI const clientid_t *zoo_client_id(zhandle_t *zh);
 
+/**
+ * \brief return the timeout for this session, only valid if the connections
+ * is currently connected (ie. last watcher state is ZOO_CONNECTED_STATE). This
+ * value may change after a server re-connect.
+ */
 ZOOAPI int zoo_recv_timeout(zhandle_t *zh);
 
+/**
+ * \brief return the context for this handle.
+ */
 ZOOAPI const void *zoo_get_context(zhandle_t *zh);
 
+/**
+ * \brief set the context for this handle.
+ */
 ZOOAPI void zoo_set_context(zhandle_t *zh, void *context);
 
 /**

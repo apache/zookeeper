@@ -257,6 +257,9 @@ IMPROVEMENTS:
   ZOOKEEPER-456. CREATOR_ALL_ACL has unnecessary PERMS.ADMIN in the
   declartion. (phunt via mahadev)
 
+  ZOOKEEPER-593.  java client api does not allow client to access negotiated
+  session timeout (phunt via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
