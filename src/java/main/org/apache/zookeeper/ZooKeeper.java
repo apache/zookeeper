@@ -473,6 +473,19 @@ public class ZooKeeper {
     }
 
     /**
+     * The negotiated session timeout for this ZooKeeper client instance. The
+     * value returned is not valid until the client connects to a server and
+     * may change after a re-connect.
+     *
+     * This method is NOT thread safe
+     *
+     * @return current session timeout
+     */
+    public int getSessionTimeout() {
+        return cnxn.getSessionTimeout();
+    }
+
+    /**
      * Add the specified scheme:auth information to this connection.
      *
      * This method is NOT thread safe
@@ -1469,7 +1482,12 @@ public class ZooKeeper {
      */
     @Override
     public String toString() {
-        return ("State:" + getState().toString() + " " + cnxn);
+        States state = getState();
+        return ("State:" + state.toString()
+                + (state == States.CONNECTED ?
+                        " Timeout:" + getSessionTimeout() + " " :
+                        " ")
+                + cnxn);
     }
 
     /*

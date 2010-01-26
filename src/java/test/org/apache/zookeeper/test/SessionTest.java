@@ -53,6 +53,8 @@ public class SessionTest extends TestCase implements Watcher {
     private CountDownLatch startSignal;
 
     File tmpDir;
+    
+    private final int TICK_TIME = 3000;
 
     @Override
     protected void setUp() throws Exception {
@@ -63,7 +65,7 @@ public class SessionTest extends TestCase implements Watcher {
         }
 
         ClientBase.setupTestEnv();
-        ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, TICK_TIME);
 
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         serverFactory = new NIOServerCnxn.Factory(PORT);
@@ -281,6 +283,34 @@ public class SessionTest extends TestCase implements Watcher {
         assertEquals(2, watcher.states.size());
 
         zk.close();
+    }
+
+    @Test
+    /**
+     * Verify access to the negotiated session timeout.
+     */
+    public void testSessionTimeoutAccess() throws Exception {
+        // validate typical case - requested == negotiated
+        DisconnectableZooKeeper zk = createClient(TICK_TIME * 4);
+        assertEquals(TICK_TIME * 4, zk.getSessionTimeout());
+        // make sure tostring works in both cases
+        LOG.info(zk.toString());
+        zk.close();
+        LOG.info(zk.toString());
+
+        // validate lower limit
+        zk = createClient(TICK_TIME);
+        assertEquals(TICK_TIME * 2, zk.getSessionTimeout());
+        LOG.info(zk.toString());
+        zk.close();
+        LOG.info(zk.toString());
+
+        // validate upper limit
+        zk = createClient(TICK_TIME * 30);
+        assertEquals(TICK_TIME * 20, zk.getSessionTimeout());
+        LOG.info(zk.toString());
+        zk.close();
+        LOG.info(zk.toString());
     }
 
     private class DupWatcher extends CountdownWatcher {
