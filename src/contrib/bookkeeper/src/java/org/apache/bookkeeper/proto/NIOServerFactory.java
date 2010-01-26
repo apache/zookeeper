@@ -45,8 +45,9 @@ public class NIOServerFactory extends Thread {
     public interface PacketProcessor {
         public void processPacket(ByteBuffer packet, Cnxn src);
     }
-    ServerStats stats = new ServerStats();
     
+    ServerStats stats = new ServerStats();
+
     Logger LOG = Logger.getLogger(NIOServerFactory.class);
 
     ServerSocketChannel ss;
@@ -89,6 +90,7 @@ public class NIOServerFactory extends Thread {
         }
     }
 
+    @Override
     public void run() {
         while (!ss.socket().isClosed()) {
             try {
@@ -97,16 +99,13 @@ public class NIOServerFactory extends Thread {
                 synchronized (this) {
                     selected = selector.selectedKeys();
                 }
-                ArrayList<SelectionKey> selectedList = new ArrayList<SelectionKey>(
-                        selected);
+                ArrayList<SelectionKey> selectedList = new ArrayList<SelectionKey>(selected);
                 Collections.shuffle(selectedList);
                 for (SelectionKey k : selectedList) {
                     if ((k.readyOps() & SelectionKey.OP_ACCEPT) != 0) {
-                        SocketChannel sc = ((ServerSocketChannel) k.channel())
-                                .accept();
+                        SocketChannel sc = ((ServerSocketChannel) k.channel()).accept();
                         sc.configureBlocking(false);
-                        SelectionKey sk = sc.register(selector,
-                                SelectionKey.OP_READ);
+                        SelectionKey sk = sc.register(selector, SelectionKey.OP_READ);
                         Cnxn cnxn = new Cnxn(sc, sk);
                         sk.attach(cnxn);
                         addCnxn(cnxn);
@@ -167,7 +166,7 @@ public class NIOServerFactory extends Thread {
     public class Cnxn {
 
         private SocketChannel sock;
-        
+
         private SelectionKey sk;
 
         boolean initialized;
@@ -183,7 +182,7 @@ public class NIOServerFactory extends Thread {
         int packetsSent;
 
         int packetsReceived;
-        
+
         void doIO(SelectionKey k) throws InterruptedException {
             try {
                 if (sock == null) {
@@ -233,8 +232,7 @@ public class NIOServerFactory extends Thread {
                                  * be copied, so we've got to slice the buffer
                                  * if it's too big.
                                  */
-                                b = (ByteBuffer) b.slice().limit(
-                                        directBuffer.remaining());
+                                b = (ByteBuffer) b.slice().limit(directBuffer.remaining());
                             }
                             /*
                              * put() is going to modify the positions of both
@@ -286,15 +284,12 @@ public class NIOServerFactory extends Thread {
                     }
                     synchronized (this) {
                         if (outgoingBuffers.size() == 0) {
-                            if (!initialized
-                                    && (sk.interestOps() & SelectionKey.OP_READ) == 0) {
+                            if (!initialized && (sk.interestOps() & SelectionKey.OP_READ) == 0) {
                                 throw new IOException("Responded to info probe");
                             }
-                            sk.interestOps(sk.interestOps()
-                                    & (~SelectionKey.OP_WRITE));
+                            sk.interestOps(sk.interestOps() & (~SelectionKey.OP_WRITE));
                         } else {
-                            sk.interestOps(sk.interestOps()
-                                    | SelectionKey.OP_WRITE);
+                            sk.interestOps(sk.interestOps() | SelectionKey.OP_WRITE);
                         }
                     }
                 }
@@ -349,9 +344,8 @@ public class NIOServerFactory extends Thread {
         }
 
         String peerName;
-        
-        public Cnxn(SocketChannel sock, SelectionKey sk)
-                throws IOException {
+
+        public Cnxn(SocketChannel sock, SelectionKey sk) throws IOException {
             this.sock = sock;
             this.sk = sk;
             sock.socket().setTcpNoDelay(true);
@@ -360,14 +354,14 @@ public class NIOServerFactory extends Thread {
             if (LOG.isTraceEnabled()) {
                 peerName = sock.socket().toString();
             }
-            
+
             lenBuffer.clear();
             incomingBuffer = lenBuffer;
         }
 
+        @Override
         public String toString() {
-            return "NIOServerCnxn object with sock = " + sock + " and sk = "
-                    + sk;
+            return "NIOServerCnxn object with sock = " + sock + " and sk = " + sk;
         }
 
         boolean closed;
@@ -437,11 +431,11 @@ public class NIOServerFactory extends Thread {
                 throw e;
             }
         }
-        
+
         private void sendBuffers(ByteBuffer bb[]) {
             ByteBuffer len = ByteBuffer.allocate(4);
             int total = 0;
-            for(int i = 0; i < bb.length; i++) {
+            for (int i = 0; i < bb.length; i++) {
                 if (bb[i] != null) {
                     total += bb[i].remaining();
                 }
@@ -452,14 +446,14 @@ public class NIOServerFactory extends Thread {
             len.putInt(total);
             len.flip();
             outgoingBuffers.add(len);
-            for(int i = 0; i < bb.length; i++) {
+            for (int i = 0; i < bb.length; i++) {
                 if (bb[i] != null) {
                     outgoingBuffers.add(bb[i]);
                 }
             }
             makeWritable(sk);
         }
-        
+
         synchronized public void sendResponse(ByteBuffer bb[]) {
             if (closed) {
                 return;
@@ -485,8 +479,8 @@ public class NIOServerFactory extends Thread {
             long packetsSent;
 
             /**
-             * The number of requests that have been submitted but not yet responded
-             * to.
+             * The number of requests that have been submitted but not yet
+             * responded to.
              */
             public long getOutstandingRequests() {
                 return outstandingRequests;
@@ -500,19 +494,15 @@ public class NIOServerFactory extends Thread {
                 return packetsSent;
             }
 
+            @Override
             public String toString() {
                 StringBuilder sb = new StringBuilder();
                 Channel channel = sk.channel();
                 if (channel instanceof SocketChannel) {
-                    sb.append(" ").append(
-                            ((SocketChannel) channel).socket()
-                                    .getRemoteSocketAddress()).append("[")
-                            .append(Integer.toHexString(sk.interestOps()))
-                            .append("](queued=").append(
-                                    getOutstandingRequests())
-                            .append(",recved=").append(getPacketsReceived())
-                            .append(",sent=").append(getPacketsSent()).append(
-                                    ")\n");
+                    sb.append(" ").append(((SocketChannel) channel).socket().getRemoteSocketAddress()).append("[")
+                            .append(Integer.toHexString(sk.interestOps())).append("](queued=").append(
+                                    getOutstandingRequests()).append(",recved=").append(getPacketsReceived()).append(
+                                    ",sent=").append(getPacketsSent()).append(")\n");
                 }
                 return sb.toString();
             }
