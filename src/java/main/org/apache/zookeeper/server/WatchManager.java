@@ -18,9 +18,11 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.WatchedEvent;
@@ -35,10 +37,10 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 public class WatchManager {
     private static final Logger LOG = Logger.getLogger(WatchManager.class);
 
-    private HashMap<String, HashSet<Watcher>> watchTable = 
+    private final HashMap<String, HashSet<Watcher>> watchTable =
         new HashMap<String, HashSet<Watcher>>();
 
-    private HashMap<Watcher, HashSet<String>> watch2Paths = 
+    private final HashMap<Watcher, HashSet<String>> watch2Paths =
         new HashMap<Watcher, HashSet<String>>();
 
     public synchronized int size(){
@@ -48,13 +50,17 @@ public class WatchManager {
     public synchronized void addWatch(String path, Watcher watcher) {
         HashSet<Watcher> list = watchTable.get(path);
         if (list == null) {
-            list = new HashSet<Watcher>();
+            // don't waste memory if there are few watches on a node
+            // rehash when the 4th entry is added, doubling size thereafter
+            // seems like a good compromise
+            list = new HashSet<Watcher>(4);
             watchTable.put(path, list);
         }
         list.add(watcher);
 
         HashSet<String> paths = watch2Paths.get(watcher);
         if (paths == null) {
+            // cnxns typically have many watches, so use default cap here
             paths = new HashSet<String>();
             watch2Paths.put(watcher, paths);
         }
@@ -80,7 +86,7 @@ public class WatchManager {
     public Set<Watcher> triggerWatch(String path, EventType type) {
         return triggerWatch(path, type, null);
     }
-    
+
     public Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
         WatchedEvent e = new WatchedEvent(type,
                 KeeperState.SyncConnected, path);
@@ -109,5 +115,52 @@ public class WatchManager {
             w.process(e);
         }
         return watchers;
+    }
+
+    /**
+     * Brief description of this object.
+     */
+    @Override
+    public synchronized String toString() {
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(watch2Paths.size()).append(" connections watching ")
+            .append(watchTable.size()).append(" paths\n");
+
+        int total = 0;
+        for (HashSet<String> paths : watch2Paths.values()) {
+            total += paths.size();
+        }
+        sb.append("Total watches:").append(total);
+
+        return sb.toString();
+    }
+
+    /**
+     * String representation of watches. Warning, may be large!
+     * @param byPath iff true output watches by paths, otw output
+     * watches by connection
+     * @return string representation of watches
+     */
+    public synchronized void dumpWatches(PrintWriter pwriter, boolean byPath) {
+        if (byPath) {
+            for (Entry<String, HashSet<Watcher>> e : watchTable.entrySet()) {
+                pwriter.println(e.getKey());
+                for (Watcher w : e.getValue()) {
+                    pwriter.print("\t0x");
+                    pwriter.print(Long.toHexString(((ServerCnxn)w).getSessionId()));
+                    pwriter.print("\n");
+                }
+            }
+        } else {
+            for (Entry<Watcher, HashSet<String>> e : watch2Paths.entrySet()) {
+                pwriter.print("0x");
+                pwriter.println(Long.toHexString(((ServerCnxn)e.getKey()).getSessionId()));
+                for (String path : e.getValue()) {
+                    pwriter.print("\t");
+                    pwriter.println(path);
+                }
+            }
+        }
     }
 }

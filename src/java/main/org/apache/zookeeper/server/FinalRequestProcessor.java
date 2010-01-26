@@ -200,7 +200,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 break;
             }
             case OpCode.setACL: {
-                lastOp = "SETD";
+                lastOp = "SETA";
                 rsp = new SetACLResponse(rc.stat);
                 err = Code.get(rc.err);
                 break;

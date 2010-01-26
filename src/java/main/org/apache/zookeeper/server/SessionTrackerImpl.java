@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -103,21 +105,32 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     volatile long currentTime;
 
-    @Override
-    synchronized public String toString() {
-        StringBuilder sb = new StringBuilder("Session Sets (")
-                .append(sessionSets.size()).append("):\n");
+    synchronized public void dumpSessions(PrintWriter pwriter) {
+        pwriter.print("Session Sets (");
+        pwriter.print(sessionSets.size());
+        pwriter.println("):");
         ArrayList<Long> keys = new ArrayList<Long>(sessionSets.keySet());
         Collections.sort(keys);
         for (long time : keys) {
-            sb.append(sessionSets.get(time).sessions.size())
-                .append(" expire at ").append(new Date(time)).append(":\n");
+            pwriter.print(sessionSets.get(time).sessions.size());
+            pwriter.print(" expire at ");
+            pwriter.print(new Date(time));
+            pwriter.println(":");
             for (SessionImpl s : sessionSets.get(time).sessions) {
-                sb.append("\t0x").append(Long.toHexString(s.sessionId))
-                    .append("\n");
+                pwriter.print("\t0x");
+                pwriter.println(Long.toHexString(s.sessionId));
             }
         }
-        return sb.toString();
+    }
+
+    @Override
+    synchronized public String toString() {
+        StringWriter sw = new StringWriter();
+        PrintWriter pwriter = new PrintWriter(sw);
+        dumpSessions(pwriter);
+        pwriter.flush();
+        pwriter.close();
+        return sw.toString();
     }
 
     @Override
@@ -196,7 +209,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         }
     }
 
-   
+
     synchronized public long createSession(int sessionTimeout) {
         addSession(nextSessionId, sessionTimeout);
         return nextSessionId++;
@@ -209,13 +222,13 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
             sessionsById.put(id, s);
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                        "SessionTrackerImpl --- Adding session 0x" 
+                        "SessionTrackerImpl --- Adding session 0x"
                         + Long.toHexString(id) + " " + sessionTimeout);
             }
         } else {
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                        "SessionTrackerImpl --- Existing session 0x" 
+                        "SessionTrackerImpl --- Existing session 0x"
                         + Long.toHexString(id) + " " + sessionTimeout);
             }
         }
@@ -224,21 +237,21 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     synchronized public void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException {
         SessionImpl session = sessionsById.get(sessionId);
-		if (session == null) {
+        if (session == null) {
             throw new KeeperException.SessionExpiredException();
         }
-		if (session.owner == null) {
-			session.owner = owner;
-		} else if (session.owner != owner) {
-			throw new KeeperException.SessionMovedException();
-		}
+        if (session.owner == null) {
+            session.owner = owner;
+        } else if (session.owner != owner) {
+            throw new KeeperException.SessionMovedException();
+        }
     }
 
-	synchronized public void setOwner(long id, Object owner) throws SessionExpiredException {
-		SessionImpl session = sessionsById.get(id);
-		if (session == null) {
+    synchronized public void setOwner(long id, Object owner) throws SessionExpiredException {
+        SessionImpl session = sessionsById.get(id);
+        if (session == null) {
             throw new KeeperException.SessionExpiredException();
         }
-		session.owner = owner;
-	}
+        session.owner = owner;
+    }
 }
