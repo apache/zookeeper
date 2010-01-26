@@ -229,7 +229,7 @@ int process_async(int outstanding_sync);
 void process_completions(zhandle_t *zh);
 int flush_send_queue(zhandle_t*zh, int timeout);
 char* sub_string(zhandle_t *zh, const char* server_path);
-void free_duplicate_path(char* free_path, const char* path);
+void free_duplicate_path(const char* free_path, const char* path);
 void zoo_lock_auth(zhandle_t *zh);
 void zoo_unlock_auth(zhandle_t *zh);
 

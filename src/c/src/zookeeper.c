@@ -713,9 +713,9 @@ abort:
  * deallocated the free_path only its beeen allocated
  * and not equal to path
  */
-void free_duplicate_path(char *free_path, const char* path) {
+void free_duplicate_path(const char *free_path, const char* path) {
     if (free_path != path) {
-        free(free_path);
+        free((void*)free_path);
     }
 }
 
