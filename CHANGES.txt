@@ -251,6 +251,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-655. StringBuffer -> StringBuilder - conversion of references as necessary (Kay Kay via henry)
 
+  ZOOKEEPER-612. Make Zookeeper C client can be compiled by gcc of early
+  version (qian via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 

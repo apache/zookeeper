@@ -168,6 +168,27 @@ public:
                 CPPUNIT_ASSERT_EQUAL(3434,(int)ntohs(addr->sin_port));
         }
     }
+    void testMultipleAddressWithSpace()
+    { 
+        const string EXPECTED_HOST("127.0.0.1:2121,  127.0.0.2:3434");
+        const char EXPECTED_IPS[][4]={{127,0,0,1},{127,0,0,2}};
+        const int EXPECTED_ADDRS_COUNT =COUNTOF(EXPECTED_IPS);
+
+        zoo_deterministic_conn_order(1);
+        zh=zookeeper_init(EXPECTED_HOST.c_str(),0,1000,0,0,0);
+
+        CPPUNIT_ASSERT(zh!=0);
+        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
+
+        for(int i=0;i<zh->addrs_count;i++){
+            sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs[i];
+            CPPUNIT_ASSERT(memcmp(EXPECTED_IPS[i],&addr->sin_addr,sizeof(addr->sin_addr))==0);
+            if(i<1)
+                CPPUNIT_ASSERT_EQUAL(2121,(int)ntohs(addr->sin_port));
+            else
+                CPPUNIT_ASSERT_EQUAL(3434,(int)ntohs(addr->sin_port));
+        }
+    }
     void testNullAddressString()
     {
         zh=zookeeper_init(NULL,0,0,0,0,0);

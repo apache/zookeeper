@@ -316,10 +316,11 @@ static void free_auth_info(auth_list_head_t *auth_list)
 {
     auth_info *auth = auth_list->auth;
     while (auth != NULL) {
+        auth_info* old_auth = NULL;
         if(auth->scheme!=NULL)
             free(auth->scheme);
         deallocate_Buffer(&auth->auth);
-        auth_info *old_auth = auth;
+        old_auth = auth;
         auth = auth->next;
         free(old_auth);
     }
@@ -449,10 +450,17 @@ int getaddrs(zhandle_t *zh)
         }
 
         memset(&hints, 0, sizeof(hints));
+#ifdef AI_ADDRCONFIG
         hints.ai_flags = AI_ADDRCONFIG;
+#else
+        hints.ai_flags = 0;
+#endif
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_protocol = IPPROTO_TCP;
+
+        while(isspace(*host) && host != strtok_last)
+            host++;
 
         if (getaddrinfo(host, port_spec, &hints, &res0) != 0) {
             LOG_ERROR(("getaddrinfo: %s\n", strerror(errno)));
@@ -543,6 +551,15 @@ watcher_fn zoo_set_watcher(zhandle_t *zh,watcher_fn newFn)
 
 static void log_env() {
   char buf[2048];
+#ifdef HAVE_SYS_UTSNAME_H
+  struct utsname utsname;
+#endif
+
+#if defined(HAVE_GETUID) && defined(HAVE_GETPWUID_R)
+  struct passwd pw;
+  struct passwd *pwp = NULL;
+  uid_t uid = 0;
+#endif
 
   LOG_INFO(("Client environment:zookeeper.version=%s", PACKAGE_STRING));
 
@@ -554,7 +571,6 @@ static void log_env() {
 #endif
 
 #ifdef HAVE_SYS_UTSNAME_H
-  struct utsname utsname;
   uname(&utsname);
   LOG_INFO(("Client environment:os.name=%s", utsname.sysname));
   LOG_INFO(("Client environment:os.arch=%s", utsname.release));
@@ -572,9 +588,7 @@ static void log_env() {
 #endif
 
 #if defined(HAVE_GETUID) && defined(HAVE_GETPWUID_R)
-  uid_t uid = getuid();
-  struct passwd pw;
-  struct passwd *pwp;
+  uid = getuid();
   if (!getpwuid_r(uid, &pw, buf, sizeof(buf), &pwp)) {
     LOG_INFO(("Client environment:user.home=%s", pw.pw_dir));
   } else {
@@ -601,6 +615,10 @@ static void log_env() {
 zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
   int recv_timeout, const clientid_t *clientid, void *context, int flags)
 {
+    int errnosave = 0;
+    zhandle_t *zh = NULL;
+    char *index_chroot = NULL;
+
     log_env();
 
     LOG_INFO(("Initiating client connection, host=%s sessionTimeout=%d watcher=%p"
@@ -614,9 +632,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
               context,
               flags));
 
-    int errnosave;
-    zhandle_t *zh = calloc(1, sizeof(*zh));
-    char *index_chroot;
+    zh = calloc(1, sizeof(*zh));
     if (!zh) {
         return 0;
     }
@@ -1122,8 +1138,9 @@ static int send_info_packet(zhandle_t *zh, auth_info* auth) {
 /** send all auths, not just the last one **/
 static int send_auth_info(zhandle_t *zh) {
     int rc = 0;
+    auth_info *auth = NULL;
+
     zoo_lock_auth(zh);
-    auth_info *auth;
     auth = zh->auth_h.auth;
     if (auth == NULL) {
         zoo_unlock_auth(zh);
@@ -1140,9 +1157,11 @@ static int send_auth_info(zhandle_t *zh) {
 
 static int send_last_auth_info(zhandle_t *zh)
 {    
-    int rc;
+    int rc = 0;
+    auth_info *auth = NULL;
+
     zoo_lock_auth(zh);
-    auth_info *auth = get_last_auth(&zh->auth_h);
+    auth = get_last_auth(&zh->auth_h);
     if(auth==NULL) {
       zoo_unlock_auth(zh);
       return ZOK; // there is nothing to send
@@ -1786,17 +1805,18 @@ int zookeeper_process(zhandle_t *zh, int events)
         }
         
         if (hdr.xid == WATCHER_EVENT_XID) {
+            struct WatcherEvent evt;
+            int type = 0;
+            char *path = NULL;
+            completion_list_t *c = NULL;
+
             LOG_DEBUG(("Processing WATCHER_EVENT"));
 
-            struct WatcherEvent evt;
-            int type;
-            char *path;
             deserialize_WatcherEvent(ia, "event", &evt);
             type = evt.type;
             path = evt.path;
             /* We are doing a notification, so there is no pending request */
-            completion_list_t *c = 
-                create_completion_entry(WATCHER_EVENT_XID,-1,0,0,0);
+            c = create_completion_entry(WATCHER_EVENT_XID,-1,0,0,0);
             c->buffer = bptr;
             c->c.watcher_result = collectWatchers(zh, type, path);
 
@@ -1844,9 +1864,10 @@ int zookeeper_process(zhandle_t *zh, int events)
 
             if (cptr->c.void_result != SYNCHRONOUS_MARKER) {
                 if(hdr.xid == PING_XID){
+                    int elapsed = 0;
                     struct timeval now;
                     gettimeofday(&now, 0);
-                    int elapsed = calculate_interval(&zh->last_ping, &now);
+                    elapsed = calculate_interval(&zh->last_ping, &now);
                     LOG_DEBUG(("Got ping response in %d ms", elapsed));
 
                     // Nothing to do with a ping response
@@ -2175,9 +2196,14 @@ finish:
 }
 
 static int isValidPath(const char* path, const int flags) {
+    int len = 0;
+    char lastc = '/';
+    char c;
+    int i = 0;
+
   if (path == 0)
     return 0;
-  const int len = strlen(path);
+  len = strlen(path);
   if (len == 0)
     return 0;
   if (path[0] != '/')
@@ -2187,9 +2213,7 @@ static int isValidPath(const char* path, const int flags) {
   if (path[len - 1] == '/' && !(flags & ZOO_SEQUENCE))
     return 0;
 
-  char lastc = '/';
-  char c;
-  int i = 1;
+  i = 1;
   for (; i < len; lastc = path[i], i++) {
     c = path[i];
             

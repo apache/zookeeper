@@ -140,6 +140,7 @@ void notify_thread_ready(zhandle_t* zh)
 
 void start_threads(zhandle_t* zh)
 {
+    int rc = 0;
     struct adaptor_threads* adaptor=zh->adaptor_priv;
     pthread_cond_init(&adaptor->cond,0);
     pthread_mutex_init(&adaptor->lock,0);
@@ -149,7 +150,7 @@ void start_threads(zhandle_t* zh)
     // while initialization is in progress
     api_prolog(zh);
     LOG_DEBUG(("starting threads..."));
-    int rc=pthread_create(&adaptor->io, 0, do_io, zh);
+    rc=pthread_create(&adaptor->io, 0, do_io, zh);
     assert("pthread_create() failed for the IO thread"&&!rc);
     rc=pthread_create(&adaptor->completion, 0, do_completion, zh);
     assert("pthread_create() failed for the completion thread"&&!rc);

@@ -99,9 +99,11 @@ static watcher_object_list_t* create_watcher_object_list(watcher_object_t* head)
 
 static void destroy_watcher_object_list(watcher_object_list_t* list)
 {
+    watcher_object_t* e = NULL;
+
     if(list==0)
         return;
-    watcher_object_t* e=list->head;
+    e=list->head;
     while(e!=0){
         watcher_object_t* this=e;
         e=e->next;
