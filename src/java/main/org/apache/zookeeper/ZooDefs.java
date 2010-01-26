@@ -43,7 +43,7 @@ public class ZooDefs {
         public final int setACL = 7;
 
         public final int getChildren = 8;
-        
+
         public final int sync = 9;
 
         public final int ping = 11;
@@ -51,7 +51,7 @@ public class ZooDefs {
         public final int getChildren2 = 12;
 
         public final int auth = 100;
-        
+
         public final int setWatches = 101;
 
         public final int createSession = -10;
@@ -97,8 +97,7 @@ public class ZooDefs {
          * This ACL gives the creators authentication id's all permissions.
          */
         public final ArrayList<ACL> CREATOR_ALL_ACL = new ArrayList<ACL>(
-                Collections.singletonList(new ACL(Perms.ALL | Perms.ADMIN,
-                        AUTH_IDS)));
+                Collections.singletonList(new ACL(Perms.ALL, AUTH_IDS)));
 
         /**
          * This ACL gives the world the ability to read.
