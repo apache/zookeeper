@@ -209,6 +209,9 @@ BUGFIXES:
 
   ZOOKEEPER-656. SledgeHammer test - thread.run() deprecated (kay kay via mahadev)
 
+  ZOOKEEPER-413. two flaws need addressing in the c tests that can cause false
+  positive failures (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
