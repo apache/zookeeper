@@ -266,6 +266,8 @@ IMPROVEMENTS:
   ZOOKEEPER-593.  java client api does not allow client to access negotiated
   session timeout (phunt via mahadev)
 
+  ZOOKEEPER-507. BookKeeper client re-write (Utkarsh and ben via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 

@@ -1,4 +1,5 @@
 package org.apache.bookkeeper.test;
+
 /*
  * 
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -20,7 +21,6 @@ package org.apache.bookkeeper.test;
  * 
  */
 
-
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
@@ -28,7 +28,6 @@ import org.apache.bookkeeper.proto.NIOServerFactory;
 import org.apache.bookkeeper.proto.NIOServerFactory.Cnxn;
 import org.apache.bookkeeper.proto.NIOServerFactory.PacketProcessor;
 import org.junit.Test;
-
 
 import junit.framework.TestCase;
 
@@ -41,8 +40,9 @@ public class NIOServerFactoryTest extends TestCase {
             }
             src.sendResponse(new ByteBuffer[] { ByteBuffer.allocate(4) });
         }
-        
+
     };
+
     @Test
     public void testProblemProcessor() throws Exception {
         NIOServerFactory factory = new NIOServerFactory(22334, problemProcessor);

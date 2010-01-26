@@ -23,11 +23,11 @@ package org.apache.bookkeeper.streaming;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Enumeration;
 
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.LedgerEntry;
 import org.apache.bookkeeper.client.LedgerHandle;
-import org.apache.bookkeeper.client.LedgerSequence;
 import org.apache.log4j.Logger;
 
 public class LedgerInputStream extends InputStream {
@@ -35,14 +35,16 @@ public class LedgerInputStream extends InputStream {
     private LedgerHandle lh;
     private ByteBuffer bytebuff;
     byte[] bbytes;
-    long lastEntry =0;
+    long lastEntry = 0;
     int increment = 50;
     int defaultSize = 1024 * 1024; // 1MB default size
-    LedgerSequence ledgerSeq = null;
-    
+    Enumeration<LedgerEntry> ledgerSeq = null;
+
     /**
      * construct a outputstream from a ledger handle
-     * @param lh ledger handle
+     * 
+     * @param lh
+     *            ledger handle
      * @throws {@link BKException}, {@link InterruptedException}
      */
     public LedgerInputStream(LedgerHandle lh) throws BKException, InterruptedException {
@@ -50,14 +52,17 @@ public class LedgerInputStream extends InputStream {
         bbytes = new byte[defaultSize];
         this.bytebuff = ByteBuffer.wrap(bbytes);
         this.bytebuff.position(this.bytebuff.limit());
-        lastEntry = Math.max(lh.getLast(), increment);
+        lastEntry = Math.min(lh.getLastAddConfirmed(), increment);
         ledgerSeq = lh.readEntries(0, lastEntry);
     }
 
     /**
      * construct a outputstream from a ledger handle
-     * @param lh the ledger handle
-     * @param size the size of the buffer
+     * 
+     * @param lh
+     *            the ledger handle
+     * @param size
+     *            the size of the buffer
      * @throws {@link BKException}, {@link InterruptedException}
      */
     public LedgerInputStream(LedgerHandle lh, int size) throws BKException, InterruptedException {
@@ -65,38 +70,37 @@ public class LedgerInputStream extends InputStream {
         bbytes = new byte[size];
         this.bytebuff = ByteBuffer.wrap(bbytes);
         this.bytebuff.position(this.bytebuff.limit());
-        lastEntry = Math.max(lh.getLast(), increment);
+        lastEntry = Math.min(lh.getLastAddConfirmed(), increment);
         ledgerSeq = lh.readEntries(0, lastEntry);
     }
-    
-    
+
     @Override
     public void close() {
         // do nothing
-        // let the applciation
+        // let the application
         // close the ledger
     }
-    
+
     /**
-     * refill the buffer, we 
-     * need to read more bytes
+     * refill the buffer, we need to read more bytes
+     * 
      * @return if we can refill or not
      */
     private synchronized boolean refill() throws IOException {
         bytebuff.clear();
-        if (!ledgerSeq.hasMoreElements() && lastEntry >= lh.getLast()) {
+        if (!ledgerSeq.hasMoreElements() && lastEntry >= lh.getLastAddConfirmed()) {
             return false;
         }
         if (!ledgerSeq.hasMoreElements()) {
-            //do refill 
-            long last = Math.max( lastEntry + increment, lh.getLast());
+            // do refill
+            long last = Math.min(lastEntry + increment, lh.getLastAddConfirmed());
             try {
                 ledgerSeq = lh.readEntries(lastEntry + 1, last);
-            } catch(BKException bk) {
+            } catch (BKException bk) {
                 IOException ie = new IOException(bk.getMessage());
                 ie.initCause(bk);
                 throw ie;
-            } catch(InterruptedException ie) {
+            } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
             lastEntry = last;
@@ -106,7 +110,7 @@ public class LedgerInputStream extends InputStream {
         bytebuff = ByteBuffer.wrap(bbytes);
         return true;
     }
-    
+
     @Override
     public synchronized int read() throws IOException {
         boolean toread = true;
@@ -120,10 +124,10 @@ public class LedgerInputStream extends InputStream {
         }
         return -1;
     }
-    
+
     @Override
     public synchronized int read(byte[] b) throws IOException {
-        // be smart ... just copy the bytes 
+        // be smart ... just copy the bytes
         // once and return the size
         // user will call it again
         boolean toread = true;
@@ -133,19 +137,19 @@ public class LedgerInputStream extends InputStream {
         if (toread) {
             int bcopied = bytebuff.remaining();
             int tocopy = Math.min(bcopied, b.length);
-            //cannot used gets because of
+            // cannot used gets because of
             // the underflow/overflow exceptions
-            System.arraycopy(bbytes, bytebuff.position(), b,0, tocopy);
+            System.arraycopy(bbytes, bytebuff.position(), b, 0, tocopy);
             bytebuff.position(bytebuff.position() + tocopy);
             return tocopy;
         }
         return -1;
     }
-    
+
     @Override
     public synchronized int read(byte[] b, int off, int len) throws IOException {
-        //again dont need ot fully
-        // fill b, just return 
+        // again dont need ot fully
+        // fill b, just return
         // what we have and let the application call read
         // again
         boolean toread = true;

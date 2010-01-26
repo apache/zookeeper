@@ -1,4 +1,5 @@
 package org.apache.bookkeeper.util;
+
 /*
  * 
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -20,30 +21,28 @@ package org.apache.bookkeeper.util;
  * 
  */
 
-
 import java.io.IOException;
 
 import org.apache.bookkeeper.proto.BookieClient;
 import org.apache.bookkeeper.proto.BookieServer;
-
 
 public class Main {
 
     static void usage() {
         System.err.println("USAGE: bookeeper client|bookie");
     }
+
     /**
      * @param args
-     * @throws InterruptedException 
-     * @throws IOException 
+     * @throws InterruptedException
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException, InterruptedException {
-        if (args.length < 1 || !(args[0].equals("client") || 
-                args[0].equals("bookie"))) {
+        if (args.length < 1 || !(args[0].equals("client") || args[0].equals("bookie"))) {
             usage();
             return;
         }
-        String newArgs[] = new String[args.length-1];
+        String newArgs[] = new String[args.length - 1];
         System.arraycopy(args, 1, newArgs, 0, newArgs.length);
         if (args[0].equals("bookie")) {
             BookieServer.main(newArgs);

@@ -1,4 +1,5 @@
-package org. apache.bookkeeper.client;
+package org.apache.bookkeeper.client;
+
 /*
  * 
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -20,597 +21,332 @@ package org. apache.bookkeeper.client;
  * 
  */
 
-
 import java.io.IOException;
-import java.net.ConnectException;
-import java.nio.ByteBuffer;
-import java.nio.channels.UnresolvedAddressException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Random;
-import java.net.InetSocketAddress;
-
+import java.util.concurrent.Executors;
 import org.apache.bookkeeper.client.BKException;
-import org.apache.bookkeeper.client.BookieHandle;
-import org.apache.bookkeeper.client.LedgerSequence;
 import org.apache.bookkeeper.client.AsyncCallback.CreateCallback;
 import org.apache.bookkeeper.client.AsyncCallback.OpenCallback;
 import org.apache.bookkeeper.client.BKException.Code;
-import org.apache.bookkeeper.client.LedgerHandle.QMode;
-import org.apache.bookkeeper.client.LedgerManagementProcessor.CreateLedgerOp;
-import org.apache.bookkeeper.client.LedgerManagementProcessor.OpenLedgerOp;
+import org.apache.bookkeeper.client.SyncCounter;
+import org.apache.bookkeeper.proto.BookieClient;
+import org.apache.bookkeeper.util.OrderedSafeExecutor;
 import org.apache.log4j.Logger;
 
-import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.WatchedEvent;
-
+import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 
 /**
- * BookKeeper client. We assume there is one single writer 
- * to a ledger at any time. 
+ * BookKeeper client. We assume there is one single writer to a ledger at any
+ * time.
  * 
- * There are three possible operations: start a new ledger, 
- * write to a ledger, and read from a ledger.
+ * There are three possible operations: start a new ledger, write to a ledger,
+ * and read from a ledger.
  * 
- * For the ZooKeeper layout, please refer to BKDefs.java.
+ * The exceptions resulting from synchronous calls and error code resulting from
+ * asynchronous calls can be found in the class {@link BKException}.
+ * 
  * 
  */
 
-public class BookKeeper 
-implements Watcher {
- 
-    Logger LOG = Logger.getLogger(BookKeeper.class);
-    
-    ZooKeeper zk = null;
-    
+public class BookKeeper implements OpenCallback, CreateCallback {
+
+  static final Logger LOG = Logger.getLogger(BookKeeper.class);
+
+  ZooKeeper zk = null;
+  // whether the zk handle is one we created, or is owned by whoever
+  // instantiated us
+  boolean ownZKHandle = false;
+
+  ClientSocketChannelFactory channelFactory;
+  // whether the socket factory is one we created, or is owned by whoever
+  // instantiated us
+  boolean ownChannelFactory = false;
+
+  BookieClient bookieClient;
+  BookieWatcher bookieWatcher;
+
+  OrderedSafeExecutor callbackWorker = new OrderedSafeExecutor(Runtime
+      .getRuntime().availableProcessors());
+  OrderedSafeExecutor mainWorkerPool = new OrderedSafeExecutor(Runtime
+      .getRuntime().availableProcessors());
+
+  /**
+   * Create a bookkeeper client. A zookeeper client and a client socket factory
+   * will be instantiated as part of this constructor.
+   * 
+   * @param servers
+   *          A list of one of more servers on which zookeeper is running. The
+   *          client assumes that the running bookies have been registered with
+   *          zookeeper under the path
+   *          {@link BookieWatcher#BOOKIE_REGISTRATION_PATH}
+   * @throws IOException
+   * @throws InterruptedException
+   * @throws KeeperException
+   */
+  public BookKeeper(String servers) throws IOException, InterruptedException,
+      KeeperException {
+    this(new ZooKeeper(servers, 10000, new Watcher() {
+      @Override
+      public void process(WatchedEvent event) {
+        // TODO: handle session disconnects and expires
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Process: " + event.getType() + " " + event.getPath());
+        }
+      }
+    }), new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
+        Executors.newCachedThreadPool()));
+
+    ownZKHandle = true;
+    ownChannelFactory = true;
+  }
+
+  /**
+   * Create a bookkeeper client but use the passed in zookeeper client instead
+   * of instantiating one.
+   * 
+   * @param zk
+   *          Zookeeper client instance connected to the zookeeper with which
+   *          the bookies have registered
+   * @throws InterruptedException
+   * @throws KeeperException
+   */
+  public BookKeeper(ZooKeeper zk) throws InterruptedException, KeeperException {
+    this(zk, new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
+        Executors.newCachedThreadPool()));
+    ownChannelFactory = true;
+  }
+
+  /**
+   * Create a bookkeeper client but use the passed in zookeeper client and
+   * client socket channel factory instead of instantiating those.
+   * 
+   * @param zk
+   *          Zookeeper client instance connected to the zookeeper with which
+   *          the bookies have registered
+   * @param channelFactory
+   *          A factory that will be used to create connections to the bookies
+   * @throws InterruptedException
+   * @throws KeeperException
+   */
+  public BookKeeper(ZooKeeper zk, ClientSocketChannelFactory channelFactory)
+      throws InterruptedException, KeeperException {
+    if (zk == null || channelFactory == null) {
+      throw new NullPointerException();
+    }
+    this.zk = zk;
+    this.channelFactory = channelFactory;
+    bookieWatcher = new BookieWatcher(this);
+    bookieWatcher.readBookiesBlocking();
+    bookieClient = new BookieClient(channelFactory, mainWorkerPool);
+  }
+
+  /**
+   * There are 2 digest types that can be used for verification. The CRC32 is
+   * cheap to compute but does not protect against byzantine bookies (i.e., a
+   * bookie might report fake bytes and a matching CRC32). The MAC code is more
+   * expensive to compute, but is protected by a password, i.e., a bookie can't
+   * report fake bytes with a mathching MAC unless it knows the password
+   */
+  public enum DigestType {
+    MAC, CRC32
+  };
+
+  public ZooKeeper getZkHandle() {
+    return zk;
+  }
+
+  /**
+   * Creates a new ledger asynchronously. To create a ledger, we need to specify
+   * the ensemble size, the quorum size, the digest type, a password, a callback
+   * implementation, and an optional control object. The ensemble size is how
+   * many bookies the entries should be striped among and the quorum size is the
+   * degree of replication of each entry. The digest type is either a MAC or a
+   * CRC. Note that the CRC option is not able to protect a client against a
+   * bookie that replaces an entry. The password is used not only to
+   * authenticate access to a ledger, but also to verify entries in ledgers.
+   * 
+   * @param ensSize
+   *          ensemble size
+   * @param qSize
+   *          quorum size
+   * @param digestType
+   *          digest type, either MAC or CRC32
+   * @param passwd
+   *          password
+   * @param cb
+   *          createCallback implementation
+   * @param ctx
+   *          optional control object
+   */
+  public void asyncCreateLedger(int ensSize, int qSize, DigestType digestType,
+      byte[] passwd, CreateCallback cb, Object ctx) {
+
+    new LedgerCreateOp(this, ensSize, qSize, digestType, passwd, cb, ctx)
+        .initiate();
+
+  }
+
+  /**
+   * Create callback implementation for synchronous create call.
+   * 
+   * @param rc
+   *          return code
+   * @param lh
+   *          ledger handle object
+   * @param ctx
+   *          optional control object
+   */
+  public void createComplete(int rc, LedgerHandle lh, Object ctx) {
+    SyncCounter counter = (SyncCounter) ctx;
+    counter.setLh(lh);
+    counter.setrc(rc);
+    counter.dec();
+  }
+
+  /**
+   * Creates a new ledger. Default of 3 servers, and quorum of 2 servers.
+   * 
+   * @param digestType
+   *          digest type, either MAC or CRC32
+   * @param passwd
+   *          password
+   * @return
+   * @throws KeeperException
+   * @throws InterruptedException
+   * @throws BKException
+   */
+  public LedgerHandle createLedger(DigestType digestType, byte passwd[])
+      throws KeeperException, BKException, InterruptedException, IOException {
+    return createLedger(3, 2, digestType, passwd);
+  }
+
+  /**
+   * Synchronous call to create ledger. Parameters match those of
+   * {@link #asyncCreateLedger(int, int, DigestType, byte[], CreateCallback, Object)}
+   * 
+   * @param ensSize
+   * @param qSize
+   * @param digestType
+   * @param passwd
+   * @return
+   * @throws KeeperException
+   * @throws InterruptedException
+   * @throws IOException
+   * @throws BKException
+   */
+  public LedgerHandle createLedger(int ensSize, int qSize,
+      DigestType digestType, byte passwd[]) throws KeeperException,
+      InterruptedException, IOException, BKException {
+    SyncCounter counter = new SyncCounter();
+    counter.inc();
     /*
-     * The ledgerMngProcessor is a thread that processes
-     * asynchronously requests that handle ledgers, such
-     * as create, open, and close.
+     * Calls asynchronous version
      */
-    private static LedgerManagementProcessor ledgerMngProcessor;
-    
+    asyncCreateLedger(ensSize, qSize, digestType, passwd, this, counter);
+
     /*
-     * Blacklist of bookies
+     * Wait
      */
-    HashSet<InetSocketAddress> bookieBlackList;
-    
-    LedgerSequence responseRead;
-    Long responseLong;
-    
-    public BookKeeper(String servers) 
-    throws KeeperException, IOException{
-    	LOG.debug("Creating BookKeeper for servers " + servers);
-        //Create ZooKeeper object
-        this.zk = new ZooKeeper(servers, 10000, this);
-        
-        //List to enable clients to blacklist bookies
-        this.bookieBlackList = new HashSet<InetSocketAddress>();
-    }
-    
-    /**
-     * Watcher method. 
-     */
-    synchronized public void process(WatchedEvent event) {
-        LOG.debug("Process: " + event.getType() + " " + event.getPath());
-    }
-    
-    /**
-     * Formats ledger ID according to ZooKeeper rules
-     * 
-     * @param id	znode id
-     */
-    String getZKStringId(long id){
-        return String.format("%010d", id);        
-    }
-    
-    /**
-     * return the zookeeper instance
-     * @return return the zookeeper instance
-     */
-    ZooKeeper getZooKeeper() {
-        return zk;
-    }
-    
-    LedgerManagementProcessor getMngProcessor(){
-        if (ledgerMngProcessor == null){
-            ledgerMngProcessor = new LedgerManagementProcessor(this);
-            ledgerMngProcessor.start();
-        }
-        return ledgerMngProcessor;
-    }
-    
-    /**
-     * Creates a new ledger. To create a ledger, we need to specify the ensemble
-     * size, the quorum size, the operation mode, and a password. The ensemble size
-     * and the quorum size depend upon the operation mode. The operation mode can be
-     * GENERIC, VERIFIABLE, or FREEFORM (debugging). The password is used not only
-     * to authenticate access to a ledger, but also to verify entries in verifiable
-     * ledgers.
-     * 
-     * @param ensSize   ensemble size
-     * @param qSize     quorum size
-     * @param mode      quorum mode: VERIFIABLE (default), GENERIC, or FREEFORM
-     * @param passwd    password
-     */
-    public LedgerHandle createLedger(int ensSize, int qSize, QMode mode,  byte passwd[])
-        throws KeeperException, InterruptedException, 
-        IOException, BKException {
-        // Check that quorum size follows the minimum
-        long t;
-        LedgerHandle lh = null;
-        
-        switch(mode){
-        case VERIFIABLE:
-            t = java.lang.Math.round(java.lang.Math.floor((ensSize - 1)/2));
-            if(t == 0){
-                LOG.error("Tolerates 0 bookie failures"); 
-                throw BKException.create(Code.QuorumException);
-            }
-            break;
-        case GENERIC:
-            t = java.lang.Math.round(java.lang.Math.floor((ensSize - 1)/3));
-            if(t == 0){
-                LOG.error("Tolerates 0 bookie failures"); 
-                throw BKException.create(Code.QuorumException);
-            }
-            break;
-        case FREEFORM:
-            break;
-        }
-        /*
-         * Create ledger node on ZK.
-         * We get the id from the sequence number on the node.
-         */
-        String path = zk.create(BKDefs.prefix, new byte[0], 
-                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-        /* 
-         * Extract ledger id.
-         */
-        String parts[] = path.split("/");
-        String subparts[] = parts[2].split("L");
-        try{
-            long lId = Long.parseLong(subparts[1]);
-       
-            /* 
-             * Get children from "/ledgers/available" on zk
-             */
-            List<String> list = 
-                zk.getChildren("/ledgers/available", false);
-            ArrayList<InetSocketAddress> lBookies = new ArrayList<InetSocketAddress>();
-            /* 
-             * Select ensSize servers to form the ensemble
-             */
-            path = zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble, new byte[0], 
-                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-         
-            /* 
-             * Add quorum size to ZK metadata
-             */
-            ByteBuffer bb = ByteBuffer.allocate(4);
-            bb.putInt(qSize);
-            zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumSize, bb.array(), 
-                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            /* 
-             * Quorum mode
-             */
-            bb = ByteBuffer.allocate(4);
-            bb.putInt(mode.ordinal());
-            zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumMode, bb.array(), 
-                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            /* 
-             * Create QuorumEngine
-             */
-            lh = new LedgerHandle(this, lId, 0, qSize, mode, passwd);
-            
-            /*
-             * Adding bookies to ledger handle
-             */
-            Random r = new Random();
-        
-            for(int i = 0; i < ensSize; i++){
-                int index = 0;
-                if(list.size() > 1) 
-                    index = r.nextInt(list.size() - 1);
-                else if(list.size() == 1)
-                    index = 0;
-                else {
-                    LOG.error("Not enough bookies available");
-        	    
-                    return null;
-                }
-            
-                try{
-                    String bookie = list.remove(index);
-                    LOG.info("Bookie: " + bookie);
-                    InetSocketAddress tAddr = parseAddr(bookie);
-                    int bindex = lh.addBookieForWriting(tAddr); 
-                    ByteBuffer bindexBuf = ByteBuffer.allocate(4);
-                    bindexBuf.putInt(bindex);
-        	    
-                    String pBookie = "/" + bookie;
-                    zk.create(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble + pBookie, bindexBuf.array(), 
-                            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                } catch (IOException e) {
-                    LOG.error(e);
-                    i--;
-                } 
-            }
-            LOG.debug("Created new ledger");
-        } catch (NumberFormatException e) {
-            LOG.error("Error when parsing the ledger identifier", e);
-        }
-        // Return ledger handler
-        return lh; 
+    counter.block(0);
+    if (counter.getLh() == null) {
+      LOG.error("ZooKeeper error: " + counter.getrc());
+      throw BKException.create(Code.ZKException);
     }
 
-    /**
-     * Creates a new ledger. Default of 3 servers, and quorum of 2 servers,
-     * verifiable ledger.
-     * 
-     * @param passwd	password
-     */
-    public LedgerHandle createLedger(byte passwd[])
-    throws KeeperException, BKException, 
-    InterruptedException, IOException {
-        return createLedger(3, 2, QMode.VERIFIABLE, passwd);
-    }
+    return counter.getLh();
+  }
 
-    /**
-     * Asychronous call to create ledger
-     * 
-     * @param ensSize
-     * @param qSize
-     * @param mode
-     * @param passwd
-     * @param cb
-     * @param ctx
-     * @throws KeeperException
-     * @throws InterruptedException
-     * @throws IOException
-     * @throws BKException
-     */
-    public void asyncCreateLedger(int ensSize, 
-            int qSize, 
-            QMode mode,  
-            byte passwd[],
-            CreateCallback cb,
-            Object ctx
-            )
-    throws KeeperException, InterruptedException, 
-    IOException, BKException {
-        CreateLedgerOp op = new CreateLedgerOp(ensSize, 
-                qSize, 
-                mode, 
-                passwd, 
-                cb, 
-                ctx);
-        LedgerManagementProcessor lmp = getMngProcessor();
-        lmp.addOp(op);
-        
-    }
-    
-    /**
-     * Open existing ledger for reading. Default for quorum size is 2.
-     * 
-     * @param long  the long corresponding to the ledger id
-     * @param byte[]    byte array corresponding to the password to access a ledger
-     * @param int   the quorum size, it has to be at least ceil(n+1/2)
-     */
-    public LedgerHandle openLedger(long lId, byte passwd[])
-    throws KeeperException, InterruptedException, IOException, BKException {
-        
-        Stat stat = null;
-        
-        /*
-         * Check if ledger exists
-         */
-        if(zk.exists(BKDefs.prefix + getZKStringId(lId), false) == null){
-            LOG.error("Ledger " + getZKStringId(lId) + " doesn't exist.");
-            throw BKException.create(Code.NoSuchLedgerExistsException);
-        }
-        
-        /*
-         * Get quorum size.
-         */
-        ByteBuffer bb = ByteBuffer.wrap(zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumSize, false, stat));
-        int qSize = bb.getInt();
-         
-        /*
-         * Get last entry written from ZK 
-         */
-        
-        long last = 0;
-        LOG.debug("Close path: " + BKDefs.prefix + getZKStringId(lId) + BKDefs.close);
-        if(zk.exists(BKDefs.prefix + getZKStringId(lId) + BKDefs.close, false) == null){
-            recoverLedger(lId, passwd);
-        }
-            
-        stat = null;
-        byte[] data = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.close, false, stat);
-        ByteBuffer buf = ByteBuffer.wrap(data);
-        last = buf.getLong();
-        //zk.delete(BKDefs.prefix + getZKStringId(lId) + BKDefs.close, -1);
-        
-        /*
-         * Quorum mode 
-         */
-        data = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumMode, false, stat);
-        buf = ByteBuffer.wrap(data);
-        
-        QMode qMode;
-        switch(buf.getInt()){
-        case 1:
-            qMode = QMode.GENERIC;
-            LOG.info("Generic ledger");
-            break;
-        case 2:
-            qMode = QMode.FREEFORM;
-            break;
-        default:
-            qMode = QMode.VERIFIABLE;
-            LOG.info("Verifiable ledger");
-        }
-        
-        /*
-         *  Create QuorumEngine
-         */
-        LedgerHandle lh = new LedgerHandle(this, lId, last, qSize, qMode, passwd);
-        
-        /*
-         * Get children of "/ledgers/id/ensemble" 
-         */
-        
-        List<String> list = 
-            zk.getChildren(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble, false);
-        
-        LOG.debug("Length of list of bookies: " + list.size());
-        for(int i = 0 ; i < list.size() ; i++){
-            for(String s : list){
-                LOG.debug("Extracting bookie: " + s);
-                byte[] bindex = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble + "/" + s, false, stat);
-                ByteBuffer bindexBuf = ByteBuffer.wrap(bindex);
-                if(bindexBuf.getInt() == i){                      
-                    try{
-                        lh.addBookieForReading(parseAddr(s));
-                    } catch (IOException e){
-                        LOG.error(e);
-                    }
-                }
-            }
-        }
-        
-        /*
-         * Read changes to quorum over time. To determine if there has been changes during
-         * writes to the ledger, check if there is a znode called quorumEvolution.
-         */
-        if(zk.exists(BKDefs.prefix + 
-                getZKStringId(lh.getId()) +  
-                BKDefs.quorumEvolution, false) != null){
-                    String path = BKDefs.prefix + 
-                    getZKStringId(lh.getId()) +  
-                    BKDefs.quorumEvolution;
-                    
-                    List<String> faultList = zk.getChildren(path, false);
-                    try{
-                        for(String s : faultList){
-                            LOG.debug("Faulty list child: " + s);
-                            long entry = Long.parseLong(s);
-                            String addresses = new String(zk.getData(path + "/" + s, false, stat));
-                            String parts[] = addresses.split(" ");
+  /**
+   * Open existing ledger asynchronously for reading.
+   * 
+   * @param lId
+   *          ledger identifier
+   * @param digestType
+   *          digest type, either MAC or CRC32
+   * @param passwd
+   *          password
+   * @param ctx
+   *          optional control object
+   */
+  public void asyncOpenLedger(long lId, DigestType digestType, byte passwd[],
+      OpenCallback cb, Object ctx) {
 
-                            ArrayList<BookieHandle> newBookieSet = new ArrayList<BookieHandle>();
-                            for(int i = 0 ; i < parts.length ; i++){
-                                LOG.debug("Address: " + parts[i]);
-                                InetSocketAddress faultyBookie =  
-                                    parseAddr(parts[i].substring(1));                           
-                        
-                                newBookieSet.add(lh.getBookieHandleDup(faultyBookie));
-                            }
-                            lh.setNewBookieConfig(entry, newBookieSet);
-                            LOG.debug("NewBookieSet size: " + newBookieSet.size());
-                        }
+    new LedgerOpenOp(this, lId, digestType, passwd, cb, ctx).initiate();
 
-                        lh.prepareEntryChange();
-                    } catch (NumberFormatException e) {
-                        LOG.error("Error when parsing the ledger identifier", e);
-                    }
-                }
-      
-        /*
-         *  Return ledger handler
-         */
-        return lh;
-    }    
-    
-    public void asyncOpenLedger(long lId, byte passwd[], OpenCallback cb, Object ctx)
-    throws InterruptedException{
-        OpenLedgerOp op = new OpenLedgerOp(lId, 
-                passwd,  
-                cb, 
-                ctx);
-        LedgerManagementProcessor lmp = getMngProcessor();
-        lmp.addOp(op);
-    }
-    
-    /**
-     * Parses address into IP and port.
-     * 
-     *  @param addr	String
+  }
+
+  /**
+   * Callback method for synchronous open operation
+   * 
+   * @param rc
+   *          return code
+   * @param lh
+   *          ledger handle
+   * @param ctx
+   *          optional control object
+   */
+  public void openComplete(int rc, LedgerHandle lh, Object ctx) {
+    SyncCounter counter = (SyncCounter) ctx;
+    counter.setLh(lh);
+
+    LOG.debug("Open complete: " + rc);
+
+    counter.setrc(rc);
+    counter.dec();
+  }
+
+  /**
+   * Synchronous open ledger call
+   * 
+   * @param lId
+   *          ledger identifier
+   * @param digestType
+   *          digest type, either MAC or CRC32
+   * @param passwd
+   *          password
+   * @return
+   * @throws InterruptedException
+   * @throws BKException
+   */
+
+  public LedgerHandle openLedger(long lId, DigestType digestType, byte passwd[])
+      throws BKException, InterruptedException {
+    SyncCounter counter = new SyncCounter();
+    counter.inc();
+
+    /*
+     * Calls async open ledger
      */
-    
-    InetSocketAddress parseAddr(String s){
-        String parts[] = s.split(":");
-        if (parts.length != 2) {
-            System.out.println(s
-                    + " does not have the form host:port");
-        }
-        InetSocketAddress addr = new InetSocketAddress(parts[0],
-                Integer.parseInt(parts[1]));
-        return addr;
-    }
-    
- 
-    /**
-     * Check if close node exists. 
-     * 
-     * @param ledgerId	id of the ledger to check
+    asyncOpenLedger(lId, digestType, passwd, this, counter);
+
+    /*
+     * Wait
      */
-    public boolean hasClosed(long ledgerId)
-    throws KeeperException, InterruptedException{
-        String closePath = BKDefs.prefix + getZKStringId(ledgerId) + BKDefs.close;
-        if(zk.exists(closePath, false) == null) return false;
-        else return true;
+    counter.block(0);
+    if (counter.getrc() != BKException.Code.OK)
+      throw BKException.create(counter.getrc());
+
+    return counter.getLh();
+  }
+
+  /**
+   * Shuts down client.
+   * 
+   */
+  public void halt() throws InterruptedException {
+    bookieClient.close();
+    bookieWatcher.halt();
+    if (ownChannelFactory) {
+      channelFactory.releaseExternalResources();
     }
-    
-    /**
-     * Recover a ledger that was not closed properly.
-     * 
-     * @param lId	ledger identifier
-     * @param passwd	password
-     */
-    
-    boolean recoverLedger(long lId, byte passwd[])
-    throws KeeperException, InterruptedException, IOException, BKException {
-        
-        Stat stat = null;
-       
-        LOG.info("Recovering ledger");
-        
-        /*
-         * Get quorum size.
-         */
-        ByteBuffer bb = ByteBuffer.wrap(zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumSize, false, stat));
-        int qSize = bb.getInt();
-                
-        
-        /*
-         * Get children of "/ledgers/id/ensemble" 
-         */
-        
-        List<String> list = 
-            zk.getChildren(BKDefs.prefix + getZKStringId(lId) + BKDefs.ensemble, false);
-        
-        ArrayList<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-        for(String s : list){
-            addresses.add(parseAddr(s));
-        }
-        
-        /*
-         * Quorum mode 
-         */
-        byte[] data = zk.getData(BKDefs.prefix + getZKStringId(lId) + BKDefs.quorumMode, false, stat);
-        ByteBuffer buf = ByteBuffer.wrap(data);
-        //int ordinal = buf.getInt();
-            
-        QMode qMode = QMode.VERIFIABLE;
-        switch(buf.getInt()){
-        case 0:
-            qMode = QMode.VERIFIABLE;
-            break;
-        case 1:
-            qMode = QMode.GENERIC;
-            break;
-        case 2:
-            qMode = QMode.FREEFORM;
-            break;
-        }
-        
-        /*
-         * Create ledger recovery monitor object
-         */
-        
-        LedgerRecoveryMonitor lrm = new LedgerRecoveryMonitor(this, lId, qSize, addresses, qMode);
-        
-        return lrm.recover(passwd);
+    if (ownZKHandle) {
+      zk.close();
     }
-    
-    /**
-     * Get new bookies
-     * 
-     * @param addrList	list of bookies to replace
-     */
-    InetSocketAddress getNewBookie(ArrayList<InetSocketAddress> addrList)
-    throws InterruptedException {
-        try{
-            // Get children from "/ledgers/available" on zk
-            List<String> list = 
-                zk.getChildren("/ledgers/available", false);
-            ArrayList<InetSocketAddress> lBookies = new ArrayList<InetSocketAddress>();
-    
-            for(String addr : list){
-                InetSocketAddress nAddr = parseAddr(addr); 
-                if(!addrList.contains(nAddr) &&
-                        !bookieBlackList.contains(nAddr))
-                    return nAddr;
-            }
-        } catch (KeeperException e){
-            LOG.error("Problem accessing ZooKeeper: " + e);
-        }
-        
-        return null;
-    }
-    
-    HashMap<InetSocketAddress, BookieHandle> bhMap = 
-    	new HashMap<InetSocketAddress, BookieHandle>();
-    
-    /**
-     *  Keeps a list of available BookieHandle objects and returns
-     *  the corresponding object given an address.
-     *  
-     *  @param	a	InetSocketAddress
-     */
-    
-    synchronized BookieHandle getBookieHandle(LedgerHandle lh, InetSocketAddress a)
-    throws ConnectException, IOException {
-    	if(!bhMap.containsKey(a)){
-    	    BookieHandle bh = new BookieHandle(a, true); 
-    		bhMap.put(a, bh);
-    		bh.start();
-    	}
-    	bhMap.get(a).incRefCount(lh);
-    	
-    	return bhMap.get(a);
-    }
-    
-    /**
-     * When there are no more references to a BookieHandle,
-     * remove it from the list. 
-     */
-    
-    synchronized void haltBookieHandles(LedgerHandle lh, ArrayList<BookieHandle> bookies){
-        while(bookies.size() > 0){
-            BookieHandle bh = bookies.remove(0);
-            if(bh.halt(lh) <= 0)
-                bhMap.remove(bh.addr);
-        }
-    }
-    
-    /**
-     * Blacklists bookies.
-     * 
-     * @param addr 	address of bookie
-     */
-    void blackListBookie(InetSocketAddress addr){
-        bookieBlackList.add(addr);
-    }
-    
-    /**
-     * Halts all bookie handles
-     * 
-     */
-    public void halt() throws InterruptedException{
-        
-        for(BookieHandle bh: bhMap.values()){
-            bh.shutdown();
-        }
-        zk.close();
-    }
+    callbackWorker.shutdown();
+    mainWorkerPool.shutdown();
+  }
 }
