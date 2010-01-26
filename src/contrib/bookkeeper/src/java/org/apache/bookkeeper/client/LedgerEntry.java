@@ -1,4 +1,5 @@
 package org.apache.bookkeeper.client;
+
 /*
  * 
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -20,39 +21,58 @@ package org.apache.bookkeeper.client;
  * 
  */
 
-
+import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.log4j.Logger;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 
 /**
- * Ledger entry. Currently only holds the necessary
- * fields to identify a ledger entry, and the entry
- * content.
+ * Ledger entry. Its a simple tuple containing the ledger id, the entry-id, and
+ * the entry content.
  * 
  */
 
 public class LedgerEntry {
-    Logger LOG = Logger.getLogger(LedgerEntry.class);
-    
-    private long lId;
-    private long eId;
-    private byte[] entry;
-    
-    LedgerEntry(long lId, long eId, byte[] entry){
-        this.lId = lId;
-        this.eId = eId;
-        this.entry = entry;
+  Logger LOG = Logger.getLogger(LedgerEntry.class);
+
+  long ledgerId;
+  long entryId;
+  ChannelBufferInputStream entryDataStream;
+
+  int nextReplicaIndexToReadFrom = 0;
+
+  LedgerEntry(long lId, long eId) {
+    this.ledgerId = lId;
+    this.entryId = eId;
+  }
+
+  public long getLedgerId() {
+    return ledgerId;
+  }
+
+  public long getEntryId() {
+    return entryId;
+  }
+
+  public byte[] getEntry() {
+    try {
+      // In general, you can't rely on the available() method of an input
+      // stream, but ChannelBufferInputStream is backed by a byte[] so it
+      // accurately knows the # bytes available
+      byte[] ret = new byte[entryDataStream.available()];
+      entryDataStream.readFully(ret);
+      return ret;
+    } catch (IOException e) {
+      // The channelbufferinput stream doesnt really throw the
+      // ioexceptions, it just has to be in the signature because
+      // InputStream says so. Hence this code, should never be reached.
+      LOG.fatal("Unexpected IOException while reading from channel buffer", e);
+      return new byte[0];
     }
-    
-    public long getLedgerId(){
-        return lId;
-    }
-    
-    public long getEntryId(){
-        return eId;
-    }
-    
-    public byte[] getEntry(){
-        return entry;
-    }
+  }
+
+  public InputStream getEntryInputStream() {
+    return entryDataStream;
+  }
 }

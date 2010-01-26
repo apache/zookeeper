@@ -28,15 +28,11 @@ import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.LedgerHandle;
 import org.apache.log4j.Logger;
 
-
 /**
- * this class provides a streaming api 
- * to get an output stream from a ledger
- * handle and write to it as a stream of 
- * bytes. This is built on top of ledgerhandle
- * api and uses a buffer to cache the data
- * written to it and writes out the entry 
- * to the ledger.
+ * this class provides a streaming api to get an output stream from a ledger
+ * handle and write to it as a stream of bytes. This is built on top of
+ * ledgerhandle api and uses a buffer to cache the data written to it and writes
+ * out the entry to the ledger.
  */
 public class LedgerOutputStream extends OutputStream {
     Logger LOG = Logger.getLogger(LedgerOutputStream.class);
@@ -44,62 +40,66 @@ public class LedgerOutputStream extends OutputStream {
     private ByteBuffer bytebuff;
     byte[] bbytes;
     int defaultSize = 1024 * 1024; // 1MB default size
-    
+
     /**
      * construct a outputstream from a ledger handle
-     * @param lh ledger handle
+     * 
+     * @param lh
+     *            ledger handle
      */
     public LedgerOutputStream(LedgerHandle lh) {
         this.lh = lh;
         bbytes = new byte[defaultSize];
         this.bytebuff = ByteBuffer.wrap(bbytes);
     }
-    
+
     /**
      * construct a outputstream from a ledger handle
-     * @param lh the ledger handle
-     * @param size the size of the buffer
+     * 
+     * @param lh
+     *            the ledger handle
+     * @param size
+     *            the size of the buffer
      */
     public LedgerOutputStream(LedgerHandle lh, int size) {
         this.lh = lh;
         bbytes = new byte[size];
         this.bytebuff = ByteBuffer.wrap(bbytes);
     }
-    
+
     @Override
     public void close() {
-        //flush everything
+        // flush everything
         // we have
         flush();
     }
-    
+
     @Override
     public synchronized void flush() {
-        // lets flush all the data 
+        // lets flush all the data
         // into the ledger entry
         if (bytebuff.position() > 0) {
-            //copy the bytes into 
+            // copy the bytes into
             // a new byte buffer and send it out
             byte[] b = new byte[bytebuff.position()];
             LOG.info("Comment: flushing with params " + " " + bytebuff.position());
             System.arraycopy(bbytes, 0, b, 0, bytebuff.position());
             try {
                 lh.addEntry(b);
-            } catch(InterruptedException ie) {
+            } catch (InterruptedException ie) {
                 LOG.warn("Interrupted while flusing " + ie);
                 Thread.currentThread().interrupt();
-            } catch(BKException bke) {
+            } catch (BKException bke) {
                 LOG.warn("BookKeeper exception ", bke);
             }
         }
     }
-    
+
     /**
-     * make space for len bytes to be written
-     * to the buffer. 
+     * make space for len bytes to be written to the buffer.
+     * 
      * @param len
-     * @return if true then we can make space for len
-     * if false we cannot
+     * @return if true then we can make space for len if false we cannot
      */
     private boolean makeSpace(int len) {
         if (bytebuff.remaining() < len) {
@@ -111,34 +111,33 @@ public class LedgerOutputStream extends OutputStream {
         }
         return true;
     }
-    
+
     @Override
     public synchronized void write(byte[] b) {
         if (makeSpace(b.length)) {
             bytebuff.put(b);
-        }
-        else {
+        } else {
             try {
                 lh.addEntry(b);
-            } catch(InterruptedException ie) {
+            } catch (InterruptedException ie) {
                 LOG.warn("Interrupted while writing", ie);
                 Thread.currentThread().interrupt();
-            } catch(BKException bke) {
+            } catch (BKException bke) {
                 LOG.warn("BookKeeper exception", bke);
             }
         }
     }
-    
+
     @Override
     public synchronized void write(byte[] b, int off, int len) {
         if (!makeSpace(len)) {
-            //lets try making the buffer bigger
+            // lets try making the buffer bigger
             bbytes = new byte[len];
             bytebuff = ByteBuffer.wrap(bbytes);
         }
         bytebuff.put(b, off, len);
     }
-    
+
     @Override
     public synchronized void write(int b) throws IOException {
         makeSpace(1);

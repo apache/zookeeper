@@ -1,4 +1,5 @@
 package org.apache.bookkeeper.proto;
+
 /*
  * 
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -20,33 +21,31 @@ package org.apache.bookkeeper.proto;
  * 
  */
 
-
 /**
- * The packets of the Bookie protocol all have a 4-byte integer
- * indicating the type of request or response at the very beginning
- * of the packet followed by a payload.
- *
+ * The packets of the Bookie protocol all have a 4-byte integer indicating the
+ * type of request or response at the very beginning of the packet followed by a
+ * payload.
+ * 
  */
 public interface BookieProtocol {
     /**
-     * The Add entry request payload will be a ledger entry exactly
-     * as it should be logged. The response payload will be a 4-byte
-     * integer that has the error code followed by the 8-byte
-     * ledger number and 8-byte entry number of the entry written.
+     * The Add entry request payload will be a ledger entry exactly as it should
+     * be logged. The response payload will be a 4-byte integer that has the
+     * error code followed by the 8-byte ledger number and 8-byte entry number
+     * of the entry written.
      */
     public static final int ADDENTRY = 1;
     /**
-     * The Read entry request payload will be the ledger number and
-     * entry number to read. (The ledger number is an 8-byte integer
-     * and the entry number is a 8-byte integer.) The
-     * response payload will be a 4-byte integer representing an 
-     * error code and a ledger entry if the error code is EOK, otherwise
-     * it will be the 8-byte ledger number and the 4-byte entry number
-     * requested. (Note that the first sixteen bytes of the entry happen
-     * to be the ledger number and entry number as well.)
+     * The Read entry request payload will be the ledger number and entry number
+     * to read. (The ledger number is an 8-byte integer and the entry number is
+     * a 8-byte integer.) The response payload will be a 4-byte integer
+     * representing an error code and a ledger entry if the error code is EOK,
+     * otherwise it will be the 8-byte ledger number and the 4-byte entry number
+     * requested. (Note that the first sixteen bytes of the entry happen to be
+     * the ledger number and entry number as well.)
      */
     public static final int READENTRY = 2;
-    
+
     /**
      * The error code that indicates success
      */
@@ -67,10 +66,10 @@ public interface BookieProtocol {
      * General error occurred at the server
      */
     public static final int EIO = 101;
-    
+
     /**
      * Unauthorized access to ledger
      */
     public static final int EUA = 102;
-    
+
 }

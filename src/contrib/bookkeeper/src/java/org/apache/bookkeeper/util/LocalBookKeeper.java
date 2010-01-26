@@ -25,9 +25,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import org.apache.bookkeeper.client.BookKeeper;
-import org.apache.bookkeeper.client.LedgerHandle;
-import org.apache.bookkeeper.client.LedgerSequence;
 import org.apache.bookkeeper.proto.BookieServer;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -40,10 +37,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
-
-import org.apache.log4j.Logger;
 
 public class LocalBookKeeper {
     protected static final Logger LOG = Logger.getLogger(LocalBookKeeper.class);
@@ -98,7 +92,7 @@ public class LocalBookKeeper {
 			// TODO Auto-generated catch block
 			LOG.fatal("Exception while instantiating ZooKeeper", e);
 		} 
-		
+
         boolean b = waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT);
         LOG.debug("ZooKeeper server up: " + b);
 	}
@@ -210,5 +204,5 @@ public class LocalBookKeeper {
         }
         return false;
     }
-
+	
 }

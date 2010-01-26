@@ -1,4 +1,3 @@
-package org.apache.bookkeeper.bookie;
 /*
  * 
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -20,11 +19,10 @@ package org.apache.bookkeeper.bookie;
  * 
  */
 
+package org.apache.bookkeeper.bookie;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 
 import org.apache.log4j.Logger;
 
@@ -36,11 +34,12 @@ import org.apache.log4j.Logger;
  *
  */
 public class LedgerDescriptor {
-    Logger LOG = Logger.getLogger(LedgerDescriptor.class);
-    LedgerDescriptor(long ledgerId, FileChannel ledger, FileChannel ledgerIndex) {
+    final static Logger LOG = Logger.getLogger(LedgerDescriptor.class);
+    LedgerCache ledgerCache;
+    LedgerDescriptor(long ledgerId, EntryLogger entryLogger, LedgerCache ledgerCache) {
         this.ledgerId = ledgerId;
-        this.ledger = ledger;
-        this.ledgerIndex = ledgerIndex;
+        this.entryLogger = entryLogger;
+        this.ledgerCache = ledgerCache;
     }
     
     private ByteBuffer masterKey = null;
@@ -54,8 +53,7 @@ public class LedgerDescriptor {
     }
     
     private long ledgerId;
-    private FileChannel ledger;
-    private FileChannel ledgerIndex;
+    EntryLogger entryLogger;
     private int refCnt;
     synchronized public void incRef() {
         refCnt++;
@@ -66,100 +64,70 @@ public class LedgerDescriptor {
     synchronized public int getRefCnt() {
         return refCnt;
     }
-    static private final long calcEntryOffset(long entryId) {
-        return 8L*entryId;
-    }
     long addEntry(ByteBuffer entry) throws IOException {
-        ByteBuffer offsetBuffer = ByteBuffer.wrap(new byte[8]);
         long ledgerId = entry.getLong();
         if (ledgerId != this.ledgerId) {
             throw new IOException("Entry for ledger " + ledgerId + " was sent to " + this.ledgerId);
         }
-        /*
-         * Get entry id
-         */
-                
         long entryId = entry.getLong();
         entry.rewind();
         
         /*
+         * Log the entry
+         */
+        long pos = entryLogger.addEntry(ledgerId, entry);
+        
+        
+        /*
          * Set offset of entry id to be the current ledger position
          */
-        offsetBuffer.rewind();
-        offsetBuffer.putLong(ledger.position());
-        //LOG.debug("Offset: " + ledger.position() + ", " + entry.position() + ", " + calcEntryOffset(entryId) + ", " + entryId);
-        offsetBuffer.flip();
-        
-        /*
-         * Write on the index entry corresponding to entryId the position
-         * of this entry.
-         */
-        ledgerIndex.write(offsetBuffer, calcEntryOffset(entryId));
-        ByteBuffer lenBuffer = ByteBuffer.allocate(4);
-        
-        
-        lenBuffer.putInt(entry.remaining());
-        lenBuffer.flip();
-        
-        /*
-         * Write length of entry first, then the entry itself
-         */
-        ledger.write(lenBuffer);
-        ledger.write(entry);
-        //entry.position(24);
-        //LOG.debug("Entry: " + entry.position() + ", " + new String(entry.array()));
-     
+        ledgerCache.putEntryOffset(ledgerId, entryId, pos);
         return entryId;
     }
     ByteBuffer readEntry(long entryId) throws IOException {
-        ByteBuffer buffer = ByteBuffer.wrap(new byte[8]);
         long offset;
         /*
          * If entryId is -1, then return the last written.
          */
         if (entryId == -1) {
-            offset = ledgerIndex.size()-8; 
-        } else {
-            offset = calcEntryOffset(entryId);
+            long lastEntry = ledgerCache.getLastEntry(ledgerId);
+            FileInfo fi = null;
+            try {
+                fi = ledgerCache.getFileInfo(ledgerId, false);
+                long size = fi.size();
+                // we may not have the last entry in the cache
+                if (size > lastEntry*8) {
+                    ByteBuffer bb = ByteBuffer.allocate(LedgerEntryPage.PAGE_SIZE);
+                    long position = size-LedgerEntryPage.PAGE_SIZE;
+                    if (position < 0) {
+                        position = 0;
+                    }
+                    fi.read(bb, position);
+                    bb.flip();
+                    long startingEntryId = position/8;
+                    for(int i = LedgerEntryPage.ENTRIES_PER_PAGES-1; i >= 0; i--) {
+                        if (bb.getLong(i*8) != 0) {
+                            if (lastEntry < startingEntryId+i) {
+                                lastEntry = startingEntryId+i;
+                            }
+                            break;
+                        }
+                    }
+                }
+            } finally {
+                if (fi != null) {
+                    fi.release();
+                }
+            }
+            entryId = lastEntry;
         }
-        int len = ledgerIndex.read(buffer, offset);
-        buffer.flip();
-        if (len != buffer.limit()) {
-            throw new Bookie.NoEntryException(ledgerId, entryId);
-        }
-        offset = buffer.getLong();
+        
+        offset = ledgerCache.getEntryOffset(ledgerId, entryId);
         if (offset == 0) {
             throw new Bookie.NoEntryException(ledgerId, entryId);
         }
-        LOG.debug("Offset: " + offset);
-
-        buffer.limit(4);
-        buffer.rewind();
-        /*
-         * Read the length
-         */
-        ledger.read(buffer, offset);
-        buffer.flip();
-        len = buffer.getInt();
-        LOG.debug("Length of buffer: " + len);
-        buffer = ByteBuffer.allocate(len);
-        /*
-         * Read the rest. We add 4 to skip the length
-         */
-        ledger.read(buffer, offset + 4);
-        buffer.flip();
-        return buffer;
+        return ByteBuffer.wrap(entryLogger.readEntry(ledgerId, entryId, offset));
     }
     void close() {
-        try {
-            ledger.close();
-        } catch (IOException e) {
-            LOG.warn("Error closing ledger " + ledgerId, e);
-        }
-        try {
-            ledgerIndex.close();
-        } catch (IOException e) {
-            LOG.warn("Error closing index for ledger " + ledgerId, e);
-        }
     }
 }

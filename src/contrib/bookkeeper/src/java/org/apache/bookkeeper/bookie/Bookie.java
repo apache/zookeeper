@@ -1,4 +1,3 @@
-package org.apache.bookkeeper.bookie;
 /*
  * 
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -20,19 +19,25 @@ package org.apache.bookkeeper.bookie;
  * 
  */
 
+package org.apache.bookkeeper.bookie;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.bookkeeper.bookie.BookieException;
-import org.apache.bookkeeper.proto.WriteCallback;
+import org.apache.bookkeeper.proto.BookkeeperInternalCallbacks.WriteCallback;
 import org.apache.log4j.Logger;
 
 
@@ -45,10 +50,6 @@ import org.apache.log4j.Logger;
 public class Bookie extends Thread {
     HashMap<Long, LedgerDescriptor> ledgers = new HashMap<Long, LedgerDescriptor>();
     static Logger LOG = Logger.getLogger(Bookie.class);
-    /**
-     * 4 byte signature followed by 2-byte major and 2-byte minor versions
-     */
-    private static byte ledgerHeader[] =  { 0x42, 0x6f, 0x6f, 0x6b, 0, 0, 0, 0};
     
     final File journalDirectory;
 
@@ -69,6 +70,7 @@ public class Bookie extends Thread {
         private long ledgerId;
         private long entryId;
         public NoEntryException(long ledgerId, long entryId) {
+            super("Entry " + entryId + " not found in " + ledgerId);
             this.ledgerId = ledgerId;
             this.entryId = entryId;
         }
@@ -80,14 +82,124 @@ public class Bookie extends Thread {
         }
     }
 
-    public Bookie(File journalDirectory, File ledgerDirectories[]) {
+    EntryLogger entryLogger;
+    LedgerCache ledgerCache;
+    class SyncThread extends Thread {
+        volatile boolean running = true;
+        public SyncThread() {
+            super("SyncThread");
+        }
+        @Override
+        public void run() {
+            while(running) {
+                synchronized(this) {
+                    try {
+                        wait(100);
+                        if (!entryLogger.testAndClearSomethingWritten()) {
+                            continue;
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        continue;
+                    }
+                }
+                lastLogMark.markLog();
+                try {
+                    ledgerCache.flushLedger(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    entryLogger.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                lastLogMark.rollLog();
+            }
+        }
+    }
+    SyncThread syncThread = new SyncThread();
+    public Bookie(File journalDirectory, File ledgerDirectories[]) throws IOException {
         this.journalDirectory = journalDirectory;
         this.ledgerDirectories = ledgerDirectories;
+        entryLogger = new EntryLogger(ledgerDirectories);
+        ledgerCache = new LedgerCache(ledgerDirectories);
+        lastLogMark.readLog();
+        final long markedLogId = lastLogMark.txnLogId;
+        if (markedLogId > 0) {
+            File logFiles[] = journalDirectory.listFiles();
+            ArrayList<Long> logs = new ArrayList<Long>();
+            for(File f: logFiles) {
+                String name = f.getName();
+                if (!name.endsWith(".txn")) {
+                    continue;
+                }
+                String idString = name.split("\\.")[0];
+                long id = Long.parseLong(idString, 16);
+                if (id < markedLogId) {
+                    continue;
+                }
+                logs.add(id);
+            }
+            Collections.sort(logs);
+            if (logs.size() == 0 || logs.get(0) != markedLogId) {
+                throw new IOException("Recovery log " + markedLogId + " is missing");
+            }
+            ByteBuffer lenBuff = ByteBuffer.allocate(4);
+            ByteBuffer recBuff = ByteBuffer.allocate(64*1024);
+            for(Long id: logs) {
+                FileChannel recLog = openChannel(id);
+                while(true) {
+                    lenBuff.clear();
+                    fullRead(recLog, lenBuff);
+                    if (lenBuff.remaining() != 0) {
+                        break;
+                    }
+                    lenBuff.flip();
+                    int len = lenBuff.getInt();
+                    if (len == 0) {
+                        break;
+                    }
+                    recBuff.clear();
+                    if (recBuff.remaining() < len) {
+                        recBuff = ByteBuffer.allocate(len);
+                    }
+                    recBuff.limit(len);
+                    if (fullRead(recLog, recBuff) != len) {
+                        // This seems scary, but it just means that this is where we
+                        // left off writing
+                        break;
+                    }
+                    recBuff.flip();
+                    long ledgerId = recBuff.getLong();
+                    // XXX we net to make sure we set the master keys appropriately!
+                    LedgerDescriptor handle = getHandle(ledgerId, false);
+                    try {
+                        recBuff.rewind();
+                        handle.addEntry(recBuff);
+                    } finally {
+                        putHandle(handle);
+                    }
+                }
+            }
+        }
         setDaemon(true);
         LOG.debug("I'm starting a bookie with journal directory " + journalDirectory.getName());
         start();
+        syncThread.start();
     }
 
+    private static int fullRead(FileChannel fc, ByteBuffer bb) throws IOException {
+        int total = 0;
+        while(bb.remaining() > 0) {
+            int rc = fc.read(bb);
+            if (rc <= 0) {
+                return total;
+            }
+            total += rc;
+        }
+        return total;
+    }
     private void putHandle(LedgerDescriptor handle) {
         synchronized (ledgers) {
             handle.decRef();
@@ -99,6 +211,9 @@ public class Bookie extends Thread {
         synchronized (ledgers) {
             handle = ledgers.get(ledgerId);
             if (handle == null) {
+                if (readonly) {
+                    throw new NoLedgerException(ledgerId);
+                }
                 handle = createHandle(ledgerId, readonly);
                 ledgers.put(ledgerId, handle);
                 handle.setMasterKey(ByteBuffer.wrap(masterKey));
@@ -113,6 +228,9 @@ public class Bookie extends Thread {
         synchronized (ledgers) {
             handle = ledgers.get(ledgerId);
             if (handle == null) {
+                if (readonly) {
+                    throw new NoLedgerException(ledgerId);
+                }
                 handle = createHandle(ledgerId, readonly);
                 ledgers.put(ledgerId, handle);
             } 
@@ -123,85 +241,9 @@ public class Bookie extends Thread {
     
 
     private LedgerDescriptor createHandle(long ledgerId, boolean readOnly) throws IOException {
-        RandomAccessFile ledgerFile = null;
-        RandomAccessFile ledgerIndexFile = null;
-        String ledgerName = getLedgerName(ledgerId, false);
-        String ledgerIndexName = getLedgerName(ledgerId, true);
-        for (File d : ledgerDirectories) {
-            File lf = new File(d, ledgerName);
-            File lif = new File(d, ledgerIndexName);
-            if (lf.exists()) {
-                if (ledgerFile != null) {
-                    throw new IOException("Duplicate ledger file found for "
-                            + ledgerId);
-                }
-                ledgerFile = new RandomAccessFile(lf, "rw");
-            }
-            if (lif.exists()) {
-                if (ledgerIndexFile != null) {
-                    throw new IOException(
-                            "Duplicate ledger index file found for " + ledgerId);
-                }
-                ledgerIndexFile = new RandomAccessFile(lif, "rw");
-            }
-        }
-        if (ledgerFile == null && ledgerIndexFile == null) {
-            if (readOnly) {
-                throw new NoLedgerException(ledgerId);
-            }
-            File dirs[] = pickDirs(ledgerDirectories);
-            File lf = new File(dirs[0], ledgerName);
-            checkParents(lf);
-            ledgerFile = new RandomAccessFile(lf, "rw");
-            ledgerFile.write(ledgerHeader);
-            File lif = new File(dirs[1], ledgerIndexName);
-            checkParents(lif);
-            ledgerIndexFile = new RandomAccessFile(lif, "rw");
-        }
-        if (ledgerFile != null && ledgerIndexFile != null) {
-            return new LedgerDescriptor(ledgerId, ledgerFile.getChannel(),
-                    ledgerIndexFile.getChannel());
-        }
-        if (ledgerFile == null) {
-            throw new IOException("Found index but no data for " + ledgerId);
-        }
-        throw new IOException("Found data but no index for " + ledgerId);
+        return new LedgerDescriptor(ledgerId, entryLogger, ledgerCache);
     }
     
-    static final private void checkParents(File f) throws IOException {
-        File parent = f.getParentFile();
-        if (parent.exists()) {
-            return;
-        }
-        if (parent.mkdirs() == false) {
-            throw new IOException("Counldn't mkdirs for " + parent);
-        }
-    }
-
-    static final private Random rand = new Random();
-
-    static final private File[] pickDirs(File dirs[]) {
-        File rc[] = new File[2];
-        rc[0] = dirs[rand.nextInt(dirs.length)];
-        rc[1] = dirs[rand.nextInt(dirs.length)];
-        return rc;
-    }
-
-    static final private String getLedgerName(long ledgerId, boolean isIndex) {
-        int parent = (int) (ledgerId & 0xff);
-        int grandParent = (int) ((ledgerId & 0xff00) >> 8);
-        StringBuilder sb = new StringBuilder();
-        sb.append(Integer.toHexString(grandParent));
-        sb.append('/');
-        sb.append(Integer.toHexString(parent));
-        sb.append('/');
-        sb.append(Long.toHexString(ledgerId));
-        if (isIndex) {
-            sb.append(".idx");
-        }
-        return sb.toString();
-    }
-
     static class QueueEntry {
         QueueEntry(ByteBuffer entry, long ledgerId, long entryId, 
                 WriteCallback cb, Object ctx) {
@@ -229,15 +271,76 @@ public class Bookie extends Thread {
     
     public final static ByteBuffer zeros = ByteBuffer.allocate(512);
     
+    class LastLogMark {
+        long txnLogId;
+        long txnLogPosition;
+        LastLogMark lastMark;
+        LastLogMark(long logId, long logPosition) {
+            this.txnLogId = logId;
+            this.txnLogPosition = logPosition;
+        }
+        synchronized void setLastLogMark(long logId, long logPosition) {
+            txnLogId = logId;
+            txnLogPosition = logPosition;
+        }
+        synchronized void markLog() {
+            lastMark = new LastLogMark(txnLogId, txnLogPosition);
+        }
+        synchronized void rollLog() {
+            byte buff[] = new byte[16];
+            ByteBuffer bb = ByteBuffer.wrap(buff);
+            bb.putLong(txnLogId);
+            bb.putLong(txnLogPosition);
+            for(File dir: ledgerDirectories) {
+                File file = new File(dir, "lastMark");
+                try {
+                    FileOutputStream fos = new FileOutputStream(file);
+                    fos.write(buff);
+                    fos.getChannel().force(true);
+                    fos.close();
+                } catch (IOException e) {
+                    LOG.error("Problems writing to " + file, e);
+                }
+            }
+        }
+        synchronized void readLog() {
+            byte buff[] = new byte[16];
+            ByteBuffer bb = ByteBuffer.wrap(buff);
+            for(File dir: ledgerDirectories) {
+                File file = new File(dir, "lastMark");
+                try {
+                    FileInputStream fis = new FileInputStream(file);
+                    fis.read(buff);
+                    fis.close();
+                    bb.clear();
+                    long i = bb.getLong();
+                    long p = bb.getLong();
+                    if (i > txnLogId) {
+                        txnLogId = i;
+                    }
+                    if (p > txnLogPosition) {
+                        txnLogPosition = p;
+                    }
+                } catch (IOException e) {
+                    LOG.error("Problems reading from " + file + " (this is okay if it is the first time starting this bookie");
+                }
+            }
+        }
+    }
+    
+    private LastLogMark lastLogMark = new LastLogMark(0, 0);
+    
+    @Override
     public void run() {
         LinkedList<QueueEntry> toFlush = new LinkedList<QueueEntry>();
         ByteBuffer lenBuff = ByteBuffer.allocate(4);
         try {
-            FileChannel logFile = new RandomAccessFile(new File(journalDirectory,
-                    Long.toHexString(System.currentTimeMillis()) + ".txn"),
-                    "rw").getChannel();
+            long logId = System.currentTimeMillis();
+            FileChannel logFile = openChannel(logId);
+            BufferedChannel bc = new BufferedChannel(logFile, 65536);
             zeros.clear();
             long nextPrealloc = preAllocSize;
+            long lastFlushPosition = 0;
             logFile.write(zeros, nextPrealloc);
             while (true) {
                 QueueEntry qe = null;
@@ -245,10 +348,13 @@ public class Bookie extends Thread {
                     qe = queue.take();
                 } else {
                     qe = queue.poll();
-                    if (qe == null || toFlush.size() > 100) {
-                        logFile.force(false);
+                    if (qe == null || bc.position() > lastFlushPosition + 512*1024) {
+                        //logFile.force(false);
+                        bc.flush(true);
+                        lastFlushPosition = bc.position();
+                        lastLogMark.setLastLogMark(logId, lastFlushPosition);
                         for (QueueEntry e : toFlush) {
-                            e.cb.writeComplete(0, e.ledgerId, e.entryId, e.ctx);
+                            e.cb.writeComplete(0, e.ledgerId, e.entryId, null, e.ctx);
                         }
                         toFlush.clear();
                     }
@@ -259,8 +365,13 @@ public class Bookie extends Thread {
                 lenBuff.clear();
                 lenBuff.putInt(qe.entry.remaining());
                 lenBuff.flip();
-                logFile.write(new ByteBuffer[] { lenBuff, qe.entry });
-                if (logFile.position() > nextPrealloc) {
+                //
+                // we should be doing the following, but then we run out of
+                // direct byte buffers
+                // logFile.write(new ByteBuffer[] { lenBuff, qe.entry });
+                bc.write(lenBuff);
+                bc.write(qe.entry);
+                if (bc.position() > nextPrealloc) {
                     nextPrealloc = (logFile.size() / preAllocSize + 1) * preAllocSize;
                     zeros.clear();
                     logFile.write(zeros, nextPrealloc);
@@ -272,9 +383,18 @@ public class Bookie extends Thread {
         }
     }
 
+    private FileChannel openChannel(long logId) throws FileNotFoundException {
+        FileChannel logFile = new RandomAccessFile(new File(journalDirectory,
+                Long.toHexString(logId) + ".txn"),
+                "rw").getChannel();
+        return logFile;
+    }
+
     public void shutdown() throws InterruptedException {
         this.interrupt();
         this.join();
+        syncThread.running = false;
+        syncThread.join();
         for(LedgerDescriptor d: ledgers.values()) {
             d.close();
         }
@@ -282,7 +402,6 @@ public class Bookie extends Thread {
     
     public void addEntry(ByteBuffer entry, WriteCallback cb, Object ctx, byte[] masterKey)
             throws IOException, BookieException {
-        
         long ledgerId = entry.getLong();
         LedgerDescriptor handle = getHandle(ledgerId, false, masterKey);
         
@@ -318,7 +437,7 @@ public class Bookie extends Thread {
     static class CounterCallback implements WriteCallback {
         int count;
 
-        synchronized public void writeComplete(int rc, long l, long e, Object ctx) {
+        synchronized public void writeComplete(int rc, long l, long e, InetSocketAddress addr, Object ctx) {
             count--;
             if (count == 0) {
                 notifyAll();
