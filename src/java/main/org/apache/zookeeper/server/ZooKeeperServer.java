@@ -18,13 +18,12 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,9 +31,6 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.BinaryOutputArchive;
-import org.apache.jute.InputArchive;
-import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.Environment;
@@ -48,12 +44,6 @@ import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener;
-import org.apache.zookeeper.server.quorum.Leader;
-import org.apache.zookeeper.server.quorum.QuorumPacket;
-import org.apache.zookeeper.server.quorum.Leader.Proposal;
-import org.apache.zookeeper.server.util.SerializeUtils;
-import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This class implements a simple standalone ZooKeeperServer. It sets up the
@@ -651,5 +641,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return "standalone";
     }
 
+    public void dumpEphemerals(PrintWriter pwriter) {
+    	zkDb.dumpEphemerals(pwriter);
+    }
     
 }

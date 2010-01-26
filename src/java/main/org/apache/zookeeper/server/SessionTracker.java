@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.PrintWriter;
+
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
@@ -63,4 +65,10 @@ public interface SessionTracker {
     void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, SessionMovedException;
 
     void setOwner(long id, Object owner) throws SessionExpiredException;
+
+    /**
+     * Text dump of session information, suitable for debugging.
+     * @param pwriter the output writer
+     */
+    void dumpSessions(PrintWriter pwriter);
 }

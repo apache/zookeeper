@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -251,12 +252,11 @@ public class ZKDatabase {
     }
 
     /**
-     * get a string dump of all the ephemerals in
-     * the datatree
-     * @return the string dump of ephemerals
+     * write a text dump of all the ephemerals in the datatree
+     * @param pwriter the output to write to
      */
-    public String dumpEphemerals() {
-        return dataTree.dumpEphemerals();
+    public void dumpEphemerals(PrintWriter pwriter) {
+        dataTree.dumpEphemerals(pwriter);
     }
 
     /**

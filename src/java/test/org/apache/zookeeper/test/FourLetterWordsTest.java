@@ -38,6 +38,9 @@ public class FourLetterWordsTest extends ClientBase {
         verify("srvr", "Outstanding");
         verify("cons", "queued");
         verify("dump", "Session");
+        verify("wchs", "watches");
+        verify("wchp", "");
+        verify("wchc", "");
 
         verify("srst", "reset");
         verify("crst", "reset");
@@ -54,13 +57,16 @@ public class FourLetterWordsTest extends ClientBase {
         verify("cons", sid);
         verify("dump", sid);
 
-        zk.getData("/", false, null);
+        zk.getData("/", true, null);
 
         verify("stat", "queued");
         verify("srvr", "Outstanding");
         verify("cons", sid);
         verify("dump", sid);
 
+        verify("wchs", "watching 1");
+        verify("wchp", sid);
+        verify("wchc", sid);
         zk.close();
 
         verify("ruok", "imok");
@@ -69,6 +75,9 @@ public class FourLetterWordsTest extends ClientBase {
         verify("srvr", "Outstanding");
         verify("cons", "queued");
         verify("dump", "Session");
+        verify("wchs", "watch");
+        verify("wchp", "");
+        verify("wchc", "");
 
         verify("srst", "reset");
         verify("crst", "reset");
