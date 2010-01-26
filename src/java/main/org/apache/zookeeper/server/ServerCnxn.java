@@ -20,7 +20,6 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -35,34 +34,6 @@ import org.apache.zookeeper.proto.ReplyHeader;
  * to the server.
  */
 public interface ServerCnxn extends Watcher {
-    /**
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
-     * Zk Admin</a>. this link is for all the commands.
-     */
-    final static int ruokCmd = ByteBuffer.wrap("ruok".getBytes()).getInt();
-
-    final static int dumpCmd = ByteBuffer.wrap("dump".getBytes()).getInt();
-
-    final static int statCmd = ByteBuffer.wrap("stat".getBytes()).getInt();
-
-    final static int srvrCmd = ByteBuffer.wrap("srvr".getBytes()).getInt();
-
-    final static int consCmd = ByteBuffer.wrap("cons".getBytes()).getInt();
-
-    final static int setTraceMaskCmd = ByteBuffer.wrap("stmk".getBytes())
-            .getInt();
-
-    final static int getTraceMaskCmd = ByteBuffer.wrap("gtmk".getBytes())
-            .getInt();
-
-    final static int enviCmd = ByteBuffer.wrap("envi".getBytes()).getInt();
-
-    final static int srstCmd = ByteBuffer.wrap("srst".getBytes()).getInt();
-
-    final static int crstCmd = ByteBuffer.wrap("crst".getBytes()).getInt();
-
-    final static ByteBuffer imok = ByteBuffer.wrap("imok".getBytes());
-
     // This is just an arbitrary object to represent requests issued by
     // (aka owned by) this class
     final public static Object me = new Object();

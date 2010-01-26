@@ -140,8 +140,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         acl = n.acl;
                         children = n.getChildren();
                     }
-                    lastChange = new ChangeRecord(-1, path, n.stat, 
-                        children != null ? children.size() : 0, 
+                    lastChange = new ChangeRecord(-1, path, n.stat,
+                        children != null ? children.size() : 0,
                             zks.getZKDatabase().convertLong(acl));
                 }
             }
@@ -216,7 +216,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 String path = createRequest.getPath();
                 int lastSlash = path.lastIndexOf('/');
                 if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
-                    LOG.info("Invalid path " + path + " with session " +
+                    LOG.info("Invalid path " + path + " with session 0x" +
                             Long.toHexString(request.sessionId));
                     throw new KeeperException.BadArgumentsException(path);
                 }
@@ -237,7 +237,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 try {
                     PathUtils.validatePath(path);
                 } catch(IllegalArgumentException ie) {
-                    LOG.info("Invalid path " + path + " with session " +
+                    LOG.info("Invalid path " + path + " with session 0x" +
                             Long.toHexString(request.sessionId));
                     throw new KeeperException.BadArgumentsException(path);
                 }

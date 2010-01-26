@@ -263,6 +263,9 @@ NEW FEATURES:
 
   ZOOKEEPER-496. zookeeper-tree utility for export, import and incremental updates (anirban roy via breed)
 
+  ZOOKEEPER-572. add ability for operator to examine state of watches
+  currently registered with a server (phunt via mahadev)
+  
 Release 3.2.0 - 2009-06-30
 
 Non-backward compatible changes:

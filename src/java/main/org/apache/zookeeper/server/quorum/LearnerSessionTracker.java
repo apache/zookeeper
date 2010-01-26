@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,10 +38,6 @@ public class LearnerSessionTracker implements SessionTracker {
     
     private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
 
-    
-    /**
-     * 
-     */
     public LearnerSessionTracker(SessionExpirer expirer,
             ConcurrentHashMap<Long, Integer> sessionsWithTimeouts, long id) {
         this.expirer = expirer;
@@ -85,5 +82,11 @@ public class LearnerSessionTracker implements SessionTracker {
     
     public void setOwner(long sessionId, Object owner) {
         // Nothing to do here. Sessions are checked at the Leader
+    }
+
+    public void dumpSessions(PrintWriter pwriter) {
+    	// the original class didn't have tostring impl, so just
+    	// dup what we had before
+    	pwriter.println(toString());
     }
 }

@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -1074,21 +1075,41 @@ public class DataTree {
         setupQuota();
     }
 
-    public String dumpEphemerals() {
+    /**
+     * Summary of the watches on the datatree.
+     * @param pwriter the output to write to
+     */
+    public synchronized void dumpWatchesSummary(PrintWriter pwriter) {
+        pwriter.print(dataWatches.toString());
+    }
+
+    /**
+     * Write a text dump of all the watches on the datatree.
+     * Warning, this is expensive, use sparingly!
+     * @param pwriter the output to write to
+     */
+    public synchronized void dumpWatches(PrintWriter pwriter, boolean byPath) {
+        dataWatches.dumpWatches(pwriter, byPath);
+    }
+
+    /**
+     * Write a text dump of all the ephemerals in the datatree.
+     * @param pwriter the output to write to
+     */
+    public void dumpEphemerals(PrintWriter pwriter) {
         Set<Long> keys = ephemerals.keySet();
-        StringBuilder sb = new StringBuilder("Sessions with Ephemerals ("
-                + keys.size() + "):\n");
+        pwriter.println("Sessions with Ephemerals ("
+                + keys.size() + "):");
         for (long k : keys) {
-            sb.append("0x" + Long.toHexString(k));
-            sb.append(":\n");
+            pwriter.print("0x" + Long.toHexString(k));
+            pwriter.println(":");
             HashSet<String> tmp = ephemerals.get(k);
             synchronized (tmp) {
                 for (String path : tmp) {
-                    sb.append("\t" + path + "\n");
+                    pwriter.println("\t" + path);
                 }
             }
         }
-        return sb.toString();
     }
 
     public void removeCnxn(Watcher watcher) {
