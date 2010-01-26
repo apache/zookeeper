@@ -122,7 +122,10 @@ public:
         // process the send queue
         rc=zookeeper_interest(zh,&fd,&interest,&tv);
         CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
-        while((rc=zookeeper_process(zh,interest))==ZOK) millisleep(100); //printf("%d\n", rc);
+        while((rc=zookeeper_process(zh,interest))==ZOK) {
+          millisleep(100);
+          //printf("%d\n", rc);
+        }
         //printf("RC = %d", rc);
         CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
 
