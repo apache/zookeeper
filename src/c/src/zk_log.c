@@ -91,21 +91,23 @@ void zoo_set_log_stream(FILE* stream){
 
 static const char* time_now(){
     struct timeval tv;
+    struct tm lt;
+    time_t now = 0;
+    size_t len = 0;
     char* now_str=get_time_buffer();
+    
     if(!now_str)
         return "time_now(): Failed to allocate memory buffer";
     
     gettimeofday(&tv,0);
 
-    const time_t now = tv.tv_sec;
-    struct tm lt;
+    now = tv.tv_sec;
     localtime_r(&now, &lt);
 
     // clone the format used by log4j ISO8601DateFormat
     // specifically: "yyyy-MM-dd HH:mm:ss,SSS"
 
-    size_t len = strftime(now_str,
-                          TIME_NOW_BUF_SIZE,
+    len = strftime(now_str, TIME_NOW_BUF_SIZE,
                           "%F %H:%M:%S",
                           &lt);
 

@@ -90,9 +90,10 @@ int doCreateNodes(const char* root, int count){
     char nodeName[1024];
     int i;
     for(i=0; i<count;i++){
+        int rc = 0;
         snprintf(nodeName, sizeof(nodeName),"%s/%d",root,i);
         incCounter(1);
-        int rc=zoo_acreate(zh, nodeName, "first", 5, &ZOO_OPEN_ACL_UNSAFE, 0,
+        rc=zoo_acreate(zh, nodeName, "first", 5, &ZOO_OPEN_ACL_UNSAFE, 0,
                             create_completion, 0);
         if(i%1000==0){
             LOG_INFO(("Created %s",nodeName));
@@ -118,9 +119,10 @@ int doWrites(const char* root, int count){
     int i;
     counter=0;
     for(i=0; i<count;i++){
+        int rc = 0;
         snprintf(nodeName, sizeof(nodeName),"%s/%d",root,i);
         incCounter(1);
-        int rc=zoo_aset(zh, nodeName, "second", 6,-1,write_completion, 0);
+        rc=zoo_aset(zh, nodeName, "second", 6,-1,write_completion, 0);
         if(rc!=ZOK) return rc;        
     }
 }
@@ -145,9 +147,10 @@ int doReads(const char* root, int count){
     int i;
     counter=0;
     for(i=0; i<count;i++){
+        int rc = 0;
         snprintf(nodeName, sizeof(nodeName),"%s/%d",root,i);
         incCounter(1);
-        int rc=zoo_aget(zh, nodeName,0,read_completion, 0);
+        rc=zoo_aget(zh, nodeName,0,read_completion, 0);
         if(rc!=ZOK) return rc;        
     }
 }
@@ -161,9 +164,10 @@ int doDeletes(const char* root, int count){
     int i;
     counter=0;
     for(i=0; i<count;i++){
+        int rc = 0;
         snprintf(nodeName, sizeof(nodeName),"%s/%d",root,i);
         incCounter(1);
-        int rc=zoo_adelete(zh, nodeName,-1,delete_completion, 0);
+        rc=zoo_adelete(zh, nodeName,-1,delete_completion, 0);
         if(rc!=ZOK) return rc;        
     }
 }
@@ -192,9 +196,10 @@ int recursiveDelete(const char* root){
             return rc;
         }
         for(i=0;i<children.count; i++){
+            int rc = 0;
             char nodeName[2048];
             snprintf(nodeName, sizeof(nodeName),"%s/%s",root,children.data[i]);
-            int rc=recursiveDelete(nodeName);
+            rc=recursiveDelete(nodeName);
             if(rc!=ZOK){
                 free_String_vector(&children);
                 return rc;
@@ -237,8 +242,9 @@ int main(int argc, char **argv) {
     LOG_INFO(("Checking server connection..."));
     ensureConnected();
     if(cleaning==1){
+        int rc = 0;
         deletedCounter=0;
-        int rc=recursiveDelete(argv[2]);
+        rc=recursiveDelete(argv[2]);
         if(rc==ZOK){
             LOG_INFO(("Succesfully deleted a subtree starting at %s (%d nodes)",
                     argv[2],deletedCounter));

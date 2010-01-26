@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "zookeeper_version.h"
 #include "recordio.h"

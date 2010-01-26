@@ -415,6 +415,9 @@ void processline(char *line) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
     } else if (startsWith(line, "exists ")) {
+#ifdef THREADED
+        struct Stat stat;
+#endif
         line += 7;
         if (line[0] != '/') {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
@@ -423,7 +426,6 @@ void processline(char *line) {
 #ifndef THREADED
         rc = zoo_aexists(zh, line, 1, my_stat_completion, strdup(line));
 #else
-        struct Stat stat;
         rc = zoo_exists(zh, line, 1, &stat);
 #endif
         if (rc) {
@@ -446,8 +448,8 @@ void processline(char *line) {
         if (rc)
             fprintf(stderr, "od command failed: %d\n", rc);
     } else if (startsWith(line, "addauth ")) {
-      line += 8;
       char *ptr;
+      line += 8;
       ptr = strchr(line, ' ');
       if (ptr) {
         *ptr = '\0';
