@@ -254,6 +254,9 @@ IMPROVEMENTS:
   ZOOKEEPER-612. Make Zookeeper C client can be compiled by gcc of early
   version (qian via mahadev)
 
+  ZOOKEEPER-456. CREATOR_ALL_ACL has unnecessary PERMS.ADMIN in the
+  declartion. (phunt via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
