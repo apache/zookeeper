@@ -215,7 +215,7 @@ BUGFIXES:
   ZOOKEEPER-495. c client logs an invalid error when zookeeper_init is called
   with chroot (phunt via mahadev)
 
-  ZOOKEEPER-489. When create a znode, a NULL ACL parameter cannot be accepted.
+  ZOOKEEPER-589. When create a znode, a NULL ACL parameter cannot be accepted.
   (breed via mahadev)
 
 IMPROVEMENTS:
