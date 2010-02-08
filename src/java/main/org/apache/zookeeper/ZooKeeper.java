@@ -608,7 +608,7 @@ public class ZooKeeper {
      *                and/or sequential
      * @return the actual path of the created node
      * @throws KeeperException if the server returns a non-zero error code
-     * @throws KeeperException.InvalidACLException if the ACL is invalid
+     * @throws KeeperException.InvalidACLException if the ACL is invalid, null, or empty
      * @throws InterruptedException if the transaction is interrupted
      * @throws IllegalArgumentException if an invalid path is specified
      */
