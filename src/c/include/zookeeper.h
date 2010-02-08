@@ -600,8 +600,7 @@ ZOOAPI int zoo_state(zhandle_t *zh);
  * separating ancestors of the node.
  * \param value The data to be stored in the node.
  * \param valuelen The number of bytes in data.
- * \param acl The initial ACL of the node. If null, the ACL of the parent will be
- *    used.
+ * \param acl The initial ACL of the node. The ACL must not be null or empty.
  * \param flags this parameter can be set to 0 for normal create or an OR
  *    of the Create Flags
  * \param completion the routine to invoke when the request completes. The completion
@@ -1055,9 +1054,8 @@ ZOOAPI void zoo_deterministic_conn_order(int yesOrNo);
  * separating ancestors of the node.
  * \param value The data to be stored in the node.
  * \param valuelen The number of bytes in data. To set the data to be NULL use
-  * value as NULL and valuelen as -1.
- * \param acl The initial ACL of the node. If null, the ACL of the parent will be
- *    used.
+ * value as NULL and valuelen as -1.
+ * \param acl The initial ACL of the node. The ACL must not be null or empty.
  * \param flags this parameter can be set to 0 for normal create or an OR
  *    of the Create Flags
  * \param path_buffer Buffer which will be filled with the path of the
