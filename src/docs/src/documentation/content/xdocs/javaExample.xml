@@ -125,7 +125,7 @@
 
 
     <para>
-    Recall that the Executor's job is to starts and stop the executable whose name you pass in on the command line. 
+    Recall that the Executor's job is to start and stop the executable whose name you pass in on the command line. 
     It does this in response to events fired by the ZooKeeper object. As you can see in the code above, the Executor passes
     a reference to itself as the Watcher argument in the ZooKeeper constructor. It also passes a reference to itself
     as DataMonitorListener argument to the DataMonitor constructor. Per the Executor's definition, it implements both these

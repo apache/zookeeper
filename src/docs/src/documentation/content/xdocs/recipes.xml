@@ -258,14 +258,14 @@
     the create() call set to true. Because the <emphasis>sequence</emphasis>
     flag is set, the new pathnames will have the form
     _path-to-queue-node_/queue-X, where X is a monotonic increasing number. A
-    client that wants to be remove from the queue calls ZooKeeper's <emphasis
+    client that wants to be removed from the queue calls ZooKeeper's <emphasis
     role="bold">getChildren( )</emphasis> function, with
     <emphasis>watch</emphasis> set to true on the queue node, and begins
     processing nodes with the lowest number. The client does not need to issue
     another <emphasis role="bold">getChildren( )</emphasis> until it exhausts
     the list obtained from the first <emphasis role="bold">getChildren(
     )</emphasis> call. If there are are no children in the queue node, the
-    reader waits for a watch notification to check to queue again.</para>
+    reader waits for a watch notification to check the queue again.</para>
 
     <section id="sc_recipes_priorityQueues">
       <title>Priority Queues</title>
@@ -275,7 +275,7 @@
       recipe</ulink> . First, to add to a queue, the pathname ends with
       "queue-YY" where YY is the priority of the element with lower numbers
       representing higher priority (just like UNIX). Second, when removing
-      from the queue a client uses an up-to-date children list meaning that
+      from the queue, a client uses an up-to-date children list meaning that
       the client will invalidate previously obtained children lists if a watch
       notification triggers for the queue node.</para>
     </section>

@@ -175,8 +175,8 @@
         <para>In distributed application engineering, the word
         <emphasis>node</emphasis> can refer to a generic host machine, a
         server, a member of an ensemble, a client process, etc. In the ZooKeeper
-        documentatin, <emphasis>znodes</emphasis> refer to the data nodes.
-        <emphasis>Servers</emphasis> to refer to machines that make up the
+        documentation, <emphasis>znodes</emphasis> refer to the data nodes.
+        <emphasis>Servers</emphasis>  refer to machines that make up the
         ZooKeeper service; <emphasis>quorum peers</emphasis> refer to the
         servers that make up an ensemble; client refers to any host or process
         which uses a ZooKeeper service.</para>
@@ -232,7 +232,7 @@
         <title>Sequence Nodes -- Unique Naming</title>
 
         <para>When creating a znode you can also request that
-        ZooKeeper append a monotonicly increasing counter to the end
+        ZooKeeper append a monotonically increasing counter to the end
         of path. This counter is unique to the parent znode. The
         counter has a format of %010d -- that is 10 digits with 0
         (zero) padding (the counter is formatted in this way to
@@ -505,7 +505,7 @@
       <listitem>
         <para><emphasis role="bold">One-time trigger</emphasis></para>
 
-        <para>One watch event will be sent to the client the data has changed.
+        <para>One watch event will be sent to the client when the data has changed.
         For example, if a client does a getData("/znode1", true) and later the
         data for /znode1 is changed or deleted, the client will get a watch
         event for /znode1. If /znode1 changes again, no watch event will be
@@ -1103,7 +1103,7 @@ authProvider.2=com.f.MyAuth2
 
         <variablelist>
           <varlistentry>
-            <term>Simultaneously Conistent Cross-Client Views</term>
+            <term>Simultaneously Consistent Cross-Client Views</term>
 
             <listitem>
               <para>ZooKeeper does not guarantee that at every instance in
