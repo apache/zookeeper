@@ -307,7 +307,7 @@ document.write("Last Published: " + document.lastModified);
     
 </p>
 <p>
-    There is one BookKeeper constructor:
+    There are three BookKeeper constructors:
     </p>
 <p>
     
@@ -315,12 +315,83 @@ document.write("Last Published: " + document.lastModified);
 	public BookKeeper(String servers) 
     	throws KeeperException, IOException    
     </span>
-   	
+	
 </p>
-<p> 
-    where <span class="codefrag computeroutput">servers</span> is a comma-separated list of ZooKeeper servers.
+<p>
+    where:
     </p>
-<a name="N10064"></a><a name="bk_createLedger"></a>
+<ul>
+    	
+<li>
+    	
+<p> 
+        
+<span class="codefrag computeroutput">servers</span> is a comma-separated list of ZooKeeper servers.
+    	</p>
+    	
+</li>
+    
+</ul>
+<p>
+    
+<span class="codefrag computeroutput">
+	public BookKeeper(ZooKeeper zk) 
+    	throws InterruptedException, KeeperException    
+    </span>
+	
+</p>
+<p>
+    where:
+    </p>
+<ul>
+    	
+<li>
+    	
+<p> 
+        
+<span class="codefrag computeroutput">zk</span> is a ZooKeeper object. This constructor is useful when
+        the application also using ZooKeeper and wants to have a single instance of ZooKeeper.  
+    	</p>
+    	
+</li>
+    
+</ul>
+<p>
+    
+<span class="codefrag computeroutput">
+	public BookKeeper(ZooKeeper zk, ClientSocketChannelFactory channelFactory) 
+    	throws InterruptedException, KeeperException    
+    </span>
+	
+</p>
+<p>
+    where:
+    </p>
+<ul>
+    	
+<li>
+    	
+<p> 
+        
+<span class="codefrag computeroutput">zk</span> is a ZooKeeper object. This constructor is useful when
+        the application also using ZooKeeper and wants to have a single instance of ZooKeeper.  
+    	</p>
+    	
+</li>
+    	
+    	
+<li>
+    	
+<p> 
+        
+<span class="codefrag computeroutput">channelFactory</span> is a netty channel object 
+        (<span class="codefrag computeroutput">org.jboss.netty.channel.socket</span>).  
+    	</p>
+    	
+</li>
+    
+</ul>
+<a name="N100A9"></a><a name="bk_createLedger"></a>
 <h3 class="h4"> Creating a ledger. </h3>
 <p> Before writing entries to BookKeeper, it is necessary to create a ledger. 
     With the current BookKeeper API, it is possible to create a ledger both synchronously
@@ -335,7 +406,7 @@ document.write("Last Published: " + document.lastModified);
 <p>
     
 <span class="codefrag computeroutput">
-    public LedgerHandle createLedger(int ensSize, int qSize, QMode mode,  byte passwd[])
+    public LedgerHandle createLedger(int ensSize, int qSize, DigestType type,  byte passwd[])
         throws KeeperException, InterruptedException, 
         IOException, BKException
     </span>
@@ -370,10 +441,7 @@ document.write("Last Published: " + document.lastModified);
     	
 <p>
     	
-<span class="codefrag computeroutput">mode</span> is the ledger mode (QMode.GENERIC, QMode.VERIFIABLE).
-    	If <span class="codefrag computeroutput">mode</span> is QMode.GENERIC, then <span class="codefrag computeroutput">ensSize</span> has to
-    	be at least <em>3t+1</em>, and <span class="codefrag computeroutput">qSize</span> has to be <em>2t+1</em>.
-    	<em>t</em> is the maximum number of tolerated bookie failures.  
+<span class="codefrag computeroutput">type</span> is the type of digest used with entries: either MAC or CRC32.  
     	</p>
     	
 </li>
@@ -396,7 +464,7 @@ document.write("Last Published: " + document.lastModified);
     </p>
 <p>
     As a convenience, we provide a <span class="codefrag computeroutput">createLedger</span> with default parameters (3,2,VERIFIABLE), 
-    and the only input parameter it requires is a password.
+    and the only two input parameters it requires are a digest type and a password.
     </p>
 <p>
    	
@@ -408,13 +476,11 @@ document.write("Last Published: " + document.lastModified);
 <span class="codefrag computeroutput">
     public void asyncCreateLedger(int ensSize, 
             int qSize, 
-            QMode mode,  
+            DigestType type,  
             byte passwd[],
             CreateCallback cb,
             Object ctx
             )
-    throws KeeperException, InterruptedException, 
-    IOException, BKException
     </span>
 	
 </p>
@@ -441,7 +507,7 @@ document.write("Last Published: " + document.lastModified);
 		
 <p>
 		
-<span class="codefrag computeroutput">rc</span> is a return code (please refer to <span class="codefrag computeroutput">org.apache.bookeeper.client.BKDefs</span> for a list);
+<span class="codefrag computeroutput">rc</span> is a return code (please refer to <span class="codefrag computeroutput">org.apache.bookeeper.client.BKException</span> for a list);
 		</p>
 		
 </li>
@@ -461,7 +527,7 @@ document.write("Last Published: " + document.lastModified);
 		
 <p>
 		
-<span class="codefrag computeroutput">ctx</span> is a control object for accountability purposes;
+<span class="codefrag computeroutput">ctx</span> is a control object for accountability purposes. It can be essentially any object the application is happy with.
 		</p>
 		
 </li>
@@ -471,7 +537,7 @@ document.write("Last Published: " + document.lastModified);
 	The <span class="codefrag computeroutput">ctx</span> object passed as a parameter to the call to create a ledger
 	is the one same returned in the callback.
     </p>
-<a name="N1012E"></a><a name="bk_writeLedger"></a>
+<a name="N1015E"></a><a name="bk_writeLedger"></a>
 <h3 class="h4"> Adding entries to a ledger. </h3>
 <p>
     Once we have a ledger handle <span class="codefrag computeroutput">lh</span> obtained through a call to create a ledger, we
@@ -508,7 +574,7 @@ document.write("Last Published: " + document.lastModified);
     
 </ul>
 <p>
-	A call to <span class="codefrag computeroutput">addEntry</span> returns the status of the operation ((please refer to <span class="codefrag computeroutput">org.apache.bookeeper.client.BKDefs</span> for a list);
+	A call to <span class="codefrag computeroutput">addEntry</span> returns the status of the operation (please refer to <span class="codefrag computeroutput">org.apache.bookeeper.client.BKDefs</span> for a list);
     </p>
 <p>
    	
@@ -519,7 +585,6 @@ document.write("Last Published: " + document.lastModified);
     
 <span class="codefrag computeroutput">
 	public void asyncAddEntry(byte[] data, AddCallback cb, Object ctx)
-    throws InterruptedException
     </span>
 	
 </p>
@@ -576,13 +641,13 @@ document.write("Last Published: " + document.lastModified);
 		
 <p>
 		
-<span class="codefrag computeroutput">ctx</span> is control object used for accountability purposes. 
+<span class="codefrag computeroutput">ctx</span> is control object used for accountability purposes. It can be any object the application is happy with.
 		</p>
 		
 </li>
 	
 </ul>
-<a name="N101C9"></a><a name="bk_closeLedger"></a>
+<a name="N101F9"></a><a name="bk_closeLedger"></a>
 <h3 class="h4"> Closing a ledger. </h3>
 <p>
     Once a client is done writing, it closes the ledger. The following methods belong
@@ -597,7 +662,7 @@ document.write("Last Published: " + document.lastModified);
     
 <span class="codefrag computeroutput">
 	public void close() 
-    throws KeeperException, InterruptedException
+    throws InterruptedException
     </span>
 	
 </p>
@@ -665,7 +730,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	
 </ul>
-<a name="N1023E"></a><a name="bk_openLedger"></a>
+<a name="N1026E"></a><a name="bk_openLedger"></a>
 <h3 class="h4"> Opening a ledger. </h3>
 <p>
     To read from a ledger, a client must open it first. The following methods belong
@@ -679,8 +744,8 @@ document.write("Last Published: " + document.lastModified);
 <p>
     
 <span class="codefrag computeroutput">
-	public LedgerHandle openLedger(long lId, byte passwd[])
-    throws KeeperException, InterruptedException, IOException, BKException
+	public LedgerHandle openLedger(long lId, DigestType type, byte passwd[])
+    throws InterruptedException, BKException
     </span>
 	
 </p>
@@ -693,6 +758,16 @@ document.write("Last Published: " + document.lastModified);
 <span class="codefrag computeroutput">ledgerId</span> is the ledger identifier;
 	</p>
 	
+</li>
+	
+	
+<li> 
+    
+<p>
+    
+<span class="codefrag computeroutput">type</span> is the type of digest used with entries: either MAC or CRC32.  
+    </p>
+    
 </li>
 	
 	
@@ -714,8 +789,7 @@ document.write("Last Published: " + document.lastModified);
 <p>
     
 <span class="codefrag computeroutput">
-	public void asyncOpenLedger(long lId, byte passwd[], OpenCallback cb, Object ctx)
-    throws InterruptedException
+	public void asyncOpenLedger(long lId, DigestType type, byte passwd[], OpenCallback cb, Object ctx)
     </span>
 	
 </p>
@@ -768,7 +842,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	
 </ul>
-<a name="N102CB"></a><a name="bk_readLedger"></a>
+<a name="N10305"></a><a name="bk_readLedger"></a>
 <h3 class="h4"> Reading from ledger </h3>
 <p>
     Read calls may request one or more consecutive entries. The following methods belong
@@ -803,7 +877,7 @@ document.write("Last Published: " + document.lastModified);
 	
 <p>
 	
-<span class="codefrag computeroutput">lastEntry</span> is the identifier of the last entry in the sequence of entries to read;
+<span class="codefrag computeroutput">lastEntry</span> is the identifier of the last entry in the sequence of entries to read.
 	</p>
 	
 </li>
@@ -833,7 +907,7 @@ document.write("Last Published: " + document.lastModified);
 <p>
 	
 <span class="codefrag computeroutput">
-	void readComplete(int rc, LedgerHandle lh, LedgerSequence seq, Object ctx)
+	void readComplete(int rc, LedgerHandle lh, Enumeration&lt;LedgerEntry&gt; seq, Object ctx)
 	</span>    
 	
 </p>
@@ -866,7 +940,7 @@ document.write("Last Published: " + document.lastModified);
 		
 <p>
 		
-<span class="codefrag computeroutput">seq</span> is a <span class="codefrag computeroutput">LedgerSequence</span> object to containing the list of entries requested;
+<span class="codefrag computeroutput">seq</span> is a <span class="codefrag computeroutput">Enumeration&lt;LedgerEntry&gt; </span> object to containing the list of entries requested;
 		</p>
 		
 </li>
