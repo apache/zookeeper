@@ -89,6 +89,7 @@
       <li><a href="bookkeeperOverview.html">henn, what's it again?</a></li>
 	  <li><a href="bookkeeperStarted.html">Ok, now how do I try it out</a></li>
 	  <li><a href="bookkeeperProgrammer.html">Awesome, but how do I integrate it with my app?</a></li>
+      <li><a href="bookkeeperStream.html">Can I stream bytes instead of entries?</a></li>
       </ul>
       </li>
     </ul>
