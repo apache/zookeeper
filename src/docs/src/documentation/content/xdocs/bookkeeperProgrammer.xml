@@ -83,7 +83,7 @@
     </para>
     
     <para>
-    There is one BookKeeper constructor:
+    There are three BookKeeper constructors:
     </para>
     
     <para>
@@ -91,12 +91,67 @@
 	public BookKeeper(String servers) 
     	throws KeeperException, IOException    
     </computeroutput>
-   	</para>
-    
-    <para> 
-    where <computeroutput>servers</computeroutput> is a comma-separated list of ZooKeeper servers.
+	</para>
+
+    <para>
+    where:
     </para>
-    
+    <itemizedlist>
+    	<listitem>
+    	<para> 
+        <computeroutput>servers</computeroutput> is a comma-separated list of ZooKeeper servers.
+    	</para>
+    	</listitem>
+    </itemizedlist>
+
+    <para>
+    <computeroutput>
+	public BookKeeper(ZooKeeper zk) 
+    	throws InterruptedException, KeeperException    
+    </computeroutput>
+	</para>
+
+    <para>
+    where:
+    </para>
+    <itemizedlist>
+    	<listitem>
+    	<para> 
+        <computeroutput>zk</computeroutput> is a ZooKeeper object. This constructor is useful when
+        the application also using ZooKeeper and wants to have a single instance of ZooKeeper.  
+    	</para>
+    	</listitem>
+    </itemizedlist>
+
+
+    <para>
+    <computeroutput>
+	public BookKeeper(ZooKeeper zk, ClientSocketChannelFactory channelFactory) 
+    	throws InterruptedException, KeeperException    
+    </computeroutput>
+	</para>
+
+    <para>
+    where:
+    </para>
+    <itemizedlist>
+    	<listitem>
+    	<para> 
+        <computeroutput>zk</computeroutput> is a ZooKeeper object. This constructor is useful when
+        the application also using ZooKeeper and wants to have a single instance of ZooKeeper.  
+    	</para>
+    	</listitem>
+    	
+    	<listitem>
+    	<para> 
+        <computeroutput>channelFactory</computeroutput> is a netty channel object 
+        (<computeroutput>org.jboss.netty.channel.socket</computeroutput>).  
+    	</para>
+    	</listitem>
+    </itemizedlist>
+
+
+        
     </section>
     
     <section id="bk_createLedger">
@@ -114,7 +169,7 @@
    	
    	<para>
     <computeroutput>
-    public LedgerHandle createLedger(int ensSize, int qSize, QMode mode,  byte passwd[])
+    public LedgerHandle createLedger(int ensSize, int qSize, DigestType type,  byte passwd[])
         throws KeeperException, InterruptedException, 
         IOException, BKException
     </computeroutput>
@@ -138,10 +193,7 @@
     
     	<listitem> 
     	<para>
-    	<computeroutput>mode</computeroutput> is the ledger mode (QMode.GENERIC, QMode.VERIFIABLE).
-    	If <computeroutput>mode</computeroutput> is QMode.GENERIC, then <computeroutput>ensSize</computeroutput> has to
-    	be at least <emphasis>3t+1</emphasis>, and <computeroutput>qSize</computeroutput> has to be <emphasis>2t+1</emphasis>.
-    	<emphasis>t</emphasis> is the maximum number of tolerated bookie failures.  
+    	<computeroutput>type</computeroutput> is the type of digest used with entries: either MAC or CRC32.  
     	</para>
     	</listitem>
     	
@@ -160,7 +212,7 @@
     
     <para>
     As a convenience, we provide a <computeroutput>createLedger</computeroutput> with default parameters (3,2,VERIFIABLE), 
-    and the only input parameter it requires is a password.
+    and the only two input parameters it requires are a digest type and a password.
     </para>
     
     <para>
@@ -171,13 +223,11 @@
     <computeroutput>
     public void asyncCreateLedger(int ensSize, 
             int qSize, 
-            QMode mode,  
+            DigestType type,  
             byte passwd[],
             CreateCallback cb,
             Object ctx
             )
-    throws KeeperException, InterruptedException, 
-    IOException, BKException
     </computeroutput>
 	</para>
 	
@@ -201,7 +251,7 @@
 	<itemizedlist>
 		<listitem>
 		<para>
-		<computeroutput>rc</computeroutput> is a return code (please refer to <computeroutput>org.apache.bookeeper.client.BKDefs</computeroutput> for a list);
+		<computeroutput>rc</computeroutput> is a return code (please refer to <computeroutput>org.apache.bookeeper.client.BKException</computeroutput> for a list);
 		</para>
 		</listitem>
 	
@@ -213,7 +263,7 @@
 		
 		<listitem>
 		<para>
-		<computeroutput>ctx</computeroutput> is a control object for accountability purposes;
+		<computeroutput>ctx</computeroutput> is a control object for accountability purposes. It can be essentially any object the application is happy with.
 		</para>
 		</listitem>
 	</itemizedlist>	
@@ -257,7 +307,7 @@
     </itemizedlist>
     
     <para>
-	A call to <computeroutput>addEntry</computeroutput> returns the status of the operation ((please refer to <computeroutput>org.apache.bookeeper.client.BKDefs</computeroutput> for a list);
+	A call to <computeroutput>addEntry</computeroutput> returns the status of the operation (please refer to <computeroutput>org.apache.bookeeper.client.BKDefs</computeroutput> for a list);
     </para>
     
     <para>
@@ -267,7 +317,6 @@
 	<para>
     <computeroutput>
 	public void asyncAddEntry(byte[] data, AddCallback cb, Object ctx)
-    throws InterruptedException
     </computeroutput>
 	</para>
 	
@@ -309,7 +358,7 @@
 		
 		<listitem>
 		<para>
-		<computeroutput>ctx</computeroutput> is control object used for accountability purposes. 
+		<computeroutput>ctx</computeroutput> is control object used for accountability purposes. It can be any object the application is happy with.
 		</para>
 		</listitem>
 	</itemizedlist>	 
@@ -328,7 +377,7 @@
     <para>
     <computeroutput>
 	public void close() 
-    throws KeeperException, InterruptedException
+    throws InterruptedException
     </computeroutput>
 	</para>
 
@@ -397,8 +446,8 @@
     
     <para>
     <computeroutput>
-	public LedgerHandle openLedger(long lId, byte passwd[])
-    throws KeeperException, InterruptedException, IOException, BKException
+	public LedgerHandle openLedger(long lId, DigestType type, byte passwd[])
+    throws InterruptedException, BKException
     </computeroutput>
 	</para>
 
@@ -408,6 +457,12 @@
 	<computeroutput>ledgerId</computeroutput> is the ledger identifier;
 	</para>
 	</listitem>
+	
+	<listitem> 
+    <para>
+    <computeroutput>type</computeroutput> is the type of digest used with entries: either MAC or CRC32.  
+    </para>
+    </listitem>
 	
 	<listitem>
 	<para>
@@ -421,8 +476,7 @@
    	</para>
     <para>
     <computeroutput>
-	public void asyncOpenLedger(long lId, byte passwd[], OpenCallback cb, Object ctx)
-    throws InterruptedException
+	public void asyncOpenLedger(long lId, DigestType type, byte passwd[], OpenCallback cb, Object ctx)
     </computeroutput>
 	</para>
 	
@@ -491,7 +545,7 @@
 	
 	<listitem>
 	<para>
-	<computeroutput>lastEntry</computeroutput> is the identifier of the last entry in the sequence of entries to read;
+	<computeroutput>lastEntry</computeroutput> is the identifier of the last entry in the sequence of entries to read.
 	</para>
 	</listitem>
 	</itemizedlist>
@@ -517,7 +571,7 @@
 
 	<para>
 	<computeroutput>
-	void readComplete(int rc, LedgerHandle lh, LedgerSequence seq, Object ctx)
+	void readComplete(int rc, LedgerHandle lh, Enumeration&lt;LedgerEntry&gt; seq, Object ctx)
 	</computeroutput>    
 	</para>
 	
@@ -539,7 +593,7 @@
 		
 		<listitem>
 		<para>
-		<computeroutput>seq</computeroutput> is a <computeroutput>LedgerSequence</computeroutput> object to containing the list of entries requested;
+		<computeroutput>seq</computeroutput> is a <computeroutput>Enumeration&lt;LedgerEntry&gt; </computeroutput> object to containing the list of entries requested;
 		</para>
 		</listitem>
 
