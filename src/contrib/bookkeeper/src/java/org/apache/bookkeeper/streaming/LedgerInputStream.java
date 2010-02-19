@@ -74,6 +74,11 @@ public class LedgerInputStream extends InputStream {
         ledgerSeq = lh.readEntries(0, lastEntry);
     }
 
+    /**
+     * Method close currently doesn't do anything. The application
+     * is supposed to open and close the ledger handle backing up 
+     * a stream ({@link LedgerHandle}).
+     */
     @Override
     public void close() {
         // do nothing
