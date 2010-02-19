@@ -283,6 +283,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-664.  BookKeeper API documentation (flavio via mahadev)
 
+  ZOOKEEPER-607. improve bookkeeper overview (flavio via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
