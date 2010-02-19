@@ -510,8 +510,8 @@ document.write("Last Published: " + document.lastModified);
 <p>In distributed application engineering, the word
         <em>node</em> can refer to a generic host machine, a
         server, a member of an ensemble, a client process, etc. In the ZooKeeper
-        documentatin, <em>znodes</em> refer to the data nodes.
-        <em>Servers</em> to refer to machines that make up the
+        documentation, <em>znodes</em> refer to the data nodes.
+        <em>Servers</em>  refer to machines that make up the
         ZooKeeper service; <em>quorum peers</em> refer to the
         servers that make up an ensemble; client refers to any host or process
         which uses a ZooKeeper service.</p>
@@ -556,7 +556,7 @@ document.write("Last Published: " + document.lastModified);
 <a name="N100EF"></a><a name="Sequence+Nodes+--+Unique+Naming"></a>
 <h4>Sequence Nodes -- Unique Naming</h4>
 <p>When creating a znode you can also request that
-        ZooKeeper append a monotonicly increasing counter to the end
+        ZooKeeper append a monotonically increasing counter to the end
         of path. This counter is unique to the parent znode. The
         counter has a format of %010d -- that is 10 digits with 0
         (zero) padding (the counter is formatted in this way to
@@ -901,7 +901,7 @@ document.write("Last Published: " + document.lastModified);
 </p>
 
         
-<p>One watch event will be sent to the client the data has changed.
+<p>One watch event will be sent to the client when the data has changed.
         For example, if a client does a getData("/znode1", true) and later the
         data for /znode1 is changed or deleted, the client will get a watch
         event for /znode1. If /znode1 changes again, no watch event will be
@@ -1606,7 +1606,7 @@ authProvider.2=com.f.MyAuth2
 <dl>
           
 <dt>
-<term>Simultaneously Conistent Cross-Client Views</term>
+<term>Simultaneously Consistent Cross-Client Views</term>
 </dt>
 <dd>
 <p>ZooKeeper does not guarantee that at every instance in
