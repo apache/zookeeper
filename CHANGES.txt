@@ -279,6 +279,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-507. BookKeeper client re-write (Utkarsh and ben via mahadev)
 
+  ZOOKEEPER-665. Add BookKeeper streaming documentation (flavio via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
