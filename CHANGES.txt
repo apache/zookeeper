@@ -223,6 +223,9 @@ BUGFIXES:
 
   ZOOKEEPER-672. typo nits across documentation (Kay Kay via mahadev)
 
+  ZOOKEEPER-668. Close method in LedgerInputStream doesn't do anything (flavio 
+  via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
