@@ -44,16 +44,6 @@
     <title>Observers: Scaling ZooKeeper Without Hurting Write Performance
       </title>
     <para>
-      <emphasis>
-	Please note: the Observers feature currently only works with the basic
-	leader election protocol, not fast leader election or authenticated fast
-	leader election. This will be remedied when a bug in the leader election
-	protocol code is fixed in the near future. An exception will be thrown
-	if you try to start a cluster containing Observers without
-	electionAlg=0. See below for more details.
-      </emphasis>
-    </para>
-    <para>
       Although ZooKeeper performs very well by having clients connect directly
       to voting members of the ensemble, this architecture makes it hard to
       scale out to huge numbers of clients. The problem is that as we add more
@@ -88,25 +78,6 @@
   </section>
   <section id="sc_UsingObservers">
     <title>How to use Observers</title>
-    <para>
-      <emphasis>
-	Note that
-	until <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-578">ZOOKEEPER-578</ulink>
-	is resolved, you must set electionAlg=0 in every server configuration
-	file. Otherwise an exception will be thrown when you try to start your
-	ensemble.
-      </emphasis>
-    </para>
-    <para>
-      <emphasis>
-	The reason: because Observers do not participate in leader elections,
-	they rely on voting Followers to inform them of changes to the
-	Leader. Currently, only the basic leader election algorithm starts a
-	thread that responds to requests from Observers to identify the current
-	Leader. Work is in progress on other JIRAs to bring this functionality
-	to all leader election protocols.
-      </emphasis>
-    </para>
     <para>Setting up a ZooKeeper ensemble that uses Observers is very simple,
     and requires just two changes to your config files. Firstly, in the config
     file of every node that is to be an Observer, you must place this line:
