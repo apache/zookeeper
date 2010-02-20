@@ -26,6 +26,7 @@ import java.util.Random;
 
 import junit.framework.TestCase;
 
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.LeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -33,6 +34,7 @@ import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 public class LETest extends TestCase {
+    private static final Logger LOG = Logger.getLogger(LETest.class);
     volatile Vote votes[];
     volatile boolean leaderDies;
     volatile long leader = -1;
@@ -57,7 +59,7 @@ public class LETest extends TestCase {
                             if (leaderDies) {
                                 leaderDies = false;
                                 peer.stopLeaderElection();
-                                System.out.println("Leader " + i + " dying");
+                                LOG.info("Leader " + i + " dying");
                                 leader = -2;
                             } else {
                                 leader = i;
@@ -77,7 +79,7 @@ public class LETest extends TestCase {
                     Thread.sleep(rand.nextInt(1000));
                     peer.setCurrentVote(new Vote(peer.getId(), 0));
                 }
-                System.out.println("Thread " + i + " votes " + v);
+                LOG.info("Thread " + i + " votes " + v);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -129,5 +131,5 @@ public class LETest extends TestCase {
                 }
             }
         }
-    }
+    }    
 }
