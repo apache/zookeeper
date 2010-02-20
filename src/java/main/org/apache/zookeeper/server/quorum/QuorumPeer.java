@@ -501,7 +501,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         //TODO: use a factory rather than a switch
         switch (electionAlgorithm) {
         case 0:
-            // will create a new instance for each run of the protocol
+            le = new LeaderElection(this);
             break;
         case 1:
             le = new AuthFastLeaderElection(this);
@@ -527,10 +527,9 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     protected Election makeLEStrategy(){
         LOG.debug("Initializing leader election protocol...");
-
-        if(electionAlg==null){
-            return new LeaderElection(this);
-        }
+        if (getElectionType() == 0) {
+            electionAlg = new LeaderElection(this);
+        }        
         return electionAlg;
     }
 

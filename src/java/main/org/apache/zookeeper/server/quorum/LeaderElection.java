@@ -198,40 +198,50 @@ public class LeaderElection implements Election  {
                         // down
                     }
                 }
+
                 ElectionResult result = countVotes(votes, heardFrom);
-                if (result.winner.id >= 0) {
-                    self.setCurrentVote(result.vote);
-                    // To do: this doesn't use a quorum verifier
-                    if (result.winningCount > (self.getVotingView().size() / 2)) {
-                        self.setCurrentVote(result.winner);
-                        s.close();
-                        Vote current = self.getCurrentVote();
-                        LOG.info("Found leader: my type is: " + self.getPeerType());
-                        /**
-                         * We want to make sure we implement the state machine
-                         * correctly. If we are a PARTICIPANT, once a leader
-                         * is elected we can move either to LEADING or 
-                         * FOLLOWING. However if we are an OBSERVER, it is an
-                         * error to be elected as a Leader.
-                         */
-                        if (self.getPeerType() == LearnerType.OBSERVER) {
-                            if (current.id == self.getId()) {
-                                // This should never happen!
-                                LOG.error("OBSERVER elected as leader!");
-                                Thread.sleep(100);
-                            }
-                            else {
-                                self.setPeerState(ServerState.OBSERVING);
-                                Thread.sleep(100);
+                // ZOOKEEPER-569:
+                // If no votes are received for live peers, reset to voting 
+                // for ourselves as otherwise we may hang on to a vote 
+                // for a dead peer                 
+                if (votes.size() == 0) {                    
+                    self.setCurrentVote(new Vote(self.getId(),
+                            self.getLastLoggedZxid()));
+                } else {
+                    if (result.winner.id >= 0) {
+                        self.setCurrentVote(result.vote);
+                        // To do: this doesn't use a quorum verifier
+                        if (result.winningCount > (self.getVotingView().size() / 2)) {
+                            self.setCurrentVote(result.winner);
+                            s.close();
+                            Vote current = self.getCurrentVote();
+                            LOG.info("Found leader: my type is: " + self.getPeerType());
+                            /*
+                             * We want to make sure we implement the state machine
+                             * correctly. If we are a PARTICIPANT, once a leader
+                             * is elected we can move either to LEADING or 
+                             * FOLLOWING. However if we are an OBSERVER, it is an
+                             * error to be elected as a Leader.
+                             */
+                            if (self.getPeerType() == LearnerType.OBSERVER) {
+                                if (current.id == self.getId()) {
+                                    // This should never happen!
+                                    LOG.error("OBSERVER elected as leader!");
+                                    Thread.sleep(100);
+                                }
+                                else {
+                                    self.setPeerState(ServerState.OBSERVING);
+                                    Thread.sleep(100);
+                                    return current;
+                                }
+                            } else {
+                                self.setPeerState((current.id == self.getId())
+                                        ? ServerState.LEADING: ServerState.FOLLOWING);
+                                if (self.getPeerState() == ServerState.FOLLOWING) {
+                                    Thread.sleep(100);
+                                }                            
                                 return current;
                             }
-                        } else {
-                            self.setPeerState((current.id == self.getId())
-                                    ? ServerState.LEADING: ServerState.FOLLOWING);
-                            if (self.getPeerState() == ServerState.FOLLOWING) {
-                                Thread.sleep(100);
-                            }                            
-                            return current;
                         }
                     }
                 }
