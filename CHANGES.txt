@@ -7,6 +7,8 @@ BUGFIXES:
 Backward compatible changes:
 
 BUGFIXES: 
+  ZOOKEEPER-524. DBSizeTest is not really testing anything (breed)
+
   ZOOKEEPER-469. make sure CPPUNIT_CFLAGS isn't overwritten
   (chris via mahadev)
 
