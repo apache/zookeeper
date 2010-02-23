@@ -231,6 +231,9 @@ BUGFIXES:
   ZOOKEEPER-569. Failure of elected leader can lead to never-ending leader 
   election (henry via flavio)
 
+  ZOOKEEPER-669. watchedevent tostring should clearly output the
+  state/type/path (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)

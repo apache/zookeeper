@@ -64,10 +64,8 @@ public class WatchedEvent {
 
     @Override
     public String toString() {
-        if(path == null)  // then is a state change 
-            return "WatchedEvent: Server state change. New state: " + keeperState;
-         else  // is a znode change
-            return "WatchedEvent: Znode change. Path: " + path + " Type: " + eventType;
+        return "WatchedEvent state:" + keeperState
+            + " type:" + eventType + " path:" + path;
     }
 
     /**
