@@ -293,6 +293,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-607. improve bookkeeper overview (flavio via mahadev)
 
+  ZOOKEEPER-485. Need ops documentation that details supervision of ZK server
+  processes. (phunt via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
