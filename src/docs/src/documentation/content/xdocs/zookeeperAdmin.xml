@@ -299,6 +299,10 @@ server.3=zoo3:2888:3888</computeroutput></para>
         </listitem>
 
         <listitem>
+          <para><xref linkend="sc_supervision" /></para>
+        </listitem>
+
+        <listitem>
           <para><xref linkend="sc_monitoring" /></para>
         </listitem>
 
@@ -492,10 +496,39 @@ server.3=zoo3:2888:3888</computeroutput></para>
 
     </section>
 
+    <section id="sc_supervision">
+      <title>Supervision</title>
+
+      <para>You will want to have a supervisory process that manages
+      each of your ZooKeeper server processes (JVM). The ZK server is
+      designed to be "fail fast" meaning that it will shutdown
+      (process exit) if an error occurs that it cannot recover
+      from. As a ZooKeeper serving cluster is highly reliable, this
+      means that while the server may go down the cluster as a whole
+      is still active and serving requests. Additionally, as the
+      cluster is "self healing" the failed server once restarted will
+      automatically rejoin the ensemble w/o any manual
+      interaction.</para>
+
+      <para>Having a supervisory process such as <ulink
+      url="http://cr.yp.to/daemontools.html">daemontools</ulink> or
+      <ulink
+      url="http://en.wikipedia.org/wiki/Service_Management_Facility">SMF</ulink>
+      (other options for supervisory process are also available, it's
+      up to you which one you would like to use, these are just two
+      examples) managing your ZooKeeper server ensures that if the
+      process does exit abnormally it will automatically be restarted
+      and will quickly rejoin the cluster.</para>
+    </section>
+
     <section id="sc_monitoring">
       <title>Monitoring</title>
 
-      <para></para>
+      <para>The ZooKeeper service can be monitored in one of two
+      primary ways; 1) the command port through the use of <ulink
+      url="#sc_zkCommands">4 letter words</ulink> and 2) <ulink
+      url="zookeeperJMX.html">JMX</ulink>. See the appropriate section for
+      your environment/requirements.</para>
     </section>
 
     <section id="sc_logging">
