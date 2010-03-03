@@ -47,7 +47,44 @@ import org.apache.zookeeper.txn.TxnHeader;
 /**
  * This class implements the TxnLog interface. It provides api's
  * to access the txnlogs and add entries to it.
- *
+ * <p>
+ * The format of a Transactional log is as follows:
+ * <blockquote><pre>
+ * LogFile:
+ *     FileHeader TxnList ZeroPad
+ * 
+ * FileHeader: {
+ *     magic 4bytes (ZKLG)
+ *     version 4bytes
+ *     dbid 8bytes
+ *   }
+ * 
+ * TxnList:
+ *     Txn || Txn TxnList
+ *     
+ * Txn:
+ *     checksum Txnlen TxnHeader Record 0x42
+ * 
+ * checksum: 8bytes Adler32 is currently used
+ *   calculated across payload -- Txnlen, TxnHeader, Record and 0x42
+ * 
+ * Txnlen:
+ *     len 4bytes
+ * 
+ * TxnHeader: {
+ *     sessionid 8bytes
+ *     cxid 4bytes
+ *     zxid 8bytes
+ *     time 8bytes
+ *     type 4bytes
+ *   }
+ *     
+ * Record:
+ *     See Jute definition file for details on the various record types
+ *      
+ * ZeroPad:
+ *     0 padded to EOF (filled during preallocation stage)
+ * </pre></blockquote> 
  */
 public class FileTxnLog implements TxnLog {
     private static final Logger LOG;
