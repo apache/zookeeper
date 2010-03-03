@@ -296,6 +296,9 @@ IMPROVEMENTS:
   ZOOKEEPER-485. Need ops documentation that details supervision of ZK server
   processes. (phunt via mahadev)
 
+  ZOOKEEPER-658. update forrest docs - AuthFLE no longer supported (flavio via
+  mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
