@@ -739,8 +739,18 @@ server.3=zoo3:2888:3888</computeroutput></para>
               non-authenticated UDP-based version of fast leader election, "2"
               corresponds to the authenticated UDP-based version of fast
               leader election, and "3" corresponds to TCP-based version of
-              fast leader election. Currently, only 0 and 3 are supported, 3 
-              being the default</para>
+              fast leader election. Currently, algorithm 3 is the default</para>
+              
+              <note>
+              <para> The implementations of leader election
+              1 and 2 are currently not supported, and we have the intention
+              of deprecating them in the near future. Implementations 0 and 3 are 
+              currently supported, and we plan to keep supporting them in the near future. 
+              To avoid having to support multiple versions of leader election unecessarily, 
+              we may eventually consider deprecating algorithm 0 as well, but we will plan
+              according to the needs of the community. 
+              </para>
+              </note>
             </listitem>
           </varlistentry>
 
