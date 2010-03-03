@@ -31,9 +31,11 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.server.LogFormatter;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.junit.Test;
 
 public class InvalidSnapshotTest extends TestCase implements Watcher {
     private final static Logger LOG = Logger.getLogger(UpgradeTest.class);
@@ -54,9 +56,21 @@ public class InvalidSnapshotTest extends TestCase implements Watcher {
     }
 
     /**
+     * Verify the LogFormatter by running it on a known file.
+     */
+    @Test
+    public void testLogFormatter() throws Exception {
+        File snapDir = new File(testData, "invalidsnap");
+        File logfile = new File(new File(snapDir, "version-2"), "log.274");
+        String[] args = {logfile.getCanonicalFile().toString()};
+        LogFormatter.main(args);
+    }
+    
+    /**
      * test the snapshot
      * @throws Exception an exception could be expected
      */
+    @Test
     public void testSnapshot() throws Exception {
         File snapDir = new File(testData, "invalidsnap");
         ZooKeeperServer zks = new ZooKeeperServer(snapDir, snapDir, 3000);
