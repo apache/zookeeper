@@ -80,11 +80,11 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         
         String quorumCfgSection =
             "electionAlg=3\n" + 
-            "server.1=localhost:" + (PORT_QP1)
+            "server.1=127.0.0.1:" + (PORT_QP1)
             + ":" + (PORT_QP_LE1)
-            + "\nserver.2=localhost:" + (PORT_QP2)
+            + "\nserver.2=127.0.0.1:" + (PORT_QP2)
             + ":" + (PORT_QP_LE2)
-            + "\nserver.3=localhost:" 
+            + "\nserver.3=127.0.0.1:" 
             + (PORT_OBS)+ ":" + (PORT_OBS_LE) + ":observer";
         String obsCfgSection =  quorumCfgSection + "\npeerType=observer";
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
@@ -94,16 +94,16 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         q2.start();
         q3.start();
         assertTrue("waiting for server 1 being up",
-                ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP1,
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
                         CONNECTION_TIMEOUT));
         assertTrue("waiting for server 2 being up",
-                ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP2,
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                         CONNECTION_TIMEOUT));
         assertTrue("waiting for server 3 being up",
-                ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_OBS,
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS,
                         CONNECTION_TIMEOUT));        
         
-        zk = new ZooKeeper("localhost:" + CLIENT_PORT_OBS,
+        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS,
                 ClientBase.CONNECTION_TIMEOUT, this);
         zk.create("/obstest", "test".getBytes(),Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
@@ -122,7 +122,7 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         q2.shutdown();
                 
         assertTrue("Waiting for server 2 to shut down",
-                    ClientBase.waitForServerDown("localhost:"+CLIENT_PORT_QP2, 
+                    ClientBase.waitForServerDown("127.0.0.1:"+CLIENT_PORT_QP2, 
                                     ClientBase.CONNECTION_TIMEOUT));
         
         // Now the resulting ensemble shouldn't be quorate         
@@ -145,7 +145,7 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         q2.start();
         LOG.info("Waiting for server 2 to come up");
         assertTrue("waiting for server 2 being up",
-                ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP2,
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                         CONNECTION_TIMEOUT));
         
         latch.await();
@@ -162,13 +162,13 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         
         zk.close();        
         assertTrue("Waiting for server 1 to shut down",
-                ClientBase.waitForServerDown("localhost:"+CLIENT_PORT_QP1, 
+                ClientBase.waitForServerDown("127.0.0.1:"+CLIENT_PORT_QP1, 
                                 ClientBase.CONNECTION_TIMEOUT));
         assertTrue("Waiting for server 2 to shut down",
-                ClientBase.waitForServerDown("localhost:"+CLIENT_PORT_QP2, 
+                ClientBase.waitForServerDown("127.0.0.1:"+CLIENT_PORT_QP2, 
                                 ClientBase.CONNECTION_TIMEOUT));
         assertTrue("Waiting for server 3 to shut down",
-                ClientBase.waitForServerDown("localhost:"+CLIENT_PORT_OBS, 
+                ClientBase.waitForServerDown("127.0.0.1:"+CLIENT_PORT_OBS, 
                                 ClientBase.CONNECTION_TIMEOUT));
     
     }
@@ -194,13 +194,13 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         final int CLIENT_PORT_QP2 = PortAssignment.unique();
         
         String quorumCfgSection =
-            "server.1=localhost:" + (CLIENT_PORT_QP1)
+            "server.1=127.0.0.1:" + (CLIENT_PORT_QP1)
             + ":" + (CLIENT_PORT_QP2) + "\npeerType=observer";
                     
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();
         assertFalse("Observer shouldn't come up",
-                ClientBase.waitForServerUp("localhost:" + CLIENT_PORT_QP1,
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
                                             CONNECTION_TIMEOUT));
         
         q1.shutdown();
