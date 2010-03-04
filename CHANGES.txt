@@ -305,6 +305,9 @@ IMPROVEMENTS:
   ZOOKEEPER-658. update forrest docs - AuthFLE no longer supported (flavio via
   mahadev)
 
+  ZOOKEEPER-640. make build.xml more configurable to ease packaging for linux
+  distros (phunt via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 

@@ -35,7 +35,18 @@
 
     <property name="src.dir" value="${basedir}/src" />
     <property name="java.src.dir" value="${src.dir}/java/main" />
+
     <property name="lib.dir" value="${src.dir}/java/lib" />
+    <property name="lib.dir.includes" value="**/*.jar" />
+    <property name="lib.dir.excludes" value="**/excluded/" />
+
+    <!-- prior to ant 1.7.1 fileset always fails if dir doesn't exist
+         so just point to bin directory and provide settings that exclude
+         everything - user can change as appropriate -->
+    <property name="additional.lib.dir" value="bin" />
+    <property name="additional.lib.dir.includes" value="**/*.jar" />
+    <property name="additional.lib.dir.excludes" value="**/*.jar" />
+
     <property name="build.dir" value="${basedir}/build" />
     <property name="distribution" value="${basedir}/distribution" />
     <property name="src_generated.dir" value="${src.dir}/java/generated" />
@@ -156,9 +167,14 @@
     <!-- the normal classpath -->
     <path id="java.classpath">
       <pathelement location="${build.classes}"/>
+      <!-- allow the user to override (e.g. if there are local versions) -->
+      <fileset dir="${additional.lib.dir}">
+        <include name="${additional.lib.dir.includes}" />
+        <exclude name="${additional.lib.dir.excludes}" />
+      </fileset>
       <fileset dir="${lib.dir}">
-        <include name="**/*.jar" />
-        <exclude name="**/excluded/" />
+        <include name="${lib.dir.includes}" />
+        <exclude name="${lib.dir.excludes}" />
       </fileset>
       <fileset dir="${ant.home}/lib">
         <include name="ant.jar" />

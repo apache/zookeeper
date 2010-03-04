@@ -18,7 +18,15 @@
 -->
 
 <project name="zookeepercontrib" default="compile" basedir=".">
-  
+
+  <property name="contribfilesetincludes" value="*/build.xml" />
+  <property name="contribfilesetexcludes" value="" />
+
+  <fileset id="contribfileset" dir=".">
+    <include name="${contribfilesetincludes}"/>
+    <exclude name="${contribfilesetexcludes}"/>
+  </fileset>
+
   <!-- In case one of the contrib subdirectories -->
   <!-- fails the build or test targets and you cannot fix it: -->
   <!-- Then add to fileset: excludes="badcontrib/build.xml" -->
@@ -28,7 +36,7 @@
   <!-- ====================================================== -->
   <target name="compile">
     <subant target="jar">
-      <fileset dir="." includes="*/build.xml"/>
+      <fileset refid="contribfileset" />
     </subant>
   </target>
   
@@ -37,7 +45,7 @@
   <!-- ====================================================== -->
   <target name="package">
     <subant target="package">
-      <fileset dir="." includes="*/build.xml"/>
+      <fileset refid="contribfileset" />
     </subant>
   </target>
   
@@ -46,7 +54,7 @@
   <!-- ====================================================== -->
   <target name="test">
     <subant target="test">
-      <fileset dir="." includes="*/build.xml"/>
+      <fileset refid="contribfileset" />
     </subant>
   </target>
   
@@ -56,7 +64,7 @@
   <!-- ====================================================== -->
   <target name="clean">
     <subant target="clean">
-      <fileset dir="." includes="*/build.xml"/>
+      <fileset refid="contribfileset" />
     </subant>
   </target>
 
