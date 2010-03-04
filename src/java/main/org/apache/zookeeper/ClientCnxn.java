@@ -744,7 +744,10 @@ public class ClientCnxn {
                 // convert from a server path to a client path
                 if (chrootPath != null) {
                     String serverPath = event.getPath();
-                    event.setPath(serverPath.substring(chrootPath.length()));
+                    if(serverPath.compareTo(chrootPath)==0)
+                        event.setPath("/");
+                    else
+                        event.setPath(serverPath.substring(chrootPath.length()));
                 }
 
                 WatchedEvent we = new WatchedEvent(event);
