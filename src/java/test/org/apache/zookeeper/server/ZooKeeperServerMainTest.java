@@ -106,11 +106,11 @@ public class ZooKeeperServerMainTest extends TestCase implements Watcher {
         main.start();
 
         assertTrue("waiting for server being up",
-                ClientBase.waitForServerUp("localhost:" + CLIENT_PORT,
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                         CONNECTION_TIMEOUT));
 
 
-        ZooKeeper zk = new ZooKeeper("localhost:" + CLIENT_PORT,
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT, this);
 
         zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
@@ -121,7 +121,7 @@ public class ZooKeeperServerMainTest extends TestCase implements Watcher {
         main.shutdown();
 
         assertTrue("waiting for server down",
-                ClientBase.waitForServerDown("localhost:" + CLIENT_PORT,
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
                         ClientBase.CONNECTION_TIMEOUT));
     }
 
