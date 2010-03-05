@@ -312,6 +312,9 @@ IMPROVEMENTS:
   ZOOKEEPER-640. make build.xml more configurable to ease packaging for linux
   distros (phunt via mahadev)
 
+  ZOOKEEPER-579. zkpython needs more test coverage for ACL code paths (henry
+  via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 

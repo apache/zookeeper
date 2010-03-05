@@ -464,6 +464,24 @@ void acl_completion_dispatch(int rc, struct ACL_vector *acl, struct Stat *stat, 
   PyGILState_Release(gstate);
 }
 
+int check_is_acl(PyObject *o) {
+	int i;
+	if (!PyList_Check(o)) {
+		return 0;
+	}
+	for (i=0;i<PyList_Size(o);++i) {
+		if (!PyDict_Check(PyList_GetItem(o,i))) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+#define CHECK_ACLS(o) if (check_is_acl(o) == 0) {\
+	PyErr_SetString(err_to_exception(ZINVALIDACL), zerror(ZINVALIDACL));\
+	return NULL;\
+ }
+
 ///////////////////////////////////////////////////////
 // Asynchronous API
 PyObject *pyzoo_acreate(PyObject *self, PyObject *args)
@@ -475,25 +493,23 @@ PyObject *pyzoo_acreate(PyObject *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "iss#O|iO", &zkhid, &path, &value, &valuelen, &pyacls, &flags, &completion_callback))
     return NULL;
   CHECK_ZHANDLE(zkhid);
-
-  if (pyacls != Py_None)
-    parse_acls(&acl, pyacls);
+  CHECK_ACLS(pyacls);
+  parse_acls(&acl, pyacls);
   int err = zoo_acreate( zhandles[zkhid],
-			 path,
-			 value,
-			 valuelen,
-			 pyacls == Py_None ? NULL : &acl,
-			 flags,
-			 string_completion_dispatch,
-			 completion_callback != Py_None ? create_pywatcher(zkhid, completion_callback,0 ) : NULL );
-    
+                         path,
+                         value,
+                         valuelen,
+                         pyacls == Py_None ? NULL : &acl,
+                         flags,
+                         string_completion_dispatch,
+                         completion_callback != Py_None ? create_pywatcher(zkhid, completion_callback,0 ) : NULL );	
   free_acls(&acl);
   if (err != ZOK)
     {
       PyErr_SetString(err_to_exception(err), zerror(err));
       return NULL;
     }
-  return Py_BuildValue("i", err);;
+  return Py_BuildValue("i", err);
 }
 
 PyObject *pyzoo_adelete(PyObject *self, PyObject *args)
@@ -676,7 +692,7 @@ PyObject *pyzoo_aset_acl(PyObject *self, PyObject *args)
 			&pyacl, &completion_callback))
     return NULL;
   CHECK_ZHANDLE(zkhid);
-
+  CHECK_ACLS(pyacl);
   parse_acls( &aclv, pyacl );
   int err = zoo_aset_acl( zhandles[zkhid],
 			  path,
@@ -736,6 +752,7 @@ static PyObject *pyzoo_create(PyObject *self, PyObject *args)
     return NULL;
   CHECK_ZHANDLE(zkhid);
   struct ACL_vector aclv;
+  CHECK_ACLS(acl);
   parse_acls(&aclv,acl);
   zhandle_t *zh = zhandles[zkhid];
   int err = zoo_create(zh, path, values, valuelen, &aclv, flags, realbuf, maxbuf_len);
