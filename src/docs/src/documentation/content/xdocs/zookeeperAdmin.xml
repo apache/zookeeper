@@ -714,8 +714,8 @@ server.3=zoo3:2888:3888</computeroutput></para>
               level) that a single client, identified by IP address, may make
               to a single member of the ZooKeeper ensemble. This is used to 
               prevent certain classes of DoS attacks, including file 
-              descriptor exhaustion. Setting this to 0 or omitting it entirely 
-              removes the limit on concurrent connections.</para>
+              descriptor exhaustion. The default is 10. Setting this to 0 
+              entirely removes the limit on concurrent connections.</para>
             </listitem>
            </varlistentry>
         </variablelist>
