@@ -438,6 +438,59 @@
     20 times the tickTime. The ZooKeeper client API allows access to
     the negotiated timeout.</para>
 
+    <para>When a client (session) becomes partitioned from the ZK
+    serving cluster it will begin searching the list of servers that
+    were specified during session creation. Eventually, when
+    connectivity between the client and at least one of the servers is
+    re-established, the session will either again transition to the
+    "connected" state (if reconnected within the session timeout
+    value) or it will transition to the "expired" state (if
+    reconnected after the session timeout). It is not advisable to
+    create a new session object (a new ZooKeeper.class or zookeeper
+    handle in the c binding) for disconnection. The ZK client library
+    will handle reconnect for you. In particular we have heuristics
+    built into the client library to handle things like "herd effect",
+    etc... Only create a new session when you are notified of session
+    expiration (mandatory).</para>
+
+    <para>Session expiration is managed by the ZooKeeper cluster
+    itself, not by the client. When the ZK client establishes a
+    session with the cluster it provides a "timeout" value detailed
+    above. This value is used by the cluster to determine when the
+    client's session expires. Expirations happens when the cluster
+    does not hear from the client within the specified session timeout
+    period (i.e. no heartbeat). At session expiration the cluster will
+    delete any/all ephemeral nodes owned by that session and
+    immediately notify any/all connected clients of the change (anyone
+    watching those znodes). At this point the client of the expired
+    session is still disconnected from the cluster, it will not be
+    notified of the session expiration until/unless it is able to
+    re-establish a connection to the cluster. The client will stay in
+    disconnected state until the TCP connection is re-established with
+    the cluster, at which point the watcher of the expired session
+    will receive the "session expired" notification.</para>
+
+    <para>Example state transitions for an expired session as seen by
+    the expired session's watcher:</para>
+
+    <orderedlist>
+      <listitem><para>'connected' : session is established and client
+      is communicating with cluster (client/server communication is
+      operating properly)</para></listitem>
+      <listitem><para>.... client is partitioned from the
+      cluster</para></listitem>
+      <listitem><para>'disconnected' : client has lost connectivity
+      with the cluster</para></listitem>
+      <listitem><para>.... time elapses, after 'timeout' period the
+      cluster expires the session, nothing is seen by client as it is
+      disconnected from cluster</para></listitem>
+      <listitem><para>.... time elapses, the client regains network
+      level connectivity with the cluster</para></listitem>
+      <listitem><para>'expired' : eventually the client reconnects to
+      the cluster, it is then notified of the
+      expiration</para></listitem>
+    </orderedlist>
+
     <para>Another parameter to the ZooKeeper session establishment
     call is the default watcher. Watchers are notified when any state
     change occurs in the client. For example if the client loses
