@@ -9,7 +9,7 @@ This has only been tested against SVN (i.e. 3.2.0 in development) but should wor
 
 You will need the Python development headers installed to build the module - on many package-management systems, these can be found in python-devel.
 
-Python >= 2.3 is required. We have tested against 2.3, 2.5 and 2.6. We have not tested against 3.x. 
+Python >= 2.6 is required. We have tested against 2.6. We have not tested against 3.x. 
 
 BUILD AND INSTALL:
 -------------------
