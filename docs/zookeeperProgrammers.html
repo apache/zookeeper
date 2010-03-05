@@ -829,6 +829,74 @@ document.write("Last Published: " + document.lastModified);
     the tickTime (as set in the server configuration) and a maximum of
     20 times the tickTime. The ZooKeeper client API allows access to
     the negotiated timeout.</p>
+<p>When a client (session) becomes partitioned from the ZK
+    serving cluster it will begin searching the list of servers that
+    were specified during session creation. Eventually, when
+    connectivity between the client and at least one of the servers is
+    re-established, the session will either again transition to the
+    "connected" state (if reconnected within the session timeout
+    value) or it will transition to the "expired" state (if
+    reconnected after the session timeout). It is not advisable to
+    create a new session object (a new ZooKeeper.class or zookeeper
+    handle in the c binding) for disconnection. The ZK client library
+    will handle reconnect for you. In particular we have heuristics
+    built into the client library to handle things like "herd effect",
+    etc... Only create a new session when you are notified of session
+    expiration (mandatory).</p>
+<p>Session expiration is managed by the ZooKeeper cluster
+    itself, not by the client. When the ZK client establishes a
+    session with the cluster it provides a "timeout" value detailed
+    above. This value is used by the cluster to determine when the
+    client's session expires. Expirations happens when the cluster
+    does not hear from the client within the specified session timeout
+    period (i.e. no heartbeat). At session expiration the cluster will
+    delete any/all ephemeral nodes owned by that session and
+    immediately notify any/all connected clients of the change (anyone
+    watching those znodes). At this point the client of the expired
+    session is still disconnected from the cluster, it will not be
+    notified of the session expiration until/unless it is able to
+    re-establish a connection to the cluster. The client will stay in
+    disconnected state until the TCP connection is re-established with
+    the cluster, at which point the watcher of the expired session
+    will receive the "session expired" notification.</p>
+<p>Example state transitions for an expired session as seen by
+    the expired session's watcher:</p>
+<ol>
+      
+<li>
+<p>'connected' : session is established and client
+      is communicating with cluster (client/server communication is
+      operating properly)</p>
+</li>
+      
+<li>
+<p>.... client is partitioned from the
+      cluster</p>
+</li>
+      
+<li>
+<p>'disconnected' : client has lost connectivity
+      with the cluster</p>
+</li>
+      
+<li>
+<p>.... time elapses, after 'timeout' period the
+      cluster expires the session, nothing is seen by client as it is
+      disconnected from cluster</p>
+</li>
+      
+<li>
+<p>.... time elapses, the client regains network
+      level connectivity with the cluster</p>
+</li>
+      
+<li>
+<p>'expired' : eventually the client reconnects to
+      the cluster, it is then notified of the
+      expiration</p>
+</li>
+    
+</ol>
 <p>Another parameter to the ZooKeeper session establishment
     call is the default watcher. Watchers are notified when any state
     change occurs in the client. For example if the client loses
@@ -884,7 +952,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N101DF"></a><a name="ch_zkWatches"></a>
+<a name="N10203"></a><a name="ch_zkWatches"></a>
 <h2 class="h3">ZooKeeper Watches</h2>
 <div class="section">
 <p>All of the read operations in ZooKeeper - <strong>getData()</strong>, <strong>getChildren()</strong>, and <strong>exists()</strong> - have the option of setting a watch as a
@@ -967,7 +1035,7 @@ document.write("Last Published: " + document.lastModified);
     general this all occurs transparently. There is one case where a watch
     may be missed: a watch for the existance of a znode not yet created will
     be missed if the znode is created and deleted while disconnected.</p>
-<a name="N10215"></a><a name="sc_WatchGuarantees"></a>
+<a name="N10239"></a><a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
 <p>With regard to watches, ZooKeeper maintains these
       guarantees:</p>
@@ -1002,7 +1070,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N1023A"></a><a name="sc_WatchRememberThese"></a>
+<a name="N1025E"></a><a name="sc_WatchRememberThese"></a>
 <h3 class="h4">Things to Remember about Watches</h3>
 <ul>
         
@@ -1061,7 +1129,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N10266"></a><a name="sc_ZooKeeperAccessControl"></a>
+<a name="N1028A"></a><a name="sc_ZooKeeperAccessControl"></a>
 <h2 class="h3">ZooKeeper access control using ACLs</h2>
 <div class="section">
 <p>ZooKeeper uses ACLs to control access to its znodes (the
@@ -1096,7 +1164,7 @@ document.write("Last Published: " + document.lastModified);
     example, the pair <em>(ip:19.22.0.0/16, READ)</em>
     gives the <em>READ</em> permission to any clients with
     an IP address that starts with 19.22.</p>
-<a name="N10299"></a><a name="sc_ACLPermissions"></a>
+<a name="N102BD"></a><a name="sc_ACLPermissions"></a>
 <h3 class="h4">ACL Permissions</h3>
 <p>ZooKeeper supports the following permissions:</p>
 <ul>
@@ -1152,7 +1220,7 @@ document.write("Last Published: " + document.lastModified);
       node, but nothing more. (The problem is, if you want to call
       zoo_exists() on a node that doesn't exist, there is no
       permission to check.)</p>
-<a name="N102EF"></a><a name="sc_BuiltinACLSchemes"></a>
+<a name="N10313"></a><a name="sc_BuiltinACLSchemes"></a>
 <h4>Builtin ACL Schemes</h4>
 <p>ZooKeeeper has the following built in schemes:</p>
 <ul>
@@ -1201,7 +1269,7 @@ document.write("Last Published: " + document.lastModified);
 
       
 </ul>
-<a name="N10333"></a><a name="ZooKeeper+C+client+API"></a>
+<a name="N10357"></a><a name="ZooKeeper+C+client+API"></a>
 <h4>ZooKeeper C client API</h4>
 <p>The following constants are provided by the ZooKeeper C
       library:</p>
@@ -1423,7 +1491,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N1044A"></a><a name="sc_ZooKeeperPluggableAuthentication"></a>
+<a name="N1046E"></a><a name="sc_ZooKeeperPluggableAuthentication"></a>
 <h2 class="h3">Pluggable ZooKeeper authentication</h2>
 <div class="section">
 <p>ZooKeeper runs in a variety of different environments with
@@ -1509,7 +1577,7 @@ authProvider.2=com.f.MyAuth2
 </div>
       
   
-<a name="N104B6"></a><a name="ch_zkGuarantees"></a>
+<a name="N104DA"></a><a name="ch_zkGuarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -1635,12 +1703,12 @@ authProvider.2=com.f.MyAuth2
 </div>
 
   
-<a name="N1051D"></a><a name="ch_bindings"></a>
+<a name="N10541"></a><a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N10526"></a><a name="Java+Binding"></a>
+<a name="N1054A"></a><a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1707,7 +1775,7 @@ authProvider.2=com.f.MyAuth2
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid.
       On a close, the two threads shut down and any further access on zookeeper
       handle is undefined behavior and should be avoided. </p>
-<a name="N1056F"></a><a name="C+Binding"></a>
+<a name="N10593"></a><a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1724,7 +1792,7 @@ authProvider.2=com.f.MyAuth2
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N1057E"></a><a name="Installation"></a>
+<a name="N105A2"></a><a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1855,7 +1923,7 @@ authProvider.2=com.f.MyAuth2
 </li>
         
 </ol>
-<a name="N10627"></a><a name="Using+the+C+Client"></a>
+<a name="N1064B"></a><a name="Using+the+C+Client"></a>
 <h4>Using the C Client</h4>
 <p>You can test your client by running a ZooKeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1913,7 +1981,7 @@ authProvider.2=com.f.MyAuth2
 </div>
 
    
-<a name="N1066D"></a><a name="ch_guideToZkOperations"></a>
+<a name="N10691"></a><a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>This section surveys all the operations a developer can perform
@@ -1931,28 +1999,28 @@ authProvider.2=com.f.MyAuth2
 </li>
     
 </ul>
-<a name="N10681"></a><a name="sc_errorsZk"></a>
+<a name="N106A5"></a><a name="sc_errorsZk"></a>
 <h3 class="h4">Handling Errors</h3>
 <p>Both the Java and C client bindings may report errors. The Java client binding does so by throwing KeeperException, calling code() on the exception will return the specific error code. The C client binding returns an error code as defined in the enum ZOO_ERRORS. API callbacks indicate result code for both language bindings. See the API documentation (javadoc for Java, doxygen for C) for full details on the possible errors and their meaning.</p>
-<a name="N1068B"></a><a name="sc_connectingToZk"></a>
+<a name="N106AF"></a><a name="sc_connectingToZk"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p></p>
-<a name="N10694"></a><a name="sc_readOps"></a>
+<a name="N106B8"></a><a name="sc_readOps"></a>
 <h3 class="h4">Read Operations</h3>
 <p></p>
-<a name="N1069D"></a><a name="sc_writeOps"></a>
+<a name="N106C1"></a><a name="sc_writeOps"></a>
 <h3 class="h4">Write Operations</h3>
 <p></p>
-<a name="N106A6"></a><a name="sc_handlingWatches"></a>
+<a name="N106CA"></a><a name="sc_handlingWatches"></a>
 <h3 class="h4">Handling Watches</h3>
 <p></p>
-<a name="N106AF"></a><a name="sc_miscOps"></a>
+<a name="N106D3"></a><a name="sc_miscOps"></a>
 <h3 class="h4">Miscelleaneous ZooKeeper Operations</h3>
 <p></p>
 </div>
 
   
-<a name="N106B9"></a><a name="ch_programStructureWithExample"></a>
+<a name="N106DD"></a><a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -1961,7 +2029,7 @@ authProvider.2=com.f.MyAuth2
 </div>
 
   
-<a name="N106C4"></a><a name="ch_gotchas"></a>
+<a name="N106E8"></a><a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application

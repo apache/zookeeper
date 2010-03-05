@@ -315,6 +315,9 @@ IMPROVEMENTS:
   ZOOKEEPER-579. zkpython needs more test coverage for ACL code paths (henry
   via mahadev)
 
+  ZOOKEEPER-688. explain session expiration better in the docs & faq (phunt
+  via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
