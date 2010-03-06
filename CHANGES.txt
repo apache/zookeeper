@@ -243,6 +243,9 @@ BUGFIXES:
   ZOOKEEPER-687. LENonterminatetest fails on some machines. (mahadev)
 
   ZOOKEEPER-681. Minor doc issue re unset maxClientCnxns (phunt via mahadev)
+
+  ZOOKEEPER-622. Test for pending watches in send_set_watches should be moved
+  (ben and steven via mahadev)
  
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
