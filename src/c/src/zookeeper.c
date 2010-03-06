@@ -1189,17 +1189,22 @@ static int send_set_watches(zhandle_t *zh)
     struct SetWatches req;
     int rc;
 
-    // return if there are no pending watches
-    if (!req.dataWatches.count && !req.existWatches.count &&
-        !req.childWatches.count) {
-        return ZOK;
-    }
-
-    oa = create_buffer_oarchive();
     req.relativeZxid = zh->last_zxid;
     req.dataWatches.data = collect_keys(zh->active_node_watchers, &req.dataWatches.count);
     req.existWatches.data = collect_keys(zh->active_exist_watchers, &req.existWatches.count);
     req.childWatches.data = collect_keys(zh->active_child_watchers, &req.childWatches.count);
+
+    // return if there are no pending watches
+    if (!req.dataWatches.count && !req.existWatches.count &&
+        !req.childWatches.count) {
+        free_key_list(req.dataWatches.data, req.dataWatches.count);
+        free_key_list(req.existWatches.data, req.existWatches.count);
+        free_key_list(req.childWatches.data, req.childWatches.count);
+        return ZOK;
+    }
+
+
+    oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SetWatches(oa, "req", &req);
     /* add this buffer to the head of the send queue */
