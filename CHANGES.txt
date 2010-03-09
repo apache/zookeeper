@@ -246,7 +246,10 @@ BUGFIXES:
 
   ZOOKEEPER-622. Test for pending watches in send_set_watches should be moved
   (ben and steven via mahadev)
- 
+
+  ZOOKEEPER-689.  release build broken - ivysettings.xml not copied during
+  "package" (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
