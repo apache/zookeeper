@@ -621,6 +621,7 @@
         </fileset>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
+        <fileset file="ivysettings.xml"/>
       </copy>
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
