@@ -252,6 +252,8 @@ BUGFIXES:
 
   ZOOKEEPER-59. Synchronized block in NIOServerCnxn (flavio via mahadev) 
 
+  ZOOKEEPER-691. Interface changed for NIOServer.Factory (breed via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
