@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
+import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -80,7 +81,8 @@ public class RecoveryTest extends TestCase implements Watcher {
         SyncRequestProcessor.setSnapCount(1000);
         try {
             final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-            NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
+            NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+                    new InetSocketAddress(PORT));
             f.startup(zks);
             LOG.info("starting up the the server, waiting");
 
@@ -118,7 +120,7 @@ public class RecoveryTest extends TestCase implements Watcher {
                                           CONNECTION_TIMEOUT));
 
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-            f = new NIOServerCnxn.Factory(PORT);
+            f = new NIOServerCnxn.Factory(new InetSocketAddress(PORT));
 
             startSignal = new CountDownLatch(1);
 
@@ -156,7 +158,7 @@ public class RecoveryTest extends TestCase implements Watcher {
                                           ClientBase.CONNECTION_TIMEOUT));
 
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-            f = new NIOServerCnxn.Factory(PORT);
+            f = new NIOServerCnxn.Factory(new InetSocketAddress(PORT));
 
             startSignal = new CountDownLatch(1);
 

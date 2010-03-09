@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -124,7 +125,8 @@ public class CRCTest extends TestCase implements Watcher{
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(150);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+                new InetSocketAddress(PORT));
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
         assertTrue("waiting for server being up",

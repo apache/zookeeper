@@ -719,6 +719,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
               property. Yes - it's not consistent, and it's annoying.)</para>
             </listitem>
           </varlistentry>
+
           <varlistentry>
             <term>maxClientCnxns</term>
             <listitem>
@@ -732,6 +733,22 @@ server.3=zoo3:2888:3888</computeroutput></para>
               entirely removes the limit on concurrent connections.</para>
             </listitem>
            </varlistentry>
+
+           <varlistentry>
+             <term>clientPortBindAddress</term>
+
+             <listitem>
+               <para><emphasis role="bold">New in 3.3:</emphasis> the
+               address (ipv4, ipv6 or hostname) to listen for client
+               connections; that is, the address that clients attempt
+               to connect to. This is optional, by default we bind in
+               such a way that any connection to the <emphasis
+               role="bold">clientPort</emphasis> for any
+               address/interface/nic on the server will be
+               accepted.</para>
+             </listitem>
+           </varlistentry>
+
         </variablelist>
       </section>
 

@@ -22,6 +22,7 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
 import junit.framework.TestCase;
@@ -63,7 +64,8 @@ public class OOMTest extends TestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 
         final int PORT = PortAssignment.unique();
-        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+                new InetSocketAddress(PORT));
         f.startup(zks);
         assertTrue("waiting for server up",
                    ClientBase.waitForServerUp("127.0.0.1:" + PORT,

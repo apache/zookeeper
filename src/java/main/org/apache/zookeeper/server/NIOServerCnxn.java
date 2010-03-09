@@ -123,8 +123,8 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
          * @param port
          * @throws IOException
          */
-        public Factory(int port) throws IOException {
-            this(port,0);
+        public Factory(InetSocketAddress addr) throws IOException {
+            this(addr, 0);
         }
 
 
@@ -136,14 +136,14 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
          * @param maxcc - the number of concurrent connections allowed from a single client.
          * @throws IOException
          */
-        public Factory(int port, int maxcc) throws IOException {
-            super("NIOServerCxn.Factory:" + port);
+        public Factory(InetSocketAddress addr, int maxcc) throws IOException {
+            super("NIOServerCxn.Factory:" + addr);
             setDaemon(true);
             maxClientCnxns = maxcc;
             this.ss = ServerSocketChannel.open();
             ss.socket().setReuseAddress(true);
-            LOG.info("binding to port " + port);
-            ss.socket().bind(new InetSocketAddress(port));
+            LOG.info("binding to port " + addr);
+            ss.socket().bind(addr);
             ss.configureBlocking(false);
             ss.register(selector, SelectionKey.OP_ACCEPT);
         }

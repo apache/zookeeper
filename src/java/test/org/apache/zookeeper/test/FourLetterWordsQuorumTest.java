@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.test.ClientBase.HostPort;
 import org.junit.Test;
 
 public class FourLetterWordsQuorumTest extends QuorumBase {
@@ -93,13 +94,15 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
     private void verify(String hp, String cmd, String expected)
         throws IOException
     {
-        String resp = send4LetterWord(hp, cmd);
-        LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
-        if (cmd.equals("dump")) {
-            assertTrue(resp.contains(expected)
-                    || resp.contains("Sessions with Ephemerals"));
-        } else {
-            assertTrue(resp.contains(expected));
+        for(HostPort hpobj: parseHostPortList(hp)) {
+            String resp = send4LetterWord(hpobj.host, hpobj.port, cmd);
+            LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
+            if (cmd.equals("dump")) {
+                assertTrue(resp.contains(expected)
+                        || resp.contains("Sessions with Ephemerals"));
+            } else {
+                assertTrue(resp.contains(expected));
+            }
         }
     }
 }
