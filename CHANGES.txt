@@ -270,24 +270,29 @@ IMPROVEMENTS:
 
   ZOOKEEPER-425. Add OSGi metadata to zookeeper.jar (david bosschaert via breed)
 
-  ZOOKEEPER-599. Changes to FLE and QuorumCnxManager to support Observers (fpj via breed)
+  ZOOKEEPER-599. Changes to FLE and QuorumCnxManager to support Observers
+  (fpj via breed)
 
   ZOOKEEPER-506. QuorumBase should use default leader election (fpj via breed)
 
   ZOOKEEPER-633. Fetch netty using ivy for bookkeeper (giri via fpj)
 
-  ZOOKEEPER-544. improve client testability - allow test client to access connected server location (phunt via breed)
+  ZOOKEEPER-544. improve client testability - allow test client to access
+  connected server location (phunt via breed)
 
-  ZOOKEEPER-426. Windows versions of zookeeper scripts (David Bosschaert via breed)
+  ZOOKEEPER-426. Windows versions of zookeeper scripts
+  (David Bosschaert via breed)
 
   ZOOKEEPER-638. upgrade ivy to 2.1.0 final from 2.1.0 release
   candidate (phunt via breed)
 
   ZOOKEEPER-648. Fix releaseaudit warning count to zero (phunt via henry)
 
-  ZOOKEEPER-626. ensure the c/java cli's print xid/sessionid/etc... in hex (pat via mahadev)
+  ZOOKEEPER-626. ensure the c/java cli's print xid/sessionid/etc... in hex
+  (pat via mahadev)
 
-  ZOOKEEPER-655. StringBuffer -> StringBuilder - conversion of references as necessary (Kay Kay via henry)
+  ZOOKEEPER-655. StringBuffer -> StringBuilder - conversion of references as
+  necessary (Kay Kay via henry)
 
   ZOOKEEPER-612. Make Zookeeper C client can be compiled by gcc of early
   version (qian via mahadev)
@@ -331,10 +336,14 @@ NEW FEATURES:
 
   ZOOKEEPER-368. Observers: core functionality (henry robinson via mahadev)
 
-  ZOOKEEPER-496. zookeeper-tree utility for export, import and incremental updates (anirban roy via breed)
+  ZOOKEEPER-496. zookeeper-tree utility for export, import and incremental
+  updates (anirban roy via breed)
 
   ZOOKEEPER-572. add ability for operator to examine state of watches
   currently registered with a server (phunt via mahadev)
+
+  ZOOKEEPER-678. Gui browser application to view and edit the contents of a
+  zookeeper instance (Colin Goodheart-Smithe via phunt)
   
 Release 3.2.0 - 2009-06-30
 
