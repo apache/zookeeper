@@ -88,7 +88,8 @@ public class FourLetterWordsTest extends ClientBase {
     }
 
     private void verify(String cmd, String expected) throws IOException {
-        String resp = send4LetterWord(hostPort, cmd);
+        HostPort hpobj = parseHostPortList(hostPort).get(0);
+        String resp = send4LetterWord(hpobj.host, hpobj.port, cmd);
         LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
         assertTrue(resp.contains(expected));
     }

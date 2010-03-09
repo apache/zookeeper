@@ -25,9 +25,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
@@ -178,18 +181,42 @@ public abstract class ClientBase extends TestCase {
         return zk;
     }
 
-    public static String send4LetterWord(String hp, String cmd)
+    public static class HostPort {
+        String host;
+        int port;
+        public HostPort(String host, int port) {
+            this.host = host;
+            this.port = port;
+        }
+    }
+    public static List<HostPort> parseHostPortList(String hplist) {
+        ArrayList<HostPort> alist = new ArrayList<HostPort>();
+        for (String hp: hplist.split(",")) {
+            int idx = hp.lastIndexOf(':');
+            String host = hp.substring(0, idx);
+            int port;
+            try {
+                port = Integer.parseInt(hp.substring(idx + 1));
+            } catch(RuntimeException e) {
+                throw new RuntimeException("Problem parsing " + hp + e.toString());
+            }
+            alist.add(new HostPort(host,port));
+        }
+        return alist;
+    }
+
+    /**
+     * Send the 4letterword
+     * @param host the destination host
+     * @param port the destination port
+     * @param cmd the 4letterword
+     * @return
+     * @throws IOException
+     */
+    public static String send4LetterWord(String host, int port, String cmd)
         throws IOException
     {
-        String split[] = hp.split(":");
-        String host = split[0];
-        int port;
-        try {
-            port = Integer.parseInt(split[1]);
-        } catch(RuntimeException e) {
-            throw new RuntimeException("Problem parsing " + hp + e.toString());
-        }
-
+        LOG.info("connecting to " + host + " " + port);
         Socket sock = new Socket(host, port);
         BufferedReader reader = null;
         try {
@@ -219,8 +246,8 @@ public abstract class ClientBase extends TestCase {
         while (true) {
             try {
                 // if there are multiple hostports, just take the first one
-                hp = hp.split(",")[0];
-                String result = send4LetterWord(hp, "stat");
+                HostPort hpobj = parseHostPortList(hp).get(0);
+                String result = send4LetterWord(hpobj.host, hpobj.port, "stat");
                 if (result.startsWith("Zookeeper version:")) {
                     return true;
                 }
@@ -244,7 +271,8 @@ public abstract class ClientBase extends TestCase {
         long start = System.currentTimeMillis();
         while (true) {
             try {
-                send4LetterWord(hp, "stat");
+                HostPort hpobj = parseHostPortList(hp).get(0);
+                send4LetterWord(hpobj.host, hpobj.port, "stat");
             } catch (IOException e) {
                 return true;
             }
@@ -288,7 +316,8 @@ public abstract class ClientBase extends TestCase {
         return tmpDir;
     }
     private static int getPort(String hostPort) {
-        String portstr = hostPort.split(":")[1];
+        String[] split = hostPort.split(":");
+        String portstr = split[split.length-1];
         String[] pc = portstr.split("/");
         if (pc.length > 1) {
             portstr = pc[0];
@@ -303,10 +332,9 @@ public abstract class ClientBase extends TestCase {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         final int PORT = getPort(hostPort);
         if (factory == null) {
-            factory = new NIOServerCnxn.Factory(PORT,maxCnxns);
+            factory = new NIOServerCnxn.Factory(new InetSocketAddress(PORT),maxCnxns);
         }
         factory.startup(zks);
-
         assertTrue("waiting for server up",
                    ClientBase.waitForServerUp("127.0.0.1:" + PORT,
                                               CONNECTION_TIMEOUT));

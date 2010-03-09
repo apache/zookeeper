@@ -119,10 +119,11 @@ public class QuorumPeerMain {
       LOG.info("Starting quorum peer");
       try {
           NIOServerCnxn.Factory cnxnFactory =
-              new NIOServerCnxn.Factory(config.getClientPort(), config.getMaxClientCnxns());
+              new NIOServerCnxn.Factory(config.getClientPortAddress(),
+                      config.getMaxClientCnxns());
   
           quorumPeer = new QuorumPeer();
-          quorumPeer.setClientPort(config.getClientPort());
+          quorumPeer.setClientPortAddress(config.getClientPortAddress());
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       new File(config.getDataLogDir()),
                       new File(config.getDataDir())));

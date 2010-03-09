@@ -33,14 +33,12 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.persistence.Util;
-import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -439,7 +437,8 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit,
-                new NIOServerCnxn.Factory(clientPort),
+                new NIOServerCnxn.Factory(
+                        new InetSocketAddress(clientPort)),
                 new QuorumMaj(countParticipants(quorumPeers)));
     }
     
@@ -455,7 +454,8 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit,
-                new NIOServerCnxn.Factory(clientPort), quorumConfig);
+                new NIOServerCnxn.Factory(new InetSocketAddress(clientPort)),
+                    quorumConfig);
     }
     
     /**
@@ -873,7 +873,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         return cnxnFactory.getLocalPort();
     }
 
-    public void setClientPort(int clientPort) {
+    public void setClientPortAddress(InetSocketAddress addr) {
     }
  
     public void setTxnFactory(FileTxnSnapLog factory) {

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.net.InetSocketAddress;
 
 import junit.framework.TestCase;
 
@@ -59,7 +60,8 @@ public class InvalidSnapshotTest extends TestCase implements Watcher {
        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
        SyncRequestProcessor.setSnapCount(100);
        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-       NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
+       NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+               new InetSocketAddress(PORT));
        f.startup(zks);
        assertTrue("waiting for server being up ",
                ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
@@ -83,7 +85,7 @@ public class InvalidSnapshotTest extends TestCase implements Watcher {
        // now restart the server and see if it starts
        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
        SyncRequestProcessor.setSnapCount(100);
-       f = new NIOServerCnxn.Factory(PORT);
+       f = new NIOServerCnxn.Factory(new InetSocketAddress(PORT));
        f.startup(zks);
        assertTrue("waiting for server being up ",
                ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
