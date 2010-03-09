@@ -548,8 +548,22 @@ server.3=zoo3:2888:3888</computeroutput></para>
 
     <section id="sc_troubleshooting">
       <title>Troubleshooting</title>
-
-      <para></para>
+	<variablelist>
+		<varlistentry>
+		<term> Server not coming up because of file corruption</term>
+		<listitem>
+		<para>A server might not be able to read its database and fail to come up because of 
+		some file corruption in the transaction logs of the ZooKeeper server. You will
+		see some IOException on loading ZooKeeper database. In such a case,
+		make sure all the other servers in your ensemble are up and  working. Use "stat" 
+		command on the command port to see if they are in good health. After you have verified that
+		all the other servers of the ensemble are up, you can go ahead and clean the database
+		of the corrupt server. Delete all the files in datadir/version-2 and datalogdir/version-2/.
+		Restart the server.
+		</para>
+		</listitem>
+		</varlistentry>
+		</variablelist>
     </section>
 
     <section id="sc_configuration">
