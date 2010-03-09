@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import org.apache.bookkeeper.proto.BookieServer;
@@ -86,7 +87,7 @@ public class LocalBookKeeper {
 		    
 		try {
 			zks = new ZooKeeperServer(ZkTmpDir, ZkTmpDir, ZooKeeperDefaultPort);
-			serverFactory =  new NIOServerCnxn.Factory(ZooKeeperDefaultPort);
+			serverFactory =  new NIOServerCnxn.Factory(new InetSocketAddress(ZooKeeperDefaultPort));
 			serverFactory.startup(zks);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
