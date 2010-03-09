@@ -353,6 +353,8 @@ NEW FEATURES:
 
   ZOOKEEPER-678. Gui browser application to view and edit the contents of a
   zookeeper instance (Colin Goodheart-Smithe via phunt)
+
+  ZOOKEEPER-635. Server supports listening on a specified network address (phunt via breed)
   
 Release 3.2.0 - 2009-06-30
 

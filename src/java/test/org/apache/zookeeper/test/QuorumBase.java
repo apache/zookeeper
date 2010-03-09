@@ -80,11 +80,11 @@ public class QuorumBase extends ClientBase {
         portLE4 = PortAssignment.unique();
         portLE5 = PortAssignment.unique();
         
-        hostPort = "127.0.0.1:" + port1 + ":" + portLE1
-            + ",127.0.0.1:" + port2 + ":" + portLE2
-            + ",127.0.0.1:" + port3 + ":" + portLE3
-            + ",127.0.0.1:" + port4 + ":" + portLE4
-            + ",127.0.0.1:" + port5 + ":" + portLE5;
+        hostPort = "127.0.0.1:" + port1
+            + ",127.0.0.1:" + port2
+            + ",127.0.0.1:" + port3
+            + ",127.0.0.1:" + port4
+            + ",127.0.0.1:" + port5;
         LOG.info("Ports are: " + hostPort);
 
         s1dir = ClientBase.createTmpDir();

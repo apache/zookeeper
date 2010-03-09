@@ -372,10 +372,13 @@ public class ClientCnxn {
         String hostsList[] = hosts.split(",");
         for (String host : hostsList) {
             int port = 2181;
-            String parts[] = host.split(":");
-            if (parts.length > 1) {
-                port = Integer.parseInt(parts[1]);
-                host = parts[0];
+            int pidx = host.lastIndexOf(':');
+            if (pidx >= 0) {
+                // otherwise : is at the end of the string, ignore
+                if (pidx < host.length() - 1) {
+                    port = Integer.parseInt(host.substring(pidx + 1));
+                }
+                host = host.substring(0, pidx);
             }
             InetAddress addrs[] = InetAddress.getAllByName(host);
             for (InetAddress addr : addrs) {

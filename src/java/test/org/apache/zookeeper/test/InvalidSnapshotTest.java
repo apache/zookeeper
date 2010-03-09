@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
+import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 
 import junit.framework.TestCase;
@@ -76,7 +77,8 @@ public class InvalidSnapshotTest extends TestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(snapDir, snapDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(PORT);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+                new InetSocketAddress(PORT));
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
         assertTrue("waiting for server being up",
