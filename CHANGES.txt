@@ -333,6 +333,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-663. hudson failure in ZKDatabaseCorruptionTest (mahadev via henryr)
 
+  ZOOKEEPER-543. Tests for ZooKeeper examples (steven via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 

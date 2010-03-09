@@ -438,7 +438,7 @@ public class ClientTest extends ClientBase {
             }
         }
     }
-
+    
     // Test that sequential filenames are being created correctly,
     // with 0-padding in the filename
     @Test
@@ -484,6 +484,48 @@ public class ClientTest extends ClientBase {
                 zk.close();
         }
     }
+    
+    // Test that data provided when 
+    // creating sequential nodes is stored properly
+    @Test
+    public void testSequentialNodeData() throws Exception {
+        ZooKeeper zk= null;
+        String queue_handle = "/queue";
+        try {
+            zk = createClient();
+
+            zk.create(queue_handle, new byte[0], Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            zk.create(queue_handle + "/element", "0".getBytes(),
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            zk.create(queue_handle + "/element", "1".getBytes(),
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            List<String> children = zk.getChildren(queue_handle, true);
+            assertEquals(children.size(), 2);
+            String child1 = children.get(0);
+            String child2 = children.get(1);
+            int compareResult = child1.compareTo(child2);
+            assertNotSame(compareResult, 0);
+            if (compareResult < 0) {
+            } else {
+                String temp = child1;
+                child1 = child2;
+                child2 = temp;
+            }
+            String child1data = new String(zk.getData(queue_handle
+                    + "/" + child1, false, null));
+            String child2data = new String(zk.getData(queue_handle
+                    + "/" + child2, false, null));
+            assertEquals(child1data, "0");
+            assertEquals(child2data, "1");
+        } finally {
+            if (zk != null) {
+                zk.close();
+            }
+        }
+
+    }
+
 
     private void verifyCreateFails(String path, ZooKeeper zk) throws Exception {
         try {
