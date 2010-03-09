@@ -927,8 +927,25 @@ server.3=zoo3:2888:3888</span>
       of the log4j manual.</p>
 <a name="N10298"></a><a name="sc_troubleshooting"></a>
 <h3 class="h4">Troubleshooting</h3>
-<p></p>
-<a name="N102A1"></a><a name="sc_configuration"></a>
+<dl>
+		
+<dt>
+<term> Server not coming up because of file corruption</term>
+</dt>
+<dd>
+<p>A server might not be able to read its database and fail to come up because of 
+		some file corruption in the transaction logs of the ZooKeeper server. You will
+		see some IOException on loading ZooKeeper database. In such a case,
+		make sure all the other servers in your ensemble are up and  working. Use "stat" 
+		command on the command port to see if they are in good health. After you have verified that
+		all the other servers of the ensemble are up, you can go ahead and clean the database
+		of the corrupt server. Delete all the files in datadir/version-2 and datalogdir/version-2/.
+		Restart the server.
+		</p>
+</dd>
+		
+</dl>
+<a name="N102A9"></a><a name="sc_configuration"></a>
 <h3 class="h4">Configuration Parameters</h3>
 <p>ZooKeeper's behavior is governed by the ZooKeeper configuration
       file. This file is designed so that the exact same file can be used by
@@ -936,7 +953,7 @@ server.3=zoo3:2888:3888</span>
       layouts are the same. If servers use different configuration files, care
       must be taken to ensure that the list of servers in all of the different
       configuration files match.</p>
-<a name="N102AA"></a><a name="sc_minimumConfiguration"></a>
+<a name="N102B2"></a><a name="sc_minimumConfiguration"></a>
 <h4>Minimum Configuration</h4>
 <p>Here are the minimum configuration keywords that must be defined
         in the configuration file:</p>
@@ -983,7 +1000,7 @@ server.3=zoo3:2888:3888</span>
 </dd>
         
 </dl>
-<a name="N102D1"></a><a name="sc_advancedConfiguration"></a>
+<a name="N102D9"></a><a name="sc_advancedConfiguration"></a>
 <h4>Advanced Configuration</h4>
 <p>The configuration settings in the section are optional. You can
         use them to further fine tune the behaviour of your ZooKeeper servers.
@@ -1083,7 +1100,7 @@ server.3=zoo3:2888:3888</span>
 </dd>
         
 </dl>
-<a name="N1033A"></a><a name="sc_clusterOptions"></a>
+<a name="N10342"></a><a name="sc_clusterOptions"></a>
 <h4>Cluster Options</h4>
 <p>The options in this section are designed for use with an ensemble
         of servers -- that is, when deploying clusters of servers.</p>
@@ -1221,7 +1238,7 @@ server.3=zoo3:2888:3888</span>
         
 </dl>
 <p></p>
-<a name="N103BA"></a><a name="sc_authOptions"></a>
+<a name="N103C2"></a><a name="sc_authOptions"></a>
 <h4>Authentication &amp; Authorization Options</h4>
 <p>The options in this section allow control over
         authentication/authorization performed by the service.</p>
@@ -1255,7 +1272,7 @@ server.3=zoo3:2888:3888</span>
 </dd>
         
 </dl>
-<a name="N103DD"></a><a name="Unsafe+Options"></a>
+<a name="N103E5"></a><a name="Unsafe+Options"></a>
 <h4>Unsafe Options</h4>
 <p>The following options can be useful, but be careful when you use
         them. The risk of each is explained along with the explanation of what
@@ -1300,7 +1317,7 @@ server.3=zoo3:2888:3888</span>
 </dd>
         
 </dl>
-<a name="N1040F"></a><a name="sc_zkCommands"></a>
+<a name="N10417"></a><a name="sc_zkCommands"></a>
 <h3 class="h4">ZooKeeper Commands: The Four Letter Words</h3>
 <p>ZooKeeper responds to a small set of commands. Each command is
       composed of four letters. You issue the commands to ZooKeeper via telnet
@@ -1421,7 +1438,7 @@ server.3=zoo3:2888:3888</span>
 <pre class="code">$ echo ruok | nc 127.0.0.1 5111
 imok
 </pre>
-<a name="N10477"></a><a name="sc_dataFileManagement"></a>
+<a name="N1047F"></a><a name="sc_dataFileManagement"></a>
 <h3 class="h4">Data File Management</h3>
 <p>ZooKeeper stores its data in a data directory and its transaction
       log in a transaction log directory. By default these two directories are
@@ -1429,7 +1446,7 @@ imok
       transaction log files in a separate directory than the data files.
       Throughput increases and latency decreases when transaction logs reside
       on a dedicated log devices.</p>
-<a name="N10480"></a><a name="The+Data+Directory"></a>
+<a name="N10488"></a><a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
 <p>This directory has two files in it:</p>
 <ul>
@@ -1475,14 +1492,14 @@ imok
         idempotent nature of its updates. By replaying the transaction log
         against fuzzy snapshots ZooKeeper gets the state of the system at the
         end of the log.</p>
-<a name="N104BC"></a><a name="The+Log+Directory"></a>
+<a name="N104C4"></a><a name="The+Log+Directory"></a>
 <h4>The Log Directory</h4>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
         log file is started each time a snapshot is begun. The log file's
         suffix is the first zxid written to that log.</p>
-<a name="N104C6"></a><a name="sc_filemanagement"></a>
+<a name="N104CE"></a><a name="sc_filemanagement"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
         standalone ZooKeeper servers and different configurations of
@@ -1502,7 +1519,7 @@ imok
         this document for more details on setting a retention policy
         and maintenance of ZooKeeper storage.
         </p>
-<a name="N104DB"></a><a name="sc_commonProblems"></a>
+<a name="N104E3"></a><a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
       ZooKeeper correctly:</p>
@@ -1556,7 +1573,7 @@ imok
 </dd>
       
 </dl>
-<a name="N104FF"></a><a name="sc_bestPractices"></a>
+<a name="N10507"></a><a name="sc_bestPractices"></a>
 <h3 class="h4">Best Practices</h3>
 <p>For best results, take note of the following list of good
       Zookeeper practices:</p>

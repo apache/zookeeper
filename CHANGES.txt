@@ -326,6 +326,8 @@ IMPROVEMENTS:
   ZOOKEEPER-688. explain session expiration better in the docs & faq (phunt
   via mahadev)
 
+  ZOOKEEPER-663. hudson failure in ZKDatabaseCorruptionTest (mahadev via henryr)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
