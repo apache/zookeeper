@@ -37,7 +37,7 @@
     <dependency org="log4j" name="log4j" rev="1.2.15" transitive="false"/>
     <dependency org="jline" name="jline" rev="0.9.94" transitive="false"/>
 
-    <dependency org="junit" name="junit" rev="4.7" conf="test->default"/>
+    <dependency org="junit" name="junit" rev="4.8.1" conf="test->default"/>
     <dependency org="checkstyle" name="checkstyle" rev="5.0"
                 conf="test->default"/>
 
