@@ -670,6 +670,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         if(udpSocket != null) {
             udpSocket.close();
         }
+        
+        if(getElectionAlg() != null){
+        	getElectionAlg().shutdown();
+        }
     }
 
     /**

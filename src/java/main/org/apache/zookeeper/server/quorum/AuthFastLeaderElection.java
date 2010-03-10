@@ -808,6 +808,17 @@ public class AuthFastLeaderElection implements Election {
 
     }
 
+    /**
+     * There is nothing to shutdown in this implementation of
+     * leader election, so we simply have an empty method.
+     */
+    public void shutdown(){}
+    
+    /**
+     * Invoked in QuorumPeer to find or elect a new leader.
+     * 
+     * @throws InterruptedException
+     */
     public Vote lookForLeader() throws InterruptedException {
         try {
             self.jmxLeaderElectionBean = new LeaderElectionBean();
