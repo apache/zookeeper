@@ -180,6 +180,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testAsyncWatcherAutoReset);
 #ifdef THREADED
     CPPUNIT_TEST(testNullData);
+    CPPUNIT_TEST(testIPV6);
     CPPUNIT_TEST(testPath);
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
@@ -215,7 +216,11 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     }
     
     zhandle_t *createClient(watchctx_t *ctx) {
-        zhandle_t *zk = zookeeper_init(hostPorts, watcher, 10000, 0, ctx, 0);
+        return createClient(hostPorts, ctx);
+    }
+
+    zhandle_t *createClient(const char *hp, watchctx_t *ctx) {
+        zhandle_t *zk = zookeeper_init(hp, watcher, 10000, 0, ctx, 0);
         ctx->zh = zk;
         sleep(1);
         return zk;
@@ -569,6 +574,16 @@ public:
 
         CPPUNIT_ASSERT(Stat_eq(&stat_a, &stat_b));
         CPPUNIT_ASSERT(stat_a.numChildren == 4);
+    }
+
+    void testIPV6() {
+        watchctx_t ctx;
+        zhandle_t *zk = createClient("::1:22181", &ctx);
+        CPPUNIT_ASSERT(zk);
+        int rc = 0;
+        rc = zoo_create(zk, "/ipv6", NULL, -1,
+                        &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
     }
 
     void testNullData() {

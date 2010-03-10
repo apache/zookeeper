@@ -52,9 +52,13 @@ AC_PROG_LN_S
 # AC_DISABLE_SHARED
 AC_PROG_LIBTOOL
 
+#enable -D_GNU_SOURCE since the return code value of getaddrinfo
+#ifdefed with __USE_GNU
+#features.h header undef's __USE_GNU and defines it only if _GNU_SOURCE is defined
+#hence this define for gcc
 AC_ARG_ENABLE([debug],
  [AS_HELP_STRING([--enable-debug],[enable debug build [default=no]])],
- [CFLAGS="-g -O0";CXXFLAGS="-g -O0"],[CFLAGS="-g -O2";CXXFLAGS="-g -O2"])
+ [CFLAGS="-g -O0 -D_GNU_SOURCE";CXXFLAGS="-g -O0"],[CFLAGS="-g -O2 -D_GNU_SOURCE";CXXFLAGS="-g -O2"])
  
 AC_ARG_WITH([syncapi],
  [AS_HELP_STRING([--with-syncapi],[build with support for SyncAPI [default=yes]])],
