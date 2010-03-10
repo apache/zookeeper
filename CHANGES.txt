@@ -7,6 +7,8 @@ BUGFIXES:
 Backward compatible changes:
 
 BUGFIXES: 
+  ZOOKEEPER-59. Synchronized block in NIOServerCnxn (fpj via breed)
+
   ZOOKEEPER-524. DBSizeTest is not really testing anything (breed)
 
   ZOOKEEPER-469. make sure CPPUNIT_CFLAGS isn't overwritten
@@ -253,6 +255,8 @@ BUGFIXES:
   ZOOKEEPER-59. Synchronized block in NIOServerCnxn (flavio via mahadev) 
 
   ZOOKEEPER-691. Interface changed for NIOServer.Factory (breed via mahadev)
+
+  ZOOKEEPER-685.  Race in LENonTerminateTest (henry via breed)
 
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to

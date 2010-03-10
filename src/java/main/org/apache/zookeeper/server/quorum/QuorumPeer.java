@@ -495,7 +495,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 this, new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
     }
 
-    private Election createElectionAlgorithm(int electionAlgorithm){
+    protected Election createElectionAlgorithm(int electionAlgorithm){
         Election le=null;
                 
         //TODO: use a factory rather than a switch
@@ -890,5 +890,13 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      */
     public void setZKDatabase(ZKDatabase database) {
         this.zkDb = database;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
+    }
+
+    public boolean isRunning() {
+        return running;
     }
 }
