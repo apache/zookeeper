@@ -155,7 +155,7 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
                 lastEvent.getState() + ")",
                 (KeeperState.SyncConnected==lastEvent.getState() ||
                 KeeperState.Expired==lastEvent.getState())); 
-                       
+
         q1.shutdown();
         q2.shutdown();
         q3.shutdown();
