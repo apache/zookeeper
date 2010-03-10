@@ -343,6 +343,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-543. Tests for ZooKeeper examples (steven via mahadev)
 
+  ZOOKEEPER-692. upgrade junit to latest version (4.8.1) (phunt via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
