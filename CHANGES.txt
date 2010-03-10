@@ -258,6 +258,8 @@ BUGFIXES:
 
   ZOOKEEPER-685.  Race in LENonTerminateTest (henry via breed)
 
+  ZOOKEEPER-677. c client doesn't allow ipv6 numeric connect string (breed & phunt & mahadev via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)

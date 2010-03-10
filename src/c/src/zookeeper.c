@@ -189,6 +189,7 @@ static __attribute__((unused)) void print_completion_queue(zhandle_t *zh);
 
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
 static int isValidPath(const char* path, const int flags);
+static int getaddrinfo_errno(int rc);
 
 const void *zoo_get_context(zhandle_t *zh) 
 {
@@ -403,6 +404,24 @@ static void setup_random()
 }
 
 /**
+ * get the errno from the return code 
+ * of get addrinfo. Errno is not set
+ * with the call to getaddrinfo, so thats
+ * why we have to do this.
+ */
+static int getaddrinfo_errno(int rc) { 
+    switch(rc) {
+    case EAI_NONAME:
+    case EAI_NODATA:
+        return ENOENT;
+    case EAI_MEMORY:
+        return ENOMEM;
+    default:
+        return EINVAL;
+    }
+}
+
+/**
  * fill in the addrs array of the zookeeper servers in the zhandle. after filling
  * them in, we will permute them for load balancing.
  */
@@ -430,7 +449,7 @@ int getaddrs(zhandle_t *zh)
     zh->addrs = 0;
     host=strtok_r(hosts, ",", &strtok_last);
     while(host) {
-        char *port_spec = strchr(host, ':');
+        char *port_spec = strrchr(host, ':');
         char *end_port_spec;
         int port;
         if (!port_spec) {
@@ -462,10 +481,23 @@ int getaddrs(zhandle_t *zh)
         while(isspace(*host) && host != strtok_last)
             host++;
 
-        if (getaddrinfo(host, port_spec, &hints, &res0) != 0) {
-            LOG_ERROR(("getaddrinfo: %s\n", strerror(errno)));
-            rc=ZSYSTEMERROR;
-            goto fail;
+        if ((rc = getaddrinfo(host, port_spec, &hints, &res0)) != 0) {
+            //bug in getaddrinfo implementation when it returns
+            //EAI_BADFLAGS or EAI_ADDRFAMILY with AF_UNSPEC and 
+            // ai_flags as AI_ADDRCONFIG
+            if ((hints.ai_flags == AI_ADDRCONFIG) && 
+                ((rc ==EAI_BADFLAGS) || (rc == EAI_ADDRFAMILY))) {
+                //reset ai_flags to null
+                hints.ai_flags = 0;
+                //retry getaddrinfo
+                rc = getaddrinfo(host, port_spec, &hints, &res0);
+            }
+            if (rc != 0) {
+                errno = getaddrinfo_errno(rc);
+                LOG_ERROR(("getaddrinfo: %s\n", strerror(errno)));
+                rc=ZSYSTEMERROR;
+                goto fail;
+            }
         }
 
         for (res = res0; res; res = res->ai_next) {
