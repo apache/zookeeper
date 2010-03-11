@@ -41,30 +41,44 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     private final CnxnStats stats;
 
     private final ZooKeeperServer zk;
+    
+    private final String remoteIP;
+    private final long sessionId;
 
     public ConnectionBean(ServerCnxn connection,ZooKeeperServer zk){
         this.connection = connection;
         this.stats = (CnxnStats)connection.getStats();
         this.zk = zk;
+        
+        InetSocketAddress sockAddr = connection.getRemoteAddress();
+        if (sockAddr == null) {
+            remoteIP = "Unknown";
+        } else {
+            InetAddress addr = sockAddr.getAddress();
+            if (addr instanceof Inet6Address) {
+                remoteIP = ObjectName.quote(addr.getHostAddress());
+            } else {
+                remoteIP = addr.getHostAddress();
+            }
+        }
+        sessionId = connection.getSessionId();
     }
     
     public String getSessionId() {
-        return "0x" + Long.toHexString(connection.getSessionId());
+        return "0x" + Long.toHexString(sessionId);
     }
 
     public String getSourceIP() {
         InetSocketAddress sockAddr = connection.getRemoteAddress();
+        if (sockAddr == null) {
+            return null;
+        }
         return sockAddr.getAddress().getHostAddress()
             + ":" + sockAddr.getPort();
     }
 
     public String getName() {
-        InetAddress addr = connection.getRemoteAddress().getAddress();
-        String ip = addr.getHostAddress();
-        if (addr instanceof Inet6Address) {
-            ip = ObjectName.quote(ip);
-        }
-        return MBeanRegistry.getInstance().makeFullPath("Connections", ip,
+        return MBeanRegistry.getInstance().makeFullPath("Connections", remoteIP,
                 getSessionId());
     }
     
@@ -74,7 +88,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     
     public String[] getEphemeralNodes() {
         if(zk.getZKDatabase()  !=null){
-            String[] res= zk.getZKDatabase().getEphemerals(connection.getSessionId())
+            String[] res= zk.getZKDatabase().getEphemerals(sessionId)
                 .toArray(new String[0]);
             Arrays.sort(res);
             return res;
@@ -88,7 +102,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     
     public void terminateSession() {
         try {
-            zk.closeSession(connection.getSessionId());
+            zk.closeSession(sessionId);
         } catch (Exception e) {
             LOG.warn("Unable to closeSession() for session: 0x" 
                     + getSessionId(), e);
