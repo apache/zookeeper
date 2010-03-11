@@ -139,7 +139,15 @@ public class LearnerHandler extends Thread {
                 oa.writeRecord(p, "packet");
             } catch (IOException e) {
                 if (!sock.isClosed()) {
-                    LOG.warn("Unexpected exception",e);
+                    LOG.warn("Unexpected exception at " + this, e);
+                    try {
+                        // this will cause everything to shutdown on
+                        // this learner handler and will help notify
+                        // the learner/observer instantaneously
+                        sock.close();
+                    } catch(IOException ie) {
+                        LOG.warn("Error closing socket for handler " + this, ie);
+                    }
                 }
                 break;
             }
