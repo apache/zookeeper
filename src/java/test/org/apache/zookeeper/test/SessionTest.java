@@ -327,7 +327,7 @@ public class SessionTest extends TestCase implements Watcher {
     public void process(WatchedEvent event) {
         LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
         if (event.getState() == KeeperState.SyncConnected
-                && startSignal.getCount() > 0)
+                && startSignal != null && startSignal.getCount() > 0)
         {
             startSignal.countDown();
         }

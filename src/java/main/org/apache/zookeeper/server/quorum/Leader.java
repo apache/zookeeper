@@ -396,16 +396,16 @@ public class Leader {
         
         // NIO should not accept conenctions
         self.cnxnFactory.setZooKeeperServer(null);
+        try {
+            ss.close();
+        } catch (IOException e) {
+            LOG.warn("Ignoring unexpected exception during close",e);
+        }
         // clear all the connections
         self.cnxnFactory.clear();
         // shutdown the previous zk
         if (zk != null) {
             zk.shutdown();
-        }
-        try {
-            ss.close();
-        } catch (IOException e) {
-            LOG.warn("Ignoring unexpected exception during close",e);
         }
         synchronized (learners) {
             for (Iterator<LearnerHandler> it = learners.iterator(); it
