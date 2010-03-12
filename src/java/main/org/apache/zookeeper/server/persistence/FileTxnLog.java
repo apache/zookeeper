@@ -165,6 +165,19 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
+     * close all the open file handles
+     * @throws IOException
+     */
+    public synchronized void close() throws IOException {
+        if (logStream != null) {
+            logStream.close();
+        }
+        for (FileOutputStream log : streamsToFlush) {
+            log.close();
+        }
+    }
+    
+    /**
      * append an entry to the transaction log
      * @param hdr the header of the transaction
      * @param txn the transaction part of the entry

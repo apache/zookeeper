@@ -450,5 +450,12 @@ public class ZKDatabase {
         this.snapLog.commit();
     }
     
+    /**
+     * close this database. free the resources
+     * @throws IOException
+     */
+    public void close() throws IOException {
+        this.snapLog.close();
+    }
     
 }

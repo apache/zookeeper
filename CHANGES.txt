@@ -273,6 +273,9 @@ BUGFIXES:
   ZOOKEEPER-604. zk needs to prevent export of any symbol not listed in their
   api (mahadev)
 
+  ZOOKEEPER-121. SyncRequestProcessor is not closing log stream during
+  shutdown (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
