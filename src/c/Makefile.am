@@ -21,6 +21,8 @@ COMMON_SRC = src/zookeeper.c include/zookeeper.h include/zookeeper_version.h inc
     src/zk_adaptor.h generated/zookeeper.jute.c \
     src/zookeeper_log.h src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c
 
+# These are the symbols (classes, mostly) we want to export from our library.
+EXPORT_SYMBOLS = '(zoo_|zookeeper_|zhandle|Z|format_log_message|log_message|logLevel)'
 noinst_LTLIBRARIES += libzkst.la
 libzkst_la_SOURCES =$(COMMON_SRC) src/st_adaptor.c
 libzkst_la_LIBADD = -lm
@@ -29,7 +31,7 @@ lib_LTLIBRARIES = libzookeeper_st.la
 libzookeeper_st_la_SOURCES =
 libzookeeper_st_la_LIBADD=libzkst.la libhashtable.la
 libzookeeper_st_la_DEPENDENCIES=libzkst.la libhashtable.la
-libzookeeper_st_la_LDFLAGS = $(LIB_LDFLAGS)
+libzookeeper_st_la_LDFLAGS = $(LIB_LDFLAGS) -export-symbols-regex $(EXPORT_SYMBOLS)
 
 if WANT_SYNCAPI
 noinst_LTLIBRARIES += libzkmt.la
@@ -41,7 +43,7 @@ lib_LTLIBRARIES += libzookeeper_mt.la
 libzookeeper_mt_la_SOURCES =
 libzookeeper_mt_la_LIBADD=libzkmt.la libhashtable.la -lpthread
 libzookeeper_mt_la_DEPENDENCIES=libzkmt.la libhashtable.la
-libzookeeper_mt_la_LDFLAGS = $(LIB_LDFLAGS)
+libzookeeper_mt_la_LDFLAGS = $(LIB_LDFLAGS) -export-symbols-regex $(EXPORT_SYMBOLS)
 endif
 
 bin_PROGRAMS = cli_st
