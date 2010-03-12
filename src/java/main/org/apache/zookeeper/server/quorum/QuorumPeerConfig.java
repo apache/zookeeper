@@ -33,11 +33,11 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
-import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
+import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 
 public class QuorumPeerConfig {
     private static final Logger LOG = Logger.getLogger(QuorumPeerConfig.class);
@@ -46,12 +46,16 @@ public class QuorumPeerConfig {
     protected String dataDir;
     protected String dataLogDir;
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
+    protected int maxClientCnxns = 10;
+    /** defaults to -1 if not set explicitly */
+    protected int minSessionTimeout = -1;
+    /** defaults to -1 if not set explicitly */
+    protected int maxSessionTimeout = -1;
 
     protected int initLimit;
     protected int syncLimit;
     protected int electionAlg = 3;
     protected int electionPort = 2182;
-    protected int maxClientCnxns = 10;
     protected final HashMap<Long,QuorumServer> servers =
         new HashMap<Long, QuorumServer>();
     protected final HashMap<Long,QuorumServer> observers =
@@ -130,14 +134,18 @@ public class QuorumPeerConfig {
                 clientPortAddress = value.trim();
             } else if (key.equals("tickTime")) {
                 tickTime = Integer.parseInt(value);
+            } else if (key.equals("maxClientCnxns")) {
+                maxClientCnxns = Integer.parseInt(value);
+            } else if (key.equals("minSessionTimeout")) {
+                minSessionTimeout = Integer.parseInt(value);
+            } else if (key.equals("maxSessionTimeout")) {
+                maxSessionTimeout = Integer.parseInt(value);
             } else if (key.equals("initLimit")) {
                 initLimit = Integer.parseInt(value);
             } else if (key.equals("syncLimit")) {
                 syncLimit = Integer.parseInt(value);
             } else if (key.equals("electionAlg")) {
                 electionAlg = Integer.parseInt(value);
-            } else if (key.equals("maxClientCnxns")) {
-                maxClientCnxns = Integer.parseInt(value);
             } else if (key.equals("peerType")) {
                 if (value.toLowerCase().equals("observer")) {
                     peerType = LearnerType.OBSERVER;
@@ -229,6 +237,10 @@ public class QuorumPeerConfig {
         if (tickTime == 0) {
             throw new IllegalArgumentException("tickTime is not set");
         }
+        if (minSessionTimeout > maxSessionTimeout) {
+            throw new IllegalArgumentException(
+                    "minSessionTimeout must not be larger than maxSessionTimeout");
+        }
         if (servers.size() > 1) {
             if (initLimit == 0) {
                 throw new IllegalArgumentException("initLimit is not set");
@@ -305,14 +317,16 @@ public class QuorumPeerConfig {
     public String getDataDir() { return dataDir; }
     public String getDataLogDir() { return dataLogDir; }
     public int getTickTime() { return tickTime; }
+    public int getMaxClientCnxns() { return maxClientCnxns; }
+    public int getMinSessionTimeout() { return minSessionTimeout; }
+    public int getMaxSessionTimeout() { return maxSessionTimeout; }
 
     public int getInitLimit() { return initLimit; }
     public int getSyncLimit() { return syncLimit; }
     public int getElectionAlg() { return electionAlg; }
-    public int getElectionPort() { return electionPort; }
-    public int getMaxClientCnxns() { return maxClientCnxns; }
-
-    public QuorumVerifier getQuorumVerifier() {
+    public int getElectionPort() { return electionPort; }    
+    
+    public QuorumVerifier getQuorumVerifier() {   
         return quorumVerifier;
     }
 

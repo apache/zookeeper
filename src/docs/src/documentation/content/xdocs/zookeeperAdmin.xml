@@ -162,7 +162,7 @@
           <para>Create a configuration file. This file can be called anything.
           Use the following settings as a starting point:</para>
 
-          <para><computeroutput>
+          <programlisting>
 tickTime=2000
 dataDir=/var/zookeeper/
 clientPort=2181
@@ -170,7 +170,7 @@ initLimit=5
 syncLimit=2
 server.1=zoo1:2888:3888
 server.2=zoo2:2888:3888
-server.3=zoo3:2888:3888</computeroutput></para>
+server.3=zoo3:2888:3888</programlisting>
 
           <para>You can find the meanings of these and other configuration
           settings in the section <xref linkend="sc_configuration" />. A word
@@ -185,7 +185,9 @@ server.3=zoo3:2888:3888</computeroutput></para>
           server id to each machine by creating a file named
           <filename>myid</filename>, one for each server, which resides in
           that server's data directory, as specified by the configuration file
-          parameter <emphasis role="bold">dataDir</emphasis>. The myid file
+          parameter <emphasis role="bold">dataDir</emphasis>.</para></listitem>
+
+          <listitem><para>The myid file
           consists of a single line containing only the text of that machine's
           id. So <filename>myid</filename> of server 1 would contain the text
           "1" and nothing else. The id must be unique within the
@@ -738,7 +740,7 @@ server.3=zoo3:2888:3888</computeroutput></para>
              <term>clientPortBindAddress</term>
 
              <listitem>
-               <para><emphasis role="bold">New in 3.3:</emphasis> the
+               <para><emphasis role="bold">New in 3.3.0:</emphasis> the
                address (ipv4, ipv6 or hostname) to listen for client
                connections; that is, the address that clients attempt
                to connect to. This is optional, by default we bind in
@@ -749,6 +751,29 @@ server.3=zoo3:2888:3888</computeroutput></para>
              </listitem>
            </varlistentry>
 
+          <varlistentry>
+            <term>minSessionTimeout</term>
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para><emphasis role="bold">New in 3.3.0:</emphasis> the
+              minimum session timeout in milliseconds that the server
+              will allow the client to negotiate. Defaults to 2 times
+              the <emphasis role="bold">tickTime</emphasis>.</para>
+            </listitem>
+           </varlistentry>
+
+          <varlistentry>
+            <term>maxSessionTimeout</term>
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para><emphasis role="bold">New in 3.3.0:</emphasis> the
+              maximum session timeout in milliseconds that the server
+              will allow the client to negotiate. Defaults to 20 times
+              the <emphasis role="bold">tickTime</emphasis>.</para>
+            </listitem>
+           </varlistentry>
         </variablelist>
       </section>
 
@@ -1007,13 +1032,24 @@ server.3=zoo3:2888:3888</computeroutput></para>
 
       <variablelist>
         <varlistentry>
+          <term>conf</term>
+
+          <listitem>
+            <para><emphasis role="bold">New in 3.3.0:</emphasis> Print
+            details about serving configuration.</para>
+          </listitem>
+
+        </varlistentry>
+
+        <varlistentry>
           <term>cons</term>
 
           <listitem>
-            <para>List full connection/session details for all clients
-            connected to this server. Includes information on numbers
-            of packets received/sent, session id, operation latencies,
-            last operation performed, etc...</para>
+            <para><emphasis role="bold">New in 3.3.0:</emphasis> List
+            full connection/session details for all clients connected
+            to this server. Includes information on numbers of packets
+            received/sent, session id, operation latencies, last
+            operation performed, etc...</para>
           </listitem>
 
         </varlistentry>
@@ -1022,7 +1058,8 @@ server.3=zoo3:2888:3888</computeroutput></para>
           <term>crst</term>
 
           <listitem>
-            <para>Reset connection/session statistics for all connections.</para>
+            <para><emphasis role="bold">New in 3.3.0:</emphasis> Reset
+            connection/session statistics for all connections.</para>
           </listitem>
         </varlistentry>
 
@@ -1070,7 +1107,8 @@ server.3=zoo3:2888:3888</computeroutput></para>
           <term>srvr</term>
 
           <listitem>
-            <para>Lists full details for the server.</para>
+            <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
+            full details for the server.</para>
           </listitem>
         </varlistentry>
 
@@ -1087,7 +1125,8 @@ server.3=zoo3:2888:3888</computeroutput></para>
           <term>wchs</term>
 
           <listitem>
-            <para>Lists brief information on watches for the server.</para>
+            <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
+            brief information on watches for the server.</para>
           </listitem>
         </varlistentry>
 
@@ -1095,10 +1134,12 @@ server.3=zoo3:2888:3888</computeroutput></para>
           <term>wchc</term>
 
           <listitem>
-            <para>Lists detailed information on watches for the server, by session.
-            This outputs a list of sessions(connections) with associated watches
-            (paths). Note, depending on the number of watches this operation may be
-            expensive (ie impact server performance), use it carefully.</para>
+            <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
+            detailed information on watches for the server, by
+            session.  This outputs a list of sessions(connections)
+            with associated watches (paths). Note, depending on the
+            number of watches this operation may be expensive (ie
+            impact server performance), use it carefully.</para>
           </listitem>
         </varlistentry>
 
@@ -1106,10 +1147,12 @@ server.3=zoo3:2888:3888</computeroutput></para>
           <term>wchp</term>
 
           <listitem>
-            <para>Lists detailed information on watches for the server, by path.
-            This outputs a list of paths (znodes) with associated sessions. Note,
-            depending on the number of watches this operation may be expensive
-            (ie impact server performance), use it carefully.</para>
+            <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
+            detailed information on watches for the server, by path.
+            This outputs a list of paths (znodes) with associated
+            sessions. Note, depending on the number of watches this
+            operation may be expensive (ie impact server performance),
+            use it carefully.</para>
           </listitem>
         </varlistentry>
       </variablelist>

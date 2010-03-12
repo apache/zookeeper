@@ -22,23 +22,22 @@ import java.util.HashMap;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
-import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
  * Parent class for all ZooKeeperServers for Learners 
  */
-public abstract class LearnerZooKeeperServer extends ZooKeeperServer {    
-    
-    protected QuorumPeer self;
-    
+public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {    
     public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
-            DataTreeBuilder treeBuilder, ZKDatabase zkDb) throws IOException {
-        super(logFactory,tickTime,treeBuilder, zkDb);
+            int minSessionTimeout, int maxSessionTimeout,
+            DataTreeBuilder treeBuilder, ZKDatabase zkDb, QuorumPeer self)
+        throws IOException
+    {
+        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout,
+                treeBuilder, zkDb, self);
     }
 
     /**
@@ -65,6 +64,7 @@ public abstract class LearnerZooKeeperServer extends ZooKeeperServer {
      * Returns the id of the associated QuorumPeer, which will do for a unique
      * id of this server. 
      */
+    @Override
     public long getServerId() {
         return self.getId();
     }    

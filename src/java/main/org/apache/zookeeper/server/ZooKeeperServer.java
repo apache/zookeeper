@@ -87,6 +87,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public static final int DEFAULT_TICK_TIME = 3000;
     protected int tickTime = DEFAULT_TICK_TIME;
+    /** value of -1 indicates unset, use default */
+    protected int minSessionTimeout = -1;
+    /** value of -1 indicates unset, use default */
+    protected int maxSessionTimeout = -1;
     protected SessionTracker sessionTracker;
     private FileTxnSnapLog txnLogFactory = null;
     private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
@@ -134,15 +138,21 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param dataDir the directory to put the data
      * @throws IOException
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime, 
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
+            int minSessionTimeout, int maxSessionTimeout,
             DataTreeBuilder treeBuilder, ZKDatabase zkDb) throws IOException {
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.zkDb = zkDb;
         this.tickTime = tickTime;
+        this.minSessionTimeout = minSessionTimeout;
+        this.maxSessionTimeout = maxSessionTimeout;
         
-        LOG.info("Created server with tickTime " + tickTime + " datadir " + 
-                txnLogFactory.getDataDir() + " snapdir " + txnLogFactory.getSnapDir());
+        LOG.info("Created server with tickTime " + tickTime
+                + " minSessionTimeout " + getMinSessionTimeout()
+                + " maxSessionTimeout " + getMaxSessionTimeout()
+                + " datadir " + txnLogFactory.getDataDir()
+                + " snapdir " + txnLogFactory.getSnapDir());
     }
 
     /**
@@ -154,13 +164,34 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             DataTreeBuilder treeBuilder) throws IOException {
-        this(txnLogFactory, tickTime, treeBuilder, new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, tickTime, -1, -1, treeBuilder,
+                new ZKDatabase(txnLogFactory));
     }
     
     public ServerStats serverStats() {
         return serverStats;
     }
-    
+
+    public void dumpConf(PrintWriter pwriter) {
+        pwriter.print("clientPort=");
+        pwriter.println(getClientPort());
+        pwriter.print("dataDir=");
+        pwriter.println(zkDb.snapLog.getSnapDir().getAbsolutePath());
+        pwriter.print("dataLogDir=");
+        pwriter.println(zkDb.snapLog.getDataDir().getAbsolutePath());
+        pwriter.print("tickTime=");
+        pwriter.println(getTickTime());
+        pwriter.print("maxClientCnxns=");
+        pwriter.println(serverCnxnFactory.getMaxClientCnxns());
+        pwriter.print("minSessionTimeout=");
+        pwriter.println(getMinSessionTimeout());
+        pwriter.print("maxSessionTimeout=");
+        pwriter.println(getMaxSessionTimeout());
+
+        pwriter.print("serverId=");
+        pwriter.println(getServerId());
+    }
+
     /**
      * This constructor is for backward compatibility with the existing unit
      * test code.
@@ -169,7 +200,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer(File snapDir, File logDir, int tickTime)
             throws IOException {
         this( new FileTxnSnapLog(snapDir, logDir),
-                tickTime,new BasicDataTreeBuilder());
+                tickTime, new BasicDataTreeBuilder());
     }
 
     /**
@@ -177,8 +208,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *
      * @throws IOException
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory,DataTreeBuilder treeBuilder) throws IOException {
-        this(txnLogFactory, DEFAULT_TICK_TIME, treeBuilder, new ZKDatabase(txnLogFactory));
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory,
+            DataTreeBuilder treeBuilder)
+        throws IOException
+    {
+        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, treeBuilder,
+                new ZKDatabase(txnLogFactory));
     }
 
     /**
@@ -622,7 +657,26 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void setTickTime(int tickTime) {
+        LOG.info("tickTime set to " + tickTime);
         this.tickTime = tickTime;
+    }
+
+    public int getMinSessionTimeout() {
+        return minSessionTimeout == -1 ? tickTime * 2 : minSessionTimeout;
+    }
+
+    public void setMinSessionTimeout(int min) {
+        LOG.info("minSessionTimeout set to " + min);
+        this.minSessionTimeout = min;
+    }
+
+    public int getMaxSessionTimeout() {
+        return maxSessionTimeout == -1 ? tickTime * 20 : maxSessionTimeout;
+    }
+
+    public void setMaxSessionTimeout(int max) {
+        LOG.info("maxSessionTimeout set to " + max);
+        this.maxSessionTimeout = max;
     }
 
     public int getClientPort() {

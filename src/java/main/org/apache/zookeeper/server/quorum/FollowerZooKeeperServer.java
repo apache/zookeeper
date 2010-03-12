@@ -40,7 +40,8 @@ import org.apache.zookeeper.txn.TxnHeader;
  * A SyncRequestProcessor is also spawned off to log proposals from the leader.
  */
 public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
-    private static final Logger LOG = Logger.getLogger(FollowerZooKeeperServer.class);
+    private static final Logger LOG =
+        Logger.getLogger(FollowerZooKeeperServer.class);
 
     CommitProcessor commitProcessor;
 
@@ -58,8 +59,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
      */
     FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
             DataTreeBuilder treeBuilder, ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime,treeBuilder, zkDb);
-        this.self = self;        
+        super(logFactory, self.tickTime, self.minSessionTimeout,
+                self.maxSessionTimeout, treeBuilder, zkDb, self);
         this.pendingSyncs = new ConcurrentLinkedQueue<Request>();
     }
 

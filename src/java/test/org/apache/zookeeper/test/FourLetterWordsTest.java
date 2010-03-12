@@ -28,12 +28,12 @@ public class FourLetterWordsTest extends ClientBase {
     protected static final Logger LOG =
         Logger.getLogger(FourLetterWordsTest.class);
 
-    /** Test the various four letter words
-     * ruok,envi,stat,srvr,cons,dump,srst,crst */
+    /** Test the various four letter words */
     @Test
     public void testFourLetterWords() throws Exception {
         verify("ruok", "imok");
         verify("envi", "java.version");
+        verify("conf", "clientPort");
         verify("stat", "Outstanding");
         verify("srvr", "Outstanding");
         verify("cons", "queued");
@@ -71,6 +71,7 @@ public class FourLetterWordsTest extends ClientBase {
 
         verify("ruok", "imok");
         verify("envi", "java.version");
+        verify("conf", "clientPort");
         verify("stat", "Outstanding");
         verify("srvr", "Outstanding");
         verify("cons", "queued");

@@ -31,6 +31,19 @@ public interface LocalPeerMXBean extends ServerMXBean {
      */
     public int getTickTime();
     
+    /** Current maxClientCnxns allowed from a particular host */
+    public int getMaxClientCnxnsPerHost();
+
+    /**
+     * @return the minimum number of milliseconds allowed for a session timeout
+     */
+    public int getMinSessionTimeout();
+    
+    /**
+     * @return the maximum number of milliseconds allowed for a session timeout
+     */
+    public int getMaxSessionTimeout();
+    
     /**
      * @return the number of ticks that the initial sync phase can take
      */

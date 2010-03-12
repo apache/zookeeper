@@ -34,7 +34,8 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  *
  */
 public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
-    private static final Logger LOG = Logger.getLogger(ObserverZooKeeperServer.class);        
+    private static final Logger LOG =
+        Logger.getLogger(ObserverZooKeeperServer.class);        
     
     /*
      * Request processors
@@ -50,8 +51,8 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
         
     ObserverZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self,
             DataTreeBuilder treeBuilder, ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime, treeBuilder, zkDb);
-        this.self = self;        
+        super(logFactory, self.tickTime, self.minSessionTimeout,
+                self.maxSessionTimeout, treeBuilder, zkDb, self);
     }
     
     public Observer getObserver() {

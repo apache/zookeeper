@@ -115,7 +115,6 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
         int maxClientCnxns = 10;
 
-
         /**
          * Construct a new server connection factory which will accept an unlimited number
          * of concurrent connections from each client (up to the file descriptor
@@ -183,6 +182,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
         public int getLocalPort(){
             return ss.socket().getLocalPort();
+        }
+
+        public int getMaxClientCnxns() {
+            return maxClientCnxns;
         }
 
         private void addCnxn(NIOServerCnxn cnxn) {
@@ -354,6 +357,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     final Factory factory;
 
+    /** The ZooKeeperServer for this connection. May be null if the server
+     * is not currently serving requests (for example if the server is not
+     * an active quorum participant.
+     */
     private final ZooKeeperServer zk;
 
     private SocketChannel sock;
@@ -719,11 +726,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         }
         sessionTimeout = connReq.getTimeOut();
         byte passwd[] = connReq.getPasswd();
-        if (sessionTimeout < zk.tickTime * 2) {
-            sessionTimeout = zk.tickTime * 2;
+        int minSessionTimeout = zk.getMinSessionTimeout();
+        if (sessionTimeout < minSessionTimeout) {
+            sessionTimeout = minSessionTimeout;
         }
-        if (sessionTimeout > zk.tickTime * 20) {
-            sessionTimeout = zk.tickTime * 20;
+        int maxSessionTimeout = zk.getMaxSessionTimeout();
+        if (sessionTimeout > maxSessionTimeout) {
+            sessionTimeout = maxSessionTimeout;
         }
         // We don't want to receive any packets until we are sure that the
         // session is setup
@@ -757,6 +766,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             zk.serverStats().incrementPacketsSent();
         }
     }
+
+    /*
+     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * Zk Admin</a>. this link is for all the commands.
+     */
+    private final static int confCmd =
+        ByteBuffer.wrap("conf".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
@@ -853,6 +869,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     // specify all of the commands that are available
     static {
+        cmd2String.put(confCmd, "conf");
         cmd2String.put(consCmd, "cons");
         cmd2String.put(crstCmd, "crst");
         cmd2String.put(dumpCmd, "dump");
@@ -983,6 +1000,13 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
                     pwriter.print("=");
                     pwriter.println(e.getValue());
                 }
+                return true;
+            } else if (len == confCmd) {
+                if (zk == null) {
+                    pwriter.println(ZK_NOT_SERVING);
+                    return true;
+                }
+                zk.dumpConf(pwriter);
                 return true;
             } else if (len == srstCmd) {
                 if (zk == null) {

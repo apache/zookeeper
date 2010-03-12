@@ -103,8 +103,10 @@ public class ZooKeeperServerMain {
                    File(config.dataLogDir), new File(config.dataDir));
             zkServer.setTxnLogFactory(ftxn);
             zkServer.setTickTime(config.tickTime);
-            cnxnFactory = new NIOServerCnxn.Factory(
-                    config.getClientPortAddress(), config.getMaxClientCnxns());
+            zkServer.setMinSessionTimeout(config.minSessionTimeout);
+            zkServer.setMaxSessionTimeout(config.maxSessionTimeout);
+            cnxnFactory = new NIOServerCnxn.Factory(config.getClientPortAddress(),
+                    config.getMaxClientCnxns());
             cnxnFactory.startup(zkServer);
             cnxnFactory.join();
             if (zkServer.isRunning()) {
