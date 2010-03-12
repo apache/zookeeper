@@ -83,6 +83,10 @@ public interface TxnLog {
      */
     void commit() throws IOException;
    
+    /** 
+     * close the transactions logs
+     */
+    void close() throws IOException;
     /**
      * an iterating interface for reading 
      * transaction logs. 
