@@ -355,6 +355,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-692. upgrade junit to latest version (4.8.1) (phunt via mahadev)
 
+  ZOOKEEPER-601. allow configuration of session timeout min/max bounds (phunt
+  via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 

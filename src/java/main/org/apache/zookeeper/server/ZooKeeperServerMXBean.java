@@ -59,13 +59,37 @@ public interface ZooKeeperServerMXBean {
      */
     public long getOutstandingRequests();
     /**
-     * Current TickTime of server
+     * Current TickTime of server in milliseconds
      */
     public int getTickTime();
     /**
-     * Set TickTime of server
+     * Set TickTime of server in milliseconds
      */
     public void setTickTime(int tickTime);
+
+    /** Current maxClientCnxns allowed from a particular host */
+    public int getMaxClientCnxnsPerHost();
+
+    /** Set maxClientCnxns allowed from a particular host */
+    public void setMaxClientCnxnsPerHost(int max);
+
+    /**
+     * Current minSessionTimeout of the server in milliseconds
+     */
+    public int getMinSessionTimeout();
+    /**
+     * Set minSessionTimeout of server in milliseconds
+     */
+    public void setMinSessionTimeout(int min);
+
+    /**
+     * Current maxSessionTimeout of the server in milliseconds
+     */
+    public int getMaxSessionTimeout();
+    /**
+     * Set maxSessionTimeout of server in milliseconds
+     */
+    public void setMaxSessionTimeout(int max);
 
     /**
      * Reset packet and latency statistics 

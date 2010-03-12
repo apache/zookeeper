@@ -31,11 +31,19 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  *
  */
 public class ServerConfig {
+    ////
+    //// If you update the configuration parameters be sure
+    //// to update the "conf" 4letter word
+    ////
     protected InetSocketAddress clientPortAddress;
     protected String dataDir;
     protected String dataLogDir;
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
     protected int maxClientCnxns;
+    /** defaults to -1 if not set explicitly */
+    protected int minSessionTimeout = -1;
+    /** defaults to -1 if not set explicitly */
+    protected int maxSessionTimeout = -1;
 
     /**
      * Parse arguments for server configuration
@@ -85,6 +93,8 @@ public class ServerConfig {
       dataLogDir = config.getDataLogDir();
       tickTime = config.getTickTime();
       maxClientCnxns = config.getMaxClientCnxns();
+      minSessionTimeout = config.getMinSessionTimeout();
+      maxSessionTimeout = config.getMaxSessionTimeout();
     }
 
     public InetSocketAddress getClientPortAddress() {
@@ -94,4 +104,8 @@ public class ServerConfig {
     public String getDataLogDir() { return dataLogDir; }
     public int getTickTime() { return tickTime; }
     public int getMaxClientCnxns() { return maxClientCnxns; }
+    /** minimum session timeout in milliseconds, -1 if unset */
+    public int getMinSessionTimeout() { return minSessionTimeout; }
+    /** maximum session timeout in milliseconds, -1 if unset */
+    public int getMaxSessionTimeout() { return maxSessionTimeout; }
 }

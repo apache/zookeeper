@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 /**
@@ -40,6 +41,22 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
 
     public int getTickTime() {
         return peer.getTickTime();
+    }
+    
+    public int getMaxClientCnxnsPerHost() {
+        NIOServerCnxn.Factory fac = peer.getCnxnFactory();
+        if (fac == null) {
+            return -1;
+        }
+        return fac.getMaxClientCnxns();
+    }
+
+    public int getMinSessionTimeout() {
+        return peer.getMinSessionTimeout();
+    }
+    
+    public int getMaxSessionTimeout() {
+        return peer.getMaxSessionTimeout();
     }
     
     public int getInitLimit() {

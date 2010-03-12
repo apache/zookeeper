@@ -89,6 +89,35 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         zks.setTickTime(tickTime);
     }
 
+    public int getMaxClientCnxnsPerHost() {
+        NIOServerCnxn.Factory fac = zks.getServerCnxnFactory();
+        if (fac == null) {
+            return -1;
+        }
+        return fac.getMaxClientCnxns();
+    }
+
+    public void setMaxClientCnxnsPerHost(int max) {
+        // if fac is null the exception will be propagated to the client
+        zks.getServerCnxnFactory().maxClientCnxns = max;
+    }
+
+    public int getMinSessionTimeout() {
+        return zks.getMinSessionTimeout();
+    }
+
+    public void setMinSessionTimeout(int min) {
+        zks.setMinSessionTimeout(min);
+    }
+
+    public int getMaxSessionTimeout() {
+        return zks.getMaxSessionTimeout();
+    }
+
+    public void setMaxSessionTimeout(int max) {
+        zks.setMaxSessionTimeout(max);
+    }
+
     
     public long getPacketsReceived() {
         return zks.serverStats().getPacketsReceived();

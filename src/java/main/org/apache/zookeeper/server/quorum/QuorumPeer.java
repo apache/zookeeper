@@ -202,23 +202,35 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     /**
      * The number of milliseconds of each tick
      */
-    int tickTime;
+    protected int tickTime;
+
+    /**
+     * Minimum number of milliseconds to allow for session timeout.
+     * A value of -1 indicates unset, use default.
+     */
+    protected int minSessionTimeout = -1;
+
+    /**
+     * Maximum number of milliseconds to allow for session timeout.
+     * A value of -1 indicates unset, use default.
+     */
+    protected int maxSessionTimeout = -1;
 
     /**
      * The number of ticks that the initial synchronization phase can take
      */
-    int initLimit;
+    protected int initLimit;
 
     /**
      * The number of ticks that can pass between sending a request and getting
      * an acknowledgment
      */
-    int syncLimit;
+    protected int syncLimit;
 
     /**
      * The current tick
      */
-    int tick;
+    protected int tick;
 
     /**
      * This class simply responds to requests for the current leader of this
@@ -788,7 +800,30 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * Set the number of milliseconds of each tick
      */
     public void setTickTime(int tickTime) {
+        LOG.info("tickTime set to " + tickTime);
         this.tickTime = tickTime;
+    }
+
+    /** minimum session timeout in milliseconds */
+    public int getMinSessionTimeout() {
+        return minSessionTimeout == -1 ? tickTime * 2 : minSessionTimeout;
+    }
+
+    /** minimum session timeout in milliseconds */
+    public void setMinSessionTimeout(int min) {
+        LOG.info("minSessionTimeout set to " + min);
+        this.minSessionTimeout = min;
+    }
+
+    /** maximum session timeout in milliseconds */
+    public int getMaxSessionTimeout() {
+        return maxSessionTimeout == -1 ? tickTime * 20 : maxSessionTimeout;
+    }
+
+    /** minimum session timeout in milliseconds */
+    public void setMaxSessionTimeout(int max) {
+        LOG.info("maxSessionTimeout set to " + max);
+        this.maxSessionTimeout = max;
     }
 
     /**
@@ -802,6 +837,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * Set the number of ticks that the initial synchronization phase can take
      */
     public void setInitLimit(int initLimit) {
+        LOG.info("initLimit set to " + initLimit);
         this.initLimit = initLimit;
     }
 
