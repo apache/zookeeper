@@ -270,6 +270,9 @@ BUGFIXES:
   ZOOKEEPER-511. bad error handling in FollowerHandler.sendPackets
   (mahadev via flavio)
 
+  ZOOKEEPER-604. zk needs to prevent export of any symbol not listed in their
+  api (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
