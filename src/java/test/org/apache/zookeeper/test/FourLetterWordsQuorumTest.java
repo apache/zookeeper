@@ -29,14 +29,14 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
     protected static final Logger LOG =
         Logger.getLogger(FourLetterWordsQuorumTest.class);
 
-    /** Test the various four letter words
-     * ruok,envi,stat,srvr,cons,dump,srst,crst */
+    /** Test the various four letter words */
     @Test
     public void testFourLetterWords() throws Exception {
         String servers[] = hostPort.split(",");
         for (String hp : servers) {
             verify(hp, "ruok", "imok");
             verify(hp, "envi", "java.version");
+            verify(hp, "conf", "clientPort");
             verify(hp, "stat", "Outstanding");
             verify(hp, "srvr", "Outstanding");
             verify(hp, "cons", "queued");
@@ -74,6 +74,7 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
 
             verify(hp, "ruok", "imok");
             verify(hp, "envi", "java.version");
+            verify(hp, "conf", "clientPort");
             verify(hp, "stat", "Outstanding");
             verify(hp, "srvr", "Outstanding");
             verify(hp, "cons", "queued");
