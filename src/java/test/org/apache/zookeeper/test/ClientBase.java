@@ -454,9 +454,7 @@ public abstract class ClientBase extends TestCase {
         stopServer();
 
         if (tmpDir != null) {
-            //assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
-            // FIXME see ZOOKEEPER-121 replace following line with previous
-            recursiveDelete(tmpDir);
+            assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
         }
 
         // This has to be set to null when the same instance of this class is reused between test cases
@@ -475,9 +473,7 @@ public abstract class ClientBase extends TestCase {
         if (d.isDirectory()) {
             File children[] = d.listFiles();
             for (File f : children) {
-                //assertTrue("delete " + f.toString(), recursiveDelete(f));
-                // FIXME see ZOOKEEPER-121 replace following line with previous
-                recursiveDelete(f);
+                assertTrue("delete " + f.toString(), recursiveDelete(f));
             }
         }
         return d.delete();

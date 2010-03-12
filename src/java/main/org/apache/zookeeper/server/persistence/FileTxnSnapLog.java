@@ -285,4 +285,12 @@ public class FileTxnSnapLog {
         txnLog.rollLog();
     }
     
+    /**
+     * close the transaction log files
+     * @throws IOException
+     */
+    public void close() throws IOException {
+        txnLog.close();
+        snapLog.close();
+    }
 }

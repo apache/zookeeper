@@ -57,4 +57,10 @@ public interface SnapShot {
      * @throws IOException
      */
     File findMostRecentSnapshot() throws IOException;
+    
+    /**
+     * free resources from this snapshot immediately
+     * @throws IOException
+     */
+    void close() throws IOException;
 } 

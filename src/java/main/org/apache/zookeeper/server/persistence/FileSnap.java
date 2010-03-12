@@ -49,6 +49,7 @@ import org.apache.zookeeper.server.util.SerializeUtils;
  */
 public class FileSnap implements SnapShot {
     File snapDir;
+    private volatile boolean close = false;
     private static final int VERSION=2;
     private static final long dbId=-1;
     private static final Logger LOG = Logger.getLogger(FileSnap.class);
@@ -217,20 +218,32 @@ public class FileSnap implements SnapShot {
      * @param sessions the sessions to be serialized
      * @param snapShot the file to store snapshot into
      */
-    public void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)
+    public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)
             throws IOException {
-        OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
-        CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32());
-        //CheckedOutputStream cout = new CheckedOutputStream()
-        OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
-        FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
-        serialize(dt,sessions,oa, header);
-        long val = crcOut.getChecksum().getValue();
-        oa.writeLong(val, "val");
-        oa.writeString("/", "path");
-        sessOS.flush();
-        crcOut.close();
-        sessOS.close();
+        if (!close) {
+            OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
+            CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32());
+            //CheckedOutputStream cout = new CheckedOutputStream()
+            OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
+            FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
+            serialize(dt,sessions,oa, header);
+            long val = crcOut.getChecksum().getValue();
+            oa.writeLong(val, "val");
+            oa.writeString("/", "path");
+            sessOS.flush();
+            crcOut.close();
+            sessOS.close();
+        }
+    }
+
+    /**
+     * synchronized close just so that if serialize is in place
+     * the close operation will block and will wait till serialize
+     * is done and will set the close flag
+     */
+    @Override
+    public synchronized void close() throws IOException {
+        close = true;
     }
 
  }
