@@ -63,7 +63,7 @@ public class QuorumPeerMain {
 
     private static final String USAGE = "Usage: QuorumPeerMain configfile";
 
-    private QuorumPeer quorumPeer;
+    protected QuorumPeer quorumPeer;
 
     /**
      * To start the replicated server specify the configuration file name on
@@ -146,9 +146,5 @@ public class QuorumPeerMain {
           // warn, but generally this is ok
           LOG.warn("Quorum Peer interrupted", e);
       }
-    }
-
-    protected void shutdown() {
-        quorumPeer.shutdown();
     }
 }

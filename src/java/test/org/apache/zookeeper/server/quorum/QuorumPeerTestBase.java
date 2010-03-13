@@ -25,13 +25,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.server.quorum.QuorumPeerMainTest.TestQPMain;
 import org.apache.zookeeper.test.ClientBase;
-
-import junit.framework.TestCase;
+import org.apache.zookeeper.test.QuorumBase;
 
 /**
  * Has some common functionality for tests that work with QuorumPeers.
@@ -44,7 +44,14 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
     public void process(WatchedEvent event) {
         // ignore for this test
     }
-    
+
+    public static  class TestQPMain extends QuorumPeerMain {
+        public void shutdown() {
+            // ensure it closes - in particular wait for thread to exit
+            QuorumBase.shutdown(quorumPeer);
+        }
+    }
+
     public static class MainThread extends Thread {
         final File confFile;
         final TestQPMain main;

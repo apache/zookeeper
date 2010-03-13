@@ -21,12 +21,6 @@ package org.apache.zookeeper.server.quorum;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.StringReader;
 import java.net.InetSocketAddress;
@@ -34,20 +28,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.regex.Pattern;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientTest;
 import org.junit.Test;
 
 
@@ -56,13 +45,6 @@ import org.junit.Test;
  *
  */
 public class QuorumPeerMainTest extends QuorumPeerTestBase {
-   
-    public static  class TestQPMain extends QuorumPeerMain {
-        public void shutdown() {
-            super.shutdown();
-        }
-    }
-
     /**
      * Verify the ability to start a cluster.
      */

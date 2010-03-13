@@ -29,7 +29,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
-import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
@@ -271,18 +270,7 @@ public class HierarchicalQuorumTest extends ClientBase {
     }
 
     protected void shutdown(QuorumPeer qp) {
-        try {
-            ((FastLeaderElection) qp.getElectionAlg()).shutdown();
-            LOG.info("Done with leader election");
-            qp.shutdown();
-            LOG.info("Done with quorum peer");
-            qp.join(30000);
-            if (qp.isAlive()) {
-                fail("QP failed to shutdown in 30 seconds");
-            }
-        } catch (InterruptedException e) {
-            LOG.debug("QP interrupted", e);
-        }
+        QuorumBase.shutdown(qp);
     }
 
     protected TestableZooKeeper createClient()
