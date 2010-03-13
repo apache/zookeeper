@@ -19,13 +19,8 @@
 package org.apache.zookeeper.test;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
@@ -36,8 +31,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
-import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.junit.Before;
 
@@ -122,10 +115,10 @@ public class ZkDatabaseCorruptionTest extends QuorumBase {
             zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         zk.close();
-        qb.s1.shutdown();
-        qb.s2.shutdown();
-        qb.s3.shutdown();
-        qb.s4.shutdown();
+        QuorumBase.shutdown(qb.s1);
+        QuorumBase.shutdown(qb.s2);
+        QuorumBase.shutdown(qb.s3);
+        QuorumBase.shutdown(qb.s4);
     } 
 
     

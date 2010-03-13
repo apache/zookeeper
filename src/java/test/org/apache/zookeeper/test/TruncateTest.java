@@ -132,11 +132,8 @@ public class TruncateTest extends TestCase {
             // this is what we want
         }
         zk1.close();
-        s1.shutdown();
-        s1.join();
-        s2.shutdown();
-        s2.join();
-        s3.shutdown();
-        s3.join();
+        QuorumBase.shutdown(s1);
+        QuorumBase.shutdown(s2);
+        QuorumBase.shutdown(s3);
     }
 }

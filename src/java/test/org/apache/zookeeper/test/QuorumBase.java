@@ -30,7 +30,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
-import org.apache.zookeeper.server.quorum.FastLeaderElection;
+import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -284,16 +284,24 @@ public class QuorumBase extends ClientBase {
         shutdown(s5);
     }
 
-    protected void shutdown(QuorumPeer qp) {
+    public static void shutdown(QuorumPeer qp) {
         try {
+            LOG.info("Shutting down quorum peer " + qp.getName());
             qp.shutdown();
-            ((FastLeaderElection) qp.getElectionAlg()).shutdown();
+            Election e = qp.getElectionAlg();
+            if (e != null) {
+                LOG.info("Shutting down leader election " + qp.getName());
+                e.shutdown();
+            } else {
+                LOG.info("No election available to shutdown " + qp.getName());
+            }
+            LOG.info("Waiting for " + qp.getName() + " to exit thread");
             qp.join(30000);
             if (qp.isAlive()) {
-                fail("QP failed to shutdown in 30 seconds");
+                fail("QP failed to shutdown in 30 seconds: " + qp.getName());
             }
         } catch (InterruptedException e) {
-            LOG.debug("QP interrupted", e);
+            LOG.debug("QP interrupted: " + qp.getName(), e);
         }
     }
 

@@ -91,11 +91,10 @@ public class FLEZeroWeightTest extends TestCase {
     protected void tearDown() throws Exception {
         for(int i = 0; i < threads.size(); i++) {
             LEThread leThread = threads.get(i);
-            ((FastLeaderElection) leThread.peer.getElectionAlg()).shutdown();
             // shutdown() has to be explicitly called for every thread to
             // make sure that resources are freed properly and all fixed network ports
             // are available for other test cases
-            leThread.peer.shutdown();
+            QuorumBase.shutdown(leThread.peer);
         }
         LOG.info("FINISHED " + getName());
     }
