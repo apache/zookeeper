@@ -133,7 +133,7 @@ public class FLERestartTest extends TestCase {
                     case 0:
                         if(peerRound == 0){
                             LOG.info("First peer, shutting it down");
-                            peer.shutdown();
+                            QuorumBase.shutdown(peer);
                             ((FastLeaderElection) restartThreads.get(i).peer.getElectionAlg()).shutdown();
 
                             peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2);

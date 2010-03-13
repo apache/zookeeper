@@ -134,8 +134,7 @@ public class FLENewEpochTest extends TestCase {
                         break;
                     case 2:
                         LOG.info("Third peer, shutting it down");
-                        ((FastLeaderElection) peer.getElectionAlg()).shutdown();
-                        peer.shutdown();
+                        QuorumBase.shutdown(peer);
                         flag = false;
                         round[2] = 1;
                         finish3.release();

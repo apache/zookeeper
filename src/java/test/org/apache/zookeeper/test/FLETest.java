@@ -92,8 +92,7 @@ public class FLETest extends TestCase {
     public void tearDown() throws Exception {
         for (int i = 0; i < threads.size(); i++) {
             leThread = threads.get(i);
-            ((FastLeaderElection) leThread.peer.getElectionAlg()).shutdown();
-            leThread.peer.shutdown();
+            QuorumBase.shutdown(leThread.peer);
         }
         LOG.info("FINISHED " + getName());
     }

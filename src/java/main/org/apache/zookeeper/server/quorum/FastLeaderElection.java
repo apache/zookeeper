@@ -20,9 +20,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 

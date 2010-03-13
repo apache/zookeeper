@@ -37,19 +37,7 @@ public class ObserverHierarchicalQuorumTest extends HierarchicalQuorumTest {
     }
            
     protected void shutdown(QuorumPeer qp) {
-        try {
-            /* TODO: when Observers are compatible with fle, shutdown
-             * the leader election */            
-            LOG.info("Done with leader election");
-            qp.shutdown();
-            LOG.info("Done with quorum peer");
-            qp.join(30000);
-            if (qp.isAlive()) {
-                fail("QP failed to shutdown in 30 seconds");
-            }
-        } catch (InterruptedException e) {
-            LOG.debug("QP interrupted", e);
-        }
+        QuorumBase.shutdown(qp);
     }
 
     @Test
