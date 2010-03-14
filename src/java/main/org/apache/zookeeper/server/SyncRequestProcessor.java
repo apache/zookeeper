@@ -166,12 +166,17 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     }
 
     public void shutdown() {
-        try{
+        queuedRequests.add(requestOfDeath);
+        try {
+            this.join();
+        } catch(InterruptedException e) {
+            LOG.warn("Interrupted while wating for " + this + " to finish");
+        }
+        try {
             zks.getZKDatabase().close();
         } catch (IOException ie) {
             LOG.warn("Error closing logs ", ie);
         }
-        queuedRequests.add(requestOfDeath);
         nextProcessor.shutdown();
     }
 
