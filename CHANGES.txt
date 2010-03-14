@@ -279,6 +279,9 @@ BUGFIXES:
   ZOOKEEPER-698. intermittent JMX test failures due to not verifying QuorumPeer
   shutdown (phunt)
 
+  ZOOKEEPER-121. SyncRequestProcessor is not closing log stream during shutdown
+  (breed via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
