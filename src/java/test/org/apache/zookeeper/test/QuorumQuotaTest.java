@@ -40,11 +40,13 @@ public class QuorumQuotaTest extends QuorumBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        LOG.info("STARTING " + getClass().getName());
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+        LOG.info("STOPPING " + getClass().getName());
     }
 
     public void testQuotaWithQuorum() throws Exception {

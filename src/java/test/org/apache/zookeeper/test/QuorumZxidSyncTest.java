@@ -41,7 +41,7 @@ public class QuorumZxidSyncTest extends TestCase {
     @Before
     @Override
     protected void setUp() throws Exception {
-        qb.setUp();
+    	qb.setUp();
     }
     
     @Test
