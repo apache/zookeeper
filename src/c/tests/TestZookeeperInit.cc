@@ -35,8 +35,8 @@ using namespace std;
 
 class Zookeeper_init : public CPPUNIT_NS::TestFixture
 {
-	CPPUNIT_TEST_SUITE(Zookeeper_init);
-	CPPUNIT_TEST(testBasic);
+    CPPUNIT_TEST_SUITE(Zookeeper_init);
+    CPPUNIT_TEST(testBasic);
     CPPUNIT_TEST(testAddressResolution);
     CPPUNIT_TEST(testMultipleAddressResolution);
     CPPUNIT_TEST(testNullAddressString);
@@ -48,14 +48,16 @@ class Zookeeper_init : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testNonexistentHost);
     CPPUNIT_TEST(testOutOfMemory_init);
     CPPUNIT_TEST(testOutOfMemory_getaddrs1);
+#if !defined(__CYGWIN__) // not valid for cygwin
     CPPUNIT_TEST(testOutOfMemory_getaddrs2);
+#endif
     CPPUNIT_TEST(testPermuteAddrsList);
-	CPPUNIT_TEST_SUITE_END();
+    CPPUNIT_TEST_SUITE_END();
     zhandle_t *zh;
-    MockPthreadsNull* pthreadMock;   
+    MockPthreadsNull* pthreadMock;
     static void watcher(zhandle_t *, int , int , const char *,void*){}
     FILE *logfile;
-public: 
+public:
     Zookeeper_init():zh(0),pthreadMock(0){
       logfile = openlogfile("Zookeeper_init");
     }
@@ -76,10 +78,10 @@ public:
 #ifdef THREADED
         // disable threading
         pthreadMock=new MockPthreadZKNull;
-#endif        
+#endif
         zh=0;
     }
-    
+
     void tearDown()
     {
         zookeeper_close(zh);
@@ -90,20 +92,20 @@ public:
 
     void testBasic()
     {
-    	const string EXPECTED_HOST("127.0.0.1:2121");
-    	const int EXPECTED_ADDRS_COUNT =1;
-    	const int EXPECTED_RECV_TIMEOUT=10000;
+        const string EXPECTED_HOST("127.0.0.1:2121");
+        const int EXPECTED_ADDRS_COUNT =1;
+        const int EXPECTED_RECV_TIMEOUT=10000;
         clientid_t cid;
-    	memset(&cid,0xFE,sizeof(cid));
-        
-    	zh=zookeeper_init(EXPECTED_HOST.c_str(),watcher,EXPECTED_RECV_TIMEOUT,
-    	        &cid,(void*)1,0);
-        
+        memset(&cid,0xFE,sizeof(cid));
+
+        zh=zookeeper_init(EXPECTED_HOST.c_str(),watcher,EXPECTED_RECV_TIMEOUT,
+                &cid,(void*)1,0);
+
         CPPUNIT_ASSERT(zh!=0);
-    	CPPUNIT_ASSERT(zh->fd == -1);
-    	CPPUNIT_ASSERT(zh->hostname!=0);
-    	CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
-    	CPPUNIT_ASSERT_EQUAL(EXPECTED_HOST,string(zh->hostname));
+        CPPUNIT_ASSERT(zh->fd == -1);
+        CPPUNIT_ASSERT(zh->hostname!=0);
+        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
+        CPPUNIT_ASSERT_EQUAL(EXPECTED_HOST,string(zh->hostname));
         CPPUNIT_ASSERT(zh->state == 0);
         CPPUNIT_ASSERT(zh->context == (void*)1);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_RECV_TIMEOUT,zh->recv_timeout);
@@ -138,7 +140,7 @@ public:
 
         zoo_deterministic_conn_order(1);
         zh=zookeeper_init("127.0.0.1:2121",0,10000,0,0,0);
-        
+
         CPPUNIT_ASSERT(zh!=0);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
         for(int i=0;i<zh->addrs_count;i++){
@@ -233,9 +235,9 @@ public:
     void testNonexistentHost()
     {
         const string EXPECTED_HOST("host1.blabadibla.bla.:1111");
-        
+
         zh=zookeeper_init(EXPECTED_HOST.c_str(),0,0,0,0,0);
-        
+
         CPPUNIT_ASSERT(zh==0);
         //With the switch to thread safe getaddrinfo, we don't get
         //these global variables
@@ -246,9 +248,9 @@ public:
     {
         Mock_calloc mock;
         mock.callsBeforeFailure=0; // fail first calloc in init()
-        
+
         zh=zookeeper_init("ahost:123",watcher,10000,0,0,0);
-        
+
         CPPUNIT_ASSERT(zh==0);
         CPPUNIT_ASSERT_EQUAL(ENOMEM,errno);
     }
@@ -258,7 +260,7 @@ public:
         reallocMock.callsBeforeFailure=0; // fail on first call to realloc
 
         zh=zookeeper_init("127.0.0.1:123",0,0,0,0,0);
-        
+
         CPPUNIT_ASSERT(zh==0);
         CPPUNIT_ASSERT_EQUAL(ENOMEM,errno);
     }
@@ -268,7 +270,7 @@ public:
         reallocMock.callsBeforeFailure=1; // fail on the second call to realloc
 
         zh=zookeeper_init("127.0.0.1:123,127.0.0.2:123,127.0.0.3:123,127.0.0.4:123,127.0.0.5:123,127.0.0.6:123,127.0.0.7:123,127.0.0.8:123,127.0.0.9:123,127.0.0.10:123,127.0.0.11:123,127.0.0.12:123,127.0.0.13:123,127.0.0.14:123,127.0.0.15:123,127.0.0.16:123,127.0.0.17:123",0,0,0,0,0);
-        
+
         CPPUNIT_ASSERT(zh==0);
         CPPUNIT_ASSERT_EQUAL(ENOMEM,errno);
     }
@@ -276,13 +278,13 @@ public:
     {
         const char EXPECTED[][5]={"\0\0\0\0","\1\1\1\1","\2\2\2\2","\3\3\3\3"};
         const int EXPECTED_ADDR_COUNT=COUNTOF(EXPECTED);
-        
+
         const int RAND_SEQ[]={0,1,2,3,1,3,2,0,-1};
         const int RAND_SIZE=COUNTOF(RAND_SEQ);
         Mock_random randomMock;
         randomMock.randomReturns.assign(RAND_SEQ,RAND_SEQ+RAND_SIZE-1);
         zh=zookeeper_init("0.0.0.0:123,1.1.1.1:123,2.2.2.2:123,3.3.3.3:123",0,1000,0,0,0);
-        
+
         CPPUNIT_ASSERT(zh!=0);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDR_COUNT,zh->addrs_count);
         const string EXPECTED_SEQ("3210");
