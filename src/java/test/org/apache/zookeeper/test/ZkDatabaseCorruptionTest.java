@@ -44,10 +44,12 @@ public class ZkDatabaseCorruptionTest extends QuorumBase {
     @Before
     @Override
     protected void setUp() throws Exception {
+    	LOG.info("STARTING " + getClass().getName());
         qb.setUp();
     }
         
     protected void tearDown() throws Exception {
+    	LOG.info("STOPPING " + getClass().getName());
     }
     
     private void corruptFile(File f) throws IOException {

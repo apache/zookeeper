@@ -42,11 +42,13 @@ public class ZooKeeperQuotaTest extends ClientBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        LOG.info("STARTING " + getClass().getName());
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+        LOG.info("STOPPING " + getClass().getName());
     }
 
     public void testQuota() throws IOException,
