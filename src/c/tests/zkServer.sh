@@ -18,36 +18,49 @@
 
 if [ "x$1" == "x" ]
 then
-	echo "USAGE: $0 startClean|start|stop hostPorts"
-	exit 2
+    echo "USAGE: $0 startClean|start|stop hostPorts"
+    exit 2
 fi
+
+case "`uname`" in
+    CYGWIN*) cygwin=true ;;
+    *) cygwin=false ;;
+esac
 
 if [ "x$1" == "xstartClean" ]
 then
-    if [ "x${base_dir}" == "x" ]	
+    if [ "x${base_dir}" == "x" ]
     then
     rm -rf /tmp/zkdata
     else
-    rm -rf ${base_dir}/build/tmp
+    rm -rf "${base_dir}/build/tmp"
     fi
+fi
+
+if $cygwin
+then
+    # cygwin has a "kill" in the shell itself, gets confused
+    KILL=/bin/kill
+else
+    KILL=kill
 fi
 
 # Make sure nothing is left over from before
 if [ -r "/tmp/zk.pid" ]
 then
 pid=`cat /tmp/zk.pid`
-kill -9 $pid
+$KILL -9 $pid
 rm -f /tmp/zk.pid
 fi
 
 if [ -r "${base_dir}/build/tmp/zk.pid" ]
 then
-pid=`cat ${base_dir}/build/tmp/zk.pid`
-kill -9 $pid
-rm -f ${base_dir}/build/tmp/zk.pid
+pid=`cat "${base_dir}/build/tmp/zk.pid"`
+$KILL -9 $pid
+rm -f "${base_dir}/build/tmp/zk.pid"
 fi
 
-if [ "x${base_dir}" == "x" ]	
+if [ "x${base_dir}" == "x" ]
 then
 zk_base="../../"
 else
@@ -69,26 +82,64 @@ done
 
 CLASSPATH="$CLASSPATH:${CLOVER_HOME}/lib/clover.jar"
 
+if $cygwin
+then
+    CLASSPATH=`cygpath -wp "$CLASSPATH"`
+fi
+
 case $1 in
 start|startClean)
-	if [ "x${base_dir}" == "x" ]
+    if [ "x${base_dir}" == "x" ]
         then
-      	mkdir -p /tmp/zkdata
-        java -cp $CLASSPATH org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
+        mkdir -p /tmp/zkdata
+        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
         pid=$!
-        echo $! > /tmp/zk.pid        
+        echo -n $! > /tmp/zk.pid
         else
-        mkdir -p ${base_dir}/build/tmp/zkdata
-        java -cp $CLASSPATH org.apache.zookeeper.server.ZooKeeperServerMain 22181 ${base_dir}/build/tmp/zkdata 3000 $ZKMAXCNXNS &> ${base_dir}/build/tmp/zk.log &
-        echo $! > ${base_dir}/build/tmp/zk.pid
-	fi
-        sleep 5
-	;;
+        mkdir -p "${base_dir}/build/tmp/zkdata"
+        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain 22181 "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
+        pid=$!
+        echo -n $pid > "${base_dir}/build/tmp/zk.pid"
+    fi
+
+    # wait max 120 seconds for server to be ready to server clients
+    # this handles testing on slow hosts
+    success=false
+    for i in {1..40}
+    do
+        if ps -p $pid > /dev/null
+        then
+            if java -cp "$CLASSPATH" org.apache.zookeeper.ZooKeeperMain -server localhost:22181 ls / > /dev/null 2>&1
+            then
+                # server not up yet - wait
+                sleep 5
+            else
+                # server is up and serving client connections
+                success=true
+                break
+            fi
+        else
+            # server died - exit now
+            echo -n " ZooKeeper server process failed"
+            break
+        fi
+    done
+
+    if $success
+    then
+        ## in case for debug, but generally don't use as it messes up the
+        ## console test output
+        echo -n " ZooKeeper server started"
+    else
+        echo -n " ZooKeeper server NOT started"
+    fi
+
+    ;;
 stop)
-	# Already killed above
-	;;
+    # Already killed above
+    ;;
 *)
-	echo "Unknown command " + $1
-	exit 2
+    echo "Unknown command " + $1
+    exit 2
 esac
 
