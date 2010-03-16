@@ -34,6 +34,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.After;
@@ -75,8 +76,14 @@ public class TruncateTest extends TestCase {
         for(int i = 0; i < 50; i++) {
             zk.create("/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
-        factory.shutdown();
         zk.close();
+        ZKDatabase zkDb = factory.getZooKeeperServer().getZKDatabase();
+        factory.shutdown();
+        try {
+            zkDb.close();
+        } catch (IOException ie) {
+            LOG.warn("Error closing logs ", ie);
+        }
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;

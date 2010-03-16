@@ -156,7 +156,7 @@ public class FileTxnLog implements TxnLog {
      * rollover the current log file to a new one.
      * @throws IOException
      */
-    public void rollLog() throws IOException {
+    public synchronized void rollLog() throws IOException {
         if (logStream != null) {
             this.logStream.flush();
             this.logStream = null;

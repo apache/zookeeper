@@ -50,6 +50,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 
@@ -344,9 +345,15 @@ public abstract class ClientBase extends TestCase {
 
     static void shutdownServerInstance(NIOServerCnxn.Factory factory,
             String hostPort)
-    {
-        if (factory != null) {
+    {    	
+    	if (factory != null) {
+    	    ZKDatabase zkDb = factory.getZooKeeperServer().getZKDatabase();
             factory.shutdown();
+            try {
+                zkDb.close();
+            } catch (IOException ie) {
+                LOG.warn("Error closing logs ", ie);
+       	 	}
             final int PORT = getPort(hostPort);
 
             assertTrue("waiting for server down",
