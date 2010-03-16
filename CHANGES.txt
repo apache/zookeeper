@@ -288,6 +288,8 @@ BUGFIXES:
   ZOOKEEPER-121_4. SyncRequestProcessor is not closing log stream during
   shutdown (mahadev via breed)
 
+  ZOOKEEPER-586. c client does not compile under cygwin (phunt, mahadev, breed via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
