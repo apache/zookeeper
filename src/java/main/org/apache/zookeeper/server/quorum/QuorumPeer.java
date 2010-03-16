@@ -672,11 +672,6 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     public void shutdown() {
         running = false;
-        try {
-            zkDb.close();
-        } catch (IOException ie) {
-            LOG.warn("Error closing logs ", ie);
-        }
         if (leader != null) {
             leader.shutdown("quorum Peer shutdown");
         }
@@ -691,6 +686,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         if(getElectionAlg() != null){
         	getElectionAlg().shutdown();
         }
+        try {
+            zkDb.close();
+        } catch (IOException ie) {
+            LOG.warn("Error closing logs ", ie);
+        }     
     }
 
     /**
