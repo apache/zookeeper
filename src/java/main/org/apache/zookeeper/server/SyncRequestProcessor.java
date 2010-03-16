@@ -172,11 +172,6 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         } catch(InterruptedException e) {
             LOG.warn("Interrupted while wating for " + this + " to finish");
         }
-        try {
-            zks.getZKDatabase().close();
-        } catch (IOException ie) {
-            LOG.warn("Error closing logs ", ie);
-        }
         nextProcessor.shutdown();
     }
 
