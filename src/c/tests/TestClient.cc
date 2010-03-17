@@ -195,6 +195,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testAcl);
     CPPUNIT_TEST(testChroot);
     CPPUNIT_TEST(testAuth);
+    CPPUNIT_TEST(testHangingClient);
     CPPUNIT_TEST(testWatcherAutoResetWithGlobal);
     CPPUNIT_TEST(testWatcherAutoResetWithLocal);
     CPPUNIT_TEST(testGetChildren2);
@@ -277,6 +278,31 @@ public:
     void tearDown()
     {
     }
+    
+    /** have a callback in the default watcher **/
+    static void default_zoo_watcher(zhandle_t *zzh, int type, int state, const char *path, void *context){
+        int zrc = 0;
+        struct String_vector str_vec = {0, NULL};
+        zrc = zoo_wget_children(zzh, "/mytest", default_zoo_watcher, NULL, &str_vec);
+    }
+    
+    /** this checks for a deadlock in calling zookeeper_close and calls from a default watcher that might get triggered just when zookeeper_close() is in progress **/
+    void testHangingClient() {
+        int zrc = 0;
+        char buff[10] = "testall";
+        char path[512];
+        watchctx_t *ctx;
+        struct String_vector str_vec = {0, NULL};
+        zhandle_t *zh = zookeeper_init(hostPorts, NULL, 10000, 0, ctx, 0);
+        sleep(1);
+        zrc = zoo_create(zh, "/mytest", buff, 10, &ZOO_OPEN_ACL_UNSAFE, 0, path, 512);
+        zrc = zoo_wget_children(zh, "/mytest", default_zoo_watcher, NULL, &str_vec);
+        zrc = zoo_create(zh, "/mytest/test1", buff, 10, &ZOO_OPEN_ACL_UNSAFE, 0, path, 512);
+        zrc = zoo_wget_children(zh, "/mytest", default_zoo_watcher, NULL, &str_vec);
+        zrc = zoo_delete(zh, "/mytest/test1", -1);
+        zookeeper_close(zh);
+    }
+    
 
     void testPing()
     {

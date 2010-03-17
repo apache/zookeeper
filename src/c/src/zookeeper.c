@@ -176,9 +176,10 @@ static int add_completion(zhandle_t *zh, int xid, int completion_type,
 static completion_list_t* create_completion_entry(int xid, int completion_type,
         const void *dc, const void *data,watcher_registration_t* wo);
 static void destroy_completion_entry(completion_list_t* c);
+static void queue_completion_nolock(completion_head_t *list, completion_list_t *c,
+        int add_to_front);
 static void queue_completion(completion_head_t *list, completion_list_t *c,
         int add_to_front);
-
 static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
     const char* format,...);
 static void cleanup_bufs(zhandle_t *zh,int callCompletion,int rc);
@@ -2172,12 +2173,12 @@ static void destroy_completion_entry(completion_list_t* c){
     }
 }
 
-static void queue_completion(completion_head_t *list, completion_list_t *c,
-        int add_to_front)
+static void queue_completion_nolock(completion_head_t *list, 
+                                    completion_list_t *c,
+                                    int add_to_front) 
 {
     c->next = 0;
     /* appending a new entry to the back of the list */
-    lock_completion_list(list);
     if (list->last) {
         assert(list->head);
         // List is not empty
@@ -2194,6 +2195,14 @@ static void queue_completion(completion_head_t *list, completion_list_t *c,
         list->head = c;
         list->last = c;
     }
+}
+
+static void queue_completion(completion_head_t *list, completion_list_t *c,
+        int add_to_front)
+{
+
+    lock_completion_list(list);
+    queue_completion_nolock(list, c, add_to_front);
     unlock_completion_list(list);
 }
 
@@ -2203,9 +2212,17 @@ static int add_completion(zhandle_t *zh, int xid, int completion_type,
 {
     completion_list_t *c =create_completion_entry(xid, completion_type, dc,
             data,wo);
+    int rc = 0;
     if (!c)
         return ZSYSTEMERROR;
-    queue_completion(&zh->sent_requests, c, add_to_front);
+    lock_completion_list(&zh->sent_requests);
+    if (zh->close_requested != 1) {
+        queue_completion_nolock(&zh->sent_requests, c, add_to_front);
+        rc = ZOK;
+    } else {
+        rc = ZINVALIDSTATE;
+    }
+    unlock_completion_list(&zh->sent_requests);
     if (dc == SYNCHRONOUS_MARKER) {
         zh->outstanding_sync++;
     }
@@ -2262,6 +2279,7 @@ int zookeeper_close(zhandle_t *zh)
 
     zh->close_requested=1;
     if (inc_ref_counter(zh,0)!=0) {
+        cleanup_bufs(zh, 1, ZCLOSING);
         adaptor_finish(zh);
         return ZOK;
     }

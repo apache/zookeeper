@@ -293,6 +293,8 @@ BUGFIXES:
   ZOOKEEPER-624. The C Client cause core dump when receive error data from
   Zookeeper Server (mahadev)
 
+  ZOOKEEPER-591. The C Client cannot exit properly in some situation (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
