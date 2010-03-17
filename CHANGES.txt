@@ -290,6 +290,9 @@ BUGFIXES:
 
   ZOOKEEPER-586. c client does not compile under cygwin (phunt, mahadev, breed via breed)
 
+  ZOOKEEPER-624. The C Client cause core dump when receive error data from
+  Zookeeper Server (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
