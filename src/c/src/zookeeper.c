@@ -2226,7 +2226,7 @@ static int add_completion(zhandle_t *zh, int xid, int completion_type,
     if (dc == SYNCHRONOUS_MARKER) {
         zh->outstanding_sync++;
     }
-    return ZOK;
+    return rc;
 }
 
 static int add_data_completion(zhandle_t *zh, int xid, data_completion_t dc,
