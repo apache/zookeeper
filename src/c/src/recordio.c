@@ -263,6 +263,9 @@ int ia_deserialize_string(struct iarchive *ia, const char *name, char **s)
     if ((priv->len - priv->off) < len) {
         return -E2BIG;
     }
+    if (len < 0) {
+        return -EINVAL;
+    }
     *s = malloc(len+1);
     if (!*s) {
         return -ENOMEM;

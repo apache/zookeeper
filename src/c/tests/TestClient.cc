@@ -36,8 +36,15 @@ using namespace std;
 #include <list>
 
 #include <zookeeper.h>
-
+#include <errno.h>
+#include <recordio.h>
 #include "Util.h"
+
+struct buff_struct_2 {
+    int32_t len;
+    int32_t off;
+    char *buffer;
+};
 
 static int Stat_eq(struct Stat* a, struct Stat* b)
 {
@@ -178,6 +185,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Zookeeper_simpleSystem);
     CPPUNIT_TEST(testAsyncWatcherAutoReset);
+    CPPUNIT_TEST(testDeserializeString);
 #ifdef THREADED
     CPPUNIT_TEST(testNullData);
     CPPUNIT_TEST(testIPV6);
@@ -428,6 +436,20 @@ public:
         return true;
     }
 
+    void testDeserializeString() {
+        char *val_str;
+        int rc = 0;
+        int val = -1;
+        struct iarchive *ia;
+        struct buff_struct_2 *b;
+        struct oarchive *oa = create_buffer_oarchive();
+        oa->serialize_Int(oa, "int", &val);
+        b = (struct buff_struct_2 *) oa->priv;
+        ia = create_buffer_iarchive(b->buffer, b->len);
+        rc = ia->deserialize_String(ia, "string", &val_str);
+        CPPUNIT_ASSERT_EQUAL(-EINVAL, rc);
+    }
+        
     void testAcl() {
         int rc;
         struct ACL_vector aclvec;
