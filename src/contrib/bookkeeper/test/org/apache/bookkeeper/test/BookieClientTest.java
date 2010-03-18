@@ -55,7 +55,10 @@ public class BookieClientTest extends TestCase {
         tmpDir = File.createTempFile("bookie", "test");
         tmpDir.delete();
         tmpDir.mkdir();
-        bs = new BookieServer(port, tmpDir, new File[] { tmpDir });
+        // Since this test does not rely on the BookKeeper client needing to
+        // know via ZooKeeper which Bookies are available, okay, so pass in null
+        // for the zkServers input parameter when constructing the BookieServer.
+        bs = new BookieServer(port, null, tmpDir, new File[] { tmpDir });
         bs.start();
         channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors
                 .newCachedThreadPool());

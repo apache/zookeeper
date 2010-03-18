@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -105,11 +106,8 @@ public class LocalBookKeeper {
 			zkc = new ZooKeeper("127.0.0.1", ZooKeeperDefaultPort, new emptyWatcher());
 			zkc.create("/ledgers", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			zkc.create("/ledgers/available", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-			// create an entry for each requested bookie
-			for(int i = 0; i < numberOfBookies; i++){
-				zkc.create("/ledgers/available/127.0.0.1:" + 
-					Integer.toString(initialPort + i), new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-			}
+            // No need to create an entry for each requested bookie anymore as the 
+            // BookieServers will register themselves with ZooKeeper on startup.
 		} catch (KeeperException e) {
 			// TODO Auto-generated catch block
 			LOG.fatal("Exception while creating znodes", e);
@@ -133,7 +131,8 @@ public class LocalBookKeeper {
 			tmpDirs[i].delete();
 			tmpDirs[i].mkdir();
 			
-			bs[i] = new BookieServer(initialPort + i, tmpDirs[i], new File[]{tmpDirs[i]});
+			bs[i] = new BookieServer(initialPort + i, InetAddress.getLocalHost().getHostAddress() + ":"
+                    + ZooKeeperDefaultPort, tmpDirs[i], new File[]{tmpDirs[i]});
 			bs[i].start();
 		}		
 	}

@@ -65,7 +65,7 @@ public class ConcurrentLedgerTest extends TestCase {
         ledgerDir = new File(tmpFile.getParent(), tmpFile.getName()+".dir");
         ledgerDir.mkdirs();
         
-        bookie = new Bookie(txnDir, new File[] {ledgerDir});
+        bookie = new Bookie(5000, null, txnDir, new File[] {ledgerDir});
     }
     
     static void recursiveDelete(File f) {

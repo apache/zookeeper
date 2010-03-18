@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -39,6 +40,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.bookkeeper.bookie.BookieException;
 import org.apache.bookkeeper.proto.BookkeeperInternalCallbacks.WriteCallback;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.ZooDefs.Ids;
 
 
 
@@ -55,6 +61,13 @@ public class Bookie extends Thread {
 
     final File ledgerDirectories[];
     
+    // ZK registration path for this bookie
+    static final String BOOKIE_REGISTRATION_PATH = "/ledgers/available/";
+    static final String LEDGERS_PATH = "/ledgers";
+
+    // ZooKeeper client instance for the Bookie
+    ZooKeeper zk;
+
     public static class NoLedgerException extends IOException {
         private static final long serialVersionUID = 1L;
         private long ledgerId;
@@ -119,7 +132,8 @@ public class Bookie extends Thread {
         }
     }
     SyncThread syncThread = new SyncThread();
-    public Bookie(File journalDirectory, File ledgerDirectories[]) throws IOException {
+    public Bookie(int port, String zkServers, File journalDirectory, File ledgerDirectories[]) throws IOException {
+        instantiateZookeeperClient(port, zkServers);
         this.journalDirectory = journalDirectory;
         this.ledgerDirectories = ledgerDirectories;
         entryLogger = new EntryLogger(ledgerDirectories);
@@ -145,6 +159,9 @@ public class Bookie extends Thread {
             if (logs.size() == 0 || logs.get(0) != markedLogId) {
                 throw new IOException("Recovery log " + markedLogId + " is missing");
             }
+            // TODO: When reading in the journal logs that need to be synced, we
+            // should use BufferedChannels instead to minimize the amount of
+            // system calls done.
             ByteBuffer lenBuff = ByteBuffer.allocate(4);
             ByteBuffer recBuff = ByteBuffer.allocate(64*1024);
             for(Long id: logs) {
@@ -187,6 +204,36 @@ public class Bookie extends Thread {
         LOG.debug("I'm starting a bookie with journal directory " + journalDirectory.getName());
         start();
         syncThread.start();
+    }
+
+    // Method to instantiate the ZooKeeper client for the Bookie.
+    private void instantiateZookeeperClient(int port, String zkServers) throws IOException {
+        if (zkServers == null) {
+            LOG.warn("No ZK servers passed to Bookie constructor so BookKeeper clients won't know about this server!");
+            zk = null;
+            return;
+        }
+        // Create the ZooKeeper client instance
+        zk = new ZooKeeper(zkServers, 10000, new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                // TODO: handle session disconnects and expires
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Process: " + event.getType() + " " + event.getPath());
+                }
+            }
+        });
+        // Create the ZK ephemeral node for this Bookie.
+        try {
+            zk.create(BOOKIE_REGISTRATION_PATH + InetAddress.getLocalHost().getHostAddress() + ":" + port, new byte[0],
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        } catch (Exception e) {
+            LOG.fatal("ZK exception registering ephemeral Znode for Bookie!", e);
+            // Throw an IOException back up. This will cause the Bookie
+            // constructor to error out. Alternatively, we could do a System
+            // exit here as this is a fatal error.
+            throw new IOException(e);
+        }
     }
 
     private static int fullRead(FileChannel fc, ByteBuffer bb) throws IOException {
@@ -342,6 +389,9 @@ public class Bookie extends Thread {
             long nextPrealloc = preAllocSize;
             long lastFlushPosition = 0;
             logFile.write(zeros, nextPrealloc);
+            // TODO: Currently, when we roll over the journal logs, the older
+            // ones are never garbage collected. We should remove a journal log
+            // once all of its entries have been synced with the entry logs.
             while (true) {
                 QueueEntry qe = null;
                 if (toFlush.isEmpty()) {
@@ -391,6 +441,7 @@ public class Bookie extends Thread {
     }
 
     public void shutdown() throws InterruptedException {
+    	if(zk != null) zk.close();
         this.interrupt();
         this.join();
         syncThread.running = false;
@@ -462,7 +513,7 @@ public class Bookie extends Thread {
      */
     public static void main(String[] args) throws IOException,
             InterruptedException, BookieException {
-        Bookie b = new Bookie(new File("/tmp"), new File[] { new File("/tmp") });
+        Bookie b = new Bookie(5000, null, new File("/tmp"), new File[] { new File("/tmp") });
         CounterCallback cb = new CounterCallback();
         long start = System.currentTimeMillis();
         for (int i = 0; i < 100000; i++) {
