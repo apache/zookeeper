@@ -22,6 +22,7 @@
 package org.apache.bookkeeper.test;
 
 import java.io.File;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -88,7 +89,7 @@ public abstract class BaseTestCase extends TestCase {
         ZkTmpDir.mkdir();
 
         zks = new ZooKeeperServer(ZkTmpDir, ZkTmpDir, ZooKeeperDefaultPort);
-        serverFactory = new NIOServerCnxn.Factory(ZooKeeperDefaultPort);
+        serverFactory = new NIOServerCnxn.Factory(new InetSocketAddress(ZooKeeperDefaultPort));
         serverFactory.startup(zks);
 
         boolean b = ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT);
