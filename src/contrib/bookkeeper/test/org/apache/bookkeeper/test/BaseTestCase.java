@@ -52,7 +52,7 @@ import junit.framework.TestCase;
 public abstract class BaseTestCase extends TestCase {
     static final Logger LOG = Logger.getLogger(BaseTestCase.class);
     // ZooKeeper related variables
-    private static final String HOSTPORT = "127.0.0.1:2181";
+    static final String HOSTPORT = "127.0.0.1:2181";
     static Integer ZooKeeperDefaultPort = 2181;
     ZooKeeperServer zks;
     ZooKeeper zkc; // zookeeper client
@@ -103,10 +103,6 @@ public abstract class BaseTestCase extends TestCase {
         // initialize the zk client with values
         zkc.create("/ledgers", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zkc.create("/ledgers/available", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        for (int i = 0; i < numBookies; i++) {
-            zkc.create("/ledgers/available/127.0.0.1:" + Integer.toString(initialPort + i), new byte[0],
-                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }
 
         // Create Bookie Servers (B1, B2, B3)
         for (int i = 0; i < numBookies; i++) {
@@ -115,7 +111,7 @@ public abstract class BaseTestCase extends TestCase {
             f.delete();
             f.mkdir();
 
-            BookieServer server = new BookieServer(initialPort + i, f, new File[] { f });
+            BookieServer server = new BookieServer(initialPort + i, HOSTPORT, f, new File[] { f });
             server.start();
             bs.add(server);
         }

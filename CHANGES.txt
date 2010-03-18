@@ -304,6 +304,8 @@ BUGFIXES:
   ZOOKEEPER-708. zkpython failing due to undefined symbol
   deallocate_String_vector (mahadev via phunt)
 
+  ZOOKEEPER-436. Bookies should auto register to ZooKeeper (erwin tam & fpj via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)

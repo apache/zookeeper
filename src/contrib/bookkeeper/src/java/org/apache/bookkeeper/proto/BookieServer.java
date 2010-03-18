@@ -42,9 +42,9 @@ public class BookieServer implements NIOServerFactory.PacketProcessor, Bookkeepe
     Bookie bookie;
     static Logger LOG = Logger.getLogger(BookieServer.class);
 
-    public BookieServer(int port, File journalDirectory, File ledgerDirectories[]) throws IOException {
+    public BookieServer(int port, String zkServers, File journalDirectory, File ledgerDirectories[]) throws IOException {
         this.port = port;
-        this.bookie = new Bookie(journalDirectory, ledgerDirectories);
+        this.bookie = new Bookie(port, zkServers, journalDirectory, ledgerDirectories);
     }
 
     public void start() throws IOException {
@@ -71,26 +71,27 @@ public class BookieServer implements NIOServerFactory.PacketProcessor, Bookkeepe
      * @throws InterruptedException
      */
     public static void main(String[] args) throws IOException, InterruptedException {
-        if (args.length < 3) {
-            System.err.println("USAGE: BookieServer port journalDirectory ledgerDirectory [ledgerDirectory]*");
+        if (args.length < 4) {
+            System.err.println("USAGE: BookieServer port zkServers journalDirectory ledgerDirectory [ledgerDirectory]*");
             return;
         }
         int port = Integer.parseInt(args[0]);
-        File journalDirectory = new File(args[1]);
-        File ledgerDirectory[] = new File[args.length - 2];
+        String zkServers = args[1];
+        File journalDirectory = new File(args[2]);
+        File ledgerDirectory[] = new File[args.length - 3];
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ledgerDirectory.length; i++) {
-            ledgerDirectory[i] = new File(args[i + 2]);
+            ledgerDirectory[i] = new File(args[i + 3]);
             if (i != 0) {
                 sb.append(',');
             }
             sb.append(ledgerDirectory[i]);
         }
         String hello = String.format(
-                "Hello, I'm your bookie, listening on port %1$s. Journals are in %2$s. Ledgers are stored in %3$s.",
-                port, journalDirectory, sb);
+                "Hello, I'm your bookie, listening on port %1$s. ZKServers are on %2$s. Journals are in %3$s. Ledgers are stored in %4$s.",
+                port, zkServers, journalDirectory, sb);
         LOG.info(hello);
-        BookieServer bs = new BookieServer(port, journalDirectory, ledgerDirectory);
+        BookieServer bs = new BookieServer(port, zkServers, journalDirectory, ledgerDirectory);
         bs.start();
         bs.join();
     }

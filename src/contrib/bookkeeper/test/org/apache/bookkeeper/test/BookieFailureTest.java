@@ -138,7 +138,7 @@ public class BookieFailureTest extends BaseTestCase implements AddCallback, Read
         }
         
         bs.get(3).shutdown();
-        BookieServer server = new BookieServer(initialPort + 3, tmpDirs.get(3), new File[] { tmpDirs.get(3)});
+        BookieServer server = new BookieServer(initialPort + 3, HOSTPORT, tmpDirs.get(3), new File[] { tmpDirs.get(3)});
         server.start();
         bs.set(3, server);
 
