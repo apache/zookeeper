@@ -298,6 +298,9 @@ BUGFIXES:
   ZOOKEEPER-591_2. The C Client cannot exit properly in some situation
   (mahadev via phunt)
 
+  ZOOKEEPER-709. bookkeeper build failing with missing factory
+  (phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
