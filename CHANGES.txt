@@ -1,3 +1,11 @@
+3.2 branch
+
+Backward compatible changes:
+
+BUGFIXES:
+  ZOOKEEPER-710. permanent ZSESSIONMOVED error after client app reconnects to
+  zookeeper cluster (phunt via mahadev)
+
 Release 3.2.2 - 2009-12-11
 
 Backward compatible changes:

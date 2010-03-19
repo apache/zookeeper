@@ -351,20 +351,22 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     void sendBuffer(ByteBuffer bb) {
         try {
-            // We check if write interest here because if it is NOT set, nothing
-            // is queued, so
-            // we can try to send the buffer right away without waking up the
-            // selector
-            if ((sk.interestOps() & SelectionKey.OP_WRITE) == 0) {
-                try {
-                    sock.write(bb);
-                } catch (IOException e) {
-                    // we are just doing best effort right now
+            if (bb != closeConn) {
+                // We check if write interest here because if it is NOT set, nothing
+                // is queued, so
+                // we can try to send the buffer right away without waking up the
+                // selector
+                if ((sk.interestOps() & SelectionKey.OP_WRITE) == 0) {
+                    try {
+                        sock.write(bb);
+                    } catch (IOException e) {
+                        // we are just doing best effort right now
+                    }
                 }
-            }
-            // if there is nothing left to send, we are done
-            if (bb.remaining() == 0) {
-                return;
+                // if there is nothing left to send, we are done
+                if (bb.remaining() == 0) {
+                    return;
+                }
             }
             synchronized (factory) {
                 sk.selector().wakeup();

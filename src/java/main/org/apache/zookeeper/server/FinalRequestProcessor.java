@@ -27,6 +27,7 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.KeeperException.SessionMovedException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -46,6 +47,7 @@ import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.NIOServerCnxn.Factory;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.txn.CreateSessionTxn;
@@ -253,6 +255,17 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new GetChildrenResponse(children);
                 break;
             }
+        } catch (SessionMovedException e) {
+            // session moved is a connection level error, we need to tear
+            // down the connection otw ZOOKEEPER-710 might happen
+            // ie client on slow follower starts to renew session, fails
+            // before this completes, then tries the fast follower (leader)
+            // and is successful, however the initial renew is then
+            // successfully fwd/processed by the leader and as a result
+            // the client and leader disagree on where the client is most
+            // recently attached (and therefore invalid SESSION MOVED generated)
+            ((NIOServerCnxn)request.cnxn).sendBuffer(NIOServerCnxn.closeConn);
+            return;
         } catch (KeeperException e) {
             err = e.code();
         } catch (Exception e) {
