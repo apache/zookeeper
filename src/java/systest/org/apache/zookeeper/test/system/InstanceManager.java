@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.test.system;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -65,6 +67,16 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
             this.container = container;
             this.instance = instance;
             this.weight = weight;
+        }
+    }
+    private static List<String> preferredList = new ArrayList<String>();
+    static {
+        String list = System.getProperty("ic.preferredList");
+        if (list != null) {
+            preferredList = Arrays.asList(list.split(","));
+            System.err.println("Preferred List: " + preferredList);
+        } else {
+            System.err.println("Preferred List is empty");
         }
     }
     private HashMap<String, HashSet<Assigned>> assignments = new HashMap<String, HashSet<Assigned>>();
@@ -174,6 +186,19 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
         // find most idle node
         String mostIdle = null;
         int mostIdleWeight = Integer.MAX_VALUE;
+        for(String preferred: preferredList) {
+            HashSet<Assigned> assignmentList = assignments.get(preferred);
+            int w = 0;
+            if (assignmentList != null) {
+                for(Assigned a: assignmentList) {
+                    w += a.weight;
+                }
+                if (w < mostIdleWeight) {
+                    mostIdleWeight = w;
+                    mostIdle = preferred;
+                }
+            }
+        }
         for(Entry<String, HashSet<Assigned>> e: assignments.entrySet()) {
             int w = 0;
             for(Assigned a: e.getValue()) {
