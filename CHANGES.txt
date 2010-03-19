@@ -306,6 +306,8 @@ BUGFIXES:
 
   ZOOKEEPER-436. Bookies should auto register to ZooKeeper (erwin tam & fpj via breed)
 
+  ZOOKEEPER-710. permanent ZSESSIONMOVED error after client app reconnects to zookeeper cluster (phunt via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
