@@ -310,6 +310,9 @@ BUGFIXES:
 
   ZOOKEEPER-718. the fatjar is missing libraries (ben via mahadev)
 
+  ZOOKEEPER-717.  add a preferred list to the instancemanager (breed via
+  mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-473. cleanup junit tests to eliminate false positives due to
   "socket reuse" and failure to close client (phunt via mahadev)
