@@ -20,20 +20,16 @@ package org.apache.zookeeper.test;
 
 import java.net.InetSocketAddress;
 
-import junit.framework.TestCase;
-
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * this test fails quorum peers and then brings up one of the node as
- * a standalone server
- */
-public class RepeatStartupTest extends TestCase {
+public class RepeatStartupTest extends ZKTestCase {
 
     /** bring up 5 quorum peers and then shut them down
      * and then bring one of the nodes as server
@@ -63,11 +59,11 @@ public class RepeatStartupTest extends TestCase {
 
         factory.startup(zks);
         System.out.println("Comment: starting factory");
-        assertTrue("waiting for server up",
+        Assert.assertTrue("waiting for server up",
                    ClientBase.waitForServerUp("127.0.0.1:" + PORT,
                            QuorumTest.CONNECTION_TIMEOUT));
         factory.shutdown();
-        assertTrue("waiting for server down",
+        Assert.assertTrue("waiting for server down",
                    ClientBase.waitForServerDown("127.0.0.1:" + PORT,
                                                 QuorumTest.CONNECTION_TIMEOUT));
         System.out.println("Comment: shutting down standalone");

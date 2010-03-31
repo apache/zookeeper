@@ -9,6 +9,8 @@ Backward compatible changes:
 BUGFIXES: 
 
 IMPROVEMENTS:
+  ZOOKEEPER-724. Improve junit test integration - log harness information 
+  (phunt via mahadev)
 
 NEW FEATURES:
 

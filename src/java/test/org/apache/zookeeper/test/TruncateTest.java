@@ -23,13 +23,12 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
@@ -38,10 +37,11 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TruncateTest extends TestCase {
+public class TruncateTest extends ZKTestCase {
 	private static final Logger LOG = Logger.getLogger(TruncateTest.class);
     File dataDir1, dataDir2, dataDir3;
     final int baseHostPort = 12233;
@@ -115,7 +115,7 @@ public class TruncateTest extends TestCase {
         zk2.getData("/9", false, new Stat());
         try {
             zk2.getData("/10", false, new Stat());
-            fail("Should have gotten an error");
+            Assert.fail("Should have gotten an error");
         } catch(KeeperException.NoNodeException e) {
             // this is what we want
         }
@@ -134,7 +134,7 @@ public class TruncateTest extends TestCase {
         	// actually truncate the zxid for 10 creation
         	// but for 11 we will for sure
         	zk1.getData("/11", false, new Stat());
-            fail("Should have gotten an error");
+            Assert.fail("Should have gotten an error");
         } catch(KeeperException.NoNodeException e) {
             // this is what we want
         }

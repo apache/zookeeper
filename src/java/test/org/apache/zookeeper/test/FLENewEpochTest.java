@@ -24,18 +24,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-public class FLENewEpochTest extends TestCase {
+public class FLENewEpochTest extends ZKTestCase {
     protected static final Logger LOG = Logger.getLogger(FLENewEpochTest.class);
 
     int count;
@@ -48,7 +50,7 @@ public class FLENewEpochTest extends TestCase {
     Semaphore start0;
     Semaphore finish3, finish0;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
         count = 3;
 
@@ -65,16 +67,13 @@ public class FLENewEpochTest extends TestCase {
         start0 = new Semaphore(0);
         finish0 = new Semaphore(0);
         finish3 = new Semaphore(0);
-
-        LOG.info("SetUp " + getName());
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         for(int i = 0; i < threads.size(); i++) {
             ((FastLeaderElection) threads.get(i).peer.getElectionAlg()).shutdown();
         }
-        LOG.info("FINISHED " + getName());
     }
 
 
@@ -99,7 +98,7 @@ public class FLENewEpochTest extends TestCase {
                     v = peer.getElectionAlg().lookForLeader();
 
                     if (v == null){
-                        fail("Thread " + i + " got a null vote");
+                        Assert.fail("Thread " + i + " got a null vote");
                     }
 
                     /*
@@ -154,7 +153,7 @@ public class FLENewEpochTest extends TestCase {
 
           FastLeaderElection le[] = new FastLeaderElection[count];
 
-          LOG.info("TestLE: " + getName()+ ", " + count);
+          LOG.info("TestLE: " + getTestName()+ ", " + count);
           for(int i = 0; i < count; i++) {
               peers.put(Long.valueOf(i),
                       new QuorumServer(i,
@@ -172,7 +171,7 @@ public class FLENewEpochTest extends TestCase {
               threads.add(thread);
           }
           if(!start0.tryAcquire(4000, java.util.concurrent.TimeUnit.MILLISECONDS))
-              fail("First leader election failed");
+              Assert.fail("First leader election failed");
 
           QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 2, 2, 2);
           peer.startLeaderElection();
@@ -180,12 +179,12 @@ public class FLENewEpochTest extends TestCase {
           thread.start();
           threads.add(thread);
 
-          LOG.info("Started threads " + getName());
+          LOG.info("Started threads " + getTestName());
 
           for(int i = 0; i < threads.size(); i++) {
               threads.get(i).join(10000);
               if (threads.get(i).isAlive()) {
-                  fail("Threads didn't join");
+                  Assert.fail("Threads didn't join");
               }
 
           }

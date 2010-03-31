@@ -25,20 +25,21 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.Random;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
+import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class FLEZeroWeightTest extends TestCase {
+public class FLEZeroWeightTest extends ZKTestCase {
     private static final Logger LOG = Logger.getLogger(HierarchicalQuorumTest.class);
 
     Properties qp;
@@ -57,8 +58,7 @@ public class FLEZeroWeightTest extends TestCase {
 
 
     @Before
-    @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         count = 9;
 
         peers = new HashMap<Long,QuorumServer>(count);
@@ -84,11 +84,10 @@ public class FLEZeroWeightTest extends TestCase {
         ByteArrayInputStream is = new ByteArrayInputStream(config.getBytes());
         this.qp = new Properties();
         qp.load(is);
-
-        LOG.info("SetUp " + getName());
     }
 
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         for(int i = 0; i < threads.size(); i++) {
             LEThread leThread = threads.get(i);
             // shutdown() has to be explicitly called for every thread to
@@ -96,7 +95,6 @@ public class FLEZeroWeightTest extends TestCase {
             // are available for other test cases
             QuorumBase.shutdown(leThread.peer);
         }
-        LOG.info("FINISHED " + getName());
     }
 
     class LEThread extends Thread {
@@ -136,7 +134,7 @@ public class FLEZeroWeightTest extends TestCase {
 
                     if((peer.getPeerState() == ServerState.LEADING) &&
                             (peer.getId() > 2)) fail = true;
-                    
+
                     if((peer.getPeerState() == ServerState.FOLLOWING) ||
                             (peer.getPeerState() == ServerState.LEADING)) break;
                 }
@@ -151,7 +149,7 @@ public class FLEZeroWeightTest extends TestCase {
     public void testZeroWeightQuorum() throws Exception {
         FastLeaderElection le[] = new FastLeaderElection[count];
 
-        LOG.info("TestZeroWeightQuorum: " + getName()+ ", " + count);
+        LOG.info("TestZeroWeightQuorum: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
@@ -169,15 +167,15 @@ public class FLEZeroWeightTest extends TestCase {
             thread.start();
             threads.add(thread);
         }
-        LOG.info("Started threads " + getName());
+        LOG.info("Started threads " + getTestName());
 
         for(int i = 0; i < threads.size(); i++) {
             threads.get(i).join(15000);
             if (threads.get(i).isAlive()) {
-                fail("Threads didn't join");
+                Assert.fail("Threads didn't join");
             } else {
                 if(threads.get(i).fail)
-                    fail("Elected zero-weight server");
+                    Assert.fail("Elected zero-weight server");
             }
         }
     }

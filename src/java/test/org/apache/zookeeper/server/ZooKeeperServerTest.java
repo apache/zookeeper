@@ -21,13 +21,13 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.util.List;
 
-import junit.framework.TestCase;
-
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.Util;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class ZooKeeperServerTest extends TestCase {
+public class ZooKeeperServerTest extends ZKTestCase {
     @Test
     public void testSortDataDirAscending() {
         File[] files = new File[5];
@@ -42,11 +42,11 @@ public class ZooKeeperServerTest extends TestCase {
 
         List<File> filelist = Util.sortDataDir(files, "foo", true);
 
-        assertEquals(orig[2], filelist.get(0));
-        assertEquals(orig[3], filelist.get(1));
-        assertEquals(orig[0], filelist.get(2));
-        assertEquals(orig[1], filelist.get(3));
-        assertEquals(orig[4], filelist.get(4));
+        Assert.assertEquals(orig[2], filelist.get(0));
+        Assert.assertEquals(orig[3], filelist.get(1));
+        Assert.assertEquals(orig[0], filelist.get(2));
+        Assert.assertEquals(orig[1], filelist.get(3));
+        Assert.assertEquals(orig[4], filelist.get(4));
     }
 
     @Test
@@ -63,11 +63,11 @@ public class ZooKeeperServerTest extends TestCase {
 
         List<File> filelist = Util.sortDataDir(files, "foo", false);
 
-        assertEquals(orig[4], filelist.get(0));
-        assertEquals(orig[1], filelist.get(1));
-        assertEquals(orig[0], filelist.get(2));
-        assertEquals(orig[3], filelist.get(3));
-        assertEquals(orig[2], filelist.get(4));
+        Assert.assertEquals(orig[4], filelist.get(0));
+        Assert.assertEquals(orig[1], filelist.get(1));
+        Assert.assertEquals(orig[0], filelist.get(2));
+        Assert.assertEquals(orig[3], filelist.get(3));
+        Assert.assertEquals(orig[2], filelist.get(4));
     }
 
     @Test
@@ -86,10 +86,10 @@ public class ZooKeeperServerTest extends TestCase {
                 FileTxnLog.getLogFiles(files,
                 Long.parseLong("10027c6de", 16));
 
-        assertEquals(3, filelist.length);
-        assertEquals(orig[0], filelist[0]);
-        assertEquals(orig[1], filelist[1]);
-        assertEquals(orig[4], filelist[2]);
+        Assert.assertEquals(3, filelist.length);
+        Assert.assertEquals(orig[0], filelist[0]);
+        Assert.assertEquals(orig[1], filelist[1]);
+        Assert.assertEquals(orig[4], filelist[2]);
     }
 
 }

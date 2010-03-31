@@ -25,24 +25,21 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
-import junit.framework.TestCase;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.junit.Assert;
 import org.junit.Test;
 
-/**
- *
- */
-public class OOMTest extends TestCase implements Watcher {
+public class OOMTest extends ZKTestCase implements Watcher {
     @Test
     public void testOOM() throws IOException, InterruptedException, KeeperException {
         // This test takes too long to run!
@@ -67,7 +64,7 @@ public class OOMTest extends TestCase implements Watcher {
         NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
                 new InetSocketAddress(PORT));
         f.startup(zks);
-        assertTrue("waiting for server up",
+        Assert.assertTrue("waiting for server up",
                    ClientBase.waitForServerUp("127.0.0.1:" + PORT,
                                               CONNECTION_TIMEOUT));
 
@@ -103,7 +100,7 @@ public class OOMTest extends TestCase implements Watcher {
         hog.get(0)[0] = (byte) 1;
 
         f.shutdown();
-        assertTrue("waiting for server down",
+        Assert.assertTrue("waiting for server down",
                    ClientBase.waitForServerDown("127.0.0.1:" + PORT,
                                                 CONNECTION_TIMEOUT));
     }
