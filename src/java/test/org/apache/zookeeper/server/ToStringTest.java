@@ -18,21 +18,21 @@
 
 package org.apache.zookeeper.server;
 
-import junit.framework.TestCase;
-
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.proto.SetDataRequest;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * A misc place to verify toString methods - mainly to make sure they don't
  * fail.
  */
-public class ToStringTest extends TestCase {
+public class ToStringTest extends ZKTestCase {
     /** Verify jute - which we've had particular problems with in the past 
      * wrt null fields */
     @Test
     public void testJuteToString() {
         SetDataRequest req = new SetDataRequest(null, null, 0);
-        assertNotSame("ERROR", req.toString());
+        Assert.assertNotSame("ERROR", req.toString());
     }
 }

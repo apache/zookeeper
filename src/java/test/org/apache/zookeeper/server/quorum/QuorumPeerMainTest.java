@@ -37,6 +37,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
+import org.junit.Assert;
 import org.junit.Test;
 
 
@@ -50,7 +51,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
      */
     @Test
     public void testQuorum() throws Exception {
-        LOG.info("STARTING " + getName());
         ClientBase.setupTestEnv();
 
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -67,10 +67,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue("waiting for server 1 being up",
+        Assert.assertTrue("waiting for server 1 being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
                         CONNECTION_TIMEOUT));
-        assertTrue("waiting for server 2 being up",
+        Assert.assertTrue("waiting for server 2 being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                         CONNECTION_TIMEOUT));
 
@@ -80,7 +80,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
+        Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
         zk.close();
 
         zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP2,
@@ -88,16 +88,16 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         zk.create("/foo_q2", "foobar2".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        assertEquals(new String(zk.getData("/foo_q2", null, null)), "foobar2");
+        Assert.assertEquals(new String(zk.getData("/foo_q2", null, null)), "foobar2");
         zk.close();
 
         q1.shutdown();
         q2.shutdown();
 
-        assertTrue("waiting for server 1 down",
+        Assert.assertTrue("waiting for server 1 down",
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
                         ClientBase.CONNECTION_TIMEOUT));
-        assertTrue("waiting for server 2 down",
+        Assert.assertTrue("waiting for server 2 down",
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
                         ClientBase.CONNECTION_TIMEOUT));
     }
@@ -107,7 +107,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
      */
     @Test
     public void testBadPeerAddressInQuorum() throws Exception {
-        LOG.info("STARTING " + getName());
         ClientBase.setupTestEnv();
 
         // setup the logger to capture all logs
@@ -136,11 +135,11 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
                         5000);
 
-            assertFalse("Server never came up", isup);
+            Assert.assertFalse("Server never came up", isup);
 
             q1.shutdown();
 
-            assertTrue("waiting for server 1 down",
+            Assert.assertTrue("waiting for server 1 down",
                     ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
                             ClientBase.CONNECTION_TIMEOUT));
 
@@ -159,7 +158,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 break;
             }
         }
-        assertTrue("complains about host", found);
+        Assert.assertTrue("complains about host", found);
     }
 
     /**
@@ -167,8 +166,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
      * at the quorum port
      * @throws Exception
      */
+    @Test
     public void testBadPackets() throws Exception {
-        LOG.info("STARTING " + getName());
         ClientBase.setupTestEnv();
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
         final int CLIENT_PORT_QP2 = PortAssignment.unique();
@@ -185,10 +184,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
         
-        assertTrue("waiting for server 1 being up",
+        Assert.assertTrue("waiting for server 1 being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
                         CONNECTION_TIMEOUT));
-        assertTrue("waiting for server 2 being up",
+        Assert.assertTrue("waiting for server 2 being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                             CONNECTION_TIMEOUT));
             
@@ -210,7 +209,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
+        Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
         zk.close();
         q1.shutdown();
         q2.shutdown();
@@ -223,7 +222,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
      */
     @Test
     public void testQuorumDefaults() throws Exception {
-        LOG.info("STARTING " + getName());
         ClientBase.setupTestEnv();
 
         // setup the logger to capture all logs
@@ -251,20 +249,20 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             q1.start();
             q2.start();
 
-            assertTrue("waiting for server 1 being up",
+            Assert.assertTrue("waiting for server 1 being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
                             CONNECTION_TIMEOUT));
-            assertTrue("waiting for server 2 being up",
+            Assert.assertTrue("waiting for server 2 being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                             CONNECTION_TIMEOUT));
 
             q1.shutdown();
             q2.shutdown();
 
-            assertTrue("waiting for server 1 down",
+            Assert.assertTrue("waiting for server 1 down",
                     ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
                             ClientBase.CONNECTION_TIMEOUT));
-            assertTrue("waiting for server 2 down",
+            Assert.assertTrue("waiting for server 2 down",
                     ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
                             ClientBase.CONNECTION_TIMEOUT));
 
@@ -283,7 +281,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 break;
             }
         }
-        assertTrue("fastleaderelection used", found);
+        Assert.assertTrue("fastleaderelection used", found);
     }
    
 }

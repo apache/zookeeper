@@ -20,13 +20,13 @@ package org.apache.zookeeper.test;
 
 import java.util.EnumSet;
 
-import junit.framework.TestCase;
-
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class KeeperStateTest extends TestCase {
+public class KeeperStateTest extends ZKTestCase {
     
     @Test
     public void testIntConversion() {
@@ -34,7 +34,7 @@ public class KeeperStateTest extends TestCase {
         EnumSet<KeeperState> allStates = EnumSet.allOf(KeeperState.class);
 
         for(KeeperState as : allStates) {
-            assertEquals(as, KeeperState.fromInt( as.getIntValue() ) );
+            Assert.assertEquals(as, KeeperState.fromInt( as.getIntValue() ) );
         }
     }
 
@@ -42,7 +42,7 @@ public class KeeperStateTest extends TestCase {
     public void testInvalidIntConversion() {
         try {
             KeeperState ks = KeeperState.fromInt(324142);
-            fail("Was able to create an invalid KeeperState via an integer");
+            Assert.fail("Was able to create an invalid KeeperState via an integer");
         } catch(RuntimeException re) {
             // we're good.
         }
@@ -58,7 +58,7 @@ public class KeeperStateTest extends TestCase {
         int test = 1;
         switch (test) {
         case Code.Ok:
-            assertTrue(true);
+            Assert.assertTrue(true);
             break;
         }
     }
@@ -69,7 +69,7 @@ public class KeeperStateTest extends TestCase {
         Code test = Code.OK;
         switch (test) {
         case OK:
-            assertTrue(true);
+            Assert.assertTrue(true);
             break;
         }
     }

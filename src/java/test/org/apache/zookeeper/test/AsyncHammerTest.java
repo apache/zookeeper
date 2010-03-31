@@ -23,13 +23,12 @@ import static org.apache.zookeeper.test.ClientBase.verifyThreadTerminated;
 
 import java.util.LinkedList;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
@@ -37,10 +36,11 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class AsyncHammerTest extends TestCase
+public class AsyncHammerTest extends ZKTestCase
     implements StringCallback, VoidCallback, DataCallback
 {
     private static final Logger LOG = Logger.getLogger(AsyncHammerTest.class);
@@ -50,14 +50,12 @@ public class AsyncHammerTest extends TestCase
     private volatile boolean bang;
 
     @Before
-    @Override
-    protected void setUp() throws Exception {
-        LOG.info("STARTING " + getName());
+    public void setUp() throws Exception {
         qb.setUp();
     }
 
     protected void restart() throws Exception {
-        LOG.info("RESTARTING " + getName());
+        LOG.info("RESTARTING " + getTestName());
         qb.tearDown();
 
         // don't call setup - we don't want to reassign ports/dirs, etc...
@@ -66,11 +64,9 @@ public class AsyncHammerTest extends TestCase
     }
 
     @After
-    @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         LOG.info("Test clients shutting down");
         qb.tearDown();
-        LOG.info("FINISHED " + getName());
     }
 
     /**
@@ -101,11 +97,11 @@ public class AsyncHammerTest extends TestCase
                 }
             } catch (InterruptedException e) {
                 if (bang) {
-                    LOG.error("sanity check failed!!!"); // sanity check
+                    LOG.error("sanity check Assert.failed!!!"); // sanity check
                     return;
                 }
             } catch (Exception e) {
-                LOG.error("Client create operation failed", e);
+                LOG.error("Client create operation Assert.failed", e);
                 return;
             } finally {
                 if (zk != null) {
@@ -131,7 +127,7 @@ public class AsyncHammerTest extends TestCase
 
         private synchronized void decOutstanding() {
             outstanding--;
-            assertTrue("outstanding >= 0", outstanding >= 0);
+            Assert.assertTrue("outstanding >= 0", outstanding >= 0);
             notifyAll();
         }
 
@@ -143,7 +139,7 @@ public class AsyncHammerTest extends TestCase
             if (rc != KeeperException.Code.OK.intValue()) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Create failed for 0x"
+                    LOG.error("Create Assert.failed for 0x"
                             + Long.toHexString(zk.getSessionId())
                             + "with rc:" + rc + " path:" + path);
                 }
@@ -156,7 +152,7 @@ public class AsyncHammerTest extends TestCase
             } catch (Exception e) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Client delete failed", e);
+                    LOG.error("Client delete Assert.failed", e);
                 }
             }
         }
@@ -165,7 +161,7 @@ public class AsyncHammerTest extends TestCase
             if (rc != KeeperException.Code.OK.intValue()) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Delete failed for 0x"
+                    LOG.error("Delete Assert.failed for 0x"
                             + Long.toHexString(zk.getSessionId())
                             + "with rc:" + rc + " path:" + path);
                 }
@@ -189,7 +185,7 @@ public class AsyncHammerTest extends TestCase
         for (int i = 0; i < hammers.length; i++) {
             hammers[i].interrupt();
             verifyThreadTerminated(hammers[i], 60000);
-            assertFalse(hammers[i].failed);
+            Assert.assertFalse(hammers[i].failed);
         }
 
         // before restart
@@ -202,7 +198,7 @@ public class AsyncHammerTest extends TestCase
         LOG.info("Verifying hammers 2");
         qb.verifyRootOfAllServersMatch(qb.hostPort);
     }
-    
+
     @Test
     public void testObserversHammer() throws Exception {
         qb.tearDown();
@@ -220,7 +216,7 @@ public class AsyncHammerTest extends TestCase
             verifyThreadTerminated(hammers[i], 60000);
         }
         // before restart
-        qb.verifyRootOfAllServersMatch(qb.hostPort);          
+        qb.verifyRootOfAllServersMatch(qb.hostPort);
     }
 
     @SuppressWarnings("unchecked")

@@ -24,16 +24,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.LeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class LETest extends TestCase {
+public class LETest extends ZKTestCase {
     private static final Logger LOG = Logger.getLogger(LETest.class);
     volatile Vote votes[];
     volatile boolean leaderDies;
@@ -85,6 +86,8 @@ public class LETest extends TestCase {
             }
         }
     }
+
+    @Test
     public void testLE() throws Exception {
         int count = 30;
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>(count);
@@ -115,19 +118,19 @@ public class LETest extends TestCase {
         for(int i = 0; i < threads.size(); i++) {
             threads.get(i).join(15000);
             if (threads.get(i).isAlive()) {
-                fail("Threads didn't join");
+                Assert.fail("Threads didn't join");
             }
         }
         long id = votes[0].id;
         for(int i = 1; i < votes.length; i++) {
             if (votes[i] == null) {
-                fail("Thread " + i + " had a null vote");
+                Assert.fail("Thread " + i + " had a null vote");
             }
             if (votes[i].id != id) {
                 if (allowOneBadLeader && votes[i].id == i) {
                     allowOneBadLeader = false;
                 } else {
-                    fail("Thread " + i + " got " + votes[i].id + " expected " + id);
+                    Assert.fail("Thread " + i + " got " + votes[i].id + " expected " + id);
                 }
             }
         }

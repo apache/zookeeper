@@ -34,8 +34,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedInputStream;
 
-import junit.framework.TestCase;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.log4j.Logger;
@@ -43,6 +41,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -50,23 +49,15 @@ import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.test.ClientBase;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class CRCTest extends TestCase implements Watcher{
+public class CRCTest extends ZKTestCase implements Watcher {
     private static final Logger LOG = Logger.getLogger(CRCTest.class);
 
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();
     private volatile CountDownLatch startSignal;
-
-    @Override
-    protected void setUp() throws Exception {
-        LOG.info("STARTING " + getName());
-    }
-    @Override
-    protected void tearDown() throws Exception {
-        LOG.info("FINISHED " + getName());
-    }
 
     /**
      * corrupt a file by writing m at 500 b
@@ -129,7 +120,7 @@ public class CRCTest extends TestCase implements Watcher{
                 new InetSocketAddress(PORT));
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        assertTrue("waiting for server being up",
+        Assert.assertTrue("waiting for server being up",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         try {
@@ -141,7 +132,7 @@ public class CRCTest extends TestCase implements Watcher{
             zk.close();
         }
         f.shutdown();
-        assertTrue("waiting for server down",
+        Assert.assertTrue("waiting for server down",
                    ClientBase.waitForServerDown(HOSTPORT,
                            ClientBase.CONNECTION_TIMEOUT));
 
@@ -164,7 +155,7 @@ public class CRCTest extends TestCase implements Watcher{
         try {
             while (itr.next()) {
             }
-            assertTrue(false);
+            Assert.assertTrue(false);
         } catch(IOException ie) {
             LOG.info("crc corruption", ie);
         }
@@ -185,7 +176,7 @@ public class CRCTest extends TestCase implements Watcher{
             corruptFile(snapFile);
             cfile = getCheckSum(snap, snapFile);
         }
-        assertTrue(cfile);
+        Assert.assertTrue(cfile);
    }
 
     public void process(WatchedEvent event) {

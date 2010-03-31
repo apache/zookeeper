@@ -31,10 +31,9 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.LeaderElection;
@@ -44,12 +43,11 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Tests that a particular run of LeaderElection terminates correctly.
- */
-public class LENonTerminateTest extends TestCase {
+public class LENonTerminateTest extends ZKTestCase {
     public class MockLeaderElection extends LeaderElection {
         public MockLeaderElection(QuorumPeer self) {
             super(self);            
@@ -153,7 +151,7 @@ public class LENonTerminateTest extends TestCase {
                  */
                 LOG.info("Waiting for first round of voting to complete");
                 latch.countDown();
-                assertTrue("Thread timed out waiting for latch",
+                Assert.assertTrue("Thread timed out waiting for latch",
                         latch.await(10000, TimeUnit.MILLISECONDS));
                 
                 // ZOOKEEPER-569:
@@ -233,22 +231,15 @@ public class LENonTerminateTest extends TestCase {
     File tmpdir[];
     int port[];   
    
-    @Override
+    @Before
     public void setUp() throws Exception {
         count = 3;
 
         peers = new HashMap<Long,QuorumServer>(count);
         tmpdir = new File[count];
         port = new int[count];
-        
-        LOG.info("SetUp " + getName());
     }
 
-    @Override
-    public void tearDown() throws Exception {
-        LOG.info("FINISHED " + getName());
-    }
-    
     static final CountDownLatch latch = new CountDownLatch(2);
     static final CountDownLatch mockLatch = new CountDownLatch(1);
 
@@ -272,7 +263,7 @@ public class LENonTerminateTest extends TestCase {
                 v = peer.getElectionAlg().lookForLeader();
 
                 if (v == null){
-                    fail("Thread " + i + " got a null vote");
+                    Assert.fail("Thread " + i + " got a null vote");
                 }                                
 
                 /*
@@ -300,7 +291,7 @@ public class LENonTerminateTest extends TestCase {
      */
     @Test
     public void testNonTermination() throws Exception {                
-        LOG.info("TestNonTermination: " + getName()+ ", " + count);
+        LOG.info("TestNonTermination: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
             peers.put(Long.valueOf(i),
@@ -331,13 +322,13 @@ public class LENonTerminateTest extends TestCase {
                     mockServer();
                 } catch (Exception e) {
                     LOG.error(e);
-                    fail("Exception when running mocked server " + e);
+                    Assert.fail("Exception when running mocked server " + e);
                 }
             }
         };        
         
         thread3.start();
-        assertTrue("mockServer did not start in 5s",
+        Assert.assertTrue("mockServer did not start in 5s",
                 mockLatch.await(5000, TimeUnit.MILLISECONDS));
         thread1.start();
         thread2.start();
@@ -348,13 +339,13 @@ public class LENonTerminateTest extends TestCase {
         thread2.join(15000);
         thread3.join(15000);
         if (thread1.isAlive() || thread2.isAlive() || thread3.isAlive()) {
-            fail("Threads didn't join");
+            Assert.fail("Threads didn't join");
         }
     }
      
     /**
      * MockServer plays the role of peer C. Respond to two requests for votes
-     * with vote for self and then fail. 
+     * with vote for self and then Assert.fail. 
      */
     void mockServer() throws InterruptedException, IOException {          
         byte b[] = new byte[36];

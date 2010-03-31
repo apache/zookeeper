@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 import org.apache.log4j.Logger;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,17 +31,19 @@ public class QuorumHammerTest extends QuorumBase {
 
     @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         qb.setUp();
         cht.hostPort = qb.hostPort;
         cht.setUpAll();
     }
 
-    protected void tearDown() throws Exception {
+    @After
+    @Override
+    public void tearDown() throws Exception {
         cht.tearDownAll();
         qb.tearDown();
     }
-    
+
     @Test
     public void testHammerBasic() throws Throwable {
         cht.testHammerBasic();

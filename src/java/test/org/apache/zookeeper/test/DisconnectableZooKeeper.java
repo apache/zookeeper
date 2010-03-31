@@ -23,11 +23,6 @@ import java.io.IOException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 
-/**
- * Specialized form of ZooKeeper specific for testing. Typically provides
- * the ability to do unsafe or incorrect operations that allow negative
- * testing.
- */
 public class DisconnectableZooKeeper extends ZooKeeper {
     public DisconnectableZooKeeper(String host, int sessionTimeout, Watcher watcher)
         throws IOException
