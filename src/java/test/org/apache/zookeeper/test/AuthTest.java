@@ -22,6 +22,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class AuthTest extends ClientBase {
@@ -43,27 +44,27 @@ public class AuthTest extends ClientBase {
             zk = createClient();
             try {
                 zk.getData("/path1", false, null);
-                fail("auth verification");
+                Assert.fail("auth verification");
             } catch (KeeperException.NoAuthException e) {
                 // expected
             }
             zk.close();
-            // verify bad pass fails
+            // verify bad pass Assert.fails
             zk = createClient();
             zk.addAuthInfo("digest", "pat:pass2".getBytes());
             try {
                 zk.getData("/path1", false, null);
-                fail("auth verification");
+                Assert.fail("auth verification");
             } catch (KeeperException.NoAuthException e) {
                 // expected
             }
             zk.close();
-            // verify super with bad pass fails
+            // verify super with bad pass Assert.fails
             zk = createClient();
             zk.addAuthInfo("digest", "super:test2".getBytes());
             try {
                 zk.getData("/path1", false, null);
-                fail("auth verification");
+                Assert.fail("auth verification");
             } catch (KeeperException.NoAuthException e) {
                 // expected
             }

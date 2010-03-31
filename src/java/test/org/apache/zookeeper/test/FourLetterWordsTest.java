@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.TestableZooKeeper;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class FourLetterWordsTest extends ClientBase {
@@ -92,6 +93,6 @@ public class FourLetterWordsTest extends ClientBase {
         HostPort hpobj = parseHostPortList(hostPort).get(0);
         String resp = send4LetterWord(hpobj.host, hpobj.port, cmd);
         LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
-        assertTrue(resp.contains(expected));
+        Assert.assertTrue(resp.contains(expected));
     }
 }

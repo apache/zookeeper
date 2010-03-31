@@ -18,24 +18,29 @@
 
 package org.apache.zookeeper.server;
 
-import junit.framework.TestCase;
-
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.data.Stat;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-public class DataTreeUnitTest extends TestCase {
+public class DataTreeUnitTest extends ZKTestCase {
     DataTree dt;
 
+    @Before
     public void setUp() throws Exception {
         dt=new DataTree();
     }
 
+    @After
     public void tearDown() throws Exception {
         dt=null;
     }
 
-
+    @Test
     public void testRootWatchTriggered() throws Exception {
         class MyWatcher implements Watcher{
             boolean fired=false;
@@ -49,7 +54,7 @@ public class DataTreeUnitTest extends TestCase {
         dt.getChildren("/", new Stat(), watcher);
         // add a new node, should trigger a watch
         dt.createNode("/xyz", new byte[0], null, 0, 1, 1);
-        assertFalse("Root node watch not triggered",!watcher.fired);
+        Assert.assertFalse("Root node watch not triggered",!watcher.fired);
     }
 
 }

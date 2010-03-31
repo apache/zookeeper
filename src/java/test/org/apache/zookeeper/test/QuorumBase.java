@@ -34,7 +34,7 @@ import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.junit.After;
+import org.junit.Assert;
 
 import com.sun.management.UnixOperatingSystemMXBean;
 
@@ -56,12 +56,12 @@ public class QuorumBase extends ClientBase {
     private int portLE5;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         setUp(false);
     }
         
     protected void setUp(boolean withObservers) throws Exception {
-        LOG.info("STARTING " + getName());
+        LOG.info("QuorumBase.setup " + getTestName());
         setupTestEnv();
 
         JMXEnv.setUp();
@@ -144,19 +144,19 @@ public class QuorumBase extends ClientBase {
 
         LOG.info("creating QuorumPeer 1 port " + port1);
         s1 = new QuorumPeer(peers, s1dir, s1dir, port1, 3, 1, tickTime, initLimit, syncLimit);
-        assertEquals(port1, s1.getClientPort());
+        Assert.assertEquals(port1, s1.getClientPort());
         LOG.info("creating QuorumPeer 2 port " + port2);
         s2 = new QuorumPeer(peers, s2dir, s2dir, port2, 3, 2, tickTime, initLimit, syncLimit);
-        assertEquals(port2, s2.getClientPort());
+        Assert.assertEquals(port2, s2.getClientPort());
         LOG.info("creating QuorumPeer 3 port " + port3);
         s3 = new QuorumPeer(peers, s3dir, s3dir, port3, 3, 3, tickTime, initLimit, syncLimit);
-        assertEquals(port3, s3.getClientPort());
+        Assert.assertEquals(port3, s3.getClientPort());
         LOG.info("creating QuorumPeer 4 port " + port4);
         s4 = new QuorumPeer(peers, s4dir, s4dir, port4, 3, 4, tickTime, initLimit, syncLimit);
-        assertEquals(port4, s4.getClientPort());
+        Assert.assertEquals(port4, s4.getClientPort());
         LOG.info("creating QuorumPeer 5 port " + port5);
         s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 3, 5, tickTime, initLimit, syncLimit);
-        assertEquals(port5, s5.getClientPort());
+        Assert.assertEquals(port5, s5.getClientPort());
         
         if (withObservers) {
             s4.setPeerType(LearnerType.OBSERVER);
@@ -177,7 +177,7 @@ public class QuorumBase extends ClientBase {
 
         LOG.info ("Checking ports " + hostPort);
         for (String hp : hostPort.split(",")) {
-            assertTrue("waiting for server up",
+            Assert.assertTrue("waiting for server up",
                        ClientBase.waitForServerUp(hp,
                                     CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
@@ -234,24 +234,23 @@ public class QuorumBase extends ClientBase {
         
         LOG.info("creating QuorumPeer 1 port " + port1);
         s1 = new QuorumPeer(peers, s1dir, s1dir, port1, 3, 1, tickTime, initLimit, syncLimit);
-        assertEquals(port1, s1.getClientPort());
+        Assert.assertEquals(port1, s1.getClientPort());
         LOG.info("creating QuorumPeer 2 port " + port2);
         s2 = new QuorumPeer(peers, s2dir, s2dir, port2, 3, 2, tickTime, initLimit, syncLimit);
-        assertEquals(port2, s2.getClientPort());
+        Assert.assertEquals(port2, s2.getClientPort());
         LOG.info("creating QuorumPeer 3 port " + port3);
         s3 = new QuorumPeer(peers, s3dir, s3dir, port3, 3, 3, tickTime, initLimit, syncLimit);
-        assertEquals(port3, s3.getClientPort());
+        Assert.assertEquals(port3, s3.getClientPort());
         LOG.info("creating QuorumPeer 4 port " + port4);
         s4 = new QuorumPeer(peers, s4dir, s4dir, port4, 3, 4, tickTime, initLimit, syncLimit);
-        assertEquals(port4, s4.getClientPort());
+        Assert.assertEquals(port4, s4.getClientPort());
         LOG.info("creating QuorumPeer 5 port " + port5);
         s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 3, 5, tickTime, initLimit, syncLimit);
-        assertEquals(port5, s5.getClientPort());
+        Assert.assertEquals(port5, s5.getClientPort());
     }
 
-    @After
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         LOG.info("TearDown started");
         
         OperatingSystemMXBean osMbean =
@@ -266,15 +265,13 @@ public class QuorumBase extends ClientBase {
         shutdownServers();
 
         for (String hp : hostPort.split(",")) {
-            assertTrue("waiting for server down",
+            Assert.assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(hp,
                                            ClientBase.CONNECTION_TIMEOUT));
             LOG.info(hp + " is no longer accepting client connections");
         }
 
         JMXEnv.tearDown();
-
-        LOG.info("FINISHED " + getName());
     }
     public void shutdownServers() {
         shutdown(s1);
@@ -298,7 +295,7 @@ public class QuorumBase extends ClientBase {
             LOG.info("Waiting for " + qp.getName() + " to exit thread");
             qp.join(30000);
             if (qp.isAlive()) {
-                fail("QP failed to shutdown in 30 seconds: " + qp.getName());
+                Assert.fail("QP failed to shutdown in 30 seconds: " + qp.getName());
             }
         } catch (InterruptedException e) {
             LOG.debug("QP interrupted: " + qp.getName(), e);

@@ -18,30 +18,30 @@
 
 package org.apache.zookeeper.test;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-public class DataTreeTest extends TestCase {
+public class DataTreeTest extends ZKTestCase {
     protected static final Logger LOG = Logger.getLogger(DataTreeTest.class);
 
     private DataTree dt;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        LOG.info("STARTING " + getName());
         dt=new DataTree();
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         dt=null;
-        LOG.info("FINISHED " + getName());
     }
 
     @Test
@@ -58,7 +58,7 @@ public class DataTreeTest extends TestCase {
         dt.getChildren("/", new Stat(), watcher);
         // add a new node, should trigger a watch
         dt.createNode("/xyz", new byte[0], null, 0, 1, 1);
-        assertFalse("Root node watch not triggered",!watcher.fired);
+        Assert.assertFalse("Root node watch not triggered",!watcher.fired);
     }
 
 }

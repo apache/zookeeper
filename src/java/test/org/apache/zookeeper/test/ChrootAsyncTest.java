@@ -22,20 +22,18 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.junit.Before;
 
 public class ChrootAsyncTest extends AsyncOpsTest {
     private static final Logger LOG = Logger.getLogger(ChrootAsyncTest.class);
 
-    @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         String hp = hostPort;
         hostPort = hostPort + "/chrootasynctest";
 
         super.setUp();
 
-        LOG.info("STARTING " + getName());
+        LOG.info("Creating client " + getTestName());
 
         ZooKeeper zk = createClient(hp);
         try {

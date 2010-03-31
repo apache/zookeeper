@@ -25,11 +25,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
 
@@ -37,7 +36,7 @@ import org.apache.zookeeper.test.QuorumBase;
  * Has some common functionality for tests that work with QuorumPeers.
  * Override process(WatchedEvent) to implement the Watcher interface
  */
-public class QuorumPeerTestBase extends TestCase implements Watcher {
+public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     protected static final Logger LOG =
         Logger.getLogger(QuorumPeerTestBase.class);
     

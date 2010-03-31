@@ -33,6 +33,8 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
+import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,17 +47,19 @@ public class QuorumTest extends QuorumBase {
 
     @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         qb.setUp();
         ct.hostPort = qb.hostPort;
         ct.setUpAll();
     }
 
-    protected void tearDown() throws Exception {
+    @After
+    @Override
+    public void tearDown() throws Exception {
         ct.tearDownAll();
         qb.tearDown();
     }
-    
+
     @Test
     public void testDeleteWithChildren() throws Exception {
         ct.testDeleteWithChildren();
@@ -91,28 +95,28 @@ public class QuorumTest extends QuorumBase {
     {
         ct.testClientWithWatcherObj();
     }
-    
+
     @Test
-    public void testGetView() {                
-        ct.assertEquals(5,qb.s1.getView().size());        
-        ct.assertEquals(5,qb.s2.getView().size());        
-        ct.assertEquals(5,qb.s3.getView().size());        
-        ct.assertEquals(5,qb.s4.getView().size());
-        ct.assertEquals(5,qb.s5.getView().size());
+    public void testGetView() {
+        Assert.assertEquals(5,qb.s1.getView().size());
+        Assert.assertEquals(5,qb.s2.getView().size());
+        Assert.assertEquals(5,qb.s3.getView().size());
+        Assert.assertEquals(5,qb.s4.getView().size());
+        Assert.assertEquals(5,qb.s5.getView().size());
     }
-    
+
     @Test
     public void testViewContains() {
         // Test view contains self
-        ct.assertTrue(qb.s1.viewContains(qb.s1.getId()));
-        
+        Assert.assertTrue(qb.s1.viewContains(qb.s1.getId()));
+
         // Test view contains other servers
-        ct.assertTrue(qb.s1.viewContains(qb.s2.getId()));
-        
+        Assert.assertTrue(qb.s1.viewContains(qb.s2.getId()));
+
         // Test view does not contain non-existant servers
-        ct.assertFalse(qb.s1.viewContains(-1L));
+        Assert.assertFalse(qb.s1.viewContains(-1L));
     }
-    
+
     volatile int counter = 0;
     volatile int errors = 0;
     @Test
@@ -127,7 +131,7 @@ public class QuorumTest extends QuorumBase {
         if (leader == null) leader = qb.s3.leader;
         if (leader == null) leader = qb.s4.leader;
         if (leader == null) leader = qb.s5.leader;
-        assertNotNull(leader);
+        Assert.assertNotNull(leader);
         for(int i = 0; i < 5000; i++) {
             zk.setData("/blah/blah", new byte[0], -1, new AsyncCallback.StatCallback() {
                 public void processResult(int rc, String path, Object ctx,
@@ -155,23 +159,23 @@ public class QuorumTest extends QuorumBase {
             }, null);
         }
         // check if all the followers are alive
-        assertTrue(qb.s1.isAlive());
-        assertTrue(qb.s2.isAlive());
-        assertTrue(qb.s3.isAlive());
-        assertTrue(qb.s4.isAlive());
-        assertTrue(qb.s5.isAlive());
+        Assert.assertTrue(qb.s1.isAlive());
+        Assert.assertTrue(qb.s2.isAlive());
+        Assert.assertTrue(qb.s3.isAlive());
+        Assert.assertTrue(qb.s4.isAlive());
+        Assert.assertTrue(qb.s5.isAlive());
         zk.close();
     }
-    
+
     @Test
     public void testMultipleWatcherObjs() throws IOException,
             InterruptedException, KeeperException
     {
         ct.testMutipleWatcherObjs();
     }
-	
+
     /**
-     * Make sure that we can change sessions 
+     * Make sure that we can change sessions
      *  from follower to leader.
      *
      * @throws IOException
@@ -188,7 +192,7 @@ public class QuorumTest extends QuorumBase {
         // we want to loop through the list twice
         for(int i = 0; i < hostPorts.length*2; i++) {
             // This should stomp the zk handle
-            DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[(i+1)%hostPorts.length], ClientBase.CONNECTION_TIMEOUT, 
+            DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[(i+1)%hostPorts.length], ClientBase.CONNECTION_TIMEOUT,
                     new Watcher() {public void process(WatchedEvent event) {
                     }},
                     zk.getSessionId(),
@@ -196,7 +200,7 @@ public class QuorumTest extends QuorumBase {
             zknew.setData("/", new byte[1], -1);
             try {
                 zk.setData("/", new byte[1], -1);
-                fail("Should have lost the connection");
+                Assert.fail("Should have lost the connection");
             } catch(KeeperException.ConnectionLossException e) {
             }
             zk.disconnect(); // close w/o closing session
@@ -214,11 +218,11 @@ public class QuorumTest extends QuorumBase {
         }
     }
 
-    @Test
     /**
      * Connect to two different servers with two different handles using the same session and
      * make sure we cannot do any changes.
      */
+    @Test
     public void testSessionMove() throws IOException, InterruptedException, KeeperException {
         String hps[] = qb.hostPort.split(",");
         DiscoWatcher oldWatcher = new DiscoWatcher();
@@ -233,7 +237,7 @@ public class QuorumTest extends QuorumBase {
         zknew.create("/t2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         try {
             zk.create("/t3", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            fail("Should have lost the connection");
+            Assert.fail("Should have lost the connection");
         } catch(KeeperException.ConnectionLossException e) {
             // wait up to 30 seconds for the disco to be delivered
             for (int i = 0; i < 30; i++) {
@@ -242,7 +246,7 @@ public class QuorumTest extends QuorumBase {
                 }
                 Thread.sleep(1000);
             }
-            assertTrue(oldWatcher.zkDisco);
+            Assert.assertTrue(oldWatcher.zkDisco);
         }
 
         ArrayList<ZooKeeper> toClose = new ArrayList<ZooKeeper>();
@@ -260,5 +264,5 @@ public class QuorumTest extends QuorumBase {
         }
         zk.close();
     }
-	// skip superhammer and clientcleanup as they are too expensive for quorum
+    // skip superhammer and clientcleanup as they are too expensive for quorum
 }
