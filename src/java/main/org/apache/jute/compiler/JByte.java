@@ -25,7 +25,7 @@ public class JByte extends JType {
     
     /** Creates a new instance of JByte */
     public JByte() {
-        super("char", "int8_t", "byte", "Byte", "Byte", "toByte");
+        super("char", "int8_t", "byte", "byte", "Byte", "Byte", "byte", "toByte");
     }
     
     public String getSignature() {
