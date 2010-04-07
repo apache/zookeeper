@@ -34,7 +34,7 @@
                     }
 
                     // clear the watches if auto watch reset is not enabled
-                    if (ClientCnxn.getDisableAutoResetWatch() &&
+                    if (ClientConnection.disableAutoWatchReset &&
                         state != KeeperState.SyncConnected)
                     {
                         lock(dataWatches) {

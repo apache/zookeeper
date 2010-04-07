@@ -11,7 +11,7 @@
     public delegate void DataCallback(object ctx, DataEventArgs args);
     public delegate void ACLCallback(object ctx, AclEventArgs args);
     public delegate void ChildrenCallback(object ctx, ChildrenEventArgs args);
-    public delegate void StringCallback(object ctx, stringEventArgs args);
+    public delegate void StringCallback(object ctx, StringEventArgs args);
     public delegate void VoidCallback(object ctx, ZooKeeperEventArgs args);
 
     public class ZooKeeperEventArgs : EventArgs
@@ -40,7 +40,7 @@
         public List<string> Children { get; set; }
     }
 
-    public class stringEventArgs : ZooKeeperEventArgs
+    public class StringEventArgs : ZooKeeperEventArgs
     {
         public string Name { get; set; }
     }

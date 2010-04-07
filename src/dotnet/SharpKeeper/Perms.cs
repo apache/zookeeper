@@ -7,6 +7,6 @@
         public static int CREATE = 1 << 2;
         public static int DELETE = 1 << 3;
         public static int ADMIN = 1 << 4;
-        public int ALL = READ | WRITE | CREATE | DELETE | ADMIN;
+        public static int ALL = READ | WRITE | CREATE | DELETE | ADMIN;
     }
 }

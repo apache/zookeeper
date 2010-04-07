@@ -290,18 +290,17 @@ namespace SharpKeeper
                         RequestHeader h = new RequestHeader();
                         h.Type = (int) OpCode.SetWatches;
                         h.Xid = -8;
-                        Packet packet = new Packet(h, new ReplyHeader(), sw, null, null, null);
+                        Packet packet = new Packet(h, new ReplyHeader(), sw, null, null, null, null, null);
                         outgoingQueue.AddFirst(packet);
                     }
 
                     foreach (ClientConnection.AuthData id in conn.authInfo)
                     {
-                        outgoingQueue.AddFirst(new Packet(new RequestHeader(-4, (int) OpCode.Auth), null,
-                                                          new AuthPacket(0, id.scheme, id.data), null, null, null));
+                        outgoingQueue.AddFirst(new Packet(new RequestHeader(-4, (int) OpCode.Auth), null, new AuthPacket(0, id.scheme, id.data), null, null, null, null, null));
                     }
 
                     ms.Position = 0;
-                    outgoingQueue.AddFirst((new Packet(null, null, null, null, ms.GetBuffer().WrapLength(), null)));
+                    outgoingQueue.AddFirst((new Packet(null, null, null, null, ms.GetBuffer().WrapLength(), null, null, null)));
                 }
             }
             if (LOG.isDebugEnabled())

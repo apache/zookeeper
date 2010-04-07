@@ -1,5 +1,6 @@
 ﻿namespace SharpKeeper
 {
+    using System;
     using Org.Apache.Zookeeper.Proto;
 
     public class WatchedEvent
@@ -17,9 +18,9 @@
 
         public WatchedEvent(WatcherEvent eventMessage)
         {
-            state = State.fromInt(eventMessage.getState());
-            type = Type.fromInt(eventMessage.getType());
-            path = eventMessage.getPath();
+            state = (KeeperState)Enum.ToObject(typeof(KeeperState), eventMessage.State);
+            type = (EventType)Enum.ToObject(typeof (EventType), eventMessage.State);
+            path = eventMessage.Path;
         }
 
         public KeeperState State
@@ -48,9 +49,7 @@
          */
         public WatcherEvent GetWrapper()
         {
-            return new WatcherEvent(type.getIntValue(),
-                                    state.getIntValue(),
-                                    path);
+            return new WatcherEvent((int)type, (int)state, path);
         }
     }
 }

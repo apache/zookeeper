@@ -19,16 +19,16 @@
         /**
          * This is a completely open ACL .
          */
-        public static readonly List<ACL> OPEN_ACL_UNSAFE = new List<ACL>(new ACL(Perms.ALL, ANYONE_ID_UNSAFE));
+        public static readonly List<ACL> OPEN_ACL_UNSAFE = new List<ACL>(new[] { new ACL(Perms.ALL, ANYONE_ID_UNSAFE) });
 
         /**
          * This ACL gives the creators authentication id's all permissions.
          */
-        public static readonly List<ACL> CREATOR_ALL_ACL = new List<ACL>(new ACL(Perms.ALL, AUTH_IDS));
+        public static readonly List<ACL> CREATOR_ALL_ACL = new List<ACL>(new[] { new ACL(Perms.ALL, AUTH_IDS) });
 
         /**
          * This ACL gives the world the ability to read.
          */
-        public static readonly List<ACL> READ_ACL_UNSAFE = new List<ACL>(new ACL(Perms.READ, ANYONE_ID_UNSAFE));
+        public static readonly List<ACL> READ_ACL_UNSAFE = new List<ACL>(new[] { new ACL(Perms.READ, ANYONE_ID_UNSAFE) });
     }
 }

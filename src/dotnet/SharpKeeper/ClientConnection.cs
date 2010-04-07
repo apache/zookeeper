@@ -70,7 +70,7 @@
 
     public class ClientConnection : IClientConnection
     {
-        private static readonly Logger LOG = Logger.getLogger(typeof(ClientCnxn));
+        private static readonly Logger LOG = Logger.getLogger(typeof(ClientConnection));
 
         internal static bool disableAutoWatchReset;
         public static readonly int packetLen;
@@ -90,7 +90,7 @@
 
         internal string hosts;
         internal readonly ZooKeeper zooKeeper;
-        internal readonly ZKWatchManager watchManager;
+        internal readonly ZKWatchManager watcher;
         internal readonly List<IPEndPoint> serverAddrs = new List<IPEndPoint>();
         internal readonly List<AuthData> authInfo = new List<AuthData>();
         internal string path;
@@ -106,9 +106,9 @@
         /// <param name="connectionString">The connection string.</param>
         /// <param name="sessionTimeout">The session timeout.</param>
         /// <param name="zooKeeper">The zoo keeper.</param>
-        /// <param name="watchManager">The watch manager.</param>
-        public ClientConnection(string connectionString, TimeSpan sessionTimeout, ZooKeeper zooKeeper, ZKWatchManager watchManager) :
-            this(connectionString, sessionTimeout, zooKeeper, watchManager, 0, new byte[16])
+        /// <param name="watcher">The watch manager.</param>
+        public ClientConnection(string connectionString, TimeSpan sessionTimeout, ZooKeeper zooKeeper, ZKWatchManager watcher) :
+            this(connectionString, sessionTimeout, zooKeeper, watcher, 0, new byte[16])
         {
         }
 
@@ -118,14 +118,14 @@
         /// <param name="hosts">The hosts.</param>
         /// <param name="sessionTimeout">The session timeout.</param>
         /// <param name="zooKeeper">The zoo keeper.</param>
-        /// <param name="watchManager">The watch manager.</param>
+        /// <param name="watcher">The watch manager.</param>
         /// <param name="sessionId">The session id.</param>
         /// <param name="sessionPasswd">The session passwd.</param>
-        public ClientConnection(string hosts, TimeSpan sessionTimeout, ZooKeeper zooKeeper, ZKWatchManager watchManager, long sessionId, byte[] sessionPasswd)
+        public ClientConnection(string hosts, TimeSpan sessionTimeout, ZooKeeper zooKeeper, ZKWatchManager watcher, long sessionId, byte[] sessionPasswd)
         {
             this.hosts = hosts;
             this.zooKeeper = zooKeeper;
-            this.watchManager = watchManager;
+            this.watcher = watcher;
             SessionTimeout = sessionTimeout;
             SessionId = sessionId;
             SessionPassword = sessionPasswd;

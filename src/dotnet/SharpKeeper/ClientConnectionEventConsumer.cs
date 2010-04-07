@@ -11,10 +11,10 @@
 
         private readonly ClientConnection conn;
         private readonly Thread eventThread;
-        static readonly Object eventOfDeath = new Object();
-        private object xidLock = new object();
+        static readonly object eventOfDeath = new object();
 
-        internal readonly Queue<Object> waitingEvents = new Queue<Object>();
+        private readonly ReaderWriterLockSlim waitingEventsLock = new ReaderWriterLockSlim();
+        internal readonly Queue<object> waitingEvents = new Queue<Object>();
 
         /** This is really the queued session state until the event
          * thread actually processes the event and hands it to the watcher.
@@ -39,141 +39,157 @@
             {
                 while (true)
                 {
-                    Object @event = waitingEvents.Dequeue();
-                    try
+                    lock (waitingEventsLock)
                     {
-                        if (@event == eventOfDeath)
+                        waitingEventsLock.EnterReadLock();
+                        object @event;
+                        try
                         {
-                            return;
+                            @event = waitingEvents.Dequeue();
                         }
+                        finally
+                        {
+                            waitingEventsLock.ExitReadLock();
+                        }
+                        try
+                        {
+                            if (@event == eventOfDeath)
+                            {
+                                return;
+                            }
 
-                        if (@event is ClientConnection.WatcherSetEventPair)
-                        {
-                            // each watcher will process the event
-                            ClientConnection.WatcherSetEventPair pair = (ClientConnection.WatcherSetEventPair)@event;
-                            foreach (Watcher watcher in pair.watchers)
+                            if (@event is ClientConnection.WatcherSetEventPair)
                             {
-                                try
+                                // each watcher will process the event
+                                ClientConnection.WatcherSetEventPair pair =
+                                    (ClientConnection.WatcherSetEventPair) @event;
+                                foreach (Watcher watcher in pair.watchers)
                                 {
-                                    watcher.process(pair.@event);
+                                    try
+                                    {
+                                        watcher.process(pair.@event);
+                                    }
+                                    catch (Exception t)
+                                    {
+                                        LOG.Error("Error while calling watcher ", t);
+                                    }
                                 }
-                                catch (Exception t)
+                            }
+                            else
+                            {
+                                Packet p = (Packet) @event;
+                                int rc = 0;
+                                String clientPath = p.clientPath;
+                                if (p.replyHeader.Err != 0)
                                 {
-                                    LOG.Error("Error while calling watcher ", t);
+                                    rc = p.replyHeader.Err;
+                                }
+
+                                if (p.cb == null) return;
+
+                                if (p.response is ExistsResponse || p.response is SetDataResponse ||
+                                    p.response is SetACLResponse)
+                                {
+                                    StatCallback cb = (StatCallback) p.cb;
+                                    StatEventArgs args = new StatEventArgs {ReturnCode = rc, Path = clientPath};
+                                    if (rc == 0)
+                                    {
+                                        if (p.response is ExistsResponse)
+                                        {
+                                            var exists = ((ExistsResponse) p.response);
+                                            args.Stat = exists.Stat;
+                                        }
+                                        else if (p.response is SetDataResponse)
+                                        {
+                                            var response = ((SetDataResponse) p.response);
+                                            args.Stat = response.Stat;
+                                        }
+                                        else if (p.response is SetACLResponse)
+                                        {
+                                            var response = ((SetACLResponse) p.response);
+                                            args.Stat = response.Stat;
+                                        }
+                                    }
+
+                                    cb(p.ctx, args);
+                                }
+                                else if (p.response is GetDataResponse)
+                                {
+                                    DataCallback cb = (DataCallback) p.cb;
+                                    GetDataResponse rsp = (GetDataResponse) p.response;
+                                    DataEventArgs args = new DataEventArgs {ReturnCode = rc, Path = clientPath};
+                                    if (rc == 0)
+                                    {
+                                        args.Data = rsp.Data;
+                                        args.Stat = rsp.Stat;
+                                    }
+                                    cb(p.ctx, args);
+                                }
+                                else if (p.response is GetACLResponse)
+                                {
+                                    ACLCallback cb = (ACLCallback) p.cb;
+                                    GetACLResponse rsp = (GetACLResponse) p.response;
+                                    AclEventArgs args = new AclEventArgs {ReturnCode = rc, Path = clientPath};
+                                    if (rc == 0)
+                                    {
+                                        args.Acl = rsp.Acl;
+                                        args.Stat = rsp.Stat;
+                                    }
+
+                                    cb(p.ctx, args);
+                                }
+                                else if (p.response is GetChildrenResponse)
+                                {
+                                    ChildrenCallback cb = (ChildrenCallback) p.cb;
+                                    GetChildrenResponse rsp = (GetChildrenResponse) p.response;
+                                    ChildrenEventArgs args = new ChildrenEventArgs {ReturnCode = rc, Path = clientPath};
+                                    if (rc == 0)
+                                    {
+                                        args.Children = rsp.Children;
+                                    }
+
+                                    cb(p.ctx, args);
+                                }
+                                else if (p.response is GetChildren2Response)
+                                {
+                                    ChildrenCallback cb = (ChildrenCallback) p.cb;
+                                    GetChildren2Response rsp = (GetChildren2Response) p.response;
+                                    ChildrenEventArgs args = new ChildrenEventArgs {ReturnCode = rc, Path = clientPath};
+                                    if (rc == 0)
+                                    {
+                                        args.Children = rsp.Children;
+                                        args.Stat = rsp.Stat;
+                                    }
+
+                                    cb(p.ctx, args);
+                                }
+                                else if (p.response is CreateResponse)
+                                {
+                                    StringCallback cb = (StringCallback) p.cb;
+                                    CreateResponse rsp = (CreateResponse) p.response;
+                                    StringEventArgs args = new StringEventArgs();
+                                    if (rc == 0)
+                                    {
+                                        args.Name = conn.ChrootPath == null
+                                                        ? rsp.Path
+                                                        : rsp.Path.Substring(conn.ChrootPath.Length);
+                                    }
+
+                                    cb(p.ctx, args);
+                                }
+                                else if (p.cb is VoidCallback)
+                                {
+                                    VoidCallback cb = (VoidCallback) p.cb;
+                                    ZooKeeperEventArgs args = new ZooKeeperEventArgs()
+                                    {ReturnCode = rc, Path = clientPath};
+                                    cb(p.ctx, args);
                                 }
                             }
                         }
-                        else
+                        catch (Exception t)
                         {
-                            Packet p = (Packet)@event;
-                            int rc = 0;
-                            String clientPath = p.clientPath;
-                            if (p.replyHeader.Err != 0)
-                            {
-                                rc = p.replyHeader.Err;
-                            }
-                            if (p.cb == null)
-                            {
-                                LOG.Warn("Somehow a null cb got to EventThread!");
-                            }
-                            else if (p.response is ExistsResponse || p.response is SetDataResponse || p.response is SetACLResponse)
-                            {
-                                StatCallback cb = (StatCallback)p.cb;
-                                if (rc == 0)
-                                {
-                                    if (p.response is ExistsResponse)
-                                    {
-                                        cb(rc, clientPath, p.ctx, ((ExistsResponse)p.response).Stat);
-                                    }
-                                    else if (p.response is SetDataResponse)
-                                    {
-                                        cb(rc, clientPath, p.ctx, ((SetDataResponse)p.response).Stat);
-                                    }
-                                    else if (p.response is SetACLResponse)
-                                    {
-                                        cb(rc, clientPath, p.ctx, ((SetACLResponse)p.response).Stat);
-                                    }
-                                }
-                                else
-                                {
-                                    cb(rc, clientPath, p.ctx, null);
-                                }
-                            }
-                            else if (p.response is GetDataResponse)
-                            {
-                                DataCallback cb = (DataCallback)p.cb;
-                                GetDataResponse rsp = (GetDataResponse)p.response;
-                                if (rc == 0)
-                                {
-                                    cb(rc, clientPath, p.ctx, rsp.Data, rsp.Stat);
-                                }
-                                else
-                                {
-                                    cb(rc, clientPath, p.ctx, null, null);
-                                }
-                            }
-                            else if (p.response is GetACLResponse)
-                            {
-                                ACLCallback cb = (ACLCallback)p.cb;
-                                GetACLResponse rsp = (GetACLResponse)p.response;
-                                if (rc == 0)
-                                {
-                                    cb(rc, clientPath, p.ctx, rsp.Acl, rsp.Stat);
-                                }
-                                else
-                                {
-                                    cb(rc, clientPath, p.ctx, null, null);
-                                }
-                            }
-                            else if (p.response is GetChildrenResponse)
-                            {
-                                ChildrenCallback cb = (ChildrenCallback)p.cb;
-                                GetChildrenResponse rsp = (GetChildrenResponse)p.response;
-                                if (rc == 0)
-                                {
-                                    cb(rc, clientPath, p.ctx, rsp.Children);
-                                }
-                                else
-                                {
-                                    cb(rc, clientPath, p.ctx, null);
-                                }
-                            }
-                            else if (p.response is GetChildren2Response)
-                            {
-                                ChildrenCallback cb = (ChildrenCallback)p.cb;
-                                GetChildren2Response rsp = (GetChildren2Response)p.response;
-                                if (rc == 0)
-                                {
-                                    cb(rc, clientPath, p.ctx, rsp.Children, rsp.Stat);
-                                }
-                                else
-                                {
-                                    cb(rc, clientPath, p.ctx, null, null);
-                                }
-                            }
-                            else if (p.response is CreateResponse)
-                            {
-                                StringCallback cb = (StringCallback)p.cb;
-                                CreateResponse rsp = (CreateResponse)p.response;
-                                if (rc == 0)
-                                {
-                                    cb(rc, clientPath, p.ctx, (conn.ChrootPath == null ? rsp.Path : rsp.Path.Substring(conn.ChrootPath.Length)));
-                                }
-                                else
-                                {
-                                    cb(rc, clientPath, p.ctx, null);
-                                }
-                            }
-                            else if (p.cb is VoidCallback)
-                            {
-                                VoidCallback cb = (VoidCallback)p.cb;
-                                cb(rc, clientPath, p.ctx);
-                            }
+                            LOG.Error("Caught unexpected throwable", t);
                         }
-                    }
-                    catch (Exception t)
-                    {
-                        LOG.Error("Caught unexpected throwable", t);
                     }
                 }
             }
@@ -183,61 +199,47 @@
             }
 
             LOG.info("EventThread shut down");
-
         }
 
-        public void queueEvent(WatchedEvent @event)
+        public void QueueEvent(WatchedEvent @event)
         {
-            if (@event.Type == EventType.None && sessionState == @event.State)
-            {
-                return;
-            }
+            if (@event.Type == EventType.None && sessionState == @event.State) return;
+            
             sessionState = @event.State;
 
             // materialize the watchers based on the event
-            ClientConnection.WatcherSetEventPair pair = new ClientConnection.WatcherSetEventPair(
-                    watcher.Materialize(@event.State, @event.Type,
-                            @event.Path),
-                            @event);
+            var pair = new ClientConnection.WatcherSetEventPair(conn.watcher.Materialize(@event.State, @event.Type,@event.Path), @event);
             // queue the pair (watch set & event) for later processing
-            waitingEvents.Enqueue(pair);
+            AppendToQueue(pair);
         }
 
         public void QueuePacket(Packet packet)
         {
-            waitingEvents.Enqueue(packet);
+            AppendToQueue(packet);
         }
 
-        public void QueueEventOfDeath()
+        private void QueueEventOfDeath()
         {
-            waitingEvents.Enqueue(eventOfDeath);
+            AppendToQueue(eventOfDeath);
         }
 
-        private void FinishPacket(Packet p)
+        private void AppendToQueue(object o)
         {
-            if (p.watchRegistration != null)
+            waitingEventsLock.EnterWriteLock();
+            try
             {
-                p.watchRegistration.Register(p.replyHeader.Err);
-            }
-
-            if (p.cb == null)
+                waitingEvents.Enqueue(o);
+            } 
+            finally
             {
-                lock (p)
-                {
-                    p.finished = true;
-                    Monitor.PulseAll(p);
-                }
-            }
-            else
-            {
-                p.finished = true;
-                QueuePacket(p);
+                waitingEventsLock.ExitWriteLock();    
             }
         }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            QueueEventOfDeath();
+            eventThread.Join();
         }
     }
 }
