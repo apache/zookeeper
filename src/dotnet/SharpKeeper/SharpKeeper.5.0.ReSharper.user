@@ -1,0 +1,433 @@
+<Configuration>
+  <SettingsComponent>
+    <string />
+    <integer />
+    <boolean>
+      <setting name="SolutionAnalysisEnabled">False</setting>
+    </boolean>
+  </SettingsComponent>
+  <RecentFiles>
+    <RecentFiles>
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:ConnectResponse.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:CreateResponse.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:CreateSessionTxn.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Jute/f:IInputArchive.cs" caret="419" fromTop="11" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:AuthPacket.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:ConnectRequest.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:CreateRequest.cs" caret="4722" fromTop="31" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:CreateTxn.cs" caret="4747" fromTop="24" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:DeleteRequest.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:DeleteTxn.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:ErrorTxn.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:FileHeader.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:ACL.cs" caret="1162" fromTop="25" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:CreateMode.cs" caret="43" fromTop="1" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:KeeperException.cs" caret="6523" fromTop="33" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZKWatchManager.cs" caret="3547" fromTop="36" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooKeeperEnvironment.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:RequestHeader.cs" caret="940" fromTop="5" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:KeeperState.cs" caret="42" fromTop="1" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientWatchManager.cs" caret="750" fromTop="19" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Watcher.cs" caret="139" fromTop="6" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooKeeper.cs" caret="1176" fromTop="9" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="1002" fromTop="41" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:GetChildren2Request.cs" caret="1145" fromTop="3" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:WatchedEvent.cs" caret="248" fromTop="9" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooKeeperEx.cs" caret="523" fromTop="17" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.EventConsumer.cs" caret="9" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="9" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooTrace.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="845" fromTop="23" />
+    </RecentFiles>
+    <RecentEdits>
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="42" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="27" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="31" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="15" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="21" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="1" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="11645" fromTop="17" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="15146" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.EventConsumer.cs" caret="48" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.EventConsumer.cs" caret="4374" fromTop="2" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.EventConsumer.cs" caret="10378" fromTop="23" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="12847" fromTop="14" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="9" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="26266" fromTop="49" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="9" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="2268" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="2514" fromTop="7" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="9480" fromTop="7" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="11483" fromTop="7" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="13766" fromTop="7" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="15807" fromTop="7" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="18991" fromTop="25" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="151" fromTop="5" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="4028" fromTop="17" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="17203" fromTop="9" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="17920" fromTop="33" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="20081" fromTop="44" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="11" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="20515" fromTop="7" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="20480" fromTop="34" />
+    </RecentEdits>
+  </RecentFiles>
+  <NAntValidationSettings>
+    <NAntPath value="" />
+  </NAntValidationSettings>
+  <UnitTestRunner>
+    <Providers />
+  </UnitTestRunner>
+  <UnitTestRunnerNUnit>
+    <NUnitInstallDir>C:\Program Files (x86)\NUnit 2.4.8\bin\net-2.0\</NUnitInstallDir>
+    <UseAddins>Never</UseAddins>
+  </UnitTestRunnerNUnit>
+  <CompletionStatisticsManager>
+    <ItemStatistics item="Default">
+      <Item value="public" priority="10" />
+      <Item value="class" priority="3" />
+      <Item value="MethodImplOptions`0" priority="2" />
+      <Item value="Type`0" priority="0" />
+      <Item value="return" priority="14" />
+      <Item value="null" priority="3" />
+      <Item value="typeof" priority="0" />
+      <Item value="private" priority="6" />
+      <Item value="string" priority="18" />
+      <Item value="WatchedEvent`0" priority="0" />
+      <Item value="to" priority="1" />
+      <Item value="from" priority="1" />
+      <Item value="if" priority="7" />
+      <Item value="result" priority="0" />
+      <Item value="existWatches" priority="1" />
+      <Item value="out" priority="3" />
+      <Item value="clientPath" priority="1" />
+      <Item value="childWatches" priority="0" />
+      <Item value="static" priority="3" />
+      <Item value="void" priority="2" />
+      <Item value="IDictionary" priority="0" />
+      <Item value="TKey`0" priority="1" />
+      <Item value="TValue`0" priority="0" />
+      <Item value="dictionary" priority="1" />
+      <Item value="key" priority="0" />
+      <Item value="value" priority="0" />
+      <Item value="InvalidOperationException`0" priority="3" />
+      <Item value="IList" priority="0" />
+      <Item value="DataMisalignedException`0" priority="0" />
+      <Item value="Dictionary" priority="1" />
+      <Item value="States`0" priority="0" />
+      <Item value="new" priority="26" />
+      <Item value="States" priority="0" />
+      <Item value="ZooKeeper`0" priority="1" />
+      <Item value="ZKWatchManager`0" priority="0" />
+      <Item value="getSessionId`0" priority="1" />
+      <Item value="CreateMode`0" priority="3" />
+      <Item value="CreateMode" priority="0" />
+      <Item value="false" priority="2" />
+      <Item value="int" priority="9" />
+      <Item value="IInputArchive`0" priority="0" />
+      <Item value="this" priority="5" />
+      <Item value="reader" priority="5" />
+      <Item value="Stream`0" priority="1" />
+      <Item value="SortedDictionary" priority="2" />
+      <Item value="List" priority="4" />
+      <Item value="KeyValuePair" priority="0" />
+      <Item value="StreamReader`0" priority="0" />
+      <Item value="StreamReader" priority="0" />
+      <Item value="BinaryReader`0" priority="3" />
+      <Item value="BinaryReader" priority="0" />
+      <Item value="buffer" priority="0" />
+      <Item value="IOutputArchive`0" priority="0" />
+      <Item value="BinaryWriter`0" priority="3" />
+      <Item value="writer" priority="2" />
+      <Item value="char" priority="0" />
+      <Item value="Length" priority="4" />
+      <Item value="byte" priority="8" />
+      <Item value="bb" priority="3" />
+      <Item value="RecordReader`0" priority="0" />
+      <Item value="InputArchive" priority="1" />
+      <Item value="BinaryInputArchive`0" priority="1" />
+      <Item value="BinaryOutputArchive`0" priority="0" />
+      <Item value="MemoryStream" priority="4" />
+      <Item value="s" priority="0" />
+      <Item value="for" priority="4" />
+      <Item value="i" priority="4" />
+      <Item value="b1" priority="3" />
+      <Item value="j" priority="3" />
+      <Item value="b2" priority="2" />
+      <Item value="MarshalByRefObject`0" priority="0" />
+      <Item value="T`0" priority="0" />
+      <Item value="Object`0" priority="0" />
+      <Item value="Stat`0" priority="1" />
+      <Item value="String`0" priority="1" />
+      <Item value="createMode" priority="1" />
+      <Item value="KeeperException`0" priority="0" />
+      <Item value="BinaryWriter" priority="1" />
+      <Item value="base" priority="2" />
+      <Item value="msg" priority="1" />
+      <Item value="client" priority="1" />
+      <Item value="IPAddress`0" priority="2" />
+      <Item value="Int16`0" priority="0" />
+      <Item value="state" priority="0" />
+      <Item value="Encoding`0" priority="2" />
+      <Item value="h" priority="1" />
+      <Item value="var" priority="0" />
+      <Item value="serverAddrs" priority="1" />
+      <Item value="sessionPasswd" priority="1" />
+      <Item value="Guid`0" priority="0" />
+      <Item value="IPEndPoint`0" priority="2" />
+      <Item value="IPEndPoint" priority="0" />
+      <Item value="ip" priority="0" />
+      <Item value="MemoryStream`0" priority="0" />
+      <Item value="ms" priority="1" />
+      <Item value="using" priority="0" />
+      <Item value="Thread`0" priority="0" />
+      <Item value="nextAddrToTry" priority="0" />
+      <Item value="Thread" priority="0" />
+      <Item value="Name" priority="1" />
+      <Item value="sendThread" priority="3" />
+      <Item value="SendThread" priority="1" />
+      <Item value="EventThread`0" priority="1" />
+      <Item value="eventThread" priority="3" />
+      <Item value="EventThread" priority="0" />
+      <Item value="try" priority="0" />
+      <Item value="catch" priority="1" />
+      <Item value="ThreadInterruptedException`0" priority="0" />
+      <Item value="while" priority="0" />
+      <Item value="true" priority="1" />
+      <Item value="Exception`0" priority="0" />
+      <Item value="LOG" priority="0" />
+      <Item value="e" priority="2" />
+      <Item value="lock" priority="1" />
+      <Item value="Monitor`0" priority="1" />
+      <Item value="MethodImpl" priority="0" />
+      <Item value="ExistsResponse`0" priority="0" />
+      <Item value="p" priority="0" />
+      <Item value="IClientWatchManager`0" priority="0" />
+      <Item value="watcher" priority="0" />
+      <Item value="chrootPath" priority="2" />
+      <Item value="object" priority="0" />
+      <Item value="System" priority="1" />
+      <Item value="Net" priority="0" />
+      <Item value="Sockets" priority="0" />
+      <Item value="Socket`0" priority="1" />
+      <Item value="IsBackground" priority="1" />
+      <Item value="readTimeout" priority="0" />
+      <Item value="negotiatedSessionTimeout" priority="0" />
+      <Item value="zooKeeper" priority="0" />
+      <Item value="long" priority="1" />
+      <Item value="ticks" priority="0" />
+      <Item value="DateTime`0" priority="4" />
+      <Item value="dateTime" priority="0" />
+      <Item value="Socket" priority="0" />
+      <Item value="AddressFamily`0" priority="0" />
+      <Item value="SocketType`0" priority="0" />
+      <Item value="ProtocolType`0" priority="0" />
+      <Item value="sock" priority="2" />
+      <Item value="sessionId" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Generic.HashSet`1">
+      <Item value="Concat`1" priority="0" />
+      <Item value="AddAll`0" priority="0" />
+      <Item value="UnionWith`0" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Generic.Dictionary`2">
+      <Item value="Values" priority="0" />
+      <Item value="TryGetValue`0" priority="0" />
+      <Item value="remove`0" priority="0" />
+      <Item value="Keys" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Generic.IDictionary`2">
+      <Item value="TryGetValue`0" priority="0" />
+      <Item value="Remove`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.ZKWatchManager">
+      <Item value="existWatches" priority="0" />
+      <Item value="childWatches" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.String">
+      <Item value="Length" priority="3" />
+      <Item value="ToCharArray`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.CreateMode">
+      <Item value="Sequential" priority="1" />
+      <Item value="Flag" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Generic.List`1">
+      <Item value="Count" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.IO.BinaryReader">
+      <Item value="ReadInt64`0" priority="0" />
+      <Item value="ReadDecimal`0" priority="0" />
+      <Item value="ReadDouble`0" priority="1" />
+      <Item value="ReadSingle`0" priority="0" />
+      <Item value="ReadInt32`0" priority="0" />
+      <Item value="ReadBytes`0" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Text.Encoding">
+      <Item value="UTF32" priority="1" />
+      <Item value="UTF8" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Text.Encoding">
+      <Item value="GetString`0" priority="0" />
+      <Item value="GetBytes`0" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.String">
+      <Item value="Empty" priority="1" />
+      <Item value="Format`0" priority="4" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.Jute.BinaryOutputArchive">
+      <Item value="writer" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.ArrayList">
+      <Item value="Count" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Generic.SortedDictionary`2">
+      <Item value="Count" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.IO.BinaryWriter">
+      <Item value="Write`0" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.ExistsRequest">
+      <Item value="Path" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.ReplyHeader">
+      <Item value="Err" priority="1" />
+      <Item value="Xid" priority="0" />
+      <Item value="Zxid" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Enum">
+      <Item value="ToObject`0" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SharpKeeper.KeeperException">
+      <Item value="Code`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.GetDataResponse">
+      <Item value="Data" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.GetChildrenResponse">
+      <Item value="Children" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Generic.LinkedList`1">
+      <Item value="Count" priority="4" />
+      <Item value="AddLast`0" priority="0" />
+      <Item value="First" priority="0" />
+      <Item value="RemoveFirst`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.ZooKeeper+States">
+      <Item value="State" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SharpKeeper.KeeperException+Code">
+      <Item value="AUTHFAILED" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SharpKeeper.ZooKeeper+States">
+      <Item value="CLOSED" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Guid">
+      <Item value="NewGuid`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.IO.MemoryStream">
+      <Item value="Position" priority="0" />
+      <Item value="Capacity" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Threading.Thread">
+      <Item value="Name" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.Logger">
+      <Item value="Error`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.WatchedEvent">
+      <Item value="EventType" priority="0" />
+      <Item value="KeeperState" priority="1" />
+      <Item value="State" priority="0" />
+      <Item value="Type" priority="0" />
+      <Item value="Path" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Generic.Queue`1">
+      <Item value="Enqueue`0" priority="0" />
+      <Item value="Dequeue`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.ClientCnxn+EventThread">
+      <Item value="run`0" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.ExistsResponse">
+      <Item value="Stat" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.SetDataResponse">
+      <Item value="Stat" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.SetACLResponse">
+      <Item value="Stat" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.GetACLResponse">
+      <Item value="Acl" priority="1" />
+      <Item value="Stat" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.GetChildren2Response">
+      <Item value="Stat" priority="0" />
+      <Item value="Children" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.CreateResponse">
+      <Item value="Path" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Threading.Monitor">
+      <Item value="PulseAll`0" priority="0" />
+      <Item value="Wait`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Runtime.CompilerServices.MethodImplOptions">
+      <Item value="Synchronized" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.RequestHeader">
+      <Item value="Type" priority="2" />
+      <Item value="Xid" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SharpKeeper.OpCode">
+      <Item value="Auth" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.ClientCnxn+SendThread">
+      <Item value="run`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.ClientCnxn+Packet">
+      <Item value="response" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.ClientCnxn">
+      <Item value="getSessionId`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.WatcherEvent">
+      <Item value="Path" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Org.Apache.Zookeeper.Proto.ConnectResponse">
+      <Item value="TimeOut" priority="0" />
+      <Item value="SessionId" priority="0" />
+      <Item value="Passwd" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Random">
+      <Item value="Next`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.DateTime">
+      <Item value="Now" priority="4" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.DateTime">
+      <Item value="Ticks" priority="4" />
+      <Item value="Nanos`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Int64">
+      <Item value="Nanos`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Net.Sockets.AddressFamily">
+      <Item value="InterNetwork" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Net.Sockets.SocketType">
+      <Item value="Stream" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Net.Sockets.ProtocolType">
+      <Item value="Tcp" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Net.Sockets.Socket">
+      <Item value="Blocking" priority="0" />
+      <Item value="Close`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Exception">
+      <Item value="Message" priority="3" />
+    </ItemStatistics>
+  </CompletionStatisticsManager>
+</Configuration>

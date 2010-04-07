@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{5C6774FB-2350-46B2-B1DF-1CCC757C7727}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SharpKeeper</RootNamespace>
+    <AssemblyName>SharpKeeper</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ClientCnxn.cs" />
+    <Compile Include="ClientCnxn.EventConsumer.cs" />
+    <Compile Include="ClientCnxn.SendThread.cs" />
+    <Compile Include="ClientConnection.cs" />
+    <Compile Include="ClientWatchManager.cs" />
+    <Compile Include="CreateMode.cs" />
+    <Compile Include="DataTree.cs" />
+    <Compile Include="EventType.cs" />
+    <Compile Include="Generated\ACL.cs" />
+    <Compile Include="Generated\AuthPacket.cs" />
+    <Compile Include="Generated\ConnectRequest.cs" />
+    <Compile Include="Generated\ConnectResponse.cs" />
+    <Compile Include="Generated\CreateRequest.cs" />
+    <Compile Include="Generated\CreateResponse.cs" />
+    <Compile Include="Generated\CreateSessionTxn.cs" />
+    <Compile Include="Generated\CreateTxn.cs" />
+    <Compile Include="Generated\DeleteRequest.cs" />
+    <Compile Include="Generated\DeleteTxn.cs" />
+    <Compile Include="Generated\ErrorTxn.cs" />
+    <Compile Include="Generated\ExistsRequest.cs" />
+    <Compile Include="Generated\ExistsResponse.cs" />
+    <Compile Include="Generated\FileHeader.cs" />
+    <Compile Include="Generated\GetACLRequest.cs" />
+    <Compile Include="Generated\GetACLResponse.cs" />
+    <Compile Include="Generated\GetChildren2Request.cs" />
+    <Compile Include="Generated\GetChildren2Response.cs" />
+    <Compile Include="Generated\GetChildrenRequest.cs" />
+    <Compile Include="Generated\GetChildrenResponse.cs" />
+    <Compile Include="Generated\GetDataRequest.cs" />
+    <Compile Include="Generated\GetDataResponse.cs" />
+    <Compile Include="Generated\GetMaxChildrenRequest.cs" />
+    <Compile Include="Generated\GetMaxChildrenResponse.cs" />
+    <Compile Include="Generated\Id.cs" />
+    <Compile Include="Generated\op_result_t.cs" />
+    <Compile Include="Generated\QuorumPacket.cs" />
+    <Compile Include="Generated\ReplyHeader.cs" />
+    <Compile Include="Generated\RequestHeader.cs" />
+    <Compile Include="Generated\SetACLRequest.cs" />
+    <Compile Include="Generated\SetACLResponse.cs" />
+    <Compile Include="Generated\SetACLTxn.cs" />
+    <Compile Include="Generated\SetDataRequest.cs" />
+    <Compile Include="Generated\SetDataResponse.cs" />
+    <Compile Include="Generated\SetDataTxn.cs" />
+    <Compile Include="Generated\SetMaxChildrenRequest.cs" />
+    <Compile Include="Generated\SetMaxChildrenTxn.cs" />
+    <Compile Include="Generated\SetWatches.cs" />
+    <Compile Include="Generated\Stat.cs" />
+    <Compile Include="Generated\StatPersisted.cs" />
+    <Compile Include="Generated\StatPersistedV1.cs" />
+    <Compile Include="Generated\SyncRequest.cs" />
+    <Compile Include="Generated\SyncResponse.cs" />
+    <Compile Include="Generated\TxnHeader.cs" />
+    <Compile Include="Generated\WatcherEvent.cs" />
+    <Compile Include="Ids.cs" />
+    <Compile Include="Jute\BinaryInputArchive.cs" />
+    <Compile Include="Jute\BinaryOutputArchive.cs" />
+    <Compile Include="Jute\IIndex.cs" />
+    <Compile Include="Jute\IInputArchive.cs" />
+    <Compile Include="Jute\IOutputArchive.cs" />
+    <Compile Include="Jute\IRecord.cs" />
+    <Compile Include="Jute\JuteEx.cs" />
+    <Compile Include="Jute\RecordReader.cs" />
+    <Compile Include="Jute\RecordWriter.cs" />
+    <Compile Include="KeeperException.cs" />
+    <Compile Include="KeeperState.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="OpCode.cs" />
+    <Compile Include="Packet.cs" />
+    <Compile Include="PathUtils.cs" />
+    <Compile Include="Perms.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Quotas.cs" />
+    <Compile Include="WatchedEvent.cs" />
+    <Compile Include="Watcher.cs" />
+    <Compile Include="ZKWatchManager.cs" />
+    <Compile Include="ZooDefs.cs" />
+    <Compile Include="ZooKeeper.cs" />
+    <Compile Include="ZooKeeperEnvironment.cs" />
+    <Compile Include="ZooKeeperEx.cs" />
+    <Compile Include="ZooThreadPool.cs" />
+    <Compile Include="ZooTrace.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
