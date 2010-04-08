@@ -80,9 +80,9 @@
             // this var should not be public, but otw there is no easy way
             // to test
             //disableAutoWatchReset = Boolean.getBoolean("zookeeper.disableAutoWatchReset");
-            if (LOG.isDebugEnabled())
+            if (LOG.IsDebugEnabled())
             {
-                LOG.debug("zookeeper.disableAutoWatchReset is " + disableAutoWatchReset);
+                LOG.Debug("zookeeper.disableAutoWatchReset is " + disableAutoWatchReset);
             }
             //packetLen = Integer.getInteger("jute.maxbuffer", 4096 * 1024);
             packetLen = 4096 * 1024;
@@ -165,7 +165,7 @@
                     }
                     host = h.Substring(0, pidx);
                 }
-                var ip = new IPAddress(Encoding.UTF8.GetBytes(host));
+                var ip = IPAddress.Parse(host);
                 serverAddrs.Add(new IPEndPoint(ip, port));
             }
 
@@ -228,13 +228,14 @@
 
         public void Start()
         {
+            zooKeeper.State = ZooKeeper.States.CONNECTING;
             consumer.Start();
             producer.Start();
         }
 
         public void AddAuthInfo(String scheme, byte[] auth)
         {
-            if (!zooKeeper.State.isAlive())
+            if (!zooKeeper.State.IsAlive())
             {
                 return;
             }
@@ -244,12 +245,31 @@
 
         public ReplyHeader SubmitRequest(RequestHeader h, IRecord request, IRecord response, ZooKeeper.WatchRegistration watchRegistration)
         {
-            return null;
+            ReplyHeader r = new ReplyHeader();
+            Packet p = new Packet(h, r, request, response, null, watchRegistration, null, null);
+            lock (p)
+            {
+                while (!p.finished)
+                {
+                    Monitor.Wait(p);
+                }
+            }
+            return r;
         }
 
         public Packet QueuePacket(RequestHeader h, ReplyHeader r, IRecord request, IRecord response, String clientPath, String serverPath, ZooKeeper.WatchRegistration watchRegistration, object callback, object ctx)
         {
-            return null;
+            //lock here for XID?
+            if (h.Type != (int)OpCode.Ping && h.Type != (int)OpCode.Auth)
+            {
+                h.Xid = 1;
+            }
+
+            Packet p = new Packet(h, r, request, response, null, watchRegistration, callback, ctx);
+            p.clientPath = clientPath;
+            p.serverPath = serverPath;
+            producer.QueuePacket(p);
+            return p;
         }
 
         /// <summary>
@@ -257,8 +277,8 @@
         /// </summary>
         public void Dispose()
         {
-            if (LOG.isDebugEnabled())
-                LOG.debug(string.Format("Closing client for session: 0x{0:X}", SessionId));
+            if (LOG.IsDebugEnabled())
+                LOG.Debug(string.Format("Closing client for session: 0x{0:X}", SessionId));
 
             closing = true;
 

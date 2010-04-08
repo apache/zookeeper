@@ -18,6 +18,7 @@ namespace SharpKeeper
         private readonly ClientConnection conn;
         private ZooKeeper zooKeeper;
         private readonly Thread requestThread;
+        private readonly ReaderWriterLockSlim pendingQueueLock = new ReaderWriterLockSlim();
         private readonly LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
         private readonly LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
         private Socket sock;
@@ -38,7 +39,7 @@ namespace SharpKeeper
         {
             this.conn = conn;
             zooKeeper = conn.zooKeeper;
-            requestThread = new Thread(SendRequests) { Name = "ZK-SendThread", IsBackground = true };
+            requestThread = new Thread(new SafeThreadStart(SendRequests).Run) { Name = "ZK-SendThread", IsBackground = true };
             incomingBuffer = lenBuffer;
         }
 
@@ -47,12 +48,31 @@ namespace SharpKeeper
             requestThread.Start();
         }
 
+        public void QueuePacket(Packet p)
+        {
+            if (!zooKeeper.State.IsAlive())
+            {
+                ConLossPacket(p);
+                return;
+            }                
+
+            pendingQueueLock.EnterReadLock();
+            try
+            {
+                pendingQueue.AddLast(p);    
+            } 
+            finally
+            {
+                pendingQueueLock.ExitReadLock();
+            }
+        }
+
         public void SendRequests()
         {
             long now = DateTime.Now.Ticks;
             long lastHeard = now;
             long lastSend = now;
-            while (zooKeeper.State.isAlive())
+            while (zooKeeper.State.IsAlive())
             {
                 try
                 {
@@ -116,10 +136,10 @@ namespace SharpKeeper
                 {
                     if (conn.closing)
                     {
-                        if (LOG.isDebugEnabled())
+                        if (LOG.IsDebugEnabled())
                         {
                             // closing so this is expected
-                            LOG.debug(string.Format("An exception was thrown while closing send thread for session 0x{0:X} : {1}", conn.SessionId, e.Message));
+                            LOG.Debug(string.Format("An exception was thrown while closing send thread for session 0x{0:X} : {1}", conn.SessionId, e.Message));
                         }
                         break;
                     }
@@ -143,7 +163,7 @@ namespace SharpKeeper
                             LOG.Warn(string.Format("Session 0x{0:X} for server {1}, unexpected error{2}", conn.SessionId, null, RETRY_CONN_MSG), e);
                         }
                         Cleanup();
-                        if (zooKeeper.State.isAlive())
+                        if (zooKeeper.State.IsAlive())
                         {
                             conn.consumer.QueueEvent(new WatchedEvent(KeeperState.Disconnected, EventType.None, null));
                         }
@@ -163,7 +183,7 @@ namespace SharpKeeper
             {
                 LOG.Warn("Ignoring exception during selector close", e);
             }
-            if (zooKeeper.State.isAlive())
+            if (zooKeeper.State.IsAlive())
             {
                 conn.consumer.QueueEvent(new WatchedEvent(KeeperState.Disconnected, EventType.None, null));
             }
@@ -180,9 +200,9 @@ namespace SharpKeeper
                 }
                 catch (IOException e)
                 {
-                    if (LOG.isDebugEnabled())
+                    if (LOG.IsDebugEnabled())
                     {
-                        LOG.debug("Ignoring exception during channel close", e);
+                        LOG.Debug("Ignoring exception during channel close", e);
                     }
                 }
             }
@@ -192,9 +212,9 @@ namespace SharpKeeper
             }
             catch (ThreadInterruptedException e)
             {
-                if (LOG.isDebugEnabled())
+                if (LOG.IsDebugEnabled())
                 {
-                    LOG.debug("SendThread interrupted during sleep, ignoring");
+                    LOG.Debug("SendThread interrupted during sleep, ignoring");
                 }
             }
             lock (pendingQueue)
@@ -303,9 +323,9 @@ namespace SharpKeeper
                     outgoingQueue.AddFirst((new Packet(null, null, null, null, ms.GetBuffer().WrapLength(), null, null, null)));
                 }
             }
-            if (LOG.isDebugEnabled())
+            if (LOG.IsDebugEnabled())
             {
-                LOG.debug("Session establishment request sent on " + socket.RemoteEndPoint);
+                LOG.Debug("Session establishment request sent on " + socket.RemoteEndPoint);
             }
 
         }
@@ -429,9 +449,9 @@ namespace SharpKeeper
                 if (replyHdr.Xid == -2)
                 {
                     // -2 is the xid for pings
-                    if (LOG.isDebugEnabled())
+                    if (LOG.IsDebugEnabled())
                     {
-                        LOG.debug(string.Format("Got ping response for sessionid: 0x{0:X} after {1}ms", conn.SessionId, (DateTime.Now.Nanos() - lastPingSentNs)/1000000));
+                        LOG.Debug(string.Format("Got ping response for sessionid: 0x{0:X} after {1}ms", conn.SessionId, (DateTime.Now.Nanos() - lastPingSentNs)/1000000));
                     }
                     return;
                 }
@@ -439,18 +459,18 @@ namespace SharpKeeper
                 {
                     // -2 is the xid for AuthPacket
                     // TODO: process AuthPacket here
-                    if (LOG.isDebugEnabled())
+                    if (LOG.IsDebugEnabled())
                     {
-                        LOG.debug(string.Format("Got auth sessionid:0x{0:X}", conn.SessionId));
+                        LOG.Debug(string.Format("Got auth sessionid:0x{0:X}", conn.SessionId));
                     }
                     return;
                 }
                 if (replyHdr.Xid == -1)
                 {
                     // -1 means notification
-                    if (LOG.isDebugEnabled())
+                    if (LOG.IsDebugEnabled())
                     {
-                        LOG.debug(string.Format("Got notification sessionid:0x{0}", conn.SessionId));
+                        LOG.Debug(string.Format("Got notification sessionid:0x{0}", conn.SessionId));
                     }
                     WatcherEvent @event = new WatcherEvent(); 
                     @event.Deserialize(bbia, "response");
@@ -466,9 +486,9 @@ namespace SharpKeeper
                     }
 
                     WatchedEvent we = new WatchedEvent(@event);
-                    if (LOG.isDebugEnabled())
+                    if (LOG.IsDebugEnabled())
                     {
-                        LOG.debug(string.Format("Got {0} for sessionid 0x{1:X}", we, conn.SessionId));
+                        LOG.Debug(string.Format("Got {0} for sessionid 0x{1:X}", we, conn.SessionId));
                     }
 
                     conn.consumer.QueueEvent(we);
@@ -508,9 +528,9 @@ namespace SharpKeeper
                         packet.response.Deserialize(bbia, "response");
                     }
 
-                    if (LOG.isDebugEnabled())
+                    if (LOG.IsDebugEnabled())
                     {
-                        LOG.debug(string.Format("Reading reply sessionid:0x{0:X}, packet:: {1}", conn.SessionId, packet));
+                        LOG.Debug(string.Format("Reading reply sessionid:0x{0:X}, packet:: {1}", conn.SessionId, packet));
                     }
                 }
                 finally

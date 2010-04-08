@@ -1,53 +1,71 @@
 ﻿namespace SharpKeeper
 {
     using System;
-    using System.IO;
 
     public class Logger
     {
+        private readonly string name;
+
+        private Logger(string name)
+        {
+            this.name = name;
+        }
+
         public static Logger getLogger(Type type)
         {
-            return null;
+            return new Logger(type.Name);
         }
 
         public void Error(string msg)
         {
-            throw new NotImplementedException();
+            Print(msg);
         }
 
         public void Warn(string msg)
         {
-            throw new NotImplementedException();
+            Print(msg);
         }
 
-        public void Warn(string msg, Exception ioException)
+        public void Warn(string msg, Exception exception)
         {
-            throw new NotImplementedException();
+            Print(msg, exception);
         }
 
-        public void info(string s)
+        public void info(string msg)
         {
-            throw new NotImplementedException();
+            Print(msg);
         }
 
-        public bool isDebugEnabled()
+        public bool IsDebugEnabled()
         {
-            throw new NotImplementedException();
+            return true;
         }
 
-        public void debug(string closeCalledOnAlreadyClosedClient)
+        public void Debug(string msg)
         {
-            throw new NotImplementedException();
+            Print(msg);
         }
 
-        public void debug(string closeCalledOnAlreadyClosedClient, Exception ioException)
+        public void Debug(string msg, Exception exception)
         {
-            throw new NotImplementedException();
+            Print(msg, exception);
         }
 
-        public void Error(string errorInEventThread, Exception exception)
+        public void Error(string msg, Exception exception)
         {
-            throw new NotImplementedException();
+            Print(msg, exception);
+        }
+
+        private void Print(string msg)
+        {
+            Console.WriteLine(string.Format("{0} {1} :: {2}", DateTime.Now, name, msg));
+        }
+
+        private void Print(string msg, Exception exception)
+        {
+            Console.WriteLine(string.Format("{0} {1} :: {2}", DateTime.Now, name, msg));
+            Console.WriteLine("\t\t" + exception.Message);
+            Console.WriteLine("\t\t" + exception.StackTrace);
         }
     }
 }

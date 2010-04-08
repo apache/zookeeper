@@ -217,7 +217,7 @@
                 get { return state; }
             }
 
-            public bool isAlive()
+            public bool IsAlive()
             {
                 return this != CLOSED && this != AUTH_FAILED;
             }
@@ -243,7 +243,7 @@
             }
         }
 
-        protected volatile States state;
+        protected volatile States state = States.CLOSED;
         protected IClientConnection cnxn;
 
         public event StringCallback OnCreate;
@@ -403,18 +403,18 @@
         [MethodImpl(MethodImplOptions.Synchronized)]
         public void Close()
         {
-            if (!state.isAlive())
+            if (!state.IsAlive())
             {
-                if (LOG.isDebugEnabled())
+                if (LOG.IsDebugEnabled())
                 {
-                    LOG.debug("Close called on already closed client");
+                    LOG.Debug("Close called on already closed client");
                 }
                 return;
             }
 
-            if (LOG.isDebugEnabled())
+            if (LOG.IsDebugEnabled())
             {
-                LOG.debug(string.Format("Closing session: 0x{0:X}", SessionId));
+                LOG.Debug(string.Format("Closing session: 0x{0:X}", SessionId));
             }
 
             try
@@ -423,9 +423,9 @@
             }
             catch (IOException e)
             {
-                if (LOG.isDebugEnabled())
+                if (LOG.IsDebugEnabled())
                 {
-                    LOG.debug("Ignoring unexpected exception during close", e);
+                    LOG.Debug("Ignoring unexpected exception during close", e);
                 }
             }
 

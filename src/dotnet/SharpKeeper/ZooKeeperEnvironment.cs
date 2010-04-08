@@ -9,7 +9,6 @@ namespace SharpKeeper
     {
         public static void logEnv(string clientEnvironment, Logger log)
         {
-            throw new NotImplementedException();
         }
     }
 }

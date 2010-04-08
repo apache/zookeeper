@@ -24,52 +24,50 @@
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:CreateMode.cs" caret="43" fromTop="1" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:KeeperException.cs" caret="6523" fromTop="33" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZKWatchManager.cs" caret="3547" fromTop="36" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooKeeperEnvironment.cs" caret="0" fromTop="0" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:RequestHeader.cs" caret="940" fromTop="5" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:KeeperState.cs" caret="42" fromTop="1" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientWatchManager.cs" caret="750" fromTop="19" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Watcher.cs" caret="139" fromTop="6" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooKeeper.cs" caret="1176" fromTop="9" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="1002" fromTop="41" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/d:Generated/f:GetChildren2Request.cs" caret="1145" fromTop="3" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:WatchedEvent.cs" caret="248" fromTop="9" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooKeeperEx.cs" caret="523" fromTop="17" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.EventConsumer.cs" caret="9" fromTop="0" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="9" fromTop="0" />
       <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooTrace.cs" caret="0" fromTop="0" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="845" fromTop="23" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="454" fromTop="0" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="4300" fromTop="21" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooKeeperEnvironment.cs" caret="262" fromTop="12" />
     </RecentFiles>
     <RecentEdits>
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="42" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="27" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="31" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="15" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="21" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="1" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="11645" fromTop="17" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="15146" fromTop="0" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.EventConsumer.cs" caret="48" fromTop="0" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.EventConsumer.cs" caret="4374" fromTop="2" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.EventConsumer.cs" caret="10378" fromTop="23" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="12847" fromTop="14" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="16722" fromTop="9" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="26266" fromTop="49" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="9" fromTop="0" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="2268" fromTop="0" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="2514" fromTop="7" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="9480" fromTop="7" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="11483" fromTop="7" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="13766" fromTop="7" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.SendThread.cs" caret="15807" fromTop="7" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="18991" fromTop="25" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="151" fromTop="5" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="4028" fromTop="17" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="17203" fromTop="9" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="17920" fromTop="33" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="20081" fromTop="44" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="11" fromTop="0" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="20515" fromTop="7" />
-      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ClientCnxn.cs" caret="20480" fromTop="34" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="3471" fromTop="20" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="3720" fromTop="40" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="2578" fromTop="17" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="649" fromTop="0" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="3809" fromTop="47" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="3285" fromTop="37" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="3234" fromTop="36" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="2803" fromTop="29" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="312" fromTop="8" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="114" fromTop="5" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="414" fromTop="22" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="490" fromTop="24" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="560" fromTop="15" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="735" fromTop="25" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="835" fromTop="30" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="943" fromTop="35" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="1043" fromTop="40" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="620" fromTop="20" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="707" fromTop="25" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="795" fromTop="30" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="883" fromTop="35" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="0" fromTop="0" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="1562" fromTop="48" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="1110" fromTop="33" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:Logger.cs" caret="990" fromTop="28" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="4076" fromTop="33" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="4374" fromTop="8" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="4136" fromTop="17" />
+      <File id="F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00/f:ZooKeeperIntegrationTests.cs" caret="4283" fromTop="20" />
+      <File id="5C6774FB-2350-46B2-B1DF-1CCC757C7727/f:ZooKeeperEnvironment.cs" caret="239" fromTop="8" />
     </RecentEdits>
   </RecentFiles>
   <NAntValidationSettings>
@@ -84,26 +82,26 @@
   </UnitTestRunnerNUnit>
   <CompletionStatisticsManager>
     <ItemStatistics item="Default">
-      <Item value="public" priority="10" />
-      <Item value="class" priority="3" />
+      <Item value="public" priority="14" />
+      <Item value="class" priority="4" />
       <Item value="MethodImplOptions`0" priority="2" />
       <Item value="Type`0" priority="0" />
-      <Item value="return" priority="14" />
+      <Item value="return" priority="16" />
       <Item value="null" priority="3" />
       <Item value="typeof" priority="0" />
-      <Item value="private" priority="6" />
+      <Item value="private" priority="7" />
       <Item value="string" priority="18" />
       <Item value="WatchedEvent`0" priority="0" />
       <Item value="to" priority="1" />
       <Item value="from" priority="1" />
-      <Item value="if" priority="7" />
+      <Item value="if" priority="9" />
       <Item value="result" priority="0" />
       <Item value="existWatches" priority="1" />
       <Item value="out" priority="3" />
       <Item value="clientPath" priority="1" />
       <Item value="childWatches" priority="0" />
-      <Item value="static" priority="3" />
-      <Item value="void" priority="2" />
+      <Item value="static" priority="4" />
+      <Item value="void" priority="5" />
       <Item value="IDictionary" priority="0" />
       <Item value="TKey`0" priority="1" />
       <Item value="TValue`0" priority="0" />
@@ -115,7 +113,7 @@
       <Item value="DataMisalignedException`0" priority="0" />
       <Item value="Dictionary" priority="1" />
       <Item value="States`0" priority="0" />
-      <Item value="new" priority="26" />
+      <Item value="new" priority="32" />
       <Item value="States" priority="0" />
       <Item value="ZooKeeper`0" priority="1" />
       <Item value="ZKWatchManager`0" priority="0" />
@@ -125,7 +123,7 @@
       <Item value="false" priority="2" />
       <Item value="int" priority="9" />
       <Item value="IInputArchive`0" priority="0" />
-      <Item value="this" priority="5" />
+      <Item value="this" priority="6" />
       <Item value="reader" priority="5" />
       <Item value="Stream`0" priority="1" />
       <Item value="SortedDictionary" priority="2" />
@@ -163,14 +161,14 @@
       <Item value="KeeperException`0" priority="0" />
       <Item value="BinaryWriter" priority="1" />
       <Item value="base" priority="2" />
-      <Item value="msg" priority="1" />
+      <Item value="msg" priority="2" />
       <Item value="client" priority="1" />
       <Item value="IPAddress`0" priority="2" />
       <Item value="Int16`0" priority="0" />
-      <Item value="state" priority="0" />
-      <Item value="Encoding`0" priority="2" />
+      <Item value="state" priority="1" />
+      <Item value="Encoding`0" priority="3" />
       <Item value="h" priority="1" />
-      <Item value="var" priority="0" />
+      <Item value="var" priority="1" />
       <Item value="serverAddrs" priority="1" />
       <Item value="sessionPasswd" priority="1" />
       <Item value="Guid`0" priority="0" />
@@ -179,7 +177,7 @@
       <Item value="ip" priority="0" />
       <Item value="MemoryStream`0" priority="0" />
       <Item value="ms" priority="1" />
-      <Item value="using" priority="0" />
+      <Item value="using" priority="1" />
       <Item value="Thread`0" priority="0" />
       <Item value="nextAddrToTry" priority="0" />
       <Item value="Thread" priority="0" />
@@ -189,14 +187,14 @@
       <Item value="EventThread`0" priority="1" />
       <Item value="eventThread" priority="3" />
       <Item value="EventThread" priority="0" />
-      <Item value="try" priority="0" />
-      <Item value="catch" priority="1" />
+      <Item value="try" priority="2" />
+      <Item value="catch" priority="3" />
       <Item value="ThreadInterruptedException`0" priority="0" />
       <Item value="while" priority="0" />
-      <Item value="true" priority="1" />
-      <Item value="Exception`0" priority="0" />
+      <Item value="true" priority="2" />
+      <Item value="Exception`0" priority="1" />
       <Item value="LOG" priority="0" />
-      <Item value="e" priority="2" />
+      <Item value="e" priority="6" />
       <Item value="lock" priority="1" />
       <Item value="Monitor`0" priority="1" />
       <Item value="MethodImpl" priority="0" />
@@ -216,7 +214,7 @@
       <Item value="zooKeeper" priority="0" />
       <Item value="long" priority="1" />
       <Item value="ticks" priority="0" />
-      <Item value="DateTime`0" priority="4" />
+      <Item value="DateTime`0" priority="5" />
       <Item value="dateTime" priority="0" />
       <Item value="Socket" priority="0" />
       <Item value="AddressFamily`0" priority="0" />
@@ -224,6 +222,38 @@
       <Item value="ProtocolType`0" priority="0" />
       <Item value="sock" priority="2" />
       <Item value="sessionId" priority="1" />
+      <Item value="NUnit" priority="4" />
+      <Item value="Core" priority="0" />
+      <Item value="TestFixture`0" priority="0" />
+      <Item value="Framework" priority="3" />
+      <Item value="TestFixture" priority="0" />
+      <Item value="SetUpFixture" priority="0" />
+      <Item value="SetUp" priority="0" />
+      <Item value="TearDown" priority="0" />
+      <Item value="throw" priority="1" />
+      <Item value="InvalidOperationException" priority="0" />
+      <Item value="proc" priority="0" />
+      <Item value="ZooKeeperServer`0" priority="0" />
+      <Item value="server" priority="2" />
+      <Item value="ZooKeeperServer" priority="0" />
+      <Item value="Path`0" priority="8" />
+      <Item value="currentDirectory" priority="8" />
+      <Item value="Console`0" priority="4" />
+      <Item value="Directory`0" priority="2" />
+      <Item value="File`0" priority="5" />
+      <Item value="configDir" priority="2" />
+      <Item value="t" priority="0" />
+      <Item value="ManualResetEvent`0" priority="0" />
+      <Item value="ManualResetEvent" priority="0" />
+      <Item value="ThreadPool`0" priority="0" />
+      <Item value="Logger" priority="0" />
+      <Item value="type" priority="0" />
+      <Item value="name" priority="0" />
+      <Item value="exception" priority="3" />
+      <Item value="ZooKeeperIntegrationTests`0" priority="0" />
+      <Item value="ZooKeeper" priority="0" />
+      <Item value="TimeSpan" priority="0" />
+      <Item value="zk" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Collections.Generic.HashSet`1">
       <Item value="Concat`1" priority="0" />
@@ -265,15 +295,15 @@
     </ItemStatistics>
     <ItemStatistics item="Qualified:@System.Text.Encoding">
       <Item value="UTF32" priority="1" />
-      <Item value="UTF8" priority="2" />
+      <Item value="UTF8" priority="3" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Text.Encoding">
       <Item value="GetString`0" priority="0" />
-      <Item value="GetBytes`0" priority="2" />
+      <Item value="GetBytes`0" priority="3" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:@System.String">
       <Item value="Empty" priority="1" />
-      <Item value="Format`0" priority="4" />
+      <Item value="Format`0" priority="6" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:SharpKeeper.Jute.BinaryOutputArchive">
       <Item value="writer" priority="0" />
@@ -331,6 +361,8 @@
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Threading.Thread">
       <Item value="Name" priority="0" />
+      <Item value="Join`0" priority="0" />
+      <Item value="Abort`0" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:SharpKeeper.Logger">
       <Item value="Error`0" priority="0" />
@@ -404,7 +436,7 @@
       <Item value="Next`0" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:@System.DateTime">
-      <Item value="Now" priority="4" />
+      <Item value="Now" priority="5" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.DateTime">
       <Item value="Ticks" priority="4" />
@@ -427,7 +459,42 @@
       <Item value="Close`0" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Exception">
-      <Item value="Message" priority="3" />
+      <Item value="Message" priority="5" />
+      <Item value="StackTrace" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SharpKeeper.Tests.AssemblyFixture+ZooKeeperServer">
+      <Item value="Dispose`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.IO.Path">
+      <Item value="Combine`0" priority="11" />
+      <Item value="GetDirectoryName`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Console">
+      <Item value="Write`0" priority="0" />
+      <Item value="WriteLine`0" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.IO.Directory">
+      <Item value="GetParent`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.IO.DirectoryInfo">
+      <Item value="ToString`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.IO.File">
+      <Item value="Exists`0" priority="3" />
+      <Item value="Copy`0" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Threading.ThreadPool">
+      <Item value="QueueUserWorkItem`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Threading.ManualResetEvent">
+      <Item value="WaitOne`0" priority="0" />
+      <Item value="Set`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Type">
+      <Item value="Name" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SharpKeeper.CreateMode">
+      <Item value="Persistent" priority="0" />
     </ItemStatistics>
   </CompletionStatisticsManager>
 </Configuration>

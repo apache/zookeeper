@@ -25,7 +25,7 @@
         public ClientConnectionEventConsumer(ClientConnection conn)
         {
             this.conn = conn;
-            eventThread = new Thread(PollEvents) { Name = "ZK-SendThread", IsBackground = true };
+            eventThread = new Thread(new SafeThreadStart(PollEvents).Run) { Name = "ZK-SendThread", IsBackground = true };
         }
 
         public void Start()
