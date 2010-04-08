@@ -188,7 +188,9 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testDeserializeString);
 #ifdef THREADED
     CPPUNIT_TEST(testNullData);
+#ifdef ZOO_IPV6_ENABLED
     CPPUNIT_TEST(testIPV6);
+#endif
     CPPUNIT_TEST(testPath);
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);

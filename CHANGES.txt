@@ -8,6 +8,9 @@ Backward compatible changes:
 
 BUGFIXES: 
 
+  ZOOKEEPER-735. cppunit test testipv6 assumes that the machine is ipv6
+  enabled. (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
