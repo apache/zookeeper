@@ -3,12 +3,13 @@
     using System;
     using System.IO;
     using System.Text;
+    using SharpKeeper;
 
     public class BinaryInputArchive : IInputArchive
     {
-        private readonly BinaryReader reader;
+        private readonly ZooKeeperBinaryReader reader;
 
-        static public BinaryInputArchive getArchive(BinaryReader reader)
+        static public BinaryInputArchive getArchive(ZooKeeperBinaryReader reader)
         {
             return new BinaryInputArchive(reader);
         }
@@ -32,7 +33,7 @@
         }
         
         /** Creates a new instance of BinaryInputArchive */
-        public BinaryInputArchive(BinaryReader reader)
+        public BinaryInputArchive(ZooKeeperBinaryReader reader)
         {
             this.reader = reader;
         }

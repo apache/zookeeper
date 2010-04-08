@@ -7,18 +7,21 @@ using NUnit.Framework;
 
 namespace SharpKeeper.Tests
 {
+    using MiscUtil.Conversion;
+    using MiscUtil.IO;
+
     [SetUpFixture]
     public class AssemblyFixture
     {
         private ZooKeeperServer server;
 
-        [SetUp]
+        //[SetUp]
         public void Setup()
         {
             server = new ZooKeeperServer();
         }
 
-        [TearDown]
+        //[TearDown]
         public void Teardown()
         {
             server.Dispose();
@@ -115,11 +118,26 @@ namespace SharpKeeper.Tests
         [Test]
         public void StartServer()
         {
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:2181", new TimeSpan(0, 0, 0, 3), this);
+            ZooKeeper zk = new ZooKeeper("127.0.0.1:2181", new TimeSpan(0, 0, 0, 5), this);
             for (int i = 0; i < 100; i++)
             {
                 string path = "/" + i;
                 zk.Create(path, Encoding.UTF8.GetBytes(path), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+            }
+        }
+
+        [Test]
+        public void BigEndianTest()
+        {
+            using (var ms = new MemoryStream())
+            using (EndianBinaryWriter writer = new EndianBinaryWriter(EndianBitConverter.Big, ms, Encoding.ASCII))
+            {
+                writer.Write(Encoding.ASCII.GetBytes(Convert.ToString(5000)));
+                ms.Position = 0;
+                foreach (byte bb in ms.ToArray())
+                {
+                    Console.WriteLine(bb);
+                }
             }
         }
 

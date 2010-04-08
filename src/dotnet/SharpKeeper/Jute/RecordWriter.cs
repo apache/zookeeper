@@ -1,12 +1,12 @@
 namespace Org.Apache.Jute
 {
-    using System.IO;
+    using SharpKeeper;
 
     public class RecordWriter
     {
         private readonly BinaryOutputArchive archive;
 
-        public RecordWriter(BinaryWriter writer, string format)
+        public RecordWriter(ZooKeeperBinaryWriter writer, string format)
         {
             archive = new BinaryOutputArchive(writer);
         }

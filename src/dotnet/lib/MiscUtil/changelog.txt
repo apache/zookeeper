@@ -1,0 +1,118 @@
+------------------------------------------------------------------------
+r89 | jon | 2007-07-27 23:40:20 +0100 (Fri, 27 Jul 2007) | 2 lines
+
+Added indexes to SmartEnumerable
+
+------------------------------------------------------------------------
+r88 | jon | 2007-07-27 23:24:05 +0100 (Fri, 27 Jul 2007) | 2 lines
+
+Added comments for Range
+
+------------------------------------------------------------------------
+r87 | jon | 2007-07-27 23:21:51 +0100 (Fri, 27 Jul 2007) | 2 lines
+
+SmartEnumerable
+
+------------------------------------------------------------------------
+r46 | jon | 2007-04-07 21:37:42 +0100 (Sat, 07 Apr 2007) | 2 lines
+
+Added StreamUtil
+
+------------------------------------------------------------------------
+r33 | jon | 2007-03-13 20:58:20 +0000 (Tue, 13 Mar 2007) | 2 lines
+
+Added test for parameterless constructor.
+
+------------------------------------------------------------------------
+r32 | jon | 2007-03-13 20:58:07 +0000 (Tue, 13 Mar 2007) | 2 lines
+
+Moved change log so it's part of the source distribution.
+
+------------------------------------------------------------------------
+r31 | jon | 2007-03-13 20:55:43 +0000 (Tue, 13 Mar 2007) | 3 lines
+
+Add parameterless constructor to CachingBufferManager.
+Specify the default for ActionOnBufferUnavailable
+
+------------------------------------------------------------------------
+r30 | jon | 2007-03-04 14:11:15 +0000 (Sun, 04 Mar 2007) | 2 lines
+
+Added comments as to use, thread safety, and clear-after-use tests.
+
+------------------------------------------------------------------------
+r29 | jon | 2007-03-04 08:04:38 +0000 (Sun, 04 Mar 2007) | 3 lines
+
+Created buffer management classes. Thread safety still needs looking at.
+Made StaticRandom a static class.
+
+------------------------------------------------------------------------
+r21 | jon | 2007-01-20 21:59:04 +0000 (Sat, 20 Jan 2007) | 2 lines
+
+Renamed tests to match convention of unit tests.
+
+------------------------------------------------------------------------
+r20 | jon | 2006-11-28 22:26:31 +0000 (Tue, 28 Nov 2006) | 2 lines
+
+Changes to build procedure
+
+------------------------------------------------------------------------
+r19 | jon | 2006-11-28 21:16:40 +0000 (Tue, 28 Nov 2006) | 1 line
+
+Fixed XML documentation warning.
+------------------------------------------------------------------------
+r18 | jon | 2006-11-28 21:13:54 +0000 (Tue, 28 Nov 2006) | 3 lines
+
+Created kitting batch file
+Changed project file to generate XML documentation
+Added licence and readme.
+------------------------------------------------------------------------
+r17 | (no author) | 2006-11-25 22:33:18 +0000 (Sat, 25 Nov 2006) | 2 lines
+
+Added tests for StringWriterWithEncoding.
+Improved StringWriterWithEncoding robustness.
+------------------------------------------------------------------------
+r16 | (no author) | 2006-11-25 22:15:23 +0000 (Sat, 25 Nov 2006) | 4 lines
+
+Added RhinoMocks
+Created new class: ComparisonComparer
+Added tests for ComparisonComparer and RandomAccessQueue
+Fixed bugs in RandomAccessQueue.
+------------------------------------------------------------------------
+r15 | (no author) | 2006-11-21 23:02:10 +0000 (Tue, 21 Nov 2006) | 3 lines
+
+Renamed test classes to XxxTest instead of TestXXX.
+Added RandomAccessQueueTest with first tests for new functionality.
+Fixed some broken RemoveAt code.
+------------------------------------------------------------------------
+r14 | (no author) | 2006-11-21 19:21:23 +0000 (Tue, 21 Nov 2006) | 1 line
+
+Initial commit of 1.1 classes.
+------------------------------------------------------------------------
+r13 | (no author) | 2006-11-21 17:55:22 +0000 (Tue, 21 Nov 2006) | 1 line
+
+
+------------------------------------------------------------------------
+r12 | (no author) | 2006-11-20 23:18:33 +0000 (Mon, 20 Nov 2006) | 1 line
+
+Reverted mess
+------------------------------------------------------------------------
+r10 | (no author) | 2006-11-20 22:45:42 +0000 (Mon, 20 Nov 2006) | 1 line
+
+Added initial files.
+------------------------------------------------------------------------
+r9 | (no author) | 2006-11-20 22:40:33 +0000 (Mon, 20 Nov 2006) | 1 line
+
+Removed file/folder
+------------------------------------------------------------------------
+r8 | (no author) | 2006-11-20 22:40:30 +0000 (Mon, 20 Nov 2006) | 1 line
+
+Removed file/folder
+------------------------------------------------------------------------
+r7 | (no author) | 2006-11-20 22:37:02 +0000 (Mon, 20 Nov 2006) | 1 line
+
+
+------------------------------------------------------------------------
+r4 | (no author) | 2006-11-20 22:30:37 +0000 (Mon, 20 Nov 2006) | 1 line
+
+Created folder remotely
+------------------------------------------------------------------------

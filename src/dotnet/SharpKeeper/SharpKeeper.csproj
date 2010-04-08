@@ -126,10 +126,18 @@
     <Compile Include="ZKWatchManager.cs" />
     <Compile Include="ZooDefs.cs" />
     <Compile Include="ZooKeeper.cs" />
+    <Compile Include="ZooKeeperBinaryReader.cs" />
+    <Compile Include="ZooKeeperBinaryWriter.cs" />
     <Compile Include="ZooKeeperEnvironment.cs" />
     <Compile Include="ZooKeeperEx.cs" />
     <Compile Include="ZooThreadPool.cs" />
     <Compile Include="ZooTrace.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\lib\MiscUtil\MiscUtil\MiscUtil.csproj">
+      <Project>{4FC1D5F4-661F-48DC-B397-4CDCB7D61ABE}</Project>
+      <Name>MiscUtil</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

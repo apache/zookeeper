@@ -1,12 +1,12 @@
 namespace Org.Apache.Jute
 {
-    using System.IO;
+    using SharpKeeper;
 
     public class RecordReader
     {
         private readonly IInputArchive archive;
 
-        public RecordReader(BinaryReader reader, string format)
+        public RecordReader(ZooKeeperBinaryReader reader, string format)
         {
             archive = new BinaryInputArchive(reader);
         }

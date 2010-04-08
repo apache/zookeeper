@@ -1,9 +1,0 @@
-D:\working\zookeeper2\src\dotnet\SharpKeeper.Tests\bin\Debug\SharpKeeper.Tests.dll
-D:\working\zookeeper2\src\dotnet\SharpKeeper.Tests\bin\Debug\SharpKeeper.Tests.pdb
-D:\working\zookeeper2\src\dotnet\SharpKeeper.Tests\bin\Debug\nunit.framework.dll
-D:\working\zookeeper2\src\dotnet\SharpKeeper.Tests\bin\Debug\pnunit.framework.dll
-D:\working\zookeeper2\src\dotnet\SharpKeeper.Tests\obj\Debug\ResolveAssemblyReference.cache
-D:\working\zookeeper2\src\dotnet\SharpKeeper.Tests\obj\Debug\SharpKeeper.Tests.dll
-D:\working\zookeeper2\src\dotnet\SharpKeeper.Tests\obj\Debug\SharpKeeper.Tests.pdb
-D:\working\zookeeper2\src\dotnet\SharpKeeper.Tests\bin\Debug\SharpKeeper.dll
-D:\working\zookeeper2\src\dotnet\SharpKeeper.Tests\bin\Debug\SharpKeeper.pdb

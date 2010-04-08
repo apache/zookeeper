@@ -94,8 +94,8 @@
         internal readonly List<IPEndPoint> serverAddrs = new List<IPEndPoint>();
         internal readonly List<AuthData> authInfo = new List<AuthData>();
         internal string path;
-        internal int connectTimeout;
-        internal int readTimeout;
+        internal TimeSpan connectTimeout;
+        internal TimeSpan readTimeout;
         internal bool closing;
         internal ClientConnectionRequestProducer producer;
         internal ClientConnectionEventConsumer consumer;
@@ -198,8 +198,8 @@
 
         private void SetTimeouts(TimeSpan sessionTimeout)
         {
-            connectTimeout = Convert.ToInt32(sessionTimeout.TotalMilliseconds / serverAddrs.Count);
-            readTimeout = Convert.ToInt32(sessionTimeout.TotalMilliseconds * 2 / 3);
+            connectTimeout = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(sessionTimeout.TotalMilliseconds / serverAddrs.Count));
+            readTimeout = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(sessionTimeout.TotalMilliseconds * 2 / 3));
         }
 
         /// <summary>

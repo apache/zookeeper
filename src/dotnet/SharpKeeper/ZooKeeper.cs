@@ -243,7 +243,7 @@
             }
         }
 
-        protected volatile States state = States.CLOSED;
+        protected volatile States state;
         protected IClientConnection cnxn;
 
         public event StringCallback OnCreate;

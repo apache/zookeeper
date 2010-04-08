@@ -42,7 +42,7 @@
                 try
                 {
                     using (MemoryStream ms = new MemoryStream())
-                    using (BinaryWriter writer = new BinaryWriter(ms))
+                    using (ZooKeeperBinaryWriter writer = new ZooKeeperBinaryWriter(ms))
                     {
                         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(writer);
                         boa.WriteInt(-1, "len"); // We'll fill this in later

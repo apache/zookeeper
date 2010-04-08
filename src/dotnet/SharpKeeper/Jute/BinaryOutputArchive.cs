@@ -1,21 +1,20 @@
 ﻿namespace Org.Apache.Jute
 {
-    using System.Collections;
     using System.Collections.Generic;
-    using System.IO;
     using System.Text;
+    using SharpKeeper;
 
     public class BinaryOutputArchive : IOutputArchive
     {
-        private readonly BinaryWriter writer;
+        private readonly ZooKeeperBinaryWriter writer;
 
-        public static BinaryOutputArchive getArchive(BinaryWriter writer)
+        public static BinaryOutputArchive getArchive(ZooKeeperBinaryWriter writer)
         {
             return new BinaryOutputArchive(writer);
         }
 
         /** Creates a new instance of BinaryOutputArchive */
-        public BinaryOutputArchive(BinaryWriter writer)
+        public BinaryOutputArchive(ZooKeeperBinaryWriter writer)
         {
             this.writer = writer;
         }
@@ -50,40 +49,6 @@
             writer.Write(d);
         }
 
-        /**
-         * create our own char encoder to utf8. This is faster 
-         * then string.getbytes(UTF8).
-         * @param s the string to encode into utf8
-         * @return utf8 byte sequence.
-         */
-        private byte[] stringToByteBuffer(string s)
-        {
-            /*bb.clear();
-            int len = s.Length;
-            for (int i = 0; i < len; i++) {
-                if (bb.remaining() < 3) {
-                    ByteBuffer n = ByteBuffer.allocate(bb.capacity() << 1);
-                    bb.flip();
-                    n.put(bb);
-                    bb = n;
-                }
-                char c = s.charAt(i);
-                if (c < 0x80) {
-                    bb.put((byte) c);
-                } else if (c < 0x800) {
-                    bb.put((byte) (0xc0 | (c >> 6)));
-                    bb.put((byte) (0x80 | (c & 0x3f)));
-                } else {
-                    bb.put((byte) (0xe0 | (c >> 12)));
-                    bb.put((byte) (0x80 | ((c >> 6) & 0x3f)));
-                    bb.put((byte) (0x80 | (c & 0x3f)));
-                }
-            }
-            bb.flip();
-            return bb;*/
-            return Encoding.UTF8.GetBytes(s);
-        }
-
         public void WriteString(string s, string tag)
         {
             if (s == null)
@@ -91,7 +56,7 @@
                 WriteInt(-1, "len");
                 return;
             }
-            byte[] bb = stringToByteBuffer(s);
+            byte[] bb = Encoding.UTF8.GetBytes(s);
             WriteInt(bb.Length, "len");
             writer.Write(bb, 0, bb.Length);
         }

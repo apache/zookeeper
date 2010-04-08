@@ -57,6 +57,10 @@
     <Compile Include="ZooKeeperIntegrationTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\lib\MiscUtil\MiscUtil\MiscUtil.csproj">
+      <Project>{4FC1D5F4-661F-48DC-B397-4CDCB7D61ABE}</Project>
+      <Name>MiscUtil</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SharpKeeper\SharpKeeper.csproj">
       <Project>{5C6774FB-2350-46B2-B1DF-1CCC757C7727}</Project>
       <Name>SharpKeeper</Name>

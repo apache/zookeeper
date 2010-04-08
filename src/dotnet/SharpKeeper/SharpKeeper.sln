@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpKeeper", "SharpKeeper.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpKeeper.Tests", "..\SharpKeeper.Tests\SharpKeeper.Tests.csproj", "{F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiscUtil", "..\lib\MiscUtil\MiscUtil\MiscUtil.csproj", "{4FC1D5F4-661F-48DC-B397-4CDCB7D61ABE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +21,10 @@ Global
 		{F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FC1D5F4-661F-48DC-B397-4CDCB7D61ABE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FC1D5F4-661F-48DC-B397-4CDCB7D61ABE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FC1D5F4-661F-48DC-B397-4CDCB7D61ABE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FC1D5F4-661F-48DC-B397-4CDCB7D61ABE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -7,6 +7,7 @@ namespace SharpKeeper
     using System.Net;
     using System.Net.Sockets;
     using System.Threading;
+    using MiscUtil.Conversion;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
 
@@ -16,11 +17,13 @@ namespace SharpKeeper
         private const string RETRY_CONN_MSG = ", closing socket connection and attempting reconnect";
 
         private readonly ClientConnection conn;
-        private ZooKeeper zooKeeper;
+        private readonly ZooKeeper zooKeeper;
         private readonly Thread requestThread;
         private readonly ReaderWriterLockSlim pendingQueueLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim outgoingQueueLock = new ReaderWriterLockSlim();
         private readonly LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
         private readonly LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
+
         private Socket sock;
         private int lastConnectIndex;
         private readonly Random r = new Random();
@@ -34,7 +37,6 @@ namespace SharpKeeper
         private byte[] incomingBuffer;
         private int recvCount;
         private int negotiatedSessionTimeout;
-
         public ClientConnectionRequestProducer(ClientConnection conn)
         {
             this.conn = conn;
@@ -45,6 +47,7 @@ namespace SharpKeeper
 
         public void Start()
         {
+            zooKeeper.State = ZooKeeper.States.CONNECTING;
             requestThread.Start();
         }
 
@@ -56,22 +59,22 @@ namespace SharpKeeper
                 return;
             }                
 
-            pendingQueueLock.EnterReadLock();
+            outgoingQueueLock.EnterReadLock();
             try
             {
-                pendingQueue.AddLast(p);    
+                outgoingQueue.AddLast(p);    
             } 
             finally
             {
-                pendingQueueLock.ExitReadLock();
+                outgoingQueueLock.ExitReadLock();
             }
         }
 
         public void SendRequests()
         {
-            long now = DateTime.Now.Ticks;
-            long lastHeard = now;
-            long lastSend = now;
+            DateTime now = DateTime.Now;
+            DateTime lastHeard = now;
+            DateTime lastSend = now;
             while (zooKeeper.State.IsAlive())
             {
                 try
@@ -87,22 +90,22 @@ namespace SharpKeeper
                         lastSend = now;
                         lastHeard = now;
                     }
-                    int idleRecv = (int)(now - lastHeard);
-                    int idleSend = (int)(now - lastSend);
-                    int to = conn.readTimeout - idleRecv;
+                    TimeSpan idleRecv = now - lastHeard;
+                    TimeSpan idleSend = now - lastSend;
+                    TimeSpan to = conn.readTimeout - idleRecv;
                     if (zooKeeper.State != ZooKeeper.States.CONNECTED)
                     {
                         to = conn.connectTimeout - idleRecv;
                     }
-                    if (to <= 0)
+                    if (to <= TimeSpan.Zero)
                     {
                         throw new SessionTimeoutException(
                                 string.Format("Client session timed out, have not heard from server in {0}ms for sessionid 0x{1:X}", idleRecv, conn.SessionId));
                     }
                     if (zooKeeper.State == ZooKeeper.States.CONNECTED)
                     {
-                        int timeToNextPing = conn.readTimeout / 2 - idleSend;
-                        if (timeToNextPing <= 0)
+                        TimeSpan timeToNextPing = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(conn.readTimeout.TotalMilliseconds / 2 - idleSend.TotalMilliseconds));
+                        if (timeToNextPing <= TimeSpan.Zero)
                         {
                             SendPing();
                             lastSend = now;
@@ -120,8 +123,20 @@ namespace SharpKeeper
                     // Everything below and until we get back to the select is
                     // non blocking, so time is effectively a constant. That is
                     // Why we just have to do this once, here
-                    now = DateTime.Now.Ticks;
-                    if (outgoingQueue.Count > 0)
+                    now = DateTime.Now;
+
+                    int outgoingQueueCount;
+                    outgoingQueueLock.EnterReadLock();
+                    try
+                    {
+                        outgoingQueueCount = outgoingQueue.Count;
+                    }
+                    finally
+                    {
+                        outgoingQueueLock.ExitReadLock();
+                    }
+
+                    if (outgoingQueueCount > 0)
                     {
                         // We have something to send so it's the same
                         // as if we do the send now.
@@ -143,35 +158,34 @@ namespace SharpKeeper
                         }
                         break;
                     }
+                    
+                    // this is ugly, you have a better way speak up
+                    if (e is KeeperException.SessionExpiredException)
+                    {
+                        LOG.info(e.Message + ", closing socket connection");
+                    }
+                    else if (e is SessionTimeoutException)
+                    {
+                        LOG.info(e.Message + RETRY_CONN_MSG);
+                    }
+                    else if (e is System.IO.EndOfStreamException)
+                    {
+                        LOG.info(e.Message + RETRY_CONN_MSG);
+                    }
                     else
                     {
-                        // this is ugly, you have a better way speak up
-                        if (e is KeeperException.SessionExpiredException)
-                        {
-                            LOG.info(e.Message + ", closing socket connection");
-                        }
-                        else if (e is SessionTimeoutException)
-                        {
-                            LOG.info(e.Message + RETRY_CONN_MSG);
-                        }
-                        else if (e is System.IO.EndOfStreamException)
-                        {
-                            LOG.info(e.Message + RETRY_CONN_MSG);
-                        }
-                        else
-                        {
-                            LOG.Warn(string.Format("Session 0x{0:X} for server {1}, unexpected error{2}", conn.SessionId, null, RETRY_CONN_MSG), e);
-                        }
-                        Cleanup();
-                        if (zooKeeper.State.IsAlive())
-                        {
-                            conn.consumer.QueueEvent(new WatchedEvent(KeeperState.Disconnected, EventType.None, null));
-                        }
-
-                        now = DateTime.Now.Ticks;
-                        lastHeard = now;
-                        lastSend = now;
+                        LOG.Warn(string.Format("Session 0x{0:X} for server {1}, unexpected error{2}", conn.SessionId, null, RETRY_CONN_MSG), e);
                     }
+                    Cleanup();
+                    if (zooKeeper.State.IsAlive())
+                    {
+                        conn.consumer.QueueEvent(new WatchedEvent(KeeperState.Disconnected, EventType.None, null));
+                    }
+
+                    now = DateTime.Now;
+                    lastHeard = now;
+                    lastSend = now;
+                    sock = null;
                 }
             }
             Cleanup();
@@ -217,7 +231,9 @@ namespace SharpKeeper
                     LOG.Debug("SendThread interrupted during sleep, ignoring");
                 }
             }
-            lock (pendingQueue)
+            
+            pendingQueueLock.EnterWriteLock();
+            try 
             {
                 foreach (Packet p in pendingQueue)
                 {
@@ -225,13 +241,28 @@ namespace SharpKeeper
                 }
                 pendingQueue.Clear();
             }
-            lock (outgoingQueue)
+            finally
             {
-                foreach (Packet p in outgoingQueue)
-                {
-                    ConLossPacket(p);
-                }
+                pendingQueueLock.ExitWriteLock();
+            }
+
+
+            Packet[] queue;
+            outgoingQueueLock.EnterWriteLock();
+            try
+            {
+                queue = new Packet[outgoingQueue.Count];
+                outgoingQueue.CopyTo(queue, 0);
                 outgoingQueue.Clear();
+            }
+            finally
+            {
+                outgoingQueueLock.ExitWriteLock();
+            }
+
+            foreach (Packet p in queue)
+            {
+                ConLossPacket(p);
             }
         }
 
@@ -247,7 +278,7 @@ namespace SharpKeeper
             {
                 try
                 {
-                    Thread.Sleep(r.Next());
+                    Thread.Sleep(new TimeSpan(0, 0, 0, 0, r.Next(0, 50)));
                 }
                 catch (ThreadInterruptedException e1)
                 {
@@ -276,12 +307,11 @@ namespace SharpKeeper
             }
             LOG.info("Opening socket connection to server " + addr);
             sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            sock.Blocking = false;
-            sock.LingerState = new LingerOption(false, -1);
+            sock.LingerState = new LingerOption(false, 0);
             sock.NoDelay = true;
-            
 
             sock.Connect(addr);
+            sock.Blocking = false;
             PrimeConnection(sock);
             initialized = false;
 
@@ -293,35 +323,41 @@ namespace SharpKeeper
             LOG.info(string.Format("Socket connection established to {0}, initiating session", socket.RemoteEndPoint));
             lastConnectIndex = currentConnectIndex;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid, Convert.ToInt32(conn.SessionTimeout.TotalMilliseconds), conn.SessionId, conn.SessionPassword);
+
+            byte[] buffer;
             using (MemoryStream ms = new MemoryStream())
-            using (BinaryWriter writer = new BinaryWriter(ms))
+            using (ZooKeeperBinaryWriter writer = new ZooKeeperBinaryWriter(ms))
             {
                 BinaryOutputArchive boa = BinaryOutputArchive.getArchive(writer);
                 boa.WriteInt(-1, "len");
                 conReq.Serialize(boa, "connect");
-                lock (outgoingQueue)
+                ms.Position = 0;
+                writer.Write(ms.ToArray().Length);                buffer = ms.ToArray();
+            }
+            outgoingQueueLock.EnterWriteLock();
+            try
+            {
+                if (!ClientConnection.disableAutoWatchReset && (!zooKeeper.DataWatches.IsEmpty() || !zooKeeper.ExistWatches.IsEmpty() || !zooKeeper.ChildWatches.IsEmpty()))
                 {
-                    if (!ClientConnection.disableAutoWatchReset &&
-                        (!zooKeeper.DataWatches.IsEmpty() || !zooKeeper.ExistWatches.IsEmpty() ||
-                         !zooKeeper.ChildWatches.IsEmpty()))
-                    {
-                        SetWatches sw = new SetWatches(lastZxid, zooKeeper.DataWatches, zooKeeper.ExistWatches,
-                                                       zooKeeper.ChildWatches);
-                        RequestHeader h = new RequestHeader();
-                        h.Type = (int) OpCode.SetWatches;
-                        h.Xid = -8;
-                        Packet packet = new Packet(h, new ReplyHeader(), sw, null, null, null, null, null);
-                        outgoingQueue.AddFirst(packet);
-                    }
-
-                    foreach (ClientConnection.AuthData id in conn.authInfo)
-                    {
-                        outgoingQueue.AddFirst(new Packet(new RequestHeader(-4, (int) OpCode.Auth), null, new AuthPacket(0, id.scheme, id.data), null, null, null, null, null));
-                    }
-
-                    ms.Position = 0;
-                    outgoingQueue.AddFirst((new Packet(null, null, null, null, ms.GetBuffer().WrapLength(), null, null, null)));
+                    var sw = new SetWatches(lastZxid, zooKeeper.DataWatches, zooKeeper.ExistWatches, zooKeeper.ChildWatches);
+                    var h = new RequestHeader();
+                    h.Type = (int)OpCode.SetWatches;
+                    h.Xid = -8;
+                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null, null, null, null);
+                    outgoingQueue.AddFirst(packet);
                 }
+
+                foreach (ClientConnection.AuthData id in conn.authInfo)
+                {
+                    outgoingQueue.AddFirst(new Packet(new RequestHeader(-4, (int)OpCode.Auth), null, new AuthPacket(0, id.scheme, id.data), null, null, null, null, null));
+                }
+
+
+                outgoingQueue.AddFirst((new Packet(null, null, null, null, buffer, null, null, null)));
+            }
+            finally
+            {
+                outgoingQueueLock.ExitWriteLock();
             }
             if (LOG.IsDebugEnabled())
             {
@@ -342,19 +378,17 @@ namespace SharpKeeper
             bool packetReceived = false;
             if (sock == null) throw new IOException("Socket is null!");
 
-            if (sock.Poll(-1, SelectMode.SelectRead))
+            if (sock.Poll(100000, SelectMode.SelectRead))
             {
                 var buffer = new byte[4];
                 int rc = sock.Receive(buffer);
                 if (rc < 0)
                 {
-                    throw new EndOfStreamException(
-                        string.Format(
-                            "Unable to read additional data from server sessionid 0x{0:X}, likely server has closed socket",
+                    throw new EndOfStreamException(string.Format("Unable to read additional data from server sessionid 0x{0:X}, likely server has closed socket",
                             conn.SessionId));
                 }
 
-                var remaining = BitConverter.ToInt32(buffer, 0);
+                var remaining = BigEndianBitConverter.INSTANCE.ToInt32(buffer, 0);
                 buffer = new byte[remaining];
                 sock.Receive(buffer, buffer.Length, SocketFlags.None);
 
@@ -379,30 +413,49 @@ namespace SharpKeeper
                     packetReceived = true;
                 }
             }
-            else if (sock.Poll(-1, SelectMode.SelectWrite))
+            else if (sock.Poll(100000, SelectMode.SelectWrite))
             {
-                lock (outgoingQueue)
+                outgoingQueueLock.EnterUpgradeableReadLock();
+                try
                 {
                     if (!outgoingQueue.IsEmpty())
                     {
-                        Packet first = outgoingQueue.First.Value;
-                        sock.Send(first.data);
-                        outgoingQueue.RemoveFirst();
-                        if (first.header != null && first.header.Type != (int) OpCode.Ping &&
-                            first.header.Type != (int) OpCode.Auth)
+                        outgoingQueueLock.EnterWriteLock();
+                        Packet first;
+                        try
                         {
-                            pendingQueue.AddLast(first);
+                            first = outgoingQueue.First.Value;
+                            sock.Send(first.data);
+                            outgoingQueue.RemoveFirst();
+                        }                        finally
+                        {
+                            outgoingQueueLock.ExitWriteLock();
+                        }
+                        if (first.header != null && first.header.Type != (int) OpCode.Ping && first.header.Type != (int) OpCode.Auth)
+                        {
+                            pendingQueueLock.EnterWriteLock();
+                            try
+                            {
+                                pendingQueue.AddLast(first);
+                            }                            finally
+                            {
+                                pendingQueueLock.ExitWriteLock();
+                            }
                         }
                     }
+                } 
+                finally
+                {
+                    outgoingQueueLock.ExitUpgradeableReadLock();    
                 }
             }
 
             return packetReceived;
         }
 
-        private void ReadLength()
+        private void ReadLength() 
         {
-            using (BinaryReader reader = new BinaryReader(new MemoryStream(incomingBuffer)))
+            using (ZooKeeperBinaryReader reader = new ZooKeeperBinaryReader(new MemoryStream(lenBuffer))) 
             {
                 int len = reader.ReadInt32();
                 if (len < 0 || len >= ClientConnection.packetLen)
@@ -415,7 +468,7 @@ namespace SharpKeeper
 
         private void ReadConnectResult()
         {
-            using (BinaryReader reader = new BinaryReader(new MemoryStream(incomingBuffer)))
+            using (var reader = new ZooKeeperBinaryReader(new MemoryStream(incomingBuffer)))
             {
                 BinaryInputArchive bbia = BinaryInputArchive.getArchive(reader);
                 ConnectResponse conRsp = new ConnectResponse();
@@ -427,8 +480,8 @@ namespace SharpKeeper
                     conn.consumer.QueueEvent(new WatchedEvent(KeeperState.Expired, EventType.None, null));
                     throw new SessionExpiredException(string.Format("Unable to reconnect to ZooKeeper service, session 0x{{0:X}}{0} has expired", conn.SessionId));
                 }
-                conn.readTimeout = negotiatedSessionTimeout*2/3;
-                conn.connectTimeout = negotiatedSessionTimeout/conn.serverAddrs.Count;
+                conn.readTimeout = new TimeSpan(0, 0, 0, 0, negotiatedSessionTimeout*2/3);
+                conn.connectTimeout = new TimeSpan(0, 0, 0, negotiatedSessionTimeout/conn.serverAddrs.Count);
                 conn.SessionId = conRsp.SessionId;
                 conn.SessionPassword = conRsp.Passwd;
                 zooKeeper.State = ZooKeeper.States.CONNECTED;
@@ -440,7 +493,7 @@ namespace SharpKeeper
         private void ReadResponse()
         {
             using (MemoryStream ms = new MemoryStream(incomingBuffer))
-            using (BinaryReader reader = new BinaryReader(ms))
+            using (ZooKeeperBinaryReader reader = new ZooKeeperBinaryReader(ms))
             {
                 BinaryInputArchive bbia = BinaryInputArchive.getArchive(reader);
                 ReplyHeader replyHdr = new ReplyHeader();
