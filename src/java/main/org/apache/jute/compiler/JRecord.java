@@ -655,8 +655,8 @@ public class JRecord extends JCompType {
         cs.write("  public override String ToString() {\n");
         cs.write("    try {\n");
         cs.write("      System.IO.MemoryStream ms = new System.IO.MemoryStream();\n");
-        cs.write("      System.IO.BinaryWriter writer =\n");
-        cs.write("        new System.IO.BinaryWriter(ms);\n");
+        cs.write("      SharpKeeper.ZooKeeperBinaryWriter writer =\n");
+        cs.write("        new SharpKeeper.ZooKeeperBinaryWriter(ms);\n");
         cs.write("      BinaryOutputArchive a_ = \n");
         cs.write("        new BinaryOutputArchive(writer);\n");
         cs.write("      a_.StartRecord(this,\"\");\n");
@@ -674,12 +674,12 @@ public class JRecord extends JCompType {
         cs.write("    return \"ERROR\";\n");
         cs.write("  }\n");
 
-        cs.write("  public void Write(System.IO.BinaryWriter writer) {\n");
+        cs.write("  public void Write(SharpKeeper.ZooKeeperBinaryWriter writer) {\n");
         cs.write("    BinaryOutputArchive archive = new BinaryOutputArchive(writer);\n");
         cs.write("    Serialize(archive, \"\");\n");
         cs.write("  }\n");
 
-        cs.write("  public void ReadFields(System.IO.BinaryReader reader) {\n");
+        cs.write("  public void ReadFields(SharpKeeper.ZooKeeperBinaryReader reader) {\n");
         cs.write("    BinaryInputArchive archive = new BinaryInputArchive(reader);\n");
         cs.write("    Deserialize(archive, \"\");\n");
         cs.write("  }\n");
