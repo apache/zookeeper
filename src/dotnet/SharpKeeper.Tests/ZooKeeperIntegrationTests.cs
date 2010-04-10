@@ -118,31 +118,14 @@ namespace SharpKeeper.Tests
         [Test]
         public void StartServer()
         {
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:2181", new TimeSpan(0, 0, 0, 5), this);
-            for (int i = 0; i < 100; i++)
+            ZooKeeper zk = new ZooKeeper("192.168.0.180:2181", new TimeSpan(0, 0, 0, 120), this);
+            for (int i = 0; i < 1; i++)
             {
-                string path = "/" + i;
-                zk.Create(path, Encoding.UTF8.GetBytes(path), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                string path = "/" + Guid.NewGuid();
+                var response = zk.Create(path, Encoding.UTF8.GetBytes(path), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                Console.Write(response);
+                Assert.NotNull(response);
             }
-        }
-
-        [Test]
-        public void BigEndianTest()
-        {
-            using (var ms = new MemoryStream())
-            using (EndianBinaryWriter writer = new EndianBinaryWriter(EndianBitConverter.Big, ms, Encoding.ASCII))
-            {
-                writer.Write(Encoding.ASCII.GetBytes(Convert.ToString(5000)));
-                ms.Position = 0;
-                foreach (byte bb in ms.ToArray())
-                {
-                    Console.WriteLine(bb);
-                }
-            }
-        }
-
-        public void process(WatchedEvent @event)
-        {            
         }
     }
 }

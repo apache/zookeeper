@@ -81,7 +81,7 @@
 
         private static int determineMaxBuffer()
         {
-            string maxBufferString = string.Empty; // = System.getProperty("jute.maxbuffer");
+            string maxBufferString = Convert.ToString(4096 * 1024); // = System.getProperty("jute.maxbuffer");
             try
             {
                 int buffer;

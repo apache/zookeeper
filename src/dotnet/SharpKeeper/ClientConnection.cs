@@ -246,7 +246,7 @@
         public ReplyHeader SubmitRequest(RequestHeader h, IRecord request, IRecord response, ZooKeeper.WatchRegistration watchRegistration)
         {
             ReplyHeader r = new ReplyHeader();
-            Packet p = new Packet(h, r, request, response, null, watchRegistration, null, null);
+            Packet p = QueuePacket(h, r, request, response, null, null, watchRegistration, null, null);
             lock (p)
             {
                 while (!p.finished)

@@ -7,7 +7,6 @@ namespace SharpKeeper
     using System.Net;
     using System.Net.Sockets;
     using System.Threading;
-    using MiscUtil.Conversion;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
 
@@ -32,17 +31,17 @@ namespace SharpKeeper
         private bool initialized;
         private long lastZxid;
         private long lastPingSentNs;
-        
-        private byte[] lenBuffer = new byte[4];
-        private byte[] incomingBuffer;
+
+        private byte[] lenBuffer;
+        private byte[] incomingBuffer = new byte[4];
         private int recvCount;
         private int negotiatedSessionTimeout;
+        
         public ClientConnectionRequestProducer(ClientConnection conn)
         {
             this.conn = conn;
             zooKeeper = conn.zooKeeper;
             requestThread = new Thread(new SafeThreadStart(SendRequests).Run) { Name = "ZK-SendThread", IsBackground = true };
-            incomingBuffer = lenBuffer;
         }
 
         public void Start()
@@ -109,7 +108,6 @@ namespace SharpKeeper
                         {
                             SendPing();
                             lastSend = now;
-                            //EnableWrite();
                         }
                         else
                         {
@@ -314,8 +312,6 @@ namespace SharpKeeper
             sock.Blocking = false;
             PrimeConnection(sock);
             initialized = false;
-
-            incomingBuffer = new byte[4];
         }
 
         private void PrimeConnection(Socket socket)
@@ -332,7 +328,8 @@ namespace SharpKeeper
                 boa.WriteInt(-1, "len");
                 conReq.Serialize(boa, "connect");
                 ms.Position = 0;
-                writer.Write(ms.ToArray().Length);                buffer = ms.ToArray();
+                writer.Write(ms.ToArray().Length - 4);                buffer = ms.ToArray();
+                if (LOG.IsDebugEnabled()) LOG.Debug(string.Format("Preparing PrimeConncetion message: {0}", BitConverter.ToString(buffer)));
             }
             outgoingQueueLock.EnterWriteLock();
             try
@@ -380,36 +377,32 @@ namespace SharpKeeper
 
             if (sock.Poll(100000, SelectMode.SelectRead))
             {
-                var buffer = new byte[4];
-                int rc = sock.Receive(buffer);
+                int rc = sock.Receive(incomingBuffer);
                 if (rc < 0)
                 {
                     throw new EndOfStreamException(string.Format("Unable to read additional data from server sessionid 0x{0:X}, likely server has closed socket",
                             conn.SessionId));
                 }
 
-                var remaining = BigEndianBitConverter.INSTANCE.ToInt32(buffer, 0);
-                buffer = new byte[remaining];
-                sock.Receive(buffer, buffer.Length, SocketFlags.None);
-
-                if (incomingBuffer == lenBuffer)
+                if (lenBuffer == null)
                 {
+                    lenBuffer = incomingBuffer;
                     recvCount++;
                     ReadLength();
                 }
                 else if (!initialized)
                 {
                     ReadConnectResult();
-                    lenBuffer = new byte[4];
-                    incomingBuffer = lenBuffer;
+                    lenBuffer = null;
+                    incomingBuffer = new byte[4];
                     packetReceived = true;
                     initialized = true;
                 }
                 else
                 {
                     ReadResponse();
-                    lenBuffer = new byte[4];
-                    incomingBuffer = lenBuffer;
+                    lenBuffer = null;
+                    incomingBuffer = new byte[4];
                     packetReceived = true;
                 }
             }
@@ -455,7 +448,8 @@ namespace SharpKeeper
 
         private void ReadLength() 
         {
-            using (ZooKeeperBinaryReader reader = new ZooKeeperBinaryReader(new MemoryStream(lenBuffer))) 
+            lenBuffer = new byte[4];
+            using (ZooKeeperBinaryReader reader = new ZooKeeperBinaryReader(new MemoryStream(incomingBuffer))) 
             {
                 int len = reader.ReadInt32();
                 if (len < 0 || len >= ClientConnection.packetLen)
@@ -551,7 +545,8 @@ namespace SharpKeeper
                 {
                     throw new IOException(string.Format("Nothing in the queue, but got {0}", replyHdr.Xid));
                 }
-                Packet packet = null;
+                
+                Packet packet;
                 lock(pendingQueue)
                 {
                     packet = pendingQueue.First.Value;
