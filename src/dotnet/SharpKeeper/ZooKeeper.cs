@@ -45,7 +45,7 @@
         public string Name { get; set; }
     }
 
-    public class ZooKeeper
+    public class ZooKeeper : IDisposable
     {
         private static readonly Logger LOG;
 
@@ -91,7 +91,7 @@
         /// </summary>
         public abstract class WatchRegistration
         {
-            private readonly Watcher watcher;
+            private readonly IWatcher watcher;
             private readonly string clientPath;
 
             /// <summary>
@@ -99,13 +99,13 @@
             /// </summary>
             /// <param name="watcher">The watcher.</param>
             /// <param name="clientPath">The client path.</param>
-            protected WatchRegistration(Watcher watcher, string clientPath)
+            protected WatchRegistration(IWatcher watcher, string clientPath)
             {
                 this.watcher = watcher;
                 this.clientPath = clientPath;
             }
 
-            abstract protected Dictionary<string, HashSet<Watcher>> GetWatches(int rc);
+            abstract protected Dictionary<string, HashSet<IWatcher>> GetWatches(int rc);
 
             /// <summary>
             /// Register the watcher with the set of watches on path.
@@ -115,14 +115,14 @@
             {
                 if (!ShouldAddWatch(rc)) return;
 
-                Dictionary<string, HashSet<Watcher>> watches = GetWatches(rc);
+                Dictionary<string, HashSet<IWatcher>> watches = GetWatches(rc);
                 lock (watches)
                 {
-                    HashSet<Watcher> watchers;
+                    HashSet<IWatcher> watchers;
                     watches.TryGetValue(clientPath, out watchers);
                     if (watchers == null)
                     {
-                        watchers = new HashSet<Watcher>();
+                        watchers = new HashSet<IWatcher>();
                         watches[clientPath] = watchers;
                     }
                     watchers.Add(watcher);
@@ -148,13 +148,13 @@
         {
             private readonly ZKWatchManager watchManager;
 
-            public ExistsWatchRegistration(ZKWatchManager watchManager, Watcher watcher, string clientPath)
+            public ExistsWatchRegistration(ZKWatchManager watchManager, IWatcher watcher, string clientPath)
                 : base(watcher, clientPath)
             {
                 this.watchManager = watchManager;
             }
 
-            protected override Dictionary<string, HashSet<Watcher>> GetWatches(int rc)
+            protected override Dictionary<string, HashSet<IWatcher>> GetWatches(int rc)
             {
                 return rc == 0 ? watchManager.dataWatches : watchManager.existWatches;
             }
@@ -169,13 +169,13 @@
         {
             private readonly ZKWatchManager watchManager;
 
-            public DataWatchRegistration(ZKWatchManager watchManager, Watcher watcher, string clientPath)
+            public DataWatchRegistration(ZKWatchManager watchManager, IWatcher watcher, string clientPath)
                 : base(watcher, clientPath)
             {
                 this.watchManager = watchManager;
             }
 
-            protected override Dictionary<string, HashSet<Watcher>> GetWatches(int rc)
+            protected override Dictionary<string, HashSet<IWatcher>> GetWatches(int rc)
             {
                 return watchManager.dataWatches;
             }
@@ -185,13 +185,13 @@
         {
             private readonly ZKWatchManager watchManager;
 
-            public ChildWatchRegistration(ZKWatchManager watchManager, Watcher watcher, string clientPath)
+            public ChildWatchRegistration(ZKWatchManager watchManager, IWatcher watcher, string clientPath)
                 : base(watcher, clientPath)
             {
                 this.watchManager = watchManager;
             }
 
-            protected override Dictionary<string, HashSet<Watcher>> GetWatches(int rc)
+            protected override Dictionary<string, HashSet<IWatcher>> GetWatches(int rc)
             {
                 return watchManager.childWatches;
             }
@@ -294,7 +294,7 @@
         ///            a watcher object which will be notified of state changes, may
         ///            also be notified for node events
         /// </param>
-        public ZooKeeper(string connectstring, TimeSpan sessionTimeout, Watcher watcher)
+        public ZooKeeper(string connectstring, TimeSpan sessionTimeout, IWatcher watcher)
         {
             LOG.info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2}", connectstring, sessionTimeout, watcher));
 
@@ -303,7 +303,7 @@
             cnxn.Start();
         }
 
-        public ZooKeeper(string connectstring, TimeSpan sessionTimeout, Watcher watcher, long sessionId, byte[] sessionPasswd)
+        public ZooKeeper(string connectstring, TimeSpan sessionTimeout, IWatcher watcher, long sessionId, byte[] sessionPasswd)
         {
             LOG.info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2} sessionId={3} sessionPasswd={4}", connectstring, sessionTimeout, watcher, sessionId, (sessionPasswd == null ? "<null>" : "<hidden>")));
 
@@ -377,7 +377,7 @@
         /// </summary>
         /// <param name="watcher">The watcher.</param>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public void Register(Watcher watcher)
+        public void Register(IWatcher watcher)
         {
             watchManager.defaultWatcher = watcher;
         }
@@ -401,7 +401,7 @@
         /// their parents) will be triggered.
         /// </summary>   
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public void Close()
+        public void Dispose()
         {
             if (!state.IsAlive())
             {
@@ -644,7 +644,7 @@
         /// <param name="path">The path.</param>
         /// <param name="watcher">The watcher.</param>
         /// <returns>the stat of the node of the given path; return null if no such a node exists.</returns>
-        public Stat Exists(string path, Watcher watcher)
+        public Stat Exists(string path, IWatcher watcher)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -705,7 +705,7 @@
         /// @see #exists(string, boolean)
         /// </summary>
 
-        public void ExistsAsync(string path, Watcher watcher, object context)
+        public void ExistsAsync(string path, IWatcher watcher, object context)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -735,7 +735,7 @@
         /// </summary>
         public void ExistsAsync(string path, bool watch, object context)
         {
-            Watcher watcher = watch ? watchManager.defaultWatcher : null;
+            IWatcher watcher = watch ? watchManager.defaultWatcher : null;
             ExistsAsync(path, watcher, context);
         }
 
@@ -757,7 +757,7 @@
         /// @throws InterruptedException If the server transaction is interrupted.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        public byte[] GetData(string path, Watcher watcher, Stat stat)
+        public byte[] GetData(string path, IWatcher watcher, Stat stat)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -816,7 +816,7 @@
         /// the asynchronous callback is called.
         /// @see #getData(string, Watcher, Stat)
         /// </summary>
-        public void GetDataAsync(string path, Watcher watcher, object context)
+        public void GetDataAsync(string path, IWatcher watcher, object context)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -1064,7 +1064,7 @@
         /// @throws KeeperException If the server signals an error with a non-zero error code.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        public List<string> GetChildren(string path, Watcher watcher)
+        public List<string> GetChildren(string path, IWatcher watcher)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -1116,7 +1116,7 @@
         /// @throws IllegalArgumentException if an invalid path is specified
          /// </summary>
 
-        public List<string> GetChildren(string path, Watcher watcher, Stat stat)
+        public List<string> GetChildren(string path, IWatcher watcher, Stat stat)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -1183,7 +1183,7 @@
         /// 
         /// @see #getChildren(string, Watcher, Stat)
         /// </summary>
-        public void GetChildrenAsync(string path, Watcher watcher, object ctx)
+        public void GetChildrenAsync(string path, IWatcher watcher, object ctx)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);

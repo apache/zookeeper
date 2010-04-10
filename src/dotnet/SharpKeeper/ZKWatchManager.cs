@@ -4,21 +4,21 @@
     using System.Collections.Generic;
 
     public class ZKWatchManager : IClientWatchManager {
-        internal readonly Dictionary<string, HashSet<Watcher>> dataWatches = new Dictionary<string, HashSet<Watcher>>();
-        internal readonly Dictionary<string, HashSet<Watcher>> existWatches = new Dictionary<string, HashSet<Watcher>>();
-        internal readonly Dictionary<string, HashSet<Watcher>> childWatches = new Dictionary<string, HashSet<Watcher>>();
+        internal readonly Dictionary<string, HashSet<IWatcher>> dataWatches = new Dictionary<string, HashSet<IWatcher>>();
+        internal readonly Dictionary<string, HashSet<IWatcher>> existWatches = new Dictionary<string, HashSet<IWatcher>>();
+        internal readonly Dictionary<string, HashSet<IWatcher>> childWatches = new Dictionary<string, HashSet<IWatcher>>();
 
-        internal volatile Watcher defaultWatcher;
+        internal volatile IWatcher defaultWatcher;
         private static Logger LOG;
 
-        private void AddTo(HashSet<Watcher> from, HashSet<Watcher> to) {
+        private void AddTo(HashSet<IWatcher> from, HashSet<IWatcher> to) {
             if (from == null) return;
             from.UnionWith(to);
         }
 
-        public HashSet<Watcher> Materialize(KeeperState state, EventType type, String clientPath)
+        public HashSet<IWatcher> Materialize(KeeperState state, EventType type, String clientPath)
         {
-            HashSet<Watcher> result = new HashSet<Watcher>();
+            HashSet<IWatcher> result = new HashSet<IWatcher>();
 
             switch (type) {
                 case EventType.None:
@@ -69,7 +69,7 @@
                     }
                     // XXX This shouldn't be needed, but just in case
                     lock (existWatches) {
-                        HashSet<Watcher> list = existWatches.GetAndRemove(clientPath);
+                        HashSet<IWatcher> list = existWatches.GetAndRemove(clientPath);
                         if (list != null) {
                             AddTo(existWatches.GetAndRemove(clientPath), result);
                             LOG.Warn("We are triggering an exists watch for delete! Shouldn't happen!");

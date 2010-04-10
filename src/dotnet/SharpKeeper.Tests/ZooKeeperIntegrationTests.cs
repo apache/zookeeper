@@ -113,19 +113,23 @@ namespace SharpKeeper.Tests
     }
 
     [TestFixture]
-    public class ZooKeeperIntegrationTests : Watcher
+    public class ZooKeeperIntegrationTests : IWatcher
     {
         [Test]
-        public void StartServer()
+        public void Can_create_random_node()
         {
-            ZooKeeper zk = new ZooKeeper("192.168.0.180:2181", new TimeSpan(0, 0, 0, 120), this);
-            for (int i = 0; i < 1; i++)
+            using (var zk = new ZooKeeper("192.168.0.180:2181", new TimeSpan(0, 0, 0, 120), this))
             {
-                string path = "/" + Guid.NewGuid();
+                var node = Guid.NewGuid();
+                string path = "/" + node;
                 var response = zk.Create(path, Encoding.UTF8.GetBytes(path), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-                Console.Write(response);
-                Assert.NotNull(response);
+                Assert.AreEqual(path, response);
             }
+        }
+
+        public void Process(WatchedEvent @event)
+        {
+            throw new NotImplementedException();
         }
     }
 }

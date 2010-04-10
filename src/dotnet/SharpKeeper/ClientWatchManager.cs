@@ -1,4 +1,4 @@
-﻿namespace SharpKeeper
+namespace SharpKeeper
 {
     using System.Collections.Generic;
 
@@ -16,6 +16,6 @@
          * @param path event path
          * @return
          */
-        HashSet<Watcher> Materialize(KeeperState state, EventType type, string path);
+        HashSet<IWatcher> Materialize(KeeperState state, EventType type, string path);
     }
 }

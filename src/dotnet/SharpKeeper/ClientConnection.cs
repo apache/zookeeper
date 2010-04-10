@@ -339,10 +339,10 @@
 
         internal class WatcherSetEventPair
         {
-            internal HashSet<Watcher> watchers;
+            internal HashSet<IWatcher> watchers;
             internal WatchedEvent @event;
 
-            public WatcherSetEventPair(HashSet<Watcher> watchers, WatchedEvent @event)
+            public WatcherSetEventPair(HashSet<IWatcher> watchers, WatchedEvent @event)
             {
                 this.watchers = watchers;
                 this.@event = @event;

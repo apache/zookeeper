@@ -63,11 +63,11 @@
                                 // each watcher will process the event
                                 ClientConnection.WatcherSetEventPair pair =
                                     (ClientConnection.WatcherSetEventPair) @event;
-                                foreach (Watcher watcher in pair.watchers)
+                                foreach (IWatcher watcher in pair.watchers)
                                 {
                                     try
                                     {
-                                        watcher.process(pair.@event);
+                                        watcher.Process(pair.@event);
                                     }
                                     catch (Exception t)
                                     {
