@@ -35,7 +35,7 @@ namespace SharpKeeper
         private byte[] lenBuffer;
         private byte[] incomingBuffer = new byte[4];
         private int recvCount;
-        private int negotiatedSessionTimeout;
+        internal int negotiatedSessionTimeout;
         
         public ClientConnectionRequestProducer(ClientConnection conn)
         {
@@ -307,11 +307,37 @@ namespace SharpKeeper
             sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             sock.LingerState = new LingerOption(false, 0);
             sock.NoDelay = true;
+            
+            ConnectSocket(addr);
 
-            sock.Connect(addr);
             sock.Blocking = false;
             PrimeConnection(sock);
             initialized = false;
+        }
+
+        private void ConnectSocket(IPEndPoint addr)
+        {
+            bool connected = false;
+            ManualResetEvent socketConnectTimeout = new ManualResetEvent(false);
+            ThreadPool.QueueUserWorkItem(state =>
+            {
+                try
+                {
+                    sock.Connect(addr);
+                    connected = true;
+                    socketConnectTimeout.Set();
+                } 
+                // ReSharper disable EmptyGeneralCatchClause
+                catch
+                // ReSharper restore EmptyGeneralCatchClause
+                {                    
+                }
+            });
+            socketConnectTimeout.WaitOne(10000);
+            
+            if (connected) return;
+
+            throw new InvalidOperationException(string.Format("Could not make socket connection to {0}:{1}", addr.Address, addr.Port));
         }
 
         private void PrimeConnection(Socket socket)
@@ -612,11 +638,7 @@ namespace SharpKeeper
 
             if (p.cb == null)
             {
-                lock (p)
-                {
-                    p.finished = true;
-                    Monitor.PulseAll(p);
-                }
+                p.WaitHandle.Set();                             
             }
             else
             {

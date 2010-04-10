@@ -97,6 +97,7 @@
     <Compile Include="Generated\SyncResponse.cs" />
     <Compile Include="Generated\TxnHeader.cs" />
     <Compile Include="Generated\WatcherEvent.cs" />
+    <Compile Include="IClientConnection.cs" />
     <Compile Include="Ids.cs" />
     <Compile Include="IStartable.cs" />
     <Compile Include="Jute\BinaryInputArchive.cs" />
@@ -124,13 +125,11 @@
     <Compile Include="WatchedEvent.cs" />
     <Compile Include="IWatcher.cs" />
     <Compile Include="ZKWatchManager.cs" />
-    <Compile Include="ZooDefs.cs" />
     <Compile Include="ZooKeeper.cs" />
     <Compile Include="ZooKeeperBinaryReader.cs" />
     <Compile Include="ZooKeeperBinaryWriter.cs" />
     <Compile Include="ZooKeeperEnvironment.cs" />
     <Compile Include="ZooKeeperEx.cs" />
-    <Compile Include="ZooThreadPool.cs" />
     <Compile Include="ZooTrace.cs" />
   </ItemGroup>
   <ItemGroup>

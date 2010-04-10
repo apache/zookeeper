@@ -1,5 +1,3 @@
-using System;
-
 namespace MiscUtil.Conversion
 {
 	/// <summary>
@@ -8,8 +6,6 @@ namespace MiscUtil.Conversion
 	/// </summary>
 	public sealed class BigEndianBitConverter : EndianBitConverter
 	{
-        public static readonly BigEndianBitConverter INSTANCE = new BigEndianBitConverter();
-
 		/// <summary>
 		/// Indicates the byte order ("endianess") in which data is converted using this class.
 		/// </summary>

@@ -3,6 +3,7 @@
     using System;
     using System.IO;
     using System.Text;
+    using System.Threading;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
 
@@ -63,6 +64,12 @@
                 }
             }
             this.watchRegistration = watchRegistration;
+            WaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
+        }
+
+        internal EventWaitHandle WaitHandle
+        { 
+            get; private set;
         }
 
         public override String ToString()
