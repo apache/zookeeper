@@ -1,4 +1,7 @@
 build
+out
+.idea
+.revision
 src/c/generated
 src/java/.idea
 src/java/out
