@@ -74,6 +74,8 @@
 
         public void WriteRecord(IRecord r, string tag)
         {
+            if (r == null) return;
+
             r.Serialize(this, tag);
         }
 
