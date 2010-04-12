@@ -6,6 +6,10 @@ BUGFIXES:
   ZOOKEEPER-735. cppunit test testipv6 assumes that the machine is ipv6
   enabled. (mahadev)
 
+  ZOOKEEPER-720. Use zookeeper-{version}-sources.jar instead of
+  zookeeper-{version}-src.jar to publish sources in the Maven repository
+  (paolo via phunt)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:

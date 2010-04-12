@@ -511,10 +511,10 @@
     </target>
 
 	<!-- ====================================================== -->
-    <!-- Make zookeeper-src.jar                                 -->
+    <!-- Make zookeeper-sources.jar                                 -->
     <!-- ====================================================== -->
     <target name="src-jar" depends="build-generated">
-        <jar jarfile="${build.dir}/${final.name}-src.jar">
+        <jar jarfile="${build.dir}/${final.name}-sources.jar">
             <fileset file="LICENSE.txt" />
             <fileset dir="${java.src.dir}"/>
             <fileset dir="${src_generated.dir}" excludes="**/.generated"/>
@@ -583,7 +583,7 @@
       <copy todir="${dist.dir}"> 
         <fileset file="${build.dir}/${final.name}.jar"/>
         <fileset file="${build.dir}/${final.name}-bin.jar"/>
-        <fileset file="${build.dir}/${final.name}-src.jar"/>
+        <fileset file="${build.dir}/${final.name}-sources.jar"/>
         <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
       </copy>
       
@@ -591,8 +591,8 @@
       <checksum file="${dist.dir}/${final.name}.jar" algorithm="sha1"/>
       <checksum file="${dist.dir}/${final.name}-bin.jar" algorithm="md5"/>
       <checksum file="${dist.dir}/${final.name}-bin.jar" algorithm="sha1"/>
-      <checksum file="${dist.dir}/${final.name}-src.jar" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}-src.jar" algorithm="sha1"/>
+      <checksum file="${dist.dir}/${final.name}-sources.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}-sources.jar" algorithm="sha1"/>
       <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
       <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
