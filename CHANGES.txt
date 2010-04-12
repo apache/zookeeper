@@ -15,6 +15,9 @@ BUGFIXES:
   zookeeper-{version}-src.jar to publish sources in the Maven repository
   (paolo via phunt)
 
+  ZOOKEEPER-722. zkServer.sh uses sh's builtin echo on BSD, behaves
+  incorrectly. (Ivan Kelly via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
