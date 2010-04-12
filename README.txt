@@ -21,12 +21,12 @@ zookeeper-<version>.jar         - legacy jar file which contains all classes
                                   a result
 
 zookeeper-<version>-bin.jar     - contains only class (*.class) files
-zookeeper-<version>-src.jar     - contains only src (*.java) files
+zookeeper-<version>-sources.jar - contains only src (*.java) files
 zookeeper-<version>-javadoc.jar - contains only javadoc files
 
-The bin/src/javadoc jars were added specifically to support Maven/Ivy which have the
-ability to pull these down automatically as part of your build process. The content
-of the legacy jar and the bin+src jar are the same.
+The bin/src/javadoc jars were added specifically to support Maven/Ivy which have 
+the ability to pull these down automatically as part of your build process. 
+The content of the legacy jar and the bin+sources jar are the same.
 
-As of version 3.3.0 bin/src/javadoc jars are deployed to the Apache Maven repository.
-  http://people.apache.org/repo/m2-ibiblio-rsync-repository/
+As of version 3.3.0 bin/sources/javadoc jars are deployed to the Apache Maven 
+repository: http://people.apache.org/repo/m2-ibiblio-rsync-repository/
