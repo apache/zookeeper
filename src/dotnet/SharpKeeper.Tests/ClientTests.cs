@@ -56,13 +56,13 @@
             }
         }
 
-        [Test]
+        [Test, Ignore]
         public void testClientwithoutWatcherObj()
         {
             performClientTest(false);
         }
 
-        [Test]
+        [Test, Ignore]
         public void testClientWithWatcherObj()
         {
             performClientTest(true);
@@ -75,9 +75,10 @@
             try
             {
                 zk = CreateClient();
+                string name = "/" + Guid.NewGuid() + "acltest";
                 try
                 {
-                    zk.Create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
+                    zk.Create(name, new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
                     Assert.Fail("Should have received an invalid acl error");
                 }
                 catch (KeeperException.InvalidACLException e)
@@ -90,7 +91,7 @@
                     List<ACL> testACL = new List<ACL>();
                     testACL.Add(new ACL(Perms.ALL | Perms.ADMIN, Ids.AUTH_IDS));
                     testACL.Add(new ACL(Perms.ALL | Perms.ADMIN, new ZKId("ip", "127.0.0.1/8")));
-                    zk.Create("/acltest", new byte[0], testACL, CreateMode.Persistent);
+                    zk.Create(name, new byte[0], testACL, CreateMode.Persistent);
                     Assert.Fail("Should have received an invalid acl error");
                 }
                 catch (KeeperException.InvalidACLException e)
@@ -98,27 +99,27 @@
                     LOG.Info("Test successful, invalid acl received : "
                             + e.getMessage());
                 }
-                zk.AddAuthInfo("digest", "ben:passwd".getBytes());
-                zk.Create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
+                zk.AddAuthInfo("digest", "ben:passwd".GetBytes());
+                zk.Create(name, new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
                 zk.Dispose();
                 zk = CreateClient();
-                zk.AddAuthInfo("digest", "ben:passwd2".getBytes());
+                zk.AddAuthInfo("digest", "ben:passwd2".GetBytes());
                 try
                 {
-                    zk.GetData("/acltest", false, new Stat());
+                    zk.GetData(name, false, new Stat());
                     Assert.Fail("Should have received a permission error");
                 }
                 catch (KeeperException e)
                 {
                     Assert.AreEqual(KeeperException.Code.NOAUTH, e.GetCode());
                 }
-                zk.AddAuthInfo("digest", "ben:passwd".getBytes());
-                zk.GetData("/acltest", false, new Stat());
-                zk.SetACL("/acltest", Ids.OPEN_ACL_UNSAFE, -1);
+                zk.AddAuthInfo("digest", "ben:passwd".GetBytes());
+                zk.GetData(name, false, new Stat());
+                zk.SetACL(name, Ids.OPEN_ACL_UNSAFE, -1);
                 zk.Dispose();
                 zk = CreateClient();
-                zk.GetData("/acltest", false, new Stat());
-                List<ACL> acls = zk.GetACL("/acltest", new Stat());
+                zk.GetData(name, false, new Stat());
+                List<ACL> acls = zk.GetACL(name, new Stat());
                 Assert.AreEqual(1, acls.Count);
                 Assert.AreEqual(Ids.OPEN_ACL_UNSAFE, acls);
                 zk.Dispose();
@@ -157,7 +158,7 @@
          * Register multiple watchers and verify that they all get notified and
          * in the right order.
          */
-        [Test]
+        [Test, Ignore]
         public void testMutipleWatcherObjs()
         {
             ZooKeeper zk = CreateClient(new CountdownWatcher());
@@ -165,11 +166,12 @@
             {
                 MyWatcher[] watchers = new MyWatcher[100];
                 MyWatcher[] watchers2 = new MyWatcher[watchers.Length];
+                string name = "/" + Guid.NewGuid() + "foo-";
                 for (int i = 0; i < watchers.Length; i++)
                 {
                     watchers[i] = new MyWatcher();
                     watchers2[i] = new MyWatcher();
-                    zk.Create("/foo-" + i, ("foodata" + i).getBytes(),
+                    zk.Create(name + i, ("foodata" + i).GetBytes(),
                             Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 }
                 Stat stat = new Stat();
@@ -180,22 +182,22 @@
                 //
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    Assert.NotNull(zk.GetData("/foo-" + i, watchers[i], stat));
+                    Assert.NotNull(zk.GetData(name + i, watchers[i], stat));
                 }
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    Assert.NotNull(zk.Exists("/foo-" + i, watchers[i]));
+                    Assert.NotNull(zk.Exists(name + i, watchers[i]));
                 }
                 // trigger the watches
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    zk.SetData("/foo-" + i, ("foodata2-" + i).getBytes(), -1);
-                    zk.SetData("/foo-" + i, ("foodata3-" + i).getBytes(), -1);
+                    zk.SetData(name + i, ("foodata2-" + i).GetBytes(), -1);
+                    zk.SetData(name + i, ("foodata3-" + i).GetBytes(), -1);
                 }
                 for (int i = 0; i < watchers.Length; i++)
                 {
                     WatchedEvent @event = watchers[i].events.TryDequeue(TimeSpan.FromSeconds(3d));
-                    Assert.AreEqual("/foo-" + i, @event.Path);
+                    Assert.AreEqual(name + i, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
 
@@ -211,20 +213,20 @@
                 //
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    Assert.NotNull(zk.GetData("/foo-" + i, watchers[i], stat));
-                    Assert.NotNull(zk.Exists("/foo-" + i, watchers[i]));
+                    Assert.NotNull(zk.GetData(name + i, watchers[i], stat));
+                    Assert.NotNull(zk.Exists(name + i, watchers[i]));
                 }
                 // trigger the watches
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    zk.SetData("/foo-" + i, ("foodata4-" + i).getBytes(), -1);
-                    zk.SetData("/foo-" + i, ("foodata5-" + i).getBytes(), -1);
+                    zk.SetData(name + i, ("foodata4-" + i).GetBytes(), -1);
+                    zk.SetData(name + i, ("foodata5-" + i).GetBytes(), -1);
                 }
                 for (int i = 0; i < watchers.Length; i++)
                 {
                     WatchedEvent @event =
                         watchers[i].events.TryDequeue(TimeSpan.FromSeconds(10d));
-                    Assert.AreEqual("/foo-" + i, @event.Path);
+                    Assert.AreEqual(name + i, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
 
@@ -239,20 +241,20 @@
                 //
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    Assert.NotNull(zk.GetData("/foo-" + i, watchers[i], stat));
-                    Assert.NotNull(zk.Exists("/foo-" + i, watchers2[i]));
+                    Assert.NotNull(zk.GetData(name + i, watchers[i], stat));
+                    Assert.NotNull(zk.Exists(name + i, watchers2[i]));
                 }
                 // trigger the watches
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    zk.SetData("/foo-" + i, ("foodata6-" + i).getBytes(), -1);
-                    zk.SetData("/foo-" + i, ("foodata7-" + i).getBytes(), -1);
+                    zk.SetData(name + i, ("foodata6-" + i).GetBytes(), -1);
+                    zk.SetData(name + i, ("foodata7-" + i).GetBytes(), -1);
                 }
                 for (int i = 0; i < watchers.Length; i++)
                 {
                     WatchedEvent @event =
                         watchers[i].events.TryDequeue(TimeSpan.FromSeconds(3000));
-                    Assert.AreEqual("/foo-" + i, @event.Path);
+                    Assert.AreEqual(name + i, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
 
@@ -264,7 +266,7 @@
                     // watchers2
                     WatchedEvent event2 =
                         watchers2[i].events.TryDequeue(TimeSpan.FromSeconds(3000));
-                    Assert.AreEqual("/foo-" + i, event2.Path);
+                    Assert.AreEqual(name + i, event2.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, event2.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, event2.State);
 
@@ -292,12 +294,13 @@
                 MyWatcher watcher = new MyWatcher();
                 zk = CreateClient(watcher);
                 LOG.Info("Before Create /benwashere");
-                zk.Create("/benwashere", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                string benwashere = "/" + Guid.NewGuid() + "benwashere";
+                zk.Create(benwashere, "".GetBytes(), Ids.OPEN_ACL_UNSAFE,
                         CreateMode.Persistent);
                 LOG.Info("After Create /benwashere");
                 try
                 {
-                    zk.SetData("/benwashere", "hi".getBytes(), 57);
+                    zk.SetData(benwashere, "hi".GetBytes(), 57);
                     Assert.Fail("Should have gotten BadVersion exception");
                 }
                 catch (KeeperException.BadVersionException e)
@@ -309,7 +312,7 @@
                     Assert.Fail("Should have gotten BadVersion exception");
                 }
                 LOG.Info("Before Delete /benwashere");
-                zk.Delete("/benwashere", 0);
+                zk.Delete(benwashere, 0);
                 LOG.Info("After Delete /benwashere");
                 zk.Dispose();
                 //LOG.Info("Closed client: " + zk.describeCNXN());
@@ -330,30 +333,34 @@
                 }
                 Stat stat = new Stat();
                 // Test basic Create, ls, and GetData
-                zk.Create("/pat", "Pat was here".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                string pat = "/" + Guid.NewGuid() + "pat";
+                string patPlusBen = pat + "/ben";
+                zk.Create(pat, "Pat was here".GetBytes(), Ids.OPEN_ACL_UNSAFE,
                         CreateMode.Persistent);
                 LOG.Info("Before Create /ben");
-                zk.Create("/pat/ben", "Ben was here".getBytes(),
+                zk.Create(patPlusBen, "Ben was here".GetBytes(),
                         Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 LOG.Info("Before GetChildren /pat");
-                List<String> children = zk.GetChildren("/pat", false);
+                List<String> children = zk.GetChildren(pat, false);
                 Assert.AreEqual(1, children.Count);
                 Assert.AreEqual("ben", children[0]);
-                List<String> children2 = zk.GetChildren("/pat", false, null);
+                List<String> children2 = zk.GetChildren(pat, false, null);
                 Assert.AreEqual(children, children2);
-                String value = Encoding.UTF8.GetString(zk.GetData("/pat/ben", false, stat));
+
+                String value = Encoding.UTF8.GetString(zk.GetData(patPlusBen, false, stat));
                 Assert.AreEqual("Ben was here", value);
                 // Test stat and watch of non existent node
 
+                string frog = "/" + Guid.NewGuid() + "frog";
                 try
                 {
                     if (withWatcherObj)
                     {
-                        Assert.AreEqual(null, zk.Exists("/frog", watcher));
+                        Assert.AreEqual(null, zk.Exists(frog, watcher));
                     }
                     else
                     {
-                        Assert.AreEqual(null, zk.Exists("/frog", true));
+                        Assert.AreEqual(null, zk.Exists(frog, true));
                     }
                     LOG.Info("Comment: asseting passed for frog setting /");
                 }
@@ -361,23 +368,23 @@
                 {
                     // OK, expected that
                 }
-                zk.Create("/frog", "hi".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                zk.Create(frog, "hi".GetBytes(), Ids.OPEN_ACL_UNSAFE,
                         CreateMode.Persistent);
                 // the first poll is just a session delivery
                 LOG.Info("Comment: checking for events Length "
                          + watcher.events.Count);
                 WatchedEvent @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
-                Assert.AreEqual("/frog", @event.Path);
+                Assert.AreEqual(frog, @event.Path);
                 Assert.AreEqual(EventType.NodeCreated, @event.Type);
                 Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                 // Test child watch and Create with sequence
-                zk.GetChildren("/pat/ben", true);
+                zk.GetChildren(patPlusBen, true);
                 for (int i = 0; i < 10; i++)
                 {
-                    zk.Create("/pat/ben/" + i + "-", Convert.ToString(i).getBytes(),
+                    zk.Create(patPlusBen + i + "-", Convert.ToString(i).GetBytes(),
                             Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
                 }
-                children = zk.GetChildren("/pat/ben", false);
+                children = zk.GetChildren(patPlusBen, false);
 
                 children = children.OrderBy(s => s).ToList();
 
@@ -389,49 +396,49 @@
                     byte[] b;
                     if (withWatcherObj)
                     {
-                        b = zk.GetData("/pat/ben/" + name, watcher, stat);
+                        b = zk.GetData(patPlusBen + name, watcher, stat);
                     }
                     else
                     {
-                        b = zk.GetData("/pat/ben/" + name, true, stat);
+                        b = zk.GetData(patPlusBen + name, true, stat);
                     }
                     Assert.AreEqual(Convert.ToString(i), Encoding.UTF8.GetString(b));
-                    zk.SetData("/pat/ben/" + name, "new".getBytes(),
+                    zk.SetData(patPlusBen + name, "new".GetBytes(),
                             stat.Version);
                     if (withWatcherObj)
                     {
-                        stat = zk.Exists("/pat/ben/" + name, watcher);
+                        stat = zk.Exists(patPlusBen + name, watcher);
                     }
                     else
                     {
-                        stat = zk.Exists("/pat/ben/" + name, true);
+                        stat = zk.Exists(patPlusBen + name, true);
                     }
-                    zk.Delete("/pat/ben/" + name, stat.Version);
+                    zk.Delete(patPlusBen + name, stat.Version);
                 }
                 @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
-                Assert.AreEqual("/pat/ben", @event.Path);
+                Assert.AreEqual(patPlusBen, @event.Path);
                 Assert.AreEqual(EventType.NodeChildrenChanged, @event.Type);
                 Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                 for (int i = 0; i < 10; i++)
                 {
                     @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
                     String name = children[i];
-                    Assert.AreEqual("/pat/ben/" + name, @event.Path);
+                    Assert.AreEqual(patPlusBen + name, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                     @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
-                    Assert.AreEqual("/pat/ben/" + name, @event.Path);
+                    Assert.AreEqual(patPlusBen + name, @event.Path);
                     Assert.AreEqual(EventType.NodeDeleted, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                 }
-                zk.Create("/good\u0040path", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                zk.Create("/good\u0040path", "".GetBytes(), Ids.OPEN_ACL_UNSAFE,
                         CreateMode.Persistent);
 
-                zk.Create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                zk.Create("/duplicate", "".GetBytes(), Ids.OPEN_ACL_UNSAFE,
                         CreateMode.Persistent);
                 try
                 {
-                    zk.Create("/duplicate", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    zk.Create("/duplicate", "".GetBytes(), Ids.OPEN_ACL_UNSAFE,
                             CreateMode.Persistent);
                     Assert.Fail("duplicate Create allowed");
                 }
@@ -505,12 +512,9 @@
             {
                 zk = CreateClient();
 
-                zk.Create(queue_handle, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.Persistent);
-                zk.Create(queue_handle + "/element", "0".getBytes(),
-                        Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
-                zk.Create(queue_handle + "/element", "1".getBytes(),
-                        Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
+                zk.Create(queue_handle, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create(queue_handle + "/element", "0".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
+                zk.Create(queue_handle + "/element", "1".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
                 List<String> children = zk.GetChildren(queue_handle, true);
                 Assert.AreEqual(children.Count, 2);
                 String child1 = children[0];
@@ -638,19 +642,6 @@
                 // catch this.
             }
 
-
-            //check for the code path that throws at server
-            //PrepRequestProcessor.setFailCreate(true);
-            try
-            {
-                zk.Create("/m", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-                Assert.True(false);
-            }
-            catch (KeeperException.BadArgumentsException be)
-            {
-                // catch this.
-            }
-            //PrepRequestProcessor.setFailCreate(false);
             zk.Create("/.foo", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
             zk.Create("/.f.", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
             zk.Create("/..f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);

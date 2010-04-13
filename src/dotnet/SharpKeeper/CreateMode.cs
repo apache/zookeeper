@@ -3,9 +3,9 @@
     public class CreateMode
     {
         public static CreateMode Persistent = new CreateMode(0, false, false);
-        public static CreateMode PersistentSequential = new CreateMode(0, false, false);
-        public static CreateMode Ephemeral = new CreateMode(0, false, false);
-        public static CreateMode EphemeralSequential = new CreateMode(0, false, false);
+        public static CreateMode PersistentSequential = new CreateMode(2, false, true);
+        public static CreateMode Ephemeral = new CreateMode(1, true, false);
+        public static CreateMode EphemeralSequential = new CreateMode(3, true, true);
 
         private readonly int flag;
         private readonly bool ephemeral;

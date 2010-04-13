@@ -26,7 +26,7 @@ namespace SharpKeeper
             return collection.Count < 1;
         }
 
-        public static byte[] getBytes(this string @string)
+        public static byte[] GetBytes(this string @string)
         {
             return Encoding.UTF8.GetBytes(@string);
         }

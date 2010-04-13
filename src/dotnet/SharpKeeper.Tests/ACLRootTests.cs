@@ -1,5 +1,6 @@
 ﻿namespace SharpKeeper.Tests
 {
+    using System;
     using System.Text;
     using NUnit.Framework;
 
@@ -27,9 +28,10 @@
             {
                 // expected
             }
+            string path = "/" + Guid.NewGuid() + "apps";
             try
             {
-                zk.Create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
+                zk.Create(path, null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
                 Assert.Fail("validate auth");
             }
             catch (KeeperException.InvalidACLException e)
@@ -39,7 +41,7 @@
             zk.AddAuthInfo("digest", Encoding.UTF8.GetBytes("world:anyone"));
             try
             {
-                zk.Create("/apps", null, Ids.CREATOR_ALL_ACL,
+                zk.Create(path, null, Ids.CREATOR_ALL_ACL,
                           CreateMode.Persistent);
                 Assert.Fail("validate auth");
             }
@@ -52,29 +54,29 @@
             zk = CreateClient();
             zk.AddAuthInfo("digest", Encoding.UTF8.GetBytes("pat:test"));
             zk.GetData("/", false, null);
-            zk.Create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
-            zk.Delete("/apps", -1);
+            zk.Create(path, null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
+            zk.Delete(path, -1);
             // reset acl (back to open) and verify accessible again
             zk.SetACL("/", Ids.OPEN_ACL_UNSAFE, -1);
             zk.Dispose();
             zk = CreateClient();
             zk.GetData("/", false, null);
-            zk.Create("/apps", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+            zk.Create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
             try
             {
-                zk.Create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
+                zk.Create(path, null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
                 Assert.Fail("validate auth");
             }
             catch (KeeperException.InvalidACLException e)
             {
                 // expected
             }
-            zk.Delete("/apps", -1);
+            zk.Delete(path, -1);
             zk.AddAuthInfo("digest", Encoding.UTF8.GetBytes("world:anyone"));
-            zk.Create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
+            zk.Create(path, null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
             zk.Dispose();
             zk = CreateClient();
-            zk.Delete("/apps", -1);
+            zk.Delete(path, -1);
         }
     }
 }
