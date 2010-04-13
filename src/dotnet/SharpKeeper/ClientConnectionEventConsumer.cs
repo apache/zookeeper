@@ -13,7 +13,7 @@
         private readonly Thread eventThread;
         static readonly object eventOfDeath = new object();
 
-        private object locker = new object();
+        private readonly object locker = new object();
         internal readonly Queue<object> waitingEvents = new Queue<object>();
 
         /** This is really the queued session state until the event
@@ -189,7 +189,7 @@
                 LOG.Error("Event thread exiting due to interruption", e);
             }
 
-            LOG.info("EventThread shut down");
+            LOG.Info("EventThread shut down");
         }
 
         public void QueueEvent(WatchedEvent @event)
@@ -226,7 +226,7 @@
         public void Dispose()
         {
             QueueEventOfDeath();
-            eventThread.Join();
+            eventThread.Join(1000);
         }
     }
 }

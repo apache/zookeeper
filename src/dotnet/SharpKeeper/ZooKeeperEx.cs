@@ -3,6 +3,8 @@
 namespace SharpKeeper
 {
     using System;
+    using System.Text;
+    using System.Threading;
 
     public static class ZooKeeperEx
     {
@@ -22,6 +24,55 @@ namespace SharpKeeper
         public static bool IsEmpty<T>(this ICollection<T> collection)
         {
             return collection.Count < 1;
+        }
+
+        public static byte[] getBytes(this string @string)
+        {
+            return Encoding.UTF8.GetBytes(@string);
+        }
+
+        public static IDisposable AcquireReadLock(this ReaderWriterLockSlim @lock)
+        {
+            @lock.EnterReadLock();
+            return new Disposable(@lock.ExitReadLock);
+        }
+
+        public static IDisposable AcquireUpgradableReadLock(this ReaderWriterLockSlim @lock)
+        {
+            @lock.EnterUpgradeableReadLock();
+            return new Disposable(@lock.ExitUpgradeableReadLock);
+        }
+
+        public static IDisposable AcquireWriteLock(this ReaderWriterLockSlim @lock)
+        {
+            @lock.EnterWriteLock();
+            return new Disposable(@lock.ExitWriteLock);
+        }
+
+        private struct Disposable : IDisposable
+        {
+            private readonly Action action;
+            private readonly Sentinel sentinel;
+
+            public Disposable(Action action)
+            {
+                this.action = action;
+                sentinel = new Sentinel();
+            }
+
+            public void Dispose()
+            {
+                action();
+                GC.SuppressFinalize(sentinel);
+            }
+        }
+
+        private class Sentinel
+        {
+            ~Sentinel()
+            {
+                throw new InvalidOperationException("Lock not properly disposed.");
+            }
         }
     }
 }

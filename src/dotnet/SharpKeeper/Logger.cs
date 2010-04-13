@@ -31,7 +31,7 @@
             Print(msg, exception);
         }
 
-        public void info(string msg)
+        public void Info(string msg)
         {
             Print(msg);
         }

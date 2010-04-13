@@ -119,7 +119,7 @@ namespace SharpKeeper.Tests
         public void Can_create_random_node()
         {
             //using (var zk = new ZooKeeper("192.168.0.180:2181", new TimeSpan(0, 0, 0, 120), this))
-            using (var zk = GetClient())
+            using (var zk = CreateClient())
             {
                 var node = Guid.NewGuid();
                 string path = "/" + node;

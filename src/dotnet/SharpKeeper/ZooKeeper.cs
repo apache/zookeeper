@@ -296,7 +296,7 @@
         /// </param>
         public ZooKeeper(string connectstring, TimeSpan sessionTimeout, IWatcher watcher)
         {
-            LOG.info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2}", connectstring, sessionTimeout, watcher));
+            LOG.Info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2}", connectstring, sessionTimeout, watcher));
 
             watchManager.defaultWatcher = watcher;
             cnxn = new ClientConnection(connectstring, sessionTimeout, this, watchManager);
@@ -305,7 +305,7 @@
 
         public ZooKeeper(string connectstring, TimeSpan sessionTimeout, IWatcher watcher, long sessionId, byte[] sessionPasswd)
         {
-            LOG.info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2} sessionId={3} sessionPasswd={4}", connectstring, sessionTimeout, watcher, sessionId, (sessionPasswd == null ? "<null>" : "<hidden>")));
+            LOG.Info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2} sessionId={3} sessionPasswd={4}", connectstring, sessionTimeout, watcher, sessionId, (sessionPasswd == null ? "<null>" : "<hidden>")));
 
             watchManager.defaultWatcher = watcher;
             cnxn = new ClientConnection(connectstring, sessionTimeout, this, watchManager, sessionId, sessionPasswd);
@@ -429,7 +429,7 @@
                 }
             }
 
-            LOG.info(string.Format("Session: 0x{0:X} closed", SessionId));
+            LOG.Info(string.Format("Session: 0x{0:X} closed", SessionId));
         }
 
         /// <summary>
@@ -1090,6 +1090,11 @@
                 throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
             return response.Children;
+        }
+
+        public List<string> GetChildren(string path, bool watch)
+        {
+            return GetChildren(path, watch ? watchManager.defaultWatcher : null);
         }
 
         /// <summary>

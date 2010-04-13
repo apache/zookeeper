@@ -188,7 +188,7 @@
         {
             ReplyHeader r = new ReplyHeader();
             Packet p = QueuePacket(h, r, request, response, null, null, watchRegistration, null, null);
-            p.WaitHandle.WaitOne();
+            if (!p.WaitHandle.WaitOne(SessionTimeout)) throw new TimeoutException(string.Format("The request {0} timed out while waiting for a resposne from the server.", request));
             return r;
         }
 

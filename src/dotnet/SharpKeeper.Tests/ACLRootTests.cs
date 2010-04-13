@@ -9,7 +9,7 @@
         [Test]
         public void RootAcl()
         {
-            ZooKeeper zk = GetClient();
+            ZooKeeper zk = CreateClient();
             // set auth using digest
             zk.AddAuthInfo("digest", Encoding.UTF8.GetBytes("pat:test"));
             zk.SetACL("/", Ids.CREATOR_ALL_ACL, -1);
@@ -17,7 +17,7 @@
             zk.Dispose();
 
             // verify no access
-            zk = GetClient();
+            zk = CreateClient();
             try
             {
                 zk.GetData("/", false, null);
@@ -49,7 +49,7 @@
             }
             zk.Dispose();
             // verify access using original auth
-            zk = GetClient();
+            zk = CreateClient();
             zk.AddAuthInfo("digest", Encoding.UTF8.GetBytes("pat:test"));
             zk.GetData("/", false, null);
             zk.Create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
@@ -57,7 +57,7 @@
             // reset acl (back to open) and verify accessible again
             zk.SetACL("/", Ids.OPEN_ACL_UNSAFE, -1);
             zk.Dispose();
-            zk = GetClient();
+            zk = CreateClient();
             zk.GetData("/", false, null);
             zk.Create("/apps", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
             try
@@ -73,7 +73,7 @@
             zk.AddAuthInfo("digest", Encoding.UTF8.GetBytes("world:anyone"));
             zk.Create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
             zk.Dispose();
-            zk = GetClient();
+            zk = CreateClient();
             zk.Delete("/apps", -1);
         }
     }

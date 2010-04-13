@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BlockingQueue.cs" />
     <Compile Include="ClientConnection.cs" />
     <Compile Include="ClientWatchManager.cs" />
     <Compile Include="CreateMode.cs" />
