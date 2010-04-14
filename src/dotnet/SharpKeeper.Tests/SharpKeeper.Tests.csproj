@@ -58,8 +58,10 @@
     <Compile Include="ChrootTests.cs" />
     <Compile Include="ClientTests.cs" />
     <Compile Include="GetChildren2Tests.cs" />
+    <Compile Include="NullDataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StatTests.cs" />
+    <Compile Include="WatcherFuncTests.cs" />
     <Compile Include="ZooKeeperIntegrationTests.cs" />
   </ItemGroup>
   <ItemGroup>

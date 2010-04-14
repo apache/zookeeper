@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.Threading;
-    using Org.Apache.Zookeeper.Proto;
 
     public class ClientConnectionEventConsumer : IStartable, IDisposable
     {
@@ -68,115 +67,6 @@
                                 }
                             }
                         }
-                        else
-                        {
-                            Packet p = (Packet) @event;
-                            int rc = 0;
-                            String clientPath = p.clientPath;
-                            if (p.replyHeader.Err != 0)
-                            {
-                                rc = p.replyHeader.Err;
-                            }
-
-                            if (p.cb == null) return;
-
-                            if (p.response is ExistsResponse || p.response is SetDataResponse ||
-                                p.response is SetACLResponse)
-                            {
-                                StatCallback cb = (StatCallback) p.cb;
-                                StatEventArgs args = new StatEventArgs {ReturnCode = rc, Path = clientPath};
-                                if (rc == 0)
-                                {
-                                    if (p.response is ExistsResponse)
-                                    {
-                                        var exists = ((ExistsResponse) p.response);
-                                        args.Stat = exists.Stat;
-                                    }
-                                    else if (p.response is SetDataResponse)
-                                    {
-                                        var response = ((SetDataResponse) p.response);
-                                        args.Stat = response.Stat;
-                                    }
-                                    else if (p.response is SetACLResponse)
-                                    {
-                                        var response = ((SetACLResponse) p.response);
-                                        args.Stat = response.Stat;
-                                    }
-                                }
-
-                                cb(p.ctx, args);
-                            }
-                            else if (p.response is GetDataResponse)
-                            {
-                                DataCallback cb = (DataCallback) p.cb;
-                                GetDataResponse rsp = (GetDataResponse) p.response;
-                                DataEventArgs args = new DataEventArgs {ReturnCode = rc, Path = clientPath};
-                                if (rc == 0)
-                                {
-                                    args.Data = rsp.Data;
-                                    args.Stat = rsp.Stat;
-                                }
-                                cb(p.ctx, args);
-                            }
-                            else if (p.response is GetACLResponse)
-                            {
-                                ACLCallback cb = (ACLCallback) p.cb;
-                                GetACLResponse rsp = (GetACLResponse) p.response;
-                                AclEventArgs args = new AclEventArgs {ReturnCode = rc, Path = clientPath};
-                                if (rc == 0)
-                                {
-                                    args.Acl = rsp.Acl;
-                                    args.Stat = rsp.Stat;
-                                }
-
-                                cb(p.ctx, args);
-                            }
-                            else if (p.response is GetChildrenResponse)
-                            {
-                                ChildrenCallback cb = (ChildrenCallback) p.cb;
-                                GetChildrenResponse rsp = (GetChildrenResponse) p.response;
-                                ChildrenEventArgs args = new ChildrenEventArgs {ReturnCode = rc, Path = clientPath};
-                                if (rc == 0)
-                                {
-                                    args.Children = rsp.Children;
-                                }
-
-                                cb(p.ctx, args);
-                            }
-                            else if (p.response is GetChildren2Response)
-                            {
-                                ChildrenCallback cb = (ChildrenCallback) p.cb;
-                                GetChildren2Response rsp = (GetChildren2Response) p.response;
-                                ChildrenEventArgs args = new ChildrenEventArgs {ReturnCode = rc, Path = clientPath};
-                                if (rc == 0)
-                                {
-                                    args.Children = rsp.Children;
-                                    args.Stat = rsp.Stat;
-                                }
-
-                                cb(p.ctx, args);
-                            }
-                            else if (p.response is CreateResponse)
-                            {
-                                StringCallback cb = (StringCallback) p.cb;
-                                CreateResponse rsp = (CreateResponse) p.response;
-                                StringEventArgs args = new StringEventArgs();
-                                if (rc == 0)
-                                {
-                                    args.Name = conn.ChrootPath == null
-                                                    ? rsp.Path
-                                                    : rsp.Path.Substring(conn.ChrootPath.Length);
-                                }
-
-                                cb(p.ctx, args);
-                            }
-                            else if (p.cb is VoidCallback)
-                            {
-                                VoidCallback cb = (VoidCallback) p.cb;
-                                ZooKeeperEventArgs args = new ZooKeeperEventArgs() {ReturnCode = rc, Path = clientPath};
-                                cb(p.ctx, args);
-                            }
-                        }
                     }
                     catch (Exception t)
                     {
@@ -202,11 +92,6 @@
             var pair = new ClientConnection.WatcherSetEventPair(conn.watcher.Materialize(@event.State, @event.Type,@event.Path), @event);
             // queue the pair (watch set & event) for later processing
             AppendToQueue(pair);
-        }
-
-        public void QueuePacket(Packet packet)
-        {
-            AppendToQueue(packet);
         }
 
         private void QueueEventOfDeath()

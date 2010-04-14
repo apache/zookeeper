@@ -7,44 +7,6 @@
     using Org.Apache.Zookeeper.Data;
     using Org.Apache.Zookeeper.Proto;
 
-    public delegate void StatCallback(object ctx, StatEventArgs args);
-    public delegate void DataCallback(object ctx, DataEventArgs args);
-    public delegate void ACLCallback(object ctx, AclEventArgs args);
-    public delegate void ChildrenCallback(object ctx, ChildrenEventArgs args);
-    public delegate void StringCallback(object ctx, StringEventArgs args);
-    public delegate void VoidCallback(object ctx, ZooKeeperEventArgs args);
-
-    public class ZooKeeperEventArgs : EventArgs
-    {
-        public int ReturnCode { get; set; }
-        public string Path { get; set; }
-    }
-
-    public class StatEventArgs : ZooKeeperEventArgs
-    {
-        public Stat Stat { get; set; }
-    }
-
-    public class DataEventArgs : StatEventArgs
-    {
-        public byte[] Data { get; set; }
-    }
-
-    public class AclEventArgs : StatEventArgs
-    {
-        public List<ACL> Acl { get; set; }
-    }
-
-    public class ChildrenEventArgs : StatEventArgs
-    {
-        public List<string> Children { get; set; }
-    }
-
-    public class StringEventArgs : ZooKeeperEventArgs
-    {
-        public string Name { get; set; }
-    }
-
     public class ZooKeeper : IDisposable
     {
         private static readonly Logger LOG;
@@ -245,16 +207,6 @@
 
         protected volatile States state;
         protected IClientConnection cnxn;
-
-        public event StringCallback OnCreate;
-        public event VoidCallback OnDelete;
-        public event StatCallback OnExists;
-        public event DataCallback OnGetData;
-        public event StatCallback OnSetData;
-        public event ACLCallback OnGetAcl;
-        public event ACLCallback OnSetAcl;
-        public event ChildrenCallback OnGetChildren;
-        public event VoidCallback OnSync;
 
         /// <summary>
         /// To create a ZooKeeper client object, the application needs to pass a
@@ -522,35 +474,6 @@
         }
 
         /// <summary>
-        /// The Asynchronous version of create
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <param name="data">The data.</param>
-        /// <param name="acl">The acl.</param>
-        /// <param name="createMode">The create mode.</param>
-        /// <param name="ctx">The context.</param>
-        /// <returns></returns>
-        public void CreateAsync(string path, byte[] data, List<ACL> acl, CreateMode createMode, object ctx)
-        {
-            string clientPath = path;
-            PathUtils.ValidatePath(clientPath, createMode.Sequential);
-
-            string serverPath = PrependChroot(clientPath);
-
-            RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.Create;
-            CreateRequest request = new CreateRequest();
-            CreateResponse response = new CreateResponse();
-            ReplyHeader r = new ReplyHeader();
-            request.Data = data;
-            request.Flags = createMode.Flag;
-            request.Path = serverPath;
-            request.Acl = acl;
-
-            cnxn.QueuePacket(h, r, request, response, clientPath, serverPath, null, OnCreate, ctx);
-        }
-
-        /// <summary>
         /// Delete the node with the given path. The call will succeed if such a node
         /// exists, and the given version matches the node's version (if the given
         /// version is -1, it matches any node's versions).
@@ -601,35 +524,6 @@
             {
                 throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
-        }
-
-        public void DeleteAsync(string path, int version, object context)
-        {
-            string clientPath = path;
-            PathUtils.ValidatePath(clientPath);
-
-            string serverPath;
-
-            // maintain semantics even in chroot case
-            // specifically - root cannot be deleted
-            // I think this makes sense even in chroot case.
-            if (clientPath.Equals("/"))
-            {
-                // a bit of a hack, but delete(/) will never succeed and ensures
-                // that the same semantics are maintained
-                serverPath = clientPath;
-            }
-            else
-            {
-                serverPath = PrependChroot(clientPath);
-            }
-
-            RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.Delete;
-            DeleteRequest request = new DeleteRequest();
-            request.Path = serverPath;
-            request.Version = version;
-            cnxn.QueuePacket(h, new ReplyHeader(), request, null, clientPath, serverPath, null, OnDelete, context);
         }
 
         /// <summary>
@@ -697,46 +591,6 @@
         public Stat Exists(string path, bool watch)
         {
             return Exists(path, watch ? watchManager.defaultWatcher : null);
-        }
-
-        /// <summary>
-        /// The Asynchronous version of exists. The request doesn't actually until
-        /// the asynchronous callback is called.        
-        /// @see #exists(string, boolean)
-        /// </summary>
-
-        public void ExistsAsync(string path, IWatcher watcher, object context)
-        {
-            string clientPath = path;
-            PathUtils.ValidatePath(clientPath);
-
-            // the watch contains the un-chroot path
-            WatchRegistration wcb = null;
-            if (watcher != null)
-            {
-                wcb = new ExistsWatchRegistration(watchManager, watcher, clientPath);
-            }
-
-            string serverPath = PrependChroot(clientPath);
-
-            RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.Exists;
-            ExistsRequest request = new ExistsRequest();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
-            SetDataResponse response = new SetDataResponse();
-            cnxn.QueuePacket(h, new ReplyHeader(), request, response, clientPath, serverPath, wcb, OnExists, context);
-        }
-
-        /// <summary>
-        /// The Asynchronous version of exists. The request doesn't actually until
-        /// the asynchronous callback is called.
-        /// @see #exists(string, boolean)
-        /// </summary>
-        public void ExistsAsync(string path, bool watch, object context)
-        {
-            IWatcher watcher = watch ? watchManager.defaultWatcher : null;
-            ExistsAsync(path, watcher, context);
         }
 
         /// <summary>
@@ -812,45 +666,6 @@
         }
 
         /// <summary>
-        /// The Asynchronous version of getData. The request doesn't actually until
-        /// the asynchronous callback is called.
-        /// @see #getData(string, Watcher, Stat)
-        /// </summary>
-        public void GetDataAsync(string path, IWatcher watcher, object context)
-        {
-            string clientPath = path;
-            PathUtils.ValidatePath(clientPath);
-
-            // the watch contains the un-chroot path
-            WatchRegistration wcb = null;
-            if (watcher != null)
-            {
-                wcb = new DataWatchRegistration(watchManager, watcher, clientPath);
-            }
-
-            string serverPath = PrependChroot(clientPath);
-
-            RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.GetData;
-            GetDataRequest request = new GetDataRequest();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
-            GetDataResponse response = new GetDataResponse();
-            cnxn.QueuePacket(h, new ReplyHeader(), request, response, clientPath, serverPath, wcb, OnGetData, context);
-        }
-
-        /// <summary>
-        /// The Asynchronous version of getData. The request doesn't actually until
-        /// the asynchronous callback is called.         
-        /// @see #getData(string, boolean, Stat)
-        /// </summary>
-        public void GetDataAsync(string path, bool watch, object ctx)
-        {
-            var watcher = watch ? watchManager.defaultWatcher : null;
-            GetDataAsync(path, watcher, ctx);
-        }
-
-        /// <summary>
         /// Set the data for the node of the given path if such a node exists and the
         /// given version matches the version of the node (if the given version is
         /// -1, it matches any node's versions). Return the stat of the node.
@@ -900,28 +715,6 @@
         }
 
         /// <summary>
-        /// The Asynchronous version of setData. The request doesn't actually until
-        /// the asynchronous callback is called.
-        /// @see #setData(string, byte[], int)
-        /// </summary>
-        public void SetDataAsync(string path, byte[] data, int version, object ctx)
-        {
-            string clientPath = path;
-            PathUtils.ValidatePath(clientPath);
-
-            string serverPath = PrependChroot(clientPath);
-
-            RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.SetData;
-            SetDataRequest request = new SetDataRequest();
-            request.Path = serverPath;
-            request.Data = data;
-            request.Version = version;
-            SetDataResponse response = new SetDataResponse();
-            cnxn.QueuePacket(h, new ReplyHeader(), request, response, clientPath, serverPath, null, OnSetData, ctx);
-        }
-
-        /// <summary>
         /// Return the ACL and stat of the node of the given path.
         /// 
         /// A KeeperException with error code KeeperException.NoNode will be thrown
@@ -954,27 +747,6 @@
             }
             DataTree.CopyStat(response.Stat, stat);
             return response.Acl;
-        }
-
-        /// <summary>
-        /// The Asynchronous version of getACL. The request doesn't actually until
-        /// the asynchronous callback is called.
-        /// @see #getACL(string, Stat)
-         /// </summary>
-
-        public void GetACLAsync(string path, Stat stat, object ctx)
-        {
-            string clientPath = path;
-            PathUtils.ValidatePath(clientPath);
-
-            string serverPath = PrependChroot(clientPath);
-
-            RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.GetACL;
-            GetACLRequest request = new GetACLRequest();
-            request.Path = serverPath;
-            GetACLResponse response = new GetACLResponse();
-            cnxn.QueuePacket(h, new ReplyHeader(), request, response, clientPath, serverPath, null, OnGetAcl, ctx);
         }
 
         /// <summary>
@@ -1020,28 +792,6 @@
                 throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
             return response.Stat;
-        }
-
-        /// <summary>
-        /// The Asynchronous version of setACL. The request doesn't actually until
-        /// the asynchronous callback is called.
-        /// @see #setACL(string, List, int)
-        /// </summary>
-        public void SetACLAsync(string path, List<ACL> acl, int version, object ctx)
-        {
-            string clientPath = path;
-            PathUtils.ValidatePath(clientPath);
-
-            string serverPath = PrependChroot(clientPath);
-
-            RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.SetACL;
-            SetACLRequest request = new SetACLRequest();
-            request.Path = serverPath;
-            request.Acl = acl;
-            request.Version = version;
-            SetACLResponse response = new SetACLResponse();
-            cnxn.QueuePacket(h, new ReplyHeader(), request, response, clientPath, serverPath, null, OnSetAcl, ctx);
         }
 
         /// <summary>
@@ -1179,71 +929,6 @@
         public List<string> GetChildren(string path, bool watch, Stat stat)
         {
             return GetChildren(path, watch ? watchManager.defaultWatcher : null, stat);
-        }
-
-        /// <summary>
-        /// The Asynchronous version of getChildren. The request doesn't actually
-        /// until the asynchronous callback is called.
-        /// @since 3.3.0
-        /// 
-        /// @see #getChildren(string, Watcher, Stat)
-        /// </summary>
-        public void GetChildrenAsync(string path, IWatcher watcher, object ctx)
-        {
-            string clientPath = path;
-            PathUtils.ValidatePath(clientPath);
-
-            // the watch contains the un-chroot path
-            WatchRegistration wcb = null;
-            if (watcher != null)
-            {
-                wcb = new ChildWatchRegistration(watchManager, watcher, clientPath);
-            }
-
-            string serverPath = PrependChroot(clientPath);
-
-            RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.GetChildren2;
-            GetChildren2Request request = new GetChildren2Request();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
-            GetChildren2Response response = new GetChildren2Response();
-            cnxn.QueuePacket(h, new ReplyHeader(), request, response, clientPath, serverPath, wcb, OnGetChildren, ctx);
-        }
-
-        /// <summary>
-        /// The Asynchronous version of getChildren. The request doesn't actually
-        /// until the asynchronous callback is called.
-        /// @since 3.3.0
-        /// 
-        /// @see #getChildren(string, boolean, Stat)
-        /// </summary>
-        public void GetChildrenAsync(string path, bool watch, object ctx)
-        {
-            var watcher = watch ? watchManager.defaultWatcher : null;
-            GetChildrenAsync(path, watcher, ctx);
-        }
-
-        /// <summary>
-        /// Asynchronous sync. Flushes channel between process and leader.
-        /// @param path
-        /// @param ctx context to be provided to the callback
-        /// @throws IllegalArgumentException if an invalid path is specified
-         /// </summary>
-
-        public void SyncAsync(string path, object ctx)
-        {
-            string clientPath = path;
-            PathUtils.ValidatePath(clientPath);
-
-            string serverPath = PrependChroot(clientPath);
-
-            RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.Sync;
-            SyncRequest request = new SyncRequest();
-            SyncResponse response = new SyncResponse();
-            request.Path = serverPath;
-            cnxn.QueuePacket(h, new ReplyHeader(), request, response, clientPath, serverPath, null, OnSync, ctx);
         }
 
         /// <summary>

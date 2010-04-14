@@ -349,17 +349,17 @@ namespace SharpKeeper
                     var h = new RequestHeader();
                     h.Type = (int)OpCode.SetWatches;
                     h.Xid = -8;
-                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null, null, null, null);
+                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null, null);
                     outgoingQueue.AddFirst(packet);
                 }
 
                 foreach (ClientConnection.AuthData id in conn.authInfo)
                 {
-                    outgoingQueue.AddFirst(new Packet(new RequestHeader(-4, (int)OpCode.Auth), null, new AuthPacket(0, id.scheme, id.data), null, null, null, null, null));
+                    outgoingQueue.AddFirst(new Packet(new RequestHeader(-4, (int)OpCode.Auth), null, new AuthPacket(0, id.scheme, id.data), null, null, null));
                 }
 
 
-                outgoingQueue.AddFirst((new Packet(null, null, null, null, buffer, null, null, null)));
+                outgoingQueue.AddFirst((new Packet(null, null, null, null, buffer, null)));
             }
             if (LOG.IsDebugEnabled())
             {
@@ -610,17 +610,8 @@ namespace SharpKeeper
                 p.watchRegistration.Register(p.replyHeader.Err);
             }
 
-            if (p.cb == null)
-            {
-                p.WaitHandle.Set();                             
-            }
-            else
-            {
-                p.finished = true;
-                conn.consumer.QueuePacket(p);
-            }
+            p.WaitHandle.Set();
         }
-
         public void Dispose()
         {
             requestThread.Join();

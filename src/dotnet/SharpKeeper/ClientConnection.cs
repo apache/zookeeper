@@ -200,7 +200,7 @@
                 h.Xid = 1;
             }
 
-            Packet p = new Packet(h, r, request, response, null, watchRegistration, callback, ctx);
+            Packet p = new Packet(h, r, request, response, null, watchRegistration);
             p.clientPath = clientPath;
             p.serverPath = serverPath;
             producer.QueuePacket(p);

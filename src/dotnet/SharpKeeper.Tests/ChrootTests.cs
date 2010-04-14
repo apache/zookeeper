@@ -9,11 +9,11 @@ namespace SharpKeeper.Tests
     [TestFixture]
     public class ChrootTests : AbstractZooKeeperTests
     {
-        /*private class MyWatcher : IWatcher
+        private class MyWatcher : IWatcher
         {
-            private String path;
+            private readonly CountDownLatch latch = new CountDownLatch(1);
+            private readonly String path;
             private String eventPath;
-            private CountDownLatch latch = new CountDownLatch(1);
 
             public MyWatcher(String path)
             {
@@ -40,37 +40,40 @@ namespace SharpKeeper.Tests
         [Test]
         public void testChrootSynchronous()
         {
+            string ch1 = "/" + Guid.NewGuid() + "ch1";
             using (ZooKeeper zk1 = CreateClient())
             {
-                Assert.AreEqual("/ch1", zk1.Create("/ch1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent));
+                Assert.AreEqual(ch1, zk1.Create(ch1, null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent));
             }
 
+            string ch2 = "/" + Guid.NewGuid() + "ch2";
             using (ZooKeeper zk2 = CreateClient())
             {
-                Assert.AreEqual("/ch2", zk2.Create("/ch2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent));
+                Assert.AreEqual(ch2, zk2.Create(ch2, null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent));
             }
 
             using (ZooKeeper zk1 = CreateClient())
             using (ZooKeeper zk2 = CreateClient())
             {
                 // check get
-                MyWatcher w1 = new MyWatcher("/ch1");
-                Assert.NotNull(zk1.Exists("/ch1", w1));
-                MyWatcher w2 = new MyWatcher("/ch1/ch2");
-                Assert.NotNull(zk1.Exists("/ch1/ch2", w2));
+                MyWatcher w1 = new MyWatcher(ch1);
+                Assert.NotNull(zk1.Exists(ch1, w1));
+                string ch1Ch2 = string.Format("{0}/{1}", ch1, ch2);
+                MyWatcher w2 = new MyWatcher(ch1Ch2);
+                Assert.NotNull(zk1.Exists(ch1Ch2, w2));
 
-                MyWatcher w3 = new MyWatcher("/ch2");
-                Assert.NotNull(zk2.Exists("/ch2", w3));
+                MyWatcher w3 = new MyWatcher(ch2);
+                Assert.NotNull(zk2.Exists(ch2, w3));
 
                 // set watches on child
-                MyWatcher w4 = new MyWatcher("/ch1");
-                zk1.GetChildren("/ch1", w4);
+                MyWatcher w4 = new MyWatcher(ch1);
+                zk1.GetChildren(ch1, w4);
                 MyWatcher w5 = new MyWatcher("/");
                 zk2.GetChildren("/", w5);
 
                 // check set
-                zk1.SetData("/ch1", Encoding.UTF8.GetBytes("1"), -1);
-                zk2.SetData("/ch2", "2".getBytes(), -1);
+                zk1.SetData(ch1, Encoding.UTF8.GetBytes("1"), -1);
+                zk2.SetData(ch2, "2".GetBytes(), -1);
 
                 // check watches
                 Assert.True(w1.Matches());
@@ -78,28 +81,29 @@ namespace SharpKeeper.Tests
                 Assert.True(w3.Matches());
 
                 // check exceptions
+                string ch3 = "/" + Guid.NewGuid() + "ch3";
                 try
                 {
-                    zk2.SetData("/ch3", "3".getBytes(), -1);
+                    zk2.SetData(ch3, "3".GetBytes(), -1);
                 }
                 catch (KeeperException.NoNodeException e)
                 {
-                    Assert.AreEqual("/ch3", e.getPath());
+                    Assert.AreEqual(ch3, e.getPath());
                 }
 
-                Assert.AreEqual("1".getBytes(), zk1.GetData("/ch1", false, null));
-                Assert.AreEqual("2".getBytes(), zk1.GetData("/ch1/ch2", false, null));
-                Assert.AreEqual("2".getBytes(), zk2.GetData("/ch2", false, null));
+                Assert.AreEqual("1".GetBytes(), zk1.GetData(ch1, false, null));
+                Assert.AreEqual("2".GetBytes(), zk1.GetData(ch1Ch2, false, null));
+                Assert.AreEqual("2".GetBytes(), zk2.GetData(ch2, false, null));
 
                 // check delete
-                zk2.Delete("/ch2", -1);
+                zk2.Delete(ch2, -1);
                 Assert.True(w4.Matches());
                 Assert.True(w5.Matches());
 
-                zk1.Delete("/ch1", -1);
-                Assert.Null(zk1.Exists("/ch1", false));
-                Assert.Null(zk1.Exists("/ch1/ch2", false));
-                Assert.Null(zk2.Exists("/ch2", false));
+                zk1.Delete(ch1, -1);
+                Assert.Null(zk1.Exists(ch1, false));
+                Assert.Null(zk1.Exists(ch1Ch2, false));
+                Assert.Null(zk2.Exists(ch2, false));
             }
 
         }
@@ -136,6 +140,14 @@ namespace SharpKeeper.Tests
                 Interlocked.Increment(ref count);
                 reset.Set();
             }
-        }*/
+
+            public int Count
+            {
+                get
+                {
+                    return count;
+                }
+            }
+        }
     }
 }

@@ -16,8 +16,6 @@
         internal ReplyHeader replyHeader;
         internal IRecord response;
         internal bool finished;
-        internal object cb;
-        internal object ctx;
         internal ZooKeeper.WatchRegistration watchRegistration;
         internal readonly byte[] data;
 
@@ -26,14 +24,12 @@
         /** Servers's view of the path (may differ due to chroot) **/
         readonly IRecord request;
 
-        internal Packet(RequestHeader header, ReplyHeader replyHeader, IRecord record, IRecord response, byte[] data, ZooKeeper.WatchRegistration watchRegistration, object callback, object context)
+        internal Packet(RequestHeader header, ReplyHeader replyHeader, IRecord record, IRecord response, byte[] data, ZooKeeper.WatchRegistration watchRegistration)
         {
             this.header = header;
             this.replyHeader = replyHeader;
             request = record;
             this.response = response;
-            this.cb = callback;
-            this.ctx = context;
             if (data != null)
             {
                 this.data = data;
