@@ -1,5 +1,0 @@
-D:\zookeeper\src\dotnet\lib\MiscUtil\MiscUtil\bin\Debug\MiscUtil.dll
-D:\zookeeper\src\dotnet\lib\MiscUtil\MiscUtil\bin\Debug\MiscUtil.pdb
-D:\zookeeper\src\dotnet\lib\MiscUtil\MiscUtil\obj\Debug\ResolveAssemblyReference.cache
-D:\zookeeper\src\dotnet\lib\MiscUtil\MiscUtil\obj\Debug\MiscUtil.dll
-D:\zookeeper\src\dotnet\lib\MiscUtil\MiscUtil\obj\Debug\MiscUtil.pdb

@@ -31,6 +31,34 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="IKVM.OpenJDK.Core, Version=0.42.0.3, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\IKVM.OpenJDK.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.OpenJDK.Management, Version=0.42.0.3, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\IKVM.OpenJDK.Management.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.OpenJDK.Util, Version=0.42.0.3, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\IKVM.OpenJDK.Util.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.Runtime, Version=0.42.0.3, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\IKVM.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="jline-0.9.94, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\jline-0.9.94.dll</HintPath>
+    </Reference>
+    <Reference Include="log4j-1.2.15, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\log4j-1.2.15.dll</HintPath>
+    </Reference>
+    <Reference Include="MiscUtil, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d3c42c4bfacf7596, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\MiscUtil.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework, Version=2.5.3.9345, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\nunit.framework.dll</HintPath>
@@ -51,24 +79,24 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="zookeeper-3.4.0, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\zookeeper-3.4.0.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbstractZooKeeperTests.cs" />
     <Compile Include="ACLRootTests.cs" />
+    <Compile Include="AssemblyFixture.cs" />
     <Compile Include="ChrootTests.cs" />
     <Compile Include="ClientTests.cs" />
     <Compile Include="GetChildren2Tests.cs" />
     <Compile Include="NullDataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StatTests.cs" />
-    <Compile Include="WatcherFuncTests.cs" />
     <Compile Include="ZooKeeperIntegrationTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\lib\MiscUtil\MiscUtil\MiscUtil.csproj">
-      <Project>{4FC1D5F4-661F-48DC-B397-4CDCB7D61ABE}</Project>
-      <Name>MiscUtil</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SharpKeeper\SharpKeeper.csproj">
       <Project>{5C6774FB-2350-46B2-B1DF-1CCC757C7727}</Project>
       <Name>SharpKeeper</Name>

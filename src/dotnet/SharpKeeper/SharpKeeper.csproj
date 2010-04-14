@@ -31,6 +31,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MiscUtil, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d3c42c4bfacf7596, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\MiscUtil.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -132,12 +136,6 @@
     <Compile Include="ZooKeeperEnvironment.cs" />
     <Compile Include="ZooKeeperEx.cs" />
     <Compile Include="ZooTrace.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\lib\MiscUtil\MiscUtil\MiscUtil.csproj">
-      <Project>{4FC1D5F4-661F-48DC-B397-4CDCB7D61ABE}</Project>
-      <Name>MiscUtil</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
