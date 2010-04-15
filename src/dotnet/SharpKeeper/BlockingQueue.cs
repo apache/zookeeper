@@ -39,7 +39,8 @@
             {
                 while (queue.Count >= maxSize && !disposed)
                 {
-                    Monitor.Wait(queue, wait);
+                    if (wait == TimeSpan.MaxValue) Monitor.Wait(queue, Timeout.Infinite);
+                    else Monitor.Wait(queue, wait);
                 }
                 queue.Enqueue(data);
                 if (queue.Count == 1)
@@ -49,9 +50,9 @@
             }
         }
 
-        public void Dequeue()
+        public T Dequeue()
         {
-            TryDequeue(TimeSpan.MaxValue);
+            return TryDequeue(TimeSpan.MaxValue);
         }
 
         public T TryDequeue(TimeSpan wait)
@@ -61,7 +62,9 @@
                 while (queue.Count == 0)
                 {
                     if (disposed) return default(T);
-                    Monitor.Wait(queue);
+
+                    if (wait == TimeSpan.MaxValue) Monitor.Wait(queue, Timeout.Infinite);
+                    else Monitor.Wait(queue, wait);
                 }
                 var answer = queue.Dequeue();
                 if (queue.Count == maxSize - 1) Monitor.PulseAll(queue);

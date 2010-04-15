@@ -19,7 +19,7 @@ namespace SharpKeeper.Tests
 
         protected ZooKeeper CreateClient(IWatcher watcher)
         {
-            return new ZooKeeper("127.0.0.1:2181", new TimeSpan(0, 0, 0, 10), watcher);
+            return new ZooKeeper("192.168.0.180:2181", new TimeSpan(0, 0, 0, 10), watcher);
         }
 
         public void Process(WatchedEvent @event)

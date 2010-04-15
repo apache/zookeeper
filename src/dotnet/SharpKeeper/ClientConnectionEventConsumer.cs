@@ -1,7 +1,6 @@
 ﻿namespace SharpKeeper
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading;
 
     public class ClientConnectionEventConsumer : IStartable, IDisposable
@@ -12,8 +11,7 @@
         private readonly Thread eventThread;
         static readonly object eventOfDeath = new object();
 
-        private readonly object locker = new object();
-        internal readonly Queue<object> waitingEvents = new Queue<object>();
+        internal readonly BlockingQueue<object> waitingEvents = new BlockingQueue<object>(1000);
 
         /** This is really the queued session state until the event
          * thread actually processes the event and hands it to the watcher.
@@ -38,12 +36,7 @@
             {
                 while (true)
                 {
-                    object @event;
-                    lock (locker)
-                    {
-                        if (Monitor.Wait(locker, 2000)) @event = waitingEvents.Dequeue();
-                        else continue;
-                    }
+                    object @event = waitingEvents.Dequeue();
                     try
                     {
                         if (@event == eventOfDeath)
@@ -106,11 +99,7 @@
 
         private void AppendToQueue(object o)
         {
-            lock (locker)
-            {
-                waitingEvents.Enqueue(o);
-                Monitor.Pulse(locker);
-            }
+            waitingEvents.Enqueue(o);
         }
 
         public void Dispose()
