@@ -282,15 +282,13 @@
 
         private void performClientTest(bool withWatcherObj)
         {
-            ZooKeeper zk = null;
-            try
+            MyWatcher watcher = new MyWatcher();
+            using (var zk = CreateClient(watcher))
             {
-                MyWatcher watcher = new MyWatcher();
-                zk = CreateClient(watcher);
                 LOG.Info("Before Create /benwashere");
                 string benwashere = "/" + Guid.NewGuid() + "benwashere";
                 zk.Create(benwashere, "".GetBytes(), Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.Persistent);
+                          CreateMode.Persistent);
                 LOG.Info("After Create /benwashere");
                 try
                 {
@@ -308,14 +306,15 @@
                 LOG.Info("Before Delete /benwashere");
                 zk.Delete(benwashere, 0);
                 LOG.Info("After Delete /benwashere");
-                zk.Dispose();
-                //LOG.Info("Closed client: " + zk.describeCNXN());
-                Thread.Sleep(2000);
+            }
 
-                zk = CreateClient(watcher);
+            //LOG.Info("Closed client: " + zk.describeCNXN());
+            Thread.Sleep(2000);
+
+            using (var zk = CreateClient(watcher))
+            {
                 //LOG.Info("Created a new client: " + zk.describeCNXN());
                 LOG.Info("Before Delete /");
-
                 try
                 {
                     zk.Delete("/", -1);
@@ -327,13 +326,11 @@
                 }
                 Stat stat = new Stat();
                 // Test basic Create, ls, and GetData
-                string pat = "/" + Guid.NewGuid() + "pat";
+                string pat = "/pat" + Guid.NewGuid();
                 string patPlusBen = pat + "/ben";
-                zk.Create(pat, "Pat was here".GetBytes(), Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.Persistent);
+                zk.Create(pat, "Pat was here".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 LOG.Info("Before Create /ben");
-                zk.Create(patPlusBen, "Ben was here".GetBytes(),
-                        Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create(patPlusBen, "Ben was here".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 LOG.Info("Before GetChildren /pat");
                 List<String> children = zk.GetChildren(pat, false);
                 Assert.AreEqual(1, children.Count);
@@ -345,7 +342,7 @@
                 Assert.AreEqual("Ben was here", value);
                 // Test stat and watch of non existent node
 
-                string frog = "/" + Guid.NewGuid() + "frog";
+                string frog = "/frog" + Guid.NewGuid();
                 try
                 {
                     if (withWatcherObj)
@@ -363,7 +360,7 @@
                     // OK, expected that
                 }
                 zk.Create(frog, "hi".GetBytes(), Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.Persistent);
+                          CreateMode.Persistent);
                 // the first poll is just a session delivery
                 LOG.Info("Comment: checking for events Length "
                          + watcher.events.Count);
@@ -375,8 +372,7 @@
                 zk.GetChildren(patPlusBen, true);
                 for (int i = 0; i < 10; i++)
                 {
-                    zk.Create(patPlusBen + i + "-", Convert.ToString(i).GetBytes(),
-                            Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
+                    zk.Create(patPlusBen + "/" + i + "-", Convert.ToString(i).GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
                 }
                 children = zk.GetChildren(patPlusBen, false);
 
@@ -390,24 +386,24 @@
                     byte[] b;
                     if (withWatcherObj)
                     {
-                        b = zk.GetData(patPlusBen + name, watcher, stat);
+                        b = zk.GetData(patPlusBen + "/" + name, watcher, stat);
                     }
                     else
                     {
-                        b = zk.GetData(patPlusBen + name, true, stat);
+                        b = zk.GetData(patPlusBen + "/" + name, true, stat);
                     }
                     Assert.AreEqual(Convert.ToString(i), Encoding.UTF8.GetString(b));
-                    zk.SetData(patPlusBen + name, "new".GetBytes(),
-                            stat.Version);
+                    zk.SetData(patPlusBen + "/" + name, "new".GetBytes(),
+                               stat.Version);
                     if (withWatcherObj)
                     {
-                        stat = zk.Exists(patPlusBen + name, watcher);
+                        stat = zk.Exists(patPlusBen + "/" + name, watcher);
                     }
                     else
                     {
-                        stat = zk.Exists(patPlusBen + name, true);
+                        stat = zk.Exists(patPlusBen + "/" + name, true);
                     }
-                    zk.Delete(patPlusBen + name, stat.Version);
+                    zk.Delete(patPlusBen + "/" + name, stat.Version);
                 }
                 @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
                 Assert.AreEqual(patPlusBen, @event.Path);
@@ -417,35 +413,26 @@
                 {
                     @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
                     String name = children[i];
-                    Assert.AreEqual(patPlusBen + name, @event.Path);
+                    Assert.AreEqual(patPlusBen + "/" + name, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                     @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
-                    Assert.AreEqual(patPlusBen + name, @event.Path);
+                    Assert.AreEqual(patPlusBen + "/" + name, @event.Path);
                     Assert.AreEqual(EventType.NodeDeleted, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                 }
-                zk.Create("/good\u0040path", "".GetBytes(), Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.Persistent);
+                zk.Create("/good" + Guid.NewGuid() + "\u0040path", "".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
 
-                zk.Create("/duplicate", "".GetBytes(), Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.Persistent);
+                var dup = "/duplicate" + Guid.NewGuid();
+                zk.Create(dup, "".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 try
                 {
-                    zk.Create("/duplicate", "".GetBytes(), Ids.OPEN_ACL_UNSAFE,
-                            CreateMode.Persistent);
+                    zk.Create(dup, "".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                     Assert.Fail("duplicate Create allowed");
                 }
                 catch (KeeperException.NodeExistsException e)
                 {
                     // OK, expected that
-                }
-            }
-            finally
-            {
-                if (zk != null)
-                {
-                    zk.Dispose();
                 }
             }
         }
