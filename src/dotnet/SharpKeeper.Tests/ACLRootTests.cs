@@ -8,7 +8,7 @@
     public class ACLRootTests : AbstractZooKeeperTests
     {
         [Test]
-        public void RootAcl()
+        public void testRootAcl()
         {
             ZooKeeper zk = CreateClient();
             // set auth using digest
