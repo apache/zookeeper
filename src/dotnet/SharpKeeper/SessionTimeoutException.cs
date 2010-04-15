@@ -5,7 +5,7 @@ namespace SharpKeeper
 
     internal class SessionTimeoutException : IOException
     {
-        public SessionTimeoutException(String msg) : base(msg)
+        public SessionTimeoutException(string msg) : base(msg)
         {
         }
     }

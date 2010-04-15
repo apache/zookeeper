@@ -5,11 +5,11 @@ namespace SharpKeeper
 
     internal class EndOfStreamException : IOException
     {
-        public EndOfStreamException(String msg) : base(msg)
+        public EndOfStreamException(string msg) : base(msg)
         {
         }
 
-        public String toString()
+        public override string ToString()
         {
             return "EndOfStreamException: " + Message;
         }

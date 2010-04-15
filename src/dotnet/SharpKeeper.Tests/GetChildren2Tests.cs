@@ -26,16 +26,16 @@ namespace SharpKeeper.Tests
     [Test]
     public void testChild()
     {
-        String name = "/" + Guid.NewGuid() + "foo";
+        string name = "/" + Guid.NewGuid() + "foo";
         zk.Create(name, name.GetBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.Persistent);
 
-        String childname = name + "/bar";
+        string childname = name + "/bar";
         zk.Create(childname, childname.GetBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.Ephemeral);
 
         Stat stat = new Stat();
-        List<String> s = zk.GetChildren(name, false, stat);
+        List<string> s = zk.GetChildren(name, false, stat);
 
         Assert.AreEqual(stat.Czxid, stat.Mzxid);
         Assert.AreEqual(stat.Czxid + 1, stat.Pzxid);
@@ -65,27 +65,27 @@ namespace SharpKeeper.Tests
     [Test]
     public void testChildren()
     {
-        String name = "/" + Guid.NewGuid() + "foo";
+        string name = "/" + Guid.NewGuid() + "foo";
         zk.Create(name, name.GetBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.Persistent);
 
-        List<String> children = new List<String>();
-        List<String> children_s = new List<String>();
+        List<string> children = new List<string>();
+        List<string> children_s = new List<string>();
 
         for (int i = 0; i < 10; i++) {
-            String childname = name + "/bar" + i;
-            String childname_s = "bar" + i;
+            string childname = name + "/bar" + i;
+            string childname_s = "bar" + i;
             children.Add(childname);
             children_s.Add(childname_s);
         }
 
         for(int i = 0; i < children.Count; i++) {
-            String childname = children[i];
+            string childname = children[i];
             zk.Create(childname, childname.GetBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.Ephemeral);
 
             Stat stat = new Stat();
-            List<String> s = zk.GetChildren(name, false, stat);
+            List<string> s = zk.GetChildren(name, false, stat);
 
             Assert.AreEqual(stat.Czxid, stat.Mzxid);
             Assert.AreEqual(stat.Czxid + i + 1, stat.Pzxid);
@@ -98,9 +98,9 @@ namespace SharpKeeper.Tests
             Assert.AreEqual(i + 1, stat.NumChildren);
             Assert.AreEqual(s.Count, stat.NumChildren);
         }
-        List<String> p = zk.GetChildren(name, false, null);
-        List<String> c_a = children_s;
-        List<String> c_b = p;
+        List<string> p = zk.GetChildren(name, false, null);
+        List<string> c_a = children_s;
+        List<string> c_b = p;
         c_a = c_a.OrderBy(e => e).ToList();
         c_b = c_b.OrderBy(e => e).ToList();
 

@@ -18,7 +18,7 @@
          * @return The specialized exception, presumably to be thrown by
          *  the caller.
          */
-        public static KeeperException Create(Code code, String path)
+        public static KeeperException Create(Code code, string path)
         {
             KeeperException r = Create(code);
             r.path = path;
@@ -153,7 +153,7 @@
             SESSIONMOVED = -118
         }
 
-        public static String getCodeMessage(Code code)
+        public static string getCodeMessage(Code code)
         {
             switch (code)
             {
@@ -206,14 +206,14 @@
 
         private Code code;
 
-        private String path;
+        private string path;
 
         public KeeperException(Code code)
         {
             this.code = code;
         }
 
-        KeeperException(Code code, String path)
+        KeeperException(Code code, string path)
         {
             this.code = code;
             this.path = path;
@@ -232,12 +232,12 @@
          * Read the path for this exception
          * @return the path associated with this error, null if none
          */
-        public String getPath()
+        public string getPath()
         {
             return path;
         }
 
-        public String getMessage()
+        public string getMessage()
         {
             if (path == null)
             {
@@ -277,7 +277,7 @@
                 : base(Code.BADARGUMENTS)
             {
             }
-            public BadArgumentsException(String path)
+            public BadArgumentsException(string path)
                 : base(Code.BADARGUMENTS, path)
             {
             }
@@ -292,7 +292,7 @@
                 : base(Code.BADVERSION)
             {
             }
-            public BadVersionException(String path)
+            public BadVersionException(string path)
                 : base(Code.BADVERSION, path)
             {
             }
@@ -329,7 +329,7 @@
                 : base(Code.INVALIDACL)
             {
             }
-            public InvalidACLException(String path)
+            public InvalidACLException(string path)
                 : base(Code.INVALIDACL, path)
             {
             }
@@ -377,7 +377,7 @@
                 : base(Code.NOCHILDRENFOREPHEMERALS)
             {
             }
-            public NoChildrenForEphemeralsException(String path)
+            public NoChildrenForEphemeralsException(string path)
                 : base(Code.NOCHILDRENFOREPHEMERALS, path)
             {
             }
@@ -392,7 +392,7 @@
                 : base(Code.NODEEXISTS)
             {
             }
-            public NodeExistsException(String path)
+            public NodeExistsException(string path)
                 : base(Code.NODEEXISTS, path)
             {
             }
@@ -407,7 +407,7 @@
                 : base(Code.NONODE)
             {
             }
-            public NoNodeException(String path)
+            public NoNodeException(string path)
                 : base(Code.NONODE, path)
             {
             }
@@ -422,7 +422,7 @@
                 : base(Code.NOTEMPTY)
             {
             }
-            public NotEmptyException(String path)
+            public NotEmptyException(string path)
                 : base(Code.NOTEMPTY, path)
             {
             }

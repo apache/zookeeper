@@ -13,7 +13,7 @@
         private static readonly ILog LOG = LogManager.GetLogger(typeof(Packet));
 
         internal RequestHeader header;
-        internal String serverPath;
+        internal string serverPath;
         internal ReplyHeader replyHeader;
         internal IRecord response;
         internal bool finished;
@@ -21,7 +21,7 @@
         internal readonly byte[] data;
 
         /** Client's view of the path (may differ due to chroot) **/
-        internal String clientPath;
+        internal string clientPath;
         /** Servers's view of the path (may differ due to chroot) **/
         readonly IRecord request;
 
@@ -70,7 +70,7 @@
             get; private set;
         }
 
-        public override String ToString()
+        public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
 

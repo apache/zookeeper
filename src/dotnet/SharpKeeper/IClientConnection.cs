@@ -35,7 +35,7 @@ namespace SharpKeeper
         /// </summary>
         /// <param name="scheme">The scheme.</param>
         /// <param name="auth">The auth.</param>
-        void AddAuthInfo(String scheme, byte[] auth);
+        void AddAuthInfo(string scheme, byte[] auth);
 
         /// <summary>
         /// Submits the request.
@@ -60,6 +60,6 @@ namespace SharpKeeper
         /// <param name="callback">The callback.</param>
         /// <param name="ctx">The context.</param>
         /// <returns></returns>
-        Packet QueuePacket(RequestHeader h, ReplyHeader r, IRecord request, IRecord response, String clientPath, String serverPath, ZooKeeper.WatchRegistration watchRegistration, object callback, object ctx);
+        Packet QueuePacket(RequestHeader h, ReplyHeader r, IRecord request, IRecord response, string clientPath, string serverPath, ZooKeeper.WatchRegistration watchRegistration, object callback, object ctx);
     }
 }

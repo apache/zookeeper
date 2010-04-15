@@ -32,10 +32,10 @@
          * the zookeeper quota node that acts as the quota management node for
          * zookeeper
          */
-        private static String quotaZookeeper = Quotas.quotaZookeeper;
+        private static string quotaZookeeper = Quotas.quotaZookeeper;
 
         /** this will be the string thats stored as a child of /zookeeper */
-        private static String quotaChildZookeeper = quotaZookeeper.Substring(procZookeeper.Length + 1);
+        private static string quotaChildZookeeper = quotaZookeeper.Substring(procZookeeper.Length + 1);
 
         /**
          * the path trie that keeps track fo the quota nodes in this datatree
@@ -45,7 +45,7 @@
         /**
          * This hashtable lists the paths of the ephemeral nodes of a session.
          */
-        private Dictionary<long, HashSet<String>> ephemerals = new Dictionary<long, HashSet<String>>();
+        private Dictionary<long, HashSet<string>> ephemerals = new Dictionary<long, HashSet<string>>();
 
         /**
          * this is map from longs to acl's. It saves acl's being stored for each
@@ -70,7 +70,7 @@
             get { return ephemerals; }
         }
 
-        public HashSet<String> GetEphemerals(long sessionId)
+        public HashSet<string> GetEphemerals(long sessionId)
         {
             HashSet<string> retv;
             if (!ephemerals.TryGetValue(sessionId, out retv))
@@ -128,12 +128,12 @@
             }
         }
 
-        public void addDataNode(String path, DataNode node)
+        public void addDataNode(string path, DataNode node)
         {
             nodes.Add(path, node);
         }
 
-        public DataNode getNode(String path)
+        public DataNode getNode(string path)
         {
             DataNode node;
             nodes.TryGetValue(path, out node);

@@ -19,7 +19,7 @@
             to.UnionWith(from);
         }
 
-        public HashSet<IWatcher> Materialize(KeeperState state, EventType type, String clientPath)
+        public HashSet<IWatcher> Materialize(KeeperState state, EventType type, string clientPath)
         {
             HashSet<IWatcher> result = new HashSet<IWatcher>();
 

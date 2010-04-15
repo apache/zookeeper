@@ -332,13 +332,13 @@
                 LOG.Info("Before Create /ben");
                 zk.Create(patPlusBen, "Ben was here".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 LOG.Info("Before GetChildren /pat");
-                List<String> children = zk.GetChildren(pat, false);
+                List<string> children = zk.GetChildren(pat, false);
                 Assert.AreEqual(1, children.Count);
                 Assert.AreEqual("ben", children[0]);
-                List<String> children2 = zk.GetChildren(pat, false, null);
+                List<string> children2 = zk.GetChildren(pat, false, null);
                 Assert.AreEqual(children, children2);
 
-                String value = Encoding.UTF8.GetString(zk.GetData(patPlusBen, false, stat));
+                string value = Encoding.UTF8.GetString(zk.GetData(patPlusBen, false, stat));
                 Assert.AreEqual("Ben was here", value);
                 // Test stat and watch of non existent node
 
@@ -381,7 +381,7 @@
                 Assert.AreEqual(10, children.Count);
                 for (int i = 0; i < 10; i++)
                 {
-                    String name = children[i];
+                    string name = children[i];
                     Assert.True(name.StartsWith(i + "-"), "starts with -");
                     byte[] b;
                     if (withWatcherObj)
@@ -412,7 +412,7 @@
                 for (int i = 0; i < 10; i++)
                 {
                     @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
-                    String name = children[i];
+                    string name = children[i];
                     Assert.AreEqual(patPlusBen + "/" + name, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
@@ -442,15 +442,15 @@
         [Test]
         public void testSequentialNodeNames()
         {
-            String path = "/SEQUENCE" + Guid.NewGuid();
-            String file = "TEST";
-            String filepath = path + "/" + file;
+            string path = "/SEQUENCE" + Guid.NewGuid();
+            string file = "TEST";
+            string filepath = path + "/" + file;
 
             using (ZooKeeper zk = CreateClient())
             {
                 zk.Create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 zk.Create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
-                List<String> children = zk.GetChildren(path, false);
+                List<string> children = zk.GetChildren(path, false);
                 Assert.AreEqual(1, children.Count);
                 Assert.AreEqual(file + "0000000000", children[0]);
 
@@ -480,7 +480,7 @@
         [Test]
         public void testSequentialNodeData()
         {
-            String queue_handle = "/queue" + Guid.NewGuid();
+            string queue_handle = "/queue" + Guid.NewGuid();
             using (ZooKeeper zk = CreateClient())
             {
 
@@ -489,10 +489,10 @@
                           CreateMode.PersistentSequential);
                 zk.Create(queue_handle + "/element", "1".GetBytes(), Ids.OPEN_ACL_UNSAFE,
                           CreateMode.PersistentSequential);
-                List<String> children = zk.GetChildren(queue_handle, true);
+                List<string> children = zk.GetChildren(queue_handle, true);
                 Assert.AreEqual(children.Count, 2);
-                String child1 = children[0];
-                String child2 = children[1];
+                string child1 = children[0];
+                string child2 = children[1];
                 int compareResult = child1.CompareTo(child2);
                 Assert.AreNotSame(compareResult, 0);
                 if (compareResult < 0)
@@ -500,19 +500,19 @@
                 }
                 else
                 {
-                    String temp = child1;
+                    string temp = child1;
                     child1 = child2;
                     child2 = temp;
                 }
-                String child1data = Encoding.UTF8.GetString(zk.GetData(queue_handle + "/" + child1, false, null));
-                String child2data = Encoding.UTF8.GetString(zk.GetData(queue_handle + "/" + child2, false, null));
+                string child1data = Encoding.UTF8.GetString(zk.GetData(queue_handle + "/" + child1, false, null));
+                string child2data = Encoding.UTF8.GetString(zk.GetData(queue_handle + "/" + child2, false, null));
                 Assert.AreEqual(child1data, "0");
                 Assert.AreEqual(child2data, "1");
             }
         }
 
 
-        private void verifyCreateFails(String path, ZooKeeper zk)
+        private void verifyCreateFails(string path, ZooKeeper zk)
         {
             try
             {

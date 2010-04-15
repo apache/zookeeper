@@ -10,7 +10,7 @@ namespace SharpKeeper
          * with a sequential flag
          * @throws IllegalArgumentException if the path is invalid
          */
-        public static void ValidatePath(String path, bool isSequential)
+        public static void ValidatePath(string path, bool isSequential)
         {
             ValidatePath(isSequential ? path + "1" : path);
         }
@@ -20,7 +20,7 @@ namespace SharpKeeper
          * @param path znode path string
          * @throws IllegalArgumentException if the path is invalid
          */
-        public static void ValidatePath(String path)
+        public static void ValidatePath(string path)
         {
             if (path == null)
             {
@@ -45,7 +45,7 @@ namespace SharpKeeper
                              "Path must not end with / character");
             }
 
-            String reason = null;
+            string reason = null;
             char lastc = '/';
             char[] chars = path.ToCharArray();
             char c;

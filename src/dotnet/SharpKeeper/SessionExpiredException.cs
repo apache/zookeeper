@@ -5,7 +5,7 @@ namespace SharpKeeper
 
     internal class SessionExpiredException : IOException
     {
-        public SessionExpiredException(String msg) : base(msg)
+        public SessionExpiredException(string msg) : base(msg)
         {
         }
     }

@@ -523,7 +523,7 @@ namespace SharpKeeper
                     // convert from a server path to a client path
                     if (conn.ChrootPath != null)
                     {
-                        String serverPath = @event.Path;
+                        string serverPath = @event.Path;
                         if (serverPath.CompareTo(conn.ChrootPath) == 0)
                             @event.Path = "/";
                         else

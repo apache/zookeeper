@@ -50,7 +50,7 @@ namespace SharpKeeper.Tests
         [Test]
         public void testBasic()
         {
-            String name = "/" + Guid.NewGuid() + "foo";
+            string name = "/" + Guid.NewGuid() + "foo";
             zk.Create(name, name.GetBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.Persistent);
 
@@ -72,11 +72,11 @@ namespace SharpKeeper.Tests
         [Test]
         public void testChild()
         {
-            String name = "/" + Guid.NewGuid() + "foo";
+            string name = "/" + Guid.NewGuid() + "foo";
             zk.Create(name, name.GetBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.Persistent);
 
-            String childname = name + "/bar";
+            string childname = name + "/bar";
             zk.Create(childname, childname.GetBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.Ephemeral);
 
@@ -112,13 +112,13 @@ namespace SharpKeeper.Tests
         [Test]
         public void testChildren()
         {
-            String name = "/" + Guid.NewGuid() + "foo";
+            string name = "/" + Guid.NewGuid() + "foo";
             zk.Create(name, name.GetBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.Persistent);
 
             for (int i = 0; i < 10; i++)
             {
-                String childname = name + "/bar" + i;
+                string childname = name + "/bar" + i;
                 zk.Create(childname, childname.GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EphemeralSequential);
 
                 Stat stat;
@@ -141,7 +141,7 @@ namespace SharpKeeper.Tests
         [Test]
         public void testDataSizeChange()
         {
-            String name = "/" + Guid.NewGuid() + "foo";
+            string name = "/" + Guid.NewGuid() + "foo";
             zk.Create(name, name.GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
 
             Stat stat;

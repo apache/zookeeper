@@ -10,7 +10,7 @@ namespace SharpKeeper.Tests
         [Test]
         public void testNullData()
         {
-            String path = "/" + Guid.NewGuid() + "SIZE";
+            string path = "/" + Guid.NewGuid() + "SIZE";
             ZooKeeper zk;
             using (zk = CreateClient())
             {

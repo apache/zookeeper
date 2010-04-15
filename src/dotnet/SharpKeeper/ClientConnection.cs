@@ -94,7 +94,7 @@
             int off = hosts.IndexOf('/');
             if (off >= 0)
             {
-                String path = hosts.Substring(off);
+                string path = hosts.Substring(off);
                 // ignore "/" chroot spec, same as null
                 if (path.Length == 1)
                 {
@@ -116,8 +116,8 @@
 
         private void GetHosts(string hosts)
         {
-            String[] hostsList = hosts.Split(',');
-            foreach (String h in hostsList)
+            string[] hostsList = hosts.Split(',');
+            foreach (string h in hostsList)
             {
                 string host = h;
                 int port = 2181;
@@ -175,7 +175,7 @@
             producer.Start();
         }
 
-        public void AddAuthInfo(String scheme, byte[] auth)
+        public void AddAuthInfo(string scheme, byte[] auth)
         {
             if (!zooKeeper.State.IsAlive())
             {
@@ -197,7 +197,7 @@
             return r;
         }
 
-        public Packet QueuePacket(RequestHeader h, ReplyHeader r, IRecord request, IRecord response, String clientPath, String serverPath, ZooKeeper.WatchRegistration watchRegistration, object callback, object ctx)
+        public Packet QueuePacket(RequestHeader h, ReplyHeader r, IRecord request, IRecord response, string clientPath, string serverPath, ZooKeeper.WatchRegistration watchRegistration, object callback, object ctx)
         {
             //lock here for XID?
             if (h.Type != (int)OpCode.Ping && h.Type != (int)OpCode.Auth)
@@ -238,10 +238,10 @@
         }
 
         /// <summary>
-        /// Returns a <see cref="System.String"/> that represents this instance.
+        /// Returns a <see cref="System.string"/> that represents this instance.
         /// </summary>
         /// <returns>
-        /// A <see cref="System.String"/> that represents this instance.
+        /// A <see cref="System.string"/> that represents this instance.
         /// </returns>
         public override string ToString()
         {
@@ -250,7 +250,7 @@
             //SocketAddress local = getLocalSocketAddress();
             //SocketAddress remote = getRemoteSocketAddress();
             sb
-                .Append("sessionid:0x").Append(String.Format("{0:X}", SessionId));
+                .Append("sessionid:0x").Append(string.Format("{0:X}", SessionId));
                 //.Append(" local:").Append(local)
                 //.Append(" remoteserver:").Append(remote)
                 //.Append(" lastZxid:").Append(lastZxid)
@@ -266,10 +266,10 @@
 
         internal class AuthData
         {
-            internal String scheme;
+            internal string scheme;
             internal byte[] data;
 
-            internal AuthData(String scheme, byte[] data)
+            internal AuthData(string scheme, byte[] data)
             {
                 this.scheme = scheme;
                 this.data = data;

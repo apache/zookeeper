@@ -14,8 +14,8 @@ namespace SharpKeeper.Tests
         {
             private readonly CountDownLatch latch = new CountDownLatch(1);
             private readonly string name;
-            private readonly String path;
-            private String eventPath;
+            private readonly string path;
+            private string eventPath;
 
             public MyWatcher(string name, string path)
             {
