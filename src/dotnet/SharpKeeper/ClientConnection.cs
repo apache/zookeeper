@@ -6,12 +6,13 @@
     using System.Net;
     using System.Text;
     using System.Threading;
+    using log4net;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
 
     public class ClientConnection : IClientConnection
     {
-        private static readonly Logger LOG = Logger.getLogger(typeof(ClientConnection));
+        private static readonly ILog LOG = LogManager.GetLogger(typeof(ClientConnection));
 
         internal static bool disableAutoWatchReset;
         public static readonly int packetLen;
@@ -21,7 +22,7 @@
             // this var should not be public, but otw there is no easy way
             // to test
             //disableAutoWatchReset = Boolean.getBoolean("zookeeper.disableAutoWatchReset");
-            if (LOG.IsDebugEnabled())
+            if (LOG.IsDebugEnabled)
             {
                 LOG.Debug("zookeeper.disableAutoWatchReset is " + disableAutoWatchReset);
             }
@@ -216,7 +217,7 @@
         /// </summary>
         public void Dispose()
         {
-            if (LOG.IsDebugEnabled())
+            if (LOG.IsDebugEnabled)
                 LOG.Debug(string.Format("Closing client for session: 0x{0:X}", SessionId));
 
             closing = true;

@@ -5,20 +5,14 @@
     using System.Diagnostics;
     using System.IO;
     using System.Runtime.CompilerServices;
+    using log4net;
     using Org.Apache.Zookeeper.Data;
     using Org.Apache.Zookeeper.Proto;
 
     [DebuggerDisplay("Id = {Id}")]
     public class ZooKeeper : IDisposable
     {
-        private static readonly Logger LOG;
-
-        static ZooKeeper()
-        {
-            LOG = Logger.getLogger(typeof(ZooKeeper));
-
-            ZooKeeperEnvironment.logEnv("Client environment:", LOG);
-        }               
+        private static readonly ILog LOG = LogManager.GetLogger(typeof(ZooKeeper));
 
         private readonly ZKWatchManager watchManager = new ZKWatchManager();
 
@@ -368,14 +362,14 @@
         {
             if (!state.IsAlive())
             {
-                if (LOG.IsDebugEnabled())
+                if (LOG.IsDebugEnabled)
                 {
                     LOG.Debug("Close called on already closed client");
                 }
                 return;
             }
 
-            if (LOG.IsDebugEnabled())
+            if (LOG.IsDebugEnabled)
             {
                 LOG.Debug(string.Format("Closing session: 0x{0:X}", SessionId));
             }
@@ -386,7 +380,7 @@
             }
             catch (IOException e)
             {
-                if (LOG.IsDebugEnabled())
+                if (LOG.IsDebugEnabled)
                 {
                     LOG.Debug("Ignoring unexpected exception during close", e);
                 }

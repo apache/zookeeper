@@ -3,16 +3,16 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading;
+    using log4net;
     using NUnit.Framework;
     using Org.Apache.Zookeeper.Data;
 
     [TestFixture]
     public class ClientTests : AbstractZooKeeperTests
     {
-        private static readonly Logger LOG = Logger.getLogger(typeof(ClientTests));
+        private static readonly ILog LOG = LogManager.GetLogger(typeof(ClientTests));
 
         /** Verify that pings are sent, keeping the "idle" client alive */
         [Test]

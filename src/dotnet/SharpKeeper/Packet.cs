@@ -4,12 +4,13 @@
     using System.IO;
     using System.Text;
     using System.Threading;
+    using log4net;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
 
     public class Packet
     {
-        private static readonly Logger LOG = Logger.getLogger(typeof(Packet));
+        private static readonly ILog LOG = LogManager.GetLogger(typeof(Packet));
 
         internal RequestHeader header;
         internal String serverPath;

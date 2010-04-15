@@ -31,6 +31,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="MiscUtil, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d3c42c4bfacf7596, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\MiscUtil.dll</HintPath>
@@ -116,7 +120,6 @@
     <Compile Include="Jute\RecordWriter.cs" />
     <Compile Include="KeeperException.cs" />
     <Compile Include="KeeperState.cs" />
-    <Compile Include="Logger.cs" />
     <Compile Include="OpCode.cs" />
     <Compile Include="Packet.cs" />
     <Compile Include="PathUtils.cs" />
@@ -133,9 +136,7 @@
     <Compile Include="ZooKeeper.cs" />
     <Compile Include="ZooKeeperBinaryReader.cs" />
     <Compile Include="ZooKeeperBinaryWriter.cs" />
-    <Compile Include="ZooKeeperEnvironment.cs" />
     <Compile Include="ZooKeeperEx.cs" />
-    <Compile Include="ZooTrace.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

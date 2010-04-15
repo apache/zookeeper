@@ -3,12 +3,13 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using log4net;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Data;
 
     public class DataTree
     {
-        private static readonly Logger LOG = Logger.getLogger(typeof(DataTree));
+        private static readonly ILog LOG = LogManager.GetLogger(typeof(DataTree));
 
         private readonly object locker = new object();
 

@@ -2,10 +2,12 @@
 
 namespace SharpKeeper
 {
+    using log4net;
+
     public class SafeThreadStart
     {
         private readonly Action action;
-        private static readonly Logger LOG = Logger.getLogger(typeof(SafeThreadStart));
+        private static readonly ILog LOG = LogManager.GetLogger(typeof(SafeThreadStart));
 
         public SafeThreadStart(Action action)
         {

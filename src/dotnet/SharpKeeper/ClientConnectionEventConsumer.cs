@@ -2,10 +2,11 @@
 {
     using System;
     using System.Threading;
+    using log4net;
 
     public class ClientConnectionEventConsumer : IStartable, IDisposable
     {
-        private static readonly Logger LOG = Logger.getLogger(typeof(ClientConnectionEventConsumer));
+        private static readonly ILog LOG = LogManager.GetLogger(typeof(ClientConnectionEventConsumer));
 
         private readonly ClientConnection conn;
         private readonly Thread eventThread;

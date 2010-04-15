@@ -2,15 +2,17 @@
 {
     using System;
     using System.Collections.Generic;
+    using log4net;
 
     public class ZKWatchManager : IClientWatchManager 
     {
+        private static readonly ILog LOG = LogManager.GetLogger(typeof(ZKWatchManager));
+
         internal readonly Dictionary<string, HashSet<IWatcher>> dataWatches = new Dictionary<string, HashSet<IWatcher>>();
         internal readonly Dictionary<string, HashSet<IWatcher>> existWatches = new Dictionary<string, HashSet<IWatcher>>();
         internal readonly Dictionary<string, HashSet<IWatcher>> childWatches = new Dictionary<string, HashSet<IWatcher>>();
 
         internal volatile IWatcher defaultWatcher;
-        private static Logger LOG;
 
         private void AddTo(HashSet<IWatcher> from, HashSet<IWatcher> to) {
             if (from == null) return;
