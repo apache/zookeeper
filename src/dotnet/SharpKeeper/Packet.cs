@@ -53,7 +53,6 @@
                         ms.Position = 0;
                         writer.Write(ms.ToArray().Length - 4);
                         this.data = ms.ToArray();
-                        if (LOG.IsDebugEnabled()) LOG.Debug(string.Format("Preparing message: {0}", BitConverter.ToString(this.data)));
                     }
                 }
                 catch (IOException e)

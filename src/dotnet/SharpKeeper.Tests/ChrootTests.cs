@@ -2,6 +2,7 @@
 
 namespace SharpKeeper.Tests
 {
+    using System.Diagnostics;
     using System.Text;
     using System.Threading;
     using NUnit.Framework;
@@ -12,17 +13,20 @@ namespace SharpKeeper.Tests
         private class MyWatcher : IWatcher
         {
             private readonly CountDownLatch latch = new CountDownLatch(1);
+            private readonly string name;
             private readonly String path;
             private String eventPath;
 
-            public MyWatcher(String path)
+            public MyWatcher(string name, string path)
             {
+                this.name = name;
                 this.path = path;
             }
 
             public void Process(WatchedEvent @event)
             {
-                Console.WriteLine("latch:" + path + " " + @event.Path);
+                Console.WriteLine(string.Format("latch:{0} {1}-{2}", name, path, @event.Path));
+                Debug.WriteLine(string.Format("latch:{0} {1}-{2}", name, path, @event.Path));
                 eventPath = @event.Path;
                 latch.CountDown();
             }
@@ -56,19 +60,19 @@ namespace SharpKeeper.Tests
             using (ZooKeeper zk2 = CreateClient(ch1))
             {
                 // check get
-                MyWatcher w1 = new MyWatcher(ch1);
+                MyWatcher w1 = new MyWatcher("w1", ch1);
                 Assert.NotNull(zk1.Exists(ch1, w1));
                 string ch1Ch2 = string.Format("{0}{1}", ch1, ch2);
-                MyWatcher w2 = new MyWatcher(ch1Ch2);
+                MyWatcher w2 = new MyWatcher("w2", ch1Ch2);
                 Assert.NotNull(zk1.Exists(ch1Ch2, w2));
 
-                MyWatcher w3 = new MyWatcher(ch2);
+                MyWatcher w3 = new MyWatcher("w3", ch2);
                 Assert.NotNull(zk2.Exists(ch2, w3));
 
                 // set watches on child
-                MyWatcher w4 = new MyWatcher(ch1);
+                MyWatcher w4 = new MyWatcher("w4", ch1);
                 zk1.GetChildren(ch1, w4);
-                MyWatcher w5 = new MyWatcher("/");
+                MyWatcher w5 = new MyWatcher("w5", "/");
                 zk2.GetChildren("/", w5);
 
                 // check set

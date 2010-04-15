@@ -479,7 +479,7 @@
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
             {
-                throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
+                throw KeeperException.Create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
             return cnxn.ChrootPath == null ? response.Path : response.Path.Substring(cnxn.ChrootPath.Length);
         }
@@ -533,7 +533,7 @@
             ReplyHeader r = cnxn.SubmitRequest(h, request, null, null);
             if (r.Err != 0)
             {
-                throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
+                throw KeeperException.Create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
         }
 
@@ -576,7 +576,7 @@
                 {
                     return null;
                 }
-                throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
+                throw KeeperException.Create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
 
             return response.Stat.Czxid == -1 ? null : response.Stat;
@@ -645,7 +645,7 @@
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
             {
-                throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
+                throw KeeperException.Create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
             if (stat != null)
             {
@@ -720,7 +720,7 @@
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
             {
-                throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
+                throw KeeperException.Create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
             return response.Stat;
         }
@@ -754,7 +754,7 @@
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
             {
-                throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
+                throw KeeperException.Create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
             DataTree.CopyStat(response.Stat, stat);
             return response.Acl;
@@ -800,7 +800,7 @@
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
             {
-                throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
+                throw KeeperException.Create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
             return response.Stat;
         }
@@ -848,7 +848,7 @@
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
             {
-                throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
+                throw KeeperException.Create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
             return response.Children;
         }
@@ -905,7 +905,7 @@
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
             {
-                throw KeeperException.create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
+                throw KeeperException.Create((KeeperException.Code)Enum.ToObject(typeof(KeeperException.Code), r.Err), clientPath);
             }
             if (stat != null)
             {

@@ -18,9 +18,9 @@
          * @return The specialized exception, presumably to be thrown by
          *  the caller.
          */
-        public static KeeperException create(Code code, String path)
+        public static KeeperException Create(Code code, String path)
         {
-            KeeperException r = create(code);
+            KeeperException r = Create(code);
             r.path = path;
             return r;
         }
@@ -39,7 +39,7 @@
          * @return The specialized exception, presumably to be thrown by
          * the caller.
          */
-        public static KeeperException create(Code code)
+        public static KeeperException Create(Code code)
         {
             switch (code)
             {

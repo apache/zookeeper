@@ -14,7 +14,7 @@
 
         private void AddTo(HashSet<IWatcher> from, HashSet<IWatcher> to) {
             if (from == null) return;
-            from.UnionWith(to);
+            to.UnionWith(from);
         }
 
         public HashSet<IWatcher> Materialize(KeeperState state, EventType type, String clientPath)

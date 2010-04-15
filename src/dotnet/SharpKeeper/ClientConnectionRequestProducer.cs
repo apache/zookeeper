@@ -338,7 +338,6 @@ namespace SharpKeeper
                 conReq.Serialize(boa, "connect");
                 ms.Position = 0;
                 writer.Write(ms.ToArray().Length - 4);                buffer = ms.ToArray();
-                if (LOG.IsDebugEnabled()) LOG.Debug(string.Format("Preparing PrimeConncetion message: {0}", BitConverter.ToString(buffer)));
             }
             lock (outgoingQueueLock)
             {

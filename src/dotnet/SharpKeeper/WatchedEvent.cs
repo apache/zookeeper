@@ -19,7 +19,7 @@
         public WatchedEvent(WatcherEvent eventMessage)
         {
             state = (KeeperState)Enum.ToObject(typeof(KeeperState), eventMessage.State);
-            type = (EventType)Enum.ToObject(typeof (EventType), eventMessage.State);
+            type = (EventType)Enum.ToObject(typeof (EventType), eventMessage.Type);
             path = eventMessage.Path;
         }
 
