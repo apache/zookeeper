@@ -6,6 +6,7 @@ namespace SharpKeeper
     using System.IO;
     using System.Net;
     using System.Net.Sockets;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
@@ -18,9 +19,9 @@ namespace SharpKeeper
         private readonly ClientConnection conn;
         private readonly ZooKeeper zooKeeper;
         private readonly Thread requestThread;
-        private readonly ReaderWriterLockSlim pendingQueueLock = new ReaderWriterLockSlim();
-        private readonly ReaderWriterLockSlim outgoingQueueLock = new ReaderWriterLockSlim();
+        private readonly object pendingQueueLock = new object();
         private readonly LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
+        private readonly object outgoingQueueLock = new object();
         private readonly LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
         private bool writeEnabled;
 
@@ -37,12 +38,12 @@ namespace SharpKeeper
         private byte[] incomingBuffer = new byte[4];
         private int recvCount;
         internal int negotiatedSessionTimeout;
-        
+
         public ClientConnectionRequestProducer(ClientConnection conn)
         {
             this.conn = conn;
             zooKeeper = conn.zooKeeper;
-            requestThread = new Thread(new SafeThreadStart(SendRequests).Run) { Name = "ZK-SendThread", IsBackground = true };
+            requestThread = new Thread(new SafeThreadStart(SendRequests).Run) { Name = "ZK-SendThread" + conn.zooKeeper.Id, IsBackground = true };
         }
 
         public void Start()
@@ -53,14 +54,14 @@ namespace SharpKeeper
 
         public void QueuePacket(Packet p)
         {
-            if (!zooKeeper.State.IsAlive())
+            lock (outgoingQueueLock)
             {
-                ConLossPacket(p);
-                return;
-            }
+                if (!zooKeeper.State.IsAlive())
+                {
+                    ConLossPacket(p);
+                    return;
+                }
 
-            using (outgoingQueueLock.AcquireWriteLock())
-            {
                 outgoingQueue.AddLast(p);
             }
         }
@@ -104,7 +105,7 @@ namespace SharpKeeper
                         {
                             SendPing();
                             lastSend = now;
-                            writeEnabled = true;
+                            EnableWrite();
                         }
                         else
                         {
@@ -120,12 +121,7 @@ namespace SharpKeeper
                     // Why we just have to do this once, here
                     now = DateTime.Now;
 
-                    int outgoingQueueCount;
-                    using (outgoingQueueLock.AcquireReadLock())
-                    {
-                        outgoingQueueCount = outgoingQueue.Count;
-                    }
-                    if (outgoingQueueCount > 0)
+                    if (outgoingQueue.Count > 0)
                     {
                         // We have something to send so it's the same
                         // as if we do the send now.
@@ -134,6 +130,17 @@ namespace SharpKeeper
                     if (doIO(to))
                     {
                         lastHeard = now;
+                    }
+                    if (zooKeeper.State == ZooKeeper.States.CONNECTED)
+                    {
+                        if (outgoingQueue.Count > 0)
+                        {
+                            EnableWrite();
+                        }
+                        else
+                        {
+                            DisableWrite();
+                        }
                     }
                 }
                 catch (Exception e)
@@ -220,31 +227,23 @@ namespace SharpKeeper
                     LOG.Debug("SendThread interrupted during sleep, ignoring");
                 }
             }
-                       
-            using (pendingQueueLock.AcquireUpgradableReadLock())
-            {                    foreach (Packet p in pendingQueue)
-                    {
-                        ConLossPacket(p);
-                    }
 
-                    using (pendingQueueLock.AcquireWriteLock())
-                    {
-                        pendingQueue.Clear();
-                    }
+            lock (pendingQueueLock)
+            {
+                foreach (Packet p in pendingQueue)
+                {
+                    ConLossPacket(p);
+                }
+                pendingQueue.Clear();
             }
 
-            Packet[] queue;
-            using (outgoingQueueLock.AcquireWriteLock())
+            lock (outgoingQueueLock)
             {
-                    queue = new Packet[outgoingQueue.Count];
-                    outgoingQueue.CopyTo(queue, 0);
-                    outgoingQueue.Clear();
-
-            }
-
-            foreach (Packet p in queue)
-            {
-                ConLossPacket(p);
+                foreach (Packet p in outgoingQueue)
+                {
+                    ConLossPacket(p);
+                }
+                outgoingQueue.Clear();
             }
         }
 
@@ -341,7 +340,7 @@ namespace SharpKeeper
                 writer.Write(ms.ToArray().Length - 4);                buffer = ms.ToArray();
                 if (LOG.IsDebugEnabled()) LOG.Debug(string.Format("Preparing PrimeConncetion message: {0}", BitConverter.ToString(buffer)));
             }
-            using (outgoingQueueLock.AcquireWriteLock())
+            lock (outgoingQueueLock)
             {
                 if (!ClientConnection.disableAutoWatchReset && (!zooKeeper.DataWatches.IsEmpty() || !zooKeeper.ExistWatches.IsEmpty() || !zooKeeper.ChildWatches.IsEmpty()))
                 {
@@ -349,18 +348,22 @@ namespace SharpKeeper
                     var h = new RequestHeader();
                     h.Type = (int)OpCode.SetWatches;
                     h.Xid = -8;
-                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null, null);
+                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null, null, null, null);
                     outgoingQueue.AddFirst(packet);
                 }
 
                 foreach (ClientConnection.AuthData id in conn.authInfo)
                 {
-                    outgoingQueue.AddFirst(new Packet(new RequestHeader(-4, (int)OpCode.Auth), null, new AuthPacket(0, id.scheme, id.data), null, null, null));
+                    outgoingQueue.AddFirst(new Packet(new RequestHeader(-4, (int)OpCode.Auth), null, new AuthPacket(0, id.scheme, id.data), null, null, null, null, null));
                 }
-
-
-                outgoingQueue.AddFirst((new Packet(null, null, null, null, buffer, null)));
+                outgoingQueue.AddFirst((new Packet(null, null, null, null, buffer, null, null, null)));
             }
+
+            lock (this)
+            {
+                EnableWrite();
+            }
+
             if (LOG.IsDebugEnabled())
             {
                 LOG.Debug("Session establishment request sent on " + socket.RemoteEndPoint);
@@ -399,10 +402,7 @@ namespace SharpKeeper
                 else if (!initialized)
                 {
                     ReadConnectResult();
-                    using (outgoingQueueLock.AcquireReadLock())
-                    {
-                        if (!outgoingQueue.IsEmpty()) writeEnabled = true;
-                    }
+                    if (!outgoingQueue.IsEmpty()) EnableWrite();
                     lenBuffer = null;
                     incomingBuffer = new byte[4];
                     initialized = true;
@@ -415,33 +415,30 @@ namespace SharpKeeper
                 }
             }
             else if (writeEnabled && sock.Poll(Convert.ToInt32(to.TotalMilliseconds / 1000), SelectMode.SelectWrite))
-            {                packetReceived = true;
-
-                using (outgoingQueueLock.AcquireUpgradableReadLock())
+            {                lock (outgoingQueueLock)
                 {
                     if (!outgoingQueue.IsEmpty())
                     {
                         Packet first;
-                        using (outgoingQueueLock.AcquireWriteLock())
+                        first = outgoingQueue.First.Value;
+                        sock.Send(first.data);
+                        outgoingQueue.RemoveFirst();
+                        if (first.header != null && first.header.Type != (int) OpCode.Ping &&
+                            first.header.Type != (int) OpCode.Auth)
                         {
-                            first = outgoingQueue.First.Value;
-                            sock.Send(first.data);
-                            outgoingQueue.RemoveFirst();
-                        }
-                        if (first.header != null && first.header.Type != (int) OpCode.Ping && first.header.Type != (int) OpCode.Auth)
-                        {
-                            using (pendingQueueLock.AcquireWriteLock())
-                            {
-                                pendingQueue.AddLast(first);
-                            }
+                            pendingQueue.AddLast(first);
                         }
                     }
                 } 
             }
 
-            using (outgoingQueueLock.AcquireReadLock())
+            if (outgoingQueue.IsEmpty())
             {
-                writeEnabled = !outgoingQueue.IsEmpty();
+                DisableWrite();
+            }
+            else
+            {
+                EnableWrite();
             }
             return packetReceived;
         }
@@ -472,14 +469,14 @@ namespace SharpKeeper
                 {
                     zooKeeper.State = ZooKeeper.States.CLOSED;
                     conn.consumer.QueueEvent(new WatchedEvent(KeeperState.Expired, EventType.None, null));
-                    throw new SessionExpiredException(string.Format("Unable to reconnect to ZooKeeper service, session 0x{{0:X}}{0} has expired", conn.SessionId));
+                    throw new SessionExpiredException(string.Format("Unable to reconnect to ZooKeeper service, session 0x{0:X} has expired", conn.SessionId));
                 }
                 conn.readTimeout = new TimeSpan(0, 0, 0, 0, negotiatedSessionTimeout*2/3);
                 conn.connectTimeout = new TimeSpan(0, 0, 0, negotiatedSessionTimeout/conn.serverAddrs.Count);
                 conn.SessionId = conRsp.SessionId;
                 conn.SessionPassword = conRsp.Passwd;
                 zooKeeper.State = ZooKeeper.States.CONNECTED;
-                LOG.Info(string.Format("Session establishment complete on server {{0:X}} {0}, negotiated timeout = {1}", conn.SessionId, negotiatedSessionTimeout));
+                LOG.Info(string.Format("Session establishment complete on server {0:X}, negotiated timeout = {1}", conn.SessionId, negotiatedSessionTimeout));
                 conn.consumer.QueueEvent(new WatchedEvent(KeeperState.SyncConnected, EventType.None, null));
             }
         }
@@ -527,9 +524,9 @@ namespace SharpKeeper
                     {
                         String serverPath = @event.Path;
                         if (serverPath.CompareTo(conn.ChrootPath) == 0)
-                        @event.Path = "/";
-                    else
-                        @event.Path = serverPath.Substring(conn.ChrootPath.Length);
+                            @event.Path = "/";
+                        else
+                            @event.Path = serverPath.Substring(conn.ChrootPath.Length);
                     }
 
                     WatchedEvent we = new WatchedEvent(@event);
@@ -547,7 +544,7 @@ namespace SharpKeeper
                 }
                 
                 Packet packet;
-                lock(pendingQueue)
+                lock (pendingQueueLock)
                 {
                     packet = pendingQueue.First.Value;
                     pendingQueue.RemoveFirst();
@@ -588,6 +585,18 @@ namespace SharpKeeper
             }
         }
 
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public void EnableWrite()
+        {
+            writeEnabled = true;
+        }
+
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public void DisableWrite()
+        {
+            writeEnabled = false;
+        }
+
         private void ConLossPacket(Packet p)
         {
             if (p.replyHeader == null) return;
@@ -610,10 +619,13 @@ namespace SharpKeeper
                 p.watchRegistration.Register(p.replyHeader.Err);
             }
 
+            p.finished = true;
             p.WaitHandle.Set();
+            conn.consumer.QueuePacket(p);
         }
         public void Dispose()
         {
+            zooKeeper.State = ZooKeeper.States.CLOSED;
             requestThread.Join();
         }
     }

@@ -34,7 +34,6 @@
         internal readonly ZKWatchManager watcher;
         internal readonly List<IPEndPoint> serverAddrs = new List<IPEndPoint>();
         internal readonly List<AuthData> authInfo = new List<AuthData>();
-        internal string path;
         internal TimeSpan connectTimeout;
         internal TimeSpan readTimeout;
         internal bool closing;
@@ -72,7 +71,7 @@
             SessionPassword = sessionPasswd;
 
             // parse out chroot, if any
-            SetChrootPath();
+            hosts = SetChrootPath();
             GetHosts(hosts);
             SetTimeouts(sessionTimeout);
             CreateConsumer();
@@ -87,6 +86,31 @@
         private void CreateProducer()
         {
             producer = new ClientConnectionRequestProducer(this);
+        }
+
+        private string SetChrootPath()
+        {
+            int off = hosts.IndexOf('/');
+            if (off >= 0)
+            {
+                String path = hosts.Substring(off);
+                // ignore "/" chroot spec, same as null
+                if (path.Length == 1)
+                {
+                    ChrootPath = null;
+                }
+                else
+                {
+                    PathUtils.ValidatePath(path);
+                    ChrootPath = path;
+                }
+                hosts = hosts.Substring(0, off);
+            }
+            else
+            {
+                ChrootPath = null;
+            }
+            return hosts;
         }
 
         private void GetHosts(string hosts)
@@ -111,30 +135,6 @@
             }
 
             serverAddrs.OrderBy(s => Guid.NewGuid()); //Random order the servers
-        }
-
-        private void SetChrootPath()
-        {
-            int off = hosts.IndexOf('/');
-            if (off >= 0)
-            {
-                String path = hosts.Substring(off);
-                // ignore "/" chroot spec, same as null
-                if (path.Length == 1)
-                {
-                    this.path = null;
-                }
-                else
-                {
-                    PathUtils.ValidatePath(ChrootPath);
-                    this.path = path;
-                }
-                hosts = hosts.Substring(0, off);
-            }
-            else
-            {
-                this.ChrootPath = null;
-            }
         }
 
         private void SetTimeouts(TimeSpan sessionTimeout)
@@ -200,7 +200,7 @@
                 h.Xid = 1;
             }
 
-            Packet p = new Packet(h, r, request, response, null, watchRegistration);
+            Packet p = new Packet(h, r, request, response, null, watchRegistration, clientPath, serverPath);
             p.clientPath = clientPath;
             p.serverPath = serverPath;
             producer.QueuePacket(p);
@@ -227,8 +227,8 @@
             }
             finally
             {
-                consumer.Dispose();
                 producer.Dispose();
+                consumer.Dispose();
             }
         }
 

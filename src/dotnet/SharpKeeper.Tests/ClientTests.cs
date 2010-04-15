@@ -71,11 +71,9 @@
         [Test]
         public void testACLs()
         {
-            ZooKeeper zk = null;
-            try
+            string name = "/" + Guid.NewGuid() + "acltest";
+            using (var zk = CreateClient())
             {
-                zk = CreateClient();
-                string name = "/" + Guid.NewGuid() + "acltest";
                 try
                 {
                     zk.Create(name, new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
@@ -84,7 +82,7 @@
                 catch (KeeperException.InvalidACLException e)
                 {
                     LOG.Info("Test successful, invalid acl received : "
-                            + e.getMessage());
+                             + e.getMessage());
                 }
                 try
                 {
@@ -97,12 +95,14 @@
                 catch (KeeperException.InvalidACLException e)
                 {
                     LOG.Info("Test successful, invalid acl received : "
-                            + e.getMessage());
+                             + e.getMessage());
                 }
                 zk.AddAuthInfo("digest", "ben:passwd".GetBytes());
                 zk.Create(name, new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
-                zk.Dispose();
-                zk = CreateClient();
+            }
+
+            using (var zk = CreateClient())
+            {
                 zk.AddAuthInfo("digest", "ben:passwd2".GetBytes());
                 try
                 {
@@ -117,19 +117,14 @@
                 zk.GetData(name, false, new Stat());
                 zk.SetACL(name, Ids.OPEN_ACL_UNSAFE, -1);
                 zk.Dispose();
-                zk = CreateClient();
+            }
+
+            using (var zk = CreateClient())
+            {
                 zk.GetData(name, false, new Stat());
                 List<ACL> acls = zk.GetACL(name, new Stat());
                 Assert.AreEqual(1, acls.Count);
                 Assert.AreEqual(Ids.OPEN_ACL_UNSAFE, acls);
-                zk.Dispose();
-            }
-            finally
-            {
-                if (zk != null)
-                {
-                    zk.Dispose();
-                }
             }
         }
 

@@ -47,18 +47,18 @@ namespace SharpKeeper.Tests
             }
 
             string ch2 = "/" + Guid.NewGuid() + "ch2";
-            using (ZooKeeper zk2 = CreateClient())
+            using (ZooKeeper zk2 = CreateClient(ch1))
             {
                 Assert.AreEqual(ch2, zk2.Create(ch2, null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent));
             }
 
             using (ZooKeeper zk1 = CreateClient())
-            using (ZooKeeper zk2 = CreateClient())
+            using (ZooKeeper zk2 = CreateClient(ch1))
             {
                 // check get
                 MyWatcher w1 = new MyWatcher(ch1);
                 Assert.NotNull(zk1.Exists(ch1, w1));
-                string ch1Ch2 = string.Format("{0}/{1}", ch1, ch2);
+                string ch1Ch2 = string.Format("{0}{1}", ch1, ch2);
                 MyWatcher w2 = new MyWatcher(ch1Ch2);
                 Assert.NotNull(zk1.Exists(ch1Ch2, w2));
 

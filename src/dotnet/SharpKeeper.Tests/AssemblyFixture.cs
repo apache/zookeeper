@@ -11,13 +11,13 @@ namespace SharpKeeper.Tests
     {
         private IDisposable server;
 
-        [SetUp]
+        //[SetUp]
         public void Setup()
         {
             server = new CommandLineZooKeeperServer();
         }
 
-        [TearDown]
+        //[TearDown]
         public void Teardown()
         {
             server.Dispose();

@@ -2,11 +2,13 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Runtime.CompilerServices;
     using Org.Apache.Zookeeper.Data;
     using Org.Apache.Zookeeper.Proto;
 
+    [DebuggerDisplay("Id = {Id}")]
     public class ZooKeeper : IDisposable
     {
         private static readonly Logger LOG;
@@ -205,6 +207,7 @@
             }
         }
 
+        protected Guid id = Guid.NewGuid();
         protected volatile States state;
         protected IClientConnection cnxn;
 
@@ -264,6 +267,14 @@
             cnxn.Start();
         }
 
+        /// <summary>
+        /// Unique ID representing the instance of the client
+        /// </summary>
+        public Guid Id
+        {
+            get { return id; }
+            set { id = value; }
+        }
 
         /// <summary>
         /// The session id for this ZooKeeper client instance. The value returned is
@@ -942,7 +953,7 @@
         /// </summary>
         public override string ToString()
         {
-            return (string.Format("State:{0}{1}{2}", state, (state == States.CONNECTED ? string.Format(" Timeout:{0} ", SessionTimeout) : " "), cnxn));
+            return (string.Format("Id: {0} State:{1}{2}{3}", id, state, (state == States.CONNECTED ? string.Format(" Timeout:{0} ", SessionTimeout) : " "), cnxn));
         }
     }
 }

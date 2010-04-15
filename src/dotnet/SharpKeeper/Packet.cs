@@ -24,12 +24,14 @@
         /** Servers's view of the path (may differ due to chroot) **/
         readonly IRecord request;
 
-        internal Packet(RequestHeader header, ReplyHeader replyHeader, IRecord record, IRecord response, byte[] data, ZooKeeper.WatchRegistration watchRegistration)
+        internal Packet(RequestHeader header, ReplyHeader replyHeader, IRecord request, IRecord response, byte[] data, ZooKeeper.WatchRegistration watchRegistration, string serverPath, string clientPath)
         {
             this.header = header;
             this.replyHeader = replyHeader;
-            request = record;
+            this.request = request;
             this.response = response;
+            this.serverPath = serverPath;
+            this.clientPath = clientPath;
             if (data != null)
             {
                 this.data = data;
@@ -44,9 +46,9 @@
                         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(writer);
                         boa.WriteInt(-1, "len"); // We'll fill this in later
                         header.Serialize(boa, "header");
-                        if (record != null)
+                        if (request != null)
                         {
-                            record.Serialize(boa, "request");
+                            request.Serialize(boa, "request");
                         }
                         ms.Position = 0;
                         writer.Write(ms.ToArray().Length - 4);

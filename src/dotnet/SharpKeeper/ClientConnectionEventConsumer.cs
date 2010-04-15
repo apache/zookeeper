@@ -24,7 +24,7 @@
         public ClientConnectionEventConsumer(ClientConnection conn)
         {
             this.conn = conn;
-            eventThread = new Thread(new SafeThreadStart(PollEvents).Run) { Name = "ZK-SendThread", IsBackground = true };
+            eventThread = new Thread(new SafeThreadStart(PollEvents).Run) { Name = "ZK-EventThread " + conn.zooKeeper.Id, IsBackground = true };
         }
 
         public void Start()
@@ -94,6 +94,11 @@
             AppendToQueue(pair);
         }
 
+        public void QueuePacket(Packet packet)
+        {
+            AppendToQueue(packet);
+        }
+
         private void QueueEventOfDeath()
         {
             AppendToQueue(eventOfDeath);
@@ -111,7 +116,7 @@
         public void Dispose()
         {
             QueueEventOfDeath();
-            eventThread.Join(1000);
+            eventThread.Join(2000);
         }
     }
 }
