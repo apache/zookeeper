@@ -109,6 +109,7 @@
     <Compile Include="IClientConnection.cs" />
     <Compile Include="Ids.cs" />
     <Compile Include="IStartable.cs" />
+    <Compile Include="IZooKeeper.cs" />
     <Compile Include="Jute\BinaryInputArchive.cs" />
     <Compile Include="Jute\BinaryOutputArchive.cs" />
     <Compile Include="Jute\IIndex.cs" />

@@ -3,9 +3,15 @@ namespace SharpKeeper.Tests
     using System;
     using System.Runtime.CompilerServices;
     using System.Threading;
+    using log4net.Config;
 
     public abstract class AbstractZooKeeperTests
     {
+        static AbstractZooKeeperTests()
+        {
+            BasicConfigurator.Configure();   
+        }
+
         protected static readonly TimeSpan CONNECTION_TIMEOUT = new TimeSpan(0, 0, 0, 0, 10000);
 
         protected virtual ZooKeeper CreateClient()

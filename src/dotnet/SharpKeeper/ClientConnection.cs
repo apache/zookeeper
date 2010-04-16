@@ -14,9 +14,9 @@
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof(ClientConnection));
 
-        internal static bool disableAutoWatchReset;
         public static readonly int packetLen;
-        
+        internal static bool disableAutoWatchReset;
+
         static ClientConnection()
         {
             // this var should not be public, but otw there is no easy way
@@ -199,17 +199,7 @@
 
         public Packet QueuePacket(RequestHeader h, ReplyHeader r, IRecord request, IRecord response, string clientPath, string serverPath, ZooKeeper.WatchRegistration watchRegistration, object callback, object ctx)
         {
-            //lock here for XID?
-            if (h.Type != (int)OpCode.Ping && h.Type != (int)OpCode.Auth)
-            {
-                h.Xid = 1;
-            }
-
-            Packet p = new Packet(h, r, request, response, null, watchRegistration, clientPath, serverPath);
-            p.clientPath = clientPath;
-            p.serverPath = serverPath;
-            producer.QueuePacket(p);
-            return p;
+            return producer.QueuePacket(h, r, request, response, clientPath, serverPath, watchRegistration);
         }
 
         /// <summary>
@@ -245,21 +235,16 @@
         /// </returns>
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
-
-            //SocketAddress local = getLocalSocketAddress();
-            //SocketAddress remote = getRemoteSocketAddress();
+            var sb = new StringBuilder();
             sb
-                .Append("sessionid:0x").Append(string.Format("{0:X}", SessionId));
-                //.Append(" local:").Append(local)
-                //.Append(" remoteserver:").Append(remote)
-                //.Append(" lastZxid:").Append(lastZxid)
-                //.Append(" xid:").Append(xid)
-                //.Append(" sent:").Append(sendThread.sentCount)
-                //.Append(" recv:").Append(sendThread.recvCount)
-                //.Append(" queuedpkts:").Append(outgoingQueue.Count)
-                //.Append(" pendingresp:").Append(sendThread.pendingQueue.Count)
-                //.Append(" queuedevents:").Append(eventConsumer.waitingEvents.Count);
+                .Append("sessionid:0x").Append(string.Format("{0:X}", SessionId))
+                .Append(" lastZxid:").Append(producer.lastZxid)
+                .Append(" xid:").Append(producer.xid)
+                .Append(" sent:").Append(producer.sentCount)
+                .Append(" recv:").Append(producer.recvCount)
+                .Append(" queuedpkts:").Append(producer.outgoingQueue.Count)
+                .Append(" pendingresp:").Append(producer.pendingQueue.Count)
+                .Append(" queuedevents:").Append(consumer.waitingEvents.Count);
 
             return sb.ToString();
         }

@@ -1,6 +1,5 @@
 namespace SharpKeeper
 {
-    using System;
     using System.IO;
 
     internal class SessionTimeoutException : IOException

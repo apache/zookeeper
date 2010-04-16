@@ -21,23 +21,25 @@ namespace SharpKeeper
         private readonly ZooKeeper zooKeeper;
         private readonly Thread requestThread;
         private readonly object pendingQueueLock = new object();
-        private readonly LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
+        internal readonly LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
         private readonly object outgoingQueueLock = new object();
-        private readonly LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
+        internal readonly LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
         private bool writeEnabled;
 
         private Socket sock;
         private int lastConnectIndex;
-        private readonly Random r = new Random();
+        private readonly Random random = new Random();
         private int nextAddrToTry;
         private int currentConnectIndex;
         private bool initialized;
-        private long lastZxid;
+        internal long lastZxid;
         private long lastPingSentNs;
+        internal int xid = 1;
 
         private byte[] lenBuffer;
         private byte[] incomingBuffer = new byte[4];
-        private int recvCount;
+        internal int sentCount;
+        internal int recvCount;
         internal int negotiatedSessionTimeout;
 
         public ClientConnectionRequestProducer(ClientConnection conn)
@@ -47,24 +49,43 @@ namespace SharpKeeper
             requestThread = new Thread(new SafeThreadStart(SendRequests).Run) { Name = "ZK-SendThread" + conn.zooKeeper.Id, IsBackground = true };
         }
 
+        protected int Xid
+        {
+            get { return xid++; }
+        }
+
         public void Start()
         {
             zooKeeper.State = ZooKeeper.States.CONNECTING;
             requestThread.Start();
         }
 
-        public void QueuePacket(Packet p)
+        public Packet QueuePacket(RequestHeader h, ReplyHeader r, IRecord request, IRecord response, string clientPath, string serverPath, ZooKeeper.WatchRegistration watchRegistration)
         {
             lock (outgoingQueueLock)
             {
-                if (!zooKeeper.State.IsAlive())
+                //lock here for XID?
+                if (h.Type != (int)OpCode.Ping && h.Type != (int)OpCode.Auth)
                 {
-                    ConLossPacket(p);
-                    return;
+                    h.Xid = Xid;
                 }
 
-                outgoingQueue.AddLast(p);
+                Packet p = new Packet(h, r, request, response, null, watchRegistration, clientPath, serverPath);
+                p.clientPath = clientPath;
+                p.serverPath = serverPath;
+
+                if (!zooKeeper.State.IsAlive())
+                    ConLossPacket(p);
+                else
+                    outgoingQueue.AddLast(p);
+
+                return p;
             }
+        }
+
+        public void QueuePacket(Packet p)
+        {
+
         }
 
         public void SendRequests()
@@ -261,7 +282,7 @@ namespace SharpKeeper
             {
                 try
                 {
-                    Thread.Sleep(new TimeSpan(0, 0, 0, 0, r.Next(0, 50)));
+                    Thread.Sleep(new TimeSpan(0, 0, 0, 0, random.Next(0, 50)));
                 }
                 catch (ThreadInterruptedException e1)
                 {
@@ -420,9 +441,9 @@ namespace SharpKeeper
                 {
                     if (!outgoingQueue.IsEmpty())
                     {
-                        Packet first;
-                        first = outgoingQueue.First.Value;
+                        Packet first = outgoingQueue.First.Value;
                         sock.Send(first.data);
+                        sentCount++;
                         outgoingQueue.RemoveFirst();
                         if (first.header != null && first.header.Type != (int) OpCode.Ping &&
                             first.header.Type != (int) OpCode.Auth)

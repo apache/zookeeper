@@ -10,7 +10,7 @@
     using Org.Apache.Zookeeper.Proto;
 
     [DebuggerDisplay("Id = {Id}")]
-    public class ZooKeeper : IDisposable
+    public class ZooKeeper : IDisposable, IZooKeeper
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof(ZooKeeper));
 
