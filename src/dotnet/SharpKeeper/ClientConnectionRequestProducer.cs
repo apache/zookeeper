@@ -207,14 +207,6 @@ namespace SharpKeeper
                 }
             }
             Cleanup();
-            try
-            {
-                sock.Close();
-            }
-            catch (IOException e)
-            {
-                LOG.Warn("Ignoring exception during selector close", e);
-            }
             if (zooKeeper.State.IsAlive())
             {
                 conn.consumer.QueueEvent(new WatchedEvent(KeeperState.Disconnected, EventType.None, null));

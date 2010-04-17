@@ -106,6 +106,20 @@
         /// <returns></returns>
         public byte[] Take()
         {
+            byte[] data;
+            TryTakeInternal(Int32.MaxValue, out data);
+            return data;
+        }
+
+        public bool TryTake(TimeSpan timeout, out byte[] data)
+        {
+            var time = timeout == TimeSpan.MaxValue ? Int32.MaxValue : Convert.ToInt32(timeout.TotalMilliseconds);
+            return TryTakeInternal(time, out data);
+        }
+
+        private bool TryTakeInternal(int wait, out byte[] data)
+        {
+            data = null;
             SortedDictionary<long, string> orderedChildren;
             while (true)
             {
@@ -121,7 +135,7 @@
                 }
                 if (orderedChildren.Count == 0)
                 {
-                    childWatcher.WaitOne();
+                    if (!childWatcher.WaitOne(wait)) return false;
                     continue;
                 }
 
@@ -129,9 +143,9 @@
                 {
                     try
                     {
-                        byte[] data = zookeeper.GetData(path, false, null);
+                        data = zookeeper.GetData(path, false, null);
                         zookeeper.Delete(path, -1);
-                        return data;
+                        return true;
                     }
                     catch (KeeperException.NoNodeException e)
                     {
@@ -186,9 +200,9 @@
                 reset.Set();
             }
 
-            public void WaitOne()
+            public bool WaitOne(int wait)
             {
-                reset.WaitOne();
+                return reset.WaitOne(wait);
             }
         }
     }
