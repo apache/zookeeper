@@ -473,7 +473,7 @@ namespace SharpKeeper
                 int len = reader.ReadInt32();
                 if (len < 0 || len >= ClientConnection.packetLen)
                 {
-                    throw new IOException("Packet len" + len + " is out of range!");
+                    throw new IOException("Packet len " + len + " is out of range!");
                 }
                 incomingBuffer = new byte[len];
             }

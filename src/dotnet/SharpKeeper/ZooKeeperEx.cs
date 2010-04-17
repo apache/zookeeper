@@ -49,6 +49,11 @@ namespace SharpKeeper
             return new Disposable(@lock.ExitWriteLock);
         }
 
+        public static string Combine(this string parent, string child)
+        {
+            return parent + "/" + child;
+        }
+
         private struct Disposable : IDisposable
         {
             private readonly Action action;
