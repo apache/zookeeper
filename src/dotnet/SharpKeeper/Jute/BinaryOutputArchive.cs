@@ -2,19 +2,19 @@
 {
     using System.Collections.Generic;
     using System.Text;
-    using SharpKeeper;
+    using MiscUtil.IO;
 
     public class BinaryOutputArchive : IOutputArchive
     {
-        private readonly ZooKeeperBinaryWriter writer;
+        private readonly EndianBinaryWriter writer;
 
-        public static BinaryOutputArchive getArchive(ZooKeeperBinaryWriter writer)
+        public static BinaryOutputArchive getArchive(EndianBinaryWriter writer)
         {
             return new BinaryOutputArchive(writer);
         }
 
         /** Creates a new instance of BinaryOutputArchive */
-        public BinaryOutputArchive(ZooKeeperBinaryWriter writer)
+        public BinaryOutputArchive(EndianBinaryWriter writer)
         {
             this.writer = writer;
         }

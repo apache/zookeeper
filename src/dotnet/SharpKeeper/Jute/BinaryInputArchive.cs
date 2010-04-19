@@ -1,15 +1,15 @@
 ﻿namespace Org.Apache.Jute
 {
+    using MiscUtil.IO;
     using System;
     using System.IO;
     using System.Text;
-    using SharpKeeper;
 
     public class BinaryInputArchive : IInputArchive
     {
-        private readonly ZooKeeperBinaryReader reader;
+        private readonly EndianBinaryReader reader;
 
-        static public BinaryInputArchive getArchive(ZooKeeperBinaryReader reader)
+        static public BinaryInputArchive getArchive(EndianBinaryReader reader)
         {
             return new BinaryInputArchive(reader);
         }
@@ -33,7 +33,7 @@
         }
         
         /** Creates a new instance of BinaryInputArchive */
-        public BinaryInputArchive(ZooKeeperBinaryReader reader)
+        public BinaryInputArchive(EndianBinaryReader reader)
         {
             this.reader = reader;
         }
