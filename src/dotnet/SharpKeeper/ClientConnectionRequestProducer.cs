@@ -7,8 +7,11 @@ namespace SharpKeeper
     using System.Net;
     using System.Net.Sockets;
     using System.Runtime.CompilerServices;
+    using System.Text;
     using System.Threading;
     using log4net;
+    using MiscUtil.Conversion;
+    using MiscUtil.IO;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
 
@@ -346,7 +349,7 @@ namespace SharpKeeper
 
             byte[] buffer;
             using (MemoryStream ms = new MemoryStream())
-            using (ZooKeeperBinaryWriter writer = new ZooKeeperBinaryWriter(ms))
+            using (EndianBinaryWriter writer = new EndianBinaryWriter(EndianBitConverter.Big, ms, Encoding.UTF8))
             {
                 BinaryOutputArchive boa = BinaryOutputArchive.getArchive(writer);
                 boa.WriteInt(-1, "len");
@@ -460,7 +463,7 @@ namespace SharpKeeper
         private void ReadLength() 
         {
             lenBuffer = new byte[4];
-            using (ZooKeeperBinaryReader reader = new ZooKeeperBinaryReader(new MemoryStream(incomingBuffer))) 
+            using (EndianBinaryReader reader = new EndianBinaryReader(EndianBitConverter.Big, new MemoryStream(incomingBuffer), Encoding.UTF8))
             {
                 int len = reader.ReadInt32();
                 if (len < 0 || len >= ClientConnection.packetLen)
@@ -473,7 +476,7 @@ namespace SharpKeeper
 
         private void ReadConnectResult()
         {
-            using (var reader = new ZooKeeperBinaryReader(new MemoryStream(incomingBuffer)))
+            using (var reader = new EndianBinaryReader(EndianBitConverter.Big, new MemoryStream(incomingBuffer), Encoding.UTF8))
             {
                 BinaryInputArchive bbia = BinaryInputArchive.getArchive(reader);
                 ConnectResponse conRsp = new ConnectResponse();
@@ -498,7 +501,7 @@ namespace SharpKeeper
         private void ReadResponse()
         {
             using (MemoryStream ms = new MemoryStream(incomingBuffer))
-            using (ZooKeeperBinaryReader reader = new ZooKeeperBinaryReader(ms))
+            using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms, Encoding.UTF8))
             {
                 BinaryInputArchive bbia = BinaryInputArchive.getArchive(reader);
                 ReplyHeader replyHdr = new ReplyHeader();
