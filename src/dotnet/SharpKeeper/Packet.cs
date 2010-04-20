@@ -21,6 +21,8 @@
     using System.Text;
     using System.Threading;
     using log4net;
+    using MiscUtil.Conversion;
+    using MiscUtil.IO;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
 
@@ -58,7 +60,7 @@
                 try
                 {
                     using (MemoryStream ms = new MemoryStream())
-                    using (ZooKeeperBinaryWriter writer = new ZooKeeperBinaryWriter(ms))
+                    using (EndianBinaryWriter writer = new EndianBinaryWriter(EndianBitConverter.Big, ms, Encoding.UTF8))
                     {
                         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(writer);
                         boa.WriteInt(-1, "len"); // We'll fill this in later

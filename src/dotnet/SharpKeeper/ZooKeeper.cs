@@ -851,11 +851,11 @@
             string serverPath = PrependChroot(clientPath);
 
             RequestHeader h = new RequestHeader();
-            h.Type = (int)OpCode.GetChildren;
-            GetChildrenRequest request = new GetChildrenRequest();
+            h.Type = (int)OpCode.GetChildren2;
+            GetChildren2Request request = new GetChildren2Request();
             request.Path = serverPath;
             request.Watch = watcher != null;
-            GetChildrenResponse response = new GetChildrenResponse();
+            GetChildren2Response response = new GetChildren2Response();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
             {

@@ -69,17 +69,9 @@ namespace SharpKeeper.Recipes
         public SortedSet<T> HeadSet(T element)
         {
             var headSet = new SortedSet<T>();
-            bool found = false;
-            foreach (var key in backing.Keys)
-            {
-                if (found)
-                {
-                    headSet.Add(key);
-                    continue;
-                }
-
-                if (key.Equals(element)) found = true;
-            }
+            foreach (var key in backing.Keys.TakeWhile(key => !key.Equals(element)))
+                headSet.Add(key);
+            
             return headSet;
         }
     }

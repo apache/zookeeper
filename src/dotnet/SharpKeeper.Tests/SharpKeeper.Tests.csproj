@@ -66,6 +66,7 @@
     <Compile Include="AssemblyFixture.cs" />
     <Compile Include="ChrootTests.cs" />
     <Compile Include="ClientTests.cs" />
+    <Compile Include="CountDownLatch.cs" />
     <Compile Include="GetChildren2Tests.cs" />
     <Compile Include="NullDataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

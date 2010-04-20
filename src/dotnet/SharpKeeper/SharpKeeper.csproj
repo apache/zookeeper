@@ -135,8 +135,6 @@
     <Compile Include="IWatcher.cs" />
     <Compile Include="ZKWatchManager.cs" />
     <Compile Include="ZooKeeper.cs" />
-    <Compile Include="ZooKeeperBinaryReader.cs" />
-    <Compile Include="ZooKeeperBinaryWriter.cs" />
     <Compile Include="ZooKeeperEx.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

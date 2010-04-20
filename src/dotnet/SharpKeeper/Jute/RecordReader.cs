@@ -17,13 +17,13 @@
  */
 namespace Org.Apache.Jute
 {
-    using SharpKeeper;
+    using MiscUtil.IO;
 
     public class RecordReader
     {
         private readonly IInputArchive archive;
 
-        public RecordReader(ZooKeeperBinaryReader reader, string format)
+        public RecordReader(EndianBinaryReader reader, string format)
         {
             archive = new BinaryInputArchive(reader);
         }

@@ -35,6 +35,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\log4net.dll</HintPath>
     </Reference>
+    <Reference Include="MiscUtil, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d3c42c4bfacf7596, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\MiscUtil.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -51,6 +55,10 @@
   <ItemGroup>
     <Compile Include="DistributedQueue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ProtocolSupport.cs" />
+    <Compile Include="SortedSet.cs" />
+    <Compile Include="WriteLock.cs" />
+    <Compile Include="ZNodeName.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SharpKeeper\SharpKeeper.csproj">

@@ -16,6 +16,7 @@ namespace SharpKeeperRecipes.Tests
             String[] expected = { "x-1", "x-3", "x-5", "x-11" };
             AssertOrderedNodeNames(names, expected);
         }
+        
         [Test]
         public void testOrderWithDifferentPrefixes()
         {
@@ -36,7 +37,7 @@ namespace SharpKeeperRecipes.Tests
             int index = 0;
             foreach (string name in nodeNames.Select(nodeName => nodeName.Name))
             {
-                Assert.AreEqual("Node " + index, expected[index++], name);
+                Assert.AreEqual(name, expected[index++]);
             }
         }
     }
