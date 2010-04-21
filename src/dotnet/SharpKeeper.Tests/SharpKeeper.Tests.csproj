@@ -64,6 +64,7 @@
     <Compile Include="AbstractZooKeeperTests.cs" />
     <Compile Include="ACLRootTests.cs" />
     <Compile Include="AssemblyFixture.cs" />
+    <Compile Include="SocketTests.cs" />
     <Compile Include="ChrootTests.cs" />
     <Compile Include="ClientTests.cs" />
     <Compile Include="CountDownLatch.cs" />

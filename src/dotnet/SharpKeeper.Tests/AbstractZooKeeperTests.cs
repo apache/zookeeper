@@ -43,10 +43,15 @@ namespace SharpKeeper.Tests
             return new ZooKeeper("127.0.0.1:2181" + node, new TimeSpan(0, 0, 0, 10000), watcher);
         }
 
-
         protected ZooKeeper CreateClient(IWatcher watcher)
         {
             return new ZooKeeper("127.0.0.1:2181", new TimeSpan(0, 0, 0, 10000), watcher);
+        }
+
+        protected ZooKeeper CreateClientWithAddress(string address)
+        {
+            CountdownWatcher watcher = new CountdownWatcher();
+            return new ZooKeeper(address, new TimeSpan(0, 0, 0, 10000), watcher);
         }
 
         public class CountdownWatcher : IWatcher

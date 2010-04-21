@@ -26,7 +26,7 @@
     {
         private readonly EndianBinaryReader reader;
 
-        static public BinaryInputArchive getArchive(EndianBinaryReader reader)
+        static public BinaryInputArchive GetArchive(EndianBinaryReader reader)
         {
             return new BinaryInputArchive(reader);
         }
@@ -89,7 +89,7 @@
         {
             int len = reader.ReadInt32();
             if (len == -1) return null;
-            var b = reader.ReadBytes(len);
+            var b = reader.ReadBytesOrThrow(len);
             return Encoding.UTF8.GetString(b);
         }
 
@@ -119,7 +119,7 @@
             {
                 throw new IOException("Unreasonable length = " + len);
             }
-            var arr = reader.ReadBytes(len);
+            var arr = reader.ReadBytesOrThrow(len);
             return arr;
         }
 

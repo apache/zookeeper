@@ -44,18 +44,19 @@
 
                 zkWatchCreator = CreateClient(watcher);
 
+                var node = Guid.NewGuid();
                 for (int i = 0; i < 10; i++)
                 {
-                    zkWatchCreator.Create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                    zkWatchCreator.Create("/" + node + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 }
                 for (int i = 0; i < 10; i++)
                 {
-                    zkIdle.Exists("/" + i, true);
+                    zkIdle.Exists("/" + node + i, true);
                 }
                 for (int i = 0; i < 10; i++)
                 {
                     Thread.Sleep(1000);
-                    zkWatchCreator.Delete("/" + i, -1);
+                    zkWatchCreator.Delete("/" + node + i, -1);
                 }
                 // The bug will manifest itself here because zkIdle will expire
                 zkIdle.Exists("/0", false);

@@ -311,7 +311,7 @@ namespace SharpKeeper
             
             ConnectSocket(addr);
 
-            sock.Blocking = false;
+            sock.Blocking = true;
             PrimeConnection(sock);
             initialized = false;
         }
@@ -403,8 +403,16 @@ namespace SharpKeeper
             if (sock.Poll(Convert.ToInt32(to.TotalMilliseconds / 1000), SelectMode.SelectRead))
             {
                 packetReceived = true;
-                int rc = sock.Receive(incomingBuffer);
-                if (rc < 0)
+                int total = 0;
+                int current = total = sock.Receive(incomingBuffer, total, incomingBuffer.Length - total, SocketFlags.None);
+
+                while (total < incomingBuffer.Length && current > 0)
+                {
+                    current = sock.Receive(incomingBuffer, total, incomingBuffer.Length - total, SocketFlags.None);
+                    total += current;
+                }
+
+                if (current <= 0)
                 {
                     throw new EndOfStreamException(string.Format("Unable to read additional data from server sessionid 0x{0:X}, likely server has closed socket",
                             conn.SessionId));
@@ -432,7 +440,8 @@ namespace SharpKeeper
                 }
             }
             else if (writeEnabled && sock.Poll(Convert.ToInt32(to.TotalMilliseconds / 1000), SelectMode.SelectWrite))
-            {                lock (outgoingQueueLock)
+            {
+                lock (outgoingQueueLock)
                 {
                     if (!outgoingQueue.IsEmpty())
                     {
@@ -440,13 +449,13 @@ namespace SharpKeeper
                         sock.Send(first.data);
                         sentCount++;
                         outgoingQueue.RemoveFirst();
-                        if (first.header != null && first.header.Type != (int) OpCode.Ping &&
-                            first.header.Type != (int) OpCode.Auth)
+                        if (first.header != null && first.header.Type != (int)OpCode.Ping &&
+                            first.header.Type != (int)OpCode.Auth)
                         {
                             pendingQueue.AddLast(first);
                         }
                     }
-                } 
+                }
             }
 
             if (outgoingQueue.IsEmpty())
@@ -478,7 +487,7 @@ namespace SharpKeeper
         {
             using (var reader = new EndianBinaryReader(EndianBitConverter.Big, new MemoryStream(incomingBuffer), Encoding.UTF8))
             {
-                BinaryInputArchive bbia = BinaryInputArchive.getArchive(reader);
+                BinaryInputArchive bbia = BinaryInputArchive.GetArchive(reader);
                 ConnectResponse conRsp = new ConnectResponse();
                 conRsp.Deserialize(bbia, "connect");
                 negotiatedSessionTimeout = conRsp.TimeOut;
@@ -503,7 +512,7 @@ namespace SharpKeeper
             using (MemoryStream ms = new MemoryStream(incomingBuffer))
             using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms, Encoding.UTF8))
             {
-                BinaryInputArchive bbia = BinaryInputArchive.getArchive(reader);
+                BinaryInputArchive bbia = BinaryInputArchive.GetArchive(reader);
                 ReplyHeader replyHdr = new ReplyHeader();
 
                 replyHdr.Deserialize(bbia, "header");
