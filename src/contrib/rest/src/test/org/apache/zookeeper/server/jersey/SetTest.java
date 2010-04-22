@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
@@ -52,7 +51,7 @@ public class SetTest extends Base {
     private String accept;
     private String path;
     private String encoding;
-    private Response.Status expectedStatus;
+    private ClientResponse.Status expectedStatus;
     private ZStat expectedStat;
     private byte[] data;
 
@@ -68,33 +67,33 @@ public class SetTest extends Base {
 
         return Arrays.asList(new Object[][] {
           {MediaType.APPLICATION_JSON, baseZnode + "/s-t1", "utf8",
-              Response.Status.OK,
+              ClientResponse.Status.OK,
               new ZStat(baseZnode + "/s-t1", null, null), null },
           {MediaType.APPLICATION_JSON, baseZnode + "/s-t2", "utf8",
-              Response.Status.OK,
+              ClientResponse.Status.OK,
               new ZStat(baseZnode + "/s-t2", null, null), new byte[0] },
           {MediaType.APPLICATION_JSON, baseZnode + "/s-t3", "utf8",
-              Response.Status.OK,
+              ClientResponse.Status.OK,
               new ZStat(baseZnode + "/s-t3", null, null), "foobar".getBytes() },
           {MediaType.APPLICATION_JSON, baseZnode + "/s-t4", "base64",
-              Response.Status.OK,
+              ClientResponse.Status.OK,
               new ZStat(baseZnode + "/s-t4", null, null), null },
           {MediaType.APPLICATION_JSON, baseZnode + "/s-t5", "base64",
-              Response.Status.OK,
+              ClientResponse.Status.OK,
               new ZStat(baseZnode + "/s-t5", null, null), new byte[0] },
           {MediaType.APPLICATION_JSON, baseZnode + "/s-t6", "base64",
-              Response.Status.OK,
+              ClientResponse.Status.OK,
               new ZStat(baseZnode + "/s-t6", null, null),
               "foobar".getBytes() },
           {MediaType.APPLICATION_JSON, baseZnode + "/dkdkdkd", "utf8",
-              Response.Status.NOT_FOUND, null, null },
+              ClientResponse.Status.NOT_FOUND, null, null },
           {MediaType.APPLICATION_JSON, baseZnode + "/dkdkdkd", "base64",
-              Response.Status.NOT_FOUND, null, null },
+              ClientResponse.Status.NOT_FOUND, null, null },
           });
     }
 
     public SetTest(String accept, String path, String encoding,
-            Response.Status status, ZStat expectedStat, byte[] data)
+            ClientResponse.Status status, ZStat expectedStat, byte[] data)
     {
         this.accept = accept;
         this.path = path;
@@ -131,7 +130,7 @@ public class SetTest extends Base {
             // TODO investigate
             cr = builder.put(ClientResponse.class, new String(data));
         }
-        assertEquals(expectedStatus, cr.getResponseStatus());
+        assertEquals(expectedStatus, cr.getClientResponseStatus());
 
         if (expectedStat == null) {
             return;

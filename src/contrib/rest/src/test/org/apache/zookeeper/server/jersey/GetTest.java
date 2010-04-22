@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.jersey.jaxb.ZStat;
@@ -45,7 +44,7 @@ public class GetTest extends Base {
     private String accept;
     private String path;
     private String encoding;
-    private Response.Status expectedStatus;
+    private ClientResponse.Status expectedStatus;
     private ZStat expectedStat;
 
     @Parameters
@@ -54,39 +53,39 @@ public class GetTest extends Base {
 
      return Arrays.asList(new Object[][] {
       {MediaType.APPLICATION_JSON, baseZnode, "utf8",
-          Response.Status.OK, new ZStat(baseZnode, null, null) },
+          ClientResponse.Status.OK, new ZStat(baseZnode, null, null) },
       {MediaType.APPLICATION_JSON, baseZnode, "utf8",
-          Response.Status.OK, new ZStat(baseZnode, null, "") },
+          ClientResponse.Status.OK, new ZStat(baseZnode, null, "") },
       {MediaType.APPLICATION_JSON, baseZnode, "utf8",
-          Response.Status.OK, new ZStat(baseZnode, null, "foo") },
+          ClientResponse.Status.OK, new ZStat(baseZnode, null, "foo") },
       {MediaType.APPLICATION_JSON, baseZnode, "base64",
-          Response.Status.OK, new ZStat(baseZnode, null, null) },
+          ClientResponse.Status.OK, new ZStat(baseZnode, null, null) },
       {MediaType.APPLICATION_JSON, baseZnode, "base64",
-          Response.Status.OK, new ZStat(baseZnode, "".getBytes(), null) },
+          ClientResponse.Status.OK, new ZStat(baseZnode, "".getBytes(), null) },
       {MediaType.APPLICATION_JSON, baseZnode, "base64",
-          Response.Status.OK, new ZStat(baseZnode, "".getBytes(), null) },
+          ClientResponse.Status.OK, new ZStat(baseZnode, "".getBytes(), null) },
       {MediaType.APPLICATION_JSON, baseZnode, "base64",
-              Response.Status.OK, new ZStat(baseZnode, "foo".getBytes(), null) },
+              ClientResponse.Status.OK, new ZStat(baseZnode, "foo".getBytes(), null) },
       {MediaType.APPLICATION_JSON, baseZnode + "abaddkdk", "utf8",
-                      Response.Status.NOT_FOUND, null },
+                      ClientResponse.Status.NOT_FOUND, null },
       {MediaType.APPLICATION_JSON, baseZnode + "abaddkdk", "base64",
-              Response.Status.NOT_FOUND, null },
+              ClientResponse.Status.NOT_FOUND, null },
 
       {MediaType.APPLICATION_XML, baseZnode, "utf8",
-                  Response.Status.OK, new ZStat(baseZnode, null, "foo") },
+                  ClientResponse.Status.OK, new ZStat(baseZnode, null, "foo") },
       {MediaType.APPLICATION_XML, baseZnode, "base64",
-                      Response.Status.OK,
+                      ClientResponse.Status.OK,
                       new ZStat(baseZnode, "foo".getBytes(), null) },
       {MediaType.APPLICATION_XML, baseZnode + "abaddkdk", "utf8",
-                      Response.Status.NOT_FOUND, null },
+                      ClientResponse.Status.NOT_FOUND, null },
       {MediaType.APPLICATION_XML, baseZnode + "abaddkdk", "base64",
-              Response.Status.NOT_FOUND, null }
+              ClientResponse.Status.NOT_FOUND, null }
 
      });
     }
 
     public GetTest(String accept, String path, String encoding,
-            Response.Status status, ZStat stat)
+            ClientResponse.Status status, ZStat stat)
     {
         this.accept = accept;
         this.path = path;
@@ -110,7 +109,7 @@ public class GetTest extends Base {
 
         ClientResponse cr = r.path(path).queryParam("dataformat", encoding)
             .accept(accept).get(ClientResponse.class);
-        assertEquals(expectedStatus, cr.getResponseStatus());
+        assertEquals(expectedStatus, cr.getClientResponseStatus());
 
         if (expectedStat == null) {
             return;

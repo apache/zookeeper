@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
@@ -47,7 +46,7 @@ public class DeleteTest extends Base {
     protected static final Logger LOG = Logger.getLogger(DeleteTest.class);
 
     private String zpath;
-    private Response.Status expectedStatus;
+    private ClientResponse.Status expectedStatus;
 
     public static class MyWatcher implements Watcher {
         public void process(WatchedEvent event) {
@@ -60,25 +59,25 @@ public class DeleteTest extends Base {
         String baseZnode = Base.createBaseZNode();
 
         return Arrays.asList(new Object[][] {
-          {baseZnode, baseZnode, Response.Status.NO_CONTENT },
-          {baseZnode, baseZnode, Response.Status.NO_CONTENT }
+          {baseZnode, baseZnode, ClientResponse.Status.NO_CONTENT },
+          {baseZnode, baseZnode, ClientResponse.Status.NO_CONTENT }
         });
     }
 
-    public DeleteTest(String path, String zpath, Response.Status status) {
+    public DeleteTest(String path, String zpath, ClientResponse.Status status) {
         this.zpath = zpath;
         this.expectedStatus = status;
     }
 
     public void verify(String type) throws Exception {
-        if (expectedStatus != Response.Status.NOT_FOUND) {
+        if (expectedStatus != ClientResponse.Status.NOT_FOUND) {
             zpath = zk.create(zpath, null, Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT_SEQUENTIAL);
         }
 
         ClientResponse cr = r.path(zpath).accept(type).type(type)
             .delete(ClientResponse.class);
-        assertEquals(expectedStatus, cr.getResponseStatus());
+        assertEquals(expectedStatus, cr.getClientResponseStatus());
 
         // use out-of-band method to verify
         Stat stat = zk.exists(zpath, false);

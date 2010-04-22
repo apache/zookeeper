@@ -58,7 +58,7 @@ import com.sun.jersey.api.json.JSONWithPadding;
  * Version 1 implementation of the ZooKeeper REST specification.
  */
 // TODO test octet fully
-@Path("znodes/v1/{path: .*}")
+@Path("znodes/v1{path: /.*}")
 public class ZNodeResource {
     private final ZooKeeper zk;
 
@@ -66,17 +66,37 @@ public class ZNodeResource {
         zk = ZooKeeperService.getClient(ui.getBaseUri().toString());
     }
 
+    private void ensurePathNotNull(String path) {
+        if (path == null) {
+            throw new IllegalArgumentException("Invalid path \"" + path + "\"");
+        }
+    }
+
     @HEAD
     @Produces({MediaType.APPLICATION_JSON, "application/javascript",
-        MediaType.APPLICATION_XML, MediaType.APPLICATION_OCTET_STREAM})
-    public void existsZNode(@PathParam("path") String path, @Context UriInfo ui)
+        MediaType.APPLICATION_XML})
+    public Response existsZNode(@PathParam("path") String path,
+            @Context UriInfo ui)
         throws InterruptedException, KeeperException
     {
-        path = "/" + path;
         Stat stat = zk.exists(path, false);
         if (stat == null) {
             throwNotFound(path, ui);
         }
+        return Response.status(Response.Status.OK).build();
+    }
+
+    @HEAD
+    @Produces({MediaType.APPLICATION_OCTET_STREAM})
+    public Response existsZNodeAsOctet(@PathParam("path") String path,
+            @Context UriInfo ui)
+        throws InterruptedException, KeeperException
+    {
+        Stat stat = zk.exists(path, false);
+        if (stat == null) {
+            throwNotFound(path, ui);
+        }
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     /*
@@ -115,7 +135,8 @@ public class ZNodeResource {
             String view, String dataformat, UriInfo ui)
         throws InterruptedException, KeeperException
     {
-        path = "/" + path;
+        ensurePathNotNull(path);
+
         if (view.equals("children")) {
             List<String> children = new ArrayList<String>();
             for (String child : zk.getChildren(path, false)) {
@@ -171,7 +192,8 @@ public class ZNodeResource {
     public Response getZNodeListAsOctet(@PathParam("path") String path)
         throws InterruptedException, KeeperException
     {
-        path = "/" + path;
+        ensurePathNotNull(path);
+
         Stat stat = new Stat();
         byte[] data = zk.getData(path, false, stat);
 
@@ -195,7 +217,7 @@ public class ZNodeResource {
             byte[] data)
         throws InterruptedException, KeeperException
     {
-        path = "/" + path;
+        ensurePathNotNull(path);
 
         int version;
         try {
@@ -235,7 +257,7 @@ public class ZNodeResource {
             byte[] data)
         throws InterruptedException, KeeperException
     {
-        path = "/" + path;
+        ensurePathNotNull(path);
 
         int version;
         try {
@@ -269,7 +291,13 @@ public class ZNodeResource {
             byte[] data)
         throws InterruptedException, KeeperException
     {
-        path = "/" + path + "/" + name;
+        ensurePathNotNull(path);
+
+        if (path.equals("/")) {
+            path += name;
+        } else {
+            path += "/" + name;
+        }
 
         if (!op.equals("create")) {
             throw new WebApplicationException(Response.status(
@@ -311,7 +339,13 @@ public class ZNodeResource {
             byte[] data)
         throws InterruptedException, KeeperException
     {
-        path = "/" + path + "/" + name;
+        ensurePathNotNull(path);
+
+        if (path.equals("/")) {
+            path += name;
+        } else {
+            path += "/" + name;
+        }
 
         if (!op.equals("create")) {
             throw new WebApplicationException(Response.status(
@@ -348,7 +382,7 @@ public class ZNodeResource {
             @Context UriInfo ui)
         throws InterruptedException, KeeperException
     {
-        path = "/" + path;
+        ensurePathNotNull(path);
 
         int version;
         try {

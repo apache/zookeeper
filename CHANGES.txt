@@ -13,6 +13,8 @@ BUGFIXES:
   ZOOKEEPER-722. zkServer.sh uses sh's builtin echo on BSD, behaves
   incorrectly. (Ivan Kelly via phunt)
 
+  ZOOKEEPER-741. root level create on REST proxy fails (phunt)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:

@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.WatchedEvent;
@@ -51,7 +50,7 @@ public class CreateTest extends Base {
     private String path;
     private String name;
     private String encoding;
-    private Response.Status expectedStatus;
+    private ClientResponse.Status expectedStatus;
     private ZPath expectedPath;
     private byte[] data;
     private boolean sequence;
@@ -69,38 +68,38 @@ public class CreateTest extends Base {
         return Arrays.asList(new Object[][] {
           {MediaType.APPLICATION_JSON,
               baseZnode, "foo bar", "utf8",
-              Response.Status.CREATED,
+              ClientResponse.Status.CREATED,
               new ZPath(baseZnode + "/foo bar"), null,
               false },
           {MediaType.APPLICATION_JSON, baseZnode, "c-t1", "utf8",
-              Response.Status.CREATED, new ZPath(baseZnode + "/c-t1"), null,
-              false },
+              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t1"),
+              null, false },
           {MediaType.APPLICATION_JSON, baseZnode, "c-t1", "utf8",
-              Response.Status.CONFLICT, null, null, false },
+              ClientResponse.Status.CONFLICT, null, null, false },
           {MediaType.APPLICATION_JSON, baseZnode, "c-t2", "utf8",
-              Response.Status.CREATED, new ZPath(baseZnode + "/c-t2"),
+              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t2"),
               "".getBytes(), false },
           {MediaType.APPLICATION_JSON, baseZnode, "c-t2", "utf8",
-              Response.Status.CONFLICT, null, null, false },
+              ClientResponse.Status.CONFLICT, null, null, false },
           {MediaType.APPLICATION_JSON, baseZnode, "c-t3", "utf8",
-              Response.Status.CREATED, new ZPath(baseZnode + "/c-t3"),
+              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t3"),
               "foo".getBytes(), false },
           {MediaType.APPLICATION_JSON, baseZnode, "c-t3", "utf8",
-              Response.Status.CONFLICT, null, null, false },
+              ClientResponse.Status.CONFLICT, null, null, false },
           {MediaType.APPLICATION_JSON, baseZnode, "c-t4", "base64",
-              Response.Status.CREATED, new ZPath(baseZnode + "/c-t4"),
+              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t4"),
               "foo".getBytes(), false },
           {MediaType.APPLICATION_JSON, baseZnode, "c-", "utf8",
-              Response.Status.CREATED, new ZPath(baseZnode + "/c-"), null,
+              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-"), null,
               true },
           {MediaType.APPLICATION_JSON, baseZnode, "c-", "utf8",
-              Response.Status.CREATED, new ZPath(baseZnode + "/c-"), null,
+              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-"), null,
               true }
           });
     }
 
     public CreateTest(String accept, String path, String name, String encoding,
-            Response.Status status, ZPath expectedPath, byte[] data,
+            ClientResponse.Status status, ZPath expectedPath, byte[] data,
             boolean sequence)
     {
         this.accept = accept;
@@ -134,7 +133,7 @@ public class CreateTest extends Base {
         } else {
             cr = builder.post(ClientResponse.class, data);
         }
-        assertEquals(expectedStatus, cr.getResponseStatus());
+        assertEquals(expectedStatus, cr.getClientResponseStatus());
 
         if (expectedPath == null) {
             return;
