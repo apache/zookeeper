@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.jersey.resources;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -40,9 +41,15 @@ public class RuntimeExceptionMapper
     }
 
     public Response toResponse(RuntimeException e) {
+        // don't try to handle jersey exceptions ourselves
+        if (e instanceof WebApplicationException) { 
+            WebApplicationException ie =(WebApplicationException) e; 
+            return ie.getResponse(); 
+        } 
+
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(
                 new ZError(ui.getRequestUri().toString(),
-                        "Error processing request due to " + e.getMessage()
+                        "Error processing request due to " + e
                         )).build();
     }
 }

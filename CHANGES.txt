@@ -18,6 +18,8 @@ BUGFIXES:
   ZOOKEEPER-722. zkServer.sh uses sh's builtin echo on BSD, behaves
   incorrectly. (Ivan Kelly via phunt)
 
+  ZOOKEEPER-741. root level create on REST proxy fails (phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

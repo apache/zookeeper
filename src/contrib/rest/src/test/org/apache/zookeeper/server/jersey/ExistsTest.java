@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -42,19 +41,19 @@ public class ExistsTest extends Base {
     protected static final Logger LOG = Logger.getLogger(ExistsTest.class);
 
     private String path;
-    private Response.Status expectedStatus;
+    private ClientResponse.Status expectedStatus;
 
     @Parameters
     public static Collection<Object[]> data() throws Exception {
         String baseZnode = Base.createBaseZNode();
 
      return Arrays.asList(new Object[][] {
-      {baseZnode, Response.Status.OK },
-      {baseZnode + "dkdk38383", Response.Status.NOT_FOUND }
+      {baseZnode, ClientResponse.Status.OK },
+      {baseZnode + "dkdk38383", ClientResponse.Status.NOT_FOUND }
      });
     }
 
-    public ExistsTest(String path, Response.Status status) {
+    public ExistsTest(String path, ClientResponse.Status status) {
         this.path = path;
         this.expectedStatus = status;
     }
@@ -62,10 +61,11 @@ public class ExistsTest extends Base {
     private void verify(String type) {
         ClientResponse cr = r.path(path).accept(type).type(type).head();
         if (type.equals(MediaType.APPLICATION_OCTET_STREAM)
-                && expectedStatus == Response.Status.OK) {
-            assertEquals(Response.Status.NO_CONTENT, cr.getResponseStatus());
+                && expectedStatus == ClientResponse.Status.OK) {
+            assertEquals(ClientResponse.Status.NO_CONTENT,
+                    cr.getClientResponseStatus());
         } else {
-            assertEquals(expectedStatus, cr.getResponseStatus());
+            assertEquals(expectedStatus, cr.getClientResponseStatus());
         }
     }
 

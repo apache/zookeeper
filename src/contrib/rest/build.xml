@@ -35,8 +35,6 @@
     <property name="test.junit.maxmem" value="512m" />
 
   <target name="setjarname">
-    <property name="main.jarname"
-              value="${zk.root}/build/zookeeper-${version}.jar"/>
     <property name="jarname"
               value="${build.dir}/zookeeper-${version}-${name}.jar"/>
   </target>
@@ -129,8 +127,8 @@
       <arg value="localhost:2181" />
       <classpath>
         <pathelement path="${jarname}" />
-        <pathelement path="${main.jarname}" />
-        <fileset dir="${root}" includes="lib/*.jar"/>
+        <fileset dir="${build.dir}/lib" includes="*.jar"/>
+        <fileset dir="${zk.root}/build" includes="zookeeper-*.jar"/>
         <pathelement path="${zk.root}/conf" />
         <fileset dir="${zk.root}/src/java/lib">
           <include name="**/*.jar" />
