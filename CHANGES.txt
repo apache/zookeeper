@@ -20,6 +20,9 @@ BUGFIXES:
 
   ZOOKEEPER-741. root level create on REST proxy fails (phunt)
 
+  ZOOKEEPER-631. zkpython's C code could do with a style clean-up
+  (henry robinson via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
