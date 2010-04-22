@@ -569,7 +569,6 @@ public class JRecord extends JCompType {
     }
 
     public void genCsharpCode(File outputDirectory) throws IOException {
-        String pkg = getJavaPackage();
         if (!outputDirectory.exists()) {
             // create the pkg directory
             if (!outputDirectory.mkdirs()) {

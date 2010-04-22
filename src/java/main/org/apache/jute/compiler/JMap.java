@@ -99,7 +99,7 @@ public class JMap extends JCompType {
         return genJavaWriteWrapper(fname, tag);
     }
 
-    public String genCsharpWriteWrapper(String fname, String tag) {
+    public String genCsharpWriteWrapper(String fname, int tag) {
         StringBuilder ret = new StringBuilder("    {\n");
         incrLevel();
         ret.append("      a_.StartMap("+fname+",\""+tag+"\");\n");
@@ -118,10 +118,10 @@ public class JMap extends JCompType {
     }
 
     String genCsharpWriteMethod(String fname, int tag) {
-        return genCsharpWriteMethod(fname, tag);
+        return genCsharpWriteWrapper(fname, tag);
     }
 
-    public String genCsharpReadWrapper(String fname, String tag, boolean decl) {
+    public String genCsharpReadWrapper(String fname, int tag, boolean decl) {
         StringBuilder ret = new StringBuilder("");
         if (decl) {
             ret.append("    System.Collections.SortedDictionary<string,string> "+capitalize(fname)+";\n");
@@ -144,6 +144,6 @@ public class JMap extends JCompType {
 
 
     String genCsharpReadMethod(String fname, int tag) {
-        return genCsharpReadMethod(fname, tag);
+        return genCsharpReadWrapper(fname, tag, false);
     }
 }
