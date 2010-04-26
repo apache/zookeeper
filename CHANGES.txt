@@ -26,6 +26,9 @@ BUGFIXES:
   ZOOKEEPER-746. learner outputs session id to log in dec (phunt via
   henryr)
 
+  ZOOKEEPER-738. zookeeper.jute.h fails to compile with -pedantic
+  (Jozef Hatala via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

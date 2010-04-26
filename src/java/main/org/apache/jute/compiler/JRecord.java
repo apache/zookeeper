@@ -114,7 +114,7 @@ public class JRecord extends JCompType {
                 String struct_name = JVector.extractVectorName(jvType);
                 if (vectorStructs.get(struct_name) == null) {
                     vectorStructs.put(struct_name, struct_name);
-                    h.write("struct " + struct_name + " {\n    int32_t count;\n" + jv.getElementType().genCDecl("*data") + ";\n};\n");
+                    h.write("struct " + struct_name + " {\n    int32_t count;\n" + jv.getElementType().genCDecl("*data") + "\n};\n");
                     h.write("int serialize_" + struct_name + "(struct oarchive *out, const char *tag, struct " + struct_name + " *v);\n");
                     h.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v);\n");
                     h.write("int allocate_" + struct_name + "(struct " + struct_name + " *v, int32_t len);\n");
