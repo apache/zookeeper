@@ -92,7 +92,7 @@ public class Learner {
      */
     void validateSession(ServerCnxn cnxn, long clientId, int timeout)
             throws IOException, InterruptedException {
-        LOG.info("Revalidating client: " + clientId);
+        LOG.info("Revalidating client: 0x" + Long.toHexString(clientId));
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         dos.writeLong(clientId);
