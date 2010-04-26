@@ -29,6 +29,9 @@ BUGFIXES:
   ZOOKEEPER-738. zookeeper.jute.h fails to compile with -pedantic
   (Jozef Hatala via phunt)
 
+  ZOOKEEPER-734. QuorumPeerTestBase.java and ZooKeeperServerMainTest.java
+  do not handle windows path correctly (Vishal K via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

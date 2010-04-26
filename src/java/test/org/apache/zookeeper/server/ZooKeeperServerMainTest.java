@@ -61,8 +61,15 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             if (!dataDir.mkdir()) {
                 throw new IOException("unable to mkdir " + dataDir);
             }
-            fwriter.write("dataDir=" + dataDir.toString() + "\n");
-
+            
+            // Convert windows path to UNIX to avoid problems with "\"
+            String dir = dataDir.toString();
+            String osname = java.lang.System.getProperty("os.name");
+            if (osname.toLowerCase().contains("windows")) {
+                dir = dir.replace('\\', '/');
+            }
+            fwriter.write("dataDir=" + dir + "\n");
+            
             fwriter.write("clientPort=" + clientPort + "\n");
             fwriter.flush();
             fwriter.close();
