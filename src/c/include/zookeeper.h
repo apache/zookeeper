@@ -605,7 +605,7 @@ ZOOAPI int zoo_state(zhandle_t *zh);
  *    of the Create Flags
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the parent node does not exist.
  * ZNODEEXISTS the node already exists
  * ZNOAUTH the client does not have permission.
@@ -632,7 +632,7 @@ ZOOAPI int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
  *  If -1 is used the version check will not take place. 
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADVERSION expected version does not match actual version.
@@ -658,7 +658,7 @@ ZOOAPI int zoo_adelete(zhandle_t *zh, const char *path, int version,
  * exist. This allows clients to watch for nodes to appear.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when the 
@@ -690,7 +690,7 @@ ZOOAPI int zoo_aexists(zhandle_t *zh, const char *path, int watch,
  * is associated with the given instance of the watcher only.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when the 
@@ -714,7 +714,7 @@ ZOOAPI int zoo_awexists(zhandle_t *zh, const char *path,
  * the client if the node changes.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when 
@@ -743,7 +743,7 @@ ZOOAPI int zoo_aget(zhandle_t *zh, const char *path, int watch,
  * is associated with the given instance of the watcher only.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when 
@@ -772,7 +772,7 @@ ZOOAPI int zoo_awget(zhandle_t *zh, const char *path,
  * immediately and invoke the completion routine when the request completes.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADVERSION expected version does not match actual version.
@@ -796,7 +796,7 @@ ZOOAPI int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buf
  * the client if the node changes.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when 
@@ -825,7 +825,7 @@ ZOOAPI int zoo_aget_children(zhandle_t *zh, const char *path, int watch,
  * is associated with the given instance of the watcher only.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when 
@@ -851,7 +851,7 @@ ZOOAPI int zoo_awget_children(zhandle_t *zh, const char *path,
  * the client if the node changes.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when 
@@ -882,7 +882,7 @@ ZOOAPI int zoo_aget_children2(zhandle_t *zh, const char *path, int watch,
  * is associated with the given instance of the watcher only.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when 
@@ -904,7 +904,7 @@ ZOOAPI int zoo_awget_children2(zhandle_t *zh, const char *path,
  * separating ancestors of the node.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when
@@ -927,7 +927,7 @@ ZOOAPI int zoo_async(zhandle_t *zh, const char *path,
  * separating ancestors of the node.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * \param data the data that will be passed to the completion routine when 
@@ -950,7 +950,7 @@ ZOOAPI int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t comple
  * \param buflen the number of bytes from buffer to write.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZINVALIDACL invalid ACL specified
@@ -1068,7 +1068,7 @@ ZOOAPI void zoo_deterministic_conn_order(int yesOrNo);
  *    new node in the server will not be affected by the truncation.
  *    The path string will always be null-terminated.
  * \return  one of the following codes are returned:
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the parent node does not exist.
  * ZNODEEXISTS the node already exists
  * ZNOAUTH the client does not have permission.
@@ -1091,7 +1091,7 @@ ZOOAPI int zoo_create(zhandle_t *zh, const char *path, const char *value,
  *    actual version of the node does not match the expected version.
  *  If -1 is used the version check will not take place. 
  * \return one of the following values is returned.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADVERSION expected version does not match actual version.
@@ -1114,7 +1114,7 @@ ZOOAPI int zoo_delete(zhandle_t *zh, const char *path, int version);
  * exist. This allows clients to watch for nodes to appear.
  * \param the return stat value of the node.
  * \return  return code of the function call.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADARGUMENTS - invalid input parameters
@@ -1140,7 +1140,7 @@ ZOOAPI int zoo_exists(zhandle_t *zh, const char *path, int watch, struct Stat *s
  * is associated with the given instance of the watcher only.
  * \param the return stat value of the node.
  * \return  return code of the function call.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADARGUMENTS - invalid input parameters
@@ -1163,7 +1163,7 @@ ZOOAPI int zoo_wexists(zhandle_t *zh, const char *path,
  * It'll be set to the actual data length upon return. If the data is NULL, length is -1.
  * \param stat if not NULL, will hold the value of stat for the path on return.
  * \return return value of the function call.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADARGUMENTS - invalid input parameters
@@ -1192,7 +1192,7 @@ ZOOAPI int zoo_get(zhandle_t *zh, const char *path, int watch, char *buffer,
  * It'll be set to the actual data length upon return. If the data is NULL, length is -1.
  * \param stat if not NULL, will hold the value of stat for the path on return.
  * \return return value of the function call.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADARGUMENTS - invalid input parameters
@@ -1217,7 +1217,7 @@ ZOOAPI int zoo_wget(zhandle_t *zh, const char *path,
  * the actual version of the node does not match the expected version. If -1 is 
  * used the version check will not take place. 
  * \return the return code for the function call.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADVERSION expected version does not match actual version.
@@ -1244,7 +1244,7 @@ ZOOAPI int zoo_set(zhandle_t *zh, const char *path, const char *buffer,
  * used the version check will not take place. 
  * \param stat if not NULL, will hold the value of stat for the path on return.
  * \return the return code for the function call.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADVERSION expected version does not match actual version.
@@ -1265,7 +1265,7 @@ ZOOAPI int zoo_set2(zhandle_t *zh, const char *path, const char *buffer,
  * the client if the node changes.
  * \param strings return value of children paths.
  * \return the return code of the function.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADARGUMENTS - invalid input parameters
@@ -1291,7 +1291,7 @@ ZOOAPI int zoo_get_children(zhandle_t *zh, const char *path, int watch,
  * is associated with the given instance of the watcher only.
  * \param strings return value of children paths.
  * \return the return code of the function.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADARGUMENTS - invalid input parameters
@@ -1315,7 +1315,7 @@ ZOOAPI int zoo_wget_children(zhandle_t *zh, const char *path,
  * \param strings return value of children paths.
  * \param stat return value of node stat.
  * \return the return code of the function.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADARGUMENTS - invalid input parameters
@@ -1344,7 +1344,7 @@ ZOOAPI int zoo_get_children2(zhandle_t *zh, const char *path, int watch,
  * \param strings return value of children paths.
  * \param stat return value of node stat.
  * \return the return code of the function.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADARGUMENTS - invalid input parameters
@@ -1364,7 +1364,7 @@ ZOOAPI int zoo_wget_children2(zhandle_t *zh, const char *path,
  * \param acl the return value of acls on the path.
  * \param stat returns the stat of the path specified.
  * \return the return code for the function call.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZBADARGUMENTS - invalid input parameters
@@ -1383,7 +1383,7 @@ ZOOAPI int zoo_get_acl(zhandle_t *zh, const char *path, struct ACL_vector *acl,
  * \param version the expected version of the path.
  * \param acl the acl to be set on the path. 
  * \return the return code for the function call.
- * ZOK operation completed succesfully
+ * ZOK operation completed successfully
  * ZNONODE the node does not exist.
  * ZNOAUTH the client does not have permission.
  * ZINVALIDACL invalid ACL specified
