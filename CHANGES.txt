@@ -24,6 +24,9 @@ BUGFIXES:
   ZOOKEEPER-734. QuorumPeerTestBase.java and ZooKeeperServerMainTest.java
   do not handle windows path correctly (Vishal K via phunt)
 
+  ZOOKEEPER-754. numerous misspellings "succesfully"
+  (Savu Andrei via phunt)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:

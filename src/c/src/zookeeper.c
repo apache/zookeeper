@@ -2844,7 +2844,7 @@ int flush_send_queue(zhandle_t*zh, int timeout)
             rc = ZCONNECTIONLOSS;
             break;
         }
-        // if the buffer has been sent succesfully, remove it from the queue
+        // if the buffer has been sent successfully, remove it from the queue
         if (rc > 0)
             remove_buffer(&zh->to_send);
         gettimeofday(&zh->last_send, 0);
