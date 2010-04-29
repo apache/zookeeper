@@ -87,6 +87,7 @@
     <property name="javadoc.packages" value="org.apache.*" />
 
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
+    <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
 
     <property name="clover.home" location="${env.CLOVER_HOME}"/>
     <property name="clover.jar" location="${clover.home}/lib/clover.jar" />
@@ -506,6 +507,19 @@
                 <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
                 <attribute name="Implementation-Version" value="${revision}"/> 
                 <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            	
+            	<!-- The following are OSGi manifest headers -->
+            	<!-- currently hardcoded, when things get more complicated we could use BND 
+            	http://www.aqute.biz/Code/Bnd to generate them -->
+                <attribute name="Bundle-Vendor" value="The Apache Software Foundation"/>
+                <attribute name="Bundle-Name" value="ZooKeeper Bundle"/>
+                <attribute name="Bundle-SymbolicName" value="org.apache.hadoop.zookeeper"/>
+                <attribute name="Bundle-ManifestVersion" value="2"/>
+                <attribute name="Bundle-Version" value="${version}"/>
+                <attribute name="Bundle-License" value="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+                <attribute name="Bundle-DocURL" value="http://hadoop.apache.org/zookeeper"/>
+                <attribute name="Import-Package" value='javax.management,org.apache.log4j,org.osgi.framework;version="[1.4,2.0)",org.osgi.util.tracker;version="[1.1,2.0)"'/>
+                <attribute name="Export-Package" value='org.apache.zookeeper;version="${version}",org.apache.zookeeper.data;version="${version}",org.apache.zookeeper.version;version="${version}",org.apache.zookeeper.server;version="${version}",org.apache.zookeeper.server.quorum;version="${version}"'/>
             </manifest>
         </jar>
     </target>
@@ -582,25 +596,34 @@
 
       <copy todir="${dist.dir}"> 
         <fileset file="${build.dir}/${final.name}.jar"/>
-        <fileset file="${build.dir}/${final.name}-bin.jar"/>
+      </copy>
+
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="sha1"/>
+
+      <mkdir dir="${dist.maven.dir}"/>
+
+      <copy file="${build.dir}/${final.name}-bin.jar"
+            tofile="${dist.maven.dir}/${final.name}.jar"/> 
+      <copy todir="${dist.maven.dir}"> 
         <fileset file="${build.dir}/${final.name}-sources.jar"/>
         <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
       </copy>
       
-      <checksum file="${dist.dir}/${final.name}.jar" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}.jar" algorithm="sha1"/>
-      <checksum file="${dist.dir}/${final.name}-bin.jar" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}-bin.jar" algorithm="sha1"/>
-      <checksum file="${dist.dir}/${final.name}-sources.jar" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}-sources.jar" algorithm="sha1"/>
-      <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.dir}/${final.name}.pom">
+                   pomfile="${dist.maven.dir}/${final.name}.pom">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
 
       <copy todir="${dist.dir}/bin">
         <fileset dir="bin"/>
