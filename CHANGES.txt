@@ -35,6 +35,12 @@ BUGFIXES:
   ZOOKEEPER-754. numerous misspellings "succesfully"
   (Savu Andrei via phunt)
 
+  ZOOKEEPER-749. OSGi metadata not included in binary only jar (phunt
+  via henryr)
+
+  ZOOKEEPER-750. move maven artifacts into "dist-maven" subdir of the
+  release (package target) (phunt via henryr)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
