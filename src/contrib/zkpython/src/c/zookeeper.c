@@ -286,8 +286,9 @@ PyObject *build_string_vector(const struct String_vector *sv)
 
 /* Returns 1 if the PyObject is a valid representation of an ACL, and
    0 otherwise. */
-int check_is_acl(PyObject *o) { 
+int check_is_acl(PyObject *o) {
   int i;
+  PyObject *entry;
   if (o == NULL) {
     return 0;
   }
@@ -295,10 +296,26 @@ int check_is_acl(PyObject *o) {
     return 0;
   }
   for (i=0;i<PyList_Size(o);++i) {
-    if (!PyDict_Check(PyList_GetItem(o,i))) {
+    PyObject *element = PyList_GetItem(o,i);
+    if (!PyDict_Check(element)) {
+      return 0;
+    }
+    entry = PyDict_GetItemString( element, "perms" );
+    if (entry == Py_None) {
+      return 0;
+    }
+
+    entry = PyDict_GetItemString( element, "scheme" );
+    if (entry == Py_None) {
+      return 0;
+    }
+
+    entry = PyDict_GetItemString( element, "id" );
+    if (entry == Py_None) {
       return 0;
     }
   }
+
   return 1;
 }
 

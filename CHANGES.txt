@@ -33,6 +33,9 @@ BUGFIXES:
   ZOOKEEPER-750. move maven artifacts into "dist-maven" subdir of the
   release (package target) (phunt via henryr)
 
+  ZOOKEEPER-758. zkpython segfaults on invalid acl with missing key
+  (Kapil Thangavelu via henryr)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:
