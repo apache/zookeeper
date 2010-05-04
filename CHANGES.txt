@@ -36,6 +36,8 @@ BUGFIXES:
   ZOOKEEPER-758. zkpython segfaults on invalid acl with missing key
   (Kapil Thangavelu via henryr)
 
+  ZOOKEEPER-737. some 4 letter words may fail with netcat (nc) (mahadev)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:

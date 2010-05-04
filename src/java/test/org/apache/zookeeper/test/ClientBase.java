@@ -224,6 +224,8 @@ public abstract class ClientBase extends TestCase {
             OutputStream outstream = sock.getOutputStream();
             outstream.write(cmd.getBytes());
             outstream.flush();
+            // this replicates NC - close the output stream before reading
+            sock.shutdownOutput();
 
             reader =
                 new BufferedReader(
