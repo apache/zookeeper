@@ -645,8 +645,7 @@ namespace SharpKeeper
                 p.watchRegistration.Register(p.replyHeader.Err);
             }
 
-            p.finished = true;
-            p.WaitHandle.Set();
+            p.Finished = true;
             conn.consumer.QueuePacket(p);
         }
         public void Dispose()

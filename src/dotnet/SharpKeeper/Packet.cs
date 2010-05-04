@@ -34,7 +34,7 @@
         internal string serverPath;
         internal ReplyHeader replyHeader;
         internal IRecord response;
-        internal bool finished;
+        private bool finished;
         internal ZooKeeper.WatchRegistration watchRegistration;
         internal readonly byte[] data;
 
@@ -80,12 +80,27 @@
                 }
             }
             this.watchRegistration = watchRegistration;
-            WaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
         }
 
-        internal EventWaitHandle WaitHandle
+        internal bool Finished
         { 
-            get; private set;
+            get
+            {
+                lock (this)
+                {
+                    return finished;
+                }
+            }
+            set
+            {
+                lock (this)
+                {
+                    Monitor.Enter(this);
+                    finished = value;
+                    Monitor.PulseAll(this);
+                    Monitor.Exit(this);
+                }
+            }
         }
 
         public override string ToString()
