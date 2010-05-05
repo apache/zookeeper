@@ -176,7 +176,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         QuorumHierarchical hq4 = new QuorumHierarchical(qp); 
         s4 = new QuorumPeer(peers, s4dir, s4dir, port4, 3, 4, tickTime, initLimit, syncLimit, hq4);
         if (withObservers) {
-            s4.setPeerType(QuorumPeer.LearnerType.OBSERVER);
+            s4.setLearnerType(QuorumPeer.LearnerType.OBSERVER);
         }
         assertEquals(port4, s4.getClientPort());
                        
@@ -184,7 +184,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         QuorumHierarchical hq5 = new QuorumHierarchical(qp); 
         s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 3, 5, tickTime, initLimit, syncLimit, hq5);
         if (withObservers) {
-            s5.setPeerType(QuorumPeer.LearnerType.OBSERVER);
+            s5.setLearnerType(QuorumPeer.LearnerType.OBSERVER);
         }
         assertEquals(port5, s5.getClientPort());
         

@@ -23,8 +23,6 @@ import static org.apache.zookeeper.test.ClientBase.verifyThreadTerminated;
 
 import java.util.LinkedList;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -36,11 +34,10 @@ import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class AsyncHammerTest extends TestCase
+public class AsyncHammerTest
     implements StringCallback, VoidCallback, DataCallback
 {
     private static final Logger LOG = Logger.getLogger(AsyncHammerTest.class);
@@ -49,15 +46,11 @@ public class AsyncHammerTest extends TestCase
 
     private volatile boolean bang;
 
-    @Before
-    @Override
-    protected void setUp() throws Exception {
-        LOG.info("STARTING " + getName());
-        qb.setUp();
+    public void setUp(boolean withObservers) throws Exception {        
+        qb.setUp(withObservers);
     }
 
     protected void restart() throws Exception {
-        LOG.info("RESTARTING " + getName());
         qb.tearDown();
 
         // don't call setup - we don't want to reassign ports/dirs, etc...
@@ -65,12 +58,9 @@ public class AsyncHammerTest extends TestCase
         qb.startServers();
     }
 
-    @After
-    @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         LOG.info("Test clients shutting down");
         qb.tearDown();
-        LOG.info("FINISHED " + getName());
     }
 
     /**
@@ -130,8 +120,8 @@ public class AsyncHammerTest extends TestCase
         }
 
         private synchronized void decOutstanding() {
-            outstanding--;
-            assertTrue("outstanding >= 0", outstanding >= 0);
+            outstanding--;            
+            Assert.assertTrue("outstanding >= 0", outstanding >= 0);
             notifyAll();
         }
 
@@ -175,6 +165,7 @@ public class AsyncHammerTest extends TestCase
 
     @Test
     public void testHammer() throws Exception {
+        setUp(false);
         bang = true;
         LOG.info("Starting hammers");
         HammerThread[] hammers = new HammerThread[100];
@@ -189,7 +180,7 @@ public class AsyncHammerTest extends TestCase
         for (int i = 0; i < hammers.length; i++) {
             hammers[i].interrupt();
             verifyThreadTerminated(hammers[i], 60000);
-            assertFalse(hammers[i].failed);
+            Assert.assertFalse(hammers[i].failed);
         }
 
         // before restart
@@ -201,12 +192,12 @@ public class AsyncHammerTest extends TestCase
         // after restart
         LOG.info("Verifying hammers 2");
         qb.verifyRootOfAllServersMatch(qb.hostPort);
+        tearDown();
     }
     
     @Test
     public void testObserversHammer() throws Exception {
-        qb.tearDown();
-        qb.setUp(true);
+        setUp(true);
         bang = true;
         Thread[] hammers = new Thread[100];
         for (int i = 0; i < hammers.length; i++) {
@@ -220,7 +211,8 @@ public class AsyncHammerTest extends TestCase
             verifyThreadTerminated(hammers[i], 60000);
         }
         // before restart
-        qb.verifyRootOfAllServersMatch(qb.hostPort);          
+        qb.verifyRootOfAllServersMatch(qb.hostPort);
+        tearDown();
     }
 
     @SuppressWarnings("unchecked")

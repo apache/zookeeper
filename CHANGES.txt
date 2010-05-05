@@ -37,9 +37,12 @@ BUGFIXES:
   (Kapil Thangavelu via henryr)
 
   ZOOKEEPER-737. some 4 letter words may fail with netcat (nc) (mahadev)
-
+  
   ZOOKEEPER-763. Deadlock on close w/ zkpython / c client
   (henry via phunt)
+
+  ZOOKEEPER-764. Observer elected leader due to inconsistent voting view
+  (henry via mahadev)
 
 Release 3.3.0 - 2010-03-24
 

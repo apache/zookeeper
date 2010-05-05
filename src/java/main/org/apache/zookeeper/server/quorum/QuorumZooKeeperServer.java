@@ -57,6 +57,6 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         pwriter.print("quorumPort=");
         pwriter.println(self.quorumPeers.get(self.getId()).addr.getPort());
         pwriter.print("peerType=");
-        pwriter.println(self.getPeerType().ordinal());
+        pwriter.println(self.getLearnerType().ordinal());
     }
 }
