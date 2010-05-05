@@ -103,7 +103,7 @@ class ACLTest(zktestbase.TestBase):
                         "/zk-python-aclverifytest",
                         "",
                         invalid_acl,
-                        zookeeper.EPHEMERAL))
+                        zookeeper.EPHEMERAL)
 
 if __name__ == '__main__':
     unittest.main()

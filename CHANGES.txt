@@ -49,6 +49,9 @@ BUGFIXES:
   ZOOKEEPER-764. Observer elected leader due to inconsistent voting view 
   (henry via mahadev)
 
+  ZOOKEEPER-763. Deadlock on close w/ zkpython / c client
+  (henry via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
