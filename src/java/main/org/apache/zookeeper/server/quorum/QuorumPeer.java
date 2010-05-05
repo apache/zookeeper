@@ -148,14 +148,24 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     /*
      * Default value of peer is participant
      */
-    private LearnerType peerType = LearnerType.PARTICIPANT;
+    private LearnerType learnerType = LearnerType.PARTICIPANT;
     
-    public LearnerType getPeerType() {
-        return peerType;
+    public LearnerType getLearnerType() {
+        return learnerType;
     }
     
-    public void setPeerType(LearnerType p) {
-        peerType = p;
+    /**
+     * Sets the LearnerType both in the QuorumPeer and in the peerMap
+     */
+    public void setLearnerType(LearnerType p) {
+        learnerType = p;
+        if (quorumPeers.containsKey(this.myid)) {
+            this.quorumPeers.get(myid).type = p;
+        } else {
+            LOG.error("Setting LearnerType to " + p + " but " + myid 
+                    + " not in QuorumPeers. ");
+        }
+        
     }
     /**
      * The servers that make up the cluster
