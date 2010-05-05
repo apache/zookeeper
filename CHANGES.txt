@@ -56,6 +56,9 @@ IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
 
+  ZOOKEEPER-766. forrest recipes docs don't mention the lock/queue recipe
+  implementations available in the release (phunt via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree. (Kay
   Kay via henry)
