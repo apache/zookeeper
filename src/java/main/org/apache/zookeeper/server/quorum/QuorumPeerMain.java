@@ -138,7 +138,7 @@ public class QuorumPeerMain {
           quorumPeer.setQuorumVerifier(config.getQuorumVerifier());
           quorumPeer.setCnxnFactory(cnxnFactory);
           quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
-          quorumPeer.setPeerType(config.getPeerType());
+          quorumPeer.setLearnerType(config.getPeerType());
   
           quorumPeer.start();
           quorumPeer.join();

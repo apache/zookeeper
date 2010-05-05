@@ -169,7 +169,7 @@ public class LENonTerminateTest extends ZKTestCase {
                             self.setCurrentVote(result.winner);
                             s.close();
                             Vote current = self.getCurrentVote();
-                            LOG.info("Found leader: my type is: " + self.getPeerType());
+                            LOG.info("Found leader: my type is: " + self.getLearnerType());
                             /*
                              * We want to make sure we implement the state machine
                              * correctly. If we are a PARTICIPANT, once a leader
@@ -177,7 +177,7 @@ public class LENonTerminateTest extends ZKTestCase {
                              * FOLLOWING. However if we are an OBSERVER, it is an
                              * error to be elected as a Leader.
                              */
-                            if (self.getPeerType() == LearnerType.OBSERVER) {
+                            if (self.getLearnerType() == LearnerType.OBSERVER) {
                                 if (current.id == self.getId()) {
                                     // This should never happen!
                                     LOG.error("OBSERVER elected as leader!");

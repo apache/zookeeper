@@ -46,6 +46,9 @@ BUGFIXES:
 
   ZOOKEEPER-737. some 4 letter words may fail with netcat (nc). (mahadev)
 
+  ZOOKEEPER-764. Observer elected leader due to inconsistent voting view 
+  (henry via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

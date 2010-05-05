@@ -49,9 +49,8 @@ public class AsyncHammerTest extends ZKTestCase
 
     private volatile boolean bang;
 
-    @Before
-    public void setUp() throws Exception {
-        qb.setUp();
+    public void setUp(boolean withObservers) throws Exception {
+        qb.setUp(withObservers);
     }
 
     protected void restart() throws Exception {
@@ -63,7 +62,6 @@ public class AsyncHammerTest extends ZKTestCase
         qb.startServers();
     }
 
-    @After
     public void tearDown() throws Exception {
         LOG.info("Test clients shutting down");
         qb.tearDown();
@@ -171,6 +169,7 @@ public class AsyncHammerTest extends ZKTestCase
 
     @Test
     public void testHammer() throws Exception {
+        setUp(false);
         bang = true;
         LOG.info("Starting hammers");
         HammerThread[] hammers = new HammerThread[100];
@@ -197,12 +196,12 @@ public class AsyncHammerTest extends ZKTestCase
         // after restart
         LOG.info("Verifying hammers 2");
         qb.verifyRootOfAllServersMatch(qb.hostPort);
+        tearDown();
     }
 
     @Test
     public void testObserversHammer() throws Exception {
-        qb.tearDown();
-        qb.setUp(true);
+        setUp(true);
         bang = true;
         Thread[] hammers = new Thread[100];
         for (int i = 0; i < hammers.length; i++) {
@@ -217,6 +216,7 @@ public class AsyncHammerTest extends ZKTestCase
         }
         // before restart
         qb.verifyRootOfAllServersMatch(qb.hostPort);
+        tearDown();
     }
 
     @SuppressWarnings("unchecked")

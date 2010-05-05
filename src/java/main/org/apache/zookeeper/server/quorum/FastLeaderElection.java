@@ -587,7 +587,7 @@ public class FastLeaderElection implements Election {
      * @return ServerState
      */
     private ServerState learningState(){
-        if(self.getPeerType() == LearnerType.PARTICIPANT){
+        if(self.getLearnerType() == LearnerType.PARTICIPANT){
             LOG.debug("I'm a participant: " + self.getId());
             return ServerState.FOLLOWING;
         }
@@ -603,7 +603,7 @@ public class FastLeaderElection implements Election {
      * @return long
      */
     private long getInitId(){
-        if(self.getPeerType() == LearnerType.PARTICIPANT)
+        if(self.getLearnerType() == LearnerType.PARTICIPANT)
             return self.getId();
         else return Long.MIN_VALUE;
     }
@@ -614,7 +614,7 @@ public class FastLeaderElection implements Election {
      * @return long
      */
     private long getInitLastLoggedZxid(){
-        if(self.getPeerType() == LearnerType.PARTICIPANT)
+        if(self.getLearnerType() == LearnerType.PARTICIPANT)
             return self.getLastLoggedZxid();
         else return Long.MIN_VALUE;
     }

@@ -159,9 +159,15 @@ public class QuorumBase extends ClientBase {
         Assert.assertEquals(port5, s5.getClientPort());
         
         if (withObservers) {
-            s4.setPeerType(LearnerType.OBSERVER);
-            s5.setPeerType(LearnerType.OBSERVER);
+            s4.setLearnerType(LearnerType.OBSERVER);
+            s5.setLearnerType(LearnerType.OBSERVER);
         }
+        
+        LOG.info("QuorumPeer 1 voting view: " + s1.getVotingView());
+        LOG.info("QuorumPeer 2 voting view: " + s2.getVotingView());
+        LOG.info("QuorumPeer 3 voting view: " + s3.getVotingView());
+        LOG.info("QuorumPeer 4 voting view: " + s4.getVotingView());
+        LOG.info("QuorumPeer 5 voting view: " + s5.getVotingView());       
         
         LOG.info("start QuorumPeer 1");
         s1.start();
