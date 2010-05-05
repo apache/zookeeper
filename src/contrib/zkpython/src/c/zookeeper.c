@@ -1258,12 +1258,15 @@ PyObject *pyzoo_set_acl(PyObject *self, PyObject *args)
 /* Closes a connection, returns integer error code */
 PyObject *pyzoo_close(PyObject *self, PyObject *args)
 {
-  int zkhid;
+  int zkhid, ret;
   if (!PyArg_ParseTuple(args, "i", &zkhid)) {
     return NULL;
   }
   CHECK_ZHANDLE(zkhid);
-  int ret = zookeeper_close(zhandles[zkhid]);
+  zhandle_t *handle = zhandles[zkhid];
+  Py_BEGIN_ALLOW_THREADS
+  ret = zookeeper_close(handle);
+  Py_END_ALLOW_THREADS
   zhandles[zkhid] = NULL; // The zk C client frees the zhandle
   return Py_BuildValue("i", ret);
 }
