@@ -36,18 +36,18 @@ Build Instructions
 	2. cd into this directory
 	3. Run command: ant
 	4. ZooInspector will be built to ../../../build/contrib/ZooInspector
-	5. Copy zookeeper-3.x.x.jar into the lib sub-directory (if you are using zookeeper-3.3.0.jar it will have been
+	5. Copy zookeeper-3.x.x.jar into the lib sub-directory (if you are using zookeeper-3.3.1.jar it will have been
        copied to this directory during the build
-	6. By default the zookeeper.cmd and zookeeper.sh files expect zookeeper-3.3.0.jar.  If you are using another version
+	6. By default the zookeeper.cmd and zookeeper.sh files expect zookeeper-3.3.1.jar.  If you are using another version
 	   you will need to change these files to point to the zookeeper-3.x.x.jar you copied to the lib directory
 	7. To run ZooInspector run zooInspector.cmd (on Windows) or zooInspector.sh (on Linux).  If you are using 
-	   zookeeper-3.3.0.jar and do not require any classpath changes you can run the zookeeper-dev-ZooInspector.jar
+	   zookeeper-3.3.1.jar and do not require any classpath changes you can run the zookeeper-dev-ZooInspector.jar
 	   directly
 
 Using ZooInspector
 ------------------
 	To start ZooInspector run zooInspector.cmd (on Windows) or zooInspector.sh (on Linux).  If you are using 
-	zookeeper-3.3.0.jar and do not require any classpath changes you can run the zookeeper-dev-ZooInspector.jar
+	zookeeper-3.3.1.jar and do not require any classpath changes you can run the zookeeper-dev-ZooInspector.jar
 	directly.
 	
 	Click the play button on the toolbar to bring up the connection dialog.  From here you can enter connection 

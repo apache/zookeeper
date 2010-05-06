@@ -15,4 +15,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
          
-java -cp ../../../build/contrib/ZooInspector/zookeeper-dev-ZooInspector.jar:../../../build/lib/log4j-1.2.15.jar:lib/zookeeper-3.3.0.jar:lib/jtoaster-1.0.4.jar:lib org.apache.zookeeper.inspector.ZooInspector
+java -cp ../../../build/contrib/ZooInspector/zookeeper-dev-ZooInspector.jar:../../../build/lib/log4j-1.2.15.jar:lib/zookeeper-3.3.1.jar:lib/jtoaster-1.0.4.jar:lib org.apache.zookeeper.inspector.ZooInspector

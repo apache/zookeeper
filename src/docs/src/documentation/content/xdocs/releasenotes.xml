@@ -18,7 +18,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
 "http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
 <article id="ar_ReleaseNotes">
-  <title>ZooKeeper 3.3.0 Release Notes</title>
+  <title>ZooKeeper 3.3.1 Release Notes</title>
 
   <articleinfo>
     <legalnotice>
@@ -47,10 +47,10 @@ from version 2 of ZooKeeper (SourceForge) to version 3 or
 later.</para>
 
 <section id="changes">
-<title>Changes Since ZooKeeper 3.2</title>
+<title>Changes Since ZooKeeper 3.3.0</title>
 
 <table>
-<title>Changes Since ZooKeeper 3.2</title>
+<title>Changes Since ZooKeeper 3.3.0</title>
 <tgroup cols='2'>
 <colspec colname='c1'/><colspec colname='c2'/>
 <thead>
@@ -62,267 +62,39 @@ later.</para>
 <tbody>
 
 <row>
-  <entry>Sub-task</entry>
-  <entry></entry>
-</row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-397">ZOOKEEPER-397</ulink></entry><entry>         mainline tests conversion
-</entry></row>
-
-    
-<row>
   <entry>Bug</entry>
   <entry></entry>
 </row>
 
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-3">ZOOKEEPER-3</ulink></entry><entry>          syncLimit has slightly different comments in the class header, and &gt; inline with the variable.
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-720">ZOOKEEPER-720</ulink></entry><entry>         Use zookeeper-{version}-sources.jar instead of zookeeper-{version}-src.jar to publish sources in the Maven repository
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-59">ZOOKEEPER-59</ulink></entry><entry>         Synchronized block in NIOServerCnxn
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-722">ZOOKEEPER-722</ulink></entry><entry>         zkServer.sh uses sh's builtin echo on BSD, behaves incorrectly.
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-86">ZOOKEEPER-86</ulink></entry><entry>         intermittent test failure of org.apache.zookeeper.test.AsyncTest
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-734">ZOOKEEPER-734</ulink></entry><entry>         QuorumPeerTestBase.java and ZooKeeperServerMainTest.java do not handle windows path correctly
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-121">ZOOKEEPER-121</ulink></entry><entry>         SyncRequestProcessor is not closing log stream during shutdown
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-735">ZOOKEEPER-735</ulink></entry><entry>         cppunit test testipv6 assumes that the machine is ipv6 enabled.
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-287">ZOOKEEPER-287</ulink></entry><entry>         high cpu utilization caused by nioserver factory thread
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-737">ZOOKEEPER-737</ulink></entry><entry>         some 4 letter words may fail with netcat (nc)
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-413">ZOOKEEPER-413</ulink></entry><entry>         two flaws need addressing in the c tests that can cause false positive failures
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-738">ZOOKEEPER-738</ulink></entry><entry>         zookeeper.jute.h fails to compile with -pedantic 
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-420">ZOOKEEPER-420</ulink></entry><entry>         build/test should not require install in zkpython
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-741">ZOOKEEPER-741</ulink></entry><entry>         root level create on REST proxy fails
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-457">ZOOKEEPER-457</ulink></entry><entry>         Make ZookeeperMain public, support for HBase (and other) embedded clients
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-742">ZOOKEEPER-742</ulink></entry><entry>         Deallocatng None on writes
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-460">ZOOKEEPER-460</ulink></entry><entry>         bad testRetry in cppunit tests (hudson failure)
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-746">ZOOKEEPER-746</ulink></entry><entry>         learner outputs session id to log in dec (should be hex)
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-466">ZOOKEEPER-466</ulink></entry><entry>         crash on zookeeper_close() when using auth with empty cert
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-749">ZOOKEEPER-749</ulink></entry><entry>         OSGi metadata not included in binary only jar
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-467">ZOOKEEPER-467</ulink></entry><entry>         Change log level in BookieHandle
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-750">ZOOKEEPER-750</ulink></entry><entry>         move maven artifacts into &quot;dist-maven&quot; subdir of the release (package target)
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-468">ZOOKEEPER-468</ulink></entry><entry>         avoid compile warning in send_auth_info()
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-758">ZOOKEEPER-758</ulink></entry><entry>         zkpython segfaults on invalid acl with missing key
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-469">ZOOKEEPER-469</ulink></entry><entry>         make sure CPPUNIT_CFLAGS isn't overwritten
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-763">ZOOKEEPER-763</ulink></entry><entry>         Deadlock on close w/ zkpython / c client
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-470">ZOOKEEPER-470</ulink></entry><entry>         include unistd.h for sleep() in c tests
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-764">ZOOKEEPER-764</ulink></entry><entry>         Observer elected leader due to inconsistent voting view
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-475">ZOOKEEPER-475</ulink></entry><entry>         FLENewEpochTest failed on nightly builds.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-477">ZOOKEEPER-477</ulink></entry><entry>         zkCleanup.sh is flaky
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-479">ZOOKEEPER-479</ulink></entry><entry>         QuorumHierarchical does not count groups correctly
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-480">ZOOKEEPER-480</ulink></entry><entry>         FLE should perform leader check when node is not leading and add vote of follower
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-481">ZOOKEEPER-481</ulink></entry><entry>         Add lastMessageSent to QuorumCnxManager
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-482">ZOOKEEPER-482</ulink></entry><entry>         ignore sigpipe in testRetry to avoid silent immediate failure
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-483">ZOOKEEPER-483</ulink></entry><entry>         ZK fataled on me, and ugly
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-484">ZOOKEEPER-484</ulink></entry><entry>         Clients get SESSION MOVED exception when switching from follower to a leader.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-485">ZOOKEEPER-485</ulink></entry><entry>         need ops documentation that details supervision of ZK server processes
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-487">ZOOKEEPER-487</ulink></entry><entry>         setdata on root (/) crashes the servers.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-489">ZOOKEEPER-489</ulink></entry><entry>         findbugs on hudson.zones.a.o has jumped way up (2k+)
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-490">ZOOKEEPER-490</ulink></entry><entry>         the java docs for session creation are misleading/incomplete
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-491">ZOOKEEPER-491</ulink></entry><entry>         Prevent zero-weight servers from being elected
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-493">ZOOKEEPER-493</ulink></entry><entry>         patch for command line setquota 
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-495">ZOOKEEPER-495</ulink></entry><entry>         c client logs an invalid error when zookeeper_init is called with chroot
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-498">ZOOKEEPER-498</ulink></entry><entry>         Unending Leader Elections : WAN configuration
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-499">ZOOKEEPER-499</ulink></entry><entry>         electionAlg should default to FLE (3) - regression
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-501">ZOOKEEPER-501</ulink></entry><entry>         CnxManagerTest failed on hudson
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-502">ZOOKEEPER-502</ulink></entry><entry>         bookkeeper create calls completion too many times
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-503">ZOOKEEPER-503</ulink></entry><entry>         race condition in asynchronous create
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-504">ZOOKEEPER-504</ulink></entry><entry>         ClassCastException in LedgerManagementProcessor
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-505">ZOOKEEPER-505</ulink></entry><entry>         testAsyncCreateClose is badly broken
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-508">ZOOKEEPER-508</ulink></entry><entry>         proposals and commits for DIFF and Truncate messages from the leader to followers is buggy.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-509">ZOOKEEPER-509</ulink></entry><entry>         Truncating of logs does not work right at the followers.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-510">ZOOKEEPER-510</ulink></entry><entry>         zkpython lumps all exceptions as IOError, needs specialized exceptions for KeeperException types
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-511">ZOOKEEPER-511</ulink></entry><entry>         bad error handling in FollowerHandler.sendPackets
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-512">ZOOKEEPER-512</ulink></entry><entry>         FLE election fails to elect leader
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-514">ZOOKEEPER-514</ulink></entry><entry>         test failure on trunk in testCnxManager - NPE
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-519">ZOOKEEPER-519</ulink></entry><entry>         Followerhandler should close the socket if it gets an exception on a write.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-524">ZOOKEEPER-524</ulink></entry><entry>         DBSizeTest is not really testing anything
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-527">ZOOKEEPER-527</ulink></entry><entry>         hudson trunk failure in  quota test
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-528">ZOOKEEPER-528</ulink></entry><entry>         c client exists() call with watch on large number of nodes (&gt;100k) causes connection loss
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-530">ZOOKEEPER-530</ulink></entry><entry>         Memory corruption: Zookeeper c client IPv6 implementation does not honor struct sockaddr_in6 size
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-531">ZOOKEEPER-531</ulink></entry><entry>         Hudson trunk failure in heirarchical quorum test (interrupt problem)
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-532">ZOOKEEPER-532</ulink></entry><entry>         java compiler should be target Java 1.5
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-533">ZOOKEEPER-533</ulink></entry><entry>         ant error running clean twice
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-534">ZOOKEEPER-534</ulink></entry><entry>         The test target in contib/bookkeeper does not depend on jar target.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-535">ZOOKEEPER-535</ulink></entry><entry>         ivy task does not enjoy being defined twice (build error)
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-537">ZOOKEEPER-537</ulink></entry><entry>         The zookeeper jar includes the java source files
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-538">ZOOKEEPER-538</ulink></entry><entry>         zookeeper.async causes python to segfault
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-540">ZOOKEEPER-540</ulink></entry><entry>         zkpython needs better tracking of handle validity
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-541">ZOOKEEPER-541</ulink></entry><entry>         zkpython limited to 256 handles
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-542">ZOOKEEPER-542</ulink></entry><entry>         c-client can spin when server unresponsive
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-547">ZOOKEEPER-547</ulink></entry><entry>         Sanity check in QuorumCnxn Manager and quorum communication port.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-548">ZOOKEEPER-548</ulink></entry><entry>         zookeeper.ZooKeeperException not added to the module in zkpython
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-551">ZOOKEEPER-551</ulink></entry><entry>         unnecessary SetWatches message on new session
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-554">ZOOKEEPER-554</ulink></entry><entry>         zkpython can segfault when statting a deleted node
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-557">ZOOKEEPER-557</ulink></entry><entry>         Upload Zookeeper jars to a public maven repository
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-558">ZOOKEEPER-558</ulink></entry><entry>         server &quot;sent&quot; stats not being updated
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-562">ZOOKEEPER-562</ulink></entry><entry>         c client can flood server with pings if tcp send queue filled
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-563">ZOOKEEPER-563</ulink></entry><entry>         ant test for recipes is broken.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-566">ZOOKEEPER-566</ulink></entry><entry>         &quot;reqs&quot; four letter word (command port) returns no information
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-567">ZOOKEEPER-567</ulink></entry><entry>         javadoc for getchildren2 needs to mention &quot;new in 3.3.0&quot;
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-568">ZOOKEEPER-568</ulink></entry><entry>         SyncRequestProcessor snapping too frequently - counts non-log events as log events
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-569">ZOOKEEPER-569</ulink></entry><entry>         Failure of elected leader can lead to never-ending leader election
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-570">ZOOKEEPER-570</ulink></entry><entry>         AsyncHammerTest is broken, callbacks need to validate rc parameter
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-573">ZOOKEEPER-573</ulink></entry><entry>         the dump 4letterword is not formatting sessionids in hex
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-574">ZOOKEEPER-574</ulink></entry><entry>         the documentation on snapcount in the admin guide has the wrong default
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-576">ZOOKEEPER-576</ulink></entry><entry>         docs need to be updated for session moved exception and how to handle it
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-582">ZOOKEEPER-582</ulink></entry><entry>         ZooKeeper can revert to old data when a snapshot is created outside of normal processing
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-586">ZOOKEEPER-586</ulink></entry><entry>         c client does not compile under cygwin
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-587">ZOOKEEPER-587</ulink></entry><entry>         client should log timeout negotiated with server
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-588">ZOOKEEPER-588</ulink></entry><entry>         remove unnecessary/annoying log of tostring error in Request.toString()
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-589">ZOOKEEPER-589</ulink></entry><entry>         When create a znode, a NULL ACL parameter cannot be accepted
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-591">ZOOKEEPER-591</ulink></entry><entry>         The C Client cannot exit properly in some situation
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-593">ZOOKEEPER-593</ulink></entry><entry>         java client api does not allow client to access negotiated session timeout
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-596">ZOOKEEPER-596</ulink></entry><entry>         The last logged zxid calculated by zookeeper servers could cause problems in leader election if data gets corrupted.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-597">ZOOKEEPER-597</ulink></entry><entry>         ASyncHammerTest is failing intermittently on hudson trunk
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-600">ZOOKEEPER-600</ulink></entry><entry>         TODO pondering about allocation behavior in zkpython may be removed
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-604">ZOOKEEPER-604</ulink></entry><entry>         zk needs to prevent export of any symbol not listed in their api
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-606">ZOOKEEPER-606</ulink></entry><entry>         bin scripts don't work in cygwin (spaces in paths)
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-609">ZOOKEEPER-609</ulink></entry><entry>         ObserverTest failure &quot;zk should not be connected expected not same&quot;
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-610">ZOOKEEPER-610</ulink></entry><entry>         cleanup final fields, esp those used for locking
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-611">ZOOKEEPER-611</ulink></entry><entry>         hudson build failiure
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-614">ZOOKEEPER-614</ulink></entry><entry>         Improper synchronisation in getClientCnxnCount
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-615">ZOOKEEPER-615</ulink></entry><entry>         wrong javadoc for create with a sequence flag
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-617">ZOOKEEPER-617</ulink></entry><entry>         improve cluster setup documentation in forrest
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-619">ZOOKEEPER-619</ulink></entry><entry>         hudson test failure in QuorumTest -- timeout error
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-620">ZOOKEEPER-620</ulink></entry><entry>         hudson is not reporting compiler warning correctly
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-621">ZOOKEEPER-621</ulink></entry><entry>         hudson failure ZooKeeper-trunk/621 - clover issue
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-622">ZOOKEEPER-622</ulink></entry><entry>         Test for pending watches in send_set_watches should be moved
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-623">ZOOKEEPER-623</ulink></entry><entry>         ClientBase in bookkeeper.util requires junit
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-624">ZOOKEEPER-624</ulink></entry><entry>         The C Client cause core dump when receive error data from Zookeeper Server
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-626">ZOOKEEPER-626</ulink></entry><entry>         ensure the c/java cli's print xid/sessionid/etc... in hex
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-627">ZOOKEEPER-627</ulink></entry><entry>         zkpython arbitrarily restricts the size of a 'get' to 512 bytes
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-629">ZOOKEEPER-629</ulink></entry><entry>         FLELostMessageTest assumes that the first zxid on a startup of quorum is -1.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-630">ZOOKEEPER-630</ulink></entry><entry>         Trunk has duplicate ObserverTest.java files
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-644">ZOOKEEPER-644</ulink></entry><entry>         Nightly build failed on hudson.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-647">ZOOKEEPER-647</ulink></entry><entry>         hudson failure in testLeaderShutdown
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-656">ZOOKEEPER-656</ulink></entry><entry>         SledgeHammer test - thread.run() deprecated 
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-663">ZOOKEEPER-663</ulink></entry><entry>         hudson failure in ZKDatabaseCorruptionTest
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-667">ZOOKEEPER-667</ulink></entry><entry>         java client doesn't allow ipv6 numeric connect string
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-668">ZOOKEEPER-668</ulink></entry><entry>         Close method in LedgerInputStream doesn't do anything
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-669">ZOOKEEPER-669</ulink></entry><entry>         watchedevent tostring should clearly output the state/type/path
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-673">ZOOKEEPER-673</ulink></entry><entry>         Fix observer documentation regarding leader election
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-677">ZOOKEEPER-677</ulink></entry><entry>         c client doesn't allow ipv6 numeric connect string
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-681">ZOOKEEPER-681</ulink></entry><entry>         Minor doc issue re unset maxClientCnxns
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-682">ZOOKEEPER-682</ulink></entry><entry>         Event is not processed when the watcher is set to watch &quot;/&quot; if chrooted
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-683">ZOOKEEPER-683</ulink></entry><entry>         LogFormatter fails to parse transactional log files
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-684">ZOOKEEPER-684</ulink></entry><entry>         Race in LENonTerminateTest
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-687">ZOOKEEPER-687</ulink></entry><entry>         LENonterminatetest fails on some machines.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-688">ZOOKEEPER-688</ulink></entry><entry>         explain session expiration better in the docs &amp; faq
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-689">ZOOKEEPER-689</ulink></entry><entry>         release build broken - ivysettings.xml not copied during &quot;package&quot;
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-691">ZOOKEEPER-691</ulink></entry><entry>         Interface changed for NIOServer.Factory
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-693">ZOOKEEPER-693</ulink></entry><entry>         TestObserver stuck in tight notification loop in FLE
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-696">ZOOKEEPER-696</ulink></entry><entry>         NPE in the hudson logs, seems nioservercnxn closed twice
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-698">ZOOKEEPER-698</ulink></entry><entry>         intermittent JMX test failures due to not verifying QuorumPeer shutdown 
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-708">ZOOKEEPER-708</ulink></entry><entry>         zkpython failing due to undefined symbol deallocate_String_vector
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-709">ZOOKEEPER-709</ulink></entry><entry>         bookkeeper build failing with missing factory
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-710">ZOOKEEPER-710</ulink></entry><entry>         permanent ZSESSIONMOVED error after client app reconnects to zookeeper cluster
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-718">ZOOKEEPER-718</ulink></entry><entry>         the fatjar is missing libraries
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-766">ZOOKEEPER-766</ulink></entry><entry>         forrest recipes docs don't mention the lock/queue recipe implementations available in the release
 </entry></row>
     
 <row>
@@ -330,145 +102,18 @@ later.</para>
   <entry></entry>
 </row>
 
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-62">ZOOKEEPER-62</ulink></entry><entry>         Generally improve logging to enable debuggability in the field.
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-631">ZOOKEEPER-631</ulink></entry><entry>         zkpython's C code could do with a style clean-up
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-152">ZOOKEEPER-152</ulink></entry><entry>         Improve unit tests for leader election
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-158">ZOOKEEPER-158</ulink></entry><entry>         Leader and followers increase cpu utilization upon loss of a follower
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-283">ZOOKEEPER-283</ulink></entry><entry>         Add more javadocs to BookKeeper
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-311">ZOOKEEPER-311</ulink></entry><entry>         handle small path lengths in zoo_create()
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-425">ZOOKEEPER-425</ulink></entry><entry>         Add OSGi metadata to zookeeper.jar
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-426">ZOOKEEPER-426</ulink></entry><entry>         Windows versions of zookeeper scripts
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-436">ZOOKEEPER-436</ulink></entry><entry>         Bookies should auto register to ZooKeeper
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-447">ZOOKEEPER-447</ulink></entry><entry>         zkServer.sh doesn't allow different config files to be specified on the command line
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-456">ZOOKEEPER-456</ulink></entry><entry>         CREATOR_ALL_ACL has unnecessary PERMS.ADMIN in the declartion.
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-461">ZOOKEEPER-461</ulink></entry><entry>         Condense ledger configuration in ZooKeeper
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-471">ZOOKEEPER-471</ulink></entry><entry>         update zkperl for 3.2.x branch
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-472">ZOOKEEPER-472</ulink></entry><entry>         Making DataNode not instantiate a HashMap when the node is ephmeral
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-473">ZOOKEEPER-473</ulink></entry><entry>         cleanup junit tests to eliminate false positives due to &quot;socket reuse&quot; and failure to close client
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-476">ZOOKEEPER-476</ulink></entry><entry>         upgrade junit library from 4.4 to 4.6
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-486">ZOOKEEPER-486</ulink></entry><entry>         Improve bookie performance for large number of ledgers
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-488">ZOOKEEPER-488</ulink></entry><entry>         to fix src/c/tests/zkServer.sh script to add clover in classpath
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-506">ZOOKEEPER-506</ulink></entry><entry>         QuorumBase should use default leader election
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-507">ZOOKEEPER-507</ulink></entry><entry>         BookKeeper client re-write
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-529">ZOOKEEPER-529</ulink></entry><entry>         Use Ivy to pull dependencies and also generate pom
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-543">ZOOKEEPER-543</ulink></entry><entry>         Tests for ZooKeeper examples
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-544">ZOOKEEPER-544</ulink></entry><entry>         improve client testability - allow test client to access connected server location
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-549">ZOOKEEPER-549</ulink></entry><entry>         Refactor Followers and related classes into a Peer-&gt;Follower hierarchy in preparation for Observers
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-555">ZOOKEEPER-555</ulink></entry><entry>         Add stat information to GetChildrenResponse
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-560">ZOOKEEPER-560</ulink></entry><entry>         inefficient request handling in NIOServerCnxn
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-561">ZOOKEEPER-561</ulink></entry><entry>         inefficient buffer management, inefficient gc, in NIOServer request handling
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-564">ZOOKEEPER-564</ulink></entry><entry>         Give more feedback on that current flow of events in java client logs
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-565">ZOOKEEPER-565</ulink></entry><entry>         Revisit some java client log messages
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-572">ZOOKEEPER-572</ulink></entry><entry>         add ability for operator to examine state of watches currently registered with a server
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-579">ZOOKEEPER-579</ulink></entry><entry>         zkpython needs more test coverage for ACL code paths
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-595">ZOOKEEPER-595</ulink></entry><entry>         A means of asking quorum what conifguration it is running with
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-599">ZOOKEEPER-599</ulink></entry><entry>         Changes to FLE and QuorumCnxManager to support Observers
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-601">ZOOKEEPER-601</ulink></entry><entry>         allow configuration of session timeout min/max bounds
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-607">ZOOKEEPER-607</ulink></entry><entry>         improve bookkeeper overview
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-608">ZOOKEEPER-608</ulink></entry><entry>         Receipt of ACK from observer should not be logged as ERROR
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-612">ZOOKEEPER-612</ulink></entry><entry>         Make Zookeeper C client can be compiled by gcc of early version
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-632">ZOOKEEPER-632</ulink></entry><entry>         add some documentation or FAQ on how to do rolling upgrade
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-633">ZOOKEEPER-633</ulink></entry><entry>         Fetch netty using ivy for bookkeeper
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-638">ZOOKEEPER-638</ulink></entry><entry>         upgrade ivy to 2.1.0 final from 2.1.0 release candidate
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-640">ZOOKEEPER-640</ulink></entry><entry>         make build.xml more configurable to ease packaging for linux distros
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-648">ZOOKEEPER-648</ulink></entry><entry>         Fix releaseaudit warning count to zero
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-651">ZOOKEEPER-651</ulink></entry><entry>         Log exception trace in QuorumCnxManager.SendWorker
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-655">ZOOKEEPER-655</ulink></entry><entry>         StringBuffer -&gt; StringBuilder - conversion of references as necessary
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-658">ZOOKEEPER-658</ulink></entry><entry>         update forrest docs - AuthFLE no longer supported
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-664">ZOOKEEPER-664</ulink></entry><entry>         BookKeeper API documentation
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-665">ZOOKEEPER-665</ulink></entry><entry>         Add BookKeeper streaming documentation 
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-672">ZOOKEEPER-672</ulink></entry><entry>         typo nits across documentation 
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-692">ZOOKEEPER-692</ulink></entry><entry>         upgrade junit to latest version (4.8.1)
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-717">ZOOKEEPER-717</ulink></entry><entry>         add a preferred list to the instancemanager
-</entry></row>
-    
-<row>
-  <entry>New Feature</entry>
-  <entry></entry>
-</row>
 
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-368">ZOOKEEPER-368</ulink></entry><entry>         Observers: core functionality 
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-496">ZOOKEEPER-496</ulink></entry><entry>         zookeeper-tree utility for export, import and incremental updates
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-539">ZOOKEEPER-539</ulink></entry><entry>         generate eclipse project via ant target
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-550">ZOOKEEPER-550</ulink></entry><entry>         Java Queue Recipe
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-635">ZOOKEEPER-635</ulink></entry><entry>         Server supports listening on a specified network address
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-678">ZOOKEEPER-678</ulink></entry><entry>         Browser application to view and edit the contents of a zookeeper instance
-</entry></row>
-                
 <row>
   <entry>Task</entry>
   <entry></entry>
 </row>
 
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-224">ZOOKEEPER-224</ulink></entry><entry>         Deploy ZooKeeper jars/artifacts to a Maven Repository
+<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-754">ZOOKEEPER-754</ulink></entry><entry>         numerous misspellings &quot;succesfully&quot;
 </entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-516">ZOOKEEPER-516</ulink></entry><entry>         add support for 10 minute test ie &quot;pre-commit&quot; test
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-521">ZOOKEEPER-521</ulink></entry><entry>         include autotools (autoconf/automake) in NOTICE file
-</entry></row>
-            
-<row>
-  <entry>Test</entry>
-  <entry></entry>
-</row>
 
 
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-394">ZOOKEEPER-394</ulink></entry><entry>         Converting JUnit tests into TestNG controlled environment
-</entry></row>
-<row><entry><ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-518">ZOOKEEPER-518</ulink></entry><entry>         DEBUG message for outstanding proposals in leader should be moved to trace.
-</entry></row>
 
 </tbody></tgroup></table>
 
