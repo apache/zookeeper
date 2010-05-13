@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
  */
 
 public class CloseTest extends BaseTestCase{
-    static Logger LOG = Logger.getLogger(LedgerRecoveryTest.class);
+    static Logger LOG = Logger.getLogger(CloseTest.class);
     DigestType digestType;
 
     public CloseTest(DigestType digestType) {

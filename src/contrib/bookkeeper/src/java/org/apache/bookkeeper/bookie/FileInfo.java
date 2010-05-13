@@ -33,6 +33,7 @@ import java.nio.channels.FileChannel;
  */
 class FileInfo {
     private FileChannel fc;
+    private final File lf;
     /**
      * The fingerprint of a ledger index file
      */
@@ -42,6 +43,7 @@ class FileInfo {
     private int useCount;
     private boolean isClosed;
     public FileInfo(File lf) throws IOException {
+        this.lf = lf;
         fc = new RandomAccessFile(lf, "rws").getChannel();
         size = fc.size();
         if (size == 0) {
@@ -110,4 +112,13 @@ class FileInfo {
             }
         }
     }
+    
+    /**
+     * Getter to a handle on the actual ledger index file.
+     * This is used when we are deleting a ledger and want to physically remove the index file.
+     */
+    File getFile() {
+        return lf;
+    }
+
 }
