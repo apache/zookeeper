@@ -98,4 +98,17 @@ public interface AsyncCallback {
     void readComplete(int rc, LedgerHandle lh, Enumeration<LedgerEntry> seq,
         Object ctx);
   }
+  
+  public interface DeleteCallback {
+      /**
+       * Callback definition for delete operations
+       * 
+       * @param rc
+       *          return code
+       * @param ctx
+       *          control object
+       */
+      void deleteComplete(int rc, Object ctx);
+    }
+
 }

@@ -65,6 +65,9 @@ NEW FEATURES:
 
   ZOOKEEPER-747. Add C# generation to Jute (Eric Hauser via phunt)
 
+  ZOOKEEPER-464. Need procedure to garbage collect ledgers
+  (erwin via fpj)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:

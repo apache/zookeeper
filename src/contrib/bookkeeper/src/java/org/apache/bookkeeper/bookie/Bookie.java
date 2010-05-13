@@ -63,7 +63,6 @@ public class Bookie extends Thread {
     
     // ZK registration path for this bookie
     static final String BOOKIE_REGISTRATION_PATH = "/ledgers/available/";
-    static final String LEDGERS_PATH = "/ledgers";
 
     // ZooKeeper client instance for the Bookie
     ZooKeeper zk;
@@ -136,7 +135,7 @@ public class Bookie extends Thread {
         instantiateZookeeperClient(port, zkServers);
         this.journalDirectory = journalDirectory;
         this.ledgerDirectories = ledgerDirectories;
-        entryLogger = new EntryLogger(ledgerDirectories);
+        entryLogger = new EntryLogger(ledgerDirectories, this);
         ledgerCache = new LedgerCache(ledgerDirectories);
         lastLogMark.readLog();
         final long markedLogId = lastLogMark.txnLogId;
@@ -206,7 +205,9 @@ public class Bookie extends Thread {
         syncThread.start();
     }
 
-    // Method to instantiate the ZooKeeper client for the Bookie.
+    /**
+     * Instantiate the ZooKeeper client for the Bookie.
+     */
     private void instantiateZookeeperClient(int port, String zkServers) throws IOException {
         if (zkServers == null) {
             LOG.warn("No ZK servers passed to Bookie constructor so BookKeeper clients won't know about this server!");
@@ -441,7 +442,8 @@ public class Bookie extends Thread {
     }
 
     public void shutdown() throws InterruptedException {
-    	if(zk != null) zk.close();
+        // Shutdown the ZK client
+        if(zk != null) zk.close();
         this.interrupt();
         this.join();
         syncThread.running = false;
@@ -449,6 +451,8 @@ public class Bookie extends Thread {
         for(LedgerDescriptor d: ledgers.values()) {
             d.close();
         }
+        // Shutdown the EntryLogger which has the GarbageCollector Thread running
+        entryLogger.shutdown();
     }
     
     public void addEntry(ByteBuffer entry, WriteCallback cb, Object ctx, byte[] masterKey)
