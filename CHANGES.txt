@@ -52,6 +52,9 @@ BUGFIXES:
   ZOOKEEPER-763. Deadlock on close w/ zkpython / c client
   (henry via phunt)
 
+  ZOOKEEPER-774. Recipes tests are slightly outdated: they do not compile
+  against JUnit 4.8 (Sergey Doroshenko via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
