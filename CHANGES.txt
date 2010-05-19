@@ -55,6 +55,9 @@ BUGFIXES:
   ZOOKEEPER-774. Recipes tests are slightly outdated: they do not compile
   against JUnit 4.8 (Sergey Doroshenko via phunt)
 
+  ZOOKEEPER-772. zkpython segfaults when watcher from async get children is
+  invoked. (henry via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
