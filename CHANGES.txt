@@ -58,6 +58,9 @@ BUGFIXES:
   ZOOKEEPER-772. zkpython segfaults when watcher from async get children is
   invoked. (henry via phunt)
 
+  ZOOKEEPER-636. configure.ac has instructions which override the contents of
+  CFLAGS and CXXFLAGS. (Maxim P. Dementiev via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
