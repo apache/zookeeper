@@ -842,7 +842,7 @@ PyObject *pyzoo_aget_children(PyObject *self, PyObject *args)
   int err = zoo_awget_children( zhandles[zkhid],
                                 path,
                                 get_watch != Py_None ? watcher_dispatch : NULL,
-                                pyw,
+                                get_pyw,
                                 strings_completion_dispatch,
                                 pyw);
   if (err != ZOK) {

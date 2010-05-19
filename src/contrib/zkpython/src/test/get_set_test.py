@@ -155,5 +155,34 @@ class GetSetTest(zktestbase.TestBase):
         self.assertEqual(len(self.children), 1, "Expected to find 1 child, got " + str(len(self.children)))
 
 
+    def test_async_getchildren_with_watcher(self):
+        self.ensureCreated("/zk-python-getchildrentest", flags=0)
+        self.ensureCreated("/zk-python-getchildrentest/child")
+
+        watched = []
+
+        def watcher(*args):
+            self.cv.acquire()
+            watched.append(args)
+            self.cv.notify()
+            self.cv.release()
+
+        def children_callback(*args):
+            self.cv.acquire()
+            self.cv.notify()
+            self.cv.release()
+
+        zookeeper.aget_children(
+            self.handle, "/zk-python-getchildrentest", watcher, children_callback)
+
+        self.cv.acquire()
+        self.cv.wait()
+        self.cv.release()
+
+        self.cv.acquire()
+        self.ensureCreated("/zk-python-getchildrentest/child2")
+        self.cv.wait(15)
+        self.assertTrue(watched)
+
 if __name__ == '__main__':
     unittest.main()
