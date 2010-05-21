@@ -310,6 +310,18 @@ public class QuorumPeerConfig {
                 throw new IllegalArgumentException("serverid " + myIdString
                         + " is not a number");
             }
+            
+            // Warn about inconsistent peer type
+            LearnerType roleByServersList = observers.containsKey(serverId) ? LearnerType.OBSERVER
+                    : LearnerType.PARTICIPANT;
+            if (roleByServersList != peerType) {
+                LOG.warn("Peer type from servers list (" + roleByServersList
+                        + ") doesn't match peerType (" + peerType
+                        + "). Defaulting to servers list.");
+
+                peerType = roleByServersList;
+            }
+            
         }
     }
 
