@@ -162,6 +162,94 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     }
 
     /**
+     * Verify handling of inconsistent peer type
+     */
+    @Test
+    public void testInconsistentPeerType() throws Exception {
+        ClientBase.setupTestEnv();
+
+        // setup the logger to capture all logs
+        Layout layout =
+            Logger.getRootLogger().getAppender("CONSOLE").getLayout();
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = new WriterAppender(layout, os);
+        appender.setThreshold(Level.INFO);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        // test the most likely situation only: server is stated as observer in 
+        // servers list, but there's no "peerType=observer" token in config
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+            final int CLIENT_PORT_QP3 = PortAssignment.unique();
+
+            String quorumCfgSection =
+                "server.1=127.0.0.1:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique()
+                + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique()
+                + "\nserver.3=127.0.0.1:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique() + ":observer";
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
+            MainThread q3 = new MainThread(3, CLIENT_PORT_QP3, quorumCfgSection);
+            q1.start();
+            q2.start();
+            q3.start();
+
+            Assert.assertTrue("waiting for server 1 being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server 2 being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                            CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server 3 being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP3,
+                            CONNECTION_TIMEOUT));
+
+            q1.shutdown();
+            q2.shutdown();
+            q3.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server 2 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
+                            ClientBase.CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server 3 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP3,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean warningPresent = false;
+        boolean defaultedToObserver = false;
+        Pattern pWarn =
+            Pattern.compile(".*Peer type from servers list.* doesn't match peerType.*");
+        Pattern pObserve = Pattern.compile(".*OBSERVING.*");
+        while ((line = r.readLine()) != null) {
+            if (pWarn.matcher(line).matches()) { 
+                warningPresent = true;
+            }
+            if (pObserve.matcher(line).matches()) {
+                defaultedToObserver = true;
+            }
+            if (warningPresent && defaultedToObserver) {
+                break;
+            }
+        }
+        Assert.assertTrue("Should warn about inconsistent peer type", 
+                warningPresent && defaultedToObserver);
+    }
+
+    /**
      * verify if bad packets are being handled properly 
      * at the quorum port
      * @throws Exception
