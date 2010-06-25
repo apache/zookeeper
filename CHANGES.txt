@@ -68,12 +68,15 @@ IMPROVEMENTS:
   ZOOKEEPER-766. forrest recipes docs don't mention the lock/queue recipe
   implementations available in the release (phunt via mahadev)
 
-  ZOOKEEPER-769: Leader can treat observers as quorum members (Sergey
-  Doroshenko via henryr)
+  ZOOKEEPER-769: Leader can treat observers as quorum members
+  (Sergey Doroshenko via henryr)
+
+  ZOOKEEPER-788: Add server id to message logs
+  (Ivan Kelly via flavio)
 
 NEW FEATURES:
-  ZOOKEEPER-729. Java client API to recursively delete a subtree. (Kay
-  Kay via henry)
+  ZOOKEEPER-729. Java client API to recursively delete a subtree.
+  (Kay Kay via henry)
 
   ZOOKEEPER-747. Add C# generation to Jute (Eric Hauser via phunt)
 
