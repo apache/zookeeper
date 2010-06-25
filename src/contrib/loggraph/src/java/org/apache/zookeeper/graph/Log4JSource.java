@@ -282,7 +282,7 @@ public class Log4JSource implements LogSource {
 	File f = new File(file);
 	RandomAccessFileReader in = new RandomAccessFileReader(f);
 	SimpleDateFormat dateformat = new SimpleDateFormat(DATE_FORMAT);
-	Pattern idp = Pattern.compile("Notification:\\s+\\d+,\\s+\\d+,\\s+\\d+,\\s+(\\d+)");// 1, My\\s+id\\s+=\\s+(\\d+)");
+	Pattern idp = Pattern.compile("\\[myid:(\\d+)\\]");
 
 	long lastFp = in.getPosition();
 	String line = in.readLine();
