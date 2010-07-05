@@ -1,3 +1,14 @@
+Branch 3.3
+
+Backward compatible changes:
+
+BUGFIXES:
+
+IMPROVEMENTS:
+
+  ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)
+
+
 Release 3.3.1 - 2010-05-11
 Backward compatible changes:
 
