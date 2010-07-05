@@ -85,6 +85,8 @@ NEW FEATURES:
 
   ZOOKEEPER-773. Log visualisation (Ivan Kelly via phunt)
 
+  ZOOKEEPER-744. Add monitoring four-letter word (Savu Andrei via phunt)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:

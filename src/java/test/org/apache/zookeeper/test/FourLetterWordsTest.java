@@ -87,6 +87,7 @@ public class FourLetterWordsTest extends ClientBase {
         verify("stat", "Outstanding");
         verify("srvr", "Outstanding");
         verify("cons", "queued");
+        verify("mntr", "zk_server_state\tstandalone");
     }
 
     private void verify(String cmd, String expected) throws IOException {

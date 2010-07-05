@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -64,6 +66,10 @@ import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
+import org.apache.zookeeper.server.quorum.Leader;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
+
+import com.sun.management.UnixOperatingSystemMXBean;
 
 /**
  * This class handles communication with clients using NIO. There is one per
@@ -891,6 +897,14 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
     private final static int wchsCmd =
         ByteBuffer.wrap("wchs".getBytes()).getInt();
 
+    /*
+     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * Zk Admin</a>. this link is for all the commands.
+     */
+    private final static int mntrCmd = ByteBuffer.wrap("mntr".getBytes())
+            .getInt();
+
+
     private final static HashMap<Integer, String> cmd2String =
         new HashMap<Integer, String>();
 
@@ -910,6 +924,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         cmd2String.put(wchcCmd, "wchc");
         cmd2String.put(wchpCmd, "wchp");
         cmd2String.put(wchsCmd, "wchs");
+        cmd2String.put(mntrCmd, "mntr");
     }
 
     /**
@@ -1221,8 +1236,71 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
             }
         }
     }
-    
-    
+
+    private class MonitorCommand extends CommandThread {
+
+        MonitorCommand(PrintWriter pw) {
+            super(pw);
+        }
+
+        @Override
+        public void commandRun() {
+            if(zk == null) {
+                pw.println(ZK_NOT_SERVING);
+                return;
+            }
+            ZKDatabase zkdb = zk.getZKDatabase();
+            ServerStats stats = zk.serverStats();
+
+            print("version", Version.getFullVersion());
+
+            print("avg_latency", stats.getAvgLatency());
+            print("max_latency", stats.getMaxLatency());
+            print("min_latency", stats.getMinLatency());
+
+            print("packets_received", stats.getPacketsReceived());
+            print("packets_sent", stats.getPacketsSent());
+
+            print("outstanding_requests", stats.getOutstandingRequests());
+
+            print("server_state", stats.getServerState());
+            print("znode_count", zkdb.getNodeCount());
+
+            print("watch_count", zkdb.getDataTree().getWatchCount());
+            print("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
+            print("approximate_data_size", zkdb.getDataTree().approximateDataSize());
+
+            OperatingSystemMXBean osMbean = ManagementFactory.getOperatingSystemMXBean();
+            if(osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
+                UnixOperatingSystemMXBean unixos = (UnixOperatingSystemMXBean)osMbean;
+
+                print("open_file_descriptor_count", unixos.getOpenFileDescriptorCount());
+                print("max_file_descriptor_count", unixos.getMaxFileDescriptorCount());
+            }
+
+            if(stats.getServerState() == "leader") {
+                Leader leader = ((LeaderZooKeeperServer)zk).getLeader();
+
+                print("followers", leader.learners.size());
+                print("synced_followers", leader.forwardingFollowers.size());
+                print("pending_syncs", leader.pendingSyncs.size());
+            }
+        }
+
+        private void print(String key, long number) {
+            print(key, "" + number);
+        }
+
+        private void print(String key, String value) {
+            pw.print("zk_");
+            pw.print(key);
+            pw.print("\t");
+            pw.println(value);
+        }
+
+    }
+
+
     /** Return if four letter word found and responded to, otw false **/
     private boolean checkFourLetterWord(final SelectionKey k, final int len)
     throws IOException
@@ -1307,6 +1385,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         } else if (len == wchpCmd || len == wchcCmd || len == wchsCmd) {
             WatchCommand wcmd = new WatchCommand(pwriter, len);
             wcmd.start();
+            return true;
+        } else if (len == mntrCmd) {
+            MonitorCommand mntr = new MonitorCommand(pwriter);
+            mntr.start();
             return true;
         }
         return false;

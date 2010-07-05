@@ -89,6 +89,8 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "stat", "Outstanding");
             verify(hp, "srvr", "Outstanding");
             verify(hp, "cons", "queued");
+
+            verify(hp, "mntr", "zk_version\t");
         }
     }
 

@@ -427,6 +427,10 @@ public abstract class ClientBase extends ZKTestCase {
         JMXEnv.ensureOnly();
     }
 
+    protected ZooKeeperServer getServer() {
+        return serverFactory.getZooKeeperServer();
+    }
+
     protected void tearDownAll() throws Exception {
         synchronized (this) {
             for (ZooKeeper zk : allClients) {
