@@ -78,6 +78,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-798. Fixup loggraph for FLE changes (Ivan Kelly via phunt)
 
+  ZOOKEEPER-797 c client source with AI_ADDRCONFIG cannot be compiled with
+  early glibc (Qian Ye via phunt)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)

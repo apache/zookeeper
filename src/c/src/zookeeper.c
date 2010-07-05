@@ -545,6 +545,7 @@ int getaddrs(zhandle_t *zh)
             //bug in getaddrinfo implementation when it returns
             //EAI_BADFLAGS or EAI_ADDRFAMILY with AF_UNSPEC and 
             // ai_flags as AI_ADDRCONFIG
+#ifdef AI_ADDRCONFIG
             if ((hints.ai_flags == AI_ADDRCONFIG) && 
                 ((rc ==EAI_BADFLAGS) || (rc == EAI_ADDRFAMILY))) {
                 //reset ai_flags to null
@@ -552,6 +553,7 @@ int getaddrs(zhandle_t *zh)
                 //retry getaddrinfo
                 rc = getaddrinfo(host, port_spec, &hints, &res0);
             }
+#endif
             if (rc != 0) {
                 errno = getaddrinfo_errno(rc);
                 LOG_ERROR(("getaddrinfo: %s\n", strerror(errno)));
