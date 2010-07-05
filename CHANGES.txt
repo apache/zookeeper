@@ -74,6 +74,8 @@ IMPROVEMENTS:
   ZOOKEEPER-788: Add server id to message logs
   (Ivan Kelly via flavio)
 
+  ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
