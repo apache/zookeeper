@@ -76,7 +76,7 @@ public class JsonGenerator {
 
 	Pattern stateChangeP = Pattern.compile("- (LOOKING|FOLLOWING|LEADING)");
 	Pattern newElectionP = Pattern.compile("New election. My id =  (\\d+), Proposed zxid = (\\d+)");
-	Pattern receivedProposalP = Pattern.compile("Notification: \\d+, (\\d+), (\\d+), \\d+, [^,]*, [^,]*, (\\d+)");//, LOOKING, LOOKING, 2
+	Pattern receivedProposalP = Pattern.compile("Notification: (\\d+) \\(n.leader\\), (\\d+) \\(n.zxid\\), (\\d+) \\(n.round\\), .+ \\(n.state\\), (\\d+) \\(n.sid\\), .+ \\(my state\\)");
 	Pattern exceptionP = Pattern.compile("xception");
 	
 	root = new JSONObject();
@@ -151,10 +151,10 @@ public class JsonGenerator {
 		    }
 		} else if ((m = receivedProposalP.matcher(e.getEntry())).find()) {
 		    // Pattern.compile("Notification: \\d+, (\\d+), (\\d+), \\d+, [^,]*, [^,]*, (\\d+)");//, LOOKING, LOOKING, 2
-		    int src = Integer.valueOf(m.group(3));
-		    long zxid = Long.valueOf(m.group(1));
+		    int src = Integer.valueOf(m.group(4));
+		    long zxid = Long.valueOf(m.group(2));
 		    int dst = e.getNode();
-		    long epoch2 = Long.valueOf(m.group(2));
+		    long epoch2 = Long.valueOf(m.group(3));
 		    
 		    int count = (int)zxid;// & 0xFFFFFFFFL;
 		    int epoch = (int)Long.rotateRight(zxid, 32);// >> 32;
@@ -169,9 +169,6 @@ public class JsonGenerator {
 			leader = 0;
 		    }
 		    
-		    //	System.out.println("src: "+src+" dst: "+dst+ " zxid: "+zxid);
-		    
-		    //  System.out.println(cur);
 		    if (src != dst) {
 			JSONObject msg = new JSONObject();
 			msg.put("type", "delivermessage");
