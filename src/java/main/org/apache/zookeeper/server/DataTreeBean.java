@@ -18,11 +18,7 @@
 
 package org.apache.zookeeper.server;
 
-import java.util.HashSet;
-import java.util.Map;
-
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.DataTree;
 
 /**
  * This class implements the data tree MBean.
@@ -43,12 +39,7 @@ public class DataTreeBean implements DataTreeMXBean, ZKMBeanInfo {
     }
 
     public int countEphemerals() {
-        Map<Long, HashSet<String>> map = dataTree.getEphemeralsMap();
-        int result = 0;
-        for (HashSet<String> set : map.values()) {
-            result += set.size();
-        }
-        return result;
+        return dataTree.getEphemeralsCount();
     }
 
     public int getWatchCount() {

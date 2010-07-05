@@ -243,6 +243,15 @@ public class DataTree {
         return dataWatches.size() + childWatches.size();
     }
 
+    public int getEphemeralsCount() {
+        Map<Long, HashSet<String>> map = this.getEphemeralsMap();
+        int result = 0;
+        for (HashSet<String> set : map.values()) {
+            result += set.size();
+        }
+        return result;
+    }
+
     /**
      * Get the size of the nodes based on path and data length.
      *

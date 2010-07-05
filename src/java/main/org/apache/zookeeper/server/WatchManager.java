@@ -44,7 +44,11 @@ public class WatchManager {
         new HashMap<Watcher, HashSet<String>>();
 
     public synchronized int size(){
-        return watchTable.size();
+        int result = 0;
+        for(Set<Watcher> watches : watchTable.values()) {
+            result += watches.size();
+        }
+        return result;
     }
 
     public synchronized void addWatch(String path, Watcher watcher) {
