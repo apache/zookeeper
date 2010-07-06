@@ -69,7 +69,9 @@ fi
 
 echo "Using config: $ZOOCFG"
 
-ZOOPIDFILE=$(grep dataDir "$ZOOCFG" | sed -e 's/.*=//')/zookeeper_server.pid
+if [ -z $ZOOPIDFILE ]
+    then ZOOPIDFILE=$(grep dataDir "$ZOOCFG" | sed -e 's/.*=//')/zookeeper_server.pid
+fi
 
 
 case $1 in
