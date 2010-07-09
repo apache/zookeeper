@@ -132,6 +132,7 @@ class PendingAddOp implements WriteCallback {
 
     void submitCallback(final int rc) {
         cb.addComplete(rc, lh, entryId, ctx);
+        lh.opCounterSem.release();
     }
 
 }

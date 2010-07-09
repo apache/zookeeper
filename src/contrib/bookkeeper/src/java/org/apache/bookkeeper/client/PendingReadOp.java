@@ -87,7 +87,7 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
         if (entry.nextReplicaIndexToReadFrom >= lh.metadata.quorumSize) {
             // we are done, the read has failed from all replicas, just fail the
             // read
-            cb.readComplete(lastErrorCode, lh, null, ctx);
+            submitCallback(lastErrorCode);
             return;
         }
 
@@ -126,11 +126,15 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
         entry.entryDataStream = is;
 
         if (numPendingReads == 0) {
-            cb.readComplete(BKException.Code.OK, lh, PendingReadOp.this, PendingReadOp.this.ctx);
+            submitCallback(BKException.Code.OK);
         }
 
     }
 
+    private void submitCallback(int code){
+        cb.readComplete(code, lh, PendingReadOp.this, PendingReadOp.this.ctx);
+        lh.opCounterSem.release();
+    }
     public boolean hasMoreElements() {
         return !seq.isEmpty();
     }
