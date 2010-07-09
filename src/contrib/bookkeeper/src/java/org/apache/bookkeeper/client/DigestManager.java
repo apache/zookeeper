@@ -35,7 +35,7 @@ import org.jboss.netty.buffer.ChannelBuffers;
  * for the packet. Currently 2 types of digests are supported: MAC (based on SHA-1) and CRC32
  */
 
-abstract class DigestManager {
+public abstract class DigestManager {
     static final Logger logger = Logger.getLogger(DigestManager.class);
 
     long ledgerId;
@@ -67,7 +67,7 @@ abstract class DigestManager {
         }
     }
 
-    ChannelBuffer computeDigestAndPackageForSending(long entryId, long lastAddConfirmed, byte[] data) {
+    public ChannelBuffer computeDigestAndPackageForSending(long entryId, long lastAddConfirmed, byte[] data) {
 
         byte[] bufferArray = new byte[24+macCodeLength];
         ByteBuffer buffer = ByteBuffer.wrap(bufferArray);

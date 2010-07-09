@@ -99,6 +99,8 @@ NEW FEATURES:
 
   ZOOKEEPER-744. Add monitoring four-letter word (Savu Andrei via phunt)
 
+  ZOOKEEPER-712. Bookie recovery. (erwin tam via breed)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:
