@@ -111,4 +111,16 @@ public interface AsyncCallback {
       void deleteComplete(int rc, Object ctx);
     }
 
+  public interface RecoverCallback {
+      /**
+       * Callback definition for bookie recover operations
+       * 
+       * @param rc
+       *          return code
+       * @param ctx
+       *          control object
+       */
+      void recoverComplete(int rc, Object ctx);
+    }
+
 }

@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
  * in zookeeper. It provides parsing and serialization methods of such metadata.
  * 
  */
-class LedgerMetadata {
+public class LedgerMetadata {
     static final Logger LOG = Logger.getLogger(LedgerMetadata.class);
 
     private static final String closed = "CLOSED";
@@ -59,6 +59,17 @@ class LedgerMetadata {
         this(0, 0);
     }
 
+    /**
+     * Get the Map of bookie ensembles for the various ledger fragments 
+     * that make up the ledger.
+     * 
+     * @return SortedMap of Ledger Fragments and the corresponding 
+     * bookie ensembles that store the entries.
+     */
+    public SortedMap<Long, ArrayList<InetSocketAddress>> getEnsembles() {
+        return ensembles;
+    }
+    
     boolean isClosed() {
         return close != NOTCLOSED;
     }

@@ -121,7 +121,43 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
     return lastAddPushed;
   }
 
-  void writeLedgerConfig(StatCallback callback, Object ctx) {
+  /**
+   * Get the Ledger's key/password.
+   * 
+   * @return byte array for the ledger's key/password.
+   */
+  public byte[] getLedgerKey() {
+      return ledgerKey;
+  }
+  
+  /**
+   * Get the LedgerMetadata
+   * 
+   * @return LedgerMetadata for the LedgerHandle
+   */
+  public LedgerMetadata getLedgerMetadata() {
+      return metadata;
+  }
+  
+  /**
+   * Get the DigestManager
+   * 
+   * @return DigestManager for the LedgerHandle
+   */
+  public DigestManager getDigestManager() {
+      return macManager;
+  }
+  
+  /**
+   * Get the Distribution Schedule
+   * 
+   * @return DistributionSchedule for the LedgerHandle
+   */
+  public DistributionSchedule getDistributionSchedule() {
+      return distributionSchedule;
+  }
+  
+  public void writeLedgerConfig(StatCallback callback, Object ctx) {
     bk.getZkHandle().setData(StringUtils.getLedgerNodePath(ledgerId),
         metadata.serialize(), -1, callback, ctx);
   }

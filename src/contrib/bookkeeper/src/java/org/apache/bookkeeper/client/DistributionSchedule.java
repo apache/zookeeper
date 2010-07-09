@@ -28,7 +28,7 @@ package org.apache.bookkeeper.client;
  * to.
  */
 
-interface DistributionSchedule {
+public interface DistributionSchedule {
 
     /**
      * 
