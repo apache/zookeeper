@@ -238,6 +238,101 @@ public class BookieReadWriteTest extends BaseTestCase implements AddCallback, Re
     }
 
     @Test
+    public void testReadWriteAsyncSingleClientThrottle() throws IOException {
+        try {
+            // Create a BookKeeper client and a ledger
+            System.setProperty("throttle", "1000");
+            bkc = new BookKeeper("127.0.0.1");
+            lh = bkc.createLedger(digestType, ledgerPassword);
+            // bkc.initMessageDigest("SHA1");
+            ledgerId = lh.getId();
+            LOG.info("Ledger ID: " + lh.getId());
+            
+            numEntriesToWrite = 20000; 
+            for (int i = 0; i < (numEntriesToWrite - 10000); i++) {
+                ByteBuffer entry = ByteBuffer.allocate(4);
+                entry.putInt(rng.nextInt(maxInt));
+                entry.position(0);
+
+                entries.add(entry.array());
+                entriesSize.add(entry.array().length);
+                lh.asyncAddEntry(entry.array(), this, sync);
+            }
+            
+
+            for (int i = 0; i < 10000; i++) {
+                ByteBuffer entry = ByteBuffer.allocate(4);
+                entry.putInt(rng.nextInt(maxInt));
+                entry.position(0);
+
+                entries.add(entry.array());
+                entriesSize.add(entry.array().length);
+                lh.asyncAddEntry(entry.array(), this, sync);
+            }
+            
+            // wait for all entries to be acknowledged
+            synchronized (sync) {
+                while (sync.counter < numEntriesToWrite) {
+                    LOG.debug("Entries counter = " + sync.counter);
+                    sync.wait();
+                }
+            }
+
+            LOG.debug("*** WRITE COMPLETE ***");
+            // close ledger
+            lh.close();
+
+            // *** WRITING PART COMPLETE // READ PART BEGINS ***
+            
+            // open ledger
+            lh = bkc.openLedger(ledgerId, digestType, ledgerPassword);
+            LOG.debug("Number of entries written: " + (lh.getLastAddConfirmed() + 1));
+            assertTrue("Verifying number of entries written", lh.getLastAddConfirmed() == (numEntriesToWrite - 1));
+
+            // read entries
+            lh.asyncReadEntries(0, numEntriesToWrite - 1, this, (Object) sync);
+
+            synchronized (sync) {
+                while (sync.value == false) {
+                    sync.wait();
+                }
+            }
+
+            LOG.debug("*** READ COMPLETE ***");
+
+            // at this point, LedgerSequence ls is filled with the returned
+            // values
+            int i = 0;
+            while (ls.hasMoreElements()) {
+                ByteBuffer origbb = ByteBuffer.wrap(entries.get(i));
+                Integer origEntry = origbb.getInt();
+                byte[] entry = ls.nextElement().getEntry();
+                ByteBuffer result = ByteBuffer.wrap(entry);
+                LOG.debug("Length of result: " + result.capacity());
+                LOG.debug("Original entry: " + origEntry);
+
+                Integer retrEntry = result.getInt();
+                LOG.debug("Retrieved entry: " + retrEntry);
+                assertTrue("Checking entry " + i + " for equality", origEntry.equals(retrEntry));
+                assertTrue("Checking entry " + i + " for size", entry.length == entriesSize.get(i).intValue());
+                i++;
+            }
+            assertTrue("Checking number of read entries", i == numEntriesToWrite);
+
+            lh.close();
+        } catch (KeeperException e) {
+            LOG.error("Test failed", e);
+            fail("Test failed due to ZooKeeper exception");
+        } catch (BKException e) {
+            LOG.error("Test failed", e);
+            fail("Test failed due to BookKeeper exception");
+        } catch (InterruptedException e) {
+            LOG.error("Test failed", e);
+            fail("Test failed due to interruption");
+        }
+    }
+    
+    @Test
     public void testSyncReadAsyncWriteStringsSingleClient() throws IOException {
         LOG.info("TEST READ WRITE STRINGS MIXED SINGLE CLIENT");
         String charset = "utf-8";

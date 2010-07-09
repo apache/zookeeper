@@ -27,6 +27,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Queue;
+import java.util.concurrent.Semaphore;
+
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.AsyncCallback.AddCallback;
 import org.apache.bookkeeper.client.AsyncCallback.CloseCallback;
@@ -61,10 +63,14 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
   final DigestManager macManager;
   final DistributionSchedule distributionSchedule;
 
+  final Semaphore opCounterSem;
+  private Integer throttling = 5000;
+  
   final Queue<PendingAddOp> pendingAddOps = new ArrayDeque<PendingAddOp>();
 
   LedgerHandle(BookKeeper bk, long ledgerId, LedgerMetadata metadata,
-      DigestType digestType, byte[] password) throws GeneralSecurityException {
+      DigestType digestType, byte[] password)
+      throws GeneralSecurityException, NumberFormatException {
     this.bk = bk;
     this.metadata = metadata;
     if (metadata.isClosed()) {
@@ -72,14 +78,21 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
     } else {
       lastAddConfirmed = lastAddPushed = -1;
     }
-
+    
     this.ledgerId = ledgerId;
+    
+    String throttleValue = System.getProperty("throttle");
+    if(throttleValue != null){
+        this.throttling = new Integer(throttleValue); 
+    }
+    this.opCounterSem = new Semaphore(throttling);
+    
     macManager = DigestManager.instantiate(ledgerId, password, digestType);
     this.ledgerKey = MacDigestManager.genDigest("ledger", password);
     distributionSchedule = new RoundRobinDistributionSchedule(
         metadata.quorumSize, metadata.ensembleSize);
   }
-
+  
   /**
    * Get the id of the current ledger
    * 
@@ -219,7 +232,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
    *          control object
    */
   public void asyncReadEntries(long firstEntry, long lastEntry,
-      ReadCallback cb, Object ctx) {
+      ReadCallback cb, Object ctx) throws InterruptedException {
     // Little sanity check
     if (firstEntry < 0 || lastEntry > lastAddConfirmed
         || firstEntry > lastEntry) {
@@ -228,7 +241,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
     }
 
     new PendingReadOp(this, firstEntry, lastEntry, cb, ctx).initiate();
-
+    opCounterSem.acquire();
   }
 
   /**
@@ -260,8 +273,8 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
    *          some control object
    */
   public void asyncAddEntry(final byte[] data, final AddCallback cb,
-      final Object ctx) {
-    bk.mainWorkerPool.submitOrdered(ledgerId, new SafeRunnable() {
+      final Object ctx) throws InterruptedException {
+      bk.mainWorkerPool.submitOrdered(ledgerId, new SafeRunnable() {
       @Override
       public void safeRun() {
         if (metadata.isClosed()) {
@@ -279,7 +292,8 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
         op.initiate(toSend);
 
       }
-    });
+      });
+      opCounterSem.acquire();
   }
 
   // close the ledger and send fails to all the adds in the pipeline

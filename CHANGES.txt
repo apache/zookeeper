@@ -64,6 +64,8 @@ BUGFIXES:
   ZOOKEEPER-796. zkServer.sh should support an external PIDFILE variable
   (Alex Newman via phunt)
 
+  ZOOKEEPER-719. Add throttling to BookKeeper client (fpj via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
