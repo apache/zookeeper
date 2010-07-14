@@ -1,0 +1,38 @@
+
+Resources for monitoring ZooKeeper using JMX
+--------------------------------------------
+
+JMX/REST Bridge  
+---------------
+
+http://code.google.com/p/polarrose-jmx-rest-bridge/ 
+
+"Simple Java Web Application that exposes JMX servers through HTTP. This was written so that external tools can easily query JMX attributes of Java applications. More specifically, this was written to allow Cacti to generate fancy graphs of ActiveMQ instances."
+
+JMXetric
+--------
+
+http://code.google.com/p/jmxetric/
+
+"JMXetric is a 100% java, configurable JVM agent that periodically polls MBean attributes and reports their values to Ganglia."
+
+jmxquery
+--------
+
+http://code.google.com/p/jmxquery/
+
+"a plugin for nagios to check jmx"
+
+check_jmx
+---------
+
+http://exchange.nagios.org/directory/Plugins/Java-Applications-and-Servers/check_jmx/details
+
+
+jmx2snmp
+--------
+
+http://github.com/tcurdt/jmx2snmp
+
+Expose application JMX properties via SNMP
+

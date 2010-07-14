@@ -1,0 +1,34 @@
+
+/* Update /etc/ganglia/gmond.conf with the content of this file.  */
+
+/* ATTENTION: Change the host and the port to meet your setup. */
+
+modules {
+  module {
+    name = "zookeeper_ganglia"
+    language = "python"
+    param host { value = "127.0.0.1" }
+    param port { value = 2181 }
+  }
+}
+
+collection_group {
+  collect_every = 20
+  time_threshold = 60
+  metric { name = "zk_avg_latency" }
+  metric { name = "zk_max_latency" }
+  metric { name = "zk_min_latency" }
+  metric { name = "zk_packets_received" }
+  metric { name = "zk_packets_sent" }
+  metric { name = "zk_outstanding_requests" }
+  metric { name = "zk_znode_count" }
+  metric { name = "zk_watch_count" }
+  metric { name = "zk_ephemerals_count" }
+  metric { name = "zk_approximate_data_size" }
+  metric { name = "zk_open_file_descriptor_count" }
+  metric { name = "zk_max_file_descriptor_count" }
+  metric { name = "zk_followers" }
+  metric { name = "zk_synced_followers" }
+  metric { name = "zk_pending_syncs" }
+}
+

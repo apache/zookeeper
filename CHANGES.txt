@@ -33,7 +33,7 @@ BUGFIXES:
   do not handle windows path correctly (Vishal K via phunt)
 
   ZOOKEEPER-754. numerous misspellings "succesfully"
-  (Savu Andrei via phunt)
+  (Andrei Savu via phunt)
 
   ZOOKEEPER-749. OSGi metadata not included in binary only jar (phunt
   via henryr)
@@ -97,9 +97,13 @@ NEW FEATURES:
 
   ZOOKEEPER-773. Log visualisation (Ivan Kelly via phunt)
 
-  ZOOKEEPER-744. Add monitoring four-letter word (Savu Andrei via phunt)
+  ZOOKEEPER-744. Add monitoring four-letter word (Andrei Savu via phunt)
 
   ZOOKEEPER-712. Bookie recovery. (erwin tam via breed)
+
+  ZOOKEEPER-799. Add tools and recipes for monitoring as a contrib
+  (Andrei Savu via phunt)
+
 
 Release 3.3.0 - 2010-03-24
 

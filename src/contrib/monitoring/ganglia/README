@@ -1,0 +1,33 @@
+
+Recipes for ZooKeeper monitoring using Ganglia
+----------------------------------------------
+
+Ganglia Install guide: http://sourceforge.net/apps/trac/ganglia/wiki/Ganglia%203.1.x%20Installation%20and%20Configuration 
+
+Gmond configuration: http://sourceforge.net/apps/trac/ganglia/wiki/Gmond%203.1.x%20General%20Configuration 
+
+WARNING: I have wrote these instructions while installing and configuring the plugin on my desktop computer running Ubuntu 9.10. I've installed Ganglia using apt-get.
+
+WARNING: I'm going to make the assumption that you know how to work with Ganglia. I'm also going to assume that you have already installed Gangli and everything works as expected.
+
+You can monitoring ZooKeeper using Ganglia in two ways:
+
+1. Using a python module:
+
+    WARNING! The python module only works with Ganglia 3.1.x 
+
+    a. enable python modules: you can find instructions in modpython.confg
+    b. copy zookeeper.pyconf in /etc/ganglia/conf.d/
+    c. copy zookeeper_ganglia.py in /usr/lib/ganglia/python_plugins
+    d. restart the ganglia-monitor
+
+    This is the recommended way!
+
+2. OR Using check_zookeeper.py and gmetric:
+
+    Monitoring ZooKeeper using Ganglia is a simple as calling:
+
+    ./check_zookeeper.py -o ganglia -s localhost:2181 
+
+    on each of the ZooKeeper cluster nodes. I'm making the assumption that you have already configured gmond and installed gmetric on each node.
+
