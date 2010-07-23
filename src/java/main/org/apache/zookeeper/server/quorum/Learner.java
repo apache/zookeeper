@@ -311,6 +311,9 @@ public class Learner {
                 System.exit(13);
 
             }
+            if(LOG.isInfoEnabled()){
+                LOG.info("Setting leader epoch " + Long.toHexString(newLeaderZxid >> 32L));
+            }
             zk.getZKDatabase().setlastProcessedZxid(newLeaderZxid);
         }
         ack.setZxid(newLeaderZxid & ~0xffffffffL);

@@ -19,6 +19,9 @@
 package org.apache.zookeeper.test;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Semaphore;
+
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.AsyncCallback;
@@ -264,5 +267,92 @@ public class QuorumTest extends QuorumBase {
         }
         zk.close();
     }
+    
+    /**
+     * Tests if closeSession can be logged before a leader gets established, which
+     * could lead to a locked-out follower (see ZOOKEEPER-790). 
+     * 
+     * The test works as follows. It has a client connecting to a follower f and
+     * sending batches of 1,000 updates. The goal is that f has a zxid higher than
+     * all other servers in the initial leader election. This way we can crash and
+     * recover the follower so that the follower believes it is the leader once it
+     * recovers (LE optimization: once a server receives a message from all other 
+     * servers, it picks a leader.
+     * 
+     * It also makes the session timeout very short so that we force the false 
+     * leader to close the session and write it to the log in the buggy code (before 
+     * ZOOKEEPER-790). Once f drops leadership and finds the current leader, its epoch
+     * is higher, and it rejects the leader. Now, if we prevent the leader from closing
+     * the session by only starting up (see Leader.lead()) once it obtains a quorum of 
+     * supporters, then f will find the current leader and support it because it won't
+     * have a highe epoch.
+     * 
+     */
+    @Test
+    public void testNoLogBeforeLeaderEstablishment () 
+    throws IOException, InterruptedException, KeeperException{
+        final Semaphore sem = new Semaphore(0);
+                
+        Leader leader = qb.s1.leader;
+        if (leader == null) leader = qb.s2.leader;
+        if (leader == null) leader = qb.s3.leader;
+        if (leader == null) leader = qb.s4.leader;
+        if (leader == null) leader = qb.s5.leader;
+        
+        Assert.assertNotNull(leader);
+        
+        
+        int serverPort = qb.s1.getClientPort();
+        if(qb.s1.leader != null){
+            serverPort = qb.s2.getClientPort();
+        }
+        
+        ZooKeeper zk = new DisconnectableZooKeeper("127.0.0.1:" + serverPort, 1000, new Watcher() {
+            public void process(WatchedEvent event) {
+        }});
+
+        zk.create("/blah", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);      
+        
+        for(int i = 0; i < 50000; i++) {
+            zk.setData("/blah", new byte[0], -1, new AsyncCallback.StatCallback() {
+                public void processResult(int rc, String path, Object ctx,
+                        Stat stat) {
+                    counter++;
+                    if (rc != 0) {
+                        errors++;
+                    }
+                    if(counter == 20000){
+                        sem.release();
+                    }
+                }
+            }, null);
+            
+            if(i == 5000){
+                qb.shutdown(qb.s1);
+                LOG.info("Shutting down s1");
+            }
+            if(i == 12000){
+                qb.setupServer(1);
+                qb.s1.start();
+                LOG.info("Setting up s1");
+            }
+            if((i % 1000) == 0){
+                Thread.sleep(500);
+            }
+        }
+
+        // Wait until all updates return
+        sem.tryAcquire(15000, TimeUnit.MILLISECONDS);
+        
+        // Verify that server is following and has the same epoch as the leader
+        Assert.assertTrue("Not following", qb.s1.follower != null);
+        long epochF = (qb.s1.getActiveServer().getZxid() >> 32L);
+        long epochL = (leader.getEpoch() >> 32L);
+        Assert.assertTrue("Zxid: " + qb.s1.getActiveServer().getZxid() + 
+                "Current epoch: " + epochF, epochF == epochL);
+        
+    }
+    
+    
     // skip superhammer and clientcleanup as they are too expensive for quorum
 }
