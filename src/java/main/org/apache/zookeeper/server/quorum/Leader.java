@@ -274,16 +274,15 @@ public class Leader {
         try {
             self.tick = 0;
             zk.loadData();
-            zk.startup();
+            
             long epoch = self.getLastLoggedZxid() >> 32L;
             epoch++;
             zk.setZxid(epoch << 32L);
-            zk.getZKDatabase().setlastProcessedZxid(zk.getZxid());
             
             synchronized(this){
                 lastProposed = zk.getZxid();
             }
-                        
+            
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
                     null, null);
 
@@ -327,6 +326,13 @@ public class Leader {
                 Thread.sleep(self.tickTime);
                 self.tick++;
             }
+            
+            if(LOG.isInfoEnabled()){
+                LOG.info("Have quorum of supporters; starting up and setting last processed zxid: " + zk.getZxid());
+            }
+            zk.startup();
+            zk.getZKDatabase().setlastProcessedZxid(zk.getZxid());
+            
             if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
                 self.cnxnFactory.setZooKeeperServer(zk);
             }
@@ -466,7 +472,7 @@ public class Leader {
             LOG.debug("Count for zxid: 0x" + Long.toHexString(zxid)
                     + " is " + p.ackSet.size());
         }
-        if (self.getQuorumVerifier().containsQuorum(p.ackSet)){        
+        if (self.getQuorumVerifier().containsQuorum(p.ackSet)){             
             if (zxid != lastCommitted+1) {
                 LOG.warn("Commiting zxid 0x" + Long.toHexString(zxid)
                         + " from " + followerAddr + " not first!");
@@ -603,6 +609,16 @@ public class Leader {
 
     long lastProposed;
 
+    
+    /**
+     * Returns the current epoch of the leader.
+     * 
+     * @return
+     */
+    public long getEpoch(){
+        return lastProposed >> 32L;
+    }
+    
     /**
      * create a proposal and send it out to all the members
      * 

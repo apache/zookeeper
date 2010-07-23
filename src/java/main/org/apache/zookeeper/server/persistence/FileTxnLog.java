@@ -193,7 +193,12 @@ public class FileTxnLog implements TxnLog {
                         + hdr.getType());
             }
             if (logStream==null) {
-               logFileWrite = new File(logDir, ("log." +
+               if(LOG.isInfoEnabled()){
+                    LOG.info("Creating new log file: log." +  
+                            Long.toHexString(hdr.getZxid()));
+               }
+               
+               logFileWrite = new File(logDir, ("log." + 
                        Long.toHexString(hdr.getZxid())));
                fos = new FileOutputStream(logFileWrite);
                logStream=new BufferedOutputStream(fos);

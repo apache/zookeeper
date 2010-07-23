@@ -86,6 +86,8 @@ IMPROVEMENTS:
   ZOOKEEPER-797 c client source with AI_ADDRCONFIG cannot be compiled with
   early glibc (Qian Ye via phunt)
 
+  ZOOKEEPER-790. Last processed zxid set prematurely while establishing leadership (fpj via breed)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
