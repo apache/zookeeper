@@ -58,6 +58,8 @@ BUGFIXES:
   ZOOKEEPER-766. forrest recipes docs don't mention the lock/queue recipe
   implementations available in the release (phunt via mahadev)
 
+  ZOOKEEPER-790. Last processed zxid set prematurely while establishing leadership (fpj via breed)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:
