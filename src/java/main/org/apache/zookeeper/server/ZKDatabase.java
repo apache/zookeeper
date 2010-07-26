@@ -104,7 +104,9 @@ public class ZKDatabase {
          */
         dataTree = new DataTree();
         sessionsWithTimeouts.clear();
-        committedLog.clear();
+        synchronized (committedLog) {
+            committedLog.clear();
+        }
         initialized = false;
     }
     
@@ -136,7 +138,9 @@ public class ZKDatabase {
     }
     
     public LinkedList<Proposal> getCommittedLog() {
-        return this.committedLog;
+        synchronized (this.committedLog) {
+            return new LinkedList<Proposal>(this.committedLog);
+        }
     }
     
     /**
