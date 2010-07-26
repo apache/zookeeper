@@ -72,6 +72,11 @@ it will use gmetric to send zookeeper node status data.
 
 Check the subfolders for configuration details and samples for each platform.
 
+License
+-------
+
+Apache License 2.0 or later.
+
 ZooKeeper 4letterwords Commands
 -------------------------------
 

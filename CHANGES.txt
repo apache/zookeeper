@@ -66,6 +66,9 @@ BUGFIXES:
 
   ZOOKEEPER-719. Add throttling to BookKeeper client (fpj via breed)
 
+  ZOOKEEPER-814. monitoring scripts are missing apache license headers
+  (andrei savu via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
