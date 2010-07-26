@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest, threading
+import unittest, threading, re
 
 import zookeeper, zktestbase
 ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
@@ -117,6 +117,9 @@ class ConnectionTest(zktestbase.TestBase):
 
         self.assertEqual(True, all( zookeeper.close(h) == zookeeper.OK for h in handles ))
 
+    def testversionstringexists(self):
+        self.assertTrue(hasattr(zookeeper, '__version__'))
+        self.assertTrue(re.match("\d.\d.\d", zookeeper.__version__))
 
 
     def tearDown(self):
