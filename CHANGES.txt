@@ -3,6 +3,8 @@ Branch 3.3
 Backward compatible changes:
 
 BUGFIXES:
+  ZOOKEEPER-783. committedLog in ZKDatabase is not properly synchronized
+  (henry via mahadev)
 
 IMPROVEMENTS:
 
