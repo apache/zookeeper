@@ -97,6 +97,8 @@ IMPROVEMENTS:
   ZOOKEEPER-821. Add ZooKeeper version information to zkpython (Rich
   Schumacher via mahadev)
 
+  ZOOKEEPER-765.  Add python example script (Travis and Andrei via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
