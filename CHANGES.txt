@@ -72,6 +72,9 @@ BUGFIXES:
   ZOOKEEPER-783. committedLog in ZKDatabase is not properly synchronized
   (henry via mahadev) 
 
+  ZOOKEEPER-790.  Last processed zxid set prematurely while establishing 
+  leadership (flavio via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
