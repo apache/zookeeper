@@ -36,6 +36,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -267,7 +268,42 @@ public class QuorumTest extends QuorumBase {
         }
         zk.close();
     }
-    
+
+    /** 
+     * See ZOOKEEPER-790 for details 
+     * */
+    @Test
+    public void testFollowersStartAfterLeader() throws Exception {
+        QuorumUtil qu = new QuorumUtil(1);
+        CountdownWatcher watcher = new CountdownWatcher();
+        qu.startQuorum();
+        
+        int index = 1;
+        while(qu.getPeer(index).peer.leader == null)
+            index++;
+        
+        ZooKeeper zk = new ZooKeeper(
+                "127.0.0.1:" + qu.getPeer((index == 1)?2:1).peer.getClientPort(),
+                ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(CONNECTION_TIMEOUT);
+        
+        // break the quorum
+        qu.shutdown(index);
+
+        // try to reestablish the quorum
+        qu.start(index);
+        Assert.assertTrue("quorum reestablishment failed",
+                QuorumBase.waitForServerUp(
+                        "127.0.0.1:" + qu.getPeer(2).clientPort,
+                        CONNECTION_TIMEOUT));
+        Thread.sleep(1000);
+
+        // zk should have reconnected already
+        zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        zk.close();
+    }
+
     /**
      * Tests if closeSession can be logged before a leader gets established, which
      * could lead to a locked-out follower (see ZOOKEEPER-790). 
@@ -293,21 +329,24 @@ public class QuorumTest extends QuorumBase {
     throws IOException, InterruptedException, KeeperException{
         final Semaphore sem = new Semaphore(0);
                 
-        Leader leader = qb.s1.leader;
-        if (leader == null) leader = qb.s2.leader;
-        if (leader == null) leader = qb.s3.leader;
-        if (leader == null) leader = qb.s4.leader;
-        if (leader == null) leader = qb.s5.leader;
+        QuorumUtil qu = new QuorumUtil(2);
+        qu.startQuorum();
+                
+        
+        int index = 1;
+        while(qu.getPeer(index).peer.leader == null)
+            index++;
+        
+        Leader leader = qu.getPeer(index).peer.leader;
         
         Assert.assertNotNull(leader);
+  
+        /*
+         * Reusing the index variable to select a follower to connect to
+         */
+        index = (index == 1) ? 2 : 1;
         
-        
-        int serverPort = qb.s1.getClientPort();
-        if(qb.s1.leader != null){
-            serverPort = qb.s2.getClientPort();
-        }
-        
-        ZooKeeper zk = new DisconnectableZooKeeper("127.0.0.1:" + serverPort, 1000, new Watcher() {
+        ZooKeeper zk = new DisconnectableZooKeeper("127.0.0.1:" + qu.getPeer(index).peer.getClientPort(), 1000, new Watcher() {
             public void process(WatchedEvent event) {
         }});
 
@@ -328,13 +367,12 @@ public class QuorumTest extends QuorumBase {
             }, null);
             
             if(i == 5000){
-                qb.shutdown(qb.s1);
+                qu.shutdown(index);
                 LOG.info("Shutting down s1");
             }
             if(i == 12000){
-                qb.setupServer(1);
-                qb.s1.start();
-                LOG.info("Setting up s1");
+                qu.start(index);
+                LOG.info("Setting up server: " + index);
             }
             if((i % 1000) == 0){
                 Thread.sleep(500);
@@ -345,10 +383,10 @@ public class QuorumTest extends QuorumBase {
         sem.tryAcquire(15000, TimeUnit.MILLISECONDS);
         
         // Verify that server is following and has the same epoch as the leader
-        Assert.assertTrue("Not following", qb.s1.follower != null);
-        long epochF = (qb.s1.getActiveServer().getZxid() >> 32L);
+        Assert.assertTrue("Not following", qu.getPeer(index).peer.follower != null);
+        long epochF = (qu.getPeer(index).peer.getActiveServer().getZxid() >> 32L);
         long epochL = (leader.getEpoch() >> 32L);
-        Assert.assertTrue("Zxid: " + qb.s1.getActiveServer().getZxid() + 
+        Assert.assertTrue("Zxid: " + qu.getPeer(index).peer.getActiveServer().getZxid() + 
                 "Current epoch: " + epochF, epochF == epochL);
         
     }

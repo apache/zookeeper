@@ -327,12 +327,6 @@ public class Leader {
                 self.tick++;
             }
             
-            if(LOG.isInfoEnabled()){
-                LOG.info("Have quorum of supporters; starting up and setting last processed zxid: " + zk.getZxid());
-            }
-            zk.startup();
-            zk.getZKDatabase().setlastProcessedZxid(zk.getZxid());
-            
             if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
                 self.cnxnFactory.setZooKeeperServer(zk);
             }
@@ -499,6 +493,11 @@ public class Leader {
                 return;
             } else {
                 lastCommitted = zxid;
+                if(LOG.isInfoEnabled()){
+                    LOG.info("Have quorum of supporters; starting up and setting last processed zxid: " + zk.getZxid());
+                }
+                zk.startup();
+                zk.getZKDatabase().setlastProcessedZxid(zk.getZxid());
             }
         }
     }
