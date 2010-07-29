@@ -157,6 +157,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         public void startup(ZooKeeperServer zks) throws IOException,
                 InterruptedException {
             start();
+            zks.startdata();
             zks.startup();
             setZooKeeperServer(zks);
         }

@@ -352,7 +352,29 @@ public class LearnerHandler extends Thread {
                     }
                 }
             }.start();
-
+            
+            /*
+             * Have to wait for the first ACK, wait until 
+             * the leader is ready, and only then we can
+             * start processing messages.
+             */
+            qp = new QuorumPacket();
+            ia.readRecord(qp, "packet");
+            if(qp.getType() != Leader.ACK){
+                LOG.error("Next packet was supposed to be an ACK");
+                return;
+            }
+            leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
+            
+            /*
+             * Wait until leader starts up
+             */
+            synchronized(leader.zk){
+                while(!leader.zk.isRunning()){
+                    leader.zk.wait(500);
+                }
+            }
+            
             while (true) {
                 qp = new QuorumPacket();
                 ia.readRecord(qp, "packet");
@@ -475,6 +497,7 @@ public class LearnerHandler extends Thread {
         } catch (IOException e) {
             LOG.warn("Ignoring unexpected exception during socket close", e);
         }
+        this.interrupt();
         leader.removeLearnerHandler(this);
     }
 
