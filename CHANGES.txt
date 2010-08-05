@@ -75,6 +75,9 @@ BUGFIXES:
   ZOOKEEPER-790.  Last processed zxid set prematurely while establishing 
   leadership (flavio via mahadev)
 
+  ZOOKEEPER-795. eventThread isn't shutdown after a connection 
+  "session expired" event coming (Sergey Doroshenko and Ben via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
