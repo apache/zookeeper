@@ -430,6 +430,17 @@ public class ClientCnxn {
         }
     }
 
+    /**
+     * Guard against creating "-EventThread-EventThread-EventThread-..." thread
+     * names when ZooKeeper object is being created from within a watcher.
+     * See ZOOKEEPER-795 for details.
+     */
+    private static String makeThreadName(String suffix) {
+        String name = Thread.currentThread().getName().
+            replaceAll("-EventThread", "");
+        return name + suffix;
+    }
+
     class EventThread extends Thread {
         private final LinkedBlockingQueue<Object> waitingEvents =
             new LinkedBlockingQueue<Object>();
@@ -441,7 +452,7 @@ public class ClientCnxn {
         private volatile KeeperState sessionState = KeeperState.Disconnected;
 
         EventThread() {
-            super(currentThread().getName() + "-EventThread");
+            super(makeThreadName("-EventThread"));
             setUncaughtExceptionHandler(uncaughtExceptionHandler);
             setDaemon(true);
         }
@@ -689,6 +700,7 @@ public class ClientCnxn {
                 eventThread.queueEvent(new WatchedEvent(
                         Watcher.Event.EventType.None,
                         Watcher.Event.KeeperState.Expired, null));
+                eventThread.queueEventOfDeath();
                 throw new SessionExpiredException(
                         "Unable to reconnect to ZooKeeper service, session 0x"
                         + Long.toHexString(sessionId) + " has expired");
@@ -898,7 +910,7 @@ public class ClientCnxn {
         }
 
         SendThread() {
-            super(currentThread().getName() + "-SendThread()");
+            super(makeThreadName("-SendThread()"));
             zooKeeper.state = States.CONNECTING;
             setUncaughtExceptionHandler(uncaughtExceptionHandler);
             setDaemon(true);
