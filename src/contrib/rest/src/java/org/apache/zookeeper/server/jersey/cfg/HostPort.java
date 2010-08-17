@@ -16,28 +16,36 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.jersey;
+package org.apache.zookeeper.server.jersey.cfg;
 
-import org.apache.log4j.Logger;
-import org.junit.Test;
+public class HostPort {
 
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.header.MediaTypes;
+   private String host;
+   private int port;
+   
+   public HostPort(String hostPort) {
+       String[] parts = hostPort.split(":");
+       host = parts[0];
+       port = Integer.parseInt(parts[1]);
+   }
 
+   public String getHost() {
+       return host;
+   }
 
-/**
- * Test stand-alone server.
- *
- */
-public class WadlTest extends Base {
-    protected static final Logger LOG = Logger.getLogger(WadlTest.class);
+   public int getPort() {
+       return port;
+   }
 
-    @Test
-    public void testApplicationWadl() {
-        WebResource r = client.resource(BASEURI);
-        String serviceWadl = r.path("application.wadl").
-                accept(MediaTypes.WADL).get(String.class);
-        assertTrue("Something wrong. Returned wadl length not > 0.",
-                serviceWadl.length() > 0);
-    }
+   @Override
+   public boolean equals(Object o) {
+       HostPort p = (HostPort) o;
+       return host.equals(p.host) && port == p.port;
+   }
+   
+   @Override
+   public int hashCode() {
+       return String.format("%s:%d", host, port).hashCode();
+   }
+   
 }

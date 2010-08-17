@@ -16,28 +16,36 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.jersey;
+package org.apache.zookeeper.server.jersey.cfg;
 
-import org.apache.log4j.Logger;
-import org.junit.Test;
+import java.util.HashSet;
+import java.util.Set;
 
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.header.MediaTypes;
+public class HostPortSet {
 
-
-/**
- * Test stand-alone server.
- *
- */
-public class WadlTest extends Base {
-    protected static final Logger LOG = Logger.getLogger(WadlTest.class);
-
-    @Test
-    public void testApplicationWadl() {
-        WebResource r = client.resource(BASEURI);
-        String serviceWadl = r.path("application.wadl").
-                accept(MediaTypes.WADL).get(String.class);
-        assertTrue("Something wrong. Returned wadl length not > 0.",
-                serviceWadl.length() > 0);
-    }
+   private Set<HostPort> hostPortSet = new HashSet<HostPort>();
+   private String original;
+   
+   public HostPortSet(String hostPortList) {
+       original = hostPortList;
+       
+       int chrootStart = hostPortList.indexOf('/');
+       String hostPortPairs;
+       if (chrootStart != -1) {
+           hostPortPairs = hostPortList.substring(0, chrootStart);
+       } else {
+           hostPortPairs = hostPortList;
+       }
+       
+       String[] parts = hostPortPairs.split(",");
+       for(String p : parts) {
+           hostPortSet.add(new HostPort(p));
+       }
+   }
+   
+   @Override
+   public String toString() {
+       return original;
+   }
+   
 }
