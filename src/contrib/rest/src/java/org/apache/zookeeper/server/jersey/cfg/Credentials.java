@@ -16,28 +16,32 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.jersey;
+package org.apache.zookeeper.server.jersey.cfg;
 
-import org.apache.log4j.Logger;
-import org.junit.Test;
+import java.util.HashMap;
 
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.header.MediaTypes;
+public class Credentials extends HashMap<String, String> {
 
-
-/**
- * Test stand-alone server.
- *
- */
-public class WadlTest extends Base {
-    protected static final Logger LOG = Logger.getLogger(WadlTest.class);
-
-    @Test
-    public void testApplicationWadl() {
-        WebResource r = client.resource(BASEURI);
-        String serviceWadl = r.path("application.wadl").
-                accept(MediaTypes.WADL).get(String.class);
-        assertTrue("Something wrong. Returned wadl length not > 0.",
-                serviceWadl.length() > 0);
-    }
+   public static Credentials join(Credentials a, Credentials b) {
+       Credentials result = new Credentials();
+       result.putAll(a);
+       result.putAll(b);
+       return result;
+   }
+   
+   public Credentials() {
+       super();
+   }
+   
+   public Credentials(String credentials) {
+       super();
+       
+       if (!credentials.trim().equals("")) {
+           String[] parts = credentials.split(",");
+           for(String p : parts) {
+               String[] userPass = p.split(":");
+               put(userPass[0], userPass[1]);
+           }
+       }
+   }
 }

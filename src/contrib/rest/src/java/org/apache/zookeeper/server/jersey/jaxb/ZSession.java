@@ -16,28 +16,40 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.jersey;
+package org.apache.zookeeper.server.jersey.jaxb;
 
-import org.apache.log4j.Logger;
-import org.junit.Test;
+import javax.xml.bind.annotation.XmlRootElement;
 
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.header.MediaTypes;
-
-
-/**
- * Test stand-alone server.
- *
- */
-public class WadlTest extends Base {
-    protected static final Logger LOG = Logger.getLogger(WadlTest.class);
-
-    @Test
-    public void testApplicationWadl() {
-        WebResource r = client.resource(BASEURI);
-        String serviceWadl = r.path("application.wadl").
-                accept(MediaTypes.WADL).get(String.class);
-        assertTrue("Something wrong. Returned wadl length not > 0.",
-                serviceWadl.length() > 0);
+@XmlRootElement(name="session")
+public class ZSession {
+    public String id;
+    public String uri;
+    
+    public ZSession() {
+        // needed by jersey
+    }
+    
+    public ZSession(String id, String uri) {
+        this.id = id;
+        this.uri = uri;
+    }
+    
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if(!(obj instanceof ZSession)) {
+            return false;
+        }
+        ZSession s = (ZSession) obj;
+        return id.equals(s.id);
+    }
+    
+    @Override
+    public String toString() {
+        return "ZSession(" + id +")";   
     }
 }
