@@ -12,6 +12,8 @@ BUGFIXES:
   ZOOKEEPER-772. zkpython segfaults when watcher from async get children 
   is invoked. (henry robinson via mahadev)
 
+  ZOOKEEPER-795. eventThread isn't shutdown after a connection "session expired" event coming (sergey doroshenko via breed)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)

@@ -23,7 +23,9 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -155,12 +157,12 @@ public class SessionTest extends TestCase implements Watcher {
 //        zk.close();
 //    }
 
-    @Test
     /**
      * This test verifies that when the session id is reused, and the original
      * client is disconnected, but not session closed, that the server
      * will remove ephemeral nodes created by the original session.
      */
+    @Test
     public void testSession()
         throws IOException, InterruptedException, KeeperException
     {
@@ -195,18 +197,55 @@ public class SessionTest extends TestCase implements Watcher {
         zk.close();
     }
 
-    @Test
+    private List<Thread> findThreads(String name) {
+        int threadCount = Thread.activeCount();
+        Thread threads[] = new Thread[threadCount*2];
+        threadCount = Thread.enumerate(threads);
+        ArrayList<Thread> list = new ArrayList<Thread>();
+        for(int i = 0; i < threadCount; i++) {
+            if (threads[i].getName().indexOf(name) != -1) {
+                list.add(threads[i]);
+            }
+        }
+        return list;
+    }
+
     /**
      * Make sure ephemerals get cleaned up when a session times out.
      */
+    @Test
     public void testSessionTimeout() throws Exception {
         final int TIMEOUT = 5000;
+        List<Thread> etBefore = findThreads("EventThread");
+        List<Thread> stBefore = findThreads("SendThread");
         DisconnectableZooKeeper zk = createClient(TIMEOUT);
         zk.create("/stest", new byte[0], Ids.OPEN_ACL_UNSAFE,
                 CreateMode.EPHEMERAL);
-        zk.disconnect();
+
+        // Find the new event and send threads
+        List<Thread> etAfter = findThreads("EventThread");
+        List<Thread> stAfter = findThreads("SendThread");
+        Thread eventThread = null;
+        Thread sendThread = null;
+        for(Thread t: etAfter) {
+            if (!etBefore.contains(t)) {
+                eventThread = t;
+                break;
+            }
+        }
+        for(Thread t: stAfter) {
+            if (!stBefore.contains(t)) {
+                sendThread = t;
+                break;
+            }
+        }
+        sendThread.suspend();
+        //zk.disconnect();
 
         Thread.sleep(TIMEOUT*2);
+        sendThread.resume();
+        eventThread.join(TIMEOUT);
+        assertFalse("EventThread is still running", eventThread.isAlive());
 
         zk = createClient(TIMEOUT);
         zk.create("/stest", new byte[0], Ids.OPEN_ACL_UNSAFE,
