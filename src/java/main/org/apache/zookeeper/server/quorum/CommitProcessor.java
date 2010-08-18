@@ -176,6 +176,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     }
 
     public void shutdown() {
+        LOG.info("Shutting down");
         synchronized (this) {
             finished = true;
             queuedRequests.clear();

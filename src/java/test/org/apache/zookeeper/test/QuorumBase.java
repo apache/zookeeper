@@ -35,6 +35,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.Assert;
+import org.junit.Test;
 
 import com.sun.management.UnixOperatingSystemMXBean;
 
@@ -55,6 +56,11 @@ public class QuorumBase extends ClientBase {
     private int portLE4;
     private int portLE5;
 
+    @Test
+    // This just avoids complaints by junit
+    public void testNull() {
+    }
+    
     @Override
     public void setUp() throws Exception {
         setUp(false);

@@ -46,4 +46,13 @@ public class DisconnectableZooKeeper extends ZooKeeper {
         cnxn.disconnect();
     }
 
+    /**
+     * Prevent the client from automatically reconnecting if the connection to the
+     * server is lost
+     */
+    public void dontReconnect() throws Exception {
+        java.lang.reflect.Field f = cnxn.getClass().getDeclaredField("closing");
+        f.setAccessible(true);
+        f.setBoolean(cnxn, true);
+    }
 }

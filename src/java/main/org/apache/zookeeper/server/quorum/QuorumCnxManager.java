@@ -433,9 +433,11 @@ public class QuorumCnxManager {
                 try {
                     ss = ServerSocketChannel.open();
                     int port = self.quorumPeers.get(self.getId()).electionAddr.getPort();
-                    LOG.info("My election bind port: " + port);
-                    ss.socket().setReuseAddress(true); 
-                    ss.socket().bind(new InetSocketAddress(port));
+                    ss.socket().setReuseAddress(true);
+                    InetSocketAddress addr = new InetSocketAddress(port);
+                    LOG.info("My election bind port: " + addr.toString());
+                    setName(addr.toString());
+                    ss.socket().bind(addr);
 
                     while (!shutdown) {
                         SocketChannel client = ss.accept();

@@ -77,7 +77,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     
     @Override
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,
-            int sessionTimeout) throws IOException, InterruptedException {
+            int sessionTimeout) throws IOException {
         getLearner().validateSession(cnxn, sessionId, sessionTimeout);
     }
     

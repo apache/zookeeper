@@ -88,10 +88,9 @@ public class Learner {
      *                the timeout for which the session is valid
      * @return
      * @throws IOException
-     * @throws InterruptedException
      */
     void validateSession(ServerCnxn cnxn, long clientId, int timeout)
-            throws IOException, InterruptedException {
+            throws IOException {
         LOG.info("Revalidating client: 0x" + Long.toHexString(clientId));
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
@@ -336,7 +335,7 @@ public class Learner {
                         + Long.toHexString(sessionId)
                         + " for validation");
             } else {
-                cnxn.finishSessionInit(valid);
+                zk.finishSessionInit(cnxn, valid);
             }
         }
         if (LOG.isTraceEnabled()) {
@@ -369,7 +368,7 @@ public class Learner {
         // set the zookeeper server to null
         self.cnxnFactory.setZooKeeperServer(null);
         // clear all the connections
-        self.cnxnFactory.clear();
+        self.cnxnFactory.closeAll();
         // shutdown previous zookeeper
         if (zk != null) {
             zk.shutdown();

@@ -107,6 +107,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-809. Improved REST Interface (Andrei Savu via phunt)
 
+  ZOOKEEPER-733. use netty to handle client connections (breed and phunt)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)

@@ -166,6 +166,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     }
 
     public void shutdown() {
+        LOG.info("Shutting down");
         queuedRequests.add(requestOfDeath);
         try {
             this.join();
