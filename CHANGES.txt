@@ -125,6 +125,8 @@ NEW FEATURES:
   ZOOKEEPER-799. Add tools and recipes for monitoring as a contrib
   (Andrei Savu via phunt)
 
+  ZOOKEEPER-808. Web-based Administrative Interface
+  (Andrei Savu via phunt)
 
 Release 3.3.0 - 2010-03-24
 

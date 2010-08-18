@@ -1,0 +1,5 @@
+copyright: Apache License v2.0
+version: 0.1
+description: ZooKeeper Browser
+name: ZooKeeper Browser
+sources: [Source/Zkui/Zkui.js]
