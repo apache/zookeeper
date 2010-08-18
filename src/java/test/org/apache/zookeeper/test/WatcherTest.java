@@ -148,7 +148,8 @@ public class WatcherTest extends ClientBase {
             zk1.getData("/watch-count-test-2", w1, stat);
             zk2.getData("/watch-count-test", w2, stat);
 
-            Assert.assertEquals(getServer().getZKDatabase().getDataTree().getWatchCount(), 3);
+            Assert.assertEquals(ClientBase.getServer(serverFactory)
+                    .getZKDatabase().getDataTree().getWatchCount(), 3);
 
         } finally {
             if(zk1 != null) {

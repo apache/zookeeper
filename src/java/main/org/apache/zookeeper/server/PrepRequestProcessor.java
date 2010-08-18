@@ -84,7 +84,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
 
     public PrepRequestProcessor(ZooKeeperServer zks,
             RequestProcessor nextProcessor) {
-        super("ProcessThread:" + zks.getClientPort());
+        super("ProcessThread(sid:" + zks.getServerId()
+                + " cport:" + zks.getClientPort() + "):");
         this.nextProcessor = nextProcessor;
         this.zks = zks;
     }
@@ -505,6 +506,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     }
 
     public void shutdown() {
+        LOG.info("Shutting down");
         submittedRequests.clear();
         submittedRequests.add(Request.requestOfDeath);
         nextProcessor.shutdown();

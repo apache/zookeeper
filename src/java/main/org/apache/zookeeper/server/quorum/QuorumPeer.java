@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +34,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -73,7 +74,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     QuorumBean jmxQuorumBean;
     LocalPeerBean jmxLocalPeerBean;
     LeaderElectionBean jmxLeaderElectionBean;
-    
+
     /* ZKDatabase is a top level member of quorumpeer 
      * which will be used in all the zookeeperservers
      * instantiated later. Also, it is created once on 
@@ -81,14 +82,6 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * message from the leader
      */
     private ZKDatabase zkDb;
-    
-    /**
-     * Create an instance of a quorum peer
-     */
-    public interface Factory{
-        public QuorumPeer create(NIOServerCnxn.Factory cnxnFactory) throws IOException;
-        public NIOServerCnxn.Factory createConnectionFactory() throws IOException;
-    }
 
     public static class QuorumServer {
         public QuorumServer(long id, InetSocketAddress addr,
@@ -343,7 +336,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     Election electionAlg;
 
-    NIOServerCnxn.Factory cnxnFactory;
+    ServerCnxnFactory cnxnFactory;
     private FileTxnSnapLog logFactory = null;
 
     private final QuorumStats quorumStats;
@@ -361,7 +354,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
-            NIOServerCnxn.Factory cnxnFactory) throws IOException {
+            ServerCnxnFactory cnxnFactory) throws IOException {
         this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, 
         		initLimit, syncLimit, cnxnFactory, 
         		new QuorumMaj(countParticipants(quorumPeers)));
@@ -370,7 +363,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
-            NIOServerCnxn.Factory cnxnFactory, 
+            ServerCnxnFactory cnxnFactory, 
             QuorumVerifier quorumConfig) throws IOException {
         this();
         this.cnxnFactory = cnxnFactory;
@@ -459,8 +452,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit,
-                new NIOServerCnxn.Factory(
-                        new InetSocketAddress(clientPort)),
+                ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
                 new QuorumMaj(countParticipants(quorumPeers)));
     }
     
@@ -476,8 +468,8 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit,
-                new NIOServerCnxn.Factory(new InetSocketAddress(clientPort)),
-                    quorumConfig);
+                ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
+                quorumConfig);
     }
     
     /**
@@ -759,7 +751,9 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         synchronized (this) {
             if (leader != null) {
                 synchronized (leader.learners) {
-                    for (LearnerHandler fh : leader.learners) {
+                    for (LearnerHandler fh :
+                        (Collection<LearnerHandler>)leader.learners)
+                    {
                         if (fh.getSocket() == null)
                             continue;
                         String s = fh.getSocket().getRemoteSocketAddress().toString();
@@ -819,6 +813,15 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         this.tickTime = tickTime;
     }
 
+    /** Maximum number of connections allowed from particular host (ip) */
+    public int getMaxClientCnxnsPerHost() {
+        ServerCnxnFactory fac = getCnxnFactory();
+        if (fac == null) {
+            return -1;
+        }
+        return fac.getMaxClientCnxnsPerHost();
+    }
+    
     /** minimum session timeout in milliseconds */
     public int getMinSessionTimeout() {
         return minSessionTimeout == -1 ? tickTime * 2 : minSessionTimeout;
@@ -912,11 +915,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         this.electionType = electionType;
     }
 
-    public NIOServerCnxn.Factory getCnxnFactory() {
+    public ServerCnxnFactory getCnxnFactory() {
         return cnxnFactory;
     }
 
-    public void setCnxnFactory(NIOServerCnxn.Factory cnxnFactory) {
+    public void setCnxnFactory(ServerCnxnFactory cnxnFactory) {
         this.cnxnFactory = cnxnFactory;
     }
 

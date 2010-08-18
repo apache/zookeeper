@@ -18,15 +18,20 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * This RequestProcessor simply forwards requests to an AckRequestProcessor and
  * SyncRequestProcessor.
  */
 public class ProposalRequestProcessor implements RequestProcessor {
+    private static final Logger LOG =
+        Logger.getLogger(ProposalRequestProcessor.class);
+
     LeaderZooKeeperServer zks;
     
     RequestProcessor nextProcessor;
@@ -75,6 +80,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
     }
 
     public void shutdown() {
+        LOG.info("Shutting down");
         nextProcessor.shutdown();
         syncProcessor.shutdown();
     }

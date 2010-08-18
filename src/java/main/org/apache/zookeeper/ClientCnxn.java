@@ -688,6 +688,15 @@ public class ClientCnxn {
         }
 
         void readConnectResult() throws IOException {
+            if (LOG.isTraceEnabled()) {
+                StringBuffer buf = new StringBuffer("0x[");
+                for (byte b : incomingBuffer.array()) {
+                    buf.append(Integer.toHexString(b) + ",");
+                }
+                buf.append("]");
+                LOG.trace("readConnectRestult " + incomingBuffer.remaining() 
+                        + " " + buf.toString());
+            }
             ByteBufferInputStream bbis = new ByteBufferInputStream(
                     incomingBuffer);
             BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
@@ -1154,7 +1163,13 @@ public class ClientCnxn {
             }
             cleanup();
             try {
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Doing client selector close");
+                }
                 selector.close();
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Closed client selector");
+                }
             } catch (IOException e) {
                 LOG.warn("Ignoring exception during selector close", e);
             }

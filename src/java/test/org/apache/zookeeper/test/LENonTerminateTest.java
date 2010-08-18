@@ -25,6 +25,7 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.LeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -93,7 +94,9 @@ public class LENonTerminateTest extends ZKTestCase {
                 requestBuffer.putInt(xid);
                 requestPacket.setLength(4);
                 HashSet<Long> heardFrom = new HashSet<Long>();
-                for (QuorumServer server : self.getVotingView().values()) {
+                for (QuorumServer server :
+                    (Collection<QuorumServer>)self.getVotingView().values())
+                {
                     LOG.info("Server address: " + server.addr);
                     try {
                         requestPacket.setSocketAddress(server.addr);
@@ -213,7 +216,7 @@ public class LENonTerminateTest extends ZKTestCase {
         {
             super(quorumPeers, snapDir, logDir, electionAlg,
                     myid,tickTime, initLimit,syncLimit,
-                    new NIOServerCnxn.Factory(new InetSocketAddress(clientPort)),
+                    ServerCnxnFactory.createFactory(clientPort, -1),
                     new QuorumMaj(countParticipants(quorumPeers)));
         }
         

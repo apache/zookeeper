@@ -202,6 +202,8 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
     }
 
     public void shutdown() {
+        LOG.info("Shutting down");
+
         running = false;
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),

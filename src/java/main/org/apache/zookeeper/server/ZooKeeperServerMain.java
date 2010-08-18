@@ -38,7 +38,7 @@ public class ZooKeeperServerMain {
     private static final String USAGE =
         "Usage: ZooKeeperServerMain configfile | port datadir [ticktime] [maxcnxns]";
 
-    private NIOServerCnxn.Factory cnxnFactory;
+    private ServerCnxnFactory cnxnFactory;
 
     /*
      * Start up the ZooKeeper server.
@@ -105,7 +105,8 @@ public class ZooKeeperServerMain {
             zkServer.setTickTime(config.tickTime);
             zkServer.setMinSessionTimeout(config.minSessionTimeout);
             zkServer.setMaxSessionTimeout(config.maxSessionTimeout);
-            cnxnFactory = new NIOServerCnxn.Factory(config.getClientPortAddress(),
+            cnxnFactory = ServerCnxnFactory.createFactory();
+            cnxnFactory.configure(config.getClientPortAddress(),
                     config.getMaxClientCnxns());
             cnxnFactory.startup(zkServer);
             cnxnFactory.join();

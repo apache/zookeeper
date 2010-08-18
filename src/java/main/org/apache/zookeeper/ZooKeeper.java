@@ -438,7 +438,7 @@ public class ZooKeeper {
         LOG.info("Initiating client connection, connectString=" + connectString
                 + " sessionTimeout=" + sessionTimeout
                 + " watcher=" + watcher
-                + " sessionId=" + sessionId
+                + " sessionId=" + Long.toHexString(sessionId)
                 + " sessionPasswd="
                 + (sessionPasswd == null ? "<null>" : "<hidden>"));
 

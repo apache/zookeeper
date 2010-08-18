@@ -35,7 +35,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
 import org.junit.Test;
@@ -82,8 +82,8 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 
-        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
-                new InetSocketAddress(bindAddress, PORT));
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(
+                new InetSocketAddress(bindAddress, PORT), -1);
         f.startup(zks);
         LOG.info("starting up the the server, waiting");
 

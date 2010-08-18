@@ -383,6 +383,8 @@ public class Leader {
      * Close down all the LearnerHandlers
      */
     void shutdown(String reason) {
+        LOG.info("Shutting down");
+
         if (isShutdown) {
             return;
         }
@@ -402,7 +404,7 @@ public class Leader {
             LOG.warn("Ignoring unexpected exception during close",e);
         }
         // clear all the connections
-        self.cnxnFactory.clear();
+        self.cnxnFactory.closeAll();
         // shutdown the previous zk
         if (zk != null) {
             zk.shutdown();
@@ -551,6 +553,7 @@ public class Leader {
          * @see org.apache.zookeeper.server.RequestProcessor#shutdown()
          */
         public void shutdown() {
+            LOG.info("Shutting down");
             next.shutdown();
         }
     }

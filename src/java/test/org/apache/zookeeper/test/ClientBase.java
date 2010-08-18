@@ -25,7 +25,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,10 +44,10 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
@@ -56,6 +55,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
+import com.j2speed.accessor.FieldAccessor;
 import com.sun.management.UnixOperatingSystemMXBean;
 
 public abstract class ClientBase extends ZKTestCase {
@@ -67,8 +67,11 @@ public abstract class ClientBase extends ZKTestCase {
 
     protected String hostPort = "127.0.0.1:" + PortAssignment.unique();
     protected int maxCnxns = 0;
-    protected NIOServerCnxn.Factory serverFactory = null;
+    protected ServerCnxnFactory serverFactory = null;
     protected File tmpDir = null;
+    
+    long initialFdCount;
+    
     public ClientBase() {
         super();
     }
@@ -330,14 +333,14 @@ public abstract class ClientBase extends ZKTestCase {
         return Integer.parseInt(portstr);
     }
 
-    static NIOServerCnxn.Factory createNewServerInstance(File dataDir,
-            NIOServerCnxn.Factory factory, String hostPort, int maxCnxns)
+    static ServerCnxnFactory createNewServerInstance(File dataDir,
+            ServerCnxnFactory factory, String hostPort, int maxCnxns)
         throws IOException, InterruptedException
     {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         final int PORT = getPort(hostPort);
         if (factory == null) {
-            factory = new NIOServerCnxn.Factory(new InetSocketAddress(PORT),maxCnxns);
+            factory = ServerCnxnFactory.createFactory(PORT, maxCnxns);
         }
         factory.startup(zks);
         Assert.assertTrue("waiting for server up",
@@ -347,11 +350,16 @@ public abstract class ClientBase extends ZKTestCase {
         return factory;
     }
 
-    static void shutdownServerInstance(NIOServerCnxn.Factory factory,
+    static void shutdownServerInstance(ServerCnxnFactory factory,
             String hostPort)
     {
         if (factory != null) {
-            ZKDatabase zkDb = factory.getZooKeeperServer().getZKDatabase();
+            ZKDatabase zkDb;
+            {
+                ZooKeeperServer zs = getServer(factory);
+        
+                zkDb = zs.getZKDatabase();
+            }
             factory.shutdown();
             try {
                 zkDb.close();
@@ -385,16 +393,6 @@ public abstract class ClientBase extends ZKTestCase {
 
     @Before
     public void setUp() throws Exception {
-        setupTestEnv();
-
-        JMXEnv.setUp();
-
-        setUpAll();
-
-        tmpDir = createTmpDir(BASETEST);
-
-        startServer();
-
         /* some useful information - log the number of fds used before
          * and after a test is run. Helps to verify we are freeing resources
          * correctly. Unfortunately this only works on unix systems (the
@@ -405,9 +403,20 @@ public abstract class ClientBase extends ZKTestCase {
         if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
             UnixOperatingSystemMXBean unixos =
                 (UnixOperatingSystemMXBean)osMbean;
+            initialFdCount = unixos.getOpenFileDescriptorCount();
             LOG.info("Initial fdcount is: "
-                    + unixos.getOpenFileDescriptorCount());
+                    + initialFdCount);
         }
+
+        setupTestEnv();
+
+        JMXEnv.setUp();
+
+        setUpAll();
+
+        tmpDir = createTmpDir(BASETEST);
+
+        startServer();
 
         LOG.info("Client test setup finished");
     }
@@ -427,8 +436,14 @@ public abstract class ClientBase extends ZKTestCase {
         JMXEnv.ensureOnly();
     }
 
-    protected ZooKeeperServer getServer() {
-        return serverFactory.getZooKeeperServer();
+    protected static ZooKeeperServer getServer(ServerCnxnFactory fac) {
+        // access the private field - test only
+        FieldAccessor<ServerCnxnFactory,ZooKeeperServer> zkServerAcc =
+            new FieldAccessor<ServerCnxnFactory,ZooKeeperServer>
+                    ("zkServer", ServerCnxnFactory.class);
+        ZooKeeperServer zs = zkServerAcc.get(fac);
+
+        return zs;
     }
 
     protected void tearDownAll() throws Exception {
@@ -449,20 +464,6 @@ public abstract class ClientBase extends ZKTestCase {
     public void tearDown() throws Exception {
         LOG.info("tearDown starting");
 
-        /* some useful information - log the number of fds used before
-         * and after a test is run. Helps to verify we are freeing resources
-         * correctly. Unfortunately this only works on unix systems (the
-         * only place sun has implemented as part of the mgmt bean api.
-         */
-        OperatingSystemMXBean osMbean =
-            ManagementFactory.getOperatingSystemMXBean();
-        if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
-            UnixOperatingSystemMXBean unixos =
-                (UnixOperatingSystemMXBean)osMbean;
-            LOG.info("fdcount after test is: "
-                    + unixos.getOpenFileDescriptorCount());
-        }
-
         tearDownAll();
 
         stopServer();
@@ -475,6 +476,27 @@ public abstract class ClientBase extends ZKTestCase {
         serverFactory = null;
 
         JMXEnv.tearDown();
+
+        /* some useful information - log the number of fds used before
+         * and after a test is run. Helps to verify we are freeing resources
+         * correctly. Unfortunately this only works on unix systems (the
+         * only place sun has implemented as part of the mgmt bean api.
+         */
+        OperatingSystemMXBean osMbean =
+            ManagementFactory.getOperatingSystemMXBean();
+        if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
+            UnixOperatingSystemMXBean unixos =
+                (UnixOperatingSystemMXBean)osMbean;
+            long fdCount = unixos.getOpenFileDescriptorCount();
+            String message = "fdcount after test is: "
+                    + fdCount + " at start it was " + initialFdCount;
+            LOG.info(message);
+            if (fdCount > initialFdCount) {
+                LOG.info("sleeping for 20 secs");
+                //Thread.sleep(60000);
+                //assertTrue(message, fdCount <= initialFdCount);
+            }
+        }
     }
 
     public static MBeanServerConnection jmxConn() throws IOException {

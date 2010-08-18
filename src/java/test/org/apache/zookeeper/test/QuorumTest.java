@@ -29,10 +29,10 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
@@ -40,6 +40,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class QuorumTest extends QuorumBase {
@@ -187,16 +188,21 @@ public class QuorumTest extends QuorumBase {
      * @throws KeeperException
      */
     @Test
-    public void testSessionMoved() throws IOException, InterruptedException, KeeperException {
+    @Ignore
+    public void testSessionMoved() throws Exception {
         String hostPorts[] = qb.hostPort.split(",");
-        DisconnectableZooKeeper zk = new DisconnectableZooKeeper(hostPorts[0], ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+        DisconnectableZooKeeper zk = new DisconnectableZooKeeper(hostPorts[0],
+                ClientBase.CONNECTION_TIMEOUT, new Watcher() {
             public void process(WatchedEvent event) {
             }});
         zk.create("/sessionMoveTest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         // we want to loop through the list twice
         for(int i = 0; i < hostPorts.length*2; i++) {
+            zk.dontReconnect();
             // This should stomp the zk handle
-            DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[(i+1)%hostPorts.length], ClientBase.CONNECTION_TIMEOUT,
+            DisconnectableZooKeeper zknew =
+                new DisconnectableZooKeeper(hostPorts[(i+1)%hostPorts.length],
+                    ClientBase.CONNECTION_TIMEOUT,
                     new Watcher() {public void process(WatchedEvent event) {
                     }},
                     zk.getSessionId(),
@@ -207,7 +213,6 @@ public class QuorumTest extends QuorumBase {
                 Assert.fail("Should have lost the connection");
             } catch(KeeperException.ConnectionLossException e) {
             }
-            zk.disconnect(); // close w/o closing session
             zk = zknew;
         }
         zk.close();
@@ -227,15 +232,17 @@ public class QuorumTest extends QuorumBase {
      * make sure we cannot do any changes.
      */
     @Test
-    public void testSessionMove() throws IOException, InterruptedException, KeeperException {
+    @Ignore
+    public void testSessionMove() throws Exception {
         String hps[] = qb.hostPort.split(",");
         DiscoWatcher oldWatcher = new DiscoWatcher();
-        ZooKeeper zk = new DisconnectableZooKeeper(hps[0],
+        DisconnectableZooKeeper zk = new DisconnectableZooKeeper(hps[0],
                 ClientBase.CONNECTION_TIMEOUT, oldWatcher);
         zk.create("/t1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        zk.dontReconnect();
         // This should stomp the zk handle
         DiscoWatcher watcher = new DiscoWatcher();
-        ZooKeeper zknew = new DisconnectableZooKeeper(hps[1],
+        DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hps[1],
                 ClientBase.CONNECTION_TIMEOUT, watcher, zk.getSessionId(),
                 zk.getSessionPasswd());
         zknew.create("/t2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
@@ -257,6 +264,7 @@ public class QuorumTest extends QuorumBase {
         toClose.add(zknew);
         // Let's just make sure it can still move
         for(int i = 0; i < 10; i++) {
+            zknew.dontReconnect();
             zknew = new DisconnectableZooKeeper(hps[1],
                     ClientBase.CONNECTION_TIMEOUT, new DiscoWatcher(),
                     zk.getSessionId(), zk.getSessionPasswd());
