@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: something
+Description: Some library.
+Requires: 
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lhedwig01
+Cflags: -I${includedir}/hedwig-0.1 -I${libdir}/hedwig-0.1/include
+
