@@ -130,6 +130,9 @@ NEW FEATURES:
   ZOOKEEPER-808. Web-based Administrative Interface
   (Andrei Savu via phunt)
 
+  ZOOKEEPER-775. A large scale pub/sub system (Erwin, Ivan and Ben via
+  mahadev)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:
