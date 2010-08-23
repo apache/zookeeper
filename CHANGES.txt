@@ -14,6 +14,8 @@ BUGFIXES:
 
   ZOOKEEPER-795. eventThread isn't shutdown after a connection "session expired" event coming (sergey doroshenko via breed)
 
+  ZOOKEEPER-792. zkpython memory leak (Lei Zhang via henryr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)
