@@ -78,6 +78,8 @@ BUGFIXES:
   ZOOKEEPER-795. eventThread isn't shutdown after a connection 
   "session expired" event coming (Sergey Doroshenko and Ben via mahadev)
 
+  ZOOKEEPER-792. zkpython memory leak (Lei Zhang via henryr)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
