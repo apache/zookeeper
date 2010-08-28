@@ -80,6 +80,9 @@ BUGFIXES:
 
   ZOOKEEPER-792. zkpython memory leak (Lei Zhang via henryr)
 
+  ZOOKEEPER-854. BookKeeper does not compile due to changes in the ZooKeeper 
+  code (Flavio via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
