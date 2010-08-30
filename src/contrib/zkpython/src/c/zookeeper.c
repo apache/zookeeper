@@ -1387,7 +1387,7 @@ PyObject *pyzoo_recv_timeout(PyObject *self, PyObject *args)
   return Py_BuildValue("i",recv_timeout);  
 }
 
-/* Returns > 0 if connection is unrecoverable, 0 otherwise */
+/* Returns True if connection is unrecoverable, False otherwise */
 PyObject *pyis_unrecoverable(PyObject *self, PyObject *args)
 {
   int zkhid;
@@ -1395,7 +1395,9 @@ PyObject *pyis_unrecoverable(PyObject *self, PyObject *args)
     return NULL;
   CHECK_ZHANDLE(zkhid);
   int ret = is_unrecoverable(zhandles[zkhid]);
-  return Py_BuildValue("i",ret); // TODO: make this a boolean
+  if (ret > 0)
+    Py_RETURN_TRUE;
+  Py_RETURN_FALSE;
 }
 
 /* Set the debug level for logging, returns None */
