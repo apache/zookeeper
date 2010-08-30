@@ -114,6 +114,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-733. use netty to handle client connections (breed and phunt)
 
+  ZOOKEEPER-853. Make zookeeper.is_unrecoverable return True or False
+  in zkpython (Andrei Savu via henryr)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
