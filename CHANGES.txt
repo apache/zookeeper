@@ -83,6 +83,10 @@ BUGFIXES:
   ZOOKEEPER-854. BookKeeper does not compile due to changes in the ZooKeeper 
   code (Flavio via mahadev)
 
+  ZOOKEEPER-861. Missing the test SSL certificate used for running junit tests.
+  (erwin tam via mahadev)
+
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
