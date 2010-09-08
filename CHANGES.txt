@@ -86,6 +86,8 @@ BUGFIXES:
   ZOOKEEPER-861. Missing the test SSL certificate used for running junit tests.
   (erwin tam via mahadev)
 
+  ZOOKEEPER-867. ClientTest is failing on hudson - fd cleanup (phunt)
+
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
