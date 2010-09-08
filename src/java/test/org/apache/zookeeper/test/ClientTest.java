@@ -726,7 +726,10 @@ public class ClientTest extends ClientBase {
 
         // if this Assert.fails it means we are not cleaning up after the closed
         // sessions.
-        Assert.assertTrue("open fds after test are not significantly higher than before",
-                unixos.getOpenFileDescriptorCount() <= initialFdCount + 10);
+        long currentCount = unixos.getOpenFileDescriptorCount();
+        Assert.assertTrue("open fds after test (" + currentCount 
+                + ") are not significantly higher than before ("
+                + initialFdCount + ")",
+                currentCount <= initialFdCount + 10);
     }
 }
