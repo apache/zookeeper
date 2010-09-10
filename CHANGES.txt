@@ -16,6 +16,8 @@ BUGFIXES:
 
   ZOOKEEPER-792. zkpython memory leak (Lei Zhang via henryr)
 
+  ZOOKEEPER-785. Zookeeper 3.3.1 shouldn't infinite loop if someone creates a server.0 line (phunt and Andrei Savu via breed)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)
