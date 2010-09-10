@@ -243,7 +243,14 @@ public class QuorumPeerConfig {
             throw new IllegalArgumentException(
                     "minSessionTimeout must not be larger than maxSessionTimeout");
         }
-        if (servers.size() > 1) {
+        if (servers.size() == 1) {
+            LOG.error("Invalid configuration, only one server specified (ignoring)");
+            servers.clear();
+        } else if (servers.size() > 1) {
+            if (servers.size() == 2) {
+                LOG.warn("No server failure will be tolerated. " +
+                    "You need at least 3 servers.");
+            }
             if (initLimit == 0) {
                 throw new IllegalArgumentException("initLimit is not set");
             }
