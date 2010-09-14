@@ -241,13 +241,29 @@ public class QuorumPeerConfig {
             throw new IllegalArgumentException(
                     "minSessionTimeout must not be larger than maxSessionTimeout");
         }
-        if (servers.size() == 1) {
+        if (servers.size() == 0) {
+            if (observers.size() > 0) {
+                throw new IllegalArgumentException("Observers w/o participants is an invalid configuration");
+            }
+            // Not a quorum configuration so return immediately - not an error
+            // case (for b/w compatibility), server will default to standalone
+            // mode.
+            return;
+        } else if (servers.size() == 1) {
+            if (observers.size() > 0) {
+                throw new IllegalArgumentException("Observers w/o quorum is an invalid configuration");
+            }
+
+            // HBase currently adds a single server line to the config, for
+            // b/w compatibility reasons we need to keep this here.
             LOG.error("Invalid configuration, only one server specified (ignoring)");
             servers.clear();
         } else if (servers.size() > 1) {
             if (servers.size() == 2) {
                 LOG.warn("No server failure will be tolerated. " +
                     "You need at least 3 servers.");
+            } else if (servers.size() % 2 == 0) {
+                LOG.warn("Non-optimial configuration, consider an odd number of servers.");
             }
             if (initLimit == 0) {
                 throw new IllegalArgumentException("initLimit is not set");
@@ -298,7 +314,7 @@ public class QuorumPeerConfig {
             // Now add observers to servers, once the quorums have been
             // figured out
             servers.putAll(observers);
-
+    
             File myIdFile = new File(dataDir, "myid");
             if (!myIdFile.exists()) {
                 throw new IllegalArgumentException(myIdFile.toString()

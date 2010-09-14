@@ -48,7 +48,9 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
     public static  class TestQPMain extends QuorumPeerMain {
         public void shutdown() {
             // ensure it closes - in particular wait for thread to exit
-            QuorumBase.shutdown(quorumPeer);
+            if (quorumPeer != null) {
+                QuorumBase.shutdown(quorumPeer);
+            }
         }
     }
 

@@ -19,9 +19,8 @@
 package org.apache.zookeeper.test;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Semaphore;
-
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.AsyncCallback;
@@ -385,6 +384,5 @@ public class QuorumTest extends QuorumBase {
         
     }
 
-    
     // skip superhammer and clientcleanup as they are too expensive for quorum
 }
