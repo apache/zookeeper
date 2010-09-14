@@ -20,18 +20,17 @@ package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
-import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.Assert;
@@ -192,25 +191,42 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
     /**
      * This test ensures that an Observer does not elect itself as a leader, or
      * indeed come up properly, if it is the lone member of an ensemble.
-     * @throws IOException
+     * @throws Exception
      */
     @Test
-    public void testSingleObserver() throws IOException{
+    public void testObserverOnly() throws Exception {
         ClientBase.setupTestEnv();
         final int CLIENT_PORT_QP1 = PortAssignment.unique();        
-        final int CLIENT_PORT_QP2 = PortAssignment.unique();
         
         String quorumCfgSection =
-            "server.1=127.0.0.1:" + (CLIENT_PORT_QP1)
-            + ":" + (CLIENT_PORT_QP2) + "\npeerType=observer";
+            "server.1=127.0.0.1:" + (PortAssignment.unique())
+            + ":" + (PortAssignment.unique()) + ":observer\npeerType=observer\n";
                     
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();
-        Assert.assertFalse("Observer shouldn't come up",
-                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                                            CONNECTION_TIMEOUT));
-        
-        q1.shutdown();
+        q1.join(ClientBase.CONNECTION_TIMEOUT);
+        Assert.assertFalse(q1.isAlive());
     }    
     
+    /**
+     * Ensure that observer only comes up when a proper ensemble is configured.
+     * (and will not come up with standalone server).
+     */
+    @Test
+    public void testObserverWithStandlone() throws Exception {
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();        
+
+        String quorumCfgSection =
+            "server.1=127.0.0.1:" + (PortAssignment.unique())
+            + ":" + (PortAssignment.unique()) + ":observer\n"
+            + "server.2=127.0.0.1:" + (PortAssignment.unique())
+            + ":" + (PortAssignment.unique()) + "\npeerType=observer\n";
+
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+        q1.start();
+        q1.join(ClientBase.CONNECTION_TIMEOUT);
+        Assert.assertFalse(q1.isAlive());
+    }    
+
 }
