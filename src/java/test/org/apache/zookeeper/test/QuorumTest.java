@@ -19,9 +19,8 @@
 package org.apache.zookeeper.test;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Semaphore;
-
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.AsyncCallback;
@@ -36,7 +35,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -398,7 +396,6 @@ public class QuorumTest extends QuorumBase {
                 "Current epoch: " + epochF, epochF == epochL);
         
     }
-    
-    
+
     // skip superhammer and clientcleanup as they are too expensive for quorum
 }

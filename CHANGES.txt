@@ -88,7 +88,11 @@ BUGFIXES:
 
   ZOOKEEPER-867. ClientTest is failing on hudson - fd cleanup (phunt)
 
-  ZOOKEEPER-785. Zookeeper 3.3.1 shouldn't infinite loop if someone creates a server.0 line (phunt and Andrei Savu via breed)
+  ZOOKEEPER-785. Zookeeper 3.3.1 shouldn't infinite loop if someone creates a
+  server.0 line (phunt and Andrei Savu via breed)
+
+  ZOOKEEPER-785. Zookeeper 3.3.1 shouldn't infinite loop if someone creates a
+  server.0 line (part 2) (phunt)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
