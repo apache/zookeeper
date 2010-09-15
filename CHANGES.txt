@@ -94,6 +94,8 @@ BUGFIXES:
   ZOOKEEPER-785. Zookeeper 3.3.1 shouldn't infinite loop if someone creates a
   server.0 line (part 2) (phunt)
 
+  ZOOKEEPER-870. Zookeeper trunk build broken. (mahadev via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
