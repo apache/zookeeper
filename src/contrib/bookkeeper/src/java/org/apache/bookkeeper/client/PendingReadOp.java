@@ -64,12 +64,18 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
         numPendingReads = endEntryId - startEntryId + 1;
     }
 
-    public void initiate() {
+    public void initiate() throws InterruptedException {
         long nextEnsembleChange = startEntryId, i = startEntryId;
 
         ArrayList<InetSocketAddress> ensemble = null;
         do {
 
+            if(LOG.isDebugEnabled()){
+                LOG.debug("Acquiring lock: " + i);
+            }
+           
+            lh.opCounterSem.acquire();
+            
             if (i == nextEnsembleChange) {
                 ensemble = lh.metadata.getEnsemble(i);
                 nextEnsembleChange = lh.metadata.getNextEnsembleChange(i);
@@ -80,7 +86,6 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
             sendRead(ensemble, entry, BKException.Code.ReadException);
 
         } while (i <= endEntryId);
-
     }
 
     void sendRead(ArrayList<InetSocketAddress> ensemble, LedgerEntry entry, int lastErrorCode) {
@@ -114,7 +119,6 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
             return;
         }
         
-        numPendingReads--;
         ChannelBufferInputStream is;
         try {
             is = lh.macManager.verifyDigestAndReturnData(entryId, buffer);
@@ -125,15 +129,23 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
 
         entry.entryDataStream = is;
 
+        numPendingReads--;
         if (numPendingReads == 0) {
             submitCallback(BKException.Code.OK);
         }
-
+        
+        if(LOG.isDebugEnabled()){
+            LOG.debug("Releasing lock: " + entryId);
+        }
+        
+        lh.opCounterSem.release();
+        
+        if(numPendingReads < 0)
+            LOG.error("Read too many values");
     }
 
     private void submitCallback(int code){
         cb.readComplete(code, lh, PendingReadOp.this, PendingReadOp.this.ctx);
-        lh.opCounterSem.release();
     }
     public boolean hasMoreElements() {
         return !seq.isEmpty();

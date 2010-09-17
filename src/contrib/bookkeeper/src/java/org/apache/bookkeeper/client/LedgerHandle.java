@@ -67,7 +67,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
   private Integer throttling = 5000;
   
   final Queue<PendingAddOp> pendingAddOps = new ArrayDeque<PendingAddOp>();
-
+  
   LedgerHandle(BookKeeper bk, long ledgerId, LedgerMetadata metadata,
       DigestType digestType, byte[] password)
       throws GeneralSecurityException, NumberFormatException {
@@ -146,6 +146,15 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
    */
   public DigestManager getDigestManager() {
       return macManager;
+  }
+  
+  /**
+   * Return total number of available slots.
+   * 
+   * @return int    available slots
+   */
+  Semaphore getAvailablePermits(){
+      return this.opCounterSem;
   }
   
   /**
@@ -277,7 +286,6 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
     }
 
     new PendingReadOp(this, firstEntry, lastEntry, cb, ctx).initiate();
-    opCounterSem.acquire();
   }
 
   /**
@@ -310,26 +318,32 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
    */
   public void asyncAddEntry(final byte[] data, final AddCallback cb,
       final Object ctx) throws InterruptedException {
-      bk.mainWorkerPool.submitOrdered(ledgerId, new SafeRunnable() {
-      @Override
-      public void safeRun() {
-        if (metadata.isClosed()) {
-          LOG.warn("Attempt to add to closed ledger: " + ledgerId);
-          cb.addComplete(BKException.Code.LedgerClosedException,
-              LedgerHandle.this, -1, ctx);
-          return;
-        }
-
-        long entryId = ++lastAddPushed;
-        PendingAddOp op = new PendingAddOp(LedgerHandle.this, cb, ctx, entryId);
-        pendingAddOps.add(op);
-        ChannelBuffer toSend = macManager.computeDigestAndPackageForSending(
-            entryId, lastAddConfirmed, data);
-        op.initiate(toSend);
-
-      }
-      });
       opCounterSem.acquire();
+      
+      try{
+          bk.mainWorkerPool.submitOrdered(ledgerId, new SafeRunnable() {
+              @Override
+              public void safeRun() {
+                  if (metadata.isClosed()) {
+                      LOG.warn("Attempt to add to closed ledger: " + ledgerId);
+                      LedgerHandle.this.opCounterSem.release();
+                      cb.addComplete(BKException.Code.LedgerClosedException,
+                              LedgerHandle.this, -1, ctx);
+                      return;
+                  }
+
+                  long entryId = ++lastAddPushed;
+                  PendingAddOp op = new PendingAddOp(LedgerHandle.this, cb, ctx, entryId);
+                  pendingAddOps.add(op);
+                  ChannelBuffer toSend = macManager.computeDigestAndPackageForSending(
+                          entryId, lastAddConfirmed, data);
+                  op.initiate(toSend);
+              }
+          });
+      } catch (RuntimeException e) {
+          opCounterSem.release();
+          throw e;
+      }
   }
 
   // close the ledger and send fails to all the adds in the pipeline

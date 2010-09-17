@@ -96,6 +96,8 @@ BUGFIXES:
 
   ZOOKEEPER-870. Zookeeper trunk build broken. (mahadev via phunt)
 
+  ZOOKEEPER-831. BookKeeper: Throttling improved for reads (breed via fpj)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
