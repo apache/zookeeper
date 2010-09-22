@@ -98,6 +98,9 @@ BUGFIXES:
 
   ZOOKEEPER-831. BookKeeper: Throttling improved for reads (breed via fpj)
 
+  ZOOKEEPER-846. zookeeper client doesn't shut down cleanly on the close call
+  (phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
