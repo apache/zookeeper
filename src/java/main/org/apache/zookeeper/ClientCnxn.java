@@ -1259,8 +1259,6 @@ public class ClientCnxn {
                       + Long.toHexString(getSessionId()));
         }
 
-        closing = true;
-
         try {
             RequestHeader h = new RequestHeader();
             h.setType(ZooDefs.OpCode.closeSession);
@@ -1308,9 +1306,14 @@ public class ClientCnxn {
             packet.ctx = ctx;
             packet.clientPath = clientPath;
             packet.serverPath = serverPath;
-            if (!zooKeeper.state.isAlive()) {
+            if (!zooKeeper.state.isAlive() || closing) {
                 conLossPacket(packet);
             } else {
+                // If the client is asking to close the session then
+                // mark as closing
+                if (h.getType() == OpCode.closeSession) {
+                    closing = true;
+                }
                 outgoingQueue.add(packet);
             }
         }
