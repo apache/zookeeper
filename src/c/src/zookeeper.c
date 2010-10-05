@@ -1947,6 +1947,15 @@ int zookeeper_process(zhandle_t *zh, int events)
             int rc = hdr.err;
             /* Find the request corresponding to the response */
             completion_list_t *cptr = dequeue_completion(&zh->sent_requests);
+
+            /* [ZOOKEEPER-804] Don't assert if zookeeper_close has been called. */
+            if (zh->close_requested == 1) {
+                if (cptr) {
+                    destroy_completion_entry(cptr);
+                    cptr = NULL;
+                }
+                return ZINVALIDSTATE;
+            }
             assert(cptr);
             /* The requests are going to come back in order */
             if (cptr->xid != hdr.xid) {
