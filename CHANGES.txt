@@ -100,6 +100,9 @@ BUGFIXES:
 
   ZOOKEEPER-846. zookeeper client doesn't shut down cleanly on the close call
   (phunt)
+  
+  ZOOKEEPER-804. c unit tests failing due to "assertion cptr failed" (michi
+  mutsuzaki via mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
