@@ -18,17 +18,63 @@
 
 package org.apache.zookeeper.test;
 
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.junit.Test;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.test.ClientBase;
+import org.junit.Assert;
+import org.junit.Test; 
 
 public class AuthTest extends ClientBase {
     static {
         // password is test
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
                 "super:D/InIHSb7yEEbrWz8b9l71RjZJU=");        
+    }
+    
+ private AtomicInteger authFailed = new AtomicInteger(0);
+    
+    @Override
+    protected TestableZooKeeper createClient(String hp)
+    throws IOException, InterruptedException
+    {
+        MyWatcher watcher = new MyWatcher();
+        return createClient(watcher, hp);
+    }
+
+    private class MyWatcher extends CountdownWatcher {
+        @Override
+        public synchronized void process(WatchedEvent event) {
+            if (event.getState() == KeeperState.AuthFailed) {
+                authFailed.incrementAndGet();
+            }
+            else {
+                super.process(event);
+            }
+        }
+    }
+
+    @Test
+    public void testBadAuthNotifiesWatch() throws Exception {
+        ZooKeeper zk = createClient();
+        try {
+            zk.addAuthInfo("FOO", "BAR".getBytes());
+            zk.getData("/path1", false, null);
+            Assert.fail("Should get auth state error");
+        } catch(KeeperException.AuthFailedException e) {
+            Assert.assertEquals("Should have called my watcher", 
+                    1, authFailed.get());
+        }
+        finally {
+            zk.close();
+        }
     }
 
     @Test

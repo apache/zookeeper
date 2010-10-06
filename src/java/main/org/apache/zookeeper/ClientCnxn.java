@@ -39,6 +39,9 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
@@ -739,8 +742,12 @@ public class ClientCnxn {
                 return;
             }
             if (replyHdr.getXid() == -4) {
-                // -2 is the xid for AuthPacket
-                // TODO: process AuthPacket here
+            	 // -4 is the xid for AuthPacket               
+                if(replyHdr.getErr() == KeeperException.Code.AUTHFAILED.intValue()) {
+                    zooKeeper.state = States.AUTH_FAILED;                    
+                    eventThread.queueEvent( new WatchedEvent(Watcher.Event.EventType.None, 
+                            Watcher.Event.KeeperState.AuthFailed, null) );            		            		
+                }
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Got auth sessionid:0x"
                             + Long.toHexString(sessionId));
