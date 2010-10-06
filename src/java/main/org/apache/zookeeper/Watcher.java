@@ -58,7 +58,13 @@ public interface Watcher {
              * client connection (the session) is no longer valid. You must
              * create a new client connection (instantiate a new ZooKeeper
              * instance) if you with to access the ensemble. */
-            Expired (-112);
+            Expired (-112),
+
+            /**
+             * Auth failed state
+             * 
+             */
+            AuthFailed(4);
 
             private final int intValue;     // Integer representation of value
                                             // for sending over wire
@@ -77,6 +83,7 @@ public interface Watcher {
                     case    0: return KeeperState.Disconnected;
                     case    1: return KeeperState.NoSyncConnected;
                     case    3: return KeeperState.SyncConnected;
+                    case    4: return KeeperState.AuthFailed;
                     case -112: return KeeperState.Expired;
 
                     default:
