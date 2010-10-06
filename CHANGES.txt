@@ -104,6 +104,9 @@ BUGFIXES:
   ZOOKEEPER-804. c unit tests failing due to "assertion cptr failed" (michi
   mutsuzaki via mahadev)
 
+  ZOOKEEPER-844. handle auth failure in java client
+  (Camille Fournier via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

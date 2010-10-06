@@ -748,8 +748,12 @@ public class ClientCnxn {
                 return;
             }
             if (replyHdr.getXid() == -4) {
-                // -2 is the xid for AuthPacket
-                // TODO: process AuthPacket here
+                // -4 is the xid for AuthPacket               
+                if(replyHdr.getErr() == KeeperException.Code.AUTHFAILED.intValue()) {
+                    zooKeeper.state = States.AUTH_FAILED;                    
+                    eventThread.queueEvent( new WatchedEvent(Watcher.Event.EventType.None, 
+                            Watcher.Event.KeeperState.AuthFailed, null) );            		            		
+                }
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Got auth sessionid:0x"
                             + Long.toHexString(sessionId));
