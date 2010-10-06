@@ -32,6 +32,9 @@ BUGFIXES:
   ZOOKEEPER-844. handle auth failure in java client
   (Camille Fournier via phunt)
 
+  ZOOKEEPER-822. Leader election taking a long time to complete
+  (Vishal K via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)

@@ -22,6 +22,7 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
@@ -178,6 +179,38 @@ public class CnxManagerTest extends TestCase {
         }
     }
     
+    @Test
+    public void testCnxManagerTimeout() throws Exception {
+        Random rand = new Random();
+        byte b = (byte) rand.nextInt();
+        int deadPort = PortAssignment.unique();
+        String deadAddress = new String("10.1.1." + b);
     
+        LOG.info("This is the dead address I'm trying: " + deadAddress);
+    
+        peers.put(Long.valueOf(2),
+                new QuorumServer(2,
+                        new InetSocketAddress(deadAddress, deadPort),
+                        new InetSocketAddress(deadAddress, PortAssignment.unique())));
+        tmpdir[2] = ClientBase.createTmpDir();
+        port[2] = deadPort;
+    
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 2, 2, 2);
+        QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+        QuorumCnxManager.Listener listener = cnxManager.listener;
+        if(listener != null){
+            listener.start();
+        } else {
+            LOG.error("Null listener when initializing cnx manager");
+        }
+
+        long begin = System.currentTimeMillis();
+        cnxManager.toSend(new Long(2), createMsg(ServerState.LOOKING.ordinal(), 1, -1, 1));
+        long end = System.currentTimeMillis();
+    
+        if((end - begin) > 6000) fail("Waited more than necessary");
+    
+    }
+ 
     
 }
