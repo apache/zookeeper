@@ -919,6 +919,23 @@ server.3=zoo3:2888:3888</programlisting>
               </para>
             </listitem>
           </varlistentry>
+          
+          <varlistentry>
+            <term>cnxTimeout</term>
+
+            <listitem>
+              <para>(Java system property: zookeeper.<emphasis
+              role="bold">cnxTimeout</emphasis>)</para>
+
+              <para>Sets the timeout value for opening connections for leader election notifications. 
+              Only applicable if you are using electionAlg 3. 
+              </para>
+
+              <note>
+                <para>Default value is 5 seconds.</para>
+              </note>
+            </listitem>
+          </varlistentry>
         </variablelist>
         <para></para>
       </section>
