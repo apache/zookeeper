@@ -24,6 +24,8 @@ namespace Hedwig {
 
   class ClientException : public std::exception { };
 
+  class ClientTimeoutException : public ClientException {};
+
   class ServiceDownException : public ClientException {};
   class CannotConnectException : public ClientException {};
   class UnexpectedResponseException : public ClientException {};

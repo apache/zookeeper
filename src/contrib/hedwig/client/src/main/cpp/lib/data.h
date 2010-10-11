@@ -25,6 +25,8 @@
 #include <pthread.h>
 #include <tr1/unordered_set>
 #include "util.h"
+#include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace Hedwig {
   /**
@@ -38,11 +40,13 @@ namespace Hedwig {
     
   private:
     long counter;
-    Mutex mutex;
+    boost::mutex mutex;
   };
 
   class PubSubData;
-  typedef std::tr1::shared_ptr<PubSubData> PubSubDataPtr;
+  typedef boost::shared_ptr<PubSubData> PubSubDataPtr;
+  typedef boost::shared_ptr<PubSubRequest> PubSubRequestPtr;
+  typedef boost::shared_ptr<PubSubResponse> PubSubResponsePtr;
 
   /**
      Data structure to hold information about requests and build request messages.
@@ -63,10 +67,11 @@ namespace Hedwig {
     const std::string& getSubscriberId() const;
     const std::string& getTopic() const;
     const std::string& getBody() const;
+    const MessageSeqId getMessageSeqId() const;
 
     void setShouldClaim(bool shouldClaim);
 
-    const PubSubRequest& getRequest();
+    const PubSubRequestPtr getRequest();
     void setCallback(const OperationCallbackPtr& callback);
     OperationCallbackPtr& getCallback();
     SubscribeRequest::CreateOrAttach getMode() const;
@@ -75,8 +80,8 @@ namespace Hedwig {
     bool hasTriedServer(HostAddress& h);
     void clearTriedServers();
   private:
+
     PubSubData();
-    PubSubRequest* request;
     
     OperationType type;
     long txnid;
@@ -87,9 +92,8 @@ namespace Hedwig {
     OperationCallbackPtr callback;
     SubscribeRequest::CreateOrAttach mode;
     MessageSeqId msgid;
-    std::tr1::unordered_set<HostAddress> triedservers;
+    std::tr1::unordered_set<HostAddress, HostAddressHash > triedservers;
   };
   
-
 };
 #endif

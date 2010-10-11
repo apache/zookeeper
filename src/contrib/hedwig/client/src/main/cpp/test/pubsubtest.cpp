@@ -18,6 +18,7 @@
 #include <cppunit/Test.h>
 #include <cppunit/TestSuite.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <boost/thread/mutex.hpp>
 
 #include "../lib/clientimpl.h"
 #include <hedwig/exceptions.h>
@@ -50,7 +51,7 @@ private:
   CPPUNIT_TEST_SUITE_END();
 
 public:
-  PubSubTestSuite() {
+  PubSubTestSuite() : control(NULL) {
     
   }
 
@@ -72,17 +73,29 @@ public:
   void tearDown() 
   {
     try {
-      hw1->kill();
-    
-      bk1->kill();
-      bk2->kill();
-      bk3->kill();
+      if (hw1.get()) {
+	hw1->kill();
+      }
       
-      zk->kill();
+      if (bk1.get()) {
+	bk1->kill();
+      }
+      if (bk2.get()) {
+	bk2->kill();
+      }
+      if (bk3.get()) {
+	bk3->kill();
+      }
+      
+      if (zk.get()) {
+	zk->kill();
+      }
     } catch (std::exception& e) {
       // don't allow an exception to break everything, we're going deleting the control no matter what
     }
-    delete control;
+    if (control) {
+      delete control;
+    }
   }
 
   class MyMessageHandlerCallback : public Hedwig::MessageHandlerCallback {
@@ -93,30 +106,28 @@ public:
 
     virtual void consume(const std::string& topic, const std::string& subscriberId, const Hedwig::Message& msg, Hedwig::OperationCallbackPtr& callback) {
       if (topic == this->topic && subscriberId == this->subscriberId) {
-	mutex.lock();
+	boost::lock_guard<boost::mutex> lock(mutex);
+      
 	messagesReceived++;
 	lastMessage = msg.body();
 	callback->operationComplete();
-	mutex.unlock();
       }
     }
     
     std::string getLastMessage() {
-      mutex.lock();
+      boost::lock_guard<boost::mutex> lock(mutex);
       std::string s = lastMessage;
-      mutex.unlock();
       return s;
     }
 
     int numMessagesReceived() {
-      mutex.lock();
+      boost::lock_guard<boost::mutex> lock(mutex);
       int i = messagesReceived;
-      mutex.unlock();
       return i;
     }    
     
   protected:
-    Hedwig::Mutex mutex;
+    boost::mutex mutex;
     int messagesReceived;
     std::string lastMessage;
     std::string topic;

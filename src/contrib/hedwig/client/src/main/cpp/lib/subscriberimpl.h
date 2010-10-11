@@ -25,98 +25,115 @@
 #include <tr1/memory>
 #include <deque>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/thread/shared_mutex.hpp>
+
 namespace Hedwig {
   class SubscriberWriteCallback : public OperationCallback {
   public:
-    SubscriberWriteCallback(ClientImplPtr& client, const PubSubDataPtr& data);
+    SubscriberWriteCallback(const ClientImplPtr& client, const PubSubDataPtr& data);
 
     void operationComplete();
     void operationFailed(const std::exception& exception);
   private:
-    ClientImplPtr client;
-    PubSubDataPtr data;
+    const ClientImplPtr client;
+    const PubSubDataPtr data;
   };
   
   class UnsubscribeWriteCallback : public OperationCallback {
   public:
-    UnsubscribeWriteCallback(ClientImplPtr& client, const PubSubDataPtr& data);
+    UnsubscribeWriteCallback(const ClientImplPtr& client, const PubSubDataPtr& data);
 
     void operationComplete();
     void operationFailed(const std::exception& exception);
   private:
-    ClientImplPtr client;
-    PubSubDataPtr data;
+    const ClientImplPtr client;
+    const PubSubDataPtr data;
   };
 
   class ConsumeWriteCallback : public OperationCallback {
   public:
-    ConsumeWriteCallback(const PubSubDataPtr& data);
+    ConsumeWriteCallback(const ClientImplPtr& client, const PubSubDataPtr& data);
     ~ConsumeWriteCallback();
 
     void operationComplete();
     void operationFailed(const std::exception& exception);
+    
+    static void timerComplete(const ClientImplPtr& client, const PubSubDataPtr& data, const boost::system::error_code& error);
   private:
-    PubSubDataPtr data;
+    const ClientImplPtr client;
+    const PubSubDataPtr data;
     };
 
   class SubscriberReconnectCallback : public OperationCallback {
   public: 
-    SubscriberReconnectCallback(ClientImplPtr& client, const PubSubDataPtr& origData);
+    SubscriberReconnectCallback(const ClientImplPtr& client, const PubSubDataPtr& origData);
 
     void operationComplete();
     void operationFailed(const std::exception& exception);
   private:
-    ClientImplPtr client;
-    PubSubDataPtr origData;
+    const ClientImplPtr client;
+    const PubSubDataPtr origData;
   };
 
   class SubscriberClientChannelHandler;
-  typedef std::tr1::shared_ptr<SubscriberClientChannelHandler> SubscriberClientChannelHandlerPtr;
+  typedef boost::shared_ptr<SubscriberClientChannelHandler> SubscriberClientChannelHandlerPtr;
 
   class SubscriberConsumeCallback : public OperationCallback {
   public: 
-    SubscriberConsumeCallback(ClientImplPtr& client, const std::string& topic, const std::string& subscriberid, const MessageSeqId& msgid);
+    SubscriberConsumeCallback(const ClientImplPtr& client, const SubscriberClientChannelHandlerPtr& handler, const PubSubDataPtr& data, const PubSubResponsePtr& m);
 
     void operationComplete();
     void operationFailed(const std::exception& exception);
+    static void timerComplete(const SubscriberClientChannelHandlerPtr handler, 
+			      const PubSubResponsePtr m, 
+			      const boost::system::error_code& error);
+
   private:
-    ClientImplPtr client;
-    const std::string topic;
-    const std::string subscriberid;
-    MessageSeqId msgid;
+    const ClientImplPtr client;
+    const SubscriberClientChannelHandlerPtr handler;
+    
+    const PubSubDataPtr data;
+    const PubSubResponsePtr m;
   };
 
-  class SubscriberClientChannelHandler : public HedwigClientChannelHandler {
+  class SubscriberClientChannelHandler : public HedwigClientChannelHandler, 
+					 public boost::enable_shared_from_this<SubscriberClientChannelHandler> {
   public: 
-    SubscriberClientChannelHandler(ClientImplPtr& client, SubscriberImpl& subscriber, const PubSubDataPtr& data);
+    SubscriberClientChannelHandler(const ClientImplPtr& client, SubscriberImpl& subscriber, const PubSubDataPtr& data);
     ~SubscriberClientChannelHandler();
 
-    void messageReceived(DuplexChannel* channel, const PubSubResponse& m);
-    void channelDisconnected(DuplexChannel* channel, const std::exception& e);
+    void messageReceived(const DuplexChannelPtr& channel, const PubSubResponsePtr& m);
+    void channelDisconnected(const DuplexChannelPtr& channel, const std::exception& e);
 
     void startDelivery(const MessageHandlerCallbackPtr& handler);
     void stopDelivery();
 
-    void handoverDelivery(SubscriberClientChannelHandler* newHandler);
+    void handoverDelivery(const SubscriberClientChannelHandlerPtr& newHandler);
 
     void setChannel(const DuplexChannelPtr& channel);
     DuplexChannelPtr& getChannel();
+
+    static void reconnectTimerComplete(const SubscriberClientChannelHandlerPtr handler, const DuplexChannelPtr channel, const std::exception e, 
+				       const boost::system::error_code& error);
 
     void close();
   private:
 
     SubscriberImpl& subscriber;
-#warning "put some limit on this to stop it growing forever"
-    std::deque<Message> queue;
+    std::deque<PubSubResponsePtr> queue;
+    
     MessageHandlerCallbackPtr handler;
     PubSubDataPtr origData;
     DuplexChannelPtr channel;
     bool closed;
+    bool should_wait;
   };
 
   class SubscriberImpl : public Subscriber {
   public:
-    SubscriberImpl(ClientImplPtr& client);
+    SubscriberImpl(const ClientImplPtr& client);
     ~SubscriberImpl();
 
     void subscribe(const std::string& topic, const std::string& subscriberId, const SubscribeRequest::CreateOrAttach mode);
@@ -132,16 +149,16 @@ namespace Hedwig {
 
     void closeSubscription(const std::string& topic, const std::string& subscriberId);
 
-    void messageHandler(const PubSubResponse& m, const PubSubDataPtr& txn);
+    void messageHandler(const PubSubResponsePtr& m, const PubSubDataPtr& txn);
 
     void doSubscribe(const DuplexChannelPtr& channel, const PubSubDataPtr& data, const SubscriberClientChannelHandlerPtr& handler);
     void doUnsubscribe(const DuplexChannelPtr& channel, const PubSubDataPtr& data);
 
   private:
-    ClientImplPtr client;
+    const ClientImplPtr client;
     
-    std::tr1::unordered_map<TopicSubscriber, SubscriberClientChannelHandlerPtr> topicsubscriber2handler;
-    Mutex topicsubscriber2handler_lock;	    
+    std::tr1::unordered_map<TopicSubscriber, SubscriberClientChannelHandlerPtr, TopicSubscriberHash > topicsubscriber2handler;
+    boost::shared_mutex topicsubscriber2handler_lock;	    
   };
 
 };

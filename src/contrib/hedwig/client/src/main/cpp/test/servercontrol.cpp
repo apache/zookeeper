@@ -27,10 +27,17 @@
 #include <stdlib.h>
 #include "servercontrol.h"
 
+
 #include <log4cpp/Category.hh>
+
+#include "util.h"
+
 #include <sstream>   
+#include <time.h>
 
 static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwigtest."__FILE__);
+
+extern HedwigCppTextTestProgressListener gprogress;
 
 using namespace HedwigTest;
 
@@ -86,6 +93,8 @@ ServerControl::ServerControl(int port) {
     close(socketfd);
     throw CantConnectToServerControlDaemonException();
   }
+  
+  requestResponse("TEST " + gprogress.getTestName() + "\n");
 }
 
 ServerControl::~ServerControl() {

@@ -25,7 +25,7 @@
 namespace Hedwig {
   class PublishWriteCallback : public OperationCallback {
   public:
-    PublishWriteCallback(ClientImplPtr& client, const PubSubDataPtr& data);
+    PublishWriteCallback(const ClientImplPtr& client, const PubSubDataPtr& data);
 
     void operationComplete();
     void operationFailed(const std::exception& exception);
@@ -36,12 +36,12 @@ namespace Hedwig {
 
   class PublisherImpl : public Publisher {
   public:
-    PublisherImpl(ClientImplPtr& client);
+    PublisherImpl(const ClientImplPtr& client);
 
     void publish(const std::string& topic, const std::string& message);
     void asyncPublish(const std::string& topic, const std::string& message, const OperationCallbackPtr& callback);
     
-    void messageHandler(const PubSubResponse& m, const PubSubDataPtr& txn);
+    void messageHandler(const PubSubResponsePtr& m, const PubSubDataPtr& txn);
 
     void doPublish(const DuplexChannelPtr& channel, const PubSubDataPtr& data);
 

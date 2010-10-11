@@ -25,7 +25,7 @@ static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwig."__FILE__
 
 using namespace Hedwig;
 
-PublishWriteCallback::PublishWriteCallback(ClientImplPtr& client, const PubSubDataPtr& data) : client(client), data(data) {}
+PublishWriteCallback::PublishWriteCallback(const ClientImplPtr& client, const PubSubDataPtr& data) : client(client), data(data) {}
 
 void PublishWriteCallback::operationComplete() {
   if (LOG.isDebugEnabled()) {
@@ -36,16 +36,16 @@ void PublishWriteCallback::operationComplete() {
 void PublishWriteCallback::operationFailed(const std::exception& exception) {
   LOG.errorStream() << "Error writing to publisher " << exception.what();
   
-  //remove txn from channel pending list
-  #warning "Actually do something here"
+  data->getCallback()->operationFailed(exception);
 }
 
-PublisherImpl::PublisherImpl(ClientImplPtr& client) 
+PublisherImpl::PublisherImpl(const ClientImplPtr& client) 
   : client(client) {
 }
 
 void PublisherImpl::publish(const std::string& topic, const std::string& message) {
-  SyncOperationCallback* cb = new SyncOperationCallback();
+  SyncOperationCallback* cb = new SyncOperationCallback(client->getConfiguration().getInt(Configuration::SYNC_REQUEST_TIMEOUT, 
+											  DEFAULT_SYNC_REQUEST_TIMEOUT));
   OperationCallbackPtr callback(cb);
   asyncPublish(topic, message, callback);
   cb->wait();
@@ -54,11 +54,10 @@ void PublisherImpl::publish(const std::string& topic, const std::string& message
 }
 
 void PublisherImpl::asyncPublish(const std::string& topic, const std::string& message, const OperationCallbackPtr& callback) {
-  DuplexChannelPtr channel = client->getChannelForTopic(topic);
-
   // use release after callback to release the channel after the callback is called
   PubSubDataPtr data = PubSubData::forPublishRequest(client->counter().next(), topic, message, callback);
   
+  DuplexChannelPtr channel = client->getChannel(topic);
   doPublish(channel, data);
 }
 
@@ -66,12 +65,11 @@ void PublisherImpl::doPublish(const DuplexChannelPtr& channel, const PubSubDataP
   channel->storeTransaction(data);
   
   OperationCallbackPtr writecb(new PublishWriteCallback(client, data));
-  LOG.debugStream() << "dopublish";
   channel->writeRequest(data->getRequest(), writecb);
 }
 
-void PublisherImpl::messageHandler(const PubSubResponse& m, const PubSubDataPtr& txn) {
-  switch (m.statuscode()) {
+void PublisherImpl::messageHandler(const PubSubResponsePtr& m, const PubSubDataPtr& txn) {
+  switch (m->statuscode()) {
   case SUCCESS:
     txn->getCallback()->operationComplete();
     break;
@@ -80,7 +78,7 @@ void PublisherImpl::messageHandler(const PubSubResponse& m, const PubSubDataPtr&
     txn->getCallback()->operationFailed(ServiceDownException());
     break;
   default:
-    LOG.errorStream() << "Unexpected response " << m.statuscode() << " for " << txn->getTxnId();
+    LOG.errorStream() << "Unexpected response " << m->statuscode() << " for " << txn->getTxnId();
     txn->getCallback()->operationFailed(UnexpectedResponseException());
     break;
   }
