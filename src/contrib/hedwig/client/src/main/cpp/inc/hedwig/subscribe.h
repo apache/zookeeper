@@ -44,6 +44,8 @@ namespace Hedwig {
     virtual void stopDelivery(const std::string& topic, const std::string& subscriberId) = 0;
 
     virtual void closeSubscription(const std::string& topic, const std::string& subscriberId) = 0;
+
+    virtual ~Subscriber() {}
   };
 };
 

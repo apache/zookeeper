@@ -28,7 +28,6 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 import org.apache.log4j.Logger;
 
-
 import org.jboss.netty.channel.Channel;  
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelEvent;
@@ -74,7 +73,12 @@ public class ServerControlDaemon {
 	    HashMap<String, ServerControl.TestServer> map = serverMap.get(c);
 	    ServerControl.TestServer t = map.get(name);
 	    map.remove(name);
-	    t.kill();
+	    try {
+		t.kill();
+	    } catch (Exception e) {
+		e.printStackTrace();
+		// do nothing, should be killed, we won't use it again anyhow
+	    }
 	}
 
 	private ServerControl.TestServer lookupServer(Channel c, String name) {
@@ -86,10 +90,12 @@ public class ServerControlDaemon {
 	    HashMap<String, ServerControl.TestServer> map = serverMap.get(c);
 	    serverMap.remove(map);
 	    
-	    for (ServerControl.TestServer t : map.values()) {
-		t.kill();
+	    if (map != null) {
+		for (ServerControl.TestServer t : map.values()) {
+		    t.kill();
+		}
+		map.clear();
 	    }
-	    map.clear();
 	}
 
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
@@ -116,11 +122,16 @@ public class ServerControlDaemon {
 		    ctx.getChannel().write("OK " + t.getAddress() + "\n");
 		} else if (args[0].equals("KILL")) {
 		    killServerForChannel(ctx.getChannel(), args[1]);
+		    
 		    ctx.getChannel().write("OK Killed " + args[1] + "\n");
+		} else if (args[0].equals("TEST")) {
+		    LOG.info("\n******\n\n" + args[1] + "\n\n******");
+		    ctx.getChannel().write("OK Test Noted\n");
 		} else {
 		    ctx.getChannel().write("ERR Bad Command\n");
 		}
 	    } catch (Exception ex) {
+		ex.printStackTrace();
 		ctx.getChannel().write("ERR " + ex.toString() + "\n");
 	    }
 	}

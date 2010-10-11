@@ -60,63 +60,27 @@ namespace Hedwig {
     struct sockaddr_in socket_addr;
   };
 
-  class DuplexChannel;  
-  
-  class Mutex {
-  public:
-    Mutex();
-    ~Mutex();
-    
-    void lock();
-    void unlock();
-  private:
-    pthread_mutex_t mutex;
-  };
-
-  class WaitConditionBase {
-  public:
-    WaitConditionBase();
-    virtual ~WaitConditionBase();
-    
-    void wait(); 
-    void lock();
-    void signalAndUnlock();
-
-    virtual bool isTrue() = 0;
-  private:
-
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;    
-  };
-
-};
-
-namespace std 
-{
-  namespace tr1 
-  {
   /**
      Hash a host address. Takes the least significant 16-bits of the address and the 16-bits of the
      port and packs them into one 32-bit number. While collisons are theoretically very possible, they
      shouldn't happen as the hedwig servers should be in the same subnet.
   */
-  template <> struct hash<Hedwig::HostAddress> : public unary_function<Hedwig::HostAddress, size_t> {
-    size_t operator()(const Hedwig::HostAddress& address) const;
+  struct HostAddressHash : public std::unary_function<Hedwig::HostAddress, size_t> {
+    size_t operator()(const Hedwig::HostAddress& address) const {
+        return (address.ip() << 16) & (address.port());
+    }
   };
+
 
   /**
      Hash a channel pointer, just returns the pointer.
   */
-  template <> struct hash<Hedwig::DuplexChannel*> : public unary_function<Hedwig::DuplexChannel*, size_t> {
-    size_t operator()(const Hedwig::DuplexChannel* channel) const;
+  struct TopicSubscriberHash : public std::unary_function<Hedwig::TopicSubscriber, size_t> {
+    size_t operator()(const Hedwig::TopicSubscriber& topicsub) const {
+      std::string fullstr = topicsub.first + topicsub.second;
+      return std::tr1::hash<std::string>()(fullstr);
+    }
   };
+};
 
-  /**
-     Hash a channel pointer, just returns the pointer.
-  */
-  template <> struct hash<Hedwig::TopicSubscriber> : public unary_function<Hedwig::TopicSubscriber, size_t> {
-    size_t operator()(const Hedwig::TopicSubscriber& topicsub) const;
-  };
-  }
-}
 #endif

@@ -54,12 +54,10 @@ private:
   CPPUNIT_TEST_SUITE_END();
 
 public:
-  PublishTestSuite() {
-
+  PublishTestSuite() : control(NULL) {
   }
 
   ~PublishTestSuite() {
-
   }
 
   void setUp()
@@ -77,15 +75,29 @@ public:
   
   void tearDown() 
   {
-    hw2->kill();
-    hw1->kill();
+    if (hw2.get()) {
+      hw2->kill();
+    }
+    if (hw1.get()) {
+      hw1->kill();
+    }
     
-    bk1->kill();
-    bk2->kill();
-    bk3->kill();
+    if (bk1.get()) {
+      bk1->kill();
+    }
+    if (bk2.get()) {
+      bk2->kill();
+    }
+    if (bk3.get()) {
+      bk3->kill();
+    }
     
-    zk->kill();
-    delete control;
+    if (zk.get()) {
+      zk->kill();
+    }
+    if (control) {
+      delete control;
+    }
   }
 
   void testSyncPublish() {
@@ -111,6 +123,9 @@ public:
     pub.asyncPublish("testTopic", "async test message", testcb);
     
     cond->wait();
+
+    CPPUNIT_ASSERT(cond->wasSuccess());
+
     delete cond;
     delete client;
     delete conf;
@@ -134,9 +149,12 @@ public:
     pub.asyncPublish("testTopic", "async test message #3", testcb3);
     
     cond3->wait();
+    CPPUNIT_ASSERT(cond3->wasSuccess());
     cond2->wait();
+    CPPUNIT_ASSERT(cond2->wasSuccess());
     cond1->wait();
-
+    CPPUNIT_ASSERT(cond1->wasSuccess());
+    
     delete cond3; delete cond2; delete cond1;
     delete client;
     delete conf;

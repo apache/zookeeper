@@ -53,6 +53,8 @@ namespace Hedwig {
 	@param callback Callback which will be used to report success or failure. Success is only reported once the server replies with an ACK response to the publication.
     */
     virtual void asyncPublish(const std::string& topic, const std::string& message, const OperationCallbackPtr& callback) = 0;
+    
+    virtual ~Publisher() {}
   };
 };
 

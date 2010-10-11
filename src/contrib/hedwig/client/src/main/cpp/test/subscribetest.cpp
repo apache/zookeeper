@@ -55,7 +55,7 @@ private:
   CPPUNIT_TEST_SUITE_END();
 
 public:
-  SubscribeTestSuite() {
+  SubscribeTestSuite() : control(NULL) {
     
   }
 
@@ -78,17 +78,29 @@ public:
   void tearDown() 
   {
     try {
-      hw1->kill();
+      if (hw1.get()) {
+	hw1->kill();
+      }
     
-      bk1->kill();
-      bk2->kill();
-      bk3->kill();
+      if (bk1.get()) {
+	bk1->kill();
+      }
+      if (bk2.get()) {
+	bk2->kill();
+      }
+      if (bk3.get()) {
+	bk3->kill();
+      }
       
-      zk->kill();
+      if (zk.get()) {
+	zk->kill();
+      }
     } catch (std::exception& e) {
       // don't allow an exception to break everything, we're going deleting the control no matter what
     }
-    delete control;
+    if (control) {
+      delete control;
+    }
   }
 
   void testSyncSubscribe() {
@@ -132,6 +144,7 @@ public:
     sub.asyncSubscribe("testTopic", "mySubscriberId-3", Hedwig::SubscribeRequest::CREATE_OR_ATTACH, testcb1);
     
     cond1->wait();
+    CPPUNIT_ASSERT(cond1->wasSuccess());
   }
   
   void testAsyncSubcribeAndUnsubscribe() {
@@ -153,9 +166,11 @@ public:
 
     sub.asyncSubscribe("testTopic", "mySubscriberId-4", Hedwig::SubscribeRequest::CREATE_OR_ATTACH, testcb1);
     cond1->wait();
+    CPPUNIT_ASSERT(cond1->wasSuccess());
     
     sub.asyncUnsubscribe("testTopic", "mySubscriberId-4", testcb2);
     cond2->wait();
+    CPPUNIT_ASSERT(cond2->wasSuccess());
   }
 
   void testAsyncSubcribeAndSyncUnsubscribe() {
@@ -174,6 +189,7 @@ public:
     
     sub.asyncSubscribe("testTopic", "mySubscriberId-5", Hedwig::SubscribeRequest::CREATE_OR_ATTACH, testcb1);
     cond1->wait();
+    CPPUNIT_ASSERT(cond1->wasSuccess());
 
     sub.unsubscribe("testTopic", "mySubscriberId-5");
   }
