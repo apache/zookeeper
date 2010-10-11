@@ -110,6 +110,8 @@ BUGFIXES:
   ZOOKEEPER-822. Leader election taking a long time to complete
   (Vishal K via phunt)
 
+  ZOOKEEPER-866. Hedwig Server stays in "disconnected" state when connection to ZK dies but gets reconnected (erwin tam via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

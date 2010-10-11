@@ -92,14 +92,19 @@ public class ZkTopicManager extends AbstractTopicManager implements TopicManager
                     if (event.getState().equals(Watcher.Event.KeeperState.Disconnected)) {
                         logger.warn("ZK client has been disconnected to the ZK server!");
                         isSuspended = true;
+                    } else if (event.getState().equals(Watcher.Event.KeeperState.SyncConnected)) {
+			if (isSuspended) {
+	                    logger.info("ZK client has been reconnected to the ZK server!");
+			}
+			isSuspended = false;
                     }
-                } else if (event.getState().equals(Watcher.Event.KeeperState.Expired)) {
+		}
+		// Check for expired connection.
+                if (event.getState().equals(Watcher.Event.KeeperState.Expired)) {
                     logger.error("ZK client connection to the ZK server has expired!");
                     System.exit(1);
-                } else if (event.getState().equals(Watcher.Event.KeeperState.SyncConnected)) {
-                    isSuspended = false;
-                }
-            }
+                }             
+	    }
         });
         final SynchronousQueue<Either<Void, PubSubException>> queue = new SynchronousQueue<Either<Void, PubSubException>>();
 
