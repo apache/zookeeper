@@ -181,7 +181,7 @@ public class AsyncHammerTest extends ZKTestCase
         LOG.info("Stopping hammers");
         for (int i = 0; i < hammers.length; i++) {
             hammers[i].interrupt();
-            verifyThreadTerminated(hammers[i], 60000);
+            verifyThreadTerminated(hammers[i], i, 60000);
             Assert.assertFalse(hammers[i].failed);
         }
 
@@ -210,7 +210,7 @@ public class AsyncHammerTest extends ZKTestCase
         bang = false;
         for (int i = 0; i < hammers.length; i++) {
             hammers[i].interrupt();
-            verifyThreadTerminated(hammers[i], 60000);
+            verifyThreadTerminated(hammers[i], i, 60000);
         }
         // before restart
         qb.verifyRootOfAllServersMatch(qb.hostPort);

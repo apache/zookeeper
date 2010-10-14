@@ -25,9 +25,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -55,7 +52,6 @@ import org.apache.zookeeper.ZooKeeper.WatchRegistration;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
-import org.apache.zookeeper.proto.ConnectResponse;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.GetACLResponse;
@@ -85,8 +81,6 @@ public class ClientCnxn {
      * option allows the client to turn off this behavior by setting
      * the environment variable "zookeeper.disableAutoWatchReset" to "true" */
     private static boolean disableAutoWatchReset;
-
-    public static final int packetLen;
     static {
         // this var should not be public, but otw there is no easy way
         // to test
@@ -96,7 +90,6 @@ public class ClientCnxn {
             LOG.debug("zookeeper.disableAutoWatchReset is "
                     + disableAutoWatchReset);
         }
-        packetLen = Integer.getInteger("jute.maxbuffer", 4096 * 1024);
     }
 
     private final ArrayList<InetSocketAddress> serverAddrs =
@@ -154,15 +147,13 @@ public class ClientCnxn {
 
     final EventThread eventThread;
 
-    final Selector selector = Selector.open();
-
     /**
      * Set to true when close is called. Latches the connection such that we
      * don't attempt to re-connect to the server if in the middle of closing the
      * connection (client sends session disconnect to server as part of close
      * operation)
      */
-    volatile boolean closing = false;
+    private volatile boolean closing = false;
 
     public long getSessionId() {
         return sessionId;
@@ -180,55 +171,21 @@ public class ClientCnxn {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        SocketAddress local = getLocalSocketAddress();
-        SocketAddress remote = getRemoteSocketAddress();
+        SocketAddress local = sendThread.getSocket().getLocalSocketAddress();
+        SocketAddress remote = sendThread.getSocket().getRemoteSocketAddress();
         sb
             .append("sessionid:0x").append(Long.toHexString(getSessionId()))
             .append(" local:").append(local)
             .append(" remoteserver:").append(remote)
             .append(" lastZxid:").append(lastZxid)
             .append(" xid:").append(xid)
-            .append(" sent:").append(sendThread.sentCount)
-            .append(" recv:").append(sendThread.recvCount)
+            .append(" sent:").append(sendThread.getSocket().getSentCount())
+            .append(" recv:").append(sendThread.getSocket().getRecvCount())
             .append(" queuedpkts:").append(outgoingQueue.size())
             .append(" pendingresp:").append(pendingQueue.size())
             .append(" queuedevents:").append(eventThread.waitingEvents.size());
 
         return sb.toString();
-    }
-    
-    /**
-     * Returns the address to which the socket is connected.
-     * @return ip address of the remote side of the connection or null if
-     *         not connected
-     */
-    SocketAddress getRemoteSocketAddress() {
-        // a lot could go wrong here, so rather than put in a bunch of code
-        // to check for nulls all down the chain let's do it the simple
-        // yet bulletproof way
-        try {
-            return ((SocketChannel)sendThread.sockKey.channel())
-                .socket().getRemoteSocketAddress();
-        } catch (NullPointerException e) {
-            return null;
-        }
-    }
-
-    /** 
-     * Returns the local address to which the socket is bound.
-     * @return ip address of the remote side of the connection or null if
-     *         not connected
-     */
-    SocketAddress getLocalSocketAddress() {
-        // a lot could go wrong here, so rather than put in a bunch of code
-        // to check for nulls all down the chain let's do it the simple
-        // yet bulletproof way
-        try {
-            return ((SocketChannel)sendThread.sockKey.channel())
-                .socket().getLocalSocketAddress();
-        } catch (NullPointerException e) {
-            return null;
-        }
     }
 
     /**
@@ -322,10 +279,9 @@ public class ClientCnxn {
      * @throws IOException
      */
     public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper,
-            ClientWatchManager watcher)
-        throws IOException
-    {
-        this(hosts, sessionTimeout, zooKeeper, watcher, 0, new byte[16]);
+            ClientWatchManager watcher, ClientCnxnSocket socket)
+            throws IOException {
+        this(hosts, sessionTimeout, zooKeeper, watcher, socket, 0, new byte[16]);
     }
 
     /**
@@ -345,9 +301,8 @@ public class ClientCnxn {
      * @throws IOException
      */
     public ClientCnxn(String hosts, int sessionTimeout, ZooKeeper zooKeeper,
-            ClientWatchManager watcher, long sessionId, byte[] sessionPasswd)
-        throws IOException
-    {
+            ClientWatchManager watcher, ClientCnxnSocket socket,
+            long sessionId, byte[] sessionPasswd) throws IOException {
         this.zooKeeper = zooKeeper;
         this.watcher = watcher;
         this.sessionId = sessionId;
@@ -389,7 +344,7 @@ public class ClientCnxn {
         connectTimeout = sessionTimeout / hostsList.length;
         readTimeout = sessionTimeout * 2 / 3;
         Collections.shuffle(serverAddrs);
-        sendThread = new SendThread();
+        sendThread = new SendThread(socket);
         eventThread = new EventThread();
     }
 
@@ -412,9 +367,10 @@ public class ClientCnxn {
         eventThread.start();
     }
 
-    Object eventOfDeath = new Object();
+    private Object eventOfDeath = new Object();
 
-    final static UncaughtExceptionHandler uncaughtExceptionHandler = new UncaughtExceptionHandler() {
+    private final static UncaughtExceptionHandler uncaughtExceptionHandler = new UncaughtExceptionHandler() {
+        @Override
         public void uncaughtException(Thread t, Throwable e) {
             LOG.error("from " + t.getName(), e);
         }
@@ -618,7 +574,7 @@ public class ClientCnxn {
         if (p.replyHeader == null) {
             return;
         }
-        switch(zooKeeper.state) {
+        switch(state) {
         case AUTH_FAILED:
             p.replyHeader.setErr(KeeperException.Code.AUTHFAILED.intValue());
             break;
@@ -631,15 +587,16 @@ public class ClientCnxn {
         finishPacket(p);
     }
 
-    volatile long lastZxid;
+    private volatile long lastZxid;
 
-    private static class EndOfStreamException extends IOException {
+    static class EndOfStreamException extends IOException {
         private static final long serialVersionUID = -5438877188796231422L;
 
         public EndOfStreamException(String msg) {
             super(msg);
         }
-        
+
+        @Override
         public String toString() {
             return "EndOfStreamException: " + getMessage();
         }
@@ -652,7 +609,7 @@ public class ClientCnxn {
             super(msg);
         }
     }
-    
+
     private static class SessionExpiredException extends IOException {
         private static final long serialVersionUID = -1388816932076193249L;
 
@@ -660,51 +617,275 @@ public class ClientCnxn {
             super(msg);
         }
     }
-    
+
+    public static final int packetLen =
+        Integer.getInteger("jute.maxbuffer", 4096 * 1024);
+
     /**
      * This class services the outgoing request queue and generates the heart
      * beats. It also spawns the ReadThread.
      */
     class SendThread extends Thread {
-        SelectionKey sockKey;
-
-        final ByteBuffer lenBuffer = ByteBuffer.allocateDirect(4);
-
-        ByteBuffer incomingBuffer = lenBuffer;
-
-        boolean initialized;
-
         private long lastPingSentNs;
+        private final ClientCnxnSocket socket;
+        private int lastConnectIndex = -1;
+        private int currentConnectIndex;
+        private Random r = new Random(System.nanoTime());
 
-        long sentCount = 0;
-        long recvCount = 0;
-
-        void readLength() throws IOException {
-            int len = incomingBuffer.getInt();
-            if (len < 0 || len >= packetLen) {
-                throw new IOException("Packet len" + len + " is out of range!");
-            }
-            incomingBuffer = ByteBuffer.allocate(len);
+        SendThread(ClientCnxnSocket socket) {
+            super(currentThread().getName() + "-SendThread()");
+            state = States.CONNECTING;
+            this.socket = socket;
+            socket.introduce(this, outgoingQueue, sessionId);
+            setUncaughtExceptionHandler(uncaughtExceptionHandler);
+            setDaemon(true);
         }
 
-        void readConnectResult() throws IOException {
-            if (LOG.isTraceEnabled()) {
-                StringBuffer buf = new StringBuffer("0x[");
-                for (byte b : incomingBuffer.array()) {
-                    buf.append(Integer.toHexString(b) + ",");
-                }
-                buf.append("]");
-                LOG.trace("readConnectRestult " + incomingBuffer.remaining() 
-                        + " " + buf.toString());
+        @Override
+        public void run() {
+            socket.updateNow();
+            socket.updateLastSendAndHeard();
+
+            while (state.isAlive()) {
+                try {
+                    if (!socket.isConnected()) {
+                        // don't re-establish connection if we are closing
+                        if (closing) {
+                            break;
+                        }
+                        startConnect();
+                        socket.updateLastSendAndHeard();
+                    }
+
+                    int to = readTimeout - socket.getIdleRecv();
+                    if (state != States.CONNECTED) {
+                        to = connectTimeout - socket.getIdleRecv();
+                    }
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("TO=" + to);
+                    }
+                    if (to <= 0) {
+                        throw new SessionTimeoutException(
+                                "Client session timed out, have not heard from server in "
+                                        + socket.getIdleRecv() + "ms"
+                                        + " for sessionid 0x"
+                                        + Long.toHexString(sessionId));
+                    }
+                    if (state == States.CONNECTED) {
+                        int timeToNextPing = readTimeout / 2
+                                - socket.getIdleSend();
+                        if (LOG.isTraceEnabled()) {
+                            LOG.trace("timeToNextPing=" + timeToNextPing);
+                        }
+                        if (timeToNextPing <= 0) {
+                            if (LOG.isTraceEnabled()) {
+                                LOG.trace("timeToNextPing=" + timeToNextPing);
+                            }
+                            sendPing();
+                            socket.updateLastSend();
+                            socket.enableWrite();
+                        } else {
+                            if (timeToNextPing < to) {
+                                to = timeToNextPing;
+                            }
+                        }
+                    }
+
+                    socket.doTransport(to, pendingQueue);
+                } catch (Exception e) {
+                    if (closing) {
+                        if (LOG.isDebugEnabled()) {
+                            // closing so this is expected
+                            LOG.debug("An exception was thrown while closing send thread for session 0x"
+                                    + Long.toHexString(getSessionId())
+                                    + " : " + e.getMessage());
+                        }
+                        break;
+                    } else {
+                        // this is ugly, you have a better way speak up
+                        if (e instanceof SessionExpiredException) {
+                            LOG.info(e.getMessage() + ", closing socket connection");
+                        } else if (e instanceof SessionTimeoutException) {
+                            LOG.info(e.getMessage() + RETRY_CONN_MSG);
+                        } else if (e instanceof EndOfStreamException) {
+                            LOG.info(e.getMessage() + RETRY_CONN_MSG);
+                        } else {
+                            LOG.warn("Session 0x"
+                                    + Long.toHexString(getSessionId())
+                                    + " for server "
+                                    // TODO: this is different in Netty
+                                            // and NIO
+                                            // Netty:
+                                            // + getRemoteSocketAddress()
+                                            // NIO:
+                                            // +
+                                            // ((SocketChannel)sockKey.channel())
+                                            // .socket().getRemoteSocketAddress()
+                                    + socket.getRemoteSocketAddress()
+                                    + ", unexpected error"
+                                    + RETRY_CONN_MSG,
+                                    e);
+                        }
+                        socket.cleanup();
+                        if (state.isAlive()) {
+                            eventThread.queueEvent(new WatchedEvent(
+                                    Event.EventType.None,
+                                    Event.KeeperState.Disconnected,
+                                    null));
+                        }
+                        socket.updateNow();
+                        socket.updateLastSendAndHeard();
+                    }
+                } // catch
+            } // while
+            socket.cleanup();
+            socket.close();
+            if (state.isAlive()) {
+                eventThread.queueEvent(new WatchedEvent(Event.EventType.None,
+                        Event.KeeperState.Disconnected, null));
             }
-            ByteBufferInputStream bbis = new ByteBufferInputStream(
-                    incomingBuffer);
-            BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
-            ConnectResponse conRsp = new ConnectResponse();
-            conRsp.deserialize(bbia, "connect");
-            negotiatedSessionTimeout = conRsp.getTimeOut();
+            ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+                    "SendThread exitedloop.");
+        }
+
+        // TODO: can not name this method getState since Thread.getState()
+        // already exists
+        // It would be cleaner to make class SendThread an implementation of
+        // Runnable
+        /**
+         * Used by ClientCnxnSocket
+         * 
+         * @return
+         */
+        ZooKeeper.States getZkState() {
+            return state;
+        }
+
+        ClientCnxnSocket getSocket() {
+            return socket;
+        }
+
+        void primeConnection() throws IOException {
+            LOG.info("Socket connection established to "
+                    + socket.getRemoteSocketAddress() 
+                    + ", initiating session");
+            lastConnectIndex = currentConnectIndex;
+            ConnectRequest conReq = new ConnectRequest(0, lastZxid,
+                    sessionTimeout, sessionId, sessionPasswd);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+            boa.writeInt(-1, "len");
+            conReq.serialize(boa, "connect");
+            baos.close();
+            ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+            bb.putInt(bb.capacity() - 4);
+            bb.rewind();
+            synchronized (outgoingQueue) {
+                // We add backwards since we are pushing into the front
+                // Only send if there's a pending watch
+                // TODO: here we have the only remaining use of zooKeeper in
+                // this class. It's to be eliminated!
+                if (!disableAutoWatchReset &&
+                        (!zooKeeper.getDataWatches().isEmpty()
+                         || !zooKeeper.getExistWatches().isEmpty()
+                         || !zooKeeper.getChildWatches().isEmpty()))
+                {
+                    SetWatches sw = new SetWatches(lastZxid,
+                            zooKeeper.getDataWatches(),
+                            zooKeeper.getExistWatches(),
+                            zooKeeper.getChildWatches());
+                    RequestHeader h = new RequestHeader();
+                    h.setType(ZooDefs.OpCode.setWatches);
+                    h.setXid(-8);
+                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null,
+                                null);
+                    outgoingQueue.addFirst(packet);
+                }
+
+                synchronized (authInfo) {
+                    for (AuthData id : authInfo) {
+                        outgoingQueue.addFirst(new Packet(new RequestHeader(-4,
+                                OpCode.auth), null, new AuthPacket(0,
+                                id.scheme, id.data), null, null, null));
+                    }
+                }
+
+                outgoingQueue.addFirst((new Packet(null, null, null, null, bb,
+                        null)));
+            }
+            synchronized(socket) {
+                socket.enableReadWriteOnly();
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Session establishment request sent on "
+                        + socket.getRemoteSocketAddress());
+            }
+        }
+
+        private void sendPing() {
+            lastPingSentNs = System.nanoTime();
+            RequestHeader h = new RequestHeader(-2, OpCode.ping);
+            queuePacket(h, null, null, null, null, null, null, null, null);
+        }
+
+        private void startConnect() throws IOException {
+            if (lastConnectIndex == -1) {
+                // We don't want to delay the first try at a connect, so we
+                // start with -1 the first time around
+                lastConnectIndex = 0;
+            } else {
+                try {
+                    Thread.sleep(r.nextInt(1000));
+                } catch (InterruptedException e1) {
+                    LOG.warn("Unexpected exception", e1);
+                }
+                if (nextAddrToTry == lastConnectIndex) {
+                    try {
+                        // Try not to spin too fast!
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        LOG.warn("Unexpected exception", e);
+                    }
+                }
+            }
+            state = States.CONNECTING;
+            currentConnectIndex = nextAddrToTry;
+            InetSocketAddress addr = serverAddrs.get(nextAddrToTry);
+            nextAddrToTry++;
+            if (nextAddrToTry == serverAddrs.size()) {
+                nextAddrToTry = 0;
+            }
+            LOG.info("Opening socket connection to server " + addr);
+            
+            setName(getName().replaceAll("\\(.*\\)",
+                    "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
+
+            socket.connect(addr);
+        }
+
+        private static final String RETRY_CONN_MSG =
+            ", closing socket connection and attempting reconnect";
+
+        void cleanup() {
+            synchronized (pendingQueue) {
+                for (Packet p : pendingQueue) {
+                    conLossPacket(p);
+                }
+                pendingQueue.clear();
+            }
+            synchronized (outgoingQueue) {
+                for (Packet p : outgoingQueue) {
+                    conLossPacket(p);
+                }
+                outgoingQueue.clear();
+            }
+        }
+
+        void onConnected(int _negotiatedSessionTimeout, long _sessionId,
+                byte[] _sessionPasswd) throws IOException {
+            negotiatedSessionTimeout = _negotiatedSessionTimeout;
             if (negotiatedSessionTimeout <= 0) {
-                zooKeeper.state = States.CLOSED;
+                state = States.CLOSED;
 
                 eventThread.queueEvent(new WatchedEvent(
                         Watcher.Event.EventType.None,
@@ -716,12 +897,11 @@ public class ClientCnxn {
             }
             readTimeout = negotiatedSessionTimeout * 2 / 3;
             connectTimeout = negotiatedSessionTimeout / serverAddrs.size();
-            sessionId = conRsp.getSessionId();
-            sessionPasswd = conRsp.getPasswd();
-            zooKeeper.state = States.CONNECTED;
+            sessionId = _sessionId;
+            sessionPasswd = _sessionPasswd;
+            state = States.CONNECTED;
             LOG.info("Session establishment complete on server "
-                    + ((SocketChannel)sockKey.channel())
-                        .socket().getRemoteSocketAddress()
+                    + socket.getRemoteSocketAddress() 
                     + ", sessionid = 0x"
                     + Long.toHexString(sessionId)
                     + ", negotiated timeout = " + negotiatedSessionTimeout);
@@ -729,7 +909,7 @@ public class ClientCnxn {
                     Watcher.Event.KeeperState.SyncConnected, null));
         }
 
-        void readResponse() throws IOException {
+        void readResponse(ByteBuffer incomingBuffer) throws IOException {
             ByteBufferInputStream bbis = new ByteBufferInputStream(
                     incomingBuffer);
             BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
@@ -750,7 +930,7 @@ public class ClientCnxn {
             if (replyHdr.getXid() == -4) {
                 // -4 is the xid for AuthPacket               
                 if(replyHdr.getErr() == KeeperException.Code.AUTHFAILED.intValue()) {
-                    zooKeeper.state = States.AUTH_FAILED;                    
+                    state = States.AUTH_FAILED;                    
                     eventThread.queueEvent( new WatchedEvent(Watcher.Event.EventType.None, 
                             Watcher.Event.KeeperState.AuthFailed, null) );            		            		
                 }
@@ -787,12 +967,12 @@ public class ClientCnxn {
                 eventThread.queueEvent( we );
                 return;
             }
-            if (pendingQueue.size() == 0) {
-                throw new IOException("Nothing in the queue, but got "
-                        + replyHdr.getXid());
-            }
-            Packet packet = null;
+            Packet packet;
             synchronized (pendingQueue) {
+                if (pendingQueue.size() == 0) {
+                    throw new IOException("Nothing in the queue, but got "
+                            + replyHdr.getXid());
+                }
                 packet = pendingQueue.remove();
             }
             /*
@@ -803,9 +983,13 @@ public class ClientCnxn {
                 if (packet.header.getXid() != replyHdr.getXid()) {
                     packet.replyHeader.setErr(
                             KeeperException.Code.CONNECTIONLOSS.intValue());
-                    throw new IOException("Xid out of order. Got "
-                            + replyHdr.getXid() + " expected "
-                            + packet.header.getXid());
+                    throw new IOException("Xid out of order. Got Xid "
+                            + replyHdr.getXid() + " with err " +
+                            + replyHdr.getErr() +
+                            " expected Xid "
+                            + packet.header.getXid()
+                            + " for a packet with details: "
+                            + packet );
                 }
 
                 packet.replyHeader.setXid(replyHdr.getXid());
@@ -827,426 +1011,17 @@ public class ClientCnxn {
             }
         }
 
-        /**
-         * @return true if a packet was received
-         * @throws InterruptedException
-         * @throws IOException
-         */
-        boolean doIO() throws InterruptedException, IOException {
-            boolean packetReceived = false;
-            SocketChannel sock = (SocketChannel) sockKey.channel();
-            if (sock == null) {
-                throw new IOException("Socket is null!");
+        void close() {
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("close called sessionId:0x"
+                        + Long.toHexString(sessionId));
             }
-            if (sockKey.isReadable()) {
-                int rc = sock.read(incomingBuffer);
-                if (rc < 0) {
-                    throw new EndOfStreamException(
-                            "Unable to read additional data from server sessionid 0x"
-                            + Long.toHexString(sessionId)
-                            + ", likely server has closed socket");
-                }
-                if (!incomingBuffer.hasRemaining()) {
-                    incomingBuffer.flip();
-                    if (incomingBuffer == lenBuffer) {
-                        recvCount++;
-                        readLength();
-                    } else if (!initialized) {
-                        readConnectResult();
-                        enableRead();
-                        if (!outgoingQueue.isEmpty()) {
-                            enableWrite();
-                        }
-                        lenBuffer.clear();
-                        incomingBuffer = lenBuffer;
-                        packetReceived = true;
-                        initialized = true;
-                    } else {
-                        readResponse();
-                        lenBuffer.clear();
-                        incomingBuffer = lenBuffer;
-                        packetReceived = true;
-                    }
-                }
-            }
-            if (sockKey.isWritable()) {
-                synchronized (outgoingQueue) {
-                    if (!outgoingQueue.isEmpty()) {
-                        ByteBuffer pbb = outgoingQueue.getFirst().bb;
-                        sock.write(pbb);
-                        if (!pbb.hasRemaining()) {
-                            sentCount++;
-                            Packet p = outgoingQueue.removeFirst();
-                            if (p.header != null
-                                    && p.header.getType() != OpCode.ping
-                                    && p.header.getType() != OpCode.auth) {
-                                pendingQueue.add(p);
-                            }
-                        }
-                    }
-                }
-            }
-            if (outgoingQueue.isEmpty()) {
-                disableWrite();
-            } else {
-                enableWrite();
-            }
-            return packetReceived;
+            state = States.CLOSED;
+            socket.wakeupCnxn();
         }
 
-        synchronized private void enableWrite() {
-            int i = sockKey.interestOps();
-            if ((i & SelectionKey.OP_WRITE) == 0) {
-                sockKey.interestOps(i | SelectionKey.OP_WRITE);
-            }
-        }
-
-        synchronized private void disableWrite() {
-            int i = sockKey.interestOps();
-            if ((i & SelectionKey.OP_WRITE) != 0) {
-                sockKey.interestOps(i & (~SelectionKey.OP_WRITE));
-            }
-        }
-
-        synchronized private void enableRead() {
-            int i = sockKey.interestOps();
-            if ((i & SelectionKey.OP_READ) == 0) {
-                sockKey.interestOps(i | SelectionKey.OP_READ);
-            }
-        }
-
-        synchronized private void disableRead() {
-            int i = sockKey.interestOps();
-            if ((i & SelectionKey.OP_READ) != 0) {
-                sockKey.interestOps(i & (~SelectionKey.OP_READ));
-            }
-        }
-
-        SendThread() {
-            super(makeThreadName("-SendThread()"));
-            zooKeeper.state = States.CONNECTING;
-            setUncaughtExceptionHandler(uncaughtExceptionHandler);
-            setDaemon(true);
-        }
-
-        private void primeConnection(SelectionKey k) throws IOException {
-            LOG.info("Socket connection established to "
-                    + ((SocketChannel)sockKey.channel())
-                        .socket().getRemoteSocketAddress()
-                    + ", initiating session");
-            lastConnectIndex = currentConnectIndex;
-            ConnectRequest conReq = new ConnectRequest(0, lastZxid,
-                    sessionTimeout, sessionId, sessionPasswd);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-            boa.writeInt(-1, "len");
-            conReq.serialize(boa, "connect");
-            baos.close();
-            ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-            bb.putInt(bb.capacity() - 4);
-            bb.rewind();
-            synchronized (outgoingQueue) {
-                // We add backwards since we are pushing into the front
-                // Only send if there's a pending watch
-                if (!disableAutoWatchReset &&
-                        (!zooKeeper.getDataWatches().isEmpty()
-                         || !zooKeeper.getExistWatches().isEmpty()
-                         || !zooKeeper.getChildWatches().isEmpty()))
-                {
-                    SetWatches sw = new SetWatches(lastZxid,
-                            zooKeeper.getDataWatches(),
-                            zooKeeper.getExistWatches(),
-                            zooKeeper.getChildWatches());
-                    RequestHeader h = new RequestHeader();
-                    h.setType(ZooDefs.OpCode.setWatches);
-                    h.setXid(-8);
-                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null,
-                                null);
-                    outgoingQueue.addFirst(packet);
-                }
-
-                for (AuthData id : authInfo) {
-                    outgoingQueue.addFirst(new Packet(new RequestHeader(-4,
-                            OpCode.auth), null, new AuthPacket(0, id.scheme,
-                            id.data), null, null, null));
-                }
-                outgoingQueue.addFirst((new Packet(null, null, null, null, bb,
-                        null)));
-            }
-            synchronized (this) {
-                k.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Session establishment request sent on "
-                        + ((SocketChannel)sockKey.channel())
-                            .socket().getRemoteSocketAddress());
-            }
-        }
-
-        private void sendPing() {
-            lastPingSentNs = System.nanoTime();
-            RequestHeader h = new RequestHeader(-2, OpCode.ping);
-            queuePacket(h, null, null, null, null, null, null, null, null);
-        }
-
-        int lastConnectIndex = -1;
-
-        int currentConnectIndex;
-
-        Random r = new Random(System.nanoTime());
-
-        private void startConnect() throws IOException {
-            if (lastConnectIndex == -1) {
-                // We don't want to delay the first try at a connect, so we
-                // start with -1 the first time around
-                lastConnectIndex = 0;
-            } else {
-                try {
-                    Thread.sleep(r.nextInt(1000));
-                } catch (InterruptedException e1) {
-                    LOG.warn("Unexpected exception", e1);
-                }
-                if (nextAddrToTry == lastConnectIndex) {
-                    try {
-                        // Try not to spin too fast!
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        LOG.warn("Unexpected exception", e);
-                    }
-                }
-            }
-            zooKeeper.state = States.CONNECTING;
-            currentConnectIndex = nextAddrToTry;
-            InetSocketAddress addr = serverAddrs.get(nextAddrToTry);
-            nextAddrToTry++;
-            if (nextAddrToTry == serverAddrs.size()) {
-                nextAddrToTry = 0;
-            }
-            LOG.info("Opening socket connection to server " + addr);
-            SocketChannel sock;
-            sock = SocketChannel.open();
-            sock.configureBlocking(false);
-            sock.socket().setSoLinger(false, -1);
-            sock.socket().setTcpNoDelay(true);
-            setName(getName().replaceAll("\\(.*\\)",
-                    "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
-            sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-            if (sock.connect(addr)) {
-                primeConnection(sockKey);
-            }
-            initialized = false;
-
-            /*
-             * Reset incomingBuffer
-             */
-            lenBuffer.clear();
-            incomingBuffer = lenBuffer;
-        }
-
-        private static final String RETRY_CONN_MSG =
-            ", closing socket connection and attempting reconnect";
-        
-        @Override
-        public void run() {
-            long now = System.currentTimeMillis();
-            long lastHeard = now;
-            long lastSend = now;
-            while (zooKeeper.state.isAlive()) {
-                try {
-                    if (sockKey == null) {
-                        // don't re-establish connection if we are closing
-                        if (closing) {
-                            break;
-                        }
-                        startConnect();
-                        lastSend = now;
-                        lastHeard = now;
-                    }
-                    int idleRecv = (int) (now - lastHeard);
-                    int idleSend = (int) (now - lastSend);
-                    int to = readTimeout - idleRecv;
-                    if (zooKeeper.state != States.CONNECTED) {
-                        to = connectTimeout - idleRecv;
-                    }
-                    if (to <= 0) {
-                        throw new SessionTimeoutException(
-                                "Client session timed out, have not heard from server in "
-                                + idleRecv + "ms"
-                                + " for sessionid 0x"
-                                + Long.toHexString(sessionId));
-                    }
-                    if (zooKeeper.state == States.CONNECTED) {
-                        int timeToNextPing = readTimeout/2 - idleSend;
-                        if (timeToNextPing <= 0) {
-                            sendPing();
-                            lastSend = now;
-                            enableWrite();
-                        } else {
-                            if (timeToNextPing < to) {
-                                to = timeToNextPing;
-                            }
-                        }
-                    }
-
-                    selector.select(to);
-                    Set<SelectionKey> selected;
-                    synchronized (this) {
-                        selected = selector.selectedKeys();
-                    }
-                    // Everything below and until we get back to the select is
-                    // non blocking, so time is effectively a constant. That is
-                    // Why we just have to do this once, here
-                    now = System.currentTimeMillis();
-                    for (SelectionKey k : selected) {
-                        SocketChannel sc = ((SocketChannel) k.channel());
-                        if ((k.readyOps() & SelectionKey.OP_CONNECT) != 0) {
-                            if (sc.finishConnect()) {
-                                lastHeard = now;
-                                lastSend = now;
-                                primeConnection(k);
-                            }
-                        } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
-                            if (outgoingQueue.size() > 0) {
-                                // We have something to send so it's the same
-                                // as if we do the send now.
-                                lastSend = now;
-                            }
-                            if (doIO()) {
-                                lastHeard = now;
-                            }
-                        }
-                    }
-                    if (zooKeeper.state == States.CONNECTED) {
-                        if (outgoingQueue.size() > 0) {
-                            enableWrite();
-                        } else {
-                            disableWrite();
-                        }
-                    }
-                    selected.clear();
-                } catch (Exception e) {
-                    if (closing) {
-                        if (LOG.isDebugEnabled()) {
-                            // closing so this is expected
-                            LOG.debug("An exception was thrown while closing send thread for session 0x"
-                                    + Long.toHexString(getSessionId())
-                                    + " : " + e.getMessage());
-                        }
-                        break;
-                    } else {
-                        // this is ugly, you have a better way speak up
-                        if (e instanceof SessionExpiredException) {
-                            LOG.info(e.getMessage() + ", closing socket connection");
-                        } else if (e instanceof SessionTimeoutException) {
-                            LOG.info(e.getMessage() + RETRY_CONN_MSG);
-                        } else if (e instanceof EndOfStreamException) {
-                            LOG.info(e.getMessage() + RETRY_CONN_MSG);
-                        } else {
-                            LOG.warn("Session 0x"
-                                    + Long.toHexString(getSessionId())
-                                    + " for server "
-                                    + ((SocketChannel)sockKey.channel())
-                                        .socket().getRemoteSocketAddress()
-                                    + ", unexpected error"
-                                    + RETRY_CONN_MSG,
-                                    e);
-                        }
-                        cleanup();
-                        if (zooKeeper.state.isAlive()) {
-                            eventThread.queueEvent(new WatchedEvent(
-                                    Event.EventType.None,
-                                    Event.KeeperState.Disconnected,
-                                    null));
-                        }
-
-                        now = System.currentTimeMillis();
-                        lastHeard = now;
-                        lastSend = now;
-                    }
-                }
-            }
-            cleanup();
-            try {
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("Doing client selector close");
-                }
-                selector.close();
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("Closed client selector");
-                }
-            } catch (IOException e) {
-                LOG.warn("Ignoring exception during selector close", e);
-            }
-            if (zooKeeper.state.isAlive()) {
-                eventThread.queueEvent(new WatchedEvent(
-                        Event.EventType.None,
-                        Event.KeeperState.Disconnected,
-                        null));
-            }
-            ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                                     "SendThread exitedloop.");
-        }
-
-        private void cleanup() {
-            if (sockKey != null) {
-                SocketChannel sock = (SocketChannel) sockKey.channel();
-                sockKey.cancel();
-                try {
-                    sock.socket().shutdownInput();
-                } catch (IOException e) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Ignoring exception during shutdown input", e);
-                    }
-                }
-                try {
-                    sock.socket().shutdownOutput();
-                } catch (IOException e) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Ignoring exception during shutdown output", e);
-                    }
-                }
-                try {
-                    sock.socket().close();
-                } catch (IOException e) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Ignoring exception during socket close", e);
-                    }
-                }
-                try {
-                    sock.close();
-                } catch (IOException e) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Ignoring exception during channel close", e);
-                    }
-                }
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("SendThread interrupted during sleep, ignoring");
-                }
-            }
-            sockKey = null;
-            synchronized (pendingQueue) {
-                for (Packet p : pendingQueue) {
-                    conLossPacket(p);
-                }
-                pendingQueue.clear();
-            }
-            synchronized (outgoingQueue) {
-                for (Packet p : outgoingQueue) {
-                    conLossPacket(p);
-                }
-                outgoingQueue.clear();
-            }
-        }
-
-        public void close() {
-            zooKeeper.state = States.CLOSED;
-            synchronized (this) {
-                selector.wakeup();
-            }
+        void testableCloseSocket() throws IOException {
+            socket.testableCloseSocket();
         }
     }
 
@@ -1292,6 +1067,8 @@ public class ClientCnxn {
 
     private int xid = 1;
 
+    private volatile States state;
+
     synchronized private int getXid() {
         return xid++;
     }
@@ -1325,7 +1102,7 @@ public class ClientCnxn {
             packet.ctx = ctx;
             packet.clientPath = clientPath;
             packet.serverPath = serverPath;
-            if (!zooKeeper.state.isAlive() || closing) {
+            if (!state.isAlive() || closing) {
                 conLossPacket(packet);
             } else {
                 // If the client is asking to close the session then
@@ -1336,19 +1113,23 @@ public class ClientCnxn {
                 outgoingQueue.add(packet);
             }
         }
-        synchronized (sendThread) {
-            selector.wakeup();
-        }
+        sendThread.getSocket().wakeupCnxn();
         return packet;
     }
 
     public void addAuthInfo(String scheme, byte auth[]) {
-        if (!zooKeeper.state.isAlive()) {
+        if (!state.isAlive()) {
             return;
         }
-        authInfo.add(new AuthData(scheme, auth));
+        synchronized (authInfo) {
+            authInfo.add(new AuthData(scheme, auth));
+        }
         queuePacket(new RequestHeader(-4, OpCode.auth), null,
                 new AuthPacket(0, scheme, auth), null, null, null, null,
                 null, null);
+    }
+
+    States getState() {
+        return state;
     }
 }

@@ -1050,13 +1050,18 @@ server.3=zoo3:2888:3888</programlisting>
         <para>Prior to version 3.4 ZooKeeper has always used NIO
             directly, however in versions 3.4 and later Netty is
             supported as an option to NIO (replaces). NIO continues to
-            be the default, however Netty based communication can be
-            used in place of NIO by setting the environment variable
+            be the default for both server and client, however Netty
+            based communication can be used in place of NIO by the
+            setting of environment variables.  Set
             "zookeeper.serverCnxnFactory" to
-            "org.apache.zookeeper.server.NettyServerCnxnFactory". You
-            have the option of setting this on either the client(s) or
-            server(s), typically you would want to set this on both,
-            however that is at your discretion.
+            "org.apache.zookeeper.server.NettyServerCnxnFactory" to
+            enable the server to use Netty.  Set
+            "zookeeper.clientCnxnFactory" to
+            "org.apache.zookeeper.NettyClientCnxnFactory" to enable
+            the client to use Netty. You have the option to set this
+            on either the client(s) or server(s), typically you would
+            want to set this on both, however that is at your
+            discretion.
         </para>
         <para>
           TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.

@@ -210,9 +210,10 @@ public class ClientHammerTest extends ClientBase {
             LOG.info("Hammer threads completed creation operations");
         }
 
-        for (HammerThread h : threads) {
+        for (int i=0;i<threads.length;++i) {
+            HammerThread h = threads[i];
             final int safetyFactor = 3;
-            verifyThreadTerminated(h,
+            verifyThreadTerminated(h, i,
                     threads.length * childCount
                     * HAMMERTHREAD_LATENCY * safetyFactor);
         }

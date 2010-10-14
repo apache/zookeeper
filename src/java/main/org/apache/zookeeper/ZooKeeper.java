@@ -105,6 +105,7 @@ import org.apache.zookeeper.server.DataTree;
  */
 public class ZooKeeper {
     private static final Logger LOG;
+    public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
 
     static {
         LOG = Logger.getLogger(ZooKeeper.class);
@@ -154,6 +155,7 @@ public class ZooKeeper {
         /* (non-Javadoc)
          * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState, Event.EventType, java.lang.String)
          */
+        @Override
         public Set<Watcher> materialize(Watcher.Event.KeeperState state,
                                         Watcher.Event.EventType type,
                                         String clientPath)
@@ -322,8 +324,6 @@ public class ZooKeeper {
         }
     }
 
-    volatile States state;
-
     protected final ClientCnxn cnxn;
 
     /**
@@ -376,7 +376,8 @@ public class ZooKeeper {
                 + " sessionTimeout=" + sessionTimeout + " watcher=" + watcher);
 
         watchManager.defaultWatcher = watcher;
-        cnxn = new ClientCnxn(connectString, sessionTimeout, this, watchManager);
+        cnxn = new ClientCnxn(connectString, sessionTimeout, this,
+                watchManager, getClientCnxnSocket());
         cnxn.start();
     }
 
@@ -443,8 +444,8 @@ public class ZooKeeper {
                 + (sessionPasswd == null ? "<null>" : "<hidden>"));
 
         watchManager.defaultWatcher = watcher;
-        cnxn = new ClientCnxn(connectString, sessionTimeout, this, watchManager,
-                sessionId, sessionPasswd);
+        cnxn = new ClientCnxn(connectString, sessionTimeout, this,
+                watchManager, getClientCnxnSocket(), sessionId, sessionPasswd);
         cnxn.start();
     }
 
@@ -518,7 +519,7 @@ public class ZooKeeper {
      * @throws InterruptedException
      */
     public synchronized void close() throws InterruptedException {
-        if (!state.isAlive()) {
+        if (!cnxn.getState().isAlive()) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Close called on already closed client");
             }
@@ -1557,7 +1558,7 @@ public class ZooKeeper {
     }
 
     public States getState() {
-        return state;
+        return cnxn.getState();
     }
 
     /**
@@ -1617,7 +1618,7 @@ public class ZooKeeper {
      *         not connected
      */
     protected SocketAddress testableRemoteSocketAddress() {
-        return cnxn.getRemoteSocketAddress();
+        return cnxn.sendThread.getSocket().getRemoteSocketAddress();
     }
 
     /** 
@@ -1630,6 +1631,23 @@ public class ZooKeeper {
      *         not connected
      */
     protected SocketAddress testableLocalSocketAddress() {
-        return cnxn.getLocalSocketAddress();
+        return cnxn.sendThread.getSocket().getLocalSocketAddress();
+    }
+
+    private static ClientCnxnSocket getClientCnxnSocket() throws IOException {
+        String clientCnxnSocketName = System
+                .getProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        if (clientCnxnSocketName == null) {
+            clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
+        }
+        try {
+            return (ClientCnxnSocket) Class.forName(clientCnxnSocketName)
+                    .newInstance();
+        } catch (Exception e) {
+            IOException ioe = new IOException("Couldn't instantiate "
+                    + clientCnxnSocketName);
+            ioe.initCause(e);
+            throw ioe;
+        }
     }
 }
