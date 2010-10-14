@@ -43,6 +43,7 @@ import org.apache.log4j.Priority;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.ThreadUtil;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -298,15 +299,27 @@ public abstract class ClientBase extends ZKTestCase {
         return false;
     }
 
-    static void verifyThreadTerminated(Thread thread, long millis)
+    static void verifyThreadTerminated(Thread thread, int index, long millis)
         throws InterruptedException
     {
+        long start = java.lang.System.currentTimeMillis();
         thread.join(millis);
+        long end = java.lang.System.currentTimeMillis();
         if (thread.isAlive()) {
-            LOG.error("Thread " + thread.getName() + " : "
-                    + Arrays.toString(thread.getStackTrace()));
-            Assert.assertFalse("thread " + thread.getName()
-                    + " still alive after join", true);
+            List<Thread> otherThreads = ThreadUtil.getThreadsFiltered(String.valueOf(index), thread);
+            StringBuilder err = new StringBuilder();
+            err.append("Thread that did not join:\n")
+               .append(ThreadUtil.formatThread(thread))
+               .append("other Threads:\n");
+            for(Thread otherThread : otherThreads){
+                err.append(ThreadUtil.formatThread(otherThread));
+            }
+            
+            LOG.error(err);
+            Assert.fail("thread " + thread.getName()
+                    + " still alive after waiting "
+                    + (end - start)
+                    +" milliseconds for join");
         }
     }
 
