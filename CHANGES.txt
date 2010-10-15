@@ -112,6 +112,8 @@ BUGFIXES:
 
   ZOOKEEPER-866. Hedwig Server stays in "disconnected" state when connection to ZK dies but gets reconnected (erwin tam via breed)
 
+  ZOOKEEPER-881. ZooKeeperServer.loadData loads database twice (jared cantwell via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
