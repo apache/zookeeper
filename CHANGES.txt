@@ -38,6 +38,9 @@ BUGFIXES:
   ZOOKEEPER-881. ZooKeeperServer.loadData loads database twice
   (Jared Cantwell via fpj)
 
+  ZOOKEEPER-855. clientPortBindAddress should be clientPortAddress
+  (Jared Cantwell via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)

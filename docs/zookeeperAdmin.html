@@ -1105,7 +1105,7 @@ server.3=zoo3:2888:3888</pre>
 
            
 <dt>
-<term>clientPortBindAddress</term>
+<term>clientPortAddress</term>
 </dt>
 <dd>
 <p>
@@ -1280,10 +1280,29 @@ server.3=zoo3:2888:3888</pre>
               
 </p>
 </dd>
+          
+          
+<dt>
+<term>cnxTimeout</term>
+</dt>
+<dd>
+<p>(Java system property: zookeeper.<strong>cnxTimeout</strong>)</p>
+<p>Sets the timeout value for opening connections for leader election notifications. 
+              Only applicable if you are using electionAlg 3.
+              </p>
+<div class="note">
+<div class="label">Note</div>
+<div class="content">
+                
+<p>Default value is 5 seconds.</p>
+              
+</div>
+</div>
+</dd>
         
 </dl>
 <p></p>
-<a name="N103EC"></a><a name="sc_authOptions"></a>
+<a name="N103FD"></a><a name="sc_authOptions"></a>
 <h4>Authentication &amp; Authorization Options</h4>
 <p>The options in this section allow control over
         authentication/authorization performed by the service.</p>
@@ -1317,7 +1336,7 @@ server.3=zoo3:2888:3888</pre>
 </dd>
         
 </dl>
-<a name="N1040F"></a><a name="Unsafe+Options"></a>
+<a name="N10420"></a><a name="Unsafe+Options"></a>
 <h4>Unsafe Options</h4>
 <p>The following options can be useful, but be careful when you use
         them. The risk of each is explained along with the explanation of what
@@ -1362,7 +1381,7 @@ server.3=zoo3:2888:3888</pre>
 </dd>
         
 </dl>
-<a name="N10441"></a><a name="sc_zkCommands"></a>
+<a name="N10452"></a><a name="sc_zkCommands"></a>
 <h3 class="h4">ZooKeeper Commands: The Four Letter Words</h3>
 <p>ZooKeeper responds to a small set of commands. Each command is
       composed of four letters. You issue the commands to ZooKeeper via telnet
@@ -1507,7 +1526,7 @@ server.3=zoo3:2888:3888</pre>
 <pre class="code">$ echo ruok | nc 127.0.0.1 5111
 imok
 </pre>
-<a name="N104BE"></a><a name="sc_dataFileManagement"></a>
+<a name="N104CF"></a><a name="sc_dataFileManagement"></a>
 <h3 class="h4">Data File Management</h3>
 <p>ZooKeeper stores its data in a data directory and its transaction
       log in a transaction log directory. By default these two directories are
@@ -1515,7 +1534,7 @@ imok
       transaction log files in a separate directory than the data files.
       Throughput increases and latency decreases when transaction logs reside
       on a dedicated log devices.</p>
-<a name="N104C7"></a><a name="The+Data+Directory"></a>
+<a name="N104D8"></a><a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
 <p>This directory has two files in it:</p>
 <ul>
@@ -1561,14 +1580,14 @@ imok
         idempotent nature of its updates. By replaying the transaction log
         against fuzzy snapshots ZooKeeper gets the state of the system at the
         end of the log.</p>
-<a name="N10503"></a><a name="The+Log+Directory"></a>
+<a name="N10514"></a><a name="The+Log+Directory"></a>
 <h4>The Log Directory</h4>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
         log file is started each time a snapshot is begun. The log file's
         suffix is the first zxid written to that log.</p>
-<a name="N1050D"></a><a name="sc_filemanagement"></a>
+<a name="N1051E"></a><a name="sc_filemanagement"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
         standalone ZooKeeper servers and different configurations of
@@ -1588,7 +1607,7 @@ imok
         this document for more details on setting a retention policy
         and maintenance of ZooKeeper storage.
         </p>
-<a name="N10522"></a><a name="sc_commonProblems"></a>
+<a name="N10533"></a><a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
       ZooKeeper correctly:</p>
@@ -1642,7 +1661,7 @@ imok
 </dd>
       
 </dl>
-<a name="N10546"></a><a name="sc_bestPractices"></a>
+<a name="N10557"></a><a name="sc_bestPractices"></a>
 <h3 class="h4">Best Practices</h3>
 <p>For best results, take note of the following list of good
       Zookeeper practices:</p>

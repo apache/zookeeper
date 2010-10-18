@@ -737,7 +737,7 @@ server.3=zoo3:2888:3888</programlisting>
            </varlistentry>
 
            <varlistentry>
-             <term>clientPortBindAddress</term>
+             <term>clientPortAddress</term>
 
              <listitem>
                <para><emphasis role="bold">New in 3.3.0:</emphasis> the
