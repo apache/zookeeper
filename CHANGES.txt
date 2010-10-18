@@ -114,6 +114,9 @@ BUGFIXES:
 
   ZOOKEEPER-881. ZooKeeperServer.loadData loads database twice (jared cantwell via breed)
 
+  ZOOKEEPER-855. clientPortBindAddress should be clientPortAddress
+  (Jared Cantwell via fpj)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
