@@ -236,7 +236,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *  Restore sessions and data
      */
     public void loadData() throws IOException, InterruptedException {
-        zkDb.loadDataBase();
         setZxid(zkDb.loadDataBase());
         // Clean up dead sessions
         LinkedList<Long> deadSessions = new LinkedList<Long>();
