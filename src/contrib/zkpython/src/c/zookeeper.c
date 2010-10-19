@@ -436,7 +436,7 @@ void watcher_dispatch(zhandle_t *zzh, int type, int state,
   if (PyObject_CallObject((PyObject*)callback, arglist) == NULL) {
     PyErr_Print();
   }
-  if (pyw->permanent == 0) {
+  if (pyw->permanent == 0 && (type != ZOO_SESSION_EVENT || is_unrecoverable(zzh))) {
     free_pywatcher(pyw);
   }
   PyGILState_Release(gstate);
@@ -1395,7 +1395,7 @@ PyObject *pyis_unrecoverable(PyObject *self, PyObject *args)
     return NULL;
   CHECK_ZHANDLE(zkhid);
   int ret = is_unrecoverable(zhandles[zkhid]);
-  if (ret > 0)
+  if (ret == ZINVALIDSTATE)
     Py_RETURN_TRUE;
   Py_RETURN_FALSE;
 }
