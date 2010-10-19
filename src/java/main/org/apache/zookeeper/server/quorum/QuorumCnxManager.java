@@ -671,28 +671,33 @@ public class QuorumCnxManager {
                     }
                     msgLength.position(0);
                     int length = msgLength.getInt();
+                    if(length <= 0) {
+                        throw new IOException("Invalid packet length:" + length);
+                    }
                     /**
                      * Allocates a new ByteBuffer to receive the message
                      */
-                    if (length > 0) {
-                        if (length > PACKETMAXSIZE) {
-                            throw new IOException("Invalid packet of length " + length);
-                        }
-                        byte[] msgArray = new byte[length];
-                        ByteBuffer message = ByteBuffer.wrap(msgArray);
-                        int numbytes = 0;
-                        while (message.hasRemaining()) {
-                            numbytes += channel.read(message);
-                        }
-                        message.position(0);
-                        synchronized (recvQueue) {
-                            recvQueue
-                                    .put(new Message(message.duplicate(), sid));
-                        }
-                        msgLength.position(0);
+                    if (length > PACKETMAXSIZE) {
+                        throw new IOException("Invalid packet of length " + length);
                     }
+                    byte[] msgArray = new byte[length];
+                    ByteBuffer message = ByteBuffer.wrap(msgArray);
+                    int numbytes = 0;
+                    int temp_numbytes = 0;
+                    while (message.hasRemaining()) {
+                        temp_numbytes = channel.read(message); 
+                        if(temp_numbytes < 0) {
+                            throw new IOException("Channel eof before end");
+                        }
+                        numbytes += temp_numbytes;
+                    }
+                    message.position(0);
+                    synchronized (recvQueue) {
+                        recvQueue
+                        .put(new Message(message.duplicate(), sid));
+                    }
+                    msgLength.position(0);
                 }
-
             } catch (Exception e) {
                 LOG.warn("Connection broken for id " + sid + ", my id = " + 
                         self.getId() + ", error = " + e);
