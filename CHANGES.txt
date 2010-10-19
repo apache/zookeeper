@@ -117,6 +117,8 @@ BUGFIXES:
   ZOOKEEPER-855. clientPortBindAddress should be clientPortAddress
   (Jared Cantwell via fpj)
 
+  ZOOKEEPER-888. c-client / zkpython: Double free corruption on node watcher (Austin Shoemaker via henryr)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
