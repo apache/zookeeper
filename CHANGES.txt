@@ -128,6 +128,9 @@ BUGFIXES:
   ZOOKEEPER-804. c unit tests failing due to "assertion cptr failed"
   (second try - Jared Cantwell via phunt)
 
+  ZOOKEEPER-820. update c unit tests to ensure "zombie" java server
+  processes don't cause failure (Michi Mutsuzaki via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

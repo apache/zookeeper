@@ -16,6 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This is the port where zookeeper server runs on.
+ZOOPORT=22181
+
 if [ "x$1" == "x" ]
 then
     echo "USAGE: $0 startClean|start|stop hostPorts"
@@ -60,6 +63,18 @@ $KILL -9 $pid
 rm -f "${base_dir}/build/tmp/zk.pid"
 fi
 
+# [ZOOKEEPER-820] If lsof command is present, look for a process listening
+# on ZOOPORT and kill it. 
+which lsof &> /dev/null
+if [ $? -eq 0  ]
+then
+    pid=`lsof -i :$ZOOPORT | grep LISTEN | awk '{print $2}'`
+    if [ -n "$pid" ]
+    then
+        $KILL -9 $pid
+    fi
+fi
+
 if [ "x${base_dir}" == "x" ]
 then
 zk_base="../../"
@@ -92,12 +107,12 @@ start|startClean)
     if [ "x${base_dir}" == "x" ]
         then
         mkdir -p /tmp/zkdata
-        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain 22181 /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
+        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
         pid=$!
         echo -n $! > /tmp/zk.pid
         else
         mkdir -p "${base_dir}/build/tmp/zkdata"
-        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain 22181 "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
+        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
         pid=$!
         echo -n $pid > "${base_dir}/build/tmp/zk.pid"
     fi
@@ -105,14 +120,15 @@ start|startClean)
     # wait max 120 seconds for server to be ready to server clients
     # this handles testing on slow hosts
     success=false
-    for i in {1..40}
+    for i in {1..120}
     do
         if ps -p $pid > /dev/null
         then
-            if java -cp "$CLASSPATH" org.apache.zookeeper.ZooKeeperMain -server localhost:22181 ls / > /dev/null 2>&1
+            java -cp "$CLASSPATH" org.apache.zookeeper.ZooKeeperMain -server localhost:$ZOOPORT ls / > /dev/null 2>&1
+            if [ $? -ne 0  ]
             then
                 # server not up yet - wait
-                sleep 5
+                sleep 1
             else
                 # server is up and serving client connections
                 success=true
