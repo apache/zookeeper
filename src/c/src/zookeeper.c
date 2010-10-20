@@ -1954,7 +1954,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                     destroy_completion_entry(cptr);
                     cptr = NULL;
                 }
-                return ZINVALIDSTATE;
+                return api_epilog(zh,ZINVALIDSTATE);
             }
             assert(cptr);
             /* The requests are going to come back in order */

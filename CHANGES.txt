@@ -44,6 +44,9 @@ BUGFIXES:
   ZOOKEEPER-893. ZooKeeper high cpu usage when invalid requests
   (Thijs Terlouw via phunt)
 
+  ZOOKEEPER-804. c unit tests failing due to "assertion cptr failed"
+  (second try - Jared Cantwell via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)
