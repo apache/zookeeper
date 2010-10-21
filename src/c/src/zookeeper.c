@@ -2932,6 +2932,12 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
 
+    // [ZOOKEEPER-800] zoo_add_auth should return ZINVALIDSTATE if
+    // the connection is closed. 
+    if (zoo_state(zh) == 0) {
+        return ZINVALIDSTATE;
+    }
+
     if(cert!=NULL && certLen!=0){
         auth.buff=calloc(1,certLen);
         if(auth.buff==0) {
