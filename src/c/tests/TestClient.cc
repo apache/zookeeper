@@ -591,6 +591,15 @@ public:
 
         rc = zoo_set_acl(zk, "/", -1, &ZOO_OPEN_ACL_UNSAFE);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+
+        // [ZOOKEEPER-800] zoo_add_auth should return ZINVALIDSTATE if
+        // the connection is closed. 
+        zhandle_t *zk2 = zookeeper_init(hostPorts, NULL, 10000, 0, NULL, 0);
+        sleep(1);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, zookeeper_close(zk2));
+        CPPUNIT_ASSERT_EQUAL(0, zoo_state(zk2)); // 0 ==> ZOO_CLOSED_STATE
+        rc = zoo_add_auth(zk2, "digest", "pat:passwd", 10, voidCompletion, (void*)ZOK);
+        CPPUNIT_ASSERT_EQUAL((int) ZINVALIDSTATE, rc);
     }
 
     void testGetChildren2() {
