@@ -131,6 +131,9 @@ BUGFIXES:
   ZOOKEEPER-820. update c unit tests to ensure "zombie" java server
   processes don't cause failure (Michi Mutsuzaki via phunt)
 
+  ZOOKEEPER-794. Callbacks are not invoked when the client is closed
+  (Alexis Midon via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
