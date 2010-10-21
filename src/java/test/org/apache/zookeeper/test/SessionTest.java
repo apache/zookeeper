@@ -29,6 +29,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -211,6 +212,25 @@ public class SessionTest extends ZKTestCase {
         LOG.info("before close zk with session id 0x"
                 + Long.toHexString(zk.getSessionId()) + "!");
         zk.close();
+        try {
+            zk.getData("/e", false, stat);
+            Assert.fail("Should have received a SessionExpiredException");
+        } catch(KeeperException.SessionExpiredException e) {}
+        
+        AsyncCallback.DataCallback cb = new AsyncCallback.DataCallback() {
+            String status = "not done";
+            public void processResult(int rc, String p, Object c, byte[] b, Stat s) {
+                synchronized(this) { status = KeeperException.Code.get(rc).toString(); this.notify(); }
+            }
+           public String toString() { return status; }
+        };
+        zk.getData("/e", false, cb, null);
+        synchronized(cb) {
+            if (cb.toString().equals("not done")) {
+                cb.wait(1000);
+            }
+        }
+        Assert.assertEquals(KeeperException.Code.SESSIONEXPIRED.toString(), cb.toString());        
     }
 
     private List<Thread> findThreads(String name) {
