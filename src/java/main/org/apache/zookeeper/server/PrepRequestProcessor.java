@@ -167,6 +167,11 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         if (acl == null || acl.size() == 0) {
             return;
         }
+        for (Id authId : ids) {
+            if (authId.getScheme().equals("super")) {
+                return;
+            }
+        }
         for (ACL a : acl) {
             Id id = a.getId();
             if ((a.getPerms() & perm) != 0) {
@@ -177,10 +182,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 AuthenticationProvider ap = ProviderRegistry.getProvider(id
                         .getScheme());
                 if (ap != null) {
-                    for (Id authId : ids) {
-                        if (authId.getScheme().equals("super")) {
-                            return;
-                        }
+                    for (Id authId : ids) {                        
                         if (authId.getScheme().equals(id.getScheme())
                                 && ap.matches(authId.getId(), id.getId())) {
                             return;
