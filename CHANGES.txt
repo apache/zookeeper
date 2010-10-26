@@ -137,6 +137,9 @@ BUGFIXES:
   ZOOKEEPER-800. zoo_add_auth returns ZOK if zookeeper handle is in
   ZOO_CLOSED_STATE (michi mutsuzaki via mahadev konar)
 
+  ZOOKEEPER-904. super digest is not actually acting as a full superuser
+  (Camille Fournier via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
