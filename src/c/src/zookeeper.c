@@ -2290,7 +2290,11 @@ int zookeeper_close(zhandle_t *zh)
 
     zh->close_requested=1;
     if (inc_ref_counter(zh,0)!=0) {
-        cleanup_bufs(zh, 1, ZCLOSING);
+	/* Signal any syncronous completions before joining the threads */
+        enter_critical(zh);
+        free_completions(zh,1,ZCLOSING);
+        leave_critical(zh);
+
         adaptor_finish(zh);
         return ZOK;
     }
