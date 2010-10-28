@@ -59,6 +59,8 @@ BUGFIXES:
   ZOOKEEPER-904. super digest is not actually acting as a full superuser
   (Camille Fournier via mahadev)
 
+  ZOOKEEPER-897. C Client seg faults during close (jared cantwell via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)
