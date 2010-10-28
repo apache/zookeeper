@@ -140,6 +140,8 @@ BUGFIXES:
   ZOOKEEPER-904. super digest is not actually acting as a full superuser
   (Camille Fournier via mahadev)
 
+  ZOOKEEPER-897. C Client seg faults during close (jared cantwell via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
