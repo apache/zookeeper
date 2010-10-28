@@ -2227,14 +2227,15 @@ static int add_completion(zhandle_t *zh, int xid, int completion_type,
     lock_completion_list(&zh->sent_requests);
     if (zh->close_requested != 1) {
         queue_completion_nolock(&zh->sent_requests, c, add_to_front);
+        if (dc == SYNCHRONOUS_MARKER) {
+            zh->outstanding_sync++;
+        }
         rc = ZOK;
     } else {
+        free(c);
         rc = ZINVALIDSTATE;
     }
     unlock_completion_list(&zh->sent_requests);
-    if (dc == SYNCHRONOUS_MARKER) {
-        zh->outstanding_sync++;
-    }
     return rc;
 }
 

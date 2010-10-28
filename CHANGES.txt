@@ -61,6 +61,9 @@ BUGFIXES:
 
   ZOOKEEPER-897. C Client seg faults during close (jared cantwell via mahadev)
 
+  ZOOKEEPER-898. C Client might not cleanup correctly during close 
+  (jared cantwell via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)
