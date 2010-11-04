@@ -56,6 +56,8 @@ public class ServerConfiguration extends AbstractConfiguration {
     protected final static String RETENTION_SECS = "retention_secs";
     protected final static String INTER_REGION_SSL_ENABLED = "inter_region_ssl_enabled";
     protected final static String MESSAGES_CONSUMED_THREAD_RUN_INTERVAL = "messages_consumed_thread_run_interval";
+    protected final static String BK_ENSEMBLE_SIZE = "bk_ensemble_size";
+    protected final static String BK_QUORUM_SIZE = "bk_quorum_size";
 
     // these are the derived attributes
     protected ByteString myRegionByteString = null;
@@ -244,6 +246,20 @@ public class ServerConfiguration extends AbstractConfiguration {
         return conf.getInt(MESSAGES_CONSUMED_THREAD_RUN_INTERVAL, 60000);
     }
 
+    // This parameter is used when Bookkeeper is the persistence store
+    // and indicates what the ensemble size is (i.e. how many bookie
+    // servers to stripe the ledger entries across).
+    public int getBkEnsembleSize() {
+        return conf.getInt(BK_ENSEMBLE_SIZE, 3);
+    }
+
+    // This parameter is used when Bookkeeper is the persistence store
+    // and indicates what the quorum size is (i.e. how many redundant
+    // copies of each ledger entry is written).
+    public int getBkQuorumSize() {
+        return conf.getInt(BK_QUORUM_SIZE, 2);
+    }
+
     /*
      * Is this a valid configuration that we can run with? This code might grow
      * over time.
@@ -261,6 +277,11 @@ public class ServerConfiguration extends AbstractConfiguration {
                 if (hub.getSSLSocketAddress() == null)
                     throw new ConfigurationException("Region defined does not have required SSL port: " + hubString);
             }
+        }
+        // Validate that the Bookkeeper ensemble size >= quorum size.
+        if (getBkEnsembleSize() < getBkQuorumSize()) {
+            throw new ConfigurationException("BK ensemble size (" + getBkEnsembleSize()
+                    + ") is less than the quorum size (" + getBkQuorumSize() + ")");
         }
 
         // add other checks here

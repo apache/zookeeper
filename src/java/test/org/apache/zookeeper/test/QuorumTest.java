@@ -186,7 +186,6 @@ public class QuorumTest extends QuorumBase {
      * @throws KeeperException
      */
     @Test
-    @Ignore
     public void testSessionMoved() throws Exception {
         String hostPorts[] = qb.hostPort.split(",");
         DisconnectableZooKeeper zk = new DisconnectableZooKeeper(hostPorts[0],
@@ -206,6 +205,20 @@ public class QuorumTest extends QuorumBase {
                     zk.getSessionId(),
                     zk.getSessionPasswd());
             zknew.setData("/", new byte[1], -1);
+            final int result[] = new int[1];
+            result[0] = Integer.MAX_VALUE;
+            zknew.sync("/", new AsyncCallback.VoidCallback() {
+                    public void processResult(int rc, String path, Object ctx) {
+                        synchronized(result) { result[0] = rc; result.notify(); }
+                    }
+                }, null);
+            synchronized(result) {
+                if(result[0] == Integer.MAX_VALUE) {
+                    result.wait(5000);
+                }
+            }
+            LOG.info(hostPorts[(i+1)%hostPorts.length] + " Sync returned " + result[0]);
+            Assert.assertTrue(result[0] == KeeperException.Code.OK.intValue());
             try {
                 zk.setData("/", new byte[1], -1);
                 Assert.fail("Should have lost the connection");
