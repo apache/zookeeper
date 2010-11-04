@@ -64,6 +64,8 @@ BUGFIXES:
   ZOOKEEPER-898. C Client might not cleanup correctly during close 
   (jared cantwell via mahadev)
 
+  ZOOKEEPER-907. Spurious "KeeperErrorCode = Session moved" messages (vishal k via breed)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-789. Improve FLE log messages (flavio via phunt)
