@@ -608,10 +608,7 @@ public class BookkeeperPersistenceManager implements PersistenceManagerWithRange
          *            the same when we try to write
          */
         private void openNewTopicLedger(final int expectedVersionOfLedgersNode, final TopicInfo topicInfo) {
-            final int ENSEMBLE_SIZE = 3;
-            final int QUORUM_SIZE = 2;
-
-            bk.asyncCreateLedger(ENSEMBLE_SIZE, QUORUM_SIZE, DigestType.CRC32, passwd,
+            bk.asyncCreateLedger(cfg.getBkEnsembleSize(), cfg.getBkQuorumSize(), DigestType.CRC32, passwd,
                     new SafeAsynBKCallback.CreateCallback() {
                         boolean processed = false;
 

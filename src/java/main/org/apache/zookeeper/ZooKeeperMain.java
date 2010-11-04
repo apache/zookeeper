@@ -782,6 +782,9 @@ public class ZooKeeperMain {
             }
         } else if (cmd.equals("close")) {
                 zk.close();            
+        } else if (cmd.equals("sync") && args.length >= 2) {
+            path = args[1];
+            zk.sync(path, new AsyncCallback.VoidCallback() { public void processResult(int rc, String path, Object ctx) { System.out.println("Sync returned " + rc); } }, null );
         } else if (cmd.equals("addauth") && args.length >=2 ) {
             byte[] b = null;
             if (args.length >= 3)
