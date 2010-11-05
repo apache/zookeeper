@@ -535,7 +535,7 @@
     
     <para>
     <computeroutput>
-	public LedgerSequence readEntries(long firstEntry, long lastEntry) 
+	public Enumeration&lt;LedgerEntry&gt; readEntries(long firstEntry, long lastEntry) 
     throws InterruptedException, BKException
     </computeroutput>
 	</para>
