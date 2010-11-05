@@ -47,6 +47,7 @@ private:
   CPPUNIT_TEST(testPubSubContinuousOverClose);
   //  CPPUNIT_TEST(testPubSubContinuousOverServerDown);
   CPPUNIT_TEST(testMultiTopic);
+  CPPUNIT_TEST(testBigMessage);
   CPPUNIT_TEST(testMultiTopicMultiSubscriber);
   CPPUNIT_TEST_SUITE_END();
 
@@ -182,6 +183,7 @@ public:
     }
     CPPUNIT_ASSERT(pass);
   }
+
 
   /*  void testPubSubContinuousOverServerDown() {
     std::string topic = "pubSubTopic";
@@ -327,6 +329,44 @@ public:
       }
     }
     CPPUNIT_ASSERT(passA && passB);
+  }
+
+  static const int BIG_MESSAGE_SIZE = 16436*2; // MTU to lo0 is 16436 by default on linux
+
+  void testBigMessage() {
+    std::string topic = "pubSubTopic";
+    std::string sid = "MySubscriberid-6";
+
+    Hedwig::Configuration* conf = new TestServerConfiguration(hw1);
+    std::auto_ptr<Hedwig::Configuration> confptr(conf);
+    
+    Hedwig::Client* client = new Hedwig::Client(*conf);
+    std::auto_ptr<Hedwig::Client> clientptr(client);
+
+    Hedwig::Subscriber& sub = client->getSubscriber();
+    Hedwig::Publisher& pub = client->getPublisher();
+
+    sub.subscribe(topic, sid, Hedwig::SubscribeRequest::CREATE_OR_ATTACH);
+    MyMessageHandlerCallback* cb = new MyMessageHandlerCallback(topic, sid);
+    Hedwig::MessageHandlerCallbackPtr handler(cb);
+
+    sub.startDelivery(topic, sid, handler);
+
+    char buf[BIG_MESSAGE_SIZE];
+    std::string bigmessage(buf, BIG_MESSAGE_SIZE);
+    pub.publish(topic, bigmessage);
+    pub.publish(topic, "Test Message 1");
+    bool pass = false;
+    for (int i = 0; i < 10; i++) {
+      sleep(3);
+      if (cb->numMessagesReceived() > 0) {
+	if (cb->getLastMessage() == "Test Message 1") {
+	  pass = true;
+	  break;
+	}
+      }
+    }
+    CPPUNIT_ASSERT(pass);
   }
 };
 

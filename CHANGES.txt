@@ -149,6 +149,8 @@ BUGFIXES:
 
   ZOOKEEPER-884. Remove LedgerSequence references from BookKeeper documentation and comments in tests (fpj via breed)
 
+  ZOOKEEPER-916. Problem receiving messages from subscribed channels in c++ client (ivan via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
@@ -184,6 +186,8 @@ IMPROVEMENTS:
   in zkpython (Andrei Savu via henryr)
 
   ZOOKEEPER-864. Hedwig C++ client improvements (Ivan Kelly via breed)
+
+  ZOOKEEPER-862. Hedwig created ledgers with hardcoded Bookkeeper ensemble and quorum size. Make these a server config parameter instead. (Erwin T via breed)
 
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
