@@ -24,6 +24,7 @@ package org.apache.bookkeeper.benchmark;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.HashMap;
 
 import org.apache.bookkeeper.client.AddCallback;
@@ -31,7 +32,6 @@ import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookKeeper;
 import org.apache.bookkeeper.client.LedgerEntry;
 import org.apache.bookkeeper.client.LedgerHandle;
-import org.apache.bookkeeper.client.LedgerSequence;
 import org.apache.bookkeeper.client.QuorumEngine;
 import org.apache.bookkeeper.client.ReadCallback;
 import org.apache.bookkeeper.client.LedgerHandle.QMode;
@@ -239,7 +239,7 @@ public class TestClient
         this.removeEntryId((Integer) ctx);
     }
    
-    public void readComplete(int rc, long ledgerId, LedgerSequence seq, Object ctx){
+    public void readComplete(int rc, long ledgerId, Enumeration<LedgerEntry> seq, Object ctx){
         System.out.println("Read callback: " + rc);
         while(seq.hasMoreElements()){
             LedgerEntry le = seq.nextElement();

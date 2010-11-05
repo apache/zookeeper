@@ -147,6 +147,8 @@ BUGFIXES:
 
   ZOOKEEPER-907. Spurious "KeeperErrorCode = Session moved" messages (vishal k via breed)
 
+  ZOOKEEPER-884. Remove LedgerSequence references from BookKeeper documentation and comments in tests (fpj via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

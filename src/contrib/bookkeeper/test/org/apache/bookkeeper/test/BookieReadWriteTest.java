@@ -210,7 +210,7 @@ public class BookieReadWriteTest extends BaseTestCase implements AddCallback, Re
 
             LOG.debug("*** READ COMPLETE ***");
 
-            // at this point, LedgerSequence ls is filled with the returned
+            // at this point, Enumeration<LedgerEntry> ls is filled with the returned
             // values
             int i = 0;
             while (ls.hasMoreElements()) {
@@ -420,7 +420,7 @@ public class BookieReadWriteTest extends BaseTestCase implements AddCallback, Re
 
             LOG.debug("*** SYNC READ COMPLETE ***");
 
-            // at this point, LedgerSequence ls is filled with the returned
+            // at this point, Enumeration<LedgerEntry> ls is filled with the returned
             // values
             int i = 0;
             while (ls.hasMoreElements()) {

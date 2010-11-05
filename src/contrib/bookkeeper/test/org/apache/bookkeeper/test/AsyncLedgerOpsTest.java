@@ -169,7 +169,7 @@ public class AsyncLedgerOpsTest extends BaseTestCase implements AddCallback, Rea
 
             LOG.debug("*** READ COMPLETE ***");
 
-            // at this point, LedgerSequence ls is filled with the returned
+            // at this point, Enumeration<LedgerEntry> ls is filled with the returned
             // values
             int i = 0;
             while (ls.hasMoreElements()) {

@@ -401,7 +401,7 @@ for(int i = 0; i &lt; 10; i++){
 lh.close();
 lh = bkc.openLedger(ledgerId, ledgerPassword);		
 			
-LedgerSequence ls = lh.readEntries(0, 9);
+Enumeration&lt;LedgerEntry&gt; ls = lh.readEntries(0, 9);
 int i = 0;
 while(ls.hasMoreElements()){
 	ByteBuffer origbb = ByteBuffer.wrap(
