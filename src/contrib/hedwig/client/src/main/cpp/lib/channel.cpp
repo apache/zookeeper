@@ -218,10 +218,13 @@ void DuplexChannel::connect() {
 
 void DuplexChannel::startReceiving() {
   if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "DuplexChannel::startReceiving channel(" << this << ")";
+    LOG.debugStream() << "DuplexChannel::startReceiving channel(" << this << ") currently receiving = " << receiving;
   }
 
   boost::lock_guard<boost::mutex> lock(receiving_lock);
+  if (receiving) {
+    return;
+  } 
   receiving = true;
   
   DuplexChannel::readSize(shared_from_this());
