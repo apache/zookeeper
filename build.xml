@@ -1191,7 +1191,6 @@
     		<arg value="${forrest.home}"/>
     		<arg value="${basedir}"/>
     		<arg value="${java5.home}"/>
-        	<arg value="${ant.project.name}"/>
   	</exec>
     </target>
 
@@ -1212,12 +1211,10 @@
     		<arg value="${eclipse.home}"/>
     		<arg value="${python.home}"/>
     		<arg value="${basedir}"/>
-    		<arg value="${trigger.url}"/>
     		<arg value="${jira.passwd}"/>
     		<arg value="${java5.home}"/>
     		<arg value="${curl.cmd}"/>
     		<arg value="${defect}"/>
-		<arg value="${ant.project.name}"/>
     	</exec>
      </target>
 
