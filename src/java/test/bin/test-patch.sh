@@ -150,9 +150,6 @@ setup () {
   $patchURL
   against trunk revision ${SVN_REVISION}."
 
-    ### Copy in any supporting files needed by this process
-    cp -r $SUPPORT_DIR/lib/* ./lib
-    #PENDING: cp -f $SUPPORT_DIR/etc/checkstyle* ./src/test
   ### Copy the patch file to $PATCH_DIR
   else
     VERSION=PATCH-${defect}
@@ -181,8 +178,8 @@ setup () {
   echo "======================================================================"
   echo ""
   echo ""
-  echo "$ANT_HOME/bin/ant  -Djavac.args="-Xlint -Xmaxwarns 1000" $ECLIPSE_PROPERTY -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -D${PROJECT_NAME}PatchProcess= clean tar > $PATCH_DIR/trunkJavacWarnings.txt 2>&1"
- $ANT_HOME/bin/ant -Djavac.args="-Xlint -Xmaxwarns 1000" $ECLIPSE_PROPERTY -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -D${PROJECT_NAME}PatchProcess= clean tar > $PATCH_DIR/trunkJavacWarnings.txt 2>&1
+  echo "$ANT_HOME/bin/ant  -Djavac.args="-Xlint -Xmaxwarns 1000" $ECLIPSE_PROPERTY -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/trunkJavacWarnings.txt 2>&1"
+ $ANT_HOME/bin/ant -Djavac.args="-Xlint -Xmaxwarns 1000" $ECLIPSE_PROPERTY -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/trunkJavacWarnings.txt 2>&1
   if [[ $? != 0 ]] ; then
     echo "Trunk compilation is broken?"
     cleanupAndExit 1
@@ -251,15 +248,6 @@ checkTests () {
 
     +1 tests included.  The patch appears to include $testReferences new or modified tests."
   return 0
-}
-
-cleanUpXml () {
-  cd $BASEDIR/conf
-  for file in `ls *.xml.template`
-    do
-      rm -f `basename $file .template`
-    done
-  cd $BASEDIR  
 }
 
 ###############################################################################
@@ -492,13 +480,9 @@ runCoreTests () {
   
   ### Kill any rogue build processes from the last attempt
   $PS auxwww | $GREP ZookeeperPatchProcess | /usr/bin/nawk '{print $2}' | /usr/bin/xargs -t -I {} /bin/kill -9 {} > /dev/null
-  PreTestTarget=""
-  if [[ $defect == MAPREDUCE-* ]] ; then
-     PreTestTarget="create-c++-configure"
-  fi
 
-  echo "$ANT_HOME/bin/ant -Dversion="${VERSION}" -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dcompile.c++=yes -Dforrest.home=$FORREST_HOME -Djava5.home=$JAVA5_HOME $PreTestTarget test-core"
-  $ANT_HOME/bin/ant -Dversion="${VERSION}" -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dcompile.c++=yes -Dforrest.home=$FORREST_HOME -Djava5.home=$JAVA5_HOME $PreTestTarget test-core
+  echo "$ANT_HOME/bin/ant -Dversion="${VERSION}" -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dcompile.c++=yes -Dforrest.home=$FORREST_HOME -Djava5.home=$JAVA5_HOME test-core"
+  $ANT_HOME/bin/ant -Dversion="${VERSION}" -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dcompile.c++=yes -Dforrest.home=$FORREST_HOME -Djava5.home=$JAVA5_HOME test-core
   if [[ $? != 0 ]] ; then
     JIRA_COMMENT="$JIRA_COMMENT
 
@@ -657,9 +641,6 @@ setup
 checkAuthor
 RESULT=$?
 
-if [[ $HUDSON == "true" ]] ; then
-  cleanUpXml
-fi
 checkTests
 (( RESULT = RESULT + $? ))
 applyPatch
