@@ -1199,7 +1199,6 @@
     		<arg value="${test_patch_sh}"/>
     		<arg value="HUDSON"/>
     		<arg value="${scratch.dir}"/>
-    		<arg value="${support.dir}"/>
     		<arg value="${ps.cmd}"/>
     		<arg value="${wget.cmd}"/>
     		<arg value="${jiracli.cmd}"/>

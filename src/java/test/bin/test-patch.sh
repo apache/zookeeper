@@ -26,25 +26,24 @@ parseArgs() {
     HUDSON)
       ### Set HUDSON to true to indicate that this script is being run by Hudson
       HUDSON=true
-      if [[ $# != 16 ]] ; then
-        echo "ERROR: usage $0 HUDSON <PATCH_DIR> <SUPPORT_DIR> <PS_CMD> <WGET_CMD> <JIRACLI> <SVN_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <FORREST_HOME> <WORKSPACE_BASEDIR> <JIRA_PASSWD> <JAVA5_HOME> <CURL_CMD> <DEFECT> "
+      if [[ $# != 15 ]] ; then
+        echo "ERROR: usage $0 HUDSON <PATCH_DIR> <PS_CMD> <WGET_CMD> <JIRACLI> <SVN_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <FORREST_HOME> <WORKSPACE_BASEDIR> <JIRA_PASSWD> <JAVA5_HOME> <CURL_CMD> <DEFECT> "
         cleanupAndExit 0
       fi
       PATCH_DIR=$2
-      SUPPORT_DIR=$3
-      PS=$4
-      WGET=$5
-      JIRACLI=$6
-      SVN=$7
-      GREP=$8
-      PATCH=$9
-      FINDBUGS_HOME=${10}
-      FORREST_HOME=${11}
-      BASEDIR=${12}
-      JIRA_PASSWD=${13}
-      JAVA5_HOME=${14}
-      CURL=${15}
-      defect=${16}
+      PS=$3
+      WGET=$4
+      JIRACLI=$5
+      SVN=$6
+      GREP=$7
+      PATCH=$8
+      FINDBUGS_HOME=$9
+      FORREST_HOME=${10}
+      BASEDIR=${11}
+      JIRA_PASSWD=${12}
+      JAVA5_HOME=${13}
+      CURL=${14}
+      defect=${15}
 		
       ### Retrieve the defect number
       if [ -z "$defect" ] ; then
