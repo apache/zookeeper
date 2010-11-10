@@ -187,9 +187,14 @@ IMPROVEMENTS:
 
   ZOOKEEPER-864. Hedwig C++ client improvements (Ivan Kelly via breed)
 
-  ZOOKEEPER-862. Hedwig created ledgers with hardcoded Bookkeeper ensemble and quorum size. Make these a server config parameter instead. (Erwin T via breed)
+  ZOOKEEPER-862. Hedwig created ledgers with hardcoded Bookkeeper ensemble and
+  quorum size. Make these a server config parameter instead. (Erwin T via breed)
 
-  ZOOKEEPER-926. Fork Hadoop common's test-patch.sh and modify for Zookeeper. (nigel)
+  ZOOKEEPER-926. Fork Hadoop common's test-patch.sh and modify for Zookeeper.
+  (nigel)
+
+  ZOOKEEPER-909. Extract NIO specific code from ClientCnxn
+  (Thomas Koch via phunt)
 
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
