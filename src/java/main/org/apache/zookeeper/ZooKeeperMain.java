@@ -653,7 +653,7 @@ public class ZooKeeperMain {
         } 
         
         // Below commands all need a live connection
-        if (zk == null || !zk.state.isAlive()) {
+        if (zk == null || !zk.getState().isAlive()) {
             System.out.println("Not connected");
             return false;
         }
