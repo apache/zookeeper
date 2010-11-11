@@ -102,9 +102,9 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     if (!pbb.hasRemaining()) {
                         sentCount++;
                         Packet p = outgoingQueue.removeFirst();
-                        if (p.header != null
-                                && p.header.getType() != OpCode.ping
-                                && p.header.getType() != OpCode.auth) {
+                        if (p.requestHeader != null
+                                && p.requestHeader.getType() != OpCode.ping
+                                && p.requestHeader.getType() != OpCode.auth) {
                             pendingQueue.add(p);
                         }
                     }
