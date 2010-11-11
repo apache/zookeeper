@@ -61,6 +61,10 @@ abstract class ClientCnxnSocket {
     protected long now;
     protected ClientCnxn.SendThread sendThread;
 
+    /**
+     * The sessionId is only available here for Log and Exception messages.
+     * Otherwise the socket doesn't need to know it.
+     */
     protected long sessionId;
 
     void introduce(ClientCnxn.SendThread sendThread, long sessionId) {

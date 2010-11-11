@@ -196,6 +196,9 @@ IMPROVEMENTS:
   ZOOKEEPER-909. Extract NIO specific code from ClientCnxn
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-908. Remove code duplication and inconsistent naming in
+  ClientCnxn.Packet creation (Thomas Koch via phunt)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
