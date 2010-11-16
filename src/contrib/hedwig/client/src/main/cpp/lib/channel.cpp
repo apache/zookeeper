@@ -35,10 +35,10 @@
 #include "util.h"
 #include "clientimpl.h"
 
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwig."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 using namespace Hedwig;
 
@@ -48,17 +48,13 @@ DuplexChannel::DuplexChannel(EventDispatcher& dispatcher, const HostAddress& add
     socket(dispatcher.getService()), instream(&in_buf), copy_buf(NULL), copy_buf_length(0),
     state(UNINITIALISED), receiving(false), sending(false)
 {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Creating DuplexChannel(" << this << ")";
-  }
+  LOG4CXX_DEBUG(logger, "Creating DuplexChannel(" << this << ")");
 }
 
 /*static*/ void DuplexChannel::connectCallbackHandler(DuplexChannelPtr channel,
 						      const boost::system::error_code& error) {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "DuplexChannel::connectCallbackHandler error(" << error 
-		      << ") channel(" << channel.get() << ")";
-  }
+  LOG4CXX_DEBUG(logger,"DuplexChannel::connectCallbackHandler error(" << error 
+		<< ") channel(" << channel.get() << ")");
 
   if (error) {
     channel->channelDisconnected(ChannelConnectException());
@@ -97,14 +93,12 @@ void DuplexChannel::connect() {
 							  std::size_t message_size,
 							  const boost::system::error_code& error, 
 							  std::size_t bytes_transferred) {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "DuplexChannel::messageReadCallbackHandler " << error << ", " 
-		      << bytes_transferred << " channel(" << channel.get() << ")";
-  }
-
+  LOG4CXX_DEBUG(logger, "DuplexChannel::messageReadCallbackHandler " << error << ", " 
+		<< bytes_transferred << " channel(" << channel.get() << ")");
+		  
   if (error) {
-    LOG.errorStream() << "Invalid read error (" << error << ") bytes_transferred (" 
-		      << bytes_transferred << ") channel(" << channel.get() << ")";
+    LOG4CXX_ERROR(logger, "Invalid read error (" << error << ") bytes_transferred (" 
+		  << bytes_transferred << ") channel(" << channel.get() << ")");
     channel->channelDisconnected(ChannelReadException());
     return;
   }
@@ -113,7 +107,7 @@ void DuplexChannel::connect() {
     channel->copy_buf_length = message_size;
     channel->copy_buf = (char*)realloc(channel->copy_buf, channel->copy_buf_length);
     if (channel->copy_buf == NULL) {
-      LOG.errorStream() << "Error allocating buffer. channel(" << channel.get() << ")";
+      LOG4CXX_ERROR(logger, "Error allocating buffer. channel(" << channel.get() << ")");
       return;
     }
   }
@@ -124,13 +118,13 @@ void DuplexChannel::connect() {
 
 
   if (!err) {
-    LOG.errorStream() << "Error parsing message. channel(" << channel.get() << ")";
+    LOG4CXX_ERROR(logger, "Error parsing message. channel(" << channel.get() << ")");
 
     channel->channelDisconnected(ChannelReadException());
     return;
-  } else if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "channel(" << channel.get() << ") : " << channel->in_buf.size() 
-		      << " bytes left in buffer";
+  } else {
+    LOG4CXX_DEBUG(logger,  "channel(" << channel.get() << ") : " << channel->in_buf.size() 
+		  << " bytes left in buffer");
   }
 
   ChannelHandlerPtr h;
@@ -150,21 +144,19 @@ void DuplexChannel::connect() {
 /*static*/ void DuplexChannel::sizeReadCallbackHandler(DuplexChannelPtr channel, 
 						       const boost::system::error_code& error, 
 						       std::size_t bytes_transferred) {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "DuplexChannel::sizeReadCallbackHandler " << error << ", " 
-		      << bytes_transferred << " channel(" << channel.get() << ")";
-  }
+  LOG4CXX_DEBUG(logger, "DuplexChannel::sizeReadCallbackHandler " << error << ", " 
+		<< bytes_transferred << " channel(" << channel.get() << ")");
 
   if (error) {
-    LOG.errorStream() << "Invalid read error (" << error << ") bytes_transferred (" 
-		      << bytes_transferred << ") channel(" << channel.get() << ")";
+    LOG4CXX_ERROR(logger, "Invalid read error (" << error << ") bytes_transferred (" 
+		  << bytes_transferred << ") channel(" << channel.get() << ")");
     channel->channelDisconnected(ChannelReadException());
     return;
   }
   
   if (channel->in_buf.size() < sizeof(uint32_t)) {
-    LOG.errorStream() << "Not enough data in stream. Must have been an error reading. " 
-		      << " Closing channel(" << channel.get() << ")";
+    LOG4CXX_ERROR(logger, "Not enough data in stream. Must have been an error reading. " 
+		  << " Closing channel(" << channel.get() << ")");
     channel->channelDisconnected(ChannelReadException());
     return;
   }
@@ -175,10 +167,8 @@ void DuplexChannel::connect() {
   size = ntohl(size);
 
   int toread = size - channel->in_buf.size();
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << " size of incoming message " << size << ", currently in buffer " 
-		      << channel->in_buf.size() << " channel(" << channel.get() << ")";
-  }
+  LOG4CXX_DEBUG(logger, " size of incoming message " << size << ", currently in buffer " 
+		<< channel->in_buf.size() << " channel(" << channel.get() << ")");
   if (toread <= 0) {
     DuplexChannel::messageReadCallbackHandler(channel, size, error, 0);
   } else {
@@ -197,11 +187,9 @@ void DuplexChannel::connect() {
   }
 
   int toread = sizeof(uint32_t) - channel->in_buf.size();
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << " size of incoming message " << sizeof(uint32_t) 
-		      << ", currently in buffer " << channel->in_buf.size() 
-		      << " channel(" << channel.get() << ")";
-  }
+  LOG4CXX_DEBUG(logger, " size of incoming message " << sizeof(uint32_t) 
+		<< ", currently in buffer " << channel->in_buf.size() 
+		<< " channel(" << channel.get() << ")");
 
   if (toread < 0) {
     DuplexChannel::sizeReadCallbackHandler(channel, boost::system::error_code(), 0);
@@ -217,10 +205,8 @@ void DuplexChannel::connect() {
 }
 
 void DuplexChannel::startReceiving() {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "DuplexChannel::startReceiving channel(" << this << ") currently receiving = " << receiving;
-  }
-
+  LOG4CXX_DEBUG(logger, "DuplexChannel::startReceiving channel(" << this << ") currently receiving = " << receiving);
+  
   boost::lock_guard<boost::mutex> lock(receiving_lock);
   if (receiving) {
     return;
@@ -235,10 +221,8 @@ bool DuplexChannel::isReceiving() {
 }
 
 void DuplexChannel::stopReceiving() {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "DuplexChannel::stopReceiving channel(" << this << ")";
-  }
-
+  LOG4CXX_DEBUG(logger, "DuplexChannel::stopReceiving channel(" << this << ")");
+  
   boost::lock_guard<boost::mutex> lock(receiving_lock);
   receiving = false;
 }
@@ -255,10 +239,8 @@ void DuplexChannel::startSending() {
   if (sending) {
     return;
   }
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "DuplexChannel::startSending channel(" << this << ")";
-  }
-
+  LOG4CXX_DEBUG(logger, "DuplexChannel::startSending channel(" << this << ")");
+  
   WriteRequest w;
   { 
     boost::lock_guard<boost::mutex> lock(write_lock);
@@ -320,10 +302,8 @@ void DuplexChannel::channelDisconnected(const std::exception& e) {
 }
 
 void DuplexChannel::kill() {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Killing duplex channel (" << this << ")";
-  }    
-  
+  LOG4CXX_DEBUG(logger, "Killing duplex channel (" << this << ")");
+    
   bool connected = false;
   {
     boost::shared_lock<boost::shared_mutex> statelock(state_lock);
@@ -349,18 +329,14 @@ DuplexChannel::~DuplexChannel() {
   copy_buf = NULL;
   copy_buf_length = 0;
 
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Destroying DuplexChannel(" << this << ")";
-  }
+  LOG4CXX_DEBUG(logger, "Destroying DuplexChannel(" << this << ")");
 }
 
 /*static*/ void DuplexChannel::writeCallbackHandler(DuplexChannelPtr channel, OperationCallbackPtr callback,
 						    const boost::system::error_code& error, 
 						    std::size_t bytes_transferred) {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "DuplexChannel::writeCallbackHandler " << error << ", " 
-		      << bytes_transferred << " channel(" << channel.get() << ")";
-  }
+  LOG4CXX_DEBUG(logger, "DuplexChannel::writeCallbackHandler " << error << ", " 
+		<< bytes_transferred << " channel(" << channel.get() << ")");
 
   if (error) {
     callback->operationFailed(ChannelWriteException());
@@ -381,17 +357,15 @@ DuplexChannel::~DuplexChannel() {
 }
 
 void DuplexChannel::writeRequest(const PubSubRequestPtr& m, const OperationCallbackPtr& callback) {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "DuplexChannel::writeRequest channel(" << this << ") txnid(" 
-		      << m->txnid() << ") shouldClaim("<< m->has_shouldclaim() << ", " 
-		      << m->shouldclaim() << ")";
-  }
+  LOG4CXX_DEBUG(logger, "DuplexChannel::writeRequest channel(" << this << ") txnid(" 
+		<< m->txnid() << ") shouldClaim("<< m->has_shouldclaim() << ", " 
+		<< m->shouldclaim() << ")");
 
   {
     boost::shared_lock<boost::shared_mutex> lock(state_lock);
     if (state != CONNECTED && state != CONNECTING) {
-      LOG.errorStream() << "Tried to write transaction [" << m->txnid() << "] to a channel [" 
-			<< this << "] which is " << (state == DEAD ? "DEAD" : "UNINITIALISED");
+      LOG4CXX_ERROR(logger,"Tried to write transaction [" << m->txnid() << "] to a channel [" 
+		    << this << "] which is " << (state == DEAD ? "DEAD" : "UNINITIALISED"));
       callback->operationFailed(UninitialisedChannelException());
     }
   }
@@ -409,9 +383,8 @@ void DuplexChannel::writeRequest(const PubSubRequestPtr& m, const OperationCallb
    Store the transaction data for a request.
 */
 void DuplexChannel::storeTransaction(const PubSubDataPtr& data) {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Storing txnid(" << data->getTxnId() << ") for channel(" << this << ")";
-  }
+  LOG4CXX_DEBUG(logger, "Storing txnid(" << data->getTxnId() << ") for channel(" << this << ")");
+
   boost::lock_guard<boost::mutex> lock(txnid2data_lock);
   txnid2data[data->getTxnId()] = data;
 }
@@ -425,8 +398,8 @@ PubSubDataPtr DuplexChannel::retrieveTransaction(long txnid) {
   PubSubDataPtr data = txnid2data[txnid];
   txnid2data.erase(txnid);
   if (data == NULL) {
-    LOG.errorStream() << "Transaction txnid(" << txnid 
-		      << ") doesn't exist in channel (" << this << ")";
+    LOG4CXX_ERROR(logger, "Transaction txnid(" << txnid 
+		  << ") doesn't exist in channel (" << this << ")");
   }
 
   return data;

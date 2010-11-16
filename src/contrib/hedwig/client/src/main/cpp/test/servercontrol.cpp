@@ -28,14 +28,14 @@
 #include "servercontrol.h"
 
 
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 
 #include "util.h"
 
 #include <sstream>   
 #include <time.h>
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwigtest."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 extern HedwigCppTextTestProgressListener gprogress;
 
@@ -66,7 +66,7 @@ void TestServerImpl::kill() {
   sstr << "KILL " << address << std::endl;
   ServerControl::ServerResponse resp = sc.requestResponse(sstr.str());
   if (resp.status != "OK") {
-    LOG.errorStream() << "Error killing Server " << resp.message;
+    LOG4CXX_ERROR(logger, "Error killing Server " << resp.message);
     throw ErrorKillingServerException();
   }
 }
@@ -79,7 +79,7 @@ ServerControl::ServerControl(int port) {
   socketfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   
   if (-1 == socketfd) {
-    LOG.errorStream() << "Couldn't create socket";
+  LOG4CXX_ERROR(logger, "Couldn't create socket");
     throw CantConnectToServerControlDaemonException();
   }
 
@@ -89,7 +89,7 @@ ServerControl::ServerControl(int port) {
   addr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
     
   if (-1 == ::connect(socketfd, (const sockaddr *)&addr, sizeof(struct sockaddr))) {
-    LOG.errorStream() << "Couldn't connect socket";
+  LOG4CXX_ERROR(logger, "Couldn't connect socket");
     close(socketfd);
     throw CantConnectToServerControlDaemonException();
   }
@@ -106,12 +106,12 @@ ServerControl::ServerResponse ServerControl::requestResponse(std::string request
   socketlock.lock();
   char response[MAX_COMMAND_LN];
 
-  LOG.debugStream() << "REQ: " << request.c_str() << " " << request.length();
+  LOG4CXX_DEBUG(logger, "REQ: " << request.c_str() << " " << request.length());
   send(socketfd, request.c_str(), request.length(), 0);
   
   memset(response, 0, MAX_COMMAND_LN);
   recv(socketfd, response, MAX_COMMAND_LN, 0);
-  LOG.debugStream() << "RESP: " << response;
+  LOG4CXX_DEBUG(logger, "RESP: " << response);
 
   socketlock.unlock();
 
@@ -130,7 +130,7 @@ ServerControl::ServerResponse ServerControl::requestResponse(std::string request
   if (strlen(message) < 1) {
     throw InvalidServerControlDaemonResponseException();
   }
-  LOG.debugStream() << "$" << message << "$";
+  LOG4CXX_DEBUG(logger, "$" << message << "$");
   ServerControl::ServerResponse resp = { std::string(status), std::string(message) };
   return resp;
 }
@@ -140,13 +140,13 @@ TestServerPtr ServerControl::startZookeeperServer(int port) {
   sstr << "START ZOOKEEPER " << port << std::endl;
 
   std::string req(sstr.str());
-  LOG.debugStream() << req;
+  LOG4CXX_DEBUG(logger, req);
 
   ServerControl::ServerResponse resp = requestResponse(req);
   if (resp.status == "OK") {
     return TestServerPtr(new TestServerImpl(resp.message, *this));
   } else {
-    LOG.errorStream() << "Error creating zookeeper on port " << port << " " << resp.message;
+    LOG4CXX_ERROR(logger, "Error creating zookeeper on port " << port << " " << resp.message);
     throw ErrorCreatingServerException();
   }
 }
@@ -156,13 +156,13 @@ TestServerPtr ServerControl::startBookieServer(int port, TestServerPtr& zookeepe
   sstr << "START BOOKKEEPER " << port << " " << zookeeperServer->getAddress() << std::endl;
 
   std::string req(sstr.str());
-  LOG.debugStream() << req;
+  LOG4CXX_DEBUG(logger, req);
 
   ServerControl::ServerResponse resp = requestResponse(req);
   if (resp.status == "OK") {
     return TestServerPtr(new TestServerImpl(resp.message, *this));
   } else {
-    LOG.errorStream() << "Error creating bookkeeper on port " << port << " " << resp.message;
+    LOG4CXX_ERROR(logger, "Error creating bookkeeper on port " << port << " " << resp.message);
     throw ErrorCreatingServerException();
   }
 }
@@ -172,13 +172,13 @@ TestServerPtr ServerControl::startPubSubServer(int port, std::string& region, Te
   sstr << "START HEDWIG " << port << " " << region << " " << zookeeperServer->getAddress() << std::endl;
 
   std::string req(sstr.str());
-  LOG.debugStream() << req;
+  LOG4CXX_DEBUG(logger, req);
 
   ServerControl::ServerResponse resp = requestResponse(req);
   if (resp.status == "OK") {
     return TestServerPtr(new TestServerImpl(resp.message, *this));
   } else {
-    LOG.errorStream() << "Error creating hedwig on port " << port << " " << resp.message;
+    LOG4CXX_ERROR(logger, "Error creating hedwig on port " << port << " " << resp.message);
     throw ErrorCreatingServerException();
   }
 }

@@ -25,12 +25,12 @@
 #include <stdexcept>
 #include <pthread.h>
 
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 
 #include "servercontrol.h"
 #include "util.h"
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwigtest."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 using namespace CppUnit;
 
@@ -160,7 +160,7 @@ public:
     delete conf;
   }
   /*  void simplePublish() {
-    LOG.debugStream() << ">>> simplePublish";
+    LOG4CXX_DEBUG(logger, ">>> simplePublish");
     SimpleWaitCondition* cond = new SimpleWaitCondition();
 
     Hedwig::Configuration* conf = new Configuration1();
@@ -170,15 +170,15 @@ public:
     Hedwig::OperationCallbackPtr testcb(new TestCallback(cond));
     pub.asyncPublish("foobar", "barfoo", testcb);
     
-    LOG.debugStream() << "wait for response";
+    LOG4CXX_DEBUG(logger, "wait for response");
     cond->wait();
     delete cond;
-    LOG.debugStream() << "got response";
+    LOG4CXX_DEBUG(logger, "got response");
     
 
     delete client;
     delete conf;
-    LOG.debugStream() << "<<< simplePublish";
+    LOG4CXX_DEBUG(logger, "<<< simplePublish");
   }
 
   class MyMessageHandler : public Hedwig::MessageHandlerCallback {
@@ -186,8 +186,8 @@ public:
     MyMessageHandler(SimpleWaitCondition* cond) : cond(cond) {}
 
     void consume(const std::string& topic, const std::string& subscriberId, const Hedwig::Message& msg, Hedwig::OperationCallbackPtr& callback) {
-      LOG.debugStream() << "Topic: " << topic << "  subscriberId: " << subscriberId;
-      LOG.debugStream() << " Message: " << msg.body();
+      LOG4CXX_DEBUG(logger, "Topic: " << topic << "  subscriberId: " << subscriberId);
+      LOG4CXX_DEBUG(logger, " Message: " << msg.body());
       
       callback->operationComplete();
       cond->setTrue();
@@ -243,21 +243,21 @@ public:
     Hedwig::Client* subscribeclient = new Hedwig::Client(*subscribeconf);
     Hedwig::Subscriber& sub = subscribeclient->getSubscriber();
     
-    LOG.debugStream() << "publishing";
+    LOG4CXX_DEBUG(logger, "publishing");
     Hedwig::OperationCallbackPtr testcb2(new TestCallback(cond3));
     pub.asyncPublish("foobar", "barfoo", testcb2);
     cond3->wait();
     
-    LOG.debugStream() << "Subscribing";
+    LOG4CXX_DEBUG(logger, "Subscribing");
     std::string topic("foobar");
     std::string sid("mysubscriber");
     Hedwig::OperationCallbackPtr testcb1(new TestCallback(cond1));
     sub.asyncSubscribe(topic, sid, Hedwig::SubscribeRequest::CREATE_OR_ATTACH, testcb1);
-    LOG.debugStream() << "Starting delivery";
+    LOG4CXX_DEBUG(logger, "Starting delivery");
     Hedwig::MessageHandlerCallbackPtr messagecb(new MyMessageHandler(cond2));
     sub.startDelivery(topic, sid, messagecb);
 
-    LOG.debugStream() << "Subscribe wait";
+    LOG4CXX_DEBUG(logger, "Subscribe wait");
     cond1->wait();
 
     Hedwig::OperationCallbackPtr testcb3(new TestCallback(cond4));
@@ -265,7 +265,7 @@ public:
     cond4->wait();
 
 
-    LOG.debugStream() << "Delivery wait";
+    LOG4CXX_DEBUG(logger, "Delivery wait");
 
     cond2->wait();
 

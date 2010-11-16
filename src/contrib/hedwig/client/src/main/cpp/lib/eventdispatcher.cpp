@@ -18,9 +18,9 @@
 
 #include "eventdispatcher.h"
 
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwig."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 using namespace Hedwig;
 
@@ -28,21 +28,17 @@ EventDispatcher::EventDispatcher() : service(), dummy_work(NULL), t(NULL) {
 }
 
 void EventDispatcher::run_forever() {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Starting event dispatcher";
-  }
+  LOG4CXX_DEBUG(logger, "Starting event dispatcher");
 
   while (true) {
     try {
       service.run();
       break;
     } catch (std::exception &e) {
-      LOG.errorStream() << "Exception in dispatch handler. " << e.what();
+    LOG4CXX_ERROR(logger, "Exception in dispatch handler. " << e.what());
     }
   }
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Event dispatcher done";
-  }
+  LOG4CXX_DEBUG(logger, "Event dispatcher done");
 }
 
 void EventDispatcher::start() {

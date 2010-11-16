@@ -20,9 +20,9 @@
 #include <memory>
 
 #include "clientimpl.h"
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwig."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 using namespace Hedwig;
 
@@ -34,9 +34,8 @@ const std::string Configuration::RECONNECT_SUBSCRIBE_RETRY_WAIT_TIME = "hedwig.c
 const std::string Configuration::SYNC_REQUEST_TIMEOUT = "hedwig.cpp.sync_request_timeout";
 
 Client::Client(const Configuration& conf) {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Client::Client (" << this << ")";
-  }
+  LOG4CXX_DEBUG(logger, "Client::Client (" << this << ")");
+
   clientimpl = ClientImpl::Create( conf );
 }
 
@@ -49,9 +48,7 @@ Publisher& Client::getPublisher() {
 }
 
 Client::~Client() {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Client::~Client (" << this << ")";
-  }
+  LOG4CXX_DEBUG(logger, "Client::~Client (" << this << ")");
 
   clientimpl->Destroy();
 }

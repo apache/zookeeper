@@ -28,7 +28,9 @@
 #include <cppunit/TestResult.h>
 #include <cppunit/Test.h>
 
-static log4cpp::Category &UTILLOG = log4cpp::Category::getInstance("hedwigtest."__FILE__);
+#include <log4cxx/logger.h>
+
+static log4cxx::LoggerPtr utillogger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 class SimpleWaitCondition {
 public:
@@ -73,14 +75,14 @@ public:
   }
 
   virtual void operationComplete() {
-    UTILLOG.debugStream() << "operationComplete";
+    LOG4CXX_DEBUG(utillogger, "operationComplete");
     cond->setSuccess(true);
     cond->notify();
 
   }
   
   virtual void operationFailed(const std::exception& exception) {
-    UTILLOG.debugStream() << "operationFailed: " << exception.what();
+    LOG4CXX_DEBUG(utillogger, "operationFailed: " << exception.what());
     cond->setSuccess(false);
     cond->notify();
   }    

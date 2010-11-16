@@ -25,12 +25,12 @@
 #include <stdexcept>
 #include <pthread.h>
 
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 
 #include "servercontrol.h"
 #include "util.h"
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwigtest."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 class SubscribeTestSuite : public CppUnit::TestFixture {
 private:
