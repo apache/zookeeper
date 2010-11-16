@@ -19,9 +19,9 @@
 #include <hedwig/protocol.h>
 #include "data.h"
 
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwig."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 using namespace Hedwig;
 
@@ -103,37 +103,30 @@ const PubSubRequestPtr PubSubData::getRequest() {
   request->set_topic(topic);
     
   if (type == PUBLISH) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debugStream() << "Creating publish request";
-    }
+    LOG4CXX_DEBUG(logger, "Creating publish request");
+
     Hedwig::PublishRequest* pubreq = request->mutable_publishrequest();
     Hedwig::Message* msg = pubreq->mutable_msg();
     msg->set_body(body);
   } else if (type == SUBSCRIBE) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debugStream() << "Creating subscribe request";
-    }
+    LOG4CXX_DEBUG(logger, "Creating subscribe request");
 
     Hedwig::SubscribeRequest* subreq = request->mutable_subscriberequest();
     subreq->set_subscriberid(subscriberid);
     subreq->set_createorattach(mode);
   } else if (type == CONSUME) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debugStream() << "Creating consume request";
-    }
+    LOG4CXX_DEBUG(logger, "Creating consume request");
 
     Hedwig::ConsumeRequest* conreq = request->mutable_consumerequest();
     conreq->set_subscriberid(subscriberid);
     conreq->mutable_msgid()->CopyFrom(msgid);
   } else if (type == UNSUBSCRIBE) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debugStream() << "Creating unsubscribe request";
-    }
+    LOG4CXX_DEBUG(logger, "Creating unsubscribe request");
     
     Hedwig::UnsubscribeRequest* unsubreq = request->mutable_unsubscriberequest();
     unsubreq->set_subscriberid(subscriberid);    
   } else {
-    LOG.errorStream() << "Tried to create a request message for the wrong type [" << type << "]";
+    LOG4CXX_ERROR(logger, "Tried to create a request message for the wrong type [" << type << "]");
     throw UnknownRequestException();
   }
 

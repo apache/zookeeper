@@ -19,22 +19,20 @@
 #include "publisherimpl.h"
 #include "channel.h"
 
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwig."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 using namespace Hedwig;
 
 PublishWriteCallback::PublishWriteCallback(const ClientImplPtr& client, const PubSubDataPtr& data) : client(client), data(data) {}
 
 void PublishWriteCallback::operationComplete() {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Successfully wrote transaction: " << data->getTxnId();
-  }
+  LOG4CXX_DEBUG(logger, "Successfully wrote transaction: " << data->getTxnId());
 }
 
 void PublishWriteCallback::operationFailed(const std::exception& exception) {
-  LOG.errorStream() << "Error writing to publisher " << exception.what();
+  LOG4CXX_ERROR(logger, "Error writing to publisher " << exception.what());
   
   data->getCallback()->operationFailed(exception);
 }
@@ -74,11 +72,11 @@ void PublisherImpl::messageHandler(const PubSubResponsePtr& m, const PubSubDataP
     txn->getCallback()->operationComplete();
     break;
   case SERVICE_DOWN:
-    LOG.errorStream() << "Server responsed with SERVICE_DOWN for " << txn->getTxnId();
+    LOG4CXX_ERROR(logger, "Server responsed with SERVICE_DOWN for " << txn->getTxnId());
     txn->getCallback()->operationFailed(ServiceDownException());
     break;
   default:
-    LOG.errorStream() << "Unexpected response " << m->statuscode() << " for " << txn->getTxnId();
+    LOG4CXX_ERROR(logger, "Unexpected response " << m->statuscode() << " for " << txn->getTxnId());
     txn->getCallback()->operationFailed(UnexpectedResponseException());
     break;
   }

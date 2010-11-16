@@ -151,6 +151,8 @@ BUGFIXES:
 
   ZOOKEEPER-916. Problem receiving messages from subscribed channels in c++ client (ivan via breed)
 
+  ZOOKEEPER-930. Hedwig c++ client uses a non thread safe logging library (ivan via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

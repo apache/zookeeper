@@ -21,11 +21,11 @@
 #include <errno.h>
 #include "util.h"
 #include "channel.h"
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwig."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 using namespace Hedwig;
 
@@ -75,7 +75,7 @@ void HostAddress::parse_string() {
   char* url = strdup(address_str.c_str());
 
   if (url == NULL) {
-    LOG.errorStream() << "You seems to be out of memory";
+    LOG4CXX_ERROR(logger, "You seems to be out of memory");
     throw OomException();
   }
   int port = DEFAULT_PORT;
@@ -93,7 +93,7 @@ void HostAddress::parse_string() {
       
       sslport = strtol(sslcolon, NULL, 10);
       if (sslport == 0) {
-	LOG.errorStream() << "Invalid SSL port given: [" << sslcolon << "]";
+        LOG4CXX_ERROR(logger, "Invalid SSL port given: [" << sslcolon << "]");
 	free((void*)url);
 	throw InvalidPortException();
       }
@@ -101,7 +101,7 @@ void HostAddress::parse_string() {
     
     port = strtol(colon, NULL, 10);
     if (port == 0) {
-      LOG.errorStream() << "Invalid port given: [" << colon << "]";
+      LOG4CXX_ERROR(logger, "Invalid port given: [" << colon << "]");
       free((void*)url);
       throw InvalidPortException();
     }
@@ -117,7 +117,7 @@ void HostAddress::parse_string() {
 
   err = getaddrinfo(url, NULL, &hints, &addr);
   if (err != 0) {
-    LOG.errorStream() << "Couldn't resolve host [" << url << "]:" << hstrerror(err);
+    LOG4CXX_ERROR(logger, "Couldn't resolve host [" << url << "]:" << hstrerror(err));
     free((void*)url);
     throw HostResolutionException();
   }

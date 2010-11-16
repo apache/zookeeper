@@ -19,9 +19,9 @@
 #include "channel.h"
 #include "publisherimpl.h"
 #include "subscriberimpl.h"
-#include <log4cpp/Category.hh>
+#include <log4cxx/logger.h>
 
-static log4cpp::Category &LOG = log4cpp::Category::getInstance("hedwig."__FILE__);
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("hedwig."__FILE__));
 
 using namespace Hedwig;
 
@@ -31,7 +31,7 @@ void SyncOperationCallback::wait() {
   boost::unique_lock<boost::mutex> lock(mut);
   while(response==PENDING) {
     if (cond.timed_wait(lock, boost::posix_time::milliseconds(timeout)) == false) {
-      LOG.errorStream() << "Timeout waiting for operation to complete " << this;
+      LOG4CXX_ERROR(logger, "Timeout waiting for operation to complete " << this);
 
       response = TIMEOUT;
     }
@@ -40,7 +40,7 @@ void SyncOperationCallback::wait() {
 
 void SyncOperationCallback::operationComplete() {
   if (response == TIMEOUT) {
-    LOG.errorStream() << "operationCompleted successfully after timeout " << this;
+    LOG4CXX_ERROR(logger, "operationCompleted successfully after timeout " << this);
     return;
   }
 
@@ -53,7 +53,7 @@ void SyncOperationCallback::operationComplete() {
 
 void SyncOperationCallback::operationFailed(const std::exception& exception) {
   if (response == TIMEOUT) {
-    LOG.errorStream() << "operationCompleted unsuccessfully after timeout " << this;
+    LOG4CXX_ERROR(logger, "operationCompleted unsuccessfully after timeout " << this);
     return;
   }
 
@@ -105,10 +105,10 @@ HedwigClientChannelHandler::HedwigClientChannelHandler(const ClientImplPtr& clie
 }
 
 void HedwigClientChannelHandler::messageReceived(const DuplexChannelPtr& channel, const PubSubResponsePtr& m) {
-  LOG.debugStream() << "Message received txnid(" << m->txnid() << ") status(" 
-		    << m->statuscode() << ")";
+  LOG4CXX_DEBUG(logger, "Message received txnid(" << m->txnid() << ") status(" 
+		<< m->statuscode() << ")");
   if (m->has_message()) {
-    LOG.errorStream() << "Subscription response, ignore for now";
+    LOG4CXX_ERROR(logger, "Subscription response, ignore for now");
     return;
   }
   
@@ -134,7 +134,7 @@ void HedwigClientChannelHandler::messageReceived(const DuplexChannelPtr& channel
     client->getSubscriberImpl().messageHandler(m, data);
     break;
   default:
-    LOG.errorStream() << "Unimplemented request type " << data->getType();
+    LOG4CXX_ERROR(logger, "Unimplemented request type " << data->getType());
     break;
   }
 }
@@ -145,13 +145,13 @@ void HedwigClientChannelHandler::channelConnected(const DuplexChannelPtr& channe
 }
 
 void HedwigClientChannelHandler::channelDisconnected(const DuplexChannelPtr& channel, const std::exception& e) {
-  LOG.errorStream() << "Channel disconnected";
+  LOG4CXX_ERROR(logger, "Channel disconnected");
 
   client->channelDied(channel);
 }
 
 void HedwigClientChannelHandler::exceptionOccurred(const DuplexChannelPtr& channel, const std::exception& e) {
-  LOG.errorStream() << "Exception occurred" << e.what();
+  LOG4CXX_ERROR(logger, "Exception occurred" << e.what());
 }
 
 ClientTxnCounter::ClientTxnCounter() : counter(0) 
@@ -176,18 +176,15 @@ long ClientTxnCounter::next() {  // would be nice to remove lock from here, look
 
 ClientImplPtr ClientImpl::Create(const Configuration& conf) {
   ClientImplPtr impl(new ClientImpl(conf));
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "Creating Clientimpl " << impl;
-  }
+  LOG4CXX_DEBUG(logger, "Creating Clientimpl " << impl);
+
   impl->dispatcher.start();
 
   return impl;
 }
 
 void ClientImpl::Destroy() {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "destroying Clientimpl " << this;
-  }
+  LOG4CXX_DEBUG(logger, "destroying Clientimpl " << this);
 
   dispatcher.stop();
   {
@@ -255,16 +252,14 @@ void ClientImpl::redirectRequest(const DuplexChannelPtr& channel, PubSubDataPtr&
   
   HostAddress h = HostAddress::fromString(response->statusmsg());
   if (data->hasTriedServer(h)) {
-    LOG.errorStream() << "We've been told to try request [" << data->getTxnId() << "] with [" 
-		      << h.getAddressString()<< "] by " << oldhost.getAddressString() 
-		      << " but we've already tried that. Failing operation";
+    LOG4CXX_ERROR(logger, "We've been told to try request [" << data->getTxnId() << "] with [" 
+		  << h.getAddressString()<< "] by " << oldhost.getAddressString() 
+		  << " but we've already tried that. Failing operation");
     data->getCallback()->operationFailed(InvalidRedirectException());
     return;
   }
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "We've been told  [" << data->getTopic() << "] is on [" << h.getAddressString() 
-		      << "] by [" << oldhost.getAddressString() << "]. Redirecting request " << data->getTxnId();
-  }
+  LOG4CXX_DEBUG(logger, "We've been told  [" << data->getTopic() << "] is on [" << h.getAddressString() 
+		<< "] by [" << oldhost.getAddressString() << "]. Redirecting request " << data->getTxnId());
   data->setShouldClaim(true);
 
   setHostForTopic(data->getTopic(), h);
@@ -289,9 +284,7 @@ void ClientImpl::redirectRequest(const DuplexChannelPtr& channel, PubSubDataPtr&
 }
 
 ClientImpl::~ClientImpl() {
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "deleting Clientimpl " << this;
-  }
+  LOG4CXX_DEBUG(logger, "deleting Clientimpl " << this);
 }
 
 DuplexChannelPtr ClientImpl::createChannel(const std::string& topic, const ChannelHandlerPtr& handler) {
@@ -313,9 +306,7 @@ DuplexChannelPtr ClientImpl::createChannel(const std::string& topic, const Chann
   channel->connect();
 
   allchannels.insert(channel);
-  if (LOG.isDebugEnabled()) {
-    LOG.debugStream() << "(create) All channels size: " << allchannels.size();
-  }
+  LOG4CXX_DEBUG(logger, "(create) All channels size: " << allchannels.size());
 
   return channel;
 }
@@ -329,9 +320,7 @@ DuplexChannelPtr ClientImpl::getChannel(const std::string& topic) {
   DuplexChannelPtr channel = host2channel[addr];
 
   if (channel.get() == 0) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debugStream() << " No channel for topic, creating new channel.get() " << channel.get() << " addr " << addr.getAddressString();
-    }
+    LOG4CXX_DEBUG(logger, " No channel for topic, creating new channel.get() " << channel.get() << " addr " << addr.getAddressString());
     ChannelHandlerPtr handler(new HedwigClientChannelHandler(shared_from_this()));
     channel = createChannel(topic, handler);
 

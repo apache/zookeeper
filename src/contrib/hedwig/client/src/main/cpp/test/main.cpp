@@ -20,8 +20,12 @@
 #include <hedwig/protocol.h>
 #include <hedwig/callback.h>
 #include <iostream>
-#include <log4cpp/PropertyConfigurator.hh>
-#include <log4cpp/Category.hh>
+
+#include <log4cxx/logger.h>
+#include <log4cxx/basicconfigurator.h>
+#include <log4cxx/propertyconfigurator.h>
+#include <log4cxx/helpers/exception.h>
+
 #include "servercontrol.h"
 #include "util.h"
 
@@ -36,13 +40,12 @@ HedwigCppTextTestProgressListener gprogress;
 int main( int argc, char **argv)
 {
   try {
-    if (getenv("LOG4CPP_CONF") == NULL) {
-      std::cerr << "Set LOG4CPP_CONF in your environment to get logging." << std::endl;
+    if (getenv("LOG4CXX_CONF") == NULL) {
+      std::cerr << "Set LOG4CXX_CONF in your environment to get logging." << std::endl;
+      log4cxx::BasicConfigurator::configure();
     } else {
-      log4cpp::PropertyConfigurator::configure(getenv("LOG4CPP_CONF"));
+      log4cxx::PropertyConfigurator::configure(getenv("LOG4CXX_CONF"));
     }
-  } catch (log4cpp::ConfigureFailure &e) {
-    std::cerr << "log4cpp configuration failure while loading : " << e.what() << std::endl;
   } catch (std::exception &e) {
     std::cerr << "exception caught while configuring log4cpp via : " << e.what() << std::endl;
   } catch (...) {
@@ -70,8 +73,6 @@ int main( int argc, char **argv)
 
   bool ret = runner.run(testPath);
   google::protobuf::ShutdownProtobufLibrary();
-  
-  log4cpp::Category::shutdown();
   
   return (ret == true) ? 0 : 1;
 }
