@@ -22,9 +22,11 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.io.*;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
@@ -165,6 +167,7 @@ public class CnxManagerTest extends ZKTestCase {
         }
         
     }
+
     @Test
     public void testCnxManagerTimeout() throws Exception {
         Random rand = new Random();
@@ -255,5 +258,32 @@ public class CnxManagerTest extends ZKTestCase {
         } catch (Exception e) {
             LOG.info("Socket has been closed as expected");
         }
+    }
+
+    /*
+     * Test if a receiveConnection is able to timeout on socket errors
+     */
+    @Test
+    public void testSocketTimeout() throws Exception {
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 2000, 2, 2);
+        QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+        QuorumCnxManager.Listener listener = cnxManager.listener;
+        if(listener != null){
+            listener.start();
+        } else {
+            LOG.error("Null listener when initializing cnx manager");
+        }
+        int port = peers.get(peer.getId()).electionAddr.getPort();
+        LOG.info("Election port: " + port);
+        InetSocketAddress addr = new InetSocketAddress(port);
+        Thread.sleep(1000);
+        
+        Socket sock = new Socket();
+        sock.connect(peers.get(new Long(1)).electionAddr, 5000);
+        long begin = System.currentTimeMillis();
+        // Read without sending data. Verify timeout.
+        cnxManager.receiveConnection(sock);
+        long end = System.currentTimeMillis();
+        if((end - begin) > ((peer.getSyncLimit() * peer.getTickTime()) + 500)) Assert.fail("Waited more than necessary");
     }
 }

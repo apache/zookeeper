@@ -153,6 +153,8 @@ BUGFIXES:
 
   ZOOKEEPER-930. Hedwig c++ client uses a non thread safe logging library (ivan via breed)
 
+  ZOOKEEPER-900. FLE implementation should be improved to use non-blocking sockets (vishal via fpj)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
