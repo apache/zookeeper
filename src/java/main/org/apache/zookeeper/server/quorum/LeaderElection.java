@@ -41,7 +41,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 public class LeaderElection implements Election  {
     private static final Logger LOG = Logger.getLogger(LeaderElection.class);
-    protected static Random epochGen = new Random();
+    protected static final Random epochGen = new Random();
 
     protected QuorumPeer self;
 
