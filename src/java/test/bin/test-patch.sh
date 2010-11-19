@@ -159,7 +159,7 @@ setup () {
     echo "Please define the following properties in test-patch.properties file"
 	 echo  "OK_FINDBUGS_WARNINGS"
 	 echo  "OK_RELEASEAUDIT_WARNINGS"
-	 echo  "OK_JAVAFINDBUGS_WARNINGS"
+	 echo  "OK_JAVADOC_WARNINGS"
     cleanupAndExit 1
   fi
   echo ""
@@ -414,6 +414,7 @@ $JIRA_COMMENT_FOOTER"
 ###############################################################################
 ### Check there are no changes in the number of Findbugs warnings
 checkFindbugsWarnings () {
+  findbugs_version=`${FINDBUGS_HOME}/bin/findbugs -version`
   echo ""
   echo ""
   echo "======================================================================"
@@ -428,7 +429,7 @@ checkFindbugsWarnings () {
   if [ $? != 0 ] ; then
     JIRA_COMMENT="$JIRA_COMMENT
 
-    -1 findbugs.  The patch appears to cause Findbugs to fail."
+    -1 findbugs.  The patch appears to cause Findbugs (version ${findbugs_version}) to fail."
     return 1
   fi
 JIRA_COMMENT_FOOTER="Findbugs warnings: $BUILD_URL/artifact/trunk/build/test/findbugs/newPatchFindbugsWarnings.html
@@ -449,12 +450,12 @@ $JIRA_COMMENT_FOOTER"
   if [[ $findbugsWarnings > $OK_FINDBUGS_WARNINGS ]] ; then
     JIRA_COMMENT="$JIRA_COMMENT
 
-    -1 findbugs.  The patch appears to introduce `expr $(($findbugsWarnings-$OK_FINDBUGS_WARNINGS))` new Findbugs warnings."
+    -1 findbugs.  The patch appears to introduce `expr $(($findbugsWarnings-$OK_FINDBUGS_WARNINGS))` new Findbugs (version ${findbugs_version}) warnings."
     return 1
   fi
   JIRA_COMMENT="$JIRA_COMMENT
 
-    +1 findbugs.  The patch does not introduce any new Findbugs warnings."
+    +1 findbugs.  The patch does not introduce any new Findbugs (version ${findbugs_version}) warnings."
   return 0
 }
 
@@ -502,7 +503,7 @@ runContribTests () {
   echo ""
 
   ### Kill any rogue build processes from the last attempt
-  $PS -auxwww | $GREP ZookeeperPatchProcess | /usr/bin/nawk '{print $2}' | /usr/bin/xargs -t -I {} /bin/kill -9 {} > /dev/null
+  $PS auxwww | $GREP ZookeeperPatchProcess | /usr/bin/nawk '{print $2}' | /usr/bin/xargs -t -I {} /bin/kill -9 {} > /dev/null
 
   echo "$ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes test-contrib"
   $ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes test-contrib
