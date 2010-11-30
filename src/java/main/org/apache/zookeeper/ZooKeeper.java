@@ -37,6 +37,9 @@ import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.client.ConnectStringParser;
+import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -376,8 +379,14 @@ public class ZooKeeper {
                 + " sessionTimeout=" + sessionTimeout + " watcher=" + watcher);
 
         watchManager.defaultWatcher = watcher;
-        cnxn = new ClientCnxn(connectString, sessionTimeout, this,
-                watchManager, getClientCnxnSocket());
+
+        ConnectStringParser connectStringParser = new ConnectStringParser(
+                connectString);
+        HostProvider hostProvider = new StaticHostProvider(
+                connectStringParser.getServerAddresses());
+        cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
+                hostProvider, sessionTimeout, this, watchManager,
+                getClientCnxnSocket());
         cnxn.start();
     }
 
@@ -431,6 +440,7 @@ public class ZooKeeper {
      *
      * @throws IOException in cases of network failure
      * @throws IllegalArgumentException if an invalid chroot path is specified
+     * @throws IllegalArgumentException for an invalid list of ZooKeeper hosts
      */
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
             long sessionId, byte[] sessionPasswd)
@@ -444,8 +454,14 @@ public class ZooKeeper {
                 + (sessionPasswd == null ? "<null>" : "<hidden>"));
 
         watchManager.defaultWatcher = watcher;
-        cnxn = new ClientCnxn(connectString, sessionTimeout, this,
-                watchManager, getClientCnxnSocket(), sessionId, sessionPasswd);
+
+        ConnectStringParser connectStringParser = new ConnectStringParser(
+                connectString);
+        HostProvider hostProvider = new StaticHostProvider(
+                connectStringParser.getServerAddresses());
+        cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
+                hostProvider, sessionTimeout, this, watchManager,
+                getClientCnxnSocket(), sessionId, sessionPasswd);
         cnxn.start();
     }
 
