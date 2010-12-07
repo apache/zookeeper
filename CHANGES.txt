@@ -157,6 +157,8 @@ BUGFIXES:
 
   ZOOKEEPER-937. test -e not available on solaris /bin/sh (Erik Hetzner via mahadev)
 
+  ZOOKEEPER-905. enhance zkServer.sh for easier zookeeper automation-izing (Nicholas Harteau via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
