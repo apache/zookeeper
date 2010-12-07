@@ -32,20 +32,20 @@ fi
 
 if [ "x$JMXDISABLE" = "x" ]
 then
-    echo "JMX enabled by default"
+    echo "JMX enabled by default" >&2
     # for some reason these two options are necessary on jdk6 on Ubuntu
     #   accord to the docs they are not necessary, but otw jconsole cannot
     #   do a local attach
     ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=$JMXLOCALONLY org.apache.zookeeper.server.quorum.QuorumPeerMain"
 else
-    echo "JMX disabled by user request"
+    echo "JMX disabled by user request" >&2
     ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
 fi
 
 # Only follow symlinks if readlink supports it
-if readlink -f "$0" > /dev/null 2>&1
+if readlink "$0" > /dev/null 2>&1
 then
-  ZOOBIN=`readlink -f "$0"`
+  ZOOBIN=`readlink "$0"`
 else
   ZOOBIN="$0"
 fi
@@ -58,6 +58,12 @@ then
     ZOOCFG="$ZOOCFGDIR/$2"
 fi
 
+# if we give a more complicated path to the config, don't screw around in $ZOOCFGDIR
+if [ "x`dirname $ZOOCFG`" != "x$ZOOCFGDIR" ]
+then
+    ZOOCFG="$2"
+fi
+
 if $cygwin
 then
     ZOOCFG=`cygpath -wp "$ZOOCFG"`
@@ -67,7 +73,7 @@ else
     KILL=kill
 fi
 
-echo "Using config: $ZOOCFG"
+echo "Using config: $ZOOCFG" >&2
 
 if [ -z $ZOOPIDFILE ]
     then ZOOPIDFILE=$(grep dataDir "$ZOOCFG" | sed -e 's/.*=//')/zookeeper_server.pid
@@ -81,6 +87,13 @@ start)
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" &
     /bin/echo -n $! > "$ZOOPIDFILE"
     echo STARTED
+    ;;
+start-foreground)
+    java  "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG"
+    ;;
+print-cmd)
+    echo "java -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\""
     ;;
 stop)
     echo "Stopping zookeeper ... "
