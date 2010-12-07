@@ -39,7 +39,7 @@ fi
 
 ZOOCFG="$ZOOCFGDIR/$ZOOCFG"
 
-if [ -e "$ZOOCFGDIR/java.env" ]
+if [ -f "$ZOOCFGDIR/java.env" ]
 then
     . "$ZOOCFGDIR/java.env"
 fi

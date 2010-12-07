@@ -155,6 +155,8 @@ BUGFIXES:
 
   ZOOKEEPER-900. FLE implementation should be improved to use non-blocking sockets (vishal via fpj)
 
+  ZOOKEEPER-937. test -e not available on solaris /bin/sh (Erik Hetzner via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
