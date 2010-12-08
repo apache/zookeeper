@@ -159,6 +159,8 @@ BUGFIXES:
 
   ZOOKEEPER-905. enhance zkServer.sh for easier zookeeper automation-izing (Nicholas Harteau via mahadev)
 
+  ZOOKEEPER-913. Version parser fails to parse "3.3.2-dev" from build.xml (Anthony Urso and phunt via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
