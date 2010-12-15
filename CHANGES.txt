@@ -161,6 +161,8 @@ BUGFIXES:
 
   ZOOKEEPER-913. Version parser fails to parse "3.3.2-dev" from build.xml (Anthony Urso and phunt via breed)
 
+  ZOOKEEPER-957. zkCleanup.sh doesn't do anything (Ted Dunning via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
