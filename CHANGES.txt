@@ -1,3 +1,8 @@
+Backward compatible changes:
+
+BUGFiXES:
+  ZOOKEEPER-957. zkCleanup.sh doesn't do anything (Ted Dunning via mahadev)
+
 Release 3.3.2 - 2010-11-04
 Backward compatible changes:
 
