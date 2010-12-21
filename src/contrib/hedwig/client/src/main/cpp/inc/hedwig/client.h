@@ -40,6 +40,7 @@ namespace Hedwig {
     static const std::string MAX_MESSAGE_QUEUE_SIZE;
     static const std::string RECONNECT_SUBSCRIBE_RETRY_WAIT_TIME;
     static const std::string SYNC_REQUEST_TIMEOUT;
+    static const std::string SUBSCRIBER_AUTOCONSUME;
 
   public:
     Configuration() {};

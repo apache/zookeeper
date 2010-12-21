@@ -32,6 +32,7 @@ const int DEFAULT_MESSAGE_CONSUME_RETRY_WAIT_TIME = 5000;
 const int DEFAULT_SUBSCRIBER_CONSUME_RETRY_WAIT_TIME = 5000;
 const int DEFAULT_MAX_MESSAGE_QUEUE_SIZE = 10;
 const int DEFAULT_RECONNECT_SUBSCRIBE_RETRY_WAIT_TIME = 5000;
+const bool DEFAULT_SUBSCRIBER_AUTOCONSUME = true;
 
 SubscriberWriteCallback::SubscriberWriteCallback(const ClientImplPtr& client, const PubSubDataPtr& data) : client(client), data(data) {}
 
@@ -100,7 +101,9 @@ SubscriberConsumeCallback::SubscriberConsumeCallback(const ClientImplPtr& client
 void SubscriberConsumeCallback::operationComplete() {
   LOG4CXX_DEBUG(logger, "ConsumeCallback::operationComplete " << data->getTopic() << " - " << data->getSubscriberId());
 
-  client->getSubscriber().consume(data->getTopic(), data->getSubscriberId(), m->message().msgid());
+  if (client->getConfiguration().getBool(Configuration::SUBSCRIBER_AUTOCONSUME, DEFAULT_SUBSCRIBER_AUTOCONSUME)) {
+    client->getSubscriber().consume(data->getTopic(), data->getSubscriberId(), m->message().msgid());
+  }
 }
 
 /* static */ void SubscriberConsumeCallback::timerComplete(const SubscriberClientChannelHandlerPtr handler, 
@@ -203,7 +206,7 @@ void SubscriberClientChannelHandler::channelDisconnected(const DuplexChannelPtr&
     boost::asio::deadline_timer t(client->getService(), boost::posix_time::milliseconds(retrywait));
     t.async_wait(boost::bind(&SubscriberClientChannelHandler::reconnectTimerComplete, shared_from_this(), 
 			     channel, e, boost::asio::placeholders::error));  
-
+    return;
   }
   should_wait = true;
 
