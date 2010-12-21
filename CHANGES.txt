@@ -163,6 +163,9 @@ BUGFIXES:
 
   ZOOKEEPER-957. zkCleanup.sh doesn't do anything (Ted Dunning via mahadev)
 
+  ZOOKEEPER-958. Flag to turn off autoconsume in hedwig c++ client (Ivan Kelly
+  via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
