@@ -570,11 +570,14 @@ public class FileTxnLog implements TxnLog {
                 inputStream.close();
                 inputStream = null;
                 ia = null;
-                // thsi means that the file has ended
+                hdr = null;
+                // this means that the file has ended
                 // we shoud go to the next file
                 if (!goToNextLog()) {
                     return false;
                 }
+                // if we went to the next log file, we should call next() again
+                return next();
             }
             return true;
         }

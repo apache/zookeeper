@@ -166,6 +166,8 @@ BUGFIXES:
   ZOOKEEPER-958. Flag to turn off autoconsume in hedwig c++ client (Ivan Kelly
   via mahadev)
 
+  ZOOKEEPER-882. Startup loads last transaction from snapshot (j:ared via fpj)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
