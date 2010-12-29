@@ -221,6 +221,8 @@ IMPROVEMENTS:
   ZOOKEEPER-921. zkPython incorrectly checks for existence of required
   ACL elements (Nicholas Knight via henryr)
 
+  ZOOKEEPER-963. Make Forrest work with	JDK6 (Carl Steinbach via henryr)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
