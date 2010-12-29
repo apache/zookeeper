@@ -218,6 +218,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-836. hostlist as string. (Thomas Koch via breed)
 
+  ZOOKEEPER-921. zkPython incorrectly checks for existence of required
+  ACL elements (Nicholas Knight via henryr)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
