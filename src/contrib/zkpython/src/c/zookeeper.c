@@ -436,7 +436,7 @@ void watcher_dispatch(zhandle_t *zzh, int type, int state,
   if (PyObject_CallObject((PyObject*)callback, arglist) == NULL) {
     PyErr_Print();
   }
-  if (pyw->permanent == 0) {
+  if (pyw->permanent == 0 && (type != ZOO_SESSION_EVENT || is_unrecoverable(zzh) == ZINVALIDSTATE)) {
     free_pywatcher(pyw);
   }
   PyGILState_Release(gstate);
