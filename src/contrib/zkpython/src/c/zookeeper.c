@@ -301,17 +301,17 @@ int check_is_acl(PyObject *o) {
       return 0;
     }
     entry = PyDict_GetItemString( element, "perms" );
-    if (entry == Py_None) {
+    if (entry == NULL) {
       return 0;
     }
 
     entry = PyDict_GetItemString( element, "scheme" );
-    if (entry == Py_None) {
+    if (entry == NULL) {
       return 0;
     }
 
     entry = PyDict_GetItemString( element, "id" );
-    if (entry == Py_None) {
+    if (entry == NULL) {
       return 0;
     }
   }
