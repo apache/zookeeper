@@ -277,7 +277,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
    *          control object
    */
   public void asyncReadEntries(long firstEntry, long lastEntry,
-      ReadCallback cb, Object ctx) throws InterruptedException {
+      ReadCallback cb, Object ctx) {
     // Little sanity check
     if (firstEntry < 0 || lastEntry > lastAddConfirmed
         || firstEntry > lastEntry) {
@@ -285,7 +285,12 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
       return;
     }
 
-    new PendingReadOp(this, firstEntry, lastEntry, cb, ctx).initiate();
+    try{
+        new PendingReadOp(this, firstEntry, lastEntry, cb, ctx).initiate();
+  
+    } catch (InterruptedException e) {
+        cb.readComplete(BKException.Code.InterruptedException, this, null, ctx);
+    }
   }
 
   /**
@@ -317,8 +322,13 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
    *          some control object
    */
   public void asyncAddEntry(final byte[] data, final AddCallback cb,
-      final Object ctx) throws InterruptedException {
-      opCounterSem.acquire();
+      final Object ctx) {
+      try{
+          opCounterSem.acquire();
+      } catch (InterruptedException e) {
+          cb.addComplete(BKException.Code.InterruptedException,
+                  LedgerHandle.this, -1, ctx);
+      }
       
       try{
           bk.mainWorkerPool.submitOrdered(ledgerId, new SafeRunnable() {
