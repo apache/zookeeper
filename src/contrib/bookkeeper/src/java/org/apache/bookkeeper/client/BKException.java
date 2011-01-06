@@ -72,6 +72,8 @@ public abstract class BKException extends Exception {
             return new BKNoSuchEntryException();
         case Code.IncorrectParameterException:
             return new BKIncorrectParameterException();
+        case Code.InterruptedException:
+            return new BKInterruptedException();
         default:
             return new BKIllegalOpException();
         }
@@ -97,6 +99,7 @@ public abstract class BKException extends Exception {
         int WriteException = -12;
         int NoSuchEntryException = -13;
         int IncorrectParameterException = -14;
+        int InterruptedException = -15;
         
         int IllegalOpException = -100;
     }
@@ -141,6 +144,8 @@ public abstract class BKException extends Exception {
             return "No such entry";
         case Code.IncorrectParameterException:
             return "Incorrect parameter input";
+        case Code.InterruptedException:
+            return "Interrupted while waiting for permit";
         default:
             return "Invalid operation";
         }
@@ -233,6 +238,12 @@ public abstract class BKException extends Exception {
     public static class BKIncorrectParameterException extends BKException {
         public BKIncorrectParameterException() {
             super(Code.IncorrectParameterException);
+        }
+    }
+    
+    public static class BKInterruptedException extends BKException {
+        public BKInterruptedException() {
+            super(Code.InterruptedException);
         }
     }
 }

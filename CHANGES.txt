@@ -223,6 +223,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-963. Make Forrest work with	JDK6 (Carl Steinbach via henryr)
 
+  ZOOKEEPER-500. Async methods shouldnt throw exceptions (fpj via breed)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
