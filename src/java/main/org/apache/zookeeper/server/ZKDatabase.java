@@ -26,6 +26,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
@@ -33,16 +36,16 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener;
 import org.apache.zookeeper.server.quorum.Leader;
-import org.apache.zookeeper.server.quorum.QuorumPacket;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
+import org.apache.zookeeper.server.quorum.QuorumPacket;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
@@ -67,6 +70,7 @@ public class ZKDatabase {
     public static final int commitLogCount = 500;
     protected static int commitLogBuffer = 700;
     protected LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
+    protected ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
     volatile private boolean initialized = false;
     
     /**
@@ -104,8 +108,12 @@ public class ZKDatabase {
          */
         dataTree = new DataTree();
         sessionsWithTimeouts.clear();
-        synchronized (committedLog) {
+        WriteLock lock = logLock.writeLock();
+        try {            
+            lock.lock();
             committedLog.clear();
+        } finally {
+            lock.unlock();
         }
         initialized = false;
     }
@@ -136,12 +144,29 @@ public class ZKDatabase {
     public long getminCommittedLog() {
         return minCommittedLog;
     }
-    
-    public LinkedList<Proposal> getCommittedLog() {
-        synchronized (this.committedLog) {
-            return new LinkedList<Proposal>(this.committedLog);
-        }
+    /**
+     * Get the lock that controls the committedLog. If you want to get the pointer to the committedLog, you need
+     * to use this lock to acquire a read lock before calling getCommittedLog()
+     * @return the lock that controls the committed log
+     */
+    public ReentrantReadWriteLock getLogLock() {
+        return logLock;
     }
+    
+
+    public synchronized LinkedList<Proposal> getCommittedLog() {
+        ReadLock rl = logLock.readLock();
+        // only make a copy if this thread isn't already holding a lock
+        if(logLock.getReadHoldCount() <=0) {
+            try {
+                rl.lock();
+                return new LinkedList<Proposal>(this.committedLog);
+            } finally {
+                rl.unlock();
+            }
+        } 
+        return this.committedLog;
+    }      
     
     /**
      * get the last processed zxid from a datatree
@@ -206,7 +231,9 @@ public class ZKDatabase {
      * @param request committed request
      */
     public void addCommittedProposal(Request request) {
-        synchronized (committedLog) {
+        WriteLock wl = logLock.writeLock();
+        try {
+            wl.lock();
             if (committedLog.size() > commitLogCount) {
                 committedLog.removeFirst();
                 minCommittedLog = committedLog.getFirst().packet.getZxid();
@@ -234,6 +261,8 @@ public class ZKDatabase {
             p.request = request;
             committedLog.add(p);
             maxCommittedLog = p.packet.getZxid();
+        } finally {
+            wl.unlock();
         }
     }
 

@@ -168,6 +168,8 @@ BUGFIXES:
 
   ZOOKEEPER-882. Startup loads last transaction from snapshot (j:ared via fpj)
 
+  ZOOKEEPER-962. leader/follower coherence issue when follower is receiving a DIFF (camille fournier via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
