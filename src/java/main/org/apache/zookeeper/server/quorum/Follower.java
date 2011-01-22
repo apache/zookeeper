@@ -125,8 +125,7 @@ public class Follower extends Learner{
             fzk.commit(qp.getZxid());
             break;
         case Leader.UPTODATE:
-            fzk.takeSnapshot();
-            self.cnxnFactory.setZooKeeperServer(fzk);
+            LOG.error("Received an UPTODATE message after Follower started");
             break;
         case Leader.REVALIDATE:
             revalidate(qp);

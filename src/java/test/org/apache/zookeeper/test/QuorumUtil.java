@@ -61,9 +61,9 @@ public class QuorumUtil {
 
     private final Map<Integer, PeerStruct> peers = new HashMap<Integer, PeerStruct>();
 
-    private final int N;
+    public final int N;
 
-    private final int ALL;
+    public final int ALL;
 
     private String hostPort;
 
@@ -123,6 +123,7 @@ public class QuorumUtil {
     }
 
     public void startAll() throws IOException {
+        shutdownAll();
         for (int i = 1; i <= ALL; ++i) {
             start(i);
             LOG.info("Started QuorumPeer " + i);
@@ -182,7 +183,26 @@ public class QuorumUtil {
                 ps.id, tickTime, initLimit, syncLimit);
         Assert.assertEquals(ps.clientPort, ps.peer.getClientPort());
 
+        ps.peer.start();    
+    }
+    
+    public void restart(int id) throws IOException {
+        start(id);
+        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+                + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
+    }
+    
+    public void startThenShutdown(int id) throws IOException {
+        PeerStruct ps = getPeer(id);
+        LOG.info("Creating QuorumPeer " + ps.id + "; public port " + ps.clientPort);
+        ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg,
+                ps.id, tickTime, initLimit, syncLimit);
+        Assert.assertEquals(ps.clientPort, ps.peer.getClientPort());
+
         ps.peer.start();
+        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+                + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        shutdown(id);
     }
 
     public void shutdownAll() {
