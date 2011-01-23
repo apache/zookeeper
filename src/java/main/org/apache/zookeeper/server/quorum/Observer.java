@@ -111,8 +111,7 @@ public class Observer extends Learner{
             LOG.warn("Ignoring commit");            
             break;            
         case Leader.UPTODATE:
-            zk.takeSnapshot();
-            self.cnxnFactory.setZooKeeperServer(zk);
+            LOG.error("Received an UPTODATE message after Observer started");
             break;
         case Leader.REVALIDATE:
             revalidate(qp);
