@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper;
 
-public class Version implements org.apache.zookeeper.version.Info{
+public class Version implements org.apache.zookeeper.version.Info {
 
     public static int getRevision() {
         return REVISION;
@@ -29,7 +29,8 @@ public class Version implements org.apache.zookeeper.version.Info{
     }
 
     public static String getVersion() {
-        return MAJOR + "." + MINOR + "." + MICRO;
+        return MAJOR + "." + MINOR + "." + MICRO
+            + (QUALIFIER == null ? "" : "-" + QUALIFIER);
     }
 
     public static String getVersionRevision() {

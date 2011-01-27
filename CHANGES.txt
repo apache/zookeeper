@@ -9,9 +9,14 @@ BUGFIXES:
   ZOOKEEPER-921. zkPython incorrectly checks for existence of required
   ACL elements (Nicholas Knight via henryr)
 
-  ZOOKEEPER-882. Startup loads last transaction from snapshot (Jared Cantwell via breed)
+  ZOOKEEPER-882. Startup loads last transaction from snapshot
+  (Jared Cantwell via breed)
 
-  ZOOKEEPER-962. leader/follower coherence issue when follower is receiving a DIFF (Camille Fournier via breed)
+  ZOOKEEPER-962. leader/follower coherence issue when follower is receiving a
+  DIFF (Camille Fournier via breed)
+
+  ZOOKEEPER-913. Version parser fails to parse "3.3.2-dev" from build.xml
+  (Anthony Urso and phunt via phunt)
 
 IMPROVEMENTS:
   ZOOKEEPER-963. Make Forrest work with JDK6 (Carl Steinbach via henryr)
