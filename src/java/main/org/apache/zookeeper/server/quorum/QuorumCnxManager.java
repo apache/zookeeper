@@ -698,7 +698,6 @@ public class QuorumCnxManager {
         @Override
         public void run() {
             try {
-                byte[] size = new byte[4];
                 while (running && !shutdown && sock != null) {
                     /**
                      * Reads the first int to determine the length of the
@@ -716,9 +715,7 @@ public class QuorumCnxManager {
                     byte[] msgArray = new byte[length];
                     din.readFully(msgArray, 0, length);
                     ByteBuffer message = ByteBuffer.wrap(msgArray);
-                    synchronized (recvQueue) {
-                        recvQueue.put(new Message(message.duplicate(), sid));
-                    }
+                    recvQueue.put(new Message(message.duplicate(), sid));
                 }
             } catch (Exception e) {
                 LOG.warn("Connection broken for id " + sid + ", my id = " + 

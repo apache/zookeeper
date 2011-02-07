@@ -32,7 +32,6 @@
     <Bug pattern="REC_CATCH_EXCEPTION" />
   </Match>
 
-
    <!-- If we cannot open a socket to elect a leader, then we should
             simply exit -->
    <Match>
@@ -108,4 +107,22 @@
   <Match>
     <Class name="org.apache.zookeeper.server.upgrade.DataTreeV1"/>
   </Match>
+
+  <!-- References code in a generated file that may or maynot be null -->
+  <Match>
+    <Class name="org.apache.zookeeper.Version" />
+    <Method name="getVersion" />
+    <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE" />
+  </Match>
+
+  <!-- sync'd object is also being used to protect the isrunning flag, this is ok -->
+  <Match>
+    <Class name="org.apache.zookeeper.ClientCnxn$EventThread"/>
+    <Bug code="JLM"/>
+    <Or>
+      <Method name="queuePacket" />
+      <Method name="run" />
+    </Or>
+  </Match>
+
 </FindBugsFilter>
