@@ -168,7 +168,11 @@ BUGFIXES:
 
   ZOOKEEPER-882. Startup loads last transaction from snapshot (j:ared via fpj)
 
-  ZOOKEEPER-962. leader/follower coherence issue when follower is receiving a DIFF (camille fournier via breed)
+  ZOOKEEPER-962. leader/follower coherence issue when follower is receiving a DIFF
+  (camille fournier via breed)
+
+  ZOOKEEPER-902. Fix findbug issue in trunk "Malicious code vulnerability"
+  (flavio and phunt via phunt)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
@@ -190,7 +194,8 @@ IMPROVEMENTS:
   ZOOKEEPER-797 c client source with AI_ADDRCONFIG cannot be compiled with
   early glibc (Qian Ye via phunt)
 
-  ZOOKEEPER-790. Last processed zxid set prematurely while establishing leadership (fpj via breed)
+  ZOOKEEPER-790. Last processed zxid set prematurely while establishing leadership
+  (fpj via breed)
 
   ZOOKEEPER-821. Add ZooKeeper version information to zkpython (Rich
   Schumacher via mahadev)

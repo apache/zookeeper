@@ -83,11 +83,8 @@ public class Observer extends Learner{
                     e1.printStackTrace();
                 }
     
-                synchronized (pendingRevalidations) {
-                    // clear pending revalidations
-                    pendingRevalidations.clear();
-                    pendingRevalidations.notifyAll();
-                }
+                // clear pending revalidations
+                pendingRevalidations.clear();
             }
         } finally {
             zk.unregisterJMX(this);

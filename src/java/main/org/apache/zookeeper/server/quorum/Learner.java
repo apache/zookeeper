@@ -384,16 +384,14 @@ public class Learner {
         DataInputStream dis = new DataInputStream(bis);
         long sessionId = dis.readLong();
         boolean valid = dis.readBoolean();
-        synchronized (pendingRevalidations) {
-            ServerCnxn cnxn = pendingRevalidations
-                    .remove(sessionId);
-            if (cnxn == null) {
-                LOG.warn("Missing session 0x"
-                        + Long.toHexString(sessionId)
-                        + " for validation");
-            } else {
-                zk.finishSessionInit(cnxn, valid);
-            }
+        ServerCnxn cnxn = pendingRevalidations
+        .remove(sessionId);
+        if (cnxn == null) {
+            LOG.warn("Missing session 0x"
+                    + Long.toHexString(sessionId)
+                    + " for validation");
+        } else {
+            zk.finishSessionInit(cnxn, valid);
         }
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(LOG,
