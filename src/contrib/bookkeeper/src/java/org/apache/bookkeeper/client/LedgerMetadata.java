@@ -45,6 +45,7 @@ public class LedgerMetadata {
     public static final int NOTCLOSED = -101;
     int ensembleSize;
     int quorumSize;
+    long length;
     long close;
     private SortedMap<Long, ArrayList<InetSocketAddress>> ensembles = new TreeMap<Long, ArrayList<InetSocketAddress>>();
     ArrayList<InetSocketAddress> currentEnsemble;
@@ -52,6 +53,12 @@ public class LedgerMetadata {
     public LedgerMetadata(int ensembleSize, int quorumSize) {
         this.ensembleSize = ensembleSize;
         this.quorumSize = quorumSize;
+        
+        /*
+         * It is set in PendingReadOp.readEntryComplete, and 
+         * we read it in LedgerRecoveryOp.readComplete.
+         */
+        this.length = 0;
         this.close = NOTCLOSED;
     };
 
@@ -77,7 +84,7 @@ public class LedgerMetadata {
     void close(long entryId) {
         close = entryId;
     }
-
+    
     void addEnsemble(long startEntryId, ArrayList<InetSocketAddress> ensemble) {
         assert ensembles.isEmpty() || startEntryId >= ensembles.lastKey();
 
@@ -117,7 +124,7 @@ public class LedgerMetadata {
      */
     public byte[] serialize() {
         StringBuilder s = new StringBuilder();
-        s.append(quorumSize).append(lSplitter).append(ensembleSize);
+        s.append(quorumSize).append(lSplitter).append(ensembleSize).append(lSplitter).append(length);
 
         for (Map.Entry<Long, ArrayList<InetSocketAddress>> entry : ensembles.entrySet()) {
             s.append(lSplitter).append(entry.getKey());
@@ -126,7 +133,7 @@ public class LedgerMetadata {
                 StringUtils.addrToString(s, addr);
             }
         }
-
+        
         if (close != NOTCLOSED) {
             s.append(lSplitter).append(close).append(tSplitter).append(closed);
         }
@@ -166,8 +173,9 @@ public class LedgerMetadata {
         try {
             lc.quorumSize = new Integer(lines[0]);
             lc.ensembleSize = new Integer(lines[1]);
-
-            for (int i = 2; i < lines.length; i++) {
+            lc.length = new Long(lines[2]); 
+            
+            for (int i = 3; i < lines.length; i++) {
                 String parts[] = lines[i].split(tSplitter);
 
                 if (parts[1].equals(closed)) {

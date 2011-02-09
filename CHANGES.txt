@@ -234,6 +234,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-977. passing null for path_buffer in zoo_create (breed via mahadev)
 
+  ZOOKEEPER-465. Ledger size in bytes. (flavio via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)

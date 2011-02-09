@@ -44,6 +44,7 @@ class LedgerRecoveryOp implements ReadEntryCallback, ReadCallback, AddCallback {
     boolean proceedingWithRecovery = false;
     long maxAddPushed = -1;
     long maxAddConfirmed = -1;
+    long maxLength = 0;
 
     GenericCallback<Void> cb;
 
@@ -81,8 +82,7 @@ class LedgerRecoveryOp implements ReadEntryCallback, ReadCallback, AddCallback {
                 heardValidResponse = true;
             } catch (BKDigestMatchException e) {
                 // Too bad, this bookie didnt give us a valid answer, we
-                // still
-                // might be able to recover though so continue
+                // still might be able to recover though so continue
                 LOG.error("Mac mismatch while reading last entry from bookie: "
                         + lh.metadata.currentEnsemble.get(bookieIndex));
             }
@@ -99,6 +99,7 @@ class LedgerRecoveryOp implements ReadEntryCallback, ReadCallback, AddCallback {
         if (heardValidResponse && lh.distributionSchedule.canProceedWithRecovery(bookieIndex)) {
             proceedingWithRecovery = true;
             lh.lastAddPushed = lh.lastAddConfirmed = maxAddConfirmed;
+            lh.length = maxLength;
             doRecoveryRead();
             return;
         }
@@ -126,7 +127,17 @@ class LedgerRecoveryOp implements ReadEntryCallback, ReadCallback, AddCallback {
         // get back to prev value
         lh.lastAddConfirmed--;
         if (rc == BKException.Code.OK) {
-            lh.asyncAddEntry(seq.nextElement().getEntry(), this, null);
+            LedgerEntry entry = seq.nextElement(); 
+            byte[] data = entry.getEntry();
+            
+            /*
+             * We will add this entry again to make sure it is written to enough
+             * replicas. We subtract the length of the data itself, since it will
+             * be added again when processing the call to add it.
+             */
+            lh.length = entry.getLength() - (long) data.length;
+            lh.asyncAddEntry(data, this, null);
+            
             return;
         }
 
@@ -138,6 +149,7 @@ class LedgerRecoveryOp implements ReadEntryCallback, ReadCallback, AddCallback {
             // it
 
             cb.operationComplete(BKException.Code.OK, null);
+            LOG.debug("After closing length is: " + lh.getLength());
             return;
         }
 

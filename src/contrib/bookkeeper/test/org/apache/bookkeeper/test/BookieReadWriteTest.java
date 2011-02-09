@@ -609,6 +609,60 @@ public class BookieReadWriteTest extends BaseTestCase implements AddCallback, Re
         }
     }
 
+    @Test
+    public void testReadWriteAsyncLength() throws IOException {
+        try {
+            // Create a BookKeeper client and a ledger
+            bkc = new BookKeeper("127.0.0.1");
+            lh = bkc.createLedger(digestType, ledgerPassword);
+            // bkc.initMessageDigest("SHA1");
+            ledgerId = lh.getId();
+            LOG.info("Ledger ID: " + lh.getId());
+            for (int i = 0; i < numEntriesToWrite; i++) {
+                ByteBuffer entry = ByteBuffer.allocate(4);
+                entry.putInt(rng.nextInt(maxInt));
+                entry.position(0);
+
+                entries.add(entry.array());
+                entriesSize.add(entry.array().length);
+                lh.asyncAddEntry(entry.array(), this, sync);
+            }
+
+            // wait for all entries to be acknowledged
+            synchronized (sync) {
+                while (sync.counter < numEntriesToWrite) {
+                    LOG.debug("Entries counter = " + sync.counter);
+                    sync.wait();
+                }
+            }
+            long length = numEntriesToWrite * 4;
+            assertTrue("Ledger length before closing: " + lh.getLength(), lh.getLength() == length);
+            
+            LOG.debug("*** WRITE COMPLETE ***");
+            // close ledger
+            lh.close();
+
+            // *** WRITING PART COMPLETE // READ PART BEGINS ***
+
+            // open ledger
+            lh = bkc.openLedger(ledgerId, digestType, ledgerPassword);
+            assertTrue("Ledger length after opening: " + lh.getLength(), lh.getLength() == length);
+
+
+            lh.close();
+        } catch (KeeperException e) {
+            LOG.error("Test failed", e);
+            fail("Test failed due to ZooKeeper exception");
+        } catch (BKException e) {
+            LOG.error("Test failed", e);
+            fail("Test failed due to BookKeeper exception");
+        } catch (InterruptedException e) {
+            LOG.error("Test failed", e);
+            fail("Test failed due to interruption");
+        }
+    }
+    
+    
     public void addComplete(int rc, LedgerHandle lh, long entryId, Object ctx) {
         if(rc != BKException.Code.OK) fail("Return code is not OK: " + rc);
         
