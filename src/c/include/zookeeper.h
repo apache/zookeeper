@@ -1061,7 +1061,7 @@ ZOOAPI void zoo_deterministic_conn_order(int yesOrNo);
  * \param path_buffer Buffer which will be filled with the path of the
  *    new node (this might be different than the supplied path
  *    because of the ZOO_SEQUENCE flag).  The path string will always be
- *    null-terminated.
+ *    null-terminated. This parameter may be NULL if path_buffer_len = 0.
  * \param path_buffer_len Size of path buffer; if the path of the new
  *    node (including space for the null terminator) exceeds the buffer size,
  *    the path string will be truncated to fit.  The actual path of the
