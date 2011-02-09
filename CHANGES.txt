@@ -236,6 +236,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-465. Ledger size in bytes. (flavio via mahadev)
 
+  ZOOKEEPER-980. allow configuration parameters for log4j.properties (phunt via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
