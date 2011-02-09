@@ -38,6 +38,7 @@ public class LedgerEntry {
 
   long ledgerId;
   long entryId;
+  long length;
   ChannelBufferInputStream entryDataStream;
 
   int nextReplicaIndexToReadFrom = 0;
@@ -53,6 +54,10 @@ public class LedgerEntry {
 
   public long getEntryId() {
     return entryId;
+  }
+  
+  public long getLength() {
+      return length;
   }
 
   public byte[] getEntry() {

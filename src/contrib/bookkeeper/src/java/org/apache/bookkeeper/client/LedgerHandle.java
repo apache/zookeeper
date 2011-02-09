@@ -60,6 +60,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
   final long ledgerId;
   long lastAddPushed;
   long lastAddConfirmed;
+  long length;
   final DigestManager macManager;
   final DistributionSchedule distributionSchedule;
 
@@ -75,8 +76,10 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
     this.metadata = metadata;
     if (metadata.isClosed()) {
       lastAddConfirmed = lastAddPushed = metadata.close;
+      length = metadata.length;
     } else {
       lastAddConfirmed = lastAddPushed = -1;
+      length = 0;
     }
     
     this.ledgerId = ledgerId;
@@ -158,6 +161,26 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
   }
   
   /**
+   *  Add to the length of the ledger in bytes.
+   *  
+   * @param delta
+   * @return
+   */
+  long addToLength(long delta){
+      this.length += delta;
+      return this.length;
+  }
+  
+  /**
+   * Returns the length of the ledger in bytes. 
+   * 
+   * @return
+   */
+  public long getLength(){
+      return this.length;
+  }
+  
+  /**
    * Get the Distribution Schedule
    * 
    * @return DistributionSchedule for the LedgerHandle
@@ -212,6 +235,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
 
       @Override
       public void safeRun() {
+        metadata.length = length;
         // Close operation is idempotent, so no need to check if we are
         // already closed
         metadata.close(lastAddConfirmed);
@@ -220,7 +244,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("Closing ledger: " + ledgerId + " at entryId: "
-              + metadata.close);
+              + metadata.close + " with this many bytes: " + metadata.length);
         }
 
         writeLedgerConfig(new StatCallback() {
@@ -343,10 +367,11 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
                   }
 
                   long entryId = ++lastAddPushed;
+                  long currentLength = addToLength(data.length);
                   PendingAddOp op = new PendingAddOp(LedgerHandle.this, cb, ctx, entryId);
                   pendingAddOps.add(op);
                   ChannelBuffer toSend = macManager.computeDigestAndPackageForSending(
-                          entryId, lastAddConfirmed, data);
+                          entryId, lastAddConfirmed, currentLength, data);
                   op.initiate(toSend);
               }
           });
