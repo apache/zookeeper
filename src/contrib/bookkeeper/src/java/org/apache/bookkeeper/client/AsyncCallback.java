@@ -98,4 +98,16 @@ public interface AsyncCallback {
     void readComplete(int rc, LedgerHandle lh, Enumeration<LedgerEntry> seq,
         Object ctx);
   }
+  
+  public interface RecoverCallback {
+      /**
+       * Callback definition for bookie recover operations
+       * 
+       * @param rc
+       *          return code
+       * @param ctx
+       *          control object
+       */
+      void recoverComplete(int rc, Object ctx);
+  }
 }

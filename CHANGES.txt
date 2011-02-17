@@ -21,6 +21,8 @@ BUGFIXES:
 IMPROVEMENTS:
   ZOOKEEPER-963. Make Forrest work with JDK6 (Carl Steinbach via henryr)
 
+  ZOOKEEPER-712. Bookie recovery (Erwin and flavio via mahadev)
+
 Release 3.3.2 - 2010-11-04
 Backward compatible changes:
 

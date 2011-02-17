@@ -160,6 +160,15 @@ public class BookKeeper implements OpenCallback, CreateCallback {
   }
 
   /**
+   * Get the BookieClient, currently used for doing bookie recovery.
+   * 
+   * @return BookieClient for the BookKeeper instance.
+   */
+  public BookieClient getBookieClient() {
+      return bookieClient;
+  }
+  
+  /**
    * Creates a new ledger asynchronously. To create a ledger, we need to specify
    * the ensemble size, the quorum size, the digest type, a password, a callback
    * implementation, and an optional control object. The ensemble size is how
