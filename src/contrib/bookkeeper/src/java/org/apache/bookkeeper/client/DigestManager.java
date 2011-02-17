@@ -37,7 +37,9 @@ import org.jboss.netty.buffer.ChannelBuffers;
 
 public abstract class DigestManager {
     static final Logger logger = Logger.getLogger(DigestManager.class);
-
+    
+    static final int METADATA_LENGTH = 32;
+    
     long ledgerId;
     
     abstract int getMacCodeLength();
@@ -67,21 +69,32 @@ public abstract class DigestManager {
         }
     }
 
-    public ChannelBuffer computeDigestAndPackageForSending(long entryId, long lastAddConfirmed, byte[] data) {
+    /**
+     * Computes the digest for an entry and put bytes together for sending.
+     *  
+     * @param entryId
+     * @param lastAddConfirmed
+     * @param length
+     * @param data
+     * @return
+     */
+    
+    public ChannelBuffer computeDigestAndPackageForSending(long entryId, long lastAddConfirmed, long length, byte[] data) {
 
-        byte[] bufferArray = new byte[24+macCodeLength];
+        byte[] bufferArray = new byte[METADATA_LENGTH + macCodeLength];
         ByteBuffer buffer = ByteBuffer.wrap(bufferArray);
         buffer.putLong(ledgerId);
         buffer.putLong(entryId);
         buffer.putLong(lastAddConfirmed);
+        buffer.putLong(length);
         buffer.flip();
 
-        update(buffer.array(), 0, 24);
+        update(buffer.array(), 0, METADATA_LENGTH);
         update(data);
         byte[] digest = getValueAndReset();
 
         buffer.limit(buffer.capacity());
-        buffer.position(24);
+        buffer.position(METADATA_LENGTH);
         buffer.put(digest);
         buffer.flip();
 
@@ -102,14 +115,14 @@ public abstract class DigestManager {
         ByteBuffer dataReceivedBuffer = dataReceived.toByteBuffer();
         byte[] digest;
 
-        update(dataReceivedBuffer.array(), dataReceivedBuffer.position(), 24);
+        update(dataReceivedBuffer.array(), dataReceivedBuffer.position(), METADATA_LENGTH);
 
-        int offset = 24 + macCodeLength;
+        int offset = METADATA_LENGTH + macCodeLength;
         update(dataReceivedBuffer.array(), dataReceivedBuffer.position() + offset, dataReceived.readableBytes() - offset);
         digest = getValueAndReset();
 
         for (int i = 0; i < digest.length; i++) {
-            if (digest[i] != dataReceived.getByte(24 + i)) {
+            if (digest[i] != dataReceived.getByte(METADATA_LENGTH + i)) {
                 logger.error("Mac mismatch for ledger-id: " + ledgerId + ", entry-id: " + entryId);
                 throw new BKDigestMatchException();
             }
@@ -131,11 +144,19 @@ public abstract class DigestManager {
         }
 
     }
-
+    
+    /**
+     * Verify that the digest matches and returns the data in the entry.
+     * 
+     * @param entryId
+     * @param dataReceived
+     * @return
+     * @throws BKDigestMatchException
+     */
     ChannelBufferInputStream verifyDigestAndReturnData(long entryId, ChannelBuffer dataReceived)
             throws BKDigestMatchException {
         verifyDigest(entryId, dataReceived);
-        dataReceived.readerIndex(24 + macCodeLength);
+        dataReceived.readerIndex(METADATA_LENGTH + macCodeLength);
         return new ChannelBufferInputStream(dataReceived);
     }
 
@@ -156,6 +177,7 @@ public abstract class DigestManager {
 
         long entryId = dataReceived.readLong();
         long lastAddConfirmed = dataReceived.readLong();
+        long length = dataReceived.readLong();
         return new RecoveryData(lastAddConfirmed, entryId);
 
     }

@@ -22,6 +22,7 @@ package org.apache.bookkeeper.client;
  */
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -33,6 +34,8 @@ import org.apache.bookkeeper.proto.BookkeeperInternalCallbacks.ReadEntryCallback
 import org.apache.log4j.Logger;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+
+import java.io.IOException;
 
 /**
  * Sequence of entries of a ledger that represents a pending read operation.
@@ -114,7 +117,6 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
             return;
         }
         
-        numPendingReads--;
         ChannelBufferInputStream is;
         try {
             is = lh.macManager.verifyDigestAndReturnData(entryId, buffer);
@@ -124,7 +126,15 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
         }
 
         entry.entryDataStream = is;
+        
+        
+        /*
+         * The length is a long and it is the last field of the metadata of an entry.
+         * Consequently, we have to subtract 8 from METADATA_LENGTH to get the length.
+         */
+        entry.length = buffer.getLong(DigestManager.METADATA_LENGTH - 8);
 
+        numPendingReads--;
         if (numPendingReads == 0) {
             cb.readComplete(BKException.Code.OK, lh, PendingReadOp.this, PendingReadOp.this.ctx);
         }
