@@ -154,7 +154,8 @@ public class BookieRecoveryTest extends BaseTestCase {
      *            Port to start the new bookie server on
      * @throws IOException
      */
-    private void startNewBookie(int port) throws IOException {
+    private void startNewBookie(int port)
+    throws IOException, InterruptedException {
         File f = File.createTempFile("bookie", "test");
         tmpDirs.add(f);
         f.delete();
@@ -162,6 +163,9 @@ public class BookieRecoveryTest extends BaseTestCase {
         BookieServer server = new BookieServer(port, HOSTPORT, f, new File[] { f });
         server.start();
         bs.add(server);
+        while(!server.isRunning()){
+            Thread.sleep(500);
+        }
         LOG.info("New bookie on port " + port + " has been created.");
     }
 

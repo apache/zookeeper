@@ -90,6 +90,10 @@ public class NIOServerFactory extends Thread {
         }
     }
 
+    public boolean isRunning() {
+        return !ss.socket().isClosed();
+    }
+    
     @Override
     public void run() {
         while (!ss.socket().isClosed()) {
