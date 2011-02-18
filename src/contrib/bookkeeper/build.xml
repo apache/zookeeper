@@ -18,7 +18,7 @@
 <project name="bookkeeper" default="jar">
   <import file="../build-contrib.xml"/>
 
-	<property name="test.build.dir" value="${build.test}" />
+    <property name="test.build.dir" value="${build.test}" />
     <property name="test.src.dir" value="test"/>
     <property name="test.log.dir" value="${test.build.dir}/logs" />
     <property name="test.data.dir" value="${test.build.dir}/data" />
@@ -138,7 +138,7 @@
     <copy todir="${dist.dir}/contrib/${name}/src">
       <fileset dir="${basedir}/src"/>
     </copy>
-  </target>
+   </target>
 
 </project>
 

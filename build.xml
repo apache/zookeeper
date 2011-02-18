@@ -604,15 +604,22 @@
         <fileset file="${build.dir}/${final.name}-sources.jar"/>
         <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
       </copy>
-      
+
+      <copy file="${dist.dir}/contrib/bookkeeper/${final.name}-bookkeeper.jar" 
+           tofile="${dist.maven.dir}/bookkeeper-${version}.jar"/>
+      <copy file="${contrib.dir}/bookkeeper/bookkeeper.pom"
+           tofile="${dist.maven.dir}/bookkeeper-${version}.pom"/>
       <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="sha1"/>
+      
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.jar" algorithm="sha1"/>
       <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="sha1"/>
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
-
-      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
+  
+      <ivy:makepom  ivyfile="${basedir}/ivy.xml"
                    pomfile="${dist.maven.dir}/${final.name}.pom">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
@@ -620,6 +627,8 @@
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
 
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.pom" algorithm="sha1"/>
       <copy todir="${dist.dir}/bin">
         <fileset dir="bin"/>
       </copy>

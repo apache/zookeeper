@@ -27,6 +27,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-465. Ledger size in bytes. (Flavio via mahadev)
 
+  ZOOKEEPER-960. Publish BookKeeper jars into maven. (mahadev via breed)
+
 Release 3.3.2 - 2010-11-04
 Backward compatible changes:
 
