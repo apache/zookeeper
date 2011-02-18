@@ -18,6 +18,8 @@ BUGFIXES:
   ZOOKEEPER-913. Version parser fails to parse "3.3.2-dev" from build.xml
   (Anthony Urso and phunt via phunt)
 
+  ZOOKEEPER-985. Test BookieRecoveryTest fails on trunk. (fpj via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-963. Make Forrest work with JDK6 (Carl Steinbach via henryr)
 

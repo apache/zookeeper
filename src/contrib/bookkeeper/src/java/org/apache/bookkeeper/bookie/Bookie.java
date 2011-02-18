@@ -67,6 +67,9 @@ public class Bookie extends Thread {
 
     // ZooKeeper client instance for the Bookie
     ZooKeeper zk;
+    
+    // Running flag
+    private volatile boolean running = false;
 
     public static class NoLedgerException extends IOException {
         private static final long serialVersionUID = 1L;
@@ -377,6 +380,10 @@ public class Bookie extends Thread {
     
     private LastLogMark lastLogMark = new LastLogMark(0, 0);
     
+    public boolean isRunning(){
+        return running;
+    }
+    
     @Override
     public void run() {
         LinkedList<QueueEntry> toFlush = new LinkedList<QueueEntry>();
@@ -389,6 +396,7 @@ public class Bookie extends Thread {
             long nextPrealloc = preAllocSize;
             long lastFlushPosition = 0;
             logFile.write(zeros, nextPrealloc);
+            running = true;
             // TODO: Currently, when we roll over the journal logs, the older
             // ones are never garbage collected. We should remove a journal log
             // once all of its entries have been synced with the entry logs.
@@ -431,6 +439,7 @@ public class Bookie extends Thread {
         } catch (Exception e) {
             LOG.fatal("Bookie thread exiting", e);
         }
+        running = false;
     }
 
     private FileChannel openChannel(long logId) throws FileNotFoundException {
