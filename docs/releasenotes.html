@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.8">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.3.2 Release Notes</title>
+<title>ZooKeeper 3.3.3 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -202,11 +202,11 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.3.2 Release Notes</h1>
+<h1>ZooKeeper 3.3.3 Release Notes</h1>
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#changes">Changes Since ZooKeeper 3.3.1</a>
+<a href="#changes">Changes Since ZooKeeper 3.3.2</a>
 </li>
 </ul>
 </div>
@@ -228,12 +228,12 @@ later.</p>
 
 
 <a name="N10013"></a><a name="changes"></a>
-<h2 class="h3">Changes Since ZooKeeper 3.3.1</h2>
+<h2 class="h3">Changes Since ZooKeeper 3.3.2</h2>
 <div class="section">
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
-<caption>Changes Since ZooKeeper 3.3.1</caption>
+<caption>Changes Since ZooKeeper 3.3.2</caption>
 
-<title>Changes Since ZooKeeper 3.3.1</title>
+<title>Changes Since ZooKeeper 3.3.2</title>
 
 
 <tr>
@@ -246,124 +246,90 @@ later.</p>
 
 
 <tr>
-  
-<td>Bug</td>
-  <td></td>
-
+<td>        Bug
+</td><td></td>
 </tr>
 
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-732">ZOOKEEPER-732</a></td><td> Improper translation of error into Python exception - Release Comment: Client that uses python binding may receive SystemError on session expiration.</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-882">ZOOKEEPER-882</a>]</td><td>        Startup loads last transaction from snapshot
+</td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-772">ZOOKEEPER-772</a></td><td> zkpython segfaults when watcher from async get children is invoked.</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-888">ZOOKEEPER-888</a>]</td><td>        c-client / zkpython: Double free corruption on node watcher
+</td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-783">ZOOKEEPER-783</a></td><td> committedLog in ZKDatabase is not properly synchronized</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-913">ZOOKEEPER-913</a>]</td><td>        Version parser fails to parse "3.3.2-dev" from build.xml.
+</td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-785">ZOOKEEPER-785</a></td><td>  Zookeeper 3.3.1 shouldn't infinite loop if someone creates a server.0 line</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-917">ZOOKEEPER-917</a>]</td><td>        Leader election selected incorrect leader
+</td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-787">ZOOKEEPER-787</a></td><td> groupId in deployed pom is wrong</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-919">ZOOKEEPER-919</a>]</td><td>        Ephemeral nodes remains in one of ensemble after deliberate SIGKILL
+</td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-790">ZOOKEEPER-790</a></td><td> Last processed zxid set prematurely while establishing leadership</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-921">ZOOKEEPER-921</a>]</td><td>        zkPython incorrectly checks for existence of required ACL elements
+</td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-792">ZOOKEEPER-792</a></td><td> zkpython memory leak</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-957">ZOOKEEPER-957</a>]</td><td>        zkCleanup.sh doesn't do anything
+</td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-794">ZOOKEEPER-794</a></td><td> Callbacks are not invoked when the client is closed</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-962">ZOOKEEPER-962</a>]</td><td>        leader/follower coherence issue when follower is receiving a DIFF
+</td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-795">ZOOKEEPER-795</a></td><td> eventThread isn't shutdown after a connection "session expired" event coming</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-963">ZOOKEEPER-963</a>]</td><td>        Make Forrest work with JDK6
+</td>
 </tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-800">ZOOKEEPER-800</a></td><td> zoo_add_auth returns ZOK if zookeeper handle is in ZOO_CLOSED_STATE</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-985">ZOOKEEPER-985</a>]</td><td>        Test BookieRecoveryTest fails on trunk.
+</td>
 </tr>
 
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-804">ZOOKEEPER-804</a></td><td> c unit tests failing due to "assertion cptr failed"</td>
-</tr>
+        
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-813">ZOOKEEPER-813</a></td><td> maven install is broken due to incorrect organisation</td>
+<td>        Improvement
+</td><td></td>
 </tr>
 
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-820">ZOOKEEPER-820</a></td><td> update c unit tests to ensure "zombie" java server processes don't cause failure</td>
-</tr>
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-822">ZOOKEEPER-822</a></td><td> Leader election taking a long time  to complete</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-960">ZOOKEEPER-960</a>]</td><td>        Publish BookKeeper jars into maven.
+</td>
 </tr>
 
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-844">ZOOKEEPER-844</a></td><td> handle auth failure in java client</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-846">ZOOKEEPER-846</a></td><td> zookeeper client doesn't shut down cleanly on the close call</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-855">ZOOKEEPER-855</a></td><td> clientPortBindAddress should be clientPortAddress</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-867">ZOOKEEPER-867</a></td><td> ClientTest is failing on hudson - fd cleanup</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-881">ZOOKEEPER-881</a></td><td> ZooKeeperServer.loadData loads database twice</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-888">ZOOKEEPER-888</a></td><td> c-client / zkpython: Double free corruption on node watcher</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-893">ZOOKEEPER-893</a></td><td> ZooKeeper high cpu usage when invalid requests</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-897">ZOOKEEPER-897</a></td><td> C Client seg faults during close</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-898">ZOOKEEPER-898</a></td><td> C Client might not cleanup correctly during close</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-904">ZOOKEEPER-904</a></td><td> super digest is not actually acting as a full superuser</td>
-</tr>
-
-<tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-907">ZOOKEEPER-907</a></td><td> Spurious "KeeperErrorCode = Session moved" messages</td>
-</tr>
     
 
 <tr>
-  
-<td>Improvement</td>
-  <td></td>
-
+<td>        New Feature
+</td><td></td>
 </tr>
 
 
 <tr>
-<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-789">ZOOKEEPER-789</a></td><td> Improve FLE log messages</td>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-465">ZOOKEEPER-465</a>]</td><td>        Ledger size in bytes
+</td>
+</tr>
+
+<tr>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-712">ZOOKEEPER-712</a>]</td><td>        Bookie recovery
+</td>
 </tr>
 
 

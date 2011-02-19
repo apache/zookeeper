@@ -299,8 +299,8 @@ endobj
 32 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F3
-/BaseFont /Helvetica-Bold
+/Name /F1
+/BaseFont /Helvetica
 /Encoding /WinAnsiEncoding >>
 endobj
 33 0 obj
@@ -313,8 +313,8 @@ endobj
 34 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F1
-/BaseFont /Helvetica
+/Name /F3
+/BaseFont /Helvetica-Bold
 /Encoding /WinAnsiEncoding >>
 endobj
 35 0 obj
@@ -343,7 +343,7 @@ endobj
 endobj
 3 0 obj
 << 
-/Font << /F3 32 0 R /F5 33 0 R /F1 34 0 R /F2 35 0 R /F7 36 0 R >> 
+/Font << /F1 32 0 R /F5 33 0 R /F3 34 0 R /F2 35 0 R /F7 36 0 R >> 
 /ProcSet [ /PDF /ImageC /Text ] >> 
 endobj
 xref
@@ -381,8 +381,8 @@ xref
 0000008661 00000 n 
 0000008834 00000 n 
 0000009003 00000 n 
-0000009116 00000 n 
-0000009226 00000 n 
+0000009111 00000 n 
+0000009221 00000 n 
 0000009334 00000 n 
 0000009450 00000 n 
 trailer
