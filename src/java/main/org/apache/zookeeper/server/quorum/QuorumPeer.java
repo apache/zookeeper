@@ -73,6 +73,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     QuorumBean jmxQuorumBean;
     LocalPeerBean jmxLocalPeerBean;
     LeaderElectionBean jmxLeaderElectionBean;
+    QuorumCnxManager qcm;
     
     /* ZKDatabase is a top level member of quorumpeer 
      * which will be used in all the zookeeperservers
@@ -532,11 +533,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             le = new AuthFastLeaderElection(this, true);
             break;
         case 3:
-            QuorumCnxManager mng = new QuorumCnxManager(this);
-            QuorumCnxManager.Listener listener = mng.listener;
+            qcm = new QuorumCnxManager(this);
+            QuorumCnxManager.Listener listener = qcm.listener;
             if(listener != null){
                 listener.start();
-                le = new FastLeaderElection(this,mng);
+                le = new FastLeaderElection(this, qcm);
             } else {
                 LOG.error("Null listener when initializing cnx manager");
             }
@@ -954,4 +955,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     public boolean isRunning() {
         return running;
     }
+
+    /**
+     * get reference to QuorumCnxManager
+     */
+    public QuorumCnxManager getQuorumCnxManager() {
+        return qcm;
+}
 }

@@ -25,6 +25,9 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map.Entry;
 
 import junit.framework.TestCase;
 
@@ -36,7 +39,7 @@ import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.junit.Test;
-
+import org.junit.Assert;
 
 /**
  * This test uses two mock servers, each running an instance of QuorumCnxManager.
@@ -270,5 +273,57 @@ public class CnxManagerTest extends TestCase {
         } catch (Exception e) {
             LOG.info("Socket has been closed as expected");
         }
+        peer.shutdown();
+        cnxManager.halt();
     }   
+
+    /*
+     * Test if Worker threads are getting killed after connection loss
+     */
+    @Test
+    public void testWorkerThreads() throws Exception {
+        ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
+
+        for (int sid = 0; sid < 3; sid++) {
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid],
+                                             port[sid], 3, sid, 1000, 2, 2);
+            LOG.info("Starting peer " + peer.getId());
+            peer.start();
+            peerList.add(sid, peer);
+        }
+        Thread.sleep(10000);
+        verifyThreadCount(peerList, 4);
+        for (int myid = 0; myid < 3; myid++) {
+            for (int i = 0; i < 5; i++) {
+                // halt one of the listeners and verify count
+                QuorumPeer peer = peerList.get(myid);
+                LOG.info("Round " + i + ", halting peer " + peer.getId());
+                peer.shutdown();
+                peerList.remove(myid);
+                Thread.sleep((peer.getSyncLimit() * peer.getTickTime()) + 2000);
+                verifyThreadCount(peerList, 2);
+
+                // Restart halted node and verify count
+                peer = new QuorumPeer(peers, tmpdir[myid], tmpdir[myid],
+                                        port[myid], 3, myid, 1000, 2, 2);
+                LOG.info("Round " + i + ", restarting peer " + peer.getId());
+                peer.start();
+                peerList.add(myid, peer);
+                Thread.sleep(peer.getInitLimit() * peer.getTickTime() * 2);
+                verifyThreadCount(peerList, 4);
+            }
+        }
+    }
+
+    public void verifyThreadCount(ArrayList<QuorumPeer> peerList, long ecnt) {
+        for (int myid = 0; myid < peerList.size(); myid++) {
+            QuorumPeer peer = peerList.get(myid);
+            QuorumCnxManager cnxManager = peer.getQuorumCnxManager();
+            long cnt = cnxManager.getThreadCount();
+            if (cnt != ecnt) {
+                Assert.fail(new Date() + " Incorrect number of Worker threads for sid=" +
+                        myid + " expected " + ecnt + " found " + cnt);
+            }
+        }
+    }
 }

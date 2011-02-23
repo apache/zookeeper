@@ -21,6 +21,8 @@ BUGFIXES:
 
   ZOOKEEPER-985. Test BookieRecoveryTest fails on trunk. (fpj via breed)
 
+  ZOOKEEPER-880. QuorumCnxManager$SendWorker grows without bounds (vishal via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-963. Make Forrest work with JDK6 (Carl Steinbach via henryr)
 
