@@ -64,6 +64,8 @@ later.</para>
 <row><entry>        Bug
 </entry><entry></entry></row>
 
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-880'>ZOOKEEPER-880</ulink>]</entry><entry>        QuorumCnxManager$SendWorker grows without bounds
+</entry></row>
 <row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-882'>ZOOKEEPER-882</ulink>]</entry><entry>        Startup loads last transaction from snapshot
 </entry></row>
 <row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-888'>ZOOKEEPER-888</ulink>]</entry><entry>        c-client / zkpython: Double free corruption on node watcher
