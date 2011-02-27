@@ -176,6 +176,8 @@ BUGFIXES:
 
   ZOOKEEPER-985. Test BookieRecoveryTest fails on trunk. (fpj via breed)
 
+  ZOOKEEPER-983. running zkServer.sh start remotely using ssh hangs (phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

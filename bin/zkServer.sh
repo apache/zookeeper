@@ -75,16 +75,24 @@ fi
 
 echo "Using config: $ZOOCFG" >&2
 
-if [ -z $ZOOPIDFILE ]
-    then ZOOPIDFILE=$(grep dataDir "$ZOOCFG" | sed -e 's/.*=//')/zookeeper_server.pid
+if [ -z $ZOOPIDFILE ]; then
+    ZOO_DATADIR=$(grep dataDir "$ZOOCFG" | sed -e 's/.*=//')
+    if [ ! -d "$ZOO_DATADIR" ]; then
+        mkdir -p "$ZOO_DATADIR"
+    fi
+    ZOOPIDFILE="$ZOO_DATADIR/zookeeper_server.pid"
+else
+    # ensure it exists, otw stop will fail
+    mkdir -p $(dirname "$ZOOPIDFILE")
 fi
 
+_ZOO_DAEMON_OUT="$ZOO_LOG_DIR/zookeeper.out"
 
 case $1 in
 start)
     echo  "Starting zookeeper ... "
     java  "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" &
+    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
     /bin/echo -n $! > "$ZOOPIDFILE"
     echo STARTED
     ;;
@@ -93,7 +101,7 @@ start-foreground)
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG"
     ;;
 print-cmd)
-    echo "java -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\""
+    echo "java -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_DAEMON_OUT\" 2>&1 < /dev/null"
     ;;
 stop)
     echo "Stopping zookeeper ... "
@@ -121,7 +129,8 @@ restart)
     "$0" start ${@}
     ;;
 status)
-    STAT=`echo stat | nc localhost $(grep clientPort "$ZOOCFG" | sed -e 's/.*=//') 2> /dev/null| grep Mode`
+    # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
+    STAT=`echo stat | nc -q 1 localhost $(grep clientPort "$ZOOCFG" | sed -e 's/.*=//') 2> /dev/null| grep Mode`
     if [ "x$STAT" = "x" ]
     then
         echo "Error contacting service. It is probably not running."
