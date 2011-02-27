@@ -178,6 +178,8 @@ BUGFIXES:
 
   ZOOKEEPER-983. running zkServer.sh start remotely using ssh hangs (phunt)
 
+  ZOOKEEPER-976. ZooKeeper startup script doesn't use JAVA_HOME (phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
