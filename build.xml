@@ -1321,6 +1321,7 @@
            <output path="${build.dir.eclipse-main-classes}" />
            <library pathref="default.path.id" exported="true" />
            <library pathref="junit.path.id" exported="false" />
+           <library path="${src.dir}/java/libtest/accessive.jar" exported="false" />
          </classpath>
        </eclipse>
      </target>

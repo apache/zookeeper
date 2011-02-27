@@ -180,6 +180,9 @@ BUGFIXES:
 
   ZOOKEEPER-976. ZooKeeper startup script doesn't use JAVA_HOME (phunt)
 
+  ZOOKEEPER-994 "eclipse" target in the build script doesnot include
+  libraray required for test classes in the classpath (MIS via phunt) 
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
