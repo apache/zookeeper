@@ -36,6 +36,6 @@ ZOOBINDIR=`dirname "$ZOOBIN"`
 
 . "$ZOOBINDIR"/zkEnv.sh
 
-java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
      -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.ZooKeeperMain $@

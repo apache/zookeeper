@@ -54,6 +54,12 @@ then
     ZOO_LOG4J_PROP="INFO,CONSOLE"
 fi
 
+if [ "$JAVA_HOME" != "" ]; then
+  JAVA="$JAVA_HOME/bin/java"
+else
+  JAVA=java
+fi
+
 #add the zoocfg dir to classpath
 CLASSPATH="$ZOOCFGDIR:$CLASSPATH"
 

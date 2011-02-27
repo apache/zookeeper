@@ -41,11 +41,11 @@ ZOODATALOGDIR=$(grep '^dataLogDir=' "$ZOOCFG" | sed -e 's/.*=//')
 
 if [ "x$ZOODATALOGDIR" = "x" ]
 then
-java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
      -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.server.PurgeTxnLog "$ZOODATADIR" $*
 else
-java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
      -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.server.PurgeTxnLog "$ZOODATALOGDIR" "$ZOODATADIR" $*
 fi
