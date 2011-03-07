@@ -22,24 +22,23 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Map.Entry;
 
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * This test uses two mock servers, each running an instance of QuorumCnxManager.
@@ -53,29 +52,31 @@ import org.junit.Assert;
  *
  */
 public class CnxManagerTest extends TestCase {
-    protected static final Logger LOG = Logger.getLogger(FLENewEpochTest.class);
+    protected static final Logger LOG = Logger.getLogger(CnxManagerTest.class);
     protected static final int THRESHOLD = 4;
     
     int count;
     HashMap<Long,QuorumServer> peers;
-    File tmpdir[];
-    int port[];
+    File peerTmpdir[];
+    int peerQuorumPort[];
+    int peerClientPort[];
     
     public void setUp() throws Exception {
         
         this.count = 3;
         this.peers = new HashMap<Long,QuorumServer>(count); 
-        tmpdir = new File[count];
-        port = new int[count];
+        peerTmpdir = new File[count];
+        peerQuorumPort = new int[count];
+        peerClientPort = new int[count];
         
         for(int i = 0; i < count; i++) {
-            int clientport = PortAssignment.unique();
+            peerQuorumPort[i] = PortAssignment.unique();
+            peerClientPort[i] = PortAssignment.unique();
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
-                            new InetSocketAddress(clientport),
+                            new InetSocketAddress(peerQuorumPort[i]),
                     new InetSocketAddress(PortAssignment.unique())));
-            tmpdir[i] = ClientBase.createTmpDir();
-            port[i] = clientport;
+            peerTmpdir[i] = ClientBase.createTmpDir();
         }
     }
     
@@ -110,7 +111,7 @@ public class CnxManagerTest extends TestCase {
         
         public void run(){
             try {
-                QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 2, 2, 2);
+                QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[0], peerTmpdir[0], peerClientPort[0], 3, 0, 2, 2, 2);
                 QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
                 QuorumCnxManager.Listener listener = cnxManager.listener;
                 if(listener != null){
@@ -154,7 +155,7 @@ public class CnxManagerTest extends TestCase {
         
         thread.start();
         
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 2, 2, 2);
         QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
@@ -196,10 +197,9 @@ public class CnxManagerTest extends TestCase {
                 new QuorumServer(2,
                         new InetSocketAddress(deadAddress, deadPort),
                         new InetSocketAddress(deadAddress, PortAssignment.unique())));
-        tmpdir[2] = ClientBase.createTmpDir();
-        port[2] = deadPort;
+        peerTmpdir[2] = ClientBase.createTmpDir();
     
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 2, 2, 2);
         QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
@@ -226,7 +226,7 @@ public class CnxManagerTest extends TestCase {
      */
     @Test
     public void testCnxManagerSpinLock() throws Exception {               
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 2, 2, 2);
         QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
@@ -285,14 +285,16 @@ public class CnxManagerTest extends TestCase {
         ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
 
         for (int sid = 0; sid < 3; sid++) {
-            QuorumPeer peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid],
-                                             port[sid], 3, sid, 1000, 2, 2);
+            QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[sid], peerTmpdir[sid],
+                                             peerClientPort[sid], 3, sid, 1000, 2, 2);
             LOG.info("Starting peer " + peer.getId());
             peer.start();
             peerList.add(sid, peer);
         }
-        Thread.sleep(10000);
-        verifyThreadCount(peerList, 4);
+        String failure = verifyThreadCount(peerList, 4);
+        if (failure != null) {
+            Assert.fail(failure);
+        }
         for (int myid = 0; myid < 3; myid++) {
             for (int i = 0; i < 5; i++) {
                 // halt one of the listeners and verify count
@@ -300,30 +302,54 @@ public class CnxManagerTest extends TestCase {
                 LOG.info("Round " + i + ", halting peer " + peer.getId());
                 peer.shutdown();
                 peerList.remove(myid);
-                Thread.sleep((peer.getSyncLimit() * peer.getTickTime()) + 2000);
-                verifyThreadCount(peerList, 2);
+                failure = verifyThreadCount(peerList, 2);
+                if (failure != null) {
+                    Assert.fail(failure);
+                }
 
                 // Restart halted node and verify count
-                peer = new QuorumPeer(peers, tmpdir[myid], tmpdir[myid],
-                                        port[myid], 3, myid, 1000, 2, 2);
+                peer = new QuorumPeer(peers, peerTmpdir[myid], peerTmpdir[myid],
+                                        peerClientPort[myid], 3, myid, 1000, 2, 2);
                 LOG.info("Round " + i + ", restarting peer " + peer.getId());
                 peer.start();
                 peerList.add(myid, peer);
-                Thread.sleep(peer.getInitLimit() * peer.getTickTime() * 2);
-                verifyThreadCount(peerList, 4);
+                failure = verifyThreadCount(peerList, 4);
+                if (failure != null) {
+                    Assert.fail(failure);
+                }
             }
         }
     }
 
-    public void verifyThreadCount(ArrayList<QuorumPeer> peerList, long ecnt) {
+    /**
+     * Returns null on success, otw the message assoc with the failure 
+     * @throws InterruptedException
+     */
+    public String verifyThreadCount(ArrayList<QuorumPeer> peerList, long ecnt)
+        throws InterruptedException
+    {
+        String failure = null;
+        for (int i = 0; i < 120; i++) {
+            Thread.sleep(500);
+
+            failure = _verifyThreadCount(peerList, ecnt);
+            if (failure == null) {
+                return null;
+            }
+        }
+        return failure;
+    }
+    public String _verifyThreadCount(ArrayList<QuorumPeer> peerList, long ecnt) {
         for (int myid = 0; myid < peerList.size(); myid++) {
             QuorumPeer peer = peerList.get(myid);
             QuorumCnxManager cnxManager = peer.getQuorumCnxManager();
             long cnt = cnxManager.getThreadCount();
             if (cnt != ecnt) {
-                Assert.fail(new Date() + " Incorrect number of Worker threads for sid=" +
-                        myid + " expected " + ecnt + " found " + cnt);
+                return new String(new Date()
+                    + " Incorrect number of Worker threads for sid=" + myid
+                    + " expected " + ecnt + " found " + cnt);
             }
         }
+        return null;
     }
 }
