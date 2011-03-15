@@ -1956,6 +1956,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                     destroy_completion_entry(cptr);
                     cptr = NULL;
                 }
+                close_buffer_iarchive(&ia);
                 return api_epilog(zh,ZINVALIDSTATE);
             }
             assert(cptr);

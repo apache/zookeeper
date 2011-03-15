@@ -186,6 +186,8 @@ BUGFIXES:
   ZOOKEEPER-1013 zkServer.sh usage message should mention all startup options
   (eugene koontz via mahadev)
 
+  ZOOKEEPER-1007. iarchive leak in C client (jeremy stribling via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
