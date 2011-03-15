@@ -139,6 +139,6 @@ status)
     fi
     ;;
 *)
-    echo "Usage: $0 {start|stop|restart|status}" >&2
+    echo "Usage: $0 {start|start-foreground|stop|restart|status|upgrade|print-cmd}" >&2
 
 esac
