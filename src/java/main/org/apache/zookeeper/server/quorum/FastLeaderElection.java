@@ -507,17 +507,13 @@ public class FastLeaderElection implements Election {
      * @param zxid  Last zxid observed by the issuer of this vote
      */
     private boolean totalOrderPredicate(long newId, long newZxid, long curId, long curZxid) {
-        LOG.debug("id: " + newId + ", proposed id: " + curId + ", zxid: " + newZxid + ", proposed zxid: " + curZxid);
+        LOG.debug("id: " + newId + ", proposed id: " + curId + ", zxid: " + 
+                newZxid + ", proposed zxid: " + curZxid);
         if(self.getQuorumVerifier().getWeight(newId) == 0){
             return false;
         }
-
-        if ((newZxid > curZxid)
-                || ((newZxid == curZxid) && (newId > curId)))
-            return true;
-        else
-            return false;
-
+        
+        return ((newZxid > curZxid) || ((newZxid == curZxid) && (newId > curId)));
     }
 
     /**
@@ -544,11 +540,7 @@ public class FastLeaderElection implements Election {
             }
         }
 
-        if(self.getQuorumVerifier().containsQuorum(set))
-            return true;
-        else
-            return false;
-
+        return self.getQuorumVerifier().containsQuorum(set);
     }
 
     /**
