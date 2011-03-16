@@ -188,6 +188,8 @@ BUGFIXES:
 
   ZOOKEEPER-1007. iarchive leak in C client (jeremy stribling via mahadev)
 
+  ZOOKEEPER-993. Code improvements (MIS via fpj)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
