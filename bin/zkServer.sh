@@ -53,6 +53,11 @@ ZOOBINDIR=`dirname "$ZOOBIN"`
 
 . "$ZOOBINDIR"/zkEnv.sh
 
+if [ "x$SERVER_JVMFLAGS" ]
+then
+    JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
+fi
+
 if [ "x$2" != "x" ]
 then
     ZOOCFG="$ZOOCFGDIR/$2"
