@@ -32,6 +32,8 @@ import java.util.Enumeration;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Date;
 
 import org.apache.log4j.Logger;
 
@@ -110,6 +112,11 @@ public class QuorumCnxManager {
      */
     public final Listener listener;
 
+    /*
+     * Counter to count worker threads
+     */
+    private AtomicInteger threadCnt = new AtomicInteger(0);
+
     static public class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
@@ -177,7 +184,7 @@ public class QuorumCnxManager {
             // Otherwise proceed with the connection
         } else {
             SendWorker sw = new SendWorker(sock, sid);
-            RecvWorker rw = new RecvWorker(sock, sid);
+            RecvWorker rw = new RecvWorker(sock, sid, sw);
             sw.setRecv(rw);
 
             SendWorker vsw = senderWorkerMap.get(sid);
@@ -253,7 +260,7 @@ public class QuorumCnxManager {
             // Otherwise start worker threads to receive data.
         } else {
             SendWorker sw = new SendWorker(sock, sid);
-            RecvWorker rw = new RecvWorker(sock, sid);
+            RecvWorker rw = new RecvWorker(sock, sid, sw);
             sw.setRecv(rw);
 
             SendWorker vsw = senderWorkerMap.get(sid);
@@ -448,6 +455,19 @@ public class QuorumCnxManager {
     }
 
     /**
+     * Return number of worker threads
+     */
+    public long getThreadCount() {
+        return threadCnt.get();
+    }
+    /**
+     * Return reference to QuorumPeer
+     */
+    public QuorumPeer getQuorumPeer() {
+        return self;
+    }
+
+    /**
      * Thread to listen on some port
      */
     public class Listener extends Thread {
@@ -591,6 +611,7 @@ public class QuorumCnxManager {
                 LOG.debug("Removing entry from senderWorkerMap sid=" + sid);
             }
             senderWorkerMap.remove(sid, this);
+            threadCnt.decrementAndGet();
             return running;
         }
         
@@ -610,6 +631,7 @@ public class QuorumCnxManager {
 
         @Override
         public void run() {
+            threadCnt.incrementAndGet();
             try {
                 ByteBuffer b = lastMessageSent.get(sid);
                 if (b != null) {
@@ -662,10 +684,12 @@ public class QuorumCnxManager {
         Socket sock;
         volatile boolean running = true;
         DataInputStream din;
+        final SendWorker sw;
 
-        RecvWorker(Socket sock, Long sid) {
+        RecvWorker(Socket sock, Long sid, SendWorker sw) {
             this.sid = sid;
             this.sock = sock;
+            this.sw = sw;
             try {
                 din = new DataInputStream(sock.getInputStream());
                 // OK to wait until socket disconnects while reading.
@@ -692,11 +716,13 @@ public class QuorumCnxManager {
             running = false;            
 
             this.interrupt();
+            threadCnt.decrementAndGet();
             return running;
         }
 
         @Override
         public void run() {
+            threadCnt.incrementAndGet();
             try {
                 while (running && !shutdown && sock != null) {
                     /**
@@ -719,8 +745,10 @@ public class QuorumCnxManager {
                 }
             } catch (Exception e) {
                 LOG.warn("Connection broken for id " + sid + ", my id = " + 
-                        self.getId() + ", error = " + e);
+                        self.getId() + ", error = " , e);
             } finally {
+                LOG.warn("Interrupting SendWorker");
+                sw.finish();
                 if (sock != null) {
                     closeSocket(sock);
                 }

@@ -192,6 +192,8 @@ BUGFIXES:
 
   ZOOKEEPER-1012. support distinct JVMFLAGS for zookeeper server in zkServer.sh and zookeeper client in zkCli.sh (Eugene Koontz via breed)
 
+  ZOOKEEPER-880. QuorumCnxManager$SendWorker grows without bounds (vishal via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
