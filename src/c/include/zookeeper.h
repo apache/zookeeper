@@ -20,6 +20,7 @@
 #define ZOOKEEPER_H_
 
 #include <stdlib.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -365,6 +366,14 @@ ZOOAPI void zoo_set_context(zhandle_t *zh, void *context);
  * \return previous watcher function
  */
 ZOOAPI watcher_fn zoo_set_watcher(zhandle_t *zh,watcher_fn newFn);
+
+/**
+ * \brief returns the socket address for the current connection
+ * \return socket address of the connected host or NULL on failure, only valid if the
+ * connection is current connected
+ */
+ZOOAPI struct sockaddr* zookeeper_get_connected_host(zhandle_t *zh,
+        struct sockaddr *addr, socklen_t *addr_len);
 
 #ifndef THREADED
 /**
