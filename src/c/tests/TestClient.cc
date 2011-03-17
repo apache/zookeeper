@@ -503,7 +503,7 @@ public:
     void testAuth() {
         int rc;
         count = 0;
-        watchctx_t ctx1, ctx2, ctx3, ctx4;
+        watchctx_t ctx1, ctx2, ctx3, ctx4, ctx5;
         zhandle_t *zk = createClient(&ctx1);
         struct ACL_vector nodeAcl;
         struct ACL acl_val;
@@ -600,6 +600,17 @@ public:
         CPPUNIT_ASSERT_EQUAL(0, zoo_state(zk2)); // 0 ==> ZOO_CLOSED_STATE
         rc = zoo_add_auth(zk2, "digest", "pat:passwd", 10, voidCompletion, (void*)ZOK);
         CPPUNIT_ASSERT_EQUAL((int) ZINVALIDSTATE, rc);
+
+        struct sockaddr addr;
+        socklen_t addr_len = sizeof(addr);
+        zk = createClient(&ctx5);
+        stopServer();
+        CPPUNIT_ASSERT(ctx5.waitForDisconnected(zk));
+        CPPUNIT_ASSERT(zookeeper_get_connected_host(zk, &addr, &addr_len) == NULL);
+        addr_len = sizeof(addr);
+        startServer();
+        CPPUNIT_ASSERT(ctx5.waitForConnected(zk));
+        CPPUNIT_ASSERT(zookeeper_get_connected_host(zk, &addr, &addr_len) != NULL);
     }
 
     void testGetChildren2() {
