@@ -1,4 +1,0 @@
-The Zookeeper and BookKeeper jars included in this server/lib directory were
-created off the zookeeper Apache trunk at revision 947756. They have new 
-features that haven't been put into a release version yet so just putting it
-here temporarily.
