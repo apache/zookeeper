@@ -99,7 +99,7 @@
     <property name="contrib.dir" value="${src.dir}/contrib"/>
     <property name="recipes.dir" value="${src.dir}/recipes"/>
 
-    <property name="ivy.version" value="2.1.0"/>
+    <property name="ivy.version" value="2.2.0"/>
     <property name="ivy.url"
               value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
     <property name="ivy.home" value="${user.home}/.ant" />
@@ -561,13 +561,31 @@
         </jar>
     </target>
 
+    <!-- ====================================================== -->
+    <!-- Make zookeeper-test.jar                                -->
+    <!-- ====================================================== -->
+    <target name="test-jar" depends="compile-test">
+        <jar jarfile="${build.dir}/${final.name}-test.jar">
+            <fileset file="LICENSE.txt" />
+            <fileset dir="${test.java.classes}"/>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${build.time}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
+                <attribute name="Implementation-Version" value="${revision}"/> 
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            </manifest>
+        </jar>
+    </target>
+
 	<!-- ================================================================== -->
     <!-- D I S T R I B U T I O N                                            -->
     <!-- ================================================================== -->
     <!--                                                                    -->
     <!-- ================================================================== -->
     <target name="package"
-            depends="jar,bin-jar,src-jar,javadoc-jar,api-report,create-cppunit-configure,compile-test"
+            depends="jar,bin-jar,src-jar,javadoc-jar,test-jar,api-report,create-cppunit-configure,compile-test"
             description="Build distribution">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
@@ -624,6 +642,21 @@
       </ivy:makepom>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
+      
+      
+      <copy file="${build.dir}/${final.name}-test.jar"
+            tofile="${dist.maven.dir}/${final.name}-test.jar"/> 
+      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="md5"/>
+      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
+                   pomfile="${dist.maven.dir}/${final.name}-test.pom"
+		   artifactName="zookeeper-test">
+        <mapping conf="default" scope="compile"/>
+        <mapping conf="test" scope="test"/>
+      </ivy:makepom>
+      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="sha1"/>
+
 
       <copy todir="${dist.dir}/bin">
         <fileset dir="bin"/>
