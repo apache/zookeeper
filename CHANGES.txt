@@ -258,6 +258,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-980. allow configuration parameters for log4j.properties (phunt via mahadev)
 
+  ZOOKEEPER-ZOOKEEPER-1042. Generate zookeeper test jar for maven installation (ivan kelly via breed)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
