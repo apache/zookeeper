@@ -279,7 +279,7 @@ public:
         const char EXPECTED[][5]={"\0\0\0\0","\1\1\1\1","\2\2\2\2","\3\3\3\3"};
         const int EXPECTED_ADDR_COUNT=COUNTOF(EXPECTED);
 
-        const int RAND_SEQ[]={0,1,2,3,1,3,2,0,-1};
+        const int RAND_SEQ[]={0,1,1,-1};
         const int RAND_SIZE=COUNTOF(RAND_SEQ);
         Mock_random randomMock;
         randomMock.randomReturns.assign(RAND_SEQ,RAND_SEQ+RAND_SIZE-1);

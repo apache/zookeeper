@@ -605,13 +605,12 @@ int getaddrs(zhandle_t *zh)
     if(!disable_conn_permute){
         setup_random();
         /* Permute */
-        for(i = 0; i < zh->addrs_count; i++) {
-            struct sockaddr_storage *s1 = zh->addrs + random()%zh->addrs_count;
-            struct sockaddr_storage *s2 = zh->addrs + random()%zh->addrs_count;
-            if (s1 != s2) {
-                struct sockaddr_storage t = *s1;
-                *s1 = *s2;
-                *s2 = t;
+        for (i = zh->addrs_count - 1; i > 0; --i) {
+            long int j = random()%(i+1);
+            if (i != j) {
+                struct sockaddr_storage t = zh->addrs[i];
+                zh->addrs[i] = zh->addrs[j];
+                zh->addrs[j] = t;
             }
         }
     }
