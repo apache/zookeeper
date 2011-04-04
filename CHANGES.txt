@@ -194,6 +194,8 @@ BUGFIXES:
 
   ZOOKEEPER-880. QuorumCnxManager$SendWorker grows without bounds (vishal via breed)
 
+  ZOOKEEPER-1018. The connection permutation in get_addrs uses a weak and inefficient shuffle (Stephen Tyree via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
