@@ -70,7 +70,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
     final HashMap<InetAddress, Set<NIOServerCnxn>> ipMap =
         new HashMap<InetAddress, Set<NIOServerCnxn>>( );
 
-    int maxClientCnxns = 10;
+    int maxClientCnxns = 60;
 
 
     /**

@@ -54,7 +54,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     HashMap<InetAddress, Set<NettyServerCnxn>> ipMap =
         new HashMap<InetAddress, Set<NettyServerCnxn>>( );
     InetSocketAddress localAddress;
-    int maxClientCnxns = 10;
+    int maxClientCnxns = 60;
     
     /**
      * This is an inner class since we need to extend SimpleChannelHandler, but
