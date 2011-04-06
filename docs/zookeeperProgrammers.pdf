@@ -1495,8 +1495,8 @@ endobj
 180 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F3
-/BaseFont /Helvetica-Bold
+/Name /F1
+/BaseFont /Helvetica
 /Encoding /WinAnsiEncoding >>
 endobj
 181 0 obj
@@ -1509,22 +1509,22 @@ endobj
 182 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F6
-/BaseFont /Times-Italic
+/Name /F4
+/BaseFont /Helvetica-BoldOblique
 /Encoding /WinAnsiEncoding >>
 endobj
 183 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F1
-/BaseFont /Helvetica
+/Name /F3
+/BaseFont /Helvetica-Bold
 /Encoding /WinAnsiEncoding >>
 endobj
 184 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F4
-/BaseFont /Helvetica-BoldOblique
+/Name /F2
+/BaseFont /Helvetica-Oblique
 /Encoding /WinAnsiEncoding >>
 endobj
 185 0 obj
@@ -1537,8 +1537,8 @@ endobj
 186 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F2
-/BaseFont /Helvetica-Oblique
+/Name /F6
+/BaseFont /Times-Italic
 /Encoding /WinAnsiEncoding >>
 endobj
 187 0 obj
@@ -1562,7 +1562,7 @@ endobj
 endobj
 3 0 obj
 << 
-/Font << /F3 180 0 R /F5 181 0 R /F1 183 0 R /F6 182 0 R /F4 184 0 R /F9 185 0 R /F2 186 0 R /F7 187 0 R >> 
+/Font << /F1 180 0 R /F5 181 0 R /F4 182 0 R /F3 183 0 R /F2 184 0 R /F9 185 0 R /F6 186 0 R /F7 187 0 R >> 
 /ProcSet [ /PDF /ImageC /Text ] /XObject <</Im1 90 0 R 
  >>
 >> 
@@ -1959,12 +1959,12 @@ xref
 0000126672 00000 n 
 0000127010 00000 n 
 0000127369 00000 n 
-0000127483 00000 n 
-0000127594 00000 n 
-0000127706 00000 n 
-0000127815 00000 n 
-0000127936 00000 n 
-0000128043 00000 n 
+0000127478 00000 n 
+0000127589 00000 n 
+0000127710 00000 n 
+0000127824 00000 n 
+0000127941 00000 n 
+0000128048 00000 n 
 0000128160 00000 n 
 trailer
 <<
