@@ -245,8 +245,8 @@ endobj
 40 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F3
-/BaseFont /Helvetica-Bold
+/Name /F1
+/BaseFont /Helvetica
 /Encoding /WinAnsiEncoding >>
 endobj
 41 0 obj
@@ -259,22 +259,22 @@ endobj
 42 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F1
-/BaseFont /Helvetica
+/Name /F3
+/BaseFont /Helvetica-Bold
 /Encoding /WinAnsiEncoding >>
 endobj
 43 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F9
-/BaseFont /Courier
+/Name /F2
+/BaseFont /Helvetica-Oblique
 /Encoding /WinAnsiEncoding >>
 endobj
 44 0 obj
 << /Type /Font
 /Subtype /Type1
-/Name /F2
-/BaseFont /Helvetica-Oblique
+/Name /F9
+/BaseFont /Courier
 /Encoding /WinAnsiEncoding >>
 endobj
 45 0 obj
@@ -298,7 +298,7 @@ endobj
 endobj
 3 0 obj
 << 
-/Font << /F3 40 0 R /F5 41 0 R /F1 42 0 R /F9 43 0 R /F2 44 0 R /F7 45 0 R >> 
+/Font << /F1 40 0 R /F5 41 0 R /F3 42 0 R /F2 43 0 R /F9 44 0 R /F7 45 0 R >> 
 /ProcSet [ /PDF /ImageC /Text ] >> 
 endobj
 9 0 obj
@@ -391,10 +391,10 @@ xref
 0000008934 00000 n 
 0000009168 00000 n 
 0000009312 00000 n 
-0000009425 00000 n 
-0000009535 00000 n 
+0000009420 00000 n 
+0000009530 00000 n 
 0000009643 00000 n 
-0000009749 00000 n 
+0000009759 00000 n 
 0000009865 00000 n 
 trailer
 <<
