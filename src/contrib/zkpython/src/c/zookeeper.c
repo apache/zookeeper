@@ -1143,14 +1143,14 @@ static PyObject *pyzoo_set2(PyObject *self, PyObject *args)
     return NULL;
   }
   CHECK_ZHANDLE(zkhid);
-  struct Stat *stat = NULL;
-  int err = zoo_set2(zhandles[zkhid], path, buffer, buflen, version, stat);
+  struct Stat stat;
+  int err = zoo_set2(zhandles[zkhid], path, buffer, buflen, version, &stat);
   if (err != ZOK) {
     PyErr_SetString(err_to_exception(err), zerror(err));
     return NULL;
   }
 
-  return build_stat(stat);
+  return build_stat(&stat);
 }
 
 /* As per ZK documentation, datanodes are limited to 1Mb. Why not do a
