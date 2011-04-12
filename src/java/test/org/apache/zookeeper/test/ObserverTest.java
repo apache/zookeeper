@@ -22,7 +22,8 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.PortAssignment;
@@ -38,7 +39,7 @@ import org.junit.Test;
 
 public class ObserverTest extends QuorumPeerTestBase implements Watcher{
     protected static final Logger LOG =
-        Logger.getLogger(ObserverTest.class);    
+        LoggerFactory.getLogger(ObserverTest.class);    
       
     CountDownLatch latch;
     ZooKeeper zk;

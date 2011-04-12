@@ -35,7 +35,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
@@ -65,7 +66,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected static final Logger LOG;
     
     static {
-        LOG = Logger.getLogger(ZooKeeperServer.class);
+        LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
         
         Environment.logEnv("Server environment:", LOG);
     }
@@ -260,7 +261,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         try {
             txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts());
         } catch (IOException e) {
-            LOG.fatal("Severe unrecoverable error, exiting", e);
+            LOG.error("Severe unrecoverable error, exiting", e);
             // This is a severe error that we cannot recover from,
             // so we need to exit
             System.exit(10);

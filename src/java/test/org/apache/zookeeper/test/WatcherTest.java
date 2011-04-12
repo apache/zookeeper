@@ -23,7 +23,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -41,7 +42,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class WatcherTest extends ClientBase {
-    protected static final Logger LOG = Logger.getLogger(WatcherTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(WatcherTest.class);
 
     private final class MyStatCallback implements StatCallback {
         int rc;

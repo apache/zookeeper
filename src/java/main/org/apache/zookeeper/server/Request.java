@@ -22,7 +22,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
@@ -34,7 +35,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * onto the request as it is processed.
  */
 public class Request {
-    private static final Logger LOG = Logger.getLogger(Request.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Request.class);
 
     public final static Request requestOfDeath = new Request(null, 0, 0, 0,
             null, null);

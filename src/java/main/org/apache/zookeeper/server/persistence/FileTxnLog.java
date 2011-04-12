@@ -40,7 +40,8 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
@@ -97,7 +98,7 @@ public class FileTxnLog implements TxnLog {
     public final static int VERSION = 2;
 
     static {
-        LOG = Logger.getLogger(FileTxnLog.class);
+        LOG = LoggerFactory.getLogger(FileTxnLog.class);
 
         forceSync =
             !System.getProperty("zookeeper.forceSync", "yes").equals("no");

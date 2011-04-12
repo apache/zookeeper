@@ -272,6 +272,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1030: Increase default for maxClientCnxns
   (Todd Lipcon via breed/mahadev/phunt)
 
+  ZOOKEEPER-850: Switch from log4j to slf4j (Olaf Krische via michim)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)

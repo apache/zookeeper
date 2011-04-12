@@ -22,13 +22,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.jute.BinaryOutputArchive;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Test;
 
 public class SerializationPerfTest extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(SerializationPerfTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(SerializationPerfTest.class);
 
     private static class NullOutputStream extends OutputStream {
         public void write(int b) {

@@ -33,7 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.data.StatPersistedV1;
@@ -55,7 +56,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * for upgrading.           
  */
 public class UpgradeSnapShotV1 implements UpgradeSnapShot {
-    private static final Logger LOG = Logger.getLogger(UpgradeSnapShotV1.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UpgradeSnapShotV1.class);
     
     ConcurrentHashMap<Long, Integer> sessionsWithTimeouts = 
         new ConcurrentHashMap<Long, Integer>();

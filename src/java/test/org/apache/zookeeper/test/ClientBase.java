@@ -38,8 +38,8 @@ import java.util.concurrent.TimeoutException;
 
 import javax.management.MBeanServerConnection;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.Priority;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -60,7 +60,7 @@ import com.j2speed.accessor.FieldAccessor;
 import com.sun.management.UnixOperatingSystemMXBean;
 
 public abstract class ClientBase extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(ClientBase.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(ClientBase.class);
 
     public static int CONNECTION_TIMEOUT = 30000;
     static final File BASETEST =
@@ -578,15 +578,13 @@ public abstract class ClientBase extends ZKTestCase {
         }
 
         // verify all the servers reporting same number of nodes
+        String logmsg = "node count not consistent{} {}";
         for (int i = 1; i < parts.length; i++) {
-            int priority = Priority.INFO_INT;
-            if (counts[i-1] == counts[i]) {
-                priority = Priority.INFO_INT;
+            if (counts[i-1] != counts[i]) {            	
+                LOG.error(logmsg, Integer.valueOf(counts[i-1]), Integer.valueOf(counts[i]));
             } else {
-                priority = Priority.ERROR_INT;
+                LOG.info(logmsg, Integer.valueOf(counts[i-1]), Integer.valueOf(counts[i]));
             }
-            LOG.log(Priority.toPriority(priority),
-                    "node count not consistent" + counts[i-1] + " " + counts[i]);
         }
     }
 }

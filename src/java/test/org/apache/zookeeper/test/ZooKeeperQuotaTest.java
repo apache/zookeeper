@@ -20,7 +20,8 @@ package org.apache.zookeeper.test;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Quotas;
@@ -33,7 +34,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ZooKeeperQuotaTest extends ClientBase {
-    private static final Logger LOG = Logger.getLogger(
+    private static final Logger LOG = LoggerFactory.getLogger(
             ZooKeeperQuotaTest.class);
 
     @Test

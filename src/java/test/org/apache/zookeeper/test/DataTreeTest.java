@@ -18,7 +18,8 @@
 
 package org.apache.zookeeper.test;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
@@ -30,7 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class DataTreeTest extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(DataTreeTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
 
     private DataTree dt;
 

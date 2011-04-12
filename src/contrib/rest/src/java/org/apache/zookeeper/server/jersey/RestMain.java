@@ -23,7 +23,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.jersey.cfg.Credentials;
 import org.apache.zookeeper.server.jersey.cfg.Endpoint;
 import org.apache.zookeeper.server.jersey.cfg.RestCfg;
@@ -39,7 +40,7 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
  */
 public class RestMain {
 
-   private static Logger LOG = Logger.getLogger(RestMain.class);
+   private static Logger LOG = LoggerFactory.getLogger(RestMain.class);
 
    private GrizzlyWebServer gws;
    private RestCfg cfg;

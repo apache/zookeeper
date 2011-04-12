@@ -30,7 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.KeeperException.Code;
@@ -59,7 +60,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
 public class DataTreeV1 {
-    private static final Logger LOG = Logger.getLogger(DataTreeV1.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataTreeV1.class);
 
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the

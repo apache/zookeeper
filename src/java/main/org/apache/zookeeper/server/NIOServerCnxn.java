@@ -39,7 +39,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.WatchedEvent;
@@ -57,7 +58,7 @@ import com.sun.management.UnixOperatingSystemMXBean;
  * client, but only one thread doing the communication.
  */
 public class NIOServerCnxn extends ServerCnxn {
-    static final Logger LOG = Logger.getLogger(NIOServerCnxn.class);
+    static final Logger LOG = LoggerFactory.getLogger(NIOServerCnxn.class);
 
     NIOServerCnxnFactory factory;
 
@@ -340,7 +341,7 @@ public class NIOServerCnxn extends ServerCnxn {
             // expecting close to log session closure
             close();
         } catch (EndOfStreamException e) {
-            LOG.warn(e); // tell user why
+            LOG.warn("caught end of stream exception",e); // tell user why
 
             // expecting close to log session closure
             close();

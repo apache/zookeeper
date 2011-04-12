@@ -20,7 +20,8 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -35,7 +36,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  */
 public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     private static final Logger LOG =
-        Logger.getLogger(ObserverZooKeeperServer.class);        
+        LoggerFactory.getLogger(ObserverZooKeeperServer.class);        
     
     /*
      * Request processors

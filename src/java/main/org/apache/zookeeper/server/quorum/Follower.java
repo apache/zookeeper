@@ -68,7 +68,7 @@ public class Follower extends Learner{
                 //this should never happen but is just a safety check
                 long lastLoggedZxid = self.getLastLoggedZxid();
                 if ((newLeaderZxid >> 32L) < (lastLoggedZxid >> 32L)) {
-                    LOG.fatal("Leader epoch " + Long.toHexString(newLeaderZxid >> 32L)
+                    LOG.error("Leader epoch " + Long.toHexString(newLeaderZxid >> 32L)
                             + " is less than our epoch " + Long.toHexString(lastLoggedZxid >> 32L));
                     throw new IOException("Error: Epoch of leader is lower");
                 }

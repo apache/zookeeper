@@ -38,7 +38,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.jersey.ZooKeeperService;
 import org.apache.zookeeper.server.jersey.jaxb.ZError;
 import org.apache.zookeeper.server.jersey.jaxb.ZSession;
@@ -48,7 +49,7 @@ import com.sun.jersey.api.json.JSONWithPadding;
 @Path("sessions/v1/{session: .*}")
 public class SessionsResource {
 
-    private static Logger LOG = Logger.getLogger(SessionsResource.class);
+    private static Logger LOG = LoggerFactory.getLogger(SessionsResource.class);
 
     private String contextPath;
 

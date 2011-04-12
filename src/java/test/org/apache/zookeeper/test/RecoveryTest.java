@@ -24,7 +24,8 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -41,7 +42,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class RecoveryTest extends ZKTestCase implements Watcher {
-    protected static final Logger LOG = Logger.getLogger(RecoveryTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(RecoveryTest.class);
 
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();

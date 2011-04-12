@@ -18,7 +18,8 @@
 
 package org.apache.zookeeper;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.internal.runners.statements.InvokeMethod;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
@@ -30,7 +31,7 @@ import org.junit.runners.model.Statement;
  * starts and when it finishes.
  */
 public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
-    private static final Logger LOG = Logger.getLogger(JUnit4ZKTestRunner.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JUnit4ZKTestRunner.class);
 
     public JUnit4ZKTestRunner(Class<?> klass) throws InitializationError {
         super(klass);

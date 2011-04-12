@@ -32,10 +32,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable {
-    private static final Logger LOG = Logger.getLogger(NIOServerCnxnFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NIOServerCnxnFactory.class);
 
     static {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {

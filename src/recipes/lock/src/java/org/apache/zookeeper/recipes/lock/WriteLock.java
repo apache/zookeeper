@@ -17,7 +17,8 @@
  */
 package org.apache.zookeeper.recipes.lock;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -40,7 +41,7 @@ import java.util.TreeSet;
  *
  */
 public class WriteLock extends ProtocolSupport {
-    private static final Logger LOG = Logger.getLogger(WriteLock.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WriteLock.class);
 
     private final String dir;
     private String id;

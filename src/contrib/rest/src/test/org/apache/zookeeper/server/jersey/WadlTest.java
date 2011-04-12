@@ -18,7 +18,8 @@
 
 package org.apache.zookeeper.server.jersey;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Test;
 
 import com.sun.jersey.api.client.WebResource;
@@ -30,7 +31,7 @@ import com.sun.jersey.core.header.MediaTypes;
  *
  */
 public class WadlTest extends Base {
-    protected static final Logger LOG = Logger.getLogger(WadlTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(WadlTest.class);
 
     @Test
     public void testApplicationWadl() {

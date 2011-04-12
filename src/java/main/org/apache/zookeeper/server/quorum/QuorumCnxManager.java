@@ -35,7 +35,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Date;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements a connection manager for leader election using TCP. It
@@ -58,7 +59,7 @@ import org.apache.log4j.Logger;
  */
 
 public class QuorumCnxManager {
-    private static final Logger LOG = Logger.getLogger(QuorumCnxManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumCnxManager.class);
 
     /*
      * Maximum capacity of thread queues
@@ -515,7 +516,7 @@ public class QuorumCnxManager {
             }
             LOG.info("Leaving listener");
             if (!shutdown) {
-                LOG.fatal("As I'm leaving the listener thread, "
+                LOG.error("As I'm leaving the listener thread, "
                         + "I won't be able to participate in leader "
                         + "election any longer: "
                         + self.quorumPeers.get(self.getId()).electionAddr);
@@ -621,7 +622,7 @@ public class QuorumCnxManager {
                 b.position(0);
                 b.get(msgBytes);
             } catch (BufferUnderflowException be) {
-                LOG.fatal("BufferUnderflowException ", be);
+                LOG.error("BufferUnderflowException ", be);
                 return;
             }
             dout.writeInt(b.capacity());

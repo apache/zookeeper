@@ -26,7 +26,8 @@ import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -36,7 +37,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class HierarchicalQuorumTest extends ClientBase {
-    private static final Logger LOG = Logger.getLogger(QuorumBase.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumBase.class);
 
     File s1dir, s2dir, s3dir, s4dir, s5dir;
     QuorumPeer s1, s2, s3, s4, s5;

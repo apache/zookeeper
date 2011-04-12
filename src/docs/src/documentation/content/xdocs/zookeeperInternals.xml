@@ -396,28 +396,35 @@ hierarchy of groups.
 <section id="sc_logging">
 
 <title>Logging</title>
-
 <para>
-ZooKeeper uses 
-<ulink url="http://logging.apache.org/log4j">log4j</ulink>
-version 1.2 as its logging infrastructure. For information on configuring log4j for
+Zookeeper uses 
+<ulink url="http://www.slf4j.org/index.html">slf4j</ulink> as an abstraction layer for logging. 
+<ulink url="http://logging.apache.org/log4j">log4j</ulink> in version 1.2 is chosen as the final logging implementation for now.
+For better embedding support, it is planned in the future to leave the decision of choosing the final logging implementation to the end user.
+Therefore, always use the slf4j api to write log statements in the code, but configure log4j for how to log at runtime.
+Note that slf4j has no FATAL level, former messages at FATAL level have been moved to ERROR level. 
+For information on configuring log4j for
 ZooKeeper, see the <ulink url="zookeeperAdmin.html#sc_logging">Logging</ulink> section 
 of the <ulink url="zookeeperAdmin.html">ZooKeeper Administrator's Guide.</ulink>
+
 </para>
 
 <section id="sc_developerGuidelines"><title>Developer Guidelines</title>
 
-<para>Please follow these guidelines when submitting code. Patch reviewers will look for the following:</para>
+<para>Please follow the  
+<ulink url="http://www.slf4j.org/manual.html">slf4j manual</ulink> when creating log statements within code.
+Also read the
+<ulink url="http://www.slf4j.org/faq.html#logging_performance">FAQ on performance</ulink>
+, when creating log statements. Patch reviewers will look for the following:</para>
 <section id="sc_rightLevel"><title>Logging at the Right Level</title>
 <para>
-There are <ulink url="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html#FATAL">6 levels of logging in log4j</ulink>. 
+There are several levels of logging in slf4j. 
 It's important to pick the right one. In order of higher to lower severity:</para>
 <orderedlist>
-   <listitem><para> FATAL level designates very severe error events that will presumably lead the application to abort</para></listitem>
    <listitem><para>ERROR level designates error events that might still allow the application to continue running.</para></listitem>
    <listitem><para>WARN level designates potentially harmful situations.</para></listitem>
    <listitem><para>INFO level designates informational messages that highlight the progress of the application at coarse-grained level.</para></listitem>
-   <listitem><para>EBUG Level designates fine-grained informational events that are most useful to debug an application.</para></listitem>
+   <listitem><para>DEBUG Level designates fine-grained informational events that are most useful to debug an application.</para></listitem>
    <listitem><para>TRACE Level designates finer-grained informational events than the DEBUG.</para></listitem>
 </orderedlist>
 
@@ -428,35 +435,31 @@ severity and higher (more severe) are output to the log.</para>
 
 </section>
 
-<section id="sc_log4jIdioms"><title>Use of Standard log4j Idioms</title>
+<section id="sc_slf4jIdioms"><title>Use of Standard slf4j Idioms</title>
 
 <para><emphasis>Static Message Logging</emphasis></para>
 <programlisting>
 LOG.debug("process completed successfully!");
 </programlisting>
 
-<para>However when creating a message from a number of components (string 
-concatenation), the log call should be wrapped with a "isXEnabled()" call. this 
-eliminates the string concatenation overhead when debug level logging is not enabled.
+<para>
+However when creating parameterized messages are required, use formatting anchors.
 </para>
 
 <programlisting>
-if (LOG.isDebugEnabled()) {
-    LOG.debug("got " + count + " messages in " + time + " minutes");
-}
+LOG.debug("got {} messages in {} minutes",new Object[]{count,time});    
 </programlisting>
+
 
 <para><emphasis>Naming</emphasis></para>
 
 <para>
-Loggers should be named after the class in which they are used. (See the 
-<ulink url="http://logging.apache.org/log4j/1.2/faq.html#2.4">log4j faq</ulink> 
-for reasons why this is a good idea.)
+Loggers should be named after the class in which they are used.
 </para>
 
 <programlisting>
 public class Foo {
-    private static final Logger LOG = Logger.getLogger(Foo.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Foo.class);
     ....
     public Foo() {
        LOG.info("constructing Foo");

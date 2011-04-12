@@ -25,7 +25,8 @@ import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -47,7 +48,7 @@ import org.junit.Test;
 public class AsyncTest extends ZKTestCase
     implements StringCallback, VoidCallback, DataCallback
 {
-    private static final Logger LOG = Logger.getLogger(AsyncTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AsyncTest.class);
 
     private QuorumBase qb = new QuorumBase();
 

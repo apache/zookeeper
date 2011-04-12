@@ -21,7 +21,8 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.io.RandomAccessFile;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -41,7 +42,7 @@ import org.junit.Test;
  */
 public class InvalidSnapshotTest extends ZKTestCase implements Watcher {
     private static final Logger LOG =
-        Logger.getLogger(InvalidSnapshotTest.class);
+        LoggerFactory.getLogger(InvalidSnapshotTest.class);
 
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();

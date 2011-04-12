@@ -34,11 +34,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import org.apache.zookeeper.graph.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GraphData extends JsonServlet
 {
-    private static final Logger LOG = Logger.getLogger(GraphData.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GraphData.class);
     private static final int DEFAULT_PERIOD = 1000;
 
     private LogSource source = null;

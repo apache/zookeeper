@@ -20,14 +20,15 @@ package org.apache.zookeeper.test;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class FourLetterWordsQuorumTest extends QuorumBase {
     protected static final Logger LOG =
-        Logger.getLogger(FourLetterWordsQuorumTest.class);
+        LoggerFactory.getLogger(FourLetterWordsQuorumTest.class);
 
     /** Test the various four letter words */
     @Test

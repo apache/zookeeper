@@ -29,14 +29,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper.States;
 
 public class ClientCnxnSocketNIO extends ClientCnxnSocket {
-    private static final Logger LOG = Logger
+    private static final Logger LOG = LoggerFactory
             .getLogger(ClientCnxnSocketNIO.class);
 
     private final Selector selector = Selector.open();

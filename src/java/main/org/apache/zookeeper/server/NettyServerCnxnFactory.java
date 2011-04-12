@@ -28,7 +28,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -45,7 +46,7 @@ import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
-    Logger LOG = Logger.getLogger(NettyServerCnxnFactory.class);
+    Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
 
     ServerBootstrap bootstrap;
     Channel parentChannel;

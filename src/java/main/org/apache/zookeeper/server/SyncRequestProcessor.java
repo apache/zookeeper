@@ -24,7 +24,8 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -33,7 +34,7 @@ import org.apache.log4j.Logger;
  * until its log has been synced to disk.
  */
 public class SyncRequestProcessor extends Thread implements RequestProcessor {
-    private static final Logger LOG = Logger.getLogger(SyncRequestProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
     private final ZooKeeperServer zks;
     private final LinkedBlockingQueue<Request> queuedRequests =
         new LinkedBlockingQueue<Request>();
@@ -145,7 +146,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                 }
             }
         } catch (Throwable t) {
-            LOG.fatal("Severe unrecoverable error, exiting", t);
+            LOG.error("Severe unrecoverable error, exiting", t);
             System.exit(11);
         }
         LOG.info("SyncRequestProcessor exited!");

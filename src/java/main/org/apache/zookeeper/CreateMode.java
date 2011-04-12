@@ -17,7 +17,8 @@
  */
 package org.apache.zookeeper;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 
 /***
@@ -44,7 +45,7 @@ public enum CreateMode {
      */
     EPHEMERAL_SEQUENTIAL (3, true, true);
 
-    private static final Logger LOG = Logger.getLogger(CreateMode.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CreateMode.class);
 
     private boolean ephemeral;
     private boolean sequential;

@@ -23,7 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
@@ -40,7 +41,7 @@ import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 
 public class SerializeUtils {
-    private static final Logger LOG = Logger.getLogger(SerializeUtils.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SerializeUtils.class);
     
     public static Record deserializeTxn(InputArchive ia, TxnHeader hdr)
             throws IOException {

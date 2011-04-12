@@ -17,13 +17,14 @@
  */
 
 package org.apache.zookeeper.test;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class QuorumHammerTest extends QuorumBase {
-    protected static final Logger LOG = Logger.getLogger(QuorumHammerTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(QuorumHammerTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
     protected final QuorumBase qb = new QuorumBase();

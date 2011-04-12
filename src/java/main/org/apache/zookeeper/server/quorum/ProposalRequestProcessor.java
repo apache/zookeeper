@@ -18,7 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SyncRequestProcessor;
@@ -30,7 +31,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
  */
 public class ProposalRequestProcessor implements RequestProcessor {
     private static final Logger LOG =
-        Logger.getLogger(ProposalRequestProcessor.class);
+        LoggerFactory.getLogger(ProposalRequestProcessor.class);
 
     LeaderZooKeeperServer zks;
     

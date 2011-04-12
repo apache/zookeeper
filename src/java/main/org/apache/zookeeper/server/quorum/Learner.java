@@ -37,7 +37,8 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooTrace;
@@ -73,7 +74,7 @@ public class Learner {
     protected InputArchive leaderIs;
     protected OutputArchive leaderOs;    
     
-    protected static final Logger LOG = Logger.getLogger(Learner.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(Learner.class);
 
     static final private boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
     static {
@@ -307,14 +308,14 @@ public class Learner {
                 boolean truncated=zk.getZKDatabase().truncateLog(qp.getZxid());
                 if (!truncated) {
                     // not able to truncate the log
-                    LOG.fatal("Not able to truncate the log "
+                    LOG.error("Not able to truncate the log "
                             + Long.toHexString(qp.getZxid()));
                     System.exit(13);
                 }
 
             }
             else {
-                LOG.fatal("Got unexpected packet from leader "
+                LOG.error("Got unexpected packet from leader "
                         + qp.getType() + " exiting ... " );
                 System.exit(13);
 

@@ -29,7 +29,8 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.net.Socket;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager;
@@ -42,7 +43,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class CnxManagerTest extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(FLENewEpochTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(FLENewEpochTest.class);
     protected static final int THRESHOLD = 4;
 
     int count;

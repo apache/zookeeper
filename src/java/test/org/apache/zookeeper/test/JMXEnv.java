@@ -36,11 +36,12 @@ import javax.management.remote.JMXServiceURL;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.CommonNames;
 
 public class JMXEnv {
-    protected static final Logger LOG = Logger.getLogger(JMXEnv.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(JMXEnv.class);
 
     private static JMXConnectorServer cs;
     private static JMXConnector cc;

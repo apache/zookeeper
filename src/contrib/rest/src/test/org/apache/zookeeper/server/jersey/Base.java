@@ -22,7 +22,8 @@ import java.io.ByteArrayInputStream;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -39,7 +40,7 @@ import com.sun.jersey.api.client.WebResource;
  * 
  */
 public class Base extends TestCase {
-   protected static final Logger LOG = Logger.getLogger(Base.class);
+   protected static final Logger LOG = LoggerFactory.getLogger(Base.class);
 
    protected static final String CONTEXT_PATH = "/zk";
    protected static final int GRIZZLY_PORT = 10104;
