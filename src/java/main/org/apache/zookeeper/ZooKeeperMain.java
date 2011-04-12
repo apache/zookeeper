@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
@@ -45,7 +46,7 @@ import org.apache.zookeeper.data.Stat;
  *
  */
 public class ZooKeeperMain {
-    private static final Logger LOG = Logger.getLogger(ZooKeeperMain.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
     protected static final Map<String,String> commandMap = new HashMap<String,String>( );
 
     protected MyCommandOptions cl = new MyCommandOptions();

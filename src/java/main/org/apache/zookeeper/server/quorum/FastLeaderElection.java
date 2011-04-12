@@ -26,7 +26,8 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -46,7 +47,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 
 public class FastLeaderElection implements Election {
-    private static final Logger LOG = Logger.getLogger(FastLeaderElection.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FastLeaderElection.class);
 
     /**
      * Determine how much time a process has to wait

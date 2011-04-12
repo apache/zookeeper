@@ -31,7 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -69,7 +70,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
  * The request for the current leader will consist solely of an xid: int xid;
  */
 public class QuorumPeer extends Thread implements QuorumStats.Provider {
-    private static final Logger LOG = Logger.getLogger(QuorumPeer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumPeer.class);
 
     QuorumBean jmxQuorumBean;
     LocalPeerBean jmxLocalPeerBean;
@@ -390,7 +391,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         try {
             zkDb.loadDataBase();
         } catch(IOException ie) {
-            LOG.fatal("Unable to load database on disk", ie);
+            LOG.error("Unable to load database on disk", ie);
             throw new RuntimeException("Unable to run quorum server ", ie);
         }
         cnxnFactory.start();        

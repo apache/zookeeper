@@ -23,7 +23,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -43,7 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TruncateTest extends ZKTestCase {
-	private static final Logger LOG = Logger.getLogger(TruncateTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TruncateTest.class);
     File dataDir1, dataDir2, dataDir3;
     final int baseHostPort = 12233;
     

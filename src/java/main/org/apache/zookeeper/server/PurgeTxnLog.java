@@ -28,7 +28,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
 
@@ -41,7 +42,7 @@ import org.apache.zookeeper.server.persistence.Util;
  * and the corresponding logs.
  */
 public class PurgeTxnLog {
-    private static final Logger LOG = Logger.getLogger(PurgeTxnLog.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PurgeTxnLog.class);
 
     static void printUsage(){
         System.out.println("PurgeTxnLog dataLogDir [snapDir] -n count");

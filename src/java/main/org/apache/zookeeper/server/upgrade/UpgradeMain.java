@@ -21,7 +21,8 @@ package org.apache.zookeeper.server.upgrade;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
@@ -43,7 +44,7 @@ public class UpgradeMain {
     File currentdataDir;
     File currentsnapShotDir;
     
-    private static final Logger LOG = Logger.getLogger(UpgradeMain.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UpgradeMain.class);
     private static final String USAGE = "Usage: UpgradeMain dataDir snapShotDir";
     private static final int LASTVERSION = 1;
     private static final int CURRENTVERSION = FileTxnSnapLog.VERSION;

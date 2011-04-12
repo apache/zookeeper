@@ -28,7 +28,8 @@ import java.util.Enumeration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -42,7 +43,7 @@ import org.junit.Test;
 
 public class ClientPortBindTest extends ZKTestCase implements Watcher {
     protected static final Logger LOG = 
-        Logger.getLogger(ClientPortBindTest.class);
+        LoggerFactory.getLogger(ClientPortBindTest.class);
 
     private volatile CountDownLatch startSignal;
 

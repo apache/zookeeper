@@ -32,7 +32,8 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -227,7 +228,7 @@ public class LENonTerminateTest extends ZKTestCase {
     }
     
     
-    protected static final Logger LOG = Logger.getLogger(FLELostMessageTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(FLELostMessageTest.class);
     
     int count;
     HashMap<Long,QuorumServer> peers;
@@ -324,7 +325,7 @@ public class LENonTerminateTest extends ZKTestCase {
                 try {
                     mockServer();
                 } catch (Exception e) {
-                    LOG.error(e);
+                    LOG.error("exception", e);
                     Assert.fail("Exception when running mocked server " + e);
                 }
             }

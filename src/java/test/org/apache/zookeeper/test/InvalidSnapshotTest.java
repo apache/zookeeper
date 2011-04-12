@@ -23,7 +23,8 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -38,7 +39,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class InvalidSnapshotTest extends ZKTestCase implements Watcher {
-    private final static Logger LOG = Logger.getLogger(UpgradeTest.class);
+    private final static Logger LOG = LoggerFactory.getLogger(UpgradeTest.class);
     private static final String HOSTPORT =
             "127.0.0.1:" + PortAssignment.unique();
 

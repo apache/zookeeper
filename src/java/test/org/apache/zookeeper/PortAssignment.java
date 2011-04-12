@@ -18,11 +18,12 @@
 
 package org.apache.zookeeper;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Assign ports to tests */
 public class PortAssignment {
-    private static final Logger LOG = Logger.getLogger(PortAssignment.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PortAssignment.class);
 
     private static int nextPort = 11221;
 

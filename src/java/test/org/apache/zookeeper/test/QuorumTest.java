@@ -22,7 +22,8 @@ import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -42,7 +43,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class QuorumTest extends QuorumBase {
-    private static final Logger LOG = Logger.getLogger(QuorumTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
     private final QuorumBase qb = new QuorumBase();

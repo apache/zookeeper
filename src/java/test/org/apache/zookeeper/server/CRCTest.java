@@ -35,7 +35,8 @@ import java.util.zip.CheckedInputStream;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -52,7 +53,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class CRCTest extends ZKTestCase implements Watcher {
-    private static final Logger LOG = Logger.getLogger(CRCTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CRCTest.class);
 
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();

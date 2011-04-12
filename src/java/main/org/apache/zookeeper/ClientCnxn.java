@@ -33,7 +33,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
@@ -72,7 +73,7 @@ import org.apache.zookeeper.server.ZooTrace;
  *
  */
 public class ClientCnxn {
-    private static final Logger LOG = Logger.getLogger(ClientCnxn.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientCnxn.class);
 
     /** This controls whether automatic watch resetting is enabled.
      * Clients automatically reset watches during session reconnect, this

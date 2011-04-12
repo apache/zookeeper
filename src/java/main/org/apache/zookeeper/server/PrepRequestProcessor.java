@@ -27,7 +27,8 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -60,7 +61,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * in the queue to be applied when generating a transaction.
  */
 public class PrepRequestProcessor extends Thread implements RequestProcessor {
-    private static final Logger LOG = Logger.getLogger(PrepRequestProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessor.class);
 
     static boolean skipACL;
     static {

@@ -25,7 +25,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
@@ -52,7 +53,7 @@ public class FileTxnSnapLog {
     public final static int VERSION = 2;
     public final static String version = "version-";
     
-    private static final Logger LOG = Logger.getLogger(FileTxnSnapLog.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FileTxnSnapLog.class);
     
     /**
      * This listener helps

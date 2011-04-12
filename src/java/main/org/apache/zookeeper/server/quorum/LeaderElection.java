@@ -31,7 +31,8 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.quorum.Vote;
@@ -40,7 +41,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 public class LeaderElection implements Election  {
-    private static final Logger LOG = Logger.getLogger(LeaderElection.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LeaderElection.class);
     protected static final Random epochGen = new Random();
 
     protected QuorumPeer self;

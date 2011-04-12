@@ -25,7 +25,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
@@ -38,7 +39,7 @@ import org.apache.zookeeper.test.QuorumBase;
  */
 public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     protected static final Logger LOG =
-        Logger.getLogger(QuorumPeerTestBase.class);
+        LoggerFactory.getLogger(QuorumPeerTestBase.class);
     
     public void process(WatchedEvent event) {
         // ignore for this test

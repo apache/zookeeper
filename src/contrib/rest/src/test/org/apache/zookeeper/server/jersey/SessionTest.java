@@ -22,7 +22,8 @@ import java.io.IOException;
 
 import javax.ws.rs.core.MediaType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
@@ -36,7 +37,7 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.WebResource.Builder;
 
 public class SessionTest extends Base {
-    protected static final Logger LOG = Logger.getLogger(SessionTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(SessionTest.class);
 
     private ZSession createSession() {
         return createSession("30");

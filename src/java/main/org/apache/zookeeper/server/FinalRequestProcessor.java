@@ -23,7 +23,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.KeeperException.Code;
@@ -63,7 +64,7 @@ import org.apache.zookeeper.txn.ErrorTxn;
  * outstandingRequests member of ZooKeeperServer.
  */
 public class FinalRequestProcessor implements RequestProcessor {
-    private static final Logger LOG = Logger.getLogger(FinalRequestProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FinalRequestProcessor.class);
 
     ZooKeeperServer zks;
 
@@ -155,7 +156,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug(request);
+                LOG.debug("{}",request);
             }
             switch (request.type) {
             case OpCode.ping: {

@@ -34,12 +34,13 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 import org.apache.zookeeper.graph.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class NumEvents extends JsonServlet
 {
-    private static final Logger LOG = Logger.getLogger(NumEvents.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NumEvents.class);
     private static final int DEFAULT_PERIOD = 1000;
 
     private LogSource source = null;

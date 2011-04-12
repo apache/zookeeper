@@ -34,7 +34,8 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Watcher;
@@ -57,7 +58,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  */
 public class ZKDatabase {
     
-    private static final Logger LOG = Logger.getLogger(ZKDatabase.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZKDatabase.class);
     
     /**
      * make sure on a clear you take care of 

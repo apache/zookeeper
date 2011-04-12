@@ -20,7 +20,8 @@ package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
@@ -32,7 +33,7 @@ import org.junit.Test;
  */
 public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
     protected static final Logger LOG =
-        Logger.getLogger(StandaloneTest.class);    
+        LoggerFactory.getLogger(StandaloneTest.class);    
       
     /**
      * Ensure that a single standalone server comes up when misconfigured

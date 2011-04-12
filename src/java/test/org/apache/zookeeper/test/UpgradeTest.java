@@ -25,7 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -43,7 +44,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class UpgradeTest extends ZKTestCase implements Watcher {
-    private final static Logger LOG = Logger.getLogger(UpgradeTest.class);
+    private final static Logger LOG = LoggerFactory.getLogger(UpgradeTest.class);
 
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final File testData = new File(

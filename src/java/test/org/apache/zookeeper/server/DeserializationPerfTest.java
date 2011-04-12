@@ -24,14 +24,15 @@ import java.io.IOException;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class DeserializationPerfTest extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(DeserializationPerfTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(DeserializationPerfTest.class);
 
     private static void deserializeTree(int depth, int width, int len)
             throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {

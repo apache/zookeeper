@@ -26,7 +26,8 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
@@ -40,7 +41,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FLERestartTest extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(FLETest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(FLETest.class);
 
     static class TestVote {
         TestVote(int id, long leader) {

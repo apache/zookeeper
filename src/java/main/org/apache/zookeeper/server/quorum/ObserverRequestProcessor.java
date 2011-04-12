@@ -20,7 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -33,7 +34,7 @@ import org.apache.zookeeper.server.ZooTrace;
  */
 public class ObserverRequestProcessor extends Thread implements
         RequestProcessor {
-    private static final Logger LOG = Logger.getLogger(ObserverRequestProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ObserverRequestProcessor.class);
 
     ObserverZooKeeperServer zks;
 

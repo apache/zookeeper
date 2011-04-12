@@ -37,7 +37,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class PurgeTxnTest extends ZKTestCase implements  Watcher {
-    //private static final Logger LOG = Logger.getLogger(PurgeTxnTest.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(PurgeTxnTest.class);
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final int CONNECTION_TIMEOUT = 3000;
     /**

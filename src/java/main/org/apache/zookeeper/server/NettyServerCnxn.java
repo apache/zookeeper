@@ -40,7 +40,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.WatchedEvent;
@@ -57,7 +58,7 @@ import org.jboss.netty.channel.MessageEvent;
 import com.sun.management.UnixOperatingSystemMXBean;
 
 public class NettyServerCnxn extends ServerCnxn {
-    Logger LOG = Logger.getLogger(NettyServerCnxn.class);
+    Logger LOG = LoggerFactory.getLogger(NettyServerCnxn.class);
     Channel channel;
     ChannelBuffer queuedBuffer;
     volatile boolean throttled;

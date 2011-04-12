@@ -21,14 +21,15 @@ package org.apache.zookeeper.server.auth;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 
 public class DigestAuthenticationProvider implements AuthenticationProvider {
     private static final Logger LOG =
-        Logger.getLogger(DigestAuthenticationProvider.class);
+        LoggerFactory.getLogger(DigestAuthenticationProvider.class);
 
     /** specify a command line property with key of 
      * "zookeeper.DigestAuthenticationProvider.superDigest"

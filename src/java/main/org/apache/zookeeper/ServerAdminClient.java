@@ -26,12 +26,13 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.StringTokenizer;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.server.ZooTrace;
 
 public class ServerAdminClient {
-    private static final Logger LOG = Logger.getLogger(ServerAdminClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ServerAdminClient.class);
 
     private static long getMask(String mask) {
         long retv = 0;

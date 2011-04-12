@@ -37,7 +37,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.jute.BinaryOutputArchive;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -47,7 +48,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
  * This class has the control logic for the Leader.
  */
 public class Leader {
-    private static final Logger LOG = Logger.getLogger(Leader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Leader.class);
     
     static final private boolean nodelay = System.getProperty("leader.nodelay", "true").equals("true");
     static {

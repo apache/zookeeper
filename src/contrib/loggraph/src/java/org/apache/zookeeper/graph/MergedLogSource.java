@@ -53,10 +53,11 @@ import java.util.Iterator;
 import java.util.Collections;
 import java.util.NoSuchElementException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MergedLogSource implements LogSource {
-    private static final Logger LOG = Logger.getLogger(MergedLogSource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MergedLogSource.class);
     private Vector<LogSource> sources = null;
     private long starttime = 0;
     private long endtime = 0;

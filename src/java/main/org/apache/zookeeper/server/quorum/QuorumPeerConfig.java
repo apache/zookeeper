@@ -31,8 +31,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -42,7 +43,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 
 public class QuorumPeerConfig {
-    private static final Logger LOG = Logger.getLogger(QuorumPeerConfig.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
 
     protected InetSocketAddress clientPortAddress;
     protected String dataDir;
@@ -331,7 +332,7 @@ public class QuorumPeerConfig {
             }
             try {
                 serverId = Long.parseLong(myIdString);
-                MDC.put("myid", serverId);
+                MDC.put("myid", myIdString);
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("serverid " + myIdString
                         + " is not a number");

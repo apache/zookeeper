@@ -22,7 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -38,7 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class ZkDatabaseCorruptionTest extends QuorumBase {
-    protected static final Logger LOG = Logger.getLogger(ZkDatabaseCorruptionTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(ZkDatabaseCorruptionTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
     private final QuorumBase qb = new QuorumBase();

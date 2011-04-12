@@ -28,7 +28,8 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 
@@ -39,7 +40,7 @@ import org.apache.zookeeper.KeeperException.SessionExpiredException;
  * in a given interval.
  */
 public class SessionTrackerImpl extends Thread implements SessionTracker {
-    private static final Logger LOG = Logger.getLogger(SessionTrackerImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SessionTrackerImpl.class);
 
     HashMap<Long, SessionImpl> sessionsById = new HashMap<Long, SessionImpl>();
 

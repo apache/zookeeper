@@ -23,7 +23,8 @@ import java.util.Collection;
 
 import javax.ws.rs.core.MediaType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -46,7 +47,7 @@ import com.sun.jersey.api.client.WebResource.Builder;
  */
 @RunWith(Parameterized.class)
 public class SetTest extends Base {
-    protected static final Logger LOG = Logger.getLogger(SetTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(SetTest.class);
 
     private String accept;
     private String path;

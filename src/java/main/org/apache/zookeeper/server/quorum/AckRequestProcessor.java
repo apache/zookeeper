@@ -18,7 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -29,7 +30,7 @@ import org.apache.zookeeper.server.RequestProcessor;
  * previous stage to the leader as an ACK.
  */
 class AckRequestProcessor implements RequestProcessor {
-    private static final Logger LOG = Logger.getLogger(AckRequestProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AckRequestProcessor.class);
     Leader leader;
 
     AckRequestProcessor(Leader leader) {

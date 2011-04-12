@@ -22,7 +22,8 @@ import java.util.Arrays;
 
 import javax.ws.rs.core.MediaType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.jersey.jaxb.ZPath;
 import org.junit.Test;
@@ -37,7 +38,7 @@ import com.sun.jersey.api.client.WebResource.Builder;
  *
  */
 public class RootTest extends Base {
-    protected static final Logger LOG = Logger.getLogger(RootTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(RootTest.class);
 
     @Test
     public void testCreate() throws Exception {

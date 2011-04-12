@@ -24,7 +24,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -41,7 +42,7 @@ import org.junit.Test;
  */
 public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     protected static final Logger LOG =
-        Logger.getLogger(ZooKeeperServerMainTest.class);
+        LoggerFactory.getLogger(ZooKeeperServerMainTest.class);
 
     public static class MainThread extends Thread {
         final File confFile;

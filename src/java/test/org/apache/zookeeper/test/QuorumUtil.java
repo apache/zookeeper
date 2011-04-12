@@ -28,7 +28,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -48,7 +49,7 @@ public class QuorumUtil {
 
     // TODO refactor QuorumBase to be special case of this
 
-    private static final Logger LOG = Logger.getLogger(QuorumUtil.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumUtil.class);
 
     public class PeerStruct {
         public int id;

@@ -26,7 +26,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.jute.BinaryInputArchive;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.proto.ConnectResponse;
 import org.apache.zookeeper.server.ByteBufferInputStream;
@@ -40,7 +41,7 @@ import org.apache.zookeeper.server.ByteBufferInputStream;
  * 
  */
 abstract class ClientCnxnSocket {
-    private static final Logger LOG = Logger.getLogger(ClientCnxnSocket.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientCnxnSocket.class);
 
     protected boolean initialized;
 

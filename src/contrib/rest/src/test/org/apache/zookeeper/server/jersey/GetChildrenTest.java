@@ -25,7 +25,8 @@ import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.server.jersey.jaxb.ZChildren;
@@ -44,7 +45,7 @@ import com.sun.jersey.api.client.ClientResponse;
  */
 @RunWith(Parameterized.class)
 public class GetChildrenTest extends Base {
-    protected static final Logger LOG = Logger.getLogger(GetChildrenTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(GetChildrenTest.class);
 
     private String accept;
     private String path;

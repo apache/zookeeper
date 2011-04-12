@@ -26,7 +26,8 @@ import java.util.Date;
 
 import javax.management.ObjectName;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
@@ -34,7 +35,7 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
  * Implementation of connection MBean interface.
  */
 public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
-    private static final Logger LOG = Logger.getLogger(ConnectionBean.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ConnectionBean.class);
 
     private final ServerCnxn connection;
     private final Stats stats;

@@ -36,7 +36,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.quorum.Election;
@@ -46,7 +47,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 
 public class AuthFastLeaderElection implements Election {
-    private static final Logger LOG = Logger.getLogger(AuthFastLeaderElection.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthFastLeaderElection.class);
 
     /* Sequence numbers for messages */
     static int sequencer = 0;
