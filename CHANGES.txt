@@ -274,6 +274,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-850: Switch from log4j to slf4j (Olaf Krische via michim)
 
+  ZOOKEEPER-874. FileTxnSnapLog.restore does not call listener (diogo via fpj)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)

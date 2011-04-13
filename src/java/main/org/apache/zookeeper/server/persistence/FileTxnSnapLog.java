@@ -143,6 +143,7 @@ public class FileTxnSnapLog {
                 highestZxid = hdr.getZxid();
             }
             processTransaction(hdr,dt,sessions, itr.getTxn());
+            listener.onTxnLoaded(hdr, itr.getTxn());
             if (!itr.next()) 
                 break;
         }
