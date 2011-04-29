@@ -139,6 +139,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      */
     
     static final long OBSERVER_ID = Long.MAX_VALUE;
+
+    /*
+     * Record leader election time
+     */
+    public long start_fle, end_fle;
     
     /*
      * Default value of peer is participant
@@ -573,7 +578,8 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     @Override
     public void run() {
-        setName("QuorumPeer:" + cnxnFactory.getLocalAddress());
+        setName("QuorumPeer" + "[myid=" + getId() + "]" +
+                cnxnFactory.getLocalAddress());
 
         LOG.debug("Starting quorum peer");
         try {

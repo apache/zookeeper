@@ -313,4 +313,94 @@ public class FLETest extends ZKTestCase {
            Assert.fail("Leader hasn't joined: " + leader);
        }
     }
+
+    /*
+     * Class to verify of the thread has become a follower
+     */
+    class VerifyState extends Thread {
+        volatile private boolean success = false;
+        QuorumPeer peer;
+        public VerifyState(QuorumPeer peer) {
+            this.peer = peer;
+        }
+        public void run() {
+            setName("VerifyState-" + peer.getId());
+            while (true) {
+                if(peer.getPeerState() == ServerState.FOLLOWING) {
+                    LOG.info("I am following");
+                    success = true;
+                    break;
+                } else if (peer.getPeerState() == ServerState.LEADING) {
+                    LOG.info("I am leading");
+                    success = false;
+                    break;
+                }
+                try {
+                    Thread.sleep(250);
+                } catch (Exception e) {
+                    LOG.warn("Sleep failed ", e);
+                }
+            }
+        }
+        public boolean isSuccess() {
+            return success;
+        }
+    }
+
+    /*
+     * For ZOOKEEPER-975 verify that a peer joining an established cluster
+     * does not go in LEADING state.
+     */
+    @Test
+    public void testJoin() throws Exception {
+        int sid;
+        QuorumPeer peer;
+        int waitTime = 10 * 1000;
+        ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
+        for(sid = 0; sid < 3; sid++) {
+            peers.put(Long.valueOf(sid),
+                    new QuorumServer(sid,
+                            new InetSocketAddress(PortAssignment.unique()),
+                    new InetSocketAddress(PortAssignment.unique())));
+            tmpdir[sid] = ClientBase.createTmpDir();
+            port[sid] = PortAssignment.unique();
+        }
+        // start 2 peers and verify if they form the cluster
+        for (sid = 0; sid < 2; sid++) {
+            peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid],
+                                             port[sid], 3, sid, 2000, 2, 2);
+            LOG.info("Starting peer " + peer.getId());
+            peer.start();
+            peerList.add(sid, peer);
+        }
+        peer = peerList.get(0);
+        VerifyState v1 = new VerifyState(peerList.get(0));
+        v1.start();
+        v1.join(waitTime);
+        Assert.assertFalse("Unable to form cluster in " +
+            waitTime + " ms",
+            !v1.isSuccess());
+        // Start 3rd peer and check if it goes in LEADING state
+        peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid],
+                 port[sid], 3, sid, 2000, 2, 2);
+        LOG.info("Starting peer " + peer.getId());
+        peer.start();
+        peerList.add(sid, peer);
+        v1 = new VerifyState(peer);
+        v1.start();
+        v1.join(waitTime);
+        if (v1.isAlive()) {
+               Assert.fail("Peer " + peer.getId() + " failed to join the cluster " +
+                "within " + waitTime + " ms");
+        } else if (!v1.isSuccess()) {
+               Assert.fail("Incorrect LEADING state for peer " + peer.getId());
+        }
+        // cleanup
+        for (int id = 0; id < 3; id++) {
+            peer = peerList.get(id);
+            if (peer != null) {
+                peer.shutdown();
+            }
+        }
+    }
 }

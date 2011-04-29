@@ -201,6 +201,8 @@ BUGFIXES:
   ZOOKEEPER-1028. In python bindings, zookeeper.set2() should return a stat dict but 
   instead returns None. (Chris Medaglia and Ivan Kelly via mahadev)
 
+  ZOOKEEPER-975. new peer goes in LEADING state even if ensemble is online. (vishal via fpj)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

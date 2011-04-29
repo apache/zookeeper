@@ -32,6 +32,7 @@ import java.util.Enumeration;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Date;
 
@@ -64,8 +65,11 @@ public class QuorumCnxManager {
     /*
      * Maximum capacity of thread queues
      */
+    static final int RECV_CAPACITY = 100;
+    // Initialized to 1 to prevent sending
+    // stale notifications to peers
+    static final int SEND_CAPACITY = 1;
 
-    static final int CAPACITY = 100;
     static final int PACKETMAXSIZE = 1024 * 1024; 
     /*
      * Maximum number of attempts to connect to a peer
@@ -101,6 +105,10 @@ public class QuorumCnxManager {
      * Reception queue
      */
     public final ArrayBlockingQueue<Message> recvQueue;
+    /*
+     * Object to synchronize access to recvQueue
+     */
+    private final Object recvQLock = new Object();
 
     /*
      * Shutdown flag
@@ -129,7 +137,7 @@ public class QuorumCnxManager {
     }
 
     public QuorumCnxManager(QuorumPeer self) {
-        this.recvQueue = new ArrayBlockingQueue<Message>(CAPACITY);
+        this.recvQueue = new ArrayBlockingQueue<Message>(RECV_CAPACITY);
         this.queueSendMap = new ConcurrentHashMap<Long, ArrayBlockingQueue<ByteBuffer>>();
         this.senderWorkerMap = new ConcurrentHashMap<Long, SendWorker>();
         this.lastMessageSent = new ConcurrentHashMap<Long, ByteBuffer>();
@@ -196,7 +204,7 @@ public class QuorumCnxManager {
             senderWorkerMap.put(sid, sw);
             if (!queueSendMap.containsKey(sid)) {
                 queueSendMap.put(sid, new ArrayBlockingQueue<ByteBuffer>(
-                        CAPACITY));
+                        SEND_CAPACITY));
             }
             
             sw.start();
@@ -273,7 +281,7 @@ public class QuorumCnxManager {
             
             if (!queueSendMap.containsKey(sid)) {
                 queueSendMap.put(sid, new ArrayBlockingQueue<ByteBuffer>(
-                        CAPACITY));
+                        SEND_CAPACITY));
             }
             
             sw.start();
@@ -293,44 +301,31 @@ public class QuorumCnxManager {
          * If sending message to myself, then simply enqueue it (loopback).
          */
         if (self.getId() == sid) {
-            try {
-                b.position(0);
-                recvQueue.put(new Message(b.duplicate(), sid));
-            } catch (InterruptedException e) {
-                LOG.warn("Exception when loopbacking", e);
-            }
+             b.position(0);
+             addToRecvQueue(new Message(b.duplicate(), sid));
             /*
              * Otherwise send to the corresponding thread to send.
              */
         } else {
-            try {
-                /*
-                 * Start a new connection if doesn't have one already.
-                 */
-                if (!queueSendMap.containsKey(sid)) {
-                    ArrayBlockingQueue<ByteBuffer> bq = new ArrayBlockingQueue<ByteBuffer>(
-                            CAPACITY);
-                    queueSendMap.put(sid, bq);
-                    bq.put(b);
+             /*
+              * Start a new connection if doesn't have one already.
+              */
+             if (!queueSendMap.containsKey(sid)) {
+                 ArrayBlockingQueue<ByteBuffer> bq = new ArrayBlockingQueue<ByteBuffer>(
+                         SEND_CAPACITY);
+                 queueSendMap.put(sid, bq);
+                 addToSendQueue(bq, b);
 
-                } else {
-                    ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
-                    if(bq != null){
-                        if (bq.remainingCapacity() == 0) {
-                            bq.take();
-                        }
-                        bq.put(b);
-                    } else {
-                        LOG.error("No queue for server " + sid);
-                    }
-                }
-
-                connectOne(sid);
+             } else {
+                 ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
+                 if(bq != null){
+                     addToSendQueue(bq, b);
+                 } else {
+                     LOG.error("No queue for server " + sid);
+                 }
+             }
+             connectOne(sid);
                 
-            } catch (InterruptedException e) {
-                LOG.warn("Interrupted while waiting to put message in queue.",
-                        e);
-            }
         }
     }
     
@@ -634,9 +629,26 @@ public class QuorumCnxManager {
         public void run() {
             threadCnt.incrementAndGet();
             try {
-                ByteBuffer b = lastMessageSent.get(sid);
-                if (b != null) {
-                    send(b);
+                /**
+                 * If there is nothing in the queue to send, then we
+                 * send the lastMessage to ensure that the last message
+                 * was received by the peer. The message could be dropped
+                 * in case self or the peer shutdown their connection
+                 * (and exit the thread) prior to reading/processing
+                 * the last message. Duplicate messages are handled correctly
+                 * by the peer.
+                 *
+                 * If the send queue is non-empty, then we have a recent
+                 * message than that stored in lastMessage. To avoid sending
+                 * stale message, we should send the message in the send queue.
+                 */
+                ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
+                if (bq == null || isSendQueueEmpty(bq)) {
+                   ByteBuffer b = lastMessageSent.get(sid);
+                   if (b != null) {
+                       LOG.debug("Attempting to send lastMessage to sid=" + sid);
+                       send(b);
+                   }
                 }
             } catch (IOException e) {
                 LOG.error("Failed to send last message. Shutting down thread.", e);
@@ -651,7 +663,7 @@ public class QuorumCnxManager {
                         ArrayBlockingQueue<ByteBuffer> bq = queueSendMap
                                 .get(sid);
                         if (bq != null) {
-                            b = bq.poll(1000, TimeUnit.MILLISECONDS);
+                            b = pollSendQueue(bq, 1000, TimeUnit.MILLISECONDS);
                         } else {
                             LOG.error("No queue of incoming messages for " +
                                       "server " + sid);
@@ -742,7 +754,7 @@ public class QuorumCnxManager {
                     byte[] msgArray = new byte[length];
                     din.readFully(msgArray, 0, length);
                     ByteBuffer message = ByteBuffer.wrap(msgArray);
-                    recvQueue.put(new Message(message.duplicate(), sid));
+                    addToRecvQueue(new Message(message.duplicate(), sid));
                 }
             } catch (Exception e) {
                 LOG.warn("Connection broken for id " + sid + ", my id = " + 
@@ -755,5 +767,117 @@ public class QuorumCnxManager {
                 }
             }
         }
+    }
+
+    /**
+     * Inserts an element in the specified queue. If the Queue is full, this
+     * method removes an element from the head of the Queue and then inserts
+     * the element at the tail. It can happen that the an element is removed
+     * by another thread in {@link SendWorker#processMessage() processMessage}
+     * method before this method attempts to remove an element from the queue.
+     * This will cause {@link ArrayBlockingQueue#remove() remove} to throw an
+     * exception, which is safe to ignore.
+     *
+     * Unlike {@link #addToRecvQueue(Message) addToRecvQueue} this method does
+     * not need to be synchronized since there is only one thread that inserts
+     * an element in the queue and another thread that reads from the queue.
+     *
+     * @param queue
+     *          Reference to the Queue
+     * @param buffer
+     *          Reference to the buffer to be inserted in the queue
+     */
+    private void addToSendQueue(ArrayBlockingQueue<ByteBuffer> queue,
+          ByteBuffer buffer) {
+        if (queue.remainingCapacity() == 0) {
+            try {
+                queue.remove();
+            } catch (NoSuchElementException ne) {
+                // element could be removed by poll()
+                LOG.debug("Trying to remove from an empty " +
+                        "Queue. Ignoring exception " + ne);
+            }
+        }
+        try {
+            queue.add(buffer);
+        } catch (IllegalStateException ie) {
+            // This should never happen
+            LOG.error("Unable to insert an element in the queue " + ie);
+        }
+    }
+
+    /**
+     * Returns true if queue is empty.
+     * @param queue
+     *          Reference to the queue
+     * @return
+     *      true if the specified queue is empty
+     */
+    private boolean isSendQueueEmpty(ArrayBlockingQueue<ByteBuffer> queue) {
+        return queue.isEmpty();
+    }
+
+    /**
+     * Retrieves and removes buffer at the head of this queue,
+     * waiting up to the specified wait time if necessary for an element to
+     * become available.
+     *
+     * {@link ArrayBlockingQueue#poll(long, java.util.concurrent.TimeUnit)}
+     */
+    private ByteBuffer pollSendQueue(ArrayBlockingQueue<ByteBuffer> queue,
+          long timeout, TimeUnit unit) throws InterruptedException {
+       return queue.poll(timeout, unit);
+    }
+
+    /**
+     * Inserts an element in the {@link #recvQueue}. If the Queue is full, this
+     * methods removes an element from the head of the Queue and then inserts
+     * the element at the tail of the queue.
+     *
+     * This method is synchronized to achieve fairness between two threads that
+     * are trying to insert an element in the queue. Each thread checks if the
+     * queue is full, then removes the element at the head of the queue, and
+     * then inserts an element at the tail. This three-step process is done to
+     * prevent a thread from blocking while inserting an element in the queue.
+     * If we do not synchronize the call to this method, then a thread can grab
+     * a slot in the queue created by the second thread. This can cause the call
+     * to insert by the second thread to fail.
+     * Note that synchronizing this method does not block another thread
+     * from polling the queue since that synchronization is provided by the
+     * queue itself.
+     *
+     * @param msg
+     *          Reference to the message to be inserted in the queue
+     */
+    public void addToRecvQueue(Message msg) {
+        synchronized(recvQLock) {
+            if (recvQueue.remainingCapacity() == 0) {
+                try {
+                    recvQueue.remove();
+                } catch (NoSuchElementException ne) {
+                    // element could be removed by poll()
+                     LOG.debug("Trying to remove from an empty " +
+                         "recvQueue. Ignoring exception " + ne);
+                }
+            }
+            try {
+                recvQueue.add(msg);
+            } catch (IllegalStateException ie) {
+                // This should never happen
+                LOG.error("Unable to insert element in the recvQueue " + ie);
+            }
+        }
+    }
+
+    /**
+     * Retrieves and removes a message at the head of this queue,
+     * waiting up to the specified wait time if necessary for an element to
+     * become available.
+     *
+     * {@link ArrayBlockingQueue#poll(long, java.util.concurrent.TimeUnit)}
+     */
+    public Message pollRecvQueue(long timeout, TimeUnit unit)
+       throws InterruptedException {
+       return recvQueue.poll(timeout, unit);
     }
 }
