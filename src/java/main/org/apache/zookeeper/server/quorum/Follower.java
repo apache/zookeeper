@@ -58,9 +58,14 @@ public class Follower extends Learner{
      * @throws InterruptedException
      */
     void followLeader() throws InterruptedException {
+        self.end_fle = System.currentTimeMillis();
+        LOG.info("FOLLOWING - LEADER ELECTION TOOK - " +
+              (self.end_fle - self.start_fle));
+        self.start_fle = 0;
+        self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
-        try {
-            InetSocketAddress addr = findLeader();
+        try {            
+            InetSocketAddress addr = findLeader();            
             try {
                 connectToLeader(addr);
                 long newLeaderZxid = registerWithLeader(Leader.FOLLOWERINFO);

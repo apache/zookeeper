@@ -270,6 +270,12 @@ public class Leader {
      * @throws InterruptedException
      */
     void lead() throws IOException, InterruptedException {
+        self.end_fle = System.currentTimeMillis();
+        LOG.info("LEADING - LEADER ELECTION TOOK - " +
+              (self.end_fle - self.start_fle));
+        self.start_fle = 0;
+        self.end_fle = 0;
+
         zk.registerJMX(new LeaderBean(this, zk), self.jmxLocalPeerBean);
 
         try {

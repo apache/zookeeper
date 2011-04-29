@@ -112,7 +112,7 @@ public class CnxManagerTest extends ZKTestCase {
                 Message m = null;
                 int numRetries = 1;
                 while((m == null) && (numRetries++ <= THRESHOLD)){
-                    m = cnxManager.recvQueue.poll(3000, TimeUnit.MILLISECONDS);
+                    m = cnxManager.pollRecvQueue(3000, TimeUnit.MILLISECONDS);
                     if(m == null) cnxManager.connectAll();
                 }
 
@@ -123,7 +123,7 @@ public class CnxManagerTest extends ZKTestCase {
 
                 cnxManager.testInitiateConnection(sid);
 
-                m = cnxManager.recvQueue.poll(3000, TimeUnit.MILLISECONDS);
+                m = cnxManager.pollRecvQueue(3000, TimeUnit.MILLISECONDS);
                 if(m == null){
                     failed = true;
                     return;
@@ -155,7 +155,7 @@ public class CnxManagerTest extends ZKTestCase {
         Message m = null;
         int numRetries = 1;
         while((m == null) && (numRetries++ <= THRESHOLD)){
-            m = cnxManager.recvQueue.poll(3000, TimeUnit.MILLISECONDS);
+            m = cnxManager.pollRecvQueue(3000, TimeUnit.MILLISECONDS);
             if(m == null) cnxManager.connectAll();
         }
         
