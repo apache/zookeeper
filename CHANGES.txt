@@ -203,6 +203,9 @@ BUGFIXES:
 
   ZOOKEEPER-975. new peer goes in LEADING state even if ensemble is online. (vishal via fpj)
 
+  ZOOKEEPER-1049. Session expire/close flooding renders heartbeats to delay significantly. 
+  (chang song via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
