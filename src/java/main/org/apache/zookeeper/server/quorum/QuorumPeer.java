@@ -313,8 +313,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                     }
                     packet.setLength(b.length);
                 }
-            } catch (Exception e) {
-                LOG.warn("Unexpected exception in ResponderThread",e);
+            } catch (RuntimeException e) {
+                LOG.warn("Unexpected runtime exception in ResponderThread",e);
+            } catch (IOException e) {
+                LOG.warn("Unexpected IO exception in ResponderThread",e);
             } finally {
                 LOG.warn("QuorumPeer responder thread exited");
             }
