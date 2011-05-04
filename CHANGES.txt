@@ -205,6 +205,9 @@ BUGFIXES:
 
   ZOOKEEPER-1049. Session expire/close flooding renders heartbeats to delay significantly. 
   (chang song via mahadev)
+  
+  ZOOKEEPER-1033. c client should install includes into INCDIR/zookeeper, not INCDIR/c-client-src
+  (Nicholas Harteau via mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
