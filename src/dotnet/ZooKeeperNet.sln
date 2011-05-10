@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet", "SharpKeeper\ZooKeeperNet.csproj", "{5C6774FB-2350-46B2-B1DF-1CCC757C7727}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet", "ZooKeeperNet\ZooKeeperNet.csproj", "{5C6774FB-2350-46B2-B1DF-1CCC757C7727}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet.Tests", "SharpKeeper.Tests\ZooKeeperNet.Tests.csproj", "{F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet.Tests", "ZooKeeperNet.Tests\ZooKeeperNet.Tests.csproj", "{F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet.Recipes", "SharpKeeper.Recipes\ZooKeeperNet.Recipes.csproj", "{9E641549-7F84-45E4-9543-537052494EC6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet.Recipes", "ZooKeeperNet.Recipes\ZooKeeperNet.Recipes.csproj", "{9E641549-7F84-45E4-9543-537052494EC6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNetRecipes.Tests", "SharpKeeperRecipes.Tests\ZooKeeperNetRecipes.Tests.csproj", "{F5808277-10B4-4E3C-A79C-EEB679DA20A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet.Recipes.Tests", "ZooKeeperNet.Recipes.Tests\ZooKeeperNetRecipes.Tests.csproj", "{F5808277-10B4-4E3C-A79C-EEB679DA20A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

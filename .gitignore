@@ -10,7 +10,7 @@ src/java/generated
 src/java/*.iml
 src/java/lib/ivy-*.jar
 src/dotnet/generated
-src/dotnet/SharpKeeper/Generated/*.cs
-src/dotnet/SharpKeeper/_Reshaper
-src/dotnet/SharpKeeper/bin
-src/dotnet/SharpKeeper/obj
+src/dotnet/ZooKeeperNet/Generated/*.cs
+src/dotnet/ZooKeeperNet/_Reshaper
+src/dotnet/ZooKeeperNet/bin
+src/dotnet/ZooKeeperNet/obj
