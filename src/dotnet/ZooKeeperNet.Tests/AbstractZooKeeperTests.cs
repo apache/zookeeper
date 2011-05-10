@@ -26,7 +26,7 @@ namespace ZooKeeperNet.Tests
     {
         static AbstractZooKeeperTests()
         {
-            BasicConfigurator.Configure();   
+            XmlConfigurator.Configure();    
         }
 
         protected static readonly TimeSpan CONNECTION_TIMEOUT = new TimeSpan(0, 0, 0, 0, 10000);

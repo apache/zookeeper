@@ -18,6 +18,7 @@
 ﻿namespace ZooKeeperNet.Tests
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
@@ -148,7 +149,7 @@
 
         private class MyWatcher : CountdownWatcher
         {
-            internal BlockingQueue<WatchedEvent> events = new BlockingQueue<WatchedEvent>(100);
+            internal readonly BlockingCollection<WatchedEvent> events = new BlockingCollection<WatchedEvent>(100);
 
             public override void Process(WatchedEvent @event)
             {
@@ -157,9 +158,9 @@
                 {
                     try
                     {
-                        events.TryEnqueue(@event, TimeSpan.FromMilliseconds(10000d));
+                        events.TryAdd(@event, TimeSpan.FromMilliseconds(10000));
                     }
-                    catch (ThreadInterruptedException e)
+                    catch (ThreadInterruptedException)
                     {
                         LOG.Warn("ignoring interrupt during @event.put");
                     }
@@ -209,7 +210,8 @@
                 }
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    WatchedEvent @event = watchers[i].events.TryDequeue(TimeSpan.FromSeconds(3d));
+                    WatchedEvent @event;
+                    watchers[i].events.TryTake(out @event, TimeSpan.FromSeconds(3d));
                     Assert.AreEqual(name + i, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
@@ -237,7 +239,8 @@
                 }
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    WatchedEvent @event = watchers[i].events.TryDequeue(TimeSpan.FromSeconds(10d));
+                    WatchedEvent @event;
+                    watchers[i].events.TryTake(out @event, TimeSpan.FromSeconds(10d));
                     Assert.AreEqual(name + i, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
@@ -264,8 +267,8 @@
                 }
                 for (int i = 0; i < watchers.Length; i++)
                 {
-                    WatchedEvent @event =
-                        watchers[i].events.TryDequeue(TimeSpan.FromSeconds(3000));
+                    WatchedEvent @event;
+                    watchers[i].events.TryTake(out @event, TimeSpan.FromSeconds(3000));
                     Assert.AreEqual(name + i, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
@@ -276,8 +279,8 @@
                     Assert.AreEqual(0, watchers[i].events.Count);
 
                     // watchers2
-                    WatchedEvent event2 =
-                        watchers2[i].events.TryDequeue(TimeSpan.FromSeconds(3000));
+                    WatchedEvent event2;
+                    watchers2[i].events.TryTake(out @event2, TimeSpan.FromSeconds(3000));
                     Assert.AreEqual(name + i, event2.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, event2.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, event2.State);
@@ -382,7 +385,8 @@
                 // the first poll is just a session delivery
                 LOG.Info("Comment: checking for events Length "
                          + watcher.events.Count);
-                WatchedEvent @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
+                WatchedEvent @event;
+                watcher.events.TryTake(out @event, TimeSpan.FromSeconds(3000));
                 Assert.AreEqual(frog, @event.Path);
                 Assert.AreEqual(EventType.NodeCreated, @event.Type);
                 Assert.AreEqual(KeeperState.SyncConnected, @event.State);
@@ -423,18 +427,19 @@
                     }
                     zk.Delete(patPlusBen + "/" + name, stat.Version);
                 }
-                @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
+                
+                watcher.events.TryTake(out @event, TimeSpan.FromSeconds(3));
                 Assert.AreEqual(patPlusBen, @event.Path);
                 Assert.AreEqual(EventType.NodeChildrenChanged, @event.Type);
                 Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                 for (int i = 0; i < 10; i++)
                 {
-                    @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
+                    watcher.events.TryTake(out @event, TimeSpan.FromSeconds(3));
                     string name = children[i];
                     Assert.AreEqual(patPlusBen + "/" + name, @event.Path);
                     Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
-                    @event = watcher.events.TryDequeue(TimeSpan.FromSeconds(3000));
+                    watcher.events.TryTake(out @event, TimeSpan.FromSeconds(3));
                     Assert.AreEqual(patPlusBen + "/" + name, @event.Path);
                     Assert.AreEqual(EventType.NodeDeleted, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
@@ -602,7 +607,7 @@
                         CreateMode.PersistentSequential);
                 Assert.True(false);
             }
-            catch (InvalidOperationException be)
+            catch (InvalidOperationException)
             {
                 // catch this.
             }
@@ -611,7 +616,7 @@
                 zk.Create(createseqpar + "/./", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
                 Assert.True(false);
             }
-            catch (Exception be)
+            catch (Exception)
             {
                 // catch this.
             }
@@ -620,7 +625,7 @@
                 zk.Create(createseqpar + "/../", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
                 Assert.True(false);
             }
-            catch (Exception be)
+            catch (Exception)
             {
                 // catch this.
             }

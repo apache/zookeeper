@@ -18,6 +18,7 @@
 ﻿namespace ZooKeeperNet
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Threading;
     using log4net;
 
@@ -27,9 +28,8 @@
 
         private readonly ClientConnection conn;
         private readonly Thread eventThread;
-        static readonly object eventOfDeath = new object();
 
-        internal readonly BlockingQueue<object> waitingEvents = new BlockingQueue<object>(1000);
+        internal readonly BlockingCollection<object> waitingEvents = new BlockingCollection<object>(1000);
 
         /** This is really the queued session state until the event
          * thread actually processes the event and hands it to the watcher.
@@ -52,16 +52,11 @@
         {
             try
             {
-                while (true)
+                while (!waitingEvents.IsCompleted)
                 {
-                    object @event = waitingEvents.Dequeue();
+                    object @event = waitingEvents.Take();
                     try
                     {
-                        if (@event == eventOfDeath)
-                        {
-                            return;
-                        }
-
                         if (@event is ClientConnection.WatcherSetEventPair)
                         {
                             // each watcher will process the event
@@ -110,19 +105,14 @@
             AppendToQueue(packet);
         }
 
-        private void QueueEventOfDeath()
-        {
-            AppendToQueue(eventOfDeath);
-        }
-
         private void AppendToQueue(object o)
         {
-            waitingEvents.Enqueue(o);
+            waitingEvents.Add(o);
         }
 
         public void Dispose()
         {
-            QueueEventOfDeath();
+            waitingEvents.CompleteAdding();
             eventThread.Join(2000);
         }
     }

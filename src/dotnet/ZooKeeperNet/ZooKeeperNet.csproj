@@ -78,13 +78,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BlockingQueue.cs" />
     <Compile Include="ClientConnection.cs" />
     <Compile Include="ClientWatchManager.cs" />
     <Compile Include="CreateMode.cs" />
     <Compile Include="DataTree.cs" />
     <Compile Include="ClientConnectionEventConsumer.cs" />
-    <Compile Include="EndOfStreamException.cs" />
     <Compile Include="EventType.cs" />
     <Compile Include="Generated\ACL.cs" />
     <Compile Include="Generated\AuthPacket.cs" />

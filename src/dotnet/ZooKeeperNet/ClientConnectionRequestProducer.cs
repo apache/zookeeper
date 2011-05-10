@@ -29,7 +29,7 @@ namespace ZooKeeperNet
         internal readonly LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
         private bool writeEnabled;
 
-        private Socket sock;
+        private TcpClient client;
         private int lastConnectIndex;
         private readonly Random random = new Random();
         private int nextAddrToTry;
@@ -100,7 +100,7 @@ namespace ZooKeeperNet
             {
                 try
                 {
-                    if (sock == null)
+                    if (client == null)
                     {
                         // don't re-establish connection if we are closing
                         if (conn.closing)
@@ -206,7 +206,7 @@ namespace ZooKeeperNet
                     now = DateTime.Now;
                     lastHeard = now;
                     lastSend = now;
-                    sock = null;
+                    client = null;
                 }
             }
             Cleanup();
@@ -220,11 +220,11 @@ namespace ZooKeeperNet
 
         private void Cleanup()
         {
-            if (sock != null)
+            if (client != null)
             {
                 try
                 {
-                    sock.Close();
+                    client.Close();
                 }
                 catch (IOException e)
                 {
@@ -305,14 +305,14 @@ namespace ZooKeeperNet
                 nextAddrToTry = 0;
             }
             LOG.Info("Opening socket connection to server " + addr);
-            sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            sock.LingerState = new LingerOption(false, 0);
-            sock.NoDelay = true;
+            client = new TcpClient();
+            client.LingerState = new LingerOption(false, 0);
+            client.NoDelay = true;
             
             ConnectSocket(addr);
 
-            sock.Blocking = true;
-            PrimeConnection(sock);
+            //sock.Blocking = true;
+            PrimeConnection(client);
             initialized = false;
         }
 
@@ -324,7 +324,7 @@ namespace ZooKeeperNet
             {
                 try
                 {
-                    sock.Connect(addr);
+                    client.Connect(addr);
                     connected = true;
                     socketConnectTimeout.Set();
                 } 
@@ -341,9 +341,9 @@ namespace ZooKeeperNet
             throw new InvalidOperationException(string.Format("Could not make socket connection to {0}:{1}", addr.Address, addr.Port));
         }
 
-        private void PrimeConnection(Socket socket)
+        private void PrimeConnection(TcpClient client)
         {
-            LOG.Info(string.Format("Socket connection established to {0}, initiating session", socket.RemoteEndPoint));
+            LOG.Info(string.Format("Socket connection established to {0}, initiating session", client));
             lastConnectIndex = currentConnectIndex;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid, Convert.ToInt32(conn.SessionTimeout.TotalMilliseconds), conn.SessionId, conn.SessionPassword);
 
@@ -383,7 +383,7 @@ namespace ZooKeeperNet
 
             if (LOG.IsDebugEnabled)
             {
-                LOG.Debug("Session establishment request sent on " + socket.RemoteEndPoint);
+                LOG.Debug("Session establishment request sent on " + client);
             }
 
         }
@@ -398,17 +398,17 @@ namespace ZooKeeperNet
         bool doIO(TimeSpan to)
         {
             bool packetReceived = false;
-            if (sock == null) throw new IOException("Socket is null!");
+            if (client == null) throw new IOException("Socket is null!");
 
-            if (sock.Poll(Convert.ToInt32(to.TotalMilliseconds / 1000), SelectMode.SelectRead))
+            if (client.Client.Poll(Convert.ToInt32(to.TotalMilliseconds / 1000000), SelectMode.SelectRead))
             {
                 packetReceived = true;
                 int total = 0;
-                int current = total = sock.Receive(incomingBuffer, total, incomingBuffer.Length - total, SocketFlags.None);
+                int current = total = client.GetStream().Read(incomingBuffer, total, incomingBuffer.Length - total);
 
                 while (total < incomingBuffer.Length && current > 0)
                 {
-                    current = sock.Receive(incomingBuffer, total, incomingBuffer.Length - total, SocketFlags.None);
+                    current = client.GetStream().Read(incomingBuffer, total, incomingBuffer.Length - total);
                     total += current;
                 }
 
@@ -439,14 +439,14 @@ namespace ZooKeeperNet
                     incomingBuffer = new byte[4];
                 }
             }
-            else if (writeEnabled && sock.Poll(Convert.ToInt32(to.TotalMilliseconds / 1000), SelectMode.SelectWrite))
+            else if (writeEnabled && client.Client.Poll(Convert.ToInt32(to.TotalMilliseconds / 1000000), SelectMode.SelectWrite))
             {
                 lock (outgoingQueueLock)
                 {
                     if (!outgoingQueue.IsEmpty())
                     {
                         Packet first = outgoingQueue.First.Value;
-                        sock.Send(first.data);
+                        client.GetStream().Write(first.data, 0, first.data.Length);
                         sentCount++;
                         outgoingQueue.RemoveFirst();
                         if (first.header != null && first.header.Type != (int)OpCode.Ping &&
