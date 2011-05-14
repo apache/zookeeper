@@ -53,7 +53,7 @@
     <property name="c.src.dir" value="${src.dir}/c" />    
     <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
     <property name="csharp.src.dir" value="${src.dir}/dotnet" />
-    <property name="csharpsrc_generated.dir" value="${csharp.src.dir}/SharpKeeper/Generated" />
+    <property name="csharpsrc_generated.dir" value="${csharp.src.dir}/ZooKeeperNet/Generated" />
 
     <property name="jute.file" value="${src.dir}/zookeeper.jute" />
 
