@@ -343,7 +343,7 @@ namespace ZooKeeperNet
 
         private void PrimeConnection(TcpClient client)
         {
-            LOG.Info(string.Format("Socket connection established to {0}, initiating session", client));
+            LOG.Info(string.Format("Socket connection established to {0}, initiating session", client.Client.RemoteEndPoint));
             lastConnectIndex = currentConnectIndex;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid, Convert.ToInt32(conn.SessionTimeout.TotalMilliseconds), conn.SessionId, conn.SessionPassword);
 
@@ -383,7 +383,7 @@ namespace ZooKeeperNet
 
             if (LOG.IsDebugEnabled)
             {
-                LOG.Debug("Session establishment request sent on " + client);
+                LOG.Debug("Session establishment request sent on " + client.Client.RemoteEndPoint);
             }
 
         }

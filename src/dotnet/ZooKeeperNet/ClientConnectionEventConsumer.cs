@@ -74,6 +74,10 @@
                             }
                         }
                     }
+                    catch (OperationCanceledException)
+                    {
+                        //ignored
+                    }
                     catch (Exception t)
                     {
                         LOG.Error("Caught unexpected throwable", t);
