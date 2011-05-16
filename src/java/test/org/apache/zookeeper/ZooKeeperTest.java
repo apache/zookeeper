@@ -122,4 +122,19 @@ public class ZooKeeperTest extends ClientBase {
         }
         Assert.assertEquals(4, ((AtomicInteger) ctx).get());
     }
+    
+    @Test
+    public void testStatWhenPathDoesNotExist() throws IOException,
+    		InterruptedException {
+    	final ZooKeeper zk = createClient();
+    	ZooKeeperMain main = new ZooKeeperMain(zk);
+    	String cmdstring = "stat /invalidPath";
+    	main.cl.parseCommand(cmdstring);
+    	try {
+    		main.processZKCmd(main.cl);
+    		Assert.fail("As Node does not exist, command should fail by throwing No Node Exception.");
+    	} catch (KeeperException e) {
+    		Assert.assertEquals("KeeperErrorCode = NoNode for /invalidPath", e.getMessage());
+    	}
+    }
 }
