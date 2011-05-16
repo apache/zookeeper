@@ -95,11 +95,28 @@ _ZOO_DAEMON_OUT="$ZOO_LOG_DIR/zookeeper.out"
 
 case $1 in
 start)
-    echo  "Starting zookeeper ... "
+    echo  -n "Starting zookeeper ... "
+    if [ -f $ZOOPIDFILE ]; then
+      if kill -0 `cat $ZOOPIDFILE` > /dev/null 2>&1; then
+         echo $command already running as process `cat $ZOOPIDFILE`. 
+         exit 0
+      fi
+    fi
     $JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
-    /bin/echo -n $! > "$ZOOPIDFILE"
-    echo STARTED
+    if [ $? -eq 0 ]
+    then
+      if /bin/echo -n $! > "$ZOOPIDFILE"
+      then
+        echo STARTED
+      else
+        echo FAILED TO WRITE PID
+        exit 1
+      fi
+    else
+      echo SERVER DID NOT START
+      exit 1
+    fi
     ;;
 start-foreground)
     $JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
@@ -109,15 +126,16 @@ print-cmd)
     echo "$JAVA -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_DAEMON_OUT\" 2>&1 < /dev/null"
     ;;
 stop)
-    echo "Stopping zookeeper ... "
+    echo -n "Stopping zookeeper ... "
     if [ ! -f "$ZOOPIDFILE" ]
     then
-    echo "error: could not find file $ZOOPIDFILE"
-    exit 1
+      echo "error: could not find file $ZOOPIDFILE"
+      exit 1
     else
-    $KILL -9 $(cat "$ZOOPIDFILE")
-    rm "$ZOOPIDFILE"
-    echo STOPPED
+      $KILL -9 $(cat "$ZOOPIDFILE")
+      rm "$ZOOPIDFILE"
+      echo STOPPED
+      exit 0
     fi
     ;;
 upgrade)
@@ -139,8 +157,10 @@ status)
     if [ "x$STAT" = "x" ]
     then
         echo "Error contacting service. It is probably not running."
+        exit 1
     else
         echo $STAT
+        exit 0
     fi
     ;;
 *)
