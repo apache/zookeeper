@@ -209,6 +209,8 @@ BUGFIXES:
   ZOOKEEPER-1033. c client should install includes into INCDIR/zookeeper, not INCDIR/c-client-src
   (Nicholas Harteau via mahadev)
 
+  ZOOKEEPER-1061. Zookeeper stop fails if start called twice. (Ted Dunning via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
