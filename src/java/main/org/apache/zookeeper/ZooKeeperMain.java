@@ -147,7 +147,7 @@ public class ZooKeeperMain {
      * A storage class for both command line options and shell commands.
      *
      */
-    static private class MyCommandOptions {
+    static class MyCommandOptions {
 
         private Map<String,String> options = new HashMap<String,String>();
         private List<String> cmdArgs = null;
@@ -724,6 +724,9 @@ public class ZooKeeperMain {
         } else if (cmd.equals("stat") && args.length >= 2) {
             path = args[1];
             stat = zk.exists(path, watch);
+            if (stat == null) {
+              throw new KeeperException.NoNodeException(path);	
+            }
             printStat(stat);
         } else if (cmd.equals("listquota") && args.length >= 2) {
             path = args[1];
