@@ -54,17 +54,26 @@ public interface Watcher {
              * creation). */
             SyncConnected (3),
 
+            /**
+             * Auth failed state
+             */
+            AuthFailed (4),
+
+            /**
+             * The client is connected to a read-only server, that is the
+             * server which is not currently connected to the majority.
+             * The only operations allowed after receiving this state is
+             * read operations.
+             * This state is generated for read-only clients only since
+             * read/write clients aren't allowed to connect to r/o servers.
+             */
+            ConnectedReadOnly (5),
+
             /** The serving cluster has expired this session. The ZooKeeper
              * client connection (the session) is no longer valid. You must
              * create a new client connection (instantiate a new ZooKeeper
              * instance) if you with to access the ensemble. */
-            Expired (-112),
-
-            /**
-             * Auth failed state
-             * 
-             */
-            AuthFailed(4);
+            Expired (-112);
 
             private final int intValue;     // Integer representation of value
                                             // for sending over wire
@@ -84,6 +93,7 @@ public interface Watcher {
                     case    1: return KeeperState.NoSyncConnected;
                     case    3: return KeeperState.SyncConnected;
                     case    4: return KeeperState.AuthFailed;
+                    case    5: return KeeperState.ConnectedReadOnly;
                     case -112: return KeeperState.Expired;
 
                     default:

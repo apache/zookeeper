@@ -195,6 +195,8 @@ public class ZooKeeperMain {
                         options.put("server", it.next());
                     } else if (opt.equals("-timeout")) {
                         options.put("timeout", it.next());
+                    } else if (opt.equals("-r")) {
+                        options.put("readonly", "true");
                     }
                 } catch (NoSuchElementException e){
                     System.err.println("Error: no argument found for option "
@@ -260,9 +262,10 @@ public class ZooKeeperMain {
             zk.close();
         }
         host = newHost;
+        boolean readOnly = cl.getOption("readonly") != null;
         zk = new ZooKeeper(host,
                  Integer.parseInt(cl.getOption("timeout")),
-                 new MyWatcher());
+                 new MyWatcher(), readOnly);
     }
     
     public static void main(String args[])
@@ -592,6 +595,8 @@ public class ZooKeeperMain {
             System.err.println("Node already exists: " + e.getPath());
         } catch (KeeperException.NotEmptyException e) {
             System.err.println("Node not empty: " + e.getPath());
+        } catch (KeeperException.NotReadOnlyException e) {
+            System.err.println("Not a read-only call: " + e.getPath());
         }
         return false;
     }

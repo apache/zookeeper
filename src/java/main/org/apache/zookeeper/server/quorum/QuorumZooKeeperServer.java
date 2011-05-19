@@ -17,7 +17,6 @@
  */
 package org.apache.zookeeper.server.quorum;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.zookeeper.server.ZKDatabase;
@@ -34,7 +33,6 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
             DataTreeBuilder treeBuilder, ZKDatabase zkDb, QuorumPeer self)
-        throws IOException
     {
         super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout,
                 treeBuilder, zkDb);

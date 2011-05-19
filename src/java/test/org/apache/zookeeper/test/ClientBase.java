@@ -100,7 +100,8 @@ public abstract class ClientBase extends ZKTestCase {
             connected = false;
         }
         synchronized public void process(WatchedEvent event) {
-            if (event.getState() == KeeperState.SyncConnected) {
+            if (event.getState() == KeeperState.SyncConnected ||
+                event.getState() == KeeperState.ConnectedReadOnly) {
                 connected = true;
                 notifyAll();
                 clientConnected.countDown();
@@ -257,7 +258,8 @@ public abstract class ClientBase extends ZKTestCase {
                 // if there are multiple hostports, just take the first one
                 HostPort hpobj = parseHostPortList(hp).get(0);
                 String result = send4LetterWord(hpobj.host, hpobj.port, "stat");
-                if (result.startsWith("Zookeeper version:")) {
+                if (result.startsWith("Zookeeper version:") &&
+                        !result.contains("READ-ONLY")) {
                     return true;
                 }
             } catch (IOException e) {

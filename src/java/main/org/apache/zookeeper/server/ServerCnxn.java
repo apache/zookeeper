@@ -48,11 +48,18 @@ public abstract class ServerCnxn implements Stats, Watcher {
     
     protected ArrayList<Id> authInfo = new ArrayList<Id>();
 
+    /**
+     * If the client is of old version, we don't send r-o mode info to it.
+     * The reason is that if we would, old C client doesn't read it, which
+     * results in TCP RST packet, i.e. "connection reset by peer".
+     */
+    boolean isOldClient = true;
+
     abstract int getSessionTimeout();
 
     abstract void close();
 
-    abstract void sendResponse(ReplyHeader h, Record r, String tag)
+    public abstract void sendResponse(ReplyHeader h, Record r, String tag)
         throws IOException;
 
     /* notify the client the session is closing and close/cleanup socket */
@@ -209,6 +216,13 @@ public abstract class ServerCnxn implements Stats, Watcher {
     protected final static int mntrCmd = ByteBuffer.wrap("mntr".getBytes())
             .getInt();
 
+    /*
+     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * Zk Admin</a>. this link is for all the commands.
+     */
+    protected final static int isroCmd = ByteBuffer.wrap("isro".getBytes())
+            .getInt();
+
     protected final static HashMap<Integer, String> cmd2String =
         new HashMap<Integer, String>();
 
@@ -229,6 +243,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         cmd2String.put(wchpCmd, "wchp");
         cmd2String.put(wchsCmd, "wchs");
         cmd2String.put(mntrCmd, "mntr");
+        cmd2String.put(isroCmd, "isro");
     }
 
     protected void packetReceived() {

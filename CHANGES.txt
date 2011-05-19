@@ -318,6 +318,8 @@ NEW FEATURES:
 
   ZOOKEEPER-1038. Move bookkeeper and hedwig code in subversion (breed)
 
+  ZOOKEEPER-784. Server-side functionality for read-only mode (Sergey Doroshenko via henryr)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:
