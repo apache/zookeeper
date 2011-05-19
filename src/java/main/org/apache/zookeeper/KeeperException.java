@@ -120,6 +120,8 @@ public abstract class KeeperException extends Exception {
                 return new InvalidCallbackException();
             case SESSIONMOVED:
                 return new SessionMovedException();
+            case NOTREADONLY:
+                return new NotReadOnlyException();
             	
             case OK:
             default:
@@ -332,7 +334,9 @@ public abstract class KeeperException extends Exception {
         /** Client authentication failed */
         AUTHFAILED (AuthFailed),
         /** Session moved to another server, so operation is ignored */
-        SESSIONMOVED (-118);
+        SESSIONMOVED (-118),
+        /** State-changing request is passed to read-only server */
+        NOTREADONLY (-119);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
@@ -407,6 +411,8 @@ public abstract class KeeperException extends Exception {
                 return "Invalid callback";
             case SESSIONMOVED:
                 return "Session moved";
+            case NOTREADONLY:
+                return "Not a read-only call";
             default:
                 return "Unknown error " + code;
         }
@@ -639,6 +645,15 @@ public abstract class KeeperException extends Exception {
     public static class SessionMovedException extends KeeperException {
         public SessionMovedException() {
             super(Code.SESSIONMOVED);
+        }
+    }
+
+    /**
+     * @see Code#NOTREADONLY
+     */
+    public static class NotReadOnlyException extends KeeperException {
+        public NotReadOnlyException() {
+            super(Code.NOTREADONLY);
         }
     }
 

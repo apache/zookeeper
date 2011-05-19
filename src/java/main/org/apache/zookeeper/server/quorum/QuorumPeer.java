@@ -618,12 +618,41 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             while (running) {
                 switch (getPeerState()) {
                 case LOOKING:
+                    LOG.info("LOOKING");
+
+                    // Create read-only server but don't start it immediately
+                    final ReadOnlyZooKeeperServer roZk = new ReadOnlyZooKeeperServer(
+                            logFactory, this,
+                            new ZooKeeperServer.BasicDataTreeBuilder(),
+                            this.zkDb);
                     try {
-                        LOG.info("LOOKING");
+                        // Instead of starting roZk immediately, wait some grace
+                        // period before we decide we're partitioned.
+                        //
+                        // Thread is used here because otherwise it would require
+                        // changes in each of election strategy classes which is
+                        // unnecessary code coupling.
+                        new Thread() {
+                            public void run() {
+                                try {
+                                    // lower-bound grace period to 2 secs
+                                    sleep(Math.max(2000, tickTime));
+                                    if (ServerState.LOOKING.equals(getPeerState())) {
+                                        roZk.startup();
+                                        LOG.info("Read-only server started");
+                                    }
+                                } catch (Exception e) {
+                                    LOG.error("FAILED to start ReadOnlyZooKeeperServer", e);
+                                }
+                            }
+                        }.start();
+
                         setCurrentVote(makeLEStrategy().lookForLeader());
                     } catch (Exception e) {
                         LOG.warn("Unexpected exception",e);
                         setPeerState(ServerState.LOOKING);
+                    } finally {
+                        roZk.shutdown();
                     }
                     break;
                 case OBSERVING:

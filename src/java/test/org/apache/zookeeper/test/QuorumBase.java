@@ -45,17 +45,17 @@ public class QuorumBase extends ClientBase {
 
     File s1dir, s2dir, s3dir, s4dir, s5dir;
     QuorumPeer s1, s2, s3, s4, s5;
-    private int port1;
-    private int port2;
-    private int port3;
-    private int port4;
-    private int port5;
+    protected int port1;
+    protected int port2;
+    protected int port3;
+    protected int port4;
+    protected int port5;
     
-    private int portLE1;
-    private int portLE2;
-    private int portLE3;
-    private int portLE4;
-    private int portLE5;
+    protected int portLE1;
+    protected int portLE2;
+    protected int portLE3;
+    protected int portLE4;
+    protected int portLE5;
 
     @Test
     // This just avoids complaints by junit

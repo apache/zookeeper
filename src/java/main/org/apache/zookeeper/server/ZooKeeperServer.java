@@ -56,6 +56,7 @@ import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 
 /**
  * This class implements a simple standalone ZooKeeperServer. It sets up the
@@ -139,11 +140,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * actually start listening for clients until run() is invoked.
      * 
      * @param dataDir the directory to put the data
-     * @throws IOException
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
-            DataTreeBuilder treeBuilder, ZKDatabase zkDb) throws IOException {
+            DataTreeBuilder treeBuilder, ZKDatabase zkDb) {
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.zkDb = zkDb;
@@ -561,6 +561,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
             bos.writeInt(-1, "len");
             rsp.serialize(bos, "connect");
+            if (!cnxn.isOldClient) {
+                bos.writeBool(
+                        this instanceof ReadOnlyZooKeeperServer, "readOnly");
+            }
             baos.close();
             ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
             bb.putInt(bb.remaining() - 4).rewind();
@@ -761,6 +765,23 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     + cnxn.getRemoteSocketAddress()
                     + " client's lastZxid is 0x"
                     + Long.toHexString(connReq.getLastZxidSeen()));
+        }
+        boolean readOnly = false;
+        try {
+            readOnly = bia.readBool("readOnly");
+            cnxn.isOldClient = false;
+        } catch (IOException e) {
+            // this is ok -- just a packet from an old client which
+            // doesn't contain readOnly field
+            LOG.warn("Connection request from old client "
+                    + cnxn.getRemoteSocketAddress()
+                    + "; will be dropped if server is in r-o mode");
+        }
+        if (readOnly == false && this instanceof ReadOnlyZooKeeperServer) {
+            String msg = "Refusing session request for not-read-only client "
+                + cnxn.getRemoteSocketAddress();
+            LOG.info(msg);
+            throw new CloseRequestException(msg);
         }
         if (connReq.getLastZxidSeen() > zkDb.dataTree.lastProcessedZxid) {
             String msg = "Refusing session request for client "

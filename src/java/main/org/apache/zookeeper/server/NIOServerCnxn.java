@@ -50,7 +50,7 @@ import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
-
+import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import com.sun.management.UnixOperatingSystemMXBean;
 
 /**
@@ -644,6 +644,10 @@ public class NIOServerCnxn extends ServerCnxn {
             else {   
                 pw.print("Zookeeper version: ");
                 pw.println(Version.getFullVersion());
+                if (zkServer instanceof ReadOnlyZooKeeperServer) {
+                    pw.println("READ-ONLY mode; serving only " +
+                               "read-only clients");
+                }
                 if (len == statCmd) {
                     LOG.info("Stat command output");
                     pw.println("Clients:");
@@ -780,6 +784,23 @@ public class NIOServerCnxn extends ServerCnxn {
 
     }
 
+    private class IsroCommand extends CommandThread {
+
+        public IsroCommand(PrintWriter pw) {
+            super(pw);
+        }
+
+        @Override
+        public void commandRun() {
+            if (zkServer == null) {
+                pw.print("null");
+            } else if (zkServer instanceof ReadOnlyZooKeeperServer) {
+                pw.print("ro");
+            } else {
+                pw.print("rw");
+            }
+        }
+    }
 
     /** Return if four letter word found and responded to, otw false **/
     private boolean checkFourLetterWord(final SelectionKey k, final int len)
@@ -869,6 +890,10 @@ public class NIOServerCnxn extends ServerCnxn {
         } else if (len == mntrCmd) {
             MonitorCommand mntr = new MonitorCommand(pwriter);
             mntr.start();
+            return true;
+        } else if (len == isroCmd) {
+            IsroCommand isro = new IsroCommand(pwriter);
+            isro.start();
             return true;
         }
         return false;
