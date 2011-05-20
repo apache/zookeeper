@@ -654,8 +654,9 @@ public class JRecord extends JCompType {
         cs.write("  public override String ToString() {\n");
         cs.write("    try {\n");
         cs.write("      System.IO.MemoryStream ms = new System.IO.MemoryStream();\n");
-        cs.write("      MiscUtil.IO.EndianBinaryWriter writer =\n");
-        cs.write("        new MiscUtil.IO.EndianBinaryWriter(MiscUtil.Conversion.EndianBitConverter.Big, ms, System.Text.Encoding.UTF8);\n");
+        cs.write("      ZooKeeperNet.IO.EndianBinaryWriter writer =\n");
+        cs.write("        new ZooKeeperNet.IO.EndianBinaryWriter(ZooKeeperNet.IO.EndianBitConverter.Big, ms, " +
+            "System.Text.Encoding.UTF8);\n");
         cs.write("      BinaryOutputArchive a_ = \n");
         cs.write("        new BinaryOutputArchive(writer);\n");
         cs.write("      a_.StartRecord(this,\"\");\n");
@@ -673,12 +674,12 @@ public class JRecord extends JCompType {
         cs.write("    return \"ERROR\";\n");
         cs.write("  }\n");
 
-        cs.write("  public void Write(MiscUtil.IO.EndianBinaryWriter writer) {\n");
+        cs.write("  public void Write(ZooKeeperNet.IO.EndianBinaryWriter writer) {\n");
         cs.write("    BinaryOutputArchive archive = new BinaryOutputArchive(writer);\n");
         cs.write("    Serialize(archive, \"\");\n");
         cs.write("  }\n");
 
-        cs.write("  public void ReadFields(MiscUtil.IO.EndianBinaryReader reader) {\n");
+        cs.write("  public void ReadFields(ZooKeeperNet.IO.EndianBinaryReader reader) {\n");
         cs.write("    BinaryInputArchive archive = new BinaryInputArchive(reader);\n");
         cs.write("    Deserialize(archive, \"\");\n");
         cs.write("  }\n");
