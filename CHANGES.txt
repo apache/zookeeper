@@ -212,6 +212,8 @@ BUGFIXES:
   ZOOKEEPER-1061. Zookeeper stop fails if start called twice. (Ted Dunning via mahadev)
 
   ZOOKEEPER-1059. stat command isses on non-existing node causes NPE. (Bhallamudi Kamesh via mahadev)
+  
+  ZOOKEEPER-1058. fix typo in opToString for getData. (camille)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 

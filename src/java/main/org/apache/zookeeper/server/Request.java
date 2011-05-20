@@ -155,7 +155,7 @@ public class Request {
         case OpCode.exists:
             return "exists";
         case OpCode.getData:
-            return "getDate";
+            return "getData";
         case OpCode.setData:
             return "setData";
         case OpCode.sync:
