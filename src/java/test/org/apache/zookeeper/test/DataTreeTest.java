@@ -29,6 +29,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.apache.zookeeper.server.DataNode;
 
 public class DataTreeTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
@@ -62,4 +63,21 @@ public class DataTreeTest extends ZKTestCase {
         Assert.assertFalse("Root node watch not triggered",!watcher.fired);
     }
 
+    /**
+     * For ZOOKEEPER-1046 test if cversion is getting incremented correctly.
+     */
+    @Test
+    public void testIncrementCversion() throws Exception {
+        dt.createNode("/test", new byte[0], null, 0, 1, 1);
+        DataNode zk = dt.getNode("/test");
+        long prevCversion = zk.stat.getCversion();
+        long prevPzxid = zk.stat.getPzxid();
+        dt.incrementCversion("/test/",  prevPzxid + 1);
+        long newCversion = zk.stat.getCversion();
+        long newPzxid = zk.stat.getPzxid();
+        Assert.assertTrue("<cversion, pzxid> verification failed. Expected: <" +
+                (prevCversion + 1) + ", " + (prevPzxid + 1) + ">, found: <" +
+                newCversion + ", " + newPzxid + ">",
+                (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
+    }
 }

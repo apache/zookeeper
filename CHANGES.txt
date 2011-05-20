@@ -214,6 +214,8 @@ BUGFIXES:
   ZOOKEEPER-1059. stat command isses on non-existing node causes NPE. (Bhallamudi Kamesh via mahadev)
   
   ZOOKEEPER-1058. fix typo in opToString for getData. (camille)
+  
+  ZOOKEEPER-1046. Creating a new sequential node results in a ZNODEEXISTS error. (Vishal K via camille) 
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 

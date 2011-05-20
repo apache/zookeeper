@@ -764,17 +764,18 @@ public class DataTree {
                 case OpCode.create:
                     CreateTxn createTxn = (CreateTxn) txn;
                     debug = "Create transaction for " + createTxn.getPath();
+                    rc.path = createTxn.getPath();
                     createNode(
                             createTxn.getPath(),
                             createTxn.getData(),
                             createTxn.getAcl(),
                             createTxn.getEphemeral() ? header.getClientId() : 0,
                             header.getZxid(), header.getTime());
-                    rc.path = createTxn.getPath();
                     break;
                 case OpCode.delete:
                     DeleteTxn deleteTxn = (DeleteTxn) txn;
                     debug = "Delete transaction for " + deleteTxn.getPath();
+                    rc.path = deleteTxn.getPath();
                     deleteNode(deleteTxn.getPath(), header.getZxid());
                     break;
                 case OpCode.setData:
@@ -801,11 +802,8 @@ public class DataTree {
                     break;
             }
         } catch (KeeperException e) {
-            // These are expected errors since we take a lazy snapshot
-            if (initialized
-                    || (e.code() != Code.NONODE && e.code() != Code.NODEEXISTS)) {
-                LOG.warn("Failed:" + debug, e);
-            }
+             LOG.debug("Failed: " + debug, e);
+             rc.err = e.code().intValue();
         }
         return rc;
     }
@@ -1190,6 +1188,35 @@ public class DataTree {
             } else {
                 this.childWatches.addWatch(path, watcher);
             }
+        }
+    }
+
+     /**
+      * If the znode for the specified path is found, then this method
+      * increments the cversion and sets its pzxid to the zxid passed
+      * in the second argument. A NoNodeException is thrown if the znode is
+      * not found.
+      *
+      * @param path
+      *     Full path to the znode whose cversion needs to be incremented.
+      *     A "/" at the end of the path is ignored.
+      * @param zxid
+      *     Value to be assigned to pzxid
+      * @throws KeeperException.NoNodeException
+      *     If znode not found.
+      **/
+    public void incrementCversion(String path, long zxid)
+        throws KeeperException.NoNodeException {
+        if (path.endsWith("/")) {
+           path = path.substring(0, path.length() - 1);
+        }
+        DataNode node = nodes.get(path);
+        if (node == null) {
+            throw new KeeperException.NoNodeException(path);
+        }
+        synchronized (node) {
+            node.stat.setCversion(node.stat.getCversion() + 1);
+            node.stat.setPzxid(zxid);
         }
     }
 }
