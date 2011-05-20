@@ -15,9 +15,10 @@
  *  limitations under the License.
  *
  */
-﻿namespace Org.Apache.Jute
+using ZooKeeperNet.IO;
+
+namespace Org.Apache.Jute
 {
-    using MiscUtil.IO;
     using System;
     using System.IO;
     using System.Text;

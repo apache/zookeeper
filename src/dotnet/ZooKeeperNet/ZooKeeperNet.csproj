@@ -60,10 +60,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="MiscUtil, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d3c42c4bfacf7596, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\lib\MiscUtil.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -131,6 +127,12 @@
     <Compile Include="Generated\WatcherEvent.cs" />
     <Compile Include="IClientConnection.cs" />
     <Compile Include="Ids.cs" />
+    <Compile Include="IO\BigEndianBitConverter.cs" />
+    <Compile Include="IO\EndianBinaryReader.cs" />
+    <Compile Include="IO\EndianBinaryWriter.cs" />
+    <Compile Include="IO\EndianBitConverter.cs" />
+    <Compile Include="IO\Endianness.cs" />
+    <Compile Include="IO\LittleEndianBitConverter.cs" />
     <Compile Include="IStartable.cs" />
     <Compile Include="IZooKeeper.cs" />
     <Compile Include="Jute\BinaryInputArchive.cs" />
@@ -180,6 +182,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

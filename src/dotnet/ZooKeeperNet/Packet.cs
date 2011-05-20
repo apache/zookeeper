@@ -15,14 +15,14 @@
  *  limitations under the License.
  *
  */
-﻿namespace ZooKeeperNet
+using ZooKeeperNet.IO;
+
+namespace ZooKeeperNet
 {
     using System.IO;
     using System.Text;
     using System.Threading;
     using log4net;
-    using MiscUtil.Conversion;
-    using MiscUtil.IO;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
 

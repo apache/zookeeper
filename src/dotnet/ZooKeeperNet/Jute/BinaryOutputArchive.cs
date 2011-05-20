@@ -15,11 +15,12 @@
  *  limitations under the License.
  *
  */
-﻿namespace Org.Apache.Jute
+using ZooKeeperNet.IO;
+
+namespace Org.Apache.Jute
 {
     using System.Collections.Generic;
     using System.Text;
-    using MiscUtil.IO;
 
     public class BinaryOutputArchive : IOutputArchive
     {

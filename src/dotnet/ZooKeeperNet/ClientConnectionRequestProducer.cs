@@ -1,4 +1,5 @@
 ﻿using System;
+using ZooKeeperNet.IO;
 
 namespace ZooKeeperNet
 {
@@ -10,8 +11,6 @@ namespace ZooKeeperNet
     using System.Text;
     using System.Threading;
     using log4net;
-    using MiscUtil.Conversion;
-    using MiscUtil.IO;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
 

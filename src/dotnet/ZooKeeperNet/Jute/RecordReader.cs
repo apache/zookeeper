@@ -15,10 +15,10 @@
  *  limitations under the License.
  *
  */
+using ZooKeeperNet.IO;
+
 namespace Org.Apache.Jute
 {
-    using MiscUtil.IO;
-
     public class RecordReader
     {
         private readonly IInputArchive archive;
