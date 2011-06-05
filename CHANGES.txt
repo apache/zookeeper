@@ -216,6 +216,8 @@ BUGFIXES:
   ZOOKEEPER-1058. fix typo in opToString for getData. (camille)
   
   ZOOKEEPER-1046. Creating a new sequential node results in a ZNODEEXISTS error. (Vishal K via camille) 
+  
+  ZOOKEEPER-1069. Calling shutdown() on a QuorumPeer too quickly can lead to a corrupt log. (Vishal K via camille) 
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
