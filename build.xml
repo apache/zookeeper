@@ -418,6 +418,7 @@
           <include name="org/apache/zookeeper/KeeperException.java"/>
           <include name="org/apache/zookeeper/ServerAdminClient.java"/>
           <include name="org/apache/zookeeper/Watcher.java"/>
+          <include name="org/apache/zookeeper/WatchedEvent.java"/>
           <include name="org/apache/zookeeper/ZooDefs.java"/>
           <include name="org/apache/zookeeper/ZooKeeper.java"/>
           <include name="org/apache/zookeeper/server/LogFormatter.java"/>
