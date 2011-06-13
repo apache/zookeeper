@@ -219,6 +219,8 @@ BUGFIXES:
   
   ZOOKEEPER-1069. Calling shutdown() on a QuorumPeer too quickly can lead to a corrupt log. (Vishal K via camille) 
 
+  ZOOKEEPER-1083. Javadoc for WatchedEvent not being generated. (Ivan Kelly via michim)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
