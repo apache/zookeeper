@@ -49,6 +49,7 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.ServerCnxnFactoryAccessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
@@ -56,7 +57,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
-import com.j2speed.accessor.FieldAccessor;
 import com.sun.management.UnixOperatingSystemMXBean;
 
 public abstract class ClientBase extends ZKTestCase {
@@ -439,12 +439,9 @@ public abstract class ClientBase extends ZKTestCase {
         JMXEnv.ensureOnly();
     }
 
+
     protected static ZooKeeperServer getServer(ServerCnxnFactory fac) {
-        // access the private field - test only
-        FieldAccessor<ServerCnxnFactory,ZooKeeperServer> zkServerAcc =
-            new FieldAccessor<ServerCnxnFactory,ZooKeeperServer>
-                    ("zkServer", ServerCnxnFactory.class);
-        ZooKeeperServer zs = zkServerAcc.get(fac);
+        ZooKeeperServer zs = ServerCnxnFactoryAccessor.getZkServer(fac);
 
         return zs;
     }
