@@ -221,6 +221,8 @@ BUGFIXES:
 
   ZOOKEEPER-1083. Javadoc for WatchedEvent not being generated. (Ivan Kelly via michim)
 
+  ZOOKEEPER-1086. zookeeper test jar has non mavenised dependency. (Ivan Kelly via michim)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
