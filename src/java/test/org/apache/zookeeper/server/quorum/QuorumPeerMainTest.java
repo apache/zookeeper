@@ -501,5 +501,29 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
         Assert.assertTrue("fastleaderelection used", found);
     }
-   
+
+    /**
+     * Verifies that QuorumPeer exits immediately
+     */
+    @Test
+    public void testQuorumPeerExitTime() throws Exception {
+        long maxwait = 3000;
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        String quorumCfgSection =
+            "server.1=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique()
+            + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique();
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+        q1.start();
+        // Let the notifications timeout
+        Thread.sleep(30000);
+        long start = System.currentTimeMillis();
+        q1.shutdown();
+        long end = System.currentTimeMillis();
+        if ((end - start) > maxwait) {
+           Assert.fail("QuorumPeer took " + (end -start) +
+                    " to shutdown, expected " + maxwait);
+        }
+    }
 }
