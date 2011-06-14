@@ -766,6 +766,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         }
         
         if(getElectionAlg() != null){
+            this.interrupt();
         	getElectionAlg().shutdown();
         }
         try {
