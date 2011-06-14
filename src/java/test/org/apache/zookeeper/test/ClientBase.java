@@ -448,7 +448,7 @@ public abstract class ClientBase extends ZKTestCase {
 
     protected void tearDownAll() throws Exception {
         synchronized (this) {
-            for (ZooKeeper zk : allClients) {
+            if (allClients != null) for (ZooKeeper zk : allClients) {
                 try {
                     if (zk != null)
                         zk.close();

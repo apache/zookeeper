@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -43,6 +44,8 @@ import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.ZxidUtils;
 
 /**
  * This class has the control logic for the Leader.
@@ -177,6 +180,17 @@ public class Leader {
     final static int UPTODATE = 12;
 
     /**
+     * This message is the first that a follower receives from the leader.
+     * It has the protocol version and the epoch of the leader.
+     */
+    public static final int LEADERINFO = 17;
+
+    /**
+     * This message is used by the follow to ack a proposed epoch.
+     */
+    public static final int ACKEPOCH = 18;
+    
+    /**
      * This message type is sent to a leader to request and mutation operation.
      * The payload will consist of a request header followed by a request.
      */
@@ -219,8 +233,8 @@ public class Leader {
      * This message type informs observers of a committed proposal.
      */
     final static int INFORM = 8;
-    
-    private ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
+
+	ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
 
     ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<Proposal>();
 
@@ -263,6 +277,12 @@ public class Leader {
         }
     }
 
+    StateSummary leaderStateSummary;
+    
+    long epoch = -1;
+    boolean waitingForNewEpoch = true;
+    boolean readyToStart = false;
+    
     /**
      * This method is main function that is called to lead
      * 
@@ -282,9 +302,16 @@ public class Leader {
             self.tick = 0;
             zk.loadData();
             
-            long epoch = self.getLastLoggedZxid() >> 32L;
-            epoch++;
-            zk.setZxid(epoch << 32L);
+            leaderStateSummary = new StateSummary(self.getCurrentEpoch(), zk.getLastProcessedZxid());
+
+            // Start thread that waits for connection requests from 
+            // new followers.
+            cnxAcceptor = new LearnerCnxAcceptor();
+            cnxAcceptor.start();
+            
+            long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
+            self.setAcceptedEpoch(epoch);
+            zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
             
             synchronized(this){
                 lastProposed = zk.getZxid();
@@ -300,11 +327,10 @@ public class Leader {
             }
             outstandingProposals.put(newLeaderProposal.packet.getZxid(), newLeaderProposal);
             
-            // Start thread that waits for connection requests from 
-            // new followers.
-            cnxAcceptor = new LearnerCnxAcceptor();
-            cnxAcceptor.start();
-            
+            readyToStart = true;
+            waitForEpochAck(self.getId(), leaderStateSummary);
+            self.setCurrentEpoch(epoch);
+
             // We have to get at least a majority of servers in sync with
             // us. We do this by waiting for the NEWLEADER packet to get
             // acknowledged
@@ -384,7 +410,7 @@ public class Leader {
         }
     }
 
-    boolean isShutdown;
+	boolean isShutdown;
 
     /**
      * Close down all the LearnerHandlers
@@ -625,7 +651,7 @@ public class Leader {
      * @return
      */
     public long getEpoch(){
-        return lastProposed >> 32L;
+        return ZxidUtils.getEpochFromZxid(lastProposed);
     }
     
     /**
@@ -740,4 +766,53 @@ public class Leader {
         return lastProposed;
     }
 
+    private HashSet<Long> connectingFollowers = new HashSet<Long>();
+	public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException {
+		synchronized(connectingFollowers) {
+			if (!waitingForNewEpoch) {
+				return epoch;
+			}
+			if (lastAcceptedEpoch > epoch) {
+				epoch = lastAcceptedEpoch+1;
+			}
+			connectingFollowers.add(sid);
+			QuorumVerifier verifier = self.getQuorumVerifier();
+			if (verifier.containsQuorum(connectingFollowers)) {
+				waitingForNewEpoch = false;
+				connectingFollowers.notifyAll();
+			} else {
+				connectingFollowers.wait(self.getInitLimit()*self.getTickTime());
+				if (waitingForNewEpoch) {
+					throw new InterruptedException("Out of time to propose an epoch");
+				}
+			}
+			return epoch;
+		}
+	}
+
+	private HashSet<Long> electingFollowers = new HashSet<Long>();
+	private boolean electionFinished = false;
+	public void waitForEpochAck(long id, StateSummary ss) throws IOException, InterruptedException {
+		synchronized(electingFollowers) {
+			if (electionFinished) {
+				return;
+			}
+			if (ss.getCurrentEpoch() != -1) {
+				if (ss.isMoreRecentThan(leaderStateSummary)) {
+					throw new IOException("Follower is ahead of the leader");
+				}
+				electingFollowers.add(id);
+			}
+			QuorumVerifier verifier = self.getQuorumVerifier();
+			if (readyToStart && verifier.containsQuorum(electingFollowers)) {
+				electionFinished = true;
+				electingFollowers.notifyAll();
+			} else {
+				electingFollowers.wait(self.getInitLimit()*self.getTickTime());
+				if (waitingForNewEpoch) {
+					throw new InterruptedException("Out of time to propose an epoch");
+				}
+			}
+		}
+	}
 }

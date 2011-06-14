@@ -22,29 +22,40 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 
 public class Vote {
+    
     public Vote(long id, long zxid) {
         this.id = id;
         this.zxid = zxid;
     }
-
-    public Vote(long id, long zxid, long epoch) {
+    
+    public Vote(long id, long zxid, long peerEpoch) {
         this.id = id;
         this.zxid = zxid;
-        this.epoch = epoch;
+        this.peerEpoch = peerEpoch;
+    }
+
+    public Vote(long id, long zxid, long electionEpoch, long peerEpoch) {
+        this.id = id;
+        this.zxid = zxid;
+        this.electionEpoch = electionEpoch;
+        this.peerEpoch = peerEpoch;
     }
     
-    public Vote(long id, long zxid, long epoch, ServerState state) {
+    public Vote(long id, long zxid, long electionEpoch, long peerEpoch, ServerState state) {
         this.id = id;
         this.zxid = zxid;
-        this.epoch = epoch;
+        this.electionEpoch = electionEpoch;
         this.state = state;
+        this.peerEpoch = peerEpoch;
     }
     
     public long id;
     
     public long zxid;
     
-    public long epoch = -1;
+    public long electionEpoch = -1;
+    
+    public long peerEpoch = -1;
     
     public ServerState state = ServerState.LOOKING;
     
@@ -54,7 +65,7 @@ public class Vote {
             return false;
         }
         Vote other = (Vote) o;
-        return (id == other.id && zxid == other.zxid && epoch == other.epoch);
+        return (id == other.id && zxid == other.zxid && electionEpoch == other.electionEpoch && peerEpoch == other.peerEpoch);
 
     }
 
@@ -64,6 +75,6 @@ public class Vote {
     }
 
     public String toString() {
-        return "(" + id + ", " + Long.toHexString(zxid) + ")";
+        return "(" + id + ", " + Long.toHexString(zxid) + ", " + Long.toHexString(peerEpoch) + ")";
     }
 }

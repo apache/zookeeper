@@ -199,6 +199,7 @@ public class ReadOnlyModeTest extends QuorumBase {
             watcher.reset();
             qu.start(2);
             qu.start(3);
+            ClientBase.waitForServerUp(qu.getConnString(), 2000);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
             zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);

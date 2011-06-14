@@ -196,6 +196,10 @@ module org.apache.zookeeper.proto {
 }
 
 module org.apache.zookeeper.server.quorum {
+    class LearnerInfo {
+        long serverid;
+        int protocolVersion;
+    }
     class QuorumPacket {
         int type; // Request, Ack, Commit, Ping
         long zxid;

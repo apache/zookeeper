@@ -17,8 +17,14 @@
  */
 package org.apache.zookeeper.server.quorum;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -41,6 +47,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.ZxidUtils;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -395,16 +402,50 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     
     @Override
     public synchronized void start() {
-        try {
-            zkDb.loadDataBase();
-        } catch(IOException ie) {
-            LOG.error("Unable to load database on disk", ie);
-            throw new RuntimeException("Unable to run quorum server ", ie);
-        }
+        loadDataBase();
         cnxnFactory.start();        
         startLeaderElection();
         super.start();
     }
+
+	private void loadDataBase() {
+		try {
+            zkDb.loadDataBase();
+
+            // load the epochs
+            long lastProcessedZxid = zkDb.getDataTree().lastProcessedZxid;
+    		long epochOfZxid = ZxidUtils.getEpochFromZxid(lastProcessedZxid);
+            try {
+            	currentEpoch = readLongFromFile(CURRENT_EPOCH_FILENAME);
+            } catch(FileNotFoundException e) {
+            	// pick a reasonable epoch number
+            	// this should only happen once when moving to a
+            	// new code version
+            	LOG.info(CURRENT_EPOCH_FILENAME + " not found! Creating with a reasonable default. This should only happen when you are upgrading your installation");
+            	currentEpoch = epochOfZxid;
+            	writeLongToFile(CURRENT_EPOCH_FILENAME, currentEpoch);
+            }
+            if (epochOfZxid > currentEpoch) {
+            	throw new IOException("The current epoch, " + ZxidUtils.zxidToString(currentEpoch) + ", is older than the last zxid, " + lastProcessedZxid);
+            }
+            try {
+            	acceptedEpoch = readLongFromFile(ACCEPTED_EPOCH_FILENAME);
+            } catch(FileNotFoundException e) {
+            	// pick a reasonable epoch number
+            	// this should only happen once when moving to a
+            	// new code version
+            	LOG.info(ACCEPTED_EPOCH_FILENAME + " not found! Creating with a reasonable default. This should only happen when you are upgrading your installation");
+            	acceptedEpoch = epochOfZxid;
+            	writeLongToFile(CURRENT_EPOCH_FILENAME, acceptedEpoch);
+            }
+            if (acceptedEpoch < currentEpoch) {
+            	throw new IOException("The current epoch, " + ZxidUtils.zxidToString(currentEpoch) + " is less than the accepted epoch, " + ZxidUtils.zxidToString(acceptedEpoch));
+            }
+        } catch(IOException ie) {
+            LOG.error("Unable to load database on disk", ie);
+            throw new RuntimeException("Unable to run quorum server ", ie);
+        }
+	}
 
     ResponderThread responder;
     
@@ -413,7 +454,13 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         responder.interrupt();
     }
     synchronized public void startLeaderElection() {
-        currentVote = new Vote(myid, getLastLoggedZxid());
+    	try {
+    		currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
+    	} catch(IOException e) {
+    		RuntimeException re = new RuntimeException(e.getMessage());
+    		re.setStackTrace(e.getStackTrace());
+    		throw re;
+    	}
         for (QuorumServer p : getView().values()) {
             if (p.id == myid) {
                 myQuorumAddr = p.addr;
@@ -487,16 +534,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * @return the highest zxid for this host
      */
     public long getLastLoggedZxid() {
-        long lastLogged= -1L;
-        try {
-            if (!zkDb.isInitialized()) {
-                zkDb.loadDataBase();
-            }
-            lastLogged = zkDb.getDataTreeLastProcessedZxid();
-        } catch(IOException ie) {
-            LOG.warn("Unable to load database ", ie);
+        if (!zkDb.isInitialized()) {
+        	loadDataBase();
         }
-        return lastLogged;
+        return zkDb.getDataTreeLastProcessedZxid();
     }
     
     public Follower follower;
@@ -1002,5 +1043,63 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      */
     public QuorumCnxManager getQuorumCnxManager() {
         return qcm;
-}
+    }
+    private long readLongFromFile(String name) throws IOException {
+    	File file = new File(logFactory.getSnapDir(), name);
+		BufferedReader br = new BufferedReader(new FileReader(file));
+		String line = "";
+		try {
+			line = br.readLine();
+    		return Long.parseLong(line);
+    	} catch(NumberFormatException e) {
+    		throw new IOException("Found " + line + " in " + file);
+    	} finally {
+    		br.close();
+    	}
+    }
+
+    private long acceptedEpoch = -1;
+    private long currentEpoch = -1;
+
+	public static final String CURRENT_EPOCH_FILENAME = "currentEpoch";
+
+	public static final String ACCEPTED_EPOCH_FILENAME = "acceptedEpoch";
+
+    private void writeLongToFile(String name, long value) throws IOException {
+    	File file = new File(logFactory.getSnapDir(), name);
+		FileOutputStream out = new FileOutputStream(file);
+		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out));
+    	try {
+    		bw.write(Long.toString(value));
+    		bw.flush();
+    		out.getFD().sync();
+    	} finally {
+    		bw.close();
+    	}
+    }
+
+    public long getCurrentEpoch() throws IOException {
+		if (currentEpoch == -1) {
+			currentEpoch = readLongFromFile(CURRENT_EPOCH_FILENAME);
+		}
+		return currentEpoch;
+	}
+	
+	public long getAcceptedEpoch() throws IOException {
+		if (acceptedEpoch == -1) {
+			acceptedEpoch = readLongFromFile(ACCEPTED_EPOCH_FILENAME);
+		}
+		return acceptedEpoch;
+	}
+	
+	public void setCurrentEpoch(long e) throws IOException {
+		currentEpoch = e;
+		writeLongToFile(CURRENT_EPOCH_FILENAME, e);
+		
+	}
+	
+	public void setAcceptedEpoch(long e) throws IOException {
+		acceptedEpoch = e;
+		writeLongToFile(ACCEPTED_EPOCH_FILENAME, e);
+	}
 }

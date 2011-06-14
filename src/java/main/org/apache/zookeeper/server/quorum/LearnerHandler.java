@@ -40,10 +40,12 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -73,6 +75,12 @@ public class LearnerHandler extends Thread {
         return sid;
     }                    
 
+    protected int version = 0x1;
+    
+    int getVersion() {
+    	return version;
+    }
+    
     /**
      * The packets to be sent to the learner
      */
@@ -226,8 +234,7 @@ public class LearnerHandler extends Thread {
      */
     @Override
     public void run() {
-        try {
-            
+        try {            
             ia = BinaryInputArchive.getArchive(new BufferedInputStream(sock
                     .getInputStream()));
             bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
@@ -240,9 +247,17 @@ public class LearnerHandler extends Thread {
                         + " is not FOLLOWERINFO or OBSERVERINFO!");
                 return;
             }
-            if (qp.getData() != null) {
-            	ByteBuffer bbsid = ByteBuffer.wrap(qp.getData());
-                this.sid = bbsid.getLong();
+            byte learnerInfoData[] = qp.getData();
+            if (learnerInfoData != null) {
+            	if (learnerInfoData.length == 8) {
+            		ByteBuffer bbsid = ByteBuffer.wrap(learnerInfoData);
+            		this.sid = bbsid.getLong();
+            	} else {
+            		LearnerInfo li = new LearnerInfo();
+            		ZooKeeperServer.byteBuffer2Record(ByteBuffer.wrap(learnerInfoData), li);
+            		this.sid = li.getServerid();
+            		this.version = li.getProtocolVersion();
+            	}
             } else {
             	this.sid = leader.followerCounter.getAndDecrement();
             }
@@ -254,7 +269,42 @@ public class LearnerHandler extends Thread {
                   learnerType = LearnerType.OBSERVER;
             }            
             
-            long peerLastZxid = qp.getZxid();
+            long lastAcceptedEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
+            
+            long peerLastZxid;
+            StateSummary ss = null;
+            if (learnerType == LearnerType.PARTICIPANT) {
+            	long zxid = qp.getZxid();
+				long newEpoch = leader.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
+				
+				if (this.getVersion() < 0x10000) {
+					// we are going to have to extrapolate the epoch information
+					long epoch = ZxidUtils.getEpochFromZxid(zxid);
+					ss = new StateSummary(epoch, zxid);
+					// fake the message
+					leader.waitForEpochAck(this.getSid(), ss);
+				} else {
+					byte ver[] = new byte[4];
+					ByteBuffer.wrap(ver).putInt(0x10000);
+				    QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, ZxidUtils.makeZxid(newEpoch, 0), ver, null);
+				    oa.writeRecord(newEpochPacket, "packet");
+		            bufferedOutput.flush();
+		            QuorumPacket ackEpochPacket = new QuorumPacket();
+		            ia.readRecord(ackEpochPacket, "packet");
+		            if (ackEpochPacket.getType() != Leader.ACKEPOCH) {
+		             	LOG.error(ackEpochPacket.toString()
+		                        + " is not ACKEPOCH");
+		                return;
+		            }
+            		ByteBuffer bbepoch = ByteBuffer.wrap(ackEpochPacket.getData());
+		            ss = new StateSummary(bbepoch.getInt(), ackEpochPacket.getZxid());
+		            leader.waitForEpochAck(this.getSid(), ss);
+				}
+            	peerLastZxid = ss.getLastZxid();
+            } else {
+            	peerLastZxid = qp.getZxid();
+            }
+            
             /* the default to send to the follower */
             int packetToSend = Leader.SNAP;
             long zxidToSend = 0;
