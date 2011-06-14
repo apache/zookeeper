@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
@@ -44,6 +45,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -72,7 +74,9 @@ public class Learner {
     }
     
     protected InputArchive leaderIs;
-    protected OutputArchive leaderOs;    
+    protected OutputArchive leaderOs;  
+    /** the protocol version of the leader */
+    protected int leaderProtocolVersion = 0x01;
     
     protected static final Logger LOG = LoggerFactory.getLogger(Learner.class);
 
@@ -250,22 +254,48 @@ public class Learner {
         /*
          * Send follower info, including last zxid and sid
          */
+    	long lastLoggedZxid = self.getLastLoggedZxid();
         QuorumPacket qp = new QuorumPacket();                
         qp.setType(pktType);
-        long sentLastZxid = self.getLastLoggedZxid();
-        qp.setZxid(sentLastZxid);
+        qp.setZxid(ZxidUtils.makeZxid(self.getAcceptedEpoch(), 0));
         
         /*
          * Add sid to payload
          */
+        LearnerInfo li = new LearnerInfo(self.getId(), 0x10000);
         ByteArrayOutputStream bsid = new ByteArrayOutputStream();
-        DataOutputStream dsid = new DataOutputStream(bsid);
-        dsid.writeLong(self.getId());
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(bsid);
+        boa.writeRecord(li, "LearnerInfo");
         qp.setData(bsid.toByteArray());
         
         writePacket(qp, true);
         readPacket(qp);        
-
+        final long newEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
+		if (qp.getType() == Leader.LEADERINFO) {
+        	// we are connected to a 1.0 server so accept the new epoch and read the next packet
+        	leaderProtocolVersion = ByteBuffer.wrap(qp.getData()).getInt();
+        	byte epochBytes[] = new byte[4];
+        	final ByteBuffer wrappedEpochBytes = ByteBuffer.wrap(epochBytes);
+        	if (newEpoch > self.getAcceptedEpoch()) {
+        		wrappedEpochBytes.putInt((int)self.getCurrentEpoch());
+        		self.setAcceptedEpoch(newEpoch);
+        	} else if (newEpoch == self.getAcceptedEpoch()) {
+        		// since we have already acked an epoch equal to the leaders, we cannot ack
+        		// again, but we still need to send our lastZxid to the leader so that we can
+        		// sync with it if it does assume leadership of the epoch.
+        		// the -1 indicates that this reply should not count as an ack for the new epoch
+                wrappedEpochBytes.putInt(-1);
+        	} else {
+        		throw new IOException("Leaders epoch, " + newEpoch + " is less than accepted epoch, " + self.getAcceptedEpoch());
+        	}
+        	QuorumPacket ackNewEpoch = new QuorumPacket(Leader.ACKEPOCH, lastLoggedZxid, epochBytes, null);
+        	writePacket(ackNewEpoch, true);
+        	readPacket(qp);
+        } else {
+        	if (newEpoch > self.getAcceptedEpoch()) {
+        		self.setAcceptedEpoch(newEpoch);
+        	}
+        }
         if (qp.getType() != Leader.NEWLEADER) {
             LOG.error("First packet should have been NEWLEADER");
             throw new IOException("First packet should have been NEWLEADER");
@@ -321,9 +351,6 @@ public class Learner {
 
             }
             zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
-            if(LOG.isInfoEnabled()){
-                LOG.info("Setting leader epoch " + Long.toHexString(newLeaderZxid >> 32L));
-            }
                         
             long lastQueued = 0;
             // we are now going to start getting transactions to apply followed by an UPTODATE
@@ -369,7 +396,9 @@ public class Learner {
                 }
             }
         }
-        ack.setZxid(newLeaderZxid & ~0xffffffffL);
+        long newEpoch = ZxidUtils.getEpochFromZxid(newLeaderZxid);
+        self.setCurrentEpoch(newEpoch);
+        ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
         writePacket(ack, true);
         sock.setSoTimeout(self.tickTime * self.syncLimit);
         zk.startup();

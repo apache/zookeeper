@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -64,20 +65,21 @@ public class Follower extends Learner{
         self.start_fle = 0;
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
-        try {            
+        try {
             InetSocketAddress addr = findLeader();            
             try {
                 connectToLeader(addr);
-                long newLeaderZxid = registerWithLeader(Leader.FOLLOWERINFO);
+                long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
+
                 //check to see if the leader zxid is lower than ours
                 //this should never happen but is just a safety check
-                long lastLoggedZxid = self.getLastLoggedZxid();
-                if ((newLeaderZxid >> 32L) < (lastLoggedZxid >> 32L)) {
-                    LOG.error("Leader epoch " + Long.toHexString(newLeaderZxid >> 32L)
-                            + " is less than our epoch " + Long.toHexString(lastLoggedZxid >> 32L));
+                long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
+                if (newEpoch < self.getAcceptedEpoch()) {
+                    LOG.error("Proposed leader epoch " + ZxidUtils.zxidToString(newEpochZxid)
+                            + " is less than our accepted epoch " + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
                     throw new IOException("Error: Epoch of leader is lower");
                 }
-                syncWithLeader(newLeaderZxid);                
+                syncWithLeader(newEpochZxid);                
                 QuorumPacket qp = new QuorumPacket();
                 while (self.isRunning()) {
                     readPacket(qp);

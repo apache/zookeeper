@@ -26,6 +26,7 @@ import java.io.StringReader;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Layout;
@@ -33,9 +34,15 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,7 +53,7 @@ import org.junit.Test;
  *
  */
 public class QuorumPeerMainTest extends QuorumPeerTestBase {
-    /**
+	/**
      * Verify the ability to start a cluster.
      */
     @Test
@@ -101,6 +108,129 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
                         ClientBase.CONNECTION_TIMEOUT));
     }
+
+    /**
+     * Test early leader abandonment.
+     */
+    @Test
+    public void testEarlyLeaderAbandonment() throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int SERVER_COUNT = 3;
+        final int clientPorts[] = new int[SERVER_COUNT];
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	clientPorts[i] = PortAssignment.unique();
+        	sb.append("server."+i+"=127.0.0.1:"+PortAssignment.unique()+":"+PortAssignment.unique()+"\n");
+        }
+        String quorumCfgSection = sb.toString();
+
+        MainThread mt[] = new MainThread[SERVER_COUNT];
+        ZooKeeper zk[] = new ZooKeeper[SERVER_COUNT];
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	mt[i] = new MainThread(i, clientPorts[i], quorumCfgSection);
+        	mt[i].start();
+        	zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
+        }
+        
+        waitForAll(zk, States.CONNECTED);
+        
+        // we need to shutdown and start back up to make sure that the create session isn't the first transaction since
+        // that is rather innocuous.
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	mt[i].shutdown();
+        }
+        
+        waitForAll(zk, States.CONNECTING);
+        
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	mt[i].start();
+        }
+        
+        waitForAll(zk, States.CONNECTED);
+        
+        // ok lets find the leader and kill everything else, we have a few
+        // seconds, so it should be plenty of time
+        int leader = -1;
+        Map<Long, Proposal> outstanding = null;
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	if (mt[i].main.quorumPeer.leader == null) {
+        		mt[i].shutdown();
+        	} else {
+        		leader = i;
+        		outstanding = mt[leader].main.quorumPeer.leader.outstandingProposals;
+        	}
+        }
+        
+        try {
+        	zk[leader].create("/zk"+leader, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE,
+        			CreateMode.PERSISTENT);
+        	Assert.fail("create /zk" + leader + " should have failed");
+        } catch(KeeperException e) {}
+        
+        // just make sure that we actually did get it in process at the 
+        // leader
+        Assert.assertTrue(outstanding.size() == 1);
+        Assert.assertTrue(((Proposal)outstanding.values().iterator().next()).request.hdr.getType() == OpCode.create);
+        // make sure it has a chance to write it to disk
+        Thread.sleep(1000);
+        mt[leader].shutdown();
+        waitForAll(zk, States.CONNECTING);
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	if (i != leader) {
+        		mt[i].start();
+        	}
+        }
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	if (i != leader) {
+        		waitForOne(zk[i], States.CONNECTED);
+        		zk[i].create("/zk" + i, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        	}
+        }
+        
+        mt[leader].start();
+        waitForAll(zk, States.CONNECTED);
+        // make sure everything is consistent
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	for(int j = 0; j < SERVER_COUNT; j++) {
+        		if (i == leader) {
+         			Assert.assertTrue((j==leader?("Leader ("+leader+")"):("Follower "+j))+" should not have /zk" + i, zk[j].exists("/zk"+i, false) == null);
+        		} else {
+         			Assert.assertTrue((j==leader?("Leader ("+leader+")"):("Follower "+j))+" does not have /zk" + i, zk[j].exists("/zk"+i, false) != null);
+        		}
+        	}
+        }
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	zk[i].close();
+        }
+        for(int i = 0; i < SERVER_COUNT; i++) {
+        	mt[i].shutdown();
+        }
+    }
+
+    private void waitForOne(ZooKeeper zk, States state) throws InterruptedException {
+    	while(zk.getState() != state) {
+    		Thread.sleep(500);
+    	}
+    }
+    
+	private void waitForAll(ZooKeeper[] zks, States state) throws InterruptedException {
+		int iterations = 10;
+		boolean someoneNotConnected = true;
+        while(someoneNotConnected) {
+        	if (iterations-- == 0) {
+        		throw new RuntimeException("Waiting too long");
+        	}
+        	
+        	someoneNotConnected = false;
+        	for(ZooKeeper zk: zks) {
+        		if (zk.getState() != state) {
+        			someoneNotConnected = true;
+        		}
+        	}
+        	Thread.sleep(1000);
+        }
+	}
 
     /**
      * Verify handling of bad quorum address

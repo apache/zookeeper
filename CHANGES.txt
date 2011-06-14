@@ -223,6 +223,12 @@ BUGFIXES:
 
   ZOOKEEPER-1086. zookeeper test jar has non mavenised dependency. (Ivan Kelly via michim)
 
+  ZOOKEEPER-335. zookeeper servers should commit the new leader txn to their logs. (breed)
+
+  ZOOKEEPER-1081. modify leader/follower code to correctly deal with new leader (breed)
+
+  ZOOKEEPER-1082. modify leader election to correctly take into account current epoch (fpj via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
