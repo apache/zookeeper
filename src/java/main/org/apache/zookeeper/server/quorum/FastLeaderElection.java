@@ -216,12 +216,12 @@ public class FastLeaderElection implements Election {
                         if(!self.getVotingView().containsKey(response.sid)){
                             Vote current = self.getCurrentVote();
                             ToSend notmsg = new ToSend(ToSend.mType.notification,
-                                    current.id,
-                                    current.zxid,
+                                    current.getId(),
+                                    current.getZxid(),
                                     logicalclock,
                                     self.getPeerState(),
                                     response.sid,
-                                    current.peerEpoch);
+                                    current.getPeerEpoch());
 
                             sendqueue.offer(notmsg);
                         } else {
@@ -298,12 +298,12 @@ public class FastLeaderElection implements Election {
                                         && (n.electionEpoch < logicalclock)){
                                     Vote v = getVote();
                                     ToSend notmsg = new ToSend(ToSend.mType.notification,
-                                            v.id,
-                                            v.zxid,
+                                            v.getId(),
+                                            v.getZxid(),
                                             logicalclock,
                                             self.getPeerState(),
                                             response.sid,
-                                            v.peerEpoch);
+                                            v.getPeerEpoch());
                                     sendqueue.offer(notmsg);
                                 }
                             } else {
@@ -317,17 +317,17 @@ public class FastLeaderElection implements Election {
                                         LOG.debug("Sending new notification. My id =  " +
                                                 self.getId() + ", Recipient = " +
                                                 response.sid + " zxid =" +
-                                                current.zxid + " leader=" +
-                                                current.id);
+                                                current.getZxid() + " leader=" +
+                                                current.getId());
                                     }
                                     ToSend notmsg = new ToSend(
                                             ToSend.mType.notification,
-                                            current.id,
-                                            current.zxid,
+                                            current.getId(),
+                                            current.getZxid(),
                                             logicalclock,
                                             self.getPeerState(),
                                             response.sid,
-                                            current.peerEpoch);
+                                            current.getPeerEpoch());
                                     sendqueue.offer(notmsg);
                                 }
                             }
@@ -491,8 +491,8 @@ public class FastLeaderElection implements Election {
     private void leaveInstance(Vote v) {
         if(LOG.isDebugEnabled()){
             LOG.debug("About to leave FLE instance: Leader= "
-                + v.id + ", Zxid = " +
-                v.zxid + ", My id = " + self.getId()
+                + v.getId() + ", Zxid = " +
+                v.getZxid() + ", My id = " + self.getId()
                 + ", My state = " + self.getPeerState());
         }
         recvqueue.clear();
@@ -618,7 +618,7 @@ public class FastLeaderElection implements Election {
 
         if(leader != self.getId()){
             if(votes.get(leader) == null) predicate = false;
-            else if(votes.get(leader).state != ServerState.LEADING) predicate = false;
+            else if(votes.get(leader).getState() != ServerState.LEADING) predicate = false;
         }
 
         return predicate;

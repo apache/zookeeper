@@ -86,17 +86,17 @@ public class LENonTerminateTest extends ZKTestCase {
                     requestBytes.length);
             DatagramPacket responsePacket = new DatagramPacket(responseBytes,
                     responseBytes.length);
-            HashMap<InetSocketAddress, Vote> votes =
-                new HashMap<InetSocketAddress, Vote>(self.getVotingView().size());
             int xid = epochGen.nextInt();
             while (self.isRunning()) {
-                votes.clear();
+                HashMap<InetSocketAddress, Vote> votes =
+                    new HashMap<InetSocketAddress, Vote>(self.getVotingView().size());
+
                 requestBuffer.clear();
                 requestBuffer.putInt(xid);
                 requestPacket.setLength(4);
                 HashSet<Long> heardFrom = new HashSet<Long>();
                 for (QuorumServer server :
-                    (Collection<QuorumServer>)self.getVotingView().values())
+                    self.getVotingView().values())
                 {
                     LOG.info("Server address: " + server.addr);
                     try {
@@ -162,11 +162,11 @@ public class LENonTerminateTest extends ZKTestCase {
                 // If no votes are received for live peers, reset to voting 
                 // for ourselves as otherwise we may hang on to a vote 
                 // for a dead peer                 
-                if (votes.size() == 0) {                    
+                if (result.numValidVotes == 0) {
                     self.setCurrentVote(new Vote(self.getId(),
                             self.getLastLoggedZxid()));
                 } else {
-                    if (result.winner.id >= 0) {
+                    if (result.winner.getId() >= 0) {
                         self.setCurrentVote(result.vote);
                         // To do: this doesn't use a quorum verifier
                         if (result.winningCount > (self.getVotingView().size() / 2)) {
@@ -182,7 +182,7 @@ public class LENonTerminateTest extends ZKTestCase {
                              * error to be elected as a Leader.
                              */
                             if (self.getLearnerType() == LearnerType.OBSERVER) {
-                                if (current.id == self.getId()) {
+                                if (current.getId() == self.getId()) {
                                     // This should never happen!
                                     LOG.error("OBSERVER elected as leader!");
                                     Thread.sleep(100);
@@ -193,7 +193,7 @@ public class LENonTerminateTest extends ZKTestCase {
                                     return current;
                                 }
                             } else {
-                                self.setPeerState((current.id == self.getId())
+                                self.setPeerState((current.getId() == self.getId())
                                         ? ServerState.LEADING: ServerState.FOLLOWING);
                                 if (self.getPeerState() == ServerState.FOLLOWING) {
                                     Thread.sleep(100);
@@ -276,7 +276,7 @@ public class LENonTerminateTest extends ZKTestCase {
                  */
                 peer.setCurrentVote(v);
 
-                LOG.info("Finished election: " + i + ", " + v.id);                    
+                LOG.info("Finished election: " + i + ", " + v.getId());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -369,8 +369,8 @@ public class LENonTerminateTest extends ZKTestCase {
             responseBuffer.getInt(); // Skip the xid
             responseBuffer.putLong(2);
             
-            responseBuffer.putLong(current.id);
-            responseBuffer.putLong(current.zxid);
+            responseBuffer.putLong(current.getId());
+            responseBuffer.putLong(current.getZxid());
             packet.setData(b);
             udpSocket.send(packet);
         }

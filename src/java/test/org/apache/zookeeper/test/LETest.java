@@ -56,7 +56,7 @@ public class LETest extends ZKTestCase {
                 while(true) {
                     v = le.lookForLeader();
                     votes[i] = v;
-                    if (v.id == i) {
+                    if (v.getId() == i) {
                         synchronized(LETest.this) {
                             if (leaderDies) {
                                 leaderDies = false;
@@ -74,7 +74,7 @@ public class LETest extends ZKTestCase {
                         if (leader == -1) {
                             LETest.this.wait();
                         }
-                        if (leader == v.id) {
+                        if (leader == v.getId()) {
                             break;
                         }
                     }
@@ -122,16 +122,16 @@ public class LETest extends ZKTestCase {
                 Assert.fail("Threads didn't join");
             }
         }
-        long id = votes[0].id;
+        long id = votes[0].getId();
         for(int i = 1; i < votes.length; i++) {
             if (votes[i] == null) {
                 Assert.fail("Thread " + i + " had a null vote");
             }
-            if (votes[i].id != id) {
-                if (allowOneBadLeader && votes[i].id == i) {
+            if (votes[i].getId() != id) {
+                if (allowOneBadLeader && votes[i].getId() == i) {
                     allowOneBadLeader = false;
                 } else {
-                    Assert.fail("Thread " + i + " got " + votes[i].id + " expected " + id);
+                    Assert.fail("Thread " + i + " got " + votes[i].getId() + " expected " + id);
                 }
             }
         }

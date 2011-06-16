@@ -195,14 +195,14 @@ public class Learner {
         // Find the leader by id
         Vote current = self.getCurrentVote();
         for (QuorumServer s : self.getView().values()) {
-            if (s.id == current.id) {
+            if (s.id == current.getId()) {
                 addr = s.addr;
                 break;
             }
         }
         if (addr == null) {
             LOG.warn("Couldn't find the leader with id = "
-                    + current.id);
+                    + current.getId());
         }
         return addr;
     }

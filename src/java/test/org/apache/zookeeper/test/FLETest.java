@@ -125,7 +125,7 @@ public class FLETest extends ZKTestCase {
                      */
                     peer.setCurrentVote(v);
 
-                    LOG.info("Finished election: " + i + ", " + v.id);
+                    LOG.info("Finished election: " + i + ", " + v.getId());
                     votes[i] = v;
 
                     /*
@@ -133,7 +133,7 @@ public class FLETest extends ZKTestCase {
                      */
                     int lc = (int) ((FastLeaderElection) peer.getElectionAlg()).getLogicalClock();
 
-                    if (v.id == ((long) i)) {
+                    if (v.getId() == i) {
                         /*
                          * A leader executes this part of the code. If it is the first leader to be
                          * elected, then it Assert.fails right after. Otherwise, it waits until it has enough
@@ -158,16 +158,16 @@ public class FLETest extends ZKTestCase {
                                     if(voteMap.get(lc) == null)
                                         voteMap.put(lc, new HashSet<TestVote>());
                                     HashSet<TestVote> hs = voteMap.get(lc);
-                                    hs.add(new TestVote(i, v.id));
+                                    hs.add(new TestVote(i, v.getId()));
 
-                                    if(countVotes(hs, v.id) > (count/2)){
+                                    if(countVotes(hs, v.getId()) > (count/2)){
                                         leader = i;
                                         LOG.info("Got majority: " + i);
                                     } else {
                                         voteMap.wait(3000);
                                         LOG.info("Notified or expired: " + i);
                                         hs = voteMap.get(lc);
-                                        if(countVotes(hs, v.id) > (count/2)){
+                                        if(countVotes(hs, v.getId()) > (count/2)){
                                             leader = i;
                                             LOG.info("Got majority: " + i);
                                         } else {
@@ -201,13 +201,13 @@ public class FLETest extends ZKTestCase {
 
                         LOG.info("Logical clock " + ((FastLeaderElection) peer.getElectionAlg()).getLogicalClock());
                         synchronized(voteMap){
-                            LOG.info("Voting on " + votes[i].id + ", round " + ((FastLeaderElection) peer.getElectionAlg()).getLogicalClock());
+                            LOG.info("Voting on " + votes[i].getId() + ", round " + ((FastLeaderElection) peer.getElectionAlg()).getLogicalClock());
                             if(voteMap.get(lc) == null)
                                 voteMap.put(lc, new HashSet<TestVote>());
                             HashSet<TestVote> hs = voteMap.get(lc);
-                            hs.add(new TestVote(i, votes[i].id));
-                            if(countVotes(hs, votes[i].id) > (count/2)){
-                                LOG.info("Logical clock: " + lc + ", " + votes[i].id);
+                            hs.add(new TestVote(i, votes[i].getId()));
+                            if(countVotes(hs, votes[i].getId()) > (count/2)){
+                                LOG.info("Logical clock: " + lc + ", " + votes[i].getId());
                                 voteMap.notify();
                             }
                         }
@@ -217,11 +217,11 @@ public class FLETest extends ZKTestCase {
                          * vote if the leader takes too long to respond.
                          */
                         synchronized(FLETest.this){
-                            if (leader != votes[i].id) FLETest.this.wait(3000);
+                            if (leader != votes[i].getId()) FLETest.this.wait(3000);
 
-                            LOG.info("The leader: " + leader + " and my vote " + votes[i].id);
+                            LOG.info("The leader: " + leader + " and my vote " + votes[i].getId());
                             synchronized(voteMap){
-                                if (leader == votes[i].id) {
+                                if (leader == votes[i].getId()) {
                                     synchronized(finalObj){
                                         successCount++;
                                         if(successCount > (count/2)) finalObj.notify();
@@ -231,7 +231,7 @@ public class FLETest extends ZKTestCase {
                                     HashSet<TestVote> hs = voteMap.get(lc);
                                     TestVote toRemove = null;
                                     for(TestVote tv : hs){
-                                        if(v.id == i){
+                                        if(v.getId() == i){
                                             toRemove = tv;
                                             break;
                                         }

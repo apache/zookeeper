@@ -94,7 +94,7 @@ public class FLELostMessageTest extends ZKTestCase {
                  */
                 peer.setCurrentVote(v);
 
-                LOG.info("Finished election: " + i + ", " + v.id);
+                LOG.info("Finished election: " + i + ", " + v.getId());
                     
                 Assert.assertTrue("State is not leading.", peer.getPeerState() == ServerState.LEADING);
             } catch (Exception e) {

@@ -126,7 +126,7 @@ public class FLERestartTest extends ZKTestCase {
                      */
                     peer.setCurrentVote(v);
 
-                    LOG.info("Finished election: " + i + ", " + v.id);
+                    LOG.info("Finished election: " + i + ", " + v.getId());
                     //votes[i] = v;
 
                     switch(i){
