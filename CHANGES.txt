@@ -308,6 +308,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1052. Findbugs warning in QuorumPeer.ResponderThread.run()  (fpj via michim)
 
+  ZOOKEEPER-1094. Small improvements to LeaderElection and Vote classes (henryr via breed)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)

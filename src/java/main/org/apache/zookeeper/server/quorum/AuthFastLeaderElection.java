@@ -279,7 +279,7 @@ public class AuthFastLeaderElection implements Election {
                     case 0:
                         // Receive challenge request
                         ToSend c = new ToSend(ToSend.mType.challenge, tag,
-                                current.id, current.zxid,
+                                current.getId(), current.getZxid(),
                                 logicalclock, self.getPeerState(),
                                 (InetSocketAddress) responsePacket
                                         .getSocketAddress());
@@ -322,8 +322,8 @@ public class AuthFastLeaderElection implements Election {
                                         recvqueue.offer(n);
 
                                         ToSend a = new ToSend(ToSend.mType.ack,
-                                                tag, current.id,
-                                                current.zxid,
+                                                tag, current.getId(),
+                                                current.getZxid(),
                                                 logicalclock, self.getPeerState(),
                                                 addr);
 
@@ -342,7 +342,7 @@ public class AuthFastLeaderElection implements Election {
                             recvqueue.offer(n);
 
                             ToSend a = new ToSend(ToSend.mType.ack, tag,
-                                    current.id, current.zxid,
+                                    current.getId(), current.getZxid(),
                                     logicalclock, self.getPeerState(),
                                     (InetSocketAddress) responsePacket
                                             .getSocketAddress());
@@ -804,7 +804,7 @@ public class AuthFastLeaderElection implements Election {
          * zxids for a server depending on timing.
          */
         for (Vote v : votesCast) {
-            if ((v.id == l) && (v.zxid == zxid))
+            if ((v.getId() == l) && (v.getZxid() == zxid))
                 count++;
         }
 

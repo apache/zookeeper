@@ -285,8 +285,8 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                         Vote current = getCurrentVote();
                         switch (getPeerState()) {
                         case LOOKING:
-                            responseBuffer.putLong(current.id);
-                            responseBuffer.putLong(current.zxid);
+                            responseBuffer.putLong(current.getId());
+                            responseBuffer.putLong(current.getZxid());
                             break;
                         case LEADING:
                             responseBuffer.putLong(myid);
@@ -302,7 +302,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                             }
                             break;
                         case FOLLOWING:
-                            responseBuffer.putLong(current.id);
+                            responseBuffer.putLong(current.getId());
                             try {
                                 responseBuffer.putLong(follower.getZxid());
                             } catch (NullPointerException npe) {
@@ -833,7 +833,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             if (leader != null) {
                 synchronized (leader.learners) {
                     for (LearnerHandler fh :
-                        (Collection<LearnerHandler>)leader.learners)
+                        leader.learners)
                     {
                         if (fh.getSocket() == null)
                             continue;

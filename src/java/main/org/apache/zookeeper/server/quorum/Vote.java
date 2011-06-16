@@ -26,12 +26,17 @@ public class Vote {
     public Vote(long id, long zxid) {
         this.id = id;
         this.zxid = zxid;
+        this.electionEpoch = -1;
+        this.peerEpoch = -1;
+        this.state = ServerState.LOOKING;
     }
     
     public Vote(long id, long zxid, long peerEpoch) {
         this.id = id;
         this.zxid = zxid;
+        this.electionEpoch = -1;
         this.peerEpoch = peerEpoch;
+        this.state = ServerState.LOOKING;
     }
 
     public Vote(long id, long zxid, long electionEpoch, long peerEpoch) {
@@ -39,6 +44,7 @@ public class Vote {
         this.zxid = zxid;
         this.electionEpoch = electionEpoch;
         this.peerEpoch = peerEpoch;
+        this.state = ServerState.LOOKING;
     }
     
     public Vote(long id, long zxid, long electionEpoch, long peerEpoch, ServerState state) {
@@ -49,15 +55,35 @@ public class Vote {
         this.peerEpoch = peerEpoch;
     }
     
-    public long id;
+    final private long id;
     
-    public long zxid;
+    final private long zxid;
     
-    public long electionEpoch = -1;
+    final private long electionEpoch;
     
-    public long peerEpoch = -1;
+    final private long peerEpoch;
     
-    public ServerState state = ServerState.LOOKING;
+    public long getId() {
+        return id;
+    }
+
+    public long getZxid() {
+        return zxid;
+    }
+
+    public long getElectionEpoch() {
+        return electionEpoch;
+    }
+
+    public long getPeerEpoch() {
+        return peerEpoch;
+    }
+
+    public ServerState getState() {
+        return state;
+    }
+
+    final private ServerState state;
     
     @Override
     public boolean equals(Object o) {
