@@ -99,9 +99,6 @@ public class FileTxnLog implements TxnLog {
     static {
         LOG = Logger.getLogger(FileTxnLog.class);
 
-        forceSync =
-            !System.getProperty("zookeeper.forceSync", "yes").equals("no");
-
         String size = System.getProperty("zookeeper.preAllocSize");
         if (size != null) {
             try {
@@ -118,7 +115,7 @@ public class FileTxnLog implements TxnLog {
     volatile FileOutputStream fos = null;
 
     File logDir;
-    private static boolean forceSync = true;
+    private final boolean forceSync = !System.getProperty("zookeeper.forceSync", "yes").equals("no");;
     long dbId;
     private LinkedList<FileOutputStream> streamsToFlush =
         new LinkedList<FileOutputStream>();
@@ -380,6 +377,14 @@ public class FileTxnLog implements TxnLog {
         if(fh==null)
             throw new IOException("Unsupported Format.");
         return fh.getDbid();
+    }
+
+    /**
+     * the forceSync value. true if forceSync is enabled, false otherwise.
+     * @return the forceSync value
+     */
+    public boolean isForceSync() {
+        return forceSync;
     }
 
     /**

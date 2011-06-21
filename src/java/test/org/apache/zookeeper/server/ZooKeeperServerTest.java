@@ -26,6 +26,7 @@ import junit.framework.TestCase;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.Util;
 import org.junit.Test;
+import org.junit.Assert;
 
 public class ZooKeeperServerTest extends TestCase {
     @Test
@@ -90,6 +91,27 @@ public class ZooKeeperServerTest extends TestCase {
         assertEquals(orig[0], filelist[0]);
         assertEquals(orig[1], filelist[1]);
         assertEquals(orig[4], filelist[2]);
+    }
+
+    @Test
+    public void testForceSyncDefaultEnabled() {
+        File file = new File("foo.10027c6de");
+        FileTxnLog log = new FileTxnLog(file);
+        Assert.assertTrue(log.isForceSync());
+    }
+
+    @Test
+    public void testForceSyncDefaultDisabled() {
+        try {
+            File file = new File("foo.10027c6de");
+            System.setProperty("zookeeper.forceSync","no");
+            FileTxnLog log = new FileTxnLog(file);
+            Assert.assertFalse(log.isForceSync());
+        }
+        finally {
+            //Reset back to default.
+            System.setProperty("zookeeper.forceSync","yes");
+        }
     }
 
 }

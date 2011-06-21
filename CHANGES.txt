@@ -2,6 +2,8 @@ Backward compatible changes:
 BUGFIXES:
   ZOOKEEPER-1006. QuorumPeer "Address already in use" -- regression in 3.3.3 (phunt via breed)
 
+  ZOOKEEPER-1087. ForceSync VM arguement not working when set to "no" (Nate Putnam via breed)
+
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:
 
