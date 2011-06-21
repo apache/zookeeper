@@ -236,6 +236,10 @@ BUGFIXES:
   ZOOKEEPER-1068. Documentation and default config suggest incorrect
   location for Zookeeper state (Roman Shaposhnik via phunt)
 
+  ZOOKEEPER-1103. In QuorumTest, use the same "for ( .. try { break }
+  catch { } )" pattern in testFollowersStartAfterLeaders as in
+  testSessionMove. (Eugene Koontz via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

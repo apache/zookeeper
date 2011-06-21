@@ -316,11 +316,21 @@ public class QuorumTest extends QuorumBase {
                 QuorumBase.waitForServerUp(
                         "127.0.0.1:" + qu.getPeer(2).clientPort,
                         CONNECTION_TIMEOUT));
-        Thread.sleep(1000);
 
-        // zk should have reconnected already
-        zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+
+        for (int i = 0; i < 30; i++) {
+            try {
+                zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+                break;
+            } catch(KeeperException.ConnectionLossException e) {
+                Thread.sleep(1000);
+            }
+            // test fails if we still can't connect to the quorum after 30 seconds.
+            Assert.assertFalse("client could not connect to reestablished quorum: giving up after 30 seconds.",true);
+        }
+
+
         zk.close();
     }
 
