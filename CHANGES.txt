@@ -231,6 +231,8 @@ BUGFIXES:
 
   ZOOKEEPER-1060. QuorumPeer takes a long time to shutdown (Vishal via fpj)
 
+  ZOOKEEPER-1087. ForceSync VM arguement not working when set to "no" (Nate Putnam via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
