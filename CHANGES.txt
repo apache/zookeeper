@@ -4,6 +4,10 @@ BUGFIXES:
 
   ZOOKEEPER-1087. ForceSync VM arguement not working when set to "no" (Nate Putnam via breed)
 
+  ZOOKEEPER-1103. In QuorumTest, use the same "for ( .. try { break }
+  catch { } )" pattern in testFollowersStartAfterLeaders as in
+  testSessionMove. (Eugene Koontz via phunt)
+
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:
 
