@@ -89,7 +89,7 @@
 
 <programlisting>
 tickTime=2000
-dataDir=/var/zookeeper
+dataDir=/var/lib/zookeeper
 clientPort=2181
 </programlisting>
 
@@ -346,7 +346,7 @@ numChildren = 0
 
 <programlisting>
 tickTime=2000
-dataDir=/var/zookeeper
+dataDir=/var/lib/zookeeper
 clientPort=2181
 initLimit=5
 syncLimit=2

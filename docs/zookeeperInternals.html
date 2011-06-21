@@ -241,7 +241,7 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_rightLevel">Logging at the Right Level</a>
 </li>
 <li>
-<a href="#sc_log4jIdioms">Use of Standard log4j Idioms</a>
+<a href="#sc_slf4jIdioms">Use of Standard slf4j Idioms</a>
 </li>
 </ul>
 </li>
@@ -677,26 +677,31 @@ hierarchy of groups.
 <h2 class="h3">Logging</h2>
 <div class="section">
 <p>
-ZooKeeper uses 
-<a href="http://logging.apache.org/log4j">log4j</a>
-version 1.2 as its logging infrastructure. For information on configuring log4j for
+Zookeeper uses 
+<a href="http://www.slf4j.org/index.html">slf4j</a> as an abstraction layer for logging. 
+<a href="http://logging.apache.org/log4j">log4j</a> in version 1.2 is chosen as the final logging implementation for now.
+For better embedding support, it is planned in the future to leave the decision of choosing the final logging implementation to the end user.
+Therefore, always use the slf4j api to write log statements in the code, but configure log4j for how to log at runtime.
+Note that slf4j has no FATAL level, former messages at FATAL level have been moved to ERROR level. 
+For information on configuring log4j for
 ZooKeeper, see the <a href="zookeeperAdmin.html#sc_logging">Logging</a> section 
 of the <a href="zookeeperAdmin.html">ZooKeeper Administrator's Guide.</a>
 
+
 </p>
-<a name="N1015C"></a><a name="sc_developerGuidelines"></a>
+<a name="N10160"></a><a name="sc_developerGuidelines"></a>
 <h3 class="h4">Developer Guidelines</h3>
-<p>Please follow these guidelines when submitting code. Patch reviewers will look for the following:</p>
-<a name="N10164"></a><a name="sc_rightLevel"></a>
+<p>Please follow the  
+<a href="http://www.slf4j.org/manual.html">slf4j manual</a> when creating log statements within code.
+Also read the
+<a href="http://www.slf4j.org/faq.html#logging_performance">FAQ on performance</a>
+, when creating log statements. Patch reviewers will look for the following:</p>
+<a name="N10170"></a><a name="sc_rightLevel"></a>
 <h4>Logging at the Right Level</h4>
 <p>
-There are <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html#FATAL">6 levels of logging in log4j</a>. 
+There are several levels of logging in slf4j. 
 It's important to pick the right one. In order of higher to lower severity:</p>
 <ol>
-   
-<li>
-<p> FATAL level designates very severe error events that will presumably lead the application to abort</p>
-</li>
    
 <li>
 <p>ERROR level designates error events that might still allow the application to continue running.</p>
@@ -711,7 +716,7 @@ It's important to pick the right one. In order of higher to lower severity:</p>
 </li>
    
 <li>
-<p>EBUG Level designates fine-grained informational events that are most useful to debug an application.</p>
+<p>DEBUG Level designates fine-grained informational events that are most useful to debug an application.</p>
 </li>
    
 <li>
@@ -722,34 +727,29 @@ It's important to pick the right one. In order of higher to lower severity:</p>
 <p>
 ZooKeeper is typically run in production such that log messages of INFO level 
 severity and higher (more severe) are output to the log.</p>
-<a name="N1018F"></a><a name="sc_log4jIdioms"></a>
-<h4>Use of Standard log4j Idioms</h4>
+<a name="N10193"></a><a name="sc_slf4jIdioms"></a>
+<h4>Use of Standard slf4j Idioms</h4>
 <p>
 <em>Static Message Logging</em>
 </p>
 <pre class="code">
 LOG.debug("process completed successfully!");
 </pre>
-<p>However when creating a message from a number of components (string 
-concatenation), the log call should be wrapped with a "isXEnabled()" call. this 
-eliminates the string concatenation overhead when debug level logging is not enabled.
+<p>
+However when creating parameterized messages are required, use formatting anchors.
 </p>
 <pre class="code">
-if (LOG.isDebugEnabled()) {
-    LOG.debug("got " + count + " messages in " + time + " minutes");
-}
+LOG.debug("got {} messages in {} minutes",new Object[]{count,time});    
 </pre>
 <p>
 <em>Naming</em>
 </p>
 <p>
-Loggers should be named after the class in which they are used. (See the 
-<a href="http://logging.apache.org/log4j/1.2/faq.html#2.4">log4j faq</a> 
-for reasons why this is a good idea.)
+Loggers should be named after the class in which they are used.
 </p>
 <pre class="code">
 public class Foo {
-    private static final Logger LOG = Logger.getLogger(Foo.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Foo.class);
     ....
     public Foo() {
        LOG.info("constructing Foo");
