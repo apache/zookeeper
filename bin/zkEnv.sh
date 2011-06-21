@@ -24,12 +24,7 @@
 # a sibling of this script's directory
 if [ "x$ZOOCFGDIR" = "x" ]
 then
-    if [ -d "/etc/zookeeper" ]
-    then
-        ZOOCFGDIR="/etc/zookeeper"
-    else
-        ZOOCFGDIR="$ZOOBINDIR/../conf"
-    fi
+    ZOOCFGDIR="$ZOOBINDIR/../conf"
 fi
 
 if [ "x$ZOOCFG" = "x" ]

@@ -487,7 +487,7 @@ document.write("Last Published: " + document.lastModified);
           
 <pre class="code">
 tickTime=2000
-dataDir=/var/zookeeper/
+dataDir=/var/lib/zookeeper/
 clientPort=2181
 initLimit=5
 syncLimit=2
@@ -528,7 +528,7 @@ server.3=zoo3:2888:3888</pre>
 
           
 <p>
-<span class="codefrag computeroutput">$ java -cp zookeeper.jar:lib/log4j-1.2.15.jar:conf \
+<span class="codefrag computeroutput">$ java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf \
               org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
           </span>
 </p>
@@ -565,7 +565,7 @@ server.3=zoo3:2888:3888</pre>
 
               
 <p>
-<span class="codefrag computeroutput">$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf:src/java/lib/jline-0.9.94.jar \
+<span class="codefrag computeroutput">$ java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf:src/java/lib/jline-0.9.94.jar \
       org.apache.zookeeper.ZooKeeperMain -server 127.0.0.1:2181</span>
 </p>
             
@@ -888,7 +888,7 @@ server.3=zoo3:2888:3888</pre>
         in the unlikely event a recent log has become corrupted). This
         can be run as a cron job on the ZooKeeper server machines to
         clean up the logs daily.</p>
-<pre class="code"> java -cp zookeeper.jar:log4j.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</pre>
+<pre class="code"> java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</pre>
 <a name="N10244"></a><a name="Debug+Log+Cleanup+%28log4j%29"></a>
 <h4>Debug Log Cleanup (log4j)</h4>
 <p>See the section on <a href="#sc_logging">logging</a> in this document. It is

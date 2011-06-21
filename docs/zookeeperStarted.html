@@ -276,7 +276,7 @@ document.write("Last Published: " + document.lastModified);
       create it in <strong>conf/zoo.cfg</strong>:</p>
 <pre class="code">
 tickTime=2000
-dataDir=/var/zookeeper
+dataDir=/var/lib/zookeeper
 clientPort=2181
 </pre>
 <p>This file can be called anything, but for the sake of this
@@ -535,7 +535,7 @@ numChildren = 0
       few differences. Here is an example:</p>
 <pre class="code">
 tickTime=2000
-dataDir=/var/zookeeper
+dataDir=/var/lib/zookeeper
 clientPort=2181
 initLimit=5
 syncLimit=2

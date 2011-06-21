@@ -233,6 +233,9 @@ BUGFIXES:
 
   ZOOKEEPER-1087. ForceSync VM arguement not working when set to "no" (Nate Putnam via breed)
 
+  ZOOKEEPER-1068. Documentation and default config suggest incorrect
+  location for Zookeeper state (Roman Shaposhnik via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
