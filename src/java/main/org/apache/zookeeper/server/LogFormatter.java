@@ -85,10 +85,8 @@ public class LogFormatter {
                 throw new IOException("CRC doesn't match " + crcValue +
                         " vs " + crc.getValue());
             }
-            InputArchive iab = BinaryInputArchive
-                                .getArchive(new ByteArrayInputStream(bytes));
             TxnHeader hdr = new TxnHeader();
-            SerializeUtils.deserializeTxn(iab, hdr);
+            Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
             System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT,
                     DateFormat.LONG).format(new Date(hdr.getTime()))
                     + " session 0x"
@@ -97,7 +95,7 @@ public class LogFormatter {
                     + Long.toHexString(hdr.getCxid())
                     + " zxid 0x"
                     + Long.toHexString(hdr.getZxid())
-                    + " " + TraceFormatter.op2String(hdr.getType()));
+                    + " " + TraceFormatter.op2String(hdr.getType()) + " " + txn);
             if (logStream.readByte("EOR") != 'B') {
                 LOG.error("Last transaction was partial.");
                 throw new EOFException("Last transaction was partial.");

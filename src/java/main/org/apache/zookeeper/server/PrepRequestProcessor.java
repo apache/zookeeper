@@ -256,17 +256,17 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
+                int newCversion = parentRecord.stat.getCversion()+1;
                 txn = new CreateTxn(path, createRequest.getData(),
                         createRequest.getAcl(),
-                        createMode.isEphemeral());
+                        createMode.isEphemeral(), newCversion);
                 StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
                 }
                 parentRecord = parentRecord.duplicate(txnHeader.getZxid());
                 parentRecord.childCount++;
-                parentRecord.stat
-                        .setCversion(parentRecord.stat.getCversion() + 1);
+                parentRecord.stat.setCversion(newCversion);
                 addChangeRecord(parentRecord);
                 addChangeRecord(new ChangeRecord(txnHeader.getZxid(), path, s,
                         0, createRequest.getAcl()));
@@ -300,8 +300,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 txn = new DeleteTxn(path);
                 parentRecord = parentRecord.duplicate(txnHeader.getZxid());
                 parentRecord.childCount--;
-                parentRecord.stat
-                        .setCversion(parentRecord.stat.getCversion() + 1);
                 addChangeRecord(parentRecord);
                 addChangeRecord(new ChangeRecord(txnHeader.getZxid(), path,
                         null, -1, null));

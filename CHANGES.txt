@@ -239,6 +239,7 @@ BUGFIXES:
   ZOOKEEPER-1103. In QuorumTest, use the same "for ( .. try { break }
   catch { } )" pattern in testFollowersStartAfterLeaders as in
   testSessionMove. (Eugene Koontz via phunt)
+  ZOOKEEPER-1046. Creating a new sequential node results in a ZNODEEXISTS error. (breed via camille) 
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 

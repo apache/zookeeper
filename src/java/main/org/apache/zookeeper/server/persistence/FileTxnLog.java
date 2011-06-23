@@ -569,10 +569,8 @@ public class FileTxnLog implements TxnLog {
                     throw new IOException(CRC_ERROR);
                 if (bytes == null || bytes.length == 0)
                     return false;
-                InputArchive iab = BinaryInputArchive
-                                    .getArchive(new ByteArrayInputStream(bytes));
                 hdr = new TxnHeader();
-                record = SerializeUtils.deserializeTxn(iab, hdr);
+                record = SerializeUtils.deserializeTxn(bytes, hdr);
             } catch (EOFException e) {
                 LOG.debug("EOF excepton " + e);
                 inputStream.close();

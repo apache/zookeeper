@@ -33,6 +33,7 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.NoNodeException;
@@ -212,10 +213,9 @@ public class FileTxnSnapLog {
          * Note, such failures on DT should be seen only during
          * restore.
          */
-        if ((hdr.getType() == OpCode.delete &&
-                 rc.err == Code.NONODE.intValue()) ||
-            (hdr.getType() == OpCode.create &&
-                rc.err == Code.NODEEXISTS.intValue())) {
+        if ((hdr.getType() == OpCode.create &&
+                rc.err == Code.NODEEXISTS.intValue()) &&
+                ((CreateTxn)txn).getParentCVersion() == -1) {
             LOG.debug("Failed Txn: " + hdr.getType() + " path:" +
                   rc.path + " err: " + rc.err);
             int lastSlash = rc.path.lastIndexOf('/');

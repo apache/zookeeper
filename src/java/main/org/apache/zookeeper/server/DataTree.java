@@ -446,7 +446,7 @@ public class DataTree {
      * @throws KeeperException
      */
     public String createNode(String path, byte data[], List<ACL> acl,
-            long ephemeralOwner, long zxid, long time)
+            long ephemeralOwner, int parentCVersion, long zxid, long time)
             throws KeeperException.NoNodeException,
             KeeperException.NodeExistsException {
         int lastSlash = path.lastIndexOf('/');
@@ -472,9 +472,12 @@ public class DataTree {
                     throw new KeeperException.NodeExistsException();
                 }
             }
-            int cver = parent.stat.getCversion();
-            cver++;
-            parent.stat.setCversion(cver);
+            
+            if (parentCVersion == -1) {
+                parentCVersion = parent.stat.getCversion();
+                parentCVersion++;
+            }    
+            parent.stat.setCversion(parentCVersion);
             parent.stat.setPzxid(zxid);
             Long longval = convertAcls(acl);
             DataNode child = new DataNode(parent, data, longval, stat);
@@ -542,7 +545,6 @@ public class DataTree {
         }
         synchronized (parent) {
             parent.removeChild(childName);
-            parent.stat.setCversion(parent.stat.getCversion() + 1);
             parent.stat.setPzxid(zxid);
             long eowner = node.stat.getEphemeralOwner();
             if (eowner != 0) {
@@ -770,6 +772,7 @@ public class DataTree {
                             createTxn.getData(),
                             createTxn.getAcl(),
                             createTxn.getEphemeral() ? header.getClientId() : 0,
+                            createTxn.getParentCVersion(),
                             header.getZxid(), header.getTime());
                     break;
                 case OpCode.delete:

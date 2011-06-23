@@ -118,9 +118,7 @@ public class Observer extends Learner{
             break;
         case Leader.INFORM:            
             TxnHeader hdr = new TxnHeader();
-            BinaryInputArchive ia = BinaryInputArchive
-                    .getArchive(new ByteArrayInputStream(qp.getData()));
-            Record txn = SerializeUtils.deserializeTxn(ia, hdr);
+            Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             Request request = new Request (null, hdr.getClientId(), 
                                            hdr.getCxid(),
                                            hdr.getType(), null, null);
