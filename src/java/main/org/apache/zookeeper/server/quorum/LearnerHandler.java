@@ -190,11 +190,9 @@ public class LearnerHandler extends Thread {
             break;
         case Leader.PROPOSAL:
             type = "PROPOSAL";
-            BinaryInputArchive ia = BinaryInputArchive
-                    .getArchive(new ByteArrayInputStream(p.getData()));
             TxnHeader hdr = new TxnHeader();
             try {
-                txn = SerializeUtils.deserializeTxn(ia, hdr);
+                txn = SerializeUtils.deserializeTxn(p.getData(), hdr);
                 // mess = "transaction: " + txn.toString();
             } catch (IOException e) {
                 LOG.warn("Unexpected exception",e);

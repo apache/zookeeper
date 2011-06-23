@@ -32,12 +32,13 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.NotReadOnlyException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.KeeperException.NotReadOnlyException;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.junit.After;
 import org.junit.Before;
@@ -113,10 +114,18 @@ public class ReadOnlyModeTest extends QuorumBase {
                         states.add(event.getState());
                     }
                 }, true);
-
-        Thread.sleep(1000);
-        zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        boolean success = false;
+        for (int i = 0; i < 30; i++) {
+            try {
+                zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT);
+                success=true;
+                break;
+            } catch(KeeperException.ConnectionLossException e) {
+                Thread.sleep(1000);               
+            }            
+        }
+        Assert.assertTrue("Did not succeed in connecting in 30s", success);
 
         // kill peer and wait no more than 5 seconds for read-only server
         // to be started (which should take one tickTime (2 seconds))

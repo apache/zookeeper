@@ -361,9 +361,7 @@ public class Learner {
                 case Leader.PROPOSAL:
                     PacketInFlight pif = new PacketInFlight();
                     pif.hdr = new TxnHeader();
-                    BinaryInputArchive ia = BinaryInputArchive
-                            .getArchive(new ByteArrayInputStream(qp.getData()));
-                    pif.rec     = SerializeUtils.deserializeTxn(ia, pif.hdr);
+                    pif.rec = SerializeUtils.deserializeTxn(qp.getData(), pif.hdr);
                     if (pif.hdr.    getZxid() != lastQueued + 1) {
                     LOG.warn("Got zxid 0x"
                             + Long.toHexString(pif.hdr.getZxid())
@@ -384,9 +382,7 @@ public class Learner {
                     break;
                 case Leader.INFORM:
                     TxnHeader hdr = new TxnHeader();
-                    ia = BinaryInputArchive
-                            .getArchive(new ByteArrayInputStream(qp.getData()));
-                    Record txn = SerializeUtils.deserializeTxn(ia, hdr);
+                    Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
                     zk.getZKDatabase().processTxn(hdr, txn);
                     break;
                 case Leader.UPTODATE:

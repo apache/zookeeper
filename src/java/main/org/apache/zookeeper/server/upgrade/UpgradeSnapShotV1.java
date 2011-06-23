@@ -115,10 +115,8 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
                     // empty transaction
                     throw new EOFException();
                 }
-                InputArchive ia = BinaryInputArchive
-                        .getArchive(new ByteArrayInputStream(bytes));
                 TxnHeader hdr = new TxnHeader();
-                Record txn = SerializeUtils.deserializeTxn(ia, hdr);
+                Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
                 if (logStream.readByte("EOR") != 'B') {
                     LOG.warn("Last transaction was partial.");
                     throw new EOFException("Last transaction was partial.");

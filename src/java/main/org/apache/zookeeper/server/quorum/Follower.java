@@ -113,9 +113,7 @@ public class Follower extends Learner{
             break;
         case Leader.PROPOSAL:            
             TxnHeader hdr = new TxnHeader();
-            BinaryInputArchive ia = BinaryInputArchive
-            .getArchive(new ByteArrayInputStream(qp.getData()));
-            Record txn = SerializeUtils.deserializeTxn(ia, hdr);
+            Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             if (hdr.getZxid() != lastQueued + 1) {
                 LOG.warn("Got zxid 0x"
                         + Long.toHexString(hdr.getZxid())

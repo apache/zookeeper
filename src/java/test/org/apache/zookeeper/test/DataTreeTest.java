@@ -59,7 +59,7 @@ public class DataTreeTest extends ZKTestCase {
         // set a watch on the root node
         dt.getChildren("/", new Stat(), watcher);
         // add a new node, should trigger a watch
-        dt.createNode("/xyz", new byte[0], null, 0, 1, 1);
+        dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion()+1, 1, 1);
         Assert.assertFalse("Root node watch not triggered",!watcher.fired);
     }
 
@@ -68,7 +68,7 @@ public class DataTreeTest extends ZKTestCase {
      */
     @Test
     public void testIncrementCversion() throws Exception {
-        dt.createNode("/test", new byte[0], null, 0, 1, 1);
+        dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion()+1, 1, 1);
         DataNode zk = dt.getNode("/test");
         long prevCversion = zk.stat.getCversion();
         long prevPzxid = zk.stat.getPzxid();
