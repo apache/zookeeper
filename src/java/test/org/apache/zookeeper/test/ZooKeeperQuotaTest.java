@@ -29,6 +29,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeperMain;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * this class tests quota on a single
@@ -52,7 +53,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
     }
 
     public void testQuota() throws IOException,
-        InterruptedException, KeeperException {
+        InterruptedException, KeeperException, Exception {
         final ZooKeeper zk = createClient();
         final String path = "/a/b/v";
         // making sure setdata works on /
@@ -80,6 +81,13 @@ public class ZooKeeperQuotaTest extends ClientBase {
         byte[] qdata = zk.getData(statPath, false, new Stat());
         StatsTrack qst = new StatsTrack(new String(qdata));
         assertTrue("bytes are set", qst.getBytes() == 8L);
-        assertTrue("cound is set", qst.getCount() == 2);
+        assertTrue("count is set", qst.getCount() == 2);
+        stopServer();
+        startServer();
+        stopServer();
+        startServer();
+        ZooKeeperServer server = serverFactory.getZooKeeperServer();
+        assertNotNull("Quota is still set",
+                server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path) != null);
     }
 }

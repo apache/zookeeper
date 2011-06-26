@@ -8,6 +8,8 @@ BUGFIXES:
   catch { } )" pattern in testFollowersStartAfterLeaders as in
   testSessionMove. (Eugene Koontz via phunt)
 
+  ZOOKEEPER-1097. Quota is not correctly rehydrated on snapshot reload (camille via henryr)
+
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:
 

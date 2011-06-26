@@ -369,11 +369,11 @@ public class DataTree {
         synchronized (node) {
             thisStats = new StatsTrack(new String(node.data));
         }
-        if (thisStats.getCount() < updatedStat.getCount()) {
+        if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
             LOG
-                    .warn("Quota exceeded: " + lastPrefix + " count="
-                            + updatedStat.getCount() + " limit="
-                            + thisStats.getCount());
+            .warn("Quota exceeded: " + lastPrefix + " count="
+                    + updatedStat.getCount() + " limit="
+                    + thisStats.getCount());
         }
     }
 
@@ -415,11 +415,11 @@ public class DataTree {
         synchronized (node) {
             thisStats = new StatsTrack(new String(node.data));
         }
-        if (thisStats.getBytes() < updatedStat.getBytes()) {
+        if (thisStats.getBytes() > -1 && (thisStats.getBytes() < updatedStat.getBytes())) {
             LOG
-                    .warn("Quota exceeded: " + lastPrefix + " bytes="
-                            + updatedStat.getBytes() + " limit="
-                            + thisStats.getBytes());
+            .warn("Quota exceeded: " + lastPrefix + " bytes="
+                    + updatedStat.getBytes() + " limit="
+                    + thisStats.getBytes());
         }
     }
 
@@ -495,8 +495,8 @@ public class DataTree {
             }
         }
         // also check to update the quotas for this node
-        String lastPrefix = pTrie.findMaxPrefix(path);
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+        String lastPrefix;
+        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
             // ok we have some match and need to update
             updateCount(lastPrefix, 1);
             updateBytes(lastPrefix, data == null ? 0 : data.length);
@@ -555,8 +555,8 @@ public class DataTree {
         }
 
         // also check to update the quotas for this node
-        String lastPrefix = pTrie.findMaxPrefix(path);
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+        String lastPrefix;
+        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
             // ok we have some match and need to update
             updateCount(lastPrefix, -1);
             int bytes = 0;
@@ -595,16 +595,33 @@ public class DataTree {
             n.copyStat(s);
         }
         // now update if the path is in a quota subtree.
-        String lastPrefix = pTrie.findMaxPrefix(path);
-        // do nothing for the root.
-        // we are not keeping a quota on the zookeeper
-        // root node for now.
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
-            this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
-                    - (lastdata == null ? 0 : lastdata.length));
+        String lastPrefix;
+        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
+          this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
+              - (lastdata == null ? 0 : lastdata.length));
         }
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
         return s;
+    }
+
+    /**
+     * If there is a quota set, return the appropriate prefix for that quota
+     * Else return null
+     * @param The ZK path to check for quota
+     * @return Max quota prefix, or null if none
+     */
+    public String getMaxPrefixWithQuota(String path) {
+        // do nothing for the root.
+        // we are not keeping a quota on the zookeeper
+        // root node for now.
+        String lastPrefix = pTrie.findMaxPrefix(path);
+
+        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+            return lastPrefix;
+        }
+        else {
+            return null;
+        }
     }
 
     public byte[] getData(String path, Stat stat, Watcher watcher)
@@ -906,26 +923,24 @@ public class DataTree {
                 children = childs.toArray(new String[childs.size()]);
             }
         }
-        if (children != null) {
-            if (children.length == 0) {
-                // this node does not have a child
-                // is the leaf node
-                // check if its the leaf node
-                String endString = "/" + Quotas.limitNode;
-                if (path.endsWith(endString)) {
-                    // ok this is the limit node
-                    // get the real node and update
-                    // the count and the bytes
-                    String realPath = path.substring(Quotas.quotaZookeeper
-                            .length(), path.indexOf(endString));
-                    updateQuotaForPath(realPath);
-                    this.pTrie.addPath(realPath);
-                }
-                return;
+        if (children == null || children.length == 0) {
+            // this node does not have a child
+            // is the leaf node
+            // check if its the leaf node
+            String endString = "/" + Quotas.limitNode;
+            if (path.endsWith(endString)) {
+                // ok this is the limit node
+                // get the real node and update
+                // the count and the bytes
+                String realPath = path.substring(Quotas.quotaZookeeper
+                        .length(), path.indexOf(endString));
+                updateQuotaForPath(realPath);
+                this.pTrie.addPath(realPath);
             }
-            for (String child : children) {
-                traverseNode(path + "/" + child);
-            }
+            return;
+        }
+        for (String child : children) {
+            traverseNode(path + "/" + child);
         }
     }
 
