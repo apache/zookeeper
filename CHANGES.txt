@@ -325,6 +325,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1074. zkServer.sh is missing nohup/sleep, which are necessary 
   for remote invocation. (phunt via mahadev)
 
+  ZOOKEEPER-965. Need a multi-update command to allow multiple znodes to be updated safely (Marshall McMullen and Ted Dunning via breed)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)

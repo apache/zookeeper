@@ -26,6 +26,7 @@ import org.apache.jute.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.MultiResponse;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
@@ -53,6 +54,15 @@ import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
+
+import org.apache.zookeeper.MultiTransactionRecord;
+import org.apache.zookeeper.Op;
+import org.apache.zookeeper.OpResult;
+import org.apache.zookeeper.OpResult.CheckResult;
+import org.apache.zookeeper.OpResult.CreateResult;
+import org.apache.zookeeper.OpResult.DeleteResult;
+import org.apache.zookeeper.OpResult.SetDataResult;
+import org.apache.zookeeper.OpResult.ErrorResult;
 
 /**
  * This Request processor actually applies any transaction associated with a
@@ -151,7 +161,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
 
             KeeperException ke = request.getException();
-            if (ke != null) {
+            if (ke != null && request.type != OpCode.multi) {
                 throw ke;
             }
 
@@ -179,6 +189,39 @@ public class FinalRequestProcessor implements RequestProcessor {
 
                 zks.finishSessionInit(request.cnxn, true);
                 return;
+            }
+            case OpCode.multi: {
+                lastOp = "MULT";
+                rsp = new MultiResponse() ;
+
+                for (ProcessTxnResult subTxnResult : rc.multiResult) {
+
+                    OpResult subResult ;
+
+                    switch (subTxnResult.type) {
+                        case OpCode.check:
+                            subResult = new CheckResult();
+                            break;
+                        case OpCode.create:
+                            subResult = new CreateResult(subTxnResult.path);
+                            break;
+                        case OpCode.delete:
+                            subResult = new DeleteResult();
+                            break;
+                        case OpCode.setData:
+                            subResult = new SetDataResult(subTxnResult.stat);
+                            break;
+                        case OpCode.error:
+                            subResult = new ErrorResult(subTxnResult.err) ;
+                            break;
+                        default:
+                            throw new IOException("Invalid type of op");
+                    }
+
+                    ((MultiResponse)rsp).add(subResult);
+                }
+
+                break;
             }
             case OpCode.create: {
                 lastOp = "CREA";
@@ -215,6 +258,12 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ZooKeeperServer.byteBuffer2Record(request.request,
                         syncRequest);
                 rsp = new SyncResponse(syncRequest.getPath());
+                break;
+            }
+            case OpCode.check: {
+                lastOp = "CHEC";
+                rsp = new SetDataResponse(rc.stat);
+                err = Code.get(rc.err);
                 break;
             }
             case OpCode.exists: {

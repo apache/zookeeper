@@ -43,6 +43,8 @@ public class TraceFormatter {
             return "getDate";
         case OpCode.setData:
             return "setData";
+        case OpCode.multi:
+            return "multi";
         case OpCode.getACL:
             return "getACL";
         case OpCode.setACL:

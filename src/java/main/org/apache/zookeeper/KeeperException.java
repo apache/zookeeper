@@ -18,12 +18,21 @@
 
 package org.apache.zookeeper;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("serial")
 public abstract class KeeperException extends Exception {
+    /**
+     * All multi-requests that result in an exception retain the results
+     * here so that it is possible to examine the problems in the catch
+     * scope.  Non-multi requests will get a null if they try to access
+     * these results.
+     */
+    private List<OpResult> results;
 
     /**
      * All non-specific keeper exceptions should be constructed via
@@ -463,6 +472,19 @@ public abstract class KeeperException extends Exception {
             return "KeeperErrorCode = " + getCodeMessage(code);
         }
         return "KeeperErrorCode = " + getCodeMessage(code) + " for " + path;
+    }
+
+    void setMultiResults(List<OpResult> results) {
+        this.results = results;
+    }
+
+    /**
+     * If this exception was thrown by a multi-request then the (partial) results
+     * and error codes can be retrieved using this getter.
+     * @return A copy of the list of results from the operations in the multi-request.
+     */
+    public List<OpResult> getResults() {
+        return results != null ? new ArrayList<OpResult>(results) : null;
     }
 
     /**
