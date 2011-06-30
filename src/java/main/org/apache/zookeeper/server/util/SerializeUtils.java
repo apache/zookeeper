@@ -43,6 +43,7 @@ import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.SetACLTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.txn.MultiTxn;
 
 public class SerializeUtils {
     private static final Logger LOG = LoggerFactory.getLogger(SerializeUtils.class);
@@ -78,6 +79,11 @@ public class SerializeUtils {
         case OpCode.error:
             txn = new ErrorTxn();
             break;
+        case OpCode.multi:
+            txn = new MultiTxn();
+            break;
+        default:
+            throw new IOException("Unsupported Txn with type=%d" + hdr.getType());
         }
         if (txn != null) {
             try {

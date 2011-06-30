@@ -21,7 +21,7 @@ module org.apache.zookeeper.data {
         ustring scheme;
         ustring id;
     }
-   class ACL {
+    class ACL {
         int perms;
         Id id;
     }
@@ -66,12 +66,6 @@ module org.apache.zookeeper.data {
 }
 
 module org.apache.zookeeper.proto {
-    class op_result_t {
-        int rc;
-        int op;
-        buffer response;
-    }
-
     class ConnectRequest {
         int protocolVersion;
         long lastZxidSeen;
@@ -94,6 +88,11 @@ module org.apache.zookeeper.proto {
     class RequestHeader {
         int xid;
         int type;
+    }
+    class MultiHeader {
+        int type;
+        boolean done;
+        int err;
     }
     class AuthPacket {
         int type;
@@ -135,6 +134,10 @@ module org.apache.zookeeper.proto {
         ustring path;
         boolean watch;
     }
+    class CheckVersionRequest {
+        ustring path;
+        int version;
+    }
     class GetMaxChildrenRequest {
         ustring path;
     }
@@ -167,7 +170,9 @@ module org.apache.zookeeper.proto {
         int state; // state of the Keeper client runtime
         ustring path;
     }
-
+    class ErrorResponse {
+        int err;
+    }
     class CreateResponse {
         ustring path;
     }
@@ -245,6 +250,10 @@ module org.apache.zookeeper.txn {
         buffer data;
         int version;
     }
+    class CheckVersionTxn {
+        ustring path;
+        int version;
+    }
     class SetACLTxn {
         ustring path;
         vector<org.apache.zookeeper.data.ACL> acl;
@@ -259,5 +268,12 @@ module org.apache.zookeeper.txn {
     }
     class ErrorTxn {
         int err;
+    }
+    class Txn {
+        int type;
+        buffer data;
+    }
+    class MultiTxn {
+        vector<org.apache.zookeeper.txn.Txn> txns;
     }
 }

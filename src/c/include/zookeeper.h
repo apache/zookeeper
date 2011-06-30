@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "proto.h"
 #include "zookeeper_version.h"
 #include "recordio.h"
 #include "zookeeper.jute.h"
@@ -253,6 +254,138 @@ typedef struct {
     int64_t client_id;
     char passwd[16];
 } clientid_t;
+
+/**
+ * \brief zoo_op structure.
+ *
+ * This structure holds all the arguments necessary for one op as part
+ * of a containing multi_op via \ref zoo_multi or \ref zoo_amulti.
+ * This structure should be treated as opaque and initialized via 
+ * \ref zoo_create_op_init, \ref zoo_delete_op_init, \ref zoo_set_op_init
+ * and \ref zoo_check_op_init.
+ */
+typedef struct zoo_op {
+    int type;
+    union {
+        // CREATE
+        struct {
+            const char *path;
+            const char *data;
+            int datalen;
+	        char *buf;
+            int buflen;
+            const struct ACL_vector *acl;
+            int flags;
+        } create_op;
+
+        // DELETE 
+        struct {
+            const char *path;
+            int version;
+        } delete_op;
+        
+        // SET
+        struct {
+            const char *path;
+            const char *data;
+            int datalen;
+            int version;
+            struct Stat *stat;
+        } set_op;
+        
+        // CHECK
+        struct {
+            const char *path;
+            int version;
+        } check_op;
+    };
+} zoo_op_t;
+
+/**
+ * \brief zoo_create_op_init.
+ *
+ * This function initializes a zoo_op_t with the arguments for a ZOO_CREATE_OP.
+ *
+ * \param op A pointer to the zoo_op_t to be initialized.
+ * \param path The name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param value The data to be stored in the node.
+ * \param valuelen The number of bytes in data. To set the data to be NULL use
+ * value as NULL and valuelen as -1.
+ * \param acl The initial ACL of the node. The ACL must not be null or empty.
+ * \param flags this parameter can be set to 0 for normal create or an OR
+ *    of the Create Flags
+ * \param path_buffer Buffer which will be filled with the path of the
+ *    new node (this might be different than the supplied path
+ *    because of the ZOO_SEQUENCE flag).  The path string will always be
+ *    null-terminated. This parameter may be NULL if path_buffer_len = 0.
+ * \param path_buffer_len Size of path buffer; if the path of the new
+ *    node (including space for the null terminator) exceeds the buffer size,
+ *    the path string will be truncated to fit.  The actual path of the
+ *    new node in the server will not be affected by the truncation.
+ *    The path string will always be null-terminated.
+ */
+void zoo_create_op_init(zoo_op_t *op, const char *path, const char *value,
+        int valuelen,  const struct ACL_vector *acl, int flags, 
+        char *path_buffer, int path_buffer_len);
+
+/**
+ * \brief zoo_delete_op_init.
+ *
+ * This function initializes a zoo_op_t with the arguments for a ZOO_DELETE_OP.
+ *
+ * \param op A pointer to the zoo_op_t to be initialized.
+ * \param path the name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param version the expected version of the node. The function will fail if the
+ *    actual version of the node does not match the expected version.
+ *  If -1 is used the version check will not take place. 
+ */
+void zoo_delete_op_init(zoo_op_t *op, const char *path, int version);
+
+/**
+ * \brief zoo_set_op_init.
+ *
+ * This function initializes an zoo_op_t with the arguments for a ZOO_SETDATA_OP.
+ *
+ * \param op A pointer to the zoo_op_t to be initialized.
+ * \param path the name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param buffer the buffer holding data to be written to the node.
+ * \param buflen the number of bytes from buffer to write. To set NULL as data 
+ * use buffer as NULL and buflen as -1.
+ * \param version the expected version of the node. The function will fail if 
+ * the actual version of the node does not match the expected version. If -1 is 
+ * used the version check will not take place. 
+ */
+void zoo_set_op_init(zoo_op_t *op, const char *path, const char *buffer, 
+        int buflen, int version, struct Stat *stat);
+
+/**
+ * \brief zoo_check_op_init.
+ *
+ * This function initializes an zoo_op_t with the arguments for a ZOO_CHECK_OP.
+ *
+ * \param op A pointer to the zoo_op_t to be initialized.
+ * \param path The name of the node. Expressed as a file name with slashes 
+ * separating ancestors of the node.
+ * \param version the expected version of the node. The function will fail if the
+ *    actual version of the node does not match the expected version.
+ */
+void zoo_check_op_init(zoo_op_t *op, const char *path, int version);
+
+/**
+ * \brief zoo_op_result structure.
+ *
+ * This structure holds the result for an op submitted as part of a multi_op
+ * via \ref zoo_multi or \ref zoo_amulti.
+ */
+typedef struct zoo_op_result {
+    int err;
+    char *value;
+	int valuelen;
+    struct Stat *stat;
+} zoo_op_result_t; 
 
 /**
  * \brief signature of a watch function.
@@ -975,6 +1108,25 @@ ZOOAPI int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
         struct ACL_vector *acl, void_completion_t, const void *data);
 
 /**
+ * \brief atomically commits multiple zookeeper operations.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param count the number of operations
+ * \param ops an array of operations to commit
+ * \param results an array to hold the results of the operations
+ * \param completion the routine to invoke when the request completes. The completion
+ * will be triggered with any of the error codes that can that can be returned by the 
+ * ops supported by a multi op (see \ref zoo_acreate, \ref zoo_adelete, \ref zoo_aset).
+ * \param data the data that will be passed to the completion routine when
+ * the function completes.
+ * \return the return code for the function call. This can be any of the
+ * values that can be returned by the ops supported by a multi op (see
+ * \ref zoo_acreate, \ref zoo_adelete, \ref zoo_aset).
+ */
+ZOOAPI int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops, 
+        zoo_op_result_t *results, void_completion_t, const void *data);
+
+/**
  * \brief return an error string.
  * 
  * \param return code
@@ -1403,6 +1555,19 @@ ZOOAPI int zoo_get_acl(zhandle_t *zh, const char *path, struct ACL_vector *acl,
  */
 ZOOAPI int zoo_set_acl(zhandle_t *zh, const char *path, int version,
                            const struct ACL_vector *acl);
+
+/**
+ * \brief atomically commits multiple zookeeper operations synchronously.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param count the number of operations
+ * \param ops an array of operations to commit
+ * \param results an array to hold the results of the operations
+ * \return the return code for the function call. This can be any of the
+ * values that can be returned by the ops supported by a multi op (see
+ * \ref zoo_acreate, \ref zoo_adelete, \ref zoo_aset).
+ */ 
+ZOOAPI int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_result_t *results);
 
 #ifdef __cplusplus
 }

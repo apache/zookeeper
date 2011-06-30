@@ -18,53 +18,22 @@
 
 package org.apache.zookeeper;
 
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.AsyncCallback.ACLCallback;
-import org.apache.zookeeper.AsyncCallback.Children2Callback;
-import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
-import org.apache.zookeeper.AsyncCallback.DataCallback;
-import org.apache.zookeeper.AsyncCallback.StatCallback;
-import org.apache.zookeeper.AsyncCallback.StringCallback;
-import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.AsyncCallback.*;
+import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.proto.CreateResponse;
-import org.apache.zookeeper.proto.DeleteRequest;
-import org.apache.zookeeper.proto.ExistsRequest;
-import org.apache.zookeeper.proto.GetACLRequest;
-import org.apache.zookeeper.proto.GetACLResponse;
-import org.apache.zookeeper.proto.GetChildren2Request;
-import org.apache.zookeeper.proto.GetChildren2Response;
-import org.apache.zookeeper.proto.GetChildrenRequest;
-import org.apache.zookeeper.proto.GetChildrenResponse;
-import org.apache.zookeeper.proto.GetDataRequest;
-import org.apache.zookeeper.proto.GetDataResponse;
-import org.apache.zookeeper.proto.ReplyHeader;
-import org.apache.zookeeper.proto.RequestHeader;
-import org.apache.zookeeper.proto.SetACLRequest;
-import org.apache.zookeeper.proto.SetACLResponse;
-import org.apache.zookeeper.proto.SetDataRequest;
-import org.apache.zookeeper.proto.SetDataResponse;
-import org.apache.zookeeper.proto.SyncRequest;
-import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.*;
 import org.apache.zookeeper.server.DataTree;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.util.*;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -885,7 +854,61 @@ public class ZooKeeper {
         }
     }
 
-    
+    /**
+     * Executes multiple Zookeeper operations or none of them.  On success, a list of results is returned.
+     * On failure, only a single exception is returned.  If you want more details, it may be preferable to
+     * use the alternative form of this method that lets you pass a list into which individual results are
+     * placed so that you can zero in on exactly which operation failed and why.
+     * <p>
+     * The maximum allowable size of all of the data arrays in all of the setData operations in this single
+     * request is 1 MB (1,048,576 bytes).
+     * Requests larger than this will cause a KeeperExecption to be thrown.
+     * @param ops  An iterable that contains the operations to be done.  These should be created using the
+     * factory methods on Op.
+     * @see Op
+     * @return A list of results.
+     * @throws InterruptedException  If the operation was interrupted.  The operation may or may not have succeeded, but
+     * will not have partially succeeded if this exception is thrown.
+     * @throws KeeperException If the operation could not be completed due to some error in doing one of the specified
+     * ops.
+     */
+    public List<OpResult> multi(Iterable<Op> ops) throws InterruptedException, KeeperException {
+        return multiInternal(new MultiTransactionRecord(ops));
+    }
+
+    protected List<OpResult> multiInternal(MultiTransactionRecord request)
+        throws InterruptedException, KeeperException {
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.multi);
+        MultiResponse response = new MultiResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
+        }
+
+        List<OpResult> results = response.getResultList();
+        
+        ErrorResult fatalError = null;
+        for (OpResult result : results) {
+            if (result instanceof ErrorResult && ((ErrorResult)result).getErr() != KeeperException.Code.OK.intValue()) {
+                fatalError = (ErrorResult) result;
+                break;
+            }
+        }
+
+        if (fatalError != null) {
+            KeeperException ex = KeeperException.create(KeeperException.Code.get(fatalError.getErr()));
+            ex.setMultiResults(results);
+            throw ex;
+        }
+
+        return results;
+    }
+
+    public Transaction transaction() {
+        return new Transaction(this);
+    }
+
     /**
      * Recursively delete the node with the given path. 
      * <p>
@@ -1247,7 +1270,7 @@ public class ZooKeeper {
      * thrown if the given version does not match the node's version.
      * <p>
      * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
-     * Arrays larger than this will cause a KeeperExecption to be thrown.
+     * Arrays larger than this will cause a KeeperException to be thrown.
      *
      * @param path
      *                the path of the node

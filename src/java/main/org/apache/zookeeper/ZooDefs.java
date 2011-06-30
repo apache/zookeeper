@@ -50,6 +50,10 @@ public class ZooDefs {
 
         public final int getChildren2 = 12;
 
+        public final int check = 13;
+
+        public final int multi = 14;
+
         public final int auth = 100;
 
         public final int setWatches = 101;

@@ -139,6 +139,7 @@ struct ACL_vector ZOO_CREATOR_ALL_ACL = { 1, _CREATOR_ALL_ACL_ACL};
 #define COMPLETION_STRINGLIST_STAT 4
 #define COMPLETION_ACLLIST 5
 #define COMPLETION_STRING 6
+#define COMPLETION_MULTI 7
 
 typedef struct _auth_completion_list {
     void_completion_t completion;
@@ -146,9 +147,8 @@ typedef struct _auth_completion_list {
     struct _auth_completion_list *next;
 } auth_completion_list_t;
 
-typedef struct _completion_list {
-    int xid;
-    int completion_type; /* one of the COMPLETION_* values */
+typedef struct completion {
+    int type; /* one of COMPLETION_* values above */
     union {
         void_completion_t void_result;
         stat_completion_t stat_result;
@@ -158,7 +158,13 @@ typedef struct _completion_list {
         acl_completion_t acl_result;
         string_completion_t string_result;
         struct watcher_object_list *watcher_result;
-    } c;
+    };
+    completion_head_t clist; /* For multi-op */
+} completion_t;
+
+typedef struct _completion_list {
+    int xid;
+    completion_t c;
     const void *data;
     buffer_list_t *buffer;
     struct _completion_list *next;
@@ -170,11 +176,17 @@ static int queue_session_event(zhandle_t *zh, int state);
 static const char* format_endpoint_info(const struct sockaddr_storage* ep);
 static const char* format_current_endpoint_info(zhandle_t* zh);
 
+/* deserialize forward declarations */
+static void deserialize_response(int type, int xid, int failed, int rc, completion_list_t *cptr, struct iarchive *ia);
+static int deserialize_multi(int xid, completion_list_t *cptr, struct iarchive *ia);
+
 /* completion routine forward declarations */
 static int add_completion(zhandle_t *zh, int xid, int completion_type,
-        const void *dc, const void *data, int add_to_front,watcher_registration_t* wo);
+        const void *dc, const void *data, int add_to_front, 
+        watcher_registration_t* wo, completion_head_t *clist);
 static completion_list_t* create_completion_entry(int xid, int completion_type,
-        const void *dc, const void *data,watcher_registration_t* wo);
+        const void *dc, const void *data, watcher_registration_t* wo, 
+        completion_head_t *clist);
 static void destroy_completion_entry(completion_list_t* c);
 static void queue_completion_nolock(completion_head_t *list, completion_list_t *c,
         int add_to_front);
@@ -1224,7 +1236,7 @@ static void auth_completion_func(int rc, zhandle_t* zh)
 
 static int send_info_packet(zhandle_t *zh, auth_info* auth) {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = AUTH_XID, .type = SETAUTH_OP};
+    struct RequestHeader h = { .xid = AUTH_XID, .type = ZOO_SETAUTH_OP};
     struct AuthPacket req;
     int rc;
     oa = create_buffer_oarchive();
@@ -1292,7 +1304,7 @@ static void free_key_list(char **list, int count)
 static int send_set_watches(zhandle_t *zh)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = SET_WATCHES_XID, .type = SETWATCHES_OP};
+    struct RequestHeader h = { .xid = SET_WATCHES_XID, .type = ZOO_SETWATCHES_OP};
     struct SetWatches req;
     int rc;
 
@@ -1446,7 +1458,7 @@ static struct timeval get_timeval(int interval)
  {
     int rc;
     struct oarchive *oa = create_buffer_oarchive();
-    struct RequestHeader h = { .xid = PING_XID, .type = PING_OP };
+    struct RequestHeader h = { .xid = PING_XID, .type = ZOO_PING_OP };
 
     rc = serialize_RequestHeader(oa, "header", &h);
     enter_critical(zh);
@@ -1715,7 +1727,7 @@ static int queue_session_event(zhandle_t *zh, int state)
         close_buffer_oarchive(&oa, 1);
         goto error;
     }
-    cptr = create_completion_entry(WATCHER_EVENT_XID,-1,0,0,0);
+    cptr = create_completion_entry(WATCHER_EVENT_XID,-1,0,0,0,0);
     cptr->buffer = allocate_buffer(get_buffer(oa), get_buffer_len(oa));
     cptr->buffer->curr_offset = get_buffer_len(oa);
     if (!cptr->buffer) {
@@ -1753,6 +1765,226 @@ completion_list_t *dequeue_completion(completion_head_t *list)
     return cptr;
 }
 
+static void process_sync_completion(
+        completion_list_t *cptr,
+        struct sync_completion *sc,
+        struct iarchive *ia)
+{
+    LOG_DEBUG(("Processing sync_completion with type=%d xid=%#x rc=%d",
+            cptr->c.type, cptr->xid, sc->rc));
+
+    switch(cptr->c.type) {
+    case COMPLETION_DATA: 
+        if (sc->rc==0) {
+            struct GetDataResponse res;
+            int len;
+            deserialize_GetDataResponse(ia, "reply", &res);
+            if (res.data.len <= sc->u.data.buff_len) {
+                len = res.data.len;
+            } else {
+                len = sc->u.data.buff_len;
+            }
+            sc->u.data.buff_len = len;
+            // check if len is negative
+            // just of NULL which is -1 int
+            if (len == -1) {
+                sc->u.data.buffer = NULL;
+            } else {
+                memcpy(sc->u.data.buffer, res.data.buff, len);
+            }
+            sc->u.data.stat = res.stat;
+            deallocate_GetDataResponse(&res);
+        }
+        break;
+    case COMPLETION_STAT:
+        if (sc->rc==0) {
+            struct SetDataResponse res;
+            deserialize_SetDataResponse(ia, "reply", &res);
+            sc->u.stat = res.stat;
+            deallocate_SetDataResponse(&res);
+        }
+        break;
+    case COMPLETION_STRINGLIST:
+        if (sc->rc==0) {
+            struct GetChildrenResponse res;
+            deserialize_GetChildrenResponse(ia, "reply", &res);
+            sc->u.strs2 = res.children;
+            /* We don't deallocate since we are passing it back */
+            // deallocate_GetChildrenResponse(&res);
+        }
+        break;
+    case COMPLETION_STRINGLIST_STAT:
+        if (sc->rc==0) {
+            struct GetChildren2Response res;
+            deserialize_GetChildren2Response(ia, "reply", &res);
+            sc->u.strs_stat.strs2 = res.children;
+            sc->u.strs_stat.stat2 = res.stat;
+            /* We don't deallocate since we are passing it back */
+            // deallocate_GetChildren2Response(&res);
+        }
+        break;
+    case COMPLETION_STRING:
+        if (sc->rc==0) {
+            struct CreateResponse res;
+            int len;
+            deserialize_CreateResponse(ia, "reply", &res);
+            len = strlen(res.path) + 1;
+            if (len > sc->u.str.str_len) {
+                len = sc->u.str.str_len;
+            }
+            if (len > 0) {
+                memcpy(sc->u.str.str, res.path, len - 1);
+                sc->u.str.str[len - 1] = '\0';
+            }
+            deallocate_CreateResponse(&res);
+        }
+        break;
+    case COMPLETION_ACLLIST:
+        if (sc->rc==0) {
+            struct GetACLResponse res;
+            deserialize_GetACLResponse(ia, "reply", &res);
+            sc->u.acl.acl = res.acl;
+            sc->u.acl.stat = res.stat;
+            /* We don't deallocate since we are passing it back */
+            //deallocate_GetACLResponse(&res);
+        }
+        break;
+    case COMPLETION_VOID:
+        break;
+    case COMPLETION_MULTI:
+        sc->rc = deserialize_multi(cptr->xid, cptr, ia);
+        break;
+    default:
+        LOG_DEBUG(("Unsupported completion type=%d", cptr->c.type));
+        break;
+    }
+}
+
+static int deserialize_multi(int xid, completion_list_t *cptr, struct iarchive *ia)
+{
+    int rc = 0;
+    completion_head_t *clist = &cptr->c.clist;
+    assert(clist);
+    struct MultiHeader mhdr = { 0 };
+    deserialize_MultiHeader(ia, "multiheader", &mhdr);
+    while (!mhdr.done) {
+        completion_list_t *entry = dequeue_completion(clist);
+        assert(entry);
+
+        if (mhdr.type == -1) {
+            struct ErrorResponse er;
+            deserialize_ErrorResponse(ia, "error", &er);
+            mhdr.err = er.err ;
+            if (rc == 0 && er.err != 0 && er.err != ZRUNTIMEINCONSISTENCY) {
+                rc = er.err;
+            }
+        }
+
+        deserialize_response(entry->c.type, xid, mhdr.type == -1, mhdr.err, entry, ia);
+        deserialize_MultiHeader(ia, "multiheader", &mhdr);
+    }
+
+    return rc;
+}
+
+static void deserialize_response(int type, int xid, int failed, int rc, completion_list_t *cptr, struct iarchive *ia)
+{
+    switch (type) {
+    case COMPLETION_DATA:
+        LOG_DEBUG(("Calling COMPLETION_DATA for xid=%#x failed=%d rc=%d",
+                    cptr->xid, failed, rc));
+        if (failed) {
+            cptr->c.data_result(rc, 0, 0, 0, cptr->data);
+        } else {
+            struct GetDataResponse res;
+            deserialize_GetDataResponse(ia, "reply", &res);
+            cptr->c.data_result(rc, res.data.buff, res.data.len,
+                    &res.stat, cptr->data);
+            deallocate_GetDataResponse(&res);
+        }
+        break;
+    case COMPLETION_STAT:
+        LOG_DEBUG(("Calling COMPLETION_STAT for xid=%#x failed=%d rc=%d",
+                    cptr->xid, failed, rc));
+        if (failed) {
+            cptr->c.stat_result(rc, 0, cptr->data);
+        } else {
+            struct SetDataResponse res;
+            deserialize_SetDataResponse(ia, "reply", &res);
+            cptr->c.stat_result(rc, &res.stat, cptr->data);
+            deallocate_SetDataResponse(&res);
+        }
+        break;
+    case COMPLETION_STRINGLIST:
+        LOG_DEBUG(("Calling COMPLETION_STRINGLIST for xid=%#x failed=%d rc=%d",
+                    cptr->xid, failed, rc));
+        if (failed) {
+            cptr->c.strings_result(rc, 0, cptr->data);
+        } else {
+            struct GetChildrenResponse res;
+            deserialize_GetChildrenResponse(ia, "reply", &res);
+            cptr->c.strings_result(rc, &res.children, cptr->data);
+            deallocate_GetChildrenResponse(&res);
+        }
+        break;
+    case COMPLETION_STRINGLIST_STAT:
+        LOG_DEBUG(("Calling COMPLETION_STRINGLIST_STAT for xid=%#x failed=%d rc=%d",
+                    cptr->xid, failed, rc));
+        if (failed) {
+            cptr->c.strings_stat_result(rc, 0, 0, cptr->data);
+        } else {
+            struct GetChildren2Response res;
+            deserialize_GetChildren2Response(ia, "reply", &res);
+            cptr->c.strings_stat_result(rc, &res.children, &res.stat, cptr->data);
+            deallocate_GetChildren2Response(&res);
+        }
+        break;
+    case COMPLETION_STRING:
+        LOG_DEBUG(("Calling COMPLETION_STRING for xid=%#x failed=%d, rc=%d",
+                    cptr->xid, failed, rc));
+        if (failed) {
+            cptr->c.string_result(rc, 0, cptr->data);
+        } else {
+            struct CreateResponse res;
+            deserialize_CreateResponse(ia, "reply", &res);
+            cptr->c.string_result(rc, res.path, cptr->data);
+            deallocate_CreateResponse(&res);
+        }
+        break;
+    case COMPLETION_ACLLIST:
+        LOG_DEBUG(("Calling COMPLETION_ACLLIST for xid=%#x failed=%d rc=%d",
+                    cptr->xid, failed, rc));
+        if (failed) {
+            cptr->c.acl_result(rc, 0, 0, cptr->data);
+        } else {
+            struct GetACLResponse res;
+            deserialize_GetACLResponse(ia, "reply", &res);
+            cptr->c.acl_result(rc, &res.acl, &res.stat, cptr->data);
+            deallocate_GetACLResponse(&res);
+        }
+        break;
+    case COMPLETION_VOID:
+        LOG_DEBUG(("Calling COMPLETION_VOID for xid=%#x failed=%d rc=%d",
+                    cptr->xid, failed, rc));
+        if (xid == PING_XID) {
+            // We want to skip the ping
+        } else {
+            assert(cptr->c.void_result);
+            cptr->c.void_result(rc, cptr->data);
+        }
+        break;
+    case COMPLETION_MULTI:
+        LOG_DEBUG(("Calling COMPLETION_MULTI for xid=%#x failed=%d rc=%d",
+                    cptr->xid, failed, rc));
+        rc = deserialize_multi(xid, cptr, ia);
+        assert(cptr->c.void_result);
+        cptr->c.void_result(rc, cptr->data);
+        break;
+    default:
+        LOG_DEBUG(("Unsupported completion type=%d", cptr->c.type));
+    }
+}
+
 
 /* handles async completion (both single- and multithreaded) */
 void process_completions(zhandle_t *zh)
@@ -1774,89 +2006,12 @@ void process_completions(zhandle_t *zh)
             state = evt.state;
             /* This is a notification so there aren't any pending requests */
             LOG_DEBUG(("Calling a watcher for node [%s], type = %d event=%s",
-                       (evt.path==NULL?"NULL":evt.path), cptr->completion_type,
+                       (evt.path==NULL?"NULL":evt.path), cptr->c.type,
                        watcherEvent2String(type)));
             deliverWatchers(zh,type,state,evt.path, &cptr->c.watcher_result);
             deallocate_WatcherEvent(&evt);
         } else {
-            int rc = hdr.err;
-            switch (cptr->completion_type) {
-            case COMPLETION_DATA:
-                LOG_DEBUG(("Calling COMPLETION_DATA for xid=%#x rc=%d",cptr->xid,rc));
-                if (rc) {
-                    cptr->c.data_result(rc, 0, 0, 0, cptr->data);
-                } else {
-                    struct GetDataResponse res;
-                    deserialize_GetDataResponse(ia, "reply", &res);
-                    cptr->c.data_result(rc, res.data.buff, res.data.len,
-                            &res.stat, cptr->data);
-                    deallocate_GetDataResponse(&res);
-                }
-                break;
-            case COMPLETION_STAT:
-                LOG_DEBUG(("Calling COMPLETION_STAT for xid=%#x rc=%d",cptr->xid,rc));
-                if (rc) {
-                    cptr->c.stat_result(rc, 0, cptr->data);
-                } else {
-                    struct SetDataResponse res;
-                    deserialize_SetDataResponse(ia, "reply", &res);
-                    cptr->c.stat_result(rc, &res.stat, cptr->data);
-                    deallocate_SetDataResponse(&res);
-                }
-                break;
-            case COMPLETION_STRINGLIST:
-                LOG_DEBUG(("Calling COMPLETION_STRINGLIST for xid=%#x rc=%d",cptr->xid,rc));
-                if (rc) {
-                    cptr->c.strings_result(rc, 0, cptr->data);
-                } else {
-                    struct GetChildrenResponse res;
-                    deserialize_GetChildrenResponse(ia, "reply", &res);
-                    cptr->c.strings_result(rc, &res.children, cptr->data);
-                    deallocate_GetChildrenResponse(&res);
-                }
-                break;
-            case COMPLETION_STRINGLIST_STAT:
-                LOG_DEBUG(("Calling COMPLETION_STRINGLIST_STAT for xid=%#x rc=%d",cptr->xid,rc));
-                if (rc) {
-                    cptr->c.strings_stat_result(rc, 0, 0, cptr->data);
-                } else {
-                    struct GetChildren2Response res;
-                    deserialize_GetChildren2Response(ia, "reply", &res);
-                    cptr->c.strings_stat_result(rc, &res.children, &res.stat, cptr->data);
-                    deallocate_GetChildren2Response(&res);
-                }
-                break;
-            case COMPLETION_STRING:
-                LOG_DEBUG(("Calling COMPLETION_STRING for xid=%#x rc=%d",cptr->xid,rc));
-                if (rc) {
-                    cptr->c.string_result(rc, 0, cptr->data);
-                } else {
-                    struct CreateResponse res;
-                    deserialize_CreateResponse(ia, "reply", &res);
-                    cptr->c.string_result(rc, res.path, cptr->data);
-                    deallocate_CreateResponse(&res);
-                }
-                break;
-            case COMPLETION_ACLLIST:
-                LOG_DEBUG(("Calling COMPLETION_ACLLIST for xid=%#x rc=%d",cptr->xid,rc));
-                if (rc) {
-                    cptr->c.acl_result(rc, 0, 0, cptr->data);
-                } else {
-                    struct GetACLResponse res;
-                    deserialize_GetACLResponse(ia, "reply", &res);
-                    cptr->c.acl_result(rc, &res.acl, &res.stat, cptr->data);
-                    deallocate_GetACLResponse(&res);
-                }
-                break;
-            case COMPLETION_VOID:
-                LOG_DEBUG(("Calling COMPLETION_VOID for xid=%#x rc=%d",cptr->xid,rc));
-                if (hdr.xid == PING_XID) {
-                    // We want to skip the ping
-                } else {
-                    cptr->c.void_result(rc, cptr->data);
-                }
-                break;
-            }
+            deserialize_response(cptr->c.type, hdr.xid, hdr.err != 0, hdr.err, cptr, ia);
         }
         destroy_completion_entry(cptr);
         close_buffer_iarchive(&ia);
@@ -1932,7 +2087,7 @@ int zookeeper_process(zhandle_t *zh, int events)
             type = evt.type;
             path = evt.path;
             /* We are doing a notification, so there is no pending request */
-            c = create_completion_entry(WATCHER_EVENT_XID,-1,0,0,0);
+            c = create_completion_entry(WATCHER_EVENT_XID,-1,0,0,0,0);
             c->buffer = bptr;
             c->c.watcher_result = collectWatchers(zh, type, path);
 
@@ -2009,103 +2164,9 @@ int zookeeper_process(zhandle_t *zh, int events)
                 struct sync_completion
                         *sc = (struct sync_completion*)cptr->data;
                 sc->rc = rc;
-                switch(cptr->completion_type) {
-                case COMPLETION_DATA:
-                    LOG_DEBUG(("Calling COMPLETION_DATA for xid=%#x rc=%d",
-                               cptr->xid, rc));
-                    if (rc==0) {
-                        struct GetDataResponse res;
-                        int len;
-                        deserialize_GetDataResponse(ia, "reply", &res);
-                        if (res.data.len <= sc->u.data.buff_len) {
-                            len = res.data.len;
-                        } else {
-                            len = sc->u.data.buff_len;
-                        }
-                        sc->u.data.buff_len = len;
-                        // check if len is negative
-                        // just of NULL which is -1 int
-                        if (len == -1) {
-                            sc->u.data.buffer = NULL;
-                        } else {
-                            memcpy(sc->u.data.buffer, res.data.buff, len);
-                        }
-                        sc->u.data.stat = res.stat;
-                        deallocate_GetDataResponse(&res);
-                    }
-                    break;
-                case COMPLETION_STAT:
-                    LOG_DEBUG(("Calling COMPLETION_STAT for xid=%#x rc=%d",
-                               cptr->xid, rc));
-                    if (rc == 0) {
-                        struct SetDataResponse res;
-                        deserialize_SetDataResponse(ia, "reply", &res);
-                        sc->u.stat = res.stat;
-                        deallocate_SetDataResponse(&res);
-                    }
-                    break;
-                case COMPLETION_STRINGLIST:
-                    LOG_DEBUG(("Calling COMPLETION_STRINGLIST for xid=%#x rc=%d",
-                               cptr->xid, rc));
-                    if (rc == 0) {
-                        struct GetChildrenResponse res;
-                        deserialize_GetChildrenResponse(ia, "reply", &res);
-                        sc->u.strs2 = res.children;
-                        /* We don't deallocate since we are passing it back */
-                        // deallocate_GetChildrenResponse(&res);
-                    }
-                    break;
-                case COMPLETION_STRINGLIST_STAT:
-                    LOG_DEBUG(("Calling COMPLETION_STRINGLIST_STAT for xid=%#x rc=%d",
-                               cptr->xid, rc));
-                    if (rc == 0) {
-                        struct GetChildren2Response res;
-                        deserialize_GetChildren2Response(ia, "reply", &res);
-                        sc->u.strs_stat.strs2 = res.children;
-                        sc->u.strs_stat.stat2 = res.stat;
-                        /* We don't deallocate since we are passing it back */
-                        // deallocate_GetChildren2Response(&res);
-                    }
-                    break;
-                case COMPLETION_STRING:
-                    LOG_DEBUG(("Calling COMPLETION_STRING for xid=%#x rc=%d",
-                               cptr->xid, rc));
-                    if (rc == 0) {
-                        struct CreateResponse res;
-                        int len;
-                        deserialize_CreateResponse(ia, "reply", &res);
-                        len = strlen(res.path) + 1;
-                        if (len > sc->u.str.str_len) {
-                            len = sc->u.str.str_len;
-                        }
-                        if (len > 0) {
-                            memcpy(sc->u.str.str, res.path, len - 1);
-                            sc->u.str.str[len - 1] = '\0';
-                        }
-                        deallocate_CreateResponse(&res);
-                    }
-                    break;
-                case COMPLETION_ACLLIST:
-                    LOG_DEBUG(("Calling COMPLETION_ACLLIST for xid=%#x rc=%d",
-                               cptr->xid, rc));
-                    if (rc == 0) {
-                        struct GetACLResponse res;
-                        deserialize_GetACLResponse(ia, "reply", &res);
-                        sc->u.acl.acl = res.acl;
-                        sc->u.acl.stat = res.stat;
-                        /* We don't deallocate since we are passing it back */
-                        //deallocate_GetACLResponse(&res);
-                    }
-                    break;
-                case COMPLETION_VOID:
-                    LOG_DEBUG(("Calling COMPLETION_VOID for xid=%#x rc=%d",
-                               cptr->xid, rc));
-                    break;
-                default:
-                    LOG_DEBUG(("UNKNOWN response type xid=%#x rc=%d",
-                               cptr->xid, rc));
-                    break;
-                }
+                
+                process_sync_completion(cptr, sc, ia); 
+                
                 notify_sync_completion(sc);
                 free_buffer(bptr);
                 zh->outstanding_sync--;
@@ -2149,16 +2210,16 @@ static void destroy_watcher_registration(watcher_registration_t* wo){
 }
 
 static completion_list_t* create_completion_entry(int xid, int completion_type,
-        const void *dc, const void *data,watcher_registration_t* wo)
+        const void *dc, const void *data,watcher_registration_t* wo, completion_head_t *clist)
 {
     completion_list_t *c = calloc(1,sizeof(completion_list_t));
     if (!c) {
         LOG_ERROR(("out of memory"));
         return 0;
     }
-    c->completion_type = completion_type;
+    c->c.type = completion_type;
     c->data = data;
-    switch(c->completion_type) {
+    switch(c->c.type) {
     case COMPLETION_VOID:
         c->c.void_result = (void_completion_t)dc;
         break;
@@ -2180,10 +2241,15 @@ static completion_list_t* create_completion_entry(int xid, int completion_type,
     case COMPLETION_ACLLIST:
         c->c.acl_result = (acl_completion_t)dc;
         break;
+    case COMPLETION_MULTI:
+        assert(clist);
+        c->c.void_result = (void_completion_t)dc;
+        c->c.clist = *clist;
+        break;
     }
     c->xid = xid;
     c->watcher = wo;
-
+    
     return c;
 }
 
@@ -2231,10 +2297,10 @@ static void queue_completion(completion_head_t *list, completion_list_t *c,
 
 static int add_completion(zhandle_t *zh, int xid, int completion_type,
         const void *dc, const void *data, int add_to_front,
-        watcher_registration_t* wo)
+        watcher_registration_t* wo, completion_head_t *clist)
 {
     completion_list_t *c =create_completion_entry(xid, completion_type, dc,
-            data,wo);
+            data, wo, clist);
     int rc = 0;
     if (!c)
         return ZSYSTEMERROR;
@@ -2256,43 +2322,49 @@ static int add_completion(zhandle_t *zh, int xid, int completion_type,
 static int add_data_completion(zhandle_t *zh, int xid, data_completion_t dc,
         const void *data,watcher_registration_t* wo)
 {
-    return add_completion(zh, xid, COMPLETION_DATA, dc, data, 0,wo);
+    return add_completion(zh, xid, COMPLETION_DATA, dc, data, 0, wo, 0);
 }
 
 static int add_stat_completion(zhandle_t *zh, int xid, stat_completion_t dc,
         const void *data,watcher_registration_t* wo)
 {
-    return add_completion(zh, xid, COMPLETION_STAT, dc, data, 0,wo);
+    return add_completion(zh, xid, COMPLETION_STAT, dc, data, 0, wo, 0);
 }
 
 static int add_strings_completion(zhandle_t *zh, int xid,
         strings_completion_t dc, const void *data,watcher_registration_t* wo)
 {
-    return add_completion(zh, xid, COMPLETION_STRINGLIST, dc, data, 0,wo);
+    return add_completion(zh, xid, COMPLETION_STRINGLIST, dc, data, 0, wo, 0);
 }
 
 static int add_strings_stat_completion(zhandle_t *zh, int xid,
         strings_stat_completion_t dc, const void *data,watcher_registration_t* wo)
 {
-    return add_completion(zh, xid, COMPLETION_STRINGLIST_STAT, dc, data, 0,wo);
+    return add_completion(zh, xid, COMPLETION_STRINGLIST_STAT, dc, data, 0, wo, 0);
 }
 
 static int add_acl_completion(zhandle_t *zh, int xid, acl_completion_t dc,
         const void *data)
 {
-    return add_completion(zh, xid, COMPLETION_ACLLIST, dc, data, 0,0);
+    return add_completion(zh, xid, COMPLETION_ACLLIST, dc, data, 0, 0, 0);
 }
 
 static int add_void_completion(zhandle_t *zh, int xid, void_completion_t dc,
         const void *data)
 {
-    return add_completion(zh, xid, COMPLETION_VOID, dc, data, 0,0);
+    return add_completion(zh, xid, COMPLETION_VOID, dc, data, 0, 0, 0);
 }
 
 static int add_string_completion(zhandle_t *zh, int xid,
         string_completion_t dc, const void *data)
 {
-    return add_completion(zh, xid, COMPLETION_STRING, dc, data, 0,0);
+    return add_completion(zh, xid, COMPLETION_STRING, dc, data, 0, 0, 0);
+}
+
+static int add_multi_completion(zhandle_t *zh, int xid, void_completion_t dc,
+        const void *data, completion_head_t *clist)
+{
+    return add_completion(zh, xid, COMPLETION_MULTI, dc, data, 0,0, clist);
 }
 
 int zookeeper_close(zhandle_t *zh)
@@ -2313,7 +2385,7 @@ int zookeeper_close(zhandle_t *zh)
     }
     if(zh->state==ZOO_CONNECTED_STATE){
         struct oarchive *oa;
-        struct RequestHeader h = { .xid = get_xid(), .type = CLOSE_OP};
+        struct RequestHeader h = { .xid = get_xid(), .type = ZOO_CLOSE_OP};
         LOG_INFO(("Closing zookeeper sessionId=%#llx to [%s]\n",
                 zh->client_id.client_id,format_current_endpoint_info(zh)));
         oa = create_buffer_oarchive();
@@ -2387,6 +2459,43 @@ static int isValidPath(const char* path, const int flags) {
   return 1;
 }
 
+/*---------------------------------------------------------------------------*
+ * REQUEST INIT HELPERS
+ *---------------------------------------------------------------------------*/
+/* Common Request init helper functions to reduce code duplication */
+static int Request_path_init(zhandle_t *zh, int flags, 
+        char **path_out, const char *path)
+{
+    assert(path_out);
+    
+    *path_out = prepend_string(zh, path);
+    if (zh == NULL || !isValidPath(*path_out, flags)) {
+        free_duplicate_path(*path_out, path);
+        return ZBADARGUMENTS;
+    }
+    if (is_unrecoverable(zh)) {
+        free_duplicate_path(*path_out, path);
+        return ZINVALIDSTATE;
+    }
+
+    return ZOK;
+}
+
+static int Request_path_watch_init(zhandle_t *zh, int flags,
+        char **path_out, const char *path,
+        int32_t *watch_out, uint32_t watch)
+{
+    int rc = Request_path_init(zh, flags, path_out, path);
+    if (rc != ZOK) {
+        return rc;
+    }
+    *watch_out = watch;
+    return ZOK;
+}
+
+/*---------------------------------------------------------------------------*
+ * ASYNC API
+ *---------------------------------------------------------------------------*/
 int zoo_aget(zhandle_t *zh, const char *path, int watch, data_completion_t dc,
         const void *data)
 {
@@ -2399,7 +2508,7 @@ int zoo_awget(zhandle_t *zh, const char *path,
 {
     struct oarchive *oa;
     char *server_path = prepend_string(zh, path);
-    struct RequestHeader h = { .xid = get_xid(), .type = GETDATA_OP};
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_GETDATA_OP};
     struct GetDataRequest req =  { (char*)server_path, watcher!=0 };
     int rc;
 
@@ -2431,29 +2540,32 @@ int zoo_awget(zhandle_t *zh, const char *path,
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
 
+static int SetDataRequest_init(zhandle_t *zh, struct SetDataRequest *req,
+        const char *path, const char *buffer, int buflen, int version)
+{
+    assert(req);
+    int rc = Request_path_init(zh, 0, &req->path, path);
+    if (rc != ZOK) {
+        return rc;
+    }
+    req->data.buff = (char*)buffer;
+    req->data.len = buflen;
+    req->version = version;
+
+    return ZOK;
+}
+
 int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
         int version, stat_completion_t dc, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = get_xid(), .type = SETDATA_OP};
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_SETDATA_OP};
     struct SetDataRequest req;
-    int rc;
-    char *server_path;
-    server_path = prepend_string(zh, path);
-
-    if (zh==0 || !isValidPath(server_path, 0)) {
-        free_duplicate_path(server_path, path);
-        return ZBADARGUMENTS;
-    }
-    if (is_unrecoverable(zh)) {
-        free_duplicate_path(server_path, path);
-        return ZINVALIDSTATE;
+    int rc = SetDataRequest_init(zh, &req, path, buffer, buflen, version);
+    if (rc != ZOK) {
+        return rc;
     }
     oa = create_buffer_oarchive();
-    req.path = (char*)server_path;
-    req.data.buff = (char*)buffer;
-    req.data.len = buflen;
-    req.version = version;
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SetDataRequest(oa, "req", &req);
     enter_critical(zh);
@@ -2461,7 +2573,7 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(server_path, path);
+    free_duplicate_path(req.path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2470,6 +2582,28 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
+}
+
+static int CreateRequest_init(zhandle_t *zh, struct CreateRequest *req,
+        const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl_entries, int flags)
+{
+    assert(req);
+    int rc = Request_path_init(zh, flags, &req->path, path);
+    if (rc != ZOK) {
+        return rc;
+    }
+    req->flags = flags;
+    req->data.buff = (char*)value;
+    req->data.len = valuelen;
+    if (acl_entries == 0) {
+        req->acl.count = 0;
+        req->acl.data = 0;
+    } else {
+        req->acl = *acl_entries;
+    }
+
+    return ZOK;
 }
 
 int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
@@ -2477,31 +2611,15 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
         string_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = get_xid(), .type = CREATE_OP };
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_CREATE_OP };
     struct CreateRequest req;
-    int rc;
-    char *server_path;
 
-    server_path = prepend_string(zh, path);
-    if (zh==0 || !isValidPath(server_path, flags)) {
-        free_duplicate_path(server_path, path);
-        return ZBADARGUMENTS;
-    }
-    if (is_unrecoverable(zh)) {
-        free_duplicate_path(server_path, path);
-        return ZINVALIDSTATE;
+    int rc = CreateRequest_init(zh, &req, 
+            path, value, valuelen, acl_entries, flags);
+    if (rc != ZOK) {
+        return rc;
     }
     oa = create_buffer_oarchive();
-    req.path = (char*)server_path;
-    req.flags = flags;
-    req.data.buff = (char*)value;
-    req.data.len = valuelen;
-    if (acl_entries == 0) {
-        req.acl.count = 0;
-        req.acl.data = 0;
-    } else {
-        req.acl = *acl_entries;
-    }
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
     enter_critical(zh);
@@ -2509,7 +2627,7 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(server_path, path);
+    free_duplicate_path(req.path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2520,27 +2638,28 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
 
+int DeleteRequest_init(zhandle_t *zh, struct DeleteRequest *req, 
+        const char *path, int version)
+{
+    int rc = Request_path_init(zh, 0, &req->path, path);
+    if (rc != ZOK) {
+        return rc;
+    }
+    req->version = version;
+    return ZOK;
+}
+
 int zoo_adelete(zhandle_t *zh, const char *path, int version,
         void_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = get_xid(), .type = DELETE_OP};
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_DELETE_OP};
     struct DeleteRequest req;
-    int rc;
-    char *server_path;
-
-    server_path = prepend_string(zh, path);
-    if (zh==0 || !isValidPath(server_path, 0)) {
-        free_duplicate_path(server_path, path);
-        return ZBADARGUMENTS;
-    }
-    if (is_unrecoverable(zh)) {
-        free_duplicate_path(server_path, path);
-        return ZINVALIDSTATE;
+    int rc = DeleteRequest_init(zh, &req, path, version);
+    if (rc != ZOK) {
+        return rc;
     }
     oa = create_buffer_oarchive();
-    req.path = (char*)server_path;
-    req.version = version;
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_DeleteRequest(oa, "req", &req);
     enter_critical(zh);
@@ -2548,7 +2667,7 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(server_path, path);
+    free_duplicate_path(req.path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2570,30 +2689,24 @@ int zoo_awexists(zhandle_t *zh, const char *path,
         stat_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = get_xid(), .type = EXISTS_OP };
-    char *server_path = prepend_string(zh, path);
-    struct ExistsRequest req  = {(char*)server_path, watcher!=0 };
-    int rc;
-
-    if (zh==0 || !isValidPath(server_path, 0)) {
-        free_duplicate_path(server_path, path);
-        return ZBADARGUMENTS;
-    }
-    if (is_unrecoverable(zh)) {
-        free_duplicate_path(server_path, path);
-        return ZINVALIDSTATE;
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_EXISTS_OP };
+    struct ExistsRequest req;
+    int rc = Request_path_watch_init(zh, 0, &req.path, path, 
+            &req.watch, watcher != NULL);
+    if (rc != ZOK) {
+        return rc;
     }
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_ExistsRequest(oa, "req", &req);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_stat_completion(zh, h.xid, completion, data,
-        create_watcher_registration(server_path,exists_result_checker,
+        create_watcher_registration(req.path,exists_result_checker,
                 watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(server_path, path);
+    free_duplicate_path(req.path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2610,29 +2723,23 @@ static int zoo_awget_children_(zhandle_t *zh, const char *path,
          const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = get_xid(), .type = GETCHILDREN_OP};
-    char * server_path = prepend_string(zh, path);
-    struct GetChildrenRequest req = {(char*)server_path, watcher!=0 };
-    int rc;
-
-    if (zh==0 || !isValidPath(server_path, 0)) {
-        free_duplicate_path(server_path, path);
-        return ZBADARGUMENTS;
-    }
-    if (is_unrecoverable(zh)) {
-        free_duplicate_path(server_path, path);
-        return ZINVALIDSTATE;
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_GETCHILDREN_OP};
+    struct GetChildrenRequest req ;
+    int rc = Request_path_watch_init(zh, 0, &req.path, path, 
+            &req.watch, watcher != NULL);
+    if (rc != ZOK) {
+        return rc;
     }
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetChildrenRequest(oa, "req", &req);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_strings_completion(zh, h.xid, sc, data,
-            create_watcher_registration(server_path,child_result_checker,watcher,watcherCtx));
+            create_watcher_registration(req.path,child_result_checker,watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(server_path, path);
+    free_duplicate_path(req.path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2664,29 +2771,23 @@ static int zoo_awget_children2_(zhandle_t *zh, const char *path,
 {
     /* invariant: (sc == NULL) != (sc == NULL) */
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = get_xid(), .type = GETCHILDREN2_OP};
-    char * server_path = prepend_string(zh, path);
-    struct GetChildren2Request req2 = {(char*)server_path, watcher!=0 };
-    int rc;
-
-    if (zh==0 || !isValidPath(server_path, 0)) {
-        free_duplicate_path(server_path, path);
-        return ZBADARGUMENTS;
-    }
-    if (is_unrecoverable(zh)) {
-        free_duplicate_path(server_path, path);
-        return ZINVALIDSTATE;
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_GETCHILDREN2_OP};
+    struct GetChildren2Request req ;
+    int rc = Request_path_watch_init(zh, 0, &req.path, path, 
+            &req.watch, watcher != NULL);
+    if (rc != ZOK) {
+        return rc;
     }
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
-    rc = rc < 0 ? rc : serialize_GetChildren2Request(oa, "req", &req2);
+    rc = rc < 0 ? rc : serialize_GetChildren2Request(oa, "req", &req);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_strings_stat_completion(zh, h.xid, ssc, data,
-            create_watcher_registration(server_path,child_result_checker,watcher,watcherCtx));
+            create_watcher_registration(req.path,child_result_checker,watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(server_path, path);
+    free_duplicate_path(req.path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2715,22 +2816,13 @@ int zoo_async(zhandle_t *zh, const char *path,
         string_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = get_xid(), .type = SYNC_OP};
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_SYNC_OP};
     struct SyncRequest req;
-    int rc;
-    char *server_path;
-
-    server_path = prepend_string(zh, path);
-    if (zh==0 || !isValidPath(server_path, 0)) {
-        free_duplicate_path(server_path, path);
-        return ZBADARGUMENTS;
-    }
-    if (is_unrecoverable(zh)) {
-        free_duplicate_path(server_path, path);
-        return ZINVALIDSTATE;
+    int rc = Request_path_init(zh, 0, &req.path, path);
+    if (rc != ZOK) {
+        return rc;
     }
     oa = create_buffer_oarchive();
-    req.path = (char*)server_path;
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SyncRequest(oa, "req", &req);
     enter_critical(zh);
@@ -2738,7 +2830,7 @@ int zoo_async(zhandle_t *zh, const char *path,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(server_path, path);
+    free_duplicate_path(req.path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2754,22 +2846,13 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
         const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = get_xid(), .type = GETACL_OP};
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_GETACL_OP};
     struct GetACLRequest req;
-    int rc;
-    char *server_path;
-
-    server_path = prepend_string(zh, path);
-    if (zh==0 || !isValidPath(server_path, 0)) {
-        free_duplicate_path(server_path, path);
-        return ZBADARGUMENTS;
-    }
-    if (is_unrecoverable(zh)) {
-        free_duplicate_path(server_path, path);
-        return ZINVALIDSTATE;
+    int rc = Request_path_init(zh, 0, &req.path, path) ;
+    if (rc != ZOK) {
+        return rc;
     }
     oa = create_buffer_oarchive();
-    req.path = (char*)server_path;
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetACLRequest(oa, "req", &req);
     enter_critical(zh);
@@ -2777,7 +2860,7 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(server_path, path);
+    free_duplicate_path(req.path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2792,22 +2875,13 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
         struct ACL_vector *acl, void_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { .xid = get_xid(), .type = SETACL_OP};
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_SETACL_OP};
     struct SetACLRequest req;
-    int rc;
-    char *server_path;
-
-    server_path = prepend_string(zh, path);
-    if (zh==0 || !isValidPath(server_path, 0)) {
-        free_duplicate_path(server_path, path);
-        return ZBADARGUMENTS;
-    }
-    if (is_unrecoverable(zh)) {
-        free_duplicate_path(server_path, path);
-        return ZINVALIDSTATE;
+    int rc = Request_path_init(zh, 0, &req.path, path);
+    if (rc != ZOK) {
+        return rc;
     }
     oa = create_buffer_oarchive();
-    req.path = (char*)server_path;
     req.acl = *acl;
     req.version = version;
     rc = serialize_RequestHeader(oa, "header", &h);
@@ -2817,7 +2891,7 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(server_path, path);
+    free_duplicate_path(req.path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -2826,6 +2900,228 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
+}
+
+/* Completions for multi-op results */
+static void op_result_string_completion(int err, const char *value, const void *data)
+{
+    struct zoo_op_result *result = (struct zoo_op_result *)data;
+    assert(result);
+    result->err = err;
+    
+    if (result->value && value) {
+        int len = strlen(value) + 1;
+		if (len > result->valuelen) {
+			len = result->valuelen;
+		}
+		if (len > 0) {
+			memcpy(result->value, value, len - 1);
+			result->value[len - 1] = '\0';
+		}
+    } else {
+        result->value = NULL;
+    }
+}
+
+static void op_result_void_completion(int err, const void *data)
+{
+    struct zoo_op_result *result = (struct zoo_op_result *)data;
+    assert(result);
+    result->err = err;
+}
+
+static void op_result_stat_completion(int err, const struct Stat *stat, const void *data)
+{
+    struct zoo_op_result *result = (struct zoo_op_result *)data;
+    assert(result);
+    result->err = err;
+
+    if (result->stat && err == 0 && stat) {
+        *result->stat = *stat;
+    } else {
+        result->stat = NULL ;
+    }
+}   
+
+static int CheckVersionRequest_init(zhandle_t *zh, struct CheckVersionRequest *req,
+        const char *path, int version)
+{
+    assert(req);
+    int rc = Request_path_init(zh, 0, &req->path, path);
+    if (rc != ZOK) {
+        return rc;
+    }
+    req->version = version;
+
+    return ZOK;
+}
+
+int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
+        zoo_op_result_t *results, void_completion_t completion, const void *data)
+{
+    struct RequestHeader h = { .xid = get_xid(), .type = ZOO_MULTI_OP };
+    struct oarchive *oa = create_buffer_oarchive();
+    completion_head_t clist = { 0 };
+
+    int rc = serialize_RequestHeader(oa, "header", &h);
+
+    int index = 0;
+    for (index=0; index < count; index++) {
+        const zoo_op_t *op = ops+index;
+        zoo_op_result_t *result = results+index;
+        completion_list_t *entry = NULL;
+
+        struct MultiHeader mh = { .type=op->type, .done=0, .err=-1 };
+        rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
+     
+        switch(op->type) {
+            case ZOO_CREATE_OP: {
+                struct CreateRequest req;
+
+                rc = rc < 0 ? rc : CreateRequest_init(zh, &req, 
+                                        op->create_op.path, op->create_op.data, 
+                                        op->create_op.datalen, op->create_op.acl, 
+                                        op->create_op.flags);
+                rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
+                result->value = op->create_op.buf;
+				result->valuelen = op->create_op.buflen;
+
+                enter_critical(zh);
+                entry = create_completion_entry(h.xid, COMPLETION_STRING, op_result_string_completion, result, 0, 0); 
+                leave_critical(zh);
+                free_duplicate_path(req.path, op->create_op.path);
+                break;
+            }
+
+            case ZOO_DELETE_OP: {
+                struct DeleteRequest req;
+                rc = rc < 0 ? rc : DeleteRequest_init(zh, &req, op->delete_op.path, op->delete_op.version);
+                rc = rc < 0 ? rc : serialize_DeleteRequest(oa, "req", &req);
+
+                enter_critical(zh);
+                entry = create_completion_entry(h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0); 
+                leave_critical(zh);
+                free_duplicate_path(req.path, op->delete_op.path);
+                break;
+            }
+
+            case ZOO_SETDATA_OP: {
+                struct SetDataRequest req;
+                rc = rc < 0 ? rc : SetDataRequest_init(zh, &req,
+                                        op->set_op.path, op->set_op.data, 
+                                        op->set_op.datalen, op->set_op.version);
+                rc = rc < 0 ? rc : serialize_SetDataRequest(oa, "req", &req);
+                result->stat = op->set_op.stat;
+
+                enter_critical(zh);
+                entry = create_completion_entry(h.xid, COMPLETION_STAT, op_result_stat_completion, result, 0, 0); 
+                leave_critical(zh);
+                free_duplicate_path(req.path, op->set_op.path);
+                break;
+            }
+
+            case ZOO_CHECK_OP: {
+                struct CheckVersionRequest req;
+                rc = rc < 0 ? rc : CheckVersionRequest_init(zh, &req,
+                                        op->check_op.path, op->check_op.version);
+                rc = rc < 0 ? rc : serialize_CheckVersionRequest(oa, "req", &req);
+
+                enter_critical(zh);
+                entry = create_completion_entry(h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0); 
+                leave_critical(zh);
+                free_duplicate_path(req.path, op->check_op.path);
+                break;
+            } 
+
+            default:
+                LOG_ERROR(("Unimplemented sub-op type=%d in multi-op", op->type));
+                return ZUNIMPLEMENTED; 
+        }
+
+        queue_completion(&clist, entry, 0);
+    }
+
+    struct MultiHeader mh = { .type=-1, .done=1, .err=-1 };
+    rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
+  
+    /* BEGIN: CRTICIAL SECTION */
+    enter_critical(zh);
+    rc = rc < 0 ? rc : add_multi_completion(zh, h.xid, completion, data, &clist);
+    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
+            get_buffer_len(oa));
+    leave_critical(zh);
+    
+    /* We queued the buffer, so don't free it */
+    close_buffer_oarchive(&oa, 0);
+
+    LOG_DEBUG(("Sending multi request xid=%#x with %d subrequests to %s",
+            h.xid, index, format_current_endpoint_info(zh)));
+    /* make a best (non-blocking) effort to send the requests asap */
+    adaptor_send_queue(zh, 0);
+
+    return (rc < 0) ? ZMARSHALLINGERROR : ZOK;
+}
+
+void zoo_create_op_init(zoo_op_t *op, const char *path, const char *value,
+        int valuelen,  const struct ACL_vector *acl, int flags, 
+        char *path_buffer, int path_buffer_len)
+{
+    assert(op);
+    op->type = ZOO_CREATE_OP;
+    op->create_op.path = path;
+    op->create_op.data = value;
+    op->create_op.datalen = valuelen;
+    op->create_op.acl = acl;
+    op->create_op.flags = flags;
+    op->create_op.buf = path_buffer;
+    op->create_op.buflen = path_buffer_len;
+}
+
+void zoo_delete_op_init(zoo_op_t *op, const char *path, int version)
+{
+    assert(op);
+    op->type = ZOO_DELETE_OP;
+    op->delete_op.path = path;
+    op->delete_op.version = version;
+}
+
+void zoo_set_op_init(zoo_op_t *op, const char *path, const char *buffer, 
+        int buflen, int version, struct Stat *stat)
+{
+    assert(op);
+    op->type = ZOO_SETDATA_OP;
+    op->set_op.path = path;
+    op->set_op.data = buffer;
+    op->set_op.datalen = buflen;
+    op->set_op.version = version;
+    op->set_op.stat = stat;
+}
+
+void zoo_check_op_init(zoo_op_t *op, const char *path, int version)
+{
+    assert(op);
+    op->type = ZOO_CHECK_OP;
+    op->check_op.path = path;
+    op->check_op.version = version;
+}
+
+int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_result_t *results)
+{
+    int rc;
+ 
+    struct sync_completion *sc = alloc_sync_completion();
+    if (!sc) {
+        return ZSYSTEMERROR;
+    }
+   
+    rc = zoo_amulti(zh, count, ops, results, SYNCHRONOUS_MARKER, sc);
+    if (rc == ZOK) {
+        wait_sync_completion(sc);
+        rc = sc->rc;
+    }
+    free_sync_completion(sc);
+
+    return rc;
 }
 
 /* specify timeout of 0 to make the function non-blocking */
@@ -3020,9 +3316,9 @@ void zoo_deterministic_conn_order(int yesOrNo)
     disable_conn_permute=yesOrNo;
 }
 
-/* ****************************************************************************
- * sync API
- */
+/*---------------------------------------------------------------------------*
+ * SYNC API
+ *---------------------------------------------------------------------------*/
 int zoo_create(zhandle_t *zh, const char *path, const char *value,
         int valuelen, const struct ACL_vector *acl, int flags,
         char *path_buffer, int path_buffer_len)

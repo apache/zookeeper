@@ -220,7 +220,7 @@ public:
         PingCountingServer():pingCount_(0){}
         // called when a client request is received
         virtual void onMessageReceived(const RequestHeader& rh, iarchive* ia){
-           if(rh.type==PING_OP){
+           if(rh.type==ZOO_PING_OP){
                pingCount_++;
            }
         }
