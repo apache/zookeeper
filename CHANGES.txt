@@ -327,6 +327,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-965. Need a multi-update command to allow multiple znodes to be updated safely (Marshall McMullen and Ted Dunning via breed)
 
+  ZOOKEEPER-1073. address a documentation issue in ZOOKEEPER-1030. (phunt via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
