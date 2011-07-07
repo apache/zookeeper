@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>ZooKeeper 3.0.0 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>ZooKeeper 3.0.0 Release Notes</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -235,6 +236,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
@@ -262,7 +264,7 @@ These release notes include new developer and user facing incompatibilities, fea
 </ul>
 
 
-<a name="N1001B"></a><a name="migration"></a>
+<a name="migration"></a>
 <h2 class="h3">Migration Instructions when Upgrading to 3.0.0</h2>
 <div class="section">
 <p>
@@ -297,7 +299,7 @@ Note: ZooKeeper increments the major version number (major.minor.fix) when backw
 </li>
 
 </ul>
-<a name="N10045"></a><a name="migration_code"></a>
+<a name="migration_code"></a>
 <h3 class="h4">Migrating Client Code</h3>
 <p>
   The underlying client-server protocol has changed in version 3.0.0
@@ -306,7 +308,7 @@ Note: ZooKeeper increments the major version number (major.minor.fix) when backw
   pre-3.0.0 clients are not guaranteed to operate against upgraded
   3.0.0 servers and vice-versa).
 </p>
-<a name="N1004E"></a><a name="Watch+Management"></a>
+<a name="Watch+Management"></a>
 <h4>Watch Management</h4>
 <p>
 In previous releases of ZooKeeper any watches registered by clients were lost if the client lost a connection to a ZooKeeper server.
@@ -322,7 +324,7 @@ This release also allows clients to specify call specific watch functions.
 This gives the developer the ability to modularize logic in different watch functions rather than cramming everything in the watch function attached to the ZooKeeper handle.
 Call specific watch functions receive all session events for as long as they are active, but will only receive the watch callbacks for which they are registered.
 </p>
-<a name="N1005B"></a><a name="Java+API"></a>
+<a name="Java+API"></a>
 <h4>Java API</h4>
 <ol>
   
@@ -344,7 +346,7 @@ Call specific watch functions receive all session events for as long as they are
 Also see <a href="http://hadoop.apache.org/zookeeper/docs/current/api/index.html">the current java API</a>
 
 </p>
-<a name="N1008D"></a><a name="C+API"></a>
+<a name="C+API"></a>
 <h4>C API</h4>
 <ol>
   
@@ -353,7 +355,7 @@ Also see <a href="http://hadoop.apache.org/zookeeper/docs/current/api/index.html
 </li>
 
 </ol>
-<a name="N100A0"></a><a name="migration_data"></a>
+<a name="migration_data"></a>
 <h3 class="h4">Migrating Server Data</h3>
 <p>
 The following issues resulted in changes to the on-disk data format (the snapshot and transaction log files contained within the ZK data directory) and require a migration utility to be run. 
@@ -499,7 +501,7 @@ The following issues resulted in changes to the on-disk data format (the snapsho
 </li> 
  
 </ol>
-<a name="N10135"></a><a name="migration_config"></a>
+<a name="migration_config"></a>
 <h3 class="h4">Migrating Server Configuration</h3>
 <p>
 There is a significant change to the ZooKeeper server configuration file.
@@ -523,7 +525,7 @@ There is a significant change to the ZooKeeper server configuration file.
 </div>
 
 
-<a name="N10162"></a><a name="changes"></a>
+<a name="changes"></a>
 <h2 class="h3">Changes Since ZooKeeper 2.2.1</h2>
 <div class="section">
 <p>
