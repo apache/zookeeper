@@ -242,6 +242,8 @@ BUGFIXES:
   ZOOKEEPER-1046. Creating a new sequential node results in a ZNODEEXISTS error. (breed via camille)
 
   ZOOKEEPER-1097. Quota is not correctly rehydrated on snapshot reload (camille via henryr)
+  
+  ZOOKEEPER-1046. Small fix: Creating a new sequential node results in a ZNODEEXISTS error. (Vishal K via camille)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 

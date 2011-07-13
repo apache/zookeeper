@@ -25,21 +25,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.jute.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.apache.zookeeper.KeeperException.Code;
-import org.apache.zookeeper.KeeperException.NoNodeException;
-import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
-import org.apache.zookeeper.KeeperException.NoNodeException;
-import org.apache.zookeeper.KeeperException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a helper class 
@@ -201,10 +199,10 @@ public class FileTxnSnapLog {
 
         /**
          * Snapshots are taken lazily. It can happen that the child
-         * znodes of a parent are modified (deleted or created) after the parent
+         * znodes of a parent are created after the parent
          * is serialized. Therefore, while replaying logs during restore, a
-         * delete/create might fail because the node was already
-         * deleted/created.
+         * create might fail because the node was already
+         * created.
          *
          * After seeing this failure, we should increment
          * the cversion of the parent znode since the parent was serialized
@@ -213,17 +211,18 @@ public class FileTxnSnapLog {
          * Note, such failures on DT should be seen only during
          * restore.
          */
-        if ((hdr.getType() == OpCode.create &&
-                rc.err == Code.NODEEXISTS.intValue()) &&
-                ((CreateTxn)txn).getParentCVersion() == -1) {
-            LOG.debug("Failed Txn: " + hdr.getType() + " path:" +
-                  rc.path + " err: " + rc.err);
+        if (hdr.getType() == OpCode.create &&
+                rc.err == Code.NODEEXISTS.intValue()) {
+            LOG.debug("Adjusting parent cversion for Txn: " + hdr.getType() +
+                    " path:" + rc.path + " err: " + rc.err);
             int lastSlash = rc.path.lastIndexOf('/');
             String parentName = rc.path.substring(0, lastSlash);
+            CreateTxn cTxn = (CreateTxn)txn;
             try {
-                dt.incrementCversion(parentName, hdr.getZxid());
+                dt.setCversionPzxid(parentName, cTxn.getParentCVersion(),
+                        hdr.getZxid());
             } catch (KeeperException.NoNodeException e) {
-                LOG.error("Failed to increment parent cversion for: " +
+                LOG.error("Failed to set parent cversion for: " +
                       parentName, e);
                 throw e;
             }
