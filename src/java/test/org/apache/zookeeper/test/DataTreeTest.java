@@ -70,10 +70,10 @@ public class DataTreeTest extends ZKTestCase {
     public void testIncrementCversion() throws Exception {
         dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion()+1, 1, 1);
         DataNode zk = dt.getNode("/test");
-        long prevCversion = zk.stat.getCversion();
+        int prevCversion = zk.stat.getCversion();
         long prevPzxid = zk.stat.getPzxid();
-        dt.incrementCversion("/test/",  prevPzxid + 1);
-        long newCversion = zk.stat.getCversion();
+        dt.setCversionPzxid("/test/",  prevCversion + 1, prevPzxid + 1);
+        int newCversion = zk.stat.getCversion();
         long newPzxid = zk.stat.getPzxid();
         Assert.assertTrue("<cversion, pzxid> verification failed. Expected: <" +
                 (prevCversion + 1) + ", " + (prevPzxid + 1) + ">, found: <" +

@@ -1299,20 +1299,22 @@ public class DataTree {
     }
 
      /**
-      * If the znode for the specified path is found, then this method
-      * increments the cversion and sets its pzxid to the zxid passed
-      * in the second argument. A NoNodeException is thrown if the znode is
-      * not found.
+      * This method sets the Cversion and Pzxid for the specified node to the
+      * values passed as arguments. The values are modified only if newCversion
+      * is greater than the current Cversion. A NoNodeException is thrown if
+      * a znode for the specified path is not found.
       *
       * @param path
-      *     Full path to the znode whose cversion needs to be incremented.
+      *     Full path to the znode whose Cversion needs to be modified.
       *     A "/" at the end of the path is ignored.
+      * @param newCversion
+      *     Value to be assigned to Cversion
       * @param zxid
-      *     Value to be assigned to pzxid
+      *     Value to be assigned to Pzxid
       * @throws KeeperException.NoNodeException
       *     If znode not found.
       **/
-    public void incrementCversion(String path, long zxid)
+    public void setCversionPzxid(String path, int newCversion, long zxid)
         throws KeeperException.NoNodeException {
         if (path.endsWith("/")) {
            path = path.substring(0, path.length() - 1);
@@ -1322,8 +1324,13 @@ public class DataTree {
             throw new KeeperException.NoNodeException(path);
         }
         synchronized (node) {
-            node.stat.setCversion(node.stat.getCversion() + 1);
-            node.stat.setPzxid(zxid);
+            if(newCversion == -1) {
+                newCversion = node.stat.getCversion() + 1;
+            }
+            if (newCversion > node.stat.getCversion()) {
+                node.stat.setCversion(newCversion);
+                node.stat.setPzxid(zxid);
+            }
         }
     }
 }

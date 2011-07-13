@@ -136,7 +136,11 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 
         // Make create to fail, then verify cversion.
         LOG.info("Attempting to create " + "/test/" + (count - 1));
-        doOp(logFile, OpCode.create, "/test/" + (count - 1), dt, zk);
+        doOp(logFile, OpCode.create, "/test/" + (count - 1), dt, zk, -1);
+
+        LOG.info("Attempting to create " + "/test/" + (count - 1));
+        doOp(logFile, OpCode.create, "/test/" + (count - 1), dt, zk,
+                zk.stat.getCversion() + 1);
 
         // Make delete fo fail, then verify cversion.
         // this doesn't happen anymore, we only set the cversion on create
@@ -148,7 +152,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
      * if cversion before the operation is 1 less than cversion afer.
      */
     private void doOp(FileTxnSnapLog logFile, int type, String path,
-            DataTree dt, DataNode parent) throws Exception {
+            DataTree dt, DataNode parent, int cversion) throws Exception {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
 
@@ -171,11 +175,11 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         } else if (type == OpCode.create) {
             txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
                     System.currentTimeMillis(), OpCode.create);
-            txn = new CreateTxn(path, new byte[0], null, false, -1);
+            txn = new CreateTxn(path, new byte[0], null, false, cversion);
         }
         logFile.processTransaction(txnHeader, dt, null, txn);
 
-        long newCversion = parent.stat.getCversion();
+        int newCversion = parent.stat.getCversion();
         long newPzxid = parent.stat.getPzxid();
         child = dt.getChildren(parentName, null, null);
         childStr = "";
@@ -206,8 +210,8 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         BinaryInputArchive ia  = BinaryInputArchive.getArchive(in);
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
-        LOG.info("Expected header :" + header.getMagic() +
-              " Received : " + FileTxnLog.TXNLOG_MAGIC);
+        LOG.info("Received magic : " + header.getMagic() +
+              " Expected : " + FileTxnLog.TXNLOG_MAGIC);
         Assert.assertTrue("Missing magic number ",
               header.getMagic() == FileTxnLog.TXNLOG_MAGIC);
     }
