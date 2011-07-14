@@ -42,11 +42,9 @@
  * ZooKeeper clients can leave watches when they queries the data or children
  * of a node. If a watch is left, that client will be notified of the change.
  * The notification is a one time trigger. Subsequent chances to the node will
- * not trigger a notification unless the client issues a querity with the watch
- * flag set. If the client is ever disconnected from the service, even if the
- * disconnection is temporary, the watches of the client will be removed from
- * the service, so a client must treat a disconnect notification as an implicit
- * trigger of all outstanding watches.
+ * not trigger a notification unless the client issues a query with the watch
+ * flag set. If the client is ever disconnected from the service, the watches do 
+ * not need to be reset. The client automatically resets the watches.
  * 
  * When a node is created, it may be flagged as an ephemeral node. Ephemeral
  * nodes are automatically removed when a client session is closed or when
