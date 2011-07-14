@@ -245,6 +245,8 @@ BUGFIXES:
   
   ZOOKEEPER-1046. Small fix: Creating a new sequential node results in a ZNODEEXISTS error. (Vishal K via camille)
 
+  ZOOKEEPER-782. Incorrect C API documentation for Watches. (mahadev via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
