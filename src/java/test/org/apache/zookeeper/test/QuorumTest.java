@@ -18,15 +18,20 @@
 
 package org.apache.zookeeper.test;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Op;
+import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -424,4 +429,42 @@ public class QuorumTest extends QuorumBase {
     }
 
     // skip superhammer and clientcleanup as they are too expensive for quorum
+    
+    /**
+     * Tests if a multiop submitted to a non-leader propagates to the leader properly
+     * (see ZOOKEEPER-1124).
+     * 
+     * The test works as follows. It has a client connect to a follower and submit a multiop
+     * to the follower. It then verifies that the multiop successfully gets committed by the leader.
+     *
+     * Without the fix in ZOOKEEPER-1124, this fails with a ConnectionLoss KeeperException.
+     */
+    @Test
+    public void testMultiToFollower() throws Exception {
+        QuorumUtil qu = new QuorumUtil(1);
+        CountdownWatcher watcher = new CountdownWatcher();
+        qu.startQuorum();
+        
+        int index = 1;
+        while(qu.getPeer(index).peer.leader == null)
+            index++;
+        
+        ZooKeeper zk = new ZooKeeper(
+                "127.0.0.1:" + qu.getPeer((index == 1)?2:1).peer.getClientPort(),
+                ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(CONNECTION_TIMEOUT);
+        
+        List<OpResult> results = new ArrayList<OpResult>();
+
+        results = zk.multi(Arrays.asList(
+                Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
+                ));
+        zk.getData("/multi0", false, null);
+        zk.getData("/multi1", false, null);
+        zk.getData("/multi2", false, null);
+
+        zk.close();
+    }
 }
