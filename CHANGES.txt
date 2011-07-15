@@ -249,6 +249,8 @@ BUGFIXES:
 
   ZOOKEEPER-1063. Dubious synchronization in Zookeeper and ClientCnxnSocketNIO classes (Yanick Dufresne via breed)
 
+  ZOOKEEPER-1124. Multiop submitted to non-leader always fails due to timeout (Marshall McMullen via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
