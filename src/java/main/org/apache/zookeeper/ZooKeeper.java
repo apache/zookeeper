@@ -90,16 +90,22 @@ public class ZooKeeper {
     private final ZKWatchManager watchManager = new ZKWatchManager();
 
     List<String> getDataWatches() {
-        List<String> rc = new ArrayList<String>(watchManager.dataWatches.keySet());
-        return rc;
+        synchronized(watchManager.dataWatches) {
+            List<String> rc = new ArrayList<String>(watchManager.dataWatches.keySet());
+            return rc;
+        }
     }
     List<String> getExistWatches() {
-        List<String> rc =  new ArrayList<String>(watchManager.existWatches.keySet());
-        return rc;
+        synchronized(watchManager.existWatches) {
+            List<String> rc =  new ArrayList<String>(watchManager.existWatches.keySet());
+            return rc;
+        }
     }
     List<String> getChildWatches() {
-        List<String> rc = new ArrayList<String>(watchManager.childWatches.keySet());
-        return rc;
+        synchronized(watchManager.childWatches) {
+            List<String> rc = new ArrayList<String>(watchManager.childWatches.keySet());
+            return rc;
+        }
     }
 
 /**
@@ -138,27 +144,32 @@ public class ZooKeeper {
             switch (type) {
             case None:
                 result.add(defaultWatcher);
-                for(Set<Watcher> ws: dataWatches.values()) {
-                    result.addAll(ws);
-                }
-                for(Set<Watcher> ws: existWatches.values()) {
-                    result.addAll(ws);
-                }
-                for(Set<Watcher> ws: childWatches.values()) {
-                    result.addAll(ws);
-                }
+                boolean clear = ClientCnxn.getDisableAutoResetWatch() &&
+                        state != Watcher.Event.KeeperState.SyncConnected;
 
-                // clear the watches if auto watch reset is not enabled
-                if (ClientCnxn.getDisableAutoResetWatch() &&
-                        state != Watcher.Event.KeeperState.SyncConnected)
-                {
-                    synchronized(dataWatches) {
+                synchronized(dataWatches) {
+                    for(Set<Watcher> ws: dataWatches.values()) {
+                        result.addAll(ws);
+                    }
+                    if (clear) {
                         dataWatches.clear();
                     }
-                    synchronized(existWatches) {
+                }
+
+                synchronized(existWatches) {
+                    for(Set<Watcher> ws: existWatches.values()) {
+                        result.addAll(ws);
+                    }
+                    if (clear) {
                         existWatches.clear();
                     }
-                    synchronized(childWatches) {
+                }
+
+                synchronized(childWatches) {
+                    for(Set<Watcher> ws: childWatches.values()) {
+                        result.addAll(ws);
+                    }
+                    if (clear) {
                         childWatches.clear();
                     }
                 }
