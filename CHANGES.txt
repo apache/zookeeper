@@ -247,6 +247,8 @@ BUGFIXES:
 
   ZOOKEEPER-782. Incorrect C API documentation for Watches. (mahadev via breed)
 
+  ZOOKEEPER-1063. Dubious synchronization in Zookeeper and ClientCnxnSocketNIO classes (Yanick Dufresne via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
