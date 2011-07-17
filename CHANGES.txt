@@ -35,8 +35,10 @@ BUGFIXES:
 
   ZOOKEEPER-880. QuorumCnxManager$SendWorker grows without bounds (vishal via breed)
  
-  ZOOKEEPER-1046. Creating a new sequential node results in a ZNODEEXISTS error. (Vishal K via camille) 
-
+  ZOOKEEPER-1046. Creating a new sequential node results in a ZNODEEXISTS error. (Vishal K via camille)
+  
+  ZOOKEEPER-1069. Calling shutdown() on a QuorumPeer too quickly can lead to a corrupt log. (Vishal K via camille) 
+   
 IMPROVEMENTS:
   ZOOKEEPER-963. Make Forrest work with JDK6 (Carl Steinbach via henryr)
 

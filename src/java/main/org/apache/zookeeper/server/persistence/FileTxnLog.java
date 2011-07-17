@@ -202,6 +202,8 @@ public class FileTxnLog implements TxnLog {
                oa = BinaryOutputArchive.getArchive(logStream);
                FileHeader fhdr = new FileHeader(TXNLOG_MAGIC,VERSION, dbId);
                fhdr.serialize(oa, "fileheader");
+               // Make sure that the magic number is written before padding.
+               logStream.flush();
                currentSize = fos.getChannel().position();
                streamsToFlush.add(fos);
             }

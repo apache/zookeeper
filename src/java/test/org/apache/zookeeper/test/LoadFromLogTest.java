@@ -1,10 +1,12 @@
 package org.apache.zookeeper.test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.List;
 
 import junit.framework.TestCase;
 
+import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -12,6 +14,8 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.persistence.FileHeader;
+import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
@@ -100,5 +104,25 @@ public class LoadFromLogTest extends TestCase implements  Watcher {
                 (prevCversion + 1) + ", " + (prevPzxid + 1) + ">, found: <" +
                 newCversion + ", " + newPzxid + ">",
                 (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
+    }
+    /**
+     * Simulates ZOOKEEPER-1069 and verifies that flush() before padLogFile
+     * fixes it.
+     */
+    @Test
+    public void testPad() throws Exception {
+        File tmpDir = ClientBase.createTmpDir();
+        FileTxnLog txnLog = new FileTxnLog(tmpDir);
+        TxnHeader txnHeader = new TxnHeader(0xabcd, 0x123, 0x123,
+              System.currentTimeMillis(), OpCode.create);
+        Record txn = new CreateTxn("/Test", new byte[0], null, false);
+        txnLog.append(txnHeader, txn);
+        FileInputStream in = new FileInputStream(tmpDir.getPath() + "/log." +
+              Long.toHexString(txnHeader.getZxid()));
+        BinaryInputArchive ia  = BinaryInputArchive.getArchive(in);
+        FileHeader header = new FileHeader();
+        header.deserialize(ia, "fileheader");
+        Assert.assertTrue("Missing magic number ",
+              header.getMagic() == FileTxnLog.TXNLOG_MAGIC);
     }
 }
