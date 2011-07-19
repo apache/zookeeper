@@ -21,7 +21,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#ifndef WIN32
 #include <netinet/in.h>
+#endif
 
 void deallocate_String(char **s)
 {
@@ -276,21 +278,21 @@ int ia_deserialize_string(struct iarchive *ia, const char *name, char **s)
     return 0;
 }
 
-static struct iarchive ia_default = { .start_record = ia_start_record,
-        .end_record = ia_end_record, .start_vector = ia_start_vector,
-        .end_vector = ia_end_vector, .deserialize_Bool = ia_deserialize_bool,
-        .deserialize_Int = ia_deserialize_int,
-        .deserialize_Buffer = ia_deserialize_buffer,
-        .deserialize_String = ia_deserialize_string,
-        .deserialize_Long = ia_deserialize_long };
+static struct iarchive ia_default = { STRUCT_INITIALIZER (start_record ,ia_start_record),
+        STRUCT_INITIALIZER (end_record ,ia_end_record), STRUCT_INITIALIZER (start_vector , ia_start_vector),
+        STRUCT_INITIALIZER (end_vector ,ia_end_vector), STRUCT_INITIALIZER (deserialize_Bool , ia_deserialize_bool),
+        STRUCT_INITIALIZER (deserialize_Int ,ia_deserialize_int),
+        STRUCT_INITIALIZER (deserialize_Long , ia_deserialize_long) ,
+        STRUCT_INITIALIZER (deserialize_Buffer, ia_deserialize_buffer),
+        STRUCT_INITIALIZER (deserialize_String, ia_deserialize_string)   };
 
-static struct oarchive oa_default = { .start_record = oa_start_record,
-        .end_record = oa_end_record, .start_vector = oa_start_vector,
-        .end_vector = oa_end_vector, .serialize_Bool = oa_serialize_bool,
-        .serialize_Int = oa_serialize_int,
-        .serialize_Buffer = oa_serialize_buffer,
-        .serialize_String = oa_serialize_string,
-        .serialize_Long = oa_serialize_long };
+static struct oarchive oa_default = { STRUCT_INITIALIZER (start_record , oa_start_record),
+        STRUCT_INITIALIZER (end_record , oa_end_record), STRUCT_INITIALIZER (start_vector , oa_start_vector),
+        STRUCT_INITIALIZER (end_vector , oa_end_vector), STRUCT_INITIALIZER (serialize_Bool , oa_serialize_bool),
+        STRUCT_INITIALIZER (serialize_Int , oa_serialize_int),
+        STRUCT_INITIALIZER (serialize_Long , oa_serialize_long) ,
+        STRUCT_INITIALIZER (serialize_Buffer , oa_serialize_buffer),
+        STRUCT_INITIALIZER (serialize_String , oa_serialize_string) };
 
 struct iarchive *create_buffer_iarchive(char *buffer, int len)
 {

@@ -183,7 +183,7 @@ public class JRecord extends JCompType {
                     c.write("    for(i=0;i<v->count;i++) {\n");
                     genSerialize(c, jvType, "data", "data[i]");
                     c.write("    }\n");
-                    c.write("    rc = rc ? : out->end_vector(out, tag);\n");
+                    c.write("    rc = rc ? rc : out->end_vector(out, tag);\n");
                     c.write("    return rc;\n");
                     c.write("}\n");
                     c.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v)\n");
@@ -218,7 +218,7 @@ public class JRecord extends JCompType {
         for(JField f : mFields) {
             genSerialize(c, f.getType(), f.getTag(), f.getName());
         }
-        c.write("    rc = rc ? : out->end_record(out, tag);\n");
+        c.write("    rc = rc ? rc : out->end_record(out, tag);\n");
         c.write("    return rc;\n");
         c.write("}\n");
         c.write("int deserialize_" + rec_name + "(struct iarchive *in, const char *tag, struct " + rec_name + "*v)");
@@ -228,7 +228,7 @@ public class JRecord extends JCompType {
         for(JField f : mFields) {
             genDeserialize(c, f.getType(), f.getTag(), f.getName());
         }
-        c.write("    rc = rc ? : in->end_record(in, tag);\n");
+        c.write("    rc = rc ? rc : in->end_record(in, tag);\n");
         c.write("    return rc;\n");
         c.write("}\n");
         c.write("void deallocate_" + rec_name + "(struct " + rec_name + "*v)");
@@ -248,21 +248,21 @@ public class JRecord extends JCompType {
 
     private void genSerialize(FileWriter c, JType type, String tag, String name) throws IOException {
         if (type instanceof JRecord) {
-            c.write("    rc = rc ? : serialize_" + extractStructName(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : serialize_" + extractStructName(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
         } else if (type instanceof JVector) {
-            c.write("    rc = rc ? : serialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : serialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(out, \"" + tag + "\", &v->" + name + ");\n");
         } else {
-            c.write("    rc = rc ? : out->serialize_" + extractMethodSuffix(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : out->serialize_" + extractMethodSuffix(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
         }
     }
 
     private void genDeserialize(FileWriter c, JType type, String tag, String name) throws IOException {
         if (type instanceof JRecord) {
-            c.write("    rc = rc ? : deserialize_" + extractStructName(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : deserialize_" + extractStructName(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
         } else if (type instanceof JVector) {
-            c.write("    rc = rc ? : deserialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : deserialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(in, \"" + tag + "\", &v->" + name + ");\n");
         } else {
-            c.write("    rc = rc ? : in->deserialize_" + extractMethodSuffix(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : in->deserialize_" + extractMethodSuffix(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
         }
     }
 
