@@ -68,8 +68,8 @@ static unsigned int string_hash_djb2(void *str)
 {
     unsigned int hash = 5381;
     int c;
-
-    while ((c = *(const char*)str++))
+    const char* cstr = (const char*)str;
+    while ((c = *cstr++))
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
     return hash;

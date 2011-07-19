@@ -21,7 +21,10 @@
 #endif
 
 #include "zookeeper_log.h"
+#ifndef WIN32
 #include <unistd.h>
+#endif
+
 #include <stdarg.h>
 #include <time.h>
 
@@ -29,7 +32,11 @@
 #define FORMAT_LOG_BUF_SIZE 4096
 
 #ifdef THREADED
+#ifndef WIN32
 #include <pthread.h>
+#else 
+#include "winport.h"
+#endif
 
 static pthread_key_t time_now_buffer;
 static pthread_key_t format_log_msg_buffer;
@@ -89,15 +96,11 @@ void zoo_set_log_stream(FILE* stream){
     logStream=stream;
 }
 
-static const char* time_now(){
+static const char* time_now(char* now_str){
     struct timeval tv;
     struct tm lt;
     time_t now = 0;
     size_t len = 0;
-    char* now_str=get_time_buffer();
-    
-    if(!now_str)
-        return "time_now(): Failed to allocate memory buffer";
     
     gettimeofday(&tv,0);
 
@@ -108,7 +111,7 @@ static const char* time_now(){
     // specifically: "yyyy-MM-dd HH:mm:ss,SSS"
 
     len = strftime(now_str, TIME_NOW_BUF_SIZE,
-                          "%F %H:%M:%S",
+                          "%Y-%m-%d %H:%M:%S",
                           &lt);
 
     len += snprintf(now_str + len,
@@ -125,14 +128,23 @@ void log_message(ZooLogLevel curLevel,int line,const char* funcName,
     static const char* dbgLevelStr[]={"ZOO_INVALID","ZOO_ERROR","ZOO_WARN",
             "ZOO_INFO","ZOO_DEBUG"};
     static pid_t pid=0;
+#ifdef WIN32
+    char timebuf [TIME_NOW_BUF_SIZE];
+#endif
     if(pid==0)pid=getpid();
 #ifndef THREADED
-    fprintf(LOGSTREAM, "%s:%d:%s@%s@%d: %s\n", time_now(),pid,
+    fprintf(LOGSTREAM, "%s:%d:%s@%s@%d: %s\n", time_now(get_time_buffer()),pid,
             dbgLevelStr[curLevel],funcName,line,message);
 #else
-    fprintf(LOGSTREAM, "%s:%d(0x%lx):%s@%s@%d: %s\n", time_now(),pid,
+#ifdef WIN32
+    fprintf(LOGSTREAM, "%s:%d(0x%lx):%s@%s@%d: %s\n", time_now(timebuf),pid,
+            (unsigned long int)(pthread_self().thread_id),
+            dbgLevelStr[curLevel],funcName,line,message);      
+#else
+    fprintf(LOGSTREAM, "%s:%d(0x%lx):%s@%s@%d: %s\n", time_now(get_time_buffer()),pid,
             (unsigned long int)pthread_self(),
-            dbgLevelStr[curLevel],funcName,line,message);
+            dbgLevelStr[curLevel],funcName,line,message);      
+#endif
 #endif
     fflush(LOGSTREAM);
 }

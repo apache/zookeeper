@@ -21,9 +21,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifndef WIN32
+#include <sys/time.h>
 #include <unistd.h>
 #include <sys/select.h>
-#include <sys/time.h>
+#else
+#include "winport.h"
+//#include <io.h> <-- can't include, conflicting definitions of close()
+int read(int _FileHandle, void * _DstBuf, unsigned int _MaxCharCount);
+int write(int _Filehandle, const void * _Buf, unsigned int _MaxCharCount);
+#define ctime_r(tctime, buffer) ctime_s (buffer, 40, tctime)
+#endif
+
 #include <time.h>
 #include <errno.h>
 #include <assert.h>
@@ -132,11 +142,15 @@ void dumpStat(const struct Stat *stat) {
     }
     tctime = stat->ctime/1000;
     tmtime = stat->mtime/1000;
+       
+    ctime_r(&tmtime, tmtimes);
+    ctime_r(&tctime, tctimes);
+       
     fprintf(stderr, "\tctime = %s\tczxid=%llx\n"
     "\tmtime=%s\tmzxid=%llx\n"
     "\tversion=%x\taversion=%x\n"
     "\tephemeralOwner = %llx\n",
-    ctime_r(&tctime, tctimes), _LL_CAST_ stat->czxid, ctime_r(&tmtime, tmtimes),
+     tctimes, _LL_CAST_ stat->czxid, tmtimes,
     _LL_CAST_ stat->mzxid,
     (unsigned int)stat->version, (unsigned int)stat->aversion,
     _LL_CAST_ stat->ephemeralOwner);
@@ -308,7 +322,7 @@ void processline(char *line) {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
             return;
         }
-        gettimeofday(&startTime, 0);
+               
         rc = zoo_aget(zh, line, 1, my_data_completion, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);

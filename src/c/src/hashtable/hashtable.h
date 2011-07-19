@@ -2,7 +2,9 @@
 
 #ifndef __HASHTABLE_CWC22_H__
 #define __HASHTABLE_CWC22_H__
-
+#ifdef WIN32
+#include "winconfig.h"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

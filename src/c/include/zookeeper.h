@@ -20,8 +20,12 @@
 #define ZOOKEEPER_H_
 
 #include <stdlib.h>
+#ifndef WIN32
 #include <sys/socket.h>
 #include <sys/time.h>
+#else
+#include "winconfig.h"
+#endif
 #include <stdio.h>
 #include <ctype.h>
 
@@ -64,7 +68,7 @@
 #ifdef DLL_EXPORT
 #    define ZOOAPI __declspec(dllexport)
 #else
-#  if defined(__CYGWIN__) && !defined(USE_STATIC_LIB)
+#  if (defined(__CYGWIN__) || defined(WIN32)) && !defined(USE_STATIC_LIB)
 #    define ZOOAPI __declspec(dllimport)
 #  else
 #    define ZOOAPI
@@ -526,8 +530,13 @@ ZOOAPI struct sockaddr* zookeeper_get_connected_host(zhandle_t *zh,
  * timeout value specified in zookeeper_init()
  * ZSYSTEMERROR -- a system (OS) error occured; it's worth checking errno to get details
  */
+#ifdef WIN32
+ZOOAPI int zookeeper_interest(zhandle_t *zh, SOCKET *fd, int *interest, 
+	struct timeval *tv);
+#else
 ZOOAPI int zookeeper_interest(zhandle_t *zh, int *fd, int *interest, 
 	struct timeval *tv);
+#endif
 
 /**
  * \brief Notifies zookeeper that an event of interest has happened.
