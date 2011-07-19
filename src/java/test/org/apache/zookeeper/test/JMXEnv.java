@@ -102,10 +102,10 @@ public class JMXEnv {
         
         Set<ObjectName> found = new HashSet<ObjectName>();
         for (String name : expectedNames) {
-            System.err.println("expect:" + name);
+            LOG.info("expect:" + name);
             for (ObjectName bean : beans) {
                 if (bean.toString().contains(name)) {
-                    System.err.println("found:" + name + " " + bean);
+                    LOG.info("found:" + name + " " + bean);
                     found.add(bean);
                     break;
                 }
@@ -130,10 +130,10 @@ public class JMXEnv {
     public static Set<ObjectName> ensureOnly(String... expectedNames)
         throws IOException
     {
-        System.err.println("ensureOnly:" + Arrays.toString(expectedNames));
+        LOG.info("ensureOnly:" + Arrays.toString(expectedNames));
         Set<ObjectName> beans = ensureAll(expectedNames);
         for (ObjectName bean : beans) {
-            System.err.println("unexpected:" + bean.toString());
+            LOG.info("unexpected:" + bean.toString());
         }
         TestCase.assertEquals(0, beans.size());
         return beans;
@@ -153,7 +153,7 @@ public class JMXEnv {
         for (String name : expectedNames) {
             for (ObjectName bean : beans) {
                 if (bean.toString().contains(name)) {
-                    System.err.println("didntexpect:" + name);
+                    LOG.info("didntexpect:" + name);
                     TestCase.fail(name + " " + bean.toString());
                 }
             }
@@ -161,7 +161,7 @@ public class JMXEnv {
     }
 
     public static void dump() throws IOException {
-        System.err.println("JMXEnv.dump() follows");
+        LOG.info("JMXEnv.dump() follows");
         Set<ObjectName> beans;
         try {
             beans = conn().queryNames(
@@ -170,7 +170,7 @@ public class JMXEnv {
             throw new RuntimeException(e);
         }
         for (ObjectName bean : beans) {
-            System.err.println("bean:" + bean.toString());
+            LOG.info("bean:" + bean.toString());
         }
     }
 

@@ -251,6 +251,9 @@ BUGFIXES:
 
   ZOOKEEPER-1124. Multiop submitted to non-leader always fails due to timeout (Marshall McMullen via breed)
 
+  ZOOKEEPER-1111. JMXEnv uses System.err instead of logging
+  (Ivan Kelly via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
