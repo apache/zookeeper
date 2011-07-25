@@ -253,6 +253,9 @@ BUGFIXES:
 
   ZOOKEEPER-1111. JMXEnv uses System.err instead of logging
   (Ivan Kelly via phunt)
+  
+  ZOOKEEPER-1027. chroot not transparent in zoo_create() (Thijs Terlouw via
+  mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 

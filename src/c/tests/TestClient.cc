@@ -850,6 +850,14 @@ public:
                          create_completion_fn, 0);
         waitForCreateCompletion(3);
         CPPUNIT_ASSERT(count == 0);
+
+        //ZOOKEEPER-1027 correctly return path_buffer without prefixed chroot
+        const char* path = "/zookeeper1027";
+        char path_buffer[1024];
+        int path_buffer_len=sizeof(path_buffer);
+        rc = zoo_create(zk_ch, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, path_buffer, path_buffer_len);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL(string(path), string(path_buffer));
     }
 
     void testAsyncWatcherAutoReset()
