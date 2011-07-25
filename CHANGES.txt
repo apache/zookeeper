@@ -263,6 +263,9 @@ BUGFIXES:
   ZOOKEEPER-1134. ClientCnxnSocket string comparison using == rather than equals.
   (phunt via mahadev) 
 
+  ZOOKEEPER-1119. zkServer stop command incorrectly reading comment lines in
+  zoo.cfg (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
