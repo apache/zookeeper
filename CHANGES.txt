@@ -256,6 +256,9 @@ BUGFIXES:
   
   ZOOKEEPER-1027. chroot not transparent in zoo_create() (Thijs Terlouw via
   mahadev)
+  
+  ZOOKEEPER-1109. Zookeeper service is down when SyncRequestProcessor meets
+  any exception. (Laxman via mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
