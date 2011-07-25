@@ -877,10 +877,11 @@ char* sub_string(zhandle_t *zh, const char* server_path) {
     char *ret_str;
     if (zh->chroot == NULL)
         return (char *) server_path;
-    if (strncmp(server_path, zh->chroot, strlen(zh->chroot) != 0)) {
+    //ZOOKEEPER-1027
+    if (strncmp(server_path, zh->chroot, strlen(zh->chroot)) != 0) {
         LOG_ERROR(("server path %s does not include chroot path %s",
                    server_path, zh->chroot));
-        return NULL;
+        return (char *) server_path;
     }
     if (strlen(server_path) == strlen(zh->chroot)) {
         //return "/"
@@ -1827,7 +1828,8 @@ completion_list_t *dequeue_completion(completion_head_t *list)
 static void process_sync_completion(
         completion_list_t *cptr,
         struct sync_completion *sc,
-        struct iarchive *ia)
+        struct iarchive *ia,
+	zhandle_t *zh)
 {
     LOG_DEBUG(("Processing sync_completion with type=%d xid=%#x rc=%d",
             cptr->c.type, cptr->xid, sc->rc));
@@ -1887,14 +1889,16 @@ static void process_sync_completion(
             struct CreateResponse res;
             int len;
             deserialize_CreateResponse(ia, "reply", &res);
-            len = strlen(res.path) + 1;
-            if (len > sc->u.str.str_len) {
+            //ZOOKEEPER-1027
+            const char * client_path = sub_string(zh, res.path); 
+            len = strlen(client_path) + 1;if (len > sc->u.str.str_len) {
                 len = sc->u.str.str_len;
             }
             if (len > 0) {
-                memcpy(sc->u.str.str, res.path, len - 1);
+                memcpy(sc->u.str.str, client_path, len - 1);
                 sc->u.str.str[len - 1] = '\0';
             }
+            free_duplicate_path(client_path, res.path);
             deallocate_CreateResponse(&res);
         }
         break;
@@ -2236,7 +2240,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                         *sc = (struct sync_completion*)cptr->data;
                 sc->rc = rc;
                 
-                process_sync_completion(cptr, sc, ia); 
+                process_sync_completion(cptr, sc, ia, zh); 
                 
                 notify_sync_completion(sc);
                 free_buffer(bptr);
