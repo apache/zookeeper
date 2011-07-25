@@ -26,11 +26,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.jute.BinaryInputArchive;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.proto.ConnectResponse;
 import org.apache.zookeeper.server.ByteBufferInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A ClientCnxnSocket does the lower level communication with a socket
@@ -116,12 +116,12 @@ abstract class ClientCnxnSocket {
 
     void readConnectResult() throws IOException {
         if (LOG.isTraceEnabled()) {
-            StringBuffer buf = new StringBuffer("0x[");
+            StringBuilder buf = new StringBuilder("0x[");
             for (byte b : incomingBuffer.array()) {
                 buf.append(Integer.toHexString(b) + ",");
             }
             buf.append("]");
-            LOG.trace("readConnectRestult " + incomingBuffer.remaining() + " "
+            LOG.trace("readConnectResult " + incomingBuffer.remaining() + " "
                     + buf.toString());
         }
         ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);

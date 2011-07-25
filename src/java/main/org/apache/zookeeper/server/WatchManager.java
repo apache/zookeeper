@@ -127,7 +127,7 @@ public class WatchManager {
      */
     @Override
     public synchronized String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         sb.append(watch2Paths.size()).append(" connections watching ")
             .append(watchTable.size()).append(" paths\n");
