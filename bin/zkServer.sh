@@ -81,7 +81,7 @@ fi
 echo "Using config: $ZOOCFG" >&2
 
 if [ -z $ZOOPIDFILE ]; then
-    ZOO_DATADIR=$(grep dataDir "$ZOOCFG" | sed -e 's/.*=//')
+    ZOO_DATADIR=$(grep "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')
     if [ ! -d "$ZOO_DATADIR" ]; then
         mkdir -p "$ZOO_DATADIR"
     fi
@@ -154,7 +154,7 @@ restart)
     ;;
 status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
-    STAT=`echo stat | nc -q 1 localhost $(grep clientPort "$ZOOCFG" | sed -e 's/.*=//') 2> /dev/null| grep Mode`
+    STAT=`echo stat | nc -q 1 localhost $(grep "^[[:space:]]*clientPort" "$ZOOCFG" | sed -e 's/.*=//') 2> /dev/null| grep Mode`
     if [ "x$STAT" = "x" ]
     then
         echo "Error contacting service. It is probably not running."
