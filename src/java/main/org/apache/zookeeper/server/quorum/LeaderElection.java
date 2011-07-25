@@ -105,7 +105,7 @@ public class LeaderElection implements Election  {
         for (Vote v : validVotes.values()) {
             Integer count = countTable.get(v);
             if (count == null) {
-                count = Integer.valueOf(0);
+                count = 0;
             }
             countTable.put(v, count + 1);
             if (v.getId() == result.vote.getId()) {

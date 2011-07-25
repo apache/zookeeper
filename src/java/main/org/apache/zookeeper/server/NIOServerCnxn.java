@@ -762,7 +762,7 @@ public class NIOServerCnxn extends ServerCnxn {
                 print("max_file_descriptor_count", unixos.getMaxFileDescriptorCount());
             }
 
-            if(stats.getServerState() == "leader") {
+            if(stats.getServerState().equals("leader")) {
                 Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
 
                 print("followers", leader.learners.size());
