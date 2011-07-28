@@ -266,6 +266,8 @@ BUGFIXES:
   ZOOKEEPER-1119. zkServer stop command incorrectly reading comment lines in
   zoo.cfg (phunt via mahadev)
 
+  ZOOKEEPER-1090. Race condition while taking snapshot can lead to not restoring data tree correctly (Vishal K via breed)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
