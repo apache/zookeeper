@@ -1188,6 +1188,8 @@
           <exclude name="src/java/test/checkstyle*.xml"/>
           <exclude name="src/java/test/checkstyle*.xsl"/>
           <exclude name="src/java/test/config/findbugs*.xml"/>
+          <exclude name="src/**/*.vcproj"/>
+          <exclude name="src/**/*.sln"/>
         </fileset>
       </rat:report>
     </target>
