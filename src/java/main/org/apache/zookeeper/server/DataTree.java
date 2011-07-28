@@ -791,9 +791,6 @@ public class DataTree {
             rc.type = header.getType();
             rc.err = 0;
             rc.multiResult = null;
-            if (rc.zxid > lastProcessedZxid) {
-                lastProcessedZxid = rc.zxid;
-            }
             switch (header.getType()) {
                 case OpCode.create:
                     CreateTxn createTxn = (CreateTxn) txn;
@@ -913,6 +910,23 @@ public class DataTree {
              rc.err = e.code().intValue();
         } catch (IOException e) {
             LOG.warn("Failed:" + debug, e);
+        }
+        /*
+         * A snapshot might be in progress while we are modifying the data
+         * tree. If we set lastProcessedZxid prior to making corresponding
+         * change to the tree, then the zxid associated with the snapshot
+         * file will be ahead of its contents. Thus, while restoring from
+         * the snapshot, the restore method will not apply the transaction
+         * for zxid associated with the snapshot file, since the restore
+         * method assumes that transaction to be present in the snapshot.
+         *
+         * To avoid this, we first apply the transaction and then modify
+         * lastProcessedZxid.  During restore, we correctly handle the
+         * case where the snapshot contains data ahead of the zxid associated
+         * with the file.
+         */
+        if (rc.zxid > lastProcessedZxid) {
+        	lastProcessedZxid = rc.zxid;
         }
         return rc;
     }
