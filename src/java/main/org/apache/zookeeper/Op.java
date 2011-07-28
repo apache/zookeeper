@@ -127,7 +127,6 @@ public abstract class Op {
      *                the path of the node
      * @param version
      *                the expected matching version
-     * @return
      */
     public static Op check(String path, int version) {
         return new Check(path, version);
