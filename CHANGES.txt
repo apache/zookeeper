@@ -270,6 +270,8 @@ BUGFIXES:
 
   ZOOKEEPER-1138. release audit failing for a number of new files. (phunt via mahadev) 
 
+  ZOOKEEPER-1139. jenkins is reporting two warnings, fix these (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
