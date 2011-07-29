@@ -361,6 +361,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1095. Simple leader election recipe
   (Eric Sammer via henry and phunt)
 
+  ZOOKEEPER-1076. some quorum tests are unnecessarily extending QuorumBase (phunt via mahadev)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)

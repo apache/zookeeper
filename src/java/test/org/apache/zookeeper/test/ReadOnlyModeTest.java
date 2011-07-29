@@ -37,25 +37,25 @@ import org.apache.zookeeper.KeeperException.NotReadOnlyException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ReadOnlyModeTest extends QuorumBase {
-
+public class ReadOnlyModeTest extends ZKTestCase {
+    private static int CONNECTION_TIMEOUT = QuorumBase.CONNECTION_TIMEOUT;
     private QuorumUtil qu = new QuorumUtil(1);
 
     @Before
-    @Override
     public void setUp() throws Exception {
         qu.startQuorum();
     }
 
     @After
-    @Override
     public void tearDown() throws Exception {
         qu.tearDown();
     }

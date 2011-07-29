@@ -22,11 +22,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.SyncRequestProcessor;
@@ -37,22 +36,22 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ZkDatabaseCorruptionTest extends QuorumBase {
+public class ZkDatabaseCorruptionTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(ZkDatabaseCorruptionTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
     private final QuorumBase qb = new QuorumBase();
 
     @Before
-    @Override
     public void setUp() throws Exception {
         LOG.info("STARTING quorum " + getClass().getName());
         qb.setUp();
     }
 
     @After
-    @Override
     public void tearDown() throws Exception {
         LOG.info("STOPPING quorum " + getClass().getName());
     }
