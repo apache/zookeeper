@@ -28,14 +28,12 @@ import java.util.HashSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -44,7 +42,7 @@ import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.Test;
 
 
-public class FollowerResyncConcurrencyTest extends QuorumBase {
+public class FollowerResyncConcurrencyTest extends ZKTestCase {
     volatile int counter = 0;
     volatile int errors = 0; 
 

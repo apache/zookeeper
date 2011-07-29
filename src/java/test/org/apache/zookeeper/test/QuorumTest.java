@@ -18,15 +18,12 @@
 
 package org.apache.zookeeper.test;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -35,19 +32,23 @@ import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
+import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class QuorumTest extends QuorumBase {
+public class QuorumTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
@@ -55,7 +56,6 @@ public class QuorumTest extends QuorumBase {
     private final ClientTest ct = new ClientTest();
 
     @Before
-    @Override
     public void setUp() throws Exception {
         qb.setUp();
         ct.hostPort = qb.hostPort;
@@ -63,7 +63,6 @@ public class QuorumTest extends QuorumBase {
     }
 
     @After
-    @Override
     public void tearDown() throws Exception {
         ct.tearDownAll();
         qb.tearDown();
