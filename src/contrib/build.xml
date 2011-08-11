@@ -48,7 +48,7 @@
       <fileset refid="contribfileset" />
     </subant>
   </target>
-
+  
   <!-- ====================================================== -->
   <!-- Test all the contribs.                               -->
   <!-- ====================================================== -->
@@ -68,21 +68,4 @@
     </subant>
   </target>
 
-  <!-- ====================================================== -->
-  <!-- rpm all the contribs.                                  -->
-  <!-- ====================================================== -->
-  <target name="rpm">
-    <subant target="rpm">
-      <fileset refid="contribfileset" />
-    </subant>
-  </target>
-
-  <!-- ====================================================== -->
-  <!-- deb all the contribs.                                  -->
-  <!-- ====================================================== -->
-  <target name="deb">
-    <subant target="deb">
-      <fileset refid="contribfileset" />
-    </subant>
-  </target>
 </project>
