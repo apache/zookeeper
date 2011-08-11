@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -42,16 +42,16 @@ else
     ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
 fi
 
-# use POSTIX interface, symlink is followed automatically
-ZOOBIN="${BASH_SOURCE-$0}"
-ZOOBIN=`dirname ${ZOOBIN}`
-ZOOBINDIR=`cd ${ZOOBIN}; pwd`
-
-if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
-  . "$ZOOBINDIR"/../libexec/zkEnv.sh
+# Only follow symlinks if readlink supports it
+if readlink "$0" > /dev/null 2>&1
+then
+  ZOOBIN=`readlink "$0"`
 else
-  . "$ZOOBINDIR"/zkEnv.sh
+  ZOOBIN="$0"
 fi
+ZOOBINDIR=`dirname "$ZOOBIN"`
+
+. "$ZOOBINDIR"/zkEnv.sh
 
 if [ "x$SERVER_JVMFLAGS" ]
 then
