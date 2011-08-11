@@ -326,6 +326,7 @@ public class Leader {
                         + Long.toHexString(newLeaderProposal.packet.getZxid()));
             }
             outstandingProposals.put(newLeaderProposal.packet.getZxid(), newLeaderProposal);
+            newLeaderProposal.ackSet.add(self.getId());
             
             readyToStart = true;
             waitForEpochAck(self.getId(), leaderStateSummary);
@@ -334,7 +335,6 @@ public class Leader {
             // We have to get at least a majority of servers in sync with
             // us. We do this by waiting for the NEWLEADER packet to get
             // acknowledged
-            newLeaderProposal.ackSet.add(self.getId());
             while (!self.getQuorumVerifier().containsQuorum(newLeaderProposal.ackSet)){
             //while (newLeaderProposal.ackCount <= self.quorumPeers.size() / 2) {
                 if (self.tick > self.initLimit) {
