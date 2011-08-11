@@ -22,9 +22,21 @@
 # otherwise we use /etc/zookeeper
 # or the conf directory that is
 # a sibling of this script's directory
+
+ZOOBINDIR=${ZOOBINDIR:-/usr/bin}
+ZOOKEEPER_PREFIX=${ZOOBINDIR}/..
+
 if [ "x$ZOOCFGDIR" = "x" ]
 then
+  if [ -e "${ZOOKEEPER_PREFIX}/conf" ]; then
     ZOOCFGDIR="$ZOOBINDIR/../conf"
+  else
+    ZOOCFGDIR="$ZOOBINDIR/../etc/zookeeper"
+  fi
+fi
+
+if [ -f "${ZOOCFGDIR}/zookeeper-env.sh" ]; then
+  . "${ZOOCFGDIR}/zookeeper-env.sh"
 fi
 
 if [ "x$ZOOCFG" = "x" ]
@@ -64,13 +76,13 @@ do
 done
 
 #make it work in the release
-for i in "$ZOOBINDIR"/../lib/*.jar
-do
-    CLASSPATH="$i:$CLASSPATH"
-done
+if [ -d ${ZOOKEEPER_PREFIX}/share/zookeeper ]; then
+  LIBPATH="${ZOOKEEPER_PREFIX}"/share/zookeeper/*.jar
+else
+  LIBPATH="${ZOOBINDIR}"/../lib/*.jar
+fi
 
-#make it work in the release
-for i in "$ZOOBINDIR"/../zookeeper-*.jar
+for i in ${LIBPATH}
 do
     CLASSPATH="$i:$CLASSPATH"
 done
