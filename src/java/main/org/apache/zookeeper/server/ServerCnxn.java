@@ -442,6 +442,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
                 pwriter.print(getMaxLatency());
             }
         }
+        pwriter.print(")");
     }
 
 }

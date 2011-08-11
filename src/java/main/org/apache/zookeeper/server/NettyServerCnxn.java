@@ -472,6 +472,7 @@ public class NettyServerCnxn extends ServerCnxn {
                     }
                     for(ServerCnxn c : cnxns){
                         c.dumpConnectionInfo(pw, true);
+                        pw.println();
                     }
                     pw.println();
                 }
@@ -501,6 +502,7 @@ public class NettyServerCnxn extends ServerCnxn {
                 }
                 for (ServerCnxn c : cnxns) {
                     c.dumpConnectionInfo(pw, false);
+                    pw.println();
                 }
                 pw.println();
             }
