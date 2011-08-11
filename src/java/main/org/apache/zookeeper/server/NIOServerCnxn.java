@@ -660,6 +660,7 @@ public class NIOServerCnxn extends ServerCnxn {
                     }
                     for(NIOServerCnxn c : cnxnset){
                         c.dumpConnectionInfo(pw, true);
+                        pw.println();
                     }
                     pw.println();
                 }
@@ -690,6 +691,7 @@ public class NIOServerCnxn extends ServerCnxn {
                 }
                 for (NIOServerCnxn c : cnxns) {
                     c.dumpConnectionInfo(pw, false);
+                    pw.println();
                 }
                 pw.println();
             }
