@@ -65,7 +65,7 @@ public class ZooKeeperTest extends ClientBase {
         Assert.assertTrue(children.contains("b"));
         Assert.assertTrue(children.contains("c"));
 
-        zk.deleteRecursive("/a");
+        ZKUtil.deleteRecursive(zk, "/a");
         Assert.assertNull(zk.exists("/a", null));
     }
 
@@ -116,7 +116,7 @@ public class ZooKeeperTest extends ClientBase {
 
         };
         final AtomicInteger ctx = new AtomicInteger(3);
-        zk.deleteRecursive("/a", cb, ctx);
+        ZKUtil.deleteRecursive(zk, "/a", cb, ctx);
         synchronized (ctx) {
             ctx.wait();
         }

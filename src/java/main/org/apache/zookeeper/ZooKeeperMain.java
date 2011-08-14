@@ -690,7 +690,7 @@ public class ZooKeeperMain {
             zk.delete(path, watch ? Integer.parseInt(args[2]) : -1);
         } else if (cmd.equals("rmr") && args.length >= 2) {
             path = args[1];
-            zk.deleteRecursive(path);
+            ZKUtil.deleteRecursive(zk, path);
         } else if (cmd.equals("set") && args.length >= 3) {
             path = args[1];
             stat = zk.setData(path, args[2].getBytes(),
