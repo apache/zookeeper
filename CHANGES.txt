@@ -278,6 +278,9 @@ BUGFIXES:
 
   ZOOKEEPER-839. deleteRecursive does not belong to the other methods.
    (mahadev)
+ 
+  ZOOKEEPER-1146. significant regression in client (c/python) performance.
+  (phunt via mahadev)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
