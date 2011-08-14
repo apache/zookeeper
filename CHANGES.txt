@@ -282,6 +282,9 @@ BUGFIXES:
   ZOOKEEPER-1146. significant regression in client (c/python) performance.
   (phunt via mahadev)
 
+  ZOOKEEPER-1150. fix for this patch to compile on windows. (dheeraj
+  via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
