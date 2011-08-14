@@ -1544,14 +1544,22 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
             zh->connect_index = 0;
         }else {
             int rc;
-            char on = 1;
+#ifdef WIN32
+            char enable_tcp_nodelay = 1;
+#else
+            int enable_tcp_nodelay = 1;
+#endif
+            int ssoresult;
 
             zh->fd = socket(zh->addrs[zh->connect_index].ss_family, SOCK_STREAM, 0);
             if (zh->fd < 0) {
                 return api_epilog(zh,handle_socket_error_msg(zh,__LINE__,
                                                              ZSYSTEMERROR, "socket() call failed"));
             }
-            setsockopt(zh->fd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(char));
+            ssoresult = setsockopt(zh->fd, IPPROTO_TCP, TCP_NODELAY, &enable_tcp_nodelay, sizeof(enable_tcp_nodelay));
+            if (ssoresult != 0) {
+                LOG_WARN(("Unable to set TCP_NODELAY, operation latency may be effected"));
+            }
 #ifdef WIN32
             ioctlsocket(zh->fd, FIONBIO, &nonblocking_flag);                    
 #else
