@@ -276,6 +276,9 @@ BUGFIXES:
   
   ZOOKEEPER-1144. ZooKeeperServer not starting on leader due to a race condition (Vishal K via camille)
 
+  ZOOKEEPER-839. deleteRecursive does not belong to the other methods.
+   (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
