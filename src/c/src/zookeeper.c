@@ -1896,9 +1896,10 @@ static void process_sync_completion(
         if (sc->rc==0) {
             struct CreateResponse res;
             int len;
+            const char * client_path;
             deserialize_CreateResponse(ia, "reply", &res);
             //ZOOKEEPER-1027
-            const char * client_path = sub_string(zh, res.path); 
+            client_path = sub_string(zh, res.path); 
             len = strlen(client_path) + 1;if (len > sc->u.str.str_len) {
                 len = sc->u.str.str_len;
             }
