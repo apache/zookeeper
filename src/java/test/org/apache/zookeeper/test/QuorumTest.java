@@ -321,18 +321,14 @@ public class QuorumTest extends ZKTestCase {
                         "127.0.0.1:" + qu.getPeer(2).clientPort,
                         CONNECTION_TIMEOUT));
 
-        boolean success = false;
         for (int i = 0; i < 30; i++) {
             try {
                 zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
-                success = true;
                 break;
             } catch(KeeperException.ConnectionLossException e) {
                 Thread.sleep(1000);
             }
-        }
-        if (!success) {
             // test fails if we still can't connect to the quorum after 30 seconds.
             Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
         }
