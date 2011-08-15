@@ -10,14 +10,20 @@ http://hadoop.apache.org/zookeeper/
 
 INSTALLATION
 
-To install this module type the following:
+To install this module type the following, first install the
+zookeeper C client, then:
 
-    perl Makefile.PL \
-        --zookeeper-include=/path/to/zookeeper/client/include \
-        --zookeeper-lib=/path/to/zookeeper/client/lib
+    perl Makefile.PL
     make
     ZK_TEST_HOSTS=host:port,... make test
     make install
+
+If the C headers and library are installed in non-standard
+locations, specify them as arguments to Makefile.PL:
+    
+    perl Makefile.PL \
+        --zookeeper-include=/path/to/zookeeper/client/include \
+        --zookeeper-lib=/path/to/zookeeper/client/lib
 
 The path supplied to the --zookeeper-include option should
 identify the directory that contains the zookeeper.h and other
