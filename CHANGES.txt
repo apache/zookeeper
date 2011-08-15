@@ -383,6 +383,10 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1143. quorum send & recv workers are missing thread names
   (phunt via mahadev)
+  
+  ZOOKEEPER-1104. CLONE - In QuorumTest, use the same "for ( .. try { break }
+  catch { } )" pattern in testFollowersStartAfterLeaders as in testSessionMove. 
+  (Eugene Koontz via mahadev)
 
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
