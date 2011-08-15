@@ -285,6 +285,9 @@ BUGFIXES:
   ZOOKEEPER-1150. fix for this patch to compile on windows. (dheeraj
   via mahadev)
 
+  ZOOKEEPER-1055. check for duplicate ACLs in addACL() and create().
+  (Eugene Koontz via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

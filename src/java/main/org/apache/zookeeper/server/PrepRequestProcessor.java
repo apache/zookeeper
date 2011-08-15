@@ -305,7 +305,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                             Long.toHexString(request.sessionId));
                     throw new KeeperException.BadArgumentsException(path);
                 }
-                if (!fixupACL(request.authInfo, createRequest.getAcl())) {
+                List<ACL> listACL = removeDuplicates(createRequest.getAcl());
+                if (!fixupACL(request.authInfo, listACL)) {
                     throw new KeeperException.InvalidACLException(path);
                 }
                 String parentPath = path.substring(0, lastSlash);
@@ -339,7 +340,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 }
                 int newCversion = parentRecord.stat.getCversion()+1;
                 request.txn = new CreateTxn(path, createRequest.getData(),
-                        createRequest.getAcl(),
+                        listACL,
                         createMode.isEphemeral(), newCversion);
                 StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
@@ -350,8 +351,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 parentRecord.stat.setCversion(newCversion);
                 addChangeRecord(parentRecord);
                 addChangeRecord(new ChangeRecord(request.hdr.getZxid(), path, s,
-                        0, createRequest.getAcl()));
-
+                        0, listACL));
                 break;
             case OpCode.delete:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
@@ -403,7 +403,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 SetACLRequest setAclRequest = (SetACLRequest)record;
                 path = setAclRequest.getPath();
-                if (!fixupACL(request.authInfo, setAclRequest.getAcl())) {
+                listACL = removeDuplicates(setAclRequest.getAcl());
+                if (!fixupACL(request.authInfo, listACL)) {
                     throw new KeeperException.InvalidACLException(path);
                 }
                 nodeRecord = getRecordForPath(path);
@@ -415,7 +416,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     throw new KeeperException.BadVersionException(path);
                 }
                 version = currentVersion + 1;
-                request.txn = new SetACLTxn(path, setAclRequest.getAcl(), version);
+                request.txn = new SetACLTxn(path, listACL, version);
                 nodeRecord = nodeRecord.duplicate(request.hdr.getZxid());
                 nodeRecord.stat.setAversion(version);
                 addChangeRecord(nodeRecord);
@@ -629,6 +630,20 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         nextProcessor.processRequest(request);
     }
 
+    private List<ACL> removeDuplicates(List<ACL> acl) {
+
+        ArrayList<ACL> retval = new ArrayList<ACL>();
+        Iterator<ACL> it = acl.iterator();
+        while (it.hasNext()) {
+            ACL a = it.next();
+            if (retval.contains(a) == false) {
+                retval.add(a);
+            }
+        }
+        return retval;
+    }
+
+
     /**
      * This method checks out the acl making sure it isn't null or empty,
      * it has valid schemes and ids, and expanding any relative ids that
@@ -645,6 +660,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         if (acl == null || acl.size() == 0) {
             return false;
         }
+
         Iterator<ACL> it = acl.iterator();
         LinkedList<ACL> toAdd = null;
         while (it.hasNext()) {
