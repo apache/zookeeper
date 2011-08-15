@@ -288,6 +288,8 @@ BUGFIXES:
   ZOOKEEPER-1055. check for duplicate ACLs in addACL() and create().
   (Eugene Koontz via mahadev)
 
+  ZOOKEEPER-1141. zkpython fails tests under python 2.4. (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

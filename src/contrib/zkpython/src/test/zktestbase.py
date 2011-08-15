@@ -93,3 +93,9 @@ class TestBase(unittest.TestCase):
     def tearDown(self):
         if self.connected:
             zookeeper.close(self.handle)
+
+    def all(self, iterable):
+        for element in iterable:
+            if not element:
+                return False
+        return True
