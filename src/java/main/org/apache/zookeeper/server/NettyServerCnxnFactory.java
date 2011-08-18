@@ -28,6 +28,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
+import org.apache.zookeeper.Login;
+import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -44,6 +46,9 @@ import org.jboss.netty.channel.WriteCompletionEvent;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginException;
 
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
     Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
@@ -302,6 +307,17 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     public void configure(InetSocketAddress addr, int maxClientCnxns)
             throws IOException
     {
+        if (System.getProperty("java.security.auth.login.config") != null) {
+            try {
+                saslServerCallbackHandler = new SaslServerCallbackHandler(Configuration.getConfiguration());
+                login = new Login("Server",saslServerCallbackHandler);
+                login.startThreadIfNeeded();
+            }
+            catch (LoginException e) {
+                throw new IOException("Could not configure server because SASL configuration did not allow the "
+                  + " Zookeeper server to authenticate itself properly: " + e);
+            }
+        }
         localAddress = addr;
         this.maxClientCnxns = maxClientCnxns;
     }
@@ -334,7 +350,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     @Override
     public void shutdown() {
         LOG.info("shutdown called " + localAddress);
-        
+        if (login != null) {
+            login.shutdown();
+        }
         // null if factory never started
         if (parentChannel != null) {
             parentChannel.close().awaitUninterruptibly();

@@ -424,6 +424,9 @@ NEW FEATURES:
   ZOOKEEPER-784. Server-side functionality for read-only mode (Sergey Doroshenko via henryr)
 
   ZOOKEEPER-992. MT Native Version of Windows C Client (Dheeraj Agrawal via michim)
+ 
+  ZOOKEEPER-938. Support Kerberos authentication of clients. (Eugene Koontz
+  via mahadev)
 
 Release 3.3.0 - 2010-03-24
 

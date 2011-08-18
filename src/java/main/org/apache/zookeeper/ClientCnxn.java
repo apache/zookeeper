@@ -53,6 +53,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.ZooKeeper.WatchRegistration;
 import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.CreateResponse;
@@ -65,10 +66,14 @@ import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
 import org.apache.zookeeper.proto.SetDataResponse;
+import org.apache.zookeeper.proto.SetSASLResponse;
 import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ZooTrace;
+
+import javax.security.auth.login.LoginException;
+import javax.security.sasl.SaslException;
 
 /**
  * This class manages the socket i/o for the client. ClientCnxn maintains a list
@@ -181,6 +186,9 @@ public class ClientCnxn {
      * then non-zero sessionId is fake, otherwise it is valid.
      */
     volatile boolean seenRwServerBefore = false;
+
+
+    public ZooKeeperSaslClient zooKeeperSaslClient;
 
     public long getSessionId() {
         return sessionId;
@@ -368,6 +376,13 @@ public class ClientCnxn {
 
         sendThread = new SendThread(clientCnxnSocket);
         eventThread = new EventThread();
+
+    }
+
+    // used by ZooKeeperSaslClient.queueSaslPacket().
+    public void queuePacket(RequestHeader h, ReplyHeader r, Record request,
+            Record response, AsyncCallback cb) {
+        queuePacket(h,r,request,response, cb, null, null, this, null);
     }
 
     /**
@@ -379,7 +394,7 @@ public class ClientCnxn {
     }
     /**
      * tests use this to set the auto reset
-     * @param b the vaued to set disable watches to
+     * @param b the value to set disable watches to
      */
     public static void setDisableAutoResetWatch(boolean b) {
         disableAutoWatchReset = b;
@@ -537,6 +552,11 @@ public class ClientCnxn {
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null);
                       }
+                  } else if (p.cb instanceof ZooKeeperSaslClient.ServerSaslResponseCallback) {
+                      ZooKeeperSaslClient.ServerSaslResponseCallback cb = (ZooKeeperSaslClient.ServerSaslResponseCallback) p.cb;
+                      SetSASLResponse rsp = (SetSASLResponse) p.response;
+                      // TODO : check rc (== 0, etc) as with other packet types.
+                      cb.processResult(rc,null,p.ctx,rsp.getToken(),null);
                   } else if (p.response instanceof GetDataResponse) {
                       DataCallback cb = (DataCallback) p.cb;
                       GetDataResponse rsp = (GetDataResponse) p.response;
@@ -890,6 +910,17 @@ public class ClientCnxn {
             setName(getName().replaceAll("\\(.*\\)",
                     "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
 
+            if (System.getProperty("java.security.auth.login.config") != null) {
+                try {
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(ClientCnxn.this, "zookeeper"+"/"+ addr.getHostName());
+                }
+                catch (LoginException e) {
+                    LOG.warn("Zookeeper client cannot authenticate using the Client section of the supplied "
+                      + "configuration file: '" + System.getProperty("java.security.auth.login.config")
+                      + "'. Will continue connection to Zookeeper server without SASL authentication, if Zookeeper "
+                      + "server allows it.");
+                }
+            }
             clientCnxnSocket.connect(addr);
         }
 
@@ -913,8 +944,22 @@ public class ClientCnxn {
                         startConnect();
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
-                   
+
                     if (state.isConnected()) {
+                        if ((zooKeeperSaslClient != null) && (zooKeeperSaslClient.isComplete() != true)) {
+                            try {
+                                zooKeeperSaslClient.initialize();
+                            }
+                            catch (SaslException e) {
+                                LOG.error("SASL authentication with Zookeeper Quorum member failed: " + e);
+                                state = States.AUTH_FAILED;
+                            }
+                            if (zooKeeperSaslClient.readyToSendSaslAuthEvent()) {
+                                eventThread.queueEvent(new WatchedEvent(
+                                  Watcher.Event.EventType.None,
+                                  Watcher.Event.KeeperState.SaslAuthenticated, null));
+                            }
+                        }
                         to = readTimeout - clientCnxnSocket.getIdleRecv();
                     } else {
                         to = connectTimeout - clientCnxnSocket.getIdleRecv();
