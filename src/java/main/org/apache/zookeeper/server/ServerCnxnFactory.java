@@ -24,13 +24,14 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 import javax.management.JMException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.Login;
+import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
 
 public abstract class ServerCnxnFactory {
-    
+
     public static final String ZOOKEEPER_SERVER_CNXN_FACTORY = "zookeeper.serverCnxnFactory";
 
     public interface PacketProcessor {
@@ -51,7 +52,10 @@ public abstract class ServerCnxnFactory {
     public abstract void closeSession(long sessionId);
 
     public abstract void configure(InetSocketAddress addr,
-            int maxClientCnxns) throws IOException;
+                                   int maxClientCnxns) throws IOException;
+
+    protected SaslServerCallbackHandler saslServerCallbackHandler;
+    public Login login;
 
     /** Maximum number of connections allowed from particular host (ip) */
     public abstract int getMaxClientCnxnsPerHost();

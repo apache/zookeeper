@@ -69,6 +69,12 @@ public interface Watcher {
              */
             ConnectedReadOnly (5),
 
+            /**
+              * SaslAuthenticated: used to notify clients that they are SASL-authenticated,
+              * so that they can perform Zookeeper actions with their SASL-authorized permissions.
+              */
+            SaslAuthenticated(6),
+
             /** The serving cluster has expired this session. The ZooKeeper
              * client connection (the session) is no longer valid. You must
              * create a new client connection (instantiate a new ZooKeeper
@@ -94,6 +100,7 @@ public interface Watcher {
                     case    3: return KeeperState.SyncConnected;
                     case    4: return KeeperState.AuthFailed;
                     case    5: return KeeperState.ConnectedReadOnly;
+                    case    6: return KeeperState.SaslAuthenticated;
                     case -112: return KeeperState.Expired;
 
                     default:

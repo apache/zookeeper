@@ -94,6 +94,8 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     abstract void setSessionTimeout(int sessionTimeout);
 
+    protected ZooKeeperSaslServer zooKeeperSaslServer = null;
+
     protected static class CloseRequestException extends IOException {
         private static final long serialVersionUID = -7854505709816442681L;
 

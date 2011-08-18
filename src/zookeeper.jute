@@ -116,6 +116,15 @@ module org.apache.zookeeper.proto {
     class SetDataResponse {
         org.apache.zookeeper.data.Stat stat;
     }
+    class GetSASLRequest {
+        buffer token;
+    }
+    class SetSASLRequest {
+        buffer token;
+    }
+    class SetSASLResponse {
+        buffer token;
+    }
     class CreateRequest {
         ustring path;
         buffer data;

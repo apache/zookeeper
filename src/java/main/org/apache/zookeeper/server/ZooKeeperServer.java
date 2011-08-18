@@ -57,8 +57,10 @@ import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
+import org.apache.zookeeper.proto.GetSASLRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.proto.SetSASLResponse;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
@@ -67,6 +69,7 @@ import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import javax.security.sasl.SaslException;
 
 /**
  * This class implements a simple standalone ZooKeeperServer. It sets up the
@@ -888,12 +891,61 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             return;
         } else {
-            Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
-                    h.getType(), incomingBuffer, cnxn.getAuthInfo());
-            si.setOwner(ServerCnxn.me);
-            submitRequest(si);
+            if (h.getType() == OpCode.sasl) {
+                Record rsp = processSasl(incomingBuffer,cnxn);
+                ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
+                cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
+            }
+            else {
+                Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
+                  h.getType(), incomingBuffer, cnxn.getAuthInfo());
+                si.setOwner(ServerCnxn.me);
+                submitRequest(si);
+            }
         }
         cnxn.incrOutstandingRequests(h);
+    }
+
+    private Record processSasl(ByteBuffer incomingBuffer, ServerCnxn cnxn) throws IOException {
+        LOG.debug("Responding to client SASL token.");
+        GetSASLRequest clientTokenRecord = new GetSASLRequest();
+        byteBuffer2Record(incomingBuffer,clientTokenRecord);
+        byte[] clientToken = clientTokenRecord.getToken();
+        LOG.debug("Size of client SASL token: " + clientToken.length);
+        byte[] responseToken = null;
+        try {
+            ZooKeeperSaslServer saslServer  = cnxn.zooKeeperSaslServer;
+            try {
+                // note that clientToken might be empty (clientToken.length == 0):
+                // if using the DIGEST-MD5 mechanism, clientToken will be empty at the beginning of the
+                // SASL negotiation process.
+                responseToken = saslServer.evaluateResponse(clientToken);
+                if (saslServer.isComplete() == true) {
+                    String authorizationID = saslServer.getAuthorizationID();
+                    LOG.info("adding SASL authorization for authorizationID: " + authorizationID);
+                    cnxn.addAuthInfo(new Id("sasl",authorizationID));
+                }
+            }
+            catch (SaslException e) {
+                LOG.warn("Client failed to SASL authenticate: " + e);
+                if ((System.getProperty("zookeeper.allowSaslFailedClients") != null)
+                  &&
+                  (System.getProperty("zookeeper.allowSaslFailedClients").equals("true"))) {
+                    LOG.warn("Maintaining client connection despite SASL authentication failure.");
+                } else {
+                    LOG.warn("Closing client connection due to SASL authentication failure.");
+                    cnxn.close();
+                }
+            }
+        }
+        catch (NullPointerException e) {
+            LOG.error("cnxn.saslServer is null: cnxn object did not initialize its saslServer properly.");
+        }
+        if (responseToken != null) {
+            LOG.debug("Size of server SASL response: " + responseToken.length);
+        }
+        // wrap SASL response token to client inside a Response object.
+        return new SetSASLResponse(responseToken);
     }
 
 
