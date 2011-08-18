@@ -137,4 +137,15 @@ public class ZooKeeperTest extends ClientBase {
     		Assert.assertEquals("KeeperErrorCode = NoNode for /invalidPath", e.getMessage());
     	}
     }
+
+    @Test
+    public void testParseWithExtraSpaces() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String cmdstring = "      ls       /  ";
+        zkMain.cl.parseCommand(cmdstring);
+        Assert.assertEquals("Spaces also considered as characters", zkMain.cl.getNumArguments(), 2);
+        Assert.assertEquals("ls is not taken as first argument", zkMain.cl.getCmdArgument(0), "ls");
+        Assert.assertEquals("/ is not taken as second argument", zkMain.cl.getCmdArgument(1), "/");
+    }
 }
