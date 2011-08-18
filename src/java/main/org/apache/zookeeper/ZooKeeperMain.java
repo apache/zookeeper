@@ -40,6 +40,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import java.util.StringTokenizer;
 
 /**
  * The command line client to ZooKeeper.
@@ -223,7 +224,13 @@ public class ZooKeeperMain {
          * @return true if parsing succeeded.
          */
         public boolean parseCommand( String cmdstring ) {
-            String[] args = cmdstring.split(" ");
+            StringTokenizer cmdTokens = new StringTokenizer(cmdstring, " ");          
+            String[] args = new String[cmdTokens.countTokens()];
+            int tokenIndex = 0;
+            while (cmdTokens.hasMoreTokens()) {
+                args[tokenIndex] = cmdTokens.nextToken();
+                tokenIndex++;
+            }
             if (args.length == 0){
                 return false;
             }

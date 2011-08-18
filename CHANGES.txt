@@ -289,6 +289,8 @@ BUGFIXES:
   (Eugene Koontz via mahadev)
 
   ZOOKEEPER-1141. zkpython fails tests under python 2.4. (phunt via mahadev)
+  
+  ZOOKEEPER-1025. zkCli is overly sensitive to to spaces. (Laxman via camille)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
