@@ -428,6 +428,8 @@ NEW FEATURES:
   ZOOKEEPER-938. Support Kerberos authentication of clients. (Eugene Koontz
   via mahadev)
 
+  ZOOKEEPER-1152. Exceptions thrown from handleAuthentication can cause buffer corruption issues in NIOServer. (camille via breed)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:

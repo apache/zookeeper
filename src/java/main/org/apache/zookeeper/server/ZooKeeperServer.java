@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
@@ -862,9 +863,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             ZooKeeperServer.byteBuffer2Record(incomingBuffer, authPacket);
             String scheme = authPacket.getScheme();
             AuthenticationProvider ap = ProviderRegistry.getProvider(scheme);
-            if (ap == null
-                    || (ap.handleAuthentication(cnxn, authPacket.getAuth())
-                            != KeeperException.Code.OK)) {
+            Code authReturn = KeeperException.Code.AUTHFAILED;
+            if(ap != null) {
+                try {
+                    authReturn = ap.handleAuthentication(cnxn, authPacket.getAuth());
+                } catch(RuntimeException e) {
+                    LOG.warn("Caught runtime exception from AuthenticationProvider: " + scheme + " due to " + e);
+                    authReturn = KeeperException.Code.AUTHFAILED;                   
+                }
+            }
+            if (authReturn!= KeeperException.Code.OK) {
                 if (ap == null) {
                     LOG.warn("No authentication provider for scheme: "
                             + scheme + " has "

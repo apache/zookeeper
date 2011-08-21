@@ -35,7 +35,8 @@ public class AuthTest extends ClientBase {
     static {
         // password is test
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
-                "super:D/InIHSb7yEEbrWz8b9l71RjZJU=");        
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU=");    
+        System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.test.InvalidAuthProvider");
     }
 
     private AtomicInteger authFailed = new AtomicInteger(0);
@@ -73,6 +74,23 @@ public class AuthTest extends ClientBase {
         }
         finally {
             zk.close();
+        }
+    }
+    
+    @Test
+    public void testBadAuthThenSendOtherCommands() throws Exception {
+        ZooKeeper zk = createClient();     
+        try {        
+            zk.addAuthInfo("INVALID", "BAR".getBytes());
+            zk.exists("/foobar", false);             
+            zk.getData("/path1", false, null);
+            Assert.fail("Should get auth state error");
+        } catch(KeeperException.AuthFailedException e) {
+            Assert.assertEquals("Should have called my watcher", 
+                    1, authFailed.get());
+        }
+        finally {
+            zk.close();          
         }
     }
 
