@@ -480,7 +480,7 @@ int getaddrs(zhandle_t *zh)
         *port_spec = '\0';
         port_spec++;
         port = strtol(port_spec, &end_port_spec, 0);
-        if (!*port_spec || *end_port_spec) {
+        if (!*port_spec || *end_port_spec || port == 0) {
             LOG_ERROR(("invalid port in %s", host));
             errno=EINVAL;
             rc=ZBADARGUMENTS;
