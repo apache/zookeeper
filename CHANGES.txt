@@ -433,6 +433,8 @@ NEW FEATURES:
 
   ZOOKEEPER-1152. Exceptions thrown from handleAuthentication can cause buffer corruption issues in NIOServer. (camille via breed)
 
+  ZOOKEEPER-999. Create an package integration project (Eric Yang via phunt)
+
 Release 3.3.0 - 2010-03-24
 
 Non-backward compatible changes:
