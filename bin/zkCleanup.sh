@@ -25,16 +25,16 @@
 # relative to the canonical path of this script.
 #
 
-# Only follow symlinks if readlink supports it
-if readlink -f "$0" > /dev/null 2>&1
-then
-  ZOOBIN=`readlink -f "$0"`
-else
-  ZOOBIN="$0"
-fi
-ZOOBINDIR=`dirname "$ZOOBIN"`
+# use POSTIX interface, symlink is followed automatically
+ZOOBIN="${BASH_SOURCE-$0}"
+ZOOBIN=`dirname ${ZOOBIN}`
+ZOOBINDIR=`cd ${ZOOBIN}; pwd`
 
-. "$ZOOBINDIR"/zkEnv.sh
+if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
+  . "$ZOOBINDIR"/../libexec/zkEnv.sh
+else
+  . "$ZOOBINDIR"/zkEnv.sh
+fi
 
 ZOODATADIR=$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" | sed -e 's/.*=//')
 ZOODATALOGDIR=$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" | sed -e 's/.*=//')

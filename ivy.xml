@@ -26,14 +26,16 @@
   </info>
 
   <configurations defaultconfmapping="default">
+    <conf name="master"/>
     <conf name="default"/>
     <conf name="test"/>
+    <conf name="package" extends="master"/>
     <conf name="jdiff" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
   </configurations>
 
   <publications>
-    <artifact name='org.jboss.netty' type='jar' ext='jar' />
+    <artifact name='org.apache.zookeeper' type='jar' ext='jar' />
   </publications>
 
   <dependencies>
@@ -47,6 +49,8 @@
     <dependency org="org.jboss.netty" name="netty" conf="default" rev="3.2.2.Final">
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
+
+    <dependency org="org.vafer" name="jdeb" rev="0.8" conf="package->master"/>
 
     <dependency org="junit" name="junit" rev="4.8.1" conf="test->default"/>
     <dependency org="checkstyle" name="checkstyle" rev="5.0"
