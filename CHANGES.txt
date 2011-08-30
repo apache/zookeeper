@@ -295,6 +295,8 @@ BUGFIXES:
   ZOOKEEPER-1117. zookeeper 3.3.3 fails to build with gcc >= 4.6.1 on
   Debian/Ubuntu (James Page via mahadev)
 
+  ZOOKEEPER-1140. server shutdown is not stopping threads. (laxman via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

@@ -38,6 +38,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  */
 public class ReadOnlyZooKeeperServer extends QuorumZooKeeperServer {
 
+    private volatile boolean shutdown = false;
     ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self,
             DataTreeBuilder treeBuilder, ZKDatabase zkDb) {
         super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout,
@@ -54,11 +55,16 @@ public class ReadOnlyZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
-    public void startup() {
+    public synchronized void startup() {
+        // check to avoid startup follows shutdown
+        if (shutdown) {
+            LOG.warn("Not starting Read-only server as startup follows shutdown!");
+            return;
+        }
         registerJMX(new ReadOnlyBean(this), self.jmxLocalPeerBean);
         super.startup();
-
         self.cnxnFactory.setZooKeeperServer(this);
+        LOG.info("Read-only server started");
     }
 
     @Override
@@ -124,7 +130,8 @@ public class ReadOnlyZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
-    public void shutdown() {
+    public synchronized void shutdown() {
+        shutdown = true;
         unregisterJMX(this);
 
         // set peer's server to null

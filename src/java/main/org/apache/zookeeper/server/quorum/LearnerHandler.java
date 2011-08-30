@@ -523,17 +523,17 @@ public class LearnerHandler extends Thread {
             LOG.warn("******* GOODBYE " 
                     + (sock != null ? sock.getRemoteSocketAddress() : "<null>")
                     + " ********");
-            // Send the packet of death
-            try {
-                queuedPackets.put(proposalOfDeath);
-            } catch (InterruptedException e) {
-                LOG.warn("Ignoring unexpected exception", e);
-            }
             shutdown();
         }
     }
 
     public void shutdown() {
+        // Send the packet of death
+        try {
+            queuedPackets.put(proposalOfDeath);
+        } catch (InterruptedException e) {
+            LOG.warn("Ignoring unexpected exception", e);
+        }
         try {
             if (sock != null && !sock.isClosed()) {
                 sock.close();
