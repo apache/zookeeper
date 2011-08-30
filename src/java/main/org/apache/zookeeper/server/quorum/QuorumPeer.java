@@ -250,6 +250,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     protected int tick;
 
     /**
+     * @deprecated As of release 3.4.0, this class has been deprecated, since
+     * it is used with one of the udp-based versions of leader election, which
+     * we are also deprecating. 
+     * 
      * This class simply responds to requests for the current leader of this
      * node.
      * <p>
@@ -260,6 +264,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      *
      *
      */
+    @Deprecated
     class ResponderThread extends Thread {
         ResponderThread() {
             super("ResponderThread");
