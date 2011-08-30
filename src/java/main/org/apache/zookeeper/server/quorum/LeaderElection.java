@@ -41,6 +41,10 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
+/**
+ * @deprecated This class has been deprecated as of release 3.4.0. 
+ */
+@Deprecated
 public class LeaderElection implements Election  {
     private static final Logger LOG = LoggerFactory.getLogger(LeaderElection.class);
     protected static final Random epochGen = new Random();

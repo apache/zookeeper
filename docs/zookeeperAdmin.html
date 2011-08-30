@@ -1171,13 +1171,10 @@ server.3=zoo3:2888:3888</pre>
 <div class="label">Note</div>
 <div class="content">
               
-<p> The implementations of leader election
-              1 and 2 are currently not supported, and we have the intention
-              of deprecating them in the near future. Implementations 0 and 3 are 
-              currently supported, and we plan to keep supporting them in the near future. 
-              To avoid having to support multiple versions of leader election unecessarily, 
-              we may eventually consider deprecating algorithm 0 as well, but we will plan
-              according to the needs of the community. 
+<p> The implementations of leader election 0, 1, and 2 are now 
+              <strong> deprecated </strong>. We have the intention
+              of removing them in the next release, at which point only the 
+              FastLeaderElection will be available. 
               </p>
               
 </div>
