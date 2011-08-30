@@ -297,6 +297,9 @@ BUGFIXES:
 
   ZOOKEEPER-1140. server shutdown is not stopping threads. (laxman via mahadev)
 
+  ZOOKEEPER-1051. SIGPIPE in Zookeeper 0.3.* when send'ing after 
+  cluster disconnection (Stephen Tyree via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

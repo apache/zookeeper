@@ -205,6 +205,19 @@ static __attribute__((unused)) void print_completion_queue(zhandle_t *zh);
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
 static int isValidPath(const char* path, const int flags);
 
+#ifdef _WINDOWS
+static int zookeeper_send(SOCKET s, const char* buf, int len)
+#else
+static ssize_t zookeeper_send(int s, const void* buf, size_t len)
+#endif
+{
+#ifdef __linux__
+  return send(s, buf, len, MSG_NOSIGNAL);
+#else
+  return send(s, buf, len, 0);
+#endif
+}
+
 const void *zoo_get_context(zhandle_t *zh)
 {
     return zh->context;
@@ -1013,7 +1026,7 @@ static int send_buffer(int fd, buffer_list_t *buff)
         /* we need to send the length at the beginning */
         int nlen = htonl(len);
         char *b = (char*)&nlen;
-        rc = send(fd, b + off, sizeof(nlen) - off, 0);
+        rc = zookeeper_send(fd, b + off, sizeof(nlen) - off);
         if (rc == -1) {
 #ifndef _WINDOWS
             if (errno != EAGAIN) {
@@ -1032,7 +1045,7 @@ static int send_buffer(int fd, buffer_list_t *buff)
     if (off >= 4) {
         /* want off to now represent the offset into the buffer */
         off -= sizeof(buff->len);
-        rc = send(fd, buff->buffer + off, len - off, 0);
+        rc = zookeeper_send(fd, buff->buffer + off, len - off);
         if (rc == -1) {
 #ifndef _WINDOWS
             if (errno != EAGAIN) {
@@ -1449,9 +1462,9 @@ static int prime_connection(zhandle_t *zh)
     req.lastZxidSeen = zh->last_zxid;
     hlen = htonl(len);
     /* We are running fast and loose here, but this string should fit in the initial buffer! */
-    rc=send(zh->fd, &hlen, sizeof(len), 0);
+    rc=zookeeper_send(zh->fd, &hlen, sizeof(len));
     serialize_prime_connect(&req, buffer_req);
-    rc=rc<0 ? rc : send(zh->fd, buffer_req, len, 0);
+    rc=rc<0 ? rc : zookeeper_send(zh->fd, buffer_req, len);
     if (rc<0) {
         return handle_socket_error_msg(zh, __LINE__, ZCONNECTIONLOSS,
                 "failed to send a handshake packet: %s", strerror(errno));
