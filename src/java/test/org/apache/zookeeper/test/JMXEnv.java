@@ -19,7 +19,6 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -36,9 +35,10 @@ import javax.management.remote.JMXServiceURL;
 
 import junit.framework.TestCase;
 
+import org.apache.zookeeper.jmx.CommonNames;
+import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.jmx.CommonNames;
 
 public class JMXEnv {
     protected static final Logger LOG = LoggerFactory.getLogger(JMXEnv.class);
@@ -47,7 +47,7 @@ public class JMXEnv {
     private static JMXConnector cc;
 
     public static void setUp() throws IOException {
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        MBeanServer mbs = MBeanRegistry.getInstance().getPlatformMBeanServer();
         
         JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://");
         cs = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbs);

@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.jmx;
 
-import java.lang.management.ManagementFactory;
 import java.util.Enumeration;
 
 import javax.management.JMException;
@@ -45,7 +44,7 @@ public class ManagedUtil {
             return;
         }
         
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        MBeanServer mbs = MBeanRegistry.getInstance().getPlatformMBeanServer();
 
         // Create and Register the top level Log4J MBean
         HierarchyDynamicMBean hdm = new HierarchyDynamicMBean();
