@@ -300,6 +300,8 @@ BUGFIXES:
   ZOOKEEPER-1051. SIGPIPE in Zookeeper 0.3.* when send'ing after 
   cluster disconnection (Stephen Tyree via mahadev)
 
+  ZOOKEEPER-1168. ZooKeeper fails to run with IKVM (Andrew Finnell via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
