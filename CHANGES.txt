@@ -403,6 +403,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1034. perl bindings should automatically find the zookeeper
   c-client headers (nicholas harteau via mahadev)
 
+  ZOOKEEPER-1166 Please add a few svn:ignore properties (via phunt)
+
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
   (Kay Kay via henry)
