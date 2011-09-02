@@ -303,6 +303,10 @@ BUGFIXES:
   ZOOKEEPER-1168. ZooKeeper fails to run with IKVM (Andrew Finnell via phunt)
 
   ZOOKEEPER-1165. better eclipse support in tests (Warren Turkal via phunt)
+  
+  ZOOKEEPER-1154. Data inconsistency when the node(s) with the highest zxid is not present at the time of leader election. (Vishal Kathuria via camille)
+  
+  ZOOKEEPER-1156. Log truncation truncating log too much - can cause data loss. (Vishal Kathuria via camille)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
