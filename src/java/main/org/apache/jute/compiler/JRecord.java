@@ -349,7 +349,7 @@ public class JRecord extends JCompType {
 
         cc.write("bool "+getCppFQName()+"::validate() const {\n");
         cc.write("  if (bs_.size() != bs_.count()) return false;\n");
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = (JField) i.next();
             JType type = jf.getType();
             if (type instanceof JRecord) {
@@ -425,7 +425,6 @@ public class JRecord extends JCompType {
         jj.write("*/\n");
         jj.write("\n");
         jj.write("package "+getJavaPackage()+";\n\n");
-        jj.write("import java.util.*;\n");
         jj.write("import org.apache.jute.*;\n");
         jj.write("public class "+getName()+" implements Record {\n");
         for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
