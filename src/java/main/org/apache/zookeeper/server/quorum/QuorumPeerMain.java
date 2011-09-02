@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
+import org.apache.zookeeper.server.DatadirCleanupManager;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -99,6 +100,12 @@ public class QuorumPeerMain {
         if (args.length == 1) {
             config.parse(args[0]);
         }
+
+        // Start and schedule the the purge task
+        DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config
+                .getDataDir(), config.getDataLogDir(), config
+                .getSnapRetainCount(), config.getPurgeInterval());
+        purgeMgr.start();
 
         if (args.length == 1 && config.servers.size() > 0) {
             runFromConfig(config);

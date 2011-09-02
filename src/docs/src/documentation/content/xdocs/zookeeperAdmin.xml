@@ -460,10 +460,11 @@ server.3=zoo3:2888:3888</programlisting>
         </para>
 
         <para>A ZooKeeper server <emphasis role="bold">will not remove
-          old snapshots and log files</emphasis>, this is the
-          responsibility of the operator. Every serving environment is
-          different and therefore the requirements of managing these
-          files may differ from install to install (backup for example).
+        old snapshots and log files</emphasis> when using the default
+        configuration (see autopurge below), this is the
+        responsibility of the operator. Every serving environment is
+        different and therefore the requirements of managing these
+        files may differ from install to install (backup for example).
         </para>
 
         <para>The PurgeTxnLog utility implements a simple retention
@@ -482,6 +483,13 @@ server.3=zoo3:2888:3888</programlisting>
 
         <programlisting> java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</programlisting>
 
+        <para>Automatic purging of the snapshots and corresponding
+        transaction logs was introduced in version 3.4.0 and can be
+        enabled via the following configuration parameters <emphasis
+        role="bold">autopurge.snapRetainCount</emphasis> and <emphasis
+        role="bold">autopurge.purgeInterval</emphasis>. For more on
+        this, see <xref linkend="sc_advancedConfiguration"/>
+        below.</para>
       </section>
 
       <section>
@@ -774,6 +782,35 @@ server.3=zoo3:2888:3888</programlisting>
               the <emphasis role="bold">tickTime</emphasis>.</para>
             </listitem>
            </varlistentry>
+           
+          <varlistentry>
+            <term>autopurge.snapRetainCount</term>
+
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para><emphasis role="bold">New in 3.4.0:</emphasis> 
+              When enabled, ZooKeeper auto purge feature retains
+              the <emphasis role="bold">autopurge.snapRetainCount</emphasis> most
+              recent snapshots and the corresponding transaction logs in the 
+              <emphasis role="bold">dataDir</emphasis> and <emphasis 
+              role="bold">dataLogDir</emphasis> respectively and deletes the rest.
+              Defaults to 3. Minimum value is 3.</para>
+            </listitem>
+          </varlistentry>
+          
+          <varlistentry>
+            <term>autopurge.purgeInterval</term>
+
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para><emphasis role="bold">New in 3.4.0:</emphasis> The
+              time interval in hours for which the purge task has to
+              be triggered. Set to a positive integer (1 and above)
+              to enable the auto purging. Defaults to 0.</para>
+            </listitem>
+          </varlistentry>
         </variablelist>
       </section>
 

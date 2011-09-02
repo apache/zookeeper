@@ -446,6 +446,8 @@ NEW FEATURES:
 
   ZOOKEEPER-999. Create an package integration project (Eric Yang via phunt)
 
+  ZOOKEEPER-1107. automating log and snapshot cleaning (Laxman via phunt)
+
 DEPRECATION:
   ZOOKEEPER-1153. Deprecate AuthFLE and LE. (Flavio Junqueira via mahadev)
   
