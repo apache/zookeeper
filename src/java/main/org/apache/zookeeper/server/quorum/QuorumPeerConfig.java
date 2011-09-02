@@ -69,8 +69,16 @@ public class QuorumPeerConfig {
     protected HashMap<Long, Long> serverGroup = new HashMap<Long, Long>();
     protected int numGroups = 0;
     protected QuorumVerifier quorumVerifier;
+    protected int snapRetainCount = 3;
+    protected int purgeInterval = 0;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
+    
+    /**
+     * Minimum snapshot retain count.
+     * @see org.apache.zookeeper.server.PurgeTxnLog#purge(File, File, int)
+     */
+    private final int MIN_SNAP_RETAIN_COUNT = 3;
 
     @SuppressWarnings("serial")
     public static class ConfigException extends Exception {
@@ -158,6 +166,10 @@ public class QuorumPeerConfig {
                 {
                     throw new ConfigException("Unrecognised peertype: " + value);
                 }
+            } else if (key.equals("autopurge.snapRetainCount")) {
+                snapRetainCount = Integer.parseInt(value);
+            } else if (key.equals("autopurge.purgeInterval")) {
+                purgeInterval = Integer.parseInt(value);
             } else if (key.startsWith("server.")) {
                 int dot = key.indexOf('.');
                 long sid = Long.parseLong(key.substring(dot + 1));
@@ -214,6 +226,15 @@ public class QuorumPeerConfig {
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
+        }
+        
+        // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
+        // PurgeTxnLog.purge(File, File, int) will not allow to purge less
+        // than 3.
+        if (snapRetainCount < MIN_SNAP_RETAIN_COUNT) {
+            LOG.warn("Invalid autopurge.snapRetainCount: " + snapRetainCount
+                    + ". Defaulting to " + MIN_SNAP_RETAIN_COUNT);
+            snapRetainCount = MIN_SNAP_RETAIN_COUNT;
         }
 
         if (dataDir == null) {
@@ -364,6 +385,14 @@ public class QuorumPeerConfig {
     public int getElectionAlg() { return electionAlg; }
     public int getElectionPort() { return electionPort; }    
     
+    public int getSnapRetainCount() {
+        return snapRetainCount;
+    }
+
+    public int getPurgeInterval() {
+        return purgeInterval;
+    }
+
     public QuorumVerifier getQuorumVerifier() {   
         return quorumVerifier;
     }
