@@ -13,6 +13,10 @@ BUGFIXES:
   ZOOKEEPER-1117. zookeeper 3.3.3 fails to build with gcc >= 4.6.1 on
   Debian/Ubuntu (James Page via mahadev)
 
+  ZOOKEEPER-1154. Data inconsistency when the node(s) with the highest zxid is not present at the time of leader election. (Vishal Kathuria via camille)
+  
+  ZOOKEEPER-1156. Log truncation truncating log too much - can cause data loss. (Vishal Kathuria via camille)
+
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:
 

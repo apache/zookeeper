@@ -40,7 +40,7 @@ import org.apache.zookeeper.test.QuorumBase;
 public class QuorumPeerTestBase extends TestCase implements Watcher {
     protected static final Logger LOG =
         Logger.getLogger(QuorumPeerTestBase.class);
-    
+
     public void process(WatchedEvent event) {
         // ignore for this test
     }
@@ -56,7 +56,7 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
 
     public static class MainThread extends Thread {
         final File confFile;
-        final TestQPMain main;
+        volatile TestQPMain main;
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
             throws IOException
@@ -83,7 +83,7 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
                 dir = dir.replace('\\', '/');
             }
             fwriter.write("dataDir=" + dir + "\n");
-            
+
             fwriter.write("clientPort=" + clientPort + "\n");
             fwriter.write(quorumCfgSection + "\n");
             fwriter.flush();
@@ -98,6 +98,12 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
             main = new TestQPMain();
         }
 
+        Thread currentThread;
+        synchronized public void start() {
+            main = new TestQPMain();
+            currentThread = new Thread(this);
+            currentThread.start();
+        }
         public void run() {
             String args[] = new String[1];
             args[0] = confFile.toString();
@@ -106,11 +112,18 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
             } catch (Exception e) {
                 // test will still fail even though we just log/ignore
                 LOG.error("unexpected exception in run", e);
+            } finally {
+                currentThread = null;
             }
         }
 
-        public void shutdown() {
-            main.shutdown();
+        public void shutdown() throws InterruptedException {
+            Thread t = currentThread;
+            if (t != null && t.isAlive()) {
+                main.shutdown();
+                t.join(500);
+            }
         }
+
     }
 }
