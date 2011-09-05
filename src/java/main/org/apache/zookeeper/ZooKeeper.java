@@ -87,8 +87,10 @@ public class ZooKeeper {
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
 
     protected final ClientCnxn cnxn;
-    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeper.class);
+    private static final Logger LOG;
     static {
+        //Keep these two lines together to keep the initialization order explicit
+        LOG = LoggerFactory.getLogger(ZooKeeper.class);
         Environment.logEnv("Client environment:", LOG);
     }
 
