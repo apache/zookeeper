@@ -308,6 +308,8 @@ BUGFIXES:
   
   ZOOKEEPER-1156. Log truncation truncating log too much - can cause data loss. (Vishal Kathuria via camille)
 
+  ZOOKEEPER-1160. test timeouts are too small (breed via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

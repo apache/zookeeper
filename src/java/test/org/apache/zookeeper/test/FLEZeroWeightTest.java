@@ -162,7 +162,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
 
         for(int i = 0; i < le.length; i++) {
             QuorumHierarchical hq = new QuorumHierarchical(qp);
-            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2, hq);
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, hq);
             peer.startLeaderElection();
             LEThread thread = new LEThread(peer, i);
             thread.start();
