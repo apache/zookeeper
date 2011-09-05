@@ -273,7 +273,7 @@ public class FLETest extends ZKTestCase {
 
         for(int i = 0; i < le.length; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
-                    port[i], 3, i, 2, 2, 2);
+                    port[i], 3, i, 1000, 2, 2);
             peer.startLeaderElection();
             LEThread thread = new LEThread(peer, i);
             thread.start();
