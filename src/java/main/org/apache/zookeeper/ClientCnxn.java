@@ -1204,7 +1204,7 @@ public class ClientCnxn {
 
     private int xid = 1;
 
-    private volatile States state;
+    private volatile States state = States.NOT_CONNECTED;
 
     synchronized private int getXid() {
         return xid++;

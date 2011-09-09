@@ -41,6 +41,7 @@
 #define CONNECTING_STATE_DEF 1
 #define ASSOCIATING_STATE_DEF 2
 #define CONNECTED_STATE_DEF 3
+#define NOTCONNECTED_STATE_DEF 999
 
 /* zookeeper event type constants */
 #define CREATED_EVENT_DEF 1

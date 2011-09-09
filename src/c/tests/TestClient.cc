@@ -518,7 +518,6 @@ public:
                           (void*)ZOK);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         waitForVoidCompletion(3);
-
         CPPUNIT_ASSERT(count == 0);
 
         rc = zoo_create(zk, "/tauth1", "", 0, &ZOO_CREATOR_ALL_ACL, 0, 0, 0);
@@ -592,6 +591,16 @@ public:
         rc = zoo_set_acl(zk, "/", -1, &ZOO_OPEN_ACL_UNSAFE);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
 
+        //[ZOOKEEPER-1108], test that auth info is sent to server, if client is not
+        //connected to server when zoo_add_auth was called.
+        zhandle_t *zk_auth = zookeeper_init(hostPorts, NULL, 10000, 0, NULL, 0);
+        rc = zoo_add_auth(zk_auth, "digest", "pat:passwd", 10, voidCompletion, (void*)ZOK);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        sleep(2);
+        CPPUNIT_ASSERT(count == 1);
+        count  = 0;
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, zookeeper_close(zk_auth));
+        
         // [ZOOKEEPER-800] zoo_add_auth should return ZINVALIDSTATE if
         // the connection is closed. 
         zhandle_t *zk2 = zookeeper_init(hostPorts, NULL, 10000, 0, NULL, 0);
