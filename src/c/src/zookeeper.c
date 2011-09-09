@@ -334,7 +334,7 @@ static void mark_active_auth(zhandle_t *zh) {
         return;
     }
     element = auth_h.auth;
-    while (element->next != NULL) {
+    while (element != NULL) {
         element->state = 1;
         element = element->next;
     }
@@ -784,7 +784,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
         return 0;
     }
     zh->fd = -1;
-    zh->state = 0;
+    zh->state = NOTCONNECTED_STATE_DEF;
     zh->context = context;
     zh->recv_timeout = recv_timeout;
     init_auth_info(&zh->auth_h);
@@ -1318,7 +1318,7 @@ static int send_auth_info(zhandle_t *zh) {
         zoo_unlock_auth(zh);
         return ZOK;
     }
-    while (auth->next != NULL) {
+    while (auth != NULL) {
         rc = send_info_packet(zh, auth);
         auth = auth->next;
     }

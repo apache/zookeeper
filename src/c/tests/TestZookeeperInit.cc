@@ -106,7 +106,7 @@ public:
         CPPUNIT_ASSERT(zh->hostname!=0);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_HOST,string(zh->hostname));
-        CPPUNIT_ASSERT(zh->state == 0);
+        CPPUNIT_ASSERT(zh->state == NOTCONNECTED_STATE_DEF);
         CPPUNIT_ASSERT(zh->context == (void*)1);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_RECV_TIMEOUT,zh->recv_timeout);
         CPPUNIT_ASSERT(zh->watcher == watcher);

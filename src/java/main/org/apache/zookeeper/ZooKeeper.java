@@ -310,7 +310,7 @@ public class ZooKeeper {
 
     public enum States {
         CONNECTING, ASSOCIATING, CONNECTED, CONNECTEDREADONLY,
-        CLOSED, AUTH_FAILED;
+        CLOSED, AUTH_FAILED, NOT_CONNECTED;
 
         public boolean isAlive() {
             return this != CLOSED && this != AUTH_FAILED;

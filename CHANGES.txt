@@ -311,6 +311,8 @@ BUGFIXES:
   ZOOKEEPER-1160. test timeouts are too small (breed via phunt)
 
   ZOOKEEPER-731. Zookeeper#delete , #create - async versions miss a verb in the javadoc. (Thomas Koch via camille)
+
+  ZOOKEEPER-1108. Various bugs in zoo_add_auth in C. (Dheeraj Agrawal via mahadev)
   
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
