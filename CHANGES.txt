@@ -419,6 +419,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1169. Fix compiler (eclipse) warnings in (generated) jute
   code (Thomas Koch via phunt)
+
+  ZOOKEEPER-1171. fix build for java 7 (phunt via mahadev)
  
 
 NEW FEATURES:
