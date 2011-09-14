@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.Record;
+
 public class ByteBufferInputStream extends InputStream {
     ByteBuffer bb;
 
@@ -67,6 +70,13 @@ public class ByteBufferInputStream extends InputStream {
         }
         bb.position(bb.position() + (int) n);
         return n;
+    }
+
+    static public void byteBuffer2Record(ByteBuffer bb, Record record)
+            throws IOException {
+        BinaryInputArchive ia;
+        ia = BinaryInputArchive.getArchive(new ByteBufferInputStream(bb));
+        record.deserialize(ia, "request");
     }
 
 }

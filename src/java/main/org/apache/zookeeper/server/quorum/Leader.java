@@ -281,7 +281,7 @@ public class Leader {
     
     long epoch = -1;
     boolean waitingForNewEpoch = true;
-    boolean readyToStart = false;
+    volatile boolean readyToStart = false;
     
     /**
      * This method is main function that is called to lead
@@ -309,13 +309,17 @@ public class Leader {
             cnxAcceptor = new LearnerCnxAcceptor();
             cnxAcceptor.start();
             
+            readyToStart = true;
             long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
             self.setAcceptedEpoch(epoch);
+            
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
             
+            /*
             synchronized(this){
                 lastProposed = zk.getZxid();
             }
+            */
             
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
                     null, null);
@@ -328,7 +332,6 @@ public class Leader {
             outstandingProposals.put(newLeaderProposal.packet.getZxid(), newLeaderProposal);
             newLeaderProposal.ackSet.add(self.getId());
             
-            readyToStart = true;
             waitForEpochAck(self.getId(), leaderStateSummary);
             self.setCurrentEpoch(epoch);
 

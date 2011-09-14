@@ -290,18 +290,17 @@ public class Learner {
         	}
         	QuorumPacket ackNewEpoch = new QuorumPacket(Leader.ACKEPOCH, lastLoggedZxid, epochBytes, null);
         	writePacket(ackNewEpoch, true);
-        	readPacket(qp);
+            return ZxidUtils.makeZxid(newEpoch, 0);
         } else {
         	if (newEpoch > self.getAcceptedEpoch()) {
         		self.setAcceptedEpoch(newEpoch);
         	}
+            if (qp.getType() != Leader.NEWLEADER) {
+                LOG.error("First packet should have been NEWLEADER");
+                throw new IOException("First packet should have been NEWLEADER");
+            }
+            return qp.getZxid();
         }
-        if (qp.getType() != Leader.NEWLEADER) {
-            LOG.error("First packet should have been NEWLEADER");
-            throw new IOException("First packet should have been NEWLEADER");
-        }
-        
-        return qp.getZxid();
     } 
     
     /**
@@ -353,6 +352,11 @@ public class Learner {
             zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
                         
             long lastQueued = 0;
+
+            // in V1.0 we take a snapshot when we get the NEWLEADER message, but in pre V1.0
+            // we take the snapshot at the UPDATE, since V1.0 also gets the UPDATE (after the NEWLEADER)
+            // we need to make sure that we don't take the snapshot twice.
+            boolean snapshotTaken = false;
             // we are now going to start getting transactions to apply followed by an UPTODATE
             outerLoop:
             while (self.isRunning()) {
@@ -362,7 +366,7 @@ public class Learner {
                     PacketInFlight pif = new PacketInFlight();
                     pif.hdr = new TxnHeader();
                     pif.rec = SerializeUtils.deserializeTxn(qp.getData(), pif.hdr);
-                    if (pif.hdr.    getZxid() != lastQueued + 1) {
+                    if (pif.hdr.getZxid() != lastQueued + 1) {
                     LOG.warn("Got zxid 0x"
                             + Long.toHexString(pif.hdr.getZxid())
                             + " expected 0x"
@@ -386,9 +390,16 @@ public class Learner {
                     zk.getZKDatabase().processTxn(hdr, txn);
                     break;
                 case Leader.UPTODATE:
-                    zk.takeSnapshot();
+                    if (!snapshotTaken) {
+                        zk.takeSnapshot();
+                    }
                     self.cnxnFactory.setZooKeeperServer(zk);                
                     break outerLoop;
+                case Leader.NEWLEADER: // it will be NEWLEADER in v1.0
+                    zk.takeSnapshot();
+                    snapshotTaken = true;
+                    writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
+                    break;
                 }
             }
         }

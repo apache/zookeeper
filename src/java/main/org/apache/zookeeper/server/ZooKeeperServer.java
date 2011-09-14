@@ -661,13 +661,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-    static public void byteBuffer2Record(ByteBuffer bb, Record record)
-            throws IOException {
-        BinaryInputArchive ia;
-        ia = BinaryInputArchive.getArchive(new ByteBufferInputStream(bb));
-        record.deserialize(ia, "request");
-    }
-
     public static int getSnapCount() {
         String sc = System.getProperty("zookeeper.snapCount");
         try {
@@ -860,7 +853,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (h.getType() == OpCode.auth) {
             LOG.info("got auth packet " + cnxn.getRemoteSocketAddress());
             AuthPacket authPacket = new AuthPacket();
-            ZooKeeperServer.byteBuffer2Record(incomingBuffer, authPacket);
+            ByteBufferInputStream.byteBuffer2Record(incomingBuffer, authPacket);
             String scheme = authPacket.getScheme();
             AuthenticationProvider ap = ProviderRegistry.getProvider(scheme);
             Code authReturn = KeeperException.Code.AUTHFAILED;
@@ -917,7 +910,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private Record processSasl(ByteBuffer incomingBuffer, ServerCnxn cnxn) throws IOException {
         LOG.debug("Responding to client SASL token.");
         GetSASLRequest clientTokenRecord = new GetSASLRequest();
-        byteBuffer2Record(incomingBuffer,clientTokenRecord);
+        ByteBufferInputStream.byteBuffer2Record(incomingBuffer,clientTokenRecord);
         byte[] clientToken = clientTokenRecord.getToken();
         LOG.debug("Size of client SASL token: " + clientToken.length);
         byte[] responseToken = null;

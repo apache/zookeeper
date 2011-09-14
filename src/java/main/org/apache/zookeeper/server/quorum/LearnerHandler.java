@@ -39,8 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -233,6 +233,7 @@ public class LearnerHandler extends Thread {
     @Override
     public void run() {
         try {            
+            sock.setSoTimeout(leader.self.getTickTime()*leader.self.getInitLimit());
             ia = BinaryInputArchive.getArchive(new BufferedInputStream(sock
                     .getInputStream()));
             bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
@@ -252,7 +253,7 @@ public class LearnerHandler extends Thread {
             		this.sid = bbsid.getLong();
             	} else {
             		LearnerInfo li = new LearnerInfo();
-            		ZooKeeperServer.byteBuffer2Record(ByteBuffer.wrap(learnerInfoData), li);
+            		ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(learnerInfoData), li);
             		this.sid = li.getServerid();
             		this.version = li.getProtocolVersion();
             	}
@@ -271,37 +272,33 @@ public class LearnerHandler extends Thread {
             
             long peerLastZxid;
             StateSummary ss = null;
-            if (learnerType == LearnerType.PARTICIPANT) {
-            	long zxid = qp.getZxid();
-				long newEpoch = leader.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
-				
-				if (this.getVersion() < 0x10000) {
-					// we are going to have to extrapolate the epoch information
-					long epoch = ZxidUtils.getEpochFromZxid(zxid);
-					ss = new StateSummary(epoch, zxid);
-					// fake the message
-					leader.waitForEpochAck(this.getSid(), ss);
-				} else {
-					byte ver[] = new byte[4];
-					ByteBuffer.wrap(ver).putInt(0x10000);
-				    QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, ZxidUtils.makeZxid(newEpoch, 0), ver, null);
-				    oa.writeRecord(newEpochPacket, "packet");
-		            bufferedOutput.flush();
-		            QuorumPacket ackEpochPacket = new QuorumPacket();
-		            ia.readRecord(ackEpochPacket, "packet");
-		            if (ackEpochPacket.getType() != Leader.ACKEPOCH) {
-		             	LOG.error(ackEpochPacket.toString()
-		                        + " is not ACKEPOCH");
-		                return;
-		            }
-            		ByteBuffer bbepoch = ByteBuffer.wrap(ackEpochPacket.getData());
-		            ss = new StateSummary(bbepoch.getInt(), ackEpochPacket.getZxid());
-		            leader.waitForEpochAck(this.getSid(), ss);
-				}
-            	peerLastZxid = ss.getLastZxid();
+            long zxid = qp.getZxid();
+            long newEpoch = leader.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
+            
+            if (this.getVersion() < 0x10000) {
+                // we are going to have to extrapolate the epoch information
+                long epoch = ZxidUtils.getEpochFromZxid(zxid);
+                ss = new StateSummary(epoch, zxid);
+                // fake the message
+                leader.waitForEpochAck(this.getSid(), ss);
             } else {
-            	peerLastZxid = qp.getZxid();
+                byte ver[] = new byte[4];
+                ByteBuffer.wrap(ver).putInt(0x10000);
+                QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, ZxidUtils.makeZxid(newEpoch, 0), ver, null);
+                oa.writeRecord(newEpochPacket, "packet");
+                bufferedOutput.flush();
+                QuorumPacket ackEpochPacket = new QuorumPacket();
+                ia.readRecord(ackEpochPacket, "packet");
+                if (ackEpochPacket.getType() != Leader.ACKEPOCH) {
+                    LOG.error(ackEpochPacket.toString()
+                            + " is not ACKEPOCH");
+                    return;
+				}
+                ByteBuffer bbepoch = ByteBuffer.wrap(ackEpochPacket.getData());
+                ss = new StateSummary(bbepoch.getInt(), ackEpochPacket.getZxid());
+                leader.waitForEpochAck(this.getSid(), ss);
             }
+            peerLastZxid = ss.getLastZxid();
             
             /* the default to send to the follower */
             int packetToSend = Leader.SNAP;
@@ -390,9 +387,13 @@ public class LearnerHandler extends Thread {
                 rl.unlock();
             }
 
-            QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
-                    leaderLastZxid, null, null);
-            oa.writeRecord(newLeaderQP, "packet");
+             QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
+                    ZxidUtils.makeZxid(newEpoch, 0), null, null);
+             if (getVersion() < 0x10000) {
+                oa.writeRecord(newLeaderQP, "packet");
+            } else {
+                queuedPackets.add(newLeaderQP);
+            }
             bufferedOutput.flush();
             //Need to set the zxidToSend to the latest zxid
             if (packetToSend == Leader.SNAP) {
@@ -415,13 +416,6 @@ public class LearnerHandler extends Thread {
             }
             bufferedOutput.flush();
             
-            // Mutation packets will be queued during the serialize,
-            // so we need to mark when the peer can actually start
-            // using the data
-            //
-            queuedPackets
-                    .add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
-
             // Start sending packets
             new Thread() {
                 public void run() {
@@ -456,6 +450,12 @@ public class LearnerHandler extends Thread {
                     leader.zk.wait(20);
                 }
             }
+            // Mutation packets will be queued during the serialize,
+            // so we need to mark when the peer can actually start
+            // using the data
+            //
+            queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
+
             
             while (true) {
                 qp = new QuorumPacket();

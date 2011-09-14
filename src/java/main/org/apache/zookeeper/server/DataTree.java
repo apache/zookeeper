@@ -880,7 +880,7 @@ public class DataTree {
                         }
                         assert(record != null);
 
-                        ZooKeeperServer.byteBuffer2Record(bb, record);
+                        ByteBufferInputStream.byteBuffer2Record(bb, record);
                        
                         if (failed && subtxn.getType() != OpCode.error){
                             int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() 

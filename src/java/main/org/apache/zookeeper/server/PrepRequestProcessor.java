@@ -488,32 +488,32 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             switch (request.type) {
                 case OpCode.create:
                 CreateRequest createRequest = new CreateRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request, createRequest);
+                ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, createRequest);
                 break;
             case OpCode.delete:
                 DeleteRequest deleteRequest = new DeleteRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request, deleteRequest);
+                ByteBufferInputStream.byteBuffer2Record(request.request, deleteRequest);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, deleteRequest);
                 break;
             case OpCode.setData:
                 SetDataRequest setDataRequest = new SetDataRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request, setDataRequest);
+                ByteBufferInputStream.byteBuffer2Record(request.request, setDataRequest);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, setDataRequest);
                 break;
             case OpCode.setACL:
                 SetACLRequest setAclRequest = new SetACLRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request, setAclRequest);
+                ByteBufferInputStream.byteBuffer2Record(request.request, setAclRequest);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, setAclRequest);
                 break;
             case OpCode.check:
                 CheckVersionRequest checkRequest = new CheckVersionRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request, checkRequest);
+                ByteBufferInputStream.byteBuffer2Record(request.request, checkRequest);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest);
                 break;
             case OpCode.multi:
                 MultiTransactionRecord multiRequest = new MultiTransactionRecord();
-                ZooKeeperServer.byteBuffer2Record(request.request, multiRequest);
+                ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
                 List<Txn> txns = new ArrayList<Txn>();
 
                 //Each op in a multi-op must have the same zxid!
