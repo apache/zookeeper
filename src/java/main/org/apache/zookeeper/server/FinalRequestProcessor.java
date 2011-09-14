@@ -255,7 +255,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.sync: {
                 lastOp = "SYNC";
                 SyncRequest syncRequest = new SyncRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request,
+                ByteBufferInputStream.byteBuffer2Record(request.request,
                         syncRequest);
                 rsp = new SyncResponse(syncRequest.getPath());
                 break;
@@ -270,7 +270,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "EXIS";
                 // TODO we need to figure out the security requirement for this!
                 ExistsRequest existsRequest = new ExistsRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request,
+                ByteBufferInputStream.byteBuffer2Record(request.request,
                         existsRequest);
                 String path = existsRequest.getPath();
                 if (path.indexOf('\0') != -1) {
@@ -284,7 +284,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.getData: {
                 lastOp = "GETD";
                 GetDataRequest getDataRequest = new GetDataRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request,
+                ByteBufferInputStream.byteBuffer2Record(request.request,
                         getDataRequest);
                 DataNode n = zks.getZKDatabase().getNode(getDataRequest.getPath());
                 if (n == null) {
@@ -308,7 +308,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 SetWatches setWatches = new SetWatches();
                 // XXX We really should NOT need this!!!!
                 request.request.rewind();
-                ZooKeeperServer.byteBuffer2Record(request.request, setWatches);
+                ByteBufferInputStream.byteBuffer2Record(request.request, setWatches);
                 long relativeZxid = setWatches.getRelativeZxid();
                 zks.getZKDatabase().setWatches(relativeZxid, 
                         setWatches.getDataWatches(), 
@@ -319,7 +319,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.getACL: {
                 lastOp = "GETA";
                 GetACLRequest getACLRequest = new GetACLRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request,
+                ByteBufferInputStream.byteBuffer2Record(request.request,
                         getACLRequest);
                 Stat stat = new Stat();
                 List<ACL> acl = 
@@ -330,7 +330,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.getChildren: {
                 lastOp = "GETC";
                 GetChildrenRequest getChildrenRequest = new GetChildrenRequest();
-                ZooKeeperServer.byteBuffer2Record(request.request,
+                ByteBufferInputStream.byteBuffer2Record(request.request,
                         getChildrenRequest);
                 DataNode n = zks.getZKDatabase().getNode(getChildrenRequest.getPath());
                 if (n == null) {
@@ -353,7 +353,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.getChildren2: {
                 lastOp = "GETC";
                 GetChildren2Request getChildren2Request = new GetChildren2Request();
-                ZooKeeperServer.byteBuffer2Record(request.request,
+                ByteBufferInputStream.byteBuffer2Record(request.request,
                         getChildren2Request);
                 Stat stat = new Stat();
                 DataNode n = zks.getZKDatabase().getNode(getChildren2Request.getPath());
