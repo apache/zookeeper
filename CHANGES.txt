@@ -317,6 +317,8 @@ BUGFIXES:
   ZOOKEEPER-981. Hang in zookeeper_close() in the multi-threaded C client. 
   (Jeremy Stribling via mahadev) 
 
+  ZOOKEEPER-1125. Intermittent java core test failures. (Vishar Kher via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

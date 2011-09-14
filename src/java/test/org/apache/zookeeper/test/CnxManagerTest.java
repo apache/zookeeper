@@ -343,7 +343,7 @@ public class CnxManagerTest extends ZKTestCase {
         throws InterruptedException
     {
         String failure = null;
-        for (int i = 0; i < 120; i++) {
+        for (int i = 0; i < 480; i++) {
             Thread.sleep(500);
 
             failure = _verifyThreadCount(peerList, ecnt);
