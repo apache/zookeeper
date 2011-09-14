@@ -33,21 +33,21 @@ public class RecordReader {
     
     private InputArchive archive;
 
-    static private HashMap archiveFactory;
+    static private HashMap<String, Method> archiveFactory;
     
     static {
-        archiveFactory = new HashMap();
-        Class[] params = { InputStream.class };
+        archiveFactory = new HashMap<String, Method>();
+
         try {
             archiveFactory.put("binary",
                     BinaryInputArchive.class.getDeclaredMethod(
-                        "getArchive", params));
+                        "getArchive", new Class[]{ InputStream.class } ));
             archiveFactory.put("csv",
                     CsvInputArchive.class.getDeclaredMethod(
-                        "getArchive", params));
+                        "getArchive", new Class[]{ InputStream.class }));
             archiveFactory.put("xml",
                     XmlInputArchive.class.getDeclaredMethod(
-                        "getArchive", params));
+                        "getArchive", new Class[]{ InputStream.class }));
         } catch (SecurityException ex) {
             ex.printStackTrace();
         } catch (NoSuchMethodException ex) {

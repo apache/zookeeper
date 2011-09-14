@@ -222,26 +222,26 @@ class XmlOutputArchive implements OutputArchive {
         outsideRecord(tag);
     }
     
-    public void startVector(List v, String tag) throws IOException {
+    public void startVector(List<?> v, String tag) throws IOException {
         insideVector(tag);
         stream.print("<array>\n");
         addIndent();
     }
     
-    public void endVector(List v, String tag) throws IOException {
+    public void endVector(List<?> v, String tag) throws IOException {
         closeIndent();
         putIndent();
         stream.print("</array>");
         outsideVector(tag);
     }
     
-    public void startMap(TreeMap v, String tag) throws IOException {
+    public void startMap(TreeMap<?,?> v, String tag) throws IOException {
         insideMap(tag);
         stream.print("<array>\n");
         addIndent();
     }
     
-    public void endMap(TreeMap v, String tag) throws IOException {
+    public void endMap(TreeMap<?,?> v, String tag) throws IOException {
         closeIndent();
         putIndent();
         stream.print("</array>");

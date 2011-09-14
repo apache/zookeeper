@@ -18,10 +18,8 @@
 
 package org.apache.jute;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -34,37 +32,19 @@ public class RecordWriter {
     
     private OutputArchive archive;
     
-    static private OutputArchive getBinaryArchive(OutputStream out) {
-        return new BinaryOutputArchive(new DataOutputStream(out));
-    }
-    
-    static private OutputArchive getCsvArchive(OutputStream out)
-    throws IOException {
-        try {
-            return new CsvOutputArchive(out);
-        } catch (UnsupportedEncodingException ex) {
-            throw new IOException("Unsupported encoding UTF-8");
-        }
-    }
-    
-    static private OutputArchive getXmlArchive(OutputStream out)
-    throws IOException {
-        return new XmlOutputArchive(out);
-    }
+    static HashMap<String, Method> constructFactory() {
+        HashMap<String, Method> factory = new HashMap<String, Method>();
 
-    static HashMap constructFactory() {
-        HashMap factory = new HashMap();
-        Class[] params = { OutputStream.class };
         try {
             factory.put("binary",
                     BinaryOutputArchive.class.getDeclaredMethod(
-                        "getArchive", params));
+                        "getArchive", new Class[]{ OutputStream.class }));
             factory.put("csv",
                     CsvOutputArchive.class.getDeclaredMethod(
-                        "getArchive", params));
+                        "getArchive", new Class[]{ OutputStream.class }));
             factory.put("xml",
                     XmlOutputArchive.class.getDeclaredMethod(
-                        "getArchive", params));
+                        "getArchive", new Class[]{ OutputStream.class }));
         } catch (SecurityException ex) {
             ex.printStackTrace();
         } catch (NoSuchMethodException ex) {
@@ -73,7 +53,7 @@ public class RecordWriter {
         return factory;
     }
     
-    static private HashMap archiveFactory = constructFactory();
+    static private HashMap<String, Method> archiveFactory = constructFactory();
     
     static private OutputArchive createArchive(OutputStream out,
             String format)

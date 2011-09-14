@@ -395,14 +395,6 @@ public class FastLeaderElection implements Election {
             }
         }
 
-        /**
-         * Test if both send and receive queues are empty.
-         */
-        public boolean queueEmpty() {
-            return (sendqueue.isEmpty() || recvqueue.isEmpty());
-        }
-
-
         WorkerSender ws;
         WorkerReceiver wr;
 

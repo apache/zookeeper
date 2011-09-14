@@ -127,7 +127,7 @@ public class BinaryOutputArchive implements OutputArchive {
     
     public void endRecord(Record r, String tag) throws IOException {}
     
-    public void startVector(List v, String tag) throws IOException {
+    public void startVector(List<?> v, String tag) throws IOException {
     	if (v == null) {
     		writeInt(-1, tag);
     		return;
@@ -135,12 +135,12 @@ public class BinaryOutputArchive implements OutputArchive {
         writeInt(v.size(), tag);
     }
     
-    public void endVector(List v, String tag) throws IOException {}
-    
-    public void startMap(TreeMap v, String tag) throws IOException {
+    public void endVector(List<?> v, String tag) throws IOException {}
+
+    public void startMap(TreeMap<?,?> v, String tag) throws IOException {
         writeInt(v.size(), tag);
     }
     
-    public void endMap(TreeMap v, String tag) throws IOException {}
+    public void endMap(TreeMap<?,?> v, String tag) throws IOException {}
     
 }

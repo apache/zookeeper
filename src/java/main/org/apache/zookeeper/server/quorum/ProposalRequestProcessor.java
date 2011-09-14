@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SyncRequestProcessor;
-import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * This RequestProcessor simply forwards requests to an AckRequestProcessor and

@@ -42,8 +42,6 @@ import org.apache.zookeeper.server.persistence.Util;
  * and the corresponding logs.
  */
 public class PurgeTxnLog {
-    private static final Logger LOG = LoggerFactory.getLogger(PurgeTxnLog.class);
-
     static void printUsage(){
         System.out.println("PurgeTxnLog dataLogDir [snapDir] -n count");
         System.out.println("\tdataLogDir -- path to the txn log directory");

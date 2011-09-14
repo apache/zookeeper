@@ -273,6 +273,7 @@ abstract public class Shell {
   /**
    * This is an IOException with exit code added.
    */
+  @SuppressWarnings("serial")
   public static class ExitCodeException extends IOException {
     int exitCode;
     
