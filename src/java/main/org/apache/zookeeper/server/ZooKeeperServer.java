@@ -18,19 +18,10 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -69,7 +60,6 @@ import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
-import org.apache.zookeeper.server.util.ZxidUtils;
 import javax.security.sasl.SaslException;
 
 /**
@@ -493,14 +483,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         List<ACL> acl; /* Make sure to create a new object when changing */
 
-        @SuppressWarnings("unchecked")
         ChangeRecord duplicate(long zxid) {
             StatPersisted stat = new StatPersisted();
             if (this.stat != null) {
                 DataTree.copyStatPersisted(this.stat, stat);
             }
             return new ChangeRecord(zxid, path, stat, childCount,
-                    acl == null ? new ArrayList<ACL>() : new ArrayList(acl));
+                    acl == null ? new ArrayList<ACL>() : new ArrayList<ACL>(acl));
         }
     }
 

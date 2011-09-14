@@ -55,8 +55,6 @@ import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
 
-import org.apache.zookeeper.MultiTransactionRecord;
-import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.OpResult.CheckResult;
 import org.apache.zookeeper.OpResult.CreateResult;

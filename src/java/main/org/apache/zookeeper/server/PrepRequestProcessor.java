@@ -289,7 +289,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      * @param request
      * @param record
      */
-    @SuppressWarnings("unchecked")
     protected void pRequest2Txn(int type, long zxid, Request request, Record record) throws KeeperException {
         request.hdr = new TxnHeader(request.sessionId, request.cxid, zxid,
                                     zks.getTime(), type);
@@ -477,7 +476,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      *
      * @param request
      */
-    @SuppressWarnings("unchecked")
     protected void pRequest(Request request) {
         // LOG.info("Prep>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = 0x" + Long.toHexString(request.sessionId));
@@ -523,7 +521,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 //Store off current pending change records in case we need to rollback
                 HashMap<String, ChangeRecord> pendingChanges = getPendingChanges(multiRequest);
 
-                int index = 0;
                 for(Op op: multiRequest) {
                     Record subrequest = op.toRequestRecord() ;
 
@@ -567,7 +564,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
 
                     txns.add(new Txn(request.hdr.getType(), bb.array()));
-                    index++;
                 }
 
                 request.hdr = new TxnHeader(request.sessionId, request.cxid, zxid, zks.getTime(), request.type);

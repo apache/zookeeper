@@ -62,7 +62,6 @@ public class MultiTransactionRecord implements Record, Iterable<Op> {
     @Override
     public void serialize(OutputArchive archive, String tag) throws IOException {
         archive.startRecord(this, tag);
-        int index = 0 ;
         for (Op op : ops) {
             MultiHeader h = new MultiHeader(op.getType(), false, -1);
             h.serialize(archive, tag);

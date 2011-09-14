@@ -35,8 +35,6 @@ import org.apache.zookeeper.txn.TxnHeader;
  * onto the request as it is processed.
  */
 public class Request {
-    private static final Logger LOG = LoggerFactory.getLogger(Request.class);
-
     public final static Request requestOfDeath = new Request(null, 0, 0, 0,
             null, null);
 

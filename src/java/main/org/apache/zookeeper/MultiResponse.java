@@ -57,7 +57,6 @@ public class MultiResponse implements Record, Iterable<OpResult> {
     public void serialize(OutputArchive archive, String tag) throws IOException {
         archive.startRecord(this, tag);
 
-        int index = 0;
         for (OpResult result : results) {
             int err = result.getType() == ZooDefs.OpCode.error ? ((OpResult.ErrorResult)result).getErr() : 0;
 

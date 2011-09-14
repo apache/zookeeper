@@ -126,24 +126,24 @@ public class CsvOutputArchive implements OutputArchive {
         }
     }
     
-    public void startVector(List v, String tag) throws IOException {
+    public void startVector(List<?> v, String tag) throws IOException {
         printCommaUnlessFirst();
         stream.print("v{");
         isFirst = true;
     }
     
-    public void endVector(List v, String tag) throws IOException {
+    public void endVector(List<?> v, String tag) throws IOException {
         stream.print("}");
         isFirst = false;
     }
     
-    public void startMap(TreeMap v, String tag) throws IOException {
+    public void startMap(TreeMap<?,?> v, String tag) throws IOException {
         printCommaUnlessFirst();
         stream.print("m{");
         isFirst = true;
     }
     
-    public void endMap(TreeMap v, String tag) throws IOException {
+    public void endMap(TreeMap<?,?> v, String tag) throws IOException {
         stream.print("}");
         isFirst = false;
     }

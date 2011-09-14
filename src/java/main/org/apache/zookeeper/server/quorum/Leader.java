@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -465,8 +464,6 @@ public class Leader {
      * @param followerAddr
      */
     synchronized public void processAck(long sid, long zxid, SocketAddress followerAddr) {
-        boolean first = true;
-        
         if (LOG.isTraceEnabled()) {
             LOG.trace("Ack zxid: 0x" + Long.toHexString(zxid));
             for (Proposal p : outstandingProposals.values()) {

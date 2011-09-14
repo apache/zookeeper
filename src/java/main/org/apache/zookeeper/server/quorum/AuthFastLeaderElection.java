@@ -27,7 +27,6 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -697,11 +696,6 @@ public class AuthFastLeaderElection implements Election {
                     break;
                 }
             }
-        }
-
-        public boolean queueEmpty() {
-            return (sendqueue.isEmpty() || ackset.isEmpty() || recvqueue
-                    .isEmpty());
         }
 
         Messenger(int threads, DatagramSocket s) {

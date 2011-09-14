@@ -24,47 +24,11 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.StringTokenizer;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.zookeeper.server.ZooTrace;
-
 public class ServerAdminClient {
     private static final Logger LOG = LoggerFactory.getLogger(ServerAdminClient.class);
-
-    private static long getMask(String mask) {
-        long retv = 0;
-        if (mask.equalsIgnoreCase("CLIENT_REQUEST_TRACE_MASK")) {
-            retv = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
-        } else if (mask.equalsIgnoreCase("CLIENT_DATA_PACKET_TRACE_MASK")) {
-            retv = ZooTrace.CLIENT_DATA_PACKET_TRACE_MASK;
-        } else if (mask.equalsIgnoreCase("CLIENT_PING_TRACE_MASK")) {
-            retv = ZooTrace.CLIENT_PING_TRACE_MASK;
-        } else if (mask.equalsIgnoreCase("SERVER_PACKET_TRACE_MASK")) {
-            retv = ZooTrace.SERVER_PACKET_TRACE_MASK;
-        } else if (mask.equalsIgnoreCase("SESSION_TRACE_MASK")) {
-            retv = ZooTrace.SESSION_TRACE_MASK;
-        } else if (mask.equalsIgnoreCase("EVENT_DELIVERY_TRACE_MASK")) {
-            retv = ZooTrace.EVENT_DELIVERY_TRACE_MASK;
-        } else if (mask.equalsIgnoreCase("SERVER_PING_TRACE_MASK")) {
-            retv = ZooTrace.SERVER_PING_TRACE_MASK;
-        } else if (mask.equalsIgnoreCase("WARNING_TRACE_MASK")) {
-            retv = ZooTrace.WARNING_TRACE_MASK;
-        }
-        return retv;
-    }
-
-    private static long getMasks(String masks) {
-        long retv = 0;
-        StringTokenizer st = new StringTokenizer(masks, "|");
-        while (st.hasMoreTokens()) {
-            String mask = st.nextToken().trim();
-            retv = retv | getMask(mask);
-        }
-        return retv;
-    }
 
     public static void ruok(String host, int port) {
         Socket s = null;

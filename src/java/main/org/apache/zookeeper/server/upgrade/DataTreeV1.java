@@ -328,7 +328,6 @@ public class DataTreeV1 {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public List<ACL> getACL(String path, Stat stat) throws KeeperException.NoNodeException {
         DataNodeV1 n = nodes.get(path);
         if (n == null) {
@@ -385,7 +384,6 @@ public class DataTreeV1 {
 
     public volatile long lastProcessedZxid = 0;
 
-    @SuppressWarnings("unchecked")
     public ProcessTxnResult processTxn(TxnHeader header, Record txn) {
         ProcessTxnResult rc = new ProcessTxnResult();
 

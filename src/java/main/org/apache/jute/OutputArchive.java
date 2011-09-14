@@ -39,9 +39,9 @@ public interface OutputArchive {
     public void writeRecord(Record r, String tag) throws IOException;
     public void startRecord(Record r, String tag) throws IOException;
     public void endRecord(Record r, String tag) throws IOException;
-    public void startVector(List v, String tag) throws IOException;
-    public void endVector(List v, String tag) throws IOException;
-    public void startMap(TreeMap v, String tag) throws IOException;
-    public void endMap(TreeMap v, String tag) throws IOException;
+    public void startVector(List<?> v, String tag) throws IOException;
+    public void endVector(List<?> v, String tag) throws IOException;
+    public void startMap(TreeMap<?,?> v, String tag) throws IOException;
+    public void endMap(TreeMap<?,?> v, String tag) throws IOException;
 
 }

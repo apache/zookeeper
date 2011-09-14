@@ -10,6 +10,10 @@ BUGFIXES:
 
 IMPROVEMENTS:
 
+  ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
+  unused variables, missing generics (Thomas Koch via phunt)
+
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
