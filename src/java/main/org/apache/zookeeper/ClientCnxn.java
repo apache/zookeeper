@@ -18,27 +18,29 @@
 
 package org.apache.zookeeper;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.ConnectException;
-import java.net.Socket;
+
+import javax.security.auth.login.LoginException;
+import javax.security.sasl.SaslException;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
@@ -71,9 +73,8 @@ import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ZooTrace;
-
-import javax.security.auth.login.LoginException;
-import javax.security.sasl.SaslException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class manages the socket i/o for the client. ClientCnxn maintains a list
@@ -748,8 +749,13 @@ public class ClientCnxn {
                     String serverPath = event.getPath();
                     if(serverPath.compareTo(chrootPath)==0)
                         event.setPath("/");
-                    else
+                    else if (serverPath.length() > chrootPath.length())
                         event.setPath(serverPath.substring(chrootPath.length()));
+                    else {
+                    	LOG.warn("Got server path " + event.getPath()
+                    			+ " which is too short for chroot path "
+                    			+ chrootPath);
+                    }
                 }
 
                 WatchedEvent we = new WatchedEvent(event);
@@ -843,19 +849,22 @@ public class ClientCnxn {
                 // Only send if there's a pending watch
                 // TODO: here we have the only remaining use of zooKeeper in
                 // this class. It's to be eliminated!
-                if (!disableAutoWatchReset
-                        && (!zooKeeper.getDataWatches().isEmpty()
-                                || !zooKeeper.getExistWatches().isEmpty() || !zooKeeper
-                                .getChildWatches().isEmpty())) {
-                    SetWatches sw = new SetWatches(lastZxid,
-                            zooKeeper.getDataWatches(),
-                            zooKeeper.getExistWatches(),
-                            zooKeeper.getChildWatches());
-                    RequestHeader h = new RequestHeader();
-                    h.setType(ZooDefs.OpCode.setWatches);
-                    h.setXid(-8);
-                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null);
-                    outgoingQueue.addFirst(packet);
+                if (!disableAutoWatchReset) {
+                    List<String> dataWatches = zooKeeper.getDataWatches();
+                    List<String> existWatches = zooKeeper.getExistWatches();
+                    List<String> childWatches = zooKeeper.getChildWatches();
+                    if (!dataWatches.isEmpty()
+                                || !existWatches.isEmpty() || !childWatches.isEmpty()) {
+                        SetWatches sw = new SetWatches(lastZxid,
+                                prependChroot(dataWatches),
+                                prependChroot(existWatches),
+                                prependChroot(childWatches));
+                        RequestHeader h = new RequestHeader();
+                        h.setType(ZooDefs.OpCode.setWatches);
+                        h.setXid(-8);
+                        Packet packet = new Packet(h, new ReplyHeader(), sw, null, null);
+                        outgoingQueue.addFirst(packet);
+                    }
                 }
 
                 for (AuthData id : authInfo) {
@@ -873,6 +882,23 @@ public class ClientCnxn {
             }
         }
 
+        private List<String> prependChroot(List<String> paths) {
+            if (chrootPath != null && !paths.isEmpty()) {
+                for (int i = 0; i < paths.size(); ++i) {
+                    String clientPath = paths.get(i);
+                    String serverPath;
+                    // handle clientPath = "/"
+                    if (clientPath.length() == 1) {
+                        serverPath = chrootPath;
+                    } else {
+                        serverPath = chrootPath + clientPath;
+                    }
+                    paths.set(i, serverPath);
+                }
+            }
+            return paths;
+        }
+
         private void sendPing() {
             lastPingSentNs = System.nanoTime();
             RequestHeader h = new RequestHeader(-2, OpCode.ping);
@@ -888,13 +914,6 @@ public class ClientCnxn {
         private int pingRwTimeout = minPingRwTimeout;
 
         private void startConnect() throws IOException {
-            if(!isFirstConnect){
-                try {
-                    Thread.sleep(r.nextInt(1000));
-                } catch (InterruptedException e) {
-                    LOG.warn("Unexpected exception", e);
-                }
-            }
             state = States.CONNECTING;
 
             InetSocketAddress addr;
@@ -937,8 +956,15 @@ public class ClientCnxn {
             while (state.isAlive()) {
                 try {
                     if (!clientCnxnSocket.isConnected()) {
+                        if(!isFirstConnect){
+                            try {
+                                Thread.sleep(r.nextInt(1000));
+                            } catch (InterruptedException e) {
+                                LOG.warn("Unexpected exception", e);
+                            }
+                        }
                         // don't re-establish connection if we are closing
-                        if (closing) {
+                        if (closing || !state.isAlive()) {
                             break;
                         }
                         startConnect();
