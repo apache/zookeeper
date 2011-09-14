@@ -13,6 +13,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
   unused variables, missing generics (Thomas Koch via phunt)
 
+  ZOOKEEPER-96. The jute parser should get generated from the jj files
+  instead of checking in the generated sources (Thomas Koch via phunt)
+
 
 Release 3.4.0 - 
 

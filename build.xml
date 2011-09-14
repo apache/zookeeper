@@ -234,7 +234,20 @@
         </tstamp>
     </target>
     
-    <target name="jute" depends="init">
+	
+    <target name="generate_jute_parser" depends="init,ivy-retrieve">
+      <property name="jute_javacc.dir" value="${java.src.dir}/org/apache/jute/compiler/generated" />
+      <!-- the javacc task expects a "javacc.jar" file... -->
+      <ivy:artifactproperty name="[artifact].revision" value="[revision]" />
+      <move file="${ivy.lib}/javacc-${javacc.revision}.jar" tofile="${ivy.lib}/javacc.jar" failonerror="false"/>
+      <javacc
+          target="${jute_javacc.dir}/rcc.jj"
+          outputdirectory="${jute_javacc.dir}/"
+          javacchome="${ivy.lib}"
+          />
+    </target>
+     
+    <target name="jute" depends="generate_jute_parser">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
             target="${javac.target}" source="${javac.source}"
             includes="org/apache/jute/**" debug="on" />
