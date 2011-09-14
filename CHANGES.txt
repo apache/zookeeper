@@ -2,6 +2,18 @@ Trunk
 
 Non-backward compatible changes:
 
+BUGFIXES:
+
+Backward compatible changes:
+
+BUGFIXES:
+
+IMPROVEMENTS:
+
+Release 3.4.0 - 
+
+Non-backward compatible changes:
+
 BUGFIXES: 
 
 Backward compatible changes:
