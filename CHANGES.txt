@@ -319,6 +319,9 @@ BUGFIXES:
 
   ZOOKEEPER-1125. Intermittent java core test failures. (Vishar Kher via mahadev)
 
+  ZOOKEEPER-961. Watch recovery after disconnection when connection string contains a prefix.
+  (Matthias Spycher via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
