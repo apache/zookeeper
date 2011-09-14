@@ -2471,15 +2471,24 @@ int zookeeper_close(zhandle_t *zh)
         return ZBADARGUMENTS;
 
     zh->close_requested=1;
-    if (inc_ref_counter(zh,0)!=0) {
+    if (inc_ref_counter(zh,1)>1) {
+        /* We have incremented the ref counter to prevent the
+         * completions from calling zookeeper_close before we have
+         * completed the adaptor_finish call below. */
+
 	/* Signal any syncronous completions before joining the threads */
         enter_critical(zh);
         free_completions(zh,1,ZCLOSING);
         leave_critical(zh);
 
         adaptor_finish(zh);
+        /* Now we can allow the handle to be cleaned up, if the completion
+         * threads finished during the adaptor_finish call. */
+        api_epilog(zh, 0);
         return ZOK;
     }
+    /* No need to decrement the counter since we're just going to
+     * destroy the handle later. */
     if(zh->state==ZOO_CONNECTED_STATE){
         struct oarchive *oa;
         struct RequestHeader h = { STRUCT_INITIALIZER (xid , get_xid()), STRUCT_INITIALIZER (type , ZOO_CLOSE_OP)};
