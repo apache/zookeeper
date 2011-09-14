@@ -16,7 +16,10 @@ BUGFIXES:
   ZOOKEEPER-1154. Data inconsistency when the node(s) with the highest zxid is not present at the time of leader election. (Vishal Kathuria via camille)
   
   ZOOKEEPER-1156. Log truncation truncating log too much - can cause data loss. (Vishal Kathuria via camille)
-
+ 
+  ZOOKEEPER-961. Watch recovery after disconnection when connection string contains a prefix. 
+  (Matthias Spycher via mahadev)
+ 
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:
 

@@ -114,16 +114,22 @@ public class ZooKeeper {
     private final ZKWatchManager watchManager = new ZKWatchManager();
 
     List<String> getDataWatches() {
-        List<String> rc = new ArrayList<String>(watchManager.dataWatches.keySet());
-        return rc;
+        synchronized(watchManager.dataWatches) {
+            List<String> rc = new ArrayList<String>(watchManager.dataWatches.keySet());
+            return rc;
+        }
     }
     List<String> getExistWatches() {
-        List<String> rc =  new ArrayList<String>(watchManager.existWatches.keySet());
-        return rc;
+        synchronized(watchManager.existWatches) {
+            List<String> rc =  new ArrayList<String>(watchManager.existWatches.keySet());
+            return rc;
+        }
     }
     List<String> getChildWatches() {
-        List<String> rc = new ArrayList<String>(watchManager.childWatches.keySet());
-        return rc;
+        synchronized(watchManager.childWatches) {
+            List<String> rc = new ArrayList<String>(watchManager.childWatches.keySet());
+            return rc;
+        }
     }
 
 /**

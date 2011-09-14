@@ -31,6 +31,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -964,21 +965,23 @@ public class ClientCnxn {
             synchronized (outgoingQueue) {
                 // We add backwards since we are pushing into the front
                 // Only send if there's a pending watch
-                if (!disableAutoWatchReset &&
-                        (!zooKeeper.getDataWatches().isEmpty()
-                         || !zooKeeper.getExistWatches().isEmpty()
-                         || !zooKeeper.getChildWatches().isEmpty()))
-                {
-                    SetWatches sw = new SetWatches(lastZxid,
-                            zooKeeper.getDataWatches(),
-                            zooKeeper.getExistWatches(),
-                            zooKeeper.getChildWatches());
-                    RequestHeader h = new RequestHeader();
-                    h.setType(ZooDefs.OpCode.setWatches);
-                    h.setXid(-8);
-                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null,
+                if (!disableAutoWatchReset) {
+                    List<String> dataWatches = zooKeeper.getDataWatches();
+                    List<String> existWatches = zooKeeper.getExistWatches();
+                    List<String> childWatches = zooKeeper.getChildWatches();
+                    if (!dataWatches.isEmpty()
+                                || !existWatches.isEmpty() || !childWatches.isEmpty()) {
+                        SetWatches sw = new SetWatches(lastZxid,
+                                prependChroot(dataWatches),
+                                prependChroot(existWatches),
+                                prependChroot(childWatches));
+                        RequestHeader h = new RequestHeader();
+                        h.setType(ZooDefs.OpCode.setWatches);
+                        h.setXid(-8);
+                        Packet packet = new Packet(h, new ReplyHeader(), sw, null, null,
                                 null);
-                    outgoingQueue.addFirst(packet);
+                        outgoingQueue.addFirst(packet);
+                    }
                 }
 
                 for (AuthData id : authInfo) {
@@ -999,6 +1002,23 @@ public class ClientCnxn {
             }
         }
 
+        private List<String> prependChroot(List<String> paths) {
+            if (chrootPath != null && !paths.isEmpty()) {
+                for (int i = 0; i < paths.size(); ++i) {
+                    String clientPath = paths.get(i);
+                    String serverPath;
+                    // handle clientPath = "/"
+                    if (clientPath.length() == 1) {
+                        serverPath = chrootPath;
+                    } else {
+                        serverPath = chrootPath + clientPath;
+                    }
+                    paths.set(i, serverPath);
+                }
+            }
+            return paths;
+        }
+
         private void sendPing() {
             lastPingSentNs = System.nanoTime();
             RequestHeader h = new RequestHeader(-2, OpCode.ping);
@@ -1011,7 +1031,7 @@ public class ClientCnxn {
 
         Random r = new Random(System.nanoTime());
 
-        private void startConnect() throws IOException {
+        private boolean startConnect() throws IOException {
             if (lastConnectIndex == -1) {
                 // We don't want to delay the first try at a connect, so we
                 // start with -1 the first time around
@@ -1031,32 +1051,37 @@ public class ClientCnxn {
                     }
                 }
             }
-            zooKeeper.state = States.CONNECTING;
-            currentConnectIndex = nextAddrToTry;
-            InetSocketAddress addr = serverAddrs.get(nextAddrToTry);
-            nextAddrToTry++;
-            if (nextAddrToTry == serverAddrs.size()) {
-                nextAddrToTry = 0;
+            // don't re-establish connection if we are closing
+            if (!closing && zooKeeper.state.isAlive()) {
+                zooKeeper.state = States.CONNECTING;
+                currentConnectIndex = nextAddrToTry;
+                InetSocketAddress addr = serverAddrs.get(nextAddrToTry);
+                nextAddrToTry++;
+                if (nextAddrToTry == serverAddrs.size()) {
+                    nextAddrToTry = 0;
+                }
+                LOG.info("Opening socket connection to server " + addr);
+                SocketChannel sock;
+                sock = SocketChannel.open();
+                sock.configureBlocking(false);
+                sock.socket().setSoLinger(false, -1);
+                sock.socket().setTcpNoDelay(true);
+                setName(getName().replaceAll("\\(.*\\)",
+                        "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
+                sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
+                if (sock.connect(addr)) {
+                    primeConnection(sockKey);
+                }
+                initialized = false;
+    
+                /*
+                 * Reset incomingBuffer
+                 */
+                lenBuffer.clear();
+                incomingBuffer = lenBuffer;
+                return true;
             }
-            LOG.info("Opening socket connection to server " + addr);
-            SocketChannel sock;
-            sock = SocketChannel.open();
-            sock.configureBlocking(false);
-            sock.socket().setSoLinger(false, -1);
-            sock.socket().setTcpNoDelay(true);
-            setName(getName().replaceAll("\\(.*\\)",
-                    "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
-            sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-            if (sock.connect(addr)) {
-                primeConnection(sockKey);
-            }
-            initialized = false;
-
-            /*
-             * Reset incomingBuffer
-             */
-            lenBuffer.clear();
-            incomingBuffer = lenBuffer;
+            return false;
         }
 
         private static final String RETRY_CONN_MSG =
@@ -1070,11 +1095,10 @@ public class ClientCnxn {
             while (zooKeeper.state.isAlive()) {
                 try {
                     if (sockKey == null) {
-                        // don't re-establish connection if we are closing
-                        if (closing) {
+                        boolean connecting = startConnect();
+                        if (!connecting) {
                             break;
                         }
-                        startConnect();
                         lastSend = now;
                         lastHeard = now;
                     }
@@ -1141,7 +1165,7 @@ public class ClientCnxn {
                     }
                     selected.clear();
                 } catch (Exception e) {
-                    if (closing) {
+                    if (closing || !zooKeeper.state.isAlive()) {
                         if (LOG.isDebugEnabled()) {
                             // closing so this is expected
                             LOG.debug("An exception was thrown while closing send thread for session 0x"
