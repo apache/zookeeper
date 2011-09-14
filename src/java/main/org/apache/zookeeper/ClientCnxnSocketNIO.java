@@ -20,6 +20,7 @@ package org.apache.zookeeper;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -42,6 +43,10 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     private final Selector selector = Selector.open();
 
     private SelectionKey sockKey;
+
+    private SocketAddress localSocketAddress;
+
+    private SocketAddress remoteSocketAddress;
 
     ClientCnxnSocketNIO() throws IOException {
         super();
@@ -185,9 +190,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         sock.socket().setSoLinger(false, -1);
         sock.socket().setTcpNoDelay(true);
         sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-        if (sock.connect(addr)) {
-            sendThread.primeConnection();
-        }
+        sock.connect(addr);
         initialized = false;
 
         /*
@@ -205,15 +208,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
      */
     @Override
     SocketAddress getRemoteSocketAddress() {
-        // a lot could go wrong here, so rather than put in a bunch of code
-        // to check for nulls all down the chain let's do it the simple
-        // yet bulletproof way
-        try {
-            return ((SocketChannel) sockKey.channel()).socket()
-                    .getRemoteSocketAddress();
-        } catch (NullPointerException e) {
-            return null;
-        }
+        return remoteSocketAddress;
     }
 
     /**
@@ -224,15 +219,13 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
      */
     @Override
     SocketAddress getLocalSocketAddress() {
-        // a lot could go wrong here, so rather than put in a bunch of code
-        // to check for nulls all down the chain let's do it the simple
-        // yet bulletproof way
-        try {
-            return ((SocketChannel) sockKey.channel()).socket()
-                    .getLocalSocketAddress();
-        } catch (NullPointerException e) {
-            return null;
-        }
+        return localSocketAddress;
+    }
+    
+    private void updateSocketAddresses() {
+        Socket socket = ((SocketChannel) sockKey.channel()).socket();
+        localSocketAddress = socket.getLocalSocketAddress();
+        remoteSocketAddress = socket.getRemoteSocketAddress();
     }
 
     @Override
@@ -257,6 +250,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             if ((k.readyOps() & SelectionKey.OP_CONNECT) != 0) {
                 if (sc.finishConnect()) {
                     updateLastSendAndHeard();
+                    updateSocketAddresses();
                     sendThread.primeConnection();
                 }
             } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
