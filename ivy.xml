@@ -67,6 +67,8 @@
                 rev="2.4" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
                 rev="3.1" conf="releaseaudit->default"/>
+
+    <dependency org="net.java.dev.javacc" name="javacc" rev="5.0" />
   </dependencies>
 
 </ivy-module>
