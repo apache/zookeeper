@@ -19,6 +19,8 @@ IMPROVEMENTS:
   ZOOKEEPER-96. The jute parser should get generated from the jj files
   instead of checking in the generated sources (Thomas Koch via phunt)
 
+  ZOOKEEPER-1175. DataNode references parent node for no reason
+  (Thomas Koch via phunt)
 
 Release 3.4.0 - 
 

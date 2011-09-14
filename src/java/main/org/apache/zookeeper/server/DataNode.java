@@ -36,9 +36,6 @@ import org.apache.zookeeper.data.StatPersisted;
  * 
  */
 public class DataNode implements Record {
-    /** the parent of this datanode */
-    DataNode parent;
-
     /** the data for this datanode */
     byte data[];
 
@@ -78,8 +75,7 @@ public class DataNode implements Record {
      * @param stat
      *            the stat for this node.
      */
-    public DataNode(DataNode parent, byte data[], Long acl, StatPersisted stat) {
-        this.parent = parent;
+    public DataNode(byte data[], Long acl, StatPersisted stat) {
         this.data = data;
         this.acl = acl;
         this.stat = stat;

@@ -256,21 +256,18 @@ public class DataTree {
      * This is a pointer to the root of the DataTree. It is the source of truth,
      * but we usually use the nodes hashmap to find nodes in the tree.
      */
-    private DataNode root = new DataNode(null, new byte[0], -1L,
-            new StatPersisted());
+    private DataNode root = new DataNode(new byte[0], -1L, new StatPersisted());
 
     /**
      * create a /zookeeper filesystem that is the proc filesystem of zookeeper
      */
-    private DataNode procDataNode = new DataNode(root, new byte[0], -1L,
-            new StatPersisted());
+    private DataNode procDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
     /**
      * create a /zookeeper/quota node for maintaining quota properties for
      * zookeeper
      */
-    private DataNode quotaDataNode = new DataNode(procDataNode, new byte[0],
-            -1L, new StatPersisted());
+    private DataNode quotaDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
     public DataTree() {
         /* Rather than fight it, let root have an alias */
@@ -461,7 +458,7 @@ public class DataTree {
             parent.stat.setCversion(parentCVersion);
             parent.stat.setPzxid(zxid);
             Long longval = convertAcls(acl);
-            DataNode child = new DataNode(parent, data, longval, stat);
+            DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
             nodes.put(path, child);
             if (ephemeralOwner != 0) {
@@ -536,7 +533,6 @@ public class DataTree {
                     }
                 }
             }
-            node.parent = null;
         }
         if (parentName.startsWith(procZookeeper)) {
             // delete the node in the trie.
@@ -1147,12 +1143,12 @@ public class DataTree {
                 root = node;
             } else {
                 String parentPath = path.substring(0, lastSlash);
-                node.parent = nodes.get(parentPath);
-                if (node.parent == null) {
+                DataNode parent = nodes.get(parentPath);
+                if (parent == null) {
                     throw new IOException("Invalid Datatree, unable to find " +
                             "parent " + parentPath + " of path " + path);
                 }
-                node.parent.addChild(path.substring(lastSlash + 1));
+                parent.addChild(path.substring(lastSlash + 1));
                 long eowner = node.stat.getEphemeralOwner();
                 if (eowner != 0) {
                     HashSet<String> list = ephemerals.get(eowner);

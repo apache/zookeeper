@@ -266,7 +266,7 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
     private DataNode convertDataNode(DataTree dt, DataNode parent, 
             DataNodeV1 oldDataNode) {
         StatPersisted stat = convertStat(oldDataNode.stat);
-        DataNode dataNode =  new DataNode(parent, oldDataNode.data,
+        DataNode dataNode =  new DataNode(oldDataNode.data,
                 dt.convertAcls(oldDataNode.acl), stat);
         dataNode.setChildren(oldDataNode.children);
         return dataNode;
