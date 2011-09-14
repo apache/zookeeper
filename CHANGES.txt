@@ -8,6 +8,9 @@ Backward compatible changes:
 
 BUGFIXES:
 
+  ZOOKEEPER-786. Exception in ZooKeeper.toString
+  (Thomas Koch via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
