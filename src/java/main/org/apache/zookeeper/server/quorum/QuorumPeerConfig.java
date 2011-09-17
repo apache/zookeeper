@@ -41,13 +41,14 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.VerifyingFileFactory;
 
 public class QuorumPeerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
 
     protected InetSocketAddress clientPortAddress;
-    protected String dataDir;
-    protected String dataLogDir;
+    protected File dataDir;
+    protected File dataLogDir;
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
     protected int maxClientCnxns = 60;
     /** defaults to -1 if not set explicitly */
@@ -73,7 +74,7 @@ public class QuorumPeerConfig {
     protected int purgeInterval = 0;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
-    
+
     /**
      * Minimum snapshot retain count.
      * @see org.apache.zookeeper.server.PurgeTxnLog#purge(File, File, int)
@@ -96,15 +97,13 @@ public class QuorumPeerConfig {
      * @throws ConfigException error processing configuration
      */
     public void parse(String path) throws ConfigException {
-        File configFile = new File(path);
-
-        LOG.info("Reading configuration from: " + configFile);
+        LOG.info("Reading configuration from: " + path);
 
         try {
-            if (!configFile.exists()) {
-                throw new IllegalArgumentException(configFile.toString()
-                        + " file is missing");
-            }
+            File configFile = (new VerifyingFileFactory.Builder(LOG)
+                .warnForRelativePath()
+                .failForNonExistingPath()
+                .build()).create(path);
 
             Properties cfg = new Properties();
             FileInputStream in = new FileInputStream(configFile);
@@ -132,13 +131,14 @@ public class QuorumPeerConfig {
     throws IOException, ConfigException {
         int clientPort = 0;
         String clientPortAddress = null;
+        VerifyingFileFactory vff = new VerifyingFileFactory.Builder(LOG).warnForRelativePath().build();
         for (Entry<Object, Object> entry : zkProp.entrySet()) {
             String key = entry.getKey().toString().trim();
             String value = entry.getValue().toString().trim();
             if (key.equals("dataDir")) {
-                dataDir = value;
+                dataDir = vff.create(value);
             } else if (key.equals("dataLogDir")) {
-                dataLogDir = value;
+                dataLogDir = vff.create(value);
             } else if (key.equals("clientPort")) {
                 clientPort = Integer.parseInt(value);
             } else if (key.equals("clientPortAddress")) {
@@ -192,11 +192,11 @@ public class QuorumPeerConfig {
                     InetSocketAddress electionAddr = new InetSocketAddress(
                             parts[0], Integer.parseInt(parts[2]));
                     LearnerType type = LearnerType.PARTICIPANT;
-                    if (parts[3].toLowerCase().equals("observer")) {
+                    if (parts[3].equalsIgnoreCase("observer")) {
                         type = LearnerType.OBSERVER;
                         observers.put(Long.valueOf(sid), new QuorumServer(sid, addr,
                                 electionAddr,type));
-                    } else if (parts[3].toLowerCase().equals("participant")) {
+                    } else if (parts[3].equalsIgnoreCase("participant")) {
                         type = LearnerType.PARTICIPANT;
                         servers.put(Long.valueOf(sid), new QuorumServer(sid, addr,
                                 electionAddr,type));
@@ -227,7 +227,7 @@ public class QuorumPeerConfig {
                 System.setProperty("zookeeper." + key, value);
             }
         }
-        
+
         // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
         // PurgeTxnLog.purge(File, File, int) will not allow to purge less
         // than 3.
@@ -243,7 +243,7 @@ public class QuorumPeerConfig {
         if (dataLogDir == null) {
             dataLogDir = dataDir;
         } else {
-            if (!new File(dataLogDir).isDirectory()) {
+            if (!dataLogDir.isDirectory()) {
                 throw new IllegalArgumentException("dataLogDir " + dataLogDir
                         + " is missing.");
             }
@@ -251,11 +251,11 @@ public class QuorumPeerConfig {
         if (clientPort == 0) {
             throw new IllegalArgumentException("clientPort is not set");
         }
-        if (clientPortAddress != null) {
+        if (clientPortAddress == null) {
+            this.clientPortAddress = new InetSocketAddress(clientPort);
+        } else {
             this.clientPortAddress = new InetSocketAddress(
                     InetAddress.getByName(clientPortAddress), clientPort);
-        } else {
-            this.clientPortAddress = new InetSocketAddress(clientPort);
         }
 
         if (tickTime == 0) {
@@ -338,7 +338,7 @@ public class QuorumPeerConfig {
             // Now add observers to servers, once the quorums have been
             // figured out
             servers.putAll(observers);
-    
+
             File myIdFile = new File(dataDir, "myid");
             if (!myIdFile.exists()) {
                 throw new IllegalArgumentException(myIdFile.toString()
@@ -358,7 +358,7 @@ public class QuorumPeerConfig {
                 throw new IllegalArgumentException("serverid " + myIdString
                         + " is not a number");
             }
-            
+
             // Warn about inconsistent peer type
             LearnerType roleByServersList = observers.containsKey(serverId) ? LearnerType.OBSERVER
                     : LearnerType.PARTICIPANT;
@@ -366,15 +366,15 @@ public class QuorumPeerConfig {
                 LOG.warn("Peer type from servers list (" + roleByServersList
                         + ") doesn't match peerType (" + peerType
                         + "). Defaulting to servers list.");
-    
+
                 peerType = roleByServersList;
             }
         }
     }
 
     public InetSocketAddress getClientPortAddress() { return clientPortAddress; }
-    public String getDataDir() { return dataDir; }
-    public String getDataLogDir() { return dataLogDir; }
+    public File getDataDir() { return dataDir; }
+    public File getDataLogDir() { return dataLogDir; }
     public int getTickTime() { return tickTime; }
     public int getMaxClientCnxns() { return maxClientCnxns; }
     public int getMinSessionTimeout() { return minSessionTimeout; }

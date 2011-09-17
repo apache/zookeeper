@@ -100,8 +100,7 @@ public class ZooKeeperServerMain {
             // create a file logger url from the command line args
             ZooKeeperServer zkServer = new ZooKeeperServer();
 
-            FileTxnSnapLog ftxn = new FileTxnSnapLog(new
-                   File(config.dataLogDir), new File(config.dataDir));
+            FileTxnSnapLog ftxn = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
             zkServer.setTxnLogFactory(ftxn);
             zkServer.setTickTime(config.tickTime);
             zkServer.setMinSessionTimeout(config.minSessionTimeout);

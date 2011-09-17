@@ -34,14 +34,14 @@ import org.junit.Test;
 public class DatadirCleanupManagerTest {
 
     private DatadirCleanupManager purgeMgr;
-    private String snapDir;
-    private String dataLogDir;
+    private File snapDir;
+    private File dataLogDir;
 
     @Before
     public void setUp() throws Exception {
         File dataDir = ClientBase.createTmpDir();
-        snapDir = dataDir.getAbsolutePath();
-        dataLogDir = dataDir.getAbsolutePath();
+        snapDir = dataDir;
+        dataLogDir = dataDir;
     }
 
     @Test
