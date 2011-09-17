@@ -121,22 +121,22 @@ public class DataTree {
      * this is map from longs to acl's. It saves acl's being stored for each
      * datanode.
      */
-    public final Map<Long, List<ACL>> longKeyMap =
+    private final Map<Long, List<ACL>> longKeyMap =
         new HashMap<Long, List<ACL>>();
 
     /**
      * this a map from acls to long.
      */
-    public final Map<List<ACL>, Long> aclKeyMap =
+    private final Map<List<ACL>, Long> aclKeyMap =
         new HashMap<List<ACL>, Long>();
 
     /**
      * these are the number of acls that we have in the datatree
      */
-    protected long aclIndex = 0;
+    private long aclIndex = 0;
 
     @SuppressWarnings("unchecked")
-    public HashSet<String> getEphemerals(long sessionId) {
+    public Set<String> getEphemerals(long sessionId) {
         HashSet<String> retv = ephemerals.get(sessionId);
         if (retv == null) {
             return new HashSet<String>();
@@ -150,6 +150,10 @@ public class DataTree {
 
     public Map<Long, HashSet<String>> getEphemeralsMap() {
         return ephemerals;
+    }
+
+    int getAclSize() {
+        return longKeyMap.size();
     }
 
     private long incrementIndex() {
@@ -245,8 +249,7 @@ public class DataTree {
             DataNode value = entry.getValue();
             synchronized (value) {
                 result += entry.getKey().length();
-                result += (value.data == null ? 0
-                        : value.data.length);
+                result += value.getApproximateDataSize();
             }
         }
         return result;
@@ -445,16 +448,14 @@ public class DataTree {
         }
         synchronized (parent) {
             Set<String> children = parent.getChildren();
-            if (children != null) {
-                if (children.contains(childName)) {
-                    throw new KeeperException.NodeExistsException();
-                }
+            if (children != null && children.contains(childName)) {
+                throw new KeeperException.NodeExistsException();
             }
-            
+
             if (parentCVersion == -1) {
                 parentCVersion = parent.stat.getCversion();
                 parentCVersion++;
-            }    
+            }
             parent.stat.setCversion(parentCVersion);
             parent.stat.setPzxid(zxid);
             Long longval = convertAcls(acl);
@@ -486,8 +487,8 @@ public class DataTree {
             }
         }
         // also check to update the quotas for this node
-        String lastPrefix;
-        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
+        String lastPrefix = getMaxPrefixWithQuota(path);
+        if(lastPrefix != null) {
             // ok we have some match and need to update
             updateCount(lastPrefix, 1);
             updateBytes(lastPrefix, data == null ? 0 : data.length);
@@ -534,18 +535,15 @@ public class DataTree {
                 }
             }
         }
-        if (parentName.startsWith(procZookeeper)) {
+        if (parentName.startsWith(procZookeeper) && Quotas.limitNode.equals(childName)) {
             // delete the node in the trie.
-            if (Quotas.limitNode.equals(childName)) {
-                // we need to update the trie
-                // as well
-                pTrie.deletePath(parentName.substring(quotaZookeeper.length()));
-            }
+            // we need to update the trie as well
+            pTrie.deletePath(parentName.substring(quotaZookeeper.length()));
         }
 
         // also check to update the quotas for this node
-        String lastPrefix;
-        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
+        String lastPrefix = getMaxPrefixWithQuota(path);
+        if(lastPrefix != null) {
             // ok we have some match and need to update
             updateCount(lastPrefix, -1);
             int bytes = 0;
@@ -563,7 +561,7 @@ public class DataTree {
         Set<Watcher> processed = dataWatches.triggerWatch(path,
                 EventType.NodeDeleted);
         childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
-        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
+        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
                 EventType.NodeChildrenChanged);
     }
 
@@ -584,8 +582,8 @@ public class DataTree {
             n.copyStat(s);
         }
         // now update if the path is in a quota subtree.
-        String lastPrefix;
-        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
+        String lastPrefix = getMaxPrefixWithQuota(path);
+        if(lastPrefix != null) {
           this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
               - (lastdata == null ? 0 : lastdata.length));
         }
@@ -605,11 +603,11 @@ public class DataTree {
         // root node for now.
         String lastPrefix = pTrie.findMaxPrefix(path);
 
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
-            return lastPrefix;
+        if (rootZookeeper.equals(lastPrefix) || "".equals(lastPrefix)) {
+            return null;
         }
         else {
-            return null;
+            return lastPrefix;
         }
     }
 
@@ -656,11 +654,10 @@ public class DataTree {
             }
             ArrayList<String> children;
             Set<String> childs = n.getChildren();
-            if (childs != null) {
-                children = new ArrayList<String>(childs.size());
-                children.addAll(childs);
-            } else {
+            if (childs == null) {
                 children = new ArrayList<String>(0);
+            } else {
+                children = new ArrayList<String>(childs);
             }
 
             if (watcher != null) {
@@ -713,7 +710,7 @@ public class DataTree {
         public Stat stat;
 
         public List<ProcessTxnResult> multiResult;
-        
+
         /**
          * Equality is defined as the clientId and the cxid being the same. This
          * allows us to use hash tables to track completion of transactions.
@@ -801,7 +798,7 @@ public class DataTree {
                 case OpCode.check:
                     CheckVersionTxn checkTxn = (CheckVersionTxn) txn;
                     debug = "Check Version transaction for "
-                            + checkTxn.getPath() 
+                            + checkTxn.getPath()
                             + " and version="
                             + checkTxn.getVersion();
                     rc.path = checkTxn.getPath();
@@ -846,9 +843,9 @@ public class DataTree {
                         assert(record != null);
 
                         ByteBufferInputStream.byteBuffer2Record(bb, record);
-                       
+
                         if (failed && subtxn.getType() != OpCode.error){
-                            int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() 
+                            int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue()
                                                  : Code.OK.intValue();
 
                             subtxn.setType(OpCode.error);
@@ -860,7 +857,7 @@ public class DataTree {
                         }
 
                         TxnHeader subHdr = new TxnHeader(header.getClientId(), header.getCxid(),
-                                                         header.getZxid(), header.getTime(), 
+                                                         header.getZxid(), header.getTime(),
                                                          subtxn.getType());
                         ProcessTxnResult subRc = processTxn(subHdr, record);
                         rc.multiResult.add(subRc);
@@ -891,7 +888,7 @@ public class DataTree {
          * with the file.
          */
         if (rc.zxid > lastProcessedZxid) {
-        	lastProcessedZxid = rc.zxid;
+            lastProcessedZxid = rc.zxid;
         }
         return rc;
     }
@@ -1056,7 +1053,6 @@ public class DataTree {
         }
         String children[] = null;
         synchronized (node) {
-            scount++;
             oa.writeString(pathString, "path");
             oa.writeRecord(node, "node");
             Set<String> childs = node.getChildren();
@@ -1077,10 +1073,6 @@ public class DataTree {
             }
         }
     }
-
-    int scount;
-
-    public boolean initialized = false;
 
     private void deserializeList(Map<Long, List<ACL>> longKeyMap,
             InputArchive ia) throws IOException {
@@ -1120,7 +1112,6 @@ public class DataTree {
     }
 
     public void serialize(OutputArchive oa, String tag) throws IOException {
-        scount = 0;
         serializeList(longKeyMap, oa);
         serializeNode(oa, new StringBuilder(""));
         // / marks end of stream
@@ -1134,7 +1125,7 @@ public class DataTree {
         deserializeList(longKeyMap, ia);
         nodes.clear();
         String path = ia.readString("path");
-        while (!path.equals("/")) {
+        while (!"/".equals(path)) {
             DataNode node = new DataNode();
             ia.readRecord(node, "node");
             nodes.put(path, node);
@@ -1211,14 +1202,6 @@ public class DataTree {
         childWatches.removeWatcher(watcher);
     }
 
-    public void clear() {
-        root = null;
-        nodes.clear();
-        ephemerals.clear();
-        // dataWatches = null;
-        // childWatches = null;
-    }
-
     public void setWatches(long relativeZxid, List<String> dataWatches,
             List<String> existWatches, List<String> childWatches,
             Watcher watcher) {
@@ -1235,10 +1218,10 @@ public class DataTree {
                 e = new WatchedEvent(EventType.NodeDataChanged,
                         KeeperState.SyncConnected, path);
             }
-            if (e != null) {
-                watcher.process(e);
-            } else {
+            if (e == null) {
                 this.dataWatches.addWatch(path, watcher);
+            } else {
+                watcher.process(e);
             }
         }
         for (String path : existWatches) {
@@ -1253,10 +1236,10 @@ public class DataTree {
                 e = new WatchedEvent(EventType.NodeCreated,
                         KeeperState.SyncConnected, path);
             }
-            if (e != null) {
-                watcher.process(e);
-            } else {
+            if (e == null) {
                 this.dataWatches.addWatch(path, watcher);
+            } else {
+                watcher.process(e);
             }
         }
         for (String path : childWatches) {
@@ -1269,10 +1252,10 @@ public class DataTree {
                 e = new WatchedEvent(EventType.NodeChildrenChanged,
                         KeeperState.SyncConnected, path);
             }
-            if (e != null) {
-                watcher.process(e);
-            } else {
+            if (e == null) {
                 this.childWatches.addWatch(path, watcher);
+            } else {
+                watcher.process(e);
             }
         }
     }
