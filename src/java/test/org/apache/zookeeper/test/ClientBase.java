@@ -70,9 +70,9 @@ public abstract class ClientBase extends ZKTestCase {
     protected int maxCnxns = 0;
     protected ServerCnxnFactory serverFactory = null;
     protected File tmpDir = null;
-    
+
     long initialFdCount;
-    
+
     public ClientBase() {
         super();
     }
@@ -83,7 +83,7 @@ public abstract class ClientBase extends ZKTestCase {
      * use empty watchers in real code!
      *
      */
-    protected class NullWatcher implements Watcher {
+    protected static class NullWatcher implements Watcher {
         public void process(WatchedEvent event) { /* nada */ }
     }
 
@@ -360,7 +360,7 @@ public abstract class ClientBase extends ZKTestCase {
             ZKDatabase zkDb;
             {
                 ZooKeeperServer zs = getServer(factory);
-        
+
                 zkDb = zs.getZKDatabase();
             }
             factory.shutdown();
@@ -579,7 +579,7 @@ public abstract class ClientBase extends ZKTestCase {
         // verify all the servers reporting same number of nodes
         String logmsg = "node count not consistent{} {}";
         for (int i = 1; i < parts.length; i++) {
-            if (counts[i-1] != counts[i]) {            	
+            if (counts[i-1] != counts[i]) {
                 LOG.error(logmsg, Integer.valueOf(counts[i-1]), Integer.valueOf(counts[i]));
             } else {
                 LOG.info(logmsg, Integer.valueOf(counts[i-1]), Integer.valueOf(counts[i]));

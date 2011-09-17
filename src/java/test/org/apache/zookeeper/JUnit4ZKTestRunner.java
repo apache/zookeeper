@@ -37,7 +37,7 @@ public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
         super(klass);
     }
 
-    public class LoggedInvokeMethod extends InvokeMethod {
+    public static class LoggedInvokeMethod extends InvokeMethod {
         private String name;
 
         public LoggedInvokeMethod(FrameworkMethod method, Object target) {

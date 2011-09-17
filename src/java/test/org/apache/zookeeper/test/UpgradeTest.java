@@ -69,7 +69,7 @@ public class UpgradeTest extends ZKTestCase implements Watcher {
         Assert.assertTrue("waiting for server being up",
                 ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
-        Stat stat = zk.exists("/", false);
+        zk.exists("/", false);
         List<String> children = zk.getChildren("/", false);
         Collections.sort(children);
         for (int i = 0; i < 10; i++) {

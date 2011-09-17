@@ -50,13 +50,8 @@ public class FLEZeroWeightTest extends ZKTestCase {
     ArrayList<LEThread> threads;
     File tmpdir[];
     int port[];
-    Object finalObj;
 
     volatile Vote votes[];
-    volatile boolean leaderDies;
-    volatile long leader = -1;
-    Random rand = new Random();
-
 
     @Before
     public void setUp() throws Exception {
@@ -67,7 +62,6 @@ public class FLEZeroWeightTest extends ZKTestCase {
         votes = new Vote[count];
         tmpdir = new File[count];
         port = new int[count];
-        finalObj = new Object();
 
         String config = "group.1=0:1:2\n" +
         "group.2=3:4:5\n" +

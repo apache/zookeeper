@@ -36,7 +36,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     public void testNextGoesRound() throws UnknownHostException {
         HostProvider hostProvider = getHostProvider(2);
         InetSocketAddress first = hostProvider.next(0);
-        assertTrue(first instanceof InetSocketAddress);
+        assertTrue(first != null);
         hostProvider.next(0);
         assertEquals(first, hostProvider.next(0));
     }

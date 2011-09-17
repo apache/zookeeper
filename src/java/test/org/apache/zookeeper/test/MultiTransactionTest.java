@@ -75,9 +75,7 @@ public class MultiTransactionTest extends ZKTestCase implements Watcher {
 
     @Test
     public void testCreate() throws Exception {
-        List<OpResult> results = new ArrayList<OpResult>();
-
-        results = zk.multi(Arrays.asList(
+        zk.multi(Arrays.asList(
                 Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
@@ -86,7 +84,7 @@ public class MultiTransactionTest extends ZKTestCase implements Watcher {
         zk.getData("/multi1", false, null);
         zk.getData("/multi2", false, null);
     }
-    
+
     @Test
     public void testCreateDelete() throws Exception {
 
@@ -154,9 +152,9 @@ public class MultiTransactionTest extends ZKTestCase implements Watcher {
 
     @Test
     public void testUpdateConflict() throws Exception {
-    
+
         Assert.assertNull(zk.exists("/multi", null));
-        
+
         try {
             zk.multi(Arrays.asList(
                     Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
@@ -182,7 +180,7 @@ public class MultiTransactionTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void TestDeleteUpdateConflict() throws Exception {
+    public void testDeleteUpdateConflict() throws Exception {
 
         /* Delete of a node folowed by an update of the (now) deleted node */
         try {
@@ -201,7 +199,7 @@ public class MultiTransactionTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void TestGetResults() throws Exception {
+    public void testGetResults() throws Exception {
         /* Delete of a node folowed by an update of the (now) deleted node */
         try {
             zk.multi(Arrays.asList(

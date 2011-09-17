@@ -42,14 +42,14 @@ import org.junit.Test;
 public class FLELostMessageTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(FLELostMessageTest.class);
 
-    
+
     int count;
     HashMap<Long,QuorumServer> peers;
     File tmpdir[];
     int port[];
-    
+
     QuorumCnxManager cnxManager;
-   
+
     @Before
     public void setUp() throws Exception {
         count = 3;
@@ -65,9 +65,9 @@ public class FLELostMessageTest extends ZKTestCase {
     }
 
 
-    class LEThread extends Thread {
-        int i;
-        QuorumPeer peer;
+    static class LEThread extends Thread {
+        private int i;
+        private QuorumPeer peer;
 
         LEThread(QuorumPeer peer, int i) {
             this.i = i;
@@ -95,7 +95,7 @@ public class FLELostMessageTest extends ZKTestCase {
                 peer.setCurrentVote(v);
 
                 LOG.info("Finished election: " + i + ", " + v.getId());
-                    
+
                 Assert.assertTrue("State is not leading.", peer.getPeerState() == ServerState.LEADING);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -105,8 +105,7 @@ public class FLELostMessageTest extends ZKTestCase {
     }
     @Test
     public void testLostMessage() throws Exception {
-        FastLeaderElection le[] = new FastLeaderElection[count];
-        
+
         LOG.info("TestLE: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
@@ -117,16 +116,16 @@ public class FLELostMessageTest extends ZKTestCase {
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = clientport;
         }
-        
+
         /*
          * Start server 0
          */
-            
+
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 1000, 2, 2);
         peer.startLeaderElection();
         LEThread thread = new LEThread(peer, 1);
         thread.start();
-            
+
         /*
          * Start mock server 1
          */
@@ -136,24 +135,24 @@ public class FLELostMessageTest extends ZKTestCase {
             Assert.fail("Threads didn't join");
         }
     }
-        
+
     ByteBuffer createMsg(int state, long leader, long zxid, long epoch){
         byte requestBytes[] = new byte[28];
-        ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);  
-        
+        ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
+
         /*
          * Building notification packet to send
          */
-                
+
         requestBuffer.clear();
         requestBuffer.putInt(state);
         requestBuffer.putLong(leader);
         requestBuffer.putLong(zxid);
         requestBuffer.putLong(epoch);
-        
+
         return requestBuffer;
     }
-        
+
     void mockServer() throws InterruptedException, IOException {
         /*
          * Create an instance of the connection manager
@@ -166,9 +165,9 @@ public class FLELostMessageTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        
-        cnxManager.toSend(new Long(1), createMsg(ServerState.LOOKING.ordinal(), 0, 0, 1));
+
+        cnxManager.toSend(1l, createMsg(ServerState.LOOKING.ordinal(), 0, 0, 1));
         cnxManager.recvQueue.take();
-        cnxManager.toSend(new Long(1), createMsg(ServerState.FOLLOWING.ordinal(), 1, 0, 1));  
+        cnxManager.toSend(1L, createMsg(ServerState.FOLLOWING.ordinal(), 1, 0, 1));
     }
 }

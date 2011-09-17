@@ -25,6 +25,8 @@ IMPROVEMENTS:
   ZOOKEEPER-899. Update Netty version in trunk to 3.2.2
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1182. Make findbugs usable in Eclipse (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

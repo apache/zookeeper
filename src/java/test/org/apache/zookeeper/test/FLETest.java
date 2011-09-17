@@ -317,9 +317,9 @@ public class FLETest extends ZKTestCase {
     /*
      * Class to verify of the thread has become a follower
      */
-    class VerifyState extends Thread {
+    static class VerifyState extends Thread {
         volatile private boolean success = false;
-        QuorumPeer peer;
+        private QuorumPeer peer;
         public VerifyState(QuorumPeer peer) {
             this.peer = peer;
         }

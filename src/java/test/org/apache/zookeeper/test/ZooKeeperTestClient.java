@@ -288,7 +288,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
     System.out.println("session id of zk_1: " + zk_1.getSessionId());
     zk.close();
 
-    Stat no_stat = zk_1.exists("nosuchnode", false);
+    zk_1.exists("nosuchnode", false);
 
     event = this.getEvent(10);
     if (event == null) {
