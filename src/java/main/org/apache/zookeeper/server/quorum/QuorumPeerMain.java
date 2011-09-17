@@ -133,8 +133,8 @@ public class QuorumPeerMain {
           quorumPeer = new QuorumPeer();
           quorumPeer.setClientPortAddress(config.getClientPortAddress());
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
-                      new File(config.getDataLogDir()),
-                      new File(config.getDataDir())));
+                      config.getDataLogDir(),
+                      config.getDataDir()));
           quorumPeer.setQuorumPeers(config.getServers());
           quorumPeer.setElectionType(config.getElectionAlg());
           quorumPeer.setMyid(config.getServerId());

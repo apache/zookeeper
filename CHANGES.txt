@@ -33,6 +33,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1176. Remove dead code and basic cleanup in DataTree
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-556. Startup messages should account for common error of
+  missing leading slash in config files (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

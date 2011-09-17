@@ -46,9 +46,9 @@ public class DatadirCleanupManager {
 
     private PurgeTaskStatus purgeTaskStatus = PurgeTaskStatus.NOT_STARTED;
 
-    private final String snapDir;
+    private final File snapDir;
 
-    private final String dataLogDir;
+    private final File dataLogDir;
 
     private final int snapRetainCount;
 
@@ -69,7 +69,7 @@ public class DatadirCleanupManager {
      * @param purgeInterval
      *            purge interval in hours
      */
-    public DatadirCleanupManager(String snapDir, String dataLogDir, int snapRetainCount,
+    public DatadirCleanupManager(File snapDir, File dataLogDir, int snapRetainCount,
             int purgeInterval) {
         this.snapDir = snapDir;
         this.dataLogDir = dataLogDir;
@@ -123,11 +123,11 @@ public class DatadirCleanupManager {
     }
 
     static class PurgeTask extends TimerTask {
-        private String logsDir;
-        private String snapsDir;
+        private File logsDir;
+        private File snapsDir;
         private int snapRetainCount;
 
-        public PurgeTask(String dataDir, String snapDir, int count) {
+        public PurgeTask(File dataDir, File snapDir, int count) {
             logsDir = dataDir;
             snapsDir = snapDir;
             snapRetainCount = count;
@@ -137,7 +137,7 @@ public class DatadirCleanupManager {
         public void run() {
             LOG.info("Purge task started.");
             try {
-                PurgeTxnLog.purge(new File(logsDir), new File(snapsDir), snapRetainCount);
+                PurgeTxnLog.purge(logsDir, snapsDir, snapRetainCount);
             } catch (Exception e) {
                 LOG.error("Error occured while purging.", e);
             }
@@ -159,7 +159,7 @@ public class DatadirCleanupManager {
      * 
      * @return the snapshot directory.
      */
-    public String getSnapDir() {
+    public File getSnapDir() {
         return snapDir;
     }
 
@@ -168,7 +168,7 @@ public class DatadirCleanupManager {
      * 
      * @return the transaction log directory.
      */
-    public String getDataLogDir() {
+    public File getDataLogDir() {
         return dataLogDir;
     }
 
