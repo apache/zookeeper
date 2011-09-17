@@ -39,20 +39,20 @@
   </publications>
 
   <dependencies>
-    <dependency org="org.slf4j" name="slf4j-api" rev="1.6.1"/>
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1" transitive="false"/>
+    <dependency org="org.slf4j" name="slf4j-api" rev="1.6.2"/>
+    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.2" transitive="false"/>
   
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
-    <dependency org="log4j" name="log4j" rev="1.2.15" transitive="false" conf="default"/>
+    <dependency org="log4j" name="log4j" rev="1.2.16" transitive="false" conf="default"/>
     <dependency org="jline" name="jline" rev="0.9.94" transitive="false" conf="default"/>
 
-    <dependency org="org.jboss.netty" name="netty" conf="default" rev="3.2.2.Final">
+    <dependency org="org.jboss.netty" name="netty" conf="default" rev="3.2.5.Final">
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
     <dependency org="org.vafer" name="jdeb" rev="0.8" conf="package->master"/>
 
-    <dependency org="junit" name="junit" rev="4.8.1" conf="test->default"/>
+    <dependency org="junit" name="junit" rev="4.9" conf="test->default"/>
     <dependency org="checkstyle" name="checkstyle" rev="5.0"
                 conf="test->default"/>
 
@@ -62,13 +62,12 @@
                 conf="jdiff->default"/>
 
     <dependency org="org.apache.rat" name="apache-rat-tasks" 
-                rev="0.6" conf="releaseaudit->default"/>
+                rev="0.7" conf="releaseaudit->default"/>
     <dependency org="commons-lang" name="commons-lang" 
-                rev="2.4" conf="releaseaudit->default"/>
+                rev="2.6" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
-                rev="3.1" conf="releaseaudit->default"/>
+                rev="3.2.1" conf="releaseaudit->default"/>
 
     <dependency org="net.java.dev.javacc" name="javacc" rev="5.0" />
   </dependencies>
-
 </ivy-module>

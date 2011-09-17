@@ -22,6 +22,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1175. DataNode references parent node for no reason
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-899. Update Netty version in trunk to 3.2.2
+  (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
