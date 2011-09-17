@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -56,7 +57,7 @@ import org.apache.zookeeper.txn.TxnHeader;
 public class LearnerHandler extends Thread {
     private static final Logger LOG = LoggerFactory.getLogger(LearnerHandler.class);
 
-    protected final Socket sock;    
+    protected final Socket sock;
 
     public Socket getSocket() {
         return sock;
@@ -65,22 +66,22 @@ public class LearnerHandler extends Thread {
     final Leader leader;
 
     long tickOfLastAck;
-    
+
     /**
      * ZooKeeper server identifier of this learner
      */
     protected long sid = 0;
-    
+
     long getSid(){
         return sid;
-    }                    
+    }
 
     protected int version = 0x1;
-    
+
     int getVersion() {
     	return version;
     }
-    
+
     /**
      * The packets to be sent to the learner
      */
@@ -99,7 +100,7 @@ public class LearnerHandler extends Thread {
         this.leader = leader;
         leader.addLearnerHandler(this);
     }
-    
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -171,7 +172,7 @@ public class LearnerHandler extends Thread {
         String type = null;
         String mess = null;
         Record txn = null;
-        
+
         switch (p.getType()) {
         case Leader.ACK:
             type = "ACK";
@@ -181,7 +182,7 @@ public class LearnerHandler extends Thread {
             break;
         case Leader.FOLLOWERINFO:
             type = "FOLLOWERINFO";
-            break;    
+            break;
         case Leader.NEWLEADER:
             type = "NEWLEADER";
             break;
@@ -232,7 +233,7 @@ public class LearnerHandler extends Thread {
      */
     @Override
     public void run() {
-        try {            
+        try {
             sock.setSoTimeout(leader.self.getTickTime()*leader.self.getInitLimit());
             ia = BinaryInputArchive.getArchive(new BufferedInputStream(sock
                     .getInputStream()));
@@ -263,18 +264,18 @@ public class LearnerHandler extends Thread {
 
             LOG.info("Follower sid: " + this.sid + " : info : "
                     + leader.self.quorumPeers.get(this.sid));
-                        
+
             if (qp.getType() == Leader.OBSERVERINFO) {
                   learnerType = LearnerType.OBSERVER;
-            }            
-            
+            }
+
             long lastAcceptedEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
-            
+
             long peerLastZxid;
             StateSummary ss = null;
             long zxid = qp.getZxid();
             long newEpoch = leader.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
-            
+
             if (this.getVersion() < 0x10000) {
                 // we are going to have to extrapolate the epoch information
                 long epoch = ZxidUtils.getEpochFromZxid(zxid);
@@ -299,21 +300,21 @@ public class LearnerHandler extends Thread {
                 leader.waitForEpochAck(this.getSid(), ss);
             }
             peerLastZxid = ss.getLastZxid();
-            
+
             /* the default to send to the follower */
             int packetToSend = Leader.SNAP;
             long zxidToSend = 0;
             long leaderLastZxid = 0;
             /** the packets that the follower needs to get updates from **/
             long updates = peerLastZxid;
-            
-            /* we are sending the diff check if we have proposals in memory to be able to 
-             * send a diff to the 
-             */ 
+
+            /* we are sending the diff check if we have proposals in memory to be able to
+             * send a diff to the
+             */
             ReentrantReadWriteLock lock = leader.zk.getZKDatabase().getLogLock();
             ReadLock rl = lock.readLock();
             try {
-                rl.lock();        
+                rl.lock();
                 final long maxCommittedLog = leader.zk.getZKDatabase().getmaxCommittedLog();
                 final long minCommittedLog = leader.zk.getZKDatabase().getminCommittedLog();
                 LOG.info("Synchronizing with Follower sid: " + this.sid
@@ -321,7 +322,7 @@ public class LearnerHandler extends Thread {
                         +" minCommittedLog = "+Long.toHexString(minCommittedLog)
                         +" peerLastZxid = "+Long.toHexString(peerLastZxid));
 
-                LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
+                List<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
 
                 if (proposals.size() != 0) {
                     if ((maxCommittedLog >= peerLastZxid)
@@ -353,12 +354,12 @@ public class LearnerHandler extends Thread {
                                         LOG.info("Sending TRUNC");
                                         zxidToSend = prevProposalZxid;
                                         updates = zxidToSend;
-                                    } 
+                                    }
                                     else {
                                         // Just send the diff
                                         packetToSend = Leader.DIFF;
                                         LOG.info("Sending diff");
-                                        zxidToSend = maxCommittedLog;        
+                                        zxidToSend = maxCommittedLog;
                                     }
 
                                 }
@@ -375,7 +376,7 @@ public class LearnerHandler extends Thread {
                     }
                 } else {
                     // just let the state transfer happen
-                }               
+                }
 
                 leaderLastZxid = leader.startForwarding(this, updates);
                 if (peerLastZxid == leaderLastZxid) {
@@ -401,21 +402,21 @@ public class LearnerHandler extends Thread {
             }
             oa.writeRecord(new QuorumPacket(packetToSend, zxidToSend, null, null), "packet");
             bufferedOutput.flush();
-            
+
             /* if we are not truncating or sending a diff just send a snapshot */
             if (packetToSend == Leader.SNAP) {
                 LOG.info("Sending snapshot last zxid of peer is 0x"
-                        + Long.toHexString(peerLastZxid) + " " 
+                        + Long.toHexString(peerLastZxid) + " "
                         + " zxid of leader is 0x"
                         + Long.toHexString(leaderLastZxid)
-                        + "sent zxid of db as 0x" 
+                        + "sent zxid of db as 0x"
                         + Long.toHexString(zxidToSend));
                 // Dump data to peer
                 leader.zk.getZKDatabase().serializeSnapshot(oa);
                 oa.writeString("BenWasHere", "signature");
             }
             bufferedOutput.flush();
-            
+
             // Start sending packets
             new Thread() {
                 public void run() {
@@ -428,9 +429,9 @@ public class LearnerHandler extends Thread {
                     }
                 }
             }.start();
-            
+
             /*
-             * Have to wait for the first ACK, wait until 
+             * Have to wait for the first ACK, wait until
              * the leader is ready, and only then we can
              * start processing messages.
              */
@@ -441,7 +442,7 @@ public class LearnerHandler extends Thread {
                 return;
             }
             leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
-            
+
             /*
              * Wait until leader starts up
              */
@@ -456,7 +457,7 @@ public class LearnerHandler extends Thread {
             //
             queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
 
-            
+
             while (true) {
                 qp = new QuorumPacket();
                 ia.readRecord(qp, "packet");
@@ -525,7 +526,7 @@ public class LearnerHandler extends Thread {
                     qp.setData(bos.toByteArray());
                     queuedPackets.add(qp);
                     break;
-                case Leader.REQUEST:                    
+                case Leader.REQUEST:
                     bb = ByteBuffer.wrap(qp.getData());
                     sessionId = bb.getLong();
                     cxid = bb.getInt();
@@ -547,7 +548,7 @@ public class LearnerHandler extends Thread {
             if (sock != null && !sock.isClosed()) {
                 LOG.error("Unexpected exception causing shutdown while sock "
                         + "still open", e);
-            	//close the socket to make sure the 
+            	//close the socket to make sure the
             	//other side can see it being close
             	try {
             		sock.close();
@@ -558,7 +559,7 @@ public class LearnerHandler extends Thread {
         } catch (InterruptedException e) {
             LOG.error("Unexpected exception causing shutdown", e);
         } finally {
-            LOG.warn("******* GOODBYE " 
+            LOG.warn("******* GOODBYE "
                     + (sock != null ? sock.getRemoteSocketAddress() : "<null>")
                     + " ********");
             shutdown();

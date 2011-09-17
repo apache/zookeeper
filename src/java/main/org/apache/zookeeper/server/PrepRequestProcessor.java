@@ -175,7 +175,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
 
     /**
      * Grab current pending change records for each op in a multi-op.
-     * 
+     *
      * This is used inside MultiOp error code path to rollback in the event
      * of a failed multi-op.
      *
@@ -183,7 +183,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      */
     HashMap<String, ChangeRecord> getPendingChanges(MultiTransactionRecord multiRequest) {
     	HashMap<String, ChangeRecord> pendingChangeRecords = new HashMap<String, ChangeRecord>();
-    	
+
         for(Op op: multiRequest) {
     		String path = op.getPath();
 
@@ -196,7 +196,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     			// ignore this one
     		}
     	}
-        
+
         return pendingChangeRecords;
     }
 
@@ -224,7 +224,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     break;
                 }
             }
-           
+
             boolean empty = zks.outstandingChanges.isEmpty();
             long firstZxid = 0;
             if (!empty) {
@@ -234,7 +234,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             Iterator<ChangeRecord> priorIter = pendingChangeRecords.values().iterator();
             while (priorIter.hasNext()) {
                 ChangeRecord c = priorIter.next();
-                 
+
                 /* Don't apply any prior change records less than firstZxid */
                 if (!empty && (c.zxid < firstZxid)) {
                     continue;
@@ -268,7 +268,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 AuthenticationProvider ap = ProviderRegistry.getProvider(id
                         .getScheme());
                 if (ap != null) {
-                    for (Id authId : ids) {                        
+                    for (Id authId : ids) {
                         if (authId.getScheme().equals(id.getScheme())
                                 && ap.matches(authId.getId(), id.getId())) {
                             return;
@@ -433,7 +433,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 // queues up this operation without being the session owner.
                 // this request is the last of the session so it should be ok
                 //zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                HashSet<String> es = zks.getZKDatabase()
+                Set<String> es = zks.getZKDatabase()
                         .getEphemerals(request.sessionId);
                 synchronized (zks.outstandingChanges) {
                     for (ChangeRecord c : zks.outstandingChanges) {
@@ -481,7 +481,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         // request.type + " id = 0x" + Long.toHexString(request.sessionId));
         request.hdr = null;
         request.txn = null;
-        
+
         try {
             switch (request.type) {
                 case OpCode.create:
@@ -531,8 +531,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     if (ke != null) {
                         request.hdr.setType(OpCode.error);
                         request.txn = new ErrorTxn(Code.RUNTIMEINCONSISTENCY.intValue());
-                    } 
-                    
+                    }
+
                     /* Prep the request and convert to a Txn */
                     else {
                         try {
@@ -556,7 +556,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     }
 
                     //FIXME: I don't want to have to serialize it here and then
-                    //       immediately deserialize in next processor. But I'm 
+                    //       immediately deserialize in next processor. But I'm
                     //       not sure how else to get the txn stored into our list.
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
@@ -568,7 +568,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
 
                 request.hdr = new TxnHeader(request.sessionId, request.cxid, zxid, zks.getTime(), request.type);
                 request.txn = new MultiTxn(txns);
-                
+
                 break;
 
             //create/close session don't require request record
@@ -576,7 +576,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             case OpCode.closeSession:
                 pRequest2Txn(request.type, zks.getNextZxid(), request, null);
                 break;
- 
+
             //All the rest don't need to create a Txn - just verify session
             case OpCode.sync:
             case OpCode.exists:

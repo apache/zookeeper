@@ -30,6 +30,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1184. jute generated files are not being cleaned up via "ant clean"
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1176. Remove dead code and basic cleanup in DataTree
+  (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
