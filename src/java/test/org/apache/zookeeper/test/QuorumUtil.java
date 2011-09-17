@@ -51,7 +51,7 @@ public class QuorumUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumUtil.class);
 
-    public class PeerStruct {
+    public static class PeerStruct {
         public int id;
         public QuorumPeer peer;
         public File dataDir;
@@ -184,15 +184,15 @@ public class QuorumUtil {
                 ps.id, tickTime, initLimit, syncLimit);
         Assert.assertEquals(ps.clientPort, ps.peer.getClientPort());
 
-        ps.peer.start();    
+        ps.peer.start();
     }
-    
+
     public void restart(int id) throws IOException {
         start(id);
         Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                 + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
     }
-    
+
     public void startThenShutdown(int id) throws IOException {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer " + ps.id + "; public port " + ps.clientPort);

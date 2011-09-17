@@ -23,7 +23,6 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.concurrent.Semaphore;
 
 import org.slf4j.Logger;
@@ -43,12 +42,19 @@ import org.junit.Test;
 public class FLERestartTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(FLETest.class);
 
+    private int count;
+    private HashMap<Long,QuorumServer> peers;
+    private ArrayList<FLERestartThread> restartThreads;
+    private File tmpdir[];
+    private int port[];
+    private Semaphore finish;
+
     static class TestVote {
+        long leader;
+
         TestVote(int id, long leader) {
             this.leader = leader;
         }
-
-        long leader;
     }
 
     int countVotes(HashSet<TestVote> hs, long id) {
@@ -60,34 +66,13 @@ public class FLERestartTest extends ZKTestCase {
         return counter;
     }
 
-    int count;
-    //    int baseport;
-    //    int baseLEport;
-    HashMap<Long,QuorumServer> peers;
-    ArrayList<FLERestartThread> restartThreads;
-    HashMap<Integer, HashSet<TestVote> > voteMap;
-    File tmpdir[];
-    int port[];
-    int successCount;
-    Semaphore finish;
-
-    volatile Vote votes[];
-    volatile boolean leaderDies;
-    volatile long leader = -1;
-    //volatile int round = 1;
-    Random rand = new Random();
-
     @Before
     public void setUp() throws Exception {
         count = 3;
-
         peers = new HashMap<Long,QuorumServer>(count);
         restartThreads = new ArrayList<FLERestartThread>(count);
-        voteMap = new HashMap<Integer, HashSet<TestVote> >();
-        votes = new Vote[count];
         tmpdir = new File[count];
         port = new int[count];
-        successCount = 0;
         finish = new Semaphore(0);
     }
 
@@ -170,10 +155,6 @@ public class FLERestartTest extends ZKTestCase {
 
     @Test
     public void testLERestart() throws Exception {
-
-        FastLeaderElection le[] = new FastLeaderElection[count];
-        leaderDies = true;
-        boolean allowOneBadLeader = leaderDies;
 
         LOG.info("TestLE: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {

@@ -301,16 +301,16 @@ public class QuorumTest extends ZKTestCase {
         QuorumUtil qu = new QuorumUtil(1);
         CountdownWatcher watcher = new CountdownWatcher();
         qu.startQuorum();
-        
+
         int index = 1;
         while(qu.getPeer(index).peer.leader == null)
             index++;
-        
+
         ZooKeeper zk = new ZooKeeper(
                 "127.0.0.1:" + qu.getPeer((index == 1)?2:1).peer.getClientPort(),
                 ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
-        
+
         // break the quorum
         qu.shutdown(index);
 
@@ -360,30 +360,29 @@ public class QuorumTest extends ZKTestCase {
     public void testNoLogBeforeLeaderEstablishment () 
     throws IOException, InterruptedException, KeeperException{
         final Semaphore sem = new Semaphore(0);
-                
+
         QuorumUtil qu = new QuorumUtil(2);
         qu.startQuorum();
-                
-        
+
         int index = 1;
         while(qu.getPeer(index).peer.leader == null)
             index++;
-        
+
         Leader leader = qu.getPeer(index).peer.leader;
-        
+
         Assert.assertNotNull(leader);
-  
+
         /*
          * Reusing the index variable to select a follower to connect to
          */
         index = (index == 1) ? 2 : 1;
-        
+
         ZooKeeper zk = new DisconnectableZooKeeper("127.0.0.1:" + qu.getPeer(index).peer.getClientPort(), 1000, new Watcher() {
             public void process(WatchedEvent event) {
         }});
 
         zk.create("/blah", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);      
-        
+
         for(int i = 0; i < 50000; i++) {
             zk.setData("/blah", new byte[0], -1, new AsyncCallback.StatCallback() {
                 public void processResult(int rc, String path, Object ctx,
@@ -397,7 +396,7 @@ public class QuorumTest extends ZKTestCase {
                     }
                 }
             }, null);
-            
+
             if(i == 5000){
                 qu.shutdown(index);
                 LOG.info("Shutting down s1");
@@ -413,18 +412,18 @@ public class QuorumTest extends ZKTestCase {
 
         // Wait until all updates return
         sem.tryAcquire(15000, TimeUnit.MILLISECONDS);
-        
+
         // Verify that server is following and has the same epoch as the leader
         Assert.assertTrue("Not following", qu.getPeer(index).peer.follower != null);
         long epochF = (qu.getPeer(index).peer.getActiveServer().getZxid() >> 32L);
         long epochL = (leader.getEpoch() >> 32L);
         Assert.assertTrue("Zxid: " + qu.getPeer(index).peer.getActiveServer().getZxid() + 
                 "Current epoch: " + epochF, epochF == epochL);
-        
+
     }
 
     // skip superhammer and clientcleanup as they are too expensive for quorum
-    
+
     /**
      * Tests if a multiop submitted to a non-leader propagates to the leader properly
      * (see ZOOKEEPER-1124).
@@ -439,19 +438,17 @@ public class QuorumTest extends ZKTestCase {
         QuorumUtil qu = new QuorumUtil(1);
         CountdownWatcher watcher = new CountdownWatcher();
         qu.startQuorum();
-        
+
         int index = 1;
         while(qu.getPeer(index).peer.leader == null)
             index++;
-        
+
         ZooKeeper zk = new ZooKeeper(
                 "127.0.0.1:" + qu.getPeer((index == 1)?2:1).peer.getClientPort(),
                 ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
-        
-        List<OpResult> results = new ArrayList<OpResult>();
 
-        results = zk.multi(Arrays.asList(
+        zk.multi(Arrays.asList(
                 Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)

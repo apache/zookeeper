@@ -175,13 +175,13 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         int prevCversion = parent.stat.getCversion();
         long prevPzxid = parent.stat.getPzxid();
         List<String> child = dt.getChildren(parentName, null, null);
-        String childStr = "";
+        StringBuilder childStr = new StringBuilder();
         for (String s : child) {
-            childStr += s + " ";
+            childStr.append(s).append(" ");
         }
         LOG.info("Children: " + childStr + " for " + parentName);
         LOG.info("(cverions, pzxid): " + prevCversion + ", " + prevPzxid);
-        
+
         Record txn = null;
         TxnHeader txnHeader = null;
         if (type == OpCode.delete) {
@@ -198,9 +198,9 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         int newCversion = parent.stat.getCversion();
         long newPzxid = parent.stat.getPzxid();
         child = dt.getChildren(parentName, null, null);
-        childStr = "";
+        childStr = new StringBuilder();
         for (String s : child) {
-            childStr += s + " ";
+            childStr.append(s).append(" ");
         }
         LOG.info("Children: " + childStr + " for " + parentName);
         LOG.info("(cverions, pzxid): " +newCversion + ", " + newPzxid);

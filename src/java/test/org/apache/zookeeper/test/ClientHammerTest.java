@@ -214,8 +214,8 @@ public class ClientHammerTest extends ClientBase {
         for (HammerThread h : threads) {
             final int safetyFactor = 3;
             verifyThreadTerminated(h,
-                    threads.length * childCount
-                    * HAMMERTHREAD_LATENCY * safetyFactor);
+                    (long)threads.length * (long)childCount
+                    * HAMMERTHREAD_LATENCY * (long)safetyFactor);
         }
         LOG.info(new Date() + " Total time "
                 + (System.currentTimeMillis() - start));

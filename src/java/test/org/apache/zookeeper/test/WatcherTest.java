@@ -44,7 +44,7 @@ import org.junit.Test;
 public class WatcherTest extends ClientBase {
     protected static final Logger LOG = LoggerFactory.getLogger(WatcherTest.class);
 
-    private final class MyStatCallback implements StatCallback {
+    private final static class MyStatCallback implements StatCallback {
         int rc;
         public void processResult(int rc, String path, Object ctx, Stat stat) {
             ((int[])ctx)[0]++;
@@ -131,7 +131,7 @@ public class WatcherTest extends ClientBase {
     }
 
     @Test
-    public void testWatcherCount() 
+    public void testWatcherCount()
     throws IOException, InterruptedException, KeeperException {
         ZooKeeper zk1 = null, zk2 = null;
         try {
@@ -213,7 +213,7 @@ public class WatcherTest extends ClientBase {
        Assert.assertEquals(COUNT, count[0]);
        zk.close();
     }
-    
+
     final int TIMEOUT = 5000;
 
     @Test

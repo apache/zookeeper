@@ -33,7 +33,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ChrootTest extends ClientBase {
-    private class MyWatcher implements Watcher {
+    private static class MyWatcher implements Watcher {
         private final String path;
         private String eventPath;
         private CountDownLatch latch = new CountDownLatch(1);
@@ -87,7 +87,7 @@ public class ChrootTest extends ClientBase {
 
             MyWatcher w3 = new MyWatcher("/ch2");
             Assert.assertNotNull(zk2.exists("/ch2", w3));
-            
+
             // set watches on child
             MyWatcher w4 = new MyWatcher("/ch1");
             zk1.getChildren("/ch1",w4);
@@ -121,7 +121,7 @@ public class ChrootTest extends ClientBase {
             zk2.delete("/ch2", -1);
             Assert.assertTrue(w4.matches());
             Assert.assertTrue(w5.matches());
-            
+
             zk1.delete("/ch1", -1);
             Assert.assertNull(zk1.exists("/ch1", false));
             Assert.assertNull(zk1.exists("/ch1/ch2", false));

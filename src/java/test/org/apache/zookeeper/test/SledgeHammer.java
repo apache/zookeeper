@@ -82,7 +82,11 @@ public class SledgeHammer extends Thread implements Watcher {
             }
             System.out.println();
             zk.close();
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (KeeperException e) {
             e.printStackTrace();
         }
     }
