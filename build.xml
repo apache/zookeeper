@@ -236,21 +236,27 @@
     
 	
     <target name="generate_jute_parser" depends="init,ivy-retrieve">
-      <property name="jute_javacc.dir" value="${java.src.dir}/org/apache/jute/compiler/generated" />
+      <property name="jute_javacc.dir" value="${build.dir}/jute_compiler" />
+      <property name="jute_javacc.packagedir" value="/org/apache/jute/compiler/generated" />
+      <mkdir dir="${jute_javacc.dir}${jute_javacc.packagedir}"/>
       <!-- the javacc task expects a "javacc.jar" file... -->
       <ivy:artifactproperty name="[artifact].revision" value="[revision]" />
       <move file="${ivy.lib}/javacc-${javacc.revision}.jar" tofile="${ivy.lib}/javacc.jar" failonerror="false"/>
       <javacc
-          target="${jute_javacc.dir}/rcc.jj"
-          outputdirectory="${jute_javacc.dir}/"
+          target="${java.src.dir}${jute_javacc.packagedir}/rcc.jj"
+          outputdirectory="${jute_javacc.dir}${jute_javacc.packagedir}/"
           javacchome="${ivy.lib}"
           />
     </target>
      
     <target name="jute" depends="generate_jute_parser">
-        <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
+        <javac srcdir="${jute_javacc.dir}" destdir="${build.classes}" includeantruntime="false"
             target="${javac.target}" source="${javac.source}"
-            includes="org/apache/jute/**" debug="on" />
+            includes="org/apache/jute/**" debug="on" 
+        >
+          <src path="${java.src.dir}" />
+          <src path="${jute_javacc.dir}" />
+        </javac>
     </target>
 
     <target name="compile_jute_uptodate">
@@ -268,6 +274,7 @@
             <arg value="../../zookeeper.jute" /> 
             <classpath>
                 <pathelement path="${build.classes}" />
+                <pathelement path="${jute_javacc.dir}" />
             </classpath>
         </java>
         
