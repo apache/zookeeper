@@ -914,6 +914,13 @@ public class ClientCnxn {
         private int pingRwTimeout = minPingRwTimeout;
 
         private void startConnect() throws IOException {
+            if(!isFirstConnect){
+                try {
+                    Thread.sleep(r.nextInt(1000));
+                } catch (InterruptedException e) {
+                    LOG.warn("Unexpected exception", e);
+                }
+            }
             state = States.CONNECTING;
 
             InetSocketAddress addr;
@@ -956,15 +963,8 @@ public class ClientCnxn {
             while (state.isAlive()) {
                 try {
                     if (!clientCnxnSocket.isConnected()) {
-                        if(!isFirstConnect){
-                            try {
-                                Thread.sleep(r.nextInt(1000));
-                            } catch (InterruptedException e) {
-                                LOG.warn("Unexpected exception", e);
-                            }
-                        }
                         // don't re-establish connection if we are closing
-                        if (closing || !state.isAlive()) {
+                        if (closing) {
                             break;
                         }
                         startConnect();
