@@ -1031,7 +1031,7 @@ public class ClientCnxn {
 
         Random r = new Random(System.nanoTime());
 
-        private boolean startConnect() throws IOException {
+        private void startConnect() throws IOException {
             if (lastConnectIndex == -1) {
                 // We don't want to delay the first try at a connect, so we
                 // start with -1 the first time around
@@ -1051,37 +1051,32 @@ public class ClientCnxn {
                     }
                 }
             }
-            // don't re-establish connection if we are closing
-            if (!closing && zooKeeper.state.isAlive()) {
-                zooKeeper.state = States.CONNECTING;
-                currentConnectIndex = nextAddrToTry;
-                InetSocketAddress addr = serverAddrs.get(nextAddrToTry);
-                nextAddrToTry++;
-                if (nextAddrToTry == serverAddrs.size()) {
-                    nextAddrToTry = 0;
-                }
-                LOG.info("Opening socket connection to server " + addr);
-                SocketChannel sock;
-                sock = SocketChannel.open();
-                sock.configureBlocking(false);
-                sock.socket().setSoLinger(false, -1);
-                sock.socket().setTcpNoDelay(true);
-                setName(getName().replaceAll("\\(.*\\)",
-                        "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
-                sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-                if (sock.connect(addr)) {
-                    primeConnection(sockKey);
-                }
-                initialized = false;
-    
-                /*
-                 * Reset incomingBuffer
-                 */
-                lenBuffer.clear();
-                incomingBuffer = lenBuffer;
-                return true;
+            zooKeeper.state = States.CONNECTING;
+            currentConnectIndex = nextAddrToTry;
+            InetSocketAddress addr = serverAddrs.get(nextAddrToTry);
+            nextAddrToTry++;
+            if (nextAddrToTry == serverAddrs.size()) {
+                nextAddrToTry = 0;
             }
-            return false;
+            LOG.info("Opening socket connection to server " + addr);
+            SocketChannel sock;
+            sock = SocketChannel.open();
+            sock.configureBlocking(false);
+            sock.socket().setSoLinger(false, -1);
+            sock.socket().setTcpNoDelay(true);
+            setName(getName().replaceAll("\\(.*\\)",
+                    "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
+            sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
+            if (sock.connect(addr)) {
+                primeConnection(sockKey);
+            }
+            initialized = false;
+
+            /*
+             * Reset incomingBuffer
+             */
+            lenBuffer.clear();
+            incomingBuffer = lenBuffer;
         }
 
         private static final String RETRY_CONN_MSG =
@@ -1095,10 +1090,11 @@ public class ClientCnxn {
             while (zooKeeper.state.isAlive()) {
                 try {
                     if (sockKey == null) {
-                        boolean connecting = startConnect();
-                        if (!connecting) {
+                        // don't re-establish connection if we are closing
+                        if (closing) {
                             break;
                         }
+                        startConnect();
                         lastSend = now;
                         lastHeard = now;
                     }
@@ -1165,7 +1161,7 @@ public class ClientCnxn {
                     }
                     selected.clear();
                 } catch (Exception e) {
-                    if (closing || !zooKeeper.state.isAlive()) {
+                    if (closing) {
                         if (LOG.isDebugEnabled()) {
                             // closing so this is expected
                             LOG.debug("An exception was thrown while closing send thread for session 0x"
