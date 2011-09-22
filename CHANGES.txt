@@ -11,6 +11,10 @@ BUGFIXES:
   ZOOKEEPER-786. Exception in ZooKeeper.toString
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1191. Synchronization issue - wait not in guarded block (Alex Shraer via breed)
+
+  ZOOKEEPER-1192. Leader.waitForEpochAck() checks waitingForNewEpoch instead of checking electionFinished (Alex Shraer via breed)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
