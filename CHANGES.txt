@@ -19,6 +19,8 @@ BUGFIXES:
  
   ZOOKEEPER-961. Watch recovery after disconnection when connection string contains a prefix. 
   (Matthias Spycher via mahadev)
+  
+  ZOOKEEPER-1160. test timeouts are too small (breed via camille)
  
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:

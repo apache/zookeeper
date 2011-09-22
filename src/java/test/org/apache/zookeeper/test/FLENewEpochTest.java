@@ -165,7 +165,7 @@ public class FLENewEpochTest extends TestCase {
           }
 
           for(int i = 1; i < le.length; i++) {
-              QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2);
+              QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2);
               peer.startLeaderElection();
               LEThread thread = new LEThread(peer, i);
               thread.start();
@@ -174,7 +174,7 @@ public class FLENewEpochTest extends TestCase {
           if(!start0.tryAcquire(4000, java.util.concurrent.TimeUnit.MILLISECONDS))
               fail("First leader election failed");
 
-          QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 2, 2, 2);
+          QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
           peer.startLeaderElection();
           LEThread thread = new LEThread(peer, 0);
           thread.start();

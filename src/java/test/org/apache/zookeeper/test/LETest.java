@@ -105,7 +105,7 @@ public class LETest extends TestCase {
         boolean allowOneBadLeader = leaderDies;
         for(int i = 0; i < le.length; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
-                    port[i], 0, i, 2, 2, 2);
+                    port[i], 0, i, 1000, 2, 2);
             peer.startLeaderElection();
             le[i] = new LeaderElection(peer);
             LEThread thread = new LEThread(le[i], peer, i);
