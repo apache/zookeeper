@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.ZooKeeper.States;
 
 public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     private static final Logger LOG = LoggerFactory
@@ -185,9 +184,15 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         sock.configureBlocking(false);
         sock.socket().setSoLinger(false, -1);
         sock.socket().setTcpNoDelay(true);
-        sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-        if (sock.connect(addr)) {
-            sendThread.primeConnection();
+        try {
+            boolean immediateConnect = sock.connect(addr);
+            sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
+            if (immediateConnect) {
+                sendThread.primeConnection();
+            }
+        } catch (IOException e) {
+            LOG.error("Unable to open socket to " + addr);
+            sock.close();
         }
         initialized = false;
 
@@ -308,5 +313,9 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     @Override
     synchronized void enableReadWriteOnly() {
         sockKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    }
+
+    Selector getSelector() {
+        return selector;
     }
 }
