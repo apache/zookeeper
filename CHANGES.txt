@@ -367,6 +367,9 @@ BUGFIXES:
   ZOOKEEPER-1136. NEW_LEADER should be queued not sent to match the Zab 1.0 protocol 
   on the twiki (breed via mahadev)
 
+  ZOOKEEPER-1189. For an invalid snapshot file(less than 10bytes size) RandomAccessFile 
+  stream is leaking. (Rakesh R via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
