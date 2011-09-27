@@ -558,6 +558,12 @@ public class ClientCnxn {
                       SetSASLResponse rsp = (SetSASLResponse) p.response;
                       // TODO : check rc (== 0, etc) as with other packet types.
                       cb.processResult(rc,null,p.ctx,rsp.getToken(),null);
+                      ClientCnxn clientCnxn = (ClientCnxn)p.ctx;
+                      if ((clientCnxn == null) || (clientCnxn.zooKeeperSaslClient == null) ||
+                              (clientCnxn.zooKeeperSaslClient.getSaslState() == ZooKeeperSaslClient.SaslState.FAILED)) {
+                          queueEvent(new WatchedEvent(EventType.None,
+                                  KeeperState.AuthFailed, null));
+                      }
                   } else if (p.response instanceof GetDataResponse) {
                       DataCallback cb = (DataCallback) p.cb;
                       GetDataResponse rsp = (GetDataResponse) p.response;
@@ -945,6 +951,9 @@ public class ClientCnxn {
                       + "configuration file: '" + System.getProperty("java.security.auth.login.config")
                       + "'. Will continue connection to Zookeeper server without SASL authentication, if Zookeeper "
                       + "server allows it.");
+                    eventThread.queueEvent(new WatchedEvent(
+                            Watcher.Event.EventType.None,
+                            KeeperState.AuthFailed, null));
                 }
             }
             clientCnxnSocket.connect(addr);
@@ -979,6 +988,9 @@ public class ClientCnxn {
                             catch (SaslException e) {
                                 LOG.error("SASL authentication with Zookeeper Quorum member failed: " + e);
                                 state = States.AUTH_FAILED;
+                                eventThread.queueEvent(new WatchedEvent(
+                                        Watcher.Event.EventType.None,
+                                        KeeperState.AuthFailed,null));
                             }
                             if (zooKeeperSaslClient.readyToSendSaslAuthEvent()) {
                                 eventThread.queueEvent(new WatchedEvent(

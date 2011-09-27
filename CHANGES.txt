@@ -370,6 +370,9 @@ BUGFIXES:
   ZOOKEEPER-1189. For an invalid snapshot file(less than 10bytes size) RandomAccessFile 
   stream is leaking. (Rakesh R via mahadev)
 
+  ZOOKEEPER-1185. Send AuthFailed event to client if SASL authentication fails.
+  (Eugene Kuntz via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

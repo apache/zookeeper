@@ -102,6 +102,7 @@ public class SaslAuthFailTest extends ClientBase {
     public void testBadSaslAuthNotifiesWatch() throws Exception {
         ZooKeeper zk = createClient();
         Thread.sleep(1000);
+        Assert.assertEquals(authFailed.get(),1);
         zk.close();
     }
 
