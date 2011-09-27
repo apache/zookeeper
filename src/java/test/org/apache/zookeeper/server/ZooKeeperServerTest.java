@@ -19,12 +19,14 @@
 package org.apache.zookeeper.server;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import junit.framework.TestCase;
 
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.Util;
+import org.apache.zookeeper.test.ClientBase;
 import org.junit.Test;
 import org.junit.Assert;
 
@@ -111,6 +113,27 @@ public class ZooKeeperServerTest extends TestCase {
         finally {
             //Reset back to default.
             System.setProperty("zookeeper.forceSync","yes");
+        }
+    }
+
+    @Test
+    public void testInvalidSnapshot() {
+        File f = null;
+        File tmpFileDir = null;
+        try {
+            tmpFileDir = ClientBase.createTmpDir();
+            f = new File(tmpFileDir, "snapshot.0");
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+            Assert.assertFalse("Snapshot file size is greater than 9 bytes",
+                    Util.isValidSnapshot(f));
+            Assert.assertTrue("Can't delete file", f.delete());
+        } catch (IOException e) {
+        } finally {
+            if (null != tmpFileDir) {
+                ClientBase.recursiveDelete(tmpFileDir);
+            }
         }
     }
 
