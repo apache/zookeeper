@@ -59,11 +59,15 @@ public class ZooKeeperSaslClient {
     private byte[] saslToken = new byte[0];
     private ClientCnxn cnxn;
 
-    private enum SaslState {
-        INITIAL,INTERMEDIATE,COMPLETE
+    public enum SaslState {
+        INITIAL,INTERMEDIATE,COMPLETE,FAILED
     }
 
     private SaslState saslState = SaslState.INITIAL;
+
+    public SaslState getSaslState() {
+        return saslState;
+    }
 
     public ZooKeeperSaslClient(ClientCnxn cnxn, String serverPrincipal) throws LoginException {
         this.cnxn = cnxn;
@@ -176,8 +180,8 @@ public class ZooKeeperSaslClient {
                     queueSaslPacket(saslToken);
                 }
             } catch (SaslException e) {
-                // TODO sendThread should set state to AUTH_FAILED; but currently only sendThread modifies state.
                 LOG.error("SASL authentication failed.");
+                saslState = SaslState.FAILED;
             }
         }
     }
@@ -265,6 +269,9 @@ public class ZooKeeperSaslClient {
     }
 
     public void initialize() throws SaslException {
+        if (saslClient == null) {
+            throw new SaslException("saslClient failed to initialize properly: it's null.");
+        }
         if (saslState == SaslState.INITIAL) {
             if (saslClient.hasInitialResponse()) {
                 queueSaslPacket();

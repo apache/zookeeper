@@ -103,14 +103,6 @@ public class SaslAuthTest extends ClientBase {
     }
 
     @Test
-    public void testBadSaslAuthNotifiesWatch() throws Exception {
-        ZooKeeper zk = createClient();
-        Thread.sleep(1000);
-        zk.close();
-    }
-
-    
-    @Test
     public void testAuth() throws Exception {
         ZooKeeper zk = createClient();
         Thread.sleep(1000);
