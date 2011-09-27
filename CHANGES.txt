@@ -333,6 +333,9 @@ BUGFIXES:
   
   ZOOKEEPER-1174. FD leak when network unreachable (Ted Dunning via camille)
 
+  ZOOKEEPER-1203. Zookeeper systest is missing Junit Classes
+  (Prashant Gokhale via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
