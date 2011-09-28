@@ -185,8 +185,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         sock.socket().setSoLinger(false, -1);
         sock.socket().setTcpNoDelay(true);
         try {
-            boolean immediateConnect = sock.connect(addr);
             sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
+            boolean immediateConnect = sock.connect(addr);            
             if (immediateConnect) {
                 sendThread.primeConnection();
             }
