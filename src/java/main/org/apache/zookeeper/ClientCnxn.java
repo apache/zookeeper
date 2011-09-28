@@ -1040,7 +1040,7 @@ public class ClientCnxn {
 
                     clientCnxnSocket.doTransport(to, pendingQueue, outgoingQueue);
 
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     if (closing) {
                         if (LOG.isDebugEnabled()) {
                             // closing so this is expected
