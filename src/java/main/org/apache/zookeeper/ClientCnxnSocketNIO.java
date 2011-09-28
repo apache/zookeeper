@@ -190,7 +190,9 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         sock.socket().setSoLinger(false, -1);
         sock.socket().setTcpNoDelay(true);
         sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-        sock.connect(addr);
+        if (sock.connect(addr)) {
+            sendThread.primeConnection();
+        }
         initialized = false;
 
         /*
