@@ -443,7 +443,9 @@ IMPROVEMENTS:
   code (Thomas Koch via phunt)
 
   ZOOKEEPER-1171. fix build for java 7 (phunt via mahadev)
- 
+
+  ZOOKEEPER-1201. Clean SaslServerCallbackHandler.java. (Thomas Koch
+  via mahadev) 
 
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.
