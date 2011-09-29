@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -318,7 +319,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 CreateMode createMode =
                     CreateMode.fromFlag(createRequest.getFlags());
                 if (createMode.isSequential()) {
-                    path = path + String.format("%010d", parentCVersion);
+                    path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
                 }
                 try {
                     PathUtils.validatePath(path);
