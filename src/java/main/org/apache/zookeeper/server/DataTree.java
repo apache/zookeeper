@@ -197,7 +197,7 @@ public class DataTree {
     /**
      * converts a list of longs to a list of acls.
      *
-     * @param longs
+     * @param longVal
      *            the list of longs
      * @return a list of ACLs that map to longs
      */
@@ -607,7 +607,7 @@ public class DataTree {
     /**
      * If there is a quota set, return the appropriate prefix for that quota
      * Else return null
-     * @param The ZK path to check for quota
+     * @param path The ZK path to check for quota
      * @return Max quota prefix, or null if none
      */
     public String getMaxPrefixWithQuota(String path) {
@@ -855,9 +855,7 @@ public class DataTree {
      *
      * @param path
      *            the path to be used
-     * @param bytes
-     *            the long bytes
-     * @param count
+     * @param counts
      *            the int count
      */
     private void getCounts(String path, Counts counts) {

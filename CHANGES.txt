@@ -30,6 +30,8 @@ BUGFIXES:
  
   ZOOKEEPER-1206. Sequential node creation does not use always use
   digits in node name given certain Locales. (Mark Miller via phunt)
+  
+  ZOOKEEPER-1174. FD leak when network unreachable. (Ted Dunning via camille)
 
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:

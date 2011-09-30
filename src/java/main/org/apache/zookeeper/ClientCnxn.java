@@ -1066,9 +1066,15 @@ public class ClientCnxn {
             sock.socket().setTcpNoDelay(true);
             setName(getName().replaceAll("\\(.*\\)",
                     "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
-            sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-            if (sock.connect(addr)) {
-                primeConnection(sockKey);
+            try {
+                sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
+                boolean immediateConnect = sock.connect(addr);
+                if (immediateConnect) {
+                    primeConnection(sockKey);
+                }
+            } catch (IOException e) {
+                LOG.error("Unable to open socket to " + addr);
+                sock.close();
             }
             initialized = false;
 
@@ -1160,7 +1166,7 @@ public class ClientCnxn {
                         }
                     }
                     selected.clear();
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     if (closing) {
                         if (LOG.isDebugEnabled()) {
                             // closing so this is expected
