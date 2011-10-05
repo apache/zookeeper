@@ -339,6 +339,9 @@ BUGFIXES:
   ZOOKEEPER-1206. Sequential node creation does not use always use
   digits in node name given certain Locales. (Mark Miller via phunt)
 
+  ZOOKEEPER-1212. zkServer.sh stop action is not conformat with LSB
+  para 20.2 Init Script Actions (Roman Shaposhnik via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
