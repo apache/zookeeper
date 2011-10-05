@@ -632,9 +632,118 @@
     <!-- ================================================================== -->
     <!--                                                                    -->
     <!-- ================================================================== -->
-    <target name="package"
+    <target name="package" 
             depends="jar,bin-jar,src-jar,javadoc-jar,test-jar,api-report,create-cppunit-configure,compile-test"
             description="Build distribution">
+      <mkdir dir="${dist.dir}"/>
+      <mkdir dir="${dist.dir}/lib"/>
+      <mkdir dir="${dist.dir}/contrib"/>
+      <mkdir dir="${dist.dir}/recipes"/>
+      <mkdir dir="${dist.dir}/bin"/>
+      <mkdir dir="${dist.dir}/docs"/>
+      <mkdir dir="${dist.dir}/docs/jdiff"/>
+      <mkdir dir="${dist.dir}/docs/api"/>
+
+      <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
+        <fileset dir="${lib.dir}">
+          <exclude name="**/ivy*.jar" />
+        </fileset>
+        <fileset dir="${ivy.lib}"/>
+      </copy>
+
+      <subant target="package">
+        <!--Pass down the version in case its needed again and the target
+            distribution directory so contribs know where to install to.-->
+        <property name="version" value="${version}"/>
+        <property name="dist.dir" value="${dist.dir}"/>
+        <fileset file="${contrib.dir}/build.xml"/>
+        <fileset file="${recipes.dir}/build.xml"/>
+      </subant>  	
+
+      <copy todir="${dist.dir}"> 
+        <fileset file="${build.dir}/${final.name}.jar"/>
+      </copy>
+
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="sha1"/>
+
+      <mkdir dir="${dist.maven.dir}"/>
+
+      <copy file="${build.dir}/${final.name}-bin.jar"
+            tofile="${dist.maven.dir}/${final.name}.jar"/> 
+      <copy todir="${dist.maven.dir}"> 
+        <fileset file="${build.dir}/${final.name}-sources.jar"/>
+        <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
+      </copy>
+      
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
+
+      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
+                   pomfile="${dist.maven.dir}/${final.name}.pom">
+        <mapping conf="default" scope="compile"/>
+        <mapping conf="test" scope="test"/>
+      </ivy:makepom>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
+      
+      
+      <copy file="${build.dir}/${final.name}-test.jar"
+            tofile="${dist.maven.dir}/${final.name}-test.jar"/> 
+      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="md5"/>
+      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
+                   pomfile="${dist.maven.dir}/${final.name}-test.pom"
+		   artifactName="zookeeper-test">
+        <mapping conf="default" scope="compile"/>
+        <mapping conf="test" scope="test"/>
+      </ivy:makepom>
+      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="sha1"/>
+
+
+      <copy todir="${dist.dir}/bin">
+        <fileset dir="bin"/>
+      </copy>
+
+      <copy todir="${dist.dir}/conf">
+        <fileset dir="${conf.dir}" excludes="**/*.template"/>
+      </copy>
+
+      <copy todir="${dist.dir}/docs">
+        <fileset dir="${docs.dir}" />
+        <fileset dir="${build.docs}"/>
+      </copy>
+
+      <copy todir="${dist.dir}">
+        <fileset dir=".">
+          <include name="*.txt" />
+        </fileset>
+        <fileset file="build.xml"/>
+        <fileset file="ivy.xml"/>
+        <fileset file="ivysettings.xml"/>
+      </copy>
+
+      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
+        <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+      </copy>
+  	  
+      <chmod perm="ugo+x" type="file" parallel="false">
+        <fileset dir="${dist.dir}/bin"/>
+        <fileset dir="${dist.dir}/src/contrib/">
+          <include name="*/bin/*" />
+        </fileset>
+      </chmod>
+    </target>
+
+    <target name="bin-package"
+            depends="jar,bin-jar,src-jar,javadoc-jar,test-jar,api-report,create-cppunit-configure,compile-test"
+            description="Build binary distribution">
+      <delete dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
       <mkdir dir="${dist.dir}/libexec"/>
@@ -811,7 +920,7 @@
       </macro_tar>
     </target>
 
-    <target name="binary" depends="package"
+    <target name="binary" depends="bin-package"
             description="Make tarball without source and documentation">
       <macro_tar param.destfile="${build.dir}/${final.name}-bin.tar.gz">
         <param.listofitems>
@@ -832,7 +941,7 @@
       </macro_tar>
     </target>
 
-    <target name="package-native" depends="compile-native, package" description="Make C binding tarball">
+    <target name="package-native" depends="compile-native, bin-package" description="Make C binding tarball">
       <!-- For Unix platforms only, use OS native tar to preserve symlinks -->
       <exec executable="tar" dir="${build.dir}/c/build">
         <arg value="cfzv" />

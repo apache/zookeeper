@@ -342,6 +342,9 @@ BUGFIXES:
   ZOOKEEPER-1212. zkServer.sh stop action is not conformat with LSB
   para 20.2 Init Script Actions (Roman Shaposhnik via phunt)
 
+  ZOOKEEPER-1190. ant package is not including many of the bin scripts
+  in the package (zkServer.sh for example) (Eric Yang via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

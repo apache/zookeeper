@@ -75,10 +75,15 @@ do
     CLASSPATH="$i:$CLASSPATH"
 done
 
-#make it work in the release
-if [ -d ${ZOOKEEPER_PREFIX}/share/zookeeper ]; then
+#make it work in the binary package
+if [ -e ${ZOOKEEPER_PREFIX}/share/zookeeper/zookeeper-*.jar ]; then
   LIBPATH="${ZOOKEEPER_PREFIX}"/share/zookeeper/*.jar
 else
+  #release tarball format
+  for i in "$ZOOBINDIR"/../zookeeper-*.jar
+  do
+    CLASSPATH="$i:$CLASSPATH"
+  done
   LIBPATH="${ZOOBINDIR}"/../lib/*.jar
 fi
 
