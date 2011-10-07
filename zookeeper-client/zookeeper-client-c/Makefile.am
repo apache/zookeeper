@@ -74,6 +74,14 @@ cli_st_SOURCES = src/cli.c
 cli_st_LDADD = libzookeeper_st.la
 cli_st_CFLAGS = $(SASL_CFLAGS)
 
+if WANT_SASL
+bin_PROGRAMS += cli_sasl_st
+
+cli_sasl_st_SOURCES = src/cli_sasl.c
+cli_sasl_st_LDADD = libzookeeper_st.la
+cli_sasl_st_CFLAGS = $(SASL_CFLAGS)
+endif
+
 if WANT_SYNCAPI
 bin_PROGRAMS += cli_mt load_gen
 
@@ -84,6 +92,14 @@ cli_mt_CFLAGS = -DTHREADED $(SASL_CFLAGS)
 load_gen_SOURCES = src/load_gen.c
 load_gen_LDADD = libzookeeper_mt.la
 load_gen_CFLAGS = -DTHREADED $(SASL_CFLAGS)
+
+if WANT_SASL
+bin_PROGRAMS += cli_sasl_mt
+
+cli_sasl_mt_SOURCES = src/cli_sasl.c
+cli_sasl_mt_LDADD = libzookeeper_mt.la
+cli_sasl_mt_CFLAGS = -DTHREADED $(SASL_CFLAGS)
+endif
 
 endif
 
