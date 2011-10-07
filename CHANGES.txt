@@ -53,6 +53,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-556. Startup messages should account for common error of
   missing leading slash in config files (Thomas Koch via phunt)
+   
+  ZOOKEEPER-1155. Add windows automated builds (CI) for zookeeper c client bindings. (Dheeraj Agrawal via camille) 
 
 Release 3.4.0 - 
 
