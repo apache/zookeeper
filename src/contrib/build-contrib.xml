@@ -144,8 +144,8 @@
   <target name="package" depends="jar" unless="skip.contrib"> 
     <echo message="contrib: ${name}"/>
 
-    <mkdir dir="${dist.dir}/contrib/${name}"/>
-    <copy todir="${dist.dir}/contrib/${name}" includeEmptyDirs="false"
+    <mkdir dir="${dist.dir}${package.share}/contrib/${name}"/>
+    <copy todir="${dist.dir}${package.share}/contrib/${name}" includeEmptyDirs="false"
           flatten="true">
       <fileset dir="${build.dir}">
         <include name="zookeeper-${version}-${name}.jar" />
