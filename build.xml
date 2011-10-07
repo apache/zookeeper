@@ -676,6 +676,7 @@
             distribution directory so contribs know where to install to.-->
         <property name="version" value="${version}"/>
         <property name="dist.dir" value="${dist.dir}"/>
+        <property name="package.share" value=""/>
         <fileset file="${contrib.dir}/build.xml"/>
         <fileset file="${recipes.dir}/build.xml"/>
       </subant>  	
@@ -790,6 +791,7 @@
             distribution directory so contribs know where to install to.-->
         <property name="version" value="${version}"/>
         <property name="dist.dir" value="${dist.dir}"/>
+        <property name="package.share" value="/share/zookeeper"/>
         <fileset file="${contrib.dir}/build.xml"/>
         <fileset file="${recipes.dir}/build.xml"/>
       </subant>  	
