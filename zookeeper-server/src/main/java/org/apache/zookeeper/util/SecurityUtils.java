@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.util;
 
+import java.util.HashMap;
+
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -153,6 +155,11 @@ public final class SecurityUtils {
     public static SaslServer createSaslServer(final Subject subject,
             final String protocol, final String serverName,
             final CallbackHandler callbackHandler, final Logger LOG) {
+        // required by c client api - Sasl.QOP="auth" is not set
+        // by default although stated in javadoc (Sun JRE 1.6.0_26-b03)
+        HashMap<String, Object> props = new HashMap<String, Object>();
+        props.put(Sasl.QOP, "auth-conf,auth-int,auth");
+
         if (subject != null) {
             // server is using a JAAS-authenticated subject: determine service
             // principal name and hostname from zk server's subject.
@@ -231,7 +238,7 @@ public final class SecurityUtils {
                                             SaslServer saslServer;
                                             saslServer = Sasl.createSaslServer(
                                                     mech, servicePrincipalName,
-                                                    serviceHostname, null,
+                                                    serviceHostname, props,
                                                     callbackHandler);
                                             return saslServer;
                                         } catch (SaslException e) {
@@ -253,7 +260,7 @@ public final class SecurityUtils {
                 // TODO: use 'authMech=' value in zoo.cfg.
                 try {
                     SaslServer saslServer = Sasl.createSaslServer("DIGEST-MD5",
-                            protocol, serverName, null, callbackHandler);
+                            protocol, serverName, props, callbackHandler);
                     return saslServer;
                 } catch (SaslException e) {
                     LOG.error("Zookeeper Quorum member failed to create a SaslServer to interact with a client during session initiation", e);

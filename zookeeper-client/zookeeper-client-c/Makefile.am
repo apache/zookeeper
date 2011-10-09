@@ -18,7 +18,17 @@ endif
 
 LIB_LDFLAGS = -no-undefined -version-info 2 $(SOLARIS_LIB_LDFLAGS)
 
-pkginclude_HEADERS = include/zookeeper.h include/zookeeper_version.h include/zookeeper_log.h include/proto.h include/recordio.h generated/zookeeper.jute.h
+if WANT_SASL
+SASL_CFLAGS = -DSASL
+SASL_LIBS = -lsasl2
+SASL_HDR = include/zookeeper_sasl.h
+SASL_SRC = src/zk_sasl.c $(SASL_HDR)
+else
+STATIC_CXX=-DUSE_STATIC_LIB
+STATIC_LD=-static-libtool-libs
+endif
+
+pkginclude_HEADERS = include/zookeeper.h include/zookeeper_version.h include/zookeeper_log.h include/proto.h include/recordio.h generated/zookeeper.jute.h $(SASL_HDR)
 EXTRA_DIST=LICENSE
 
 HASHTABLE_SRC = src/hashtable/hashtable_itr.h src/hashtable/hashtable_itr.c \
@@ -31,13 +41,13 @@ COMMON_SRC = src/zookeeper.c include/zookeeper.h include/zookeeper_version.h inc
     src/recordio.c include/recordio.h include/proto.h \
     src/zk_adaptor.h generated/zookeeper.jute.c \
     src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c \
-	src/addrvec.h src/addrvec.c
+    src/addrvec.h src/addrvec.c $(SASL_SRC)
 
 # These are the symbols (classes, mostly) we want to export from our library.
 EXPORT_SYMBOLS = '(zoo_|zookeeper_|zhandle|Z|format_log_message|log_message|logLevel|deallocate_|allocate_|zerror|is_unrecoverable)'
 noinst_LTLIBRARIES += libzkst.la
 libzkst_la_SOURCES =$(COMMON_SRC) src/st_adaptor.c
-libzkst_la_LIBADD = -lm $(CLOCK_GETTIME_LIBS)
+libzkst_la_LIBADD = -lm $(CLOCK_GETTIME_LIBS) $(SASL_LIBS)
 
 lib_LTLIBRARIES = libzookeeper_st.la
 libzookeeper_st_la_SOURCES =
@@ -49,7 +59,7 @@ if WANT_SYNCAPI
 noinst_LTLIBRARIES += libzkmt.la
 libzkmt_la_SOURCES =$(COMMON_SRC) src/mt_adaptor.c
 libzkmt_la_CFLAGS = -DTHREADED
-libzkmt_la_LIBADD = -lm $(CLOCK_GETTIME_LIBS)
+libzkmt_la_LIBADD = -lm $(CLOCK_GETTIME_LIBS) $(SASL_LIBS)
 
 lib_LTLIBRARIES += libzookeeper_mt.la
 libzookeeper_mt_la_SOURCES =
@@ -62,17 +72,18 @@ bin_PROGRAMS = cli_st
 
 cli_st_SOURCES = src/cli.c
 cli_st_LDADD = libzookeeper_st.la
+cli_st_CFLAGS = $(SASL_CFLAGS)
 
 if WANT_SYNCAPI
 bin_PROGRAMS += cli_mt load_gen
 
 cli_mt_SOURCES = src/cli.c
 cli_mt_LDADD = libzookeeper_mt.la
-cli_mt_CFLAGS = -DTHREADED
+cli_mt_CFLAGS = -DTHREADED $(SASL_CFLAGS)
 
 load_gen_SOURCES = src/load_gen.c
 load_gen_LDADD = libzookeeper_mt.la
-load_gen_CFLAGS = -DTHREADED
+load_gen_CFLAGS = -DTHREADED $(SASL_CFLAGS)
 
 endif
 
@@ -122,14 +133,14 @@ TESTS_ENVIRONMENT = ZKROOT=${srcdir}/../.. \
                     CLASSPATH=$$CLASSPATH:$$CLOVER_HOME/lib/clover*.jar
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
 zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS) -ldl
-zktest_st_CXXFLAGS = -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(USEIPV6) $(SOLARIS_CPPFLAGS)
+zktest_st_CXXFLAGS = -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(USEIPV6) $(SASL_CFLAGS) $(SOLARIS_CPPFLAGS)
 zktest_st_LDFLAGS = -shared $(SYMBOL_WRAPPERS) $(SOLARIS_LIB_LDFLAGS)
 
 if WANT_SYNCAPI
   check_PROGRAMS += zktest-mt
   nodist_zktest_mt_SOURCES = $(TEST_SOURCES) tests/PthreadMocks.cc
   zktest_mt_LDADD = libzkmt.la libhashtable.la -lpthread $(CPPUNIT_LIBS) -ldl
-  zktest_mt_CXXFLAGS = -DUSE_STATIC_LIB -DTHREADED $(CPPUNIT_CFLAGS) $(USEIPV6)
+  zktest_mt_CXXFLAGS = -DUSE_STATIC_LIB -DTHREADED $(CPPUNIT_CFLAGS) $(USEIPV6) $(SASL_CFLAGS)
 if SOLARIS
   SHELL_SYMBOL_WRAPPERS_MT = cat ${srcdir}/tests/wrappers-mt.opt
   SYMBOL_WRAPPERS_MT=$(SYMBOL_WRAPPERS) $(SHELL_SYMBOL_WRAPPERS_MT:sh)
