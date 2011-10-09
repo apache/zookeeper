@@ -1676,6 +1676,29 @@ ZOOAPI int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, int local, void_completion_t *completion,
         const void *data);
 
+typedef struct zoo_sasl_conn zoo_sasl_conn_t;
+
+typedef int (*sasl_completion_t)(int rc, zhandle_t *zh, zoo_sasl_conn_t *conn,
+        const char *serverin, int serverinlen);
+
+/**
+ * \brief send a sasl request asynchronously.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param zh the connection handle obtained by a call to \ref zoo_sasl_connect
+ * \param clientout the token
+ * \param clientoutlen the token length
+ * \param cptr function to call with the server response
+ * \return ZMARSHALLINGERROR if sending failed, ZOK otherwise
+ */
+ZOOAPI int zoo_asasl(zhandle_t *zh, zoo_sasl_conn_t *conn, const char *clientout,
+        unsigned clientoutlen, sasl_completion_t cptr);
+
+struct sasl_completion_ctx {
+    zhandle_t *zh;
+    zoo_sasl_conn_t *conn;
+};
+
 #ifdef THREADED
 /**
  * \brief create a node synchronously.
@@ -2288,7 +2311,22 @@ ZOOAPI int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_resul
  */
 ZOOAPI int zoo_remove_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, watcher_fn watcher, void *watcherCtx, int local);
+
+/**
+ * \brief send a sasl request synchronously.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param zh the connection handle obtained by a call to \ref zoo_sasl_connect
+ * \param clientout the token to send
+ * \param clientoutlen the token  length
+ * \param serverin the received token
+ * \param serverinlen the token length
+ * \return
+ */
+ZOOAPI int zoo_sasl(zhandle_t *zh, zoo_sasl_conn_t *conn, const char *clientout,
+        unsigned clientoutlen, const char **serverin, unsigned *serverinlen);
 #endif
+
 #ifdef __cplusplus
 }
 #endif

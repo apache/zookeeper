@@ -225,6 +225,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testGetChildren2);
     CPPUNIT_TEST(testLastZxid);
     CPPUNIT_TEST(testRemoveWatchers);
+    CPPUNIT_TEST(testSasl);
 #endif
     CPPUNIT_TEST_SUITE_END();
 
@@ -298,6 +299,12 @@ public:
     void startServer() {
         char cmd[1024];
         sprintf(cmd, "%s start %s", ZKSERVER_CMD, getHostPorts());
+        CPPUNIT_ASSERT(system(cmd) == 0);
+    }
+
+    void startServerWithOpts(const char *opts) {
+        char cmd[1024];
+        sprintf(cmd, "%s start %s %s", ZKSERVER_CMD, getHostPorts(), opts);
         CPPUNIT_ASSERT(system(cmd) == 0);
     }
 
@@ -489,6 +496,19 @@ public:
         int tmp = (int) (long) data;
         CPPUNIT_ASSERT_EQUAL(tmp, rc);
         count++;
+    }
+
+    static int saslDigestInitCompletion(int rc, zhandle_t *zh, zoo_sasl_conn_t *conn,
+        const char *serverin, int serverinlen) {
+        const char *realm = "realm";
+        const char *nonce = "nonce";
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        // response should look like
+        // realm="zk-sasl-md5",nonce="4n7iytvP7E9GyRVvGQ8pATPPnXJ0GjOB5rmTzk3a",...
+        //LOG_DEBUG(("SASL Response: %s", serverin));
+        CPPUNIT_ASSERT(strstr(serverin, realm)!=NULL);
+        CPPUNIT_ASSERT(strstr(serverin, nonce)!=NULL);
+        return rc;
     }
 
     static void verifyCreateFails(const char *path, zhandle_t *zk) {
@@ -1463,6 +1483,39 @@ public:
       rc = zoo_remove_watches(zk, "/something2", ZWATCHTYPE_DATA,
                                           watcher_rw, ctx2, 1);
       CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+    }
+
+    void testSasl() {
+        int rc;
+        const char *saslopt = "-sasl";
+        count = 0;
+        watchctx_t ctx1, ctx2;
+
+        const char *serverin;
+        unsigned serverinlen;
+        const char *realm = "realm";
+        const char *nonce = "nonce";
+
+        stopServer();
+        startServerWithOpts(saslopt);
+
+        // zoo_set_log_stream(stdout);
+        // zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+
+        zhandle_t *zk1 = createClient(&ctx1);
+        rc = zoo_sasl(zk1, NULL, (const char *) "", 0, &serverin, &serverinlen);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        // response should look like
+        // realm="zk-sasl-md5",nonce="4n7iytvP7E9GyRVvGQ8pATPPnXJ0GjOB5rmTzk3a",...
+        //LOG_DEBUG(("SASL Response: %s", serverin));
+        CPPUNIT_ASSERT(strstr(serverin, realm)!=NULL);
+        CPPUNIT_ASSERT(strstr(serverin, nonce)!=NULL);
+
+        zhandle_t *zk2 = createClient(&ctx2);
+        rc = zoo_asasl(zk2, NULL, (const char *) "", 0, saslDigestInitCompletion);
+        stopServer();
+        startServer();
+
     }
 };
 

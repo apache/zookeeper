@@ -21,7 +21,7 @@ ZOOPORT=22181
 
 if [ "x$1" == "x" ]
 then
-    echo "USAGE: $0 startClean|start|startReadOnly|startRequireSASLAuth|stop hostPorts"
+    echo "USAGE: $0 startClean|start|startReadOnly|startRequireSASLAuth|stop hostPorts [-sasl] [-verbose]"
     exit 2
 fi
 
@@ -109,6 +109,27 @@ then
 fi
 
 PROPERTIES="-Dzookeeper.extendedTypesEnabled=true -Dznode.container.checkIntervalMs=100"
+
+for var in "$@"
+do
+    if [[ "x$var" != "x0" && "x$var" != "x1" && "x$var" != "x2" ]]
+    then
+        if [ "$var" == "-sasl" ]
+        then
+            SASLCONFFILE=tests/jaas.digest.server.conf
+            if [ "x${base_dir}" != "x" ]
+            then
+                SASLCONFFILE="${base_dir}/zookeeper-client/zookeeper-client-c/$SASLCONFFILE"
+            fi
+            PROPERTIES="$PROPERTIES -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider"
+            PROPERTIES="$PROPERTIES -Djava.security.auth.login.config=$SASLCONFFILE"
+        fi
+        if [ "$var" == "-verbose" ]
+        then
+            PROPERTIES="$PROPERTIES -Dzookeeper.root.logger=DEBUG,CONSOLE -Dzookeeper.console.threshold=DEBUG"
+        fi
+    fi
+done
 
 case $1 in
 start|startClean)
