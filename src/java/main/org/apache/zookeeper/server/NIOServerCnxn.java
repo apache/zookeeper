@@ -1365,7 +1365,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         this.sk = sk;
         this.factory = factory;
         sock.socket().setTcpNoDelay(true);
-        sock.socket().setSoLinger(true, 2);
+        sock.socket().setSoLinger(false, -1);
         InetAddress addr = ((InetSocketAddress) sock.socket()
                 .getRemoteSocketAddress()).getAddress();
         authInfo.add(new Id("ip", addr.getHostAddress()));
