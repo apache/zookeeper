@@ -84,8 +84,7 @@ stop)
     echo "Stopping zookeeper ... "
     if [ ! -f "$ZOOPIDFILE" ]
     then
-    echo "error: could not find file $ZOOPIDFILE"
-    exit 1
+    echo "no zookeeper to stop (could not find file $ZOOPIDFILE)"
     else
     $KILL -9 $(cat "$ZOOPIDFILE")
     rm "$ZOOPIDFILE"
