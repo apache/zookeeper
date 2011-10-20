@@ -39,7 +39,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class InvalidSnapshotTest extends ZKTestCase implements Watcher {
-    private final static Logger LOG = LoggerFactory.getLogger(UpgradeTest.class);
+    private final static Logger LOG = LoggerFactory.getLogger(InvalidSnapshotTest.class);
     private static final String HOSTPORT =
             "127.0.0.1:" + PortAssignment.unique();
 
@@ -57,7 +57,7 @@ public class InvalidSnapshotTest extends ZKTestCase implements Watcher {
         String[] args = {logfile.getCanonicalFile().toString()};
         LogFormatter.main(args);
     }
-    
+
     /**
      * test the snapshot
      * @throws Exception an exception could be expected

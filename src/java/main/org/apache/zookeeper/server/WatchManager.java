@@ -35,7 +35,7 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
  * This class manages watches. It allows watches to be associated with a string
  * and removes watchers and their watches in addition to managing triggers.
  */
-public class WatchManager {
+class WatchManager {
     private static final Logger LOG = LoggerFactory.getLogger(WatchManager.class);
 
     private final HashMap<String, HashSet<Watcher>> watchTable =
@@ -44,7 +44,7 @@ public class WatchManager {
     private final HashMap<Watcher, HashSet<String>> watch2Paths =
         new HashMap<Watcher, HashSet<String>>();
 
-    public synchronized int size(){
+    synchronized int size(){
         int result = 0;
         for(Set<Watcher> watches : watchTable.values()) {
             result += watches.size();
@@ -52,7 +52,7 @@ public class WatchManager {
         return result;
     }
 
-    public synchronized void addWatch(String path, Watcher watcher) {
+    synchronized void addWatch(String path, Watcher watcher) {
         HashSet<Watcher> list = watchTable.get(path);
         if (list == null) {
             // don't waste memory if there are few watches on a node
@@ -72,7 +72,7 @@ public class WatchManager {
         paths.add(path);
     }
 
-    public synchronized void removeWatcher(Watcher watcher) {
+    synchronized void removeWatcher(Watcher watcher) {
         HashSet<String> paths = watch2Paths.remove(watcher);
         if (paths == null) {
             return;
@@ -88,11 +88,11 @@ public class WatchManager {
         }
     }
 
-    public Set<Watcher> triggerWatch(String path, EventType type) {
+    Set<Watcher> triggerWatch(String path, EventType type) {
         return triggerWatch(path, type, null);
     }
 
-    public Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
+    Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
         WatchedEvent e = new WatchedEvent(type,
                 KeeperState.SyncConnected, path);
         HashSet<Watcher> watchers;
@@ -147,7 +147,7 @@ public class WatchManager {
      * watches by connection
      * @return string representation of watches
      */
-    public synchronized void dumpWatches(PrintWriter pwriter, boolean byPath) {
+    synchronized void dumpWatches(PrintWriter pwriter, boolean byPath) {
         if (byPath) {
             for (Entry<String, HashSet<Watcher>> e : watchTable.entrySet()) {
                 pwriter.println(e.getKey());

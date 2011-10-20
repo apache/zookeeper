@@ -148,10 +148,6 @@ public class DataTree {
         return cloned;
     }
 
-    public Map<Long, HashSet<String>> getEphemeralsMap() {
-        return ephemerals;
-    }
-
     int getAclSize() {
         return longKeyMap.size();
     }
@@ -204,19 +200,6 @@ public class DataTree {
         return ephemerals.keySet();
     }
 
-    /**
-     * just an accessor method to allow raw creation of datatree's from a bunch
-     * of datanodes
-     *
-     * @param path
-     *            the path of the datanode
-     * @param node
-     *            the datanode corresponding to this path
-     */
-    public void addDataNode(String path, DataNode node) {
-        nodes.put(path, node);
-    }
-
     public DataNode getNode(String path) {
         return nodes.get(path);
     }
@@ -229,10 +212,9 @@ public class DataTree {
         return dataWatches.size() + childWatches.size();
     }
 
-    public int getEphemeralsCount() {
-        Map<Long, HashSet<String>> map = this.getEphemeralsMap();
+    int getEphemeralsCount() {
         int result = 0;
-        for (HashSet<String> set : map.values()) {
+        for (HashSet<String> set : ephemerals.values()) {
             result += set.size();
         }
         return result;
@@ -264,13 +246,13 @@ public class DataTree {
     /**
      * create a /zookeeper filesystem that is the proc filesystem of zookeeper
      */
-    private DataNode procDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
+    private final DataNode procDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
     /**
      * create a /zookeeper/quota node for maintaining quota properties for
      * zookeeper
      */
-    private DataNode quotaDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
+    private final DataNode quotaDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
     public DataTree() {
         /* Rather than fight it, let root have an alias */

@@ -51,18 +51,6 @@ module org.apache.zookeeper.data {
         long ephemeralOwner; // owner id if ephemeral, 0 otw
         long pzxid;      // last modified children
     }
-
-   // information explicitly stored by the version 1 database of servers 
-   class StatPersistedV1 {
-       long czxid; //created zxid
-       long mzxid; //last modified zxid
-       long ctime; //created
-       long mtime; //last modified
-       int version; //version
-       int cversion; //child version
-       int aversion; //acl version
-       long ephemeralOwner; //owner id if ephemeral. 0 otw
-    }
 }
 
 module org.apache.zookeeper.proto {
