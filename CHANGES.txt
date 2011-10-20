@@ -57,6 +57,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1155. Add windows automated builds (CI) for zookeeper c client bindings. (Dheeraj Agrawal via camille) 
 
   ZOOKEEPER-1226. extract version check in separate method in PrepRequestProcessor (Thomas Koch via camille)
+
+  ZOOKEEPER-1193. Remove upgrade code (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

@@ -138,13 +138,6 @@ stop)
     fi
     exit 0
     ;;
-upgrade)
-    shift
-    echo "upgrading the servers to 3.*"
-    $JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.server.upgrade.UpgradeMain ${@}
-    echo "Upgrading ... "
-    ;;
 restart)
     shift
     "$0" stop ${@}
