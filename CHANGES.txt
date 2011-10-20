@@ -60,6 +60,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1193. Remove upgrade code (Thomas Koch via phunt)
 
+  ZOOKEEPER-1221. Provide accessors for Request.{hdr|txn} (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

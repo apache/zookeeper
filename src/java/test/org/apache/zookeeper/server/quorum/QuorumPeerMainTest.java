@@ -168,7 +168,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // just make sure that we actually did get it in process at the
         // leader
         Assert.assertTrue(outstanding.size() == 1);
-        Assert.assertTrue(((Proposal) outstanding.values().iterator().next()).request.hdr.getType() == OpCode.create);
+        Assert.assertTrue(((Proposal) outstanding.values().iterator().next()).request.getHdr().getType() == OpCode.create);
         // make sure it has a chance to write it to disk
         Thread.sleep(1000);
         mt[leader].shutdown();

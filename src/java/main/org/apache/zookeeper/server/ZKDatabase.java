@@ -203,11 +203,7 @@ public class ZKDatabase {
     public long loadDataBase() throws IOException {
         PlayBackListener listener=new PlayBackListener(){
             public void onTxnLoaded(TxnHeader hdr,Record txn){
-                Request r = new Request(null, 0, hdr.getCxid(),hdr.getType(),
-                        null, null);
-                r.txn = txn;
-                r.hdr = hdr;
-                r.zxid = hdr.getZxid();
+                Request r = new Request(0, hdr.getCxid(),hdr.getType(), hdr, txn, hdr.getZxid());
                 addCommittedProposal(r);
             }
         };
@@ -239,9 +235,9 @@ public class ZKDatabase {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
             try {
-                request.hdr.serialize(boa, "hdr");
-                if (request.txn != null) {
-                    request.txn.serialize(boa, "txn");
+                request.getHdr().serialize(boa, "hdr");
+                if (request.getTxn() != null) {
+                    request.getTxn().serialize(boa, "txn");
                 }
                 baos.close();
             } catch (IOException e) {
