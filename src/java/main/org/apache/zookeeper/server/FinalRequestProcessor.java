@@ -106,17 +106,17 @@ public class FinalRequestProcessor implements RequestProcessor {
                     zks.outstandingChangesForPath.remove(cr.path);
                 }
             }
-            if (request.hdr != null) {
-                rc = zks.getZKDatabase().processTxn(request.hdr, request.txn);
+            if (request.getHdr() != null) {
+                rc = zks.getZKDatabase().processTxn(request.getHdr(), request.getTxn());
                 if (request.type == OpCode.createSession) {
-                    if (request.txn instanceof CreateSessionTxn) {
-                        CreateSessionTxn cst = (CreateSessionTxn) request.txn;
+                    if (request.getTxn() instanceof CreateSessionTxn) {
+                        CreateSessionTxn cst = (CreateSessionTxn) request.getTxn();
                         zks.sessionTracker.addSession(request.sessionId, cst
                                 .getTimeOut());
                     } else {
                         LOG.warn("*****>>>>> Got "
-                                + request.txn.getClass() + " "
-                                + request.txn.toString());
+                                + request.getTxn().getClass() + " "
+                                + request.getTxn().toString());
                     }
                 } else if (request.type == OpCode.closeSession) {
                     zks.sessionTracker.removeSession(request.sessionId);
@@ -128,7 +128,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
         }
 
-        if (request.hdr != null && request.hdr.getType() == OpCode.closeSession) {
+        if (request.getHdr() != null && request.getHdr().getType() == OpCode.closeSession) {
             ServerCnxnFactory scxn = zks.getServerCnxnFactory();
             // this might be possible since
             // we might just be playing diffs from the leader
@@ -153,9 +153,9 @@ public class FinalRequestProcessor implements RequestProcessor {
         Record rsp = null;
         boolean closeSession = false;
         try {
-            if (request.hdr != null && request.hdr.getType() == OpCode.error) {
+            if (request.getHdr() != null && request.getHdr().getType() == OpCode.error) {
                 throw KeeperException.create(KeeperException.Code.get((
-                        (ErrorTxn) request.txn).getErr()));
+                        (ErrorTxn) request.getTxn()).getErr()));
             }
 
             KeeperException ke = request.getException();
@@ -308,8 +308,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 request.request.rewind();
                 ByteBufferInputStream.byteBuffer2Record(request.request, setWatches);
                 long relativeZxid = setWatches.getRelativeZxid();
-                zks.getZKDatabase().setWatches(relativeZxid, 
-                        setWatches.getDataWatches(), 
+                zks.getZKDatabase().setWatches(relativeZxid,
+                        setWatches.getDataWatches(),
                         setWatches.getExistWatches(),
                         setWatches.getChildWatches(), cnxn);
                 break;
@@ -320,7 +320,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         getACLRequest);
                 Stat stat = new Stat();
-                List<ACL> acl = 
+                List<ACL> acl =
                     zks.getZKDatabase().getACL(getACLRequest.getPath(), stat);
                 rsp = new GetACLResponse(acl, stat);
                 break;
@@ -337,9 +337,9 @@ public class FinalRequestProcessor implements RequestProcessor {
                 Long aclG;
                 synchronized(n) {
                     aclG = n.acl;
-                    
+
                 }
-                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclG), 
+                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclG),
                         ZooDefs.Perms.READ,
                         request.authInfo);
                 List<String> children = zks.getZKDatabase().getChildren(
@@ -362,7 +362,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 synchronized(n) {
                     aclG = n.acl;
                 }
-                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclG), 
+                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclG),
                         ZooDefs.Perms.READ,
                         request.authInfo);
                 List<String> children = zks.getZKDatabase().getChildren(
@@ -377,7 +377,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             // down the connection otw ZOOKEEPER-710 might happen
             // ie client on slow follower starts to renew session, fails
             // before this completes, then tries the fast follower (leader)
-            // and is successful, however the initial renew is then 
+            // and is successful, however the initial renew is then
             // successfully fwd/processed by the leader and as a result
             // the client and leader disagree on where the client is most
             // recently attached (and therefore invalid SESSION MOVED generated)

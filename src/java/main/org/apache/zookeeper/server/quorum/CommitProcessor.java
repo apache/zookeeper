@@ -47,7 +47,6 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     LinkedList<Request> committedRequests = new LinkedList<Request>();
 
     RequestProcessor nextProcessor;
-    ArrayList<Request> toProcess = new ArrayList<Request>();
 
     /**
      * This flag indicates whether we need to wait for a response to come back from the
@@ -66,24 +65,21 @@ public class CommitProcessor extends Thread implements RequestProcessor {
 
     @Override
     public void run() {
+        ArrayList<Request> toProcess = new ArrayList<Request>();
         try {
             Request nextPending = null;            
             while (!finished) {
-                int len = toProcess.size();
-                for (int i = 0; i < len; i++) {
-                    nextProcessor.processRequest(toProcess.get(i));
+                for (Request request : toProcess) {
+                    nextProcessor.processRequest(request);
                 }
                 toProcess.clear();
                 synchronized (this) {
-                    if ((queuedRequests.size() == 0 || nextPending != null)
-                            && committedRequests.size() == 0) {
+                    if ((queuedRequests.isEmpty() || nextPending != null) && committedRequests.isEmpty()) {
                         wait();
                         continue;
                     }
-                    // First check and see if the commit came in for the pending
-                    // request
-                    if ((queuedRequests.size() == 0 || nextPending != null)
-                            && committedRequests.size() > 0) {
+                    // First check and see if the commit came in for the pending request
+                    if ((queuedRequests.isEmpty() || nextPending != null) && !committedRequests.isEmpty()) {
                         Request r = committedRequests.remove();
                         /*
                          * We match with nextPending so that we can move to the
@@ -96,28 +92,26 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                                 && nextPending.cxid == r.cxid) {
                             // we want to send our version of the request.
                             // the pointer to the connection in the request
-                            nextPending.hdr = r.hdr;
-                            nextPending.txn = r.txn;
+                            nextPending.setHdr(r.getHdr());
+                            nextPending.setTxn(r.getTxn());
                             nextPending.zxid = r.zxid;
                             toProcess.add(nextPending);
                             nextPending = null;
                         } else {
-                            // this request came from someone else so just
-                            // send the commit packet
+                            // this request came from someone else so just send the commit packet
                             toProcess.add(r);
                         }
                     }
                 }
 
-                // We haven't matched the pending requests, so go back to
-                // waiting
+                // We haven't matched the pending requests, so go back to waiting
                 if (nextPending != null) {
                     continue;
                 }
 
                 synchronized (this) {
                     // Process the next requests in the queuedRequests
-                    while (nextPending == null && queuedRequests.size() > 0) {
+                    while (nextPending == null && !queuedRequests.isEmpty()) {
                         Request request = queuedRequests.remove();
                         switch (request.type) {
                         case OpCode.create:
@@ -166,7 +160,6 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     }
 
     synchronized public void processRequest(Request request) {
-        // request.addRQRec(">commit");
         if (LOG.isDebugEnabled()) {
             LOG.debug("Processing request:: " + request);
         }
@@ -188,5 +181,4 @@ public class CommitProcessor extends Thread implements RequestProcessor {
             nextProcessor.shutdown();
         }
     }
-
 }

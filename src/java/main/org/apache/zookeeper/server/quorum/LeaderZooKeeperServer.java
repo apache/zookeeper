@@ -32,7 +32,7 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
- * 
+ *
  * Just like the standard ZooKeeperServer. We just replace the request
  * processors: PrepRequestProcessor -> ProposalRequestProcessor ->
  * CommitProcessor -> Leader.ToBeAppliedRequestProcessor ->
@@ -55,12 +55,11 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     public Leader getLeader(){
         return self.leader;
     }
-    
+
     @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(
-                finalProcessor, getLeader().toBeApplied);
+        RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
         commitProcessor = new CommitProcessor(toBeAppliedProcessor,
                 Long.toString(getServerId()), false);
         commitProcessor.start();
@@ -75,7 +74,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     public int getGlobalOutstandingLimit() {
         return super.getGlobalOutstandingLimit() / (self.getQuorumSize() - 1);
     }
-    
+
     @Override
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, getZKDatabase().getSessionWithTimeOuts(),
@@ -146,7 +145,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         }
         jmxServerBean = null;
     }
-    
+
     @Override
     public String getState() {
         return "leader";
@@ -154,13 +153,13 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
 
     /**
      * Returns the id of the associated QuorumPeer, which will do for a unique
-     * id of this server. 
+     * id of this server.
      */
     @Override
     public long getServerId() {
         return self.getId();
-    }    
-    
+    }
+
     @Override
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,
         int sessionTimeout) throws IOException {
