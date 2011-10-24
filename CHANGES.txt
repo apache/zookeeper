@@ -395,6 +395,9 @@ BUGFIXES:
   ZOOKEEPER-1185. Send AuthFailed event to client if SASL authentication fails.
   (Eugene Kuntz via mahadev)
 
+  ZOOKEEPER-1181. Fix problems with Kerberos TGT renewal.
+  (Eugene Koontz via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
