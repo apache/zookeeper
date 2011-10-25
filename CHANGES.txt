@@ -1,4 +1,4 @@
-Trunk
+Release 3.4.0 - 2011-10-25
 
 Non-backward compatible changes:
 
