@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.File;
 import java.io.IOException;
 
 import javax.management.JMException;

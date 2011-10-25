@@ -42,7 +42,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.system.Instance.Reporter;
 
 /**
- * This class starts up, 
+ * This class starts up,
  */
 public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallback {
     private final class MyWatcher implements Watcher {
@@ -105,7 +105,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
             }
         }
     }
-    private static final Logger LOG = LoggerFactory.getLogger(InstanceContainer.class); 
+    private static final Logger LOG = LoggerFactory.getLogger(InstanceContainer.class);
     String name;
     String zkHostPort;
     // We only run if the readyNode exists
@@ -127,7 +127,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
         this.reportsNode = prefix + '/' + this.reportsNode;
         this.assignmentsNode = prefix + '/' + this.assignmentsNode + '/' + name;
     }
-    
+
     private void rmnod(String path) throws InterruptedException, KeeperException {
         KeeperException lastException = null;
         for(int i = 0; i < maxTries; i++) {
@@ -168,7 +168,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
             }
         }
     }
-    
+
     private void mknod(String path, CreateMode mode) throws KeeperException, InterruptedException {
         String subpath[] = path.split("/");
         StringBuilder sb = new StringBuilder();
@@ -183,7 +183,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
             mknod_inner(sb.toString(), m);
         }
     }
-    
+
     public void run() throws IOException, InterruptedException, KeeperException {
         zk = new ZooKeeper(zkHostPort, sessTimeout, this);
         mknod(assignmentsNode, CreateMode.PERSISTENT);
@@ -192,15 +192,15 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
         // Now we just start watching the assignments directory
         zk.getChildren(assignmentsNode, true, this, null);
     }
-    
+
     /**
      * @param args the first parameter is the instance name, the second
      * is the ZooKeeper spec. if the instance name is the empty string
      * or "hostname", the hostname will be used.
-     * @throws InterruptedException 
-     * @throws IOException 
-     * @throws UnknownHostException 
-     * @throws KeeperException 
+     * @throws InterruptedException
+     * @throws IOException
+     * @throws UnknownHostException
+     * @throws KeeperException
      */
     public static void main(String[] args) throws UnknownHostException, IOException, InterruptedException, KeeperException {
         if (args.length != 3) {
@@ -226,8 +226,9 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
     }
 
     HashMap<String, Instance> instances = new HashMap<String, Instance>();
-    public void processResult(int rc, String path, Object ctx,
-            List<String> children) {
+
+    @Override
+    public void processResult(int rc, String path, Object ctx, List<String> children) {
         if (rc != KeeperException.Code.OK.intValue()) {
             // try it again
             zk.getChildren(assignmentsNode, true, this, null);
@@ -268,7 +269,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
                         conf = instanceSpec.substring(spaceIndex+1);
                     }
                     try {
-                        Class c = Class.forName(clazz);
+                        Class<?> c = Class.forName(clazz);
                         i = (Instance)c.newInstance();
                         Reporter reporter = new MyReporter(child);
                         i.setReporter(reporter);
@@ -286,7 +287,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
                             LOG.warn("Caused by", e.getCause());
                         }
                     }
-                    
+
                 }
             } else {
                 // just move it to the new list

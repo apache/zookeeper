@@ -541,10 +541,6 @@ public class GenerateLoad {
             }
         }
 
-        public boolean isConnected() {
-            return connected;
-        }
-
         synchronized public boolean waitConnected(long timeout)
                 throws InterruptedException {
             long endTime = System.currentTimeMillis() + timeout;

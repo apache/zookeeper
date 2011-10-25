@@ -259,7 +259,6 @@ public class FLETest extends ZKTestCase {
 
         FastLeaderElection le[] = new FastLeaderElection[count];
         leaderDies = true;
-        boolean allowOneBadLeader = leaderDies;
 
         LOG.info("TestLE: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {

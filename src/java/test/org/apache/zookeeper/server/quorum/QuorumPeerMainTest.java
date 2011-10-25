@@ -385,7 +385,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
-            final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
             String quorumCfgSection =
                     "server.1=127.0.0.1:" + PortAssignment.unique()

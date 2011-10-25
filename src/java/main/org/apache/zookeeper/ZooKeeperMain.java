@@ -294,7 +294,6 @@ public class ZooKeeperMain {
       this.zk = zk;
     }
 
-    @SuppressWarnings("unchecked")
     void run() throws KeeperException, IOException, InterruptedException {
         if (cl.getCommand() == null) {
             System.out.println("Welcome to ZooKeeper!");
@@ -302,8 +301,8 @@ public class ZooKeeperMain {
             boolean jlinemissing = false;
             // only use jline if it's in the classpath
             try {
-                Class consoleC = Class.forName("jline.ConsoleReader");
-                Class completorC =
+                Class<?> consoleC = Class.forName("jline.ConsoleReader");
+                Class<?> completorC =
                     Class.forName("org.apache.zookeeper.JLineZNodeCompletor");
 
                 System.out.println("JLine support is enabled");

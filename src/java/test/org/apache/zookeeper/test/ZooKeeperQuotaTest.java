@@ -31,14 +31,8 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ZooKeeperQuotaTest extends ClientBase {
-
-
-    private static final Logger LOG = LoggerFactory.getLogger(
-            ZooKeeperQuotaTest.class);
 
     @Test
     public void testQuota() throws IOException,

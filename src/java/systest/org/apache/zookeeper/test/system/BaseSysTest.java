@@ -52,7 +52,6 @@ public class BaseSysTest extends TestCase {
     @Override
     protected void setUp() throws Exception {
         if (!fakeMachines) {
-            String localHost = InetAddress.getLocalHost().getCanonicalHostName();
             zk = new ZooKeeper(zkHostPort, 15000, new Watcher() {public void process(WatchedEvent e){}});
             im = new InstanceManager(zk, prefix);
         }

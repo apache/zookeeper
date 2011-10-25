@@ -41,7 +41,7 @@ public class KeeperStateTest extends ZKTestCase {
     @Test
     public void testInvalidIntConversion() {
         try {
-            KeeperState ks = KeeperState.fromInt(324142);
+            KeeperState.fromInt(324142);
             Assert.fail("Was able to create an invalid KeeperState via an integer");
         } catch(RuntimeException re) {
             // we're good.

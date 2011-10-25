@@ -62,11 +62,9 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
     private static final int maxTries = 3;
     private static final class Assigned {
         String container;
-        String instance;
         int weight;
-        Assigned(String container, String instance, int weight) {
+        Assigned(String container, int weight) {
             this.container = container;
-            this.instance = instance;
             this.weight = weight;
         }
     }
@@ -159,16 +157,6 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
         }
         assignments = newAssignments;
     }
-    private void removeAssignmentNode(String dead) throws KeeperException, InterruptedException {
-        String deadNode = assignmentsNode + '/' + dead;
-        List<String> children = zk.getChildren(deadNode, false);
-        for(String c: children) {
-            zk.delete(deadNode + '/' + c, -1);
-        }
-        try {
-            zk.delete(deadNode, -1);
-        } catch(NoNodeException e) { /* this is ok */ }
-    }
     
     public void process(WatchedEvent event) {
         if (event.getPath().equals(statusNode)) {
@@ -213,7 +201,7 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
         if (mostIdle == null) {
             throw new NoAvailableContainers("No available containers");
         }
-        Assigned a = new Assigned(mostIdle, name, weight);
+        Assigned a = new Assigned(mostIdle, weight);
         instanceToAssignment.put(name, a);
         HashSet<Assigned> as = assignments.get(mostIdle);
         if (as == null) {

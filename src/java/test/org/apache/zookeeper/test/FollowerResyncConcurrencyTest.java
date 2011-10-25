@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -366,14 +365,14 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         ZKDatabase lead = qu.getPeer(leaderIndex).peer.getActiveServer().getZKDatabase();
         for(Long l : sessionsRestarted) {
             assertTrue("Should have same set of sessions in both servers, did not expect: " + l, sessionsNotRestarted.contains(l));
-            Set ephemerals = restarted.getEphemerals(l);
-            Set cleanEphemerals = clean.getEphemerals(l);
+            Set<String> ephemerals = restarted.getEphemerals(l);
+            Set<String> cleanEphemerals = clean.getEphemerals(l);
             for(Object o : cleanEphemerals) {
                 if(!ephemerals.contains(o)) {
                     LOG.info("Restarted follower doesn't contain ephemeral " + o);
                 }
             }
-            Set leadEphemerals = lead.getEphemerals(l);
+            Set<String> leadEphemerals = lead.getEphemerals(l);
             for(Object o : leadEphemerals) {
                 if(!cleanEphemerals.contains(o)) {
                     LOG.info("Follower doesn't contain ephemeral from leader " + o);

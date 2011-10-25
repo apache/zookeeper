@@ -40,7 +40,7 @@ public class EventTypeTest extends ZKTestCase {
     @Test
     public void testInvalidIntConversion() {
         try {
-            EventType et = EventType.fromInt(324242);
+            EventType.fromInt(324242);
             Assert.fail("Was able to create an invalid EventType via an integer");
         } catch(RuntimeException re) {
             // we're good.
