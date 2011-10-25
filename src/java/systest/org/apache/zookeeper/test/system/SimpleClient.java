@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.test.system;
 
-import java.io.IOException;
-
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;

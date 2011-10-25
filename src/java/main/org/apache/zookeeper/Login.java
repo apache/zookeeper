@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper;
 
-/** 
+/**
  * This class is responsible for refreshing Kerberos credentials for
  * logins for both Zookeeper client and server.
  * See ZooKeeperSaslServer for server-side usage.
@@ -63,14 +63,12 @@ public class Login {
     private Thread t = null;
     private boolean isKrbTicket = false;
     private boolean isUsingTicketCache = false;
-    private boolean isUsingKeytab = false;
 
     /** Random number generator */
     private static Random rng = new Random();
 
     private LoginContext login = null;
     private String loginContextName = null;
-    private String keytabFile = null;
     private String principal = null;
 
     private long lastLogin = 0;
@@ -102,10 +100,6 @@ public class Login {
                 if (val.equals("true")) {
                     isUsingTicketCache = true;
                 }
-            }
-            if (entry.getOptions().get("keyTab") != null) {
-                keytabFile = (String)entry.getOptions().get("keyTab");
-                isUsingKeytab = true;
             }
             if (entry.getOptions().get("principal") != null) {
                 principal = (String)entry.getOptions().get("principal");

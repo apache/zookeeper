@@ -43,11 +43,11 @@ public class RepeatStartupTest extends ZKTestCase {
         ZooKeeper zk = qb.createClient();
         zk.create("/test", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
-        qb.shutdown(qb.s1);
-        qb.shutdown(qb.s2);
-        qb.shutdown(qb.s3);
-        qb.shutdown(qb.s4);
-        qb.shutdown(qb.s5);
+        QuorumBase.shutdown(qb.s1);
+        QuorumBase.shutdown(qb.s2);
+        QuorumBase.shutdown(qb.s3);
+        QuorumBase.shutdown(qb.s4);
+        QuorumBase.shutdown(qb.s5);
         String hp = qb.hostPort.split(",")[0];
         ZooKeeperServer zks = new ZooKeeperServer(qb.s1.getTxnFactory().getSnapDir(),
                 qb.s1.getTxnFactory().getDataDir(), 3000);
