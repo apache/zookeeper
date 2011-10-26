@@ -68,6 +68,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1216. Fix more eclipse compiler warnings, also in Tests
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1254. test correct watch handling with multi ops
+  (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
