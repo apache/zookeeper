@@ -71,6 +71,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1254. test correct watch handling with multi ops
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1251. call checkSession at begin of PrepRequestProcessor.pRequest
+  (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
