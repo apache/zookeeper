@@ -35,6 +35,9 @@ import java.util.List;
 import java.util.ArrayList;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class MultiTransactionTest extends ZKTestCase implements Watcher {
     private static final Logger LOG = Logger.getLogger(MultiTransactionTest.class);
@@ -220,6 +223,42 @@ public class MultiTransactionTest extends ZKTestCase implements Watcher {
         }
     }
 
+    @Test
+    public void testWatchesTriggered() throws KeeperException, InterruptedException {
+        HasTriggeredWatcher watcher = new HasTriggeredWatcher();
+        zk.getChildren("/", watcher);
+        zk.sync("/", null, null);
+        zk.multi(Arrays.asList(
+                Op.create("/t", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.delete("/t", -1)
+        ));
+        zk.sync("/", null, null);
+        assertTrue(watcher.triggered);
+    }
 
+    @Test
+    public void testNoWatchesTriggeredForFailedMultiRequest() throws InterruptedException, KeeperException {
+        HasTriggeredWatcher watcher = new HasTriggeredWatcher();
+        zk.getChildren("/", watcher);
+        zk.sync("/", null, null);
+        try {
+            zk.multi(Arrays.asList(
+                    Op.create("/t", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.delete("/nonexisting", -1)
+            ));
+            fail("expected previous multi op to fail!");
+        } catch (KeeperException.NoNodeException e) {
+            // expected
+        }
+        zk.sync("/", null, null);
+        assertFalse(watcher.triggered);
+    }
 
+    private static final class HasTriggeredWatcher implements Watcher {
+        boolean triggered = false;
+        @Override
+        public void process(WatchedEvent event) {
+            triggered = true;
+        }
+    }
 }
