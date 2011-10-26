@@ -294,7 +294,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
 
         switch (type) {
             case OpCode.create:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 CreateRequest createRequest = (CreateRequest)record;
                 String path = createRequest.getPath();
                 int lastSlash = path.lastIndexOf('/');
@@ -348,7 +347,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, s, 0, listACL));
                 break;
             case OpCode.delete:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 DeleteRequest deleteRequest = (DeleteRequest)record;
                 path = deleteRequest.getPath();
                 lastSlash = path.lastIndexOf('/');
@@ -371,7 +369,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null));
                 break;
             case OpCode.setData:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 SetDataRequest setDataRequest = (SetDataRequest)record;
                 path = setDataRequest.getPath();
                 nodeRecord = getRecordForPath(path);
@@ -383,7 +380,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 addChangeRecord(nodeRecord);
                 break;
             case OpCode.setACL:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 SetACLRequest setAclRequest = (SetACLRequest)record;
                 path = setAclRequest.getPath();
                 listACL = removeDuplicates(setAclRequest.getAcl());
@@ -430,7 +426,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         + Long.toHexString(request.sessionId));
                 break;
             case OpCode.check:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 CheckVersionRequest checkVersionRequest = (CheckVersionRequest)record;
                 path = checkVersionRequest.getPath();
                 nodeRecord = getRecordForPath(path);
@@ -462,6 +457,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         request.setTxn(null);
 
         try {
+            if(request.type != OpCode.createSession && request.type != OpCode.closeSession) {
+                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+            }
+
             switch (request.type) {
                 case OpCode.create:
                 CreateRequest createRequest = new CreateRequest();
@@ -554,19 +553,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             case OpCode.createSession:
             case OpCode.closeSession:
                 pRequest2Txn(request.type, zks.getNextZxid(), request, null);
-                break;
-
-            //All the rest don't need to create a Txn - just verify session
-            case OpCode.sync:
-            case OpCode.exists:
-            case OpCode.getData:
-            case OpCode.getACL:
-            case OpCode.getChildren:
-            case OpCode.getChildren2:
-            case OpCode.ping:
-            case OpCode.setWatches:
-                zks.sessionTracker.checkSession(request.sessionId,
-                        request.getOwner());
                 break;
             }
         } catch (KeeperException e) {
