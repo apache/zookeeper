@@ -57,11 +57,6 @@ public class AsyncTest extends ZKTestCase
         qb.setUp();
     }
 
-    public void restart() throws Exception {
-        JMXEnv.setUp();
-        qb.startServers();
-    }
-
     @After
     public void tearDown() throws Exception {
         LOG.info("Test clients shutting down");
