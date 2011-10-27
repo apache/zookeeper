@@ -83,6 +83,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1252. remove unused method o.a.z.test.AxyncTest.restart()
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1200. Remove obsolete DataTreeBuilder
+  (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

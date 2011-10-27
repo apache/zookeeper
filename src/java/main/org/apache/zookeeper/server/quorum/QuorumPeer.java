@@ -549,18 +549,15 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     public Observer observer;
 
     protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
-        return new Follower(this, new FollowerZooKeeperServer(logFactory,
-                this,new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
+        return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.zkDb));
     }
 
     protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
-        return new Leader(this, new LeaderZooKeeperServer(logFactory,
-                this,new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
+        return new Leader(this, new LeaderZooKeeperServer(logFactory, this, this.zkDb));
     }
 
     protected Observer makeObserver(FileTxnSnapLog logFactory) throws IOException {
-        return new Observer(this, new ObserverZooKeeperServer(logFactory,
-                this, new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
+        return new Observer(this, new ObserverZooKeeperServer(logFactory, this, this.zkDb));
     }
 
     @SuppressWarnings("deprecation")
@@ -668,10 +665,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                     LOG.info("LOOKING");
 
                     // Create read-only server but don't start it immediately
-                    final ReadOnlyZooKeeperServer roZk = new ReadOnlyZooKeeperServer(
-                            logFactory, this,
-                            new ZooKeeperServer.BasicDataTreeBuilder(),
-                            this.zkDb);
+                    final ReadOnlyZooKeeperServer roZk = new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb);
 
                     // Instead of starting roZk immediately, wait some grace
                     // period before we decide we're partitioned.

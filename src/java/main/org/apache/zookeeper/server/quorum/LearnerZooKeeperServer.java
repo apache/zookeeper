@@ -33,11 +33,10 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {    
     public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
-            DataTreeBuilder treeBuilder, ZKDatabase zkDb, QuorumPeer self)
+            ZKDatabase zkDb, QuorumPeer self)
         throws IOException
     {
-        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout,
-                treeBuilder, zkDb, self);
+        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, self);
     }
 
     /**
