@@ -670,11 +670,13 @@ public class ZooKeeperMain {
             return false;
         }
         
-        if (cmd.equals("create") && args.length >= 3) {
+        if (cmd.equals("create") && args.length >= 2) {
             int first = 0;
             CreateMode flags = CreateMode.PERSISTENT;
-            if ((args[1].equals("-e") && args[2].equals("-s"))
-                    || (args[1]).equals("-s") && (args[2].equals("-e"))) {
+            if ((args.length >= 3)
+                    && ((args[1].equals("-e") && args[2].equals("-s")) || (args[1])
+                            .equals("-s")
+                            && (args[2].equals("-e")))) {
                 first+=2;
                 flags = CreateMode.EPHEMERAL_SEQUENTIAL;
             } else if (args[1].equals("-e")) {
@@ -684,13 +686,24 @@ public class ZooKeeperMain {
                 first++;
                 flags = CreateMode.PERSISTENT_SEQUENTIAL;
             }
-            if (args.length == first + 4) {
+            if (args.length >= first+2) {
+                path = args[first+1];
+            }
+            if(path==null)
+            {
+                usage();
+                return false;
+            }
+            byte[] data = null;
+            if (args.length >= first + 3) {
+                data = args[first + 2].getBytes();
+            }
+            if (args.length >= first + 4) {
                 acl = parseACLs(args[first+3]);
             }
-            path = args[first + 1];
-            String newPath = zk.create(path, args[first+2].getBytes(), acl,
-                    flags);
+            String newPath = zk.create(path, data, acl, flags);
             System.err.println("Created " + newPath);
+            return true;
         } else if (cmd.equals("delete") && args.length >= 2) {
             path = args[1];
             zk.delete(path, watch ? Integer.parseInt(args[2]) : -1);
