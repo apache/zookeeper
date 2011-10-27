@@ -35,6 +35,8 @@ BUGFIXES:
   ZOOKEEPER-1220. ./zkCli.sh 'create' command is throwing
   ArrayIndexOutOfBoundsException (kavita sharma via phunt)
 
+  ZOOKEEPER-1256. ClientPortBindTest is failing on Mac OS X
+  (Daniel Gómez Ferro via phunt)
 
 IMPROVEMENTS:
 
