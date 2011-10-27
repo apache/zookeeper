@@ -330,6 +330,10 @@ BUGFIXES:
 
   ZOOKEEPER-1718. Support JLine 2 (Manikumar Reddy via phunt)
 
+  ZOOKEEPER-1220. ./zkCli.sh 'create' command is throwing
+  ArrayIndexOutOfBoundsException (kavita sharma via phunt)
+
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
