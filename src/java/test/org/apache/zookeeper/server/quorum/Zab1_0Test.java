@@ -39,7 +39,6 @@ import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.ZooKeeperServer.DataTreeBuilder;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerInfo;
@@ -99,13 +98,6 @@ public class Zab1_0Test {
         }
         public void closeAll() {
         }
-    }
-    static class MockDataTreeBuilder implements DataTreeBuilder {
-        @Override
-        public DataTree build() {
-            return new DataTree();
-        }
-        
     }
     static Socket[] getSocketPair() throws IOException {
         ServerSocket ss = new ServerSocket();
@@ -291,8 +283,7 @@ public class Zab1_0Test {
         addrField.setAccessible(true);
         addrField.set(peer, new InetSocketAddress(33556));
         ZKDatabase zkDb = new ZKDatabase(logFactory);
-        DataTreeBuilder treeBuilder = new MockDataTreeBuilder();
-        LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer, treeBuilder, zkDb);
+        LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer, zkDb);
         return new Leader(peer, zk);
     }
     private QuorumPeer createQuorumPeer(File tmpDir) throws IOException,

@@ -39,10 +39,8 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 public class ReadOnlyZooKeeperServer extends QuorumZooKeeperServer {
 
     private volatile boolean shutdown = false;
-    ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self,
-            DataTreeBuilder treeBuilder, ZKDatabase zkDb) {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout,
-                treeBuilder, zkDb, self);
+    ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) {
+        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, zkDb, self);
     }
 
     @Override

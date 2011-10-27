@@ -45,7 +45,7 @@ public class LearnerTest extends ZKTestCase {
         Learner learner;
 
         public SimpleLearnerZooKeeperServer(FileTxnSnapLog ftsl) throws IOException {
-            super(ftsl, 2000, 2000, 2000, null, new ZKDatabase(ftsl), null);
+            super(ftsl, 2000, 2000, 2000, new ZKDatabase(ftsl), null);
         }
 
         @Override

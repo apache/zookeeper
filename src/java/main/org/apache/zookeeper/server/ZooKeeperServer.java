@@ -79,20 +79,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected ZooKeeperServerBean jmxServerBean;
     protected DataTreeBean jmxDataTreeBean;
 
-
-    /**
-     * The server delegates loading of the tree to an instance of the interface
-     */
-    public interface DataTreeBuilder {
-        public DataTree build();
-    }
-
-    static public class BasicDataTreeBuilder implements DataTreeBuilder {
-        public DataTree build() {
-            return new DataTree();
-        }
-    }
-
     public static final int DEFAULT_TICK_TIME = 3000;
     protected int tickTime = DEFAULT_TICK_TIME;
     /** value of -1 indicates unset, use default */
@@ -146,8 +132,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param dataDir the directory to put the data
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
-            int minSessionTimeout, int maxSessionTimeout,
-            DataTreeBuilder treeBuilder, ZKDatabase zkDb) {
+            int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb) {
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.zkDb = zkDb;
@@ -169,10 +154,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param treeBuilder the datatree builder
      * @throws IOException
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
-            DataTreeBuilder treeBuilder) throws IOException {
-        this(txnLogFactory, tickTime, -1, -1, treeBuilder,
-                new ZKDatabase(txnLogFactory));
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime) throws IOException {
+        this(txnLogFactory, tickTime, -1, -1, new ZKDatabase(txnLogFactory));
     }
 
     public ServerStats serverStats() {
@@ -207,7 +190,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer(File snapDir, File logDir, int tickTime)
             throws IOException {
         this( new FileTxnSnapLog(snapDir, logDir),
-                tickTime, new BasicDataTreeBuilder());
+                tickTime);
     }
 
     /**
@@ -215,12 +198,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *
      * @throws IOException
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory,
-            DataTreeBuilder treeBuilder)
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory)
         throws IOException
     {
-        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, treeBuilder,
-                new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, new ZKDatabase(txnLogFactory));
     }
 
     /**
