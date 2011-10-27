@@ -32,6 +32,10 @@ BUGFIXES:
   ZOOKEEPER-1241. Typo in ZooKeeper Recipes and Solutions
   documentation (Jingguo Yao via phunt)
 
+  ZOOKEEPER-1220. ./zkCli.sh 'create' command is throwing
+  ArrayIndexOutOfBoundsException (kavita sharma via phunt)
+
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
