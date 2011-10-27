@@ -500,27 +500,29 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 Map<String, ChangeRecord> pendingChanges = getPendingChanges(multiRequest);
 
                 for(Op op: multiRequest) {
-                    Record subrequest = op.toRequestRecord() ;
+                    Record subrequest = op.toRequestRecord();
+                    int type;
+                    Record txn;
 
                     /* If we've already failed one of the ops, don't bother
                      * trying the rest as we know it's going to fail and it
                      * would be confusing in the logfiles.
                      */
                     if (ke != null) {
-                        request.getHdr().setType(OpCode.error);
-                        request.setTxn(new ErrorTxn(Code.RUNTIMEINCONSISTENCY.intValue()));
+                        type = OpCode.error;
+                        txn = new ErrorTxn(Code.RUNTIMEINCONSISTENCY.intValue());
                     }
 
                     /* Prep the request and convert to a Txn */
                     else {
                         try {
                             pRequest2Txn(op.getType(), zxid, request, subrequest);
+                            type = request.getHdr().getType();
+                            txn = request.getTxn();
                         } catch (KeeperException e) {
-                            if (ke == null) {
-                                ke = e;
-                            }
-                            request.getHdr().setType(OpCode.error);
-                            request.setTxn(new ErrorTxn(e.code().intValue()));
+                            ke = e;
+                            type = OpCode.error;
+                            txn = new ErrorTxn(e.code().intValue());
                             LOG.error(">>>> Got user-level KeeperException when processing "
                                     + request.toString()
                                     + " Error Path:" + e.getPath()
@@ -538,10 +540,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                     //       not sure how else to get the txn stored into our list.
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-                    request.getTxn().serialize(boa, "request") ;
+                    txn.serialize(boa, "request") ;
                     ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
 
-                    txns.add(new Txn(request.getHdr().getType(), bb.array()));
+                    txns.add(new Txn(type, bb.array()));
                 }
 
                 request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid, zks.getTime(), request.type));

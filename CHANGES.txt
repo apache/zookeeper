@@ -86,6 +86,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1200. Remove obsolete DataTreeBuilder
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1247. dead code in PrepRequestProcessor.pRequest multi case
+  (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
