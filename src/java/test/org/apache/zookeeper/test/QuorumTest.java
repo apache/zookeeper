@@ -378,9 +378,11 @@ public class QuorumTest extends ZKTestCase {
          */
         index = (index == 1) ? 2 : 1;
         
-        ZooKeeper zk = new DisconnectableZooKeeper("127.0.0.1:" + qu.getPeer(index).peer.getClientPort(), 1000, new Watcher() {
-            public void process(WatchedEvent event) {
-        }});
+        ZooKeeper zk = new DisconnectableZooKeeper(
+                "127.0.0.1:" + qu.getPeer(index).peer.getClientPort(),
+                ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+            public void process(WatchedEvent event) { }
+          });
 
         zk.create("/blah", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);      
         
@@ -412,7 +414,7 @@ public class QuorumTest extends ZKTestCase {
         }
 
         // Wait until all updates return
-        sem.tryAcquire(15000, TimeUnit.MILLISECONDS);
+        sem.tryAcquire(15, TimeUnit.SECONDS);
         
         // Verify that server is following and has the same epoch as the leader
         Assert.assertTrue("Not following", qu.getPeer(index).peer.follower != null);
