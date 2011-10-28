@@ -94,6 +94,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1265. Normalize switch cases lists on request types
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1267. closeSession flag in finalRequestProcessor is superfluous
+  (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
