@@ -67,7 +67,7 @@ public class FollowerRequestProcessor extends Thread implements
                 // the request to the leader so that we are ready to receive
                 // the response
                 nextProcessor.processRequest(request);
-                
+
                 // We now ship the request to the leader. As with all
                 // other quorum operations, sync also follows this code
                 // path, but different from others, we need to keep track
@@ -85,6 +85,7 @@ public class FollowerRequestProcessor extends Thread implements
                 case OpCode.createSession:
                 case OpCode.closeSession:
                 case OpCode.multi:
+                case OpCode.check:
                     zks.getFollower().request(request);
                     break;
                 }

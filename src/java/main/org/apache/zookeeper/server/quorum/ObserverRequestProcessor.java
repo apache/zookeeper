@@ -40,15 +40,15 @@ public class ObserverRequestProcessor extends Thread implements
 
     RequestProcessor nextProcessor;
 
-    // We keep a queue of requests. As requests get submitted they are 
-    // stored here. The queue is drained in the run() method. 
+    // We keep a queue of requests. As requests get submitted they are
+    // stored here. The queue is drained in the run() method.
     LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
 
     boolean finished = false;
 
     /**
      * Constructor - takes an ObserverZooKeeperServer to associate with
-     * and the next processor to pass requests to after we're finished. 
+     * and the next processor to pass requests to after we're finished.
      * @param zks
      * @param nextProcessor
      */
@@ -75,7 +75,7 @@ public class ObserverRequestProcessor extends Thread implements
                 // the request to the leader so that we are ready to receive
                 // the response
                 nextProcessor.processRequest(request);
-                
+
                 // We now ship the request to the leader. As with all
                 // other quorum operations, sync also follows this code
                 // path, but different from others, we need to keep track
@@ -93,6 +93,7 @@ public class ObserverRequestProcessor extends Thread implements
                 case OpCode.createSession:
                 case OpCode.closeSession:
                 case OpCode.multi:
+                case OpCode.check:
                     zks.getObserver().request(request);
                     break;
                 }
@@ -104,7 +105,7 @@ public class ObserverRequestProcessor extends Thread implements
     }
 
     /**
-     * Simply queue the request, which will be processed in FIFO order. 
+     * Simply queue the request, which will be processed in FIFO order.
      */
     public void processRequest(Request request) {
         if (!finished) {

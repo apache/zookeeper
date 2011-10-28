@@ -67,7 +67,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     public void run() {
         ArrayList<Request> toProcess = new ArrayList<Request>();
         try {
-            Request nextPending = null;            
+            Request nextPending = null;
             while (!finished) {
                 for (Request request : toProcess) {
                     nextProcessor.processRequest(request);
@@ -118,6 +118,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
                         case OpCode.delete:
                         case OpCode.setData:
                         case OpCode.multi:
+                        case OpCode.check:
                         case OpCode.setACL:
                         case OpCode.createSession:
                         case OpCode.closeSession:
@@ -163,7 +164,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Processing request:: " + request);
         }
-        
+
         if (!finished) {
             queuedRequests.add(request);
             notifyAll();
