@@ -91,6 +91,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1247. dead code in PrepRequestProcessor.pRequest multi case
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1265. Normalize switch cases lists on request types
+  (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

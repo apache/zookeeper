@@ -41,13 +41,13 @@ public class ReadOnlyRequestProcessor extends Thread implements RequestProcessor
 
     private static final Logger LOG = LoggerFactory.getLogger(ReadOnlyRequestProcessor.class);
 
-    private LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
+    private final LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
 
     private boolean finished = false;
 
-    private RequestProcessor nextProcessor;
+    private final RequestProcessor nextProcessor;
 
-    private ZooKeeperServer zks;
+    private final ZooKeeperServer zks;
 
     public ReadOnlyRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
         super("ReadOnlyRequestProcessor:" + zks.getServerId());
@@ -79,7 +79,8 @@ public class ReadOnlyRequestProcessor extends Thread implements RequestProcessor
                 case OpCode.delete:
                 case OpCode.setData:
                 case OpCode.setACL:
-
+                case OpCode.multi:
+                case OpCode.check:
                     ReplyHeader hdr = new ReplyHeader(request.cxid, zks.getZKDatabase()
                             .getDataTreeLastProcessedZxid(), Code.NOTREADONLY.intValue());
                     try {
