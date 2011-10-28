@@ -151,7 +151,6 @@ public class FinalRequestProcessor implements RequestProcessor {
         zks.decInProcess();
         Code err = Code.OK;
         Record rsp = null;
-        boolean closeSession = false;
         try {
             if (request.getHdr() != null && request.getHdr().getType() == OpCode.error) {
                 throw KeeperException.create(KeeperException.Code.get((
@@ -246,7 +245,6 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.closeSession: {
                 lastOp = "CLOS";
-                closeSession = true;
                 err = Code.get(rc.err);
                 break;
             }
@@ -408,7 +406,7 @@ public class FinalRequestProcessor implements RequestProcessor {
 
         try {
             cnxn.sendResponse(hdr, rsp, "response");
-            if (closeSession) {
+            if (request.type == OpCode.closeSession) {
                 cnxn.sendCloseSession();
             }
         } catch (IOException e) {
