@@ -39,6 +39,7 @@ BUGFIXES:
   ZOOKEEPER-1212. zkServer.sh stop action is not conformat with LSB para 
   20.2 Init Script Actions (Roman Shaposhnik via mahadev)
 
+  ZOOKEEPER-1264. FollowerResyncConcurrencyTest failing intermittently. (phunt via camille)
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:
 
