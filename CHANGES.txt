@@ -97,6 +97,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1267. closeSession flag in finalRequestProcessor is superfluous
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1273. Copy'n'pasted unit test (Thomas Koch via phunt)
+
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
