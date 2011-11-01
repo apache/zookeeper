@@ -52,11 +52,13 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
     @Before
     public void setUp() throws Exception {
+        System.setProperty("readonlymode.enabled", "true");
         qu.startQuorum();
     }
 
     @After
     public void tearDown() throws Exception {
+        System.setProperty("readonlymode.enabled", "false");
         qu.tearDown();
     }
 
@@ -133,9 +135,10 @@ public class ReadOnlyModeTest extends ZKTestCase {
         long start = System.currentTimeMillis();
         while (!(zk.getState() == States.CONNECTEDREADONLY)) {
             Thread.sleep(200);
+            // FIXME this was originally 5 seconds, but realistically, on random/slow/virt hosts, there is no way to guarantee this
             Assert.assertTrue("Can't connect to the server", System
                     .currentTimeMillis()
-                    - start < 5000);
+                    - start < 30000);
         }
 
         // At this point states list should contain, in the given order,
