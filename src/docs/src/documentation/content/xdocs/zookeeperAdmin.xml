@@ -1016,6 +1016,35 @@ server.3=zoo3:2888:3888</programlisting>
       </section>
 
       <section>
+        <title>Experimental Options/Features</title>
+
+        <para>New features that are currently considered experimental.</para>
+
+        <variablelist>
+          <varlistentry>
+            <term>Read Only Mode Server</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">readonlymode.enabled</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.4.0:</emphasis>
+              Setting this value to true enables Read Only Mode server
+              support (disabled by default). ROM allows clients
+              sessions which requested ROM support to connect to the
+              server even when the server might be partitioned from
+              the quorum. In this mode ROM clients can still read
+              values from the ZK service, but will be unable to write
+              values and see changes from other clients. See
+              ZOOKEEPER-784 for more details.
+              </para>
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+      </section>
+
+      <section>
         <title>Unsafe Options</title>
 
         <para>The following options can be useful, but be careful when you use
