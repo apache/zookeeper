@@ -350,6 +350,9 @@ BUGFIXES:
   
   ZOOKEEPER-1264. FollowerResyncConcurrencyTest failing intermittently. (phunt via camille)
 
+  ZOOKEEPER-1268. problems with read only mode, intermittent test failures 
+  and ERRORs in the log. (phunt via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
