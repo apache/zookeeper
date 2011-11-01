@@ -664,39 +664,53 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 case LOOKING:
                     LOG.info("LOOKING");
 
-                    // Create read-only server but don't start it immediately
-                    final ReadOnlyZooKeeperServer roZk = new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb);
+                    if (Boolean.getBoolean("readonlymode.enabled")) {
+                        LOG.info("Attempting to start ReadOnlyZooKeeperServer");
 
-                    // Instead of starting roZk immediately, wait some grace
-                    // period before we decide we're partitioned.
-                    //
-                    // Thread is used here because otherwise it would require
-                    // changes in each of election strategy classes which is
-                    // unnecessary code coupling.
-                    Thread roZkMgr = new Thread() {
-                        public void run() {
-                            try {
-                                // lower-bound grace period to 2 secs
-                                sleep(Math.max(2000, tickTime));
-                                if (ServerState.LOOKING.equals(getPeerState())) {
-                                    roZk.startup();
+                        // Create read-only server but don't start it immediately
+                        final ReadOnlyZooKeeperServer roZk =
+                            new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb);
+    
+                        // Instead of starting roZk immediately, wait some grace
+                        // period before we decide we're partitioned.
+                        //
+                        // Thread is used here because otherwise it would require
+                        // changes in each of election strategy classes which is
+                        // unnecessary code coupling.
+                        Thread roZkMgr = new Thread() {
+                            public void run() {
+                                try {
+                                    // lower-bound grace period to 2 secs
+                                    sleep(Math.max(2000, tickTime));
+                                    if (ServerState.LOOKING.equals(getPeerState())) {
+                                        roZk.startup();
+                                    }
+                                } catch (InterruptedException e) {
+                                    LOG.info("Interrupted while attempting to start ReadOnlyZooKeeperServer, not started");
+                                } catch (Exception e) {
+                                    LOG.error("FAILED to start ReadOnlyZooKeeperServer", e);
                                 }
-                            } catch (Exception e) {
-                                LOG.error("FAILED to start ReadOnlyZooKeeperServer", e);
                             }
+                        };
+                        try {
+                            roZkMgr.start();
+                            setCurrentVote(makeLEStrategy().lookForLeader());
+                        } catch (Exception e) {
+                            LOG.warn("Unexpected exception", e);
+                            setPeerState(ServerState.LOOKING);
+                        } finally {
+                            // If the thread is in the the grace period, interrupt
+                            // to come out of waiting.
+                            roZkMgr.interrupt();
+                            roZk.shutdown();
                         }
-                    };
-                    try {
-                        roZkMgr.start();
-                        setCurrentVote(makeLEStrategy().lookForLeader());
-                    } catch (Exception e) {
-                        LOG.warn("Unexpected exception",e);
-                        setPeerState(ServerState.LOOKING);
-                    } finally {
-                        // If the thread is in the the grace period, interrupt
-                        // to come out of waiting.
-                        roZkMgr.interrupt();
-                        roZk.shutdown();
+                    } else {
+                        try {
+                            setCurrentVote(makeLEStrategy().lookForLeader());
+                        } catch (Exception e) {
+                            LOG.warn("Unexpected exception", e);
+                            setPeerState(ServerState.LOOKING);
+                        }                        
                     }
                     break;
                 case OBSERVING:
