@@ -352,6 +352,8 @@ BUGFIXES:
 
   ZOOKEEPER-1268. problems with read only mode, intermittent test failures 
   and ERRORs in the log. (phunt via mahadev)
+  
+  ZOOKEEPER-1246. Dead code in PrepRequestProcessor catch Exception block. (camille)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
