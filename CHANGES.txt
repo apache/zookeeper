@@ -39,6 +39,8 @@ BUGFIXES:
   (Daniel Gómez Ferro via phunt)
   
   ZOOKEEPER-1264. FollowerResyncConcurrencyTest failing intermittently. (phunt via camille)
+  
+  ZOOKEEPER-1246. Dead code in PrepRequestProcessor catch Exception block. (camille)
 
 IMPROVEMENTS:
 
