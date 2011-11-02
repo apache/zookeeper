@@ -176,23 +176,45 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             LOG.warn("Ignoring exception during selector close", e);
         }
     }
-
-    @Override
-    void connect(InetSocketAddress addr) throws IOException {
+    
+    /**
+     * create a socket channel.
+     * @return the created socket channel
+     * @throws IOException
+     */
+    SocketChannel createSock() throws IOException {
         SocketChannel sock;
         sock = SocketChannel.open();
         sock.configureBlocking(false);
         sock.socket().setSoLinger(false, -1);
         sock.socket().setTcpNoDelay(true);
+        return sock;
+    }
+
+    /**
+     * register with the selection and connect
+     * @param sock the {@link SocketChannel} 
+     * @param addr the address of remote host
+     * @throws IOException
+     */
+    void registerAndConnect(SocketChannel sock, InetSocketAddress addr) 
+    throws IOException {
+        sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
+        boolean immediateConnect = sock.connect(addr);            
+        if (immediateConnect) {
+            sendThread.primeConnection();
+        }
+    }
+    
+    @Override
+    void connect(InetSocketAddress addr) throws IOException {
+        SocketChannel sock = createSock();
         try {
-            sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-            boolean immediateConnect = sock.connect(addr);            
-            if (immediateConnect) {
-                sendThread.primeConnection();
-            }
+           registerAndConnect(sock, addr);
         } catch (IOException e) {
             LOG.error("Unable to open socket to " + addr);
             sock.close();
+            throw e;
         }
         initialized = false;
 

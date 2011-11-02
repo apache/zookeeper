@@ -355,6 +355,9 @@ BUGFIXES:
   
   ZOOKEEPER-1246. Dead code in PrepRequestProcessor catch Exception block. (camille)
 
+  ZOOKEEPER-1271. testEarlyLeaderAbandonment failing on solaris -
+  clients not retrying connection (mahadev via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
