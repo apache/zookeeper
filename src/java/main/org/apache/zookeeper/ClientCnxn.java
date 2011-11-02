@@ -1075,6 +1075,7 @@ public class ClientCnxn {
             } catch (IOException e) {
                 LOG.error("Unable to open socket to " + addr);
                 sock.close();
+                throw e;
             }
             initialized = false;
 

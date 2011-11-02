@@ -40,6 +40,10 @@ BUGFIXES:
   20.2 Init Script Actions (Roman Shaposhnik via mahadev)
 
   ZOOKEEPER-1264. FollowerResyncConcurrencyTest failing intermittently. (phunt via camille)
+
+  ZOOKEEPER-1271. testEarlyLeaderAbandonment failing on solaris -
+  clients not retrying connection (mahadev via phunt)
+
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:
 
