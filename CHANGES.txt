@@ -44,6 +44,15 @@ BUGFIXES:
 
   ZOOKEEPER-1271. testEarlyLeaderAbandonment failing on solaris -
   clients not retrying connection (mahadev via phunt)
+  
+  ZOOKEEPER-1264. FollowerResyncConcurrencyTest failing 
+  intermittently. (breed, camille and Alex Shraer via camille)
+  
+  ZOOKEEPER-1282. Learner.java not following Zab 1.0 protocol - 
+  setCurrentEpoch should be done upon receipt of NEWLEADER 
+  (before acking it) and not upon receipt of UPTODATE (breed via camille)
+  
+  ZOOKEEPER-1291. AcceptedEpoch not updated at leader before it proposes the epoch to followers. (Alex Shraer via camille)
 
 IMPROVEMENTS:
 

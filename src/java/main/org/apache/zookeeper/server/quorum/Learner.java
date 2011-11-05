@@ -312,8 +312,10 @@ public class Learner {
     protected void syncWithLeader(long newLeaderZxid) throws IOException, InterruptedException{
         QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
         QuorumPacket qp = new QuorumPacket();
+        long newEpoch = ZxidUtils.getEpochFromZxid(newLeaderZxid);
         
         readPacket(qp);   
+        LinkedList<Long> packetsCommitted = new LinkedList<Long>();
         LinkedList<PacketInFlight> packetsNotCommitted = new LinkedList<PacketInFlight>();
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
@@ -376,12 +378,16 @@ public class Learner {
                     packetsNotCommitted.add(pif);
                     break;
                 case Leader.COMMIT:
-                    pif = packetsNotCommitted.peekFirst();
-                    if (pif.hdr.getZxid() != qp.getZxid()) {
-                        LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
+                    if (!snapshotTaken) {
+                        pif = packetsNotCommitted.peekFirst();
+                        if (pif.hdr.getZxid() != qp.getZxid()) {
+                            LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
+                        } else {
+                            zk.getZKDatabase().processTxn(pif.hdr, pif.rec);
+                            packetsNotCommitted.remove();
+                        }
                     } else {
-                        zk.getZKDatabase().processTxn(pif.hdr, pif.rec);
-                        packetsNotCommitted.remove();
+                        packetsCommitted.add(qp.getZxid());
                     }
                     break;
                 case Leader.INFORM:
@@ -390,28 +396,34 @@ public class Learner {
                     zk.getZKDatabase().processTxn(hdr, txn);
                     break;
                 case Leader.UPTODATE:
-                    if (!snapshotTaken) {
+                    if (!snapshotTaken) { // true for the pre v1.0 case
                         zk.takeSnapshot();
+                        self.setCurrentEpoch(newEpoch);
                     }
                     self.cnxnFactory.setZooKeeperServer(zk);                
                     break outerLoop;
                 case Leader.NEWLEADER: // it will be NEWLEADER in v1.0
                     zk.takeSnapshot();
+                    self.setCurrentEpoch(newEpoch);
                     snapshotTaken = true;
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
                     break;
                 }
             }
         }
-        long newEpoch = ZxidUtils.getEpochFromZxid(newLeaderZxid);
-        self.setCurrentEpoch(newEpoch);
         ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
         writePacket(ack, true);
         sock.setSoTimeout(self.tickTime * self.syncLimit);
         zk.startup();
-        //We have to have a commit processor to do this
-        for(PacketInFlight p: packetsNotCommitted) {
-            ((FollowerZooKeeperServer)zk).logRequest(p.hdr, p.rec);
+        // We need to log the stuff that came in between the snapshot and the uptodate
+        if (zk instanceof FollowerZooKeeperServer) {
+            FollowerZooKeeperServer fzk = (FollowerZooKeeperServer)zk;
+            for(PacketInFlight p: packetsNotCommitted) {
+                fzk.logRequest(p.hdr, p.rec);
+            }
+            for(Long zxid: packetsCommitted) {
+                fzk.commit(zxid);
+            }
         }
     }
     
