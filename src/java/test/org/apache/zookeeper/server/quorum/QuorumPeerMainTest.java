@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Layout;
@@ -144,7 +145,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             mt[i].start();
         }
 
-        waitForAll(zk, States.CONNECTED);
+        waitForAll(zk, States.CONNECTED);          
+                          
 
         // ok lets find the leader and kill everything else, we have a few
         // seconds, so it should be plenty of time
@@ -312,13 +314,14 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     private void waitForAll(ZooKeeper[] zks, States state) throws InterruptedException {
         int iterations = 10;
         boolean someoneNotConnected = true;
-        while (someoneNotConnected) {
+        while (someoneNotConnected) {           
             if (iterations-- == 0) {
+                ClientBase.logAllStackTraces();
                 throw new RuntimeException("Waiting too long");
             }
 
             someoneNotConnected = false;
-            for (ZooKeeper zk : zks) {
+            for (ZooKeeper zk : zks) {                
                 if (zk.getState() != state) {
                     someoneNotConnected = true;
                 }
