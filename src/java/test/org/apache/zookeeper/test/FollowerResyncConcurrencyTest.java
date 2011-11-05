@@ -109,7 +109,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
             @Override
             public void run() {
-                for(int i = 0; i < 1000; i++) {
+                for(int i = 0; i < 3000; i++) {
                     zk3.create("/mytestfoo", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
 
                         @Override
@@ -118,7 +118,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                             if (rc != 0) {
                                 errors++;
                             }
-                            if(counter == 14200){
+                            if(counter == 16200){
                                 sem.release();
                             }
                         }
@@ -144,7 +144,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                     if (rc != 0) {
                         errors++;
                     }
-                    if(counter == 14200){
+                    if(counter == 16200){
                         sem.release();
                     }
                 }
@@ -156,10 +156,10 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
             }
             if(i == 12000){
                 //Restart off of snap, then get some txns for a log, then shut down
+                mytestfooThread.start();
                 qu.restart(index);       
                 Thread.sleep(300);
-                qu.shutdown(index);
-                mytestfooThread.start();
+                qu.shutdown(index);               
                 Thread.sleep(300);                
                 qu.restart(index);
                 LOG.info("Setting up server: " + index);
@@ -176,7 +176,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                         if (rc != 0) {
                             errors++;
                         }
-                        if(counter == 14200){
+                        if(counter == 16200){
                             sem.release();
                         }
                     }
