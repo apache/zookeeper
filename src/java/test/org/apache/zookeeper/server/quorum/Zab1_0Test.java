@@ -44,7 +44,10 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServer.DataTreeBuilder;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader;
+import org.apache.zookeeper.server.quorum.LearnerInfo;
+import org.apache.zookeeper.server.quorum.QuorumPacket;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.Zab1_0Test.LeaderConversation;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.junit.Assert;
@@ -124,7 +127,7 @@ public class Zab1_0Test {
     }
     
     static public interface LeaderConversation {
-        void converseWithLeader(InputArchive ia, OutputArchive oa) throws Exception;
+        void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws Exception;
     }
     
     static public interface FollowerConversation {
@@ -160,7 +163,7 @@ public class Zab1_0Test {
             OutputArchive oa = BinaryOutputArchive.getArchive(followerSocket
                     .getOutputStream());
 
-            conversation.converseWithLeader(ia, oa);
+            conversation.converseWithLeader(ia, oa, leader);
         } finally {
             recursiveDelete(tmpDir);
             if (leader != null) {
@@ -176,7 +179,7 @@ public class Zab1_0Test {
     @Test
     public void testNormalRun() throws Exception {
         testConversation(new LeaderConversation() {
-            public void converseWithLeader(InputArchive ia, OutputArchive oa)
+            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
                     throws IOException {
                 /* we test a normal run. everything should work out well. */
                 LearnerInfo li = new LearnerInfo(1, 0x10000);
@@ -209,7 +212,7 @@ public class Zab1_0Test {
     @Test
     public void testLeaderBehind() throws Exception {
         testConversation(new LeaderConversation() {
-            public void converseWithLeader(InputArchive ia, OutputArchive oa)
+            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
                     throws IOException {
                 /* we test a normal run. everything should work out well. */
                 LearnerInfo li = new LearnerInfo(1, 0x10000);
@@ -240,7 +243,38 @@ public class Zab1_0Test {
         });
     }
 
-
+    /**
+     * Tests that when a quorum of followers send LearnerInfo but do not ack the epoch (which is sent
+     * by the leader upon receipt of LearnerInfo from a quorum), the leader does not start using this epoch
+     * as it would in the normal case (when a quorum do ack the epoch). This tests ZK-1192
+     * @throws Exception
+     */
+    @Test
+    public void testAbandonBeforeACKEpoch() throws Exception {
+        testConversation(new LeaderConversation() {
+            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
+                    throws IOException, InterruptedException {
+                /* we test a normal run. everything should work out well. */            	
+                LearnerInfo li = new LearnerInfo(1, 0x10000);
+                byte liBytes[] = new byte[12];
+                ByteBufferOutputStream.record2ByteBuffer(li,
+                        ByteBuffer.wrap(liBytes));
+                QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0,
+                        liBytes, null);
+                oa.writeRecord(qp, null);
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.LEADERINFO, qp.getType());
+                Assert.assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
+                Assert.assertEquals(ByteBuffer.wrap(qp.getData()).getInt(),
+                        0x10000);                
+                Thread.sleep(l.self.getInitLimit()*l.self.getTickTime() + 5000);
+                
+                // The leader didn't get a quorum of acks - make sure that leader's current epoch is not advanced
+                Assert.assertEquals(0, l.self.getCurrentEpoch());			
+            }
+        });
+    }
+    
     private void recursiveDelete(File file) {
         if (file.isFile()) {
             file.delete();
