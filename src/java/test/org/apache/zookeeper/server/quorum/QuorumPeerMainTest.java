@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Layout;
@@ -319,7 +320,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 		boolean someoneNotConnected = true;
         while(someoneNotConnected) {
         	if (iterations-- == 0) {
-        		throw new RuntimeException("Waiting too long");
+        		ClientBase.logAllStackTraces();
+			throw new RuntimeException("Waiting too long");
         	}
         	
         	someoneNotConnected = false;

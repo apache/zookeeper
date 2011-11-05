@@ -361,6 +361,9 @@ BUGFIXES:
   ZOOKEEPER-1192. Leader.waitForEpochAck() checks waitingForNewEpoch instead 
   of checking electionFinished (Alexander Shraer via mahadev)
 
+  ZOOKEEPER-1270. testEarlyLeaderAbandonment failing intermittently, 
+  quorum formed, no serving. (Flavio, Camille and Alexander Shraer via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

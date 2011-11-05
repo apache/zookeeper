@@ -780,7 +780,8 @@ public class Leader {
 			}
 			connectingFollowers.add(sid);
 			QuorumVerifier verifier = self.getQuorumVerifier();
-			if (verifier.containsQuorum(connectingFollowers)) {
+			if (connectingFollowers.contains(self.getId()) && verifier.containsQuorum(connectingFollowers)) 
+{
 				waitingForNewEpoch = false;
 				connectingFollowers.notifyAll();
 			} else {
@@ -813,7 +814,7 @@ public class Leader {
 				electingFollowers.add(id);
 			}
 			QuorumVerifier verifier = self.getQuorumVerifier();
-			if (readyToStart && verifier.containsQuorum(electingFollowers)) {
+			if (electingFollowers.contains(self.getId()) && verifier.containsQuorum(electingFollowers)) {
 				electionFinished = true;
 				electingFollowers.notifyAll();
             } else {                

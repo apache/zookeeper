@@ -513,7 +513,7 @@ public abstract class ClientBase extends ZKTestCase {
         return d.delete();
     }
 
-    private static void logAllStackTraces() {
+    public static void logAllStackTraces() {
         StringBuilder sb = new StringBuilder();
         sb.append("Starting logAllStackTraces()\n");
         Map<Thread, StackTraceElement[]> threads = Thread.getAllStackTraces();
