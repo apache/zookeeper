@@ -309,8 +309,7 @@ public class Leader {
             cnxAcceptor.start();
 
             readyToStart = true;
-            long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
-            self.setAcceptedEpoch(epoch);
+            long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());            
 
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
 
@@ -764,7 +763,7 @@ public class Leader {
     }
 
     private final HashSet<Long> connectingFollowers = new HashSet<Long>();
-	public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException {
+	public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
 		synchronized(connectingFollowers) {
 			if (!waitingForNewEpoch) {
 				return epoch;
@@ -777,6 +776,7 @@ public class Leader {
 			if (connectingFollowers.contains(self.getId()) && verifier.containsQuorum(connectingFollowers)) 
 {
 				waitingForNewEpoch = false;
+				self.setAcceptedEpoch(epoch);
 				connectingFollowers.notifyAll();
 			} else {
                    long start = System.currentTimeMillis();
