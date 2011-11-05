@@ -202,6 +202,80 @@ These release notes include new developer and user facing incompatibilities, fea
 </row>
 <row>
  <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1268">
+   ZOOKEEPER-1268</ulink>
+ </entry>
+ <entry>
+  problems with read only mode, intermittent test failures and ERRORs in the log.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1271">
+   ZOOKEEPER-1271</ulink>
+ </entry>
+ <entry>
+	testEarlyLeaderAbandonment failing on solaris - clients not retrying connection.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1192">
+   ZOOKEEPER-1192</ulink>
+ </entry>
+ <entry>
+Leader.waitForEpochAck() checks waitingForNewEpoch instead of checking electionFinished.
+</entry>
+</row>
+
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1246">
+   ZOOKEEPER-1246</ulink>
+ </entry>
+ <entry>
+  Dead code in PrepRequestProcessor catch Exception block.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1264">
+   ZOOKEEPER-1264</ulink>
+ </entry>
+ <entry>
+  FollowerResyncConcurrencyTest failing intermittently.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1270">
+   ZOOKEEPER-1270</ulink>
+ </entry>
+ <entry>
+   testEarlyLeaderAbandonment failing intermittently, quorum formed, no serving.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1291">
+   ZOOKEEPER-1291</ulink>
+ </entry>
+ <entry>
+   AcceptedEpoch not updated at leader before it proposes the epoch to followers.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1282">
+   ZOOKEEPER-1282</ulink>
+ </entry>
+ <entry>
+Learner.java not following Zab 1.0 protocol - setCurrentEpoch should be done upon receipt of NEWLEADER
+ (before acking it) and not upon receipt of UPTODATE.
+ </entry>
+</row>
+<row>
+ <entry>
   <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-335">
    ZOOKEEPER-335</ulink>
  </entry>

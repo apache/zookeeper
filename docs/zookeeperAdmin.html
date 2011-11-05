@@ -291,6 +291,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_authOptions">Authentication &amp; Authorization Options</a>
 </li>
 <li>
+<a href="#Experimental+Options%2FFeatures">Experimental Options/Features</a>
+</li>
+<li>
 <a href="#Unsafe+Options">Unsafe Options</a>
 </li>
 <li>
@@ -1370,6 +1373,31 @@ server.3=zoo3:2888:3888</pre>
               localhost (not over the network) or over an encrypted
               connection.</p>
 </dd>
+        
+</dl>
+<a name="Experimental+Options%2FFeatures"></a>
+<h4>Experimental Options/Features</h4>
+<p>New features that are currently considered experimental.</p>
+<dl>
+          
+<dt>
+<term>Read Only Mode Server</term>
+</dt>
+<dd>
+<p>(Java system property: <strong>readonlymode.enabled</strong>)</p>
+<p>
+<strong>New in 3.4.0:</strong>
+              Setting this value to true enables Read Only Mode server
+              support (disabled by default). ROM allows clients
+              sessions which requested ROM support to connect to the
+              server even when the server might be partitioned from
+              the quorum. In this mode ROM clients can still read
+              values from the ZK service, but will be unable to write
+              values and see changes from other clients. See
+              ZOOKEEPER-784 for more details.
+              </p>
+</dd>
+
         
 </dl>
 <a name="Unsafe+Options"></a>

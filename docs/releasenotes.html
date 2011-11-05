@@ -444,6 +444,104 @@ These release notes include new developer and user facing incompatibilities, fea
 <tr>
  
 <td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1268">
+   ZOOKEEPER-1268</a>
+ </td>
+ <td>
+  problems with read only mode, intermittent test failures and ERRORs in the log.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1271">
+   ZOOKEEPER-1271</a>
+ </td>
+ <td>
+	testEarlyLeaderAbandonment failing on solaris - clients not retrying connection.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1192">
+   ZOOKEEPER-1192</a>
+ </td>
+ <td>
+Leader.waitForEpochAck() checks waitingForNewEpoch instead of checking electionFinished.
+</td>
+
+</tr>
+
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1246">
+   ZOOKEEPER-1246</a>
+ </td>
+ <td>
+  Dead code in PrepRequestProcessor catch Exception block.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1264">
+   ZOOKEEPER-1264</a>
+ </td>
+ <td>
+  FollowerResyncConcurrencyTest failing intermittently.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1270">
+   ZOOKEEPER-1270</a>
+ </td>
+ <td>
+   testEarlyLeaderAbandonment failing intermittently, quorum formed, no serving.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1291">
+   ZOOKEEPER-1291</a>
+ </td>
+ <td>
+   AcceptedEpoch not updated at leader before it proposes the epoch to followers.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1282">
+   ZOOKEEPER-1282</a>
+ </td>
+ <td>
+Learner.java not following Zab 1.0 protocol - setCurrentEpoch should be done upon receipt of NEWLEADER
+ (before acking it) and not upon receipt of UPTODATE.
+ </td>
+
+</tr>
+
+<tr>
+ 
+<td>
   <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-335">
    ZOOKEEPER-335</a>
  </td>
