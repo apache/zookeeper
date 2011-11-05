@@ -784,9 +784,15 @@ public class Leader {
 				waitingForNewEpoch = false;
 				connectingFollowers.notifyAll();
 			} else {
-				connectingFollowers.wait(self.getInitLimit()*self.getTickTime());
+                   long start = System.currentTimeMillis();
+                   long cur = start;
+                long end = start + self.getInitLimit()*self.getTickTime();
+                while(waitingForNewEpoch && cur < end) {
+                    connectingFollowers.wait(end - cur);
+                    cur = System.currentTimeMillis();
+                }
 				if (waitingForNewEpoch) {
-					throw new InterruptedException("Out of time to propose an epoch");
+                    throw new InterruptedException("Timeout while waiting for epoch from quorum");        
 				}
 			}
 			return epoch;
@@ -810,10 +816,16 @@ public class Leader {
 			if (readyToStart && verifier.containsQuorum(electingFollowers)) {
 				electionFinished = true;
 				electingFollowers.notifyAll();
-			} else {
-				electingFollowers.wait(self.getInitLimit()*self.getTickTime());
-				if (waitingForNewEpoch) {
-					throw new InterruptedException("Out of time to propose an epoch");
+            } else {                
+                long start = System.currentTimeMillis();
+                long cur = start;
+                long end = start + self.getInitLimit()*self.getTickTime();
+                while(!electionFinished && cur < end) {
+                    electingFollowers.wait(end - cur);
+                    cur = System.currentTimeMillis();
+                }
+                if (!electionFinished) {
+                    throw new InterruptedException("Timeout while waiting for epoch to be acked by quorum");
 				}
 			}
 		}
