@@ -311,7 +311,6 @@ public class Leader {
             
             readyToStart = true;
             long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
-            self.setAcceptedEpoch(epoch);
             
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
             
@@ -770,7 +769,7 @@ public class Leader {
     }
 
     private HashSet<Long> connectingFollowers = new HashSet<Long>();
-	public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException {
+	public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
 		synchronized(connectingFollowers) {
 			if (!waitingForNewEpoch) {
 				return epoch;
@@ -782,8 +781,9 @@ public class Leader {
 			QuorumVerifier verifier = self.getQuorumVerifier();
 			if (connectingFollowers.contains(self.getId()) && verifier.containsQuorum(connectingFollowers)) 
 {
-				waitingForNewEpoch = false;
-				connectingFollowers.notifyAll();
+			    waitingForNewEpoch = false;
+			    self.setAcceptedEpoch(epoch);
+			    connectingFollowers.notifyAll();
 			} else {
                    long start = System.currentTimeMillis();
                    long cur = start;
