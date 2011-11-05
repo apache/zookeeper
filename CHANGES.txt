@@ -444,6 +444,9 @@ BUGFIXES:
   ZOOKEEPER-1268. problems with read only mode, intermittent test failures 
   and ERRORs in the log (phunt via mahadev)
 
+  ZOOKEEPER-1270. testEarlyLeaderAbandonment failing intermittently, 
+  quorum formed, no serving. (Flavio, Camille and Alexander Shraer via mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
