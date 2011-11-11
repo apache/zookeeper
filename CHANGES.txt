@@ -93,9 +93,6 @@ IMPROVEMENTS:
   ZOOKEEPER-1254. test correct watch handling with multi ops
   (Thomas Koch via phunt)
 
-  ZOOKEEPER-1251. call checkSession at begin of PrepRequestProcessor.pRequest
-  (Thomas Koch via phunt)
-
   ZOOKEEPER-1252. remove unused method o.a.z.test.AxyncTest.restart()
   (Thomas Koch via phunt)
 
