@@ -43,6 +43,9 @@ BUGFIXES:
 
   ZOOKEEPER-1271. testEarlyLeaderAbandonment failing on solaris -
   clients not retrying connection (mahadev via phunt)
+  
+  ZOOKEEPER-1208. Ephemeral node not removed after the client session is long gone. (phunt via camille)
+ 
 
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:

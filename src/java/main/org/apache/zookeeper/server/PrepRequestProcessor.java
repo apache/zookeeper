@@ -31,8 +31,8 @@ import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
@@ -384,7 +384,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         addChangeRecord(new ChangeRecord(txnHeader.getZxid(),
                                 path2Delete, null, 0, null));
                     }
+
+                    zks.sessionTracker.setSessionClosing(request.sessionId);
                 }
+
                 LOG.info("Processed session termination for sessionid: 0x"
                         + Long.toHexString(request.sessionId));
                 break;
