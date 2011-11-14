@@ -117,5 +117,9 @@ public class PrepRequestProcessorTest extends ClientBase {
             // TODO Auto-generated method stub
             return false;
         }
+        @Override
+        public void setSessionClosing(long sessionId) {
+          // TODO Auto-generated method stub
+        }
     }
 }
