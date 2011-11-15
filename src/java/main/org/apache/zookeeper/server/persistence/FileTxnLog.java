@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
@@ -97,6 +98,9 @@ public class FileTxnLog implements TxnLog {
 
     public final static int VERSION = 2;
 
+    /** Maximum time we allow for elapsed fsync before WARNing */
+    private final static long fsyncWarningThresholdMS;
+
     static {
         LOG = LoggerFactory.getLogger(FileTxnLog.class);
 
@@ -108,6 +112,7 @@ public class FileTxnLog implements TxnLog {
                 LOG.warn(size + " is not a valid value for preAllocSize");
             }
         }
+        fsyncWarningThresholdMS = Long.getLong("fsync.warningthresholdms", 1000);
     }
 
     long lastZxidSeen;
@@ -307,7 +312,19 @@ public class FileTxnLog implements TxnLog {
         for (FileOutputStream log : streamsToFlush) {
             log.flush();
             if (forceSync) {
+                long startSyncNS = System.nanoTime();
+
                 log.getChannel().force(false);
+
+                long syncElapsedMS =
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
+                if (syncElapsedMS > fsyncWarningThresholdMS) {
+                    LOG.warn("fsync-ing the write ahead log in "
+                            + Thread.currentThread().getName()
+                            + " took " + syncElapsedMS
+                            + "ms which will adversely effect operation latency. "
+                            + "See the ZooKeeper troubleshooting guide");
+                }
             }
         }
         while (streamsToFlush.size() > 1) {

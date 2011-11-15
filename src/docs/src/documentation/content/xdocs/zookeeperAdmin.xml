@@ -783,6 +783,21 @@ server.3=zoo3:2888:3888</programlisting>
             </listitem>
            </varlistentry>
            
+           <varlistentry>
+             <term>fsync.warningthresholdms</term>
+             <listitem>
+               <para>(Java system property: <emphasis
+               role="bold">fsync.warningthresholdms</emphasis>)</para>
+
+               <para><emphasis role="bold">New in 3.3.4:</emphasis> A
+               warning message will be output to the log whenever an
+               fsync in the Transactional Log (WAL) takes longer than
+               this value. The values is specified in milliseconds and
+               defaults to 1000. This value can only be set as a
+               system property.</para>
+             </listitem>
+           </varlistentry>
+
           <varlistentry>
             <term>autopurge.snapRetainCount</term>
 
