@@ -46,6 +46,7 @@ BUGFIXES:
   
   ZOOKEEPER-1208. Ephemeral node not removed after the client session is long gone. (phunt via camille)
  
+  ZOOKEEPER-1283. building 3.3 branch fails with Ant 1.8.2 (success with 1.7.1 though). (phunt via camille)
 
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:

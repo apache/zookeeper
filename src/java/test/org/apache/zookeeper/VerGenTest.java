@@ -22,8 +22,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
-import junit.framework.TestCase;
-
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.version.util.VerGen;
 import org.junit.Assert;
@@ -38,7 +36,7 @@ import org.junit.runners.Parameterized.Parameters;
  *
  */
 @RunWith(Parameterized.class)
-public class VerGenTest extends TestCase {
+public class VerGenTest {
     @Parameters
     public static Collection<Object[]> data() {
             return Arrays.asList(new Object[][] {
