@@ -373,6 +373,10 @@ BUGFIXES:
   
   ZOOKEEPER-1291. AcceptedEpoch not updated at leader before it proposes the epoch to followers. (Alex Shraer via camille)
 
+  ZOOKEEPER-1208. Ephemeral node not removed after the client session is long gone. (phunt via camille)
+  
+  ZOOKEEPER-1239. add logging/stats to identify fsync stalls. (phunt via camille)
+  
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

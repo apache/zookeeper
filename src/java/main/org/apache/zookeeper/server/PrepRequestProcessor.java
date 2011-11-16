@@ -459,7 +459,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         addChangeRecord(new ChangeRecord(request.hdr.getZxid(),
                                 path2Delete, null, 0, null));
                     }
+
+                    zks.sessionTracker.setSessionClosing(request.sessionId);
                 }
+
                 LOG.info("Processed session termination for sessionid: 0x"
                         + Long.toHexString(request.sessionId));
                 break;
