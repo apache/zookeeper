@@ -377,6 +377,8 @@ BUGFIXES:
   
   ZOOKEEPER-1239. add logging/stats to identify fsync stalls. (phunt via camille)
   
+  ZOOKEEPER-1299. Add winconfig.h file to ignore in release audit. (mahadev)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)
