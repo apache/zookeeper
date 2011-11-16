@@ -1158,6 +1158,21 @@ server.3=zoo3:2888:3888</pre>
               the <strong>tickTime</strong>.</p>
 </dd>
            
+           
+<dt>
+<term>fsync.warningthresholdms</term>
+</dt>
+<dd>
+<p>(Java system property: <strong>fsync.warningthresholdms</strong>)</p>
+<p>
+<strong>New in 3.3.4:</strong> A
+               warning message will be output to the log whenever an
+               fsync in the Transactional Log (WAL) takes longer than
+               this value. The values is specified in milliseconds and
+               defaults to 1000. This value can only be set as a
+               system property.</p>
+</dd>
+
           
 <dt>
 <term>autopurge.snapRetainCount</term>

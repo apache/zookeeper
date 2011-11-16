@@ -265,11 +265,37 @@ These release notes include new developer and user facing incompatibilities, fea
 <tr>
  
 <td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1239">
+   ZOOKEEPER-1239</a>
+ </td>
+ <td>
+ add logging/stats to identify fsync stalls.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1208">
+   ZOOKEEPER-1208</a>
+ </td>
+<td>
+Ephemeral node not removed after the client session is long gone. 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
   <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-784">
    ZOOKEEPER-784</a>
  </td>
  <td>
-  server-side functionality for read-only mode
+  server-side functionality for read-only mode. This is not thoroughly tested.
+  Avoid using it in production. This is also at risk of being removed from
+  the feature set later.
 </td>
 
 </tr>
