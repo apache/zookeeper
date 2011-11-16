@@ -1515,6 +1515,7 @@
           <exclude name="**/*.sha1"/>
           <exclude name="**/.gitignore"/>
           <exclude name="**/Makefile**"/>
+          <exclude name="**/winconfig.h"/>
           <exclude name="**/configure**"/>
           <exclude name="**/*Doxyfile"/>
           <exclude name="**/*.am"/>
