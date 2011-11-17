@@ -50,6 +50,20 @@ BUGFIXES:
   
   ZOOKEEPER-1239. add logging/stats to identify fsync stalls. (phunt via camille)
 
+  ZOOKEEPER-1301. backport patches related to the zk startup script
+  from 3.4 to 3.3 release (Giridharan Kesavan via phunt)
+
+    ZOOKEEPER-1301 includes:
+      ZOOKEEPER-905. enhance zkServer.sh for easier zookeeper automation-izing (Nicholas Harteau via mahadev)
+      ZOOKEEPER-796. zkServer.sh should support an external PIDFILE variable (Alex Newman via phunt)
+      ZOOKEEPER-983. running zkServer.sh start remotely using ssh hangs (phunt)
+      ZOOKEEPER-976. ZooKeeper startup script doesn't use JAVA_HOME (phunt)
+      ZOOKEEPER-1013 zkServer.sh usage message should mention all startup options (eugene koontz via mahadev)
+      ZOOKEEPER-1012. support distinct JVMFLAGS for zookeeper server in zkServer.sh and zookeeper client in zkCli.sh (Eugene Koontz via breed)
+      ZOOKEEPER-1061. Zookeeper stop fails if start called twice. (Ted Dunning via mahadev)
+      ZOOKEEPER-1074. zkServer.sh is missing nohup/sleep, which are necessary for remote invocation. (phunt via mahadev)
+      ZOOKEEPER-1119. zkServer stop command incorrectly reading comment lines in zoo.cfg (phunt via mahadev)
+
 Release 3.3.3 - 2011-02-23
 Backward compatible changes:
 
