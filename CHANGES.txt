@@ -1,4 +1,6 @@
+Release 3.3.4 - 2011-11-16
 Backward compatible changes:
+
 BUGFIXES:
   ZOOKEEPER-1006. QuorumPeer "Address already in use" -- regression in 3.3.3 (phunt via breed)
 

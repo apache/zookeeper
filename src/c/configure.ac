@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],3.3.3,[zookeeper-user@hadoop.apache.org],[c-client-src])
+AC_INIT([zookeeper C client],3.3.4,[zookeeper-user@hadoop.apache.org],[c-client-src])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
 
 # initialize Doxygen support

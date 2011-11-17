@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>BookKeeper Getting Started Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>BookKeeper Getting Started Guide</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -230,11 +231,12 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
   
-<a name="N10009"></a><a name="bk_GettingStarted"></a>
+<a name="bk_GettingStarted"></a>
 <h2 class="h3">Programming with BookKeeper</h2>
 <div class="section">
 <ul>
@@ -294,7 +296,7 @@ document.write("Last Published: " + document.lastModified);
       
     
 </ul>
-<a name="N10042"></a><a name="bk_instance"></a>
+<a name="bk_instance"></a>
 <h3 class="h4"> Instantiating BookKeeper.</h3>
 <p>
     The first step to use BookKeeper is to instantiate a BookKeeper object:
@@ -391,7 +393,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-<a name="N100A9"></a><a name="bk_createLedger"></a>
+<a name="bk_createLedger"></a>
 <h3 class="h4"> Creating a ledger. </h3>
 <p> Before writing entries to BookKeeper, it is necessary to create a ledger. 
     With the current BookKeeper API, it is possible to create a ledger both synchronously
@@ -537,7 +539,7 @@ document.write("Last Published: " + document.lastModified);
 	The <span class="codefrag computeroutput">ctx</span> object passed as a parameter to the call to create a ledger
 	is the one same returned in the callback.
     </p>
-<a name="N1015E"></a><a name="bk_writeLedger"></a>
+<a name="bk_writeLedger"></a>
 <h3 class="h4"> Adding entries to a ledger. </h3>
 <p>
     Once we have a ledger handle <span class="codefrag computeroutput">lh</span> obtained through a call to create a ledger, we
@@ -647,7 +649,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	
 </ul>
-<a name="N101F9"></a><a name="bk_closeLedger"></a>
+<a name="bk_closeLedger"></a>
 <h3 class="h4"> Closing a ledger. </h3>
 <p>
     Once a client is done writing, it closes the ledger. The following methods belong
@@ -730,7 +732,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	
 </ul>
-<a name="N1026E"></a><a name="bk_openLedger"></a>
+<a name="bk_openLedger"></a>
 <h3 class="h4"> Opening a ledger. </h3>
 <p>
     To read from a ledger, a client must open it first. The following methods belong
@@ -842,7 +844,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	
 </ul>
-<a name="N10305"></a><a name="bk_readLedger"></a>
+<a name="bk_readLedger"></a>
 <h3 class="h4"> Reading from ledger </h3>
 <p>
     Read calls may request one or more consecutive entries. The following methods belong
