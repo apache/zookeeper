@@ -692,20 +692,10 @@
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
       
-      
       <copy file="${build.dir}/${final.name}-test.jar"
-            tofile="${dist.maven.dir}/${final.name}-test.jar"/> 
-      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="sha1"/>
-      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="md5"/>
-      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.maven.dir}/${final.name}-test.pom"
-		   artifactName="zookeeper-test">
-        <mapping conf="default" scope="compile"/>
-        <mapping conf="test" scope="test"/>
-      </ivy:makepom>
-      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="md5"/>
-      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="sha1"/>
-
+            tofile="${dist.maven.dir}/${final.name}-tests.jar"/> 
+      <checksum file="${dist.maven.dir}/${final.name}-tests.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-tests.jar" algorithm="md5"/>
 
       <copy todir="${dist.dir}/bin">
         <fileset dir="bin"/>

@@ -1,3 +1,12 @@
+Release 3.4.1 - TBD
+
+Backward compatible changes:
+
+BUGFIXES: 
+
+  ZOOKEEPER-1311. ZooKeeper test jar is broken (Ivan Kelly via phunt)
+
+
 Release 3.4.0 - 2011-10-25
 
 Non-backward compatible changes:
