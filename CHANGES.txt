@@ -57,6 +57,8 @@ BUGFIXES:
   ZOOKEEPER-1208. Ephemeral node not removed after the client session is long gone. (phunt via camille)
  
   ZOOKEEPER-1239. add logging/stats to identify fsync stalls. (phunt via camille)
+
+  ZOOKEEPER-1311. ZooKeeper test jar is broken (Ivan Kelly via phunt)
    
 IMPROVEMENTS:
 
