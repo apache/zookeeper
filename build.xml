@@ -19,6 +19,32 @@
 
 <project name="ZooKeeper" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
 
+  <!-- load ant-contrib tasks to get the "if" task. -->
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+    <classpath>
+      <pathelement location="${basedir}/cloudera/maven-packaging/lib/ant-contrib-1.0b3.jar"/>
+    </classpath>
+  </taskdef>
+  
+  <!-- Initializes ivy/libraries.properties and build.properties with CDH versions -->
+  <if>
+    <and>
+      <not>
+        <isset property="cdh.maven" />
+      </not>
+      <not>
+        <available file="${basedir}/build.properties" />
+      </not>
+    </and>
+    <then>
+      <exec  executable="mvn" dir="${basedir}" failonerror="true">
+        <arg value="-f" />
+        <arg value="cloudera-pom.xml" />
+        <arg value="process-resources"/>
+      </exec>
+    </then>
+  </if>
+
     <property name="Name" value="ZooKeeper" />
     <property name="name" value="zookeeper" />
 
@@ -651,6 +677,12 @@
         </fileset>
         <fileset dir="${ivy.lib}"/>
       </copy>
+      <copy todir="${dist.dir}/cloudera">
+        <fileset dir="cloudera" />
+      </copy>
+
+      <copy todir="${dist.dir}/" file="cloudera-pom.xml" />
+      <copy todir="${dist.dir}/" file="build.properties" />
 
       <subant target="package">
         <!--Pass down the version in case its needed again and the target
@@ -1100,6 +1132,7 @@
       <delete file="${jar.name}" />
       <delete dir="${distribution}"/>
       <delete dir="${revision.dir}"/>
+      <delete file="${basedir}/build.properties" />
       <delete>
         <fileset dir="${basedir}" includes="*.jar,*.tar.gz"/>
       </delete>
