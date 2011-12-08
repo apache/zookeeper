@@ -6,6 +6,8 @@ BUGFIXES:
 
   ZOOKEEPER-1311. ZooKeeper test jar is broken (Ivan Kelly via phunt)
 
+  ZOOKEEPER-1305. zookeeper.c:prepend_string func can dereference null ptr.
+  (Daniel Lescohier via mahadev)
 
 Release 3.4.0 - 2011-10-25
 
