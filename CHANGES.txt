@@ -62,6 +62,9 @@ BUGFIXES:
  
   ZOOKEEPER-1305. zookeeper.c:prepend_string func can dereference null ptr. 
   (Daniel Lescohier via mahadev)
+
+  ZOOKEEPER-1262. Documentation for Lock recipe has major flaw.
+  (Jordan Zimmerman via mahadev)
  
 IMPROVEMENTS:
 

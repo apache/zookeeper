@@ -210,6 +210,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#ch_recipes">A Guide to Creating Higher-level Constructs with ZooKeeper</a>
 <ul class="minitoc">
 <li>
+<a href="#sc_recipes_errorHandlingNote">Important Note About Error Handling</a>
+</li>
+<li>
 <a href="#sc_outOfTheBox">Out of the Box Applications: Name Service, Configuration, Group
     Membership</a>
 </li>
@@ -232,6 +235,9 @@ document.write("Last Published: " + document.lastModified);
 <li>
 <a href="#sc_recipes_Locks">Locks</a>
 <ul class="minitoc">
+<li>
+<a href="#sc_recipes_GuidNote">Recoverable Errors and the GUID</a>
+</li>
 <li>
 <a href="#Shared+Locks">Shared Locks</a>
 </li>
@@ -281,6 +287,17 @@ document.write("Last Published: " + document.lastModified);
     as event handles or queues, a more practical means of performing the same
     function. In general, the examples in this section are designed to
     stimulate thought.</p>
+<a name="sc_recipes_errorHandlingNote"></a>
+<h3 class="h4">Important Note About Error Handling</h3>
+<p>When implementing the recipes you must handle recoverable exceptions 
+	(see the <a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a>). In 
+	particular, several of the recipes employ sequential ephemeral 
+	nodes. When creating a sequential ephemeral node there is an error case in 
+	which the create() succeeds on the server but the server crashes before 
+	returning the name of the node to the client. When the client reconnects its 
+	session is still valid and, thus, the node is not removed. The implication is 
+	that it is difficult for the client to know if its node was created or not. The 
+	recipes below include measures to handle this.</p>
 <a name="sc_outOfTheBox"></a>
 <h3 class="h4">Out of the Box Applications: Name Service, Configuration, Group
     Membership</h3>
@@ -454,7 +471,7 @@ document.write("Last Published: " + document.lastModified);
 <li>
                     
 <p>if <em>p</em> is the lowest process
-                      node in L, wait on highest process node in L</p>
+                      node in L, wait on highest process node in P</p>
                   
 </li>
 
@@ -563,8 +580,9 @@ document.write("Last Published: " + document.lastModified);
 <li>
         
 <p>Call <strong>create( )</strong> with a pathname
-        of "_locknode_/lock-" and the <em>sequence</em> and
-        <em>ephemeral</em> flags set.</p>
+        of "_locknode_/guid-lock-" and the <em>sequence</em> and
+        <em>ephemeral</em> flags set. The <em>guid</em> 
+		is needed in case the create() result is missed. See the note below.</p>
       
 </li>
 
@@ -639,6 +657,22 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
+<a name="sc_recipes_GuidNote"></a>
+<h4>Recoverable Errors and the GUID</h4>
+<ul>
+      
+<li>
+        
+<p>If a recoverable error occurs calling <strong>create()</strong> the 
+		client should call <strong>getChildren()</strong> and check for a node 
+		containing the <em>guid</em> used in the path name. 
+		This handles the case (noted <a href="#sc_recipes_errorHandlingNote">above</a>) of 
+		the create() succeeding on the server but the server crashing before returning the name 
+		of the new node.</p>
+      
+</li>
+    
+</ul>
 <a name="Shared+Locks"></a>
 <h4>Shared Locks</h4>
 <p>You can implement shared locks by with a few changes to the lock
@@ -666,7 +700,7 @@ document.write("Last Published: " + document.lastModified);
                     
 <p>Call <strong>create( )</strong> to
                     create a node with pathname
-                    "<span class="codefrag filename">_locknode_/read-</span>". This is the
+                    "<span class="codefrag filename">guid-/read-</span>". This is the
                     lock node use later in the protocol. Make sure to set both
                     the <em>sequence</em> and
                     <em>ephemeral</em> flags.</p>
@@ -731,7 +765,7 @@ document.write("Last Published: " + document.lastModified);
                     
 <p>Call <strong>create( )</strong> to
                     create a node with pathname
-                    "<span class="codefrag filename">_locknode_/write-</span>". This is the
+                    "<span class="codefrag filename">guid-/write-</span>". This is the
                     lock node spoken of later in the protocol. Make sure to
                     set both <em>sequence</em> and
                     <em>ephemeral</em> flags.</p>
@@ -784,9 +818,10 @@ document.write("Last Published: " + document.lastModified);
           
       
 </table>
-<div class="note">
-<div class="label">Note</div>
-<div class="content">
+<p>Notes:</p>
+<ul>
+      
+<li>
         
 <p>It might appear that this recipe creates a herd effect:
           when there is a large group of clients waiting for a read
@@ -796,11 +831,20 @@ document.write("Last Published: " + document.lastModified);
           as all those waiting reader clients should be released since
           they have the lock. The herd effect refers to releasing a
           "herd" when in fact only a single or a small number of
-          machines can proceed.
-        </p>
+          machines can proceed.</p>
       
-</div>
-</div>
+</li>
+    
+</ul>
+<ul>
+      
+<li>
+        
+<p>See the <a href="#sc_recipes_GuidNote">note for Locks</a> on how to use the guid in the node.</p>
+      
+</li>
+    
+</ul>
 <a name="sc_recoverableSharedLocks"></a>
 <h4>Recoverable Shared Locks</h4>
 <p>With minor modifications to the Shared Lock protocol, you make
@@ -860,7 +904,7 @@ document.write("Last Published: " + document.lastModified);
 <p>A simple way of doing leader election with ZooKeeper is to use the
     <strong>SEQUENCE|EPHEMERAL</strong> flags when creating
     znodes that represent "proposals" of clients. The idea is to have a znode,
-    say "/election", such that each znode creates a child znode "/election/n_"
+    say "/election", such that each znode creates a child znode "/election/guid-n_"
     with both flags SEQUENCE|EPHEMERAL. With the sequence flag, ZooKeeper
     automatically appends a sequence number that is greater that any one
     previously appended to a child of "/election". The process that created
@@ -889,7 +933,7 @@ document.write("Last Published: " + document.lastModified);
       
 <li>
         
-<p>Create znode z with path "ELECTION/n_" with both SEQUENCE and
+<p>Create znode z with path "ELECTION/guid-n_" with both SEQUENCE and
         EPHEMERAL flags;</p>
       
 </li>
@@ -905,7 +949,7 @@ document.write("Last Published: " + document.lastModified);
       
 <li>
         
-<p>Watch for changes on "ELECTION/n_j", where j is the smallest
+<p>Watch for changes on "ELECTION/guid-n_j", where j is the smallest
         sequence number such that j &lt; i and n_j is a znode in C;</p>
       
 </li>
@@ -931,17 +975,35 @@ document.write("Last Published: " + document.lastModified);
       
 <li>
         
-<p>Otherwise, watch for changes on "ELECTION/n_j", where j is the
+<p>Otherwise, watch for changes on "ELECTION/guid-n_j", where j is the
         smallest sequence number such that j &lt; i and n_j is a znode in C;
         </p>
       
 </li>
     
 </ol>
+<p>Notes:</p>
+<ul>
+      
+<li>
+	    
 <p>Note that the znode having no preceding znode on the list of
-    children does not imply that the creator of this znode is aware that it is
-    the current leader. Applications may consider creating a separate to znode
-    to acknowledge that the leader has executed the leader procedure. </p>
+	    children does not imply that the creator of this znode is aware that it is
+	    the current leader. Applications may consider creating a separate to znode
+	    to acknowledge that the leader has executed the leader procedure. </p>
+      
+</li>
+    
+</ul>
+<ul>
+      
+<li>
+        
+<p>See the <a href="#sc_recipes_GuidNote">note for Locks</a> on how to use the guid in the node.</p>
+      
+</li>
+    
+</ul>
 </div>
 
 <p align="right">
