@@ -871,7 +871,7 @@ void free_duplicate_path(const char *free_path, const char* path) {
 */
 static char* prepend_string(zhandle_t *zh, const char* client_path) {
     char *ret_str;
-    if (zh->chroot == NULL)
+    if (zh == NULL || zh->chroot == NULL)
         return (char *) client_path;
     // handle the chroot itself, client_path = "/"
     if (strlen(client_path) == 1) {
