@@ -72,6 +72,19 @@
     function. In general, the examples in this section are designed to
     stimulate thought.</para>
 
+  <section id="sc_recipes_errorHandlingNote">
+    <title>Important Note About Error Handling</title>
+
+	<para>When implementing the recipes you must handle recoverable exceptions 
+	(see the <ulink url="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</ulink>). In 
+	particular, several of the recipes employ sequential ephemeral 
+	nodes. When creating a sequential ephemeral node there is an error case in 
+	which the create() succeeds on the server but the server crashes before 
+	returning the name of the node to the client. When the client reconnects its 
+	session is still valid and, thus, the node is not removed. The implication is 
+	that it is difficult for the client to know if its node was created or not. The 
+	recipes below include measures to handle this.</para>
+  </section>
 
   <section id="sc_outOfTheBox">
     <title>Out of the Box Applications: Name Service, Configuration, Group
@@ -203,7 +216,7 @@
 
                   <listitem>
                     <para>if <emphasis>p</emphasis> is the lowest process
-                      node in L, wait on highest process node in L</para>
+                      node in L, wait on highest process node in P</para>
                   </listitem>
 
                   <listitem>
@@ -308,8 +321,9 @@
     <orderedlist>
       <listitem>
         <para>Call <emphasis role="bold">create( )</emphasis> with a pathname
-        of "_locknode_/lock-" and the <emphasis>sequence</emphasis> and
-        <emphasis>ephemeral</emphasis> flags set.</para>
+        of "_locknode_/guid-lock-" and the <emphasis>sequence</emphasis> and
+        <emphasis>ephemeral</emphasis> flags set. The <emphasis>guid</emphasis> 
+		is needed in case the create() result is missed. See the note below.</para>
       </listitem>
 
       <listitem>
@@ -365,6 +379,20 @@
       </listitem>
     </itemizedlist>
 
+	<section id="sc_recipes_GuidNote">
+      <title>Recoverable Errors and the GUID</title>
+    <itemizedlist>
+      <listitem>
+        <para>If a recoverable error occurs calling <emphasis role="bold">create()</emphasis> the 
+		client should call <emphasis role="bold">getChildren()</emphasis> and check for a node 
+		containing the <emphasis>guid</emphasis> used in the path name. 
+		This handles the case (noted <ulink url="#sc_recipes_errorHandlingNote">above</ulink>) of 
+		the create() succeeding on the server but the server crashing before returning the name 
+		of the new node.</para>
+      </listitem>
+    </itemizedlist>
+	</section>
+
     <section>
       <title>Shared Locks</title>
 
@@ -387,7 +415,7 @@
                   <listitem>
                     <para>Call <emphasis role="bold">create( )</emphasis> to
                     create a node with pathname
-                    "<filename>_locknode_/read-</filename>". This is the
+                    "<filename>guid-/read-</filename>". This is the
                     lock node use later in the protocol. Make sure to set both
                     the <emphasis>sequence</emphasis> and
                     <emphasis>ephemeral</emphasis> flags.</para>
@@ -433,7 +461,7 @@
                   <listitem>
                     <para>Call <emphasis role="bold">create( )</emphasis> to
                     create a node with pathname
-                    "<filename>_locknode_/write-</filename>". This is the
+                    "<filename>guid-/write-</filename>". This is the
                     lock node spoken of later in the protocol. Make sure to
                     set both <emphasis>sequence</emphasis> and
                     <emphasis>ephemeral</emphasis> flags.</para>
@@ -474,7 +502,10 @@
         </tgroup>
       </informaltable>
 
-      <note>
+    <para>Notes:</para>
+
+    <itemizedlist>
+      <listitem>
         <para>It might appear that this recipe creates a herd effect:
           when there is a large group of clients waiting for a read
           lock, and all getting notified more or less simultaneously
@@ -483,10 +514,17 @@
           as all those waiting reader clients should be released since
           they have the lock. The herd effect refers to releasing a
           "herd" when in fact only a single or a small number of
-          machines can proceed.
-        </para>
-      </note>
-    </section>
+          machines can proceed.</para>
+      </listitem>
+    </itemizedlist>
+
+    <itemizedlist>
+      <listitem>
+        <para>See the <ulink url="#sc_recipes_GuidNote">note for Locks</ulink> on how to use the guid in the node.</para>
+      </listitem>
+    </itemizedlist>
+
+	</section>
 
     <section id="sc_recoverableSharedLocks">
       <title>Recoverable Shared Locks</title>
@@ -563,7 +601,7 @@
     <para>A simple way of doing leader election with ZooKeeper is to use the
     <emphasis role="bold">SEQUENCE|EPHEMERAL</emphasis> flags when creating
     znodes that represent "proposals" of clients. The idea is to have a znode,
-    say "/election", such that each znode creates a child znode "/election/n_"
+    say "/election", such that each znode creates a child znode "/election/guid-n_"
     with both flags SEQUENCE|EPHEMERAL. With the sequence flag, ZooKeeper
     automatically appends a sequence number that is greater that any one
     previously appended to a child of "/election". The process that created
@@ -594,7 +632,7 @@
 
     <orderedlist>
       <listitem>
-        <para>Create znode z with path "ELECTION/n_" with both SEQUENCE and
+        <para>Create znode z with path "ELECTION/guid-n_" with both SEQUENCE and
         EPHEMERAL flags;</para>
       </listitem>
 
@@ -604,7 +642,7 @@
       </listitem>
 
       <listitem>
-        <para>Watch for changes on "ELECTION/n_j", where j is the smallest
+        <para>Watch for changes on "ELECTION/guid-n_j", where j is the smallest
         sequence number such that j &lt; i and n_j is a znode in C;</para>
       </listitem>
     </orderedlist>
@@ -622,16 +660,29 @@
       </listitem>
 
       <listitem>
-        <para>Otherwise, watch for changes on "ELECTION/n_j", where j is the
+        <para>Otherwise, watch for changes on "ELECTION/guid-n_j", where j is the
         smallest sequence number such that j &lt; i and n_j is a znode in C;
         </para>
       </listitem>
     </orderedlist>
 
-    <para>Note that the znode having no preceding znode on the list of
-    children does not imply that the creator of this znode is aware that it is
-    the current leader. Applications may consider creating a separate to znode
-    to acknowledge that the leader has executed the leader procedure. </para>
+	<para>Notes:</para>
+
+    <itemizedlist>
+      <listitem>
+	    <para>Note that the znode having no preceding znode on the list of
+	    children does not imply that the creator of this znode is aware that it is
+	    the current leader. Applications may consider creating a separate to znode
+	    to acknowledge that the leader has executed the leader procedure. </para>
+      </listitem>
+    </itemizedlist>
+
+    <itemizedlist>
+      <listitem>
+        <para>See the <ulink url="#sc_recipes_GuidNote">note for Locks</ulink> on how to use the guid in the node.</para>
+      </listitem>
+    </itemizedlist>
+
   </section>
   </section>
 </article>
