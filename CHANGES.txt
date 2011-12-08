@@ -59,7 +59,10 @@ BUGFIXES:
   ZOOKEEPER-1239. add logging/stats to identify fsync stalls. (phunt via camille)
 
   ZOOKEEPER-1311. ZooKeeper test jar is broken (Ivan Kelly via phunt)
-   
+ 
+  ZOOKEEPER-1305. zookeeper.c:prepend_string func can dereference null ptr. 
+  (Daniel Lescohier via mahadev)
+ 
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

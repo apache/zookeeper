@@ -792,6 +792,10 @@ public:
         zk_ch = createchClient(&ctx_ch, "127.0.0.1:22181/testch1/mahadev");
         CPPUNIT_ASSERT(zk_ch != NULL);
         zk = createClient(&ctx);
+        // first test with a NULL zk handle, make sure client library does not
+        // dereference a null pointer, but instead returns ZBADARGUMENTS
+        rc = zoo_create(NULL, "/testch1", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZBADARGUMENTS, rc);
         rc = zoo_create(zk, "/testch1", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         rc = zoo_create(zk, "/testch1/mahadev", data, 7, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
