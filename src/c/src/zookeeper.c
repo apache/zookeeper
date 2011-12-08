@@ -804,6 +804,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
         zh->chroot = strdup(index_chroot);
         // if chroot is just / set it to null
         if (strlen(zh->chroot) == 1) {
+            free(zh->chroot);
             zh->chroot = NULL;
         }
         // cannot use strndup so allocate and strcpy
