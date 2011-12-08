@@ -9,6 +9,9 @@ BUGFIXES:
   ZOOKEEPER-1305. zookeeper.c:prepend_string func can dereference null ptr.
   (Daniel Lescohier via mahadev)
 
+  ZOOKEEPER-1316. zookeeper_init leaks memory if chroot is just '/'.
+  (Akira Kitada via mahadev)
+
 Release 3.4.0 - 2011-10-25
 
 Non-backward compatible changes:
