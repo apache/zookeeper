@@ -802,6 +802,9 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
     index_chroot = strchr(host, '/');
     if (index_chroot) {
         zh->chroot = strdup(index_chroot);
+        if (zh->chroot == NULL) {
+            goto abort;
+        }
         // if chroot is just / set it to null
         if (strlen(zh->chroot) == 1) {
             free(zh->chroot);

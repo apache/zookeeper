@@ -71,6 +71,8 @@ BUGFIXES:
 
   ZOOKEEPER-1315. zookeeper_init always reports sessionPasswd=<hidden>.
   (Akira Kitada via mahadev)
+
+  ZOOKEEPER-1317. Possible segfault in zookeeper_init. (Akira Kitada via mahadev)
  
 IMPROVEMENTS:
 
