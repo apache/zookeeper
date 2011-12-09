@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.4.0 Release Notes</title>
+<title>ZooKeeper 3.4.1 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -202,12 +202,15 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.4.0 Release Notes</h1>
+<h1>ZooKeeper 3.4.1 Release Notes</h1>
 <div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#changes">Changes Since ZooKeeper 3.3.0</a>
+<a href="#changes">Changes Since ZooKeeper 3.4.0</a>
+</li>
+<li>
+<a href="#prevchanges">Changes Since ZooKeeper 3.3.0</a>
 </li>
 </ul>
 </div>
@@ -233,8 +236,113 @@ These release notes include new developer and user facing incompatibilities, fea
 </ul>
 
 
-
 <a name="changes"></a>
+<h2 class="h3">Changes Since ZooKeeper 3.4.0</h2>
+<div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.4.0</caption>
+
+<title>Changes Since ZooKeeper 3.4.0</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1311">
+   ZOOKEEPER-1311</a>
+ </td>
+<td>
+ZooKeeper test jar is broken
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1305">
+   ZOOKEEPER-1305</a>
+ </td>
+<td>
+zookeeper.c:prepend_string func can dereference null ptr
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1316">
+   ZOOKEEPER-1316</a>
+ </td>
+<td>
+zookeeper_init leaks memory if chroot is just '/'
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1315">
+   ZOOKEEPER-1315</a>
+ </td>
+<td>
+ zookeeper_init always reports sessionPasswd=hidden
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1317">
+   ZOOKEEPER-1317</a>
+ </td>
+<td>
+ Possible segfault in zookeeper_init.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1319">
+   ZOOKEEPER-1319</a>
+ </td>
+<td>
+ Missing data after restarting+expanding a cluster.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1269">
+   ZOOKEEPER-1269</a>
+ </td>
+<td>
+ Multi deserialization issues.
+</td>
+
+</tr>
+
+
+</table>
+</div>
+
+
+<a name="prevchanges"></a>
 <h2 class="h3">Changes Since ZooKeeper 3.3.0</h2>
 <div class="section">
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
