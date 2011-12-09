@@ -314,11 +314,9 @@ public class Leader {
             
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
             
-            /*
             synchronized(this){
                 lastProposed = zk.getZxid();
             }
-            */
             
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
                     null, null);
