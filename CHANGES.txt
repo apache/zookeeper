@@ -21,6 +21,9 @@ BUGFIXES:
   ZOOKEEPER-1319. Missing data after restarting+expanding a cluster.
   (Patrick Hunt and Ben Reed via mahadev)
 
+  ZOOKEEPER-1269. Multi deserialization issues (Camille Fournier via 
+  mahadev)
+
 Release 3.4.0 - 2011-10-25
 
 Non-backward compatible changes:

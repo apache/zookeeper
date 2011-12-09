@@ -18,12 +18,15 @@
 
 package org.apache.zookeeper.test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.MultiTransactionRecord;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -43,9 +46,13 @@ import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
+import org.apache.zookeeper.txn.MultiTxn;
+import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import java.io.FileInputStream;
+import java.nio.ByteBuffer;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.server.persistence.FileHeader;
@@ -157,6 +164,14 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         LOG.info("Attempting to create " + "/test/" + (count - 1));
         doOp(logFile, OpCode.create, "/test/" + (count - 1), dt, zk,
                 zk.stat.getCversion() + 1);
+        
+        LOG.info("Attempting to create " + "/test/" + (count - 1));
+        doOp(logFile, OpCode.multi, "/test/" + (count - 1), dt, zk,
+                zk.stat.getCversion() + 1);
+        
+        LOG.info("Attempting to create " + "/test/" + (count - 1));
+        doOp(logFile, OpCode.multi, "/test/" + (count - 1), dt, zk,
+                -1);
 
         // Make delete fo fail, then verify cversion.
         // this doesn't happen anymore, we only set the cversion on create
@@ -192,6 +207,21 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
             txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
                     System.currentTimeMillis(), OpCode.create);
             txn = new CreateTxn(path, new byte[0], null, false, cversion);
+        }
+        else if (type == OpCode.multi) {
+            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
+                    System.currentTimeMillis(), OpCode.create);
+            txn = new CreateTxn(path, new byte[0], null, false, cversion);                       
+            ArrayList txnList = new ArrayList();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+            txn.serialize(boa, "request") ;
+            ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+            Txn txact = new Txn(OpCode.create,  bb.array());
+            txnList.add(txact);
+            txn = new MultiTxn(txnList);
+            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
+                    System.currentTimeMillis(), OpCode.multi);
         }
         logFile.processTransaction(txnHeader, dt, null, txn);
 

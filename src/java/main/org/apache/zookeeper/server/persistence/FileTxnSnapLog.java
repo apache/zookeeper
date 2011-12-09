@@ -197,39 +197,20 @@ public class FileTxnSnapLog {
             rc = dt.processTxn(hdr, txn);
         }
 
-        /**
-         * Snapshots are taken lazily. It can happen that the child
-         * znodes of a parent are created after the parent
-         * is serialized. Therefore, while replaying logs during restore, a
-         * create might fail because the node was already
-         * created.
-         *
-         * After seeing this failure, we should increment
-         * the cversion of the parent znode since the parent was serialized
-         * before its children.
-         *
-         * Note, such failures on DT should be seen only during
-         * restore.
-         */
-        if (hdr.getType() == OpCode.create &&
-                rc.err == Code.NODEEXISTS.intValue()) {
-            LOG.debug("Adjusting parent cversion for Txn: " + hdr.getType() +
-                    " path:" + rc.path + " err: " + rc.err);
-            int lastSlash = rc.path.lastIndexOf('/');
-            String parentName = rc.path.substring(0, lastSlash);
-            CreateTxn cTxn = (CreateTxn)txn;
-            try {
-                dt.setCversionPzxid(parentName, cTxn.getParentCVersion(),
-                        hdr.getZxid());
-            } catch (KeeperException.NoNodeException e) {
+              
+        if(rc.err !=  Code.OK.intValue()) {          
+            if(rc.err == Code.NONODE.intValue()) {
+                int lastSlash = rc.path.lastIndexOf('/');
+                String parentName = rc.path.substring(0, lastSlash);
                 LOG.error("Failed to set parent cversion for: " +
-                      parentName, e);
-                throw e;
+                        parentName);
+                  throw new KeeperException.NoNodeException(parentName);
             }
-        } else if (rc.err != Code.OK.intValue()) {
-            LOG.debug("Ignoring processTxn failure hdr: " + hdr.getType() +
-                  " : error: " + rc.err);
-        }
+            else {
+                LOG.debug("Ignoring processTxn failure hdr: " + hdr.getType() +
+                        " : error: " + rc.err);
+            }
+        }      
     }
     
     /**
