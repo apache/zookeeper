@@ -76,6 +76,8 @@ BUGFIXES:
 
   ZOOKEEPER-1319. Missing data after restarting+expanding a cluster.
   (phunt and breed via mahadev)
+
+  ZOOKEEPER-1269. Multi deserialization issues. (Camille Fournier via mahadev)
  
 IMPROVEMENTS:
 
