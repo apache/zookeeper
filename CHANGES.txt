@@ -73,6 +73,9 @@ BUGFIXES:
   (Akira Kitada via mahadev)
 
   ZOOKEEPER-1317. Possible segfault in zookeeper_init. (Akira Kitada via mahadev)
+
+  ZOOKEEPER-1319. Missing data after restarting+expanding a cluster.
+  (phunt and breed via mahadev)
  
 IMPROVEMENTS:
 
