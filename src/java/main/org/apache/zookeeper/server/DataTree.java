@@ -928,6 +928,39 @@ public class DataTree {
         if (rc.zxid > lastProcessedZxid) {
         	lastProcessedZxid = rc.zxid;
         }
+        /**
+         * Snapshots are taken lazily. It can happen that the child
+         * znodes of a parent are created after the parent
+         * is serialized. Therefore, while replaying logs during restore, a
+         * create might fail because the node was already
+         * created.
+         *
+         * After seeing this failure, we should increment
+         * the cversion of the parent znode since the parent was serialized
+         * before its children.
+         *
+         * Note, such failures on DT should be seen only during
+         * restore.
+         */
+        if (header.getType() == OpCode.create &&
+                rc.err == Code.NODEEXISTS.intValue()) {
+            LOG.debug("Adjusting parent cversion for Txn: " + header.getType() +
+                    " path:" + rc.path + " err: " + rc.err);
+            int lastSlash = rc.path.lastIndexOf('/');
+            String parentName = rc.path.substring(0, lastSlash);
+            CreateTxn cTxn = (CreateTxn)txn;
+            try {
+                setCversionPzxid(parentName, cTxn.getParentCVersion(),
+                        header.getZxid());
+            } catch (KeeperException.NoNodeException e) {
+                LOG.error("Failed to set parent cversion for: " +
+                      parentName, e);
+                rc.err = e.code().intValue();
+            }
+        } else if (rc.err != Code.OK.intValue()) {
+            LOG.debug("Ignoring processTxn failure hdr: " + header.getType() +
+                  " : error: " + rc.err);
+        }
         return rc;
     }
 
