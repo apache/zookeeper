@@ -774,7 +774,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
               recv_timeout,
               watcher,
               (clientid == 0 ? 0 : clientid->client_id),
-              ((clientid == 0) || (clientid->passwd == 0) ?
+              ((clientid == 0) || (clientid->passwd[0] == 0) ?
                "<null>" : "<hidden>"),
               context,
               flags));
