@@ -78,6 +78,9 @@ BUGFIXES:
   (phunt and breed via mahadev)
 
   ZOOKEEPER-1269. Multi deserialization issues. (Camille Fournier via mahadev)
+
+  ZOOKEEPER-1323. c client doesn't compile on freebsd
+  (michi mutsuzaki via phunt)
  
 IMPROVEMENTS:
 
