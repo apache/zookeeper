@@ -1,3 +1,13 @@
+Release 3.4.2 - TBD
+
+Backward compatible changes:
+
+BUGFIXES: 
+
+  ZOOKEEPER-1323. c client doesn't compile on freebsd
+  (michi mutsuzaki via phunt)
+
+
 Release 3.4.1 - 2011-12-12
 
 Backward compatible changes:

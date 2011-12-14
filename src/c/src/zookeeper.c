@@ -442,7 +442,8 @@ static void setup_random()
 static int getaddrinfo_errno(int rc) { 
     switch(rc) {
     case EAI_NONAME:
-#if EAI_NODATA != EAI_NONAME
+// ZOOKEEPER-1323 EAI_NODATA and EAI_ADDRFAMILY are deprecated in FreeBSD.
+#if defined EAI_NODATA && EAI_NODATA != EAI_NONAME
     case EAI_NODATA:
 #endif
         return ENOENT;
@@ -578,7 +579,12 @@ int getaddrs(zhandle_t *zh)
             // ai_flags as AI_ADDRCONFIG
 #ifdef AI_ADDRCONFIG
             if ((hints.ai_flags == AI_ADDRCONFIG) && 
+// ZOOKEEPER-1323 EAI_NODATA and EAI_ADDRFAMILY are deprecated in FreeBSD.
+#ifdef EAI_ADDRFAMILY
                 ((rc ==EAI_BADFLAGS) || (rc == EAI_ADDRFAMILY))) {
+#else
+                (rc == EAI_BADFLAGS)) {
+#endif
                 //reset ai_flags to null
                 hints.ai_flags = 0;
                 //retry getaddrinfo
