@@ -210,8 +210,8 @@ public class ZooKeeperTest extends ClientBase {
         try {
             Assert.assertTrue("Created node with wrong option", zkMain
                     .processZKCmd(zkMain.cl));
-            Assert
-                    .fail("Created the node with wrong option should throw Exception.");
+            Assert.fail("Created the node with wrong option should "
+                    + "throw Exception.");
         } catch (IllegalArgumentException e) {
             Assert.assertEquals("Path must start with / character", e
                     .getMessage());
