@@ -141,6 +141,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1232. remove unused o.a.z.server.util.Profiler
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-1253. return value of DataTree.createNode is never used
+  (Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

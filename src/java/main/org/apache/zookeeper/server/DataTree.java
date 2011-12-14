@@ -405,10 +405,9 @@ public class DataTree {
      *            an ephemeral node.
      * @param zxid
      * @param time
-     * @return the patch of the created node
      * @throws KeeperException
      */
-    public String createNode(String path, byte data[], List<ACL> acl,
+    public void createNode(final String path, byte data[], List<ACL> acl,
             long ephemeralOwner, int parentCVersion, long zxid, long time)
             throws KeeperException.NoNodeException,
             KeeperException.NodeExistsException {
@@ -478,7 +477,6 @@ public class DataTree {
         dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
         childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
                 Event.EventType.NodeChildrenChanged);
-        return path;
     }
 
     /**
