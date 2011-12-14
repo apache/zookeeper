@@ -138,6 +138,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1273. Copy'n'pasted unit test (Thomas Koch via phunt)
 
+  ZOOKEEPER-1232. remove unused o.a.z.server.util.Profiler
+  (Thomas Koch via phunt)
 
 Release 3.4.0 - 
 
