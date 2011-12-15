@@ -1,3 +1,9 @@
-This contrib module includes icons available under the Eclipse Public Licence Version 1.0
-. from the Eclipse Java Devlopment Platform. 
-The lib sub-directory includes a binary only jar library developed at http://sourceforge.net/projects/jtoaster/
+src/java/com/nitido/utils/toaster/Toaster.java:
+This java file is copyright by Daniele Piras ("danielepiras80", no email known) released under the Apache Software License 2.0
+It has been downloaded in december 2009 from the CVS web interface of the sourceforge project http://sourceforge.net/projects/jtoaster/ . The web interface to CVS is not available anymore on sourceforge.
+
+The icons in src/main/resources/icons are taken from the Tango project
+downloaded from http://tango.freedesktop.org/releases on 2011-09-06.
+The Tango project is public domain.
+
+Distribution packagers should not include the icons in the package but rather depend on tango-icon-theme (Debian package name). ZooInspector will then try to get the icons from /usr/share/icons/Tango rather then from its jar file.

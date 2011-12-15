@@ -1,0 +1,19 @@
+- replace JToaster with standard notifications, see:
+  http://www.galago-project.org/specs/notification/
+  http://stackoverflow.com/questions/857154/freedesktop-org-notifications-in-java
+  DBus and Java:
+  http://bolta-gecko.blogspot.com/2009/06/using-d-bus-in-java.html
+  http://dbus.freedesktop.org/doc/dbus-java/ (packaged in Debian)
+
+- properly respect
+  http://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html
+  http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  http://standards.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html
+
+- Rename classes to avoid redundand "ZooInspector" prefix.
+
+- Ant build file has hard coded log4j dependency. (ZK will move to maven anyways...)
+
+- make directory for config files configurable via commandline parameter
+
+- Clean up the code! :-)

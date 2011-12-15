@@ -31,11 +31,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -51,6 +54,7 @@ import javax.swing.TransferHandler;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.zookeeper.inspector.gui.Toolbar.Button;
 import org.apache.zookeeper.inspector.gui.nodeviewer.ZooInspectorNodeViewer;
 import org.apache.zookeeper.inspector.logger.LoggerFactory;
 import org.apache.zookeeper.inspector.manager.ZooInspectorManager;
@@ -62,16 +66,9 @@ import org.apache.zookeeper.inspector.manager.ZooInspectorManager;
 public class ZooInspectorNodeViewersDialog extends JDialog implements
         ListSelectionListener {
 
-    private final JButton upButton;
-    private final JButton downButton;
-    private final JButton removeButton;
-    private final JButton addButton;
     private final JList viewersList;
-    private final JButton saveFileButton;
-    private final JButton loadFileButton;
-    private final JButton setDefaultsButton;
     private final JFileChooser fileChooser = new JFileChooser(new File("."));
-
+    private final Map<Button, JButton> buttons = new HashMap<Button, JButton>();
     /**
      * @param frame
      *            - the Frame from which the dialog is displayed
@@ -87,12 +84,13 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
     public ZooInspectorNodeViewersDialog(Frame frame,
             final List<ZooInspectorNodeViewer> currentViewers,
             final Collection<NodeViewersChangeListener> listeners,
-            final ZooInspectorManager manager) {
+            final ZooInspectorManager manager,
+            final IconResource iconResource) {
         super(frame);
         final List<ZooInspectorNodeViewer> newViewers = new ArrayList<ZooInspectorNodeViewer>(
                 currentViewers);
         this.setLayout(new BorderLayout());
-        this.setIconImage(ZooInspectorIconResources.getChangeNodeViewersIcon()
+        this.setIconImage(iconResource.get(IconResource.ICON_ChangeNodeViewers,"")
                 .getImage());
         this.setTitle("About ZooInspector");
         this.setModal(true);
@@ -205,20 +203,13 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
         c1.ipadx = 0;
         c1.ipady = 0;
         panel.add(scroller, c1);
-        upButton = new JButton(ZooInspectorIconResources.getUpIcon());
-        downButton = new JButton(ZooInspectorIconResources.getDownIcon());
-        removeButton = new JButton(ZooInspectorIconResources
-                .getDeleteNodeIcon());
-        addButton = new JButton(ZooInspectorIconResources.getAddNodeIcon());
-        upButton.setEnabled(false);
-        downButton.setEnabled(false);
-        removeButton.setEnabled(false);
-        addButton.setEnabled(true);
-        upButton.setToolTipText("Move currently selected node viewer up");
-        downButton.setToolTipText("Move currently selected node viewer down");
-        removeButton.setToolTipText("Remove currently selected node viewer");
-        addButton.setToolTipText("Add node viewer");
+
         final JTextField newViewerTextField = new JTextField();
+
+        for(Button button : Button.values()) {
+            JButton jbutton = button.createJButton(iconResource);
+            buttons.put(button, jbutton);
+        }
         GridBagConstraints c2 = new GridBagConstraints();
         c2.gridx = 3;
         c2.gridy = 0;
@@ -231,7 +222,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
         c2.insets = new Insets(5, 5, 5, 5);
         c2.ipadx = 0;
         c2.ipady = 0;
-        panel.add(upButton, c2);
+        panel.add(buttons.get(Button.up), c2);
         GridBagConstraints c3 = new GridBagConstraints();
         c3.gridx = 3;
         c3.gridy = 2;
@@ -244,7 +235,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
         c3.insets = new Insets(5, 5, 5, 5);
         c3.ipadx = 0;
         c3.ipady = 0;
-        panel.add(downButton, c3);
+        panel.add(buttons.get(Button.down), c3);
         GridBagConstraints c4 = new GridBagConstraints();
         c4.gridx = 3;
         c4.gridy = 1;
@@ -257,7 +248,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
         c4.insets = new Insets(5, 5, 5, 5);
         c4.ipadx = 0;
         c4.ipady = 0;
-        panel.add(removeButton, c4);
+        panel.add(buttons.get(Button.remove), c4);
         GridBagConstraints c5 = new GridBagConstraints();
         c5.gridx = 0;
         c5.gridy = 3;
@@ -283,8 +274,8 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
         c6.insets = new Insets(5, 5, 5, 5);
         c6.ipadx = 0;
         c6.ipady = 0;
-        panel.add(addButton, c6);
-        upButton.addActionListener(new ActionListener() {
+        panel.add(buttons.get(Button.add), c6);
+        buttons.get(Button.up).addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 DefaultListModel listModel = (DefaultListModel) viewersList
@@ -299,7 +290,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
                 }
             }
         });
-        downButton.addActionListener(new ActionListener() {
+        buttons.get(Button.down).addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 DefaultListModel listModel = (DefaultListModel) viewersList
@@ -314,7 +305,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
                 }
             }
         });
-        removeButton.addActionListener(new ActionListener() {
+        buttons.get(Button.remove).addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 DefaultListModel listModel = (DefaultListModel) viewersList
@@ -330,7 +321,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
                 }
             }
         });
-        addButton.addActionListener(new ActionListener() {
+        buttons.get(Button.add).addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 String className = newViewerTextField.getText();
@@ -371,15 +362,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
                 }
             }
         });
-        saveFileButton = new JButton("Save");
-        loadFileButton = new JButton("Load");
-        setDefaultsButton = new JButton("Set As Defaults");
-        saveFileButton
-                .setToolTipText("Save current node viewer configuration to file");
-        loadFileButton
-                .setToolTipText("Load node viewer configuration frm file");
-        setDefaultsButton
-                .setToolTipText("Set current configuration asd defaults");
+
         GridBagConstraints c7 = new GridBagConstraints();
         c7.gridx = 0;
         c7.gridy = 4;
@@ -392,7 +375,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
         c7.insets = new Insets(5, 5, 5, 5);
         c7.ipadx = 0;
         c7.ipady = 0;
-        panel.add(saveFileButton, c7);
+        panel.add(buttons.get(Button.save), c7);
         GridBagConstraints c8 = new GridBagConstraints();
         c8.gridx = 1;
         c8.gridy = 4;
@@ -405,7 +388,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
         c8.insets = new Insets(5, 5, 5, 5);
         c8.ipadx = 0;
         c8.ipady = 0;
-        panel.add(loadFileButton, c8);
+        panel.add(buttons.get(Button.load), c8);
         GridBagConstraints c9 = new GridBagConstraints();
         c9.gridx = 2;
         c9.gridy = 4;
@@ -418,8 +401,8 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
         c9.insets = new Insets(5, 5, 5, 5);
         c9.ipadx = 0;
         c9.ipady = 0;
-        panel.add(setDefaultsButton, c9);
-        saveFileButton.addActionListener(new ActionListener() {
+        panel.add(buttons.get(Button.setDefaults), c9);
+        buttons.get(Button.save).addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 int result = fileChooser
@@ -453,11 +436,11 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
                             LoggerFactory
                                     .getLogger()
                                     .error(
-                                            "Error saving node veiwer configuration from file.",
+                                            "Error saving node viewer configuration from file.",
                                             ex);
                             JOptionPane.showMessageDialog(
                                     ZooInspectorNodeViewersDialog.this,
-                                    "Error saving node veiwer configuration from file: "
+                                    "Error saving node viewer configuration from file: "
                                             + ex.getMessage(), "Error",
                                     JOptionPane.ERROR_MESSAGE);
                         }
@@ -465,7 +448,7 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
                 }
             }
         });
-        loadFileButton.addActionListener(new ActionListener() {
+        buttons.get(Button.load).addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 int result = fileChooser
@@ -493,18 +476,18 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
                         LoggerFactory
                                 .getLogger()
                                 .error(
-                                        "Error loading node veiwer configuration from file.",
+                                        "Error loading node viewer configuration from file.",
                                         ex);
                         JOptionPane.showMessageDialog(
                                 ZooInspectorNodeViewersDialog.this,
-                                "Error loading node veiwer configuration from file: "
+                                "Error loading node viewer configuration from file: "
                                         + ex.getMessage(), "Error",
                                 JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
         });
-        setDefaultsButton.addActionListener(new ActionListener() {
+        buttons.get(Button.setDefaults).addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 int answer = JOptionPane
@@ -530,11 +513,11 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
                         LoggerFactory
                                 .getLogger()
                                 .error(
-                                        "Error setting default node veiwer configuration.",
+                                        "Error setting default node viewer configuration.",
                                         ex);
                         JOptionPane.showMessageDialog(
                                 ZooInspectorNodeViewersDialog.this,
-                                "Error setting default node veiwer configuration: "
+                                "Error setting default node viewer configuration: "
                                         + ex.getMessage(), "Error",
                                 JOptionPane.ERROR_MESSAGE);
                     }
@@ -583,7 +566,11 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
      * .ListSelectionEvent)
      */
     public void valueChanged(ListSelectionEvent e) {
+        JButton removeButton = buttons.get(Button.remove);
+        JButton upButton = buttons.get(Button.up);
+        JButton downButton = buttons.get(Button.down);
         int index = viewersList.getSelectedIndex();
+
         if (index == -1) {
             removeButton.setEnabled(false);
             upButton.setEnabled(false);
@@ -600,6 +587,45 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
             } else {
                 downButton.setEnabled(true);
             }
+        }
+    }
+
+    public static enum Button {
+        up("Move currently selected node viewer up",IconResource.ICON_UP,false),
+        down("Move currently selected node viewer down",IconResource.ICON_DOWN,false),
+        add("Add node viewer",IconResource.ICON_ADD,true),
+        remove("Remove currently selected node viewer",IconResource.ICON_REMOVE,false),
+        save("Save current node viewer configuration to file","Save"),
+        load("Load node viewer configuration from file","Load"),
+        setDefaults("Set current configuration asd defaults","Set as defaults");
+
+        private String toolTip;
+        private String icon;
+        private boolean enabled;
+
+        Button(String toolTip, String icon, boolean enabled) {
+            this.toolTip = toolTip;
+            this.icon = icon;
+            this.enabled = enabled;
+        }
+
+        Button(String toolTip, String icon) {
+            this(toolTip, icon, true);
+        }
+
+        public JButton createJButton(IconResource iconResource) {
+            ImageIcon imageIcon = iconResource.get(icon, toolTip);
+            JButton jbutton;
+
+            if(imageIcon == null) {
+                jbutton = new JButton(icon);
+            } else {
+                jbutton = new JButton(imageIcon);
+            }
+
+            jbutton.setEnabled(enabled);
+            jbutton.setToolTipText(toolTip);
+            return jbutton;
         }
     }
 }

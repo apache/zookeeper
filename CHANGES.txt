@@ -144,6 +144,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1253. return value of DataTree.createNode is never used
   (Thomas Koch via phunt)
 
+  ZOOKEEPER-756. some cleanup and improvements for zooinspector
+  (Colin Goodheart-Smithe & Thomas Koch via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
