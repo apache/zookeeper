@@ -20,42 +20,41 @@ package org.apache.zookeeper.test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.MultiTransactionRecord;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.DataNode;
+import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
-import org.apache.zookeeper.txn.TxnHeader;
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.zookeeper.server.DataTree;
-import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.Txn;
-import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.jute.BinaryOutputArchive;
-import org.apache.jute.Record;
-import java.io.FileInputStream;
-import java.nio.ByteBuffer;
-
-import org.apache.jute.BinaryInputArchive;
-import org.apache.zookeeper.server.persistence.FileHeader;
+import org.apache.zookeeper.txn.TxnHeader;
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoadFromLogTest extends ZKTestCase implements  Watcher {
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
@@ -100,8 +99,8 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
                 ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
 
         // now verify that the FileTxnLog reads every transaction only once
-	File logDir = new File(tmpDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
-	FileTxnLog txnLog = new FileTxnLog(logDir);
+        File logDir = new File(tmpDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
+        FileTxnLog txnLog = new FileTxnLog(logDir);
 
         TxnIterator itr = txnLog.read(0);
         long expectedZxid = 0;
@@ -368,4 +367,71 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 				(children.length == NUM_MESSAGES));
 		f.shutdown();
 	}
+    
+    /**
+     * Test we can restore a snapshot that has errors and data ahead of the zxid
+     * of the snapshot file. 
+     */
+    @Test
+    public void testRestoreWithTransactionErrors() throws Exception {
+        // setup a single server cluster
+        File tmpDir = ClientBase.createTmpDir();
+        ClientBase.setupTestEnv();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        SyncRequestProcessor.setSnapCount(10000);
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        Assert.assertTrue("waiting for server being up ", ClientBase
+                .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+
+        long start = System.currentTimeMillis();
+        while (!connected) {
+            long end = System.currentTimeMillis();
+            if (end - start > 5000) {
+                Assert.assertTrue("Could not connect with server in 5 seconds",
+                        false);
+            }
+            try {
+                Thread.sleep(200);
+            } catch (Exception e) {
+                LOG.warn("Intrrupted");
+            }
+
+        }
+        // generate some transactions
+        try {
+            for (int i = 0; i < NUM_MESSAGES; i++) {
+                try {
+                    zk.create("/invaliddir/test-", new byte[0],
+                            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                } catch(NoNodeException e) {
+                    //Expected
+                }
+            }
+        } finally {
+            zk.close();
+        }
+
+        // force the zxid to be behind the content
+        zks.getZKDatabase().setlastProcessedZxid(
+                zks.getZKDatabase().getDataTreeLastProcessedZxid() - 10);
+        LOG.info("Set lastProcessedZxid to "
+                + zks.getZKDatabase().getDataTreeLastProcessedZxid());
+        
+        // Force snapshot and restore
+        zks.takeSnapshot();
+        zks.shutdown();
+        f.shutdown();
+
+        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        SyncRequestProcessor.setSnapCount(10000);
+        f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        Assert.assertTrue("waiting for server being up ", ClientBase
+                .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        
+        f.shutdown();
+    }
 }

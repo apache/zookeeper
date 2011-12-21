@@ -1,4 +1,4 @@
-Release 3.4.2 - TBD
+Release 3.4.2 - 2011-12-21
 
 Backward compatible changes:
 
@@ -7,6 +7,8 @@ BUGFIXES:
   ZOOKEEPER-1323. c client doesn't compile on freebsd
   (michi mutsuzaki via phunt)
 
+  ZOOKEEPER-1333. NPE in FileTxnSnapLog when restarting a cluster.
+  (Patrick Hunt and Andrew Mc Nair via mahadev)
 
 Release 3.4.1 - 2011-12-12
 
