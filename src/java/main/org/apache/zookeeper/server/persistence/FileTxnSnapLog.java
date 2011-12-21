@@ -205,7 +205,7 @@ public class FileTxnSnapLog {
             if (hdr.getType() == OpCode.create && rc.err == Code.NONODE.intValue()) {
                 int lastSlash = rc.path.lastIndexOf('/');
                 String parentName = rc.path.substring(0, lastSlash);
-                LOG.error("Failed to set parent cversion for {}", parentName);
+                LOG.error("Parent {} missing for {}", parentName, rc.path);
                 throw new KeeperException.NoNodeException(parentName);
             } else {
                 LOG.debug("Ignoring processTxn failure hdr: " + hdr.getType() +
