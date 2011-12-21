@@ -34,7 +34,6 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
-import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,7 +149,7 @@ public class FileTxnSnapLog {
                 processTransaction(hdr,dt,sessions, itr.getTxn());
             } catch(KeeperException.NoNodeException e) {
                throw new IOException("Failed to process transaction type: " +
-                     hdr.getType() + " error: " + e.getMessage());
+                     hdr.getType() + " error: " + e.getMessage(), e);
             }
             listener.onTxnLoaded(hdr, itr.getTxn());
             if (!itr.next()) 
@@ -197,20 +196,22 @@ public class FileTxnSnapLog {
             rc = dt.processTxn(hdr, txn);
         }
 
-              
-        if(rc.err !=  Code.OK.intValue()) {          
-            if(rc.err == Code.NONODE.intValue()) {
+        /**
+         * This should never happen. A NONODE can never show up in the 
+         * transaction logs. This is more indicative of a corrupt transaction
+         * log. Refer ZOOKEEPER-1333 for more info.
+         */
+        if (rc.err != Code.OK.intValue()) {          
+            if (hdr.getType() == OpCode.create && rc.err == Code.NONODE.intValue()) {
                 int lastSlash = rc.path.lastIndexOf('/');
                 String parentName = rc.path.substring(0, lastSlash);
-                LOG.error("Failed to set parent cversion for: " +
-                        parentName);
-                  throw new KeeperException.NoNodeException(parentName);
-            }
-            else {
+                LOG.error("Failed to set parent cversion for {}", parentName);
+                throw new KeeperException.NoNodeException(parentName);
+            } else {
                 LOG.debug("Ignoring processTxn failure hdr: " + hdr.getType() +
                         " : error: " + rc.err);
             }
-        }      
+        }
     }
     
     /**
