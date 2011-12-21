@@ -81,6 +81,9 @@ BUGFIXES:
 
   ZOOKEEPER-1323. c client doesn't compile on freebsd
   (michi mutsuzaki via phunt)
+
+  ZOOKEEPER-1333. NPE in FileTxnSnapLog when restarting a cluster.
+  (Patrick Hunt via mahadev)
  
 IMPROVEMENTS:
 
