@@ -66,7 +66,16 @@ public class ZooKeeperTest extends ClientBase {
         Assert.assertTrue(children.contains("b"));
         Assert.assertTrue(children.contains("c"));
 
-        ZKUtil.deleteRecursive(zk, "/a");
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        // 'rmr' is deprecated, so the test here is just for backwards
+        // compatibility.
+        String cmdstring0 = "rmr /a/b/v";
+        String cmdstring1 = "deleteall /a";
+        zkMain.cl.parseCommand(cmdstring0);
+        Assert.assertFalse(zkMain.processZKCmd(zkMain.cl));
+        Assert.assertEquals(null, zk.exists("/a/b/v", null));
+        zkMain.cl.parseCommand(cmdstring1);
+        Assert.assertFalse(zkMain.processZKCmd(zkMain.cl));
         Assert.assertNull(zk.exists("/a", null));
     }
 
