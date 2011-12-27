@@ -150,7 +150,10 @@ IMPROVEMENTS:
   ZOOKEEPER-756. some cleanup and improvements for zooinspector
   (Colin Goodheart-Smithe & Thomas Koch via phunt)
 
-  ZOOKEEPER-1292.  FLETest is flaky (flp via breed)
+  ZOOKEEPER-1292. FLETest is flaky (flp via breed)
+
+  ZOOKEEPER-1326. The CLI commands "delete" and "rmr" are confusing.
+  Can we have "rm" + "rmr" instead? (Harsh J via phunt)
 
 Release 3.4.0 - 
 
