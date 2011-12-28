@@ -53,6 +53,7 @@ import org.apache.zookeeper.server.ServerCnxnFactoryAccessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
+import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -211,44 +212,6 @@ public abstract class ClientBase extends ZKTestCase {
             alist.add(new HostPort(host,port));
         }
         return alist;
-    }
-
-    /**
-     * Send the 4letterword
-     * @param host the destination host
-     * @param port the destination port
-     * @param cmd the 4letterword
-     * @return
-     * @throws IOException
-     */
-    public static String send4LetterWord(String host, int port, String cmd)
-        throws IOException
-    {
-        LOG.info("connecting to " + host + " " + port);
-        Socket sock = new Socket(host, port);
-        BufferedReader reader = null;
-        try {
-            OutputStream outstream = sock.getOutputStream();
-            outstream.write(cmd.getBytes());
-            outstream.flush();
-            // this replicates NC - close the output stream before reading
-            sock.shutdownOutput();
-
-            reader =
-                new BufferedReader(
-                        new InputStreamReader(sock.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
-            }
-            return sb.toString();
-        } finally {
-            sock.close();
-            if (reader != null) {
-                reader.close();
-            }
-        }
     }
 
     public static boolean waitForServerUp(String hp, long timeout) {

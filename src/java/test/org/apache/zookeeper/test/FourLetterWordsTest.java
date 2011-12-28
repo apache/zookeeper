@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooKeeper;
+import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -97,7 +98,7 @@ public class FourLetterWordsTest extends ClientBase {
 
     private String sendRequest(String cmd) throws IOException {
       HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
-      return ClientBase.send4LetterWord(hpobj.host, hpobj.port, cmd);
+      return send4LetterWord(hpobj.host, hpobj.port, cmd);
     }
 
     private void verify(String cmd, String expected) throws IOException {
