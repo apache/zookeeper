@@ -32,13 +32,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.security.auth.login.Configuration;
-import javax.security.auth.login.LoginException;
-
 import org.apache.zookeeper.Login;
 import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginException;
 
 public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(NIOServerCnxnFactory.class);
@@ -77,6 +77,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
         new HashMap<InetAddress, Set<NIOServerCnxn>>( );
 
     int maxClientCnxns = 60;
+
 
     /**
      * Construct a new server connection factory which will accept an unlimited number
@@ -121,7 +122,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
     public void setMaxClientCnxnsPerHost(int max) {
         maxClientCnxns = max;
     }
-   
+
     @Override
     public void start() {
         // ensure thread is started once and only once
@@ -186,7 +187,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
             return s.size();
         }
     }
-    
+
     public void run() {
         while (!ss.socket().isClosed()) {
             try {
@@ -322,8 +323,4 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
         return cnxns;
     }
 
-    @Override
-    public int getNumAliveConnections() {
-    	return cnxns.size();
-    }
 }

@@ -411,10 +411,5 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
     }
-    
-    @Override
-    public int getNumAliveConnections() {
-    	return cnxns.size();
-    }
 
 }
