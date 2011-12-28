@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.TestableZooKeeper;
+import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 import org.junit.Test;
 
 public class FourLetterWordsTest extends ClientBase {

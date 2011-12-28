@@ -1,3 +1,12 @@
+Release 3.3.5 - TBD
+Backward compatible changes:
+
+BUGFIXES:
+
+  ZOOKEEPER-1089. zkServer.sh status does not work due to invalid
+  option of nc (Roman Shaposhnik via phunt)
+ 
+
 Release 3.3.4 - 2011-11-16
 Backward compatible changes:
 
