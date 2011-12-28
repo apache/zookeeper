@@ -162,8 +162,6 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1342. quorum Listener & LearnerCnxAcceptor are missing
   thread names (Rakesh R via phunt)
-  
-  ZOOKEEPER-1321. Add number of client connections metric in JMX and srvr (Neha Narkhede via camille)
 
 Release 3.4.0 - 
 

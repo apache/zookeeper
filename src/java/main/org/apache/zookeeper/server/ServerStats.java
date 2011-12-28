@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server;
 
 
-
 /**
  * Basic Server Statistics
  */
@@ -30,14 +29,13 @@ public class ServerStats {
     private long minLatency = Long.MAX_VALUE;
     private long totalLatency = 0;
     private long count = 0;
-    
+
     private final Provider provider;
 
     public interface Provider {
         public long getOutstandingRequests();
         public long getLastProcessedZxid();
         public String getState();
-        public int getNumAliveConnections();
     }
     
     public ServerStats(Provider provider) {
@@ -77,14 +75,9 @@ public class ServerStats {
     }
 
     public String getServerState() {
-    	return provider.getState();
+        return provider.getState();
     }
-
-    /** The number of client connections alive to this server */
-    public int getNumAliveClientConnections() {
-    	return provider.getNumAliveConnections();
-    }
-
+    
     @Override
     public String toString(){
         StringBuilder sb = new StringBuilder();
@@ -92,8 +85,6 @@ public class ServerStats {
                 + getAvgLatency() + "/" + getMaxLatency() + "\n");
         sb.append("Received: " + getPacketsReceived() + "\n");
         sb.append("Sent: " + getPacketsSent() + "\n");
-        sb.append("Connections: " + getNumAliveClientConnections() + "\n");
-        
         if (provider != null) {
             sb.append("Outstanding: " + getOutstandingRequests() + "\n");
             sb.append("Zxid: 0x"+ Long.toHexString(getLastProcessedZxid())+ "\n");
@@ -132,6 +123,7 @@ public class ServerStats {
         packetsReceived = 0;
         packetsSent = 0;
     }
+    
     synchronized public void reset() {
         resetLatency();
         resetRequestCounters();

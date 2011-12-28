@@ -140,8 +140,4 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         serverStats.resetRequestCounters();
         serverStats.resetLatency();
     }
-
-	public long getNumAliveConnections() {
-		return zks.getNumAliveConnections();
-	}
 }
