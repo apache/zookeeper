@@ -155,6 +155,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1326. The CLI commands "delete" and "rmr" are confusing.
   Can we have "rm" + "rmr" instead? (Harsh J via phunt)
 
+  ZOOKEEPER-1342. quorum Listener & LearnerCnxAcceptor are missing
+  thread names (Rakesh R via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
