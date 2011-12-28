@@ -86,6 +86,9 @@ BUGFIXES:
   (Patrick Hunt via mahadev)
 
   ZOOKEEPER-1331. Typo in docs: acheive -> achieve (Andrew Ash via phunt)
+
+  ZOOKEEPER-1089. zkServer.sh status does not work due to invalid
+  option of nc (Roman Shaposhnik via phunt)
  
 IMPROVEMENTS:
 

@@ -146,7 +146,10 @@ restart)
     ;;
 status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
-    STAT=`echo stat | nc -q 1 localhost $(grep "^[[:space:]]*clientPort" "$ZOOCFG" | sed -e 's/.*=//') 2> /dev/null| grep Mode`
+    STAT=`$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+             -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain localhost \
+             $(grep "^[[:space:]]*clientPort" "$ZOOCFG" | sed -e 's/.*=//') srvr 2> /dev/null    \
+          | grep Mode`
     if [ "x$STAT" = "x" ]
     then
         echo "Error contacting service. It is probably not running."
