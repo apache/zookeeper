@@ -749,7 +749,8 @@ public class NIOServerCnxn extends ServerCnxn {
 
             print("packets_received", stats.getPacketsReceived());
             print("packets_sent", stats.getPacketsSent());
-
+            print("num_alive_connections", stats.getNumAliveClientConnections());
+            
             print("outstanding_requests", stats.getOutstandingRequests());
 
             print("server_state", stats.getServerState());

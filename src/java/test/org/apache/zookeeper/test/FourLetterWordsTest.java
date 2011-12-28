@@ -94,6 +94,9 @@ public class FourLetterWordsTest extends ClientBase {
         verify("srvr", "Outstanding");
         verify("cons", "queued");
         verify("mntr", "zk_server_state\tstandalone");
+        verify("mntr", "num_alive_connections");
+        verify("stat", "Connections");
+        verify("srvr", "Connections");
     }
 
     private String sendRequest(String cmd) throws IOException {
@@ -135,6 +138,8 @@ public class FourLetterWordsTest extends ClientBase {
         Assert.assertTrue(Pattern.matches("^Received: \\d+$", line));
         line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Sent: \\d+$", line));
+        line = in.readLine();
+        Assert.assertTrue(Pattern.matches("^Connections: \\d+$", line));
         line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Outstanding: \\d+$", line));
         line = in.readLine();

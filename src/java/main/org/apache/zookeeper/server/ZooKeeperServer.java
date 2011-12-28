@@ -109,7 +109,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private ServerCnxnFactory serverCnxnFactory;
 
     private final ServerStats serverStats;
-
+ 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -253,7 +253,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             System.exit(10);
         }
     }
-
 
     /**
      * This should be called from a synchronized block on this!
@@ -677,6 +676,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return getInProcess();
     }
 
+    /**
+     * return the total number of client connections that are alive
+     * to this server
+     */
+    public int getNumAliveConnections() {
+    	return serverCnxnFactory.getNumAliveConnections();
+    }
+    
     /**
      * trunccate the log to get in sync with others
      * if in a quorum
