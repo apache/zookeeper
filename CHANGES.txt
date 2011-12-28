@@ -84,6 +84,8 @@ BUGFIXES:
 
   ZOOKEEPER-1333. NPE in FileTxnSnapLog when restarting a cluster.
   (Patrick Hunt via mahadev)
+
+  ZOOKEEPER-1331. Typo in docs: acheive -> achieve (Andrew Ash via phunt)
  
 IMPROVEMENTS:
 
