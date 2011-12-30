@@ -163,6 +163,10 @@ IMPROVEMENTS:
   ZOOKEEPER-1342. quorum Listener & LearnerCnxAcceptor are missing
   thread names (Rakesh R via phunt)
 
+  ZOOKEEPER-1229. C client hashtable_remove redundantly calls hash function
+  (Harsh J via phunt)
+
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

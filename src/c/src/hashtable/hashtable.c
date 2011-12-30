@@ -189,7 +189,7 @@ hashtable_remove(struct hashtable *h, void *k)
     unsigned int hashvalue, index;
 
     hashvalue = hash(h,k);
-    index = indexFor(h->tablelength,hash(h,k));
+    index = indexFor(h->tablelength, hashvalue);
     pE = &(h->table[index]);
     e = *pE;
     while (NULL != e)
