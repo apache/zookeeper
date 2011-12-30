@@ -1,0 +1,8 @@
+.classpath
+.eclipse/
+.project
+.revision/
+.settings/
+build/
+src/java/lib/ant-eclipse-*
+src/java/lib/ivy-*

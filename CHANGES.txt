@@ -5,6 +5,9 @@ BUGFIXES:
 
   ZOOKEEPER-1089. zkServer.sh status does not work due to invalid
   option of nc (Roman Shaposhnik via phunt)
+
+  ZOOKEEPER-1345. Add a .gitignore file with general exclusions and
+  Eclipse project files excluded (Harsh J via phunt)
  
 
 Release 3.3.4 - 2011-11-16
