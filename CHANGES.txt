@@ -166,6 +166,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1229. C client hashtable_remove redundantly calls hash function
   (Harsh J via phunt)
 
+  ZOOKEEPER-1345. Add a .gitignore file with general exclusions and
+  Eclipse project files excluded (Harsh J via phunt)
+
 
 Release 3.4.0 - 
 
