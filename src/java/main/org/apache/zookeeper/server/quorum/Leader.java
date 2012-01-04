@@ -234,7 +234,7 @@ public class Leader {
      */
     final static int INFORM = 8;
 
-	ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
+    ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
 
     ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<Proposal>();
 
@@ -410,7 +410,7 @@ public class Leader {
         }
     }
 
-	boolean isShutdown;
+    boolean isShutdown;
 
     /**
      * Close down all the LearnerHandlers
@@ -767,54 +767,54 @@ public class Leader {
     }
 
     private HashSet<Long> connectingFollowers = new HashSet<Long>();
-	public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
-		synchronized(connectingFollowers) {
-			if (!waitingForNewEpoch) {
-				return epoch;
-			}
-			if (lastAcceptedEpoch > epoch) {
-				epoch = lastAcceptedEpoch+1;
-			}
-			connectingFollowers.add(sid);
-			QuorumVerifier verifier = self.getQuorumVerifier();
-			if (connectingFollowers.contains(self.getId()) && verifier.containsQuorum(connectingFollowers)) 
-{
-			    waitingForNewEpoch = false;
-			    self.setAcceptedEpoch(epoch);
-			    connectingFollowers.notifyAll();
-			} else {
-                   long start = System.currentTimeMillis();
-                   long cur = start;
+    public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
+        synchronized(connectingFollowers) {
+            if (!waitingForNewEpoch) {
+                return epoch;
+            }
+            if (lastAcceptedEpoch >= epoch) {
+                epoch = lastAcceptedEpoch+1;
+            }
+            connectingFollowers.add(sid);
+            QuorumVerifier verifier = self.getQuorumVerifier();
+            if (connectingFollowers.contains(self.getId()) && 
+                                            verifier.containsQuorum(connectingFollowers)) {
+                waitingForNewEpoch = false;
+                self.setAcceptedEpoch(epoch);
+                connectingFollowers.notifyAll();
+            } else {
+                long start = System.currentTimeMillis();
+                long cur = start;
                 long end = start + self.getInitLimit()*self.getTickTime();
                 while(waitingForNewEpoch && cur < end) {
                     connectingFollowers.wait(end - cur);
                     cur = System.currentTimeMillis();
                 }
-				if (waitingForNewEpoch) {
+                if (waitingForNewEpoch) {
                     throw new InterruptedException("Timeout while waiting for epoch from quorum");        
-				}
-			}
-			return epoch;
-		}
-	}
+                }
+            }
+            return epoch;
+        }
+    }
 
-	private HashSet<Long> electingFollowers = new HashSet<Long>();
-	private boolean electionFinished = false;
-	public void waitForEpochAck(long id, StateSummary ss) throws IOException, InterruptedException {
-		synchronized(electingFollowers) {
-			if (electionFinished) {
-				return;
-			}
-			if (ss.getCurrentEpoch() != -1) {
-				if (ss.isMoreRecentThan(leaderStateSummary)) {
-					throw new IOException("Follower is ahead of the leader");
-				}
-				electingFollowers.add(id);
-			}
-			QuorumVerifier verifier = self.getQuorumVerifier();
-			if (electingFollowers.contains(self.getId()) && verifier.containsQuorum(electingFollowers)) {
-				electionFinished = true;
-				electingFollowers.notifyAll();
+    private HashSet<Long> electingFollowers = new HashSet<Long>();
+    private boolean electionFinished = false;
+    public void waitForEpochAck(long id, StateSummary ss) throws IOException, InterruptedException {
+        synchronized(electingFollowers) {
+            if (electionFinished) {
+                return;
+            }
+            if (ss.getCurrentEpoch() != -1) {
+                if (ss.isMoreRecentThan(leaderStateSummary)) {
+                    throw new IOException("Follower is ahead of the leader");
+                }
+                electingFollowers.add(id);
+            }
+            QuorumVerifier verifier = self.getQuorumVerifier();
+            if (electingFollowers.contains(self.getId()) && verifier.containsQuorum(electingFollowers)) {
+                electionFinished = true;
+                electingFollowers.notifyAll();
             } else {                
                 long start = System.currentTimeMillis();
                 long cur = start;
@@ -825,8 +825,8 @@ public class Leader {
                 }
                 if (!electionFinished) {
                     throw new InterruptedException("Timeout while waiting for epoch to be acked by quorum");
-				}
-			}
-		}
-	}
+                }
+            }
+        }
+    }
 }

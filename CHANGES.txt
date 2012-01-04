@@ -10,6 +10,7 @@ BUGFIXES:
   ZOOKEEPER-1345. Add a .gitignore file with general exclusions and
   Eclipse project files excluded (Harsh J via phunt)
 
+  ZOOKEEPER-1343. getEpochToPropose should check if lastAcceptedEpoch is greater or equal than epoch (fpj via breed)
 
 Release 3.4.2 - 2011-12-21
 
