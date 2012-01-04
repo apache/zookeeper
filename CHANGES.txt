@@ -89,6 +89,8 @@ BUGFIXES:
 
   ZOOKEEPER-1089. zkServer.sh status does not work due to invalid
   option of nc (Roman Shaposhnik via phunt)
+
+  ZOOKEEPER-1343. getEpochToPropose should check if lastAcceptedEpoch is greater or equal than epoch (fpj via breed)
  
 IMPROVEMENTS:
 

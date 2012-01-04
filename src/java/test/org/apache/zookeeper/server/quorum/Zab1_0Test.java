@@ -48,6 +48,7 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.util.ZxidUtils;
@@ -76,6 +77,26 @@ public class Zab1_0Test {
         }
     }
 
+    
+   private static final class MockLeader extends Leader {
+       
+       MockLeader(QuorumPeer qp, LeaderZooKeeperServer zk)
+       throws IOException {
+           super(qp, zk);
+       }
+       
+       /**
+        * This method returns the value of the variable that holds the epoch
+        * to be proposed and that has been proposed, depending on the point
+        * of the execution in which it is called. 
+        * 
+        * @return epoch
+        */
+       public long getCurrentEpochToPropose() {
+           return epoch;
+       }
+   }
+   
    public static final class FollowerMockThread extends Thread {
     	private final Leader leader;
     	private final long followerSid;
@@ -143,6 +164,55 @@ public class Zab1_0Test {
             }
         }
     }
+    
+    /**
+     * In this test, the leader sets the last accepted epoch to 5. The call
+     * to getEpochToPropose should set epoch to 6 and wait until another 
+     * follower executes it. If in getEpochToPropose we don't check if
+     * lastAcceptedEpoch == epoch, then the call from the subsequent
+     * follower with lastAcceptedEpoch = 6 doesn't change the value
+     * of epoch, and the test fails. It passes with the fix to predicate.
+     * 
+     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1343}
+     * 
+     * 
+     * @throws Exception
+     */
+    
+    @Test
+    public void testLastAcceptedEpoch() throws Exception {    
+        File tmpDir = File.createTempFile("test", "dir");
+        tmpDir.delete();
+        tmpDir.mkdir();
+        Leader leader = null;
+        LeadThread leadThread = null;
+        try {
+            QuorumPeer peer = createQuorumPeer(tmpDir);
+            leader = createMockLeader(tmpDir, peer);
+            peer.leader = leader;
+            peer.setAcceptedEpoch(5);
+            leadThread = new LeadThread(leader); 
+            leadThread.start();
+            
+            while(((MockLeader) leader).getCurrentEpochToPropose() != 6){
+                Thread.sleep(20);
+            }
+            
+            try {
+                long epoch = leader.getEpochToPropose(1, 6);
+                Assert.assertEquals("New proposed epoch is wrong", 7, epoch);  
+            } catch (Exception e){ 
+                Assert.fail("Timed out in getEpochToPropose");
+            }
+            
+        } finally {
+            recursiveDelete(tmpDir);
+            if (leader != null) {
+                leader.shutdown("end of test");
+            }
+        }
+    }
+    
     
     @Test
     public void testLeaderInElectingFollowers() throws Exception {    
@@ -632,6 +702,18 @@ public class Zab1_0Test {
     }
 
     private Leader createLeader(File tmpDir, QuorumPeer peer)
+    throws IOException, NoSuchFieldException, IllegalAccessException{
+        LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
+        return new Leader(peer, zk);
+    }
+    
+    private Leader createMockLeader(File tmpDir, QuorumPeer peer)
+    throws IOException, NoSuchFieldException, IllegalAccessException{
+        LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
+        return new MockLeader(peer, zk);
+    }
+    
+    private LeaderZooKeeperServer prepareLeader(File tmpDir, QuorumPeer peer)
             throws IOException, NoSuchFieldException, IllegalAccessException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
@@ -640,9 +722,9 @@ public class Zab1_0Test {
         addrField.set(peer, new InetSocketAddress(33556));
         ZKDatabase zkDb = new ZKDatabase(logFactory);
         LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer, zkDb);
-        return new Leader(peer, zk);
+        return zk;
     }
-
+    
     static class ConversableFollower extends Follower {
 
         ConversableFollower(QuorumPeer self, FollowerZooKeeperServer zk) {
