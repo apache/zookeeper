@@ -75,7 +75,7 @@ public class Leader {
     final QuorumPeer self;
 
     // the follower acceptor thread
-    LearnerCnxAcceptor cnxAcceptor;
+    volatile LearnerCnxAcceptor cnxAcceptor = null;
 
     // list of all the followers
     public final HashSet<LearnerHandler> learners =
@@ -280,7 +280,6 @@ public class Leader {
 
     long epoch = -1;
     boolean waitingForNewEpoch = true;
-    volatile boolean readyToStart = false;
 
     /**
      * This method is main function that is called to lead
@@ -309,7 +308,6 @@ public class Leader {
             cnxAcceptor.setName("LearnerCnxAcceptor-" + ss.getLocalSocketAddress());
             cnxAcceptor.start();
 
-            readyToStart = true;
             long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());            
 
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
