@@ -54,7 +54,6 @@
 		<jar jarfile="${jarname}">
 			<manifest>
 				<attribute name="Main-Class" value="org.apache.zookeeper.inspector.ZooInspector" />
-				<attribute name="Class-Path" value="lib/log4j-1.2.15.jar lib/zookeeper-${version}.jar lib" />
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Built-At" value="${build.time}" />
 				<attribute name="Built-On" value="${host.name}" />
