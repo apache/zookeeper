@@ -229,7 +229,6 @@ public class Zab1_0Test {
             FollowerMockThread f2 = new FollowerMockThread(2, leader, false);
 
             // things needed for waitForEpochAck to run (usually in leader.lead(), but we're not running leader here)
-            leader.readyToStart = true;
             leader.leaderStateSummary = new StateSummary(leader.self.getCurrentEpoch(), leader.zk.getLastProcessedZxid());
             
             f1.start();
@@ -323,7 +322,7 @@ public class Zab1_0Test {
             leadThread = new LeadThread(leader);
             leadThread.start();
 
-            while(!leader.readyToStart) {
+            while(leader.cnxAcceptor == null || !leader.cnxAcceptor.isAlive()) {
                 Thread.sleep(20);
             }
             
