@@ -91,6 +91,9 @@ BUGFIXES:
   option of nc (Roman Shaposhnik via phunt)
 
   ZOOKEEPER-1343. getEpochToPropose should check if lastAcceptedEpoch is greater or equal than epoch (fpj via breed)
+
+  ZOOKEEPER-1050. zooinspector shell scripts do not work
+  (Will Johnson via phunt)
  
 IMPROVEMENTS:
 
