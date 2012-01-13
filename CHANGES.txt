@@ -94,6 +94,8 @@ BUGFIXES:
 
   ZOOKEEPER-1050. zooinspector shell scripts do not work
   (Will Johnson via phunt)
+
+  ZOOKEEPER-1294. One of the zookeeper server is not accepting any requests (Kavita Sharma via henryr)
  
 IMPROVEMENTS:
 

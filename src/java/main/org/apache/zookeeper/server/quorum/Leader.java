@@ -308,7 +308,7 @@ public class Leader {
             cnxAcceptor.setName("LearnerCnxAcceptor-" + ss.getLocalSocketAddress());
             cnxAcceptor.start();
 
-            long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());            
+            long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
 
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
 
@@ -377,15 +377,15 @@ public class Leader {
                 if (!tickSkip) {
                     self.tick++;
                 }
-                int syncedCount = 0;
                 HashSet<Long> syncedSet = new HashSet<Long>();
 
                 // lock on the followers when we use it.
                 syncedSet.add(self.getId());
                 synchronized (learners) {
                     for (LearnerHandler f : learners) {
-                        if (f.synced()) {
-                            syncedCount++;
+                        // Synced set is used to check we have a supporting quorum, so only
+                        // PARTICIPANT, not OBSERVER, learners should be used
+                        if (f.synced() && f.getLearnerType() == LearnerType.PARTICIPANT) {
                             syncedSet.add(f.getSid());
                         }
                         f.ping();
@@ -395,7 +395,7 @@ public class Leader {
                 //if (!tickSkip && syncedCount < self.quorumPeers.size() / 2) {
                     // Lost quorum, shutdown
                   // TODO: message is wrong unless majority quorums used
-                    shutdown("Only " + syncedCount + " followers, need "
+                    shutdown("Only " + syncedSet.size() + " followers, need "
                             + (self.getVotingView().size() / 2));
                     // make sure the order is the same!
                     // the leader goes to looking
@@ -770,7 +770,7 @@ public class Leader {
             }
             connectingFollowers.add(sid);
             QuorumVerifier verifier = self.getQuorumVerifier();
-            if (connectingFollowers.contains(self.getId()) && 
+            if (connectingFollowers.contains(self.getId()) &&
                                             verifier.containsQuorum(connectingFollowers)) {
                 waitingForNewEpoch = false;
                 self.setAcceptedEpoch(epoch);
