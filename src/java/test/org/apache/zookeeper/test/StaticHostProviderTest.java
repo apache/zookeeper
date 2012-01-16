@@ -66,7 +66,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         long start = System.currentTimeMillis();
         hostProvider.next(0);
         long stop = System.currentTimeMillis();
-        assertTrue(10000 > stop - start);
+        assertTrue(5 > stop - start);
     }
 
     @Test

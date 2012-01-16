@@ -11,6 +11,9 @@ BUGFIXES:
   Eclipse project files excluded (Harsh J via phunt)
 
   ZOOKEEPER-1343. getEpochToPropose should check if lastAcceptedEpoch is greater or equal than epoch (fpj via breed)
+  
+  ZOOKEEPER-1358. In StaticHostProviderTest.java, testNextDoesNotSleepForZero tests that hostProvider.next(0) 
+  doesn't sleep by checking that the latency of this call is less than 10sec (Alex Shraer via camille)
 
 Release 3.4.2 - 2011-12-21
 
