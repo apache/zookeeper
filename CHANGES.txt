@@ -96,6 +96,9 @@ BUGFIXES:
   (Will Johnson via phunt)
 
   ZOOKEEPER-1294. One of the zookeeper server is not accepting any requests (Kavita Sharma via henryr)
+  
+  ZOOKEEPER-1358. In StaticHostProviderTest.java, testNextDoesNotSleepForZero tests that hostProvider.next(0) 
+  doesn't sleep by checking that the latency of this call is less than 10sec (Alex Shraer via camille)
  
 IMPROVEMENTS:
 
