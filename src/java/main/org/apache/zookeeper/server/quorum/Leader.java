@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.BindException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -131,7 +132,9 @@ public class Leader {
     Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
         try {
-            ss = new ServerSocket(self.getQuorumAddress().getPort());
+            ss = new ServerSocket();
+            ss.setReuseAddress(true);
+            ss.bind(new InetSocketAddress(self.getQuorumAddress().getPort()));
         } catch (BindException e) {
             LOG.error("Couldn't bind to port "
                     + self.getQuorumAddress().getPort(), e);

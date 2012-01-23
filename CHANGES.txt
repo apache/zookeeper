@@ -101,6 +101,9 @@ BUGFIXES:
   doesn't sleep by checking that the latency of this call is less than 10sec (Alex Shraer via camille)
 
   ZOOKEEPER-1351. invalid test verification in MultiTransactionTest (phunt via camille) 
+
+  ZOOKEEPER-973. bind() could fail on Leader because it does not
+  setReuseAddress on its ServerSocket (Harsh J via phunt)
   
 IMPROVEMENTS:
 
