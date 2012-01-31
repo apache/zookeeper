@@ -104,7 +104,10 @@ BUGFIXES:
 
   ZOOKEEPER-973. bind() could fail on Leader because it does not
   setReuseAddress on its ServerSocket (Harsh J via phunt)
-  
+ 
+  ZOOKEEPER-1367. Data inconsistencies and unexpired ephemeral nodes after cluster restart.
+  (Benjamin Reed via mahadev)
+ 
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

@@ -54,6 +54,7 @@ import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.TxnHeader;
 
 import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.OpResult.CheckResult;
@@ -107,20 +108,10 @@ public class FinalRequestProcessor implements RequestProcessor {
                 }
             }
             if (request.getHdr() != null) {
-                rc = zks.getZKDatabase().processTxn(request.getHdr(), request.getTxn());
-                if (request.type == OpCode.createSession) {
-                    if (request.getTxn() instanceof CreateSessionTxn) {
-                        CreateSessionTxn cst = (CreateSessionTxn) request.getTxn();
-                        zks.sessionTracker.addSession(request.sessionId, cst
-                                .getTimeOut());
-                    } else {
-                        LOG.warn("*****>>>>> Got "
-                                + request.getTxn().getClass() + " "
-                                + request.getTxn().toString());
-                    }
-                } else if (request.type == OpCode.closeSession) {
-                    zks.sessionTracker.removeSession(request.sessionId);
-                }
+                TxnHeader hdr = request.getHdr();
+                Record txn = request.getTxn();
+                
+                rc = zks.processTxn(hdr, txn);
             }
             // do not add non quorum packets to the queue.
             if (Request.isQuorum(request.type)) {

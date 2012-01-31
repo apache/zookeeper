@@ -53,6 +53,7 @@ import org.apache.zookeeper.proto.GetSASLRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetSASLResponse;
+import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
@@ -60,6 +61,9 @@ import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
+import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.txn.TxnHeader;
+
 import javax.security.sasl.SaslException;
 
 /**
@@ -87,7 +91,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected int maxSessionTimeout = -1;
     protected SessionTracker sessionTracker;
     private FileTxnSnapLog txnLogFactory = null;
-    private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
     private ZKDatabase zkDb;
     protected long hzxid = 0;
     public final static Exception ok = new Exception("No prob");
@@ -228,8 +231,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // Clean up dead sessions
         LinkedList<Long> deadSessions = new LinkedList<Long>();
         for (Long session : zkDb.getSessions()) {
-            sessionsWithTimeouts = zkDb.getSessionWithTimeOuts();
-            if (sessionsWithTimeouts.get(session) == null) {
+            if (zkDb.getSessionWithTimeOuts().get(session) == null) {
                 deadSessions.add(session);
             }
         }
@@ -357,7 +359,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void startup() {
-        createSessionTracker();
+        if (sessionTracker == null) {
+            createSessionTracker();
+        }
+        startSessionTracker();
         setupRequestProcessors();
 
         registerJMX();
@@ -380,6 +385,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, zkDb.getSessionWithTimeOuts(),
                 tickTime, 1);
+    }
+    
+    protected void startSessionTracker() {
         ((SessionTrackerImpl)sessionTracker).start();
     }
 
@@ -918,4 +926,26 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // wrap SASL response token to client inside a Response object.
         return new SetSASLResponse(responseToken);
     }
+    
+    public ProcessTxnResult processTxn(TxnHeader hdr, Record txn) {
+        ProcessTxnResult rc;
+        int opCode = hdr.getType();
+        long sessionId = hdr.getClientId();
+        rc = getZKDatabase().processTxn(hdr, txn);
+        if (opCode == OpCode.createSession) {
+            if (txn instanceof CreateSessionTxn) {
+                CreateSessionTxn cst = (CreateSessionTxn) txn;
+                sessionTracker.addSession(sessionId, cst
+                        .getTimeOut());
+            } else {
+                LOG.warn("*****>>>>> Got "
+                        + txn.getClass() + " "
+                        + txn.toString());
+            }
+        } else if (opCode == OpCode.closeSession) {
+            sessionTracker.removeSession(sessionId);
+        }
+        return rc;
+    }
+
 }
