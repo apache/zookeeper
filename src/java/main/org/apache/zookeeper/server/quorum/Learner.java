@@ -352,7 +352,8 @@ public class Learner {
 
             }
             zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
-                        
+            zk.createSessionTracker();            
+            
             long lastQueued = 0;
 
             // in V1.0 we take a snapshot when we get the NEWLEADER message, but in pre V1.0
@@ -383,7 +384,7 @@ public class Learner {
                         if (pif.hdr.getZxid() != qp.getZxid()) {
                             LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
                         } else {
-                            zk.getZKDatabase().processTxn(pif.hdr, pif.rec);
+                            zk.processTxn(pif.hdr, pif.rec);
                             packetsNotCommitted.remove();
                         }
                     } else {
@@ -393,7 +394,7 @@ public class Learner {
                 case Leader.INFORM:
                     TxnHeader hdr = new TxnHeader();
                     Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
-                    zk.getZKDatabase().processTxn(hdr, txn);
+                    zk.processTxn(hdr, txn);
                     break;
                 case Leader.UPTODATE:
                     if (!snapshotTaken) { // true for the pre v1.0 case
