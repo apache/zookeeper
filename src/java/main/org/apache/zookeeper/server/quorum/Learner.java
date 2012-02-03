@@ -321,7 +321,6 @@ public class Learner {
 
             }
             zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
-            zk.createSessionTracker();
             if(LOG.isInfoEnabled()){
                 LOG.info("Setting leader epoch " + Long.toHexString(newLeaderZxid >> 32L));
             }
@@ -352,7 +351,7 @@ public class Learner {
                     if (pif.hdr.getZxid() != qp.getZxid()) {
                         LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
                     } else {
-                        zk.processTxn(pif.hdr, pif.rec);
+                        zk.getZKDatabase().processTxn(pif.hdr, pif.rec);
                         packetsNotCommitted.remove();
                     }
                     break;
@@ -361,7 +360,7 @@ public class Learner {
                     ia = BinaryInputArchive
                             .getArchive(new ByteArrayInputStream(qp.getData()));
                     Record txn = SerializeUtils.deserializeTxn(ia, hdr);
-                    zk.processTxn(hdr, txn);
+                    zk.getZKDatabase().processTxn(hdr, txn);
                     break;
                 case Leader.UPTODATE:
                     zk.takeSnapshot();

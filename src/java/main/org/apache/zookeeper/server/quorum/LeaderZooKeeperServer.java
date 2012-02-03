@@ -77,13 +77,9 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
     
     @Override
-    public void createSessionTracker() {
+    protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, getZKDatabase().getSessionWithTimeOuts(),
                 tickTime, self.getId());
-    }
-    
-    @Override
-    protected void startSessionTracker() {
         ((SessionTrackerImpl)sessionTracker).start();
     }
 
