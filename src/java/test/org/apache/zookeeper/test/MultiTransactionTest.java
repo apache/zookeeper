@@ -38,7 +38,9 @@ import org.apache.zookeeper.OpResult.CheckResult;
 import org.apache.zookeeper.OpResult.CreateResult;
 import org.apache.zookeeper.OpResult.DeleteResult;
 import org.apache.zookeeper.OpResult.ErrorResult;
+import org.apache.zookeeper.OpResult.SetDataResult;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.junit.Assert;
 import org.junit.Before;
@@ -204,6 +206,45 @@ public class MultiTransactionTest extends ClientBase {
                 }
             }
         }
+    }
+
+    /**
+     * Exercise the equals methods of OpResult classes.
+     */
+    @Test
+    public void testOpResultEquals() {
+        opEquals(new CreateResult("/foo"),
+                new CreateResult("/foo"),
+                new CreateResult("nope"));
+
+        opEquals(new CheckResult(),
+                new CheckResult(),
+                null);
+        
+        opEquals(new SetDataResult(new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                new SetDataResult(new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                new SetDataResult(new Stat(11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111)));
+        
+        opEquals(new ErrorResult(1),
+                new ErrorResult(1),
+                new ErrorResult(2));
+        
+        opEquals(new DeleteResult(),
+                new DeleteResult(),
+                null);
+
+        opEquals(new ErrorResult(1),
+                new ErrorResult(1),
+                new ErrorResult(2));
+    }
+
+    private void opEquals(OpResult expected, OpResult value, OpResult near) {
+        assertEquals(value, value);
+        assertFalse(value.equals(new Object()));
+        assertFalse(value.equals(near));
+        assertFalse(value.equals(value instanceof CreateResult ?
+                new ErrorResult(1) : new CreateResult("nope2")));
+        assertTrue(value.equals(expected));
     }
 
     @Test
