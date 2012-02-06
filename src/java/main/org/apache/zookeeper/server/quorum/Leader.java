@@ -32,20 +32,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryOutputArchive;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class has the control logic for the Leader.
@@ -464,11 +464,11 @@ public class Leader {
      */
     synchronized public void processAck(long sid, long zxid, SocketAddress followerAddr) {
         if (LOG.isTraceEnabled()) {
-            LOG.trace("Ack zxid: 0x" + Long.toHexString(zxid));
+            LOG.trace("Ack zxid: 0x{}", Long.toHexString(zxid));
             for (Proposal p : outstandingProposals.values()) {
                 long packetZxid = p.packet.getZxid();
-                LOG.trace("outstanding proposal: 0x"
-                        + Long.toHexString(packetZxid));
+                LOG.trace("outstanding proposal: 0x{}",
+                        Long.toHexString(packetZxid));
             }
             LOG.trace("outstanding proposals all");
         }
@@ -481,31 +481,29 @@ public class Leader {
         }
         if (lastCommitted >= zxid) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("proposal has already been committed, pzxid:"
-                        + lastCommitted
-                        + " zxid: 0x" + Long.toHexString(zxid));
+                LOG.debug("proposal has already been committed, pzxid: 0x{} zxid: 0x{}",
+                        Long.toHexString(lastCommitted), Long.toHexString(zxid));
             }
             // The proposal has already been committed
             return;
         }
         Proposal p = outstandingProposals.get(zxid);
         if (p == null) {
-            LOG.warn("Trying to commit future proposal: zxid 0x"
-                    + Long.toHexString(zxid) + " from " + followerAddr);
+            LOG.warn("Trying to commit future proposal: zxid 0x{} from {}",
+                    Long.toHexString(zxid), followerAddr);
             return;
         }
 
         p.ackSet.add(sid);
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Count for zxid: 0x" + Long.toHexString(zxid)
-                    + " is " + p.ackSet.size());
+            LOG.debug("Count for zxid: 0x{} is {}",
+                    Long.toHexString(zxid), p.ackSet.size());
         }
         if (self.getQuorumVerifier().containsQuorum(p.ackSet)){
             if (zxid != lastCommitted+1) {
-                LOG.warn("Commiting zxid 0x" + Long.toHexString(zxid)
-                        + " from " + followerAddr + " not first!");
-                LOG.warn("First is "
-                        + (lastCommitted+1));
+                LOG.warn("Commiting zxid 0x{} from {} not first!",
+                        Long.toHexString(zxid), followerAddr);
+                LOG.warn("First is 0x{}", Long.toHexString(lastCommitted + 1));
             }
             outstandingProposals.remove(zxid);
             if (p.request != null) {
@@ -514,7 +512,7 @@ public class Leader {
             // We don't commit the new leader proposal
             if ((zxid & 0xffffffffL) != 0) {
                 if (p.request == null) {
-                    LOG.warn("Going to commmit null: " + p);
+                    LOG.warn("Going to commmit null request for proposal: {}", p);
                 }
                 commit(zxid);
                 inform(p);
@@ -527,9 +525,8 @@ public class Leader {
                 return;
             } else {
                 lastCommitted = zxid;
-                if(LOG.isInfoEnabled()){
-                    LOG.info("Have quorum of supporters; starting up and setting last processed zxid: " + zk.getZxid());
-                }
+                LOG.info("Have quorum of supporters; starting up and setting last processed zxid: 0x{}",
+                        Long.toHexString(zk.getZxid()));
                 zk.startup();
                 zk.getZKDatabase().setlastProcessedZxid(zk.getZxid());
             }
