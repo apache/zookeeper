@@ -934,20 +934,14 @@ public class ClientCnxn {
 
             setName(getName().replaceAll("\\(.*\\)",
                     "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
-
-            if (System.getProperty("java.security.auth.login.config") != null) {
-                try {
-                    zooKeeperSaslClient = new ZooKeeperSaslClient(ClientCnxn.this, "zookeeper"+"/"+ addr.getHostName());
-                }
-                catch (LoginException e) {
-                    LOG.warn("Zookeeper client cannot authenticate using the Client section of the supplied "
-                      + "configuration file: '" + System.getProperty("java.security.auth.login.config")
-                      + "'. Will continue connection to Zookeeper server without SASL authentication, if Zookeeper "
-                      + "server allows it.");
-                    eventThread.queueEvent(new WatchedEvent(
-                            Watcher.Event.EventType.None,
-                            KeeperState.AuthFailed, null));
-                }
+            try {
+                zooKeeperSaslClient = new ZooKeeperSaslClient("zookeeper/"+addr.getHostName());
+            } catch (LoginException e) {
+                LOG.warn("SASL authentication failed: " + e + " Will continue connection to Zookeeper server without "
+                        + "SASL authentication, if Zookeeper server allows it.");
+                eventThread.queueEvent(new WatchedEvent(
+                        Watcher.Event.EventType.None,
+                        Watcher.Event.KeeperState.AuthFailed, null));
             }
             clientCnxnSocket.connect(addr);
         }
@@ -981,9 +975,9 @@ public class ClientCnxn {
                     }
 
                     if (state.isConnected()) {
-                        if ((zooKeeperSaslClient != null) && (zooKeeperSaslClient.isComplete() != true)) {
+                        if ((zooKeeperSaslClient != null) && (zooKeeperSaslClient.isFailed() != true) && (zooKeeperSaslClient.isComplete() != true)) {
                             try {
-                                zooKeeperSaslClient.initialize();
+                                zooKeeperSaslClient.initialize(ClientCnxn.this);
                             }
                             catch (SaslException e) {
                                 LOG.error("SASL authentication with Zookeeper Quorum member failed: " + e);
