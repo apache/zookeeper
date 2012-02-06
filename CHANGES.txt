@@ -121,6 +121,9 @@ BUGFIXES:
   to exist. (phunt via mahadev)
 
   ZOOKEEPER-1327. there are still remnants of hadoop urls. (Harsh J via mahadev)
+
+  ZOOKEEPER-1340. multi problem - typical user operations are generating ERROR level 
+  messages in the server (phunt via mahadev)
  
 IMPROVEMENTS:
 
