@@ -21,12 +21,12 @@ package org.apache.zookeeper.client;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.GetSASLRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetSASLResponse;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.auth.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +40,8 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
@@ -52,12 +54,12 @@ import javax.security.sasl.SaslException;
  * allows ClientCnxn to authenticate using SASL with a Zookeeper server.
  */
 public class ZooKeeperSaslClient {
+    public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.clientconfig";
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperSaslClient.class);
     private static Login login = null;
     private SaslClient saslClient;
 
     private byte[] saslToken = new byte[0];
-    private ClientCnxn cnxn;
 
     public enum SaslState {
         INITIAL,INTERMEDIATE,COMPLETE,FAILED
@@ -69,13 +71,85 @@ public class ZooKeeperSaslClient {
         return saslState;
     }
 
-    public ZooKeeperSaslClient(ClientCnxn cnxn, String serverPrincipal) throws LoginException {
-        this.cnxn = cnxn;
-        this.saslClient = createSaslClient(serverPrincipal);
+    private String loginContext;
+
+    public String getLoginContext() {
+      return loginContext;
+    }
+
+    public ZooKeeperSaslClient(final String serverPrincipal)
+            throws LoginException {
+        /**
+         * ZOOKEEPER-1373: allow system property to specify the JAAS
+         * configuration section that the zookeeper client should use.
+         * Default to "Client".
+         */
+        String clientSection = System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client");
+        // Note that 'Configuration' here refers to javax.security.auth.login.Configuration.
+        AppConfigurationEntry entries[] = null;
+        SecurityException securityException = null;
+        try {
+            entries = Configuration.getConfiguration().getAppConfigurationEntry(clientSection);
+        } catch (SecurityException e) {
+            // handle below: might be harmless if the user doesn't intend to use JAAS authentication.
+            securityException = e;
+        }
+        if (entries != null) {
+            LOG.info("Found Login Context section '" + clientSection + "': will use it to attempt to SASL-authenticate.");
+            this.saslClient = createSaslClient(serverPrincipal, clientSection);
+        } else {
+            // Handle situation of clientSection's being null: it might simply because the client does not intend to 
+            // use SASL, so not necessarily an error.
+            saslState = SaslState.FAILED;
+            String explicitClientSection = System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY);
+            if (explicitClientSection != null) {
+                // If the user explicitly overrides the default Login Context, they probably expected SASL to
+                // succeed. But if we got here, SASL failed.
+                if (securityException != null) {
+                    throw new LoginException("Zookeeper client cannot authenticate using the " + explicitClientSection +
+                            " section of the supplied JAAS configuration: '" +
+                            System.getProperty("java.security.auth.login.config") + "' because of a " +
+                            "SecurityException: " + securityException);
+                    
+                    
+                } else {
+                    throw new LoginException("Client cannot SASL-authenticate because the specified JAAS configuration " +
+                            "section '" + explicitClientSection + "' could not be found.");
+                }
+            } else {
+                // The user did not override the default context. It might be that they just don't intend to use SASL,
+                // so log at INFO, not WARN, since they don't expect any SASL-related information.
+                if (securityException != null) {
+                    LOG.warn("SecurityException: " + securityException + " occurred when trying to find JAAS configuration.");
+                }
+                LOG.info("Client will not SASL-authenticate because the default JAAS configuration section 'Client' " +
+                        "could not be found. If you are not using SASL, you may ignore this. On the other hand, " +
+                        "if you expected SASL to work, please fix your JAAS configuration.");
+            }
+            if (System.getProperty("java.security.auth.login.config")  != null) {
+                // Again, the user explicitly set something SASL-related, so they probably expected SASL to succeed.
+                if (securityException != null) {
+                    throw new LoginException("Zookeeper client cannot authenticate using the '" +
+                            System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client") +
+                            "' section of the supplied JAAS configuration: '" +
+                            System.getProperty("java.security.auth.login.config") + "' because of a " +
+                            "SecurityException: " + securityException);
+                } else {
+                    throw new LoginException("No JAAS configuration section named '" +
+                            System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client") +
+                            "' was found in specified JAAS configuration file: '" +
+                            System.getProperty("java.security.auth.login.config") + "'.");
+                }
+            }
+        }
     }
 
     public boolean isComplete() {
         return (saslState == SaslState.COMPLETE);
+    }
+
+    public boolean isFailed() {
+        return (saslState == SaslState.FAILED);
     }
 
     public static class ServerSaslResponseCallback implements AsyncCallback.DataCallback {
@@ -97,16 +171,21 @@ public class ZooKeeperSaslClient {
                 usedata = new byte[0];
                 LOG.debug("ServerSaslResponseCallback(): using empty data[] as server response (length="+usedata.length+")");
             }
-            client.prepareSaslResponseToServer(usedata);
+            client.prepareSaslResponseToServer(usedata, (ClientCnxn)ctx);
         }
     }
 
-    synchronized private SaslClient createSaslClient(final String servicePrincipal) throws LoginException {
+    synchronized private SaslClient createSaslClient(final String servicePrincipal,
+                                                     final String loginContext) throws LoginException {
         try {
             if (login == null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("JAAS loginContext is: " + loginContext);
+                }
+                this.loginContext = loginContext;
                 // note that the login object is static: it's shared amongst all zookeeper-related connections.
                 // createSaslClient() must be declared synchronized so that login is initialized only once.
-                login = new Login("Client",new ClientCallbackHandler(null));
+                login = new Login(loginContext, new ClientCallbackHandler(null));
                 login.startThreadIfNeeded();
             }
             Subject subject = login.getSubject();
@@ -163,7 +242,7 @@ public class ZooKeeperSaslClient {
         }
     }
 
-    private void prepareSaslResponseToServer(byte[] serverToken) {
+    private void prepareSaslResponseToServer(byte[] serverToken, ClientCnxn cnxn) {
         saslToken = serverToken;
 
         if (saslClient == null) {
@@ -177,16 +256,17 @@ public class ZooKeeperSaslClient {
                 saslToken = createSaslToken(saslToken);
                 if (saslToken != null) {
                     LOG.debug("saslToken (client) length: " + saslToken.length);
-                    queueSaslPacket(saslToken);
+                    queueSaslPacket(saslToken, cnxn);
                 }
             } catch (SaslException e) {
-                LOG.error("SASL authentication failed.");
+                LOG.error("SASL authentication failed using login context '" +
+                this.getLoginContext() + "'.");
                 saslState = SaslState.FAILED;
             }
         }
     }
 
-    public byte[] createSaslToken() throws SaslException {
+    private byte[] createSaslToken() throws SaslException {
         saslState = SaslState.INTERMEDIATE;
         return createSaslToken(saslToken);
     }
@@ -234,7 +314,7 @@ public class ZooKeeperSaslClient {
         }
     }
 
-    public void queueSaslPacket(byte[] saslToken) {
+    private void queueSaslPacket(byte[] saslToken, ClientCnxn cnxn) {
         LOG.debug("ClientCnxn:sendSaslPacket:length="+saslToken.length);
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.sasl);
@@ -245,9 +325,9 @@ public class ZooKeeperSaslClient {
         ReplyHeader r = new ReplyHeader();
         cnxn.queuePacket(h,r,request,response,cb);
     }
-
-    public void queueSaslPacket() throws SaslException {
-        queueSaslPacket(createSaslToken());
+    
+    private void queueSaslPacket(ClientCnxn cnxn) throws SaslException {
+        queueSaslPacket(createSaslToken(), cnxn);
     }
 
     // used by ClientCnxn to know when to emit SaslAuthenticated event.
@@ -268,17 +348,17 @@ public class ZooKeeperSaslClient {
         return false;
     }
 
-    public void initialize() throws SaslException {
+    public void initialize(ClientCnxn cnxn) throws SaslException {
         if (saslClient == null) {
             throw new SaslException("saslClient failed to initialize properly: it's null.");
         }
         if (saslState == SaslState.INITIAL) {
             if (saslClient.hasInitialResponse()) {
-                queueSaslPacket();
+                queueSaslPacket(cnxn);
             }
             else {
                 byte[] emptyToken = new byte[0];
-                queueSaslPacket(emptyToken);
+                queueSaslPacket(emptyToken, cnxn);
             }
             saslState = SaslState.INTERMEDIATE;
         }
