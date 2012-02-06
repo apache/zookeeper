@@ -169,8 +169,7 @@ Net::ZooKeeper - Perl extension for Apache ZooKeeper
 
 Net::ZooKeeper provides a Perl interface to the synchronous C API
 of Apache ZooKeeper.  ZooKeeper is coordination service for
-distributed applications and is a sub-project of the Apache Hadoop
-project.
+distributed applications.
 
 Each connection to ZooKeeper is represented as a handle object
 of the class Net::ZooKeeper, similar to the manner in which database
@@ -1229,7 +1228,7 @@ Everything from all of the above tagsets.
 =head1 SEE ALSO
 
 The Apache ZooKeeper project's home page at
-L<http://hadoop.apache.org/zookeeper/> provides a wealth of detail
+L<http://zookeeper.apache.org/> provides a wealth of detail
 on how to develop applications using ZooKeeper.
 
 =head1 AUTHOR

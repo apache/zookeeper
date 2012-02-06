@@ -61,7 +61,7 @@
       	<title>Download</title>
 		<para> BookKeeper is distributed along with ZooKeeper. To get a ZooKeeper distribution, 
 			   download a recent
-    	    <ulink url="http://hadoop.apache.org/zookeeper/releases.html">
+    	    <ulink url="http://zookeeper.apache.org/releases.html">
         	  stable</ulink> release from one of the Apache Download
        	 Mirrors.</para>
 	  </section>

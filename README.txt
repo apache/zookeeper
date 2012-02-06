@@ -1,10 +1,10 @@
 For the latest information about ZooKeeper, please visit our website at:
 
-   http://hadoop.apache.org/zookeeper/
+   http://zookeeper.apache.org/
 
 and our wiki, at:
 
-   http://wiki.apache.org/hadoop/ZooKeeper
+   https://cwiki.apache.org/confluence/display/ZOOKEEPER
 
 Full documentation for this release can also be found in docs/index.html
 

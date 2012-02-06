@@ -29,8 +29,8 @@
     directory (ends in '/'), in which case /index.html will be added
   -->
 
-  <tab label="Project" href="http://hadoop.apache.org/zookeeper/" />
-  <tab label="Wiki" href="http://wiki.apache.org/hadoop/ZooKeeper" />
+  <tab label="Project" href="http://zookeeper.apache.org/" />
+  <tab label="Wiki" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/" />
   <tab label="ZooKeeper 3.4 Documentation" dir="" />
   
 </tabs>
