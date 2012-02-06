@@ -111,7 +111,7 @@
 #define PACKAGE "c-client-src"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "zookeeper-user@hadoop.apache.org"
+#define PACKAGE_BUGREPORT "user@zookeeper.apache.org"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "zookeeper C client"

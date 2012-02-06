@@ -106,7 +106,7 @@ Call specific watch functions receive all session events for as long as they are
 </orderedlist>
 
 <para>
-Also see <ulink url="http://hadoop.apache.org/zookeeper/docs/current/api/index.html">the current java API</ulink>
+Also see <ulink url="http://zookeeper.apache.org/docs/current/api/index.html">the current java API</ulink>
 </para>
 </section>
 

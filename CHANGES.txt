@@ -119,6 +119,8 @@ BUGFIXES:
 
   ZOOKEEPER-1336. javadoc for multi is confusing, references functionality that doesn't seem
   to exist. (phunt via mahadev)
+
+  ZOOKEEPER-1327. there are still remnants of hadoop urls. (Harsh J via mahadev)
  
 IMPROVEMENTS:
 
