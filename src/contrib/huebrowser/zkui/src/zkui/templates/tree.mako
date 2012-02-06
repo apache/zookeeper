@@ -69,7 +69,7 @@ ${shared.header("ZooKeeper Browser > Tree > %s > %s" % (cluster['nice_name'], pa
 </table>
 
 <br />
-<a target="_blank" href="http://hadoop.apache.org/zookeeper/docs/current/zookeeperProgrammers.html#sc_zkStatStructure">Details on stat information.</a>
+<a target="_blank" href="http://zookeeper.apache.org/docs/current/zookeeperProgrammers.html#sc_zkStatStructure">Details on stat information.</a>
 
 ${shared.footer()}
 

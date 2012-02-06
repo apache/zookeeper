@@ -1587,7 +1587,7 @@ authProvider.2=com.f.MyAuth2
 
       <varlistentry>
         <term><ulink
-        url="http://wiki.apache.org/hadoop/ZooKeeper/Tutorial">Barrier and
+                url="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Tutorial">Barrier and
         Queue Tutorial</ulink></term>
 
         <listitem>
@@ -1598,7 +1598,7 @@ authProvider.2=com.f.MyAuth2
 
       <varlistentry>
         <term><ulink
-        url="http://wiki.apache.org/hadoop/ZooKeeper/ZooKeeperArticles">ZooKeeper
+                url="https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeperArticles">ZooKeeper
         - A Reliable, Scalable Distributed Coordination System</ulink></term>
 
         <listitem>

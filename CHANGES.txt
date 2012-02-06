@@ -39,6 +39,9 @@ IMPROVEMENTS:
  
  ZOOKEEPER-1322. Cleanup/fix logging in Quorum code. (phunt via mahadev)
 
+ ZOOKEEPER-1327. there are still remnants of hadoop urls.
+ (Harsh J via mahadev)
+
 Release 3.4.2 - 2011-12-21
 
 Backward compatible changes:

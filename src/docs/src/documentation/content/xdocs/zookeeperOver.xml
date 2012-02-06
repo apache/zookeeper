@@ -375,7 +375,7 @@
 
       <note><para>In version 3.2 r/w performance improved by ~2x
       compared to the <ulink
-      url="http://hadoop.apache.org/zookeeper/docs/r3.1.1/zookeeperOver.html#Performance">previous
+      url="http://zookeeper.apache.org/docs/r3.1.1/zookeeperOver.html#Performance">previous
       3.1 release</ulink>.</para></note>
 
       <para>Benchmarks also indicate that it is reliable, too. <xref
@@ -439,7 +439,7 @@
       <title>The ZooKeeper Project</title>
 
       <para>ZooKeeper has been
-        <ulink url="http://wiki.apache.org/hadoop/ZooKeeper/PoweredBy">
+          <ulink url="https://cwiki.apache.org/confluence/display/ZOOKEEPER/PoweredBy">
           successfully used
         </ulink>
         in many industrial applications.  It is used at Yahoo! as the
@@ -454,7 +454,7 @@
 
       <para>All users and developers are encouraged to join the
         community and contribute their expertise. See the
-        <ulink url="http://hadoop.apache.org/zookeeper/">
+        <ulink url="http://zookeeper.apache.org/">
           Zookeeper Project on Apache
         </ulink>
         for more information.
