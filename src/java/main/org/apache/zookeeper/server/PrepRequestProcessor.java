@@ -561,11 +561,11 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                             }
                             request.hdr.setType(OpCode.error);
                             request.txn = new ErrorTxn(e.code().intValue());
-                            LOG.error(">>>> Got user-level KeeperException when processing "
-                                    + request.toString()
-                                    + " Error Path:" + e.getPath()
-                                    + " Error:" + e.getMessage());
-                            LOG.error(">>>> ABORTING remaing MultiOp ops");
+                            LOG.info("Got user-level KeeperException when processing "
+                            		+ request.toString() + " aborting remaining multi ops."
+                            		+ " Error Path:" + e.getPath()
+                            		+ " Error:" + e.getMessage());
+
                             request.setException(e);
 
                             /* Rollback change records from failed multi-op */
