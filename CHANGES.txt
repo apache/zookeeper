@@ -107,6 +107,9 @@ BUGFIXES:
  
   ZOOKEEPER-1367. Data inconsistencies and unexpired ephemeral nodes after cluster restart.
   (Benjamin Reed via mahadev)
+
+  ZOOKEEPER-1353. C client test suite fails consistently. (Clint Byrum 
+  via mahadev)
  
 IMPROVEMENTS:
 
