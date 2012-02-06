@@ -21,7 +21,7 @@
   <info organisation="org.apache.zookeeper"
         module="${name}" revision="${version}">
     <license name="Apache 2.0"/>
-    <ivyauthor name="Apache Hadoop" url="http://hadoop.apache.org"/>
+    <ivyauthor name="Apache ZooKeeper" url="http://zookeeper.apache.org"/>
     <description>ZooKeeper</description>
   </info>
 

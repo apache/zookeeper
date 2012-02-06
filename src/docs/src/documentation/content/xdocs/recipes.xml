@@ -76,7 +76,7 @@
     <title>Important Note About Error Handling</title>
 
 	<para>When implementing the recipes you must handle recoverable exceptions 
-	(see the <ulink url="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</ulink>). In 
+        (see the <ulink url="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</ulink>). In 
 	particular, several of the recipes employ sequential ephemeral 
 	nodes. When creating a sequential ephemeral node there is an error case in 
 	which the create() succeeds on the server but the server crashes before 

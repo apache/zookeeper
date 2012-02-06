@@ -29,7 +29,7 @@ This file contains an outline of the site's information content.  It is used to:
 See http://forrest.apache.org/docs/linking.html for more info.
 -->
 
-<site label="Hadoop" href="" xmlns="http://apache.org/forrest/linkmap/1.0">
+<site label="ZooKeeper" href="" xmlns="http://apache.org/forrest/linkmap/1.0">
 
   <docs label="Overview"> 
     <welcome   label="Welcome"                href="index.html" />
@@ -74,14 +74,14 @@ See http://forrest.apache.org/docs/linking.html for more info.
   
 
   <external-refs>
-    <site      href="http://hadoop.apache.org/zookeeper/"/>
-    <lists     href="http://hadoop.apache.org/zookeeper/mailing_lists.html"/>
-    <releases  href="http://hadoop.apache.org/zookeeper/releases.html">
+    <site      href="http://zookeeper.apache.org/"/>
+    <lists     href="http://zookeeper.apache.org/mailing_lists.html"/>
+    <releases  href="http://zookeeper.apache.org/releases.html">
       <download href="#Download" />
     </releases>
-    <jira      href="http://hadoop.apache.org/zookeeper/issue_tracking.html"/>
-    <wiki      href="http://wiki.apache.org/hadoop/ZooKeeper" />
-    <faq       href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ" />
+    <jira      href="http://zookeeper.apache.org/issue_tracking.html"/>
+    <wiki      href="https://cwiki.apache.org/confluence/display/ZOOKEEPER" />
+    <faq       href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ" />
     <zlib      href="http://www.zlib.net/" />
     <lzo       href="http://www.oberhumer.com/opensource/lzo/" />
     <gzip      href="http://www.gzip.org/" />
@@ -93,10 +93,8 @@ See http://forrest.apache.org/docs/linking.html for more info.
       <index href="index.html" />
       <org href="org/">
         <apache href="apache/">
-          <hadoop href="hadoop/">
-            <zookeeper href="zookeeper/">
-            </zookeeper>
-          </hadoop>
+          <zookeeper href="zookeeper/">
+          </zookeeper>
         </apache>
       </org>
     </api>

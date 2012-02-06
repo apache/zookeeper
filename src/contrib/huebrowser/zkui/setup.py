@@ -28,7 +28,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 setup(
   name = "zkui",
   version = "0.1",
-  url = 'http://hadoop.apache.org/zookeeper/',
+  url = 'http://zookeeper.apache.org/',
   description = 'ZooKeeper Browser',
   packages = find_packages('src'),
   package_dir = {'': 'src'},
