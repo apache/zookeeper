@@ -871,22 +871,31 @@ public class ZooKeeper {
     }
 
     /**
-     * Executes multiple Zookeeper operations or none of them.  On success, a list of results is returned.
-     * On failure, only a single exception is returned.  If you want more details, it may be preferable to
-     * use the alternative form of this method that lets you pass a list into which individual results are
-     * placed so that you can zero in on exactly which operation failed and why.
+     * Executes multiple ZooKeeper operations or none of them.
      * <p>
-     * The maximum allowable size of all of the data arrays in all of the setData operations in this single
-     * request is 1 MB (1,048,576 bytes).
-     * Requests larger than this will cause a KeeperExecption to be thrown.
-     * @param ops  An iterable that contains the operations to be done.  These should be created using the
-     * factory methods on Op.
-     * @see Op
-     * @return A list of results.
-     * @throws InterruptedException  If the operation was interrupted.  The operation may or may not have succeeded, but
-     * will not have partially succeeded if this exception is thrown.
-     * @throws KeeperException If the operation could not be completed due to some error in doing one of the specified
-     * ops.
+     * On success, a list of results is returned.
+     * On failure, an exception is raised which contains partial results and
+     * error details, see {@link KeeperException#getResults}
+     * <p>
+     * Note: The maximum allowable size of all of the data arrays in all of
+     * the setData operations in this single request is typically 1 MB
+     * (1,048,576 bytes). This limit is specified on the server via
+     * <a href="http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#Unsafe+Options">jute.maxbuffer</a>.
+     * Requests larger than this will cause a KeeperException to be
+     * thrown.
+     *
+     * @param ops An iterable that contains the operations to be done.
+     * These should be created using the factory methods on {@link Op}.
+     * @return A list of results, one for each input Op, the order of
+     * which exactly matches the order of the <code>ops</code> input
+     * operations.
+     * @throws InterruptedException If the operation was interrupted.
+     * The operation may or may not have succeeded, but will not have
+     * partially succeeded if this exception is thrown.
+     * @throws KeeperException If the operation could not be completed
+     * due to some error in doing one of the specified ops.
+     *
+     * @since 3.4.0
      */
     public List<OpResult> multi(Iterable<Op> ops) throws InterruptedException, KeeperException {
         return multiInternal(new MultiTransactionRecord(ops));
@@ -921,6 +930,15 @@ public class ZooKeeper {
         return results;
     }
 
+    /**
+     * A Transaction is a thin wrapper on the {@link #multi} method
+     * which provides a builder object that can be used to construct
+     * and commit an atomic set of operations.
+     *
+     * @since 3.4.0
+     *
+     * @return a Transaction builder object
+     */
     public Transaction transaction() {
         return new Transaction(this);
     }

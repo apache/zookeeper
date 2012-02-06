@@ -32,6 +32,9 @@ BUGFIXES:
   ZOOKEEPER-1352. server.InvalidSnapshotTest is using connection timeouts that 
   are too short. (phunt via mahadev)
 
+  ZOOKEEPER-1336. javadoc for multi is confusing, references functionality that doesn't 
+  seem to exist (phunt via mahadev)
+
 IMPROVEMENTS:
  
  ZOOKEEPER-1322. Cleanup/fix logging in Quorum code. (phunt via mahadev)
