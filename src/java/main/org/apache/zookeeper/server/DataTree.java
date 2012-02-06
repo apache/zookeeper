@@ -849,10 +849,10 @@ public class DataTree {
                     break;
             }
         } catch (KeeperException e) {
-             LOG.warn("Failed: " + debug, e);
-             rc.err = e.code().intValue();
+            LOG.debug("Failed: " + debug, e);
+            rc.err = e.code().intValue();
         } catch (IOException e) {
-            LOG.warn("Failed:" + debug, e);
+            LOG.debug("Failed:" + debug, e);
         }
         /*
          * A snapshot might be in progress while we are modifying the data
