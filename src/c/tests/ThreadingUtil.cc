@@ -47,6 +47,9 @@ void Mutex::release() {
 // Atomics
 int32_t atomic_post_incr(volatile int32_t* operand, int32_t incr)
 {
+#if defined(__GNUC__)
+    return __sync_fetch_and_add(operand,incr);
+#else
     int32_t result;
     __asm__ __volatile__(
          "lock xaddl %0,%1\n"
@@ -54,15 +57,20 @@ int32_t atomic_post_incr(volatile int32_t* operand, int32_t incr)
          : "0"(incr)
          : "memory");
    return result;
+#endif
 }
 int32_t atomic_fetch_store(volatile int32_t *ptr, int32_t value)
 {
+#if defined(__GNUC__)
+    return __sync_lock_test_and_set(ptr,value);
+#else
     int32_t result;
     __asm__ __volatile__("lock xchgl %0,%1\n"
                           : "=r"(result), "=m"(*ptr)
                           : "0"(value)
                           : "memory");
    return result; 
+#endif
 }
 #else
 int32_t atomic_post_incr(volatile int32_t* operand, int32_t incr){
