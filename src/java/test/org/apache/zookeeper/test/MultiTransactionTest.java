@@ -17,9 +17,7 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,11 +31,14 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
-import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.OpResult.CheckResult;
+import org.apache.zookeeper.OpResult.CreateResult;
+import org.apache.zookeeper.OpResult.DeleteResult;
+import org.apache.zookeeper.OpResult.ErrorResult;
+import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.junit.Assert;
 import org.junit.Before;
@@ -235,6 +236,85 @@ public class MultiTransactionTest extends ClientBase {
         // by waiting for the callback we're assured that the event queue is flushed
         cb.done.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
         assertEquals(1, watcher.triggered.getCount());
+    }
+    
+    @Test
+    public void testTransactionBuilder() throws Exception {
+        List<OpResult> results = zk.transaction()
+                .create("/t1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
+                .create("/t1/child", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
+                .create("/t2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL)
+                .commit();
+        assertEquals(3, results.size());
+        for (OpResult r : results) {
+            CreateResult c = (CreateResult)r;
+            assertTrue(c.getPath().startsWith("/t"));
+            assertNotNull(c.toString());
+        }
+        assertNotNull(zk.exists("/t1", false));
+        assertNotNull(zk.exists("/t1/child", false));
+        assertNotNull(zk.exists("/t2", false));
+        
+        results = zk.transaction()
+                .check("/t1", 0)
+                .check("/t1/child", 0)
+                .check("/t2", 0)
+                .commit();
+        assertEquals(3, results.size());
+        for (OpResult r : results) {
+            CheckResult c = (CheckResult)r;
+            assertNotNull(c.toString());
+        }
+        
+        try {
+            results = zk.transaction()
+                    .check("/t1", 0)
+                    .check("/t1/child", 0)
+                    .check("/t2", 1)
+                    .commit();
+            fail();
+        } catch (KeeperException.BadVersionException e) {
+            // expected
+        }
+        
+        results = zk.transaction()
+                .check("/t1", 0)
+                .setData("/t1", new byte[0], 0)
+                .commit();
+        assertEquals(2, results.size());
+        for (OpResult r : results) {
+            assertNotNull(r.toString());
+        }
+
+        try {
+            results = zk.transaction()
+                    .check("/t1", 1)
+                    .setData("/t1", new byte[0], 2)
+                    .commit();
+            fail();
+        } catch (KeeperException.BadVersionException e) {
+            // expected
+        }
+        
+        results = zk.transaction()
+                .check("/t1", 1)
+                .check("/t1/child", 0)
+                .check("/t2", 0)
+                .commit();
+        assertEquals(3, results.size());
+
+        results = zk.transaction()
+                .delete("/t2", -1)
+                .delete("/t1/child", -1)
+                .commit();
+        assertEquals(2, results.size());
+        for (OpResult r : results) {
+            DeleteResult d = (DeleteResult)r;
+            assertNotNull(d.toString());
+        }
+        assertNotNull(zk.exists("/t1", false));
+        assertNull(zk.exists("/t1/child", false));
+        assertNull(zk.exists("/t2", false));
     }
 
     private static class HasTriggeredWatcher implements Watcher {

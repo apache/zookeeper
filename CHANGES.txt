@@ -41,6 +41,9 @@ BUGFIXES:
   ZOOKEEPER-1374. C client multi-threaded test suite fails to 
   compile on ARM architectures. (James Page via mahadev)
 
+  ZOOKEEPER-1337. multi's "Transaction" class is missing tests.
+  (phunt and camille via mahadev)
+
 IMPROVEMENTS:
  
   ZOOKEEPER-1322. Cleanup/fix logging in Quorum code. (phunt via mahadev)
