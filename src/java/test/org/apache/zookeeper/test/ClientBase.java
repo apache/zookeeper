@@ -291,7 +291,7 @@ public abstract class ClientBase extends TestCase {
         return Integer.parseInt(portstr);
     }
 
-    static NIOServerCnxn.Factory createNewServerInstance(File dataDir,
+    public static NIOServerCnxn.Factory createNewServerInstance(File dataDir,
             NIOServerCnxn.Factory factory, String hostPort, int maxCnxns)
         throws IOException, InterruptedException
     {

@@ -18,6 +18,9 @@ BUGFIXES:
   ZOOKEEPER-1353. C client test suite fails consistently.
   (Clint Byrum via mahadev)
 
+  ZOOKEEPER-1352. server.InvalidSnapshotTest is using connection timeouts 
+  that are too short. (phunt via mahadev)
+
 Release 3.3.4 - 2011-11-16
 Backward compatible changes:
 
