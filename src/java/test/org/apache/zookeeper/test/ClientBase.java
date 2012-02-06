@@ -18,14 +18,12 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.BufferedReader;
+import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -38,8 +36,6 @@ import java.util.concurrent.TimeoutException;
 
 import javax.management.MBeanServerConnection;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -59,7 +55,8 @@ import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.sun.management.UnixOperatingSystemMXBean;
 
 public abstract class ClientBase extends ZKTestCase {
@@ -318,7 +315,7 @@ public abstract class ClientBase extends ZKTestCase {
         return Integer.parseInt(portstr);
     }
 
-    static ServerCnxnFactory createNewServerInstance(File dataDir,
+    public static ServerCnxnFactory createNewServerInstance(File dataDir,
             ServerCnxnFactory factory, String hostPort, int maxCnxns)
         throws IOException, InterruptedException
     {
