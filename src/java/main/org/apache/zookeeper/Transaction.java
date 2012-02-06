@@ -24,6 +24,9 @@ import java.util.List;
 /**
  * Provides a builder style interface for doing multiple updates.  This is
  * really just a thin layer on top of Zookeeper.multi().
+ *
+ * @since 3.4.0
+ *
  */
 public class Transaction {
     private ZooKeeper zk;
