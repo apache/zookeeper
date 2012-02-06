@@ -38,6 +38,9 @@ BUGFIXES:
   ZOOKEEPER-1340. multi problem - typical user operations are 
   generating ERROR level messages in the server (phunt via mahadev)
 
+  ZOOKEEPER-1374. C client multi-threaded test suite fails to 
+  compile on ARM architectures. (James Page via mahadev)
+
 IMPROVEMENTS:
  
   ZOOKEEPER-1322. Cleanup/fix logging in Quorum code. (phunt via mahadev)
