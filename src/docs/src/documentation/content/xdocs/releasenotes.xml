@@ -18,7 +18,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
 "http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
 <article id="ar_ReleaseNotes">
-  <title>ZooKeeper 3.4.2 Release Notes</title>
+  <title>ZooKeeper 3.4.3 Release Notes</title>
 
   <articleinfo>
     <legalnotice>
@@ -43,6 +43,198 @@ These release notes include new developer and user facing incompatibilities, fea
   <listitem><para><ulink url="#changes">Changes</ulink></para></listitem>
 </itemizedlist>
 <section id="changes">
+<title>Changes Since ZooKeeper 3.4.2</title>
+
+<table>
+<title>Changes Since ZooKeeper 3.4.2</title>
+<tgroup cols='2'>
+<colspec colname='c1'/><colspec colname='c2'/>
+<thead>
+<row>
+  <entry>Issue</entry>
+  <entry>Notes</entry>
+</row>
+</thead>
+<tbody>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1089">
+   ZOOKEEPER-1089</ulink>
+ </entry>
+<entry>
+zkServer.sh status does not work due to invalid option of nc.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1345">
+   ZOOKEEPER-1345</ulink>
+ </entry>
+<entry>
+Add a .gitignore file with general exclusions and Eclipse project files excluded.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1343">
+   ZOOKEEPER-1343</ulink>
+ </entry>
+<entry>
+getEpochToPropose should check if lastAcceptedEpoch is greater or equal than epoch.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-850">
+   ZOOKEEPER-850</ulink>
+ </entry>
+<entry>
+ replaces log4j with slf4j code (also in contrib for bookkeeper, zooinspector,
+ rest,loggraph), added slf4j dependencies into several ivy.xml files. 
+ You must add slf4j-api-1.6.1.jar and slf4j-log4j12-1.6.1.jar (bridge from sl4j 
+ to log4j) to the classpath, if not using the standard scripts.
+ log4j remains as the final logger yet, there is still work to do:
+ remove programmatic access to the log4j api from certain classes
+  (which add appenders or configure log4j at runtime), or move them to contrib 
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1358">
+   ZOOKEEPER-1358</ulink>
+ </entry>
+<entry>
+In StaticHostProviderTest.java, testNextDoesNotSleepForZero tests that hostProvider.next(0)
+  doesn't sleep by checking that the latency of this call is less than 10sec
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1351">
+   ZOOKEEPER-1351</ulink>
+ </entry>
+<entry>
+Invalid test verification in MultiTransactionTest.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-973">
+   ZOOKEEPER-973</ulink>
+ </entry>
+<entry>
+bind() could fail on Leader because it does not setReuseAddress on its ServerSocket.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1367">
+   ZOOKEEPER-1367</ulink>
+ </entry>
+<entry>
+ Data inconsistencies and unexpired ephemeral nodes after cluster restart.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1353">
+   ZOOKEEPER-1353</ulink>
+ </entry>
+<entry>
+ C client test suite fails consistently.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1373">
+   ZOOKEEPER-1373</ulink>
+ </entry>
+<entry>
+  Hardcoded SASL login context name clashes with Hadoop security
+  configuration override.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1352">
+   ZOOKEEPER-1352</ulink>
+ </entry>
+<entry>
+ server.InvalidSnapshotTest is using connection timeouts that
+  are too short.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1336">
+   ZOOKEEPER-1336</ulink>
+ </entry>
+<entry>
+ javadoc for multi is confusing, references functionality that doesn't
+  seem to exis
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1340">
+   ZOOKEEPER-1340</ulink>
+ </entry>
+<entry>
+ multi problem - typical user operations are
+  generating ERROR level messages in the server.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1374">
+   ZOOKEEPER-1374</ulink>
+ </entry>
+<entry>
+ C client multi-threaded test suite fails to  compile on ARM architectures.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1337">
+   ZOOKEEPER-1337</ulink>
+ </entry>
+<entry>
+ multi's "Transaction" class is missing tests.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1338">
+   ZOOKEEPER-1338</ulink>
+ </entry>
+<entry>
+ class cast exceptions may be thrown by multi  ErrorResult class (invalid equals)
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1322">
+   ZOOKEEPER-1322</ulink>
+ </entry>
+<entry>
+Cleanup/fix logging in Quorum code.
+</entry>
+</row>
+<row>
+ <entry>
+  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1327">
+   ZOOKEEPER-1327</ulink>
+ </entry>
+<entry>
+There are still remnants of hadoop urls.
+</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+</section>
+
+<section id="changes_3.4.1">
 <title>Changes Since ZooKeeper 3.4.1</title>
 
 <table>
