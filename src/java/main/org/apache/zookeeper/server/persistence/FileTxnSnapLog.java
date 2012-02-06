@@ -175,7 +175,7 @@ public class FileTxnSnapLog {
                     ((CreateSessionTxn) txn).getTimeOut());
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
-                        "playLog --- create session in log: "
+                        "playLog --- create session in log: 0x"
                                 + Long.toHexString(hdr.getClientId())
                                 + " with timeout: "
                                 + ((CreateSessionTxn) txn).getTimeOut());
@@ -187,7 +187,7 @@ public class FileTxnSnapLog {
             sessions.remove(hdr.getClientId());
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
-                        "playLog --- close session in log: "
+                        "playLog --- close session in log: 0x"
                                 + Long.toHexString(hdr.getClientId()));
             }
             rc = dt.processTxn(hdr, txn);
@@ -234,10 +234,10 @@ public class FileTxnSnapLog {
             ConcurrentHashMap<Long, Integer> sessionsWithTimeouts)
         throws IOException {
         long lastZxid = dataTree.lastProcessedZxid;
-        LOG.info("Snapshotting: " + Long.toHexString(lastZxid));
-        File snapshot=new File(
-                snapDir, Util.makeSnapshotName(lastZxid));
-        snapLog.serialize(dataTree, sessionsWithTimeouts, snapshot);
+        File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
+        LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid),
+                snapshotFile);
+        snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile);
         
     }
 
