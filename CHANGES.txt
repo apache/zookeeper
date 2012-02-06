@@ -196,6 +196,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1293. Remove unused readyToStart from Leader.java
   (Alex Shraer via phunt)
 
+  ZOOKEEPER-1322. Cleanup/fix logging in Quorum code. 
+  (phunt via mahadev)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
