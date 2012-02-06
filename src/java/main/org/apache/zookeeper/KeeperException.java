@@ -482,6 +482,9 @@ public abstract class KeeperException extends Exception {
      * If this exception was thrown by a multi-request then the (partial) results
      * and error codes can be retrieved using this getter.
      * @return A copy of the list of results from the operations in the multi-request.
+     * 
+     * @since 3.4.0
+     *
      */
     public List<OpResult> getResults() {
         return results != null ? new ArrayList<OpResult>(results) : null;
