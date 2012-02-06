@@ -130,6 +130,9 @@ BUGFIXES:
 
   ZOOKEEPER-1337. multi's "Transaction" class is missing tests. (camille
   and phunt via mahadev)
+
+  ZOOKEEPER-1338. class cast exceptions may be thrown by multi ErrorResult 
+  class (invalid equals) (phunt via mahadev)
  
 IMPROVEMENTS:
 
