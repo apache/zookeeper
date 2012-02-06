@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.4.2 Release Notes</title>
+<title>ZooKeeper 3.4.3 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -202,12 +202,15 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.4.2 Release Notes</h1>
+<h1>ZooKeeper 3.4.3 Release Notes</h1>
 <div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#changes">Changes Since ZooKeeper 3.4.1</a>
+<a href="#changes">Changes Since ZooKeeper 3.4.2</a>
+</li>
+<li>
+<a href="#changes_3.4.1">Changes Since ZooKeeper 3.4.1</a>
 </li>
 <li>
 <a href="#prev_changes">Changes Since ZooKeeper 3.4.0</a>
@@ -239,6 +242,255 @@ These release notes include new developer and user facing incompatibilities, fea
 </ul>
 
 <a name="changes"></a>
+<h2 class="h3">Changes Since ZooKeeper 3.4.2</h2>
+<div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.4.2</caption>
+
+<title>Changes Since ZooKeeper 3.4.2</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1089">
+   ZOOKEEPER-1089</a>
+ </td>
+<td>
+zkServer.sh status does not work due to invalid option of nc.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1345">
+   ZOOKEEPER-1345</a>
+ </td>
+<td>
+Add a .gitignore file with general exclusions and Eclipse project files excluded.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1343">
+   ZOOKEEPER-1343</a>
+ </td>
+<td>
+getEpochToPropose should check if lastAcceptedEpoch is greater or equal than epoch.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-850">
+   ZOOKEEPER-850</a>
+ </td>
+<td>
+ replaces log4j with slf4j code (also in contrib for bookkeeper, zooinspector,
+ rest,loggraph), added slf4j dependencies into several ivy.xml files. 
+ You must add slf4j-api-1.6.1.jar and slf4j-log4j12-1.6.1.jar (bridge from sl4j 
+ to log4j) to the classpath, if not using the standard scripts.
+ log4j remains as the final logger yet, there is still work to do:
+ remove programmatic access to the log4j api from certain classes
+  (which add appenders or configure log4j at runtime), or move them to contrib 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1358">
+   ZOOKEEPER-1358</a>
+ </td>
+<td>
+In StaticHostProviderTest.java, testNextDoesNotSleepForZero tests that hostProvider.next(0)
+  doesn't sleep by checking that the latency of this call is less than 10sec
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1351">
+   ZOOKEEPER-1351</a>
+ </td>
+<td>
+Invalid test verification in MultiTransactionTest.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-973">
+   ZOOKEEPER-973</a>
+ </td>
+<td>
+bind() could fail on Leader because it does not setReuseAddress on its ServerSocket.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1367">
+   ZOOKEEPER-1367</a>
+ </td>
+<td>
+ Data inconsistencies and unexpired ephemeral nodes after cluster restart.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1353">
+   ZOOKEEPER-1353</a>
+ </td>
+<td>
+ C client test suite fails consistently.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1373">
+   ZOOKEEPER-1373</a>
+ </td>
+<td>
+  Hardcoded SASL login context name clashes with Hadoop security
+  configuration override.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1352">
+   ZOOKEEPER-1352</a>
+ </td>
+<td>
+ server.InvalidSnapshotTest is using connection timeouts that
+  are too short.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1336">
+   ZOOKEEPER-1336</a>
+ </td>
+<td>
+ javadoc for multi is confusing, references functionality that doesn't
+  seem to exis
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1340">
+   ZOOKEEPER-1340</a>
+ </td>
+<td>
+ multi problem - typical user operations are
+  generating ERROR level messages in the server.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1374">
+   ZOOKEEPER-1374</a>
+ </td>
+<td>
+ C client multi-threaded test suite fails to  compile on ARM architectures.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1337">
+   ZOOKEEPER-1337</a>
+ </td>
+<td>
+ multi's "Transaction" class is missing tests.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1338">
+   ZOOKEEPER-1338</a>
+ </td>
+<td>
+ class cast exceptions may be thrown by multi  ErrorResult class (invalid equals)
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1322">
+   ZOOKEEPER-1322</a>
+ </td>
+<td>
+Cleanup/fix logging in Quorum code.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1327">
+   ZOOKEEPER-1327</a>
+ </td>
+<td>
+There are still remnants of hadoop urls.
+</td>
+
+</tr>
+
+
+</table>
+</div>
+
+
+<a name="changes_3.4.1"></a>
 <h2 class="h3">Changes Since ZooKeeper 3.4.1</h2>
 <div class="section">
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
