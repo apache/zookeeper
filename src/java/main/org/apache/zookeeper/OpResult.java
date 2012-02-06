@@ -23,7 +23,7 @@ import org.apache.zookeeper.data.Stat;
 /**
  * Encodes the result of a single part of a multiple operation commit.
  */
-public class OpResult {
+public abstract class OpResult {
     private int type;
 
     private OpResult(int type) {
@@ -61,10 +61,10 @@ public class OpResult {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof OpResult)) return false;
+            if (!(o instanceof CreateResult)) return false;
 
             CreateResult other = (CreateResult) o;
-            return getType() == other.getType() && path.equals(other.path);
+            return getType() == other.getType() && path.equals(other.getPath());
         }
 
         @Override
@@ -84,9 +84,9 @@ public class OpResult {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof OpResult)) return false;
+            if (!(o instanceof DeleteResult)) return false;
 
-            OpResult opResult = (OpResult) o;
+            DeleteResult opResult = (DeleteResult) o;
             return getType() == opResult.getType();
         }
 
@@ -115,7 +115,7 @@ public class OpResult {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof OpResult)) return false;
+            if (!(o instanceof SetDataResult)) return false;
 
             SetDataResult other = (SetDataResult) o;
             return getType() == other.getType() && stat.getMzxid() == other.stat.getMzxid();
@@ -138,7 +138,7 @@ public class OpResult {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof OpResult)) return false;
+            if (!(o instanceof CheckResult)) return false;
 
             CheckResult other = (CheckResult) o;
             return getType() == other.getType();
@@ -171,7 +171,7 @@ public class OpResult {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof OpResult)) return false;
+            if (!(o instanceof ErrorResult)) return false;
 
             ErrorResult other = (ErrorResult) o;
             return getType() == other.getType() && err == other.getErr();

@@ -44,6 +44,9 @@ BUGFIXES:
   ZOOKEEPER-1337. multi's "Transaction" class is missing tests.
   (phunt and camille via mahadev)
 
+  ZOOKEEPER-1338. class cast exceptions may be thrown by multi 
+  ErrorResult class (invalid equals) (phunt via mahadev)
+
 IMPROVEMENTS:
  
   ZOOKEEPER-1322. Cleanup/fix logging in Quorum code. (phunt via mahadev)
