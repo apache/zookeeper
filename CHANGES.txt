@@ -110,6 +110,9 @@ BUGFIXES:
 
   ZOOKEEPER-1353. C client test suite fails consistently. (Clint Byrum 
   via mahadev)
+
+  ZOOKEEPER-1373. Hardcoded SASL login context name clashes with Hadoop security 
+  configuration override. (Eugene Koontz and Thomas Weise via mahadev)
  
 IMPROVEMENTS:
 
