@@ -31,14 +31,11 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -48,6 +45,8 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -426,8 +425,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             	// pick a reasonable epoch number
             	// this should only happen once when moving to a
             	// new code version
-            	LOG.info(CURRENT_EPOCH_FILENAME + " not found! Creating with a reasonable default. This should only happen when you are upgrading your installation");
             	currentEpoch = epochOfZxid;
+            	LOG.info(CURRENT_EPOCH_FILENAME
+            	        + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation",
+            	        currentEpoch);
             	writeLongToFile(CURRENT_EPOCH_FILENAME, currentEpoch);
             }
             if (epochOfZxid > currentEpoch) {
@@ -439,8 +440,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             	// pick a reasonable epoch number
             	// this should only happen once when moving to a
             	// new code version
-            	LOG.info(ACCEPTED_EPOCH_FILENAME + " not found! Creating with a reasonable default. This should only happen when you are upgrading your installation");
             	acceptedEpoch = epochOfZxid;
+            	LOG.info(ACCEPTED_EPOCH_FILENAME
+            	        + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation",
+            	        acceptedEpoch);
             	writeLongToFile(CURRENT_EPOCH_FILENAME, acceptedEpoch);
             }
             if (acceptedEpoch < currentEpoch) {

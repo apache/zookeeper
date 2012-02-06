@@ -35,8 +35,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.ByteBufferInputStream;
@@ -47,6 +45,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * There will be an instance of this class created by the Leader for each
@@ -261,8 +261,8 @@ public class LearnerHandler extends Thread {
             	this.sid = leader.followerCounter.getAndDecrement();
             }
 
-            LOG.info("Follower sid: " + this.sid + " : info : "
-                    + leader.self.quorumPeers.get(this.sid));
+            LOG.info("Follower sid: " + sid + " : info : "
+                    + leader.self.quorumPeers.get(sid));
                         
             if (qp.getType() == Leader.OBSERVERINFO) {
                   learnerType = LearnerType.OBSERVER;
@@ -316,16 +316,18 @@ public class LearnerHandler extends Thread {
                 rl.lock();        
                 final long maxCommittedLog = leader.zk.getZKDatabase().getmaxCommittedLog();
                 final long minCommittedLog = leader.zk.getZKDatabase().getminCommittedLog();
-                LOG.info("Synchronizing with Follower sid: " + this.sid
-                        +" maxCommittedLog ="+Long.toHexString(maxCommittedLog)
-                        +" minCommittedLog = "+Long.toHexString(minCommittedLog)
-                        +" peerLastZxid = "+Long.toHexString(peerLastZxid));
+                LOG.info("Synchronizing with Follower sid: " + sid
+                        +" maxCommittedLog=0x"+Long.toHexString(maxCommittedLog)
+                        +" minCommittedLog=0x"+Long.toHexString(minCommittedLog)
+                        +" peerLastZxid=0x"+Long.toHexString(peerLastZxid));
 
                 LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
 
                 if (proposals.size() != 0) {
+                    LOG.debug("proposal size is {}", proposals.size());
                     if ((maxCommittedLog >= peerLastZxid)
                             && (minCommittedLog <= peerLastZxid)) {
+                        LOG.debug("Sending proposals to follower");
 
                         // as we look through proposals, this variable keeps track of previous
                         // proposal Id.
@@ -369,16 +371,25 @@ public class LearnerHandler extends Thread {
                             }
                         }
                     } else if (peerLastZxid > maxCommittedLog) {
+                        LOG.debug("Sending TRUNC to follower zxidToSend=0x{} updates=0x{}",
+                                Long.toHexString(maxCommittedLog),
+                                Long.toHexString(updates));
+
                         packetToSend = Leader.TRUNC;
                         zxidToSend = maxCommittedLog;
                         updates = zxidToSend;
+                    } else {
+                        LOG.warn("Unhandled proposal scenario");
                     }
                 } else {
                     // just let the state transfer happen
+                    LOG.debug("proposals is empty");
                 }               
 
                 leaderLastZxid = leader.startForwarding(this, updates);
                 if (peerLastZxid == leaderLastZxid) {
+                    LOG.debug("Leader and follower are in sync, sending empty diff. zxid=0x{}",
+                            Long.toHexString(leaderLastZxid));
                     // We are in sync so we'll do an empty diff
                     packetToSend = Leader.DIFF;
                     zxidToSend = leaderLastZxid;

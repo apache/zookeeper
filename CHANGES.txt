@@ -29,6 +29,10 @@ BUGFIXES:
   ZOOKEEPER-1373. Hardcoded SASL login context name clashes with Hadoop security 
   configuration override. (Eugene Koontz and Thomas Weise via mahadev)
 
+IMPROVEMENTS:
+ 
+ ZOOKEEPER-1322. Cleanup/fix logging in Quorum code. (phunt via mahadev)
+
 Release 3.4.2 - 2011-12-21
 
 Backward compatible changes:

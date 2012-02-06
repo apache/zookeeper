@@ -19,7 +19,6 @@ package org.apache.zookeeper.server.persistence;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,10 +40,10 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements the TxnLog interface. It provides api's
@@ -602,8 +601,9 @@ public class FileTxnLog implements TxnLog {
                 long crcValue = ia.readLong("crcvalue");
                 byte[] bytes = Util.readTxnBytes(ia);
                 // Since we preallocate, we define EOF to be an
-                if (bytes == null || bytes.length==0)
-                   throw new EOFException("Failed to read");
+                if (bytes == null || bytes.length==0) {
+                    throw new EOFException("Failed to read " + logFile);
+                }
                 // EOF or corrupted record
                 // validate CRC
                 Checksum crc = makeChecksumAlgorithm();
@@ -621,7 +621,7 @@ public class FileTxnLog implements TxnLog {
                 ia = null;
                 hdr = null;
                 // this means that the file has ended
-                // we shoud go to the next file
+                // we should go to the next file
                 if (!goToNextLog()) {
                     return false;
                 }
