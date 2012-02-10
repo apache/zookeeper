@@ -256,7 +256,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-
     /**
      * This should be called from a synchronized block on this!
      */
@@ -683,6 +682,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public long getOutstandingRequests() {
         return getInProcess();
+    }
+
+    /**
+     * return the total number of client connections that are alive
+     * to this server
+     */
+    public int getNumAliveConnections() {
+        return serverCnxnFactory.getNumAliveConnections();
     }
 
     /**
