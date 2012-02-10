@@ -282,6 +282,10 @@ public class Zab1_0Test {
         }
         public void closeAll() {
         }
+        @Override
+        public int getNumAliveConnections() {
+            return 0;
+        }
     }
     static Socket[] getSocketPair() throws IOException {
         ServerSocket ss = new ServerSocket();
