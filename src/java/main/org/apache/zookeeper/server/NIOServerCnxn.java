@@ -64,7 +64,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     SocketChannel sock;
 
-    private SelectionKey sk;
+    private final SelectionKey sk;
 
     boolean initialized;
 
@@ -749,6 +749,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
             print("packets_received", stats.getPacketsReceived());
             print("packets_sent", stats.getPacketsSent());
+            print("num_alive_connections", stats.getNumAliveClientConnections());
 
             print("outstanding_requests", stats.getOutstandingRequests());
 

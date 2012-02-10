@@ -583,6 +583,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1201. Clean SaslServerCallbackHandler.java. (Thomas Koch
   via mahadev) 
+  
+  ZOOKEEPER-1321. Add number of client connections metric in JMX and srvr. (Neha Narkhede via camille)
 
 NEW FEATURES:
   ZOOKEEPER-729. Java client API to recursively delete a subtree.

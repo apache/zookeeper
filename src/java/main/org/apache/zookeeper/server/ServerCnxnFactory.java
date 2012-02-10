@@ -22,13 +22,15 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import javax.management.JMException;
+
+import org.apache.zookeeper.Login;
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.Login;
-import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
 
 public abstract class ServerCnxnFactory {
 
@@ -48,6 +50,12 @@ public abstract class ServerCnxnFactory {
     public abstract int getLocalPort();
     
     public abstract Iterable<ServerCnxn> getConnections();
+
+    public int getNumAliveConnections() {
+        synchronized(cnxns) {
+            return cnxns.size();
+        }
+    }
 
     public abstract void closeSession(long sessionId);
 
@@ -115,7 +123,9 @@ public abstract class ServerCnxnFactory {
 
     public abstract InetSocketAddress getLocalAddress();
 
-    private HashMap<ServerCnxn, ConnectionBean> connectionBeans = new HashMap<ServerCnxn, ConnectionBean>();
+    private final HashMap<ServerCnxn, ConnectionBean> connectionBeans = new HashMap<ServerCnxn, ConnectionBean>();
+
+    protected final HashSet<ServerCnxn> cnxns = new HashSet<ServerCnxn>();
     public void unregisterConnection(ServerCnxn serverCnxn) {
         ConnectionBean jmxConnectionBean = connectionBeans.remove(serverCnxn);
         if (jmxConnectionBean != null){
