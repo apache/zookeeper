@@ -103,4 +103,8 @@ public interface ZooKeeperServerMXBean {
      * Reset max latency statistics only.
      */
     public void resetMaxLatency();
+    /**
+     * @return number of alive client connections
+     */
+    public long getNumAliveConnections();
 }

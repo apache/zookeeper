@@ -772,6 +772,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     	zkDb.dumpEphemerals(pwriter);
     }
     
+    /**
+     * return the total number of client connections that are alive
+     * to this server
+     */
+    public int getNumAliveConnections() {
+        return serverCnxnFactory.getNumAliveConnections();
+    }
+    
     public void processConnectRequest(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
