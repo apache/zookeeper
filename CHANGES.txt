@@ -219,7 +219,14 @@ IMPROVEMENTS:
   ZOOKEEPER-1322. Cleanup/fix logging in Quorum code. 
   (phunt via mahadev)
 
-  ZOOKEEPER-1321. Add number of client connections metric in JMX and srvr. (Neha Narkhede via camille)
+  ZOOKEEPER-1321. Add number of client connections metric in JMX and
+  srvr. (Neha Narkhede via camille)
+
+  ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
+  in order to get rid of the intermediate shell process
+  (Roman Shaposhnik via phunt)
+
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
