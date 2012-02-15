@@ -1,3 +1,16 @@
+Release 3.4.4 - TBD
+
+Backward compatible changes:
+
+BUGFIXES: 
+
+IMPROVEMENTS:
+
+  ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
+  in order to get rid of the intermediate shell process
+  (Roman Shaposhnik via phunt)
+
+
 Release 3.4.3 - 2012-02-06
 
 Backward compatible changes:
@@ -53,6 +66,7 @@ IMPROVEMENTS:
  
   ZOOKEEPER-1327. there are still remnants of hadoop urls.
   (Harsh J via mahadev)
+
 
 Release 3.4.2 - 2011-12-21
 
