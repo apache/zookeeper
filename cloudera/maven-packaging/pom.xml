@@ -27,7 +27,7 @@
   
   <groupId>com.cloudera.cdh</groupId>
   <artifactId>zookeeper-root</artifactId>
-  <version>3.4.1-cdh4b2-SNAPSHOT</version>
+  <version>3.4.3-cdh4b2-SNAPSHOT</version>
   <packaging>pom</packaging>
   
   <name>CDH ZooKeeper root</name>
