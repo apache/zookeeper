@@ -40,9 +40,6 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
@@ -157,8 +154,6 @@ public class ClientCnxn {
     final SendThread sendThread;
 
     final EventThread eventThread;
-
-    final Selector selector = Selector.open();
 
     /**
      * Set to true when close is called. Latches the connection such that we
@@ -694,6 +689,8 @@ public class ClientCnxn {
     class SendThread extends Thread {
         SelectionKey sockKey;
 
+        private final Selector selector = Selector.open();
+
         final ByteBuffer lenBuffer = ByteBuffer.allocateDirect(4);
 
         ByteBuffer incomingBuffer = lenBuffer;
@@ -939,7 +936,7 @@ public class ClientCnxn {
             }
         }
 
-        SendThread() {
+        SendThread() throws IOException {
             super(makeThreadName("-SendThread()"));
             zooKeeper.state = States.CONNECTING;
             setUncaughtExceptionHandler(uncaughtExceptionHandler);
@@ -1285,6 +1282,10 @@ public class ClientCnxn {
                selector.wakeup();
             }
         }
+
+        synchronized private void wakeup() {
+            selector.wakeup();
+        }
     }
 
     /**
@@ -1373,9 +1374,8 @@ public class ClientCnxn {
                 outgoingQueue.add(packet);
             }
         }
-        synchronized (sendThread) {
-            selector.wakeup();
-        }
+
+        sendThread.wakeup();
         return packet;
     }
 
