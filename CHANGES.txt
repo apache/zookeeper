@@ -138,6 +138,8 @@ BUGFIXES:
   replace "http://java.sun.com/javase/6/docs/api/" with 
   "http://download.oracle.com/javase/6/docs/api/" (Eugene Koontz via camille)
  
+  ZOOKEEPER-1361. Leader.lead iterates over 'learners' set without proper synchronisation (henryr via camille)
+  
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

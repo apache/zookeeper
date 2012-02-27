@@ -44,7 +44,7 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     
     public String followerInfo() {
         StringBuilder sb = new StringBuilder();
-        for (LearnerHandler handler : leader.learners) {
+        for (LearnerHandler handler : leader.getLearners()) {
             sb.append(handler.toString()).append("\n");
         }
         return sb.toString();
