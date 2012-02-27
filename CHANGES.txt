@@ -133,6 +133,10 @@ BUGFIXES:
 
   ZOOKEEPER-1338. class cast exceptions may be thrown by multi ErrorResult 
   class (invalid equals) (phunt via mahadev)
+  
+  ZOOKEEPER-1386. avoid flaky URL redirection in "ant javadoc" : 
+  replace "http://java.sun.com/javase/6/docs/api/" with 
+  "http://download.oracle.com/javase/6/docs/api/" (Eugene Koontz via camille)
  
 IMPROVEMENTS:
 

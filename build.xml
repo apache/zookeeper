@@ -82,7 +82,7 @@
     <property name="docs.dir" value="${basedir}/docs"/>
     <property name="docs.src" value="${basedir}/src/docs"/>
     <property name="javadoc.link.java"
-              value="http://java.sun.com/javase/6/docs/api/" />
+              value="http://docs.oracle.com/javase/6/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
 
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
