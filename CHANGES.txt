@@ -23,6 +23,10 @@ BUGFIXES:
 
   ZOOKEEPER-1309. Creating a new ZooKeeper client can leak file handles. (Daniel Lord via camille)
   
+  ZOOKEEPER-1386. avoid flaky URL redirection in "ant javadoc" : 
+  replace "http://java.sun.com/javase/6/docs/api/" with 
+  "http://download.oracle.com/javase/6/docs/api/" (Eugene Koontz via camille)
+  
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
