@@ -7,6 +7,8 @@ BUGFIXES:
   ZOOKEEPER-1386. avoid flaky URL redirection in "ant javadoc" : 
   replace "http://java.sun.com/javase/6/docs/api/" with 
   "http://download.oracle.com/javase/6/docs/api/" (Eugene Koontz via camille) 
+  
+  ZOOKEEPER-1354. AuthTest.testBadAuthThenSendOtherCommands fails intermittently (phunt via camille)
  
 
 IMPROVEMENTS:
