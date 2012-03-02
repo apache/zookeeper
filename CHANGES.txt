@@ -576,6 +576,8 @@ BUGFIXES:
   quorum formed, no serving. (Flavio, Camille and Alexander Shraer via mahadev)
 
   ZOOKEEPER-1299. Add winconfig.h file to ignore in release audit. (mahadev)
+  
+  ZOOKEEPER-1354. AuthTest.testBadAuthThenSendOtherCommands fails intermittently (phunt via camille)
 
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 

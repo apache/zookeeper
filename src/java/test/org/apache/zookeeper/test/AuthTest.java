@@ -19,15 +19,16 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,8 +40,8 @@ public class AuthTest extends ClientBase {
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.test.InvalidAuthProvider");
     }
 
-    private AtomicInteger authFailed = new AtomicInteger(0);
-    
+    private final CountDownLatch authFailed = new CountDownLatch(1);
+
     @Override
     protected TestableZooKeeper createClient(String hp)
     throws IOException, InterruptedException
@@ -53,7 +54,7 @@ public class AuthTest extends ClientBase {
         @Override
         public synchronized void process(WatchedEvent event) {
             if (event.getState() == KeeperState.AuthFailed) {
-                authFailed.incrementAndGet();
+                authFailed.countDown();
             }
             else {
                 super.process(event);
@@ -69,8 +70,11 @@ public class AuthTest extends ClientBase {
             zk.getData("/path1", false, null);
             Assert.fail("Should get auth state error");
         } catch(KeeperException.AuthFailedException e) {
-            Assert.assertEquals("Should have called my watcher", 
-                    1, authFailed.get());
+            if(!authFailed.await(CONNECTION_TIMEOUT,
+                    TimeUnit.MILLISECONDS))
+            {
+                Assert.fail("Should have called my watcher");
+            }
         }
         finally {
             zk.close();
@@ -86,8 +90,11 @@ public class AuthTest extends ClientBase {
             zk.getData("/path1", false, null);
             Assert.fail("Should get auth state error");
         } catch(KeeperException.AuthFailedException e) {
-            Assert.assertEquals("Should have called my watcher", 
-                    1, authFailed.get());
+            if(!authFailed.await(CONNECTION_TIMEOUT,
+                    TimeUnit.MILLISECONDS))
+            {
+                Assert.fail("Should have called my watcher");
+            }
         }
         finally {
             zk.close();          
