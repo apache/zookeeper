@@ -53,7 +53,7 @@ else
   . "$ZOOBINDIR"/zkEnv.sh
 fi
 
-if [ "x$SERVER_JVMFLAGS"  != "x" ]
+if [ "x$SERVER_JVMFLAGS" != "x" ]
 then
     JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
 fi
@@ -80,8 +80,25 @@ fi
 
 echo "Using config: $ZOOCFG" >&2
 
-if [ -z $ZOOPIDFILE ]; then
-    ZOO_DATADIR=$(grep "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')
+ZOO_DATADIR=$(grep "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')
+ZOO_DATALOGDIR=$(grep "^[[:space:]]*dataLogDir" "$ZOOCFG" | sed -e 's/.*=//')
+
+# iff autocreate is turned off and the datadirs don't exist fail
+# immediately as we can't create the PID file, etc..., anyway.
+if [ -n "$ZOO_DATADIR_AUTOCREATE_DISABLE" ]; then
+    if [ ! -d "$ZOO_DATADIR/version-2" ]; then
+        echo "ZooKeeper data directory is missing at $ZOO_DATADIR fix the path or run initialize"
+        exit 1
+    fi
+
+    if [ -n "$ZOO_DATALOGDIR" ] && [ ! -d "$ZOO_DATALOGDIR/version-2" ]; then
+        echo "ZooKeeper txnlog directory is missing at $ZOO_DATALOGDIR fix the path or run initialize"
+        exit 1
+    fi
+    ZOO_DATADIR_AUTOCREATE="-Dzookeeper.datadir.autocreate=false"
+fi
+
+if [ -z "$ZOOPIDFILE" ]; then
     if [ ! -d "$ZOO_DATADIR" ]; then
         mkdir -p "$ZOO_DATADIR"
     fi
@@ -106,7 +123,8 @@ start)
          exit 0
       fi
     fi
-    nohup $JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+    nohup $JAVA $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
+    "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
     if [ $? -eq 0 ]
     then
@@ -128,11 +146,12 @@ start-foreground)
     if [ "${ZOO_NOEXEC}" != "" ]; then
       ZOO_CMD="$JAVA"
     fi
-    $ZOO_CMD "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+    $ZOO_CMD $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
+    "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG"
     ;;
 print-cmd)
-    echo "$JAVA -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_DAEMON_OUT\" 2>&1 < /dev/null"
+    echo "$JAVA $ZOO_DATADIR_AUTOCREATE -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_DAEMON_OUT\" 2>&1 < /dev/null"
     ;;
 stop)
     echo -n "Stopping zookeeper ... "

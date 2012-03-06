@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +64,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
     protected static final Logger LOG = LoggerFactory.getLogger(LoadFromLogTest.class);
 
     // setting up the quorum has a transaction overhead for creating and closing the session
-    private static final int TRANSACTION_OVERHEAD = 2;	
+    private static final int TRANSACTION_OVERHEAD = 2;
     private static final int TOTAL_TRANSACTIONS = NUM_MESSAGES + TRANSACTION_OVERHEAD;
     private volatile boolean connected;
 
@@ -113,7 +114,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
             Assert.assertTrue("excepting next transaction. expected=" + expectedZxid + ", retreived=" + hdr.getZxid(), (hdr.getZxid() == expectedZxid));
             lastZxid = hdr.getZxid();
         }while(itr.next());
-	
+
         Assert.assertTrue("processed all transactions. " + expectedZxid + " == " + TOTAL_TRANSACTIONS, (expectedZxid == TOTAL_TRANSACTIONS));
     }
 
@@ -122,7 +123,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 
     public void process(WatchedEvent event) {
     	switch (event.getType()) {
-    	case None:   
+    	case None:
     		switch (event.getState()) {
     		case SyncConnected:
     			connected = true;
@@ -130,7 +131,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
     		case Disconnected:
     			connected = false;
     			break;
-    		default:   
+    		default:
     			break;
     		}
         	break;
@@ -163,11 +164,11 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         LOG.info("Attempting to create " + "/test/" + (count - 1));
         doOp(logFile, OpCode.create, "/test/" + (count - 1), dt, zk,
                 zk.stat.getCversion() + 1);
-        
+
         LOG.info("Attempting to create " + "/test/" + (count - 1));
         doOp(logFile, OpCode.multi, "/test/" + (count - 1), dt, zk,
                 zk.stat.getCversion() + 1);
-        
+
         LOG.info("Attempting to create " + "/test/" + (count - 1));
         doOp(logFile, OpCode.multi, "/test/" + (count - 1), dt, zk,
                 -1);
@@ -210,7 +211,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         else if (type == OpCode.multi) {
             txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
                     System.currentTimeMillis(), OpCode.create);
-            txn = new CreateTxn(path, new byte[0], null, false, cversion);                       
+            txn = new CreateTxn(path, new byte[0], null, false, cversion);
             ArrayList txnList = new ArrayList();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
@@ -260,10 +261,10 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         Assert.assertTrue("Missing magic number ",
               header.getMagic() == FileTxnLog.TXNLOG_MAGIC);
     }
-    
+
     /**
      * Test we can restore the snapshot that has data ahead of the zxid
-     * of the snapshot file. 
+     * of the snapshot file.
      */
     @Test
     public void testRestore() throws Exception {
@@ -347,7 +348,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 			}
 
 		}
-		// Verify correctness of data and whether sequential znode creation 
+		// Verify correctness of data and whether sequential znode creation
 		// proceeds correctly after this point
 		String[] children;
 		String path;
@@ -367,10 +368,10 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 				(children.length == NUM_MESSAGES));
 		f.shutdown();
 	}
-    
+
     /**
      * Test we can restore a snapshot that has errors and data ahead of the zxid
-     * of the snapshot file. 
+     * of the snapshot file.
      */
     @Test
     public void testRestoreWithTransactionErrors() throws Exception {
@@ -419,7 +420,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
                 zks.getZKDatabase().getDataTreeLastProcessedZxid() - 10);
         LOG.info("Set lastProcessedZxid to "
                 + zks.getZKDatabase().getDataTreeLastProcessedZxid());
-        
+
         // Force snapshot and restore
         zks.takeSnapshot();
         zks.shutdown();
@@ -431,7 +432,48 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ", ClientBase
                 .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-        
+
         f.shutdown();
     }
+
+    /**
+     * Verify snap/log dir create with/without autocreate enabled.
+     */
+    @Test
+    public void testDatadirAutocreate() throws Exception {
+        ClientBase.setupTestEnv();
+
+        // first verify the default (autocreate on) works
+        File tmpDir = ClientBase.createTmpDir();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        Assert.assertTrue("waiting for server being up ", ClientBase
+                .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        zks.shutdown();
+        f.shutdown();
+        Assert.assertTrue("waiting for server being down ", ClientBase
+                .waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+
+        try {
+            // now verify autocreate off works
+            System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "false");
+
+            tmpDir = ClientBase.createTmpDir();
+            zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+            f = ServerCnxnFactory.createFactory(PORT, -1);
+            f.startup(zks);
+            Assert.assertTrue("waiting for server being up ", ClientBase
+                    .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+
+            Assert.fail("Server should not have started without datadir");
+        } catch (IOException e) {
+            LOG.info("Server failed to start - correct behavior " + e);
+        } finally {
+            System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE,
+                FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT);
+        }
+    }
+
 }
