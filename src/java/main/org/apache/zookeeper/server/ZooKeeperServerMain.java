@@ -22,11 +22,12 @@ import java.io.IOException;
 
 import javax.management.JMException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class starts and runs a standalone ZooKeeperServer.
@@ -58,6 +59,10 @@ public class ZooKeeperServerMain {
             LOG.error("Invalid config, exiting abnormally", e);
             System.err.println("Invalid config, exiting abnormally");
             System.exit(2);
+        } catch (DatadirException e) {
+            LOG.error("Unable to access datadir, exiting abnormally", e);
+            System.err.println("Unable to access datadir, exiting abnormally");
+            System.exit(3);
         } catch (Exception e) {
             LOG.error("Unexpected exception, exiting abnormally", e);
             System.exit(1);

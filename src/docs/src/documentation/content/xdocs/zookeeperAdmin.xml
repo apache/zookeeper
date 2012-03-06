@@ -1113,6 +1113,64 @@ server.3=zoo3:2888:3888</programlisting>
       </section>
 
       <section>
+        <title>Disabling data directory autocreation</title>
+
+        <para><emphasis role="bold">New in 3.5:</emphasis> The default
+        behavior of a ZooKeeper server is to automatically create the
+        data directory (specified in the configuration file) when
+        started if that directory does not already exist. This can be
+        inconvenient and even dangerous in some cases. Take the case
+        where a configuration change is made to a running server,
+        wherein the <emphasis role="bold">dataDir</emphasis> parameter
+        is accidentally changed. When the ZooKeeper server is
+        restarted it will create this non-existent directory and begin
+        serving - with an empty znode namespace. This scenario can
+        result in an effective "split brain" situation (i.e. data in
+        both the new invalid directory and the original valid data
+        store). As such is would be good to have an option to turn off
+        this autocreate behavior. In general for production
+        environments this should be done, unfortunately however the
+        default legacy behavior cannot be changed at this point and
+        therefore this must be done on a case by case basis. This is
+        left to users and to packagers of ZooKeeper distributions.
+        </para>
+
+        <para>When running <emphasis
+        role="bold">zkServer.sh</emphasis> autocreate can be disabled
+        by setting the environment variable <emphasis
+        role="bold">ZOO_DATADIR_AUTOCREATE_DISABLE</emphasis> to 1.
+        When running ZooKeeper servers directly from class files this
+        can be accomplished by setting <emphasis
+        role="bold">zookeeper.datadir.autocreate=false</emphasis> on
+        the java command line, i.e. <emphasis
+        role="bold">-Dzookeeper.datadir.autocreate=false</emphasis>
+        </para>
+
+        <para>When this feature is disabled, and the ZooKeeper server
+        determines that the required directories do not exist it will
+        generate an error and refuse to start.
+        </para>
+
+        <para>A new script <emphasis
+        role="bold">zkServer-initialize.sh</emphasis> is provided to
+        support this new feature. If autocreate is disabled it is
+        necessary for the user to first install ZooKeeper, then create
+        the data directory (and potentially txnlog directory), and
+        then start the server. Otherwise as mentioned in the previous
+        paragraph the server will not start. Running <emphasis
+        role="bold">zkServer-initialize.sh</emphasis> will create the
+        required directories, and optionally setup the myid file
+        (optional command line parameter). This script can be used
+        even if the autocreate feature itself is not used, and will
+        likely be of use to users as this (setup, including creation
+        of the myid file) has been an issue for users in the past.
+        Note that this script ensures the data directories exist only,
+        it does not create a config file, but rather requires a config
+        file to be available in order to execute.
+        </para>
+      </section>
+
+      <section>
         <title>Communication using the Netty framework</title>
 
         <para><emphasis role="bold">New in
