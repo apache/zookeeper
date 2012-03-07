@@ -1,4 +1,4 @@
-Release 3.3.5 - TBD
+Release 3.3.5 - 2012-03-12
 Backward compatible changes:
 
 BUGFIXES:
