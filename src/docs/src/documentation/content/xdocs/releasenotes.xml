@@ -68,6 +68,8 @@ later.</para>
 </entry></row>
 <row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1089'>ZOOKEEPER-1089</ulink>]</entry><entry>         zkServer.sh status does not work due to invalid option of nc
 </entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1277'>ZOOKEEPER-1277</ulink>]</entry><entry>         servers stop serving when lower 32bits of zxid roll over
+</entry></row>
 <row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1309'>ZOOKEEPER-1309</ulink>]</entry><entry>         Creating a new ZooKeeper client can leak file handles
 </entry></row>
 <row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1352'>ZOOKEEPER-1352</ulink>]</entry><entry>         server.InvalidSnapshotTest is using connection timeouts that are too short
@@ -77,6 +79,8 @@ later.</para>
 <row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1367'>ZOOKEEPER-1367</ulink>]</entry><entry>         Data inconsistencies and unexpired ephemeral nodes after cluster restart
 </entry></row>
 <row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1386'>ZOOKEEPER-1386</ulink>]</entry><entry>         avoid flaky URL redirection in &quot;ant javadoc&quot; : replace &quot;http://java.sun.com/javase/6/docs/api/&quot; with &quot;http://download.oracle.com/javase/6/docs/api/&quot; 
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1412'>ZOOKEEPER-1412</ulink>]</entry><entry>         java client watches inconsistently triggered on reconnect
 </entry></row>
         
 <row><entry>        Improvement
