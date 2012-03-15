@@ -660,6 +660,10 @@ public class ClientCnxn {
 
     private volatile long lastZxid;
 
+    public long getLastZxid() {
+        return lastZxid;
+    }
+
     static class EndOfStreamException extends IOException {
         private static final long serialVersionUID = -5438877188796231422L;
 
