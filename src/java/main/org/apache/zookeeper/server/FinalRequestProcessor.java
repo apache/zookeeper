@@ -346,12 +346,13 @@ public class FinalRequestProcessor implements RequestProcessor {
             err = Code.MARSHALLINGERROR;
         }
 
+        long lastZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
         ReplyHeader hdr =
-            new ReplyHeader(request.cxid, request.zxid, err.intValue());
+            new ReplyHeader(request.cxid, lastZxid, err.intValue());
 
         zks.serverStats().updateLatency(request.createTime);
         ((CnxnStats)cnxn.getStats())
-            .updateForResponse(request.cxid, request.zxid, lastOp,
+            .updateForResponse(request.cxid, lastZxid, lastOp,
                     request.createTime, System.currentTimeMillis());
 
         try {
