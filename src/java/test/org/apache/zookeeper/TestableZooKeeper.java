@@ -46,6 +46,15 @@ public class TestableZooKeeper extends ZooKeeper {
         return super.getExistWatches();
     }
 
+    /**
+     * Cause this ZooKeeper object to disconnect from the server. It will then
+     * later attempt to reconnect.
+     */
+    public void testableConnloss() throws IOException {
+        synchronized(cnxn) {
+            cnxn.sendThread.testableCloseSocket();
+        }
+    }
 
     /**
      * Cause this ZooKeeper object to stop receiving from the ZooKeeperServer
@@ -82,5 +91,12 @@ public class TestableZooKeeper extends ZooKeeper {
 
     public SocketAddress testableRemoteSocketAddress() {
         return super.testableRemoteSocketAddress();
+    }
+
+    /**
+     * @return the last zxid as seen by the client session
+     */
+    public long testableLastZxid() {
+        return cnxn.getLastZxid();
     }
 }

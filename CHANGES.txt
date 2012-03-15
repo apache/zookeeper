@@ -142,6 +142,9 @@ BUGFIXES:
 
   ZOOKEEPER-1277. servers stop serving when lower 32bits of zxid roll
   over (phunt)
+
+  ZOOKEEPER-1412. java client watches inconsistently triggered on
+  reconnect (phunt)
   
 IMPROVEMENTS:
 
