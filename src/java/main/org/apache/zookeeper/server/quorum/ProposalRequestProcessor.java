@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 
 /**
  * This RequestProcessor simply forwards requests to an AckRequestProcessor and
@@ -48,7 +49,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
         syncProcessor.start();
     }
     
-    public void processRequest(Request request) {
+    public void processRequest(Request request) throws RequestProcessorException {
         // LOG.warn("Ack>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = " + request.sessionId);
         // request.addRQRec(">prop");
@@ -68,7 +69,11 @@ public class ProposalRequestProcessor implements RequestProcessor {
                 nextProcessor.processRequest(request);
             if (request.hdr != null) {
                 // We need to sync and get consensus on any transactions
-                zks.getLeader().propose(request);
+                try {
+                    zks.getLeader().propose(request);
+                } catch (XidRolloverException e) {
+                    throw new RequestProcessorException(e.getMessage(), e);
+                }
                 syncProcessor.processRequest(request);
             }
         }

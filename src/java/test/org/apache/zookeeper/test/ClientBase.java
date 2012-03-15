@@ -82,7 +82,7 @@ public abstract class ClientBase extends TestCase {
         public void process(WatchedEvent event) { /* nada */ }
     }
 
-    protected static class CountdownWatcher implements Watcher {
+    public static class CountdownWatcher implements Watcher {
         // XXX this doesn't need to be volatile! (Should probably be final)
         volatile CountDownLatch clientConnected;
         volatile boolean connected;
@@ -104,10 +104,12 @@ public abstract class ClientBase extends TestCase {
                 notifyAll();
             }
         }
-        synchronized boolean isConnected() {
+        synchronized public boolean isConnected() {
             return connected;
         }
-        synchronized void waitForConnected(long timeout) throws InterruptedException, TimeoutException {
+        synchronized public void waitForConnected(long timeout)
+            throws InterruptedException, TimeoutException
+        {
             long expire = System.currentTimeMillis() + timeout;
             long left = timeout;
             while(!connected && left > 0) {
@@ -119,7 +121,9 @@ public abstract class ClientBase extends TestCase {
 
             }
         }
-        synchronized void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
+        synchronized public void waitForDisconnected(long timeout)
+            throws InterruptedException, TimeoutException
+        {
             long expire = System.currentTimeMillis() + timeout;
             long left = timeout;
             while(connected && left > 0) {
