@@ -8,8 +8,11 @@ BUGFIXES:
   replace "http://java.sun.com/javase/6/docs/api/" with 
   "http://download.oracle.com/javase/6/docs/api/" (Eugene Koontz via camille) 
   
-  ZOOKEEPER-1354. AuthTest.testBadAuthThenSendOtherCommands fails intermittently (phunt via camille)
+  ZOOKEEPER-1354. AuthTest.testBadAuthThenSendOtherCommands fails
+  intermittently (phunt via camille)
  
+  ZOOKEEPER-1277. servers stop serving when lower 32bits of zxid roll
+  over (phunt)
 
 IMPROVEMENTS:
 

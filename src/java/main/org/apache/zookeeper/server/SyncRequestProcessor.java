@@ -155,7 +155,9 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         LOG.info("SyncRequestProcessor exited!");
     }
 
-    private void flush(LinkedList<Request> toFlush) throws IOException {
+    private void flush(LinkedList<Request> toFlush)
+        throws IOException, RequestProcessorException
+    {
         if (toFlush.isEmpty())
             return;
 
