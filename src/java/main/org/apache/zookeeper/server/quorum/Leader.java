@@ -409,6 +409,24 @@ public class Leader {
                 Thread.sleep(self.tickTime);
                 self.tick++;
             }
+            
+            /**
+             * WARNING: do not use this for anything other than QA testing
+             * on a real cluster. Specifically to enable verification that quorum
+             * can handle the lower 32bit roll-over issue identified in
+             * ZOOKEEPER-1277. Without this option it would take a very long
+             * time (on order of a month say) to see the 4 billion writes
+             * necessary to cause the roll-over to occur.
+             * 
+             * This field allows you to override the zxid of the server. Typically
+             * you'll want to set it to something like 0xfffffff0 and then
+             * start the quorum, run some operations and see the re-election.
+             */
+            String initialZxid = System.getProperty("zookeeper.testingonly.initialZxid");
+            if (initialZxid != null) {
+                long zxid = Long.parseLong(initialZxid);
+                zk.setZxid((zk.getZxid() & 0xffffffff00000000L) | zxid);
+            }
 
             if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
                 self.cnxnFactory.setZooKeeperServer(zk);
@@ -614,7 +632,7 @@ public class Leader {
          *
          * @see org.apache.zookeeper.server.RequestProcessor#processRequest(org.apache.zookeeper.server.Request)
          */
-        public void processRequest(Request request) {
+        public void processRequest(Request request) throws RequestProcessorException {
             next.processRequest(request);
             Proposal p = leader.toBeApplied.peek();
             if (p != null && p.request != null && p.request.zxid == request.zxid) {
@@ -693,6 +711,13 @@ public class Leader {
     public long getEpoch(){
         return ZxidUtils.getEpochFromZxid(lastProposed);
     }
+    
+    @SuppressWarnings("serial")
+    public static class XidRolloverException extends Exception {
+        public XidRolloverException(String message) {
+            super(message);
+        }
+    }
 
     /**
      * create a proposal and send it out to all the members
@@ -700,7 +725,18 @@ public class Leader {
      * @param request
      * @return the proposal that is queued to send to all the members
      */
-    public Proposal propose(Request request) {
+    public Proposal propose(Request request) throws XidRolloverException {
+        /**
+         * Address the rollover issue. All lower 32bits set indicate a new leader
+         * election. Force a re-election instead. See ZOOKEEPER-1277
+         */
+        if ((request.zxid & 0xffffffffL) == 0xffffffffL) {
+            String msg =
+                    "zxid lower 32 bits have rolled over, forcing re-election, and therefore new epoch start";
+            shutdown(msg);
+            throw new XidRolloverException(msg);
+        }
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         try {
