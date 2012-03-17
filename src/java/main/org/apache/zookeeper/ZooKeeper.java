@@ -1380,7 +1380,7 @@ public class ZooKeeper {
         SetACLRequest request = new SetACLRequest();
         request.setPath(serverPath);
         if (acl != null && acl.size() == 0) {
-            throw new KeeperException.InvalidACLException();
+            throw new KeeperException.InvalidACLException(clientPath);
         }
         request.setAcl(acl);
         request.setVersion(version);
