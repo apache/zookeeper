@@ -898,7 +898,22 @@ public class ZooKeeper {
      * @since 3.4.0
      */
     public List<OpResult> multi(Iterable<Op> ops) throws InterruptedException, KeeperException {
-        return multiInternal(new MultiTransactionRecord(ops));
+        // reconstructing transaction with the chroot prefix
+        List<Op> transaction = new ArrayList<Op>();
+        for (Op op : ops) {
+            transaction.add(withRootPrefix(op));
+        }
+        return multiInternal(new MultiTransactionRecord(transaction));
+    }
+    
+    private Op withRootPrefix(Op op) {
+        if (null != op.getPath()) {
+            final String serverPath = prependChroot(op.getPath());
+            if (!op.getPath().equals(serverPath)) {
+                return op.withChroot(serverPath);
+            }
+        }
+        return op;
     }
 
     protected List<OpResult> multiInternal(MultiTransactionRecord request)
