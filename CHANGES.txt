@@ -248,6 +248,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1161. Provide an option for disabling auto-creation of the data directory 
   (phunt via henry)
+  
+  ZOOKEEPER-1397. Remove BookKeeper documentation links. (flavio via camille)
 
 
 Release 3.4.0 - 
