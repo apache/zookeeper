@@ -80,18 +80,6 @@
       <li><a href="ext:faq">FAQ</a></li>    
       </ul>
       </li>
-
-	  <li><strong>BookKeeper Documentation</strong>
-	  <p> BookKeeper is a highly-available system that implements high-performance write-ahead logging. It uses ZooKeeper for metadata, 
-	  which is the main reason for being a ZooKeeper contrib.
-	  </p>
-      <ul>
-      <li><a href="bookkeeperOverview.html">henn, what's it again?</a></li>
-	  <li><a href="bookkeeperStarted.html">Ok, now how do I try it out</a></li>
-	  <li><a href="bookkeeperProgrammer.html">Awesome, but how do I integrate it with my app?</a></li>
-      <li><a href="bookkeeperStream.html">Can I stream bytes instead of entries?</a></li>
-      </ul>
-      </li>
     </ul>
   </body>
   
