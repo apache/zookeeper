@@ -23,6 +23,8 @@ BUGFIXES:
   ZOOKEEPER-1307. zkCli.sh is exiting when an Invalid ACL exception is
   thrown from setACL command through client (Kavita Sharma via phunt)
   
+  ZOOKEEPER-1390. some expensive debug code not protected by a check for debug (breed via camille)
+  
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
