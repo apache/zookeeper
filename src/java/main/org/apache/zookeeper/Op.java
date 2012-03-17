@@ -155,6 +155,13 @@ public abstract class Op {
      */
     public abstract Record toRequestRecord() ;
 
+    /**
+     * Reconstructs the transaction with the chroot prefix.
+     * 
+     * @return transaction with chroot.
+     */
+    abstract Op withChroot(String addRootPrefix);
+
     //////////////////
     // these internal classes are public, but should not generally be referenced.
     //
@@ -210,6 +217,11 @@ public abstract class Op {
         public Record toRequestRecord() {
             return new CreateRequest(getPath(), data, acl, flags);
         }
+
+        @Override
+        Op withChroot(String path) {
+            return new Create(path, data, acl, flags);
+        }
     }
 
     public static class Delete extends Op {
@@ -239,6 +251,11 @@ public abstract class Op {
         @Override
         public Record toRequestRecord() {
             return new DeleteRequest(getPath(), version);
+        }
+
+        @Override
+        Op withChroot(String path) {
+            return new Delete(path, version);
         }
     }
 
@@ -272,6 +289,11 @@ public abstract class Op {
         public Record toRequestRecord() {
             return new SetDataRequest(getPath(), data, version);
         }
+
+        @Override
+        Op withChroot(String path) {
+            return new SetData(path, data, version);
+        }
     }
 
     public static class Check extends Op {
@@ -300,6 +322,11 @@ public abstract class Op {
         @Override
         public Record toRequestRecord() {
             return new CheckVersionRequest(getPath(), version);
+        }
+
+        @Override
+        Op withChroot(String path) {
+            return new Check(path, version);
         }
     }
 }

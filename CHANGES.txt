@@ -17,6 +17,9 @@ BUGFIXES:
   ZOOKEEPER-1412. java client watches inconsistently triggered on
   reconnect (phunt)
 
+  ZOOKEEPER-1344. ZooKeeper client multi-update command is not
+  considering the Chroot request (Rakesh R via phunt)
+  
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
