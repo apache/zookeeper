@@ -724,7 +724,6 @@ public class DataTree {
     {
         ProcessTxnResult rc = new ProcessTxnResult();
 
-        String debug = "";
         try {
             rc.clientId = header.getClientId();
             rc.cxid = header.getCxid();
@@ -735,7 +734,6 @@ public class DataTree {
             switch (header.getType()) {
                 case OpCode.create:
                     CreateTxn createTxn = (CreateTxn) txn;
-                    debug = "Create transaction for " + createTxn.getPath();
                     rc.path = createTxn.getPath();
                     createNode(
                             createTxn.getPath(),
@@ -747,15 +745,11 @@ public class DataTree {
                     break;
                 case OpCode.delete:
                     DeleteTxn deleteTxn = (DeleteTxn) txn;
-                    debug = "Delete transaction for " + deleteTxn.getPath();
                     rc.path = deleteTxn.getPath();
                     deleteNode(deleteTxn.getPath(), header.getZxid());
                     break;
                 case OpCode.setData:
                     SetDataTxn setDataTxn = (SetDataTxn) txn;
-                    debug = "Set data transaction for "
-                            + setDataTxn.getPath()
-                            + " to new value=" + Arrays.toString(setDataTxn.getData());
                     rc.path = setDataTxn.getPath();
                     rc.stat = setData(setDataTxn.getPath(), setDataTxn
                             .getData(), setDataTxn.getVersion(), header
@@ -763,8 +757,6 @@ public class DataTree {
                     break;
                 case OpCode.setACL:
                     SetACLTxn setACLTxn = (SetACLTxn) txn;
-                    debug = "Set ACL transaction for "
-                            + setACLTxn.getPath();
                     rc.path = setACLTxn.getPath();
                     rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(),
                             setACLTxn.getVersion());
@@ -778,16 +770,11 @@ public class DataTree {
                     break;
                 case OpCode.check:
                     CheckVersionTxn checkTxn = (CheckVersionTxn) txn;
-                    debug = "Check Version transaction for "
-                            + checkTxn.getPath()
-                            + " and version="
-                            + checkTxn.getVersion();
                     rc.path = checkTxn.getPath();
                     break;
                 case OpCode.multi:
                     MultiTxn multiTxn = (MultiTxn) txn ;
                     List<Txn> txns = multiTxn.getTxns();
-                    debug = "Multi transaction with " + txns.size() + " operations";
                     rc.multiResult = new ArrayList<ProcessTxnResult>();
                     boolean failed = false;
                     for (Txn subtxn : txns) {
@@ -849,10 +836,14 @@ public class DataTree {
                     break;
             }
         } catch (KeeperException e) {
-            LOG.debug("Failed: " + debug, e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed: " + header + ":" + txn, e);
+            }
             rc.err = e.code().intValue();
         } catch (IOException e) {
-            LOG.debug("Failed:" + debug, e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed: " + header + ":" + txn, e);
+            }
         }
         /*
          * A snapshot might be in progress while we are modifying the data
