@@ -604,6 +604,14 @@ public class ZooKeeperMain {
             System.err.println("Node not empty: " + e.getPath());
         } catch (KeeperException.NotReadOnlyException e) {
             System.err.println("Not a read-only call: " + e.getPath());
+        }catch (KeeperException.InvalidACLException  e) {
+            System.err.println("Acl is not valid : "+e.getPath());
+        }catch (KeeperException.NoAuthException  e) {
+            System.err.println("Authentication is not valid : "+e.getPath());
+        }catch (KeeperException.BadArgumentsException   e) {
+            System.err.println("Arguments are not valid : "+e.getPath());
+        }catch (KeeperException.BadVersionException e) {
+            System.err.println("version No is not valid : "+e.getPath());
         }
         return false;
     }
