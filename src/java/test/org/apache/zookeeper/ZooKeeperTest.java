@@ -17,6 +17,8 @@
  */
 package org.apache.zookeeper;
 
+import static org.junit.Assert.*;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -148,4 +150,32 @@ public class ZooKeeperTest extends ClientBase {
         Assert.assertEquals("ls is not taken as first argument", zkMain.cl.getCmdArgument(0), "ls");
         Assert.assertEquals("/ is not taken as second argument", zkMain.cl.getCmdArgument(1), "/");
     }
+
+    @Test
+    public void testCheckInvalidAcls() throws Exception {
+         final ZooKeeper zk = createClient();
+            ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+            String cmdstring = "create -s -e /node data ip:scheme:gggsd"; //invalid acl's
+            try{
+                 zkMain.executeLine(cmdstring);
+            }catch(KeeperException.InvalidACLException e){
+                fail("For Invalid ACls should not throw exception");
+            }
+    }
+
+    @Test
+    public void testDeleteWithInvalidVersionNo() throws Exception {
+         final ZooKeeper zk = createClient();
+            ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+            String cmdstring = "create -s -e /node1 data "; 
+            String cmdstring1 = "delete /node1 2";//invalid dataversion no
+                 zkMain.executeLine(cmdstring);
+           try{
+               zkMain.executeLine(cmdstring1);
+                     
+            }catch(KeeperException.BadVersionException e){
+                fail("For Invalid dataversion number should not throw exception");
+            }
+    }
+
 }
