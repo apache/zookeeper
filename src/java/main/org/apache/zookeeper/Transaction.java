@@ -18,7 +18,7 @@
 package org.apache.zookeeper;
 
 import org.apache.zookeeper.data.ACL;
-
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class Transaction {
     private ZooKeeper zk;
-    private MultiTransactionRecord request = new MultiTransactionRecord();
+    private List<Op> ops = new ArrayList<Op>();
 
     protected Transaction(ZooKeeper zk) {
         this.zk = zk;
@@ -38,26 +38,26 @@ public class Transaction {
 
     public Transaction create(final String path, byte data[], List<ACL> acl,
                               CreateMode createMode) {
-        request.add(Op.create(path, data, acl, createMode.toFlag()));
+        ops.add(Op.create(path, data, acl, createMode.toFlag()));
         return this;
     }
 
     public Transaction delete(final String path, int version) {
-        request.add(Op.delete(path, version));
+        ops.add(Op.delete(path, version));
         return this;
     }
 
     public Transaction check(String path, int version) {
-        request.add(Op.check(path, version));
+        ops.add(Op.check(path, version));
         return this;
     }
 
     public Transaction setData(final String path, byte data[], int version) {
-        request.add(Op.setData(path, data, version));
+        ops.add(Op.setData(path, data, version));
         return this;
     }
 
     public List<OpResult> commit() throws InterruptedException, KeeperException {
-        return zk.multiInternal(request);
+        return zk.multi(ops);
     }
 }
