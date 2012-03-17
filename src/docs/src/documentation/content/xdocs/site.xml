@@ -46,13 +46,6 @@ See http://forrest.apache.org/docs/linking.html for more info.
     <recipes   label="Recipes"		      href="recipes.html" />
   </docs>
   
-  <docs label="BookKeeper">
-      <bkStarted label="Getting started"  href="bookkeeperStarted.html" />
-      <bkOverview label="Overview"            href="bookkeeperOverview.html" />
-      <bkProgrammer   label="Setup guide"                    href="bookkeeperConfig.html" />
-      <bkProgrammer   label="Programmer's guide"                    href="bookkeeperProgrammer.html" />
-  </docs>
-  
   <docs label="Admin &amp; Ops">
       <admin label="Administrator's Guide"  href="zookeeperAdmin.html" />
       <quota label="Quota Guide"            href="zookeeperQuotas.html" />
