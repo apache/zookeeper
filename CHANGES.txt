@@ -29,6 +29,8 @@ BUGFIXES:
   ZOOKEEPER-1406. dpkg init scripts don't restart - missing
   check_priv_sep_dir (Chris Beauchamp via phunt)
    
+  ZOOKEEPER-1403. zkCli.sh script quoting issue (James Page via phunt)
+   
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
