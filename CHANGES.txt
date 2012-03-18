@@ -1,3 +1,11 @@
+Release 3.3.6 - TBD
+Backward compatible changes:
+
+BUGFIXES:
+
+  ZOOKEEPER-1403. zkCli.sh script quoting issue (James Page via phunt)
+   
+
 Release 3.3.5 - 2012-03-18
 Backward compatible changes:
 
