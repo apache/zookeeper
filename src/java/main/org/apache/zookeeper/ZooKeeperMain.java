@@ -25,22 +25,38 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import java.util.StringTokenizer;
+import org.apache.commons.cli.ParseException;
+import org.apache.zookeeper.cli.AddAuthCommand;
+import org.apache.zookeeper.cli.CliCommand;
+import org.apache.zookeeper.cli.CloseCommand;
+import org.apache.zookeeper.cli.CreateCommand;
+import org.apache.zookeeper.cli.DelQuotaCommand;
+import org.apache.zookeeper.cli.DeleteAllCommand;
+import org.apache.zookeeper.cli.DeleteCommand;
+import org.apache.zookeeper.cli.GetAclCommand;
+import org.apache.zookeeper.cli.GetCommand;
+import org.apache.zookeeper.cli.ListQuotaCommand;
+import org.apache.zookeeper.cli.Ls2Command;
+import org.apache.zookeeper.cli.LsCommand;
+import org.apache.zookeeper.cli.SetAclCommand;
+import org.apache.zookeeper.cli.SetCommand;
+import org.apache.zookeeper.cli.SetQuotaCommand;
+import org.apache.zookeeper.cli.StatCommand;
+import org.apache.zookeeper.cli.SyncCommand;
 
 /**
  * The command line client to ZooKeeper.
@@ -49,6 +65,8 @@ import java.util.StringTokenizer;
 public class ZooKeeperMain {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
     protected static final Map<String,String> commandMap = new HashMap<String,String>( );
+    protected static final Map<String,CliCommand> commandMapCli = 
+            new HashMap<String,CliCommand>( );
 
     protected MyCommandOptions cl = new MyCommandOptions();
     protected HashMap<Integer,String> history = new HashMap<Integer,String>( );
@@ -64,32 +82,41 @@ public class ZooKeeperMain {
 
     static {
         commandMap.put("connect", "host:port");
-        commandMap.put("close","");
-        commandMap.put("create", "[-s] [-e] path data acl");
-        commandMap.put("delete","path [version]");
-        commandMap.put("deleteall","path");
-        commandMap.put("rmr","path (Deprecated - Use 'deleteall' instead.)");
-        commandMap.put("set","path data [version]");
-        commandMap.put("get","path [watch]");
-        commandMap.put("ls","path [watch]");
-        commandMap.put("ls2","path [watch]");
-        commandMap.put("getAcl","path");
-        commandMap.put("setAcl","path acl");
-        commandMap.put("stat","path [watch]");
-        commandMap.put("sync","path");
-        commandMap.put("setquota","-n|-b val path");
-        commandMap.put("listquota","path");
-        commandMap.put("delquota","[-n|-b] path");
         commandMap.put("history","");
         commandMap.put("redo","cmdno");
         commandMap.put("printwatches", "on|off");
-        commandMap.put("quit","");
-        commandMap.put("addauth", "scheme auth");
+        commandMap.put("quit", "");
+
+        new CloseCommand().addToMap(commandMapCli);
+        new CreateCommand().addToMap(commandMapCli);
+        new DeleteCommand().addToMap(commandMapCli);
+        new DeleteAllCommand().addToMap(commandMapCli);
+        // Depricated: rmr
+        new DeleteAllCommand("rmr").addToMap(commandMapCli);
+        new SetCommand().addToMap(commandMapCli);
+        new GetCommand().addToMap(commandMapCli);
+        new LsCommand().addToMap(commandMapCli);
+        new Ls2Command().addToMap(commandMapCli);
+        new GetAclCommand().addToMap(commandMapCli);
+        new SetAclCommand().addToMap(commandMapCli);
+        new StatCommand().addToMap(commandMapCli);
+        new SyncCommand().addToMap(commandMapCli);
+        new SetQuotaCommand().addToMap(commandMapCli);
+        new ListQuotaCommand().addToMap(commandMapCli);
+        new DelQuotaCommand().addToMap(commandMapCli);
+        new AddAuthCommand().addToMap(commandMapCli);
+        
+        // add all to commandMap
+        for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {
+            commandMap.put(entry.getKey(), entry.getValue().getOptionStr());
+    }
     }
 
     static void usage() {
         System.err.println("ZooKeeper -server host:port cmd args");
-        for (String cmd : commandMap.keySet()) {
+        List<String> cmdList = new ArrayList<String>(commandMap.keySet());
+        Collections.sort(cmdList);
+        for (String cmd : cmdList) {
             System.err.println("\t"+cmd+ " " + commandMap.get(cmd));
         }
     }
@@ -101,48 +128,6 @@ public class ZooKeeperMain {
                 ZooKeeperMain.printMessage(event.toString());
             }
         }
-    }
-
-    static private int getPermFromString(String permString) {
-        int perm = 0;
-        for (int i = 0; i < permString.length(); i++) {
-            switch (permString.charAt(i)) {
-            case 'r':
-                perm |= ZooDefs.Perms.READ;
-                break;
-            case 'w':
-                perm |= ZooDefs.Perms.WRITE;
-                break;
-            case 'c':
-                perm |= ZooDefs.Perms.CREATE;
-                break;
-            case 'd':
-                perm |= ZooDefs.Perms.DELETE;
-                break;
-            case 'a':
-                perm |= ZooDefs.Perms.ADMIN;
-                break;
-            default:
-                System.err
-                .println("Unknown perm type: " + permString.charAt(i));
-            }
-        }
-        return perm;
-    }
-
-    private static void printStat(Stat stat) {
-        System.err.println("cZxid = 0x" + Long.toHexString(stat.getCzxid()));
-        System.err.println("ctime = " + new Date(stat.getCtime()).toString());
-        System.err.println("mZxid = 0x" + Long.toHexString(stat.getMzxid()));
-        System.err.println("mtime = " + new Date(stat.getMtime()).toString());
-        System.err.println("pZxid = 0x" + Long.toHexString(stat.getPzxid()));
-        System.err.println("cversion = " + stat.getCversion());
-        System.err.println("dataVersion = " + stat.getVersion());
-        System.err.println("aclVersion = " + stat.getAversion());
-        System.err.println("ephemeralOwner = 0x"
-        		+ Long.toHexString(stat.getEphemeralOwner()));
-        System.err.println("dataLength = " + stat.getDataLength());
-        System.err.println("numChildren = " + stat.getNumChildren());
     }
 
     /**
@@ -254,7 +239,9 @@ public class ZooKeeperMain {
     }
 
     public static List<String> getCommands() {
-        return new LinkedList<String>(commandMap.keySet());
+        List<String> cmdList = new ArrayList<String>(commandMap.keySet());
+        Collections.sort(cmdList);
+        return cmdList;
     }
 
     protected String getPrompt() {       
@@ -366,17 +353,6 @@ public class ZooKeeperMain {
         commandCount++;
       }
     }
-
-    private static DataCallback dataCallback = new DataCallback() {
-
-        public void processResult(int rc, String path, Object ctx, byte[] data,
-                Stat stat) {
-            System.out.println("rc = " + rc + " path = " + path + " data = "
-                    + (data == null ? "null" : new String(data)) + " stat = ");
-            printStat(stat);
-        }
-
-    };
 
     /**
      * trim the quota tree to recover unwanted tree elements
@@ -619,7 +595,6 @@ public class ZooKeeperMain {
     protected boolean processZKCmd(MyCommandOptions co)
         throws KeeperException, IOException, InterruptedException
     {
-        Stat stat = new Stat();
         String[] args = co.getArgArray();
         String cmd = co.getCommand();
         if (args.length < 1) {
@@ -632,13 +607,11 @@ public class ZooKeeperMain {
             return false;
         }
         
-        boolean watch = args.length > 2;
-        String path = null;
-        List<ACL> acl = Ids.OPEN_ACL_UNSAFE;
+        boolean watch = false;
         LOG.debug("Processing " + cmd);
         
+        try {
         if (cmd.equals("quit")) {
-            System.out.println("Quitting...");
             zk.close();
             System.exit(0);
         } else if (cmd.equals("redo") && args.length >= 2) {
@@ -679,205 +652,19 @@ public class ZooKeeperMain {
             return false;
         }
         
-        if (cmd.equals("create") && args.length >= 2) {
-            int first = 0;
-            CreateMode flags = CreateMode.PERSISTENT;
-            if ((args.length >= 3)
-                    && ((args[1].equals("-e") && args[2].equals("-s")) || (args[1])
-                            .equals("-s")
-                            && (args[2].equals("-e")))) {
-                first+=2;
-                flags = CreateMode.EPHEMERAL_SEQUENTIAL;
-            } else if (args[1].equals("-e")) {
-                first++;
-                flags = CreateMode.EPHEMERAL;
-            } else if (args[1].equals("-s")) {
-                first++;
-                flags = CreateMode.PERSISTENT_SEQUENTIAL;
-            }
-            if (args.length >= first+2) {
-                path = args[first+1];
-            }
-            if(path==null)
-            {
-                usage();
-                return false;
-            }
-            byte[] data = null;
-            if (args.length >= first + 3) {
-                data = args[first + 2].getBytes();
-            }
-            if (args.length >= first + 4) {
-                acl = parseACLs(args[first+3]);
-            }
-            String newPath = zk.create(path, data, acl, flags);
-            System.err.println("Created " + newPath);
-            return true;
-        } else if (cmd.equals("delete") && args.length >= 2) {
-            path = args[1];
-            zk.delete(path, watch ? Integer.parseInt(args[2]) : -1);
-        } else if (
-            (cmd.equals("deleteall") || cmd.equals("rmr")) &&
-            args.length >= 2) {
-            if (cmd.equals("rmr")) {
-              LOG.warn("The command 'rmr' has been deprecated. " +
-                  "Please use 'deleteall' instead.");
-            }
-            path = args[1];
-            ZKUtil.deleteRecursive(zk, path);
-        } else if (cmd.equals("set") && args.length >= 3) {
-            path = args[1];
-            stat = zk.setData(path, args[2].getBytes(),
-                    args.length > 3 ? Integer.parseInt(args[3]) : -1);
-            printStat(stat);
-        } else if (cmd.equals("aget") && args.length >= 2) {
-            path = args[1];
-            zk.getData(path, watch, dataCallback, path);
-        } else if (cmd.equals("get") && args.length >= 2) {
-            path = args[1];
-            byte data[] = zk.getData(path, watch, stat);
-            data = (data == null)? "null".getBytes() : data;
-            System.out.println(new String(data));
-            printStat(stat);
-        } else if (cmd.equals("ls") && args.length >= 2) {
-            path = args[1];
-            List<String> children = zk.getChildren(path, watch);
-            System.out.println(children);
-        } else if (cmd.equals("ls2") && args.length >= 2) {
-            path = args[1];
-            List<String> children = zk.getChildren(path, watch, stat);
-            System.out.println(children);
-            printStat(stat);
-        } else if (cmd.equals("getAcl") && args.length >= 2) {
-            path = args[1];
-            acl = zk.getACL(path, stat);
-            for (ACL a : acl) {
-                System.out.println(a.getId() + ": "
-                        + getPermString(a.getPerms()));
-            }
-        } else if (cmd.equals("setAcl") && args.length >= 3) {
-            path = args[1];
-            stat = zk.setACL(path, parseACLs(args[2]),
-                    args.length > 4 ? Integer.parseInt(args[3]) : -1);
-            printStat(stat);
-        } else if (cmd.equals("stat") && args.length >= 2) {
-            path = args[1];
-            stat = zk.exists(path, watch);
-            if (stat == null) {
-              throw new KeeperException.NoNodeException(path);	
-            }
-            printStat(stat);
-        } else if (cmd.equals("listquota") && args.length >= 2) {
-            path = args[1];
-            String absolutePath = Quotas.quotaZookeeper + path + "/" + Quotas.limitNode;
-            byte[] data =  null;
-            try {
-                System.err.println("absolute path is " + absolutePath);
-                data = zk.getData(absolutePath, false, stat);
-                StatsTrack st = new StatsTrack(new String(data));
-                System.out.println("Output quota for " + path + " "
-                        + st.toString());
-
-                data = zk.getData(Quotas.quotaZookeeper + path + "/" +
-                        Quotas.statNode, false, stat);
-                System.out.println("Output stat for " + path + " " +
-                        new StatsTrack(new String(data)).toString());
-            } catch(KeeperException.NoNodeException ne) {
-                System.err.println("quota for " + path + " does not exist.");
-            }
-        } else if (cmd.equals("setquota") && args.length >= 4) {
-            String option = args[1];
-            String val = args[2];
-            path = args[3];
-            System.err.println("Comment: the parts are " +
-                               "option " + option +
-                               " val " + val +
-                               " path " + path);
-            if ("-b".equals(option)) {
-                // we are setting the bytes quota
-                createQuota(zk, path, Long.parseLong(val), -1);
-            } else if ("-n".equals(option)) {
-                // we are setting the num quota
-                createQuota(zk, path, -1L, Integer.parseInt(val));
+        // execute from commandMap
+        CliCommand cliCmd = commandMapCli.get(cmd);
+        if(cliCmd != null) {
+            cliCmd.setZk(zk);
+            watch = cliCmd.parse(args).exec();
             } else {
                 usage();
             }
-
-        } else if (cmd.equals("delquota") && args.length >= 2) {
-            //if neither option -n or -b is specified, we delete
-            // the quota node for thsi node.
-            if (args.length == 3) {
-                //this time we have an option
-                String option = args[1];
-                path = args[2];
-                if ("-b".equals(option)) {
-                    delQuota(zk, path, true, false);
-                } else if ("-n".equals(option)) {
-                    delQuota(zk, path, false, true);
-                }
-            } else if (args.length == 2) {
-                path = args[1];
-                // we dont have an option specified.
-                // just delete whole quota node
-                delQuota(zk, path, true, true);
-            } else if (cmd.equals("help")) {
+        } catch (ParseException ex) {
+            System.err.println(ex.getMessage());
                 usage();
+            return false;
             }
-        } else if (cmd.equals("close")) {
-                zk.close();            
-        } else if (cmd.equals("sync") && args.length >= 2) {
-            path = args[1];
-            zk.sync(path, new AsyncCallback.VoidCallback() { public void processResult(int rc, String path, Object ctx) { System.out.println("Sync returned " + rc); } }, null );
-        } else if (cmd.equals("addauth") && args.length >=2 ) {
-            byte[] b = null;
-            if (args.length >= 3)
-                b = args[2].getBytes();
-
-            zk.addAuthInfo(args[1], b);
-        } else {
-            usage();
-        }
         return watch;
     }
-
-    private static String getPermString(int perms) {
-        StringBuilder p = new StringBuilder();
-        if ((perms & ZooDefs.Perms.CREATE) != 0) {
-            p.append('c');
         }
-        if ((perms & ZooDefs.Perms.DELETE) != 0) {
-            p.append('d');
-        }
-        if ((perms & ZooDefs.Perms.READ) != 0) {
-            p.append('r');
-        }
-        if ((perms & ZooDefs.Perms.WRITE) != 0) {
-            p.append('w');
-        }
-        if ((perms & ZooDefs.Perms.ADMIN) != 0) {
-            p.append('a');
-        }
-        return p.toString();
-    }
-
-    private static List<ACL> parseACLs(String aclString) {
-        List<ACL> acl;
-        String acls[] = aclString.split(",");
-        acl = new ArrayList<ACL>();
-        for (String a : acls) {
-            int firstColon = a.indexOf(':');
-            int lastColon = a.lastIndexOf(':');
-            if (firstColon == -1 || lastColon == -1 || firstColon == lastColon) {
-                System.err
-                .println(a + " does not have the form scheme:id:perm");
-                continue;
-            }
-            ACL newAcl = new ACL();
-            newAcl.setId(new Id(a.substring(0, firstColon), a.substring(
-                    firstColon + 1, lastColon)));
-            newAcl.setPerms(getPermFromString(a.substring(lastColon + 1)));
-            acl.add(newAcl);
-        }
-        return acl;
-    }
-}

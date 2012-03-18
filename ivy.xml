@@ -41,6 +41,7 @@
   <dependencies>
     <dependency org="org.slf4j" name="slf4j-api" rev="1.6.2"/>
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.2" transitive="false"/>
+    <dependency org="commons-cli" name="commons-cli" rev="1.2" />
   
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
     <dependency org="log4j" name="log4j" rev="1.2.16" transitive="false" conf="default"/>

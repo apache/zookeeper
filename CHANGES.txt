@@ -246,10 +246,13 @@ IMPROVEMENTS:
   in order to get rid of the intermediate shell process
   (Roman Shaposhnik via phunt)
 
-  ZOOKEEPER-1161. Provide an option for disabling auto-creation of the data directory 
-  (phunt via henry)
+  ZOOKEEPER-1161. Provide an option for disabling auto-creation of the
+  data directory (phunt via henry)
   
   ZOOKEEPER-1397. Remove BookKeeper documentation links. (flavio via camille)
+
+  ZOOKEEPER-271. Better command line parsing in ZookeeperMain.
+  (Hartmut Lang via phunt)
 
 
 Release 3.4.0 - 
