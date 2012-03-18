@@ -153,6 +153,9 @@ BUGFIXES:
   thrown from setACL command through client (Kavita Sharma via phunt)
  
   ZOOKEEPER-1390. some expensive debug code not protected by a check for debug (breed via camille)
+
+  ZOOKEEPER-1406. dpkg init scripts don't restart - missing
+  check_priv_sep_dir (Chris Beauchamp via phunt)
    
 IMPROVEMENTS:
 
