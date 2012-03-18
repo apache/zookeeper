@@ -43,6 +43,7 @@
   <dependencies>
     <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"/>
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}" transitive="false"/>
+    <dependency org="commons-cli" name="commons-cli" rev="1.2" />
 
     <dependency org="org.apache.maven.wagon" name="wagon-http" rev="2.4" conf="mvn-ant-task->default"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks" rev="2.1.3" conf="mvn-ant-task->default"/>
