@@ -152,10 +152,13 @@ BUGFIXES:
   ZOOKEEPER-1307. zkCli.sh is exiting when an Invalid ACL exception is
   thrown from setACL command through client (Kavita Sharma via phunt)
  
-  ZOOKEEPER-1390. some expensive debug code not protected by a check for debug (breed via camille)
+  ZOOKEEPER-1390. some expensive debug code not protected by a check
+  for debug (breed via camille)
 
   ZOOKEEPER-1406. dpkg init scripts don't restart - missing
   check_priv_sep_dir (Chris Beauchamp via phunt)
+
+  ZOOKEEPER-1403. zkCli.sh script quoting issue (James Page via phunt)
    
 IMPROVEMENTS:
 
