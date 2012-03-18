@@ -256,6 +256,8 @@ IMPROVEMENTS:
   data directory (phunt via henry)
   
   ZOOKEEPER-1397. Remove BookKeeper documentation links. (flavio via camille)
+  
+  ZOOKEEPER-1377. add support for dumping a snapshot file content (similar to LogFormatter). (phunt via camille)
 
   ZOOKEEPER-271. Better command line parsing in ZookeeperMain.
   (Hartmut Lang via phunt)
