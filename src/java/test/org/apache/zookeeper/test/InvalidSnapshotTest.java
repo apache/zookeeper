@@ -23,20 +23,21 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.server.LogFormatter;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.SnapshotFormatter;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InvalidSnapshotTest extends ZKTestCase implements Watcher {
     private final static Logger LOG = LoggerFactory.getLogger(InvalidSnapshotTest.class);
@@ -58,6 +59,17 @@ public class InvalidSnapshotTest extends ZKTestCase implements Watcher {
         LogFormatter.main(args);
     }
 
+    /**
+     * Verify the SnapshotFormatter by running it on a known file.
+     */
+    @Test
+    public void testSnapshotFormatter() throws Exception {
+        File snapDir = new File(testData, "invalidsnap");
+        File snapfile = new File(new File(snapDir, "version-2"), "snapshot.272");
+        String[] args = {snapfile.getCanonicalFile().toString()};
+        SnapshotFormatter.main(args);
+    }
+    
     /**
      * test the snapshot
      * @throws Exception an exception could be expected
