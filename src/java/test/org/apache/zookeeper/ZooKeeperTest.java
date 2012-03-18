@@ -310,7 +310,7 @@ public class ZooKeeperTest extends ClientBase {
         stat = zk.exists("/node4", true);
         version = stat.getVersion();
         zkMain.cl.parseCommand(cmdstring2);
-        Assert.assertTrue(zkMain.processZKCmd(zkMain.cl));
+        Assert.assertFalse(zkMain.processZKCmd(zkMain.cl));
         stat = zk.exists("/node4", true);
         Assert.assertEquals(version + 1, stat.getVersion());
         zkMain.cl.parseCommand(cmdstring3);
