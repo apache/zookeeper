@@ -37,6 +37,8 @@ IMPROVEMENTS:
   in order to get rid of the intermediate shell process
   (Roman Shaposhnik via phunt)
 
+  ZOOKEEPER-1377. add support for dumping a snapshot file content (similar to LogFormatter). (phunt via camille)
+
 
 Release 3.4.3 - 2012-02-06
 
