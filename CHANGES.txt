@@ -159,6 +159,9 @@ BUGFIXES:
   check_priv_sep_dir (Chris Beauchamp via phunt)
 
   ZOOKEEPER-1403. zkCli.sh script quoting issue (James Page via phunt)
+
+  ZOOKEEPER-1384. test-cppunit overrides LD_LIBRARY_PATH and fails if
+  gcc is in non-standard location (Jay Shrauner via phunt)
    
 IMPROVEMENTS:
 
