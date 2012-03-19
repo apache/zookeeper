@@ -391,7 +391,7 @@
       <property name="c.build" value="${build.dir}/c/build"/>
       <exec dir="${build.dir}/c" executable="make" failonerror="true">
         <arg value="install"/>
-        <env key="LD_LIBRARY_PATH" value="${c.build}"/>
+        <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};${c.build}"/>
         <env key="PATH" path="${env.PATH};${c.src.dir};"/>
         <env key="CALLER" value="ANT"/>
         <env key="base_dir" value="${basedir}"/>
@@ -1257,7 +1257,7 @@
             if="cppunit"
 		description="to run cppunit test cases">
         <exec dir="${test.cppunit.dir}" executable="make" failonerror="true">
-		<env key="LD_LIBRARY_PATH" value="${cppunit.lib}"/>
+		<env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};${cppunit.lib}"/>
 		<env key="PATH" path="${env.PATH};${c.src.dir};"/>
                 <env key="CALLER" value="ANT"/>
                 <env key="CLOVER_HOME" value="${clover.home}"/>
