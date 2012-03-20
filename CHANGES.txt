@@ -33,6 +33,9 @@ BUGFIXES:
    
   ZOOKEEPER-1384. test-cppunit overrides LD_LIBRARY_PATH and fails if
   gcc is in non-standard location (Jay Shrauner via phunt)
+  
+  ZOOKEEPER-1419. Leader election never settles for a 5-node cluster (flavio via camille)
+  
    
 IMPROVEMENTS:
 
