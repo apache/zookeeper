@@ -34,8 +34,11 @@ BUGFIXES:
   ZOOKEEPER-1384. test-cppunit overrides LD_LIBRARY_PATH and fails if
   gcc is in non-standard location (Jay Shrauner via phunt)
   
-  ZOOKEEPER-1419. Leader election never settles for a 5-node cluster (flavio via camille)
+  ZOOKEEPER-1419. Leader election never settles for a 5-node cluster
+  (flavio via camille)
   
+  ZOOKEEPER-1256. ClientPortBindTest is failing on Mac OS X
+  (Daniel Gómez Ferro via phunt)
    
 IMPROVEMENTS:
 
