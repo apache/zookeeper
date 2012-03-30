@@ -4,8 +4,10 @@ Backward compatible changes:
 BUGFIXES:
 
   ZOOKEEPER-1403. zkCli.sh script quoting issue (James Page via phunt)
+
   ZOOKEEPER-1433. improve ZxidRolloverTest (test seems flakey) (phunt via henryr)
-   
+
+  ZOOKEEPER-1395. node-watcher double-free redux (Mike Lundy via henryr)   
 
 Release 3.3.5 - 2012-03-18
 Backward compatible changes:
