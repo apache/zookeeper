@@ -267,6 +267,7 @@ IMPROVEMENTS:
   ZOOKEEPER-271. Better command line parsing in ZookeeperMain.
   (Hartmut Lang via phunt)
 
+  ZOOKEEPER-1435. cap space usage of default log4j rolling policy (phunt via henryr)
 
 Release 3.4.0 - 
 
