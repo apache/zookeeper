@@ -164,6 +164,8 @@ BUGFIXES:
   gcc is in non-standard location (Jay Shrauner via phunt)
   
   ZOOKEEPER-1419. Leader election never settles for a 5-node cluster (flavio via camille)
+
+  ZOOKEEPER-1433. improve ZxidRolloverTest (test seems flakey) (phunt via henryr)
    
 IMPROVEMENTS:
 
