@@ -39,6 +39,8 @@ BUGFIXES:
   
   ZOOKEEPER-1256. ClientPortBindTest is failing on Mac OS X
   (Daniel Gómez Ferro via phunt)
+
+  ZOOKEEPER-1433. improve ZxidRolloverTest (test seems flakey) (phunt via henryr)
    
 IMPROVEMENTS:
 
