@@ -166,6 +166,8 @@ BUGFIXES:
   ZOOKEEPER-1419. Leader election never settles for a 5-node cluster (flavio via camille)
 
   ZOOKEEPER-1433. improve ZxidRolloverTest (test seems flakey) (phunt via henryr)
+
+  ZOOKEEPER-1395. node-watcher double-free redux (Mike Lundy via henryr)
    
 IMPROVEMENTS:
 
