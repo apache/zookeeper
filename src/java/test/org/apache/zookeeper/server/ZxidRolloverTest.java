@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.IOException;
-
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
@@ -31,6 +31,7 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
 import org.apache.zookeeper.test.QuorumUtil;
+import org.apache.zookeeper.test.QuorumUtil.PeerStruct;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -64,26 +65,93 @@ public class ZxidRolloverTest extends TestCase {
 
         for (int i = 0; i < zkClients.length; i++) {
             zkClientWatchers[i] = new CountdownWatcher();
-            int followerPort = qu.getPeer(i+1).peer.getClientPort();
+            PeerStruct peer = qu.getPeer(i + 1);
             zkClients[i] = new ZooKeeper(
-                    "127.0.0.1:" + followerPort,
+                    "127.0.0.1:" + peer.clientPort,
                     ClientTest.CONNECTION_TIMEOUT, zkClientWatchers[i]);
         }
-        waitForClients();
+        waitForClientsConnected();
     }
     
-    private void waitForClients() throws Exception {
+    private void waitForClientsConnected() throws Exception {
         for (int i = 0; i < zkClients.length; i++) {
             zkClientWatchers[i].waitForConnected(ClientTest.CONNECTION_TIMEOUT);
             zkClientWatchers[i].reset();
         }
     }
 
-    private void startAll() throws IOException {
+    /**
+     * Ensure all clients are able to talk to the service.
+     */
+    private void checkClientsConnected() throws Exception {
+        for (int i = 0; i < zkClients.length; i++) {
+            checkClientConnected(i + 1);
+        }
+    }
+
+    /**
+     * Ensure the client is able to talk to the server.
+     * 
+     * @param idx the idx of the server the client is talking to
+     */
+    private void checkClientConnected(int idx) throws Exception {
+        ZooKeeper zk = getClient(idx);
+        if (zk == null) {
+            return;
+        }
+        try {
+            assertNull(zk.exists("/foofoofoo-connected", false));
+        } catch (ConnectionLossException e) {
+            // second chance...
+            // in some cases, leader change in particular, the timing is
+            // very tricky to get right in order to assure that the client has
+            // disconnected and reconnected. In some cases the client will
+            // disconnect, then attempt to reconnect before the server is
+            // back, in which case we'll see another connloss on the operation
+            // in the try, this catches that case and waits for the server
+            // to come back
+            PeerStruct peer = qu.getPeer(idx);
+            Assert.assertTrue("Waiting for server down", ClientBase.waitForServerUp(
+                    "127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
+
+            assertNull(zk.exists("/foofoofoo-connected", false));
+        }
+    }
+
+    /**
+     * Ensure all clients are disconnected from the service.
+     */
+    private void checkClientsDisconnected() throws Exception {
+        for (int i = 0; i < zkClients.length; i++) {
+            checkClientDisconnected(i + 1);
+        }
+    }
+
+    /**
+     * Ensure the client is able to talk to the server
+     * 
+     * @param idx the idx of the server the client is talking to
+     */
+    private void checkClientDisconnected(int idx) throws Exception {
+        ZooKeeper zk = getClient(idx);
+        if (zk == null) {
+            return;
+        }
+        try {
+            assertNull(zk.exists("/foofoofoo-disconnected", false));
+            fail("expected client to be disconnected");
+        } catch (KeeperException e) {
+            // success
+        }
+    }
+
+    private void startAll() throws Exception {
         qu.startAll();
         checkLeader();
+        // all clients should be connected
+        checkClientsConnected();
     }
-    private void start(int idx) throws IOException {
+    private void start(int idx) throws Exception {
         qu.start(idx);
         for (String hp : qu.getConnString().split(",")) {
             Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(hp,
@@ -91,6 +159,8 @@ public class ZxidRolloverTest extends TestCase {
         }
 
         checkLeader();
+        // all clients should be connected
+        checkClientsConnected();
     }
 
     private void checkLeader() {
@@ -103,12 +173,34 @@ public class ZxidRolloverTest extends TestCase {
         zksLeader = qu.getPeer(idxLeader).peer.getActiveServer();
     }
 
-    private void shutdownAll() throws IOException {
+    private void shutdownAll() throws Exception {
         qu.shutdownAll();
+        // all clients should be disconnected
+        checkClientsDisconnected();
     }
     
-    private void shutdown(int idx) throws IOException {
+    private void shutdown(int idx) throws Exception {
         qu.shutdown(idx);
+
+        // leader will shutdown, remaining followers will elect a new leader
+        PeerStruct peer = qu.getPeer(idx);
+        Assert.assertTrue("Waiting for server down", ClientBase.waitForServerDown(
+                "127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
+
+        // if idx is the the leader then everyone will get disconnected,
+        // otherwise if idx is a follower then just that client will get
+        // disconnected
+        if (idx == idxLeader) {
+            checkClientDisconnected(idx);
+            try {
+                checkClientsDisconnected();
+            } catch (AssertionFailedError e) {
+                // the clients may or may not have already reconnected
+                // to the recovered cluster, force a check, but ignore
+            }
+        } else {
+            checkClientDisconnected(idx);
+        }
     }
 
     /** Reset the next zxid to be near epoch end */
@@ -140,7 +232,7 @@ public class ZxidRolloverTest extends TestCase {
             }
         } catch (ConnectionLossException e) {
             // this is ok - the leader has dropped leadership
-            waitForClients();
+            waitForClientsConnected();
         }
         return j;
     }
