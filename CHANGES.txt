@@ -41,6 +41,8 @@ BUGFIXES:
   (Daniel Gómez Ferro via phunt)
 
   ZOOKEEPER-1433. improve ZxidRolloverTest (test seems flakey) (phunt via henryr)
+
+  ZOOKEEPER-1395. node-watcher double-free redux (Mike Lundy via henryr)
    
 IMPROVEMENTS:
 
