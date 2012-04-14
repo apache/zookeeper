@@ -254,10 +254,23 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         }
     }
 
+    /**
+     * Grant or deny authorization to an operation on a node as a function of:
+     *
+     * @param zks: not used.
+     * @param acl:  set of ACLs for the node
+     * @param perm: the permission that the client is requesting
+     * @param ids:  the credentials supplied by the client
+     */
     static void checkACL(ZooKeeperServer zks, List<ACL> acl, int perm,
             List<Id> ids) throws KeeperException.NoAuthException {
         if (skipACL) {
             return;
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Permission requested: {} ", perm);
+            LOG.debug("ACLs for node: {}", acl);
+            LOG.debug("Client credentials: {}", ids);
         }
         if (acl == null || acl.size() == 0) {
             return;
