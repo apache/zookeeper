@@ -273,6 +273,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1435. cap space usage of default log4j rolling policy (phunt via henryr)
 
+  ZOOKEEPER-1432. Add javadoc and debug logging for checkACL() method in 
+  PrepRequestProcessor (Eugene Koontz via michim)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
