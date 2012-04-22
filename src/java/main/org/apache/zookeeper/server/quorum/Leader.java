@@ -367,15 +367,15 @@ public class Leader {
                 if (!tickSkip) {
                     self.tick++;
                 }
-                int syncedCount = 0;
                 HashSet<Long> syncedSet = new HashSet<Long>();
-                
+
                 // lock on the followers when we use it.
                 syncedSet.add(self.getId());
                 synchronized (learners) {
                     for (LearnerHandler f : learners) {
-                        if (f.synced()) {
-                            syncedCount++;
+                        // Synced set is used to check we have a supporting quorum, so only
+                        // PARTICIPANT, not OBSERVER, learners should be used
+                        if (f.synced() && f.getLearnerType() == LearnerType.PARTICIPANT) {
                             syncedSet.add(f.getSid());
                         }
                         f.ping();
@@ -385,7 +385,7 @@ public class Leader {
                 //if (!tickSkip && syncedCount < self.quorumPeers.size() / 2) {
                     // Lost quorum, shutdown
                   // TODO: message is wrong unless majority quorums used
-                    shutdown("Only " + syncedCount + " followers, need "
+                    shutdown("Only " + syncedSet.size() + " followers, need "
                             + (self.getVotingView().size() / 2));
                     // make sure the order is the same!
                     // the leader goes to looking
