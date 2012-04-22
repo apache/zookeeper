@@ -18,7 +18,10 @@
 
 package org.apache.zookeeper.server.quorum.flexible;
 
-import java.util.HashSet;
+import java.util.Set;
+import java.util.Map;
+
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 /**
  * All quorum validators have to implement a method called
@@ -29,5 +32,11 @@ import java.util.HashSet;
 
 public interface QuorumVerifier {
     long getWeight(long id);
-    boolean containsQuorum(HashSet<Long> set);
+    boolean containsQuorum(Set<Long> set);
+    long getVersion();
+    Map<Long, QuorumServer> getAllMembers();
+    Map<Long, QuorumServer> getVotingMembers();
+    Map<Long, QuorumServer> getObservingMembers();
+    boolean equals(Object o);
+    byte[] toByteArray();
 }

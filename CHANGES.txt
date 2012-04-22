@@ -276,6 +276,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1432. Add javadoc and debug logging for checkACL() method in 
   PrepRequestProcessor (Eugene Koontz via michim)
 
+  ZOOKEEPER-1411. Consolidate membership management, distinguish between static and dynamic configuration parameters (Alex Shraer via breed)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

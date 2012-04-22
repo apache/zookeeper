@@ -110,8 +110,8 @@ public class QuorumPeerMain {
                 .getDataDir(), config.getDataLogDir(), config
                 .getSnapRetainCount(), config.getPurgeInterval());
         purgeMgr.start();
-
-        if (args.length == 1 && config.servers.size() > 0) {
+        
+        if (args.length == 1 && config.isDistributed()) {
             runFromConfig(config);
         } else {
             LOG.warn("Either no config or no quorum defined in config, running "
@@ -134,12 +134,11 @@ public class QuorumPeerMain {
           cnxnFactory.configure(config.getClientPortAddress(),
                                 config.getMaxClientCnxns());
   
-          quorumPeer = new QuorumPeer();
-          quorumPeer.setClientPortAddress(config.getClientPortAddress());
+          quorumPeer = new QuorumPeer();          
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
                       config.getDataDir()));
-          quorumPeer.setQuorumPeers(config.getServers());
+          //quorumPeer.setQuorumPeers(config.getAllMembers());
           quorumPeer.setElectionType(config.getElectionAlg());
           quorumPeer.setMyid(config.getServerId());
           quorumPeer.setTickTime(config.getTickTime());
@@ -147,11 +146,14 @@ public class QuorumPeerMain {
           quorumPeer.setMaxSessionTimeout(config.getMaxSessionTimeout());
           quorumPeer.setInitLimit(config.getInitLimit());
           quorumPeer.setSyncLimit(config.getSyncLimit());
-          quorumPeer.setQuorumVerifier(config.getQuorumVerifier());
-          quorumPeer.setCnxnFactory(cnxnFactory);
+          quorumPeer.setDynamicConfigFilename(config.getDynamicConfigFilename());
+          quorumPeer.setConfigFileName(config.getConfigFilename());
+          quorumPeer.setConfigBackwardCompatibility(config.getConfigBackwardCompatibility());
           quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
+          quorumPeer.setQuorumVerifier(config.getQuorumVerifier(), false);
+          quorumPeer.setCnxnFactory(cnxnFactory);
           quorumPeer.setLearnerType(config.getPeerType());
-  
+          
           quorumPeer.start();
           quorumPeer.join();
       } catch (InterruptedException e) {

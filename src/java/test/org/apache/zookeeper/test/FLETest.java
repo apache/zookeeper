@@ -298,12 +298,12 @@ public class FLETest extends ZKTestCase {
          * Creates list of peers.
          */
         for(int i = 0; i < count; i++) {
+            port[i] = PortAssignment.unique();
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
                             new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique())));
-            tmpdir[i] = ClientBase.createTmpDir();
-            port[i] = PortAssignment.unique();
+                    new InetSocketAddress(PortAssignment.unique()), new InetSocketAddress(port[i])));
+            tmpdir[i] = ClientBase.createTmpDir();           
         }
 
         /*
@@ -400,12 +400,13 @@ public class FLETest extends ZKTestCase {
         int waitTime = 10 * 1000;
         ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
         for(sid = 0; sid < 3; sid++) {
+            port[sid] = PortAssignment.unique();
             peers.put(Long.valueOf(sid),
                     new QuorumServer(sid,
                             new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique())));
-            tmpdir[sid] = ClientBase.createTmpDir();
-            port[sid] = PortAssignment.unique();
+                    new InetSocketAddress(PortAssignment.unique()),
+                    new InetSocketAddress(port[sid])));
+            tmpdir[sid] = ClientBase.createTmpDir();          
         }
         // start 2 peers and verify if they form the cluster
         for (sid = 0; sid < 2; sid++) {

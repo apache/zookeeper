@@ -56,14 +56,17 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
     public static class MainThread implements Runnable {
         final File confFile;
+        final File dynamicConfigFile;
         volatile TestQPMain main;
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
             throws IOException
         {
             File tmpDir = ClientBase.createTmpDir();
+            LOG.info("id = " + myid + " tmpDir = " + tmpDir);
             confFile = new File(tmpDir, "zoo.cfg");
-
+            dynamicConfigFile = new File(tmpDir, "zoo.dynamic");
+            
             FileWriter fwriter = new FileWriter(confFile);
             fwriter.write("tickTime=4000\n");
             fwriter.write("initLimit=10\n");
@@ -76,13 +79,22 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
             // Convert windows path to UNIX to avoid problems with "\"
             String dir = dataDir.toString();
+            String dynamicConfigFilename = dynamicConfigFile.toString();
             String osname = java.lang.System.getProperty("os.name");
             if (osname.toLowerCase().contains("windows")) {
                 dir = dir.replace('\\', '/');
+                dynamicConfigFilename = dynamicConfigFilename.replace('\\', '/');
             }
             fwriter.write("dataDir=" + dir + "\n");
             
             fwriter.write("clientPort=" + clientPort + "\n");
+            
+            fwriter.write("dynamicConfigFile=" + dynamicConfigFilename + "\n");
+            
+            fwriter.flush();
+            fwriter.close();
+
+            fwriter = new FileWriter(dynamicConfigFile);
             fwriter.write(quorumCfgSection + "\n");
             fwriter.flush();
             fwriter.close();

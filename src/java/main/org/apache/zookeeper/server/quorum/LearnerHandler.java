@@ -261,8 +261,12 @@ public class LearnerHandler extends Thread {
             	this.sid = leader.followerCounter.getAndDecrement();
             }
 
-            LOG.info("Follower sid: " + sid + " : info : "
-                    + leader.self.quorumPeers.get(sid));
+            if (leader.self.getView().containsKey(this.sid)) {
+                LOG.info("Follower sid: " + this.sid + " : info : "
+                        + leader.self.getView().get(this.sid).toString());
+            } else {
+                LOG.info("Follower sid: " + this.sid + " not in the current config " + Long.toHexString(leader.self.getQuorumVerifier().getVersion()));
+            }
                         
             if (qp.getType() == Leader.OBSERVERINFO) {
                   learnerType = LearnerType.OBSERVER;

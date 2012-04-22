@@ -63,10 +63,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
         String quorumCfgSection =
-                "server.1=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique()
-                + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique();
+            "server.1=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+            + "\nserver.2=127.0.0.1:" + PortAssignment.unique() 
+            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
@@ -117,9 +117,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         final int SERVER_COUNT = 3;
         final int clientPorts[] = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            clientPorts[i] = PortAssignment.unique();
-            sb.append("server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + "\n");
+        for(int i = 0; i < SERVER_COUNT; i++) {
+               clientPorts[i] = PortAssignment.unique();
+               sb.append("server."+i+"=127.0.0.1:"+PortAssignment.unique()+":"+PortAssignment.unique()+";"+clientPorts[i]+"\n");
         }
         String quorumCfgSection = sb.toString();
 
@@ -351,7 +351,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            sb.append("server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + "\n");
+            sb.append("server."+i+"=127.0.0.1:"+PortAssignment.unique()+":"+PortAssignment.unique()+";"+clientPorts[i]+"\n");
         }
         String quorumCfgSection = sb.toString();
 
@@ -388,12 +388,13 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
+            final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
             String quorumCfgSection =
-                    "server.1=127.0.0.1:" + PortAssignment.unique()
-                    + ":" + PortAssignment.unique()
-                    + "\nserver.2=fee.fii.foo.fum:" + PortAssignment.unique()
-                    + ":" + PortAssignment.unique();
+                "server.1=127.0.0.1:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+                + "\nserver.2=fee.fii.foo.fum:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
 
             MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
             q1.start();
@@ -452,12 +453,12 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             final int CLIENT_PORT_QP3 = PortAssignment.unique();
 
             String quorumCfgSection =
-                    "server.1=127.0.0.1:" + PortAssignment.unique()
-                    + ":" + PortAssignment.unique()
-                    + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
-                    + ":" + PortAssignment.unique()
-                    + "\nserver.3=127.0.0.1:" + PortAssignment.unique()
-                    + ":" + PortAssignment.unique() + ":observer";
+                "server.1=127.0.0.1:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+                + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2
+                + "\nserver.3=127.0.0.1:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique() + ":observer" + ";" + CLIENT_PORT_QP3;
 
             MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
             MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
@@ -529,11 +530,11 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         int electionPort1 = PortAssignment.unique();
         int electionPort2 = PortAssignment.unique();
         String quorumCfgSection =
-                "server.1=127.0.0.1:" + PortAssignment.unique()
-                + ":" + electionPort1
-                + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
-                + ":" + electionPort2;
-
+            "server.1=127.0.0.1:" + PortAssignment.unique()
+            + ":" + electionPort1 + ";" + CLIENT_PORT_QP1
+            + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
+            + ":" +  electionPort2 + ";" + CLIENT_PORT_QP2;
+        
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
         q1.start();
@@ -593,10 +594,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
             String quorumCfgSection =
-                    "server.1=127.0.0.1:" + PortAssignment.unique()
-                    + ":" + PortAssignment.unique()
-                    + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
-                    + ":" + PortAssignment.unique();
+                "server.1=127.0.0.1:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+                + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
+                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
 
             MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
             MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
@@ -646,10 +647,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         long maxwait = 3000;
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
         String quorumCfgSection =
-                "server.1=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique()
-                + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique();
+            "server.1=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+            + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ";" + PortAssignment.unique();
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();
         // Let the notifications timeout

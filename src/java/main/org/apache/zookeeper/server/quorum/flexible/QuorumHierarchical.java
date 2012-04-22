@@ -21,8 +21,10 @@ package org.apache.zookeeper.server.quorum.flexible;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashSet;
+import java.io.StringWriter;
+import java.util.Set;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
@@ -30,6 +32,8 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
 
@@ -65,12 +69,53 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 public class QuorumHierarchical implements QuorumVerifier {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumHierarchical.class);
 
-    HashMap<Long, Long> serverWeight;
-    HashMap<Long, Long> serverGroup;
-    HashMap<Long, Long> groupWeight;
+    private HashMap<Long, Long> serverWeight = new HashMap<Long, Long>();
+    private HashMap<Long, Long> serverGroup = new HashMap<Long, Long>();
+    private HashMap<Long, Long> groupWeight = new HashMap<Long, Long>();
     
-    int numGroups;
+    private int numGroups = 0;
    
+    private Map<Long, QuorumServer> allMembers = new HashMap<Long, QuorumServer>();
+    private Map<Long, QuorumServer> participatingMembers = new HashMap<Long, QuorumServer>();
+    private Map<Long, QuorumServer> observingMembers = new HashMap<Long, QuorumServer>();
+    
+    private long version = 0;
+    
+    public int hashCode() {
+         assert false : "hashCode not designed";
+         return 42; // any arbitrary constant will do 
+    }
+    
+   public boolean equals(Object o){
+       if (!(o instanceof QuorumHierarchical)) {
+           return false;           
+       }       
+       QuorumHierarchical qm = (QuorumHierarchical)o;
+       if (qm.getVersion() == version) return true;
+       if ((allMembers.size()!=qm.getAllMembers().size()) ||
+           (serverWeight.size() != qm.serverWeight.size()) ||
+           (groupWeight.size() != qm.groupWeight.size()) ||
+            (serverGroup.size() != qm.serverGroup.size())) {
+           return false;
+       }   
+       for (QuorumServer qs: allMembers.values()){
+           QuorumServer qso = qm.getAllMembers().get(qs.id);
+           if (qso == null || !qs.equals(qso)) return false;
+       }
+       for (Long sid: serverWeight.keySet()){
+           if (serverWeight.get(sid) != qm.serverWeight.get(sid))
+               return false;
+       }
+       for (Long sid: groupWeight.keySet()){
+           if (groupWeight.get(sid) != qm.groupWeight.get(sid))
+               return false;
+       }
+       for (Long sid: serverGroup.keySet()){
+           if (serverGroup.get(sid) != qm.serverGroup.get(sid))
+               return false;
+       }
+       return true;
+   }
     /**
      * This contructor requires the quorum configuration
      * to be declared in a separate file, and it takes the
@@ -78,12 +123,7 @@ public class QuorumHierarchical implements QuorumVerifier {
      */
     public QuorumHierarchical(String filename)
     throws ConfigException {
-        this.serverWeight = new HashMap<Long, Long>();
-        this.serverGroup = new HashMap<Long, Long>();
-        this.groupWeight = new HashMap<Long, Long>();
-        this.numGroups = 0;
-        
-        readConfigFile(filename);
+        readConfigFile(filename);    
     }
     
     /**
@@ -91,40 +131,11 @@ public class QuorumHierarchical implements QuorumVerifier {
      * it in the unit test for this feature.
      */
     
-    public QuorumHierarchical(Properties qp)
-    throws ConfigException {
-        this.serverWeight = new HashMap<Long, Long>();
-        this.serverGroup = new HashMap<Long, Long>();
-        this.groupWeight = new HashMap<Long, Long>();
-        this.numGroups = 0;
-        
+    public QuorumHierarchical(Properties qp) throws ConfigException {
         parse(qp);
-        
         LOG.info(serverWeight.size() + ", " + serverGroup.size() + ", " + groupWeight.size());
     }
-    
-   /**
-    *  This contructor takes the two hash maps needed to enable 
-    *  validating quorums. We use it with QuorumPeerConfig. That is,
-    *  we declare weights and groups in the server configuration
-    *  file along with the other parameters.
-    * @param numGroups
-    * @param serverWeight
-    * @param serverGroup
-    */
-    public QuorumHierarchical(int numGroups,
-            HashMap<Long, Long> serverWeight,
-            HashMap<Long, Long> serverGroup)
-    {
-        this.serverWeight = serverWeight;
-        this.serverGroup = serverGroup;
-        this.groupWeight = new HashMap<Long, Long>();
-        
-        this.numGroups = numGroups;
-        computeGroupWeight();   
-    }
-    
-    
+  
     /**
      * Returns the weight of a server.
      * 
@@ -170,12 +181,25 @@ public class QuorumHierarchical implements QuorumVerifier {
     
     /**
      * Parse properties if configuration given in a separate file.
+     * Assumes that allMembers has been already assigned
+     * @throws ConfigException 
      */
-    private void parse(Properties quorumProp){
+    private void parse(Properties quorumProp) throws ConfigException{
         for (Entry<Object, Object> entry : quorumProp.entrySet()) {
             String key = entry.getKey().toString();
             String value = entry.getValue().toString(); 
-            if (key.startsWith("group")) {
+            
+            if (key.startsWith("server.")) {
+                int dot = key.indexOf('.');
+                long sid = Long.parseLong(key.substring(dot + 1));
+                QuorumServer qs = new QuorumServer(sid, value);
+                allMembers.put(Long.valueOf(sid), qs);  
+                if (qs.type == LearnerType.PARTICIPANT) 
+                   participatingMembers.put(Long.valueOf(sid), qs);
+                else {
+                   observingMembers.put(Long.valueOf(sid), qs);
+                }
+            } else if (key.startsWith("group")) {
                 int dot = key.indexOf('.');
                 long gid = Long.parseLong(key.substring(dot + 1));
                 
@@ -184,7 +208,10 @@ public class QuorumHierarchical implements QuorumVerifier {
                 String parts[] = value.split(":");
                 for(String s : parts){
                     long sid = Long.parseLong(s);
-                    serverGroup.put(sid, gid);
+                    if(serverGroup.containsKey(sid))
+                        throw new ConfigException("Server " + sid + "is in multiple groups");
+                    else
+                        serverGroup.put(sid, gid);
                 }
                     
                 
@@ -192,10 +219,74 @@ public class QuorumHierarchical implements QuorumVerifier {
                 int dot = key.indexOf('.');
                 long sid = Long.parseLong(key.substring(dot + 1));
                 serverWeight.put(sid, Long.parseLong(value));
-            }
+            } else if (key.equals("version")){
+               version = Long.parseLong(value, 16);
+            }        
         }
         
+        for (QuorumServer qs: allMembers.values()){
+           Long id = qs.id;
+           if (qs.type == LearnerType.PARTICIPANT){
+               if (!serverGroup.containsKey(id)) 
+                   throw new ConfigException("Server " + id + "is not in a group");
+               if (!serverWeight.containsKey(id))
+                   serverWeight.put(id, (long) 1);
+            }
+        }
+           
+           
         computeGroupWeight();
+    }
+    
+    public Map<Long, QuorumServer> getAllMembers() { 
+       return allMembers;
+    }
+    public byte[] toByteArray(){
+       StringWriter sw = new StringWriter();
+       
+       for (QuorumServer member: getAllMembers().values()){            
+               String key = "server." + member.id;
+            String value = member.toString();
+            sw.append(key);
+            sw.append('=');
+            sw.append(value);
+            sw.append('\n');                       
+       }
+       
+       Map<Long, String> groups = new HashMap<Long, String>();
+       for (Entry<Long, Long> pair: serverGroup.entrySet()) {
+           Long sid = pair.getKey();
+           Long gid = pair.getValue();
+           String str = groups.get(gid);
+           if (str == null) str = sid.toString();
+           else str = str.concat(":").concat(sid.toString());
+           groups.put(gid, str);
+       }
+       
+       for (Entry<Long, String> pair: groups.entrySet()) {
+           Long gid = pair.getKey();
+           String key = "group." + gid.toString();
+            String value = pair.getValue();
+            sw.append(key);
+            sw.append('=');
+            sw.append(value);
+            sw.append('\n');           
+       }
+   
+   
+       for (Entry<Long, Long> pair: serverWeight.entrySet()) {
+           Long sid = pair.getKey();
+           String key = "weight." + sid.toString();
+            String value = pair.getValue().toString();
+            sw.append(key);
+            sw.append('=');
+            sw.append(value);
+            sw.append('\n');           
+       }
+       
+       sw.append("version=" + Long.toHexString(version));
+       
+       return sw.toString().getBytes();        
     }
     
     /**
@@ -229,7 +320,7 @@ public class QuorumHierarchical implements QuorumVerifier {
     /**
      * Verifies if a given set is a quorum.
      */
-    public boolean containsQuorum(HashSet<Long> set){
+    public boolean containsQuorum(Set<Long> set){
         HashMap<Long, Long> expansion = new HashMap<Long, Long>();
         
         /*
@@ -240,6 +331,7 @@ public class QuorumHierarchical implements QuorumVerifier {
         
         for(long sid : set){
             Long gid = serverGroup.get(sid);
+            if (gid == null) continue;
             if(!expansion.containsKey(gid))
                 expansion.put(gid, serverWeight.get(sid));
             else {
@@ -267,5 +359,16 @@ public class QuorumHierarchical implements QuorumVerifier {
             LOG.debug("Negative set size: " + set.size());
             return false;
         }
-    }
+    }  
+    public Map<Long, QuorumServer> getVotingMembers() {        
+       return participatingMembers;
+   }
+
+   public Map<Long, QuorumServer> getObservingMembers() {      
+       return observingMembers;
+   }
+
+   public long getVersion() {
+       return version;
+   }          
 }

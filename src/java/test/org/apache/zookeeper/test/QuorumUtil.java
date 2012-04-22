@@ -102,9 +102,11 @@ public class QuorumUtil {
                 ps.clientPort = PortAssignment.unique();
                 peers.put(i, ps);
 
-                peersView.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(
-                        "127.0.0.1", ps.clientPort + 1000), new InetSocketAddress("127.0.0.1",
-                        PortAssignment.unique() + 1000), LearnerType.PARTICIPANT));
+                peersView.put(Long.valueOf(i), new QuorumServer(i, 
+                               new InetSocketAddress("127.0.0.1", PortAssignment.unique() + 1000), 
+                               new InetSocketAddress("127.0.0.1", PortAssignment.unique() + 1000), 
+                               new InetSocketAddress("127.0.0.1", ps.clientPort), 
+                               LearnerType.PARTICIPANT));
                 hostPort += "127.0.0.1:" + ps.clientPort + ((i == ALL) ? "" : ",");
             }
             for (int i = 1; i <= ALL; ++i) {
