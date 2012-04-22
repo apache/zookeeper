@@ -396,7 +396,9 @@ public class Leader {
                     HashSet<Long> followerSet = new HashSet<Long>();
 
                     for(LearnerHandler f : getLearners()) {
-                        followerSet.add(f.getSid());
+                        if (self.getQuorumVerifier().getVotingMembers().containsKey(f.getSid())){
+                            followerSet.add(f.getSid());
+                        }
                     }
 
                     if (self.getQuorumVerifier().containsQuorum(followerSet)) {
@@ -455,7 +457,7 @@ public class Leader {
                 for (LearnerHandler f : getLearners()) {
                     // Synced set is used to check we have a supporting quorum, so only
                     // PARTICIPANT, not OBSERVER, learners should be used
-                    if (f.synced() && f.getLearnerType() == LearnerType.PARTICIPANT) {
+                    if (f.synced() && self.getQuorumVerifier().getVotingMembers().containsKey(f.getSid())) {
                         syncedSet.add(f.getSid());
                     }
                     f.ping();

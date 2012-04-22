@@ -49,7 +49,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         
         String quorumCfgSection =
             "server.1=127.0.0.1:" + (PortAssignment.unique())
-            + ":" + (PortAssignment.unique()) + "\n";
+            + ":" + (PortAssignment.unique()) + ";" + CLIENT_PORT_QP1 + "\n";
                     
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();

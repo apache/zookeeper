@@ -859,16 +859,18 @@ public class Zab1_0Test {
         return new ConversableFollower(peer, zk);
     }
 
-    private QuorumPeer createQuorumPeer(File tmpDir) throws IOException,
-            FileNotFoundException {
+    private QuorumPeer createQuorumPeer(File tmpDir) throws IOException, FileNotFoundException {
+        HashMap<Long, QuorumServer> peers = new HashMap<Long, QuorumServer>();
         QuorumPeer peer = new QuorumPeer();
         peer.syncLimit = 2;
         peer.initLimit = 2;
         peer.tickTime = 2000;
-        peer.quorumPeers = new HashMap<Long, QuorumServer>();
-        peer.quorumPeers.put(1L, new QuorumServer(0, new InetSocketAddress(33221)));
-        peer.quorumPeers.put(1L, new QuorumServer(1, new InetSocketAddress(33223)));
-        peer.setQuorumVerifier(new QuorumMaj(3));
+        
+        peers.put(0L, new QuorumServer(0, new InetSocketAddress(33221), new InetSocketAddress(33231), new InetSocketAddress(33241)));
+        peers.put(1L, new QuorumServer(1, new InetSocketAddress(33223), new InetSocketAddress(33233), new InetSocketAddress(33243))); 
+        peers.put(2L, new QuorumServer(2, new InetSocketAddress(33224), new InetSocketAddress(33234), new InetSocketAddress(33245))); 
+        
+        peer.setQuorumVerifier(new QuorumMaj(peers), false);
         peer.setCnxnFactory(new NullServerCnxnFactory());
         File version2 = new File(tmpDir, "version-2");
         version2.mkdir();

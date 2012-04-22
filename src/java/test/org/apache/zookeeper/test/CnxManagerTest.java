@@ -66,7 +66,8 @@ public class CnxManagerTest extends ZKTestCase {
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
                             new InetSocketAddress(peerQuorumPort[i]),
-                    new InetSocketAddress(PortAssignment.unique())));
+                    new InetSocketAddress(PortAssignment.unique()), 
+                    new InetSocketAddress(peerClientPort[i])));
             peerTmpdir[i] = ClientBase.createTmpDir();
         }
     }
@@ -183,6 +184,7 @@ public class CnxManagerTest extends ZKTestCase {
         peers.put(Long.valueOf(2),
                 new QuorumServer(2,
                         new InetSocketAddress(deadAddress, deadPort),
+                        new InetSocketAddress(deadAddress, PortAssignment.unique()),
                         new InetSocketAddress(deadAddress, PortAssignment.unique())));
         peerTmpdir[2] = ClientBase.createTmpDir();
 

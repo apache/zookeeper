@@ -585,14 +585,14 @@ public class FastLeaderElection implements Election {
          * different zxids for a server depending on timing.
          */
         for (Map.Entry<Long,Vote> entry : votes.entrySet()) {
-            if (vote.equals(entry.getValue())){
+            if (self.getQuorumVerifier().getVotingMembers().containsKey(entry.getKey())
+                    && vote.equals(entry.getValue())){
                 set.add(entry.getKey());
             }
         }
 
         return self.getQuorumVerifier().containsQuorum(set);
     }
-
     /**
      * In the case there is a leader elected, and a quorum supporting
      * this leader, we have to check if the leader has voted and acked
@@ -665,7 +665,7 @@ public class FastLeaderElection implements Election {
      * @return long
      */
     private long getInitId(){
-        if(self.getLearnerType() == LearnerType.PARTICIPANT)
+        if(self.getQuorumVerifier().getVotingMembers().containsKey(self.getId()))       
             return self.getId();
         else return Long.MIN_VALUE;
     }

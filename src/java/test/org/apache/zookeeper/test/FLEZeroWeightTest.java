@@ -144,12 +144,13 @@ public class FLEZeroWeightTest extends ZKTestCase {
 
         LOG.info("TestZeroWeightQuorum: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {
-            peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique())));
+            InetSocketAddress addr1 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
+            InetSocketAddress addr2 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
+            InetSocketAddress addr3 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
+            port[i] = addr3.getPort();
+            qp.setProperty("server."+i, "127.0.0.1:"+addr1.getPort()+":"+addr2.getPort()+";"+port[i]);
+            peers.put(Long.valueOf(i), new QuorumServer(i, addr1, addr2, addr3));
             tmpdir[i] = ClientBase.createTmpDir();
-            port[i] = PortAssignment.unique();
         }
 
         for(int i = 0; i < le.length; i++) {

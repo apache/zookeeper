@@ -56,7 +56,13 @@ public class QuorumBase extends ClientBase {
     protected int portLE3;
     protected int portLE4;
     protected int portLE5;
-
+    
+    protected int portClient1;
+    protected int portClient2;
+    protected int portClient3;
+    protected int portClient4;
+    protected int portClient5;
+    
     @Test
     // This just avoids complaints by junit
     public void testNull() {
@@ -87,11 +93,17 @@ public class QuorumBase extends ClientBase {
         portLE4 = PortAssignment.unique();
         portLE5 = PortAssignment.unique();
         
-        hostPort = "127.0.0.1:" + port1
-            + ",127.0.0.1:" + port2
-            + ",127.0.0.1:" + port3
-            + ",127.0.0.1:" + port4
-            + ",127.0.0.1:" + port5;
+        portClient1 = PortAssignment.unique();
+        portClient2 = PortAssignment.unique();
+        portClient3 = PortAssignment.unique();
+        portClient4 = PortAssignment.unique();
+        portClient5 = PortAssignment.unique();
+        
+        hostPort = "127.0.0.1:" + portClient1
+            + ",127.0.0.1:" + portClient2
+            + ",127.0.0.1:" + portClient3
+            + ",127.0.0.1:" + portClient4
+            + ",127.0.0.1:" + portClient5;
         LOG.info("Ports are: " + hostPort);
 
         s1dir = ClientBase.createTmpDir();
@@ -126,22 +138,27 @@ public class QuorumBase extends ClientBase {
         peers.put(Long.valueOf(1), new QuorumServer(1, 
                 new InetSocketAddress("127.0.0.1", port1 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE1 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient1),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(2), new QuorumServer(2, 
                 new InetSocketAddress("127.0.0.1", port2 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE2 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient2),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(3), new QuorumServer(3, 
                 new InetSocketAddress("127.0.0.1", port3 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE3 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient3),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(4), new QuorumServer(4, 
                 new InetSocketAddress("127.0.0.1", port4 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE4 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient4),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(5), new QuorumServer(5, 
                 new InetSocketAddress("127.0.0.1", port5 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE5 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient5),
                 LearnerType.PARTICIPANT));
         
         if (withObservers) {
@@ -149,21 +166,21 @@ public class QuorumBase extends ClientBase {
             peers.get(Long.valueOf(5)).type = LearnerType.OBSERVER;
         }
 
-        LOG.info("creating QuorumPeer 1 port " + port1);
-        s1 = new QuorumPeer(peers, s1dir, s1dir, port1, 3, 1, tickTime, initLimit, syncLimit);
-        Assert.assertEquals(port1, s1.getClientPort());
-        LOG.info("creating QuorumPeer 2 port " + port2);
-        s2 = new QuorumPeer(peers, s2dir, s2dir, port2, 3, 2, tickTime, initLimit, syncLimit);
-        Assert.assertEquals(port2, s2.getClientPort());
-        LOG.info("creating QuorumPeer 3 port " + port3);
-        s3 = new QuorumPeer(peers, s3dir, s3dir, port3, 3, 3, tickTime, initLimit, syncLimit);
-        Assert.assertEquals(port3, s3.getClientPort());
-        LOG.info("creating QuorumPeer 4 port " + port4);
-        s4 = new QuorumPeer(peers, s4dir, s4dir, port4, 3, 4, tickTime, initLimit, syncLimit);
-        Assert.assertEquals(port4, s4.getClientPort());
-        LOG.info("creating QuorumPeer 5 port " + port5);
-        s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 3, 5, tickTime, initLimit, syncLimit);
-        Assert.assertEquals(port5, s5.getClientPort());
+        LOG.info("creating QuorumPeer 1 port " + portClient1);
+        s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit);
+        Assert.assertEquals(portClient1, s1.getClientPort());
+        LOG.info("creating QuorumPeer 2 port " + portClient2);
+        s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit);
+        Assert.assertEquals(portClient2, s2.getClientPort());
+        LOG.info("creating QuorumPeer 3 port " + portClient3);
+        s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit);
+        Assert.assertEquals(portClient3, s3.getClientPort());
+        LOG.info("creating QuorumPeer 4 port " + portClient4);
+        s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit);
+        Assert.assertEquals(portClient4, s4.getClientPort());
+        LOG.info("creating QuorumPeer 5 port " + portClient5);
+        s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit);
+        Assert.assertEquals(portClient5, s5.getClientPort());
         
         if (withObservers) {
             s4.setLearnerType(LearnerType.OBSERVER);
@@ -240,50 +257,55 @@ public class QuorumBase extends ClientBase {
             peers.put(Long.valueOf(1), new QuorumServer(1, 
                 new InetSocketAddress("127.0.0.1", port1 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE1 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient1),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(2), new QuorumServer(2, 
                 new InetSocketAddress("127.0.0.1", port2 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE2 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient2),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(3), new QuorumServer(3, 
                 new InetSocketAddress("127.0.0.1", port3 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE3 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient3),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(4), new QuorumServer(4, 
                 new InetSocketAddress("127.0.0.1", port4 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE4 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient4),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(5), new QuorumServer(5, 
                 new InetSocketAddress("127.0.0.1", port5 + 1000),
                 new InetSocketAddress("127.0.0.1", portLE5 + 1000),
+                new InetSocketAddress("127.0.0.1", portClient5),
                 LearnerType.PARTICIPANT));
         }
         
         switch(i){
         case 1:
-            LOG.info("creating QuorumPeer 1 port " + port1);
-            s1 = new QuorumPeer(peers, s1dir, s1dir, port1, 3, 1, tickTime, initLimit, syncLimit);
-            Assert.assertEquals(port1, s1.getClientPort());
+            LOG.info("creating QuorumPeer 1 port " + portClient1);
+            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit);
+            Assert.assertEquals(portClient1, s1.getClientPort());
             break;
         case 2:
-            LOG.info("creating QuorumPeer 2 port " + port2);
-            s2 = new QuorumPeer(peers, s2dir, s2dir, port2, 3, 2, tickTime, initLimit, syncLimit);
-            Assert.assertEquals(port2, s2.getClientPort());
+            LOG.info("creating QuorumPeer 2 port " + portClient2);
+            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit);
+            Assert.assertEquals(portClient2, s2.getClientPort());
             break;
         case 3:  
-            LOG.info("creating QuorumPeer 3 port " + port3);
-            s3 = new QuorumPeer(peers, s3dir, s3dir, port3, 3, 3, tickTime, initLimit, syncLimit);
-            Assert.assertEquals(port3, s3.getClientPort());
+            LOG.info("creating QuorumPeer 3 port " + portClient3);
+            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit);
+            Assert.assertEquals(portClient3, s3.getClientPort());
             break;
         case 4:
-            LOG.info("creating QuorumPeer 4 port " + port4);
-            s4 = new QuorumPeer(peers, s4dir, s4dir, port4, 3, 4, tickTime, initLimit, syncLimit);
-            Assert.assertEquals(port4, s4.getClientPort());
+            LOG.info("creating QuorumPeer 4 port " + portClient4);
+            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit);
+            Assert.assertEquals(portClient4, s4.getClientPort());
             break;
         case 5:
-            LOG.info("creating QuorumPeer 5 port " + port5);
-            s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 3, 5, tickTime, initLimit, syncLimit);
-            Assert.assertEquals(port5, s5.getClientPort());
+            LOG.info("creating QuorumPeer 5 port " + portClient5);
+            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit);
+            Assert.assertEquals(portClient5, s5.getClientPort());
         }
     }
     

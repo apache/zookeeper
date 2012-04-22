@@ -337,8 +337,8 @@ public class QuorumCnxManager {
     synchronized void connectOne(long sid){
         if (senderWorkerMap.get(sid) == null){
             InetSocketAddress electionAddr;
-            if (self.quorumPeers.containsKey(sid)) {
-                electionAddr = self.quorumPeers.get(sid).electionAddr;
+            if (self.getView().containsKey(sid)) {
+                electionAddr = self.getView().get(sid).electionAddr;
             } else {
                 LOG.warn("Invalid server id: " + sid);
                 return;
@@ -479,12 +479,10 @@ public class QuorumCnxManager {
                 try {
                     ss = new ServerSocket();
                     ss.setReuseAddress(true);
-                    int port = self.quorumPeers.get(self.getId()).electionAddr
-                            .getPort();
-                    InetSocketAddress addr = new InetSocketAddress(port);
+                    InetSocketAddress addr = self.getElectionAddress();
                     LOG.info("My election bind port: " + addr.toString());
-                    setName(self.quorumPeers.get(self.getId()).electionAddr
-                            .toString());
+                    setName(addr.toString());
+                    // we used to bind to the * address but this seems more correct
                     ss.bind(addr);
                     while (!shutdown) {
                         Socket client = ss.accept();
@@ -513,7 +511,7 @@ public class QuorumCnxManager {
                 LOG.error("As I'm leaving the listener thread, "
                         + "I won't be able to participate in leader "
                         + "election any longer: "
-                        + self.quorumPeers.get(self.getId()).electionAddr);
+                        + self.getElectionAddress());
             }
         }
         
@@ -684,7 +682,7 @@ public class QuorumCnxManager {
                         self.getId() + " error = " + e);
             }
             this.finish();
-            LOG.warn("Send worker leaving thread");
+            LOG.warn("Send worker leaving thread " + " id " + sid + " my id = " + self.getId());
         }
     }
 
