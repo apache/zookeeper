@@ -49,6 +49,8 @@ import org.apache.zookeeper.server.ServerCnxnFactoryAccessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -262,6 +264,23 @@ public abstract class ClientBase extends ZKTestCase {
             }
         }
         return false;
+    }
+
+    public static boolean waitForServerState(QuorumPeer qp, int timeout,
+            String serverState) {
+        long start = System.currentTimeMillis();
+        while (true) {
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+            if (qp.getServerState().equals(serverState))
+                return true;
+            if (System.currentTimeMillis() > start + timeout) {
+                return false;
+            }
+        }
     }
 
     static void verifyThreadTerminated(Thread thread, long millis)

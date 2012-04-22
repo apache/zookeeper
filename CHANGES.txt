@@ -43,6 +43,8 @@ BUGFIXES:
   ZOOKEEPER-1433. improve ZxidRolloverTest (test seems flakey) (phunt via henryr)
 
   ZOOKEEPER-1395. node-watcher double-free redux (Mike Lundy via henryr)
+  
+  ZOOKEEPER-1450. Backport of ZOOKEEPER-1294 fix to 3.4 and 3.3 (Norman Bishop via camille)
    
 IMPROVEMENTS:
 
