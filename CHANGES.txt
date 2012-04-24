@@ -278,6 +278,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1411. Consolidate membership management, distinguish between static and dynamic configuration parameters (Alex Shraer via breed)
 
+  ZOOKEEPER-1451. C API improperly logs getaddrinfo failures on Linux when using glibc (Stephen Tyree via michim)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
