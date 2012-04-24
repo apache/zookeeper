@@ -595,6 +595,8 @@ int getaddrs(zhandle_t *zh)
                 errno = getaddrinfo_errno(rc);
 #ifdef WIN32
                 LOG_ERROR(("Win32 message: %s\n", gai_strerror(rc)));
+#elif __linux__ && __GNUC__
+                LOG_ERROR(("getaddrinfo: %s\n", gai_strerror(rc)));
 #else
                 LOG_ERROR(("getaddrinfo: %s\n", strerror(errno)));
 #endif
