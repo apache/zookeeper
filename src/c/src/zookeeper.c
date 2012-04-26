@@ -739,7 +739,7 @@ static void log_env() {
 
 #if defined(HAVE_GETUID) && defined(HAVE_GETPWUID_R)
   uid = getuid();
-  if (!getpwuid_r(uid, &pw, buf, sizeof(buf), &pwp)) {
+  if (!getpwuid_r(uid, &pw, buf, sizeof(buf), &pwp) && pwp) {
     LOG_INFO(("Client environment:user.home=%s", pw.pw_dir));
   } else {
     LOG_INFO(("Client environment:user.home=<NA>"));
