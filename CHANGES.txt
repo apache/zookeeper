@@ -172,6 +172,9 @@ BUGFIXES:
   ZOOKEEPER-1439. c sdk: core in log_env for lack of checking the output
   argument *pwp* of getpwuid_r (Yubing Yin via michim)
 
+  ZOOKEEPER-1339. C client doesn't build with --enable-debug
+  (Eric Liang via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
