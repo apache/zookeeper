@@ -11,6 +11,8 @@ BUGFIXES:
   
   ZOOKEEPER-1450. Backport of ZOOKEEPER-1294 fix to 3.4 and 3.3 (Norman Bishop via camille)
 
+  ZOOKEEPER-1305. zookeeper.c:prepend_string func can dereference null ptr (Daniel Lescohier via michim)
+
 Release 3.3.5 - 2012-03-18
 Backward compatible changes:
 
