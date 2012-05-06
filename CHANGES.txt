@@ -45,6 +45,8 @@ BUGFIXES:
   ZOOKEEPER-1395. node-watcher double-free redux (Mike Lundy via henryr)
   
   ZOOKEEPER-1450. Backport of ZOOKEEPER-1294 fix to 3.4 and 3.3 (Norman Bishop via camille)
+
+  ZOOKEEPER-1048. addauth command does not work in cli_mt/cli_st (allengao via michim)
    
 IMPROVEMENTS:
 

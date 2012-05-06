@@ -469,7 +469,7 @@ void processline(char *line) {
         *ptr = '\0';
         ptr++;
       }
-      zoo_add_auth(zh, line, ptr, ptr ? strlen(ptr)-1 : 0, NULL, NULL);
+      zoo_add_auth(zh, line, ptr, ptr ? strlen(ptr) : 0, NULL, NULL);
     }
 }
 
