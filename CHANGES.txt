@@ -175,6 +175,9 @@ BUGFIXES:
   ZOOKEEPER-1339. C client doesn't build with --enable-debug
   (Eric Liang via michim)
 
+  ZOOKEEPER-1048. addauth command does not work in cli_mt/cli_st
+  (allengao via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
