@@ -13,6 +13,8 @@ BUGFIXES:
 
   ZOOKEEPER-1305. zookeeper.c:prepend_string func can dereference null ptr (Daniel Lescohier via michim)
 
+  ZOOKEEPER-1048. addauth command does not work in cli_mt/cli_st (allengao via michim)
+
 Release 3.3.5 - 2012-03-18
 Backward compatible changes:
 
