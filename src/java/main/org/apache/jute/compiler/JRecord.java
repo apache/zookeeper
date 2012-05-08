@@ -600,6 +600,7 @@ public class JRecord extends JCompType {
         cs.write("\n");
         cs.write("using System;\n");
         cs.write("using Org.Apache.Jute;\n");
+        cs.write("using log4net;\n");
         cs.write("\n");        
         cs.write("namespace "+getCsharpNameSpace()+"\n");
         cs.write("{\n");
@@ -607,6 +608,7 @@ public class JRecord extends JCompType {
         String className = getCsharpName();
         cs.write("public class "+className+" : IRecord, IComparable \n");
         cs.write("{\n");
+        cs.write("private static ILog log = LogManager.GetLogger(typeof(" + className + "));\n");
         cs.write("  public "+ className +"() {\n");
         cs.write("  }\n");
 
@@ -653,10 +655,10 @@ public class JRecord extends JCompType {
 
         cs.write("  public override String ToString() {\n");
         cs.write("    try {\n");
-        cs.write("      System.IO.MemoryStream ms = new System.IO.MemoryStream();\n");
-        cs.write("      ZooKeeperNet.IO.EndianBinaryWriter writer =\n");
+        cs.write("      using(System.IO.MemoryStream ms = new System.IO.MemoryStream())\n");
+        cs.write("      using(ZooKeeperNet.IO.EndianBinaryWriter writer =\n");
         cs.write("        new ZooKeeperNet.IO.EndianBinaryWriter(ZooKeeperNet.IO.EndianBitConverter.Big, ms, " +
-            "System.Text.Encoding.UTF8);\n");
+            "System.Text.Encoding.UTF8)){\n");
         cs.write("      BinaryOutputArchive a_ = \n");
         cs.write("        new BinaryOutputArchive(writer);\n");
         cs.write("      a_.StartRecord(this,\"\");\n");
@@ -668,8 +670,9 @@ public class JRecord extends JCompType {
         cs.write("      a_.EndRecord(this,\"\");\n");
         cs.write("      ms.Position = 0;\n");
         cs.write("      return System.Text.Encoding.UTF8.GetString(ms.ToArray());\n");
+        cs.write("    }");
         cs.write("    } catch (Exception ex) {\n");
-        cs.write("      Console.WriteLine(ex.StackTrace);\n");
+        cs.write("      log.Error(ex);\n");
         cs.write("    }\n");
         cs.write("    return \"ERROR\";\n");
         cs.write("  }\n");
