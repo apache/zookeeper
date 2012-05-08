@@ -7,7 +7,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet.Tests", "ZooKe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet.Recipes", "ZooKeeperNet.Recipes\ZooKeeperNet.Recipes.csproj", "{9E641549-7F84-45E4-9543-537052494EC6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNet.Recipes.Tests", "ZooKeeperNet.Recipes.Tests\ZooKeeperNetRecipes.Tests.csproj", "{F5808277-10B4-4E3C-A79C-EEB679DA20A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZooKeeperNetRecipes.Tests", "ZooKeeperNet.Recipes.Tests\ZooKeeperNetRecipes.Tests.csproj", "{F5808277-10B4-4E3C-A79C-EEB679DA20A6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3124BC6C-39C6-473D-B3E5-E04C85D922F4}"
+	ProjectSection(SolutionItems) = preProject
+		SolutionVersion.cs = SolutionVersion.cs
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
