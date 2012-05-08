@@ -493,16 +493,18 @@ public class QuorumCnxManager {
                         numRetries = 0;
                     }
                 } catch (IOException e) {
-                    LOG.error("Exception while listening", e);
-                    numRetries++;
-                    try {
-                        ss.close();
-                        Thread.sleep(1000);
-                    } catch (IOException ie) {
-                        LOG.error("Error closing server socket", ie);
-                    } catch (InterruptedException ie) {
-                        LOG.error("Interrupted while sleeping. " +
-                                  "Ignoring exception", ie);
+                    if ( !shutdown ) {
+                        LOG.error("Exception while listening", e);
+                        numRetries++;
+                        try {
+                            ss.close();
+                            Thread.sleep(1000);
+                        } catch (IOException ie) {
+                            LOG.error("Error closing server socket", ie);
+                        } catch (InterruptedException ie) {
+                            LOG.error("Interrupted while sleeping. " +
+                                      "Ignoring exception", ie);
+                        }
                     }
                 }
             }
