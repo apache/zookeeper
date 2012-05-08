@@ -34,7 +34,7 @@
          * @return object. it needs to be cast to the callee's expected 
          * return type.
          */
-        protected object RetryOperation(Func<object> operation)
+        protected T RetryOperation<T>(Func<T> operation)
         {
             KeeperException exception = null;
             for (int i = 0; i < RetryCount; i++)
@@ -51,9 +51,15 @@
                 catch (KeeperException.ConnectionLossException e)
                 {
                     if (exception == null)
-                    {
                         exception = e;
-                    }
+                    LOG.Debug("Attempt " + i + " failed with connection loss so " +
+                            "attempting to reconnect: " + e, e);
+                    DoRetryDelay(i);
+                }
+                catch (TimeoutException e)
+                {
+                    if (exception == null)
+                        exception = KeeperException.Create(KeeperException.Code.OPERATIONTIMEOUT);
                     LOG.Debug("Attempt " + i + " failed with connection loss so " +
                             "attempting to reconnect: " + e, e);
                     DoRetryDelay(i);
@@ -109,7 +115,7 @@
          */
         protected bool IsDisposed()
         {
-            return Thread.VolatileRead(ref closed) == 1;
+            return Interlocked.CompareExchange(ref closed,1,1) == 1;
         }
 
         /**
@@ -131,16 +137,27 @@
             }
         }
 
-        public void Dispose()
+        protected virtual void Dispose(bool isDisposing)
         {
-            if (Interlocked.CompareExchange(ref closed, 0, 1) == 0)
+            if (Interlocked.CompareExchange(ref closed, 1, 0) == 0)
             {
-                DisposeInternal();
+                if (isDisposing)
+                    GC.SuppressFinalize(this);
             }
         }
 
-        protected virtual void DisposeInternal()
+        #region IDisposable Members
+
+        public void Dispose()
         {
+            Dispose(true);
         }
+
+        ~ProtocolSupport()
+        {
+            Dispose(false);
+        }
+
+        #endregion
     }
 }

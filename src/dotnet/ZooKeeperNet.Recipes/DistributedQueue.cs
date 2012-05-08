@@ -64,7 +64,7 @@
             {
                 return GetElement(false);
             }
-            catch (NoSuchElementException e)
+            catch (NoSuchElementException)
             {
                 return null;
             }
@@ -84,7 +84,7 @@
                     zookeeper.Create(dir + "/" + prefix, data, acl, CreateMode.PersistentSequential);
                     return true;
                 }
-                catch (KeeperException.NoNodeException e)
+                catch (KeeperException.NoNodeException)
                 {
                     zookeeper.Create(dir, new byte[0], acl, CreateMode.Persistent);
                 }
@@ -129,7 +129,7 @@
                 {
                     orderedChildren = OrderedChildren(childWatcher);
                 }
-                catch (KeeperException.NoNodeException e)
+                catch (KeeperException.NoNodeException)
                 {
                     zookeeper.Create(dir, new byte[0], acl, CreateMode.Persistent);
                     continue;
@@ -148,7 +148,7 @@
                         zookeeper.Delete(path, -1);
                         return true;
                     }
-                    catch (KeeperException.NoNodeException e)
+                    catch (KeeperException.NoNodeException)
                     {
                         // Another client deleted the node first.
                     }

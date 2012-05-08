@@ -39,6 +39,11 @@
             // this var should not be public, but otw there is no easy way
             // to test
             //disableAutoWatchReset = Boolean.getBoolean("zookeeper.disableAutoWatchReset");
+            var zkSection = (System.Collections.Specialized.NameValueCollection)System.Configuration.ConfigurationManager.GetSection("zookeeper");
+            if (zkSection != null)
+            {
+                Boolean.TryParse(zkSection["disableAutoWatchReset"], out disableAutoWatchReset);
+            }
             if (LOG.IsDebugEnabled)
             {
                 LOG.Debug("zookeeper.disableAutoWatchReset is " + disableAutoWatchReset);
@@ -236,7 +241,7 @@
             {
                 SubmitRequest(new RequestHeader {Type = (int) OpCode.CloseSession}, null, null, null);
             }
-            catch (ThreadInterruptedException e)
+            catch (ThreadInterruptedException)
             {
                 // ignore, close the send/event threads
             }
@@ -262,6 +267,7 @@
                 .Append(" xid:").Append(producer.xid)
                 .Append(" sent:").Append(producer.sentCount)
                 .Append(" recv:").Append(producer.recvCount)
+                //.Append(" queuedpkts:").Append(producer.outgoingQueue.Count)
                 .Append(" queuedpkts:").Append(producer.outgoingQueue.Count)
                 .Append(" pendingresp:").Append(producer.pendingQueue.Count)
                 .Append(" queuedevents:").Append(consumer.waitingEvents.Count);

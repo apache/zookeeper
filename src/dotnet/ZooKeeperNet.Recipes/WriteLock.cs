@@ -11,7 +11,7 @@
     {
         private readonly string dir;
         private readonly byte[] data = new[] { (byte)12, (byte)34 };
-        private readonly Func<object> lockOperation;
+        private readonly Func<bool> lockOperation;
 
         private string id;
         private ZNodeName idName;
@@ -70,11 +70,11 @@
             {
                 Zookeeper.Delete(id, -1);
             }
-            catch (ThreadInterruptedException e)
+            catch (ThreadInterruptedException)
             {
                 Thread.CurrentThread.Interrupt();
             }
-            catch (KeeperException.NoNodeException e)
+            catch (KeeperException.NoNodeException)
             {
                 //do nothing
             }
@@ -90,7 +90,7 @@
             }
         }
 
-        private object LockOperation()
+        private bool LockOperation()
         {
             do
             {
@@ -187,7 +187,7 @@
             }
             EnsurePathExists(dir);
 
-            return (bool)RetryOperation(lockOperation);
+            return RetryOperation<bool>(lockOperation);
         }
 
         public IDisposable UseLock()

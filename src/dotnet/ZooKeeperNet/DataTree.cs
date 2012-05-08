@@ -37,7 +37,7 @@
         private ZKWatchManager childWatches = new ZKWatchManager();
 
         /** the root of zookeeper tree */
-        private static string rootZookeeper = "/";
+        //private static string rootZookeeper = "/";
 
         /** the zookeeper nodes that acts as the management and status node **/
         private static string procZookeeper = Quotas.procZookeeper;
