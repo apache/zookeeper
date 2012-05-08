@@ -26,12 +26,13 @@
         protected void runTest(int count)
         {
             ManualResetEvent[] waitHandles = new ManualResetEvent[count];
+            ZooKeeper[] keeper = new ZooKeeper[count];
             nodes = new WriteLock[count];
             for (int i = 0; i < count; i++)
             {
                 waitHandles[i] = new ManualResetEvent(true);
-                ZooKeeper keeper = CreateClient();
-                WriteLock leader = new WriteLock(keeper, dir, null);
+                keeper[i] = CreateClient();
+                WriteLock leader = new WriteLock(keeper[i], dir, null);
                 leader.LockAcquired += () => waitHandles[i].Set();
                 nodes[i] = leader;
                 leader.Lock();
@@ -75,6 +76,10 @@
                     WriteLock node = nodes[i];
                     Assert.False(node.Owner, "Node should not be the leader " + node.Id);
                 }
+            }
+            for (int i = 0; i < count; i++)
+            {
+                keeper[i].Dispose();
             }
         }
 

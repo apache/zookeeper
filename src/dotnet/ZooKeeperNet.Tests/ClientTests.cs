@@ -51,7 +51,7 @@
                     zkWatchCreator.Create("/" + node + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 }
                 for (int i = 0; i < 10; i++)
-                {
+                {                      
                     zkIdle.Exists("/" + node + i, true);
                 }
                 for (int i = 0; i < 10; i++)
@@ -135,7 +135,6 @@
                 zk.AddAuthInfo("digest", "ben:passwd".GetBytes());
                 zk.GetData(name, false, new Stat());
                 zk.SetACL(name, Ids.OPEN_ACL_UNSAFE, -1);
-                zk.Dispose();
             }
 
             using (var zk = CreateClient())
@@ -316,11 +315,11 @@
                     zk.SetData(benwashere, "hi".GetBytes(), 57);
                     Assert.Fail("Should have gotten BadVersion exception");
                 }
-                catch (KeeperException.BadVersionException e)
+                catch (KeeperException.BadVersionException)
                 {
                     // expected that
                 }
-                catch (KeeperException e)
+                catch (KeeperException)
                 {
                     Assert.Fail("Should have gotten BadVersion exception");
                 }
@@ -341,7 +340,7 @@
                     zk.Delete("/", -1);
                     Assert.Fail("Deleted root!");
                 }
-                catch (KeeperException.BadArgumentsException e)
+                catch (KeeperException.BadArgumentsException)
                 {
                     // good, expected that
                 }
@@ -376,7 +375,7 @@
                     }
                     LOG.Info("Comment: asseting passed for frog setting /");
                 }
-                catch (KeeperException.NoNodeException e)
+                catch (KeeperException.NoNodeException)
                 {
                     // OK, expected that
                 }
@@ -453,7 +452,7 @@
                     zk.Create(dup, "".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                     Assert.Fail("duplicate Create allowed");
                 }
-                catch (KeeperException.NodeExistsException e)
+                catch (KeeperException.NodeExistsException)
                 {
                     // OK, expected that
                 }
@@ -541,7 +540,7 @@
             {
                 zk.Create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 // this is good
                 return;
@@ -553,118 +552,120 @@
         [Test]
         public void testPathValidation()
         {
-            ZooKeeper zk = CreateClient();
-
-            verifyCreateFails(null, zk);
-            verifyCreateFails("", zk);
-            verifyCreateFails("//", zk);
-            verifyCreateFails("///", zk);
-            verifyCreateFails("////", zk);
-            verifyCreateFails("/.", zk);
-            verifyCreateFails("/..", zk);
-            verifyCreateFails("/./", zk);
-            verifyCreateFails("/../", zk);
-            verifyCreateFails("/foo/./", zk);
-            verifyCreateFails("/foo/../", zk);
-            verifyCreateFails("/foo/.", zk);
-            verifyCreateFails("/foo/..", zk);
-            verifyCreateFails("/./.", zk);
-            verifyCreateFails("/../..", zk);
-            verifyCreateFails("/\u0001foo", zk);
-            verifyCreateFails("/foo/bar/", zk);
-            verifyCreateFails("/foo//bar", zk);
-            verifyCreateFails("/foo/bar//", zk);
-
-            verifyCreateFails("foo", zk);
-            verifyCreateFails("a", zk);
-
-            string createseqpar = "/Createseqpar" + Guid.NewGuid();
-            zk.Create(createseqpar, null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.Persistent);
-            // next two steps - related to sequential processing
-            // 1) verify that empty child name Assert.Fails if not sequential
-            try
+            using (ZooKeeper zk = CreateClient())
             {
+                verifyCreateFails(null, zk);
+                verifyCreateFails("", zk);
+                verifyCreateFails("//", zk);
+                verifyCreateFails("///", zk);
+                verifyCreateFails("////", zk);
+                verifyCreateFails("/.", zk);
+                verifyCreateFails("/..", zk);
+                verifyCreateFails("/./", zk);
+                verifyCreateFails("/../", zk);
+                verifyCreateFails("/foo/./", zk);
+                verifyCreateFails("/foo/../", zk);
+                verifyCreateFails("/foo/.", zk);
+                verifyCreateFails("/foo/..", zk);
+                verifyCreateFails("/./.", zk);
+                verifyCreateFails("/../..", zk);
+                verifyCreateFails("/\u0001foo", zk);
+                verifyCreateFails("/foo/bar/", zk);
+                verifyCreateFails("/foo//bar", zk);
+                verifyCreateFails("/foo/bar//", zk);
+
+                verifyCreateFails("foo", zk);
+                verifyCreateFails("a", zk);
+
+                string createseqpar = "/Createseqpar" + Guid.NewGuid();
                 zk.Create(createseqpar, null, Ids.OPEN_ACL_UNSAFE,
                         CreateMode.Persistent);
-                Assert.True(false);
-            }
-            catch (Exception be)
-            {
-                // catch this.
-            }
+                // next two steps - related to sequential processing
+                // 1) verify that empty child name Assert.Fails if not sequential
+                try
+                {
+                    zk.Create(createseqpar, null, Ids.OPEN_ACL_UNSAFE,
+                            CreateMode.Persistent);
+                    Assert.True(false);
+                }
+                catch (Exception)
+                {
+                    // catch this.
+                }
 
-            // 2) verify that empty child name success if sequential 
-            zk.Create(createseqpar, null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PersistentSequential);
-            zk.Create(createseqpar + "/.", null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PersistentSequential);
-            zk.Create(createseqpar + "/..", null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PersistentSequential);
-            try
-            {
-                zk.Create(createseqpar + "//", null, Ids.OPEN_ACL_UNSAFE,
+                // 2) verify that empty child name success if sequential 
+                zk.Create(createseqpar, null, Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PersistentSequential);
-                Assert.True(false);
-            }
-            catch (InvalidOperationException)
-            {
-                // catch this.
-            }
-            try
-            {
-                zk.Create(createseqpar + "/./", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
-                Assert.True(false);
-            }
-            catch (Exception)
-            {
-                // catch this.
-            }
-            try
-            {
-                zk.Create(createseqpar + "/../", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
-                Assert.True(false);
-            }
-            catch (Exception)
-            {
-                // catch this.
-            }
+                zk.Create(createseqpar + "/.", null, Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PersistentSequential);
+                zk.Create(createseqpar + "/..", null, Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PersistentSequential);
+                try
+                {
+                    zk.Create(createseqpar + "//", null, Ids.OPEN_ACL_UNSAFE,
+                            CreateMode.PersistentSequential);
+                    Assert.True(false);
+                }
+                catch (InvalidOperationException)
+                {
+                    // catch this.
+                }
+                try
+                {
+                    zk.Create(createseqpar + "/./", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
+                    Assert.True(false);
+                }
+                catch (Exception)
+                {
+                    // catch this.
+                }
+                try
+                {
+                    zk.Create(createseqpar + "/../", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PersistentSequential);
+                    Assert.True(false);
+                }
+                catch (Exception)
+                {
+                    // catch this.
+                }
 
-            zk.Create("/.foo" + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create("/.f." + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create("/..f" + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create("/..f.." + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create("/f.c" + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create("/f\u0040f" + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            var f = "/f" + Guid.NewGuid();
-            zk.Create(f, null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create(f + "/.f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create(f + "/f.", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create(f + "/..f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create(f + "/f..", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create(f + "/.f/f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create(f + "/f./f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create("/.foo" + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create("/.f." + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create("/..f" + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create("/..f.." + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create("/f.c" + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create("/f\u0040f" + Guid.NewGuid(), null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                var f = "/f" + Guid.NewGuid();
+                zk.Create(f, null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create(f + "/.f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create(f + "/f.", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create(f + "/..f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create(f + "/f..", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create(f + "/.f/f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create(f + "/f./f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+            }
         }
 
 
         [Test]
         public void testDeleteWithChildren()
         {
-            ZooKeeper zk = CreateClient();
-            zk.Create("/parent", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            zk.Create("/parent/child", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
-            try
+            using (ZooKeeper zk = CreateClient())
             {
+                zk.Create("/parent", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                zk.Create("/parent/child", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
+                try
+                {
+                    zk.Delete("/parent", -1);
+                    Assert.Fail("Should have received a not equals message");
+                }
+                catch (KeeperException e)
+                {
+                    Assert.AreEqual(KeeperException.Code.NOTEMPTY, e.GetCode());
+                }
+                zk.Delete("/parent/child", -1);
                 zk.Delete("/parent", -1);
-                Assert.Fail("Should have received a not equals message");
             }
-            catch (KeeperException e)
-            {
-                Assert.AreEqual(KeeperException.Code.NOTEMPTY, e.GetCode());
-            }
-            zk.Delete("/parent/child", -1);
-            zk.Delete("/parent", -1);
-            zk.Dispose();
         }
 
     }

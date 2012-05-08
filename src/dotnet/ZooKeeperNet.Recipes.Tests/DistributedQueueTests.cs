@@ -38,6 +38,10 @@
 
             byte[] dequeuedBytes = queueHandles[0].Dequeue();
             Assert.AreEqual(Encoding.UTF8.GetString(dequeuedBytes), testString);
+            for (int i = 0; i < clients.Length; i++)
+            {
+                clients[i].Dispose();
+            }            
         }
 
         [Test]
@@ -58,6 +62,11 @@
 
             byte[] dequeuedBytes = queueHandles[1].Dequeue();
             Assert.AreEqual(Encoding.UTF8.GetString(dequeuedBytes), testString);
+            for (int i = 0; i < clients.Length; i++)
+            {
+                clients[i].Dispose();
+            }            
+
         }
 
         [Test]
@@ -78,13 +87,18 @@
 
             byte[] dequeuedBytes = queueHandles[0].Take();
             Assert.AreEqual(Encoding.UTF8.GetString(dequeuedBytes), testString);
+            for (int i = 0; i < clients.Length; i++)
+            {
+                clients[i].Dispose();
+            }            
+
         }
 
         [Test]
         public void testRemove1()
         {
             String dir = "/testRemove1" + Guid.NewGuid();
-            String testString = "Hello World";
+            //String testString = "Hello World";
             int num_clients = 1;
             clients = new ZooKeeper[num_clients];
             DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
@@ -98,11 +112,16 @@
             {
                 queueHandles[0].Dequeue();
             }
-            catch (NoSuchElementException e)
+            catch (NoSuchElementException)
             {
                 return;
             }
             Assert.Fail();
+            for (int i = 0; i < clients.Length; i++)
+            {
+                clients[i].Dispose();
+            }
+
         }
 
         public void createNremoveMtest(String dir, int n, int m)
@@ -129,6 +148,10 @@
                 data = queueHandles[1].Dequeue();
             }
             Assert.AreEqual(testString + (m - 1), Encoding.UTF8.GetString(data));
+            for (int i = 0; i < clients.Length; i++)
+            {
+                clients[i].Dispose();
+            }
         }
 
         [Test]
@@ -168,6 +191,10 @@
                 data = queueHandles[1].Dequeue();
             }
             Assert.AreEqual(Encoding.UTF8.GetString(queueHandles[1].Peek()), testString + m);
+            for (int i = 0; i < clients.Length; i++)
+            {
+                clients[i].Dispose();
+            }
         }
 
         [Test]
@@ -246,6 +273,10 @@
 
             Assert.True(takeResult[0] != null);
             Assert.AreEqual(Encoding.UTF8.GetString(takeResult[0]), testString);
+            for (int i = 0; i < clients.Length; i++)
+            {
+                clients[i].Dispose();
+            }
         }
 
         [Test]
@@ -275,10 +306,10 @@
                         takeResult[0] = queueHandles[0].Take();
                         wait.Set();
                     }
-                    catch (KeeperException e)
+                    catch (KeeperException)
                     {
                     }
-                    catch (ThreadInterruptedException e)
+                    catch (ThreadInterruptedException)
                     {
                     }
                 });
@@ -291,10 +322,10 @@
                         while (!wait.WaitOne(1000) && maxRetry-- > 0)
                             queueHandles[0].Enqueue(threadTestString.GetBytes());
                     }
-                    catch (KeeperException e)
+                    catch (KeeperException)
                     {
                     }
-                    catch (ThreadInterruptedException e)
+                    catch (ThreadInterruptedException)
                     {
                     }
                 });
