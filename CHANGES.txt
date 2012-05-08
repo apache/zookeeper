@@ -15,6 +15,8 @@ BUGFIXES:
 
   ZOOKEEPER-1048. addauth command does not work in cli_mt/cli_st (allengao via michim)
 
+  ZOOKEEPER-1339. C client doesn't build with --enable-debug (Eric Liang via michim)
+
 Release 3.3.5 - 2012-03-18
 Backward compatible changes:
 
