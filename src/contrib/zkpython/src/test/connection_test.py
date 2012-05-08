@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest, threading
+import unittest, threading, re
 
 import zookeeper, zktestbase
 ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
@@ -76,7 +76,7 @@ class ConnectionTest(zktestbase.TestBase):
         cv.wait(15.0)
         cv.release()
         self.assertEqual(self.connected, True, "Connection timed out to " + self.host)
-        self.assertEqual(True, all( [ zookeeper.state(handle) == zookeeper.CONNECTED_STATE for handle in handles ] ),
+        self.assertEqual(True, self.all( [ zookeeper.state(handle) == zookeeper.CONNECTED_STATE for handle in handles ] ),
                          "Not all connections succeeded")
         oldhandle = handles[3]
         zookeeper.close(oldhandle)
@@ -115,8 +115,11 @@ class ConnectionTest(zktestbase.TestBase):
             path = "/zkpython-test-handles-%s" % str(i)
             self.assertEqual(path, zookeeper.create(h, path, "", [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL))
 
-        self.assertEqual(True, all( zookeeper.close(h) == zookeeper.OK for h in handles ))
+        self.assertEqual(True, self.all( zookeeper.close(h) == zookeeper.OK for h in handles ))
 
+    def testversionstringexists(self):
+        self.assertTrue(hasattr(zookeeper, '__version__'))
+        self.assertTrue(re.match("\d.\d.\d", zookeeper.__version__))
 
 
     def tearDown(self):

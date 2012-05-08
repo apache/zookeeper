@@ -25,27 +25,27 @@
 # relative to the canonical path of this script.
 #
 
-# Only follow symlinks if readlink supports it
-if readlink -f "$0" > /dev/null 2>&1
-then
-  ZOOBIN=`readlink -f "$0"`
+# use POSTIX interface, symlink is followed automatically
+ZOOBIN="${BASH_SOURCE-$0}"
+ZOOBIN=`dirname ${ZOOBIN}`
+ZOOBINDIR=`cd ${ZOOBIN}; pwd`
+
+if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
+  . "$ZOOBINDIR"/../libexec/zkEnv.sh
 else
-  ZOOBIN="$0"
+  . "$ZOOBINDIR"/zkEnv.sh
 fi
-ZOOBINDIR=`dirname "$ZOOBIN"`
 
-. "$ZOOBINDIR"/zkEnv.sh
-
-ZOODATADIR=$(grep '^dataDir=' "$ZOOCFG" | sed -e 's/.*=//')
-ZOODATALOGDIR=$(grep '^dataLogDir=' "$ZOOCFG" | sed -e 's/.*=//')
+ZOODATADIR=$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" | sed -e 's/.*=//')
+ZOODATALOGDIR=$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" | sed -e 's/.*=//')
 
 if [ "x$ZOODATALOGDIR" = "x" ]
 then
-echo java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
      -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.server.PurgeTxnLog "$ZOODATADIR" $*
 else
-echo java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
      -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.server.PurgeTxnLog "$ZOODATALOGDIR" "$ZOODATADIR" $*
 fi

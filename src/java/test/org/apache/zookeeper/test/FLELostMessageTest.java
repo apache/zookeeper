@@ -24,7 +24,8 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
@@ -39,7 +40,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FLELostMessageTest extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(FLELostMessageTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(FLELostMessageTest.class);
 
     
     int count;
@@ -93,7 +94,7 @@ public class FLELostMessageTest extends ZKTestCase {
                  */
                 peer.setCurrentVote(v);
 
-                LOG.info("Finished election: " + i + ", " + v.id);
+                LOG.info("Finished election: " + i + ", " + v.getId());
                     
                 Assert.assertTrue("State is not leading.", peer.getPeerState() == ServerState.LEADING);
             } catch (Exception e) {
@@ -121,7 +122,7 @@ public class FLELostMessageTest extends ZKTestCase {
          * Start server 0
          */
             
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 1000, 2, 2);
         peer.startLeaderElection();
         LEThread thread = new LEThread(peer, 1);
         thread.start();
@@ -157,7 +158,7 @@ public class FLELostMessageTest extends ZKTestCase {
         /*
          * Create an instance of the connection manager
          */
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
         cnxManager = new QuorumCnxManager(peer);
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){

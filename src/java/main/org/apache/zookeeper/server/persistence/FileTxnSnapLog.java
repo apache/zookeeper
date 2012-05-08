@@ -25,14 +25,18 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a helper class 
@@ -52,7 +56,7 @@ public class FileTxnSnapLog {
     public final static int VERSION = 2;
     public final static String version = "version-";
     
-    private static final Logger LOG = Logger.getLogger(FileTxnSnapLog.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FileTxnSnapLog.class);
     
     /**
      * This listener helps
@@ -123,7 +127,7 @@ public class FileTxnSnapLog {
             PlayBackListener listener) throws IOException {
         snapLog.deserialize(dt, sessions);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
-        TxnIterator itr = txnLog.read(dt.lastProcessedZxid);
+        TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
         while (true) {
@@ -141,7 +145,13 @@ public class FileTxnSnapLog {
             } else {
                 highestZxid = hdr.getZxid();
             }
-            processTransaction(hdr,dt,sessions, itr.getTxn());
+            try {
+                processTransaction(hdr,dt,sessions, itr.getTxn());
+            } catch(KeeperException.NoNodeException e) {
+               throw new IOException("Failed to process transaction type: " +
+                     hdr.getType() + " error: " + e.getMessage(), e);
+            }
+            listener.onTxnLoaded(hdr, itr.getTxn());
             if (!itr.next()) 
                 break;
         }
@@ -155,34 +165,53 @@ public class FileTxnSnapLog {
      * @param sessions the sessions to be restored
      * @param txn the transaction to be applied
      */
-    private void processTransaction(TxnHeader hdr,DataTree dt,
-            Map<Long, Integer> sessions, Record txn){
+    public void processTransaction(TxnHeader hdr,DataTree dt,
+            Map<Long, Integer> sessions, Record txn)
+        throws KeeperException.NoNodeException {
+        ProcessTxnResult rc;
         switch (hdr.getType()) {
         case OpCode.createSession:
             sessions.put(hdr.getClientId(),
                     ((CreateSessionTxn) txn).getTimeOut());
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
-                        "playLog --- create session in log: "
+                        "playLog --- create session in log: 0x"
                                 + Long.toHexString(hdr.getClientId())
                                 + " with timeout: "
                                 + ((CreateSessionTxn) txn).getTimeOut());
             }
             // give dataTree a chance to sync its lastProcessedZxid
-            dt.processTxn(hdr, txn);
+            rc = dt.processTxn(hdr, txn);
             break;
         case OpCode.closeSession:
             sessions.remove(hdr.getClientId());
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
-                        "playLog --- close session in log: "
+                        "playLog --- close session in log: 0x"
                                 + Long.toHexString(hdr.getClientId()));
             }
-            dt.processTxn(hdr, txn);
+            rc = dt.processTxn(hdr, txn);
             break;
         default:
-            dt.processTxn(hdr, txn);
-        }        
+            rc = dt.processTxn(hdr, txn);
+        }
+
+        /**
+         * This should never happen. A NONODE can never show up in the 
+         * transaction logs. This is more indicative of a corrupt transaction
+         * log. Refer ZOOKEEPER-1333 for more info.
+         */
+        if (rc.err != Code.OK.intValue()) {          
+            if (hdr.getType() == OpCode.create && rc.err == Code.NONODE.intValue()) {
+                int lastSlash = rc.path.lastIndexOf('/');
+                String parentName = rc.path.substring(0, lastSlash);
+                LOG.error("Parent {} missing for {}", parentName, rc.path);
+                throw new KeeperException.NoNodeException(parentName);
+            } else {
+                LOG.debug("Ignoring processTxn failure hdr: " + hdr.getType() +
+                        " : error: " + rc.err);
+            }
+        }
     }
     
     /**
@@ -205,10 +234,10 @@ public class FileTxnSnapLog {
             ConcurrentHashMap<Long, Integer> sessionsWithTimeouts)
         throws IOException {
         long lastZxid = dataTree.lastProcessedZxid;
-        LOG.info("Snapshotting: " + Long.toHexString(lastZxid));
-        File snapshot=new File(
-                snapDir, Util.makeSnapshotName(lastZxid));
-        snapLog.serialize(dataTree, sessionsWithTimeouts, snapshot);
+        File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
+        LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid),
+                snapshotFile);
+        snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile);
         
     }
 

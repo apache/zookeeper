@@ -40,7 +40,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.KeeperException;
@@ -54,7 +55,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.WatchedEvent;
 
 public class GenerateLoad {
-    protected static final Logger LOG = Logger.getLogger(GenerateLoad.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(GenerateLoad.class);
 
     static ServerSocket ss;
 

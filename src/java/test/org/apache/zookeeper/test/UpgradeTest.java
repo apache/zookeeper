@@ -21,12 +21,12 @@ package org.apache.zookeeper.test;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -36,7 +36,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.upgrade.UpgradeMain;
@@ -44,7 +44,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class UpgradeTest extends ZKTestCase implements Watcher {
-    private final static Logger LOG = Logger.getLogger(UpgradeTest.class);
+    private final static Logger LOG = LoggerFactory.getLogger(UpgradeTest.class);
 
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final File testData = new File(
@@ -63,8 +63,7 @@ public class UpgradeTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(upgradeDir, upgradeDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
-                new InetSocketAddress(PORT));
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
         Assert.assertTrue("waiting for server being up",

@@ -24,7 +24,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
@@ -35,7 +36,7 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
  * and removes watchers and their watches in addition to managing triggers.
  */
 public class WatchManager {
-    private static final Logger LOG = Logger.getLogger(WatchManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WatchManager.class);
 
     private final HashMap<String, HashSet<Watcher>> watchTable =
         new HashMap<String, HashSet<Watcher>>();
@@ -44,7 +45,11 @@ public class WatchManager {
         new HashMap<Watcher, HashSet<String>>();
 
     public synchronized int size(){
-        return watchTable.size();
+        int result = 0;
+        for(Set<Watcher> watches : watchTable.values()) {
+            result += watches.size();
+        }
+        return result;
     }
 
     public synchronized void addWatch(String path, Watcher watcher) {
@@ -122,7 +127,7 @@ public class WatchManager {
      */
     @Override
     public synchronized String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         sb.append(watch2Paths.size()).append(" connections watching ")
             .append(watchTable.size()).append(" paths\n");

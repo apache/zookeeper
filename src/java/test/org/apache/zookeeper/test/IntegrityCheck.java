@@ -35,7 +35,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -48,7 +49,7 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.data.Stat;
 
 public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
-    private static final Logger LOG = Logger.getLogger(IntegrityCheck.class);
+    private static final Logger LOG = LoggerFactory.getLogger(IntegrityCheck.class);
 
     ZooKeeper zk;
 

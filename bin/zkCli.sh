@@ -25,17 +25,17 @@
 # relative to the canonical path of this script.
 #
 
-# Only follow symlinks if readlink supports it
-if readlink -f "$0" > /dev/null 2>&1
-then
-  ZOOBIN=`readlink -f "$0"`
+# use POSTIX interface, symlink is followed automatically
+ZOOBIN="${BASH_SOURCE-$0}"
+ZOOBIN=`dirname ${ZOOBIN}`
+ZOOBINDIR=`cd ${ZOOBIN}; pwd`
+
+if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
+  . "$ZOOBINDIR"/../libexec/zkEnv.sh
 else
-  ZOOBIN="$0"
+  . "$ZOOBINDIR"/zkEnv.sh
 fi
-ZOOBINDIR=`dirname "$ZOOBIN"`
 
-. "$ZOOBINDIR"/zkEnv.sh
-
-java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-     -cp "$CLASSPATH" $JVMFLAGS \
+$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+     -cp "$CLASSPATH" $CLIENT_JVMFLAGS $JVMFLAGS \
      org.apache.zookeeper.ZooKeeperMain $@

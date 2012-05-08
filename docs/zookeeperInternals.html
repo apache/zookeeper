@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>ZooKeeper Internals</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -20,7 +20,7 @@
     |breadtrail
     +-->
 <div class="breadtrail">
-<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://hadoop.apache.org/">Hadoop</a> &gt; <a href="http://hadoop.apache.org/zookeeper/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
+<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
 </div>
 <!--+
     |header
@@ -39,7 +39,7 @@
     |start Project Logo
     +-->
 <div class="projectlogo">
-<a href="http://hadoop.apache.org/zookeeper/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+<a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
 </div>
 <!--+
     |end Project Logo
@@ -49,7 +49,7 @@
     +-->
 <div class="searchbox">
 <form action="http://www.google.com/search" method="get" class="roundtopsmall">
-<input value="hadoop.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
+<input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
                     <input name="Search" value="Search" type="submit">
 </form>
 </div>
@@ -61,10 +61,10 @@
     +-->
 <ul id="tabs">
 <li>
-<a class="unselected" href="http://hadoop.apache.org/zookeeper/">Project</a>
+<a class="unselected" href="http://zookeeper.apache.org/">Project</a>
 </li>
 <li>
-<a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+<a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
 </li>
 <li class="current">
 <a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
@@ -174,13 +174,13 @@ document.write("Last Published: " + document.lastModified);
 <div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
 <div id="menu_1.6" class="menuitemgroup">
 <div class="menuitem">
-<a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
 </div>
 <div class="menuitem">
-<a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a>
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
 </div>
 <div class="menuitem">
-<a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">Mailing Lists</a>
+<a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
 </div>
 </div>
 <div id="credit"></div>
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>ZooKeeper Internals</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -241,7 +242,7 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_rightLevel">Logging at the Right Level</a>
 </li>
 <li>
-<a href="#sc_log4jIdioms">Use of Standard log4j Idioms</a>
+<a href="#sc_slf4jIdioms">Use of Standard slf4j Idioms</a>
 </li>
 </ul>
 </li>
@@ -249,12 +250,13 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
 
   
-<a name="N10009"></a><a name="ch_Introduction"></a>
+<a name="ch_Introduction"></a>
 <h2 class="h3">Introduction</h2>
 <div class="section">
 <p>This document contains information on the inner workings of ZooKeeper. 
@@ -278,12 +280,12 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
 
-<a name="N10022"></a><a name="sc_atomicBroadcast"></a>
+<a name="sc_atomicBroadcast"></a>
 <h2 class="h3">Atomic Broadcast</h2>
 <div class="section">
 <p>
 At the heart of ZooKeeper is an atomic messaging system that keeps all of the servers in sync.</p>
-<a name="N1002B"></a><a name="sc_guaranteesPropertiesDefinitions"></a>
+<a name="sc_guaranteesPropertiesDefinitions"></a>
 <h3 class="h4">Guarantees, Properties, and Definitions</h3>
 <p>
 The specific guarantees provided by the messaging system used by ZooKeeper are the following:</p>
@@ -472,7 +474,7 @@ yourself, <em>Does the set of proposals that the leader believes has been commit
 included all the proposals that really have been committed?</em> The answer is <em>yes</em>. 
 Below, we make clear why.)
 </p>
-<a name="N100B9"></a><a name="sc_leaderElection"></a>
+<a name="sc_leaderElection"></a>
 <h3 class="h4">Leader Activation</h3>
 <p>
 Leader activation includes leader election. We currently have two leader election 
@@ -558,7 +560,7 @@ NEW_LEADER proposal will not be committed since the leader will not have quorum.
 When this happens, the leader and any remaining followers will timeout and go back 
 to leader election.
 </p>
-<a name="N100F7"></a><a name="sc_activeMessaging"></a>
+<a name="sc_activeMessaging"></a>
 <h3 class="h4">Active Messaging</h3>
 <p>
 Leader Activation does all the heavy lifting. Once the leader is coronated he can 
@@ -606,7 +608,7 @@ message when that proposal is committed.</p>
 
 
 </ul>
-<a name="N1011E"></a><a name="sc_summary"></a>
+<a name="sc_summary"></a>
 <h3 class="h4">Summary</h3>
 <p>So there you go. Why does it work? Specifically, why does is set of proposals 
 believed by a new leader always contain any proposal that has actually been committed? 
@@ -618,7 +620,7 @@ follow a single leader at a time; a new leader has seen all committed proposals
 from the previous epoch since it has seen the highest zxid from a quorum of servers; 
 any uncommited proposals from a previous epoch seen by a new leader will be committed 
 by that leader before it becomes active.</p>
-<a name="N10127"></a><a name="sc_comparisons"></a>
+<a name="sc_comparisons"></a>
 <h3 class="h4">Comparisons</h3>
 <p>
 Isn't this just Multi-Paxos? No, Multi-Paxos requires some way of assuring that 
@@ -638,7 +640,7 @@ proposals and to not worry about duplicate proposals for a given zxid.
 </div>
 
 
-<a name="N10134"></a><a name="sc_quorum"></a>
+<a name="sc_quorum"></a>
 <h2 class="h3">Quorums</h2>
 <div class="section">
 <p>
@@ -673,30 +675,35 @@ hierarchy of groups.
 </div>
 
 
-<a name="N10147"></a><a name="sc_logging"></a>
+<a name="sc_logging"></a>
 <h2 class="h3">Logging</h2>
 <div class="section">
 <p>
-ZooKeeper uses 
-<a href="http://logging.apache.org/log4j">log4j</a>
-version 1.2 as its logging infrastructure. For information on configuring log4j for
+Zookeeper uses 
+<a href="http://www.slf4j.org/index.html">slf4j</a> as an abstraction layer for logging. 
+<a href="http://logging.apache.org/log4j">log4j</a> in version 1.2 is chosen as the final logging implementation for now.
+For better embedding support, it is planned in the future to leave the decision of choosing the final logging implementation to the end user.
+Therefore, always use the slf4j api to write log statements in the code, but configure log4j for how to log at runtime.
+Note that slf4j has no FATAL level, former messages at FATAL level have been moved to ERROR level. 
+For information on configuring log4j for
 ZooKeeper, see the <a href="zookeeperAdmin.html#sc_logging">Logging</a> section 
 of the <a href="zookeeperAdmin.html">ZooKeeper Administrator's Guide.</a>
 
+
 </p>
-<a name="N1015C"></a><a name="sc_developerGuidelines"></a>
+<a name="sc_developerGuidelines"></a>
 <h3 class="h4">Developer Guidelines</h3>
-<p>Please follow these guidelines when submitting code. Patch reviewers will look for the following:</p>
-<a name="N10164"></a><a name="sc_rightLevel"></a>
+<p>Please follow the  
+<a href="http://www.slf4j.org/manual.html">slf4j manual</a> when creating log statements within code.
+Also read the
+<a href="http://www.slf4j.org/faq.html#logging_performance">FAQ on performance</a>
+, when creating log statements. Patch reviewers will look for the following:</p>
+<a name="sc_rightLevel"></a>
 <h4>Logging at the Right Level</h4>
 <p>
-There are <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html#FATAL">6 levels of logging in log4j</a>. 
+There are several levels of logging in slf4j. 
 It's important to pick the right one. In order of higher to lower severity:</p>
 <ol>
-   
-<li>
-<p> FATAL level designates very severe error events that will presumably lead the application to abort</p>
-</li>
    
 <li>
 <p>ERROR level designates error events that might still allow the application to continue running.</p>
@@ -711,7 +718,7 @@ It's important to pick the right one. In order of higher to lower severity:</p>
 </li>
    
 <li>
-<p>EBUG Level designates fine-grained informational events that are most useful to debug an application.</p>
+<p>DEBUG Level designates fine-grained informational events that are most useful to debug an application.</p>
 </li>
    
 <li>
@@ -722,34 +729,29 @@ It's important to pick the right one. In order of higher to lower severity:</p>
 <p>
 ZooKeeper is typically run in production such that log messages of INFO level 
 severity and higher (more severe) are output to the log.</p>
-<a name="N1018F"></a><a name="sc_log4jIdioms"></a>
-<h4>Use of Standard log4j Idioms</h4>
+<a name="sc_slf4jIdioms"></a>
+<h4>Use of Standard slf4j Idioms</h4>
 <p>
 <em>Static Message Logging</em>
 </p>
 <pre class="code">
 LOG.debug("process completed successfully!");
 </pre>
-<p>However when creating a message from a number of components (string 
-concatenation), the log call should be wrapped with a "isXEnabled()" call. this 
-eliminates the string concatenation overhead when debug level logging is not enabled.
+<p>
+However when creating parameterized messages are required, use formatting anchors.
 </p>
 <pre class="code">
-if (LOG.isDebugEnabled()) {
-    LOG.debug("got " + count + " messages in " + time + " minutes");
-}
+LOG.debug("got {} messages in {} minutes",new Object[]{count,time});    
 </pre>
 <p>
 <em>Naming</em>
 </p>
 <p>
-Loggers should be named after the class in which they are used. (See the 
-<a href="http://logging.apache.org/log4j/1.2/faq.html#2.4">log4j faq</a> 
-for reasons why this is a good idea.)
+Loggers should be named after the class in which they are used.
 </p>
 <pre class="code">
 public class Foo {
-    private static final Logger LOG = Logger.getLogger(Foo.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Foo.class);
     ....
     public Foo() {
        LOG.info("constructing Foo");

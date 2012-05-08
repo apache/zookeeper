@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -58,26 +59,32 @@ public class Follower extends Learner{
      * @throws InterruptedException
      */
     void followLeader() throws InterruptedException {
+        self.end_fle = System.currentTimeMillis();
+        LOG.info("FOLLOWING - LEADER ELECTION TOOK - " +
+              (self.end_fle - self.start_fle));
+        self.start_fle = 0;
+        self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
-        try {            
+        try {
             InetSocketAddress addr = findLeader();            
             try {
                 connectToLeader(addr);
-                long newLeaderZxid = registerWithLeader(Leader.FOLLOWERINFO);
+                long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
+
                 //check to see if the leader zxid is lower than ours
                 //this should never happen but is just a safety check
-                long lastLoggedZxid = self.getLastLoggedZxid();
-                if ((newLeaderZxid >> 32L) < (lastLoggedZxid >> 32L)) {
-                    LOG.fatal("Leader epoch " + Long.toHexString(newLeaderZxid >> 32L)
-                            + " is less than our epoch " + Long.toHexString(lastLoggedZxid >> 32L));
+                long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
+                if (newEpoch < self.getAcceptedEpoch()) {
+                    LOG.error("Proposed leader epoch " + ZxidUtils.zxidToString(newEpochZxid)
+                            + " is less than our accepted epoch " + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
                     throw new IOException("Error: Epoch of leader is lower");
                 }
-                syncWithLeader(newLeaderZxid);                
+                syncWithLeader(newEpochZxid);                
                 QuorumPacket qp = new QuorumPacket();
                 while (self.isRunning()) {
                     readPacket(qp);
-                    processPacket(qp);                   
-                }                              
+                    processPacket(qp);
+                }
             } catch (IOException e) {
                 LOG.warn("Exception when following the leader", e);
                 try {
@@ -86,11 +93,8 @@ public class Follower extends Learner{
                     e1.printStackTrace();
                 }
     
-                synchronized (pendingRevalidations) {
-                    // clear pending revalidations
-                    pendingRevalidations.clear();
-                    pendingRevalidations.notifyAll();
-                }
+                // clear pending revalidations
+                pendingRevalidations.clear();
             }
         } finally {
             zk.unregisterJMX((Learner)this);
@@ -109,9 +113,7 @@ public class Follower extends Learner{
             break;
         case Leader.PROPOSAL:            
             TxnHeader hdr = new TxnHeader();
-            BinaryInputArchive ia = BinaryInputArchive
-            .getArchive(new ByteArrayInputStream(qp.getData()));
-            Record txn = SerializeUtils.deserializeTxn(ia, hdr);
+            Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             if (hdr.getZxid() != lastQueued + 1) {
                 LOG.warn("Got zxid 0x"
                         + Long.toHexString(hdr.getZxid())
@@ -125,8 +127,7 @@ public class Follower extends Learner{
             fzk.commit(qp.getZxid());
             break;
         case Leader.UPTODATE:
-            fzk.takeSnapshot();
-            self.cnxnFactory.setZooKeeperServer(fzk);
+            LOG.error("Received an UPTODATE message after Follower started");
             break;
         case Leader.REVALIDATE:
             revalidate(qp);
@@ -136,7 +137,6 @@ public class Follower extends Learner{
             break;
         }
     }
-
 
     /**
      * The zxid of the last operation seen

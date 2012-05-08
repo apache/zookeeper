@@ -487,7 +487,7 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
         onMessageReceived(rh,ia);
     }
     close_buffer_iarchive(&ia);
-    if(rh.type==CLOSE_OP){
+    if(rh.type==ZOO_CLOSE_OP){
         ++closeSent;
         return; // no reply for close requests
     }

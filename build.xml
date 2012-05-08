@@ -24,14 +24,14 @@
 
     <property environment="env"/>
     
-    <property name="version" value="3.4.0" />
+    <property name="version" value="3.4.3" />
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
     <property file="${basedir}/src/java/${revision.properties}" />
     
-    <!-- Target Java 1.5 -->
     <property name="javac.target" value="1.5" />
+    <property name="javac.source" value="1.5" />
 
     <property name="src.dir" value="${basedir}/src" />
     <property name="java.src.dir" value="${src.dir}/java/main" />
@@ -52,8 +52,8 @@
     <property name="src_generated.dir" value="${src.dir}/java/generated" />
     <property name="c.src.dir" value="${src.dir}/c" />    
     <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
-    <property name="csharp.src.dir" value="${src.dir}/dotnet" />
-    <property name="csharpsrc_generated.dir" value="${csharp.src.dir}/ZooKeeperNet/Generated" />
+    <property name="csharp.src.dir" value="${src.dir}/dotnet"/>
+    <property name="csharpsrc_generated.dir" value="${csharp.src.dir}/ZooKeeperNet/Generated"/>
 
     <property name="jute.file" value="${src.dir}/zookeeper.jute" />
 
@@ -89,6 +89,7 @@
     <property name="javadoc.packages" value="org.apache.*" />
 
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
+    <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
 
     <property name="clover.home" location="${env.CLOVER_HOME}"/>
     <property name="clover.jar" location="${clover.home}/lib/clover.jar" />
@@ -99,11 +100,12 @@
     <property name="contrib.dir" value="${src.dir}/contrib"/>
     <property name="recipes.dir" value="${src.dir}/recipes"/>
 
-    <property name="ivy.version" value="2.1.0"/>
+    <property name="ivy.version" value="2.2.0"/>
     <property name="ivy.url"
               value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
     <property name="ivy.home" value="${user.home}/.ant" />
     <property name="ivy.lib" value="${build.dir}/lib"/>
+    <property name="ivy.package.lib" value="${build.dir}/package/lib"/>
     <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
@@ -151,6 +153,20 @@
     <property name="build.dir.eclipse-main-classes" value="${build.dir.eclipse}/classes-main"/>
     <property name="build.dir.eclipse-test-classes" value="${build.dir.eclipse}/classes-test"/>
 
+    <!-- cppunit property set -->
+    <property name="cppunit.lib" value="/usr/lib"/>
+    <property name="cppunit.m4" value="/usr/share/aclocal"/>
+
+    <!-- packaging property set -->
+    <property name="package.release" value="1"/>
+    <property name="package.prefix" value="/usr"/>
+    <property name="package.conf.dir" value="/etc/zookeeper"/>
+    <property name="package.log.dir" value="/var/log/zookeeper"/>
+    <property name="package.pid.dir" value="/var/run/zookeeper"/>
+    <property name="package.var.dir" value="/var/lib/zookeeper"/>
+    <property name="package.share.dir" value="/share/zookeeper"/>
+    <property name="package.buildroot" value="/tmp/zookeeper_package_build_${user.name}"/>
+    <property name="package.build.dir" value="/tmp/zookeeper_package_build_${user.name}/BUILD"/>
 
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
@@ -195,6 +211,12 @@
       <path refid="java.classpath"/>
     </path>
 
+    <path id="package.classpath">
+      <fileset dir="${ivy.package.lib}">
+        <include name="**/jdeb*.jar" />
+      </fileset>
+    </path>
+
     <!-- ====================================================== -->
     <!-- Generate and compile the Java files                    -->
     <!-- ====================================================== -->
@@ -202,6 +224,7 @@
         <mkdir dir="${build.classes}" />
 
         <mkdir dir="${ivy.lib}"/>
+        <mkdir dir="${ivy.package.lib}"/>
         <mkdir dir="${ivy.test.lib}"/>
         <condition property="ivy.jar.exists">
           <available file="${lib.dir}/ivy-${ivy.version}.jar"/>
@@ -214,7 +237,8 @@
     </target>
     
     <target name="jute" depends="init">
-        <javac srcdir="${java.src.dir}" destdir="${build.classes}" target="${javac.target}"
+        <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
+            target="${javac.target}" source="${javac.source}"
             includes="org/apache/jute/**" debug="on" />
     </target>
 
@@ -226,21 +250,12 @@
 
     <target name="compile_jute" depends="jute,compile_jute_uptodate" unless="juteBuild.notRequired">
         <mkdir dir="${src_generated.dir}" />
-	<mkdir dir="${csrc_generated.dir}" />
-	<mkdir dir="${csharpsrc_generated.dir}" />
-        <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
+        <mkdir dir="${csrc_generated.dir}" />
+        <mkdir dir="${csharpsrc_generated.dir}"/>
+      <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
             <arg value="-l" />
             <arg value="java" />
-	    <arg value="../../zookeeper.jute" /> 
-            <classpath>
-                <pathelement path="${build.classes}" />
-            </classpath>
-    	</java>
-
-        <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${csharpsrc_generated.dir}">
-            <arg value="-l" />
-            <arg value="csharp" />
-	    <arg value="../../../zookeeper.jute" /> 
+            <arg value="../../zookeeper.jute" /> 
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
@@ -254,12 +269,21 @@
                 <pathelement path="${build.classes}" />
             </classpath>
         </java>
+      <java dir="${csharpsrc_generated.dir}" classname="org.apache.jute.compiler.generated.Rcc" fork="true">
+        <arg value="-l"/>
+        <arg value="csharp"/>
+        <arg value="../../../zookeeper.jute"/>
+        <classpath>
+          <pathelement path="${build.classes}"/>
+        </classpath>
+      </java>
 
-        <touch file="${src_generated.dir}/.generated"/>
+      <touch file="${src_generated.dir}/.generated"/>
     </target>
 
     <target name="ver-gen" depends="init">
-        <javac srcdir="${java.src.dir}" destdir="${build.classes}" target="${javac.target}"
+        <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
+            target="${javac.target}" source="${javac.source}"
             includes="org/apache/zookeeper/version/util/**" debug="on" />
     </target>
     
@@ -292,8 +316,8 @@
     </target>
     
     <target name="build-generated" depends="compile_jute,version-info" >
-        <javac srcdir="${src_generated.dir}" destdir="${build.classes}" 
-            target="${javac.target}" debug="on" />
+        <javac srcdir="${src_generated.dir}" destdir="${build.classes}" includeantruntime="false"
+            target="${javac.target}" source="${javac.source}" debug="on" />
     </target>
     
     <target name="ivy-download" unless="ivy.jar.exists" depends="init">
@@ -324,6 +348,11 @@
                     pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
+    <target name="ivy-retrieve-package" depends="init,ivy-init">
+      <ivy:retrieve settingsRef="${ant.project.name}" conf="package"
+                    pattern="${ivy.package.lib}/[artifact]-[revision].[ext]"/>
+    </target>
+
     <target name="ivy-retrieve-jdiff" depends="init,ivy-init">
       <mkdir dir="${ivy.jdiff.lib}"/>
       <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="jdiff"
@@ -337,8 +366,8 @@
     </target>
 
     <target name="compile" depends="ivy-retrieve,clover,build-generated">
-        <javac srcdir="${java.src.dir}" destdir="${build.classes}" 
-               target="${javac.target}" debug="on">
+        <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
+               target="${javac.target}" source="${javac.source}" debug="on">
             <classpath refid="java.classpath"/>
             <compilerarg value="-Xlint:all"/>
             <compilerarg value="-Xlint:-path"/>
@@ -347,14 +376,37 @@
 
     <target name="compile-test" depends="ivy-retrieve-test,compile">
       <mkdir dir="${test.java.classes}"/>
-      <javac srcdir="${test.src.dir}" destdir="${test.java.classes}"
-             target="${javac.target}" debug="on">
+      <javac srcdir="${test.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
+             target="${javac.target}" source="${javac.source}" debug="on">
         <classpath refid="test.java.classpath"/>
       </javac>
-      <javac srcdir="${systest.src.dir}" destdir="${test.java.classes}"
-             target="${javac.target}" debug="on">
+      <javac srcdir="${systest.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
+             target="${javac.target}" source="${javac.source}" debug="on">
         <classpath refid="test.java.classpath"/>
       </javac>
+    </target>
+
+    <target name="compile-native" depends="compile_jute" description="Make C binding">
+      <exec executable="autoreconf" dir="${c.src.dir}" searchpath="yes"
+            failonerror="yes">
+        <arg value="-if"/>
+        <env key="ACLOCAL" value="aclocal -I ${cppunit.m4}"/>
+      </exec>
+      <mkdir dir="${build.dir}/c" />
+      <exec executable="${c.src.dir}/configure" dir="${build.dir}/c"
+            failonerror="yes">
+        <env key="base_dir" value="${basedir}"/>
+        <env key="CALLER" value="ANT"/>
+        <arg value="--prefix=${build.dir}/c/build/${package.prefix}"/>
+      </exec>
+      <property name="c.build" value="${build.dir}/c/build"/>
+      <exec dir="${build.dir}/c" executable="make" failonerror="true">
+        <arg value="install"/>
+        <env key="LD_LIBRARY_PATH" value="${c.build}"/>
+        <env key="PATH" path="${env.PATH};${c.src.dir};"/>
+        <env key="CALLER" value="ANT"/>
+        <env key="base_dir" value="${basedir}"/>
+      </exec>
     </target>
 
     <!-- ====================================================== -->
@@ -366,7 +418,6 @@
       </condition>
       <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
             failonerror="true">
-        <env key="JAVA_HOME" value="${java5.home}"/>
       </exec>
       <copy todir="${docs.dir}">
         <fileset dir="${docs.src}/build/site/" />
@@ -375,14 +426,10 @@
              includes="zookeeper-default.xml" style="conf/configuration.xsl"/>
     </target>
 
-    <target name="forrest.check" unless="forrest.home" depends="java5.check">
+    <target name="forrest.check" unless="forrest.home">
       <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
     </target>
 
-    <target name="java5.check" unless="java5.home">
-      <fail message="'java5.home' is not defined.  Forrest requires Java 5.  Please pass -Djava5.home=&lt;base of Java 5 distribution&gt; to Ant on the command-line." />
-    </target>
-	
     <!-- Javadoc -->
     <target name="javadoc-dev" depends="jar"
             description="Generate javadoc for zookeeper developers">
@@ -429,6 +476,7 @@
           <include name="org/apache/zookeeper/KeeperException.java"/>
           <include name="org/apache/zookeeper/ServerAdminClient.java"/>
           <include name="org/apache/zookeeper/Watcher.java"/>
+          <include name="org/apache/zookeeper/WatchedEvent.java"/>
           <include name="org/apache/zookeeper/ZooDefs.java"/>
           <include name="org/apache/zookeeper/ZooKeeper.java"/>
           <include name="org/apache/zookeeper/server/LogFormatter.java"/>
@@ -518,15 +566,28 @@
                 <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
                 <attribute name="Implementation-Version" value="${revision}"/> 
                 <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            	
+            	<!-- The following are OSGi manifest headers -->
+            	<!-- currently hardcoded, when things get more complicated we could use BND 
+            	http://www.aqute.biz/Code/Bnd to generate them -->
+                <attribute name="Bundle-Vendor" value="The Apache Software Foundation"/>
+                <attribute name="Bundle-Name" value="ZooKeeper Bundle"/>
+                <attribute name="Bundle-SymbolicName" value="org.apache.hadoop.zookeeper"/>
+                <attribute name="Bundle-ManifestVersion" value="2"/>
+                <attribute name="Bundle-Version" value="${version}"/>
+                <attribute name="Bundle-License" value="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+                <attribute name="Bundle-DocURL" value="http://hadoop.apache.org/zookeeper"/>
+                <attribute name="Import-Package" value='javax.management,org.apache.log4j,org.osgi.framework;version="[1.4,2.0)",org.osgi.util.tracker;version="[1.1,2.0)"'/>
+                <attribute name="Export-Package" value='org.apache.zookeeper;version="${version}",org.apache.zookeeper.data;version="${version}",org.apache.zookeeper.version;version="${version}",org.apache.zookeeper.server;version="${version}",org.apache.zookeeper.server.quorum;version="${version}"'/>
             </manifest>
         </jar>
     </target>
 
 	<!-- ====================================================== -->
-    <!-- Make zookeeper-src.jar                                 -->
+    <!-- Make zookeeper-sources.jar                                 -->
     <!-- ====================================================== -->
     <target name="src-jar" depends="build-generated">
-        <jar jarfile="${build.dir}/${final.name}-src.jar">
+        <jar jarfile="${build.dir}/${final.name}-sources.jar">
             <fileset file="LICENSE.txt" />
             <fileset dir="${java.src.dir}"/>
             <fileset dir="${src_generated.dir}" excludes="**/.generated"/>
@@ -559,13 +620,31 @@
         </jar>
     </target>
 
+    <!-- ====================================================== -->
+    <!-- Make zookeeper-test.jar                                -->
+    <!-- ====================================================== -->
+    <target name="test-jar" depends="compile-test">
+        <jar jarfile="${build.dir}/${final.name}-test.jar">
+            <fileset file="LICENSE.txt" />
+            <fileset dir="${test.java.classes}"/>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${build.time}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
+                <attribute name="Implementation-Version" value="${revision}"/> 
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            </manifest>
+        </jar>
+    </target>
+
 	<!-- ================================================================== -->
     <!-- D I S T R I B U T I O N                                            -->
     <!-- ================================================================== -->
     <!--                                                                    -->
     <!-- ================================================================== -->
-    <target name="package"
-            depends="jar,bin-jar,src-jar,javadoc-jar,api-report,create-cppunit-configure,compile-test"
+    <target name="package" 
+            depends="jar,bin-jar,src-jar,javadoc-jar,test-jar,api-report,create-cppunit-configure,compile-test"
             description="Build distribution">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
@@ -588,31 +667,46 @@
             distribution directory so contribs know where to install to.-->
         <property name="version" value="${version}"/>
         <property name="dist.dir" value="${dist.dir}"/>
+        <property name="package.share" value=""/>
         <fileset file="${contrib.dir}/build.xml"/>
         <fileset file="${recipes.dir}/build.xml"/>
       </subant>  	
 
       <copy todir="${dist.dir}"> 
         <fileset file="${build.dir}/${final.name}.jar"/>
-        <fileset file="${build.dir}/${final.name}-bin.jar"/>
-        <fileset file="${build.dir}/${final.name}-src.jar"/>
+      </copy>
+
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="sha1"/>
+
+      <mkdir dir="${dist.maven.dir}"/>
+
+      <copy file="${build.dir}/${final.name}-bin.jar"
+            tofile="${dist.maven.dir}/${final.name}.jar"/> 
+      <copy todir="${dist.maven.dir}"> 
+        <fileset file="${build.dir}/${final.name}-sources.jar"/>
         <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
       </copy>
       
-      <checksum file="${dist.dir}/${final.name}.jar" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}.jar" algorithm="sha1"/>
-      <checksum file="${dist.dir}/${final.name}-bin.jar" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}-bin.jar" algorithm="sha1"/>
-      <checksum file="${dist.dir}/${final.name}-src.jar" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}-src.jar" algorithm="sha1"/>
-      <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
-      <checksum file="${dist.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.dir}/${final.name}.pom">
+                   pomfile="${dist.maven.dir}/${final.name}.pom">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
+      
+      <copy file="${build.dir}/${final.name}-test.jar"
+            tofile="${dist.maven.dir}/${final.name}-tests.jar"/> 
+      <checksum file="${dist.maven.dir}/${final.name}-tests.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-tests.jar" algorithm="md5"/>
 
       <copy todir="${dist.dir}/bin">
         <fileset dir="bin"/>
@@ -642,6 +736,140 @@
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
+        <fileset dir="${dist.dir}/src/contrib/">
+          <include name="*/bin/*" />
+        </fileset>
+      </chmod>
+    </target>
+
+    <target name="bin-package"
+            depends="jar,bin-jar,src-jar,javadoc-jar,test-jar,api-report,create-cppunit-configure,compile-test"
+            description="Build binary distribution">
+      <delete dir="${dist.dir}"/>
+      <mkdir dir="${dist.dir}"/>
+      <mkdir dir="${dist.dir}/lib"/>
+      <mkdir dir="${dist.dir}/libexec"/>
+      <mkdir dir="${dist.dir}/share/zookeeper/contrib"/>
+      <mkdir dir="${dist.dir}/share/zookeeper/recipes"/>
+      <mkdir dir="${dist.dir}/bin"/>
+      <mkdir dir="${dist.dir}/docs"/>
+      <mkdir dir="${dist.dir}/docs/jdiff"/>
+      <mkdir dir="${dist.dir}/docs/api"/>
+      <mkdir dir="${dist.dir}/share/zookeeper/templates/conf"/>
+      <mkdir dir="${dist.dir}/sbin"/>
+
+      <copy todir="${dist.dir}/share/zookeeper" includeEmptyDirs="false">
+        <fileset dir="${lib.dir}">
+          <exclude name="**/ivy*.jar" />
+          <exclude name="**/deb*.jar" />
+        </fileset>
+        <fileset dir="${ivy.lib}"/>
+      </copy>
+
+      <copy file="${basedir}/src/packages/update-zookeeper-env.sh" tofile="${dist.dir}/sbin/update-zookeeper-env.sh"/>
+      <subant target="package">
+        <!--Pass down the version in case its needed again and the target
+            distribution directory so contribs know where to install to.-->
+        <property name="version" value="${version}"/>
+        <property name="dist.dir" value="${dist.dir}"/>
+        <property name="package.share" value="/share/zookeeper"/>
+        <fileset file="${contrib.dir}/build.xml"/>
+        <fileset file="${recipes.dir}/build.xml"/>
+      </subant>  	
+
+      <copy todir="${dist.dir}/share/zookeeper"> 
+        <fileset file="${build.dir}/${final.name}.jar"/>
+      </copy>
+
+      <checksum file="${dist.dir}/share/zookeeper/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/share/zookeeper/${final.name}.jar" algorithm="sha1"/>
+
+      <mkdir dir="${dist.maven.dir}"/>
+
+      <copy file="${build.dir}/${final.name}-bin.jar"
+            tofile="${dist.maven.dir}/${final.name}.jar"/> 
+      <copy todir="${dist.maven.dir}"> 
+        <fileset file="${build.dir}/${final.name}-sources.jar"/>
+        <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
+      </copy>
+      
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
+
+      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
+                   pomfile="${dist.maven.dir}/${final.name}.pom">
+        <mapping conf="default" scope="compile"/>
+        <mapping conf="test" scope="test"/>
+      </ivy:makepom>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
+      
+      
+      <copy file="${build.dir}/${final.name}-test.jar"
+            tofile="${dist.maven.dir}/${final.name}-test.jar"/> 
+      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="md5"/>
+      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
+                   pomfile="${dist.maven.dir}/${final.name}-test.pom"
+		   artifactName="zookeeper-test">
+        <mapping conf="default" scope="compile"/>
+        <mapping conf="test" scope="test"/>
+      </ivy:makepom>
+      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="sha1"/>
+
+
+      <copy todir="${dist.dir}/bin">
+        <fileset dir="bin" includes="zkCli*"/>
+      </copy>
+
+      <copy todir="${dist.dir}/libexec">
+        <fileset dir="bin" includes="zkEnv*"/>
+      </copy>
+
+      <copy todir="${dist.dir}/sbin">
+        <fileset dir="bin" includes="zkServer*"/>
+      </copy>
+
+      <copy todir="${dist.dir}/conf">
+        <fileset dir="${conf.dir}" excludes="**/*.template"/>
+      </copy>
+
+      <copy todir="${dist.dir}/docs">
+        <fileset dir="${docs.dir}" />
+        <fileset dir="${build.docs}"/>
+      </copy>
+
+      <copy todir="${dist.dir}">
+        <fileset dir=".">
+          <include name="*.txt" />
+        </fileset>
+        <fileset file="build.xml"/>
+        <fileset file="ivy.xml"/>
+        <fileset file="ivysettings.xml"/>
+      </copy>
+
+      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
+        <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+      </copy>
+
+      <copy todir="${dist.dir}/${package.share.dir}/templates/conf">
+        <fileset dir="src/packages/templates/conf"/>
+      </copy>
+
+      <copy file="${basedir}/conf/zoo_sample.cfg" tofile="${dist.dir}/${package.share.dir}/templates/conf/zoo.cfg" />
+      <replace file="${dist.dir}/${package.share.dir}/templates/conf/zoo.cfg">
+        <replacetoken>/tmp/zookeeper</replacetoken>
+        <replacevalue>${VAR_DIR}/data</replacevalue>
+      </replace>
+  	  
+      <chmod perm="ugo+x" type="file" parallel="false">
+        <fileset dir="${dist.dir}/bin"/>
+        <fileset dir="${dist.dir}/sbin"/>
         <fileset dir="${dist.dir}/src/contrib/">
           <include name="*/bin/*" />
         </fileset>
@@ -695,7 +923,7 @@
       </macro_tar>
     </target>
 
-    <target name="binary" depends="package"
+    <target name="binary" depends="bin-package"
             description="Make tarball without source and documentation">
       <macro_tar param.destfile="${build.dir}/${final.name}-bin.tar.gz">
         <param.listofitems>
@@ -716,6 +944,157 @@
       </macro_tar>
     </target>
 
+    <target name="package-native" depends="compile-native, bin-package" description="Make C binding tarball">
+      <!-- For Unix platforms only, use OS native tar to preserve symlinks -->
+      <exec executable="tar" dir="${build.dir}/c/build">
+        <arg value="cfzv" />
+        <arg value="${build.dir}/${final.name}-lib.tar.gz" />
+        <arg value="." />
+      </exec>
+      <subant target="package">
+        <!--Pass down the version in case its needed again and the target
+            distribution directory so contribs know where to install to.-->
+        <property name="version" value="${version}"/>
+        <property name="dist.dir" value="${dist.dir}"/>
+        <fileset file="${contrib.dir}/build.xml"/>
+        <fileset file="${recipes.dir}/build.xml"/>
+      </subant>
+    </target>
+
+    <target name="rpm" depends="package-native, tar" description="Make rpm package">
+      <subant target="rpm">
+        <!--Pass down the version in case its needed again and the target
+            distribution directory so contribs know where to install to.-->
+        <property name="version" value="${version}"/>
+        <property name="dist.dir" value="${dist.dir}"/>
+        <fileset file="${contrib.dir}/build.xml"/>
+        <fileset file="${recipes.dir}/build.xml"/>
+      </subant>  	
+      <path id="c.lib">
+        <fileset dir="${build.dir}">
+          <include name="${final.name}-lib.tar.gz"/>
+        </fileset>
+      </path>
+      <property name="c.lib" refid="c.lib"/>
+      <mkdir dir="${package.buildroot}/BUILD" />
+      <mkdir dir="${package.buildroot}/RPMS" />
+      <mkdir dir="${package.buildroot}/SRPMS" />
+      <mkdir dir="${package.buildroot}/SOURCES" />
+      <mkdir dir="${package.buildroot}/SPECS" />
+      <copy todir="${package.buildroot}/SOURCES">
+        <fileset dir="${build.dir}">
+          <include name="${final.name}.tar.gz" />
+        </fileset>
+        <fileset file="${c.lib}" />
+      </copy>
+      <copy file="${src.dir}/packages/rpm/spec/zookeeper.spec" todir="${package.buildroot}/SPECS">
+        <filterchain>
+          <replacetokens>
+            <token key="final.name" value="${final.name}" />
+            <token key="version" value="${version}" />
+            <token key="package.release" value="${package.release}" />
+            <token key="package.build.dir" value="${package.build.dir}" />
+            <token key="package.prefix" value="${package.prefix}" />
+            <token key="package.conf.dir" value="${package.conf.dir}" />
+            <token key="package.log.dir" value="${package.log.dir}" />
+            <token key="package.pid.dir" value="${package.pid.dir}" />
+            <token key="package.var.dir" value="${package.var.dir}" />
+            <token key="c.lib" value="${c.lib}" />
+          </replacetokens>
+        </filterchain>
+      </copy>
+      <rpm specFile="zookeeper.spec" command="-ba" topDir="${package.buildroot}" cleanBuildDir="true" failOnError="true"
+/>
+      <copy todir="${build.dir}/" flatten="true">
+        <fileset dir="${package.buildroot}/RPMS">
+          <include name="**/${name}*.rpm" />
+        </fileset>
+        <fileset dir="${package.buildroot}/SRPMS">
+          <include name="**/${name}*.rpm" />
+        </fileset>
+      </copy>
+      <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
+    </target>
+
+    <target name="deb" depends="ivy-retrieve-package, package-native, tar" description="Make deb package">
+      <subant target="deb">
+        <!--Pass down the version in case its needed again and the target
+            distribution directory so contribs know where to install to.-->
+        <property name="version" value="${version}"/>
+        <property name="dist.dir" value="${dist.dir}"/>
+        <fileset file="${contrib.dir}/build.xml"/>
+        <fileset file="${recipes.dir}/build.xml"/>
+      </subant>
+      <taskdef name="deb" classname="org.vafer.jdeb.ant.DebAntTask">
+        <classpath refid="java.classpath"/>
+        <classpath refid="package.classpath"/>
+      </taskdef>
+
+      <mkdir dir="${package.build.dir}/zookeeper.control" />
+      <copy todir="${package.buildroot}/${package.prefix}">
+        <fileset dir="${build.dir}/${final.name}">
+          <include name="bin/**" />
+          <include name="conf/**" />
+          <include name="sbin/**" />
+          <include name="share/**" />
+        </fileset>
+      </copy>
+      <copy todir="${package.build.dir}/zookeeper.control">
+        <fileset dir="${src.dir}/packages/deb/zookeeper.control">
+          <exclude name="control" />
+        </fileset>
+      </copy>
+      <copy file="${src.dir}/packages/deb/zookeeper.control/control" todir="${package.build.dir}/zookeeper.control">
+        <filterchain>
+          <replacetokens>
+            <token key="final.name" value="${final.name}" />
+            <token key="version" value="${version}" />
+            <token key="package.release" value="${package.release}" />
+            <token key="package.build.dir" value="${package.build.dir}" />
+            <token key="package.prefix" value="${package.prefix}" />
+            <token key="package.conf.dir" value="${package.conf.dir}" />
+            <token key="package.log.dir" value="${package.log.dir}" />
+            <token key="package.pid.dir" value="${package.pid.dir}" />
+            <token key="package.var.dir" value="${package.var.dir}" />
+          </replacetokens>
+        </filterchain>
+      </copy>
+      <deb destfile="${package.buildroot}/${name}_${version}-${package.release}_${os.arch}.deb" control="${package.build.dir}/zookeeper.control">
+        <tarfileset dir="${build.dir}/${final.name}/share/zookeeper" filemode="644" prefix="${package.prefix}/share/zookeeper">
+          <include name="**" />
+        </tarfileset>
+        <tarfileset dir="${build.dir}/${final.name}/bin" filemode="755" prefix="${package.prefix}/bin">
+          <include name="zkCli.sh" />
+        </tarfileset>
+        <tarfileset dir="${build.dir}/${final.name}/sbin" filemode="755" prefix="${package.prefix}/sbin">
+          <include name="**.sh" />
+        </tarfileset>
+        <tarfileset dir="${build.dir}/${final.name}/libexec" filemode="755" prefix="${package.prefix}/libexec">
+          <include name="zkEnv.sh" />
+        </tarfileset>
+        <tarfileset dir="${build.dir}/c/build/${package.prefix}/include" prefix="${package.prefix}/include">
+          <include name="**" />
+        </tarfileset> 
+        <tarfileset dir="${build.dir}/c/build/${package.prefix}/lib" filemode="755" prefix="${package.prefix}/lib">
+          <include name="**" />
+        </tarfileset> 
+        <tarfileset dir="${build.dir}/${final.name}/conf" filemode="644" prefix="${package.conf.dir}">
+          <include name="**" />
+        </tarfileset>
+        <tarfileset dir="${build.dir}/${final.name}/src/packages/deb/init.d" filemode="755" prefix="/etc/init.d">
+          <include name="**" />
+        </tarfileset>
+      </deb>
+
+      <copy todir="${build.dir}/" flatten="true">
+        <fileset dir="${package.buildroot}">
+          <include name="**/${name}*.deb" />
+        </fileset>
+      </copy>
+      <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
+
+    </target>
+
     <!-- ====================================================== -->
     <!-- Clean.  Delete the build files, and their directories  -->
     <!-- ====================================================== -->
@@ -725,7 +1104,7 @@
       <delete dir="${docs.src}/build"/>
       <delete dir="${src_generated.dir}" />
       <delete dir="${csrc_generated.dir}" />
-      <delete dir="${csharpsrc_generated.dir}" />
+      <delete dir="${csharpsrc_generated.dir}"/>
       <delete file="${lib.dir}/Null.java"/>
       <delete file="${lib.dir}/rats.jar" />
       <delete file="${jdiff.xml.dir}/${name}_${version}.xml"/>	
@@ -735,6 +1114,7 @@
       <delete>
         <fileset dir="${basedir}" includes="*.jar,*.tar.gz"/>
       </delete>
+      <delete dir="${package.buildroot}" />
     </target>
 
     <target name="clean-contrib">
@@ -857,6 +1237,7 @@
       <exec executable="autoreconf" dir="${c.src.dir}" searchpath="yes"
             failonerror="yes">
         <arg value="-if"/>
+        <env key="ACLOCAL" value="aclocal -I ${cppunit.m4}"/>
       </exec>
     </target>
 
@@ -886,9 +1267,8 @@
             depends="compile_jute, jar, create-cppunit-makefile"
             if="cppunit"
 		description="to run cppunit test cases">
-        <property name="lib.cppunit" value="/usr/local/lib"/>
         <exec dir="${test.cppunit.dir}" executable="make" failonerror="true">
-		<env key="LD_LIBRARY_PATH" value="${lib.cppunit}"/>
+		<env key="LD_LIBRARY_PATH" value="${cppunit.lib}"/>
 		<env key="PATH" path="${env.PATH};${c.src.dir};"/>
                 <env key="CALLER" value="ANT"/>
                 <env key="CLOVER_HOME" value="${clover.home}"/>
@@ -1124,6 +1504,7 @@
           <exclude name="**/*.sha1"/>
           <exclude name="**/.gitignore"/>
           <exclude name="**/Makefile**"/>
+          <exclude name="**/winconfig.h"/>
           <exclude name="**/configure**"/>
           <exclude name="**/*Doxyfile"/>
           <exclude name="**/*.am"/>
@@ -1149,6 +1530,8 @@
           <exclude name="src/java/test/checkstyle*.xml"/>
           <exclude name="src/java/test/checkstyle*.xsl"/>
           <exclude name="src/java/test/config/findbugs*.xml"/>
+          <exclude name="src/**/*.vcproj"/>
+          <exclude name="src/**/*.sln"/>
         </fileset>
       </rat:report>
     </target>
@@ -1176,7 +1559,6 @@
     		<arg value="${forrest.home}"/>
     		<arg value="${basedir}"/>
     		<arg value="${java5.home}"/>
-        	<arg value="${ant.project.name}"/>
   	</exec>
     </target>
 
@@ -1185,7 +1567,6 @@
     		<arg value="${test_patch_sh}"/>
     		<arg value="HUDSON"/>
     		<arg value="${scratch.dir}"/>
-    		<arg value="${support.dir}"/>
     		<arg value="${ps.cmd}"/>
     		<arg value="${wget.cmd}"/>
     		<arg value="${jiracli.cmd}"/>
@@ -1194,15 +1575,11 @@
     		<arg value="${patch.cmd}"/>
     		<arg value="${findbugs.home}"/>
     		<arg value="${forrest.home}"/>
-    		<arg value="${eclipse.home}"/>
-    		<arg value="${python.home}"/>
     		<arg value="${basedir}"/>
-    		<arg value="${trigger.url}"/>
     		<arg value="${jira.passwd}"/>
     		<arg value="${java5.home}"/>
     		<arg value="${curl.cmd}"/>
     		<arg value="${defect}"/>
-		<arg value="${ant.project.name}"/>
     	</exec>
      </target>
 

@@ -25,7 +25,8 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
@@ -40,7 +41,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FLEZeroWeightTest extends ZKTestCase {
-    private static final Logger LOG = Logger.getLogger(HierarchicalQuorumTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HierarchicalQuorumTest.class);
 
     Properties qp;
 
@@ -129,7 +130,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
                      */
                     peer.setCurrentVote(v);
 
-                    LOG.info("Finished election: " + i + ", " + v.id);
+                    LOG.info("Finished election: " + i + ", " + v.getId());
                     votes[i] = v;
 
                     if((peer.getPeerState() == ServerState.LEADING) &&
@@ -161,7 +162,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
 
         for(int i = 0; i < le.length; i++) {
             QuorumHierarchical hq = new QuorumHierarchical(qp);
-            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2, hq);
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, hq);
             peer.startLeaderElection();
             LEThread thread = new LEThread(peer, i);
             thread.start();

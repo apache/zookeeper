@@ -26,7 +26,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +35,8 @@ import java.util.zip.CheckedInputStream;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -53,7 +53,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class CRCTest extends ZKTestCase implements Watcher {
-    private static final Logger LOG = Logger.getLogger(CRCTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CRCTest.class);
 
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();
@@ -116,8 +116,7 @@ public class CRCTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(150);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
-                new InetSocketAddress(PORT));
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
         Assert.assertTrue("waiting for server being up",

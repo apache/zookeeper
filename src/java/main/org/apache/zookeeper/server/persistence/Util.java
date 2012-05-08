@@ -38,7 +38,8 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -46,7 +47,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * low level I/O file operations and marshalling/unmarshalling.
  */
 public class Util {
-    private static final Logger LOG = Logger.getLogger(Util.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Util.class);
     private static final String SNAP_DIR="snapDir";
     private static final String LOG_DIR="logDir";
     private static final String DB_FORMAT_CONV="dbFormatConversion";
@@ -163,12 +164,12 @@ public class Util {
 
         // Check for a valid snapshot
         RandomAccessFile raf = new RandomAccessFile(f, "r");
-        // including the header and the last / bytes
-        // the snapshot should be atleast 10 bytes
-        if (raf.length() < 10) {
-            return false;
-        }
         try {
+            // including the header and the last / bytes
+            // the snapshot should be atleast 10 bytes
+            if (raf.length() < 10) {
+                return false;
+            }
             raf.seek(raf.length() - 5);
             byte bytes[] = new byte[5];
             int readlen = 0;

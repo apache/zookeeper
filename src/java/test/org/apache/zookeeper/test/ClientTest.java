@@ -26,8 +26,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -49,7 +51,7 @@ import org.junit.Test;
 import com.sun.management.UnixOperatingSystemMXBean;
 
 public class ClientTest extends ClientBase {
-    protected static final Logger LOG = Logger.getLogger(ClientTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(ClientTest.class);
 
     /** Verify that pings are sent, keeping the "idle" client alive */
     @Test
@@ -104,15 +106,15 @@ public class ClientTest extends ClientBase {
     public void testTestability() throws Exception {
         TestableZooKeeper zk = createClient();
         try {
-            LOG.info(zk.testableLocalSocketAddress());
-            LOG.info(zk.testableRemoteSocketAddress());
-            LOG.info(zk.toString());
+            LOG.info("{}",zk.testableLocalSocketAddress());
+            LOG.info("{}",zk.testableRemoteSocketAddress());
+            LOG.info("{}",zk.toString());
         } finally {
             zk.close();
             zk.testableWaitForShutdown(CONNECTION_TIMEOUT);
-            LOG.info(zk.testableLocalSocketAddress());
-            LOG.info(zk.testableRemoteSocketAddress());
-            LOG.info(zk.toString());
+            LOG.info("{}",zk.testableLocalSocketAddress());
+            LOG.info("{}",zk.testableRemoteSocketAddress());
+            LOG.info("{}",zk.toString());
         }
     }
 
@@ -726,7 +728,14 @@ public class ClientTest extends ClientBase {
 
         // if this Assert.fails it means we are not cleaning up after the closed
         // sessions.
-        Assert.assertTrue("open fds after test are not significantly higher than before",
-                unixos.getOpenFileDescriptorCount() <= initialFdCount + 10);
+        long currentCount = unixos.getOpenFileDescriptorCount();
+        final String logmsg = "open fds after test ({}) are not significantly higher than before ({})";
+        
+        if (currentCount > initialFdCount + 10) {
+            // consider as error
+        	LOG.error(logmsg,Long.valueOf(currentCount),Long.valueOf(initialFdCount));
+        } else {
+        	LOG.info(logmsg,Long.valueOf(currentCount),Long.valueOf(initialFdCount));
+        }
     }
 }

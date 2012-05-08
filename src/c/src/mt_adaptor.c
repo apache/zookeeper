@@ -33,13 +33,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <sys/time.h>
-#include <signal.h>
-#include <poll.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <errno.h>
+
+#ifndef WIN32
+#include <signal.h>
+#include <poll.h>
 #include <unistd.h>
+#include <sys/time.h>
+#endif
 
 void zoo_lock_auth(zhandle_t *zh)
 {
@@ -107,15 +110,81 @@ int process_async(int outstanding_sync)
     return 0;
 }
 
+#ifdef WIN32
+unsigned __stdcall do_io( void * );
+unsigned __stdcall do_completion( void * );
+
+int handle_error(SOCKET sock, char* message)
+{
+       LOG_ERROR(("%s. %d",message, WSAGetLastError()));
+       closesocket (sock);
+       return -1;
+}
+
+//--create socket pair for interupting selects.
+int create_socket_pair(SOCKET fds[2]) 
+{ 
+    struct sockaddr_in inaddr; 
+    struct sockaddr addr; 
+    int yes=1; 
+    int len=0;
+       
+    SOCKET lst=socket(AF_INET, SOCK_STREAM,IPPROTO_TCP); 
+    if (lst ==  INVALID_SOCKET ){
+       LOG_ERROR(("Error creating socket. %d",WSAGetLastError()));
+       return -1;
+    }
+    memset(&inaddr, 0, sizeof(inaddr)); 
+    memset(&addr, 0, sizeof(addr)); 
+    inaddr.sin_family = AF_INET; 
+    inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); 
+    inaddr.sin_port = 0; //--system assigns the port
+
+    if ( setsockopt(lst,SOL_SOCKET,SO_REUSEADDR,(char*)&yes,sizeof(yes)) == SOCKET_ERROR  ) {
+       return handle_error(lst,"Error trying to set socket option.");          
+    }  
+    if (bind(lst,(struct sockaddr *)&inaddr,sizeof(inaddr)) == SOCKET_ERROR){
+       return handle_error(lst,"Error trying to bind socket.");                
+    }
+    if (listen(lst,1) == SOCKET_ERROR){
+       return handle_error(lst,"Error trying to listen on socket.");
+    }
+    len=sizeof(inaddr); 
+    getsockname(lst, &addr,&len); 
+    fds[0]=socket(AF_INET, SOCK_STREAM,0); 
+    if (connect(fds[0],&addr,len) == SOCKET_ERROR){
+       return handle_error(lst, "Error while connecting to socket.");
+    }
+    if ((fds[1]=accept(lst,0,0)) == INVALID_SOCKET){
+       closesocket(fds[0]);
+       return handle_error(lst, "Error while accepting socket connection.");
+    }
+    closesocket(lst);  
+    return 0;
+} 
+#else
 void *do_io(void *);
 void *do_completion(void *);
+#endif
+
+
 int wakeup_io_thread(zhandle_t *zh);
 
+#ifdef WIN32
+static int set_nonblock(SOCKET fd){
+    ULONG nonblocking_flag = 1;
+    if (ioctlsocket(fd, FIONBIO, &nonblocking_flag) == 0)
+        return 1;
+    else 
+        return -1;
+}
+#else
 static int set_nonblock(int fd){
     long l = fcntl(fd, F_GETFL);
     if(l & O_NONBLOCK) return 0;
     return fcntl(fd, F_SETFL, l | O_NONBLOCK);
 }
+#endif
 
 void wait_for_others(zhandle_t* zh)
 {
@@ -167,9 +236,14 @@ int adaptor_init(zhandle_t *zh)
         return -1;
     }
 
-    /* We use a pipe for interrupting select() */
+    /* We use a pipe for interrupting select() in unix/sol and socketpair in windows. */
+#ifdef WIN32   
+    if (create_socket_pair(adaptor_threads->self_pipe) == -1){
+       LOG_ERROR(("Can't make a socket."));
+#else
     if(pipe(adaptor_threads->self_pipe)==-1) {
         LOG_ERROR(("Can't make a pipe %d",errno));
+#endif
         free(adaptor_threads);
         return -1;
     }
@@ -250,7 +324,11 @@ int wakeup_io_thread(zhandle_t *zh)
 {
     struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
     char c=0;
+#ifndef WIN32
     return write(adaptor_threads->self_pipe[1],&c,1)==1? ZOK: ZSYSTEMERROR;    
+#else
+    return send(adaptor_threads->self_pipe[1], &c, 1, 0)==1? ZOK: ZSYSTEMERROR;    
+#endif         
 }
 
 int adaptor_send_queue(zhandle_t *zh, int timeout)
@@ -264,13 +342,23 @@ int adaptor_send_queue(zhandle_t *zh, int timeout)
 
 /* These two are declared here because we will run the event loop
  * and not the client */
+#ifdef WIN32
+int zookeeper_interest(zhandle_t *zh, SOCKET *fd, int *interest,
+        struct timeval *tv);
+#else
 int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
         struct timeval *tv);
+#endif
 int zookeeper_process(zhandle_t *zh, int events);
 
+#ifdef WIN32
+unsigned __stdcall do_io( void * v)
+#else
 void *do_io(void *v)
+#endif
 {
     zhandle_t *zh = (zhandle_t*)v;
+#ifndef WIN32
     struct pollfd fds[2];
     struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
 
@@ -305,7 +393,48 @@ void *do_io(void *v)
             // flush the pipe
             char b[128];
             while(read(adaptor_threads->self_pipe[0],b,sizeof(b))==sizeof(b)){}
+        }        
+#else
+    fd_set rfds, wfds, efds;
+    struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
+    api_prolog(zh);
+    notify_thread_ready(zh);
+    LOG_DEBUG(("started IO thread"));
+    FD_ZERO(&rfds);   FD_ZERO(&wfds);    FD_ZERO(&efds);
+    while(!zh->close_requested) {      
+        struct timeval tv;
+        SOCKET fd;
+        SOCKET maxfd=adaptor_threads->self_pipe[0];
+        int interest;        
+        int rc;
+               
+       zookeeper_interest(zh, &fd, &interest, &tv);
+       if (fd != -1) {
+           if (interest&ZOOKEEPER_READ) {
+                FD_SET(fd, &rfds);
+            } else {
+                FD_CLR(fd, &rfds);
+            }
+           if (interest&ZOOKEEPER_WRITE) {
+                FD_SET(fd, &wfds);
+            } else {
+                FD_CLR(fd, &wfds);
+            }                  
         }
+       FD_SET( adaptor_threads->self_pipe[0] ,&rfds );        
+       rc = select((int)maxfd, &rfds, &wfds, &efds, &tv);
+       if (fd != -1) 
+       {
+           interest = (FD_ISSET(fd, &rfds))? ZOOKEEPER_READ:0;
+           interest|= (FD_ISSET(fd, &wfds))? ZOOKEEPER_WRITE:0;
+        }
+               
+       if (FD_ISSET(adaptor_threads->self_pipe[0], &rfds)){
+            // flush the pipe/socket
+            char b[128];
+           while(recv(adaptor_threads->self_pipe[0],b,sizeof(b), 0)==sizeof(b)){}
+       }
+#endif
         // dispatch zookeeper events
         rc = zookeeper_process(zh, interest);
         // check the current state of the zhandle and terminate 
@@ -318,7 +447,11 @@ void *do_io(void *v)
     return 0;
 }
 
+#ifdef WIN32
+unsigned __stdcall do_completion( void * v)
+#else
 void *do_completion(void *v)
+#endif
 {
     zhandle_t *zh = v;
     api_prolog(zh);
@@ -349,6 +482,7 @@ int32_t inc_ref_counter(zhandle_t* zh,int i)
 
 int32_t fetch_and_add(volatile int32_t* operand, int incr)
 {
+#ifndef WIN32
     int32_t result;
     asm __volatile__(
          "lock xaddl %0,%1\n"
@@ -356,6 +490,19 @@ int32_t fetch_and_add(volatile int32_t* operand, int incr)
          : "0"(incr)
          : "memory");
    return result;
+#else
+    volatile int32_t result;
+    _asm
+    {
+        mov eax, operand; //eax = v;
+       mov ebx, incr; // ebx = i;
+        mov ecx, 0x0; // ecx = 0;
+        lock xadd dword ptr [eax], ecx; 
+       lock xadd dword ptr [eax], ebx; 
+        mov result, ecx; // result = ebx;        
+     }
+     return result;    
+#endif
 }
 
 // make sure the static xid is initialized before any threads started

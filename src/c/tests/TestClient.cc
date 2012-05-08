@@ -188,7 +188,9 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testDeserializeString);
 #ifdef THREADED
     CPPUNIT_TEST(testNullData);
+#ifdef ZOO_IPV6_ENABLED
     CPPUNIT_TEST(testIPV6);
+#endif
     CPPUNIT_TEST(testPath);
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
@@ -501,7 +503,7 @@ public:
     void testAuth() {
         int rc;
         count = 0;
-        watchctx_t ctx1, ctx2, ctx3, ctx4;
+        watchctx_t ctx1, ctx2, ctx3, ctx4, ctx5;
         zhandle_t *zk = createClient(&ctx1);
         struct ACL_vector nodeAcl;
         struct ACL acl_val;
@@ -516,7 +518,6 @@ public:
                           (void*)ZOK);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         waitForVoidCompletion(3);
-
         CPPUNIT_ASSERT(count == 0);
 
         rc = zoo_create(zk, "/tauth1", "", 0, &ZOO_CREATOR_ALL_ACL, 0, 0, 0);
@@ -589,6 +590,36 @@ public:
 
         rc = zoo_set_acl(zk, "/", -1, &ZOO_OPEN_ACL_UNSAFE);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+
+        //[ZOOKEEPER-1108], test that auth info is sent to server, if client is not
+        //connected to server when zoo_add_auth was called.
+        zhandle_t *zk_auth = zookeeper_init(hostPorts, NULL, 10000, 0, NULL, 0);
+        rc = zoo_add_auth(zk_auth, "digest", "pat:passwd", 10, voidCompletion, (void*)ZOK);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        sleep(2);
+        CPPUNIT_ASSERT(count == 1);
+        count  = 0;
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, zookeeper_close(zk_auth));
+        
+        // [ZOOKEEPER-800] zoo_add_auth should return ZINVALIDSTATE if
+        // the connection is closed. 
+        zhandle_t *zk2 = zookeeper_init(hostPorts, NULL, 10000, 0, NULL, 0);
+        sleep(1);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, zookeeper_close(zk2));
+        CPPUNIT_ASSERT_EQUAL(0, zoo_state(zk2)); // 0 ==> ZOO_CLOSED_STATE
+        rc = zoo_add_auth(zk2, "digest", "pat:passwd", 10, voidCompletion, (void*)ZOK);
+        CPPUNIT_ASSERT_EQUAL((int) ZINVALIDSTATE, rc);
+
+        struct sockaddr addr;
+        socklen_t addr_len = sizeof(addr);
+        zk = createClient(&ctx5);
+        stopServer();
+        CPPUNIT_ASSERT(ctx5.waitForDisconnected(zk));
+        CPPUNIT_ASSERT(zookeeper_get_connected_host(zk, &addr, &addr_len) == NULL);
+        addr_len = sizeof(addr);
+        startServer();
+        CPPUNIT_ASSERT(ctx5.waitForConnected(zk));
+        CPPUNIT_ASSERT(zookeeper_get_connected_host(zk, &addr, &addr_len) != NULL);
     }
 
     void testGetChildren2() {
@@ -761,6 +792,10 @@ public:
         zk_ch = createchClient(&ctx_ch, "127.0.0.1:22181/testch1/mahadev");
         CPPUNIT_ASSERT(zk_ch != NULL);
         zk = createClient(&ctx);
+        // first test with a NULL zk handle, make sure client library does not
+        // dereference a null pointer, but instead returns ZBADARGUMENTS
+        rc = zoo_create(NULL, "/testch1", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZBADARGUMENTS, rc);
         rc = zoo_create(zk, "/testch1", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         rc = zoo_create(zk, "/testch1/mahadev", data, 7, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
@@ -828,6 +863,14 @@ public:
                          create_completion_fn, 0);
         waitForCreateCompletion(3);
         CPPUNIT_ASSERT(count == 0);
+
+        //ZOOKEEPER-1027 correctly return path_buffer without prefixed chroot
+        const char* path = "/zookeeper1027";
+        char path_buffer[1024];
+        int path_buffer_len=sizeof(path_buffer);
+        rc = zoo_create(zk_ch, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, path_buffer, path_buffer_len);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL(string(path), string(path_buffer));
     }
 
     void testAsyncWatcherAutoReset()

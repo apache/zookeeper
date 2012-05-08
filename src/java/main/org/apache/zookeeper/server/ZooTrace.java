@@ -18,7 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.server.quorum.QuorumPacket;
 
@@ -57,7 +58,7 @@ public class ZooTrace {
 
     public static void setTextTraceLevel(long mask) {
         traceMask = mask;
-        Logger LOG = Logger.getLogger(ZooTrace.class);
+        Logger LOG = LoggerFactory.getLogger(ZooTrace.class);
         LOG.info("Set text trace mask to 0x" + Long.toHexString(mask));
     }
 

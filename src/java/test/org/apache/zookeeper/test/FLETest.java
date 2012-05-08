@@ -25,7 +25,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
@@ -39,7 +40,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FLETest extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(FLETest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(FLETest.class);
     private FLETest.LEThread leThread;
 
     static class TestVote {
@@ -124,7 +125,7 @@ public class FLETest extends ZKTestCase {
                      */
                     peer.setCurrentVote(v);
 
-                    LOG.info("Finished election: " + i + ", " + v.id);
+                    LOG.info("Finished election: " + i + ", " + v.getId());
                     votes[i] = v;
 
                     /*
@@ -132,7 +133,7 @@ public class FLETest extends ZKTestCase {
                      */
                     int lc = (int) ((FastLeaderElection) peer.getElectionAlg()).getLogicalClock();
 
-                    if (v.id == ((long) i)) {
+                    if (v.getId() == i) {
                         /*
                          * A leader executes this part of the code. If it is the first leader to be
                          * elected, then it Assert.fails right after. Otherwise, it waits until it has enough
@@ -157,16 +158,16 @@ public class FLETest extends ZKTestCase {
                                     if(voteMap.get(lc) == null)
                                         voteMap.put(lc, new HashSet<TestVote>());
                                     HashSet<TestVote> hs = voteMap.get(lc);
-                                    hs.add(new TestVote(i, v.id));
+                                    hs.add(new TestVote(i, v.getId()));
 
-                                    if(countVotes(hs, v.id) > (count/2)){
+                                    if(countVotes(hs, v.getId()) > (count/2)){
                                         leader = i;
                                         LOG.info("Got majority: " + i);
                                     } else {
                                         voteMap.wait(3000);
                                         LOG.info("Notified or expired: " + i);
                                         hs = voteMap.get(lc);
-                                        if(countVotes(hs, v.id) > (count/2)){
+                                        if(countVotes(hs, v.getId()) > (count/2)){
                                             leader = i;
                                             LOG.info("Got majority: " + i);
                                         } else {
@@ -200,13 +201,13 @@ public class FLETest extends ZKTestCase {
 
                         LOG.info("Logical clock " + ((FastLeaderElection) peer.getElectionAlg()).getLogicalClock());
                         synchronized(voteMap){
-                            LOG.info("Voting on " + votes[i].id + ", round " + ((FastLeaderElection) peer.getElectionAlg()).getLogicalClock());
+                            LOG.info("Voting on " + votes[i].getId() + ", round " + ((FastLeaderElection) peer.getElectionAlg()).getLogicalClock());
                             if(voteMap.get(lc) == null)
                                 voteMap.put(lc, new HashSet<TestVote>());
                             HashSet<TestVote> hs = voteMap.get(lc);
-                            hs.add(new TestVote(i, votes[i].id));
-                            if(countVotes(hs, votes[i].id) > (count/2)){
-                                LOG.info("Logical clock: " + lc + ", " + votes[i].id);
+                            hs.add(new TestVote(i, votes[i].getId()));
+                            if(countVotes(hs, votes[i].getId()) > (count/2)){
+                                LOG.info("Logical clock: " + lc + ", " + votes[i].getId());
                                 voteMap.notify();
                             }
                         }
@@ -216,11 +217,11 @@ public class FLETest extends ZKTestCase {
                          * vote if the leader takes too long to respond.
                          */
                         synchronized(FLETest.this){
-                            if (leader != votes[i].id) FLETest.this.wait(3000);
+                            if (leader != votes[i].getId()) FLETest.this.wait(3000);
 
-                            LOG.info("The leader: " + leader + " and my vote " + votes[i].id);
+                            LOG.info("The leader: " + leader + " and my vote " + votes[i].getId());
                             synchronized(voteMap){
-                                if (leader == votes[i].id) {
+                                if (leader == votes[i].getId()) {
                                     synchronized(finalObj){
                                         successCount++;
                                         if(successCount > (count/2)) finalObj.notify();
@@ -230,7 +231,7 @@ public class FLETest extends ZKTestCase {
                                     HashSet<TestVote> hs = voteMap.get(lc);
                                     TestVote toRemove = null;
                                     for(TestVote tv : hs){
-                                        if(v.id == i){
+                                        if(v.getId() == i){
                                             toRemove = tv;
                                             break;
                                         }
@@ -272,7 +273,7 @@ public class FLETest extends ZKTestCase {
 
         for(int i = 0; i < le.length; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
-                    port[i], 3, i, 2, 2, 2);
+                    port[i], 3, i, 1000, 2, 2);
             peer.startLeaderElection();
             LEThread thread = new LEThread(peer, i);
             thread.start();
@@ -311,5 +312,95 @@ public class FLETest extends ZKTestCase {
        if(threads.get((int) leader).isAlive()){
            Assert.fail("Leader hasn't joined: " + leader);
        }
+    }
+
+    /*
+     * Class to verify of the thread has become a follower
+     */
+    class VerifyState extends Thread {
+        volatile private boolean success = false;
+        QuorumPeer peer;
+        public VerifyState(QuorumPeer peer) {
+            this.peer = peer;
+        }
+        public void run() {
+            setName("VerifyState-" + peer.getId());
+            while (true) {
+                if(peer.getPeerState() == ServerState.FOLLOWING) {
+                    LOG.info("I am following");
+                    success = true;
+                    break;
+                } else if (peer.getPeerState() == ServerState.LEADING) {
+                    LOG.info("I am leading");
+                    success = false;
+                    break;
+                }
+                try {
+                    Thread.sleep(250);
+                } catch (Exception e) {
+                    LOG.warn("Sleep failed ", e);
+                }
+            }
+        }
+        public boolean isSuccess() {
+            return success;
+        }
+    }
+
+    /*
+     * For ZOOKEEPER-975 verify that a peer joining an established cluster
+     * does not go in LEADING state.
+     */
+    @Test
+    public void testJoin() throws Exception {
+        int sid;
+        QuorumPeer peer;
+        int waitTime = 10 * 1000;
+        ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
+        for(sid = 0; sid < 3; sid++) {
+            peers.put(Long.valueOf(sid),
+                    new QuorumServer(sid,
+                            new InetSocketAddress(PortAssignment.unique()),
+                    new InetSocketAddress(PortAssignment.unique())));
+            tmpdir[sid] = ClientBase.createTmpDir();
+            port[sid] = PortAssignment.unique();
+        }
+        // start 2 peers and verify if they form the cluster
+        for (sid = 0; sid < 2; sid++) {
+            peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid],
+                                             port[sid], 3, sid, 2000, 2, 2);
+            LOG.info("Starting peer " + peer.getId());
+            peer.start();
+            peerList.add(sid, peer);
+        }
+        peer = peerList.get(0);
+        VerifyState v1 = new VerifyState(peerList.get(0));
+        v1.start();
+        v1.join(waitTime);
+        Assert.assertFalse("Unable to form cluster in " +
+            waitTime + " ms",
+            !v1.isSuccess());
+        // Start 3rd peer and check if it goes in LEADING state
+        peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid],
+                 port[sid], 3, sid, 2000, 2, 2);
+        LOG.info("Starting peer " + peer.getId());
+        peer.start();
+        peerList.add(sid, peer);
+        v1 = new VerifyState(peer);
+        v1.start();
+        v1.join(waitTime);
+        if (v1.isAlive()) {
+               Assert.fail("Peer " + peer.getId() + " failed to join the cluster " +
+                "within " + waitTime + " ms");
+        } else if (!v1.isSuccess()) {
+               Assert.fail("Incorrect LEADING state for peer " + peer.getId());
+        }
+        // cleanup
+        for (int id = 0; id < 3; id++) {
+            peer = peerList.get(id);
+            if (peer != null) {
+                peer.shutdown();
+            }
+        }
     }
 }

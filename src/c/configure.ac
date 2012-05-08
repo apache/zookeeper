@@ -3,8 +3,12 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],3.4.0,[zookeeper-user@hadoop.apache.org],[c-client-src])
+AC_INIT([zookeeper C client],3.4.3,[user@zookeeper.apache.org],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
+
+# Save initial CFLAGS and CXXFLAGS values before AC_PROG_CC and AC_PROG_CXX
+init_cflags="$CFLAGS"
+init_cxxflags="$CXXFLAGS"
 
 # initialize Doxygen support
 DX_HTML_FEATURE(ON)
@@ -58,8 +62,30 @@ AC_PROG_LIBTOOL
 #hence this define for gcc
 AC_ARG_ENABLE([debug],
  [AS_HELP_STRING([--enable-debug],[enable debug build [default=no]])],
- [CFLAGS="-g -O0 -D_GNU_SOURCE";CXXFLAGS="-g -O0"],[CFLAGS="-g -O2 -D_GNU_SOURCE";CXXFLAGS="-g -O2"])
- 
+ [],[enable_debug=no])
+
+if test "x$enable_debug" = xyes; then
+    if test "x$init_cflags" = x; then
+        CFLAGS=""
+    fi
+    CFLAGS="$CFLAGS -g -O0 -D_GNU_SOURCE"
+else
+    if test "x$init_cflags" = x; then
+        CFLAGS="-g -O2 -D_GNU_SOURCE"
+    fi
+fi
+
+if test "x$enable_debug" = xyes; then
+    if test "x$init_cxxflags" = x; then
+        CXXFLAGS=""
+    fi
+    CXXFLAGS="$CXXFLAGS -g -O0"
+else
+    if test "x$init_cxxflags" = x; then
+        CXXFLAGS="-g -O2"
+    fi
+fi
+
 AC_ARG_WITH([syncapi],
  [AS_HELP_STRING([--with-syncapi],[build with support for SyncAPI [default=yes]])],
  [],[with_syncapi=yes])
@@ -91,6 +117,30 @@ AC_CHECK_TYPE([nfds_t],
     [AC_DEFINE([POLL_NFDS_TYPE],[nfds_t],[poll() second argument type])],
     [AC_DEFINE([POLL_NFDS_TYPE],[unsigned int],[poll() second argument type])],
     [#include <poll.h>])
+
+AC_MSG_CHECKING([whether to enable ipv6])
+
+AC_TRY_RUN([ /* is AF_INET6 available? */
+#include <sys/types.h>
+#include <sys/socket.h>
+main()
+{
+ if (socket(AF_INET6, SOCK_STREAM, 0) < 0)
+   exit(1);
+ else
+   exit(0);
+}
+], AC_MSG_RESULT(yes) 
+   ipv6=yes, 
+   AC_MSG_RESULT(no) 
+   ipv6=no, 
+   AC_MSG_RESULT(no) 
+   ipv6=no)
+
+if test x"$ipv6" = xyes; then
+  USEIPV6="-DZOO_IPV6_ENABLED"
+  AC_SUBST(USEIPV6)
+fi
 
 # Checks for library functions.
 AC_CHECK_FUNCS([getcwd gethostbyname gethostname getlogin getpwuid_r gettimeofday getuid memmove memset poll socket strchr strdup strerror strtol])

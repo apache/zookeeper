@@ -17,20 +17,21 @@
  */
 
 package org.apache.zookeeper.test;
-import org.apache.log4j.Logger;
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class QuorumHammerTest extends QuorumBase {
-    protected static final Logger LOG = Logger.getLogger(QuorumHammerTest.class);
+public class QuorumHammerTest extends ZKTestCase {
+    protected static final Logger LOG = LoggerFactory.getLogger(QuorumHammerTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
     protected final QuorumBase qb = new QuorumBase();
     protected final ClientHammerTest cht = new ClientHammerTest();
 
     @Before
-    @Override
     public void setUp() throws Exception {
         qb.setUp();
         cht.hostPort = qb.hostPort;
@@ -38,7 +39,6 @@ public class QuorumHammerTest extends QuorumBase {
     }
 
     @After
-    @Override
     public void tearDown() throws Exception {
         cht.tearDownAll();
         qb.tearDown();

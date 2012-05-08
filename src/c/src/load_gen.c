@@ -19,7 +19,13 @@
 #include <zookeeper.h>
 #include "zookeeper_log.h"
 #include <errno.h>
+#ifndef WIN32
+#ifdef THREADED 
 #include <pthread.h>
+#endif
+#else
+#include "win32port.h"
+#endif
 #include <string.h>
 #include <stdlib.h>
 

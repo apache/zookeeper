@@ -148,7 +148,7 @@ public class JRecord extends JCompType {
                 String struct_name = JVector.extractVectorName(jvType);
                 if (vectorStructs.get(struct_name) == null) {
                     vectorStructs.put(struct_name, struct_name);
-                    h.write("struct " + struct_name + " {\n    int32_t count;\n" + jv.getElementType().genCDecl("*data") + ";\n};\n");
+                    h.write("struct " + struct_name + " {\n    int32_t count;\n" + jv.getElementType().genCDecl("*data") + "\n};\n");
                     h.write("int serialize_" + struct_name + "(struct oarchive *out, const char *tag, struct " + struct_name + " *v);\n");
                     h.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v);\n");
                     h.write("int allocate_" + struct_name + "(struct " + struct_name + " *v, int32_t len);\n");
@@ -183,7 +183,7 @@ public class JRecord extends JCompType {
                     c.write("    for(i=0;i<v->count;i++) {\n");
                     genSerialize(c, jvType, "data", "data[i]");
                     c.write("    }\n");
-                    c.write("    rc = rc ? : out->end_vector(out, tag);\n");
+                    c.write("    rc = rc ? rc : out->end_vector(out, tag);\n");
                     c.write("    return rc;\n");
                     c.write("}\n");
                     c.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v)\n");
@@ -218,7 +218,7 @@ public class JRecord extends JCompType {
         for(JField f : mFields) {
             genSerialize(c, f.getType(), f.getTag(), f.getName());
         }
-        c.write("    rc = rc ? : out->end_record(out, tag);\n");
+        c.write("    rc = rc ? rc : out->end_record(out, tag);\n");
         c.write("    return rc;\n");
         c.write("}\n");
         c.write("int deserialize_" + rec_name + "(struct iarchive *in, const char *tag, struct " + rec_name + "*v)");
@@ -228,7 +228,7 @@ public class JRecord extends JCompType {
         for(JField f : mFields) {
             genDeserialize(c, f.getType(), f.getTag(), f.getName());
         }
-        c.write("    rc = rc ? : in->end_record(in, tag);\n");
+        c.write("    rc = rc ? rc : in->end_record(in, tag);\n");
         c.write("    return rc;\n");
         c.write("}\n");
         c.write("void deallocate_" + rec_name + "(struct " + rec_name + "*v)");
@@ -248,21 +248,21 @@ public class JRecord extends JCompType {
 
     private void genSerialize(FileWriter c, JType type, String tag, String name) throws IOException {
         if (type instanceof JRecord) {
-            c.write("    rc = rc ? : serialize_" + extractStructName(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : serialize_" + extractStructName(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
         } else if (type instanceof JVector) {
-            c.write("    rc = rc ? : serialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : serialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(out, \"" + tag + "\", &v->" + name + ");\n");
         } else {
-            c.write("    rc = rc ? : out->serialize_" + extractMethodSuffix(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : out->serialize_" + extractMethodSuffix(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
         }
     }
 
     private void genDeserialize(FileWriter c, JType type, String tag, String name) throws IOException {
         if (type instanceof JRecord) {
-            c.write("    rc = rc ? : deserialize_" + extractStructName(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : deserialize_" + extractStructName(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
         } else if (type instanceof JVector) {
-            c.write("    rc = rc ? : deserialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : deserialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(in, \"" + tag + "\", &v->" + name + ");\n");
         } else {
-            c.write("    rc = rc ? : in->deserialize_" + extractMethodSuffix(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : in->deserialize_" + extractMethodSuffix(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
         }
     }
 
@@ -349,7 +349,7 @@ public class JRecord extends JCompType {
 
         cc.write("bool "+getCppFQName()+"::validate() const {\n");
         cc.write("  if (bs_.size() != bs_.count()) return false;\n");
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = (JField) i.next();
             JType type = jf.getType();
             if (type instanceof JRecord) {
@@ -425,7 +425,6 @@ public class JRecord extends JCompType {
         jj.write("*/\n");
         jj.write("\n");
         jj.write("package "+getJavaPackage()+";\n\n");
-        jj.write("import java.util.*;\n");
         jj.write("import org.apache.jute.*;\n");
         jj.write("public class "+getName()+" implements Record {\n");
         for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {

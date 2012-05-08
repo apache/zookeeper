@@ -59,7 +59,7 @@ public class TestableZooKeeper extends ZooKeeper {
                 synchronized(cnxn) {
                     try {
                         try {
-                            ((SocketChannel)cnxn.sendThread.sockKey.channel()).socket().close();
+                            cnxn.sendThread.testableCloseSocket();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

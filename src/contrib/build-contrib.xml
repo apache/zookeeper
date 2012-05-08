@@ -41,7 +41,7 @@
 
   <property name="build.encoding" value="ISO-8859-1"/>
 
-  <property name="ivy.version" value="2.1.0"/>
+  <property name="ivy.version" value="2.2.0"/>
   <property name="ivy.url"
             value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
   <property name="ivy.home" value="${user.home}/.ant" />
@@ -144,8 +144,8 @@
   <target name="package" depends="jar" unless="skip.contrib"> 
     <echo message="contrib: ${name}"/>
 
-    <mkdir dir="${dist.dir}/contrib/${name}"/>
-    <copy todir="${dist.dir}/contrib/${name}" includeEmptyDirs="false"
+    <mkdir dir="${dist.dir}${package.share}/contrib/${name}"/>
+    <copy todir="${dist.dir}${package.share}/contrib/${name}" includeEmptyDirs="false"
           flatten="true">
       <fileset dir="${build.dir}">
         <include name="zookeeper-${version}-${name}.jar" />
@@ -153,6 +153,28 @@
     </copy>
   </target>
 
+  <!-- ====================================================== -->
+  <!-- Package a contrib's files                              -->
+  <!-- ====================================================== -->
+  <target name="package-native" depends="jar" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+  </target>
+
+  <!-- ====================================================== -->
+  <!-- rpm a contrib's files                                  -->
+  <!-- ====================================================== -->
+  <target name="rpm" depends="jar" unless="skip.contrib"> 
+    <echo message="contrib: ${name}"/>
+
+  </target>
+
+  <!-- ====================================================== -->
+  <!-- deb a contrib's files                                  -->
+  <!-- ====================================================== -->
+  <target name="deb" depends="jar" unless="skip.contrib"> 
+    <echo message="contrib: ${name}"/>
+
+  </target>
   <!-- ================================================================== -->
   <!-- Clean.  Delete the build files, and their directories              -->
   <!-- ================================================================== -->

@@ -23,7 +23,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -32,8 +33,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.After;
@@ -42,7 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TruncateTest extends ZKTestCase {
-	private static final Logger LOG = Logger.getLogger(TruncateTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TruncateTest.class);
     File dataDir1, dataDir2, dataDir3;
     final int baseHostPort = 12233;
     
@@ -71,13 +73,19 @@ public class TruncateTest extends ZKTestCase {
     @Test
     public void testTruncate() throws IOException, InterruptedException, KeeperException {
         // Prime the server that is going to come in late with 50 txns
-        NIOServerCnxn.Factory factory = ClientBase.createNewServerInstance(dataDir1, null, "127.0.0.1:" + baseHostPort, 100);
+        ServerCnxnFactory factory = ClientBase.createNewServerInstance(dataDir1, null, "127.0.0.1:" + baseHostPort, 100);
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + baseHostPort, 15000, nullWatcher);
         for(int i = 0; i < 50; i++) {
             zk.create("/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         zk.close();
-        ZKDatabase zkDb = factory.getZooKeeperServer().getZKDatabase();
+        
+        ZKDatabase zkDb;
+        {
+            ZooKeeperServer zs = ClientBase.getServer(factory);
+    
+            zkDb = zs.getZKDatabase();
+        }
         factory.shutdown();
         try {
             zkDb.close();

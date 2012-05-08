@@ -29,19 +29,24 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * There will be an instance of this class created by the Leader for each
@@ -49,7 +54,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * class.
  */
 public class LearnerHandler extends Thread {
-    private static final Logger LOG = Logger.getLogger(LearnerHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LearnerHandler.class);
 
     protected final Socket sock;    
 
@@ -70,6 +75,12 @@ public class LearnerHandler extends Thread {
         return sid;
     }                    
 
+    protected int version = 0x1;
+    
+    int getVersion() {
+    	return version;
+    }
+    
     /**
      * The packets to be sent to the learner
      */
@@ -179,11 +190,9 @@ public class LearnerHandler extends Thread {
             break;
         case Leader.PROPOSAL:
             type = "PROPOSAL";
-            BinaryInputArchive ia = BinaryInputArchive
-                    .getArchive(new ByteArrayInputStream(p.getData()));
             TxnHeader hdr = new TxnHeader();
             try {
-                txn = SerializeUtils.deserializeTxn(ia, hdr);
+                txn = SerializeUtils.deserializeTxn(p.getData(), hdr);
                 // mess = "transaction: " + txn.toString();
             } catch (IOException e) {
                 LOG.warn("Unexpected exception",e);
@@ -223,8 +232,8 @@ public class LearnerHandler extends Thread {
      */
     @Override
     public void run() {
-        try {
-            
+        try {            
+            sock.setSoTimeout(leader.self.getTickTime()*leader.self.getInitLimit());
             ia = BinaryInputArchive.getArchive(new BufferedInputStream(sock
                     .getInputStream()));
             bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
@@ -237,109 +246,187 @@ public class LearnerHandler extends Thread {
                         + " is not FOLLOWERINFO or OBSERVERINFO!");
                 return;
             }
-            if (qp.getData() != null) {
-            	ByteBuffer bbsid = ByteBuffer.wrap(qp.getData());
-                this.sid = bbsid.getLong();
+            byte learnerInfoData[] = qp.getData();
+            if (learnerInfoData != null) {
+            	if (learnerInfoData.length == 8) {
+            		ByteBuffer bbsid = ByteBuffer.wrap(learnerInfoData);
+            		this.sid = bbsid.getLong();
+            	} else {
+            		LearnerInfo li = new LearnerInfo();
+            		ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(learnerInfoData), li);
+            		this.sid = li.getServerid();
+            		this.version = li.getProtocolVersion();
+            	}
             } else {
             	this.sid = leader.followerCounter.getAndDecrement();
             }
 
-            LOG.info("Follower sid: " + this.sid + " : info : "
-                    + leader.self.quorumPeers.get(this.sid));
+            LOG.info("Follower sid: " + sid + " : info : "
+                    + leader.self.quorumPeers.get(sid));
                         
             if (qp.getType() == Leader.OBSERVERINFO) {
                   learnerType = LearnerType.OBSERVER;
             }            
             
-            long peerLastZxid = qp.getZxid();
+            long lastAcceptedEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
+            
+            long peerLastZxid;
+            StateSummary ss = null;
+            long zxid = qp.getZxid();
+            long newEpoch = leader.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
+            
+            if (this.getVersion() < 0x10000) {
+                // we are going to have to extrapolate the epoch information
+                long epoch = ZxidUtils.getEpochFromZxid(zxid);
+                ss = new StateSummary(epoch, zxid);
+                // fake the message
+                leader.waitForEpochAck(this.getSid(), ss);
+            } else {
+                byte ver[] = new byte[4];
+                ByteBuffer.wrap(ver).putInt(0x10000);
+                QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, ZxidUtils.makeZxid(newEpoch, 0), ver, null);
+                oa.writeRecord(newEpochPacket, "packet");
+                bufferedOutput.flush();
+                QuorumPacket ackEpochPacket = new QuorumPacket();
+                ia.readRecord(ackEpochPacket, "packet");
+                if (ackEpochPacket.getType() != Leader.ACKEPOCH) {
+                    LOG.error(ackEpochPacket.toString()
+                            + " is not ACKEPOCH");
+                    return;
+				}
+                ByteBuffer bbepoch = ByteBuffer.wrap(ackEpochPacket.getData());
+                ss = new StateSummary(bbepoch.getInt(), ackEpochPacket.getZxid());
+                leader.waitForEpochAck(this.getSid(), ss);
+            }
+            peerLastZxid = ss.getLastZxid();
+            
             /* the default to send to the follower */
             int packetToSend = Leader.SNAP;
-            boolean logTxns = true;
             long zxidToSend = 0;
-            
+            long leaderLastZxid = 0;
             /** the packets that the follower needs to get updates from **/
             long updates = peerLastZxid;
             
             /* we are sending the diff check if we have proposals in memory to be able to 
              * send a diff to the 
              */ 
-            LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
-            synchronized(proposals) {
+            ReentrantReadWriteLock lock = leader.zk.getZKDatabase().getLogLock();
+            ReadLock rl = lock.readLock();
+            try {
+                rl.lock();        
+                final long maxCommittedLog = leader.zk.getZKDatabase().getmaxCommittedLog();
+                final long minCommittedLog = leader.zk.getZKDatabase().getminCommittedLog();
+                LOG.info("Synchronizing with Follower sid: " + sid
+                        +" maxCommittedLog=0x"+Long.toHexString(maxCommittedLog)
+                        +" minCommittedLog=0x"+Long.toHexString(minCommittedLog)
+                        +" peerLastZxid=0x"+Long.toHexString(peerLastZxid));
+
+                LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
+
                 if (proposals.size() != 0) {
-                    if ((leader.zk.getZKDatabase().getmaxCommittedLog() >= peerLastZxid)
-                            && (leader.zk.getZKDatabase().getminCommittedLog() <= peerLastZxid)) {
-                        packetToSend = Leader.DIFF;
-                        zxidToSend = leader.zk.getZKDatabase().getmaxCommittedLog();
+                    LOG.debug("proposal size is {}", proposals.size());
+                    if ((maxCommittedLog >= peerLastZxid)
+                            && (minCommittedLog <= peerLastZxid)) {
+                        LOG.debug("Sending proposals to follower");
+
+                        // as we look through proposals, this variable keeps track of previous
+                        // proposal Id.
+                        long prevProposalZxid = minCommittedLog;
+
+                        // Keep track of whether we are about to send the first packet.
+                        // Before sending the first packet, we have to tell the learner
+                        // whether to expect a trunc or a diff
+                        boolean firstPacket=true;
+
                         for (Proposal propose: proposals) {
-                            if (propose.packet.getZxid() > peerLastZxid) {
+                            // skip the proposals the peer already has
+                            if (propose.packet.getZxid() <= peerLastZxid) {
+                                prevProposalZxid = propose.packet.getZxid();
+                                continue;
+                            } else {
+                                // If we are sending the first packet, figure out whether to trunc
+                                // in case the follower has some proposals that the leader doesn't
+                                if (firstPacket) {
+                                    firstPacket = false;
+                                    // Does the peer have some proposals that the leader hasn't seen yet
+                                    if (prevProposalZxid < peerLastZxid) {
+                                        // send a trunc message before sending the diff
+                                        packetToSend = Leader.TRUNC;
+                                        LOG.info("Sending TRUNC");
+                                        zxidToSend = prevProposalZxid;
+                                        updates = zxidToSend;
+                                    } 
+                                    else {
+                                        // Just send the diff
+                                        packetToSend = Leader.DIFF;
+                                        LOG.info("Sending diff");
+                                        zxidToSend = maxCommittedLog;        
+                                    }
+
+                                }
                                 queuePacket(propose.packet);
                                 QuorumPacket qcommit = new QuorumPacket(Leader.COMMIT, propose.packet.getZxid(),
                                         null, null);
                                 queuePacket(qcommit);
-
                             }
                         }
+                    } else if (peerLastZxid > maxCommittedLog) {
+                        LOG.debug("Sending TRUNC to follower zxidToSend=0x{} updates=0x{}",
+                                Long.toHexString(maxCommittedLog),
+                                Long.toHexString(updates));
+
+                        packetToSend = Leader.TRUNC;
+                        zxidToSend = maxCommittedLog;
+                        updates = zxidToSend;
+                    } else {
+                        LOG.warn("Unhandled proposal scenario");
                     }
+                } else {
+                    // just let the state transfer happen
+                    LOG.debug("proposals is empty");
+                }               
+
+                leaderLastZxid = leader.startForwarding(this, updates);
+                if (peerLastZxid == leaderLastZxid) {
+                    LOG.debug("Leader and follower are in sync, sending empty diff. zxid=0x{}",
+                            Long.toHexString(leaderLastZxid));
+                    // We are in sync so we'll do an empty diff
+                    packetToSend = Leader.DIFF;
+                    zxidToSend = leaderLastZxid;
                 }
-                else {
-                    logTxns = false;
-                }            
-            }
-            
-            //check if we decided to send a diff or we need to send a truncate
-            // we avoid using epochs for truncating because epochs make things
-            // complicated. Two epochs might have the last 32 bits as same.
-            // only if we know that there is a committed zxid in the queue that
-            // is less than the one the peer has we send a trunc else to make
-            // things simple we just send sanpshot.
-            if (logTxns && (peerLastZxid > leader.zk.getZKDatabase().getmaxCommittedLog())) {
-                // this is the only case that we are sure that
-                // we can ask the peer to truncate the log
-                packetToSend = Leader.TRUNC;
-                zxidToSend = leader.zk.getZKDatabase().getmaxCommittedLog();
-                updates = zxidToSend;
-            }
-            
-            /* see what other packets from the proposal
-             * and tobeapplied queues need to be sent
-             * and then decide if we can just send a DIFF
-             * or we actually need to send the whole snapshot
-             */
-            long leaderLastZxid = leader.startForwarding(this, updates);
-            // a special case when both the ids are the same 
-            if (peerLastZxid == leaderLastZxid) {
-                packetToSend = Leader.DIFF;
-                zxidToSend = leaderLastZxid;
+            } finally {
+                rl.unlock();
             }
 
-            QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
-                    leaderLastZxid, null, null);
-            oa.writeRecord(newLeaderQP, "packet");
+             QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
+                    ZxidUtils.makeZxid(newEpoch, 0), null, null);
+             if (getVersion() < 0x10000) {
+                oa.writeRecord(newLeaderQP, "packet");
+            } else {
+                queuedPackets.add(newLeaderQP);
+            }
             bufferedOutput.flush();
-            
-           
+            //Need to set the zxidToSend to the latest zxid
+            if (packetToSend == Leader.SNAP) {
+                zxidToSend = leader.zk.getZKDatabase().getDataTreeLastProcessedZxid();
+            }
             oa.writeRecord(new QuorumPacket(packetToSend, zxidToSend, null, null), "packet");
             bufferedOutput.flush();
             
             /* if we are not truncating or sending a diff just send a snapshot */
             if (packetToSend == Leader.SNAP) {
-                LOG.warn("Sending snapshot last zxid of peer is 0x"
+                LOG.info("Sending snapshot last zxid of peer is 0x"
                         + Long.toHexString(peerLastZxid) + " " 
                         + " zxid of leader is 0x"
-                        + Long.toHexString(leaderLastZxid));
+                        + Long.toHexString(leaderLastZxid)
+                        + "sent zxid of db as 0x" 
+                        + Long.toHexString(zxidToSend));
                 // Dump data to peer
                 leader.zk.getZKDatabase().serializeSnapshot(oa);
                 oa.writeString("BenWasHere", "signature");
             }
             bufferedOutput.flush();
             
-            // Mutation packets will be queued during the serialize,
-            // so we need to mark when the peer can actually start
-            // using the data
-            //
-            queuedPackets
-                    .add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
-
             // Start sending packets
             new Thread() {
                 public void run() {
@@ -352,7 +439,35 @@ public class LearnerHandler extends Thread {
                     }
                 }
             }.start();
+            
+            /*
+             * Have to wait for the first ACK, wait until 
+             * the leader is ready, and only then we can
+             * start processing messages.
+             */
+            qp = new QuorumPacket();
+            ia.readRecord(qp, "packet");
+            if(qp.getType() != Leader.ACK){
+                LOG.error("Next packet was supposed to be an ACK");
+                return;
+            }
+            leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
+            
+            /*
+             * Wait until leader starts up
+             */
+            synchronized(leader.zk){
+                while(!leader.zk.isRunning() && !this.isInterrupted()){
+                    leader.zk.wait(20);
+                }
+            }
+            // Mutation packets will be queued during the serialize,
+            // so we need to mark when the peer can actually start
+            // using the data
+            //
+            queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
 
+            
             while (true) {
                 qp = new QuorumPacket();
                 ia.readRecord(qp, "packet");
@@ -427,14 +542,14 @@ public class LearnerHandler extends Thread {
                     cxid = bb.getInt();
                     type = bb.getInt();
                     bb = bb.slice();
+                    Request si;
                     if(type == OpCode.sync){
-                     	leader.zk.submitRequest(new LearnerSyncRequest(this, sessionId, cxid, type, bb,
-                                qp.getAuthinfo()));
+                        si = new LearnerSyncRequest(this, sessionId, cxid, type, bb, qp.getAuthinfo());
                     } else {
-                        Request si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
-                        si.setOwner(this);
-                        leader.zk.submitRequest(si);
+                        si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
                     }
+                    si.setOwner(this);
+                    leader.zk.submitRequest(si);
                     break;
                 default:
                 }
@@ -457,17 +572,17 @@ public class LearnerHandler extends Thread {
             LOG.warn("******* GOODBYE " 
                     + (sock != null ? sock.getRemoteSocketAddress() : "<null>")
                     + " ********");
-            // Send the packet of death
-            try {
-                queuedPackets.put(proposalOfDeath);
-            } catch (InterruptedException e) {
-                LOG.warn("Ignoring unexpected exception", e);
-            }
             shutdown();
         }
     }
 
     public void shutdown() {
+        // Send the packet of death
+        try {
+            queuedPackets.put(proposalOfDeath);
+        } catch (InterruptedException e) {
+            LOG.warn("Ignoring unexpected exception", e);
+        }
         try {
             if (sock != null && !sock.isClosed()) {
                 sock.close();
@@ -475,6 +590,7 @@ public class LearnerHandler extends Thread {
         } catch (IOException e) {
             LOG.warn("Ignoring unexpected exception during socket close", e);
         }
+        this.interrupt();
         leader.removeLearnerHandler(this);
     }
 
@@ -501,6 +617,6 @@ public class LearnerHandler extends Thread {
 
     public boolean synced() {
         return isAlive()
-                && tickOfLastAck >= leader.self.tick - leader.self.syncLimit;
+        && tickOfLastAck >= leader.self.tick - leader.self.syncLimit;
     }
 }

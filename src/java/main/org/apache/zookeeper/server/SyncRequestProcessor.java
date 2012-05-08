@@ -24,7 +24,8 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -33,13 +34,14 @@ import org.apache.log4j.Logger;
  * until its log has been synced to disk.
  */
 public class SyncRequestProcessor extends Thread implements RequestProcessor {
-    private static final Logger LOG = Logger.getLogger(SyncRequestProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
     private final ZooKeeperServer zks;
     private final LinkedBlockingQueue<Request> queuedRequests =
         new LinkedBlockingQueue<Request>();
     private final RequestProcessor nextProcessor;
 
     private Thread snapInProcess = null;
+    volatile private boolean running;
 
     /**
      * Transactions that have been written and are waiting to be flushed to
@@ -61,6 +63,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         super("SyncThread:" + zks.getServerId());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
+        running = true;
     }
 
     /**
@@ -145,7 +148,8 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                 }
             }
         } catch (Throwable t) {
-            LOG.fatal("Severe unrecoverable error, exiting", t);
+            LOG.error("Severe unrecoverable error, exiting", t);
+            running = false;
             System.exit(11);
         }
         LOG.info("SyncRequestProcessor exited!");
@@ -166,9 +170,12 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     }
 
     public void shutdown() {
+        LOG.info("Shutting down");
         queuedRequests.add(requestOfDeath);
         try {
-            this.join();
+            if(running){
+                this.join();
+            }
         } catch(InterruptedException e) {
             LOG.warn("Interrupted while wating for " + this + " to finish");
         }

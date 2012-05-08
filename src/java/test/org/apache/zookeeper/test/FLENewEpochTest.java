@@ -24,7 +24,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
@@ -38,7 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FLENewEpochTest extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(FLENewEpochTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(FLENewEpochTest.class);
 
     int count;
     HashMap<Long,QuorumServer> peers;
@@ -107,7 +108,7 @@ public class FLENewEpochTest extends ZKTestCase {
                      */
                     peer.setCurrentVote(v);
 
-                    LOG.info("Finished election: " + i + ", " + v.id);
+                    LOG.info("Finished election: " + i + ", " + v.getId());
                     //votes[i] = v;
 
                     switch (i) {
@@ -164,7 +165,7 @@ public class FLENewEpochTest extends ZKTestCase {
           }
 
           for(int i = 1; i < le.length; i++) {
-              QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2);
+              QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2);
               peer.startLeaderElection();
               LEThread thread = new LEThread(peer, i);
               thread.start();
@@ -173,7 +174,7 @@ public class FLENewEpochTest extends ZKTestCase {
           if(!start0.tryAcquire(4000, java.util.concurrent.TimeUnit.MILLISECONDS))
               Assert.fail("First leader election failed");
 
-          QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 2, 2, 2);
+          QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
           peer.startLeaderElection();
           LEThread thread = new LEThread(peer, 0);
           thread.start();

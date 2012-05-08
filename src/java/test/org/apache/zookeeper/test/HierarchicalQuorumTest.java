@@ -26,7 +26,8 @@ import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -36,7 +37,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class HierarchicalQuorumTest extends ClientBase {
-    private static final Logger LOG = Logger.getLogger(QuorumBase.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumBase.class);
 
     File s1dir, s2dir, s3dir, s4dir, s5dir;
     QuorumPeer s1, s2, s3, s4, s5;
@@ -166,7 +167,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         QuorumHierarchical hq4 = new QuorumHierarchical(qp); 
         s4 = new QuorumPeer(peers, s4dir, s4dir, port4, 3, 4, tickTime, initLimit, syncLimit, hq4);
         if (withObservers) {
-            s4.setPeerType(QuorumPeer.LearnerType.OBSERVER);
+            s4.setLearnerType(QuorumPeer.LearnerType.OBSERVER);
         }
         Assert.assertEquals(port4, s4.getClientPort());
                        
@@ -174,7 +175,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         QuorumHierarchical hq5 = new QuorumHierarchical(qp); 
         s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 3, 5, tickTime, initLimit, syncLimit, hq5);
         if (withObservers) {
-            s5.setPeerType(QuorumPeer.LearnerType.OBSERVER);
+            s5.setLearnerType(QuorumPeer.LearnerType.OBSERVER);
         }
         Assert.assertEquals(port5, s5.getClientPort());
         

@@ -23,7 +23,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -41,7 +42,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  */
 public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     private static final Logger LOG =
-        Logger.getLogger(FollowerZooKeeperServer.class);
+        LoggerFactory.getLogger(FollowerZooKeeperServer.class);
 
     CommitProcessor commitProcessor;
 
@@ -80,7 +81,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
                 new SendAckRequestProcessor((Learner)getFollower()));
         syncProcessor.start();
     }
-    
+
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<Request>();
 
     public void logRequest(TxnHeader hdr, Record txn) {
@@ -109,7 +110,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         }
         long firstElementZxid = pendingTxns.element().zxid;
         if (firstElementZxid != zxid) {
-            LOG.fatal("Committing zxid 0x" + Long.toHexString(zxid)
+            LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
                     + " but next pending txn 0x"
                     + Long.toHexString(firstElementZxid));
             System.exit(12);
@@ -135,6 +136,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     
     @Override
     public void shutdown() {
+        LOG.info("Shutting down");
         try {
             super.shutdown();
         } catch (Exception e) {

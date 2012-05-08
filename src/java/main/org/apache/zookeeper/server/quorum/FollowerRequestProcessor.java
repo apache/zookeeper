@@ -20,7 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -33,7 +34,7 @@ import org.apache.zookeeper.server.ZooTrace;
  */
 public class FollowerRequestProcessor extends Thread implements
         RequestProcessor {
-    private static final Logger LOG = Logger.getLogger(FollowerRequestProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FollowerRequestProcessor.class);
 
     FollowerZooKeeperServer zks;
 
@@ -83,6 +84,7 @@ public class FollowerRequestProcessor extends Thread implements
                 case OpCode.setACL:
                 case OpCode.createSession:
                 case OpCode.closeSession:
+                case OpCode.multi:
                     zks.getFollower().request(request);
                     break;
                 }
@@ -100,6 +102,7 @@ public class FollowerRequestProcessor extends Thread implements
     }
 
     public void shutdown() {
+        LOG.info("Shutting down");
         finished = true;
         queuedRequests.clear();
         queuedRequests.add(Request.requestOfDeath);

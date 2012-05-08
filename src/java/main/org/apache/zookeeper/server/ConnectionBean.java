@@ -26,19 +26,19 @@ import java.util.Date;
 
 import javax.management.ObjectName;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.NIOServerCnxn.CnxnStats;
 
 /**
  * Implementation of connection MBean interface.
  */
 public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
-    private static final Logger LOG = Logger.getLogger(ConnectionBean.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ConnectionBean.class);
 
     private final ServerCnxn connection;
-    private final CnxnStats stats;
+    private final Stats stats;
 
     private final ZooKeeperServer zk;
     
@@ -47,10 +47,10 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
 
     public ConnectionBean(ServerCnxn connection,ZooKeeperServer zk){
         this.connection = connection;
-        this.stats = (CnxnStats)connection.getStats();
+        this.stats = connection;
         this.zk = zk;
         
-        InetSocketAddress sockAddr = connection.getRemoteAddress();
+        InetSocketAddress sockAddr = connection.getRemoteSocketAddress();
         if (sockAddr == null) {
             remoteIP = "Unknown";
         } else {
@@ -69,7 +69,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     }
 
     public String getSourceIP() {
-        InetSocketAddress sockAddr = connection.getRemoteAddress();
+        InetSocketAddress sockAddr = connection.getRemoteSocketAddress();
         if (sockAddr == null) {
             return null;
         }
@@ -88,7 +88,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     
     public String[] getEphemeralNodes() {
         if(zk.getZKDatabase()  !=null){
-            String[] res= zk.getZKDatabase().getEphemerals(sessionId)
+            String[] res = zk.getZKDatabase().getEphemerals(sessionId)
                 .toArray(new String[0]);
             Arrays.sort(res);
             return res;
@@ -114,7 +114,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     }
 
     public void resetCounters() {
-        stats.reset();
+        stats.resetStats();
     }
 
     @Override

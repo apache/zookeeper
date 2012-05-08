@@ -29,7 +29,8 @@ import java.util.Properties;
 import java.util.Map.Entry;
 
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
@@ -64,7 +65,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  */
 
 public class QuorumHierarchical implements QuorumVerifier {
-    private static final Logger LOG = Logger.getLogger(QuorumHierarchical.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumHierarchical.class);
 
     HashMap<Long, Long> serverWeight;
     HashMap<Long, Long> serverGroup;

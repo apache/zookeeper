@@ -85,5 +85,25 @@ class ACLTest(zktestbase.TestBase):
       acls = zookeeper.get_acl(self.handle, "/zk-python-aacltest")
       self.assertEqual(acls[1], [ZOO_ACL_READ], "Wrong ACL returned from get when aset")
 
+    def test_invalid_acl(self):
+      self.assertRaises(zookeeper.InvalidACLException,
+                        zookeeper.create,
+                        self.handle,
+                        "/zk-python-aclverifytest",
+                        "",
+                        None,
+                        zookeeper.EPHEMERAL)
+      
+    def test_invalid_acl2(self):
+      """Verify all required keys are present in the ACL."""
+      invalid_acl = [{"schema": "digest", "id": "zebra"}]
+      self.assertRaises(zookeeper.InvalidACLException,
+                        zookeeper.create,
+                        self.handle,
+                        "/zk-python-aclverifytest",
+                        "",
+                        invalid_acl,
+                        zookeeper.EPHEMERAL)
+
 if __name__ == '__main__':
     unittest.main()

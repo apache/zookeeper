@@ -18,7 +18,8 @@
 
 package org.apache.zookeeper.test.system;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -41,7 +42,7 @@ import org.junit.Test;
 public class SimpleSysTest extends BaseSysTest implements Watcher {
     int maxTries = 10;
     boolean connected;
-    final private static Logger LOG = Logger.getLogger(SimpleSysTest.class);
+    final private static Logger LOG = LoggerFactory.getLogger(SimpleSysTest.class);
     
     synchronized private boolean waitForConnect(ZooKeeper zk, long timeout) throws InterruptedException {
         connected = (zk.getState() == States.CONNECTED);

@@ -32,8 +32,10 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.junit.Ignore;
 import org.junit.runner.JUnitCore;
 
+@Ignore("No tests in this class.")
 public class BaseSysTest extends TestCase {
     private static int fakeBasePort = 33222;
     private static String zkHostPort;

@@ -18,10 +18,11 @@
 
 package org.apache.zookeeper.server.util;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Profiler {
-    private static final Logger LOG = Logger.getLogger(Profiler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Profiler.class);
 
     public interface Operation<T> {
         public T execute() throws Exception;

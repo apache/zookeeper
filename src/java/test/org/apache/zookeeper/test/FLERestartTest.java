@@ -26,7 +26,8 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
@@ -40,7 +41,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FLERestartTest extends ZKTestCase {
-    protected static final Logger LOG = Logger.getLogger(FLETest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(FLETest.class);
 
     static class TestVote {
         TestVote(int id, long leader) {
@@ -125,7 +126,7 @@ public class FLERestartTest extends ZKTestCase {
                      */
                     peer.setCurrentVote(v);
 
-                    LOG.info("Finished election: " + i + ", " + v.id);
+                    LOG.info("Finished election: " + i + ", " + v.getId());
                     //votes[i] = v;
 
                     switch(i){
@@ -135,7 +136,7 @@ public class FLERestartTest extends ZKTestCase {
                             QuorumBase.shutdown(peer);
                             ((FastLeaderElection) restartThreads.get(i).peer.getElectionAlg()).shutdown();
 
-                            peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2);
+                            peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2);
                             peer.startLeaderElection();
                             peerRound++;
                         } else {
@@ -185,7 +186,7 @@ public class FLERestartTest extends ZKTestCase {
         }
 
         for(int i = 0; i < count; i++) {
-            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2);
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2);
             peer.startLeaderElection();
             FLERestartThread thread = new FLERestartThread(peer, i);
             thread.start();
