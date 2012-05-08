@@ -289,6 +289,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1451. C API improperly logs getaddrinfo failures on Linux when using glibc (Stephen Tyree via michim)
 
+  ZOOKEEPER-1440. Spurious log error messages when QuorumCnxManager is shutting
+  down (Jordan Zimmerman via michim)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
