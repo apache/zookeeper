@@ -106,7 +106,7 @@ namespace Org.Apache.Jute
                 Int32.TryParse(maxBufferString, out buffer);
                 return buffer;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return 0xfffff;
             }
