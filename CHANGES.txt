@@ -47,6 +47,8 @@ BUGFIXES:
   ZOOKEEPER-1450. Backport of ZOOKEEPER-1294 fix to 3.4 and 3.3 (Norman Bishop via camille)
 
   ZOOKEEPER-1048. addauth command does not work in cli_mt/cli_st (allengao via michim)
+
+  ZOOKEEPER-1339. C client doesn't build with --enable-debug (Eric Liang via michim)
    
 IMPROVEMENTS:
 
