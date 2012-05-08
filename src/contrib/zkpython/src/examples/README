@@ -1,0 +1,8 @@
+
+This folder contains sample showing how you can use ZooKeeper from Python.
+
+You should also check the following projects:
+
+* http://github.com/phunt/zk-smoketest
+* http://github.com/henryr/pyzk-recipes 
+
