@@ -66,6 +66,8 @@ PyObject *err_to_exception(int errcode) {
     return OperationTimeoutException;
   case ZBADARGUMENTS:
     return BadArgumentsException;
+  case ZINVALIDSTATE:
+    return InvalidStateException;
   case ZAPIERROR:
     return ApiErrorException;
   case ZNONODE:
@@ -90,7 +92,6 @@ PyObject *err_to_exception(int errcode) {
     return InvalidCallbackException;
   case ZSESSIONMOVED:
     return SessionMovedException;
-      
   case ZOK:
   default:
     return NULL;
