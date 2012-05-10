@@ -178,6 +178,9 @@ BUGFIXES:
   ZOOKEEPER-1048. addauth command does not work in cli_mt/cli_st
   (allengao via michim)
 
+  ZOOKEEPER-1318. In Python binding, get_children (and get and exists, and probably others)
+  with expired session doesn't raise exception properly (henryr via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
