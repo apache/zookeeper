@@ -363,6 +363,10 @@ BUGFIXES:
 
   ZOOKEEPER-1431. zkpython async calls leak memory (Kapil Thangavelu and Andre Cruz via henryr)
 
+  ZOOKEEPER-642. "exceeded deadline by N ms" floods logs (Marc Celani via michim)
+
+IMPROVEMENTS:
+
   ZOOKEEPER-1163. Memory leak in zk_hashtable.c:do_insert_watcher_object()
   (Anupam Chanda via michim)
 
