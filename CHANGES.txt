@@ -181,6 +181,8 @@ BUGFIXES:
   ZOOKEEPER-1318. In Python binding, get_children (and get and exists, and probably others)
   with expired session doesn't raise exception properly (henryr via michim)
 
+  ZOOKEEPER-642. "exceeded deadline by N ms" floods logs (Marc Celani via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
