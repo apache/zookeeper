@@ -1,3 +1,6 @@
 _ReSharper*
 *ReSharper*
 *.suo
+TestResults
+*.testsettings
+*.vsmdi
