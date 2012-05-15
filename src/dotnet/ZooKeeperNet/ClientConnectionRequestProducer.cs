@@ -194,40 +194,26 @@ namespace ZooKeeperNet
 
         private void Cleanup()
         {
-            lock (synchRoot)
+            if (client != null)
             {
-                if (client != null)
+                try
                 {
-                    try
+                    client.Close();
+                }
+                catch (IOException e)
+                {
+                    if (LOG.IsDebugEnabled)
                     {
-                        client.Close();
-                    }
-                    catch (IOException e)
-                    {
-                        if (LOG.IsDebugEnabled)
-                        {
-                            LOG.Debug("Ignoring exception during channel close", e);
-                        }
+                        LOG.Debug("Ignoring exception during channel close", e);
                     }
                 }
-                //try
-                //{
-                //    Thread.Sleep(100);
-                //}
-                //catch (ThreadInterruptedException)
-                //{
-                //    if (LOG.IsDebugEnabled)
-                //    {
-                //        LOG.Debug("SendThread interrupted during sleep, ignoring");
-                //    }
-                //}
-                Packet pack;                
-                while (pendingQueue.TryDequeue(out pack))
-                    ConLossPacket(pack);
-
-                while (outgoingQueue.TryDequeue(out pack))
-                    ConLossPacket(pack);
             }
+            Packet pack;
+            while (pendingQueue.TryDequeue(out pack))
+                ConLossPacket(pack);
+
+            while (outgoingQueue.TryDequeue(out pack))
+                ConLossPacket(pack);
         }
 
         private void StartConnect()
@@ -283,58 +269,65 @@ namespace ZooKeeperNet
 
         private byte[] juteBuffer;
 
-        private object synchRoot = new object();
-
         private int currentLen;
+        private void BeginReceive(byte[] content, int pos, int len)
+        {
+            if (Interlocked.CompareExchange(ref isDisposed, 1, 1) == 1)
+                return;
+            client.GetStream().BeginRead(content, pos, len, ReceiveAsynch, content);
+        }
         private void ReceiveAsynch(IAsyncResult ar)
         {
-            lock (synchRoot)
+            if (Interlocked.CompareExchange(ref isDisposed, 1, 1) == 1)
+                return;
+            int len = 0;
+            try
             {
-                int len = 0;
-                try
-                {
-                    if (!client.Connected)
-                        return;
-                    len = client.GetStream().EndRead(ar);
-                    if (len == 0)
-                        return;
-                    byte[] bData = (byte[])ar.AsyncState;
+                if (!client.Connected)
+                    return;
+                len = client.GetStream().EndRead(ar);
+                if (len == 0)
+                    return;
+                byte[] bData = (byte[])ar.AsyncState;
 
-                    recvCount++;
-                    if (bData == incomingBuffer)
+                recvCount++;
+                if (bData == incomingBuffer)
+                {
+                    currentLen = 0;
+                    juteBuffer = null;
+                    juteBuffer = new byte[ReadLength(bData)];
+                    BeginReceive(juteBuffer,0,juteBuffer.Length);
+                    //client.GetStream().BeginRead(juteBuffer, 0, juteBuffer.Length, ReceiveAsynch, juteBuffer);
+                }
+                else
+                {
+                    if (!initialized)
                     {
-                        currentLen = 0;
-                        juteBuffer = null;
-                        juteBuffer = new byte[ReadLength(bData)];
-                        client.GetStream().BeginRead(juteBuffer, 0, juteBuffer.Length, ReceiveAsynch, juteBuffer);
+                        initialized = true;
+                        ReadConnectResult(bData);
+                        BeginReceive(incomingBuffer, 0, incomingBuffer.Length);
+                        //client.GetStream().BeginRead(incomingBuffer, 0, incomingBuffer.Length, ReceiveAsynch, incomingBuffer);
                     }
                     else
                     {
-                        if (!initialized)
+                        currentLen += len;
+                        if (juteBuffer.Length > currentLen)
                         {
-                            initialized = true;
-                            ReadConnectResult(juteBuffer);
-                            client.GetStream().BeginRead(incomingBuffer, 0, incomingBuffer.Length, ReceiveAsynch, incomingBuffer);
+                            BeginReceive(juteBuffer, currentLen, juteBuffer.Length - currentLen);
+                            //client.GetStream().BeginRead(juteBuffer, currentLen, juteBuffer.Length - currentLen, ReceiveAsynch, juteBuffer);
                         }
                         else
                         {
-                            currentLen += len;
-                            if (juteBuffer.Length > currentLen)
-                            {
-                                client.GetStream().BeginRead(juteBuffer, currentLen, juteBuffer.Length - currentLen, ReceiveAsynch, juteBuffer);
-                            }
-                            else
-                            {
-                                ReadResponse(juteBuffer);
-                                client.GetStream().BeginRead(incomingBuffer, 0, incomingBuffer.Length, ReceiveAsynch, incomingBuffer);
-                            }
+                            ReadResponse(bData);
+                            BeginReceive(incomingBuffer, 0, incomingBuffer.Length);
+                            //client.GetStream().BeginRead(incomingBuffer, 0, incomingBuffer.Length, ReceiveAsynch, incomingBuffer);
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    LOG.Error(ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                LOG.Error(ex);
             }
         }
 
