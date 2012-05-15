@@ -297,7 +297,6 @@ namespace ZooKeeperNet
                     juteBuffer = null;
                     juteBuffer = new byte[ReadLength(bData)];
                     BeginReceive(juteBuffer,0,juteBuffer.Length);
-                    //client.GetStream().BeginRead(juteBuffer, 0, juteBuffer.Length, ReceiveAsynch, juteBuffer);
                 }
                 else
                 {
@@ -306,7 +305,6 @@ namespace ZooKeeperNet
                         initialized = true;
                         ReadConnectResult(bData);
                         BeginReceive(incomingBuffer, 0, incomingBuffer.Length);
-                        //client.GetStream().BeginRead(incomingBuffer, 0, incomingBuffer.Length, ReceiveAsynch, incomingBuffer);
                     }
                     else
                     {
@@ -314,13 +312,11 @@ namespace ZooKeeperNet
                         if (juteBuffer.Length > currentLen)
                         {
                             BeginReceive(juteBuffer, currentLen, juteBuffer.Length - currentLen);
-                            //client.GetStream().BeginRead(juteBuffer, currentLen, juteBuffer.Length - currentLen, ReceiveAsynch, juteBuffer);
                         }
                         else
                         {
                             ReadResponse(bData);
                             BeginReceive(incomingBuffer, 0, incomingBuffer.Length);
-                            //client.GetStream().BeginRead(incomingBuffer, 0, incomingBuffer.Length, ReceiveAsynch, incomingBuffer);
                         }
                     }
                 }
