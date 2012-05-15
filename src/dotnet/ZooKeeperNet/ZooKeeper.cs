@@ -25,6 +25,7 @@
     using log4net;
     using Org.Apache.Zookeeper.Data;
     using Org.Apache.Zookeeper.Proto;
+    using System.Threading;
 
     [DebuggerDisplay("Id = {Id}")]
     public class ZooKeeper : IDisposable, IZooKeeper
@@ -374,36 +375,52 @@
         /// the session will be removed. The watches left on those nodes (and on
         /// their parents) will be triggered.
         /// </summary>   
-        [MethodImpl(MethodImplOptions.Synchronized)]
+        private int isDisposed = 0;
+        private void Dispose(bool isDisposing)
+        {
+            if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
+            {
+                if (isDisposing)
+                    GC.SuppressFinalize(this);
+                if (!state.IsAlive())
+                {
+                    if (LOG.IsDebugEnabled)
+                    {
+                        LOG.Debug("Close called on already closed client");
+                    }
+                    return;
+                }
+
+                if (LOG.IsDebugEnabled)
+                {
+                    LOG.Debug(string.Format("Closing session: 0x{0:X}", SessionId));
+                }
+
+                try
+                {
+                    cnxn.Dispose();
+                }
+                catch (IOException e)
+                {
+                    if (LOG.IsDebugEnabled)
+                    {
+                        LOG.Debug("Ignoring unexpected exception during close", e);
+                    }
+                }
+
+                LOG.Info(string.Format("Session: 0x{0:X} closed", SessionId));
+
+            }
+        }
+
         public void Dispose()
         {
-            if (!state.IsAlive())
-            {
-                if (LOG.IsDebugEnabled)
-                {
-                    LOG.Debug("Close called on already closed client");
-                }
-                return;
-            }
+            Dispose(true);
+        }
 
-            if (LOG.IsDebugEnabled)
-            {
-                LOG.Debug(string.Format("Closing session: 0x{0:X}", SessionId));
-            }
-
-            try
-            {
-                cnxn.Dispose();
-            }
-            catch (IOException e)
-            {
-                if (LOG.IsDebugEnabled)
-                {
-                    LOG.Debug("Ignoring unexpected exception during close", e);
-                }
-            }
-
-            LOG.Info(string.Format("Session: 0x{0:X} closed", SessionId));
+        ~ZooKeeper()
+        {
+            Dispose(false);
         }
 
         /// <summary>

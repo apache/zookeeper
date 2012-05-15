@@ -4,3 +4,13 @@ _ReSharper*
 TestResults
 *.testsettings
 *.vsmdi
+ZooKeeperNet/bin
+ZooKeeperNet/obj
+ZooKeeperNet.Recipes/bin
+ZooKeeperNet.Recipes/obj
+ZooKeeperNet.MsTests/bin
+ZooKeeperNet.MsTests/obj
+ZooKeeperNet.Tests/bin
+ZooKeeperNet.Tests/obj
+ZooKeeperNet.Recipes.Tests/bin
+ZooKeeperNet.Recipes.Tests/obj

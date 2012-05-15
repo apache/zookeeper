@@ -654,7 +654,7 @@ public class JRecord extends JCompType {
 
         cs.write("  public override String ToString() {\n");
         cs.write("    try {\n");
-        cs.write("      using(System.IO.MemoryStream ms = new System.IO.MemoryStream())\n");
+        cs.write("      System.IO.MemoryStream ms = new System.IO.MemoryStream();\n");
         cs.write("      using(ZooKeeperNet.IO.EndianBinaryWriter writer =\n");
         cs.write("        new ZooKeeperNet.IO.EndianBinaryWriter(ZooKeeperNet.IO.EndianBitConverter.Big, ms, " +
             "System.Text.Encoding.UTF8)){\n");

@@ -602,17 +602,30 @@ namespace ZooKeeperNet.IO
 		#endregion
 
 		#region IDisposable Members
+        private void Dispose(bool isDisposing)
+        {
+            if (!disposed)
+            {
+                disposed = true;
+                if (isDisposing)
+                    GC.SuppressFinalize(this);
+                stream.Dispose();
+            }
+
+        }
 		/// <summary>
 		/// Disposes of the underlying stream.
 		/// </summary>
 		public void Dispose()
 		{
-			if (!disposed)
-			{
-				disposed = true;
-				((IDisposable)stream).Dispose();
-			}
+            Dispose(true);
 		}
+
+        ~EndianBinaryReader()
+        {
+            Dispose(false);
+        }
+
 		#endregion
 	}
 }

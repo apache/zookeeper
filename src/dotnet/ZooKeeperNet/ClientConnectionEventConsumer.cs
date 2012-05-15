@@ -54,13 +54,13 @@
             {
                 while (!waitingEvents.IsCompleted)
                 {
-                    object @event = waitingEvents.Take();
                     try
                     {
+                        object @event = waitingEvents.Take();
                         if (@event is ClientConnection.WatcherSetEventPair)
                         {
                             // each watcher will process the event
-                            ClientConnection.WatcherSetEventPair pair = (ClientConnection.WatcherSetEventPair) @event;
+                            ClientConnection.WatcherSetEventPair pair = (ClientConnection.WatcherSetEventPair)@event;
                             foreach (IWatcher watcher in pair.watchers)
                             {
                                 try
@@ -73,6 +73,12 @@
                                 }
                             }
                         }
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
+                    catch (InvalidOperationException)
+                    {
                     }
                     catch (OperationCanceledException)
                     {
@@ -114,10 +120,27 @@
             waitingEvents.Add(o);
         }
 
+        private int isDisposed = 0;
+        private void Dispose(bool isDisposing)
+        {
+            if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
+            {
+                if (isDisposing)
+                    GC.SuppressFinalize(this);
+                waitingEvents.CompleteAdding();
+                if (eventThread.Join(2000))
+                    waitingEvents.Dispose();
+            }
+        }
+
         public void Dispose()
         {
-            waitingEvents.CompleteAdding();
-            eventThread.Join(2000);
+            Dispose(true);
+        }
+
+        ~ClientConnectionEventConsumer()
+        {
+            Dispose(false);
         }
     }
 }

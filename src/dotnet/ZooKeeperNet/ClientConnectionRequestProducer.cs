@@ -464,8 +464,7 @@ namespace ZooKeeperNet
 
         private void ReadResponse(byte[] content)
         {
-            using (MemoryStream ms = new MemoryStream(content))
-            using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms, Encoding.UTF8))
+            using (var reader = new EndianBinaryReader(EndianBitConverter.Big, new MemoryStream(content), Encoding.UTF8))
             {
                 BinaryInputArchive bbia = BinaryInputArchive.GetArchive(reader);
                 ReplyHeader replyHdr = new ReplyHeader();
@@ -588,12 +587,28 @@ namespace ZooKeeperNet
             p.Finished = true;
             conn.consumer.QueuePacket(p);
         }
+
+        private int isDisposed = 0;
+        private void Dispose(bool isDisposing)
+        {
+            if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
+            {
+                if (isDisposing)
+                    GC.SuppressFinalize(this);
+
+                zooKeeper.State = ZooKeeper.States.CLOSED;
+                queueEvent.Set();
+                requestThread.Join();
+                queueEvent.Dispose();
+            }
+        }
         public void Dispose()
         {
-            zooKeeper.State = ZooKeeper.States.CLOSED;
-            queueEvent.Set();
-            requestThread.Join();
-            queueEvent.Dispose();
+            Dispose(true);
+        }
+        ~ClientConnectionRequestProducer()
+        {
+            Dispose(false);
         }
     }
 

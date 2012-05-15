@@ -393,18 +393,29 @@ namespace ZooKeeperNet.IO
 		#endregion
 
 		#region IDisposable Members
+        private void Dispose(bool isDisposing)
+        {
+            if (!disposed)
+            {
+                Flush();
+                disposed = true;
+                if (isDisposing)
+                    GC.SuppressFinalize(this);
+                stream.Dispose();
+            }
+        }
 		/// <summary>
 		/// Disposes of the underlying stream.
 		/// </summary>
 		public void Dispose()
 		{
-			if (!disposed)
-			{
-				Flush();
-				disposed = true;
-				((IDisposable)stream).Dispose();
-			}
+            Dispose(true);
 		}
+
+        ~EndianBinaryWriter()
+        {
+            Dispose(false);
+        }
 		#endregion
 	}
 }

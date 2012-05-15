@@ -72,7 +72,7 @@
       <Link>SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="ClientConnection.cs" />
-    <Compile Include="ClientConnectionRequestProducer2.cs">
+    <Compile Include="ClientConnectionRequestProducer.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ClientWatchManager.cs" />

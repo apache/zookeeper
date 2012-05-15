@@ -32,6 +32,32 @@
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof(ClientTests));
 
+        [TestMethod]
+        public void DeleteAllNodeExceptPraweda()
+        {
+            using (var zk = CreateClient())
+            {
+                DeleteChild(zk, "/");
+            }
+        }
+
+        private void DeleteChild(ZooKeeper zk, string path)
+        {
+            if (!string.IsNullOrEmpty(path) && !path.Contains("praweda") && !path.Contains("zookeeper"))
+            {
+                var lstChild = zk.GetChildren(path, false);
+                foreach (var child in lstChild)
+                {
+                    if(path != "/")
+                        DeleteChild(zk, path + "/" + child);
+                    else
+                        DeleteChild(zk, "/" + child);
+                }
+                if (path != "/")
+                    zk.Delete(path, -1);
+            }
+        }
+
         /** Verify that pings are sent, keeping the "idle" client alive */
         [TestMethod]
         public void testPing()
