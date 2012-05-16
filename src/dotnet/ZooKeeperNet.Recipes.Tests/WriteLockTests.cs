@@ -30,10 +30,21 @@
             nodes = new WriteLock[count];
             for (int i = 0; i < count; i++)
             {
-                waitHandles[i] = new ManualResetEvent(true);
+                var handle = new ManualResetEvent(true);
+                waitHandles[i] = handle;
                 keeper[i] = CreateClient();
                 WriteLock leader = new WriteLock(keeper[i], dir, null);
-                leader.LockAcquired += () => waitHandles[i].Set();
+                leader.LockAcquired += () =>
+                    {
+                        try
+                        {
+                            handle.Set();
+                        }
+                        catch (Exception ex)
+                        {
+                            LOG.Error(ex);
+                        }
+                    };
                 nodes[i] = leader;
                 leader.Lock();
             }
@@ -77,10 +88,6 @@
                     Assert.False(node.Owner, "Node should not be the leader " + node.Id);
                 }
             }
-            for (int i = 0; i < count; i++)
-            {
-                keeper[i].Dispose();
-            }
         }
 
         protected void dumpNodes(int count)
@@ -100,20 +107,21 @@
                 for (int i = 0; i < nodes.Length; i++)
                 {
                     WriteLock node = nodes[i];
-                    if (node == null) continue;
+                    if (node == null) 
+                        continue;
 
                     LOG.Debug("Closing node: " + i);
                     node.Dispose();
-                    if (i == nodes.Length - 1)
-                    {
-                        LOG.Debug("Not closing zookeeper: " + i + " due to bug!");
-                    }
-                    else
-                    {
+                    //if (i == nodes.Length - 1)
+                    //{
+                    //    LOG.Debug("Not closing zookeeper: " + i + " due to bug!");
+                    //}
+                    //else
+                    //{
                         LOG.Debug("Closing zookeeper: " + i);
                         node.Zookeeper.Dispose();
                         LOG.Debug("Closed zookeeper: " + i);
-                    }
+                    //}
                 }
             }
         }

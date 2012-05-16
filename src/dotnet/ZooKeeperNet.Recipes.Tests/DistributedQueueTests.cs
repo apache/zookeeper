@@ -38,10 +38,6 @@
 
             byte[] dequeuedBytes = queueHandles[0].Dequeue();
             Assert.AreEqual(Encoding.UTF8.GetString(dequeuedBytes), testString);
-            for (int i = 0; i < clients.Length; i++)
-            {
-                clients[i].Dispose();
-            }            
         }
 
         [Test]
@@ -62,11 +58,6 @@
 
             byte[] dequeuedBytes = queueHandles[1].Dequeue();
             Assert.AreEqual(Encoding.UTF8.GetString(dequeuedBytes), testString);
-            for (int i = 0; i < clients.Length; i++)
-            {
-                clients[i].Dispose();
-            }            
-
         }
 
         [Test]
@@ -87,10 +78,10 @@
 
             byte[] dequeuedBytes = queueHandles[0].Take();
             Assert.AreEqual(Encoding.UTF8.GetString(dequeuedBytes), testString);
-            for (int i = 0; i < clients.Length; i++)
-            {
-                clients[i].Dispose();
-            }            
+            //for (int i = 0; i < clients.Length; i++)
+            //{
+            //    clients[i].Dispose();
+            //}            
 
         }
 
@@ -117,11 +108,10 @@
                 return;
             }
             Assert.Fail();
-            for (int i = 0; i < clients.Length; i++)
-            {
-                clients[i].Dispose();
-            }
-
+            //for (int i = 0; i < clients.Length; i++)
+            //{
+            //    clients[i].Dispose();
+            //}
         }
 
         public void createNremoveMtest(String dir, int n, int m)
@@ -148,10 +138,6 @@
                 data = queueHandles[1].Dequeue();
             }
             Assert.AreEqual(testString + (m - 1), Encoding.UTF8.GetString(data));
-            for (int i = 0; i < clients.Length; i++)
-            {
-                clients[i].Dispose();
-            }
         }
 
         [Test]
@@ -273,10 +259,6 @@
 
             Assert.True(takeResult[0] != null);
             Assert.AreEqual(Encoding.UTF8.GetString(takeResult[0]), testString);
-            for (int i = 0; i < clients.Length; i++)
-            {
-                clients[i].Dispose();
-            }
         }
 
         [Test]

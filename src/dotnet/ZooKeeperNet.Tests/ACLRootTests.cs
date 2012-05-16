@@ -27,8 +27,7 @@
         [Test]
         public void testRootAcl()
         {
-            ZooKeeper zk;
-            using (zk = CreateClient())
+            using (var zk = CreateClient())
             {
                 // set auth using digest
                 zk.AddAuthInfo("digest", Encoding.UTF8.GetBytes("pat:test"));
@@ -38,7 +37,7 @@
 
             // verify no access
             string path = "/" + Guid.NewGuid() + "apps";
-            using (zk = CreateClient())
+            using (var zk = CreateClient())
             {
                 try
                 {
@@ -71,7 +70,7 @@
                 }
             }
             // verify access using original auth
-            using (zk = CreateClient())
+            using (var zk = CreateClient())
             {
                 zk.AddAuthInfo("digest", Encoding.UTF8.GetBytes("pat:test"));
                 zk.GetData("/", false, null);
@@ -80,7 +79,7 @@
                 // reset acl (back to open) and verify accessible again
                 zk.SetACL("/", Ids.OPEN_ACL_UNSAFE, -1);
             }
-            using (zk = CreateClient())
+            using (var zk = CreateClient())
             {
                 zk.GetData("/", false, null);
                 zk.Create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
@@ -97,7 +96,7 @@
                 zk.AddAuthInfo("digest", Encoding.UTF8.GetBytes("world:anyone"));
                 zk.Create(path, null, Ids.CREATOR_ALL_ACL, CreateMode.Persistent);
             }
-            using (zk = CreateClient())
+            using (var zk = CreateClient())
             {
                 zk.Delete(path, -1);
             }

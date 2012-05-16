@@ -190,5 +190,31 @@ namespace ZooKeeperNet.Tests
             Assert.AreEqual(name.Length * 2, stat.DataLength);
             Assert.AreEqual(0, stat.NumChildren);
         }
+
+        [Test]
+        public void testDeleteAllNodeExceptPraweda()
+        {
+            using (var zk = CreateClient())
+            {
+                DeleteChild(zk, "/");
+            }
+        }
+
+        private void DeleteChild(ZooKeeper zk, string path)
+        {
+            if (!string.IsNullOrEmpty(path) && !path.Contains("praweda") && !path.Contains("zookeeper"))
+            {
+                var lstChild = zk.GetChildren(path, false);
+                foreach (var child in lstChild)
+                {
+                    if (path != "/")
+                        DeleteChild(zk, path + "/" + child);
+                    else
+                        DeleteChild(zk, "/" + child);
+                }
+                if (path != "/")
+                    zk.Delete(path, -1);
+            }
+        }
     }
 }

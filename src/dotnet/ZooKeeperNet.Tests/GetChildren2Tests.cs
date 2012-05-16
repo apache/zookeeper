@@ -34,6 +34,7 @@ namespace ZooKeeperNet.Tests
             zk = CreateClient();
         }
 
+        [TearDown]
         public void Teardown()
         {
             zk.Dispose();

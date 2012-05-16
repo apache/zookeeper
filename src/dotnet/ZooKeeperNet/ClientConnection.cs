@@ -230,26 +230,48 @@
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
+        private void Dispose(bool isDisposing)
+        {
+            if (!closing)
+            {
+                closing = true;
+                if (isDisposing)
+                    GC.SuppressFinalize(this);
+                if (LOG.IsDebugEnabled)
+                    LOG.Debug(string.Format("Closing client for session: 0x{0:X}", SessionId));
+
+                try
+                {
+                    SubmitRequest(new RequestHeader { Type = (int)OpCode.CloseSession }, null, null, null);
+                    lock (producer)
+                    {
+                        while (!producer.IsConnectionClosedByServer)
+                        {
+                            Monitor.Wait(producer, SessionTimeout);
+                            break;
+                        }
+                    }
+                }
+                catch (ThreadInterruptedException)
+                {
+                    // ignore, close the send/event threads
+                }
+                finally
+                {
+                    producer.Dispose();
+                    consumer.Dispose();
+                }
+
+            }
+        }
         public void Dispose()
         {
-            if (LOG.IsDebugEnabled)
-                LOG.Debug(string.Format("Closing client for session: 0x{0:X}", SessionId));
+            Dispose(true);
+        }
 
-            closing = true;
-
-            try
-            {
-                SubmitRequest(new RequestHeader {Type = (int) OpCode.CloseSession}, null, null, null);
-            }
-            catch (ThreadInterruptedException)
-            {
-                // ignore, close the send/event threads
-            }
-            finally
-            {
-                producer.Dispose();
-                consumer.Dispose();
-            }
+        ~ClientConnection()
+        {
+            Dispose(false);
         }
 
         /// <summary>
