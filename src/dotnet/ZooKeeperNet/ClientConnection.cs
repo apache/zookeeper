@@ -31,33 +31,34 @@
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof(ClientConnection));
 
-        public static readonly int packetLen;
-        internal static bool disableAutoWatchReset;
+        //doesn't need this restriction, heck no limmit
+        //public const int packetLen = 4096 * 1024;
+        internal static readonly bool disableAutoWatchReset = false;
 
-        static ClientConnection()
-        {
-            // this var should not be public, but otw there is no easy way
-            // to test
-            //disableAutoWatchReset = Boolean.getBoolean("zookeeper.disableAutoWatchReset");
-            var zkSection = (System.Collections.Specialized.NameValueCollection)System.Configuration.ConfigurationManager.GetSection("zookeeper");
-            if (zkSection != null)
-            {
-                Boolean.TryParse(zkSection["disableAutoWatchReset"], out disableAutoWatchReset);
-            }
-            if (LOG.IsDebugEnabled)
-            {
-                LOG.Debug("zookeeper.disableAutoWatchReset is " + disableAutoWatchReset);
-            }
-            //packetLen = Integer.getInteger("jute.maxbuffer", 4096 * 1024);
-            packetLen = 4096 * 1024;
-        }
+        //static ClientConnection()
+        //{
+        //    // this var should not be public, but otw there is no easy way
+        //    // to test
+        //    var zkSection = (System.Collections.Specialized.NameValueCollection)System.Configuration.ConfigurationManager.GetSection("zookeeper");
+        //    if (zkSection != null)
+        //    {
+        //        Boolean.TryParse(zkSection["disableAutoWatchReset"], out disableAutoWatchReset);
+        //    }
+        //    if (LOG.IsDebugEnabled)
+        //    {
+        //        LOG.DebugFormat("zookeeper.disableAutoWatchReset is {0}",disableAutoWatchReset);
+        //    }
+        //    //packetLen = Integer.getInteger("jute.maxbuffer", 4096 * 1024);
+        //    packetLen = 4096 * 1024;
+        //}
 
         internal string hosts;
         internal readonly ZooKeeper zooKeeper;
         internal readonly ZKWatchManager watcher;
         internal readonly List<IPEndPoint> serverAddrs = new List<IPEndPoint>();
         internal readonly List<AuthData> authInfo = new List<AuthData>();
-        internal TimeSpan connectTimeout;
+        //what the....we use default socket connection time out
+        //internal TimeSpan connectTimeout;
         internal TimeSpan readTimeout;
         internal bool closing;
         internal ClientConnectionRequestProducer producer;
@@ -119,9 +120,7 @@
                 string path = hosts.Substring(off);
                 // ignore "/" chroot spec, same as null
                 if (path.Length == 1)
-                {
                     ChrootPath = null;
-                }
                 else
                 {
                     PathUtils.ValidatePath(path);
@@ -130,15 +129,13 @@
                 hosts = hosts.Substring(0, off);
             }
             else
-            {
                 ChrootPath = null;
-            }
             return hosts;
         }
 
-        private void GetHosts(string hosts)
+        private void GetHosts(string hostLst)
         {
-            string[] hostsList = hosts.Split(',');
+            string[] hostsList = hostLst.Split(',');
             foreach (string h in hostsList)
             {
                 string host = h;
@@ -162,7 +159,8 @@
 
         private void SetTimeouts(TimeSpan sessionTimeout)
         {
-            connectTimeout = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(sessionTimeout.TotalMilliseconds / serverAddrs.Count));
+            //since we have no need of it just remark it
+            //connectTimeout = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(sessionTimeout.TotalMilliseconds / serverAddrs.Count));
             readTimeout = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(sessionTimeout.TotalMilliseconds * 2 / 3));
         }
 
@@ -192,7 +190,6 @@
 
         public void Start()
         {
-            zooKeeper.State = ZooKeeper.States.CONNECTING;
             consumer.Start();
             producer.Start();
         }
@@ -200,9 +197,7 @@
         public void AddAuthInfo(string scheme, byte[] auth)
         {
             if (!zooKeeper.State.IsAlive())
-            {
                 return;
-            }
             authInfo.Add(new AuthData(scheme, auth));
             QueuePacket(new RequestHeader(-4, (int)OpCode.Auth), null, new AuthPacket(0, scheme, auth), null, null, null, null, null, null);
         }
@@ -212,13 +207,9 @@
             ReplyHeader r = new ReplyHeader();
             Packet p = QueuePacket(h, r, request, response, null, null, watchRegistration, null, null);
             lock (p)
-            {
                 while (!p.Finished)
-                {
                     if (!Monitor.Wait(p, SessionTimeout))
-                        throw new TimeoutException(string.Format("The request {0} timed out while waiting for a resposne from the server.", request));
-                }
-            }
+                        throw new TimeoutException(new StringBuilder("The request ").Append(request).Append(" timed out while waiting for a response from the server.").ToString());
             return r;
         }
 
@@ -230,15 +221,13 @@
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
-        private void Dispose(bool isDisposing)
+        private void InternalDispose()
         {
             if (!closing)
             {
                 closing = true;
-                if (isDisposing)
-                    GC.SuppressFinalize(this);
                 if (LOG.IsDebugEnabled)
-                    LOG.Debug(string.Format("Closing client for session: 0x{0:X}", SessionId));
+                    LOG.DebugFormat("Closing client for session: 0x{0:X}", SessionId);
 
                 try
                 {
@@ -266,12 +255,13 @@
         }
         public void Dispose()
         {
-            Dispose(true);
+            InternalDispose();
+            GC.SuppressFinalize(this);
         }
 
         ~ClientConnection()
         {
-            Dispose(false);
+            InternalDispose();
         }
 
         /// <summary>
@@ -283,8 +273,7 @@
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb
-                .Append("sessionid:0x").Append(string.Format("{0:X}", SessionId))
+            sb.Append("sessionid:0x").AppendFormat("{0:X}", SessionId)
                 .Append(" lastZxid:").Append(producer.lastZxid)
                 .Append(" xid:").Append(producer.xid)
                 .Append(" sent:").Append(producer.sentCount)
@@ -298,12 +287,22 @@
 
         internal class AuthData
         {
-            internal string scheme;
-            internal byte[] data;
-
-            internal AuthData(string scheme, byte[] data)
+            public string Scheme
             {
-                this.scheme = scheme;
+                get;
+                private set;
+            }
+
+            private byte[] data;
+
+            public byte[] GetData()
+            {
+                return data;
+            }
+
+            public AuthData(string scheme, byte[] data)
+            {
+                this.Scheme = scheme;
                 this.data = data;
             }
 
@@ -311,13 +310,21 @@
 
         internal class WatcherSetEventPair
         {
-            internal HashSet<IWatcher> watchers;
-            internal WatchedEvent @event;
-
-            public WatcherSetEventPair(HashSet<IWatcher> watchers, WatchedEvent @event)
+            public IEnumerable<IWatcher> Watchers
             {
-                this.watchers = watchers;
-                this.@event = @event;
+                get;
+                private set;
+            }
+            public WatchedEvent WatchedEvent
+            {
+                get;
+                private set;
+            }
+
+            public WatcherSetEventPair(IEnumerable<IWatcher> watchers, WatchedEvent @event)
+            {
+                this.Watchers = watchers;
+                this.WatchedEvent = @event;
             }
         }
     }

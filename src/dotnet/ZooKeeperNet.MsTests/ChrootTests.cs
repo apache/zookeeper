@@ -107,7 +107,7 @@ namespace ZooKeeperNet.Tests
                 }
                 catch (KeeperException.NoNodeException e)
                 {
-                    Assert.AreEqual(ch3, e.getPath());
+                    Assert.AreEqual(ch3, e.Path);
                 }
                 var bDatas = zk1.GetData(ch1, false, null);
                 Assert.AreEqual("1", Encoding.UTF8.GetString(bDatas));

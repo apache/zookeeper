@@ -14,3 +14,4 @@ ZooKeeperNet.Tests/bin
 ZooKeeperNet.Tests/obj
 ZooKeeperNet.Recipes.Tests/bin
 ZooKeeperNet.Recipes.Tests/obj
+*.vsp

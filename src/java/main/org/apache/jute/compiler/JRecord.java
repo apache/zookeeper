@@ -598,6 +598,7 @@ public class JRecord extends JCompType {
         cs.write("*/\n");
         cs.write("\n");
         cs.write("using System;\n");
+        cs.write("using System.Linq;\n");
         cs.write("using Org.Apache.Jute;\n");
         cs.write("using log4net;\n");
         cs.write("\n");        
@@ -660,13 +661,13 @@ public class JRecord extends JCompType {
             "System.Text.Encoding.UTF8)){\n");
         cs.write("      BinaryOutputArchive a_ = \n");
         cs.write("        new BinaryOutputArchive(writer);\n");
-        cs.write("      a_.StartRecord(this,\"\");\n");
+        cs.write("      a_.StartRecord(this,string.Empty);\n");
         fIdx = 0;
         for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = i.next();
             cs.write(jf.genCsharpWriteMethodName());
         }
-        cs.write("      a_.EndRecord(this,\"\");\n");
+        cs.write("      a_.EndRecord(this,string.Empty);\n");
         cs.write("      ms.Position = 0;\n");
         cs.write("      return System.Text.Encoding.UTF8.GetString(ms.ToArray());\n");
         cs.write("    }");
@@ -678,15 +679,15 @@ public class JRecord extends JCompType {
 
         cs.write("  public void Write(ZooKeeperNet.IO.EndianBinaryWriter writer) {\n");
         cs.write("    BinaryOutputArchive archive = new BinaryOutputArchive(writer);\n");
-        cs.write("    Serialize(archive, \"\");\n");
+        cs.write("    Serialize(archive, string.Empty);\n");
         cs.write("  }\n");
 
         cs.write("  public void ReadFields(ZooKeeperNet.IO.EndianBinaryReader reader) {\n");
         cs.write("    BinaryInputArchive archive = new BinaryInputArchive(reader);\n");
-        cs.write("    Deserialize(archive, \"\");\n");
+        cs.write("    Deserialize(archive, string.Empty);\n");
         cs.write("  }\n");
 
-        cs.write("  public int CompareTo (object peer_) {\n");
+        cs.write("  public int CompareTo (object obj) {\n");
         boolean unimplemented = false;
         for (JField f : mFields) {
             if ((f.getType() instanceof JMap)
@@ -699,10 +700,10 @@ public class JRecord extends JCompType {
             cs.write("    throw new InvalidOperationException(\"comparing "
                     + getCsharpName() + " is unimplemented\");\n");
         } else {
-            cs.write("    if (!(peer_ is "+getCsharpName()+")) {\n");
+            cs.write("    "+getCsharpName()+" peer = ("+getCsharpName()+") obj;\n");
+            cs.write("    if (peer == null) {\n");
             cs.write("      throw new InvalidOperationException(\"Comparing different types of records.\");\n");
             cs.write("    }\n");
-            cs.write("    "+getCsharpName()+" peer = ("+getCsharpName()+") peer_;\n");
             cs.write("    int ret = 0;\n");
             for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
                 JField jf = i.next();
@@ -713,15 +714,15 @@ public class JRecord extends JCompType {
         }
         cs.write("  }\n");
 
-        cs.write("  public override bool Equals(object peer_) {\n");
-        cs.write("    if (!(peer_ is "+getCsharpName()+")) {\n");
+        cs.write("  public override bool Equals(object obj) {\n");
+        cs.write(" " + getCsharpName() + " peer = (" + getCsharpName() + ") obj;\n");
+        cs.write("    if (peer == null) {\n");
         cs.write("      return false;\n");
         cs.write("    }\n");
-        cs.write("    if (peer_ == this) {\n");
+        cs.write("    if (Object.ReferenceEquals(peer,this)) {\n");
         cs.write("      return true;\n");
         cs.write("    }\n");
         cs.write("    bool ret = false;\n");
-        cs.write("    " + getCsharpName() + " peer = (" + getCsharpName() + ")peer_;\n");
         for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = i.next();
             cs.write(jf.genCsharpEquals());
@@ -732,7 +733,8 @@ public class JRecord extends JCompType {
 
         cs.write("  public override int GetHashCode() {\n");
         cs.write("    int result = 17;\n");
-        cs.write("    int ret;\n");
+        cs.write("    int ret = GetType().GetHashCode();\n");
+	   cs.write("    result = 37*result + ret;\n");
         for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = i.next();
             cs.write(jf.genCsharpHashCode());

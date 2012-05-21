@@ -21,6 +21,7 @@ namespace Org.Apache.Jute
 {
     using System.Collections.Generic;
     using System.Text;
+    using System.Linq;
 
     public class BinaryOutputArchive : IOutputArchive
     {
@@ -101,17 +102,17 @@ namespace Org.Apache.Jute
 
         public void EndRecord(IRecord r, string tag) { }
 
-        public void StartVector<T>(List<T> v, string tag)
+        public void StartVector<T>(IEnumerable<T> v, string tag)
         {
             if (v == null)
             {
                 WriteInt(-1, tag);
                 return;
             }
-            WriteInt(v.Count, tag);
+            WriteInt(v.Count(), tag);
         }
 
-        public void EndVector<T>(List<T> v, string tag) { }
+        public void EndVector<T>(IEnumerable<T> v, string tag) { }
 
         public void StartMap(SortedDictionary<string, string> v, string tag)
         {

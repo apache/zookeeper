@@ -42,7 +42,7 @@
                     bool matches = childName.Length > prefix.Length && childName.Substring(0, prefix.Length) == prefix;
                     if (!matches)
                     {
-                        LOG.Warn("Found child node with improper name: " + childName);
+                        LOG.WarnFormat("Found child node with improper name: {0}", childName);
                         continue;
                     }
                     string suffix = childName.Substring(prefix.Length);
@@ -51,7 +51,7 @@
                 }
                 catch (InvalidCastException e)
                 {
-                    LOG.Warn("Found child node with improper format : " + childName + " " + e, e);
+                    LOG.WarnFormat("Found child node with improper format : {0} {1} {2}", childName, e, e.StackTrace);
                 }
             }
 
@@ -197,7 +197,7 @@
 
             public void Process(WatchedEvent @event)
             {
-                LOG.Debug(string.Format("Watcher fired on path: {0} state: {1} type {2}", @event.Path, @event.State, @event.Type));
+                LOG.DebugFormat("Watcher fired on path: {0} state: {1} type {2}", @event.Path, @event.State, @event.EventType);
                 reset.Set();
             }
 

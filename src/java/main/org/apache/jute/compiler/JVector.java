@@ -37,8 +37,8 @@ public class JVector extends JCompType {
     
     /** Creates a new instance of JVector */
     public JVector(JType t) {
-        super("struct " + extractVectorName(t), " ::std::vector<"+t.getCppType()+">", "System.Collections.Generic.List<" + t.getCsharpType() + ">", "java.util.List<" + t.getJavaType() + ">", "Vector",
-                "System.Collections.Generic.List<" + t.getCsharpType() + ">", "java.util.ArrayList<" + t.getJavaType() + ">");
+        super("struct " + extractVectorName(t), " ::std::vector<"+t.getCppType()+">", /*"System.Collections.Generic.List<"*/ "System.Collections.Generic.IEnumerable<"+ t.getCsharpType() + ">", "java.util.List<" + t.getJavaType() + ">", "Vector",
+                /*"System.Collections.Generic.List<"*/ "System.Collections.Generic.IEnumerable<" + t.getCsharpType() + ">", "java.util.ArrayList<" + t.getJavaType() + ">");
         mElement = t;
     }
     
@@ -106,9 +106,10 @@ public class JVector extends JCompType {
         incrLevel();
         ret.append("      a_.StartVector("+capitalize(fname)+",\""+tag+"\");\n");
         ret.append("      if ("+capitalize(fname)+"!= null) {");
-        ret.append("          int "+getId("len")+" = "+capitalize(fname)+".Count;\n");
-        ret.append("          for(int "+getId("vidx")+" = 0; "+getId("vidx")+"<"+getId("len")+"; "+getId("vidx")+"++) {\n");
-        ret.append("            "+mElement.getCsharpWrapperType()+" "+getId("e")+" = ("+mElement.getCsharpWrapperType()+") "+capitalize(fname)+"["+getId("vidx")+"];\n");
+        //ret.append("          int "+getId("len")+" = "+capitalize(fname)+".Count;\n");
+        //ret.append("          for(int "+getId("vidx")+" = 0; "+getId("vidx")+"<"+getId("len")+"; "+getId("vidx")+"++) {\n");
+	  ret.append("          foreach(var "+getId("e")+" in " + capitalize(fname) + ") {\n");
+        // ret.append("            "+mElement.getCsharpWrapperType()+" "+getId("e")+" = ("+mElement.getCsharpWrapperType()+") "+capitalize(fname)+"["+getId("vidx")+"];\n");
         ret.append(mElement.genCsharpWriteWrapper(getId("e"), getId("e")));
         ret.append("          }\n");
         ret.append("      }\n");
@@ -131,11 +132,12 @@ public class JVector extends JCompType {
         incrLevel();
         ret.append("      IIndex "+getId("vidx")+" = a_.StartVector(\""+tag+"\");\n");
         ret.append("      if ("+getId("vidx")+"!= null) {");
-        ret.append("          "+capitalize(fname)+"=new System.Collections.Generic.List<"+ mElement.getCsharpType() + ">();\n");
+        ret.append("          var tmpLst=new System.Collections.Generic.List<"+ mElement.getCsharpType() + ">();\n");
         ret.append("          for (; !"+getId("vidx")+".Done(); "+getId("vidx")+".Incr()) {\n");
         ret.append(mElement.genCsharpReadWrapper(getId("e"), getId("e"), true));
-        ret.append("            "+capitalize(fname)+".Add("+getId("e")+");\n");
+        ret.append("            tmpLst.Add("+getId("e")+");\n");
         ret.append("          }\n");
+        ret.append("            "+capitalize(fname) + "=tmpLst;\n");
         ret.append("      }\n");
         ret.append("    a_.EndVector(\""+tag+"\");\n");
         decrLevel();

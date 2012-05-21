@@ -32,8 +32,8 @@ namespace Org.Apache.Jute
         void WriteRecord(IRecord r, string tag);
         void StartRecord(IRecord r, string tag);
         void EndRecord(IRecord r, string tag);
-        void StartVector<T>(List<T> v, string tag);
-        void EndVector<T>(List<T> v, string tag);
+        void StartVector<T>(IEnumerable<T> v, string tag);
+        void EndVector<T>(IEnumerable<T> v, string tag);
         void StartMap(SortedDictionary<string, string> v, string tag);
         void EndMap(SortedDictionary<string, string> v, string tag);
     }

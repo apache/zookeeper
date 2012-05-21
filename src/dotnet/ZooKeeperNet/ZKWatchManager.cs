@@ -20,23 +20,28 @@
     using System;
     using System.Collections.Generic;
     using log4net;
+    using System.Text;
+    using System.Collections.Concurrent;
 
     public class ZKWatchManager : IClientWatchManager 
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof(ZKWatchManager));
 
-        internal readonly Dictionary<string, HashSet<IWatcher>> dataWatches = new Dictionary<string, HashSet<IWatcher>>();
-        internal readonly Dictionary<string, HashSet<IWatcher>> existWatches = new Dictionary<string, HashSet<IWatcher>>();
-        internal readonly Dictionary<string, HashSet<IWatcher>> childWatches = new Dictionary<string, HashSet<IWatcher>>();
+        //internal readonly Dictionary<string, HashSet<IWatcher>> dataWatches = new Dictionary<string, HashSet<IWatcher>>();
+        internal readonly ConcurrentDictionary<string, HashSet<IWatcher>> dataWatches = new ConcurrentDictionary<string, HashSet<IWatcher>>();
+        //internal readonly Dictionary<string, HashSet<IWatcher>> existWatches = new Dictionary<string, HashSet<IWatcher>>();
+        internal readonly ConcurrentDictionary<string, HashSet<IWatcher>> existWatches = new ConcurrentDictionary<string, HashSet<IWatcher>>();
+        //internal readonly Dictionary<string, HashSet<IWatcher>> childWatches = new Dictionary<string, HashSet<IWatcher>>();
+        internal readonly ConcurrentDictionary<string, HashSet<IWatcher>> childWatches = new ConcurrentDictionary<string, HashSet<IWatcher>>();
 
         internal volatile IWatcher defaultWatcher;
 
-        private void AddTo(HashSet<IWatcher> from, HashSet<IWatcher> to) {
+        private static void AddTo(HashSet<IWatcher> from, HashSet<IWatcher> to) {
             if (from == null) return;
             to.UnionWith(from);
         }
 
-        public HashSet<IWatcher> Materialize(KeeperState state, EventType type, string clientPath)
+        public IEnumerable<IWatcher> Materialize(KeeperState state, EventType type, string clientPath)
         {
             HashSet<IWatcher> result = new HashSet<IWatcher>();
 
@@ -57,50 +62,32 @@
                     if (ClientConnection.disableAutoWatchReset &&
                         state != KeeperState.SyncConnected)
                     {
-                        lock(dataWatches) {
-                            dataWatches.Clear();
-                        }
-                        lock(existWatches) {
-                            existWatches.Clear();
-                        }
-                        lock(childWatches) {
-                            childWatches.Clear();
-                        }
+                        dataWatches.Clear();
+                        existWatches.Clear();
+                        childWatches.Clear();
                     }
 
                     return result;
                 case EventType.NodeDataChanged:
                 case EventType.NodeCreated:
-                    lock (dataWatches) {
                         AddTo(dataWatches.GetAndRemove(clientPath), result);
-                    }
-                    lock (existWatches) {
                         AddTo(existWatches.GetAndRemove(clientPath), result);
-                    }
                     break;
                 case EventType.NodeChildrenChanged:
-                    lock (childWatches) {
                         AddTo(childWatches.GetAndRemove(clientPath), result);
-                    }
                     break;
                 case EventType.NodeDeleted:
-                    lock (dataWatches) {
                         AddTo(dataWatches.GetAndRemove(clientPath), result);
-                    }
                     // XXX This shouldn't be needed, but just in case
-                    lock (existWatches) {
                         HashSet<IWatcher> list = existWatches.GetAndRemove(clientPath);
                         if (list != null) {
                             AddTo(existWatches.GetAndRemove(clientPath), result);
                             LOG.Warn("We are triggering an exists watch for delete! Shouldn't happen!");
                         }
-                    }
-                    lock (childWatches) {
                         AddTo(childWatches.GetAndRemove(clientPath), result);
-                    }
                     break;
                 default:
-                    var msg = string.Format("Unhandled watch event type {0} with state {1} on path {2}", type, state, clientPath);
+                    var msg = new StringBuilder("Unhandled watch event type ").Append(type).Append(" with state ").Append(state).Append(" on path ").Append(clientPath).ToString();
                     LOG.Error(msg);
                     throw new InvalidOperationException(msg);
             }

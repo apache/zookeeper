@@ -20,6 +20,7 @@ namespace ZooKeeperNet.Tests
     using System;
     using NUnit.Framework;
     using Org.Apache.Zookeeper.Data;
+    using System.Threading;
 
     [TestFixture]
     public class StatTests : AbstractZooKeeperTests
@@ -194,10 +195,7 @@ namespace ZooKeeperNet.Tests
         [Test]
         public void testDeleteAllNodeExceptPraweda()
         {
-            using (var zk = CreateClient())
-            {
-                DeleteChild(zk, "/");
-            }
+            DeleteChild(zk, "/");
         }
 
         private void DeleteChild(ZooKeeper zk, string path)

@@ -40,8 +40,14 @@ namespace ZooKeeperNet.Tests
 
             public void Process(WatchedEvent @event)
             {
-                Console.WriteLine(string.Format("latch:{0} {1}-{2}", name, path, @event.Path));
-                Debug.WriteLine(string.Format("latch:{0} {1}-{2}", name, path, @event.Path));
+                StringBuilder builder = new StringBuilder("latch:")
+                    .Append(name)
+                    .Append(" ")
+                    .Append(path)
+                    .Append("-")
+                    .Append(@event.Path);
+                Console.WriteLine(builder.ToString());
+                //Debug.WriteLine(builder.ToString());                
                 eventPath = @event.Path;
                 latch.CountDown();
             }
@@ -107,7 +113,7 @@ namespace ZooKeeperNet.Tests
                 }
                 catch (KeeperException.NoNodeException e)
                 {
-                    Assert.AreEqual(ch3, e.getPath());
+                    Assert.AreEqual(ch3, e.Path);
                 }
 
                 Assert.AreEqual("1".GetBytes(), zk1.GetData(ch1, false, null));

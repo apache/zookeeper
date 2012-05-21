@@ -16,6 +16,7 @@
  *
  */
 ﻿using System;
+using System.Text;
 
 namespace ZooKeeperNet
 {
@@ -29,7 +30,7 @@ namespace ZooKeeperNet
          */
         public static void ValidatePath(string path, bool isSequential)
         {
-            ValidatePath(isSequential ? path + "1" : path);
+            ValidatePath(isSequential ? new StringBuilder(path).Append("1").ToString() : path);
         }
 
         /**
@@ -72,12 +73,12 @@ namespace ZooKeeperNet
 
                 if (c == 0)
                 {
-                    reason = "null character not allowed @" + i;
+                    reason = new StringBuilder("null character not allowed @").Append(i).ToString();
                     break;
                 }
                 else if (c == '/' && lastc == '/')
                 {
-                    reason = "empty node name specified @" + i;
+                    reason = new StringBuilder("empty node name specified @").Append(i).ToString();
                     break;
                 }
                 else if (c == '.' && lastc == '.')
@@ -86,7 +87,7 @@ namespace ZooKeeperNet
                             ((i + 1 == chars.Length)
                                     || chars[i + 1] == '/'))
                     {
-                        reason = "relative paths not allowed @" + i;
+                        reason = new StringBuilder("relative paths not allowed @").Append(i).ToString();
                         break;
                     }
                 }
@@ -96,7 +97,7 @@ namespace ZooKeeperNet
                             ((i + 1 == chars.Length)
                                     || chars[i + 1] == '/'))
                     {
-                        reason = "relative paths not allowed @" + i;
+                        reason = new StringBuilder("relative paths not allowed @").Append(i).ToString();
                         break;
                     }
                 }
@@ -105,14 +106,14 @@ namespace ZooKeeperNet
                       || c > '\ud800' && c < '\uf8ff'
                       || c > '\ufff0' && c < '\uffff')
                 {
-                    reason = "invalid charater @" + i;
+                    reason = new StringBuilder("invalid charater @").Append(i).ToString();
                     break;
                 }
             }
 
             if (reason != null)
             {
-                throw new InvalidOperationException(string.Format("Invalid path string \"{0}\" caused by {1}", path, reason));
+                throw new InvalidOperationException(new StringBuilder("Invalid path string \"").Append(path).Append("\" caused by ").Append(reason).ToString());
             }
         }
     }

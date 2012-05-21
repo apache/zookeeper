@@ -94,7 +94,7 @@ namespace Org.Apache.Jute
             return Encoding.UTF8.GetString(b);
         }
 
-        static public int maxBuffer = determineMaxBuffer();
+        static private int maxBuffer = determineMaxBuffer();
 
 
         private static int determineMaxBuffer()
@@ -118,7 +118,7 @@ namespace Org.Apache.Jute
             if (len == -1) return null;
             if (len < 0 || len > maxBuffer)
             {
-                throw new IOException("Unreasonable length = " + len);
+                throw new IOException(new StringBuilder("Unreasonable length = ").Append(len).ToString());
             }
             var arr = reader.ReadBytesOrThrow(len);
             return arr;

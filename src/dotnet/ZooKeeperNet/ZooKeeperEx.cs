@@ -22,6 +22,7 @@ namespace ZooKeeperNet
     using System;
     using System.Text;
     using System.Threading;
+    using System.Linq;
 
     public static class ZooKeeperEx
     {
@@ -38,9 +39,9 @@ namespace ZooKeeperNet
             return dateTime.Ticks / 100;
         }
 
-        public static bool IsEmpty<T>(this ICollection<T> collection)
+        public static bool IsEmpty<T>(this IEnumerable<T> collection)
         {
-            return collection.Count < 1;
+            return collection.Count() == 0;
         }
 
         public static byte[] GetBytes(this string @string)
@@ -68,7 +69,10 @@ namespace ZooKeeperNet
 
         public static string Combine(this string parent, string child)
         {
-            return parent + "/" + child;
+            StringBuilder builder = new StringBuilder(parent)
+            .Append("/")
+            .Append(child);
+            return builder.ToString();
         }
 
         private struct Disposable : IDisposable
@@ -85,16 +89,32 @@ namespace ZooKeeperNet
             public void Dispose()
             {
                 action();
-                GC.SuppressFinalize(sentinel);
+                sentinel.Dispose();
             }
         }
 
-        private class Sentinel
+        private class Sentinel : IDisposable
         {
             ~Sentinel()
             {
-                throw new InvalidOperationException("Lock not properly disposed.");
+                Dispose(false);
             }
+
+            #region IDisposable Members
+
+            private static void Dispose(bool isDisposing)
+            {
+                if(!isDisposing)
+                    throw new InvalidOperationException("Lock not properly disposed.");
+            }
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+
+            #endregion
         }
     }
 }

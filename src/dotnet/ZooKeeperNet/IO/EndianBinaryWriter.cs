@@ -393,14 +393,12 @@ namespace ZooKeeperNet.IO
 		#endregion
 
 		#region IDisposable Members
-        private void Dispose(bool isDisposing)
+        private void InternalDispose()
         {
             if (!disposed)
             {
                 Flush();
                 disposed = true;
-                if (isDisposing)
-                    GC.SuppressFinalize(this);
                 stream.Dispose();
             }
         }
@@ -409,12 +407,13 @@ namespace ZooKeeperNet.IO
 		/// </summary>
 		public void Dispose()
 		{
-            Dispose(true);
-		}
+            InternalDispose();
+            GC.SuppressFinalize(this);
+        }
 
         ~EndianBinaryWriter()
         {
-            Dispose(false);
+            InternalDispose();
         }
 		#endregion
 	}

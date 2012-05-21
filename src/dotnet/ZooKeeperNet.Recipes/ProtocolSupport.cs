@@ -45,23 +45,21 @@
                 }
                 catch (KeeperException.SessionExpiredException e)
                 {
-                    LOG.Warn("Session expired for: " + Zookeeper + " so reconnecting due to: " + e, e);
+                    LOG.WarnFormat("Session expired for: {0} so reconnecting due to: {1} {2}",Zookeeper,e, e.StackTrace);
                     throw e;
                 }
                 catch (KeeperException.ConnectionLossException e)
                 {
                     if (exception == null)
                         exception = e;
-                    LOG.Debug("Attempt " + i + " failed with connection loss so " +
-                            "attempting to reconnect: " + e, e);
+                    LOG.DebugFormat("Attempt {0} failed with connection loss so attempting to reconnect: {1} {2}", e, e.StackTrace);
                     DoRetryDelay(i);
                 }
                 catch (TimeoutException e)
                 {
                     if (exception == null)
                         exception = KeeperException.Create(KeeperException.Code.OPERATIONTIMEOUT);
-                    LOG.Debug("Attempt " + i + " failed with connection loss so " +
-                            "attempting to reconnect: " + e, e);
+                    LOG.DebugFormat("Attempt {0} failed with connection loss so attempting to reconnect: {1} {2}", e, e.StackTrace);
                     DoRetryDelay(i);
                 }
             }
@@ -101,11 +99,11 @@
             }
             catch (KeeperException e)
             {
-                LOG.Warn("Caught: " + e, e);
+                LOG.WarnFormat("Caught: {0} {1}", e, e.StackTrace);
             }
             catch (ThreadInterruptedException e)
             {
-                LOG.Warn("Caught: " + e, e);
+                LOG.WarnFormat("Caught: {0} {1}", e, e.StackTrace);
             }
         }
 
@@ -132,17 +130,8 @@
                 }
                 catch (ThreadInterruptedException e)
                 {
-                    LOG.Debug("Failed to sleep: " + e, e);
+                    LOG.WarnFormat("Failed to sleep: {0} {1}", e, e.StackTrace);
                 }
-            }
-        }
-
-        protected virtual void Dispose(bool isDisposing)
-        {
-            if (Interlocked.CompareExchange(ref closed, 1, 0) == 0)
-            {
-                if (isDisposing)
-                    GC.SuppressFinalize(this);
             }
         }
 
@@ -150,12 +139,15 @@
 
         public void Dispose()
         {
-            Dispose(true);
+            if (Interlocked.CompareExchange(ref closed, 1, 0) == 0)
+            {
+                GC.SuppressFinalize(this);
+            }
         }
 
         ~ProtocolSupport()
         {
-            Dispose(false);
+            Interlocked.Exchange(ref closed, 1);
         }
 
         #endregion

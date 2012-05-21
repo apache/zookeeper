@@ -17,13 +17,14 @@
  */
 ﻿namespace ZooKeeperNet
 {
-    public class Perms
+     public sealed class Perms
     {
-        public static int READ = 1 << 0;
-        public static int WRITE = 1 << 1;
-        public static int CREATE = 1 << 2;
-        public static int DELETE = 1 << 3;
-        public static int ADMIN = 1 << 4;
-        public static int ALL = READ | WRITE | CREATE | DELETE | ADMIN;
+        private Perms() { }
+        public const int READ = 1 << 0;
+        public const int WRITE = 1 << 1;
+        public const int CREATE = 1 << 2;
+        public const int DELETE = 1 << 3;
+        public const int ADMIN = 1 << 4;
+        public const int ALL = READ | WRITE | CREATE | DELETE | ADMIN;
     }
 }

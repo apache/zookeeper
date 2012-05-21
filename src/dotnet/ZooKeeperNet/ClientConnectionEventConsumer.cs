@@ -21,6 +21,7 @@
     using System.Collections.Concurrent;
     using System.Threading;
     using log4net;
+    using System.Text;
 
     public class ClientConnectionEventConsumer : IStartable, IDisposable
     {
@@ -29,7 +30,7 @@
         private readonly ClientConnection conn;
         private readonly Thread eventThread;
 
-        internal readonly BlockingCollection<object> waitingEvents = new BlockingCollection<object>(1000);
+        internal readonly BlockingCollection<ClientConnection.WatcherSetEventPair> waitingEvents = new BlockingCollection<ClientConnection.WatcherSetEventPair>(1000);
 
         /** This is really the queued session state until the event
          * thread actually processes the event and hands it to the watcher.
@@ -40,7 +41,7 @@
         public ClientConnectionEventConsumer(ClientConnection conn)
         {
             this.conn = conn;
-            eventThread = new Thread(new SafeThreadStart(PollEvents).Run) { Name = "ZK-EventThread " + conn.zooKeeper.Id, IsBackground = true };
+            eventThread = new Thread(new SafeThreadStart(PollEvents).Run) { Name = new StringBuilder("ZK-EventThread ").Append(conn.zooKeeper.Id).ToString(), IsBackground = true };
         }
 
         public void Start()
@@ -56,21 +57,17 @@
                 {
                     try
                     {
-                        object @event = waitingEvents.Take();
-                        if (@event is ClientConnection.WatcherSetEventPair)
+                        ClientConnection.WatcherSetEventPair pair = waitingEvents.Take();
+                        //    // each watcher will process the event
+                        foreach (IWatcher watcher in pair.Watchers)
                         {
-                            // each watcher will process the event
-                            ClientConnection.WatcherSetEventPair pair = (ClientConnection.WatcherSetEventPair)@event;
-                            foreach (IWatcher watcher in pair.watchers)
+                            try
                             {
-                                try
-                                {
-                                    watcher.Process(pair.@event);
-                                }
-                                catch (Exception t)
-                                {
-                                    LOG.Error("Error while calling watcher ", t);
-                                }
+                                watcher.Process(pair.WatchedEvent);
+                            }
+                            catch (Exception t)
+                            {
+                                LOG.Error("Error while calling watcher ", t);
                             }
                         }
                     }
@@ -100,47 +97,36 @@
 
         public void QueueEvent(WatchedEvent @event)
         {
-            if (@event.Type == EventType.None && sessionState == @event.State) return;
+            if (@event.EventType == EventType.None && sessionState == @event.State) return;
             
             sessionState = @event.State;
 
             // materialize the watchers based on the event
-            var pair = new ClientConnection.WatcherSetEventPair(conn.watcher.Materialize(@event.State, @event.Type,@event.Path), @event);
+            var pair = new ClientConnection.WatcherSetEventPair(conn.watcher.Materialize(@event.State, @event.EventType,@event.Path), @event);
             // queue the pair (watch set & event) for later processing
-            AppendToQueue(pair);
-        }
-
-        public void QueuePacket(Packet packet)
-        {
-            AppendToQueue(packet);
-        }
-
-        private void AppendToQueue(object o)
-        {
-            waitingEvents.Add(o);
+            waitingEvents.Add(pair);
         }
 
         private int isDisposed = 0;
-        private void Dispose(bool isDisposing)
+        private void InternalDispose()
         {
             if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
             {
-                if (isDisposing)
-                    GC.SuppressFinalize(this);
                 waitingEvents.CompleteAdding();
-                if (eventThread.Join(2000))
-                    waitingEvents.Dispose();
+                eventThread.Join();
+                waitingEvents.Dispose();
             }
         }
 
         public void Dispose()
         {
-            Dispose(true);
+            InternalDispose();
+            GC.SuppressFinalize(this);
         }
 
         ~ClientConnectionEventConsumer()
         {
-            Dispose(false);
+            InternalDispose();
         }
     }
 }

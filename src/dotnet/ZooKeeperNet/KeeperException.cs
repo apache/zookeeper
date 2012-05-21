@@ -18,7 +18,9 @@
 ﻿namespace ZooKeeperNet
 {
     using System;
+    using System.Text;
 
+     [Serializable]
     public abstract class KeeperException : Exception
     {
 
@@ -170,7 +172,7 @@
             SESSIONMOVED = -118
         }
 
-        public static string getCodeMessage(Code code)
+        public static string GetCodeMessage(Code code)
         {
             switch (code)
             {
@@ -217,7 +219,7 @@
                 case Code.SESSIONMOVED:
                     return "Session moved";
                 default:
-                    return "Unknown error " + code;
+                    return new StringBuilder("Unknown error ").Append(code).ToString();
             }
         }
 
@@ -225,12 +227,12 @@
 
         private string path;
 
-        public KeeperException(Code code)
+        protected KeeperException(Code code)
         {
             this.code = code;
         }
 
-        KeeperException(Code code, string path)
+        protected KeeperException(Code code, string path)
         {
             this.code = code;
             this.path = path;
@@ -240,27 +242,36 @@
      * Read the error Code for this exception
      * @return the error Code for this exception
      */
-        public Code GetCode()
+        public Code ErrorCode
         {
-            return code;
+            get
+            {
+                return code;
+            }
         }
 
         /**
          * Read the path for this exception
          * @return the path associated with this error, null if none
          */
-        public string getPath()
+        public string Path
         {
-            return path;
+            get
+            {
+                return path;
+            }
         }
 
-        public string getMessage()
+        public string ErrorMessage
         {
-            if (path == null)
+            get
             {
-                return "KeeperErrorCode = " + getCodeMessage(code);
+                StringBuilder builder = new StringBuilder("KeeperErrorCode = ")
+                    .Append(GetCodeMessage(code));
+                if (path != null)
+                    builder.Append(" for ").Append(path);
+                return builder.ToString();
             }
-            return "KeeperErrorCode = " + getCodeMessage(code) + " for " + path;
         }
 
         /**
@@ -277,6 +288,7 @@
         /**
          *  @see Code#AUTHFAILED
          */
+         [Serializable]
         public class AuthFailedException : KeeperException
         {
             public AuthFailedException()
@@ -288,6 +300,7 @@
         /**
          *  @see Code#BADARGUMENTS
          */
+         [Serializable]
         public class BadArgumentsException : KeeperException
         {
             public BadArgumentsException()
@@ -303,6 +316,7 @@
         /**
          * @see Code#BADVERSION
          */
+         [Serializable]
         public class BadVersionException : KeeperException
         {
             public BadVersionException()
@@ -318,6 +332,7 @@
         /**
          * @see Code#CONNECTIONLOSS
          */
+         [Serializable]
         public class ConnectionLossException : KeeperException
         {
             public ConnectionLossException()
@@ -329,6 +344,7 @@
         /**
          * @see Code#DATAINCONSISTENCY
          */
+         [Serializable]
         public class DataInconsistencyException : KeeperException
         {
             public DataInconsistencyException()
@@ -340,6 +356,7 @@
         /**
          * @see Code#INVALIDACL
          */
+         [Serializable]
         public class InvalidACLException : KeeperException
         {
             public InvalidACLException()
@@ -355,6 +372,7 @@
         /**
          * @see Code#INVALIDCALLBACK
          */
+         [Serializable]
         public class InvalidCallbackException : KeeperException
         {
             public InvalidCallbackException()
@@ -366,6 +384,7 @@
         /**
          * @see Code#MARSHALLINGERROR
          */
+         [Serializable]
         public class MarshallingErrorException : KeeperException
         {
             public MarshallingErrorException()
@@ -377,6 +396,7 @@
         /**
          * @see Code#NOAUTH
          */
+         [Serializable]
         public class NoAuthException : KeeperException
         {
             public NoAuthException()
@@ -388,6 +408,7 @@
         /**
          * @see Code#NOCHILDRENFOREPHEMERALS
          */
+         [Serializable]
         public class NoChildrenForEphemeralsException : KeeperException
         {
             public NoChildrenForEphemeralsException()
@@ -403,6 +424,7 @@
         /**
          * @see Code#NODEEXISTS
          */
+         [Serializable]
         public class NodeExistsException : KeeperException
         {
             public NodeExistsException()
@@ -418,6 +440,7 @@
         /**
          * @see Code#NONODE
          */
+         [Serializable]
         public class NoNodeException : KeeperException
         {
             public NoNodeException()
@@ -433,6 +456,7 @@
         /**
          * @see Code#NOTEMPTY
          */
+         [Serializable]
         public class NotEmptyException : KeeperException
         {
             public NotEmptyException()
@@ -448,6 +472,7 @@
         /**
          * @see Code#OPERATIONTIMEOUT
          */
+         [Serializable]
         public class OperationTimeoutException : KeeperException
         {
             public OperationTimeoutException()
@@ -459,6 +484,7 @@
         /**
          * @see Code#RUNTIMEINCONSISTENCY
          */
+         [Serializable]
         public class RuntimeInconsistencyException : KeeperException
         {
             public RuntimeInconsistencyException()
@@ -470,6 +496,7 @@
         /**
          * @see Code#SESSIONEXPIRED
          */
+         [Serializable]
         public class SessionExpiredException : KeeperException
         {
             public SessionExpiredException()
@@ -481,6 +508,7 @@
         /**
          * @see Code#SESSIONMOVED
          */
+         [Serializable]
         public class SessionMovedException : KeeperException
         {
             public SessionMovedException()
@@ -492,6 +520,7 @@
         /**
          * @see Code#SYSTEMERROR
          */
+         [Serializable]
         public class SystemErrorException : KeeperException
         {
             public SystemErrorException()
@@ -503,6 +532,7 @@
         /**
          * @see Code#UNIMPLEMENTED
          */
+         [Serializable]
         public class UnimplementedException : KeeperException
         {
             public UnimplementedException()

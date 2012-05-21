@@ -18,7 +18,9 @@
 namespace ZooKeeperNet
 {
     using System.IO;
+    using System;
 
+    [Serializable]
     internal class SessionTimeoutException : IOException
     {
         public SessionTimeoutException(string msg) : base(msg)

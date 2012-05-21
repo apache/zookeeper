@@ -33,6 +33,6 @@ namespace ZooKeeperNet
          * @param path event path
          * @return
          */
-        HashSet<IWatcher> Materialize(KeeperState state, EventType type, string path);
+        IEnumerable<IWatcher> Materialize(KeeperState state, EventType type, string path);
     }
 }

@@ -20,8 +20,9 @@
     using System.Collections.Generic;
     using Org.Apache.Zookeeper.Data;
 
-    public class Ids
+    public sealed class Ids
     {
+        private Ids() { }
         /**
          * This Id represents anyone.
          */

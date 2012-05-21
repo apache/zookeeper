@@ -18,6 +18,7 @@
 ﻿namespace ZooKeeperNet
 {
     using System;
+    using System.Linq;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
@@ -26,6 +27,7 @@
     using Org.Apache.Zookeeper.Data;
     using Org.Apache.Zookeeper.Proto;
     using System.Threading;
+    using System.Text;
 
     [DebuggerDisplay("Id = {Id}")]
     public class ZooKeeper : IDisposable, IZooKeeper
@@ -34,27 +36,27 @@
 
         private readonly ZKWatchManager watchManager = new ZKWatchManager();
 
-        public List<string> DataWatches
+        public IEnumerable<string> DataWatches
         {
             get
             {
-                return new List<string>(watchManager.dataWatches.Keys);
+                return watchManager.dataWatches.Keys;
             }
         }
 
-        public List<string> ExistWatches
+        public IEnumerable<string> ExistWatches
         {
             get
             {
-                return new List<string>(watchManager.existWatches.Keys);
+                return watchManager.existWatches.Keys;
             }
         }
 
-        public List<string> ChildWatches
+        public IEnumerable<string> ChildWatches
         {
             get
             {
-                return new List<string>(watchManager.childWatches.Keys);
+                return watchManager.childWatches.Keys;
             }
         }
 
@@ -81,7 +83,7 @@
                 this.clientPath = clientPath;
             }
 
-            abstract protected Dictionary<string, HashSet<IWatcher>> GetWatches(int rc);
+            abstract protected IDictionary<string, HashSet<IWatcher>> GetWatches(int rc);
 
             /// <summary>
             /// Register the watcher with the set of watches on path.
@@ -91,18 +93,15 @@
             {
                 if (!ShouldAddWatch(rc)) return;
 
-                Dictionary<string, HashSet<IWatcher>> watches = GetWatches(rc);
-                lock (watches)
+                var watches = GetWatches(rc);
+                HashSet<IWatcher> watchers;
+                watches.TryGetValue(clientPath, out watchers);
+                if (watchers == null)
                 {
-                    HashSet<IWatcher> watchers;
-                    watches.TryGetValue(clientPath, out watchers);
-                    if (watchers == null)
-                    {
-                        watchers = new HashSet<IWatcher>();
-                        watches[clientPath] = watchers;
-                    }
-                    watchers.Add(watcher);
+                    watchers = new HashSet<IWatcher>();
+                    watches[clientPath] = watchers;
                 }
+                watchers.Add(watcher);
             }
 
             /// <summary>
@@ -130,7 +129,7 @@
                 this.watchManager = watchManager;
             }
 
-            protected override Dictionary<string, HashSet<IWatcher>> GetWatches(int rc)
+            protected override IDictionary<string, HashSet<IWatcher>> GetWatches(int rc)
             {
                 return rc == 0 ? watchManager.dataWatches : watchManager.existWatches;
             }
@@ -151,7 +150,7 @@
                 this.watchManager = watchManager;
             }
 
-            protected override Dictionary<string, HashSet<IWatcher>> GetWatches(int rc)
+            protected override IDictionary<string, HashSet<IWatcher>> GetWatches(int rc)
             {
                 return watchManager.dataWatches;
             }
@@ -167,7 +166,7 @@
                 this.watchManager = watchManager;
             }
 
-            protected override Dictionary<string, HashSet<IWatcher>> GetWatches(int rc)
+            protected override IDictionary<string, HashSet<IWatcher>> GetWatches(int rc)
             {
                 return watchManager.childWatches;
             }
@@ -181,7 +180,7 @@
             public static readonly States CLOSED = new States("CLOSED");
             public static readonly States AUTH_FAILED = new States("AUTH_FAILED");
 
-            public string state;
+            private string state;
 
             public States(string state)
             {
@@ -219,9 +218,9 @@
             }
         }
 
-        protected Guid id = Guid.NewGuid();
-        protected volatile States state;
-        protected IClientConnection cnxn;
+        private Guid id = Guid.NewGuid();
+        private volatile States state;
+        private IClientConnection cnxn;
 
         /// <summary>
         /// To create a ZooKeeper client object, the application needs to pass a
@@ -263,7 +262,7 @@
         /// </param>
         public ZooKeeper(string connectstring, TimeSpan sessionTimeout, IWatcher watcher)
         {
-            LOG.Info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2}", connectstring, sessionTimeout, watcher));
+            LOG.InfoFormat("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2}", connectstring, sessionTimeout, watcher);
 
             watchManager.defaultWatcher = watcher;
             cnxn = new ClientConnection(connectstring, sessionTimeout, this, watchManager);
@@ -272,7 +271,7 @@
 
         public ZooKeeper(string connectstring, TimeSpan sessionTimeout, IWatcher watcher, long sessionId, byte[] sessionPasswd)
         {
-            LOG.Info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2} sessionId={3} sessionPasswd={4}", connectstring, sessionTimeout, watcher, sessionId, (sessionPasswd == null ? "<null>" : "<hidden>")));
+            LOG.InfoFormat("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2} sessionId={3} sessionPasswd={4}", connectstring, sessionTimeout, watcher, sessionId, (sessionPasswd == null ? "<null>" : "<hidden>"));
 
             watchManager.defaultWatcher = watcher;
             cnxn = new ClientConnection(connectstring, sessionTimeout, this, watchManager, sessionId, sessionPasswd);
@@ -351,7 +350,7 @@
         /// specified during construction).
         /// </summary>
         /// <param name="watcher">The watcher.</param>
-        [MethodImpl(MethodImplOptions.Synchronized)]
+        //[MethodImpl(MethodImplOptions.Synchronized)]
         public void Register(IWatcher watcher)
         {
             watchManager.defaultWatcher = watcher;
@@ -376,12 +375,10 @@
         /// their parents) will be triggered.
         /// </summary>   
         private int isDisposed = 0;
-        private void Dispose(bool isDisposing)
+        private void InternalDispose()
         {
             if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
             {
-                if (isDisposing)
-                    GC.SuppressFinalize(this);
                 if (!state.IsAlive())
                 {
                     if (LOG.IsDebugEnabled)
@@ -393,7 +390,7 @@
 
                 if (LOG.IsDebugEnabled)
                 {
-                    LOG.Debug(string.Format("Closing session: 0x{0:X}", SessionId));
+                    LOG.DebugFormat("Closing session: 0x{0:X}", SessionId);
                 }
 
                 try
@@ -408,19 +405,20 @@
                     }
                 }
 
-                LOG.Info(string.Format("Session: 0x{0:X} closed", SessionId));
+                LOG.DebugFormat("Session: 0x{0:X} closed", SessionId);
 
             }
         }
 
         public void Dispose()
         {
-            Dispose(true);
+            InternalDispose();
+            GC.SuppressFinalize(this);
         }
 
         ~ZooKeeper()
         {
-            Dispose(false);
+            InternalDispose();
         }
 
         /// <summary>
@@ -485,7 +483,7 @@
         /// <param name="acl">The acl for the node.</param>
         /// <param name="createMode">specifying whether the node to be created is ephemeral and/or sequential.</param>
         /// <returns></returns>
-        public string Create(string path, byte[] data, List<ACL> acl, CreateMode createMode)
+        public string Create(string path, byte[] data, IEnumerable<ACL> acl, CreateMode createMode)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath, createMode.Sequential);
@@ -499,7 +497,7 @@
             request.Data = data;
             request.Flags = createMode.Flag;
             request.Path = serverPath;
-            if (acl != null && acl.Count == 0)
+            if (acl != null && acl.Count() == 0)
             {
                 throw new KeeperException.InvalidACLException();
             }
@@ -767,7 +765,7 @@
         /// @throws KeeperException If the server signals an error with a non-zero error code.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        public List<ACL> GetACL(string path, Stat stat)
+        public IEnumerable<ACL> GetACL(string path, Stat stat)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -807,7 +805,7 @@
         /// @throws org.apache.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        public Stat SetACL(string path, List<ACL> acl, int version)
+        public Stat SetACL(string path, IEnumerable<ACL> acl, int version)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -818,7 +816,7 @@
             h.Type = (int)OpCode.SetACL;
             SetACLRequest request = new SetACLRequest();
             request.Path = serverPath;
-            if (acl != null && acl.Count == 0)
+            if (acl != null && acl.Count() == 0)
             {
                 throw new KeeperException.InvalidACLException();
             }
@@ -853,7 +851,7 @@
         /// @throws KeeperException If the server signals an error with a non-zero error code.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        public List<string> GetChildren(string path, IWatcher watcher)
+        public IEnumerable<string> GetChildren(string path, IWatcher watcher)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -881,7 +879,7 @@
             return response.Children;
         }
 
-        public List<string> GetChildren(string path, bool watch)
+        public IEnumerable<string> GetChildren(string path, bool watch)
         {
             return GetChildren(path, watch ? watchManager.defaultWatcher : null);
         }
@@ -910,7 +908,7 @@
         /// @throws IllegalArgumentException if an invalid path is specified
          /// </summary>
 
-        public List<string> GetChildren(string path, IWatcher watcher, Stat stat)
+        public IEnumerable<string> GetChildren(string path, IWatcher watcher, Stat stat)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -965,7 +963,7 @@
         /// @throws KeeperException If the server signals an error with a non-zero
         ///  error code.
         /// </summary>
-        public List<string> GetChildren(string path, bool watch, Stat stat)
+        public IEnumerable<string> GetChildren(string path, bool watch, Stat stat)
         {
             return GetChildren(path, watch ? watchManager.defaultWatcher : null, stat);
         }
@@ -981,7 +979,16 @@
         /// </summary>
         public override string ToString()
         {
-            return (string.Format("Id: {0} State:{1}{2}{3}", id, state, (state == States.CONNECTED ? string.Format(" Timeout:{0} ", SessionTimeout) : " "), cnxn));
+            StringBuilder builder = new StringBuilder("Id: ")
+                .Append(id)
+                .Append(" State:")
+                .Append(state);
+            if (state == States.CONNECTED)
+                builder.Append(" Timeout:")
+                    .Append(SessionTimeout);
+            builder.Append(" ")
+                .Append(cnxn);
+            return builder.ToString();
         }
     }
 }

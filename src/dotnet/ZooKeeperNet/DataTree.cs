@@ -23,6 +23,9 @@
     using log4net;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Data;
+    using System.Text;
+    using System.Collections.Concurrent;
+    using System.Threading;
 
     public class DataTree
     {
@@ -32,27 +35,27 @@
 
         private readonly Dictionary<string, DataNode> nodes = new Dictionary<string, DataNode>();
 
-        private ZKWatchManager dataWatches = new ZKWatchManager();
+        //private ZKWatchManager dataWatches = new ZKWatchManager();
 
-        private ZKWatchManager childWatches = new ZKWatchManager();
+        //private ZKWatchManager childWatches = new ZKWatchManager();
 
         /** the root of zookeeper tree */
         //private static string rootZookeeper = "/";
 
         /** the zookeeper nodes that acts as the management and status node **/
-        private static string procZookeeper = Quotas.procZookeeper;
+        //private static string procZookeeper = Quotas.procZookeeper;
 
         /** this will be the string thats stored as a child of root */
-        private static string procChildZookeeper = procZookeeper.Substring(1);
+        //private static string procChildZookeeper = procZookeeper.Substring(1);
 
         /**
          * the zookeeper quota node that acts as the quota management node for
          * zookeeper
          */
-        private static string quotaZookeeper = Quotas.quotaZookeeper;
+        //private static string quotaZookeeper = Quotas.quotaZookeeper;
 
         /** this will be the string thats stored as a child of /zookeeper */
-        private static string quotaChildZookeeper = quotaZookeeper.Substring(procZookeeper.Length + 1);
+        //private static string quotaChildZookeeper = quotaZookeeper.Substring(procZookeeper.Length + 1);
 
         /**
          * the path trie that keeps track fo the quota nodes in this datatree
@@ -68,14 +71,12 @@
          * this is map from longs to acl's. It saves acl's being stored for each
          * datanode.
          */
-        //not concurrent
-        public Dictionary<long, List<ACL>> longKeyMap = new Dictionary<long, List<ACL>>();
+        public ConcurrentDictionary<long, List<ACL>> longKeyMap = new ConcurrentDictionary<long, List<ACL>>();
 
         /**
          * this a map from acls to long.
          */
-        //not concurrent
-        public Dictionary<List<ACL>, long> aclKeyMap = new Dictionary<List<ACL>, long>();
+        private ConcurrentDictionary<List<ACL>, long> aclKeyMap = new ConcurrentDictionary<List<ACL>, long>();
 
         /**
          * these are the number of acls that we have in the datatree
@@ -101,65 +102,72 @@
 
         private long IncrementIndex()
         {
-            return ++aclIndex;
+            return Interlocked.Increment(ref aclIndex);
         }
 
 
         public long ConvertAcls(List<ACL> acls)
         {
-            lock (locker)
-            {
-                if (acls == null)
-                    return -1L;
-                // get the value from the map
-                long ret;
-                if (!aclKeyMap.TryGetValue(acls, out ret))
-                {
-                    ret = IncrementIndex();
-                    longKeyMap.Add(ret, acls);
-                    aclKeyMap.Add(acls, ret);
-                }
-                return ret;
-            }
+            //lock (locker)
+            //{
+            if (acls == null)
+                return -1L;
+            // get the value from the map
+            long ret;
+            ret = aclKeyMap.GetOrAdd(acls, (a) => IncrementIndex());
+            longKeyMap.GetOrAdd(ret, acls);
+            //if (!aclKeyMap.TryGetValue(acls, out ret))
+            //{
+            //    ret = IncrementIndex();
+            //    longKeyMap.Add(ret, acls);
+            //    aclKeyMap.Add(acls, ret);
+            //}
+            return ret;
+            //}
         }
 
-    public List<ACL> convertLong(long longVal) {
-        lock (locker)
+        public List<ACL> ConvertLong(long longVal)
         {
+            //lock (locker)
+            //{
             if (longVal == -1L)
                 return Ids.OPEN_ACL_UNSAFE;
             List<ACL> acls;
-            if (!longKeyMap.TryGetValue(longVal, out acls)) {
-                LOG.Error("ERROR: ACL not available for long " + longVal);
-                throw new InvalidOperationException("Failed to fetch acls for " + longVal);
+            if (!longKeyMap.TryGetValue(longVal, out acls))
+            {
+                LOG.ErrorFormat("ERROR: ACL not available for long {0}", longVal);
+                throw new InvalidOperationException(new StringBuilder("Failed to fetch acls for ").Append(longVal).ToString());
             }
             return acls;
+            //}
         }
-    }
 
-        public List<long> Sessions
+        public ICollection<long> Sessions
         {
             get
             {
-                return ephemerals.Keys.ToList();
+                return ephemerals.Keys;
             }
         }
 
-        public void addDataNode(string path, DataNode node)
+        public void AddDataNode(string path, DataNode node)
         {
             nodes.Add(path, node);
         }
 
-        public DataNode getNode(string path)
+        public DataNode GetNode(string path)
         {
             DataNode node;
             nodes.TryGetValue(path, out node);
             return node;
         }
 
-        public int getNodeCount()
+        public int NodeCount
         {
-            return nodes.Count;
+            get
+            {
+                return nodes.Count;
+            }
         }
 
 
@@ -184,10 +192,16 @@
         {
             private readonly object locker = new object();
             private readonly DataNode parent;
+
+            public DataNode Parent
+            {
+                get { return parent; }
+            } 
+
             private byte[] data;
             private long acl;
             private StatPersisted stat;
-            private HashSet<string> children;
+            private volatile HashSet<string> children;
 
             public DataNode(DataNode parent, byte[] data, long acl, StatPersisted stat)
             {
@@ -195,34 +209,25 @@
                 this.data = data;
                 this.acl = acl;
                 this.stat = stat;
+                children = new HashSet<string>();
             }
 
-            public HashSet<string> Children
+            public IEnumerable<string> Children
             {
                 get
                 {
-                    lock (locker)
-                    {
-                        return children;
-                    }
+                    return children;
                 }
-                set
-                {
-                    lock (locker)
-                    {
-                        children = value;
-                    }
-                }
+                //set
+                //{
+                //    children = value;
+                //}
             }
 
             public bool AddChild(string child)
             {
                 lock (locker)
                 {
-                    if (children == null)
-                    {
-                        children = new HashSet<string>();
-                    }
                     return children.Add(child);
                 }
             }
@@ -231,8 +236,6 @@
             {
                 lock (locker)
                 {
-                    if (children == null)
-                        return false;
                     return children.Remove(child);
                 }
             }
@@ -264,27 +267,27 @@
 
             public void Serialize(IOutputArchive archive, string tag)
             {
+                archive.StartRecord(this, "node");
                 lock (locker)
                 {
-                    archive.StartRecord(this, "node");
                     archive.WriteBuffer(data, "data");
                     archive.WriteLong(acl, "acl");
                     stat.Serialize(archive, "statpersisted");
-                    archive.EndRecord(this, "node");
                 }
+                archive.EndRecord(this, "node");
             }
 
             public void Deserialize(IInputArchive archive, string tag)
             {
-                lock (locker)
-                {
                     archive.StartRecord("node");
-                    data = archive.ReadBuffer("data");
-                    acl = archive.ReadLong("acl");
-                    stat = new StatPersisted();
-                    stat.Deserialize(archive, "statpersisted");
+                    lock (locker)
+                    {
+                        data = archive.ReadBuffer("data");
+                        acl = archive.ReadLong("acl");
+                        stat = new StatPersisted();
+                        stat.Deserialize(archive, "statpersisted");
+                    }
                     archive.EndRecord("node");
-                }
             }
         }
     }

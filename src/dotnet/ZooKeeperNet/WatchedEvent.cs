@@ -19,6 +19,7 @@
 {
     using System;
     using Org.Apache.Zookeeper.Proto;
+    using System.Text;
 
     public class WatchedEvent
     {
@@ -45,7 +46,7 @@
             get { return state; }
         }
 
-        public EventType Type
+        public EventType EventType
         {
             get { return type; }
         }
@@ -57,16 +58,22 @@
 
         public override string ToString()
         {
-            return "WatchedEvent state:" + state
-                + " type:" + type + " path:" + path;
+            StringBuilder builder = new StringBuilder("WatchedEvent state:")
+            .Append(state)
+            .Append(" type:").Append(type)
+            .Append(" path:").Append(path);
+            return builder.ToString();
         }
 
         /**
          *  Convert WatchedEvent to type that can be sent over network
          */
-        public WatcherEvent GetWrapper()
+        public WatcherEvent Wrapper
         {
-            return new WatcherEvent((int)type, (int)state, path);
+            get
+            {
+                return new WatcherEvent((int)type, (int)state, path);
+            }
         }
     }
 }
