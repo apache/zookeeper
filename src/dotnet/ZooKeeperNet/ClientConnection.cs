@@ -32,8 +32,9 @@
         private static readonly ILog LOG = LogManager.GetLogger(typeof(ClientConnection));
 
         //doesn't need this restriction, heck no limmit
-        //public const int packetLen = 4096 * 1024;
+        public const int packetLen = 4096 * 1024;
         internal static readonly bool disableAutoWatchReset = false;
+        internal const int maxSpin = 30;
 
         //static ClientConnection()
         //{
@@ -60,7 +61,14 @@
         //what the....we use default socket connection time out
         //internal TimeSpan connectTimeout;
         internal TimeSpan readTimeout;
-        internal bool closing;
+        private int isClosed;
+        public bool IsClosed
+        {
+            get
+            {
+                return Interlocked.CompareExchange(ref isClosed, 0, 0) == 1;
+            }
+        }
         internal ClientConnectionRequestProducer producer;
         internal ClientConnectionEventConsumer consumer;
 
@@ -206,10 +214,18 @@
         {
             ReplyHeader r = new ReplyHeader();
             Packet p = QueuePacket(h, r, request, response, null, null, watchRegistration, null, null);
-            lock (p)
-                while (!p.Finished)
-                    if (!Monitor.Wait(p, SessionTimeout))
+            SpinWait spin = new SpinWait();
+            DateTime start = DateTime.Now;
+            while (!p.Finished)
+            {
+                spin.SpinOnce();
+                if (spin.Count > ClientConnection.maxSpin)
+                {
+                    if(DateTime.Now.Subtract(start) > SessionTimeout)
                         throw new TimeoutException(new StringBuilder("The request ").Append(request).Append(" timed out while waiting for a response from the server.").ToString());
+                    spin.Reset();
+                }
+            }
             return r;
         }
 
@@ -223,22 +239,22 @@
         /// </summary>
         private void InternalDispose()
         {
-            if (!closing)
+            //if (!closing)
+            if(Interlocked.CompareExchange(ref isClosed,1,0) == 0)
             {
-                closing = true;
+                //closing = true;
                 if (LOG.IsDebugEnabled)
                     LOG.DebugFormat("Closing client for session: 0x{0:X}", SessionId);
 
                 try
                 {
                     SubmitRequest(new RequestHeader { Type = (int)OpCode.CloseSession }, null, null, null);
-                    lock (producer)
+                    SpinWait spin = new SpinWait();
+                    while (!producer.IsConnectionClosedByServer)
                     {
-                        while (!producer.IsConnectionClosedByServer)
-                        {
-                            Monitor.Wait(producer, SessionTimeout);
-                            break;
-                        }
+                        spin.SpinOnce();
+                        if (spin.Count > maxSpin)
+                            spin.Reset();
                     }
                 }
                 catch (ThreadInterruptedException)

@@ -113,7 +113,7 @@
          */
         protected bool IsDisposed()
         {
-            return Interlocked.CompareExchange(ref closed,1,1) == 1;
+            return Interlocked.CompareExchange(ref closed,0,0) == 1;
         }
 
         /**

@@ -17,7 +17,7 @@
  */
 ﻿namespace ZooKeeperNet
 {
-    public class CreateMode
+    public sealed class CreateMode
     {
         public static readonly CreateMode Persistent = new CreateMode(0, false, false);
         public static readonly CreateMode PersistentSequential = new CreateMode(2, false, true);
@@ -40,7 +40,7 @@
             get { return flag; }
         }
 
-        public bool Ephemeral1
+        public bool IsEphemeral
         {
             get { return ephemeral; }
         }

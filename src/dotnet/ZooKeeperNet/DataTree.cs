@@ -31,8 +31,6 @@
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof(DataTree));
 
-        private readonly object locker = new object();
-
         private readonly Dictionary<string, DataNode> nodes = new Dictionary<string, DataNode>();
 
         //private ZKWatchManager dataWatches = new ZKWatchManager();
@@ -108,28 +106,16 @@
 
         public long ConvertAcls(List<ACL> acls)
         {
-            //lock (locker)
-            //{
             if (acls == null)
                 return -1L;
             // get the value from the map
-            long ret;
-            ret = aclKeyMap.GetOrAdd(acls, (a) => IncrementIndex());
+            long ret = aclKeyMap.GetOrAdd(acls, (a) => IncrementIndex());
             longKeyMap.GetOrAdd(ret, acls);
-            //if (!aclKeyMap.TryGetValue(acls, out ret))
-            //{
-            //    ret = IncrementIndex();
-            //    longKeyMap.Add(ret, acls);
-            //    aclKeyMap.Add(acls, ret);
-            //}
             return ret;
-            //}
         }
 
         public List<ACL> ConvertLong(long longVal)
         {
-            //lock (locker)
-            //{
             if (longVal == -1L)
                 return Ids.OPEN_ACL_UNSAFE;
             List<ACL> acls;
@@ -139,7 +125,6 @@
                 throw new InvalidOperationException(new StringBuilder("Failed to fetch acls for ").Append(longVal).ToString());
             }
             return acls;
-            //}
         }
 
         public ICollection<long> Sessions
@@ -190,7 +175,7 @@
 
         public class DataNode : IRecord
         {
-            private readonly object locker = new object();
+            private int lockedInt;
             private readonly DataNode parent;
 
             public DataNode Parent
@@ -204,7 +189,7 @@
             private volatile HashSet<string> children;
 
             public DataNode(DataNode parent, byte[] data, long acl, StatPersisted stat)
-            {
+            {                                
                 this.parent = parent;
                 this.data = data;
                 this.acl = acl;
@@ -226,24 +211,35 @@
 
             public bool AddChild(string child)
             {
-                lock (locker)
+                try
                 {
+                    SpinWait.SpinUntil(() => Interlocked.CompareExchange(ref lockedInt, 1, 0) == 0);
                     return children.Add(child);
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref lockedInt, 0);
                 }
             }
 
             public bool RemoveChild(string child)
             {
-                lock (locker)
+                try
                 {
+                    SpinWait.SpinUntil(() => Interlocked.CompareExchange(ref lockedInt, 1, 0) == 0);
                     return children.Remove(child);
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref lockedInt, 0);
                 }
             }
 
             public void CopyStat(Stat to)
             {
-                lock (locker)
+                try
                 {
+                    SpinWait.SpinUntil(() => Interlocked.CompareExchange(ref lockedInt, 1, 0) == 0);
                     to.Aversion = stat.Aversion;
                     to.Ctime = stat.Ctime;
                     to.Cversion = stat.Cversion;
@@ -263,31 +259,45 @@
                         to.NumChildren = children.Count;
                     }
                 }
+                finally
+                {
+                    Interlocked.Exchange(ref lockedInt, 0);
+                }
             }
 
             public void Serialize(IOutputArchive archive, string tag)
             {
-                archive.StartRecord(this, "node");
-                lock (locker)
+                try
                 {
+                    SpinWait.SpinUntil(() => Interlocked.CompareExchange(ref lockedInt, 1, 0) == 0);
+                    archive.StartRecord(this, "node");
                     archive.WriteBuffer(data, "data");
                     archive.WriteLong(acl, "acl");
                     stat.Serialize(archive, "statpersisted");
+                    archive.EndRecord(this, "node");
                 }
-                archive.EndRecord(this, "node");
+                finally
+                {
+                    Interlocked.Exchange(ref lockedInt, 0);
+                }
             }
 
             public void Deserialize(IInputArchive archive, string tag)
             {
+                try
+                {
+                    SpinWait.SpinUntil(() => Interlocked.CompareExchange(ref lockedInt, 1, 0) == 0);
                     archive.StartRecord("node");
-                    lock (locker)
-                    {
-                        data = archive.ReadBuffer("data");
-                        acl = archive.ReadLong("acl");
-                        stat = new StatPersisted();
-                        stat.Deserialize(archive, "statpersisted");
-                    }
+                    data = archive.ReadBuffer("data");
+                    acl = archive.ReadLong("acl");
+                    stat = new StatPersisted();
+                    stat.Deserialize(archive, "statpersisted");
                     archive.EndRecord("node");
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref lockedInt, 0);
+                }
             }
         }
     }

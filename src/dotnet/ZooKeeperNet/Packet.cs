@@ -32,15 +32,15 @@ namespace ZooKeeperNet
         private static readonly ILog LOG = LogManager.GetLogger(typeof(Packet));
 
         internal RequestHeader header;
-        internal string serverPath;
+        private string serverPath;
         internal ReplyHeader replyHeader;
         internal IRecord response;
-        private bool finished;
+        private int finished;
         internal ZooKeeper.WatchRegistration watchRegistration;
         internal readonly byte[] data;
 
         /** Client's view of the path (may differ due to chroot) **/
-        internal string clientPath;
+        private string clientPath;
         /** Servers's view of the path (may differ due to chroot) **/
         readonly IRecord request;
 
@@ -88,17 +88,11 @@ namespace ZooKeeperNet
         {
             get
             {
-                return finished;
+                return Interlocked.CompareExchange(ref finished,0,0) == 1;
             }
             set
             {
-                lock (this)
-                {
-                    Monitor.Enter(this);
-                    finished = value;
-                    Monitor.PulseAll(this);
-                    Monitor.Exit(this);
-                }
+                Interlocked.Exchange(ref finished, value ? 1 : 0);
             }
         }
 

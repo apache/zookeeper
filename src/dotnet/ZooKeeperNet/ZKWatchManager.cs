@@ -22,19 +22,28 @@
     using log4net;
     using System.Text;
     using System.Collections.Concurrent;
+    using System.Threading;
 
     public class ZKWatchManager : IClientWatchManager 
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof(ZKWatchManager));
 
-        //internal readonly Dictionary<string, HashSet<IWatcher>> dataWatches = new Dictionary<string, HashSet<IWatcher>>();
         internal readonly ConcurrentDictionary<string, HashSet<IWatcher>> dataWatches = new ConcurrentDictionary<string, HashSet<IWatcher>>();
-        //internal readonly Dictionary<string, HashSet<IWatcher>> existWatches = new Dictionary<string, HashSet<IWatcher>>();
         internal readonly ConcurrentDictionary<string, HashSet<IWatcher>> existWatches = new ConcurrentDictionary<string, HashSet<IWatcher>>();
-        //internal readonly Dictionary<string, HashSet<IWatcher>> childWatches = new Dictionary<string, HashSet<IWatcher>>();
         internal readonly ConcurrentDictionary<string, HashSet<IWatcher>> childWatches = new ConcurrentDictionary<string, HashSet<IWatcher>>();
 
-        internal volatile IWatcher defaultWatcher;
+        private IWatcher defaultWatcher;
+        internal IWatcher DefaultWatcher
+        {
+            get
+            {
+                return Interlocked.CompareExchange(ref defaultWatcher, null, null);
+            }
+            set
+            {
+                Interlocked.Exchange(ref defaultWatcher, value);
+            }
+        }
 
         private static void AddTo(HashSet<IWatcher> from, HashSet<IWatcher> to) {
             if (from == null) return;

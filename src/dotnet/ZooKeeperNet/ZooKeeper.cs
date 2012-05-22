@@ -219,7 +219,7 @@
         }
 
         private Guid id = Guid.NewGuid();
-        private volatile States state;
+        private States state;
         private IClientConnection cnxn;
 
         /// <summary>
@@ -264,7 +264,7 @@
         {
             LOG.InfoFormat("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2}", connectstring, sessionTimeout, watcher);
 
-            watchManager.defaultWatcher = watcher;
+            watchManager.DefaultWatcher = watcher;
             cnxn = new ClientConnection(connectstring, sessionTimeout, this, watchManager);
             cnxn.Start();
         }
@@ -273,7 +273,7 @@
         {
             LOG.InfoFormat("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2} sessionId={3} sessionPasswd={4}", connectstring, sessionTimeout, watcher, sessionId, (sessionPasswd == null ? "<null>" : "<hidden>"));
 
-            watchManager.defaultWatcher = watcher;
+            watchManager.DefaultWatcher = watcher;
             cnxn = new ClientConnection(connectstring, sessionTimeout, this, watchManager, sessionId, sessionPasswd);
             cnxn.Start();
         }
@@ -353,18 +353,18 @@
         //[MethodImpl(MethodImplOptions.Synchronized)]
         public void Register(IWatcher watcher)
         {
-            watchManager.defaultWatcher = watcher;
+            watchManager.DefaultWatcher = watcher;
         }
 
         public States State
         {
             get
             {
-                return state;
+                return Interlocked.CompareExchange(ref state, null, null);
             }
             internal set
             {
-                state = value;
+                Interlocked.Exchange(ref state, value);
             }
         }
 
@@ -374,40 +374,35 @@
         /// the session will be removed. The watches left on those nodes (and on
         /// their parents) will be triggered.
         /// </summary>   
-        private int isDisposed = 0;
         private void InternalDispose()
         {
-            if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
+            if (!State.IsAlive())
             {
-                if (!state.IsAlive())
-                {
-                    if (LOG.IsDebugEnabled)
-                    {
-                        LOG.Debug("Close called on already closed client");
-                    }
-                    return;
-                }
-
                 if (LOG.IsDebugEnabled)
                 {
-                    LOG.DebugFormat("Closing session: 0x{0:X}", SessionId);
+                    LOG.Debug("Close called on already closed client");
                 }
-
-                try
-                {
-                    cnxn.Dispose();
-                }
-                catch (IOException e)
-                {
-                    if (LOG.IsDebugEnabled)
-                    {
-                        LOG.Debug("Ignoring unexpected exception during close", e);
-                    }
-                }
-
-                LOG.DebugFormat("Session: 0x{0:X} closed", SessionId);
-
+                return;
             }
+
+            if (LOG.IsDebugEnabled)
+            {
+                LOG.DebugFormat("Closing session: 0x{0:X}", SessionId);
+            }
+
+            try
+            {
+                cnxn.Dispose();
+            }
+            catch (IOException e)
+            {
+                if (LOG.IsDebugEnabled)
+                {
+                    LOG.Debug("Ignoring unexpected exception during close", e);
+                }
+            }
+
+            LOG.DebugFormat("Session: 0x{0:X} closed", SessionId);
         }
 
         public void Dispose()
@@ -487,21 +482,21 @@
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath, createMode.Sequential);
+            if (acl != null && acl.Count() == 0)
+            {
+                throw new KeeperException.InvalidACLException();
+            }
 
             string serverPath = PrependChroot(clientPath);
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.Create;
-            CreateRequest request = new CreateRequest();
+            CreateRequest request = new CreateRequest(serverPath,data,acl,createMode.Flag);
             CreateResponse response = new CreateResponse();
-            request.Data = data;
-            request.Flags = createMode.Flag;
-            request.Path = serverPath;
-            if (acl != null && acl.Count() == 0)
-            {
-                throw new KeeperException.InvalidACLException();
-            }
-            request.Acl = acl;
+            //request.Data = data;
+            //request.Flags = createMode.Flag;
+            //request.Path = serverPath;
+            //request.Acl = acl;
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
             {
@@ -553,9 +548,9 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.Delete;
-            DeleteRequest request = new DeleteRequest();
-            request.Path = serverPath;
-            request.Version = version;
+            DeleteRequest request = new DeleteRequest(serverPath,version);
+            //request.Path = serverPath;
+            //request.Version = version;
             ReplyHeader r = cnxn.SubmitRequest(h, request, null, null);
             if (r.Err != 0)
             {
@@ -591,9 +586,9 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.Exists;
-            ExistsRequest request = new ExistsRequest();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
+            ExistsRequest request = new ExistsRequest(serverPath, watcher != null);
+            //request.Path = serverPath;
+            //request.Watch = watcher != null;
             SetDataResponse response = new SetDataResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -627,7 +622,7 @@
         /// </summary>
         public Stat Exists(string path, bool watch)
         {
-            return Exists(path, watch ? watchManager.defaultWatcher : null);
+            return Exists(path, watch ? watchManager.DefaultWatcher : null);
         }
 
         /// <summary>
@@ -664,9 +659,9 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetData;
-            GetDataRequest request = new GetDataRequest();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
+            GetDataRequest request = new GetDataRequest(serverPath, watcher != null);
+            //request.Path = serverPath;
+            //request.Watch = watcher != null;
             GetDataResponse response = new GetDataResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -699,7 +694,7 @@
         /// </summary>
         public byte[] GetData(string path, bool watch, Stat stat)
         {
-            return GetData(path, watch ? watchManager.defaultWatcher : null, stat);
+            return GetData(path, watch ? watchManager.DefaultWatcher : null, stat);
         }
 
         /// <summary>
@@ -738,10 +733,10 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.SetData;
-            SetDataRequest request = new SetDataRequest();
-            request.Path = serverPath;
-            request.Data = data;
-            request.Version = version;
+            SetDataRequest request = new SetDataRequest(serverPath,data,version);
+            //request.Path = serverPath;
+            //request.Data = data;
+            //request.Version = version;
             SetDataResponse response = new SetDataResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
@@ -774,8 +769,8 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetACL;
-            GetACLRequest request = new GetACLRequest();
-            request.Path = serverPath;
+            GetACLRequest request = new GetACLRequest(serverPath);
+            //request.Path = serverPath;
             GetACLResponse response = new GetACLResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
@@ -809,19 +804,19 @@
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
+            if (acl != null && acl.Count() == 0)
+            {
+                throw new KeeperException.InvalidACLException();
+            }
 
             string serverPath = PrependChroot(clientPath);
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.SetACL;
-            SetACLRequest request = new SetACLRequest();
-            request.Path = serverPath;
-            if (acl != null && acl.Count() == 0)
-            {
-                throw new KeeperException.InvalidACLException();
-            }
-            request.Acl = acl;
-            request.Version = version;
+            SetACLRequest request = new SetACLRequest(serverPath,acl,version);
+            //request.Path = serverPath;
+            //request.Acl = acl;
+            //request.Version = version;
             SetACLResponse response = new SetACLResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
@@ -867,9 +862,9 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetChildren2;
-            GetChildren2Request request = new GetChildren2Request();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
+            GetChildren2Request request = new GetChildren2Request(serverPath, watcher != null);
+            //request.Path = serverPath;
+            //request.Watch = watcher != null;
             GetChildren2Response response = new GetChildren2Response();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -881,7 +876,7 @@
 
         public IEnumerable<string> GetChildren(string path, bool watch)
         {
-            return GetChildren(path, watch ? watchManager.defaultWatcher : null);
+            return GetChildren(path, watch ? watchManager.DefaultWatcher : null);
         }
 
         /// <summary>
@@ -924,9 +919,9 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetChildren2;
-            GetChildren2Request request = new GetChildren2Request();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
+            GetChildren2Request request = new GetChildren2Request(serverPath, watcher != null);
+            //request.Path = serverPath;
+            //request.Watch = watcher != null;
             GetChildren2Response response = new GetChildren2Response();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -965,7 +960,7 @@
         /// </summary>
         public IEnumerable<string> GetChildren(string path, bool watch, Stat stat)
         {
-            return GetChildren(path, watch ? watchManager.defaultWatcher : null, stat);
+            return GetChildren(path, watch ? watchManager.DefaultWatcher : null, stat);
         }
 
         /// <summary>
@@ -982,8 +977,8 @@
             StringBuilder builder = new StringBuilder("Id: ")
                 .Append(id)
                 .Append(" State:")
-                .Append(state);
-            if (state == States.CONNECTED)
+                .Append(State);
+            if (State == States.CONNECTED)
                 builder.Append(" Timeout:")
                     .Append(SessionTimeout);
             builder.Append(" ")

@@ -22,7 +22,6 @@ namespace ZooKeeperNet
         private readonly ClientConnection conn;
         private readonly ZooKeeper zooKeeper;
         private readonly Thread requestThread;
-        private readonly ManualResetEvent queueEvent = new ManualResetEvent(false);
         
         internal readonly System.Collections.Concurrent.ConcurrentQueue<Packet> pendingQueue = new System.Collections.Concurrent.ConcurrentQueue<Packet>();
         internal readonly System.Collections.Concurrent.ConcurrentQueue<Packet> outgoingQueue = new System.Collections.Concurrent.ConcurrentQueue<Packet>();
@@ -32,7 +31,7 @@ namespace ZooKeeperNet
         private readonly Random random = new Random();
         private int nextAddrToTry;
         private int currentConnectIndex;
-        private volatile bool initialized;
+        private int initialized;
         internal long lastZxid;
         private long lastPingSentNs;
         internal int xid = 1;
@@ -42,10 +41,17 @@ namespace ZooKeeperNet
         internal int recvCount;
         internal int negotiatedSessionTimeout;
 
+        private int connectionClosed;
         public bool IsConnectionClosedByServer
         {
-            get;
-            private set;
+            get
+            {
+                return Interlocked.CompareExchange(ref connectionClosed, 0, 0) == 1;
+            }
+            private set
+            {
+                Interlocked.Exchange(ref connectionClosed, value ? 1 : 0);
+            }
         }
 
         public ClientConnectionRequestProducer(ClientConnection conn)
@@ -62,27 +68,23 @@ namespace ZooKeeperNet
 
         public void Start()
         {
-            //zooKeeper.State = ZooKeeper.States.CONNECTING;
             StartConnect();
             requestThread.Start();
         }
 
         public Packet QueuePacket(RequestHeader h, ReplyHeader r, IRecord request, IRecord response, string clientPath, string serverPath, ZooKeeper.WatchRegistration watchRegistration)
         {
-            //lock here for XID?
             if (h.Type != (int)OpCode.Ping && h.Type != (int)OpCode.Auth)
                 h.Xid = Xid;
 
             Packet p = new Packet(h, r, request, response, null, watchRegistration, clientPath, serverPath);
-            p.clientPath = clientPath;
-            p.serverPath = serverPath;
 
-            if (!zooKeeper.State.IsAlive() || Interlocked.CompareExchange(ref isDisposed, 1, 1) == 1)
+            if (!zooKeeper.State.IsAlive() || Interlocked.CompareExchange(ref isDisposed, 0, 0) == 1)
                 ConLossPacket(p);
             else
             {
                 outgoingQueue.Enqueue(p);
-                queueEvent.Set();
+                //queueEvent.Set();
             }
             return p;
         }
@@ -92,6 +94,7 @@ namespace ZooKeeperNet
             DateTime now = DateTime.Now;
             DateTime lastSend = now;
             Packet packet = null;
+            SpinWait spin = new SpinWait();
             while (zooKeeper.State.IsAlive())
             {
                 try
@@ -100,11 +103,12 @@ namespace ZooKeeperNet
                     if (client == null)
                     {
                         // don't re-establish connection if we are closing
-                        if (conn.closing)
+                        //if (conn.closing)
+                        if(conn.IsClosed)
                             break;
 
                         StartConnect();
-                        //lastSend = now;
+                        lastSend = now;
                     }
                     TimeSpan idleSend = now - lastSend;
                     if (zooKeeper.State == ZooKeeper.States.CONNECTED)
@@ -113,7 +117,6 @@ namespace ZooKeeperNet
                         if (timeToNextPing <= TimeSpan.Zero)
                             SendPing();
                     }
-
                     // Everything below and until we get back to the select is
                     // non blocking, so time is effectively a constant. That is
                     // Why we just have to do this once, here                    
@@ -127,13 +130,17 @@ namespace ZooKeeperNet
                         lastSend = DateTime.Now;
                         packet = null;
                     }
-                    else if (queueEvent.WaitOne(1111))
-                        queueEvent.Reset();
-
+                    else
+                    {
+                        spin.SpinOnce();
+                        if (spin.Count > ClientConnection.maxSpin)
+                            spin.Reset();
+                    }
                 }
                 catch (Exception e)
                 {
-                    if (conn.closing)
+                    //if (conn.closing)
+                    if(conn.IsClosed)
                     {
                         if (LOG.IsDebugEnabled)
                         {
@@ -157,9 +164,6 @@ namespace ZooKeeperNet
                     Cleanup();
                     if (zooKeeper.State.IsAlive())
                         conn.consumer.QueueEvent(new WatchedEvent(KeeperState.Disconnected, EventType.None, null));
-
-                    now = DateTime.Now;
-                    lastSend = now;
                 }
             }
             Cleanup();
@@ -238,7 +242,9 @@ namespace ZooKeeperNet
             client = new TcpClient();
             client.LingerState = new LingerOption(false, 0);
             client.NoDelay = true;
-            initialized = IsConnectionClosedByServer = false;
+            //initialized = 
+            Interlocked.Exchange(ref initialized, 0);
+            IsConnectionClosedByServer = false;
             //ConnectSocket(addr);
             client.Connect(addr);
             //initialized = false;
@@ -252,7 +258,7 @@ namespace ZooKeeperNet
 
         private void ReceiveAsynch(IAsyncResult ar)
         {
-            if (Interlocked.CompareExchange(ref isDisposed, 1, 1) == 1)
+            if (Interlocked.CompareExchange(ref isDisposed, 0, 0) == 1)
                 return;
             int len = 0;
             try
@@ -261,14 +267,7 @@ namespace ZooKeeperNet
                 if (len == 0) //server closed the connection
                 {
                     zooKeeper.State = ZooKeeper.States.CLOSED;
-                    queueEvent.Set();
-                    lock (this)
-                    {
-                        Monitor.Enter(this);
-                        IsConnectionClosedByServer = true;
-                        Monitor.PulseAll(this);
-                        Monitor.Exit(this);
-                    }
+                    IsConnectionClosedByServer = true;
                     return;
                 }
                 byte[] bData = (byte[])ar.AsyncState;
@@ -283,9 +282,8 @@ namespace ZooKeeperNet
                 }
                 else
                 {
-                    if (!initialized)
+                    if (Interlocked.CompareExchange(ref initialized,1,0) == 0)
                     {
-                        initialized = true;
                         ReadConnectResult(bData);
                         client.GetStream().BeginRead(incomingBuffer, 0, incomingBuffer.Length, ReceiveAsynch, incomingBuffer);
                     }
@@ -391,11 +389,10 @@ namespace ZooKeeperNet
         {
             using (EndianBinaryReader reader = new EndianBinaryReader(EndianBitConverter.Big, new MemoryStream(content), Encoding.UTF8))
             {
-                return reader.ReadInt32();
-                //int len = reader.ReadInt32();
-                //if (len < 0 || len >= ClientConnection.packetLen)
-                //    throw new IOException(new StringBuilder("Packet len ").Append(len).Append("is out of range!").ToString());
-                //return len;
+                int len = reader.ReadInt32();
+                if (len < 0 || len >= ClientConnection.packetLen)
+                    throw new IOException(new StringBuilder("Packet len ").Append(len).Append("is out of range!").ToString());
+                return len;
             }
         }
 
@@ -538,11 +535,10 @@ namespace ZooKeeperNet
         {
             if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
             {
-
                 zooKeeper.State = ZooKeeper.States.CLOSED;
-                queueEvent.Set();
+                //queueEvent.Set();
                 requestThread.Join();
-                queueEvent.Dispose();
+                //queueEvent.Dispose();
                 incomingBuffer = juteBuffer = null;
             }
         }

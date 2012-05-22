@@ -211,7 +211,15 @@ namespace ZooKeeperNet.Tests
                         DeleteChild(zk, "/" + child);
                 }
                 if (path != "/")
-                    zk.Delete(path, -1);
+                {
+                    try
+                    {
+                        zk.Delete(path, -1);
+                    }
+                    catch
+                    {
+                    }
+                }
             }
         }
     }
