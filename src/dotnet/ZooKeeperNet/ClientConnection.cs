@@ -31,7 +31,7 @@
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof(ClientConnection));
 
-        //doesn't need this restriction, heck no limmit
+        //TODO find an elegant way to set this parameter
         public const int packetLen = 4096 * 1024;
         internal static readonly bool disableAutoWatchReset = false;
         internal const int maxSpin = 30;
@@ -122,7 +122,7 @@
 
         private string SetChrootPath()
         {
-            int off = hosts.IndexOf('/');
+            int off = hosts.IndexOf(PathUtils.PathSeparatorChar);
             if (off >= 0)
             {
                 string path = hosts.Substring(off);
@@ -216,6 +216,7 @@
             Packet p = QueuePacket(h, r, request, response, null, null, watchRegistration, null, null);
             SpinWait spin = new SpinWait();
             DateTime start = DateTime.Now;
+            // now wait for reply for the packet
             while (!p.Finished)
             {
                 spin.SpinOnce();
@@ -239,7 +240,6 @@
         /// </summary>
         private void InternalDispose()
         {
-            //if (!closing)
             if(Interlocked.CompareExchange(ref isClosed,1,0) == 0)
             {
                 //closing = true;

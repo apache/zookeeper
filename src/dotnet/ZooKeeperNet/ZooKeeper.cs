@@ -208,8 +208,8 @@
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != typeof(States)) return false;
-                return Equals((States)obj);
+                //if (obj.GetType() != typeof(States)) return false; // don't need this
+                return Equals((States)obj); // when casting to States, any non-States object will be null
             }
 
             public override int GetHashCode()
@@ -350,12 +350,15 @@
         /// specified during construction).
         /// </summary>
         /// <param name="watcher">The watcher.</param>
-        //[MethodImpl(MethodImplOptions.Synchronized)]
-        public void Register(IWatcher watcher)
+        public void Register(IWatcher watcher) // the defaultwatcher is already a full fenced so we don't need to mark the method synchronized
         {
             watchManager.DefaultWatcher = watcher;
         }
 
+        /// <summary>
+        /// The State of ZooKeeper connection
+        /// Thread safe
+        /// </summary>
         public States State
         {
             get
@@ -493,10 +496,6 @@
             h.Type = (int)OpCode.Create;
             CreateRequest request = new CreateRequest(serverPath,data,acl,createMode.Flag);
             CreateResponse response = new CreateResponse();
-            //request.Data = data;
-            //request.Flags = createMode.Flag;
-            //request.Path = serverPath;
-            //request.Acl = acl;
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
             {
@@ -535,7 +534,7 @@
             // maintain semantics even in chroot case
             // specifically - root cannot be deleted
             // I think this makes sense even in chroot case.
-            if (clientPath.Equals("/"))
+            if (clientPath.Equals(PathUtils.PathSeparator))
             {
                 // a bit of a hack, but delete(/) will never succeed and ensures
                 // that the same semantics are maintained
@@ -549,8 +548,6 @@
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.Delete;
             DeleteRequest request = new DeleteRequest(serverPath,version);
-            //request.Path = serverPath;
-            //request.Version = version;
             ReplyHeader r = cnxn.SubmitRequest(h, request, null, null);
             if (r.Err != 0)
             {
@@ -587,8 +584,6 @@
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.Exists;
             ExistsRequest request = new ExistsRequest(serverPath, watcher != null);
-            //request.Path = serverPath;
-            //request.Watch = watcher != null;
             SetDataResponse response = new SetDataResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -660,8 +655,6 @@
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetData;
             GetDataRequest request = new GetDataRequest(serverPath, watcher != null);
-            //request.Path = serverPath;
-            //request.Watch = watcher != null;
             GetDataResponse response = new GetDataResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -734,9 +727,6 @@
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.SetData;
             SetDataRequest request = new SetDataRequest(serverPath,data,version);
-            //request.Path = serverPath;
-            //request.Data = data;
-            //request.Version = version;
             SetDataResponse response = new SetDataResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
@@ -770,7 +760,6 @@
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetACL;
             GetACLRequest request = new GetACLRequest(serverPath);
-            //request.Path = serverPath;
             GetACLResponse response = new GetACLResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
@@ -814,9 +803,6 @@
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.SetACL;
             SetACLRequest request = new SetACLRequest(serverPath,acl,version);
-            //request.Path = serverPath;
-            //request.Acl = acl;
-            //request.Version = version;
             SetACLResponse response = new SetACLResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
@@ -863,8 +849,6 @@
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetChildren2;
             GetChildren2Request request = new GetChildren2Request(serverPath, watcher != null);
-            //request.Path = serverPath;
-            //request.Watch = watcher != null;
             GetChildren2Response response = new GetChildren2Response();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -920,8 +904,6 @@
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetChildren2;
             GetChildren2Request request = new GetChildren2Request(serverPath, watcher != null);
-            //request.Path = serverPath;
-            //request.Watch = watcher != null;
             GetChildren2Response response = new GetChildren2Response();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)

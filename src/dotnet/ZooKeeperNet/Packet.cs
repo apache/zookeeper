@@ -71,8 +71,8 @@ namespace ZooKeeperNet
                             request.Serialize(boa, "request");
                         }                        
                         ms.Position = 0;
-                        int len = Convert.ToInt32(ms.Length);
-                        writer.Write(len - 4);
+                        int len = Convert.ToInt32(ms.Length); // now we have the real length
+                        writer.Write(len - 4); // update the length info
                         this.data = ms.ToArray();
                     }
                 }

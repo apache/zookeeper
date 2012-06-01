@@ -445,7 +445,7 @@ namespace ZooKeeperNet.IO
 					//byte[] copy = new byte[index];
 					//Buffer.BlockCopy(ret, 0, copy, 0, index);
 					//return copy;
-                    Array.Resize(ref ret, index);
+                    Array.Resize(ref ret, index); // change to array resize...simpler way
                     return ret;
                 }
 				index += read;

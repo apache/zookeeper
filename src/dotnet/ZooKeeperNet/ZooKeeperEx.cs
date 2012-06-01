@@ -70,7 +70,7 @@ namespace ZooKeeperNet
         public static string Combine(this string parent, string child)
         {
             StringBuilder builder = new StringBuilder(parent)
-            .Append("/")
+            .Append(PathUtils.PathSeparator)
             .Append(child);
             return builder.ToString();
         }

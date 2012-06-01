@@ -30,7 +30,7 @@ using System.Collections.Generic;
 
         private readonly ClientConnection conn;
         private readonly Thread eventThread;
-
+        //ConcurrentQueue gives us the non-blocking way of processing, it reduced the contention so much
         internal readonly ConcurrentQueue<ClientConnection.WatcherSetEventPair> waitingEvents = new ConcurrentQueue<ClientConnection.WatcherSetEventPair>();
 
         /** This is really the queued session state until the event
@@ -52,7 +52,6 @@ using System.Collections.Generic;
 
         private static void ProcessWatcher(IEnumerable<IWatcher> watchers,WatchedEvent watchedEvent)
         {
-            //    // each watcher will process the event
             foreach (IWatcher watcher in watchers)
             {
                 try
@@ -70,13 +69,12 @@ using System.Collections.Generic;
         {
             try
             {
-                //while (!waitingEvents.IsCompleted)
                 SpinWait spin = new SpinWait();
                 while(Interlocked.CompareExchange(ref isDisposed, 1, 1) == 0)
                 {
                     try
                     {
-                        ClientConnection.WatcherSetEventPair pair;// = waitingEvents.Take();
+                        ClientConnection.WatcherSetEventPair pair;
                         if (waitingEvents.TryDequeue(out pair))
                             ProcessWatcher(pair.Watchers, pair.WatchedEvent);
                         else
@@ -131,17 +129,11 @@ using System.Collections.Generic;
         {
             if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
             {
-                //waitingEvents.CompleteAdding();
                 eventThread.Join();
-                while (!waitingEvents.IsEmpty)
-                {
-                    ClientConnection.WatcherSetEventPair pair;// = waitingEvents.Take();
-                    if (waitingEvents.TryDequeue(out pair))
-                    {
-                        ProcessWatcher(pair.Watchers,pair.WatchedEvent);
-                    }
-                }
-                    //waitingEvents.Dispose();
+                //process any unprocessed event
+                ClientConnection.WatcherSetEventPair pair;
+                while(waitingEvents.TryDequeue(out pair))
+                    ProcessWatcher(pair.Watchers, pair.WatchedEvent);
             }
         }
 

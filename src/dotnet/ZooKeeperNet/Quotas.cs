@@ -50,7 +50,7 @@ namespace ZooKeeperNet
         {
             StringBuilder builder = new StringBuilder(quotaZookeeper)
             .Append(path)
-            .Append("/")
+            .Append(PathUtils.PathSeparator)
             .Append(limitNode);
             return builder.ToString();
         }
@@ -65,7 +65,7 @@ namespace ZooKeeperNet
         {
             StringBuilder builder = new StringBuilder(quotaZookeeper)
             .Append(path)
-            .Append("/")
+            .Append(PathUtils.PathSeparator)
             .Append(statNode);
             return builder.ToString();
         }
