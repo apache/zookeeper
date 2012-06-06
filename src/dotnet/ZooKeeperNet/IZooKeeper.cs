@@ -119,7 +119,7 @@ namespace ZooKeeperNet
         /// <param name="acl">The acl for the node.</param>
         /// <param name="createMode">specifying whether the node to be created is ephemeral and/or sequential.</param>
         /// <returns></returns>
-        string Create(string path, byte[] data, List<ACL> acl, CreateMode createMode);
+        string Create(string path, byte[] data, IEnumerable<ACL> acl, CreateMode createMode);
 
         /// <summary>
         /// Delete the node with the given path. The call will succeed if such a node
@@ -258,7 +258,7 @@ namespace ZooKeeperNet
         /// @throws KeeperException If the server signals an error with a non-zero error code.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        List<ACL> GetACL(string path, Stat stat);
+        IEnumerable<ACL> GetACL(string path, Stat stat);
 
         /// <summary>
         /// Set the ACL for the node of the given path if such a node exists and the
@@ -279,7 +279,7 @@ namespace ZooKeeperNet
         /// @throws org.apache.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        Stat SetACL(string path, List<ACL> acl, int version);
+        Stat SetACL(string path, IEnumerable<ACL> acl, int version);
 
         /// <summary>
         /// Return the list of the children of the node of the given path.
@@ -301,9 +301,9 @@ namespace ZooKeeperNet
         /// @throws KeeperException If the server signals an error with a non-zero error code.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        List<string> GetChildren(string path, IWatcher watcher);
+        IEnumerable<string> GetChildren(string path, IWatcher watcher);
 
-        List<string> GetChildren(string path, bool watch);
+        IEnumerable<string> GetChildren(string path, bool watch);
 
         /// <summary>
         /// For the given znode path return the stat and children list.
@@ -328,7 +328,7 @@ namespace ZooKeeperNet
         /// @throws KeeperException If the server signals an error with a non-zero error code.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        List<string> GetChildren(string path, IWatcher watcher, Stat stat);
+        IEnumerable<string> GetChildren(string path, IWatcher watcher, Stat stat);
 
         /// <summary>
         /// For the given znode path return the stat and children list.
@@ -353,7 +353,7 @@ namespace ZooKeeperNet
         /// @throws KeeperException If the server signals an error with a non-zero
         ///  error code.
         /// </summary>
-        List<string> GetChildren(string path, bool watch, Stat stat);
+        IEnumerable<string> GetChildren(string path, bool watch, Stat stat);
 
         /// <summary>
         /// Close this client object. Once the client is closed, its session becomes

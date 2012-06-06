@@ -18,7 +18,8 @@
 
 package org.apache.zookeeper;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Rule;
 import org.junit.rules.MethodRule;
 import org.junit.rules.TestWatchman;
@@ -33,7 +34,7 @@ import org.junit.runners.model.FrameworkMethod;
  */
 @RunWith(JUnit4ZKTestRunner.class)
 public class ZKTestCase {
-    private static final Logger LOG = Logger.getLogger(ZKTestCase.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZKTestCase.class);
 
     private String testName;
 

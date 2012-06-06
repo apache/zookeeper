@@ -43,6 +43,13 @@ class GetSetTest(zktestbase.TestBase):
                           "/zk-python-getsettest",
                           "test",
                           stat["version"]+1)
+        stat2 = zookeeper.set2(self.handle, "/zk-python-getsettest",
+                               "set2", stat["version"])
+        self.assertNotEqual(stat2, None, "set2 call failed, return should not be None")
+        self.assertEqual(stat2["numChildren"], 0,
+                         "set2 call failed, numChildren not 0 in set2 call")
+        (data,stat) = zookeeper.get(self.handle, "/zk-python-getsettest", None)
+        self.assertEqual(data, "set2", "Data is not 'set2' as expected: " + data)
 
     def test_stat_deleted_node(self):
         """
@@ -154,6 +161,35 @@ class GetSetTest(zktestbase.TestBase):
         self.assertEqual(self.rc, zookeeper.OK, "Return code for aget_children was not OK - %s" % zookeeper.zerror(self.rc))
         self.assertEqual(len(self.children), 1, "Expected to find 1 child, got " + str(len(self.children)))
 
+
+    def test_async_getchildren_with_watcher(self):
+        self.ensureCreated("/zk-python-getchildrentest", flags=0)
+        self.ensureCreated("/zk-python-getchildrentest/child")
+
+        watched = []
+
+        def watcher(*args):
+            self.cv.acquire()
+            watched.append(args)
+            self.cv.notify()
+            self.cv.release()
+
+        def children_callback(*args):
+            self.cv.acquire()
+            self.cv.notify()
+            self.cv.release()
+
+        zookeeper.aget_children(
+            self.handle, "/zk-python-getchildrentest", watcher, children_callback)
+
+        self.cv.acquire()
+        self.cv.wait()
+        self.cv.release()
+
+        self.cv.acquire()
+        self.ensureCreated("/zk-python-getchildrentest/child2")
+        self.cv.wait(15)
+        self.assertTrue(watched)
 
 if __name__ == '__main__':
     unittest.main()

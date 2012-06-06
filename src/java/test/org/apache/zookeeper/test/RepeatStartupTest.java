@@ -18,13 +18,11 @@
 
 package org.apache.zookeeper.test;
 
-import java.net.InetSocketAddress;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
 import org.junit.Test;
@@ -54,8 +52,7 @@ public class RepeatStartupTest extends ZKTestCase {
         ZooKeeperServer zks = new ZooKeeperServer(qb.s1.getTxnFactory().getSnapDir(),
                 qb.s1.getTxnFactory().getDataDir(), 3000);
         final int PORT = Integer.parseInt(hp.split(":")[1]);
-        NIOServerCnxn.Factory factory = new NIOServerCnxn.Factory(
-                new InetSocketAddress(PORT));
+        ServerCnxnFactory factory = ServerCnxnFactory.createFactory(PORT, -1);
 
         factory.startup(zks);
         System.out.println("Comment: starting factory");

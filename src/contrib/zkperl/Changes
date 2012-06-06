@@ -59,3 +59,7 @@ Revision history
 0.35  Jul 15, 2009
         - support multiple include and library locations
 
+0.36  Mar 27, 2011
+        - Fix zookeeper version check, but only warn since we haven't been enforcing it in a while
+        - Look for zookeeper includes in some sane places by default
+

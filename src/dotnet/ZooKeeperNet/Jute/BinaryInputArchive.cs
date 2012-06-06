@@ -22,6 +22,7 @@ namespace Org.Apache.Jute
     using System;
     using System.IO;
     using System.Text;
+    using ZooKeeperNet;
 
     public class BinaryInputArchive : IInputArchive
     {
@@ -94,31 +95,31 @@ namespace Org.Apache.Jute
             return Encoding.UTF8.GetString(b);
         }
 
-        static public int maxBuffer = determineMaxBuffer();
+        //static private int maxBuffer = determineMaxBuffer();
 
 
-        private static int determineMaxBuffer()
-        {
-            string maxBufferString = Convert.ToString(4096 * 1024); // = System.getProperty("jute.maxbuffer");
-            try
-            {
-                int buffer;
-                Int32.TryParse(maxBufferString, out buffer);
-                return buffer;
-            }
-            catch (Exception e)
-            {
-                return 0xfffff;
-            }
+        //private static int determineMaxBuffer()
+        //{
+        //    string maxBufferString = Convert.ToString(ClientConnection.packetLen); 
+        //    try
+        //    {
+        //        int buffer;
+        //        Int32.TryParse(maxBufferString, out buffer);
+        //        return buffer;
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return 0xfffff;
+        //    }
 
-        }
+        //}
         public byte[] ReadBuffer(string tag)
         {
             int len = ReadInt(tag);
             if (len == -1) return null;
-            if (len < 0 || len > maxBuffer)
+            if (len < 0 || len > ClientConnection.packetLen)
             {
-                throw new IOException("Unreasonable length = " + len);
+                throw new IOException(new StringBuilder("Unreasonable length = ").Append(len).ToString());
             }
             var arr = reader.ReadBytesOrThrow(len);
             return arr;

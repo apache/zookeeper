@@ -20,7 +20,9 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,14 +35,13 @@ import org.apache.jute.Index;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.KeeperException.Code;
-import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -50,12 +51,17 @@ import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.SetACLTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class maintains the tree data structure. It doesn't have any networking
@@ -67,7 +73,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
 public class DataTree {
-    private static final Logger LOG = Logger.getLogger(DataTree.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
 
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
@@ -197,7 +203,7 @@ public class DataTree {
     /**
      * converts a list of longs to a list of acls.
      *
-     * @param longs
+     * @param longVal
      *            the list of longs
      * @return a list of ACLs that map to longs
      */
@@ -241,6 +247,15 @@ public class DataTree {
 
     public int getWatchCount() {
         return dataWatches.size() + childWatches.size();
+    }
+
+    public int getEphemeralsCount() {
+        Map<Long, HashSet<String>> map = this.getEphemeralsMap();
+        int result = 0;
+        for (HashSet<String> set : map.values()) {
+            result += set.size();
+        }
+        return result;
     }
 
     /**
@@ -369,11 +384,11 @@ public class DataTree {
         synchronized (node) {
             thisStats = new StatsTrack(new String(node.data));
         }
-        if (thisStats.getCount() < updatedStat.getCount()) {
+        if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
             LOG
-                    .warn("Quota exceeded: " + lastPrefix + " count="
-                            + updatedStat.getCount() + " limit="
-                            + thisStats.getCount());
+            .warn("Quota exceeded: " + lastPrefix + " count="
+                    + updatedStat.getCount() + " limit="
+                    + thisStats.getCount());
         }
     }
 
@@ -415,11 +430,11 @@ public class DataTree {
         synchronized (node) {
             thisStats = new StatsTrack(new String(node.data));
         }
-        if (thisStats.getBytes() < updatedStat.getBytes()) {
+        if (thisStats.getBytes() > -1 && (thisStats.getBytes() < updatedStat.getBytes())) {
             LOG
-                    .warn("Quota exceeded: " + lastPrefix + " bytes="
-                            + updatedStat.getBytes() + " limit="
-                            + thisStats.getBytes());
+            .warn("Quota exceeded: " + lastPrefix + " bytes="
+                    + updatedStat.getBytes() + " limit="
+                    + thisStats.getBytes());
         }
     }
 
@@ -436,7 +451,7 @@ public class DataTree {
      * @throws KeeperException
      */
     public String createNode(String path, byte data[], List<ACL> acl,
-            long ephemeralOwner, long zxid, long time)
+            long ephemeralOwner, int parentCVersion, long zxid, long time)
             throws KeeperException.NoNodeException,
             KeeperException.NodeExistsException {
         int lastSlash = path.lastIndexOf('/');
@@ -462,9 +477,12 @@ public class DataTree {
                     throw new KeeperException.NodeExistsException();
                 }
             }
-            int cver = parent.stat.getCversion();
-            cver++;
-            parent.stat.setCversion(cver);
+            
+            if (parentCVersion == -1) {
+                parentCVersion = parent.stat.getCversion();
+                parentCVersion++;
+            }    
+            parent.stat.setCversion(parentCVersion);
             parent.stat.setPzxid(zxid);
             Long longval = convertAcls(acl);
             DataNode child = new DataNode(parent, data, longval, stat);
@@ -495,8 +513,8 @@ public class DataTree {
             }
         }
         // also check to update the quotas for this node
-        String lastPrefix = pTrie.findMaxPrefix(path);
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+        String lastPrefix;
+        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
             // ok we have some match and need to update
             updateCount(lastPrefix, 1);
             updateBytes(lastPrefix, data == null ? 0 : data.length);
@@ -532,7 +550,6 @@ public class DataTree {
         }
         synchronized (parent) {
             parent.removeChild(childName);
-            parent.stat.setCversion(parent.stat.getCversion() + 1);
             parent.stat.setPzxid(zxid);
             long eowner = node.stat.getEphemeralOwner();
             if (eowner != 0) {
@@ -555,8 +572,8 @@ public class DataTree {
         }
 
         // also check to update the quotas for this node
-        String lastPrefix = pTrie.findMaxPrefix(path);
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+        String lastPrefix;
+        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
             // ok we have some match and need to update
             updateCount(lastPrefix, -1);
             int bytes = 0;
@@ -595,16 +612,33 @@ public class DataTree {
             n.copyStat(s);
         }
         // now update if the path is in a quota subtree.
-        String lastPrefix = pTrie.findMaxPrefix(path);
-        // do nothing for the root.
-        // we are not keeping a quota on the zookeeper
-        // root node for now.
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
-            this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
-                    - (lastdata == null ? 0 : lastdata.length));
+        String lastPrefix;
+        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
+          this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
+              - (lastdata == null ? 0 : lastdata.length));
         }
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
         return s;
+    }
+
+    /**
+     * If there is a quota set, return the appropriate prefix for that quota
+     * Else return null
+     * @param path The ZK path to check for quota
+     * @return Max quota prefix, or null if none
+     */
+    public String getMaxPrefixWithQuota(String path) {
+        // do nothing for the root.
+        // we are not keeping a quota on the zookeeper
+        // root node for now.
+        String lastPrefix = pTrie.findMaxPrefix(path);
+
+        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+            return lastPrefix;
+        }
+        else {
+            return null;
+        }
     }
 
     public byte[] getData(String path, Stat stat, Watcher watcher)
@@ -707,6 +741,8 @@ public class DataTree {
 
         public Stat stat;
 
+        public List<ProcessTxnResult> multiResult;
+        
         /**
          * Equality is defined as the clientId and the cxid being the same. This
          * allows us to use hash tables to track completion of transactions.
@@ -737,7 +773,8 @@ public class DataTree {
 
     public volatile long lastProcessedZxid = 0;
 
-    public ProcessTxnResult processTxn(TxnHeader header, Record txn) {
+    public ProcessTxnResult processTxn(TxnHeader header, Record txn)
+    {
         ProcessTxnResult rc = new ProcessTxnResult();
 
         String debug = "";
@@ -747,38 +784,41 @@ public class DataTree {
             rc.zxid = header.getZxid();
             rc.type = header.getType();
             rc.err = 0;
-            if (rc.zxid > lastProcessedZxid) {
-                lastProcessedZxid = rc.zxid;
-            }
+            rc.multiResult = null;
             switch (header.getType()) {
                 case OpCode.create:
                     CreateTxn createTxn = (CreateTxn) txn;
                     debug = "Create transaction for " + createTxn.getPath();
+                    rc.path = createTxn.getPath();
                     createNode(
                             createTxn.getPath(),
                             createTxn.getData(),
                             createTxn.getAcl(),
                             createTxn.getEphemeral() ? header.getClientId() : 0,
+                            createTxn.getParentCVersion(),
                             header.getZxid(), header.getTime());
-                    rc.path = createTxn.getPath();
                     break;
                 case OpCode.delete:
                     DeleteTxn deleteTxn = (DeleteTxn) txn;
                     debug = "Delete transaction for " + deleteTxn.getPath();
+                    rc.path = deleteTxn.getPath();
                     deleteNode(deleteTxn.getPath(), header.getZxid());
                     break;
                 case OpCode.setData:
                     SetDataTxn setDataTxn = (SetDataTxn) txn;
-                    debug = "Set data for  transaction for "
-                            + setDataTxn.getPath();
+                    debug = "Set data transaction for "
+                            + setDataTxn.getPath()
+                            + " to new value=" + Arrays.toString(setDataTxn.getData());
+                    rc.path = setDataTxn.getPath();
                     rc.stat = setData(setDataTxn.getPath(), setDataTxn
                             .getData(), setDataTxn.getVersion(), header
                             .getZxid(), header.getTime());
                     break;
                 case OpCode.setACL:
                     SetACLTxn setACLTxn = (SetACLTxn) txn;
-                    debug = "Set ACL for  transaction for "
+                    debug = "Set ACL transaction for "
                             + setACLTxn.getPath();
+                    rc.path = setACLTxn.getPath();
                     rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(),
                             setACLTxn.getVersion());
                     break;
@@ -789,13 +829,134 @@ public class DataTree {
                     ErrorTxn errTxn = (ErrorTxn) txn;
                     rc.err = errTxn.getErr();
                     break;
+                case OpCode.check:
+                    CheckVersionTxn checkTxn = (CheckVersionTxn) txn;
+                    debug = "Check Version transaction for "
+                            + checkTxn.getPath() 
+                            + " and version="
+                            + checkTxn.getVersion();
+                    rc.path = checkTxn.getPath();
+                    break;
+                case OpCode.multi:
+                    MultiTxn multiTxn = (MultiTxn) txn ;
+                    List<Txn> txns = multiTxn.getTxns();
+                    debug = "Multi transaction with " + txns.size() + " operations";
+                    rc.multiResult = new ArrayList<ProcessTxnResult>();
+                    boolean failed = false;
+                    for (Txn subtxn : txns) {
+                        if (subtxn.getType() == OpCode.error) {
+                            failed = true;
+                            break;
+                        }
+                    }
+
+                    boolean post_failed = false;
+                    for (Txn subtxn : txns) {
+                        ByteBuffer bb = ByteBuffer.wrap(subtxn.getData());
+                        Record record = null;
+                        switch (subtxn.getType()) {
+                            case OpCode.create:
+                                record = new CreateTxn();
+                                break;
+                            case OpCode.delete:
+                                record = new DeleteTxn();
+                                break;
+                            case OpCode.setData:
+                                record = new SetDataTxn();
+                                break;
+                            case OpCode.error:
+                                record = new ErrorTxn();
+                                post_failed = true;
+                                break;
+                            case OpCode.check:
+                                record = new CheckVersionTxn();
+                                break;
+                            default:
+                                throw new IOException("Invalid type of op: " + subtxn.getType());
+                        }
+                        assert(record != null);
+
+                        ByteBufferInputStream.byteBuffer2Record(bb, record);
+                       
+                        if (failed && subtxn.getType() != OpCode.error){
+                            int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() 
+                                                 : Code.OK.intValue();
+
+                            subtxn.setType(OpCode.error);
+                            record = new ErrorTxn(ec);
+                        }
+
+                        if (failed) {
+                            assert(subtxn.getType() == OpCode.error) ;
+                        }
+
+                        TxnHeader subHdr = new TxnHeader(header.getClientId(), header.getCxid(),
+                                                         header.getZxid(), header.getTime(), 
+                                                         subtxn.getType());
+                        ProcessTxnResult subRc = processTxn(subHdr, record);
+                        rc.multiResult.add(subRc);
+                        if (subRc.err != 0 && rc.err == 0) {
+                            rc.err = subRc.err ;
+                        }
+                    }
+                    break;
             }
         } catch (KeeperException e) {
-            // These are expected errors since we take a lazy snapshot
-            if (initialized
-                    || (e.code() != Code.NONODE && e.code() != Code.NODEEXISTS)) {
-                LOG.warn("Failed:" + debug, e);
+            LOG.debug("Failed: " + debug, e);
+            rc.err = e.code().intValue();
+        } catch (IOException e) {
+            LOG.debug("Failed:" + debug, e);
+        }
+        /*
+         * A snapshot might be in progress while we are modifying the data
+         * tree. If we set lastProcessedZxid prior to making corresponding
+         * change to the tree, then the zxid associated with the snapshot
+         * file will be ahead of its contents. Thus, while restoring from
+         * the snapshot, the restore method will not apply the transaction
+         * for zxid associated with the snapshot file, since the restore
+         * method assumes that transaction to be present in the snapshot.
+         *
+         * To avoid this, we first apply the transaction and then modify
+         * lastProcessedZxid.  During restore, we correctly handle the
+         * case where the snapshot contains data ahead of the zxid associated
+         * with the file.
+         */
+        if (rc.zxid > lastProcessedZxid) {
+        	lastProcessedZxid = rc.zxid;
+        }
+
+        /*
+         * Snapshots are taken lazily. It can happen that the child
+         * znodes of a parent are created after the parent
+         * is serialized. Therefore, while replaying logs during restore, a
+         * create might fail because the node was already
+         * created.
+         *
+         * After seeing this failure, we should increment
+         * the cversion of the parent znode since the parent was serialized
+         * before its children.
+         *
+         * Note, such failures on DT should be seen only during
+         * restore.
+         */
+        if (header.getType() == OpCode.create &&
+                rc.err == Code.NODEEXISTS.intValue()) {
+            LOG.debug("Adjusting parent cversion for Txn: " + header.getType() +
+                    " path:" + rc.path + " err: " + rc.err);
+            int lastSlash = rc.path.lastIndexOf('/');
+            String parentName = rc.path.substring(0, lastSlash);
+            CreateTxn cTxn = (CreateTxn)txn;
+            try {
+                setCversionPzxid(parentName, cTxn.getParentCVersion(),
+                        header.getZxid());
+            } catch (KeeperException.NoNodeException e) {
+                LOG.error("Failed to set parent cversion for: " +
+                      parentName, e);
+                rc.err = e.code().intValue();
             }
+        } else if (rc.err != Code.OK.intValue()) {
+            LOG.debug("Ignoring processTxn failure hdr: " + header.getType() +
+                  " : error: " + rc.err);
         }
         return rc;
     }
@@ -840,9 +1001,7 @@ public class DataTree {
      *
      * @param path
      *            the path to be used
-     * @param bytes
-     *            the long bytes
-     * @param count
+     * @param counts
      *            the int count
      */
     private void getCounts(String path, Counts counts) {
@@ -908,26 +1067,24 @@ public class DataTree {
                 children = childs.toArray(new String[childs.size()]);
             }
         }
-        if (children != null) {
-            if (children.length == 0) {
-                // this node does not have a child
-                // is the leaf node
-                // check if its the leaf node
-                String endString = "/" + Quotas.limitNode;
-                if (path.endsWith(endString)) {
-                    // ok this is the limit node
-                    // get the real node and update
-                    // the count and the bytes
-                    String realPath = path.substring(Quotas.quotaZookeeper
-                            .length(), path.indexOf(endString));
-                    updateQuotaForPath(realPath);
-                    this.pTrie.addPath(realPath);
-                }
-                return;
+        if (children == null || children.length == 0) {
+            // this node does not have a child
+            // is the leaf node
+            // check if its the leaf node
+            String endString = "/" + Quotas.limitNode;
+            if (path.endsWith(endString)) {
+                // ok this is the limit node
+                // get the real node and update
+                // the count and the bytes
+                String realPath = path.substring(Quotas.quotaZookeeper
+                        .length(), path.indexOf(endString));
+                updateQuotaForPath(realPath);
+                this.pTrie.addPath(realPath);
             }
-            for (String child : children) {
-                traverseNode(path + "/" + child);
-            }
+            return;
+        }
+        for (String child : children) {
+            traverseNode(path + "/" + child);
         }
     }
 
@@ -1179,6 +1336,42 @@ public class DataTree {
                 watcher.process(e);
             } else {
                 this.childWatches.addWatch(path, watcher);
+            }
+        }
+    }
+
+     /**
+      * This method sets the Cversion and Pzxid for the specified node to the
+      * values passed as arguments. The values are modified only if newCversion
+      * is greater than the current Cversion. A NoNodeException is thrown if
+      * a znode for the specified path is not found.
+      *
+      * @param path
+      *     Full path to the znode whose Cversion needs to be modified.
+      *     A "/" at the end of the path is ignored.
+      * @param newCversion
+      *     Value to be assigned to Cversion
+      * @param zxid
+      *     Value to be assigned to Pzxid
+      * @throws KeeperException.NoNodeException
+      *     If znode not found.
+      **/
+    public void setCversionPzxid(String path, int newCversion, long zxid)
+        throws KeeperException.NoNodeException {
+        if (path.endsWith("/")) {
+           path = path.substring(0, path.length() - 1);
+        }
+        DataNode node = nodes.get(path);
+        if (node == null) {
+            throw new KeeperException.NoNodeException(path);
+        }
+        synchronized (node) {
+            if(newCversion == -1) {
+                newCversion = node.stat.getCversion() + 1;
+            }
+            if (newCversion > node.stat.getCversion()) {
+                node.stat.setCversion(newCversion);
+                node.stat.setPzxid(zxid);
             }
         }
     }

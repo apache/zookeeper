@@ -22,6 +22,9 @@ use Config;
 use ExtUtils::MakeMaker;
 use Getopt::Long;
 
+my $ZOO_MAJOR_VERSION = 3;
+my $ZOO_REQUIRED_VERSION = qr{^$ZOO_MAJOR_VERSION\.\d+.\d+$}ismx;
+
 my @zk_inc_paths;
 my @zk_lib_paths;
 
@@ -39,8 +42,7 @@ $zk_lib_paths .= ' ' unless ($zk_lib_paths eq '');
 my $cc = $Config{'cc'};
 my $check_file = 'build/check_zk_version';
 
-my $check_out =
-    qx($cc -c $zk_inc_paths -I. -c $check_file.c -o $check_file.o 2>&1);
+my $check_out = qx($cc $zk_inc_paths $zk_lib_paths -I. -o $check_file $check_file.c 2>&1);
 
 if ($?) {
     if ($check_out =~ /zookeeper_version\.h/) {
@@ -50,6 +52,15 @@ if ($?) {
         ## keep in sync with build/check_zk_version.h
         die("Net::ZooKeeper requires at least ZooKeeper version 3.1.1\n");
     }
+}
+
+chomp(my $zk_ver = qx($check_file));
+
+if ($? >> 8 != 0) {
+  die "Couldn't check zookeeper version: $zk_ver: $r";
+}
+elsif ($zk_ver !~ $ZOO_REQUIRED_VERSION) {
+  warn "Net::ZooKeeper requires ZooKeeper 3.x, found $zk_ver!";
 }
 
 WriteMakefile(

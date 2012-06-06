@@ -83,11 +83,8 @@ public class Observer extends Learner{
                     e1.printStackTrace();
                 }
     
-                synchronized (pendingRevalidations) {
-                    // clear pending revalidations
-                    pendingRevalidations.clear();
-                    pendingRevalidations.notifyAll();
-                }
+                // clear pending revalidations
+                pendingRevalidations.clear();
             }
         } finally {
             zk.unregisterJMX(this);
@@ -111,8 +108,7 @@ public class Observer extends Learner{
             LOG.warn("Ignoring commit");            
             break;            
         case Leader.UPTODATE:
-            zk.takeSnapshot();
-            self.cnxnFactory.setZooKeeperServer(zk);
+            LOG.error("Received an UPTODATE message after Observer started");
             break;
         case Leader.REVALIDATE:
             revalidate(qp);
@@ -122,9 +118,7 @@ public class Observer extends Learner{
             break;
         case Leader.INFORM:            
             TxnHeader hdr = new TxnHeader();
-            BinaryInputArchive ia = BinaryInputArchive
-                    .getArchive(new ByteArrayInputStream(qp.getData()));
-            Record txn = SerializeUtils.deserializeTxn(ia, hdr);
+            Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             Request request = new Request (null, hdr.getClientId(), 
                                            hdr.getCxid(),
                                            hdr.getType(), null, null);

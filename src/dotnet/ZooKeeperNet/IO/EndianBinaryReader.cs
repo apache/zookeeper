@@ -43,7 +43,7 @@ namespace ZooKeeperNet.IO
 		/// <summary>
 		/// Buffer used for temporary storage before conversion into primitives
 		/// </summary>
-		byte[] buffer = new byte[16];
+		byte[] byteBuffer = new byte[16];
 		/// <summary>
 		/// Buffer used for temporary storage when reading a single character
 		/// </summary>
@@ -159,8 +159,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The byte read</returns>
 		public byte ReadByte()
 		{
-			ReadInternal(buffer, 1);
-			return buffer[0];
+			ReadInternal(byteBuffer, 1);
+			return byteBuffer[0];
 		}
 
 		/// <summary>
@@ -169,8 +169,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The byte read</returns>
 		public sbyte ReadSByte()
 		{
-			ReadInternal(buffer, 1);
-			return unchecked((sbyte)buffer[0]);
+			ReadInternal(byteBuffer, 1);
+			return unchecked((sbyte)byteBuffer[0]);
 		}
 
 		/// <summary>
@@ -179,8 +179,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The boolean read</returns>
 		public bool ReadBoolean()
 		{
-			ReadInternal(buffer, 1);
-			return bitConverter.ToBoolean(buffer, 0);
+			ReadInternal(byteBuffer, 1);
+			return bitConverter.ToBoolean(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -190,8 +190,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The 16-bit integer read</returns>
 		public short ReadInt16()
 		{
-			ReadInternal(buffer, 2);
-			return bitConverter.ToInt16(buffer, 0);
+			ReadInternal(byteBuffer, 2);
+			return bitConverter.ToInt16(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -201,8 +201,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The 32-bit integer read</returns>
 		public int ReadInt32()
 		{
-			ReadInternal(buffer, 4);
-			return bitConverter.ToInt32(buffer, 0);
+			ReadInternal(byteBuffer, 4);
+			return bitConverter.ToInt32(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -212,8 +212,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The 64-bit integer read</returns>
 		public long ReadInt64()
 		{
-			ReadInternal(buffer, 8);
-			return bitConverter.ToInt64(buffer, 0);
+			ReadInternal(byteBuffer, 8);
+			return bitConverter.ToInt64(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -223,8 +223,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The 16-bit unsigned integer read</returns>
 		public ushort ReadUInt16()
 		{
-			ReadInternal(buffer, 2);
-			return bitConverter.ToUInt16(buffer, 0);
+			ReadInternal(byteBuffer, 2);
+			return bitConverter.ToUInt16(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -234,8 +234,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The 32-bit unsigned integer read</returns>
 		public uint ReadUInt32()
 		{
-			ReadInternal(buffer, 4);
-			return bitConverter.ToUInt32(buffer, 0);
+			ReadInternal(byteBuffer, 4);
+			return bitConverter.ToUInt32(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -245,8 +245,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The 64-bit unsigned integer read</returns>
 		public ulong ReadUInt64()
 		{
-			ReadInternal(buffer, 8);
-			return bitConverter.ToUInt64(buffer, 0);
+			ReadInternal(byteBuffer, 8);
+			return bitConverter.ToUInt64(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -256,8 +256,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The floating point value read</returns>
 		public float ReadSingle()
 		{
-			ReadInternal(buffer, 4);
-			return bitConverter.ToSingle(buffer, 0);
+			ReadInternal(byteBuffer, 4);
+			return bitConverter.ToSingle(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -267,8 +267,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The floating point value read</returns>
 		public double ReadDouble()
 		{
-			ReadInternal(buffer, 8);
-			return bitConverter.ToDouble(buffer, 0);
+			ReadInternal(byteBuffer, 8);
+			return bitConverter.ToDouble(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -278,8 +278,8 @@ namespace ZooKeeperNet.IO
 		/// <returns>The decimal value read</returns>
 		public decimal ReadDecimal()
 		{
-			ReadInternal(buffer, 16);
-			return bitConverter.ToDecimal(buffer, 0);
+			ReadInternal(byteBuffer, 16);
+			return bitConverter.ToDecimal(byteBuffer, 0);
 		}
 
 		/// <summary>
@@ -314,7 +314,7 @@ namespace ZooKeeperNet.IO
 		public int Read(char[] data, int index, int count)
 		{
 			CheckDisposed();
-			if (buffer==null)
+            if (data == null)
 			{
 				throw new ArgumentNullException("buffer");
 			}
@@ -337,11 +337,11 @@ namespace ZooKeeperNet.IO
 
 			// Use the normal buffer if we're only reading a small amount, otherwise
 			// use at most 4K at a time.
-			byte[] byteBuffer = buffer;
+			byte[] buffer = byteBuffer;
 
-			if (byteBuffer.Length < count*minBytesPerChar)
+            if (buffer.Length < count * minBytesPerChar)
 			{
-				byteBuffer = new byte[4096];
+                buffer = new byte[4096];
 			}
 
 			while (read < count)
@@ -359,16 +359,16 @@ namespace ZooKeeperNet.IO
 				{
 					amountToRead = ((count-read-1)*minBytesPerChar)+1;
 				}
-				if (amountToRead > byteBuffer.Length)
+                if (amountToRead > buffer.Length)
 				{
-					amountToRead = byteBuffer.Length;
+                    amountToRead = buffer.Length;
 				}
-				int bytesRead = TryReadInternal(byteBuffer, amountToRead);
+                int bytesRead = TryReadInternal(buffer, amountToRead);
 				if (bytesRead==0)
 				{
 					return read;
 				}
-				int decoded = decoder.GetChars(byteBuffer, 0, bytesRead, data, index);
+                int decoded = decoder.GetChars(buffer, 0, bytesRead, data, index);
 				read += decoded;
 				index += decoded;
 			}
@@ -442,10 +442,12 @@ namespace ZooKeeperNet.IO
 				// Stream has finished half way through. That's fine, return what we've got.
 				if (read==0)
 				{
-					byte[] copy = new byte[index];
-					Buffer.BlockCopy(ret, 0, copy, 0, index);
-					return copy;
-				}
+					//byte[] copy = new byte[index];
+					//Buffer.BlockCopy(ret, 0, copy, 0, index);
+					//return copy;
+                    Array.Resize(ref ret, index); // change to array resize...simpler way
+                    return ret;
+                }
 				index += read;
 			}
 			return ret;
@@ -569,8 +571,7 @@ namespace ZooKeeperNet.IO
 				if (read==0)
 				{
 					throw new EndOfStreamException
-						(String.Format("End of stream reached with {0} byte{1} left to read.", size-index,
-						size-index==1 ? "s" : ""));
+                        (new StringBuilder("End of stream reached with ").Append(size - index).Append("byte(s) left to read.").ToString());
 				}
 				index += read;
 			}
@@ -602,17 +603,29 @@ namespace ZooKeeperNet.IO
 		#endregion
 
 		#region IDisposable Members
+        private void InternalDispose()
+        {
+            if (!disposed)
+            {
+                disposed = true;
+                stream.Dispose();
+            }
+
+        }
 		/// <summary>
 		/// Disposes of the underlying stream.
 		/// </summary>
 		public void Dispose()
 		{
-			if (!disposed)
-			{
-				disposed = true;
-				((IDisposable)stream).Dispose();
-			}
-		}
+            InternalDispose();
+            GC.SuppressFinalize(this);
+        }
+
+        ~EndianBinaryReader()
+        {
+            InternalDispose();
+        }
+
 		#endregion
 	}
 }

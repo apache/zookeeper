@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -32,30 +32,41 @@ fi
 
 if [ "x$JMXDISABLE" = "x" ]
 then
-    echo "JMX enabled by default"
+    echo "JMX enabled by default" >&2
     # for some reason these two options are necessary on jdk6 on Ubuntu
     #   accord to the docs they are not necessary, but otw jconsole cannot
     #   do a local attach
     ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=$JMXLOCALONLY org.apache.zookeeper.server.quorum.QuorumPeerMain"
 else
-    echo "JMX disabled by user request"
+    echo "JMX disabled by user request" >&2
     ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
 fi
 
-# Only follow symlinks if readlink supports it
-if readlink -f "$0" > /dev/null 2>&1
-then
-  ZOOBIN=`readlink -f "$0"`
-else
-  ZOOBIN="$0"
-fi
-ZOOBINDIR=`dirname "$ZOOBIN"`
+# use POSTIX interface, symlink is followed automatically
+ZOOBIN="${BASH_SOURCE-$0}"
+ZOOBIN=`dirname ${ZOOBIN}`
+ZOOBINDIR=`cd ${ZOOBIN}; pwd`
 
-. "$ZOOBINDIR"/zkEnv.sh
+if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
+  . "$ZOOBINDIR"/../libexec/zkEnv.sh
+else
+  . "$ZOOBINDIR"/zkEnv.sh
+fi
+
+if [ "x$SERVER_JVMFLAGS" ]
+then
+    JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
+fi
 
 if [ "x$2" != "x" ]
 then
     ZOOCFG="$ZOOCFGDIR/$2"
+fi
+
+# if we give a more complicated path to the config, don't screw around in $ZOOCFGDIR
+if [ "x`dirname $ZOOCFG`" != "x$ZOOCFGDIR" ]
+then
+    ZOOCFG="$2"
 fi
 
 if $cygwin
@@ -67,35 +78,70 @@ else
     KILL=kill
 fi
 
-echo "Using config: $ZOOCFG"
+echo "Using config: $ZOOCFG" >&2
 
-ZOOPIDFILE=$(grep dataDir "$ZOOCFG" | sed -e 's/.*=//')/zookeeper_server.pid
+if [ -z $ZOOPIDFILE ]; then
+    ZOO_DATADIR=$(grep "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')
+    if [ ! -d "$ZOO_DATADIR" ]; then
+        mkdir -p "$ZOO_DATADIR"
+    fi
+    ZOOPIDFILE="$ZOO_DATADIR/zookeeper_server.pid"
+else
+    # ensure it exists, otw stop will fail
+    mkdir -p $(dirname "$ZOOPIDFILE")
+fi
 
+_ZOO_DAEMON_OUT="$ZOO_LOG_DIR/zookeeper.out"
 
 case $1 in
 start)
-    echo  "Starting zookeeper ... "
-    java  "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" &
-    echo -n $! > "$ZOOPIDFILE"
-    echo STARTED
+    echo  -n "Starting zookeeper ... "
+    if [ -f $ZOOPIDFILE ]; then
+      if kill -0 `cat $ZOOPIDFILE` > /dev/null 2>&1; then
+         echo $command already running as process `cat $ZOOPIDFILE`. 
+         exit 0
+      fi
+    fi
+    nohup $JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
+    if [ $? -eq 0 ]
+    then
+      if /bin/echo -n $! > "$ZOOPIDFILE"
+      then
+        sleep 1
+        echo STARTED
+      else
+        echo FAILED TO WRITE PID
+        exit 1
+      fi
+    else
+      echo SERVER DID NOT START
+      exit 1
+    fi
+    ;;
+start-foreground)
+    $JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG"
+    ;;
+print-cmd)
+    echo "$JAVA -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_DAEMON_OUT\" 2>&1 < /dev/null"
     ;;
 stop)
-    echo "Stopping zookeeper ... "
+    echo -n "Stopping zookeeper ... "
     if [ ! -f "$ZOOPIDFILE" ]
     then
-    echo "error: could not find file $ZOOPIDFILE"
-    exit 1
+      echo "no zookeeper to stop (could not find file $ZOOPIDFILE)"
     else
-    $KILL -9 $(cat "$ZOOPIDFILE")
-    rm "$ZOOPIDFILE"
-    echo STOPPED
+      $KILL -9 $(cat "$ZOOPIDFILE")
+      rm "$ZOOPIDFILE"
+      echo STOPPED
     fi
+    exit 0
     ;;
 upgrade)
     shift
     echo "upgrading the servers to 3.*"
-    java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+    $JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.server.upgrade.UpgradeMain ${@}
     echo "Upgrading ... "
     ;;
@@ -106,15 +152,21 @@ restart)
     "$0" start ${@}
     ;;
 status)
-    STAT=`echo stat | nc localhost $(grep clientPort "$ZOOCFG" | sed -e 's/.*=//') 2> /dev/null| grep Mode`
+    # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
+    STAT=`$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+             -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain localhost \
+             $(grep "^[[:space:]]*clientPort" "$ZOOCFG" | sed -e 's/.*=//') srvr 2> /dev/null    \
+          | grep Mode`
     if [ "x$STAT" = "x" ]
     then
         echo "Error contacting service. It is probably not running."
+        exit 1
     else
         echo $STAT
+        exit 0
     fi
     ;;
 *)
-    echo "Usage: $0 {start|stop|restart|status}" >&2
+    echo "Usage: $0 {start|start-foreground|stop|restart|status|upgrade|print-cmd}" >&2
 
 esac

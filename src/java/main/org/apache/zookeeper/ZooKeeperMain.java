@@ -33,19 +33,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import java.util.StringTokenizer;
 
 /**
  * The command line client to ZooKeeper.
  *
  */
 public class ZooKeeperMain {
-    private static final Logger LOG = Logger.getLogger(ZooKeeperMain.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
     protected static final Map<String,String> commandMap = new HashMap<String,String>( );
 
     protected MyCommandOptions cl = new MyCommandOptions();
@@ -65,6 +67,7 @@ public class ZooKeeperMain {
         commandMap.put("close","");
         commandMap.put("create", "[-s] [-e] path data acl");
         commandMap.put("delete","path [version]");
+        commandMap.put("rmr","path");
         commandMap.put("set","path data [version]");
         commandMap.put("get","path [watch]");
         commandMap.put("ls","path [watch]");
@@ -145,7 +148,7 @@ public class ZooKeeperMain {
      * A storage class for both command line options and shell commands.
      *
      */
-    static private class MyCommandOptions {
+    static class MyCommandOptions {
 
         private Map<String,String> options = new HashMap<String,String>();
         private List<String> cmdArgs = null;
@@ -193,6 +196,8 @@ public class ZooKeeperMain {
                         options.put("server", it.next());
                     } else if (opt.equals("-timeout")) {
                         options.put("timeout", it.next());
+                    } else if (opt.equals("-r")) {
+                        options.put("readonly", "true");
                     }
                 } catch (NoSuchElementException e){
                     System.err.println("Error: no argument found for option "
@@ -219,7 +224,13 @@ public class ZooKeeperMain {
          * @return true if parsing succeeded.
          */
         public boolean parseCommand( String cmdstring ) {
-            String[] args = cmdstring.split(" ");
+            StringTokenizer cmdTokens = new StringTokenizer(cmdstring, " ");          
+            String[] args = new String[cmdTokens.countTokens()];
+            int tokenIndex = 0;
+            while (cmdTokens.hasMoreTokens()) {
+                args[tokenIndex] = cmdTokens.nextToken();
+                tokenIndex++;
+            }
             if (args.length == 0){
                 return false;
             }
@@ -258,9 +269,10 @@ public class ZooKeeperMain {
             zk.close();
         }
         host = newHost;
+        boolean readOnly = cl.getOption("readonly") != null;
         zk = new ZooKeeper(host,
                  Integer.parseInt(cl.getOption("timeout")),
-                 new MyWatcher());
+                 new MyWatcher(), readOnly);
     }
     
     public static void main(String args[])
@@ -590,6 +602,8 @@ public class ZooKeeperMain {
             System.err.println("Node already exists: " + e.getPath());
         } catch (KeeperException.NotEmptyException e) {
             System.err.println("Node not empty: " + e.getPath());
+        } catch (KeeperException.NotReadOnlyException e) {
+            System.err.println("Not a read-only call: " + e.getPath());
         }
         return false;
     }
@@ -652,7 +666,7 @@ public class ZooKeeperMain {
         } 
         
         // Below commands all need a live connection
-        if (zk == null || !zk.state.isAlive()) {
+        if (zk == null || !zk.getState().isAlive()) {
             System.out.println("Not connected");
             return false;
         }
@@ -681,6 +695,9 @@ public class ZooKeeperMain {
         } else if (cmd.equals("delete") && args.length >= 2) {
             path = args[1];
             zk.delete(path, watch ? Integer.parseInt(args[2]) : -1);
+        } else if (cmd.equals("rmr") && args.length >= 2) {
+            path = args[1];
+            ZKUtil.deleteRecursive(zk, path);
         } else if (cmd.equals("set") && args.length >= 3) {
             path = args[1];
             stat = zk.setData(path, args[2].getBytes(),
@@ -719,6 +736,9 @@ public class ZooKeeperMain {
         } else if (cmd.equals("stat") && args.length >= 2) {
             path = args[1];
             stat = zk.exists(path, watch);
+            if (stat == null) {
+              throw new KeeperException.NoNodeException(path);	
+            }
             printStat(stat);
         } else if (cmd.equals("listquota") && args.length >= 2) {
             path = args[1];
@@ -778,6 +798,9 @@ public class ZooKeeperMain {
             }
         } else if (cmd.equals("close")) {
                 zk.close();            
+        } else if (cmd.equals("sync") && args.length >= 2) {
+            path = args[1];
+            zk.sync(path, new AsyncCallback.VoidCallback() { public void processResult(int rc, String path, Object ctx) { System.out.println("Sync returned " + rc); } }, null );
         } else if (cmd.equals("addauth") && args.length >=2 ) {
             byte[] b = null;
             if (args.length >= 3)

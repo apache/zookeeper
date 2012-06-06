@@ -22,7 +22,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
@@ -31,7 +32,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ClientHammerTest extends ClientBase {
-    protected static final Logger LOG = Logger.getLogger(ClientHammerTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(ClientHammerTest.class);
 
     private static final long HAMMERTHREAD_LATENCY = 5;
 

@@ -11,7 +11,7 @@
     {
         private readonly string dir;
         private readonly byte[] data = new[] { (byte)12, (byte)34 };
-        private readonly Func<object> lockOperation;
+        private readonly Func<bool> lockOperation;
 
         private string id;
         private ZNodeName idName;
@@ -70,17 +70,17 @@
             {
                 Zookeeper.Delete(id, -1);
             }
-            catch (ThreadInterruptedException e)
+            catch (ThreadInterruptedException)
             {
                 Thread.CurrentThread.Interrupt();
             }
-            catch (KeeperException.NoNodeException e)
+            catch (KeeperException.NoNodeException)
             {
                 //do nothing
             }
             catch (KeeperException e)
             {
-                LOG.Warn("Caught: " + e, e);
+                LOG.WarnFormat("Caught: {0} {1}",e, e.StackTrace);
                 throw;
             }
             finally
@@ -90,7 +90,7 @@
             }
         }
 
-        private object LockOperation()
+        private bool LockOperation()
         {
             do
             {
@@ -104,11 +104,10 @@
                 
                 if (id == null) continue;
 
-                List<string> names = Zookeeper.GetChildren(dir, false);
+                var names = Zookeeper.GetChildren(dir, false);
                 if (names.IsEmpty())
                 {
-                    LOG.Warn("No children in: " + dir + " when we've just " +
-                             "created one! Lets recreate it...");
+                    LOG.WarnFormat("No children in: {0} when we've just created one! Lets recreate it...",dir);
                     // lets force the recreation of the id
                     id = null;
                 }
@@ -128,7 +127,7 @@
                         lastChildId = lastChildName.Name;
                         if (LOG.IsDebugEnabled)
                         {
-                            LOG.Debug("watching less than me node: " + lastChildId);
+                            LOG.DebugFormat("watching less than me node: {0}", lastChildId);
                         }
                         Stat stat = Zookeeper.Exists(lastChildId, new LockWatcher(this));
                         if (stat != null)
@@ -136,7 +135,7 @@
                             return false;
                         }
                             
-                        LOG.Warn("Could not find the stats for less than me: " + lastChildName.Name);
+                        LOG.WarnFormat("Could not find the stats for less than me: {0}", lastChildName.Name);
                     }
                     else
                     {
@@ -153,7 +152,7 @@
 
         private void FindPrefixInChildren(String prefix, ZooKeeper zookeeper, String dir)
         {
-            List<String> names = Zookeeper.GetChildren(dir, false);
+            var names = Zookeeper.GetChildren(dir, false);
             foreach (string name in names)
             {
                 if (name.StartsWith(prefix))
@@ -161,7 +160,7 @@
                     id = name;
                     if (LOG.IsDebugEnabled)
                     {
-                        LOG.Debug("Found id created last time: " + id);
+                        LOG.DebugFormat("Found id created last time: {0}",id);
                     }
                     break;
                 }
@@ -172,7 +171,7 @@
 
                 if (LOG.IsDebugEnabled)
                 {
-                    LOG.Debug("Created id: " + id);
+                    LOG.DebugFormat("Created id: {0}",id);
                 }
             }
 
@@ -187,7 +186,7 @@
             }
             EnsurePathExists(dir);
 
-            return (bool)RetryOperation(lockOperation);
+            return RetryOperation<bool>(lockOperation);
         }
 
         public IDisposable UseLock()
@@ -207,14 +206,14 @@
             public void Process(WatchedEvent @event)
             {
                 if (LOG.IsDebugEnabled)
-                    LOG.Debug(string.Format("Watcher fired on path: {0} state: {1} type {2}", @event.Path, @event.State, @event.Type));
+                    LOG.DebugFormat("Watcher fired on path: {0} state: {1} type {2}", @event.Path, @event.State, @event.EventType);
                 try
                 {
                     writeLock.Lock();
                 }
                 catch (Exception e)
                 {
-                    LOG.Warn("Failed to acquire lock: " + e, e);
+                    LOG.WarnFormat("Failed to acquire lock: {0} {1}", e, e.StackTrace);
                 }
             }
         }

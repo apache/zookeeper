@@ -20,6 +20,7 @@ namespace ZooKeeperNet.Tests
     using System;
     using NUnit.Framework;
     using Org.Apache.Zookeeper.Data;
+    using System.Threading;
 
     [TestFixture]
     public class StatTests : AbstractZooKeeperTests
@@ -189,6 +190,37 @@ namespace ZooKeeperNet.Tests
             Assert.AreEqual(0, stat.EphemeralOwner);
             Assert.AreEqual(name.Length * 2, stat.DataLength);
             Assert.AreEqual(0, stat.NumChildren);
+        }
+
+        [Test]
+        public void testDeleteAllNodeExceptPraweda()
+        {
+            DeleteChild(zk, "/");
+        }
+
+        private void DeleteChild(ZooKeeper zk, string path)
+        {
+            if (!string.IsNullOrEmpty(path) && !path.Contains("praweda") && !path.Contains("zookeeper"))
+            {
+                var lstChild = zk.GetChildren(path, false);
+                foreach (var child in lstChild)
+                {
+                    if (path != "/")
+                        DeleteChild(zk, path + "/" + child);
+                    else
+                        DeleteChild(zk, "/" + child);
+                }
+                if (path != "/")
+                {
+                    try
+                    {
+                        zk.Delete(path, -1);
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
         }
     }
 }

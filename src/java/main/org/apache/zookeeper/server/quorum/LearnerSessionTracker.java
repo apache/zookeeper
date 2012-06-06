@@ -89,4 +89,8 @@ public class LearnerSessionTracker implements SessionTracker {
     	// dup what we had before
     	pwriter.println(toString());
     }
+
+    public void setSessionClosing(long sessionId) {
+        // Nothing to do here.
+    }
 }

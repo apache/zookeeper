@@ -26,21 +26,21 @@ package org.apache.jute.compiler.generated;
 import org.apache.jute.compiler.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+@SuppressWarnings("unused")
 public class Rcc {
-    private static Hashtable recTab = new Hashtable();
+    private static Hashtable<String, JRecord> recTab = new Hashtable<String, JRecord>();
     private static String curDir = System.getProperty("user.dir");
     private static String curFileName;
     private static String curModuleName;
 
     public static void main(String args[]) {
         String language = "java";
-        ArrayList recFiles = new ArrayList();
+        ArrayList<String> recFiles = new ArrayList<String>();
         JFile curFile=null;
         
         for (int i=0; i<args.length; i++) {
@@ -52,7 +52,7 @@ public class Rcc {
                 recFiles.add(args[i]);
             }
         }
-        if (!"c++".equals(language) && !"java".equals(language) && !"c".equals(language) && !"csharp".equals(language)) {
+        if (!"c++".equals(language) && !"java".equals(language) && !"c".equals(language)) {
             System.out.println("Cannot recognize language:" + language);
             System.exit(1);
         }
@@ -61,18 +61,18 @@ public class Rcc {
             System.exit(1);
         }
         for (int i=0; i<recFiles.size(); i++) {
-            curFileName = (String) recFiles.get(i);
+            curFileName = recFiles.get(i);
             File file = new File(curFileName);
             try {
                 curFile = parseFile(file);
             } catch (FileNotFoundException e) {
-                System.out.println("File " + (String) recFiles.get(i) + " Not found.");
+                System.out.println("File " + recFiles.get(i) + " Not found.");
                 System.exit(1);
             } catch (ParseException e) {
                 System.out.println(e.toString());
                 System.exit(1);
             }
-            System.out.println((String) recFiles.get(i) + " Parsed Successfully");
+            System.out.println(recFiles.get(i) + " Parsed Successfully");
             try {
                 curFile.genCode(language, new File("."));
             } catch (IOException e) {
@@ -88,7 +88,7 @@ public class Rcc {
         FileReader reader = new FileReader(file);
         try {
             Rcc parser = new Rcc(reader);
-            recTab = new Hashtable();
+            recTab = new Hashtable<String, JRecord>();
             return parser.Input();
         } finally {
             try {
@@ -167,10 +167,10 @@ TOKEN :
 
 JFile Input() :
 {
-    ArrayList ilist = new ArrayList();
-    ArrayList rlist = new ArrayList();
+    ArrayList<JFile> ilist = new ArrayList<JFile>();
+    ArrayList<JRecord> rlist = new ArrayList<JRecord>();
     JFile i;
-    ArrayList l;
+    ArrayList <JRecord>l;
 }
 {
     (
@@ -224,10 +224,10 @@ JFile Include() :
     }
 }
 
-ArrayList Module() :
+ArrayList<JRecord> Module() :
 {
     String mName;
-    ArrayList rlist;
+    ArrayList<JRecord> rlist;
 }
 {
     <MODULE_TKN>
@@ -255,9 +255,9 @@ String ModuleName() :
     { return name; }
 }
 
-ArrayList RecordList() :
+ArrayList<JRecord> RecordList() :
 {
-    ArrayList rlist = new ArrayList();
+    ArrayList<JRecord> rlist = new ArrayList<JRecord>();
     JRecord r;
 }
 {
@@ -271,7 +271,7 @@ ArrayList RecordList() :
 JRecord Record() :
 {
     String rname;
-    ArrayList flist = new ArrayList();
+    ArrayList<JField> flist = new ArrayList<JField>();
     Token t;
     JField f;
 }
@@ -337,7 +337,7 @@ JType Type() :
         if (rname.indexOf('.', 0) < 0) {
             rname = curModuleName + "." + rname;
         }
-        JRecord r = (JRecord) recTab.get(rname);
+        JRecord r = recTab.get(rname);
         if (r == null) {
             System.out.println("Type " + rname + " not known. Exiting.");
             System.exit(1);

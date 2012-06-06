@@ -18,61 +18,134 @@
 
 package org.apache.zookeeper.server.jersey;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URISyntaxException;
+import java.net.URL;
 
-import com.sun.grizzly.http.SelectorThread;
-import com.sun.jersey.api.container.grizzly.GrizzlyWebContainerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.server.jersey.cfg.Credentials;
+import org.apache.zookeeper.server.jersey.cfg.Endpoint;
+import org.apache.zookeeper.server.jersey.cfg.RestCfg;
+import org.apache.zookeeper.server.jersey.filters.HTTPBasicAuth;
+
+import com.sun.grizzly.SSLConfig;
+import com.sun.grizzly.http.embed.GrizzlyWebServer;
+import com.sun.grizzly.http.servlet.ServletAdapter;
+import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 /**
  * Demonstration of how to run the REST service using Grizzly
  */
 public class RestMain {
-    private String baseUri;
 
-    public RestMain(String baseUri) {
-        this.baseUri = baseUri;
-    }
+   private static Logger LOG = LoggerFactory.getLogger(RestMain.class);
 
-    public SelectorThread execute() throws IOException {
-        final Map<String, String> initParams = new HashMap<String, String>();
+   private GrizzlyWebServer gws;
+   private RestCfg cfg;
 
-        initParams.put("com.sun.jersey.config.property.packages",
-                       "org.apache.zookeeper.server.jersey.resources");
+   public RestMain(RestCfg cfg) {
+       this.cfg = cfg;
+   }
 
-        System.out.println("Starting grizzly...");
-        SelectorThread threadSelector =
-            GrizzlyWebContainerFactory.create(baseUri, initParams);
+   public void start() throws IOException {
+       System.out.println("Starting grizzly ...");
 
-        return threadSelector;
-    }
+       boolean useSSL = cfg.useSSL();
+       gws = new GrizzlyWebServer(cfg.getPort(), "/tmp/23cxv45345/2131xc2/", useSSL);
+       // BUG: Grizzly needs a doc root if you are going to register multiple adapters
 
-    /**
-     * The entry point for starting the server
-     *
-     * @param args requires 2 arguments; the base uri of the service (e.g.
-     *        http://localhost:9998/) and the zookeeper host:port string
-     */
-    public static void main(String[] args) throws Exception {
-        final String baseUri = args[0];
-        final String zkHostPort = args[1];
+       for (Endpoint e : cfg.getEndpoints()) {
+           ZooKeeperService.mapContext(e.getContext(), e);
+           gws.addGrizzlyAdapter(createJerseyAdapter(e), new String[] { e
+                   .getContext() });
+       }
+       
+       if (useSSL) {
+           System.out.println("Starting SSL ...");
+           String jks = cfg.getJKS("keys/rest.jks");
+           String jksPassword = cfg.getJKSPassword();
 
-        ZooKeeperService.mapUriBase(baseUri, zkHostPort);
+           SSLConfig sslConfig = new SSLConfig();
+           URL resource = getClass().getClassLoader().getResource(jks);
+           if (resource == null) {
+               LOG.error("Unable to find the keystore file: " + jks);
+               System.exit(2);
+           }
+           try {
+               sslConfig.setKeyStoreFile(new File(resource.toURI())
+                       .getAbsolutePath());
+           } catch (URISyntaxException e1) {
+               LOG.error("Unable to load keystore: " + jks, e1);
+               System.exit(2);
+           }
+           sslConfig.setKeyStorePass(jksPassword);
+           gws.setSSLConfig(sslConfig);
+       }
 
-        RestMain main = new RestMain(baseUri);
-        SelectorThread sel = main.execute();
+       gws.start();
+   }
 
-        System.out.println(String.format(
-                "Jersey app started with WADL available at %sapplication.wadl\n” +"
-                + "Try out %szookeeper\nHit enter to stop it...",
-                baseUri, baseUri));
+   public void stop() {
+       gws.stop();
+       ZooKeeperService.closeAll();
+   }
 
-        System.in.read();
-        sel.stopEndpoint();
+   private ServletAdapter createJerseyAdapter(Endpoint e) {
+       ServletAdapter jersey = new ServletAdapter();
 
-        ZooKeeperService.close(baseUri);
-        System.exit(0);
-    }
+       jersey.setServletInstance(new ServletContainer());
+       jersey.addInitParameter("com.sun.jersey.config.property.packages",
+               "org.apache.zookeeper.server.jersey.resources");
+       jersey.setContextPath(e.getContext());
+
+       Credentials c = Credentials.join(e.getCredentials(), cfg
+               .getCredentials());
+       if (!c.isEmpty()) {
+           jersey.addFilter(new HTTPBasicAuth(c), e.getContext()
+                   + "-basic-auth", null);
+       }
+
+       return jersey;
+   }
+
+   /**
+    * The entry point for starting the server
+    * 
+    */
+   public static void main(String[] args) throws Exception {
+       RestCfg cfg = new RestCfg("rest.properties");
+
+       final RestMain main = new RestMain(cfg);
+       main.start();
+
+       Runtime.getRuntime().addShutdownHook(new Thread() {
+           @Override
+           public void run() {
+               main.stop();
+               System.out.println("Got exit request. Bye.");
+           }
+       });
+
+       printEndpoints(cfg);
+       System.out.println("Server started.");
+   }
+
+   private static void printEndpoints(RestCfg cfg) {
+       int port = cfg.getPort();
+
+       for (Endpoint e : cfg.getEndpoints()) {
+
+           String context = e.getContext();
+           if (context.charAt(context.length() - 1) != '/') {
+               context += "/";
+           }
+
+           System.out.println(String.format(
+                   "Started %s - WADL: http://localhost:%d%sapplication.wadl",
+                   context, port, context));
+       }
+   }
 
 }

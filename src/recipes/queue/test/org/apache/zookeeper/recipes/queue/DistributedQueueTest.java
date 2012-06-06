@@ -17,25 +17,27 @@
  */
 package org.apache.zookeeper.recipes.queue;
 
-import java.util.Calendar;
 import java.util.NoSuchElementException;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.recipes.queue.DistributedQueue;
 import org.apache.zookeeper.test.ClientBase;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
 
 
 
 public class DistributedQueueTest extends ClientBase {
-    @Override
-    protected void tearDown() throws Exception {
+
+    @After
+    public void tearDown() throws Exception {
         super.tearDown();
-        LOG.info("FINISHED " + getName());
+        LOG.info("FINISHED " + getTestName());
     }
 
 
-
+    @Test
     public void testOffer1() throws Exception {
         String dir = "/testOffer1";
         String testString = "Hello World";
@@ -50,9 +52,10 @@ public class DistributedQueueTest extends ClientBase {
         queueHandles[0].offer(testString.getBytes());
 
         byte dequeuedBytes[] = queueHandles[0].remove();
-        assertEquals(new String(dequeuedBytes), testString);
+        Assert.assertEquals(new String(dequeuedBytes), testString);
     }
 
+    @Test
     public void testOffer2() throws Exception {
         String dir = "/testOffer2";
         String testString = "Hello World";
@@ -67,9 +70,10 @@ public class DistributedQueueTest extends ClientBase {
         queueHandles[0].offer(testString.getBytes());
 
         byte dequeuedBytes[] = queueHandles[1].remove();
-        assertEquals(new String(dequeuedBytes), testString);
+        Assert.assertEquals(new String(dequeuedBytes), testString);
     }
 
+    @Test
     public void testTake1() throws Exception {
         String dir = "/testTake1";
         String testString = "Hello World";
@@ -84,11 +88,12 @@ public class DistributedQueueTest extends ClientBase {
         queueHandles[0].offer(testString.getBytes());
 
         byte dequeuedBytes[] = queueHandles[0].take();
-        assertEquals(new String(dequeuedBytes), testString);
+        Assert.assertEquals(new String(dequeuedBytes), testString);
     }
 
 
 
+    @Test
     public void testRemove1() throws Exception{
         String dir = "/testRemove1";
         String testString = "Hello World";
@@ -105,7 +110,7 @@ public class DistributedQueueTest extends ClientBase {
         }catch(NoSuchElementException e){
             return;
         }
-        assertTrue(false);
+        Assert.assertTrue(false);
     }
 
     public void createNremoveMtest(String dir,int n,int m) throws Exception{
@@ -127,12 +132,14 @@ public class DistributedQueueTest extends ClientBase {
         for(int i=0; i<m; i++){
             data=queueHandles[1].remove();
         }
-        assertEquals(new String(data), testString+(m-1));
+        Assert.assertEquals(new String(data), testString+(m-1));
     }
 
+    @Test
     public void testRemove2() throws Exception{
         createNremoveMtest("/testRemove2",10,2);
     }
+    @Test
     public void testRemove3() throws Exception{
         createNremoveMtest("/testRemove3",1000,1000);
     }
@@ -156,25 +163,30 @@ public class DistributedQueueTest extends ClientBase {
         for(int i=0; i<m; i++){
             data=queueHandles[1].remove();
         }
-        assertEquals(new String(queueHandles[1].element()), testString+m);
+        Assert.assertEquals(new String(queueHandles[1].element()), testString+m);
     }
 
+    @Test
     public void testElement1() throws Exception {
         createNremoveMelementTest("/testElement1",1,0);
     }
 
+    @Test
     public void testElement2() throws Exception {
         createNremoveMelementTest("/testElement2",10,2);
     }
 
+    @Test
     public void testElement3() throws Exception {
         createNremoveMelementTest("/testElement3",1000,500);
     }
 
+    @Test
     public void testElement4() throws Exception {
         createNremoveMelementTest("/testElement4",1000,1000-1);
     }
 
+    @Test
     public void testTakeWait1() throws Exception{
         String dir = "/testTakeWait1";
         final String testString = "Hello World";
@@ -217,10 +229,11 @@ public class DistributedQueueTest extends ClientBase {
 
         takeThread.join();
 
-        assertTrue(takeResult[0] != null);
-        assertEquals(new String(takeResult[0]), testString);
+        Assert.assertTrue(takeResult[0] != null);
+        Assert.assertEquals(new String(takeResult[0]), testString);
     }
 
+    @Test
     public void testTakeWait2() throws Exception{
         String dir = "/testTakeWait2";
         final String testString = "Hello World";
@@ -265,8 +278,8 @@ public class DistributedQueueTest extends ClientBase {
 
             takeThread.join();
 
-            assertTrue(takeResult[0] != null);
-            assertEquals(new String(takeResult[0]), threadTestString);
+            Assert.assertTrue(takeResult[0] != null);
+            Assert.assertEquals(new String(takeResult[0]), threadTestString);
         }
     }
 }

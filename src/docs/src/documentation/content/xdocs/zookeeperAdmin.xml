@@ -152,8 +152,8 @@
             from:
           </para>
           <para>
-            <ulink url="http://hadoop.apache.org/zookeeper/releases.html">
-              http://hadoop.apache.org/zookeeper/releases.html
+            <ulink url="http://zookeeper.apache.org/releases.html">
+              http://zookeeper.apache.org/releases.html
             </ulink>
           </para>
         </listitem>
@@ -164,7 +164,7 @@
 
           <programlisting>
 tickTime=2000
-dataDir=/var/zookeeper/
+dataDir=/var/lib/zookeeper/
 clientPort=2181
 initLimit=5
 syncLimit=2
@@ -198,7 +198,7 @@ server.3=zoo3:2888:3888</programlisting>
           <para>If your configuration file is set up, you can start a
           ZooKeeper server:</para>
 
-          <para><computeroutput>$ java -cp zookeeper.jar:lib/log4j-1.2.15.jar:conf \
+          <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf \
               org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
           </computeroutput></para>
           
@@ -224,7 +224,7 @@ server.3=zoo3:2888:3888</programlisting>
               <para>In Java, you can run the following command to execute
               simple operations:</para>
 
-              <para><computeroutput>$ java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar:conf:src/java/lib/jline-0.9.94.jar \
+              <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf:src/java/lib/jline-0.9.94.jar \
       org.apache.zookeeper.ZooKeeperMain -server 127.0.0.1:2181</computeroutput></para>
             </listitem>
 
@@ -460,10 +460,11 @@ server.3=zoo3:2888:3888</programlisting>
         </para>
 
         <para>A ZooKeeper server <emphasis role="bold">will not remove
-          old snapshots and log files</emphasis>, this is the
-          responsibility of the operator. Every serving environment is
-          different and therefore the requirements of managing these
-          files may differ from install to install (backup for example).
+        old snapshots and log files</emphasis> when using the default
+        configuration (see autopurge below), this is the
+        responsibility of the operator. Every serving environment is
+        different and therefore the requirements of managing these
+        files may differ from install to install (backup for example).
         </para>
 
         <para>The PurgeTxnLog utility implements a simple retention
@@ -480,8 +481,15 @@ server.3=zoo3:2888:3888</programlisting>
         can be run as a cron job on the ZooKeeper server machines to
         clean up the logs daily.</para>
 
-        <programlisting> java -cp zookeeper.jar:log4j.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</programlisting>
+        <programlisting> java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</programlisting>
 
+        <para>Automatic purging of the snapshots and corresponding
+        transaction logs was introduced in version 3.4.0 and can be
+        enabled via the following configuration parameters <emphasis
+        role="bold">autopurge.snapRetainCount</emphasis> and <emphasis
+        role="bold">autopurge.purgeInterval</emphasis>. For more on
+        this, see <xref linkend="sc_advancedConfiguration"/>
+        below.</para>
       </section>
 
       <section>
@@ -731,13 +739,13 @@ server.3=zoo3:2888:3888</programlisting>
               level) that a single client, identified by IP address, may make
               to a single member of the ZooKeeper ensemble. This is used to 
               prevent certain classes of DoS attacks, including file 
-              descriptor exhaustion. The default is 10. Setting this to 0 
+              descriptor exhaustion. The default is 60. Setting this to 0
               entirely removes the limit on concurrent connections.</para>
             </listitem>
            </varlistentry>
 
            <varlistentry>
-             <term>clientPortBindAddress</term>
+             <term>clientPortAddress</term>
 
              <listitem>
                <para><emphasis role="bold">New in 3.3.0:</emphasis> the
@@ -774,6 +782,50 @@ server.3=zoo3:2888:3888</programlisting>
               the <emphasis role="bold">tickTime</emphasis>.</para>
             </listitem>
            </varlistentry>
+           
+           <varlistentry>
+             <term>fsync.warningthresholdms</term>
+             <listitem>
+               <para>(Java system property: <emphasis
+               role="bold">fsync.warningthresholdms</emphasis>)</para>
+
+               <para><emphasis role="bold">New in 3.3.4:</emphasis> A
+               warning message will be output to the log whenever an
+               fsync in the Transactional Log (WAL) takes longer than
+               this value. The values is specified in milliseconds and
+               defaults to 1000. This value can only be set as a
+               system property.</para>
+             </listitem>
+           </varlistentry>
+
+          <varlistentry>
+            <term>autopurge.snapRetainCount</term>
+
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para><emphasis role="bold">New in 3.4.0:</emphasis> 
+              When enabled, ZooKeeper auto purge feature retains
+              the <emphasis role="bold">autopurge.snapRetainCount</emphasis> most
+              recent snapshots and the corresponding transaction logs in the 
+              <emphasis role="bold">dataDir</emphasis> and <emphasis 
+              role="bold">dataLogDir</emphasis> respectively and deletes the rest.
+              Defaults to 3. Minimum value is 3.</para>
+            </listitem>
+          </varlistentry>
+          
+          <varlistentry>
+            <term>autopurge.purgeInterval</term>
+
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para><emphasis role="bold">New in 3.4.0:</emphasis> The
+              time interval in hours for which the purge task has to
+              be triggered. Set to a positive integer (1 and above)
+              to enable the auto purging. Defaults to 0.</para>
+            </listitem>
+          </varlistentry>
         </variablelist>
       </section>
 
@@ -798,13 +850,10 @@ server.3=zoo3:2888:3888</programlisting>
               fast leader election. Currently, algorithm 3 is the default</para>
               
               <note>
-              <para> The implementations of leader election
-              1 and 2 are currently not supported, and we have the intention
-              of deprecating them in the near future. Implementations 0 and 3 are 
-              currently supported, and we plan to keep supporting them in the near future. 
-              To avoid having to support multiple versions of leader election unecessarily, 
-              we may eventually consider deprecating algorithm 0 as well, but we will plan
-              according to the needs of the community. 
+              <para> The implementations of leader election 0, 1, and 2 are now 
+              <emphasis role="bold"> deprecated </emphasis>. We have the intention
+              of removing them in the next release, at which point only the 
+              FastLeaderElection will be available. 
               </para>
               </note>
             </listitem>
@@ -919,6 +968,23 @@ server.3=zoo3:2888:3888</programlisting>
               </para>
             </listitem>
           </varlistentry>
+          
+          <varlistentry>
+            <term>cnxTimeout</term>
+
+            <listitem>
+              <para>(Java system property: zookeeper.<emphasis
+              role="bold">cnxTimeout</emphasis>)</para>
+
+              <para>Sets the timeout value for opening connections for leader election notifications. 
+              Only applicable if you are using electionAlg 3. 
+              </para>
+
+              <note>
+                <para>Default value is 5 seconds.</para>
+              </note>
+            </listitem>
+          </varlistentry>
         </variablelist>
         <para></para>
       </section>
@@ -961,6 +1027,35 @@ server.3=zoo3:2888:3888</programlisting>
               connection.</para>
             </listitem>
           </varlistentry>
+        </variablelist>
+      </section>
+
+      <section>
+        <title>Experimental Options/Features</title>
+
+        <para>New features that are currently considered experimental.</para>
+
+        <variablelist>
+          <varlistentry>
+            <term>Read Only Mode Server</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">readonlymode.enabled</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.4.0:</emphasis>
+              Setting this value to true enables Read Only Mode server
+              support (disabled by default). ROM allows clients
+              sessions which requested ROM support to connect to the
+              server even when the server might be partitioned from
+              the quorum. In this mode ROM clients can still read
+              values from the ZK service, but will be unable to write
+              values and see changes from other clients. See
+              ZOOKEEPER-784 for more details.
+              </para>
+            </listitem>
+          </varlistentry>
+
         </variablelist>
       </section>
 
@@ -1016,6 +1111,43 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
         </variablelist>
       </section>
+
+      <section>
+        <title>Communication using the Netty framework</title>
+
+        <para><emphasis role="bold">New in
+            3.4:</emphasis> <ulink url="http://jboss.org/netty">Netty</ulink>
+            is an NIO based client/server communication framework, it
+            simplifies (over NIO being used directly) many of the
+            complexities of network level communication for java
+            applications. Additionally the Netty framework has built
+            in support for encryption (SSL) and authentication
+            (certificates). These are optional features and can be
+            turned on or off individually.
+        </para>
+        <para>Prior to version 3.4 ZooKeeper has always used NIO
+            directly, however in versions 3.4 and later Netty is
+            supported as an option to NIO (replaces). NIO continues to
+            be the default, however Netty based communication can be
+            used in place of NIO by setting the environment variable
+            "zookeeper.serverCnxnFactory" to
+            "org.apache.zookeeper.server.NettyServerCnxnFactory". You
+            have the option of setting this on either the client(s) or
+            server(s), typically you would want to set this on both,
+            however that is at your discretion.
+        </para>
+        <para>
+          TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
+        </para>
+        <para>
+          TBD - how to manage encryption
+        </para>
+        <para>
+          TBD - how to manage certificates
+        </para>
+
+      </section>
+
     </section>
 
     <section id="sc_zkCommands">
@@ -1153,6 +1285,45 @@ server.3=zoo3:2888:3888</programlisting>
             sessions. Note, depending on the number of watches this
             operation may be expensive (ie impact server performance),
             use it carefully.</para>
+          </listitem>
+        </varlistentry>
+
+
+        <varlistentry>
+          <term>mntr</term>
+
+          <listitem>
+            <para><emphasis role="bold">New in 3.4.0:</emphasis> Outputs a list 
+            of variables that could be used for monitoring the health of the cluster.</para>
+
+            <programlisting>$ echo mntr | nc localhost 2185
+
+zk_version  3.4.0
+zk_avg_latency  0
+zk_max_latency  0
+zk_min_latency  0
+zk_packets_received 70
+zk_packets_sent 69
+zk_outstanding_requests 0
+zk_server_state leader
+zk_znode_count   4
+zk_watch_count  0
+zk_ephemerals_count 0
+zk_approximate_data_size    27
+zk_followers    4                   - only exposed by the Leader
+zk_synced_followers 4               - only exposed by the Leader
+zk_pending_syncs    0               - only exposed by the Leader
+zk_open_file_descriptor_count 23    - only available on Unix platforms
+zk_max_file_descriptor_count 1024   - only available on Unix platforms
+</programlisting>
+
+          <para>The output is compatible with java properties format and the content 
+        may change over time (new keys added). Your scripts should expect changes.</para>
+
+          <para>ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader. </para>
+
+          <para>The output contains multiple lines with the following format:</para>
+          <programlisting>key \t value</programlisting>
           </listitem>
         </varlistentry>
       </variablelist>

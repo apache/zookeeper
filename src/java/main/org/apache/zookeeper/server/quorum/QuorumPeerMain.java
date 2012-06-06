@@ -22,10 +22,12 @@ import java.io.IOException;
 
 import javax.management.JMException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
+import org.apache.zookeeper.server.DatadirCleanupManager;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -59,7 +61,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  *
  */
 public class QuorumPeerMain {
-    private static final Logger LOG = Logger.getLogger(QuorumPeerMain.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerMain.class);
 
     private static final String USAGE = "Usage: QuorumPeerMain configfile";
 
@@ -75,16 +77,16 @@ public class QuorumPeerMain {
         try {
             main.initializeAndRun(args);
         } catch (IllegalArgumentException e) {
-            LOG.fatal("Invalid arguments, exiting abnormally", e);
+            LOG.error("Invalid arguments, exiting abnormally", e);
             LOG.info(USAGE);
             System.err.println(USAGE);
             System.exit(2);
         } catch (ConfigException e) {
-            LOG.fatal("Invalid config, exiting abnormally", e);
+            LOG.error("Invalid config, exiting abnormally", e);
             System.err.println("Invalid config, exiting abnormally");
             System.exit(2);
         } catch (Exception e) {
-            LOG.fatal("Unexpected exception, exiting abnormally", e);
+            LOG.error("Unexpected exception, exiting abnormally", e);
             System.exit(1);
         }
         LOG.info("Exiting normally");
@@ -98,6 +100,12 @@ public class QuorumPeerMain {
         if (args.length == 1) {
             config.parse(args[0]);
         }
+
+        // Start and schedule the the purge task
+        DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config
+                .getDataDir(), config.getDataLogDir(), config
+                .getSnapRetainCount(), config.getPurgeInterval());
+        purgeMgr.start();
 
         if (args.length == 1 && config.servers.size() > 0) {
             runFromConfig(config);
@@ -118,9 +126,9 @@ public class QuorumPeerMain {
   
       LOG.info("Starting quorum peer");
       try {
-          NIOServerCnxn.Factory cnxnFactory =
-              new NIOServerCnxn.Factory(config.getClientPortAddress(),
-                      config.getMaxClientCnxns());
+          ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
+          cnxnFactory.configure(config.getClientPortAddress(),
+                                config.getMaxClientCnxns());
   
           quorumPeer = new QuorumPeer();
           quorumPeer.setClientPortAddress(config.getClientPortAddress());
@@ -138,7 +146,7 @@ public class QuorumPeerMain {
           quorumPeer.setQuorumVerifier(config.getQuorumVerifier());
           quorumPeer.setCnxnFactory(cnxnFactory);
           quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
-          quorumPeer.setPeerType(config.getPeerType());
+          quorumPeer.setLearnerType(config.getPeerType());
   
           quorumPeer.start();
           quorumPeer.join();

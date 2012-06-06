@@ -148,7 +148,7 @@ public class JRecord extends JCompType {
                 String struct_name = JVector.extractVectorName(jvType);
                 if (vectorStructs.get(struct_name) == null) {
                     vectorStructs.put(struct_name, struct_name);
-                    h.write("struct " + struct_name + " {\n    int32_t count;\n" + jv.getElementType().genCDecl("*data") + ";\n};\n");
+                    h.write("struct " + struct_name + " {\n    int32_t count;\n" + jv.getElementType().genCDecl("*data") + "\n};\n");
                     h.write("int serialize_" + struct_name + "(struct oarchive *out, const char *tag, struct " + struct_name + " *v);\n");
                     h.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v);\n");
                     h.write("int allocate_" + struct_name + "(struct " + struct_name + " *v, int32_t len);\n");
@@ -183,7 +183,7 @@ public class JRecord extends JCompType {
                     c.write("    for(i=0;i<v->count;i++) {\n");
                     genSerialize(c, jvType, "data", "data[i]");
                     c.write("    }\n");
-                    c.write("    rc = rc ? : out->end_vector(out, tag);\n");
+                    c.write("    rc = rc ? rc : out->end_vector(out, tag);\n");
                     c.write("    return rc;\n");
                     c.write("}\n");
                     c.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v)\n");
@@ -218,7 +218,7 @@ public class JRecord extends JCompType {
         for(JField f : mFields) {
             genSerialize(c, f.getType(), f.getTag(), f.getName());
         }
-        c.write("    rc = rc ? : out->end_record(out, tag);\n");
+        c.write("    rc = rc ? rc : out->end_record(out, tag);\n");
         c.write("    return rc;\n");
         c.write("}\n");
         c.write("int deserialize_" + rec_name + "(struct iarchive *in, const char *tag, struct " + rec_name + "*v)");
@@ -228,7 +228,7 @@ public class JRecord extends JCompType {
         for(JField f : mFields) {
             genDeserialize(c, f.getType(), f.getTag(), f.getName());
         }
-        c.write("    rc = rc ? : in->end_record(in, tag);\n");
+        c.write("    rc = rc ? rc : in->end_record(in, tag);\n");
         c.write("    return rc;\n");
         c.write("}\n");
         c.write("void deallocate_" + rec_name + "(struct " + rec_name + "*v)");
@@ -248,21 +248,21 @@ public class JRecord extends JCompType {
 
     private void genSerialize(FileWriter c, JType type, String tag, String name) throws IOException {
         if (type instanceof JRecord) {
-            c.write("    rc = rc ? : serialize_" + extractStructName(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : serialize_" + extractStructName(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
         } else if (type instanceof JVector) {
-            c.write("    rc = rc ? : serialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : serialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(out, \"" + tag + "\", &v->" + name + ");\n");
         } else {
-            c.write("    rc = rc ? : out->serialize_" + extractMethodSuffix(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : out->serialize_" + extractMethodSuffix(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
         }
     }
 
     private void genDeserialize(FileWriter c, JType type, String tag, String name) throws IOException {
         if (type instanceof JRecord) {
-            c.write("    rc = rc ? : deserialize_" + extractStructName(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : deserialize_" + extractStructName(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
         } else if (type instanceof JVector) {
-            c.write("    rc = rc ? : deserialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : deserialize_" + JVector.extractVectorName(((JVector)type).getElementType()) + "(in, \"" + tag + "\", &v->" + name + ");\n");
         } else {
-            c.write("    rc = rc ? : in->deserialize_" + extractMethodSuffix(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : in->deserialize_" + extractMethodSuffix(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
         }
     }
 
@@ -349,7 +349,7 @@ public class JRecord extends JCompType {
 
         cc.write("bool "+getCppFQName()+"::validate() const {\n");
         cc.write("  if (bs_.size() != bs_.count()) return false;\n");
-        for (Iterator i = mFields.iterator(); i.hasNext(); fIdx++) {
+        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = (JField) i.next();
             JType type = jf.getType();
             if (type instanceof JRecord) {
@@ -425,7 +425,6 @@ public class JRecord extends JCompType {
         jj.write("*/\n");
         jj.write("\n");
         jj.write("package "+getJavaPackage()+";\n\n");
-        jj.write("import java.util.*;\n");
         jj.write("import org.apache.jute.*;\n");
         jj.write("public class "+getName()+" implements Record {\n");
         for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
@@ -599,7 +598,9 @@ public class JRecord extends JCompType {
         cs.write("*/\n");
         cs.write("\n");
         cs.write("using System;\n");
+        cs.write("using System.Linq;\n");
         cs.write("using Org.Apache.Jute;\n");
+        cs.write("using log4net;\n");
         cs.write("\n");        
         cs.write("namespace "+getCsharpNameSpace()+"\n");
         cs.write("{\n");
@@ -607,6 +608,7 @@ public class JRecord extends JCompType {
         String className = getCsharpName();
         cs.write("public class "+className+" : IRecord, IComparable \n");
         cs.write("{\n");
+        cs.write("private static ILog log = LogManager.GetLogger(typeof(" + className + "));\n");
         cs.write("  public "+ className +"() {\n");
         cs.write("  }\n");
 
@@ -654,37 +656,38 @@ public class JRecord extends JCompType {
         cs.write("  public override String ToString() {\n");
         cs.write("    try {\n");
         cs.write("      System.IO.MemoryStream ms = new System.IO.MemoryStream();\n");
-        cs.write("      ZooKeeperNet.IO.EndianBinaryWriter writer =\n");
+        cs.write("      using(ZooKeeperNet.IO.EndianBinaryWriter writer =\n");
         cs.write("        new ZooKeeperNet.IO.EndianBinaryWriter(ZooKeeperNet.IO.EndianBitConverter.Big, ms, " +
-            "System.Text.Encoding.UTF8);\n");
+            "System.Text.Encoding.UTF8)){\n");
         cs.write("      BinaryOutputArchive a_ = \n");
         cs.write("        new BinaryOutputArchive(writer);\n");
-        cs.write("      a_.StartRecord(this,\"\");\n");
+        cs.write("      a_.StartRecord(this,string.Empty);\n");
         fIdx = 0;
         for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = i.next();
             cs.write(jf.genCsharpWriteMethodName());
         }
-        cs.write("      a_.EndRecord(this,\"\");\n");
+        cs.write("      a_.EndRecord(this,string.Empty);\n");
         cs.write("      ms.Position = 0;\n");
         cs.write("      return System.Text.Encoding.UTF8.GetString(ms.ToArray());\n");
+        cs.write("    }");
         cs.write("    } catch (Exception ex) {\n");
-        cs.write("      Console.WriteLine(ex.StackTrace);\n");
+        cs.write("      log.Error(ex);\n");
         cs.write("    }\n");
         cs.write("    return \"ERROR\";\n");
         cs.write("  }\n");
 
         cs.write("  public void Write(ZooKeeperNet.IO.EndianBinaryWriter writer) {\n");
         cs.write("    BinaryOutputArchive archive = new BinaryOutputArchive(writer);\n");
-        cs.write("    Serialize(archive, \"\");\n");
+        cs.write("    Serialize(archive, string.Empty);\n");
         cs.write("  }\n");
 
         cs.write("  public void ReadFields(ZooKeeperNet.IO.EndianBinaryReader reader) {\n");
         cs.write("    BinaryInputArchive archive = new BinaryInputArchive(reader);\n");
-        cs.write("    Deserialize(archive, \"\");\n");
+        cs.write("    Deserialize(archive, string.Empty);\n");
         cs.write("  }\n");
 
-        cs.write("  public int CompareTo (object peer_) {\n");
+        cs.write("  public int CompareTo (object obj) {\n");
         boolean unimplemented = false;
         for (JField f : mFields) {
             if ((f.getType() instanceof JMap)
@@ -697,10 +700,10 @@ public class JRecord extends JCompType {
             cs.write("    throw new InvalidOperationException(\"comparing "
                     + getCsharpName() + " is unimplemented\");\n");
         } else {
-            cs.write("    if (!(peer_ is "+getCsharpName()+")) {\n");
+            cs.write("    "+getCsharpName()+" peer = ("+getCsharpName()+") obj;\n");
+            cs.write("    if (peer == null) {\n");
             cs.write("      throw new InvalidOperationException(\"Comparing different types of records.\");\n");
             cs.write("    }\n");
-            cs.write("    "+getCsharpName()+" peer = ("+getCsharpName()+") peer_;\n");
             cs.write("    int ret = 0;\n");
             for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
                 JField jf = i.next();
@@ -711,15 +714,15 @@ public class JRecord extends JCompType {
         }
         cs.write("  }\n");
 
-        cs.write("  public override bool Equals(object peer_) {\n");
-        cs.write("    if (!(peer_ is "+getCsharpName()+")) {\n");
+        cs.write("  public override bool Equals(object obj) {\n");
+        cs.write(" " + getCsharpName() + " peer = (" + getCsharpName() + ") obj;\n");
+        cs.write("    if (peer == null) {\n");
         cs.write("      return false;\n");
         cs.write("    }\n");
-        cs.write("    if (peer_ == this) {\n");
+        cs.write("    if (Object.ReferenceEquals(peer,this)) {\n");
         cs.write("      return true;\n");
         cs.write("    }\n");
         cs.write("    bool ret = false;\n");
-        cs.write("    " + getCsharpName() + " peer = (" + getCsharpName() + ")peer_;\n");
         for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = i.next();
             cs.write(jf.genCsharpEquals());
@@ -730,7 +733,8 @@ public class JRecord extends JCompType {
 
         cs.write("  public override int GetHashCode() {\n");
         cs.write("    int result = 17;\n");
-        cs.write("    int ret;\n");
+        cs.write("    int ret = GetType().GetHashCode();\n");
+	   cs.write("    result = 37*result + ret;\n");
         for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = i.next();
             cs.write(jf.genCsharpHashCode());

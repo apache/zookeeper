@@ -18,12 +18,21 @@
 
 package org.apache.zookeeper;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("serial")
 public abstract class KeeperException extends Exception {
+    /**
+     * All multi-requests that result in an exception retain the results
+     * here so that it is possible to examine the problems in the catch
+     * scope.  Non-multi requests will get a null if they try to access
+     * these results.
+     */
+    private List<OpResult> results;
 
     /**
      * All non-specific keeper exceptions should be constructed via
@@ -120,6 +129,8 @@ public abstract class KeeperException extends Exception {
                 return new InvalidCallbackException();
             case SESSIONMOVED:
                 return new SessionMovedException();
+            case NOTREADONLY:
+                return new NotReadOnlyException();
             	
             case OK:
             default:
@@ -332,7 +343,9 @@ public abstract class KeeperException extends Exception {
         /** Client authentication failed */
         AUTHFAILED (AuthFailed),
         /** Session moved to another server, so operation is ignored */
-        SESSIONMOVED (-118);
+        SESSIONMOVED (-118),
+        /** State-changing request is passed to read-only server */
+        NOTREADONLY (-119);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
@@ -407,6 +420,8 @@ public abstract class KeeperException extends Exception {
                 return "Invalid callback";
             case SESSIONMOVED:
                 return "Session moved";
+            case NOTREADONLY:
+                return "Not a read-only call";
             default:
                 return "Unknown error " + code;
         }
@@ -457,6 +472,22 @@ public abstract class KeeperException extends Exception {
             return "KeeperErrorCode = " + getCodeMessage(code);
         }
         return "KeeperErrorCode = " + getCodeMessage(code) + " for " + path;
+    }
+
+    void setMultiResults(List<OpResult> results) {
+        this.results = results;
+    }
+
+    /**
+     * If this exception was thrown by a multi-request then the (partial) results
+     * and error codes can be retrieved using this getter.
+     * @return A copy of the list of results from the operations in the multi-request.
+     * 
+     * @since 3.4.0
+     *
+     */
+    public List<OpResult> getResults() {
+        return results != null ? new ArrayList<OpResult>(results) : null;
     }
 
     /**
@@ -639,6 +670,15 @@ public abstract class KeeperException extends Exception {
     public static class SessionMovedException extends KeeperException {
         public SessionMovedException() {
             super(Code.SESSIONMOVED);
+        }
+    }
+
+    /**
+     * @see Code#NOTREADONLY
+     */
+    public static class NotReadOnlyException extends KeeperException {
+        public NotReadOnlyException() {
+            super(Code.NOTREADONLY);
         }
     }
 

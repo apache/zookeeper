@@ -21,14 +21,15 @@ package org.apache.zookeeper.server.quorum;
 import java.io.Flushable;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 
 public class SendAckRequestProcessor implements RequestProcessor, Flushable {
-    private static final Logger LOG = Logger.getLogger(SendAckRequestProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SendAckRequestProcessor.class);
     
     Learner learner;
 

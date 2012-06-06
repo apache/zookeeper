@@ -22,7 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * a class that implements prefix matching for 
@@ -43,7 +44,7 @@ public class PathTrie {
     /**
      * the logger for this class
      */
-    private static final Logger LOG = Logger.getLogger(PathTrie.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PathTrie.class);
     
     /**
      * the root node of PathTrie
@@ -233,7 +234,7 @@ public class PathTrie {
                 return;
             }
             parent = parent.getChild(part);
-            LOG.info(parent);
+            LOG.info("{}",parent);
         }
         TrieNode realParent  = parent.getParent();
         realParent.deleteChild(part);

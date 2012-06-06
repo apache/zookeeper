@@ -22,31 +22,68 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 
 public class Vote {
+    
     public Vote(long id, long zxid) {
         this.id = id;
         this.zxid = zxid;
+        this.electionEpoch = -1;
+        this.peerEpoch = -1;
+        this.state = ServerState.LOOKING;
+    }
+    
+    public Vote(long id, long zxid, long peerEpoch) {
+        this.id = id;
+        this.zxid = zxid;
+        this.electionEpoch = -1;
+        this.peerEpoch = peerEpoch;
+        this.state = ServerState.LOOKING;
     }
 
-    public Vote(long id, long zxid, long epoch) {
+    public Vote(long id, long zxid, long electionEpoch, long peerEpoch) {
         this.id = id;
         this.zxid = zxid;
-        this.epoch = epoch;
+        this.electionEpoch = electionEpoch;
+        this.peerEpoch = peerEpoch;
+        this.state = ServerState.LOOKING;
     }
     
-    public Vote(long id, long zxid, long epoch, ServerState state) {
+    public Vote(long id, long zxid, long electionEpoch, long peerEpoch, ServerState state) {
         this.id = id;
         this.zxid = zxid;
-        this.epoch = epoch;
+        this.electionEpoch = electionEpoch;
         this.state = state;
+        this.peerEpoch = peerEpoch;
     }
     
-    public long id;
+    final private long id;
     
-    public long zxid;
+    final private long zxid;
     
-    public long epoch = -1;
+    final private long electionEpoch;
     
-    public ServerState state = ServerState.LOOKING;
+    final private long peerEpoch;
+    
+    public long getId() {
+        return id;
+    }
+
+    public long getZxid() {
+        return zxid;
+    }
+
+    public long getElectionEpoch() {
+        return electionEpoch;
+    }
+
+    public long getPeerEpoch() {
+        return peerEpoch;
+    }
+
+    public ServerState getState() {
+        return state;
+    }
+
+    final private ServerState state;
     
     @Override
     public boolean equals(Object o) {
@@ -54,7 +91,7 @@ public class Vote {
             return false;
         }
         Vote other = (Vote) o;
-        return (id == other.id && zxid == other.zxid && epoch == other.epoch);
+        return (id == other.id && zxid == other.zxid && electionEpoch == other.electionEpoch && peerEpoch == other.peerEpoch);
 
     }
 
@@ -64,6 +101,6 @@ public class Vote {
     }
 
     public String toString() {
-        return "(" + id + ", " + Long.toHexString(zxid) + ")";
+        return "(" + id + ", " + Long.toHexString(zxid) + ", " + Long.toHexString(peerEpoch) + ")";
     }
 }

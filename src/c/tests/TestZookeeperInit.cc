@@ -106,7 +106,7 @@ public:
         CPPUNIT_ASSERT(zh->hostname!=0);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_HOST,string(zh->hostname));
-        CPPUNIT_ASSERT(zh->state == 0);
+        CPPUNIT_ASSERT(zh->state == NOTCONNECTED_STATE_DEF);
         CPPUNIT_ASSERT(zh->context == (void*)1);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_RECV_TIMEOUT,zh->recv_timeout);
         CPPUNIT_ASSERT(zh->watcher == watcher);
@@ -230,7 +230,7 @@ public:
         const string INVALID_HOST("host1:1111+host:123");
         zh=zookeeper_init(INVALID_HOST.c_str(),0,0,0,0,0);
         CPPUNIT_ASSERT(zh==0);
-        CPPUNIT_ASSERT_EQUAL(ENOENT,errno);
+        CPPUNIT_ASSERT((ENOENT|EINVAL) & errno);
     }
     void testNonexistentHost()
     {
@@ -279,7 +279,7 @@ public:
         const char EXPECTED[][5]={"\0\0\0\0","\1\1\1\1","\2\2\2\2","\3\3\3\3"};
         const int EXPECTED_ADDR_COUNT=COUNTOF(EXPECTED);
 
-        const int RAND_SEQ[]={0,1,2,3,1,3,2,0,-1};
+        const int RAND_SEQ[]={0,1,1,-1};
         const int RAND_SIZE=COUNTOF(RAND_SEQ);
         Mock_random randomMock;
         randomMock.randomReturns.assign(RAND_SEQ,RAND_SEQ+RAND_SIZE-1);

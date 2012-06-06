@@ -23,7 +23,8 @@ import java.util.NoSuchElementException;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -40,7 +41,7 @@ import org.apache.zookeeper.data.Stat;
  */
 
 public class DistributedQueue {
-    private static final Logger LOG = Logger.getLogger(DistributedQueue.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DistributedQueue.class);
 
     private final String dir;
 

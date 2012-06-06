@@ -34,6 +34,7 @@ namespace ZooKeeperNet.Tests
             zk = CreateClient();
         }
 
+        [TearDown]
         public void Teardown()
         {
             zk.Dispose();
@@ -51,7 +52,7 @@ namespace ZooKeeperNet.Tests
                     CreateMode.Ephemeral);
 
             Stat stat = new Stat();
-            List<string> s = zk.GetChildren(name, false, stat);
+            var s = zk.GetChildren(name, false, stat);
 
             Assert.AreEqual(stat.Czxid, stat.Mzxid);
             Assert.AreEqual(stat.Czxid + 1, stat.Pzxid);
@@ -62,7 +63,7 @@ namespace ZooKeeperNet.Tests
             Assert.AreEqual(0, stat.EphemeralOwner);
             Assert.AreEqual(name.Length, stat.DataLength);
             Assert.AreEqual(1, stat.NumChildren);
-            Assert.AreEqual(s.Count, stat.NumChildren);
+            Assert.AreEqual(s.Count(), stat.NumChildren);
 
             s = zk.GetChildren(childname, false, stat);
 
@@ -75,7 +76,7 @@ namespace ZooKeeperNet.Tests
             Assert.AreEqual(zk.SessionId, stat.EphemeralOwner);
             Assert.AreEqual(childname.Length, stat.DataLength);
             Assert.AreEqual(0, stat.NumChildren);
-            Assert.AreEqual(s.Count, stat.NumChildren);
+            Assert.AreEqual(s.Count(), stat.NumChildren);
         }
 
         [Test]
@@ -103,7 +104,7 @@ namespace ZooKeeperNet.Tests
                         CreateMode.Ephemeral);
 
                 Stat stat = new Stat();
-                List<string> s = zk.GetChildren(name, false, stat);
+                var s = zk.GetChildren(name, false, stat);
 
                 Assert.AreEqual(stat.Czxid, stat.Mzxid);
                 Assert.AreEqual(stat.Czxid + i + 1, stat.Pzxid);
@@ -114,11 +115,11 @@ namespace ZooKeeperNet.Tests
                 Assert.AreEqual(0, stat.EphemeralOwner);
                 Assert.AreEqual(name.Length, stat.DataLength);
                 Assert.AreEqual(i + 1, stat.NumChildren);
-                Assert.AreEqual(s.Count, stat.NumChildren);
+                Assert.AreEqual(s.Count(), stat.NumChildren);
             }
-            List<string> p = zk.GetChildren(name, false, null);
+            var p = zk.GetChildren(name, false, null);
             List<string> c_a = children_s;
-            List<string> c_b = p;
+            var c_b = p;
             c_a = c_a.OrderBy(e => e).ToList();
             c_b = c_b.OrderBy(e => e).ToList();
 

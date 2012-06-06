@@ -25,7 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -104,7 +105,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
             }
         }
     }
-    private static final Logger LOG = Logger.getLogger(InstanceContainer.class); 
+    private static final Logger LOG = LoggerFactory.getLogger(InstanceContainer.class); 
     String name;
     String zkHostPort;
     // We only run if the readyNode exists
@@ -215,7 +216,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
     public void process(WatchedEvent event) {
         if (KeeperState.Expired == event.getState()) {
             // It's all over
-            LOG.fatal("Lost session");
+            LOG.error("Lost session");
             System.exit(4);
         }
         if (event.getPath() != null && event.getPath().equals(assignmentsNode)) {

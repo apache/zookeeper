@@ -30,14 +30,15 @@ import java.util.zip.Checksum;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
 public class LogFormatter {
-    private static final Logger LOG = Logger.getLogger(LogFormatter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LogFormatter.class);
 
     /**
      * @param args
@@ -84,10 +85,8 @@ public class LogFormatter {
                 throw new IOException("CRC doesn't match " + crcValue +
                         " vs " + crc.getValue());
             }
-            InputArchive iab = BinaryInputArchive
-                                .getArchive(new ByteArrayInputStream(bytes));
             TxnHeader hdr = new TxnHeader();
-            SerializeUtils.deserializeTxn(iab, hdr);
+            Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
             System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT,
                     DateFormat.LONG).format(new Date(hdr.getTime()))
                     + " session 0x"
@@ -96,7 +95,7 @@ public class LogFormatter {
                     + Long.toHexString(hdr.getCxid())
                     + " zxid 0x"
                     + Long.toHexString(hdr.getZxid())
-                    + " " + TraceFormatter.op2String(hdr.getType()));
+                    + " " + TraceFormatter.op2String(hdr.getType()) + " " + txn);
             if (logStream.readByte("EOR") != 'B') {
                 LOG.error("Last transaction was partial.");
                 throw new EOFException("Last transaction was partial.");

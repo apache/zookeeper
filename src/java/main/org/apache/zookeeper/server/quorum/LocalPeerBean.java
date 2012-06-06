@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 /**
  * Implementation of the local peer MBean interface.
@@ -44,11 +42,7 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     }
     
     public int getMaxClientCnxnsPerHost() {
-        NIOServerCnxn.Factory fac = peer.getCnxnFactory();
-        if (fac == null) {
-            return -1;
-        }
-        return fac.getMaxClientCnxns();
+        return peer.getMaxClientCnxnsPerHost();
     }
 
     public int getMinSessionTimeout() {

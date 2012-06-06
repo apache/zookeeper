@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>BookKeeper Getting Started Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -20,7 +20,7 @@
     |breadtrail
     +-->
 <div class="breadtrail">
-<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://hadoop.apache.org/">Hadoop</a> &gt; <a href="http://hadoop.apache.org/zookeeper/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
+<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
 </div>
 <!--+
     |header
@@ -39,7 +39,7 @@
     |start Project Logo
     +-->
 <div class="projectlogo">
-<a href="http://hadoop.apache.org/zookeeper/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+<a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
 </div>
 <!--+
     |end Project Logo
@@ -49,7 +49,7 @@
     +-->
 <div class="searchbox">
 <form action="http://www.google.com/search" method="get" class="roundtopsmall">
-<input value="hadoop.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
+<input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
                     <input name="Search" value="Search" type="submit">
 </form>
 </div>
@@ -61,10 +61,10 @@
     +-->
 <ul id="tabs">
 <li>
-<a class="unselected" href="http://hadoop.apache.org/zookeeper/">Project</a>
+<a class="unselected" href="http://zookeeper.apache.org/">Project</a>
 </li>
 <li>
-<a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+<a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
 </li>
 <li class="current">
 <a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
@@ -174,13 +174,13 @@ document.write("Last Published: " + document.lastModified);
 <div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
 <div id="menu_1.6" class="menuitemgroup">
 <div class="menuitem">
-<a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
 </div>
 <div class="menuitem">
-<a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a>
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
 </div>
 <div class="menuitem">
-<a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">Mailing Lists</a>
+<a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
 </div>
 </div>
 <div id="credit"></div>
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>BookKeeper Getting Started Guide</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -230,11 +231,12 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
   
-<a name="N10009"></a><a name="bk_GettingStarted"></a>
+<a name="bk_GettingStarted"></a>
 <h2 class="h3">Getting Started: Setting up BookKeeper to write logs.</h2>
 <div class="section">
 <p>This document contains information to get you started quickly with
@@ -243,25 +245,25 @@ document.write("Last Published: " + document.lastModified);
     and a simple programming example. For further programming detail, please refer to 
     <a href="bookkeeperProgrammer.html">BookKeeper Programmer's Guide</a>.
     </p>
-<a name="N10016"></a><a name="bk_Prerequisites"></a>
+<a name="bk_Prerequisites"></a>
 <h3 class="h4">Pre-requisites</h3>
 <p>See <a href="bookkeeperConfig.html#bk_sysReq">
     	      System Requirements</a> in the Admin guide.</p>
-<a name="N10024"></a><a name="bk_Download"></a>
+<a name="bk_Download"></a>
 <h3 class="h4">Download</h3>
 <p> BookKeeper is distributed along with ZooKeeper. To get a ZooKeeper distribution, 
 			   download a recent
-    	    <a href="http://hadoop.apache.org/zookeeper/releases.html">
+    	    <a href="http://zookeeper.apache.org/releases.html">
         	  stable</a> release from one of the Apache Download
        	 Mirrors.</p>
-<a name="N10032"></a><a name="bk_localBK"></a>
+<a name="bk_localBK"></a>
 <h3 class="h4">LocalBookKeeper</h3>
 <p> Under org.apache.bookkeeper.util, you'll find a java program
 		called LocalBookKeeper.java that sets you up to run BookKeeper on a 
 		single machine. This is far from ideal from a performance perspective,
 		but the program is useful for both test and educational purposes.
 		</p>
-<a name="N1003C"></a><a name="bk_setupBookies"></a>
+<a name="bk_setupBookies"></a>
 <h3 class="h4">Setting up bookies</h3>
 <p> If you're bold and you want more than just running things locally, then
 		you'll need to run bookies in different servers. You'll need at least three bookies
@@ -272,15 +274,19 @@ document.write("Last Published: " + document.lastModified);
 		</p>
 <p>
 <span class="codefrag computeroutput">
-		java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar:../log4j/apache-log4j-1.2.15/log4j-1.2.15.jar\
-		-Dlog4j.configuration=log4j.properties org.apache.bookkeeper.proto.BookieServer 3181 /path_to_log_device/\
+		java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar\
+		:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar -Dlog4j.configuration=log4j.properties\ 
+		org.apache.bookkeeper.proto.BookieServer 3181 127.0.0.1:2181 /path_to_log_device/\
 		/path_to_ledger_device/
 		</span>
 </p>
 <p> "/path_to_log_device/" and "/path_to_ledger_device/" are different paths. Also, port 3181
-		is the port that a bookie listens on for connection requests from clients. 
+		is the port that a bookie listens on for connection requests from clients. 127.0.0.1:2181 is the hostname:port 
+		for the ZooKeeper server. In this example, the standalone ZooKeeper server is running locally on port 2181.
+		If we had multiple ZooKeeper servers, this parameter would be a comma separated list of all the hostname:port
+		values corresponding to them.
 		</p>
-<a name="N10051"></a><a name="bk_setupZK"></a>
+<a name="bk_setupZK"></a>
 <h3 class="h4">Setting up ZooKeeper</h3>
 <p> ZooKeeper stores metadata on behalf of BookKeeper clients and bookies. To get a minimal 
 	  	ZooKeeper installation to work with BookKeeper, we can set up one server running in
@@ -322,7 +328,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	  	
 </ol>
-<a name="N10078"></a><a name="bk_example"></a>
+<a name="bk_example"></a>
 <h3 class="h4">Example</h3>
 <p>
 	    In the following excerpt of code, we:
@@ -397,7 +403,7 @@ for(int i = 0; i &lt; 10; i++){
 lh.close();
 lh = bkc.openLedger(ledgerId, ledgerPassword);		
 			
-LedgerSequence ls = lh.readEntries(0, 9);
+Enumeration&lt;LedgerEntry&gt; ls = lh.readEntries(0, 9);
 int i = 0;
 while(ls.hasMoreElements()){
 	ByteBuffer origbb = ByteBuffer.wrap(

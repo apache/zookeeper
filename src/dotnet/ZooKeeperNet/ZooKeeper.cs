@@ -18,6 +18,7 @@
 ﻿namespace ZooKeeperNet
 {
     using System;
+    using System.Linq;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
@@ -25,6 +26,8 @@
     using log4net;
     using Org.Apache.Zookeeper.Data;
     using Org.Apache.Zookeeper.Proto;
+    using System.Threading;
+    using System.Text;
 
     [DebuggerDisplay("Id = {Id}")]
     public class ZooKeeper : IDisposable, IZooKeeper
@@ -33,27 +36,27 @@
 
         private readonly ZKWatchManager watchManager = new ZKWatchManager();
 
-        public List<string> DataWatches
+        public IEnumerable<string> DataWatches
         {
             get
             {
-                return new List<string>(watchManager.dataWatches.Keys);
+                return watchManager.dataWatches.Keys;
             }
         }
 
-        public List<string> ExistWatches
+        public IEnumerable<string> ExistWatches
         {
             get
             {
-                return new List<string>(watchManager.existWatches.Keys);
+                return watchManager.existWatches.Keys;
             }
         }
 
-        public List<string> ChildWatches
+        public IEnumerable<string> ChildWatches
         {
             get
             {
-                return new List<string>(watchManager.childWatches.Keys);
+                return watchManager.childWatches.Keys;
             }
         }
 
@@ -80,7 +83,7 @@
                 this.clientPath = clientPath;
             }
 
-            abstract protected Dictionary<string, HashSet<IWatcher>> GetWatches(int rc);
+            abstract protected IDictionary<string, HashSet<IWatcher>> GetWatches(int rc);
 
             /// <summary>
             /// Register the watcher with the set of watches on path.
@@ -90,18 +93,15 @@
             {
                 if (!ShouldAddWatch(rc)) return;
 
-                Dictionary<string, HashSet<IWatcher>> watches = GetWatches(rc);
-                lock (watches)
+                var watches = GetWatches(rc);
+                HashSet<IWatcher> watchers;
+                watches.TryGetValue(clientPath, out watchers);
+                if (watchers == null)
                 {
-                    HashSet<IWatcher> watchers;
-                    watches.TryGetValue(clientPath, out watchers);
-                    if (watchers == null)
-                    {
-                        watchers = new HashSet<IWatcher>();
-                        watches[clientPath] = watchers;
-                    }
-                    watchers.Add(watcher);
+                    watchers = new HashSet<IWatcher>();
+                    watches[clientPath] = watchers;
                 }
+                watchers.Add(watcher);
             }
 
             /// <summary>
@@ -129,7 +129,7 @@
                 this.watchManager = watchManager;
             }
 
-            protected override Dictionary<string, HashSet<IWatcher>> GetWatches(int rc)
+            protected override IDictionary<string, HashSet<IWatcher>> GetWatches(int rc)
             {
                 return rc == 0 ? watchManager.dataWatches : watchManager.existWatches;
             }
@@ -150,7 +150,7 @@
                 this.watchManager = watchManager;
             }
 
-            protected override Dictionary<string, HashSet<IWatcher>> GetWatches(int rc)
+            protected override IDictionary<string, HashSet<IWatcher>> GetWatches(int rc)
             {
                 return watchManager.dataWatches;
             }
@@ -166,7 +166,7 @@
                 this.watchManager = watchManager;
             }
 
-            protected override Dictionary<string, HashSet<IWatcher>> GetWatches(int rc)
+            protected override IDictionary<string, HashSet<IWatcher>> GetWatches(int rc)
             {
                 return watchManager.childWatches;
             }
@@ -180,7 +180,7 @@
             public static readonly States CLOSED = new States("CLOSED");
             public static readonly States AUTH_FAILED = new States("AUTH_FAILED");
 
-            public string state;
+            private string state;
 
             public States(string state)
             {
@@ -208,8 +208,8 @@
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != typeof(States)) return false;
-                return Equals((States)obj);
+                //if (obj.GetType() != typeof(States)) return false; // don't need this
+                return Equals((States)obj); // when casting to States, any non-States object will be null
             }
 
             public override int GetHashCode()
@@ -218,9 +218,9 @@
             }
         }
 
-        protected Guid id = Guid.NewGuid();
-        protected volatile States state;
-        protected IClientConnection cnxn;
+        private Guid id = Guid.NewGuid();
+        private States state;
+        private IClientConnection cnxn;
 
         /// <summary>
         /// To create a ZooKeeper client object, the application needs to pass a
@@ -262,18 +262,18 @@
         /// </param>
         public ZooKeeper(string connectstring, TimeSpan sessionTimeout, IWatcher watcher)
         {
-            LOG.Info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2}", connectstring, sessionTimeout, watcher));
+            LOG.InfoFormat("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2}", connectstring, sessionTimeout, watcher);
 
-            watchManager.defaultWatcher = watcher;
+            watchManager.DefaultWatcher = watcher;
             cnxn = new ClientConnection(connectstring, sessionTimeout, this, watchManager);
             cnxn.Start();
         }
 
         public ZooKeeper(string connectstring, TimeSpan sessionTimeout, IWatcher watcher, long sessionId, byte[] sessionPasswd)
         {
-            LOG.Info(string.Format("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2} sessionId={3} sessionPasswd={4}", connectstring, sessionTimeout, watcher, sessionId, (sessionPasswd == null ? "<null>" : "<hidden>")));
+            LOG.InfoFormat("Initiating client connection, connectstring={0} sessionTimeout={1} watcher={2} sessionId={3} sessionPasswd={4}", connectstring, sessionTimeout, watcher, sessionId, (sessionPasswd == null ? "<null>" : "<hidden>"));
 
-            watchManager.defaultWatcher = watcher;
+            watchManager.DefaultWatcher = watcher;
             cnxn = new ClientConnection(connectstring, sessionTimeout, this, watchManager, sessionId, sessionPasswd);
             cnxn.Start();
         }
@@ -350,21 +350,24 @@
         /// specified during construction).
         /// </summary>
         /// <param name="watcher">The watcher.</param>
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public void Register(IWatcher watcher)
+        public void Register(IWatcher watcher) // the defaultwatcher is already a full fenced so we don't need to mark the method synchronized
         {
-            watchManager.defaultWatcher = watcher;
+            watchManager.DefaultWatcher = watcher;
         }
 
+        /// <summary>
+        /// The State of ZooKeeper connection
+        /// Thread safe
+        /// </summary>
         public States State
         {
             get
             {
-                return state;
+                return Interlocked.CompareExchange(ref state, null, null);
             }
             internal set
             {
-                state = value;
+                Interlocked.Exchange(ref state, value);
             }
         }
 
@@ -374,10 +377,9 @@
         /// the session will be removed. The watches left on those nodes (and on
         /// their parents) will be triggered.
         /// </summary>   
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public void Dispose()
+        private void InternalDispose()
         {
-            if (!state.IsAlive())
+            if (!State.IsAlive())
             {
                 if (LOG.IsDebugEnabled)
                 {
@@ -388,7 +390,7 @@
 
             if (LOG.IsDebugEnabled)
             {
-                LOG.Debug(string.Format("Closing session: 0x{0:X}", SessionId));
+                LOG.DebugFormat("Closing session: 0x{0:X}", SessionId);
             }
 
             try
@@ -403,7 +405,18 @@
                 }
             }
 
-            LOG.Info(string.Format("Session: 0x{0:X} closed", SessionId));
+            LOG.DebugFormat("Session: 0x{0:X} closed", SessionId);
+        }
+
+        public void Dispose()
+        {
+            InternalDispose();
+            GC.SuppressFinalize(this);
+        }
+
+        ~ZooKeeper()
+        {
+            InternalDispose();
         }
 
         /// <summary>
@@ -468,25 +481,21 @@
         /// <param name="acl">The acl for the node.</param>
         /// <param name="createMode">specifying whether the node to be created is ephemeral and/or sequential.</param>
         /// <returns></returns>
-        public string Create(string path, byte[] data, List<ACL> acl, CreateMode createMode)
+        public string Create(string path, byte[] data, IEnumerable<ACL> acl, CreateMode createMode)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath, createMode.Sequential);
+            if (acl != null && acl.Count() == 0)
+            {
+                throw new KeeperException.InvalidACLException();
+            }
 
             string serverPath = PrependChroot(clientPath);
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.Create;
-            CreateRequest request = new CreateRequest();
+            CreateRequest request = new CreateRequest(serverPath,data,acl,createMode.Flag);
             CreateResponse response = new CreateResponse();
-            request.Data = data;
-            request.Flags = createMode.Flag;
-            request.Path = serverPath;
-            if (acl != null && acl.Count == 0)
-            {
-                throw new KeeperException.InvalidACLException();
-            }
-            request.Acl = acl;
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
             {
@@ -525,7 +534,7 @@
             // maintain semantics even in chroot case
             // specifically - root cannot be deleted
             // I think this makes sense even in chroot case.
-            if (clientPath.Equals("/"))
+            if (clientPath.Equals(PathUtils.PathSeparator))
             {
                 // a bit of a hack, but delete(/) will never succeed and ensures
                 // that the same semantics are maintained
@@ -538,9 +547,7 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.Delete;
-            DeleteRequest request = new DeleteRequest();
-            request.Path = serverPath;
-            request.Version = version;
+            DeleteRequest request = new DeleteRequest(serverPath,version);
             ReplyHeader r = cnxn.SubmitRequest(h, request, null, null);
             if (r.Err != 0)
             {
@@ -576,9 +583,7 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.Exists;
-            ExistsRequest request = new ExistsRequest();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
+            ExistsRequest request = new ExistsRequest(serverPath, watcher != null);
             SetDataResponse response = new SetDataResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -612,7 +617,7 @@
         /// </summary>
         public Stat Exists(string path, bool watch)
         {
-            return Exists(path, watch ? watchManager.defaultWatcher : null);
+            return Exists(path, watch ? watchManager.DefaultWatcher : null);
         }
 
         /// <summary>
@@ -649,9 +654,7 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetData;
-            GetDataRequest request = new GetDataRequest();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
+            GetDataRequest request = new GetDataRequest(serverPath, watcher != null);
             GetDataResponse response = new GetDataResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -684,7 +687,7 @@
         /// </summary>
         public byte[] GetData(string path, bool watch, Stat stat)
         {
-            return GetData(path, watch ? watchManager.defaultWatcher : null, stat);
+            return GetData(path, watch ? watchManager.DefaultWatcher : null, stat);
         }
 
         /// <summary>
@@ -723,10 +726,7 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.SetData;
-            SetDataRequest request = new SetDataRequest();
-            request.Path = serverPath;
-            request.Data = data;
-            request.Version = version;
+            SetDataRequest request = new SetDataRequest(serverPath,data,version);
             SetDataResponse response = new SetDataResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
@@ -750,7 +750,7 @@
         /// @throws KeeperException If the server signals an error with a non-zero error code.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        public List<ACL> GetACL(string path, Stat stat)
+        public IEnumerable<ACL> GetACL(string path, Stat stat)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -759,8 +759,7 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetACL;
-            GetACLRequest request = new GetACLRequest();
-            request.Path = serverPath;
+            GetACLRequest request = new GetACLRequest(serverPath);
             GetACLResponse response = new GetACLResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
@@ -790,23 +789,20 @@
         /// @throws org.apache.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        public Stat SetACL(string path, List<ACL> acl, int version)
+        public Stat SetACL(string path, IEnumerable<ACL> acl, int version)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
+            if (acl != null && acl.Count() == 0)
+            {
+                throw new KeeperException.InvalidACLException();
+            }
 
             string serverPath = PrependChroot(clientPath);
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.SetACL;
-            SetACLRequest request = new SetACLRequest();
-            request.Path = serverPath;
-            if (acl != null && acl.Count == 0)
-            {
-                throw new KeeperException.InvalidACLException();
-            }
-            request.Acl = acl;
-            request.Version = version;
+            SetACLRequest request = new SetACLRequest(serverPath,acl,version);
             SetACLResponse response = new SetACLResponse();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, null);
             if (r.Err != 0)
@@ -836,7 +832,7 @@
         /// @throws KeeperException If the server signals an error with a non-zero error code.
         /// @throws IllegalArgumentException if an invalid path is specified
         /// </summary>
-        public List<string> GetChildren(string path, IWatcher watcher)
+        public IEnumerable<string> GetChildren(string path, IWatcher watcher)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -852,9 +848,7 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetChildren2;
-            GetChildren2Request request = new GetChildren2Request();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
+            GetChildren2Request request = new GetChildren2Request(serverPath, watcher != null);
             GetChildren2Response response = new GetChildren2Response();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -864,9 +858,9 @@
             return response.Children;
         }
 
-        public List<string> GetChildren(string path, bool watch)
+        public IEnumerable<string> GetChildren(string path, bool watch)
         {
-            return GetChildren(path, watch ? watchManager.defaultWatcher : null);
+            return GetChildren(path, watch ? watchManager.DefaultWatcher : null);
         }
 
         /// <summary>
@@ -893,7 +887,7 @@
         /// @throws IllegalArgumentException if an invalid path is specified
          /// </summary>
 
-        public List<string> GetChildren(string path, IWatcher watcher, Stat stat)
+        public IEnumerable<string> GetChildren(string path, IWatcher watcher, Stat stat)
         {
             string clientPath = path;
             PathUtils.ValidatePath(clientPath);
@@ -909,9 +903,7 @@
 
             RequestHeader h = new RequestHeader();
             h.Type = (int)OpCode.GetChildren2;
-            GetChildren2Request request = new GetChildren2Request();
-            request.Path = serverPath;
-            request.Watch = watcher != null;
+            GetChildren2Request request = new GetChildren2Request(serverPath, watcher != null);
             GetChildren2Response response = new GetChildren2Response();
             ReplyHeader r = cnxn.SubmitRequest(h, request, response, wcb);
             if (r.Err != 0)
@@ -948,9 +940,9 @@
         /// @throws KeeperException If the server signals an error with a non-zero
         ///  error code.
         /// </summary>
-        public List<string> GetChildren(string path, bool watch, Stat stat)
+        public IEnumerable<string> GetChildren(string path, bool watch, Stat stat)
         {
-            return GetChildren(path, watch ? watchManager.defaultWatcher : null, stat);
+            return GetChildren(path, watch ? watchManager.DefaultWatcher : null, stat);
         }
 
         /// <summary>
@@ -964,7 +956,16 @@
         /// </summary>
         public override string ToString()
         {
-            return (string.Format("Id: {0} State:{1}{2}{3}", id, state, (state == States.CONNECTED ? string.Format(" Timeout:{0} ", SessionTimeout) : " "), cnxn));
+            StringBuilder builder = new StringBuilder("Id: ")
+                .Append(id)
+                .Append(" State:")
+                .Append(State);
+            if (State == States.CONNECTED)
+                builder.Append(" Timeout:")
+                    .Append(SessionTimeout);
+            builder.Append(" ")
+                .Append(cnxn);
+            return builder.ToString();
         }
     }
 }

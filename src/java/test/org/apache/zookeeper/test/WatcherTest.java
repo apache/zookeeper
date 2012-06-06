@@ -23,12 +23,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
@@ -40,7 +42,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class WatcherTest extends ClientBase {
-    protected static final Logger LOG = Logger.getLogger(WatcherTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(WatcherTest.class);
 
     private final class MyStatCallback implements StatCallback {
         int rc;
@@ -126,6 +128,39 @@ public class WatcherTest extends ClientBase {
                 zk.close();
             }
         }
+    }
+
+    @Test
+    public void testWatcherCount() 
+    throws IOException, InterruptedException, KeeperException {
+        ZooKeeper zk1 = null, zk2 = null;
+        try {
+            MyWatcher w1 = new MyWatcher();
+            zk1 = createClient(w1, hostPort);
+
+            MyWatcher w2 = new MyWatcher();
+            zk2 = createClient(w2, hostPort);
+
+            Stat stat = new Stat();
+            zk1.create("/watch-count-test", "value".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            zk1.create("/watch-count-test-2", "value".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+
+            zk1.getData("/watch-count-test", w1, stat);
+            zk1.getData("/watch-count-test-2", w1, stat);
+            zk2.getData("/watch-count-test", w2, stat);
+
+            Assert.assertEquals(ClientBase.getServer(serverFactory)
+                    .getZKDatabase().getDataTree().getWatchCount(), 3);
+
+        } finally {
+            if(zk1 != null) {
+                zk1.close();
+            }
+            if(zk2 != null) {
+                zk2.close();
+            }
+        }
+
     }
 
     final static int COUNT = 100;

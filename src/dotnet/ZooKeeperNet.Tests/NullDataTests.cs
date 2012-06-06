@@ -27,8 +27,7 @@ namespace ZooKeeperNet.Tests
         public void testNullData()
         {
             string path = "/" + Guid.NewGuid() + "SIZE";
-            ZooKeeper zk;
-            using (zk = CreateClient())
+            using (var zk = CreateClient())
             {
                 zk.Create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);
                 // try sync zk exists 

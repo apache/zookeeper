@@ -17,7 +17,8 @@
  */
 package org.apache.zookeeper.recipes.lock;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents an ephemeral znode name which has an ordered sequence number
@@ -28,7 +29,7 @@ class ZNodeName implements Comparable<ZNodeName> {
     private final String name;
     private String prefix;
     private int sequence = -1;
-    private static final Logger LOG = Logger.getLogger(ZNodeName.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZNodeName.class);
     
     public ZNodeName(String name) {
         if (name == null) {

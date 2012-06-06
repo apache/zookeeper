@@ -23,7 +23,8 @@ import java.io.IOException;
 
 import javax.management.JMException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -33,12 +34,12 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  */
 public class ZooKeeperServerMain {
     private static final Logger LOG =
-        Logger.getLogger(ZooKeeperServerMain.class);
+        LoggerFactory.getLogger(ZooKeeperServerMain.class);
 
     private static final String USAGE =
         "Usage: ZooKeeperServerMain configfile | port datadir [ticktime] [maxcnxns]";
 
-    private NIOServerCnxn.Factory cnxnFactory;
+    private ServerCnxnFactory cnxnFactory;
 
     /*
      * Start up the ZooKeeper server.
@@ -50,16 +51,16 @@ public class ZooKeeperServerMain {
         try {
             main.initializeAndRun(args);
         } catch (IllegalArgumentException e) {
-            LOG.fatal("Invalid arguments, exiting abnormally", e);
+            LOG.error("Invalid arguments, exiting abnormally", e);
             LOG.info(USAGE);
             System.err.println(USAGE);
             System.exit(2);
         } catch (ConfigException e) {
-            LOG.fatal("Invalid config, exiting abnormally", e);
+            LOG.error("Invalid config, exiting abnormally", e);
             System.err.println("Invalid config, exiting abnormally");
             System.exit(2);
         } catch (Exception e) {
-            LOG.fatal("Unexpected exception, exiting abnormally", e);
+            LOG.error("Unexpected exception, exiting abnormally", e);
             System.exit(1);
         }
         LOG.info("Exiting normally");
@@ -105,7 +106,8 @@ public class ZooKeeperServerMain {
             zkServer.setTickTime(config.tickTime);
             zkServer.setMinSessionTimeout(config.minSessionTimeout);
             zkServer.setMaxSessionTimeout(config.maxSessionTimeout);
-            cnxnFactory = new NIOServerCnxn.Factory(config.getClientPortAddress(),
+            cnxnFactory = ServerCnxnFactory.createFactory();
+            cnxnFactory.configure(config.getClientPortAddress(),
                     config.getMaxClientCnxns());
             cnxnFactory.startup(zkServer);
             cnxnFactory.join();

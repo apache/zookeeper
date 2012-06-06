@@ -19,7 +19,6 @@ package org.apache.zookeeper.server.persistence;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +31,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
@@ -40,9 +40,10 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements the TxnLog interface. It provides api's
@@ -96,11 +97,11 @@ public class FileTxnLog implements TxnLog {
 
     public final static int VERSION = 2;
 
-    static {
-        LOG = Logger.getLogger(FileTxnLog.class);
+    /** Maximum time we allow for elapsed fsync before WARNing */
+    private final static long fsyncWarningThresholdMS;
 
-        forceSync =
-            !System.getProperty("zookeeper.forceSync", "yes").equals("no");
+    static {
+        LOG = LoggerFactory.getLogger(FileTxnLog.class);
 
         String size = System.getProperty("zookeeper.preAllocSize");
         if (size != null) {
@@ -110,6 +111,7 @@ public class FileTxnLog implements TxnLog {
                 LOG.warn(size + " is not a valid value for preAllocSize");
             }
         }
+        fsyncWarningThresholdMS = Long.getLong("fsync.warningthresholdms", 1000);
     }
 
     long lastZxidSeen;
@@ -118,7 +120,7 @@ public class FileTxnLog implements TxnLog {
     volatile FileOutputStream fos = null;
 
     File logDir;
-    private static boolean forceSync = true;
+    private final boolean forceSync = !System.getProperty("zookeeper.forceSync", "yes").equals("no");;
     long dbId;
     private LinkedList<FileOutputStream> streamsToFlush =
         new LinkedList<FileOutputStream>();
@@ -193,13 +195,20 @@ public class FileTxnLog implements TxnLog {
                         + hdr.getType());
             }
             if (logStream==null) {
-               logFileWrite = new File(logDir, ("log." +
+               if(LOG.isInfoEnabled()){
+                    LOG.info("Creating new log file: log." +  
+                            Long.toHexString(hdr.getZxid()));
+               }
+               
+               logFileWrite = new File(logDir, ("log." + 
                        Long.toHexString(hdr.getZxid())));
                fos = new FileOutputStream(logFileWrite);
                logStream=new BufferedOutputStream(fos);
                oa = BinaryOutputArchive.getArchive(logStream);
                FileHeader fhdr = new FileHeader(TXNLOG_MAGIC,VERSION, dbId);
                fhdr.serialize(oa, "fileheader");
+               // Make sure that the magic number is written before padding.
+               logStream.flush();
                currentSize = fos.getChannel().position();
                streamsToFlush.add(fos);
             }
@@ -302,7 +311,19 @@ public class FileTxnLog implements TxnLog {
         for (FileOutputStream log : streamsToFlush) {
             log.flush();
             if (forceSync) {
+                long startSyncNS = System.nanoTime();
+
                 log.getChannel().force(false);
+
+                long syncElapsedMS =
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
+                if (syncElapsedMS > fsyncWarningThresholdMS) {
+                    LOG.warn("fsync-ing the write ahead log in "
+                            + Thread.currentThread().getName()
+                            + " took " + syncElapsedMS
+                            + "ms which will adversely effect operation latency. "
+                            + "See the ZooKeeper troubleshooting guide");
+                }
             }
         }
         while (streamsToFlush.size() > 1) {
@@ -378,6 +399,14 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
+     * the forceSync value. true if forceSync is enabled, false otherwise.
+     * @return the forceSync value
+     */
+    public boolean isForceSync() {
+        return forceSync;
+    }
+
+    /**
      * a class that keeps track of the position 
      * in the input stream. The position points to offset
      * that has been consumed by the applications. It can 
@@ -388,21 +417,32 @@ public class FileTxnLog implements TxnLog {
         long position;
         protected PositionInputStream(InputStream in) {
             super(in);
+            position = 0;
         }
         
         @Override
         public int read() throws IOException {
             int rc = super.read();
-            if (rc > 0) {
+            if (rc > -1) {
                 position++;
             }
             return rc;
+        }
+
+        public int read(byte[] b) throws IOException {
+            int rc = super.read(b);
+            if (rc > 0) {
+                position += rc;
+            }
+            return rc;            
         }
         
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
             int rc = super.read(b, off, len);
-            position += rc;
+            if (rc > 0) {
+                position += rc;
+            }
             return rc;
         }
         
@@ -416,6 +456,21 @@ public class FileTxnLog implements TxnLog {
         }
         public long getPosition() {
             return position;
+        }
+
+        @Override
+        public boolean markSupported() {
+            return false;
+        }
+
+        @Override
+        public void mark(int readLimit) {
+            throw new UnsupportedOperationException("mark");
+        }
+
+        @Override
+        public void reset() {
+            throw new UnsupportedOperationException("reset");
         }
     }
     
@@ -492,7 +547,7 @@ public class FileTxnLog implements TxnLog {
         }
 
         /**
-         * read the header fomr the inputarchive
+         * read the header from the inputarchive
          * @param ia the inputarchive to be read from
          * @param is the inputstream
          * @throws IOException
@@ -546,8 +601,9 @@ public class FileTxnLog implements TxnLog {
                 long crcValue = ia.readLong("crcvalue");
                 byte[] bytes = Util.readTxnBytes(ia);
                 // Since we preallocate, we define EOF to be an
-                if (bytes == null || bytes.length==0)
-                   throw new EOFException("Failed to read");
+                if (bytes == null || bytes.length==0) {
+                    throw new EOFException("Failed to read " + logFile);
+                }
                 // EOF or corrupted record
                 // validate CRC
                 Checksum crc = makeChecksumAlgorithm();
@@ -556,20 +612,21 @@ public class FileTxnLog implements TxnLog {
                     throw new IOException(CRC_ERROR);
                 if (bytes == null || bytes.length == 0)
                     return false;
-                InputArchive iab = BinaryInputArchive
-                                    .getArchive(new ByteArrayInputStream(bytes));
                 hdr = new TxnHeader();
-                record = SerializeUtils.deserializeTxn(iab, hdr);
+                record = SerializeUtils.deserializeTxn(bytes, hdr);
             } catch (EOFException e) {
                 LOG.debug("EOF excepton " + e);
                 inputStream.close();
                 inputStream = null;
                 ia = null;
-                // thsi means that the file has ended
-                // we shoud go to the next file
+                hdr = null;
+                // this means that the file has ended
+                // we should go to the next file
                 if (!goToNextLog()) {
                     return false;
                 }
+                // if we went to the next log file, we should call next() again
+                return next();
             }
             return true;
         }

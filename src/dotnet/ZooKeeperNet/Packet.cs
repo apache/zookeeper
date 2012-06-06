@@ -25,21 +25,22 @@ namespace ZooKeeperNet
     using log4net;
     using Org.Apache.Jute;
     using Org.Apache.Zookeeper.Proto;
+    using System;
 
     public class Packet
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof(Packet));
 
         internal RequestHeader header;
-        internal string serverPath;
+        private string serverPath;
         internal ReplyHeader replyHeader;
         internal IRecord response;
-        private bool finished;
+        private int finished;
         internal ZooKeeper.WatchRegistration watchRegistration;
         internal readonly byte[] data;
 
         /** Client's view of the path (may differ due to chroot) **/
-        internal string clientPath;
+        private string clientPath;
         /** Servers's view of the path (may differ due to chroot) **/
         readonly IRecord request;
 
@@ -59,7 +60,7 @@ namespace ZooKeeperNet
             {
                 try
                 {
-                    using (MemoryStream ms = new MemoryStream())
+                    MemoryStream ms = new MemoryStream();
                     using (EndianBinaryWriter writer = new EndianBinaryWriter(EndianBitConverter.Big, ms, Encoding.UTF8))
                     {
                         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(writer);
@@ -68,9 +69,10 @@ namespace ZooKeeperNet
                         if (request != null)
                         {
                             request.Serialize(boa, "request");
-                        }
+                        }                        
                         ms.Position = 0;
-                        writer.Write(ms.ToArray().Length - 4);
+                        int len = Convert.ToInt32(ms.Length); // now we have the real length
+                        writer.Write(len - 4); // update the length info
                         this.data = ms.ToArray();
                     }
                 }
@@ -83,23 +85,14 @@ namespace ZooKeeperNet
         }
 
         internal bool Finished
-        { 
+        {
             get
             {
-                lock (this)
-                {
-                    return finished;
-                }
+                return Interlocked.CompareExchange(ref finished,0,0) == 1;
             }
             set
             {
-                lock (this)
-                {
-                    Monitor.Enter(this);
-                    finished = value;
-                    Monitor.PulseAll(this);
-                    Monitor.Exit(this);
-                }
+                Interlocked.Exchange(ref finished, value ? 1 : 0);
             }
         }
 
@@ -107,14 +100,13 @@ namespace ZooKeeperNet
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.Append("clientPath:" + clientPath);
-            sb.Append(" serverPath:" + serverPath);
-            sb.Append(" finished:" + finished);
-
-            sb.Append(" header:: " + header);
-            sb.Append(" replyHeader:: " + replyHeader);
-            sb.Append(" request:: " + request);
-            sb.Append(" response:: " + response);
+            sb.Append("  clientPath:").Append(clientPath);
+            sb.Append("  serverPath:").Append(serverPath);
+            sb.Append("    finished:").Append(finished);
+            sb.Append("     header::").Append(header);
+            sb.Append("replyHeader::").Append(replyHeader);
+            sb.Append("    request::").Append(request);
+            sb.Append("   response::").Append(response);
 
             // jute toString is horrible, remove unnecessary newlines
             return sb.ToString().Replace(@"\r*\n+", " ");

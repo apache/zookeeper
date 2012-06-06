@@ -21,6 +21,8 @@
     using System.Collections.Concurrent;
     using System.Threading;
     using log4net;
+    using System.Text;
+using System.Collections.Generic;
 
     public class ClientConnectionEventConsumer : IStartable, IDisposable
     {
@@ -28,8 +30,8 @@
 
         private readonly ClientConnection conn;
         private readonly Thread eventThread;
-
-        internal readonly BlockingCollection<object> waitingEvents = new BlockingCollection<object>(1000);
+        //ConcurrentQueue gives us the non-blocking way of processing, it reduced the contention so much
+        internal readonly ConcurrentQueue<ClientConnection.WatcherSetEventPair> waitingEvents = new ConcurrentQueue<ClientConnection.WatcherSetEventPair>();
 
         /** This is really the queued session state until the event
          * thread actually processes the event and hands it to the watcher.
@@ -40,7 +42,7 @@
         public ClientConnectionEventConsumer(ClientConnection conn)
         {
             this.conn = conn;
-            eventThread = new Thread(new SafeThreadStart(PollEvents).Run) { Name = "ZK-EventThread " + conn.zooKeeper.Id, IsBackground = true };
+            eventThread = new Thread(new SafeThreadStart(PollEvents).Run) { Name = new StringBuilder("ZK-EventThread ").Append(conn.zooKeeper.Id).ToString(), IsBackground = true };
         }
 
         public void Start()
@@ -48,31 +50,46 @@
             eventThread.Start();
         }
 
+        private static void ProcessWatcher(IEnumerable<IWatcher> watchers,WatchedEvent watchedEvent)
+        {
+            foreach (IWatcher watcher in watchers)
+            {
+                try
+                {
+                    watcher.Process(watchedEvent);
+                }
+                catch (Exception t)
+                {
+                    LOG.Error("Error while calling watcher ", t);
+                }
+            }
+        }
+
         public void PollEvents()
         {
             try
             {
-                while (!waitingEvents.IsCompleted)
+                SpinWait spin = new SpinWait();
+                while(Interlocked.CompareExchange(ref isDisposed, 1, 1) == 0)
                 {
-                    object @event = waitingEvents.Take();
                     try
                     {
-                        if (@event is ClientConnection.WatcherSetEventPair)
+                        ClientConnection.WatcherSetEventPair pair;
+                        if (waitingEvents.TryDequeue(out pair))
+                            ProcessWatcher(pair.Watchers, pair.WatchedEvent);
+                        else
                         {
-                            // each watcher will process the event
-                            ClientConnection.WatcherSetEventPair pair = (ClientConnection.WatcherSetEventPair) @event;
-                            foreach (IWatcher watcher in pair.watchers)
-                            {
-                                try
-                                {
-                                    watcher.Process(pair.@event);
-                                }
-                                catch (Exception t)
-                                {
-                                    LOG.Error("Error while calling watcher ", t);
-                                }
-                            }
+                            spin.SpinOnce();
+                            if (spin.Count > ClientConnection.maxSpin)
+                                spin.Reset();
                         }
+                        
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
+                    catch (InvalidOperationException)
+                    {
                     }
                     catch (OperationCanceledException)
                     {
@@ -94,30 +111,41 @@
 
         public void QueueEvent(WatchedEvent @event)
         {
-            if (@event.Type == EventType.None && sessionState == @event.State) return;
+            if (@event.EventType == EventType.None && sessionState == @event.State) return;
+
+            if (Interlocked.CompareExchange(ref isDisposed, 0, 0) == 1)
+                throw new InvalidOperationException("consumer has been disposed");
             
             sessionState = @event.State;
 
             // materialize the watchers based on the event
-            var pair = new ClientConnection.WatcherSetEventPair(conn.watcher.Materialize(@event.State, @event.Type,@event.Path), @event);
+            var pair = new ClientConnection.WatcherSetEventPair(conn.watcher.Materialize(@event.State, @event.EventType,@event.Path), @event);
             // queue the pair (watch set & event) for later processing
-            AppendToQueue(pair);
+            waitingEvents.Enqueue(pair);
         }
 
-        public void QueuePacket(Packet packet)
+        private int isDisposed = 0;
+        private void InternalDispose()
         {
-            AppendToQueue(packet);
-        }
-
-        private void AppendToQueue(object o)
-        {
-            waitingEvents.Add(o);
+            if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
+            {
+                eventThread.Join();
+                //process any unprocessed event
+                ClientConnection.WatcherSetEventPair pair;
+                while(waitingEvents.TryDequeue(out pair))
+                    ProcessWatcher(pair.Watchers, pair.WatchedEvent);
+            }
         }
 
         public void Dispose()
         {
-            waitingEvents.CompleteAdding();
-            eventThread.Join(2000);
+            InternalDispose();
+            GC.SuppressFinalize(this);
+        }
+
+        ~ClientConnectionEventConsumer()
+        {
+            InternalDispose();
         }
     }
 }

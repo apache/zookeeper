@@ -17,7 +17,8 @@
  */
 package org.apache.zookeeper.recipes.lock;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -37,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  */
 class ProtocolSupport {
-    private static final Logger LOG = Logger.getLogger(ProtocolSupport.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProtocolSupport.class);
 
     protected final ZooKeeper zookeeper;
     private AtomicBoolean closed = new AtomicBoolean(false);

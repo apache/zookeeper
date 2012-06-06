@@ -134,7 +134,6 @@ public class DataNode implements Record {
     synchronized public void copyStat(Stat to) {
         to.setAversion(stat.getAversion());
         to.setCtime(stat.getCtime());
-        to.setCversion(stat.getCversion());
         to.setCzxid(stat.getCzxid());
         to.setMtime(stat.getMtime());
         to.setMzxid(stat.getMzxid());
@@ -142,11 +141,15 @@ public class DataNode implements Record {
         to.setVersion(stat.getVersion());
         to.setEphemeralOwner(stat.getEphemeralOwner());
         to.setDataLength(data == null ? 0 : data.length);
-        if (this.children == null) {
-            to.setNumChildren(0);
-        } else {
-            to.setNumChildren(children.size());
+        int numChildren = 0;
+        if (this.children != null) {
+            numChildren = children.size();
         }
+        // when we do the Cversion we need to translate from the count of the creates
+        // to the count of the changes (v3 semantics)
+        // for every create there is a delete except for the children still present
+        to.setCversion(stat.getCversion()*2 - numChildren);
+        to.setNumChildren(numChildren);
     }
 
     synchronized public void deserialize(InputArchive archive, String tag)

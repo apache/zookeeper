@@ -69,7 +69,7 @@
       <title>Download</title>
 
       <para>To get a ZooKeeper distribution, download a recent
-        <ulink url="http://hadoop.apache.org/zookeeper/releases.html">
+        <ulink url="http://zookeeper.apache.org/releases.html">
           stable</ulink> release from one of the Apache Download
         Mirrors.</para>
     </section>
@@ -89,7 +89,7 @@
 
 <programlisting>
 tickTime=2000
-dataDir=/var/zookeeper
+dataDir=/var/lib/zookeeper
 clientPort=2181
 </programlisting>
 
@@ -346,7 +346,7 @@ numChildren = 0
 
 <programlisting>
 tickTime=2000
-dataDir=/var/zookeeper
+dataDir=/var/lib/zookeeper
 clientPort=2181
 initLimit=5
 syncLimit=2

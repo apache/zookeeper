@@ -21,12 +21,13 @@ package org.apache.zookeeper.server.auth;
 import java.util.Enumeration;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 public class ProviderRegistry {
-    private static final Logger LOG = Logger.getLogger(ProviderRegistry.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProviderRegistry.class);
 
     private static boolean initialized = false;
     private static HashMap<String, AuthenticationProvider> authenticationProviders =

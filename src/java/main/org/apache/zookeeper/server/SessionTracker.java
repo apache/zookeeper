@@ -34,6 +34,7 @@ public interface SessionTracker {
     public static interface Session {
         long getSessionId();
         int getTimeout();
+        boolean isClosing();
     }
     public static interface SessionExpirer {
         void expire(Session session);
@@ -51,6 +52,12 @@ public interface SessionTracker {
      * @return false if session is no longer active
      */
     boolean touchSession(long sessionId, int sessionTimeout);
+
+    /**
+     * Mark that the session is in the process of closing.
+     * @param sessionId
+     */
+    void setSessionClosing(long sessionId);
 
     /**
      * 

@@ -30,7 +30,7 @@ which will be used to configure the chosen Forrest skin.
     In other words google will search the @domain for the query string.
 
   -->
-  <search name="ZooKeeper" domain="hadoop.apache.org" provider="google"/>
+  <search name="ZooKeeper" domain="zookeeper.apache.org" provider="google"/>
 
   <!-- Disable the print link? If enabled, invalid HTML 4.0.1 -->
   <disable-print-link>true</disable-print-link>  
@@ -66,7 +66,7 @@ which will be used to configure the chosen Forrest skin.
   <!-- project logo -->
   <project-name>ZooKeeper</project-name>
   <project-description>ZooKeeper: distributed coordination</project-description>
-  <project-url>http://hadoop.apache.org/zookeeper/</project-url>
+  <project-url>http://zookeeper.apache.org/</project-url>
   <project-logo>images/zookeeper_small.gif</project-logo>
 
   <!-- group logo -->
@@ -95,10 +95,10 @@ which will be used to configure the chosen Forrest skin.
 	  Use location="none" to not display the trail (if the skin supports it).
     For some skins just set the attributes to blank.
   -->
-  <trail>
+   <trail>
     <link1 name="Apache" href="http://www.apache.org/"/>
-    <link2 name="Hadoop" href="http://hadoop.apache.org/"/>
-    <link3 name="ZooKeeper" href="http://hadoop.apache.org/zookeeper/"/>
+    <link2 name="ZooKeeper" href="http://zookeeper.apache.org/"/>
+    <link3 name="ZooKeeper" href="http://zookeeper.apache.org/"/>
   </trail>
 
   <!-- Configure the TOC, i.e. the Table of Contents.

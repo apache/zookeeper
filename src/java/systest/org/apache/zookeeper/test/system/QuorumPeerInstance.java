@@ -28,13 +28,14 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 class QuorumPeerInstance implements Instance {
-    final private static Logger LOG = Logger.getLogger(QuorumPeerInstance.class);
+    final private static Logger LOG = LoggerFactory.getLogger(QuorumPeerInstance.class);
     private static final int syncLimit = 3;
     private static final int initLimit = 3;
     private static final int tickTime = 2000;

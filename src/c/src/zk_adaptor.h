@@ -20,7 +20,11 @@
 #define ZK_ADAPTOR_H_
 #include <zookeeper.jute.h>
 #ifdef THREADED
+#ifndef WIN32
 #include <pthread.h>
+#else
+#include "winport.h"
+#endif
 #endif
 #include "zookeeper.h"
 #include "zk_hashtable.h"
@@ -37,6 +41,7 @@
 #define CONNECTING_STATE_DEF 1
 #define ASSOCIATING_STATE_DEF 2
 #define CONNECTED_STATE_DEF 3
+#define NOTCONNECTED_STATE_DEF 999
 
 /* zookeeper event type constants */
 #define CREATED_EVENT_DEF 1
@@ -155,7 +160,11 @@ struct adaptor_threads {
      pthread_cond_t cond;       // barrier's conditional
      pthread_mutex_t lock;      // ... and a lock
      pthread_mutex_t zh_lock;   // critical section lock
+#ifdef WIN32
+     SOCKET self_pipe[2];
+#else
      int self_pipe[2];
+#endif
 };
 #endif
 
@@ -172,7 +181,11 @@ typedef struct _auth_list_head {
  */
 
 struct _zhandle {
+#ifdef WIN32
+    SOCKET fd; /* the descriptor used to talk to zookeeper */
+#else
     int fd; /* the descriptor used to talk to zookeeper */
+#endif
     char *hostname; /* the hostname of zookeeper */
     struct sockaddr_storage *addrs; /* the addresses that correspond to the hostname */
     int addrs_count; /* The number of addresses in the addrs array */

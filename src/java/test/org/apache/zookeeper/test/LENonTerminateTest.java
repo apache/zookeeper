@@ -25,16 +25,18 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.LeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -84,16 +86,18 @@ public class LENonTerminateTest extends ZKTestCase {
                     requestBytes.length);
             DatagramPacket responsePacket = new DatagramPacket(responseBytes,
                     responseBytes.length);
-            HashMap<InetSocketAddress, Vote> votes =
-                new HashMap<InetSocketAddress, Vote>(self.getVotingView().size());
             int xid = epochGen.nextInt();
             while (self.isRunning()) {
-                votes.clear();
+                HashMap<InetSocketAddress, Vote> votes =
+                    new HashMap<InetSocketAddress, Vote>(self.getVotingView().size());
+
                 requestBuffer.clear();
                 requestBuffer.putInt(xid);
                 requestPacket.setLength(4);
                 HashSet<Long> heardFrom = new HashSet<Long>();
-                for (QuorumServer server : self.getVotingView().values()) {
+                for (QuorumServer server :
+                    self.getVotingView().values())
+                {
                     LOG.info("Server address: " + server.addr);
                     try {
                         requestPacket.setSocketAddress(server.addr);
@@ -158,18 +162,18 @@ public class LENonTerminateTest extends ZKTestCase {
                 // If no votes are received for live peers, reset to voting 
                 // for ourselves as otherwise we may hang on to a vote 
                 // for a dead peer                 
-                if (votes.size() == 0) {                    
+                if (result.numValidVotes == 0) {
                     self.setCurrentVote(new Vote(self.getId(),
                             self.getLastLoggedZxid()));
                 } else {
-                    if (result.winner.id >= 0) {
+                    if (result.winner.getId() >= 0) {
                         self.setCurrentVote(result.vote);
                         // To do: this doesn't use a quorum verifier
                         if (result.winningCount > (self.getVotingView().size() / 2)) {
                             self.setCurrentVote(result.winner);
                             s.close();
                             Vote current = self.getCurrentVote();
-                            LOG.info("Found leader: my type is: " + self.getPeerType());
+                            LOG.info("Found leader: my type is: " + self.getLearnerType());
                             /*
                              * We want to make sure we implement the state machine
                              * correctly. If we are a PARTICIPANT, once a leader
@@ -177,8 +181,8 @@ public class LENonTerminateTest extends ZKTestCase {
                              * FOLLOWING. However if we are an OBSERVER, it is an
                              * error to be elected as a Leader.
                              */
-                            if (self.getPeerType() == LearnerType.OBSERVER) {
-                                if (current.id == self.getId()) {
+                            if (self.getLearnerType() == LearnerType.OBSERVER) {
+                                if (current.getId() == self.getId()) {
                                     // This should never happen!
                                     LOG.error("OBSERVER elected as leader!");
                                     Thread.sleep(100);
@@ -189,7 +193,7 @@ public class LENonTerminateTest extends ZKTestCase {
                                     return current;
                                 }
                             } else {
-                                self.setPeerState((current.id == self.getId())
+                                self.setPeerState((current.getId() == self.getId())
                                         ? ServerState.LEADING: ServerState.FOLLOWING);
                                 if (self.getPeerState() == ServerState.FOLLOWING) {
                                     Thread.sleep(100);
@@ -213,7 +217,7 @@ public class LENonTerminateTest extends ZKTestCase {
         {
             super(quorumPeers, snapDir, logDir, electionAlg,
                     myid,tickTime, initLimit,syncLimit,
-                    new NIOServerCnxn.Factory(new InetSocketAddress(clientPort)),
+                    ServerCnxnFactory.createFactory(clientPort, -1),
                     new QuorumMaj(countParticipants(quorumPeers)));
         }
         
@@ -224,7 +228,7 @@ public class LENonTerminateTest extends ZKTestCase {
     }
     
     
-    protected static final Logger LOG = Logger.getLogger(FLELostMessageTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(FLELostMessageTest.class);
     
     int count;
     HashMap<Long,QuorumServer> peers;
@@ -272,7 +276,7 @@ public class LENonTerminateTest extends ZKTestCase {
                  */
                 peer.setCurrentVote(v);
 
-                LOG.info("Finished election: " + i + ", " + v.id);                    
+                LOG.info("Finished election: " + i + ", " + v.getId());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -321,7 +325,7 @@ public class LENonTerminateTest extends ZKTestCase {
                 try {
                     mockServer();
                 } catch (Exception e) {
-                    LOG.error(e);
+                    LOG.error("exception", e);
                     Assert.fail("Exception when running mocked server " + e);
                 }
             }
@@ -365,8 +369,8 @@ public class LENonTerminateTest extends ZKTestCase {
             responseBuffer.getInt(); // Skip the xid
             responseBuffer.putLong(2);
             
-            responseBuffer.putLong(current.id);
-            responseBuffer.putLong(current.zxid);
+            responseBuffer.putLong(current.getId());
+            responseBuffer.putLong(current.getZxid());
             packet.setData(b);
             udpSocket.send(packet);
         }

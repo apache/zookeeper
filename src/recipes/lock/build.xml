@@ -112,14 +112,14 @@
   <target name="package" depends="jar, zookeeperbuildrecipes.package"
           unless="skip.recipes">
 
-    <copy file="${basedir}/build.xml" todir="${dist.dir}/recipes/${name}"/>
+    <copy file="${basedir}/build.xml" todir="${dist.dir}${package.share}/recipes/${name}"/>
 
-    <mkdir dir="${dist.dir}/recipes/${name}/test"/>
-    <copy todir="${dist.dir}/recipes/${name}/test">
+    <mkdir dir="${dist.dir}${package.share}/recipes/${name}/test"/>
+    <copy todir="${dist.dir}${package.share}/recipes/${name}/test">
       <fileset dir="${basedir}/test"/>
     </copy>
-    <mkdir dir="${dist.dir}/recipes/${name}/src"/>
-    <copy todir="${dist.dir}/recipes/${name}/src">
+    <mkdir dir="${dist.dir}${package.share}/recipes/${name}/src"/>
+    <copy todir="${dist.dir}${package.share}/recipes/${name}/src">
       <fileset dir="${basedir}/src"/>
     </copy>
   </target>

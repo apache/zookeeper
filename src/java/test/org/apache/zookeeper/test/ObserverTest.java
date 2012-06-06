@@ -20,18 +20,18 @@ package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
-import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.Assert;
@@ -39,7 +39,7 @@ import org.junit.Test;
 
 public class ObserverTest extends QuorumPeerTestBase implements Watcher{
     protected static final Logger LOG =
-        Logger.getLogger(ObserverTest.class);    
+        LoggerFactory.getLogger(ObserverTest.class);    
       
     CountDownLatch latch;
     ZooKeeper zk;
@@ -111,17 +111,22 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         
         Assert.assertEquals(zk.getState(), States.CONNECTED);
         
+        LOG.info("Shutting down server 2");
         // Now kill one of the other real servers        
         q2.shutdown();
                 
         Assert.assertTrue("Waiting for server 2 to shut down",
                     ClientBase.waitForServerDown("127.0.0.1:"+CLIENT_PORT_QP2, 
                                     ClientBase.CONNECTION_TIMEOUT));
-        
+
+        LOG.info("Server 2 down");
+
         // Now the resulting ensemble shouldn't be quorate         
         latch.await();        
         Assert.assertNotSame("Client is still connected to non-quorate cluster", 
                 KeeperState.SyncConnected,lastEvent.getState());
+
+        LOG.info("Latch returned");
 
         try {
             Assert.assertFalse("Shouldn't get a response when cluster not quorate!",
@@ -133,14 +138,19 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
         
         latch = new CountDownLatch(1);
 
+        LOG.info("Restarting server 2");
+
         // Bring it back
         q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
         q2.start();
+        
         LOG.info("Waiting for server 2 to come up");
         Assert.assertTrue("waiting for server 2 being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                         CONNECTION_TIMEOUT));
         
+        LOG.info("Server 2 started, waiting for latch");
+
         latch.await();
         // It's possible our session expired - but this is ok, shows we 
         // were able to talk to the ensemble
@@ -149,10 +159,14 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
                 (KeeperState.SyncConnected==lastEvent.getState() ||
                 KeeperState.Expired==lastEvent.getState())); 
 
+        LOG.info("Shutting down all servers");
+
         q1.shutdown();
         q2.shutdown();
         q3.shutdown();
         
+        LOG.info("Closing zk client");
+
         zk.close();        
         Assert.assertTrue("Waiting for server 1 to shut down",
                 ClientBase.waitForServerDown("127.0.0.1:"+CLIENT_PORT_QP1, 
@@ -178,25 +192,42 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
     /**
      * This test ensures that an Observer does not elect itself as a leader, or
      * indeed come up properly, if it is the lone member of an ensemble.
-     * @throws IOException
+     * @throws Exception
      */
     @Test
-    public void testSingleObserver() throws IOException{
+    public void testObserverOnly() throws Exception {
         ClientBase.setupTestEnv();
         final int CLIENT_PORT_QP1 = PortAssignment.unique();        
-        final int CLIENT_PORT_QP2 = PortAssignment.unique();
         
         String quorumCfgSection =
-            "server.1=127.0.0.1:" + (CLIENT_PORT_QP1)
-            + ":" + (CLIENT_PORT_QP2) + "\npeerType=observer";
+            "server.1=127.0.0.1:" + (PortAssignment.unique())
+            + ":" + (PortAssignment.unique()) + ":observer\npeerType=observer\n";
                     
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();
-        Assert.assertFalse("Observer shouldn't come up",
-                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                                            CONNECTION_TIMEOUT));
-        
-        q1.shutdown();
+        q1.join(ClientBase.CONNECTION_TIMEOUT);
+        Assert.assertFalse(q1.isAlive());
     }    
     
+    /**
+     * Ensure that observer only comes up when a proper ensemble is configured.
+     * (and will not come up with standalone server).
+     */
+    @Test
+    public void testObserverWithStandlone() throws Exception {
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();        
+
+        String quorumCfgSection =
+            "server.1=127.0.0.1:" + (PortAssignment.unique())
+            + ":" + (PortAssignment.unique()) + ":observer\n"
+            + "server.2=127.0.0.1:" + (PortAssignment.unique())
+            + ":" + (PortAssignment.unique()) + "\npeerType=observer\n";
+
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+        q1.start();
+        q1.join(ClientBase.CONNECTION_TIMEOUT);
+        Assert.assertFalse(q1.isAlive());
+    }    
+
 }

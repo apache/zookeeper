@@ -31,7 +31,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -40,13 +43,13 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 
 public class QuorumPeerConfig {
-    private static final Logger LOG = Logger.getLogger(QuorumPeerConfig.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
 
     protected InetSocketAddress clientPortAddress;
     protected String dataDir;
     protected String dataLogDir;
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
-    protected int maxClientCnxns = 10;
+    protected int maxClientCnxns = 60;
     /** defaults to -1 if not set explicitly */
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
@@ -66,8 +69,16 @@ public class QuorumPeerConfig {
     protected HashMap<Long, Long> serverGroup = new HashMap<Long, Long>();
     protected int numGroups = 0;
     protected QuorumVerifier quorumVerifier;
+    protected int snapRetainCount = 3;
+    protected int purgeInterval = 0;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
+    
+    /**
+     * Minimum snapshot retain count.
+     * @see org.apache.zookeeper.server.PurgeTxnLog#purge(File, File, int)
+     */
+    private final int MIN_SNAP_RETAIN_COUNT = 3;
 
     @SuppressWarnings("serial")
     public static class ConfigException extends Exception {
@@ -155,6 +166,10 @@ public class QuorumPeerConfig {
                 {
                     throw new ConfigException("Unrecognised peertype: " + value);
                 }
+            } else if (key.equals("autopurge.snapRetainCount")) {
+                snapRetainCount = Integer.parseInt(value);
+            } else if (key.equals("autopurge.purgeInterval")) {
+                purgeInterval = Integer.parseInt(value);
             } else if (key.startsWith("server.")) {
                 int dot = key.indexOf('.');
                 long sid = Long.parseLong(key.substring(dot + 1));
@@ -212,6 +227,15 @@ public class QuorumPeerConfig {
                 System.setProperty("zookeeper." + key, value);
             }
         }
+        
+        // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
+        // PurgeTxnLog.purge(File, File, int) will not allow to purge less
+        // than 3.
+        if (snapRetainCount < MIN_SNAP_RETAIN_COUNT) {
+            LOG.warn("Invalid autopurge.snapRetainCount: " + snapRetainCount
+                    + ". Defaulting to " + MIN_SNAP_RETAIN_COUNT);
+            snapRetainCount = MIN_SNAP_RETAIN_COUNT;
+        }
 
         if (dataDir == null) {
             throw new IllegalArgumentException("dataDir is not set");
@@ -241,7 +265,30 @@ public class QuorumPeerConfig {
             throw new IllegalArgumentException(
                     "minSessionTimeout must not be larger than maxSessionTimeout");
         }
-        if (servers.size() > 1) {
+        if (servers.size() == 0) {
+            if (observers.size() > 0) {
+                throw new IllegalArgumentException("Observers w/o participants is an invalid configuration");
+            }
+            // Not a quorum configuration so return immediately - not an error
+            // case (for b/w compatibility), server will default to standalone
+            // mode.
+            return;
+        } else if (servers.size() == 1) {
+            if (observers.size() > 0) {
+                throw new IllegalArgumentException("Observers w/o quorum is an invalid configuration");
+            }
+
+            // HBase currently adds a single server line to the config, for
+            // b/w compatibility reasons we need to keep this here.
+            LOG.error("Invalid configuration, only one server specified (ignoring)");
+            servers.clear();
+        } else if (servers.size() > 1) {
+            if (servers.size() == 2) {
+                LOG.warn("No server failure will be tolerated. " +
+                    "You need at least 3 servers.");
+            } else if (servers.size() % 2 == 0) {
+                LOG.warn("Non-optimial configuration, consider an odd number of servers.");
+            }
             if (initLimit == 0) {
                 throw new IllegalArgumentException("initLimit is not set");
             }
@@ -291,7 +338,7 @@ public class QuorumPeerConfig {
             // Now add observers to servers, once the quorums have been
             // figured out
             servers.putAll(observers);
-
+    
             File myIdFile = new File(dataDir, "myid");
             if (!myIdFile.exists()) {
                 throw new IllegalArgumentException(myIdFile.toString()
@@ -306,9 +353,21 @@ public class QuorumPeerConfig {
             }
             try {
                 serverId = Long.parseLong(myIdString);
+                MDC.put("myid", myIdString);
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("serverid " + myIdString
                         + " is not a number");
+            }
+            
+            // Warn about inconsistent peer type
+            LearnerType roleByServersList = observers.containsKey(serverId) ? LearnerType.OBSERVER
+                    : LearnerType.PARTICIPANT;
+            if (roleByServersList != peerType) {
+                LOG.warn("Peer type from servers list (" + roleByServersList
+                        + ") doesn't match peerType (" + peerType
+                        + "). Defaulting to servers list.");
+    
+                peerType = roleByServersList;
             }
         }
     }
@@ -326,6 +385,14 @@ public class QuorumPeerConfig {
     public int getElectionAlg() { return electionAlg; }
     public int getElectionPort() { return electionPort; }    
     
+    public int getSnapRetainCount() {
+        return snapRetainCount;
+    }
+
+    public int getPurgeInterval() {
+        return purgeInterval;
+    }
+
     public QuorumVerifier getQuorumVerifier() {   
         return quorumVerifier;
     }

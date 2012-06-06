@@ -1,0 +1,62 @@
+
+ZooKeeper Browser - Hue Application
+===================================
+
+The ZooKeeper Browser application allows you to see how the cluster nodes are working and also allows you to do CRUD operations on the znode hierarchy.
+
+Requirements
+------------
+
+Hue-1.0:
+  * http://github.com/downloads/cloudera/hue/hue-1.0.tgz
+  * http://github.com/downloads/cloudera/hue/release-notes-1.0.html
+
+ZooKeeper REST gateway:
+  * available as contrib: contrib/rest
+
+How to install?
+---------------
+
+First of all you need to install Hue 1.0 release:
+
+  * http://archive.cloudera.com/cdh/3/hue/sdk/sdk.html
+  * http://github.com/cloudera/hue/tree/release-1.0
+
+After you finish the previous step you should copy the zkui/ folder to apps/ and register the new application:
+
+  * $ ./build/env/bin/python tools/app_reg/app_reg.py --install apps/zkui
+  * $ ./build/env/bin/python tools/app_reg/app_reg.py --list 2>&1 | grep zkui
+    zkui           0.1     /Users/philip/src/hue/apps/zkui
+
+
+And restart the Hue application server.
+
+Configuration
+-------------
+
+Edit zkui/src/zkui/settings.py:
+
+CLUSTERS = [{
+        'nice_name': 'Default',
+        'hostport': 'localhost:2181,localhost:2182,localhost:2183',
+        'rest_gateway': 'http://localhost:9998'
+    }, {
+      # ... and more clusters
+    }
+]
+
+What is Hue?
+------------
+
+Wiki: http://wiki.github.com/cloudera/hue/
+Main Repo: http://github.com/cloudera/hue 
+
+Hue is both a web UI for Hadoop and a framework to create interactive web applications. It features a FileBrowser for accessing HDFS, JobSub and JobBrowser applications for submitting and viewing MapReduce jobs, a Beeswax application for interacting with Hive. On top of that, the web frontend is mostly built from declarative widgets that require no JavaScript and are easy to learn.
+
+What is ZooKeeper?
+------------------
+
+http://zookeeper.apache.org/
+
+ZooKeeper is a centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services. All of these kinds of services are used in some form or another by distributed applications. Each time they are implemented there is a lot of work that goes into fixing the bugs and race conditions that are inevitable. Because of the difficulty of implementing these kinds of services, applications initially usually skimp on them ,which make them brittle in the presence of change and difficult to manage. Even when done correctly, different implementations of these services lead to management complexity when the applications are deployed.
+

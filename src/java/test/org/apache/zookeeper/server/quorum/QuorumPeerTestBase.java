@@ -25,10 +25,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
 
@@ -38,7 +41,7 @@ import org.apache.zookeeper.test.QuorumBase;
  */
 public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     protected static final Logger LOG =
-        Logger.getLogger(QuorumPeerTestBase.class);
+        LoggerFactory.getLogger(QuorumPeerTestBase.class);
     
     public void process(WatchedEvent event) {
         // ignore for this test
@@ -47,24 +50,24 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     public static  class TestQPMain extends QuorumPeerMain {
         public void shutdown() {
             // ensure it closes - in particular wait for thread to exit
-            QuorumBase.shutdown(quorumPeer);
+            if (quorumPeer != null) {
+                QuorumBase.shutdown(quorumPeer);
+            }
         }
     }
 
-    public static class MainThread extends Thread {
+    public static class MainThread implements Runnable {
         final File confFile;
-        final TestQPMain main;
+        volatile TestQPMain main;
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
             throws IOException
         {
-            super("QuorumPeer with myid:" + myid
-                    + " and clientPort:" + clientPort);
             File tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
 
             FileWriter fwriter = new FileWriter(confFile);
-            fwriter.write("tickTime=2000\n");
+            fwriter.write("tickTime=4000\n");
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
 
@@ -72,8 +75,15 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             if (!dataDir.mkdir()) {
                 throw new IOException("Unable to mkdir " + dataDir);
             }
-            fwriter.write("dataDir=" + dataDir.toString() + "\n");
 
+            // Convert windows path to UNIX to avoid problems with "\"
+            String dir = dataDir.toString();
+            String osname = java.lang.System.getProperty("os.name");
+            if (osname.toLowerCase().contains("windows")) {
+                dir = dir.replace('\\', '/');
+            }
+            fwriter.write("dataDir=" + dir + "\n");
+            
             fwriter.write("clientPort=" + clientPort + "\n");
             fwriter.write(quorumCfgSection + "\n");
             fwriter.flush();
@@ -84,10 +94,14 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write(Integer.toString(myid));
             fwriter.flush();
             fwriter.close();
-
-            main = new TestQPMain();
         }
 
+        Thread currentThread;
+        synchronized public void start() {
+        	main = new TestQPMain();
+        	currentThread = new Thread(this);
+        	currentThread.start();
+        }
         public void run() {
             String args[] = new String[1];
             args[0] = confFile.toString();
@@ -96,11 +110,27 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             } catch (Exception e) {
                 // test will still fail even though we just log/ignore
                 LOG.error("unexpected exception in run", e);
+            } finally {
+            	currentThread = null;
             }
         }
 
-        public void shutdown() {
-            main.shutdown();
+        public void shutdown() throws InterruptedException {
+        	Thread t = currentThread;
+        	if (t != null && t.isAlive()) {
+        		main.shutdown();
+        		t.join(500);
+        	}
         }
+		public void join(long timeout) throws InterruptedException {
+			Thread t = currentThread;
+			if (t != null) {
+				t.join(timeout);
+			}
+		}
+		public boolean isAlive() {
+			Thread t = currentThread;
+			return t != null && t.isAlive();
+		}
     }
 }
