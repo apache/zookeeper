@@ -153,7 +153,7 @@
             public override void Process(WatchedEvent @event)
             {
                 base.Process(@event);
-                if (@event.EventType != EventType.None)
+                if (@event.Type != EventType.None)
                 {
                     try
                     {
@@ -212,7 +212,7 @@
                     WatchedEvent @event;
                     watchers[i].events.TryTake(out @event, TimeSpan.FromSeconds(3d));
                     Assert.AreEqual(name + i, @event.Path);
-                    Assert.AreEqual(EventType.NodeDataChanged, @event.EventType);
+                    Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
 
                     // small chance that an unexpected message was delivered
@@ -241,7 +241,7 @@
                     WatchedEvent @event;
                     watchers[i].events.TryTake(out @event, TimeSpan.FromSeconds(10d));
                     Assert.AreEqual(name + i, @event.Path);
-                    Assert.AreEqual(EventType.NodeDataChanged, @event.EventType);
+                    Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
 
                     // small chance that an unexpected message was delivered
@@ -269,7 +269,7 @@
                     WatchedEvent @event;
                     watchers[i].events.TryTake(out @event, TimeSpan.FromSeconds(3000));
                     Assert.AreEqual(name + i, @event.Path);
-                    Assert.AreEqual(EventType.NodeDataChanged, @event.EventType);
+                    Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
 
                     // small chance that an unexpected message was delivered
@@ -281,7 +281,7 @@
                     WatchedEvent event2;
                     watchers2[i].events.TryTake(out @event2, TimeSpan.FromSeconds(3000));
                     Assert.AreEqual(name + i, event2.Path);
-                    Assert.AreEqual(EventType.NodeDataChanged, event2.EventType);
+                    Assert.AreEqual(EventType.NodeDataChanged, event2.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, event2.State);
 
                     // small chance that an unexpected message was delivered
@@ -387,7 +387,7 @@
                 WatchedEvent @event;
                 watcher.events.TryTake(out @event, TimeSpan.FromSeconds(3000));
                 Assert.AreEqual(frog, @event.Path);
-                Assert.AreEqual(EventType.NodeCreated, @event.EventType);
+                Assert.AreEqual(EventType.NodeCreated, @event.Type);
                 Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                 // Test child watch and Create with sequence
                 zk.GetChildren(patPlusBen, true);
@@ -429,18 +429,18 @@
                 
                 watcher.events.TryTake(out @event, TimeSpan.FromSeconds(3));
                 Assert.AreEqual(patPlusBen, @event.Path);
-                Assert.AreEqual(EventType.NodeChildrenChanged, @event.EventType);
+                Assert.AreEqual(EventType.NodeChildrenChanged, @event.Type);
                 Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                 for (int i = 0; i < 10; i++)
                 {
                     watcher.events.TryTake(out @event, TimeSpan.FromSeconds(3));
                     string name = children.ElementAt(i);
                     Assert.AreEqual(patPlusBen + "/" + name, @event.Path);
-                    Assert.AreEqual(EventType.NodeDataChanged, @event.EventType);
+                    Assert.AreEqual(EventType.NodeDataChanged, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                     watcher.events.TryTake(out @event, TimeSpan.FromSeconds(3));
                     Assert.AreEqual(patPlusBen + "/" + name, @event.Path);
-                    Assert.AreEqual(EventType.NodeDeleted, @event.EventType);
+                    Assert.AreEqual(EventType.NodeDeleted, @event.Type);
                     Assert.AreEqual(KeeperState.SyncConnected, @event.State);
                 }
                 zk.Create("/good" + Guid.NewGuid() + "\u0040path", "".GetBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.Persistent);

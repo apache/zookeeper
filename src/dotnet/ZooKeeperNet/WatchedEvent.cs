@@ -46,7 +46,7 @@
             get { return state; }
         }
 
-        public EventType EventType
+        public EventType Type
         {
             get { return type; }
         }

@@ -111,7 +111,7 @@ using System.Collections.Generic;
 
         public void QueueEvent(WatchedEvent @event)
         {
-            if (@event.EventType == EventType.None && sessionState == @event.State) return;
+            if (@event.Type == EventType.None && sessionState == @event.State) return;
 
             if (Interlocked.CompareExchange(ref isDisposed, 0, 0) == 1)
                 throw new InvalidOperationException("consumer has been disposed");
@@ -119,7 +119,7 @@ using System.Collections.Generic;
             sessionState = @event.State;
 
             // materialize the watchers based on the event
-            var pair = new ClientConnection.WatcherSetEventPair(conn.watcher.Materialize(@event.State, @event.EventType,@event.Path), @event);
+            var pair = new ClientConnection.WatcherSetEventPair(conn.watcher.Materialize(@event.State, @event.Type,@event.Path), @event);
             // queue the pair (watch set & event) for later processing
             waitingEvents.Enqueue(pair);
         }

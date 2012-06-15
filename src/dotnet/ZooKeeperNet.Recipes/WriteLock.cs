@@ -206,7 +206,7 @@
             public void Process(WatchedEvent @event)
             {
                 if (LOG.IsDebugEnabled)
-                    LOG.DebugFormat("Watcher fired on path: {0} state: {1} type {2}", @event.Path, @event.State, @event.EventType);
+                    LOG.DebugFormat("Watcher fired on path: {0} state: {1} type {2}", @event.Path, @event.State, @event.Type);
                 try
                 {
                     writeLock.Lock();
