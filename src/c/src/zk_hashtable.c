@@ -189,8 +189,12 @@ static int do_insert_watcher_object(zk_hashtable *ht, const char *path, watcher_
         res=hashtable_insert(ht->ht,strdup(path),create_watcher_object_list(wo));
         assert(res);
     }else{
-        /* path already exists; check if the watcher already exists */
-        res = add_to_list(&wl, wo, 1);
+        /*
+         * Path already exists; check if the watcher already exists.
+         * Don't clone the watcher since it's allocated on the heap --- avoids
+         * a memory leak and saves a clone operation (calloc + copy).
+         */
+        res = add_to_list(&wl, wo, 0);
     }
     return res;    
 }
