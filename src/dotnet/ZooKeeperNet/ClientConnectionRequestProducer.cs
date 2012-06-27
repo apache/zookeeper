@@ -539,7 +539,10 @@ namespace ZooKeeperNet
             if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
             {
                 zooKeeper.State = ZooKeeper.States.CLOSED;
-                requestThread.Join();
+                if (requestThread.IsAlive)
+                {
+                    requestThread.Join();
+                }
                 incomingBuffer = juteBuffer = null;
             }
         }
