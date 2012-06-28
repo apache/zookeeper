@@ -129,11 +129,21 @@ using System.Collections.Generic;
         {
             if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
             {
-                eventThread.Join();
-                //process any unprocessed event
-                ClientConnection.WatcherSetEventPair pair;
-                while(waitingEvents.TryDequeue(out pair))
-                    ProcessWatcher(pair.Watchers, pair.WatchedEvent);
+                try
+                {
+                    if (eventThread.IsAlive)
+                    {
+                        eventThread.Join();
+                    }
+                    //process any unprocessed event
+                    ClientConnection.WatcherSetEventPair pair;
+                    while (waitingEvents.TryDequeue(out pair))
+                        ProcessWatcher(pair.Watchers, pair.WatchedEvent);  
+                }
+                catch (Exception ex)
+                {
+                    LOG.WarnFormat("Error disposing {0} : {1}", this.GetType().FullName, ex.Message);
+                }
             }
         }
 

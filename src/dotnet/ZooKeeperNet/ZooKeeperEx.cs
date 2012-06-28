@@ -16,6 +16,7 @@
  *
  */
 ﻿using System.Collections.Generic;
+﻿using log4net;
 
 namespace ZooKeeperNet
 {
@@ -26,6 +27,8 @@ namespace ZooKeeperNet
 
     public static class ZooKeeperEx
     {
+        private static readonly ILog LOG = LogManager.GetLogger(typeof(ZooKeeperEx));
+
         public static TValue GetAndRemove<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
         {
             TValue value;
@@ -88,8 +91,16 @@ namespace ZooKeeperNet
 
             public void Dispose()
             {
-                action();
-                sentinel.Dispose();
+                try
+                {
+                    action();
+                    sentinel.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    LOG.WarnFormat("Error disposing {0} : {1}", this.GetType().FullName, ex.Message);
+                }
+                
             }
         }
 

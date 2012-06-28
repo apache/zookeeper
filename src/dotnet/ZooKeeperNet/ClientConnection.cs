@@ -261,6 +261,10 @@
                 {
                     // ignore, close the send/event threads
                 }
+                catch (Exception ex)
+                {
+                    LOG.WarnFormat("Error disposing {0} : {1}", this.GetType().FullName, ex.Message);
+                }
                 finally
                 {
                     producer.Dispose();

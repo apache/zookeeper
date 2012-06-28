@@ -539,10 +539,18 @@ namespace ZooKeeperNet
             if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
             {
                 zooKeeper.State = ZooKeeper.States.CLOSED;
-                if (requestThread.IsAlive)
+                try
                 {
-                    requestThread.Join();
+                    if (requestThread.IsAlive)
+                    {
+                        requestThread.Join();
+                    } 
                 }
+                catch (Exception ex)
+                {
+                    LOG.WarnFormat("Error disposing {0} : {1}", this.GetType().FullName, ex.Message);
+                }
+                
                 incomingBuffer = juteBuffer = null;
             }
         }
