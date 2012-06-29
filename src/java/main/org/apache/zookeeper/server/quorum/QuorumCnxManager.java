@@ -103,7 +103,7 @@ public class QuorumCnxManager {
      * Shutdown flag
      */
 
-    boolean shutdown = false;
+    volatile boolean shutdown = false;
 
     /*
      * Listener thread

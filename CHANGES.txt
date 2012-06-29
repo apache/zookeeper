@@ -3,6 +3,9 @@ Backward compatible changes:
 
 BUGFIXES:
 
+  ZOOKEEPER-1466. QuorumCnxManager.shutdown missing synchronization.
+  (Patrick Hunt via mahadev)
+
   ZOOKEEPER-1403. zkCli.sh script quoting issue (James Page via phunt)
 
   ZOOKEEPER-1433. improve ZxidRolloverTest (test seems flakey) (phunt via henryr)
