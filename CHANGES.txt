@@ -188,6 +188,8 @@ BUGFIXES:
   ZOOKEEPER-1163. Memory leak in zk_hashtable.c:do_insert_watcher_object()
   (Anupam Chanda via michim)
 
+  ZOOKEEPER-1466. QuorumCnxManager.shutdown missing synchronization. (Patrick Hunt via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
