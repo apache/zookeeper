@@ -28,6 +28,11 @@ BUGFIXES:
   ZOOKEEPER-1163. Memory leak in zk_hashtable.c:do_insert_watcher_object()
   (Anupam Chanda via michim)
 
+IMPROVEMENTS:
+
+  ZOOKEEPER-1454. Document how to run autoreconf if cppunit is
+    installed in a non-standard directory (Michi Mutsuzaki via phunt)
+
 Release 3.3.5 - 2012-03-18
 Backward compatible changes:
 
