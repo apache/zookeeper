@@ -43,7 +43,12 @@ tar downloaded from Apache please skip to step 2.
 2) unzip/untar the source tarball and cd to the zookeeper-x.x.x/src/c directory
 3) change directory to src/c and do a "autoreconf -if" to bootstrap
    autoconf, automake and libtool. Please make sure you have autoconf
-   version 2.59 or greater installed.
+   version 2.59 or greater installed. If cppunit is installed in a non-standard
+   directory, you need to specify where to find cppunit.m4. For example, if
+   cppunit is installed under /usr/local, run:
+   
+       ACLOCAL="aclocal -I /usr/local/share/aclocal" autoreconf -if
+
 4) do a "./configure [OPTIONS]" to generate the makefile. See INSTALL
    for general information about running configure. Additionally, the
    configure supports the following options:
