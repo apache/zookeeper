@@ -61,6 +61,10 @@ BUGFIXES:
   ZOOKEEPER-1163. Memory leak in zk_hashtable.c:do_insert_watcher_object()
   (Anupam Chanda via michim)
 
+  ZOOKEEPER-1490. If the configured log directory does not exist
+    zookeeper will not start. Better to create the directory and start
+    (suja s via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
