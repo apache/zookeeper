@@ -52,7 +52,6 @@ Version: %{version}
 Release: %{release} 
 Source0: %{_python_lib}
 Prefix: %{_prefix}
-Buildroot: %{_build_dir}
 Requires: zookeeper-lib == %{version}
 AutoReqProv: no
 Provides: zkpython
