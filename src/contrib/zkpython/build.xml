@@ -141,7 +141,7 @@
         </filterchain>
       </copy>
 
-      <rpm specFile="${name}.spec" command="-ba" topDir="${package.buildroot}" cleanBuildDir="true" failOnError="true" />
+      <rpm specFile="${name}.spec" command="-ba --buildroot=${package.buildroot}/BUILD" topDir="${package.buildroot}" cleanBuildDir="true" failOnError="true" />
       <copy todir="${build.dir}/" flatten="true">
         <fileset dir="${package.buildroot}/RPMS">
           <include name="**/*.rpm" />
