@@ -197,6 +197,9 @@ BUGFIXES:
   ZOOKEEPER-1210. Can't build ZooKeeper RPM with RPM >= 4.6.0 (i.e. on
     RHEL 6 and Fedora >= 10) (Tadeusz Andrzej Kadłubowski via phunt)
 
+  ZOOKEEPER-1236. Security uses proprietary Sun APIs
+    (Adalberto Medeiros via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
