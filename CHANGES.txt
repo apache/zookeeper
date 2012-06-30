@@ -65,6 +65,9 @@ BUGFIXES:
     zookeeper will not start. Better to create the directory and start
     (suja s via phunt)
 
+  ZOOKEEPER-1210. Can't build ZooKeeper RPM with RPM >= 4.6.0 (i.e. on
+    RHEL 6 and Fedora >= 10) (Tadeusz Andrzej Kadłubowski via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
