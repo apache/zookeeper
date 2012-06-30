@@ -317,6 +317,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1440. Spurious log error messages when QuorumCnxManager is shutting
   down (Jordan Zimmerman via michim)
 
+  ZOOKEEPER-1454. Document how to run autoreconf if cppunit is
+    installed in a non-standard directory (Michi Mutsuzaki via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
