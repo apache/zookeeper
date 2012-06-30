@@ -32,8 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import sun.security.krb5.Config;
-import sun.security.krb5.KrbException;
+
+import org.apache.zookeeper.server.util.KerberosUtil;
 
 /**
  * This class implements parsing and handling of Kerberos principal names. In 
@@ -79,17 +79,17 @@ public class KerberosName {
   private static List<Rule> rules;
 
   private static String defaultRealm;
-  private static Config kerbConf;
   
   static {
     try {
-      kerbConf = Config.getInstance();
-      defaultRealm = kerbConf.getDefaultRealm();
-    } catch (KrbException ke) {
+      defaultRealm = KerberosUtil.getDefaultRealm();
+    } catch (Exception ke) {
       if ((System.getProperty("zookeeper.requireKerberosConfig") != null) &&
           (System.getProperty("zookeeper.requireKerberosConfig").equals("true"))) {
         throw new IllegalArgumentException("Can't get Kerberos configuration",ke);
       }
+      else
+        defaultRealm="";
     }
     try {
       // setConfiguration() will work even if the above try() fails due
