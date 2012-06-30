@@ -190,6 +190,10 @@ BUGFIXES:
 
   ZOOKEEPER-1466. QuorumCnxManager.shutdown missing synchronization. (Patrick Hunt via mahadev)
 
+  ZOOKEEPER-1490. If the configured log directory does not exist
+    zookeeper will not start. Better to create the directory and start
+    (suja s via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
