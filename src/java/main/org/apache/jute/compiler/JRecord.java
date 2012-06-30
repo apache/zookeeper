@@ -99,7 +99,7 @@ public class JRecord extends JCompType {
     }
 
     public String genCppDecl(String fname) {
-        return "  "+mName+" "+fname+";\n";
+        return "  "+ getCppNameSpace() + "::" + mName+" m"+fname+";\n";
     }
 
     public String genJavaReadMethod(String fname, String tag) {
@@ -320,9 +320,9 @@ public class JRecord extends JCompType {
             JField jf = i.next();
             String name = jf.getName();
             if (jf.getType() instanceof JBuffer) {
-                cc.write("  a_.serialize("+name+","+name+".length(),\""+jf.getTag()+"\");\n");
+                cc.write("  a_.serialize(m"+name+",m"+name+".length(),\""+jf.getTag()+"\");\n");
             } else {
-                cc.write("  a_.serialize("+name+",\""+jf.getTag()+"\");\n");
+                cc.write("  a_.serialize(m"+name+",\""+jf.getTag()+"\");\n");
             }
             cc.write("  bs_.reset("+fIdx+");\n");
         }
@@ -337,9 +337,9 @@ public class JRecord extends JCompType {
             JField jf = i.next();
             String name = jf.getName();
             if (jf.getType() instanceof JBuffer) {
-                cc.write("  { size_t len=0; a_.deserialize("+name+",len,\""+jf.getTag()+"\");}\n");
+                cc.write("  { size_t len=0; a_.deserialize(m"+name+",len,\""+jf.getTag()+"\");}\n");
             } else {
-                cc.write("  a_.deserialize("+name+",\""+jf.getTag()+"\");\n");
+                cc.write("  a_.deserialize(m"+name+",\""+jf.getTag()+"\");\n");
             }
             cc.write("  bs_.set("+fIdx+");\n");
         }
@@ -353,7 +353,7 @@ public class JRecord extends JCompType {
             JField jf = (JField) i.next();
             JType type = jf.getType();
             if (type instanceof JRecord) {
-                cc.write("  if (!"+jf.getName()+".validate()) return false;\n");
+                cc.write("  if (!m"+jf.getName()+".validate()) return false;\n");
             }
         }
         cc.write("  return true;\n");
@@ -364,7 +364,7 @@ public class JRecord extends JCompType {
         for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
             JField jf = i.next();
             String name = jf.getName();
-            cc.write("    && ("+name+" < peer_."+name+")\n");
+            cc.write("    && (m"+name+" < peer_.m"+name+")\n");
         }
         cc.write("  );\n");
         cc.write("}\n");
@@ -374,7 +374,7 @@ public class JRecord extends JCompType {
         for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
             JField jf = i.next();
             String name = jf.getName();
-            cc.write("    && ("+name+" == peer_."+name+")\n");
+            cc.write("    && (m"+name+" == peer_.m"+name+")\n");
         }
         cc.write("  );\n");
         cc.write("}\n");
