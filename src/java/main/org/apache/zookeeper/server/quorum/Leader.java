@@ -840,7 +840,11 @@ public class Leader {
             }
             if (ss.getCurrentEpoch() != -1) {
                 if (ss.isMoreRecentThan(leaderStateSummary)) {
-                    throw new IOException("Follower is ahead of the leader");
+                    throw new IOException("Follower is ahead of the leader, leader summary: " 
+                                                    + leaderStateSummary.getCurrentEpoch()
+                                                    + " (current epoch), "
+                                                    + leaderStateSummary.getLastZxid()
+                                                    + " (last zxid)");
                 }
                 electingFollowers.add(id);
             }
@@ -860,6 +864,52 @@ public class Leader {
                     throw new InterruptedException("Timeout while waiting for epoch to be acked by quorum");
                 }
             }
+        }
+    }
+
+    /**
+     * Get string representation of a given packet type
+     * @param packetType
+     * @return string representing the packet type
+     */
+    public static String getPacketType(int packetType) {
+        switch (packetType) {
+        case DIFF:
+            return "DIFF";
+        case TRUNC:
+            return "TRUNC";
+        case SNAP:
+            return "SNAP";
+        case OBSERVERINFO:
+            return "OBSERVERINFO";
+        case NEWLEADER:
+            return "NEWLEADER";
+        case FOLLOWERINFO:
+            return "FOLLOWERINFO";
+        case UPTODATE:
+            return "UPTODATE";
+        case LEADERINFO:
+            return "LEADERINFO";
+        case ACKEPOCH:
+            return "ACKEPOCH";
+        case REQUEST:
+            return "REQUEST";
+        case PROPOSAL:
+            return "PROPOSAL";
+        case ACK:
+            return "ACK";
+        case COMMIT:
+            return "COMMIT";
+        case PING:
+            return "PING";
+        case REVALIDATE:
+            return "REVALIDATE";
+        case SYNC:
+            return "SYNC";
+        case INFORM:
+            return "INFORM";
+        default:
+            return "UNKNOWN";
         }
     }
 }
