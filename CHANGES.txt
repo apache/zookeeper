@@ -28,6 +28,8 @@ BUGFIXES:
   ZOOKEEPER-1163. Memory leak in zk_hashtable.c:do_insert_watcher_object()
   (Anupam Chanda via michim)
 
+  ZOOKEEPER-1489. Data loss after truncate on transaction log (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1454. Document how to run autoreconf if cppunit is

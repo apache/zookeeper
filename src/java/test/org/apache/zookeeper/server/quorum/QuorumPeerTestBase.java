@@ -34,8 +34,8 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
 
 /**
- * Has some common functionality for tests that work with QuorumPeers.
- * Override process(WatchedEvent) to implement the Watcher interface
+ * Has some common functionality for tests that work with QuorumPeers. Override
+ * process(WatchedEvent) to implement the Watcher interface
  */
 public class QuorumPeerTestBase extends TestCase implements Watcher {
     protected static final Logger LOG =
@@ -45,7 +45,7 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
         // ignore for this test
     }
 
-    public static  class TestQPMain extends QuorumPeerMain {
+    public static class TestQPMain extends QuorumPeerMain {
         public void shutdown() {
             // ensure it closes - in particular wait for thread to exit
             if (quorumPeer != null) {
@@ -54,16 +54,16 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
         }
     }
 
-    public static class MainThread extends Thread {
+    public static class MainThread implements Runnable {
         final File confFile;
         volatile TestQPMain main;
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
             throws IOException
         {
-            super("QuorumPeer with myid:" + myid
-                    + " and clientPort:" + clientPort);
             File tmpDir = ClientBase.createTmpDir();
+            LOG.info("id = " + myid + " tmpDir = " + tmpDir + " clientPort = "
+                    + clientPort);
             confFile = new File(tmpDir, "zoo.cfg");
 
             FileWriter fwriter = new FileWriter(confFile);
@@ -99,11 +99,13 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
         }
 
         Thread currentThread;
+
         synchronized public void start() {
             main = new TestQPMain();
             currentThread = new Thread(this);
             currentThread.start();
         }
+
         public void run() {
             String args[] = new String[1];
             args[0] = confFile.toString();
@@ -125,5 +127,21 @@ public class QuorumPeerTestBase extends TestCase implements Watcher {
             }
         }
 
+        public void join(long timeout) throws InterruptedException {
+            Thread t = currentThread;
+            if (t != null) {
+                t.join(timeout);
+            }
+        }
+
+        public boolean isAlive() {
+            Thread t = currentThread;
+            return t != null && t.isAlive();
+        }
+
+        public void clean() {
+            ClientBase.recursiveDelete(main.quorumPeer.getTxnFactory()
+                    .getDataDir());
+        }
     }
 }
