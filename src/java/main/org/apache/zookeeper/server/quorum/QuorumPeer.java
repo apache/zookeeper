@@ -21,7 +21,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -39,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -1283,16 +1283,36 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     public static final String ACCEPTED_EPOCH_FILENAME = "acceptedEpoch";
 
+	/**
+	 * Write a long value to disk atomically. Either succeeds or an exception
+	 * is thrown.
+	 * @param name file name to write the long to
+	 * @param value the long value to write to the named file
+	 * @throws IOException if the file cannot be written atomically
+	 */
     private void writeLongToFile(String name, long value) throws IOException {
         File file = new File(logFactory.getSnapDir(), name);
-        FileOutputStream out = new FileOutputStream(file);
+        AtomicFileOutputStream out = new AtomicFileOutputStream(file);
         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out));
+        boolean aborted = false;
         try {
             bw.write(Long.toString(value));
             bw.flush();
-            out.getFD().sync();
+            
+            out.flush();
+        } catch (IOException e) {
+            LOG.error("Failed to write new file " + file, e);
+            // worst case here the tmp file/resources(fd) are not cleaned up
+            //   and the caller will be notified (IOException)
+            aborted = true;
+            out.abort();
+            throw e;
         } finally {
-            bw.close();
+            if (!aborted) {
+                // if the close operation (rename) fails we'll get notified.
+                // worst case the tmp file may still exist
+                out.close();
+            }
         }
     }
 

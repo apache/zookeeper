@@ -207,6 +207,8 @@ BUGFIXES:
     takes a long time with large datasets - is correlated to dataset size
     (fpj and Thawan Kooburat via camille)
 
+  ZOOKEEPER-1427. Writing to local files is done non-atomically (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
