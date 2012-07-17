@@ -76,6 +76,7 @@
     <Compile Include="AbstractZooKeeperTests.cs" />
     <Compile Include="ACLRootTests.cs" />
     <Compile Include="AssemblyFixture.cs" />
+    <Compile Include="RecoveryTest.cs" />
     <Compile Include="SocketTests.cs" />
     <Compile Include="ChrootTests.cs" />
     <Compile Include="ClientTests.cs" />
@@ -84,12 +85,6 @@
     <Compile Include="NullDataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StatTests.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ZooKeeperNet\ZooKeeperNet.csproj">
-      <Project>{5C6774FB-2350-46B2-B1DF-1CCC757C7727}</Project>
-      <Name>ZooKeeperNet</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -110,6 +105,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ZooKeeperNet\ZooKeeperNet.csproj">
+      <Project>{5C6774FB-2350-46B2-B1DF-1CCC757C7727}</Project>
+      <Name>ZooKeeperNet</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
