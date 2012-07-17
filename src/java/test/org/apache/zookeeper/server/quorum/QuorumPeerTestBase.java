@@ -25,29 +25,27 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Has some common functionality for tests that work with QuorumPeers.
- * Override process(WatchedEvent) to implement the Watcher interface
+ * Has some common functionality for tests that work with QuorumPeers. Override
+ * process(WatchedEvent) to implement the Watcher interface
  */
 public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
-    protected static final Logger LOG =
-        LoggerFactory.getLogger(QuorumPeerTestBase.class);
-    
+    protected static final Logger LOG = LoggerFactory
+            .getLogger(QuorumPeerTestBase.class);
+
     public void process(WatchedEvent event) {
         // ignore for this test
     }
 
-    public static  class TestQPMain extends QuorumPeerMain {
+    public static class TestQPMain extends QuorumPeerMain {
         public void shutdown() {
             // ensure it closes - in particular wait for thread to exit
             if (quorumPeer != null) {
@@ -61,9 +59,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         volatile TestQPMain main;
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
-            throws IOException
-        {
+                throws IOException {
             File tmpDir = ClientBase.createTmpDir();
+            LOG.info("id = " + myid + " tmpDir = " + tmpDir + " clientPort = "
+                    + clientPort);
             confFile = new File(tmpDir, "zoo.cfg");
 
             FileWriter fwriter = new FileWriter(confFile);
@@ -83,7 +82,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                 dir = dir.replace('\\', '/');
             }
             fwriter.write("dataDir=" + dir + "\n");
-            
+
             fwriter.write("clientPort=" + clientPort + "\n");
             fwriter.write(quorumCfgSection + "\n");
             fwriter.flush();
@@ -97,11 +96,13 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         Thread currentThread;
+
         synchronized public void start() {
-        	main = new TestQPMain();
-        	currentThread = new Thread(this);
-        	currentThread.start();
+            main = new TestQPMain();
+            currentThread = new Thread(this);
+            currentThread.start();
         }
+
         public void run() {
             String args[] = new String[1];
             args[0] = confFile.toString();
@@ -111,26 +112,33 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                 // test will still fail even though we just log/ignore
                 LOG.error("unexpected exception in run", e);
             } finally {
-            	currentThread = null;
+                currentThread = null;
             }
         }
 
         public void shutdown() throws InterruptedException {
-        	Thread t = currentThread;
-        	if (t != null && t.isAlive()) {
-        		main.shutdown();
-        		t.join(500);
-        	}
+            Thread t = currentThread;
+            if (t != null && t.isAlive()) {
+                main.shutdown();
+                t.join(500);
+            }
         }
-		public void join(long timeout) throws InterruptedException {
-			Thread t = currentThread;
-			if (t != null) {
-				t.join(timeout);
-			}
-		}
-		public boolean isAlive() {
-			Thread t = currentThread;
-			return t != null && t.isAlive();
-		}
+
+        public void join(long timeout) throws InterruptedException {
+            Thread t = currentThread;
+            if (t != null) {
+                t.join(timeout);
+            }
+        }
+
+        public boolean isAlive() {
+            Thread t = currentThread;
+            return t != null && t.isAlive();
+        }
+
+        public void clean() {
+            ClientBase.recursiveDelete(main.quorumPeer.getTxnFactory()
+                    .getDataDir());
+        }
     }
 }
