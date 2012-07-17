@@ -125,4 +125,10 @@
     </Or>
   </Match>
 
+  <Match>
+    <Class name="org.apache.zookeeper.server.quorum.QuorumPeer"/>
+    <Bug pattern="OS_OPEN_STREAM" />
+    <Method name="writeLongToFile" />
+  </Match>
+
 </FindBugsFilter>
