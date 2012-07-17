@@ -80,6 +80,8 @@ BUGFIXES:
 
   ZOOKEEPER-1427. Writing to local files is done non-atomically (phunt)
 
+  ZOOKEEPER-1489. Data loss after truncate on transaction log (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
