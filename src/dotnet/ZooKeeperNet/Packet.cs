@@ -38,6 +38,7 @@ namespace ZooKeeperNet
         private int finished;
         internal ZooKeeper.WatchRegistration watchRegistration;
         internal readonly byte[] data;
+        public readonly DateTime DateCreated;
 
         /** Client's view of the path (may differ due to chroot) **/
         private string clientPath;
@@ -65,7 +66,10 @@ namespace ZooKeeperNet
                     {
                         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(writer);
                         boa.WriteInt(-1, "len"); // We'll fill this in later
-                        header.Serialize(boa, "header");
+                        if(header != null)
+                        {
+                            header.Serialize(boa, "header");
+                        }
                         if (request != null)
                         {
                             request.Serialize(boa, "request");

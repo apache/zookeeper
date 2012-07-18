@@ -179,6 +179,7 @@
             public static readonly States CONNECTED = new States("CONNECTED");
             public static readonly States CLOSED = new States("CLOSED");
             public static readonly States AUTH_FAILED = new States("AUTH_FAILED");
+            public static readonly States NOT_CONNECTED = new States("NOT_CONNECTED");
 
             private string state;
 
@@ -215,6 +216,11 @@
             public override int GetHashCode()
             {
                 return (state != null ? state.GetHashCode() : 0);
+            }
+
+            public override string ToString()
+            {
+                return this.state;
             }
         }
 

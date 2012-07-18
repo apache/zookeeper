@@ -298,8 +298,8 @@
                 .Append(" xid:").Append(producer.xid)
                 .Append(" sent:").Append(producer.sentCount)
                 .Append(" recv:").Append(producer.recvCount)
-                .Append(" queuedpkts:").Append(producer.outgoingQueue.Count)
-                .Append(" pendingresp:").Append(producer.pendingQueue.Count)
+                .Append(" queuedpkts:").Append(producer.OutgoingQueueCount)
+                .Append(" pendingresp:").Append(producer.PendingQueueCount)
                 .Append(" queuedevents:").Append(consumer.waitingEvents.Count);
 
             return sb.ToString();
