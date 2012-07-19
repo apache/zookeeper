@@ -385,7 +385,7 @@
         /// </summary>   
         private void InternalDispose()
         {
-            if (!State.IsAlive())
+            if (null != State && !State.IsAlive())
             {
                 if (LOG.IsDebugEnabled)
                 {
