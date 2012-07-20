@@ -385,7 +385,9 @@
         /// </summary>   
         private void InternalDispose()
         {
-            if (!State.IsAlive())
+            //Assume an unitialized connection state could still require a connection disposal
+            var connectionState = State;
+            if (null != connectionState && !connectionState.IsAlive())
             {
                 if (LOG.IsDebugEnabled)
                 {
@@ -403,7 +405,7 @@
             {
                 cnxn.Dispose();
             }
-            catch (IOException e)
+            catch (Exception e)
             {
                 if (LOG.IsDebugEnabled)
                 {
