@@ -233,7 +233,6 @@ public class LearnerHandler extends Thread {
     @Override
     public void run() {
         try {
-            sock.setSoTimeout(leader.self.getTickTime()*leader.self.getInitLimit());
             ia = BinaryInputArchive.getArchive(new BufferedInputStream(sock
                     .getInputStream()));
             bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
@@ -458,6 +457,9 @@ public class LearnerHandler extends Thread {
                 return;
             }
             leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
+            
+            // now that the ack has been processed expect the syncLimit
+            sock.setSoTimeout(leader.self.tickTime * leader.self.syncLimit);
 
             /*
              * Wait until leader starts up
@@ -472,7 +474,6 @@ public class LearnerHandler extends Thread {
             // using the data
             //
             queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
-
 
             while (true) {
                 qp = new QuorumPacket();
