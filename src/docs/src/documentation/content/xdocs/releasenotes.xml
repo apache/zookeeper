@@ -18,7 +18,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
 "http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
 <article id="ar_ReleaseNotes">
-  <title>ZooKeeper 3.3.5 Release Notes</title>
+  <title>ZooKeeper 3.3.6 Release Notes</title>
 
   <articleinfo>
     <legalnotice>
@@ -47,10 +47,10 @@ from version 2 of ZooKeeper (SourceForge) to version 3 or
 later.</para>
 
 <section id="changes">
-<title>Changes Since ZooKeeper 3.3.4</title>
+<title>Changes Since ZooKeeper 3.3.5</title>
 
 <table>
-<title>Changes Since ZooKeeper 3.3.4</title>
+<title>Changes Since ZooKeeper 3.3.5</title>
 <tgroup cols='2'>
 <colspec colname='c1'/><colspec colname='c2'/>
 <thead>
@@ -64,33 +64,47 @@ later.</para>
 <row><entry>        Bug
 </entry><entry></entry></row>
 
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-973'>ZOOKEEPER-973</ulink>]</entry><entry>         bind() could fail on Leader because it does not setReuseAddress on its ServerSocket 
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1048'>ZOOKEEPER-1048</ulink>]</entry><entry>         addauth command does not work in cli_mt/cli_st
 </entry></row>
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1089'>ZOOKEEPER-1089</ulink>]</entry><entry>         zkServer.sh status does not work due to invalid option of nc
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1163'>ZOOKEEPER-1163</ulink>]</entry><entry>         Memory leak in zk_hashtable.c:do_insert_watcher_object()
 </entry></row>
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1277'>ZOOKEEPER-1277</ulink>]</entry><entry>         servers stop serving when lower 32bits of zxid roll over
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1210'>ZOOKEEPER-1210</ulink>]</entry><entry>         Can&#39;t build ZooKeeper RPM with RPM &gt;= 4.6.0 (i.e. on RHEL 6 and Fedora &gt;= 10)
 </entry></row>
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1309'>ZOOKEEPER-1309</ulink>]</entry><entry>         Creating a new ZooKeeper client can leak file handles
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1305'>ZOOKEEPER-1305</ulink>]</entry><entry>         zookeeper.c:prepend_string func can dereference null ptr
 </entry></row>
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1352'>ZOOKEEPER-1352</ulink>]</entry><entry>         server.InvalidSnapshotTest is using connection timeouts that are too short
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1318'>ZOOKEEPER-1318</ulink>]</entry><entry>         In Python binding, get_children (and get and exists, and probably others) with expired session doesn&#39;t raise exception properly
 </entry></row>
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1353'>ZOOKEEPER-1353</ulink>]</entry><entry>         C client test suite fails consistently
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1339'>ZOOKEEPER-1339</ulink>]</entry><entry>         C clien doesn&#39;t build with --enable-debug
 </entry></row>
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1367'>ZOOKEEPER-1367</ulink>]</entry><entry>         Data inconsistencies and unexpired ephemeral nodes after cluster restart
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1395'>ZOOKEEPER-1395</ulink>]</entry><entry>         node-watcher double-free redux
 </entry></row>
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1386'>ZOOKEEPER-1386</ulink>]</entry><entry>         avoid flaky URL redirection in &quot;ant javadoc&quot; : replace &quot;http://java.sun.com/javase/6/docs/api/&quot; with &quot;http://download.oracle.com/javase/6/docs/api/&quot; 
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1403'>ZOOKEEPER-1403</ulink>]</entry><entry>         zkCli.sh script quoting issue
 </entry></row>
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1412'>ZOOKEEPER-1412</ulink>]</entry><entry>         java client watches inconsistently triggered on reconnect
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1431'>ZOOKEEPER-1431</ulink>]</entry><entry>         zkpython: async calls leak memory
 </entry></row>
-        
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1466'>ZOOKEEPER-1466</ulink>]</entry><entry>         QuorumCnxManager.shutdown missing synchronization
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1489'>ZOOKEEPER-1489</ulink>]</entry><entry>         Data loss after truncate on transaction log
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1493'>ZOOKEEPER-1493</ulink>]</entry><entry>         C Client: zookeeper_process doesn&#39;t invoke completion callback if zookeeper_close has been called
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1521'>ZOOKEEPER-1521</ulink>]</entry><entry>         LearnerHandler initLimit/syncLimit problems specifying follower socket timeout limits
+</entry></row>
+
 <row><entry>        Improvement
 </entry><entry></entry></row>
 
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1345'>ZOOKEEPER-1345</ulink>]</entry><entry>         Add a .gitignore file with general exclusions and Eclipse project files excluded
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1433'>ZOOKEEPER-1433</ulink>]</entry><entry>         improve ZxidRolloverTest (test seems flakey)
 </entry></row>
-<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1389'>ZOOKEEPER-1389</ulink>]</entry><entry>         it would be nice if start-foreground used exec $JAVA in order to get rid of the intermediate shell process
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1454'>ZOOKEEPER-1454</ulink>]</entry><entry>         Document how to run autoreconf if cppunit is installed in a non-standard directory
 </entry></row>
 
+<row><entry>        Task
+</entry><entry></entry></row>
+
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1450'>ZOOKEEPER-1450</ulink>]</entry><entry>         Backport ZOOKEEPER-1294 fix to 3.4 and 3.3
+</entry></row>
+        
 </tbody></tgroup></table>
 
 </section>

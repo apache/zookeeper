@@ -1,4 +1,4 @@
-Release 3.3.6 - TBD
+Release 3.3.6 - 2012-08-01
 Backward compatible changes:
 
 BUGFIXES:

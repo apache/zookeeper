@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.3.5 Release Notes</title>
+<title>ZooKeeper 3.3.6 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -202,12 +202,12 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.3.5 Release Notes</h1>
+<h1>ZooKeeper 3.3.6 Release Notes</h1>
 <div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
-<a href="#changes">Changes Since ZooKeeper 3.3.4</a>
+<a href="#changes">Changes Since ZooKeeper 3.3.5</a>
 </li>
 </ul>
 </div>
@@ -230,12 +230,12 @@ later.</p>
 
 
 <a name="changes"></a>
-<h2 class="h3">Changes Since ZooKeeper 3.3.4</h2>
+<h2 class="h3">Changes Since ZooKeeper 3.3.5</h2>
 <div class="section">
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
-<caption>Changes Since ZooKeeper 3.3.4</caption>
+<caption>Changes Since ZooKeeper 3.3.5</caption>
 
-<title>Changes Since ZooKeeper 3.3.4</title>
+<title>Changes Since ZooKeeper 3.3.5</title>
 
 
 <tr>
@@ -254,50 +254,70 @@ later.</p>
 
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-973">ZOOKEEPER-973</a>]</td><td>         bind() could fail on Leader because it does not setReuseAddress on its ServerSocket 
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1048">ZOOKEEPER-1048</a>]</td><td>         addauth command does not work in cli_mt/cli_st
 </td>
 </tr>
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1089">ZOOKEEPER-1089</a>]</td><td>         zkServer.sh status does not work due to invalid option of nc
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1163">ZOOKEEPER-1163</a>]</td><td>         Memory leak in zk_hashtable.c:do_insert_watcher_object()
 </td>
 </tr>
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1277">ZOOKEEPER-1277</a>]</td><td>         servers stop serving when lower 32bits of zxid roll over
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1210">ZOOKEEPER-1210</a>]</td><td>         Can't build ZooKeeper RPM with RPM &gt;= 4.6.0 (i.e. on RHEL 6 and Fedora &gt;= 10)
 </td>
 </tr>
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1309">ZOOKEEPER-1309</a>]</td><td>         Creating a new ZooKeeper client can leak file handles
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1305">ZOOKEEPER-1305</a>]</td><td>         zookeeper.c:prepend_string func can dereference null ptr
 </td>
 </tr>
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1352">ZOOKEEPER-1352</a>]</td><td>         server.InvalidSnapshotTest is using connection timeouts that are too short
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1318">ZOOKEEPER-1318</a>]</td><td>         In Python binding, get_children (and get and exists, and probably others) with expired session doesn't raise exception properly
 </td>
 </tr>
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1353">ZOOKEEPER-1353</a>]</td><td>         C client test suite fails consistently
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1339">ZOOKEEPER-1339</a>]</td><td>         C clien doesn't build with --enable-debug
 </td>
 </tr>
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1367">ZOOKEEPER-1367</a>]</td><td>         Data inconsistencies and unexpired ephemeral nodes after cluster restart
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1395">ZOOKEEPER-1395</a>]</td><td>         node-watcher double-free redux
 </td>
 </tr>
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1386">ZOOKEEPER-1386</a>]</td><td>         avoid flaky URL redirection in "ant javadoc" : replace "http://java.sun.com/javase/6/docs/api/" with "http://download.oracle.com/javase/6/docs/api/" 
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1403">ZOOKEEPER-1403</a>]</td><td>         zkCli.sh script quoting issue
 </td>
 </tr>
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1412">ZOOKEEPER-1412</a>]</td><td>         java client watches inconsistently triggered on reconnect
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1431">ZOOKEEPER-1431</a>]</td><td>         zkpython: async calls leak memory
 </td>
 </tr>
-        
+
+<tr>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1466">ZOOKEEPER-1466</a>]</td><td>         QuorumCnxManager.shutdown missing synchronization
+</td>
+</tr>
+
+<tr>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1489">ZOOKEEPER-1489</a>]</td><td>         Data loss after truncate on transaction log
+</td>
+</tr>
+
+<tr>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1493">ZOOKEEPER-1493</a>]</td><td>         C Client: zookeeper_process doesn't invoke completion callback if zookeeper_close has been called
+</td>
+</tr>
+
+<tr>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1521">ZOOKEEPER-1521</a>]</td><td>         LearnerHandler initLimit/syncLimit problems specifying follower socket timeout limits
+</td>
+</tr>
+
 
 <tr>
 <td>        Improvement
@@ -306,15 +326,27 @@ later.</p>
 
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1345">ZOOKEEPER-1345</a>]</td><td>         Add a .gitignore file with general exclusions and Eclipse project files excluded
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1433">ZOOKEEPER-1433</a>]</td><td>         improve ZxidRolloverTest (test seems flakey)
 </td>
 </tr>
 
 <tr>
-<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1389">ZOOKEEPER-1389</a>]</td><td>         it would be nice if start-foreground used exec $JAVA in order to get rid of the intermediate shell process
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1454">ZOOKEEPER-1454</a>]</td><td>         Document how to run autoreconf if cppunit is installed in a non-standard directory
 </td>
 </tr>
 
+
+<tr>
+<td>        Task
+</td><td></td>
+</tr>
+
+
+<tr>
+<td>[<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1450">ZOOKEEPER-1450</a>]</td><td>         Backport ZOOKEEPER-1294 fix to 3.4 and 3.3
+</td>
+</tr>
+        
 
 </table>
 </div>
