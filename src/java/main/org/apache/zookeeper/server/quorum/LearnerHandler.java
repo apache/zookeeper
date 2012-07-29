@@ -399,6 +399,9 @@ public class LearnerHandler extends Thread {
             }
             leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
             
+            // now that the ack has been processed expect the syncLimit
+            sock.setSoTimeout(leader.self.tickTime * leader.self.syncLimit);
+
             /*
              * Wait until leader starts up
              */
@@ -407,7 +410,7 @@ public class LearnerHandler extends Thread {
                     leader.zk.wait(500);
                 }
             }
-            
+
             while (true) {
                 qp = new QuorumPacket();
                 ia.readRecord(qp, "packet");
