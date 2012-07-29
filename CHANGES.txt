@@ -211,6 +211,9 @@ BUGFIXES:
 
   ZOOKEEPER-1489. Data loss after truncate on transaction log (phunt)
 
+  ZOOKEEPER-1521. LearnerHandler initLimit/syncLimit problems
+    specifying follower socket timeout limits (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
