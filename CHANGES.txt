@@ -85,6 +85,10 @@ BUGFIXES:
   ZOOKEEPER-1521. LearnerHandler initLimit/syncLimit problems
     specifying follower socket timeout limits (phunt)
 
+  ZOOKEEPER-1493. C Client: zookeeper_process doesn't invoke
+    completion callback if zookeeper_close has been called
+    (Michi Mutsuzaki via phunt and mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
