@@ -250,8 +250,10 @@ public class Leader {
             try {
                 while (!stop) {
                     try{
-                        Socket s = ss.accept();                        
-                        s.setSoTimeout(self.tickTime * self.syncLimit);
+                        Socket s = ss.accept();
+                        // start with the initLimit, once the ack is processed
+                        // in LearnerHandler switch to the syncLimit
+                        s.setSoTimeout(self.tickTime * self.initLimit);
                         s.setTcpNoDelay(nodelay);
                         LearnerHandler fh = new LearnerHandler(s, Leader.this);
                         fh.start();

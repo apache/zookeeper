@@ -82,6 +82,9 @@ BUGFIXES:
 
   ZOOKEEPER-1489. Data loss after truncate on transaction log (phunt)
 
+  ZOOKEEPER-1521. LearnerHandler initLimit/syncLimit problems
+    specifying follower socket timeout limits (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
