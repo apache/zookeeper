@@ -67,6 +67,7 @@ public class ZooKeeperSaslClient {
 
     private SaslState saslState = SaslState.INITIAL;
 
+    /** informational message indicating the current configuration status */
     private final String configStatus;
 
     public SaslState getSaslState() {
@@ -147,6 +148,9 @@ public class ZooKeeperSaslClient {
         }
     }
 
+    /**
+     * @return informational message indicating the current configuration status.
+     */
     public String getConfigStatus() {
         return configStatus;
     }
