@@ -941,19 +941,23 @@ public class ClientCnxn {
                 addr = hostProvider.next(1000);
             }
 
-            LOG.info("Opening socket connection to server " + addr);
-
             setName(getName().replaceAll("\\(.*\\)",
                     "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
             try {
                 zooKeeperSaslClient = new ZooKeeperSaslClient("zookeeper/"+addr.getHostName());
             } catch (LoginException e) {
-                LOG.warn("SASL authentication failed: " + e + " Will continue connection to Zookeeper server without "
+                LOG.warn("SASL configuration failed: " + e + " Will continue connection to Zookeeper server without "
                         + "SASL authentication, if Zookeeper server allows it.");
                 eventThread.queueEvent(new WatchedEvent(
                         Watcher.Event.EventType.None,
                         Watcher.Event.KeeperState.AuthFailed, null));
             }
+            String log = "Opening socket connection to server " + addr;
+            if (zooKeeperSaslClient != null) {
+              log += ". " + zooKeeperSaslClient.getConfigStatus();
+            }
+            LOG.info(log);
+
             clientCnxnSocket.connect(addr);
         }
 
