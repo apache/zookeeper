@@ -338,6 +338,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1454. Document how to run autoreconf if cppunit is
     installed in a non-standard directory (Michi Mutsuzaki via phunt)
 
+  ZOOKEEPER-1503. remove redundant JAAS configuration code in SaslAuthTest and
+    SaslAuthFailTest ((Eugene Koontz via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
