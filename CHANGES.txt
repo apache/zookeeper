@@ -339,7 +339,10 @@ IMPROVEMENTS:
     installed in a non-standard directory (Michi Mutsuzaki via phunt)
 
   ZOOKEEPER-1503. remove redundant JAAS configuration code in SaslAuthTest and
-    SaslAuthFailTest ((Eugene Koontz via phunt)
+    SaslAuthFailTest (Eugene Koontz via phunt)
+
+  ZOOKEEPER-1510. Should not log SASL errors for non-secure usage
+    (Todd Lipcon via phunt)
 
 Release 3.4.0 - 
 

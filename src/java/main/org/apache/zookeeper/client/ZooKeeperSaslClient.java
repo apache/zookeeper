@@ -67,6 +67,8 @@ public class ZooKeeperSaslClient {
 
     private SaslState saslState = SaslState.INITIAL;
 
+    private final String configStatus;
+
     public SaslState getSaslState() {
         return saslState;
     }
@@ -95,7 +97,7 @@ public class ZooKeeperSaslClient {
             securityException = e;
         }
         if (entries != null) {
-            LOG.info("Found Login Context section '" + clientSection + "': will use it to attempt to SASL-authenticate.");
+            this.configStatus = "Will attempt to SASL-authenticate using Login Context section '" + clientSection + "'";
             this.saslClient = createSaslClient(serverPrincipal, clientSection);
         } else {
             // Handle situation of clientSection's being null: it might simply because the client does not intend to 
@@ -119,12 +121,13 @@ public class ZooKeeperSaslClient {
             } else {
                 // The user did not override the default context. It might be that they just don't intend to use SASL,
                 // so log at INFO, not WARN, since they don't expect any SASL-related information.
+                String msg = "Will not attempt to authenticate using SASL ";
                 if (securityException != null) {
-                    LOG.warn("SecurityException: " + securityException + " occurred when trying to find JAAS configuration.");
+                    msg += "(" + securityException.getLocalizedMessage() + ")";
+                } else {
+                    msg += "(unknown error)";
                 }
-                LOG.info("Client will not SASL-authenticate because the default JAAS configuration section 'Client' " +
-                        "could not be found. If you are not using SASL, you may ignore this. On the other hand, " +
-                        "if you expected SASL to work, please fix your JAAS configuration.");
+                this.configStatus = msg;
             }
             if (System.getProperty("java.security.auth.login.config")  != null) {
                 // Again, the user explicitly set something SASL-related, so they probably expected SASL to succeed.
@@ -142,6 +145,10 @@ public class ZooKeeperSaslClient {
                 }
             }
         }
+    }
+
+    public String getConfigStatus() {
+        return configStatus;
     }
 
     public boolean isComplete() {
