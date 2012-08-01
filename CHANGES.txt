@@ -89,6 +89,9 @@ BUGFIXES:
     completion callback if zookeeper_close has been called
     (Michi Mutsuzaki via phunt and mahadev)
 
+  ZOOKEEPER-1522. intermittent failures in Zab test due to NPE in
+    recursiveDelete test function (phunt via flavio)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
