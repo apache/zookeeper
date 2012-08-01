@@ -952,13 +952,17 @@ public class ClientCnxn {
                         Watcher.Event.EventType.None,
                         Watcher.Event.KeeperState.AuthFailed, null));
             }
-            String log = "Opening socket connection to server " + addr;
-            if (zooKeeperSaslClient != null) {
-              log += ". " + zooKeeperSaslClient.getConfigStatus();
-            }
-            LOG.info(log);
+            logStartConnect(addr);
 
             clientCnxnSocket.connect(addr);
+        }
+
+        private void logStartConnect(InetSocketAddress addr) {
+            String msg = "Opening socket connection to server " + addr;
+            if (zooKeeperSaslClient != null) {
+              msg += ". " + zooKeeperSaslClient.getConfigStatus();
+            }
+            LOG.info(msg);
         }
 
         private static final String RETRY_CONN_MSG =
