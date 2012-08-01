@@ -66,22 +66,6 @@ public class SaslAuthFailTest extends ClientBase {
     protected TestableZooKeeper createClient(String hp)
     throws IOException, InterruptedException
     {
-        File tmpDir = ClientBase.createTmpDir();
-        File saslConfFile = new File(tmpDir, "jaas_bad_password.conf");
-        FileWriter fwriter = new FileWriter(saslConfFile);
-
-        fwriter.write("" +
-                "Server {\n" +
-                "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                "          user_super=\"test\";\n" +
-                "};\n" +
-                "Client {\n" +
-                "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                "       username=\"super\"\n" +
-                "       password=\"test1\";\n" + // NOTE: wrong password to cause authentication failure : 'test' != 'test1'.
-                "};" + "\n");
-        fwriter.close();
-        System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
         MyWatcher watcher = new MyWatcher();
         return createClient(watcher, hp);
     }
