@@ -442,7 +442,7 @@ public class FastLeaderElection implements Election {
      * Returns the current vlue of the logical clock counter
      */
     public long getLogicalClock(){
-    return logicalclock;
+        return logicalclock;
     }
 
     /**
@@ -621,7 +621,9 @@ public class FastLeaderElection implements Election {
         if(leader != self.getId()){
             if(votes.get(leader) == null) predicate = false;
             else if(votes.get(leader).getState() != ServerState.LEADING) predicate = false;
-        }
+        } else if(logicalclock != electionEpoch) {
+            predicate = false;
+        } 
 
         return predicate;
     }
@@ -724,7 +726,7 @@ public class FastLeaderElection implements Election {
 
             synchronized(this){
                 logicalclock++;
-                    updateProposal(getInitId(), getInitLastLoggedZxid(), getPeerEpoch());
+                updateProposal(getInitId(), getInitLastLoggedZxid(), getPeerEpoch());
             }
 
             LOG.info("New election. My id =  " + self.getId() +
