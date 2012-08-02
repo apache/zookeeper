@@ -92,6 +92,9 @@ BUGFIXES:
   ZOOKEEPER-1522. intermittent failures in Zab test due to NPE in
     recursiveDelete test function (phunt via flavio)
 
+  ZOOKEEPER-1514. FastLeaderElection - leader ignores the round
+  information when joining a quorum (flavio via henryr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
