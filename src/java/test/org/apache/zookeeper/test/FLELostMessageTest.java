@@ -62,45 +62,7 @@ public class FLELostMessageTest extends ZKTestCase {
     public void tearDown() throws Exception {
         cnxManager.halt();
     }
-
-
-    static class LEThread extends Thread {
-        private int i;
-        private QuorumPeer peer;
-
-        LEThread(QuorumPeer peer, int i) {
-            this.i = i;
-            this.peer = peer;
-            LOG.info("Constructor: " + getName());
-
-        }
-
-        public void run(){
-            try{
-                Vote v = null;
-                peer.setPeerState(ServerState.LOOKING);
-                LOG.info("Going to call leader election: " + i);
-                v = peer.getElectionAlg().lookForLeader();
-
-                if (v == null){
-                    Assert.fail("Thread " + i + " got a null vote");
-                }
-
-                /*
-                 * A real zookeeper would take care of setting the current vote. Here
-                 * we do it manually.
-                 */
-                peer.setCurrentVote(v);
-
-                LOG.info("Finished election: " + i + ", " + v.getId());
-
-                Assert.assertTrue("State is not leading.", peer.getPeerState() == ServerState.LEADING);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            LOG.info("Joining");
-        }
-    }
+    
     @Test
     public void testLostMessage() throws Exception {
 
@@ -121,7 +83,7 @@ public class FLELostMessageTest extends ZKTestCase {
 
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 1000, 2, 2);
         peer.startLeaderElection();
-        LEThread thread = new LEThread(peer, 1);
+        FLETestUtils.LEThread thread = new FLETestUtils.LEThread(peer, 1);
         thread.start();
 
         /*
@@ -134,23 +96,6 @@ public class FLELostMessageTest extends ZKTestCase {
         }
     }
 
-    ByteBuffer createMsg(int state, long leader, long zxid, long epoch){
-        byte requestBytes[] = new byte[28];
-        ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
-
-        /*
-         * Building notification packet to send
-         */
-
-        requestBuffer.clear();
-        requestBuffer.putInt(state);
-        requestBuffer.putLong(leader);
-        requestBuffer.putLong(zxid);
-        requestBuffer.putLong(epoch);
-
-        return requestBuffer;
-    }
-
     void mockServer() throws InterruptedException, IOException {
         /*
          * Create an instance of the connection manager
@@ -158,14 +103,11 @@ public class FLELostMessageTest extends ZKTestCase {
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
         cnxManager = new QuorumCnxManager(peer);
         QuorumCnxManager.Listener listener = cnxManager.listener;
-        if(listener != null){
-            listener.start();
-        } else {
-            LOG.error("Null listener when initializing cnx manager");
-        }
+        listener.start();
 
-        cnxManager.toSend(1l, createMsg(ServerState.LOOKING.ordinal(), 0, 0, 1));
+
+        cnxManager.toSend(1l, FLETestUtils.createMsg(ServerState.LOOKING.ordinal(), 0, 0, 1));
         cnxManager.recvQueue.take();
-        cnxManager.toSend(1L, createMsg(ServerState.FOLLOWING.ordinal(), 1, 0, 1));
+        cnxManager.toSend(1L, FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 1, 0, 1));
     }
 }
