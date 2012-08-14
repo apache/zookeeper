@@ -224,6 +224,9 @@ BUGFIXES:
   ZOOKEEPER-1514. FastLeaderElection - leader ignores the round
   information when joining a quorum (flavio via henryr)
 
+  ZOOKEEPER-1533 Correct the documentation of the args for the JavaExample doc.
+  (Warren Turkal via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
