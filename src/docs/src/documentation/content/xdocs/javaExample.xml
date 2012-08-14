@@ -52,13 +52,14 @@
     <para>The client has four requirements:</para>
     
     <itemizedlist><listitem><para>It takes as parameters:</para>
-    	<itemizedlist>
-		<listitem><para>the address of the ZooKeeper service</para></listitem>
-		<listitem> <para>then name of a znode - the one to be watched</para></listitem>
-		<listitem><para>an executable with arguments.</para></listitem></itemizedlist></listitem>
-	<listitem><para>It fetches the data associated with the znode and starts the executable.</para></listitem>
-	<listitem><para>If the znode changes, the client refetches the contents and restarts the executable.</para></listitem>
-	<listitem><para>If the znode disappears, the client kills the executable.</para></listitem></itemizedlist>
+        <itemizedlist>
+        <listitem><para>the address of the ZooKeeper service</para></listitem>
+        <listitem><para>the name of a znode - the one to be watched</para></listitem>
+        <listitem><para>the name of a file to write the output to</para></listitem>
+        <listitem><para>an executable with arguments.</para></listitem></itemizedlist></listitem>
+    <listitem><para>It fetches the data associated with the znode and starts the executable.</para></listitem>
+    <listitem><para>If the znode changes, the client refetches the contents and restarts the executable.</para></listitem>
+    <listitem><para>If the znode disappears, the client kills the executable.</para></listitem></itemizedlist>
 
    </section>
    
