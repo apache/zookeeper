@@ -34,6 +34,8 @@ import javax.security.auth.login.Configuration;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
+import org.apache.zookeeper.server.ZooKeeperSaslServer;
+
 public class SaslServerCallbackHandler implements CallbackHandler {
     private static final String USER_PREFIX = "user_";
     private static final Logger LOG = LoggerFactory.getLogger(SaslServerCallbackHandler.class);
@@ -45,7 +47,9 @@ public class SaslServerCallbackHandler implements CallbackHandler {
     private final Map<String,String> credentials = new HashMap<String,String>();
 
     public SaslServerCallbackHandler(Configuration configuration) throws IOException {
-        AppConfigurationEntry configurationEntries[] = configuration.getAppConfigurationEntry("Server");
+        String serverSection = System.getProperty(ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY,
+                                                  ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME);
+        AppConfigurationEntry configurationEntries[] = configuration.getAppConfigurationEntry(serverSection);
 
         if (configurationEntries == null) {
             String errorMessage = "Could not find a 'Server' entry in this configuration: Server cannot start.";

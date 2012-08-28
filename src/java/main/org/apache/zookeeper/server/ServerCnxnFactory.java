@@ -24,9 +24,14 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginException;
+import javax.security.auth.login.AppConfigurationEntry;
+
 import javax.management.JMException;
 
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
 import org.slf4j.Logger;
@@ -146,4 +151,59 @@ public abstract class ServerCnxnFactory {
 
     }
 
+    /**
+     * Initialize the server SASL if specified.
+     *
+     * If the user has specified a "ZooKeeperServer.LOGIN_CONTEXT_NAME_KEY"
+     * or a jaas.conf using "java.security.auth.login.config"
+     * the authentication is required and an exception is raised.
+     * Otherwise no authentication is configured and no exception is raised.
+     *
+     * @throws IOException if jaas.conf is missing or there's an error in it.
+     */
+    protected void configureSaslLogin() throws IOException {
+        String serverSection = System.getProperty(ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY,
+                                                  ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME);
+
+        // Note that 'Configuration' here refers to javax.security.auth.login.Configuration.
+        AppConfigurationEntry entries[] = null;
+        SecurityException securityException = null;
+        try {
+            entries = Configuration.getConfiguration().getAppConfigurationEntry(serverSection);
+        } catch (SecurityException e) {
+            // handle below: might be harmless if the user doesn't intend to use JAAS authentication.
+            securityException = e;
+        }
+
+        // No entries in jaas.conf
+        // If there's a configuration exception fetching the jaas section and
+        // the user has required sasl by specifying a LOGIN_CONTEXT_NAME_KEY or a jaas file
+        // we throw an exception otherwise we continue without authentication.
+        if (entries == null) {
+            String jaasFile = System.getProperty(Environment.JAAS_CONF_KEY);
+            String loginContextName = System.getProperty(ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY);
+            if (securityException != null && (loginContextName != null || jaasFile != null)) {
+                String errorMessage = "No JAAS configuration section named '" + serverSection +  "' was found";
+                if (jaasFile != null) {
+                    errorMessage += "in '" + jaasFile + "'.";
+                }
+                if (loginContextName != null) {
+                    errorMessage += " But " + ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY + " was set.";
+                }
+                LOG.error(errorMessage);
+                throw new IOException(errorMessage);
+            }
+            return;
+        }
+
+        // jaas.conf entry available
+        try {
+            saslServerCallbackHandler = new SaslServerCallbackHandler(Configuration.getConfiguration());
+            login = new Login(serverSection, saslServerCallbackHandler);
+            login.startThreadIfNeeded();
+        } catch (LoginException e) {
+            throw new IOException("Could not configure server because SASL configuration did not allow the "
+              + " ZooKeeper server to authenticate itself properly: " + e);
+        }
+    }
 }
