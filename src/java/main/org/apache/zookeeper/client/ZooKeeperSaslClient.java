@@ -22,6 +22,7 @@ import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.Login;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.GetSASLRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
@@ -111,10 +112,8 @@ public class ZooKeeperSaslClient {
                 if (securityException != null) {
                     throw new LoginException("Zookeeper client cannot authenticate using the " + explicitClientSection +
                             " section of the supplied JAAS configuration: '" +
-                            System.getProperty("java.security.auth.login.config") + "' because of a " +
+                            System.getProperty(Environment.JAAS_CONF_KEY) + "' because of a " +
                             "SecurityException: " + securityException);
-                    
-                    
                 } else {
                     throw new LoginException("Client cannot SASL-authenticate because the specified JAAS configuration " +
                             "section '" + explicitClientSection + "' could not be found.");
@@ -130,19 +129,19 @@ public class ZooKeeperSaslClient {
                 }
                 this.configStatus = msg;
             }
-            if (System.getProperty("java.security.auth.login.config")  != null) {
+            if (System.getProperty(Environment.JAAS_CONF_KEY)  != null) {
                 // Again, the user explicitly set something SASL-related, so they probably expected SASL to succeed.
                 if (securityException != null) {
                     throw new LoginException("Zookeeper client cannot authenticate using the '" +
                             System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client") +
                             "' section of the supplied JAAS configuration: '" +
-                            System.getProperty("java.security.auth.login.config") + "' because of a " +
+                            System.getProperty(Environment.JAAS_CONF_KEY) + "' because of a " +
                             "SecurityException: " + securityException);
                 } else {
                     throw new LoginException("No JAAS configuration section named '" +
                             System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client") +
                             "' was found in specified JAAS configuration file: '" +
-                            System.getProperty("java.security.auth.login.config") + "'.");
+                            System.getProperty(Environment.JAAS_CONF_KEY) + "'.");
                 }
             }
         }

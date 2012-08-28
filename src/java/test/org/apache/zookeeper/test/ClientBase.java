@@ -159,6 +159,12 @@ public abstract class ClientBase extends ZKTestCase {
         return createClient(watcher, hp);
     }
 
+    protected TestableZooKeeper createClient(CountdownWatcher watcher)
+        throws IOException, InterruptedException
+    {
+        return createClient(watcher, hostPort);
+    }
+
     private LinkedList<ZooKeeper> allClients;
     private boolean allClientsSetup = false;
 
