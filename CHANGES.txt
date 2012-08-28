@@ -112,6 +112,10 @@ IMPROVEMENTS:
   ZOOKEEPER-1510. Should not log SASL errors for non-secure usage
     (Todd Lipcon via phunt)
 
+  ZOOKEEPER-1497. Allow server-side SASL login with JAAS configuration
+  to be programmatically set (rather than only by reading JAAS
+  configuration file) (Matteo Bertozzi via phunt)
+
 Release 3.4.3 - 2012-02-06
 
 Backward compatible changes:

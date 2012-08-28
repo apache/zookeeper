@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class Environment {
+    public static String JAAS_CONF_KEY = "java.security.auth.login.config";
+
     public static class Entry {
         private String k;
         private String v;
