@@ -95,6 +95,8 @@ BUGFIXES:
   ZOOKEEPER-1514. FastLeaderElection - leader ignores the round
   information when joining a quorum (flavio via henryr)
 
+  ZOOKEEPER-1536 c client : memory leak in winport.c (brooklin via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
