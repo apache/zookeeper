@@ -227,6 +227,8 @@ BUGFIXES:
   ZOOKEEPER-1533 Correct the documentation of the args for the JavaExample doc.
   (Warren Turkal via michim)
 
+  ZOOKEEPER-1536 c client : memory leak in winport.c (brooklin via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

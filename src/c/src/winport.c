@@ -109,6 +109,7 @@ pthread_cond_init (pthread_cond_t *cv,
 int pthread_cond_destroy(pthread_cond_t *cond)
 {
        CloseHandle( cond->sema_);
+       DeleteCriticalSection(&cond->waiters_count_lock_);
        return (CloseHandle( cond->waiters_done_ ) == 0)? GetLastError(): 0 ;
 }
 
