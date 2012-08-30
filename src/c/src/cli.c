@@ -84,13 +84,30 @@ static const char* state2String(int state){
   return "INVALID_STATE";
 }
 
+static const char* type2String(int state){
+  if (state == ZOO_CREATED_EVENT)
+    return "CREATED_EVENT";
+  if (state == ZOO_DELETED_EVENT)
+    return "DELETED_EVENT";
+  if (state == ZOO_CHANGED_EVENT)
+    return "CHANGED_EVENT";
+  if (state == ZOO_CHILD_EVENT)
+    return "CHILD_EVENT";
+  if (state == ZOO_SESSION_EVENT)
+    return "SESSION_EVENT";
+  if (state == ZOO_NOTWATCHING_EVENT)
+    return "NOTWATCHING_EVENT";
+
+  return "UNKNOWN_EVENT_TYPE";
+}
+
 void watcher(zhandle_t *zzh, int type, int state, const char *path,
              void* context)
 {
     /* Be careful using zh here rather than zzh - as this may be mt code
      * the client lib may call the watcher before zookeeper_init returns */
 
-    fprintf(stderr, "Watcher %d state = %s", type, state2String(state));
+    fprintf(stderr, "Watcher %s state = %s", type2String(type), state2String(state));
     if (path && strlen(path) > 0) {
       fprintf(stderr, " for path %s", path);
     }
@@ -298,6 +315,7 @@ void processline(char *line) {
       fprintf(stderr, "    ls2 <path>\n");
       fprintf(stderr, "    sync <path>\n");
       fprintf(stderr, "    exists <path>\n");
+      fprintf(stderr, "    wexists <path>\n");
       fprintf(stderr, "    myid\n");
       fprintf(stderr, "    verbose\n");
       fprintf(stderr, "    addauth <id> <scheme>\n");
@@ -425,6 +443,23 @@ void processline(char *line) {
             return;
         }
         rc = zoo_async(zh, line, my_string_completion, strdup(line));
+        if (rc) {
+            fprintf(stderr, "Error %d for %s\n", rc, line);
+        }
+    } else if (startsWith(line, "wexists ")) {
+#ifdef THREADED
+        struct Stat stat;
+#endif
+        line += 8;
+        if (line[0] != '/') {
+            fprintf(stderr, "Path must start with /, found: %s\n", line);
+            return;
+        }
+#ifndef THREADED
+        rc = zoo_awexists(zh, line, watcher, (void*) 0, my_stat_completion, strdup(line));
+#else
+        rc = zoo_wexists(zh, line, watcher, (void*) 0, &stat);
+#endif
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }

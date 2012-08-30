@@ -97,6 +97,8 @@ BUGFIXES:
 
   ZOOKEEPER-1536 c client : memory leak in winport.c (brooklin via michim)
 
+  ZOOKEEPER-1481 allow the C cli to run exists with a watcher (phunt via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
