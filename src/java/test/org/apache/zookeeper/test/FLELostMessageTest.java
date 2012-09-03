@@ -91,6 +91,9 @@ public class FLELostMessageTest extends ZKTestCase {
          */
         mockServer();
         thread.join(5000);
+        Assert.assertTrue("State is not leading. Current state:"
+                + peer.getPeerState(),
+                peer.getPeerState() == ServerState.LEADING);
         if (thread.isAlive()) {
             Assert.fail("Threads didn't join");
         }

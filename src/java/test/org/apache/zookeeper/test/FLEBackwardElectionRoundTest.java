@@ -134,6 +134,9 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
          * Run another instance of leader election.
          */
         thread.join(5000);
+        Assert.assertTrue("State is not leading. Current state:"
+                + peer.getPeerState(),
+                peer.getPeerState() == ServerState.LEADING);
         thread = new FLETestUtils.LEThread(peer, 0);
         thread.start();
         
@@ -145,7 +148,9 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         
         
         thread.join(5000);
-        
+        Assert.assertTrue("State is not looking. Current state:"
+                + peer.getPeerState(),
+                peer.getPeerState() == ServerState.LOOKING);
         if (!thread.isAlive()) {
             Assert.fail("Should not have joined");
         }
