@@ -99,6 +99,9 @@ BUGFIXES:
 
   ZOOKEEPER-1481 allow the C cli to run exists with a watcher (phunt via michim)
 
+  ZOOKEEPER-1105 c client zookeeper_close not send CLOSE_OP request to server
+  (lincoln.lee via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
