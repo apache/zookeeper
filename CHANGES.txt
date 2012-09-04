@@ -234,6 +234,9 @@ BUGFIXES:
   ZOOKEEPER-1328. Misplaced assertion for the test case 'FLELostMessageTest'
   and not identifying misfunctions. (Rakesh R via mahadev)
 
+  ZOOKEEPER-1105 c client zookeeper_close not send CLOSE_OP request to server
+  (lincoln.lee via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
