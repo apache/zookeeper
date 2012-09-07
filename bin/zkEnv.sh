@@ -76,7 +76,7 @@ do
 done
 
 #make it work in the binary package
-if [ -e ${ZOOKEEPER_PREFIX}/share/zookeeper/zookeeper-*.jar ]; then
+if [ -e "${ZOOKEEPER_PREFIX}/share/zookeeper/zookeeper-*.jar" ]; then
   LIBPATH="${ZOOKEEPER_PREFIX}"/share/zookeeper/*.jar
 else
   #release tarball format
