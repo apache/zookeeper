@@ -251,12 +251,12 @@ static void _zk_release_watch(pTHX_ zk_watch_t *watch, int list)
     if (list) {
         if (watch->prev) {
             watch->prev->next = watch->next;
-            watch->prev = NULL;
         }
         if (watch->next) {
             watch->next->prev = watch->prev;
-            watch->next = NULL;
         }
+        watch->prev = NULL;
+        watch->next = NULL;
     }
 
     if (--watch->ref_count == 0) {
