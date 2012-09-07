@@ -44,7 +44,7 @@ fi
 
 # use POSTIX interface, symlink is followed automatically
 ZOOBIN="${BASH_SOURCE-$0}"
-ZOOBIN=`dirname ${ZOOBIN}`
+ZOOBIN=`dirname "${ZOOBIN}"`
 ZOOBINDIR=`cd ${ZOOBIN}; pwd`
 
 if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
@@ -64,7 +64,7 @@ then
 fi
 
 # if we give a more complicated path to the config, don't screw around in $ZOOCFGDIR
-if [ "x`dirname $ZOOCFG`" != "x$ZOOCFGDIR" ]
+if [ "x`dirname \"$ZOOCFG\"`" != "x$ZOOCFGDIR" ]
 then
     ZOOCFG="$2"
 fi
