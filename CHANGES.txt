@@ -243,6 +243,9 @@ BUGFIXES:
   ZOOKEEPER-1538. Improve space handling in zkServer.sh and zkEnv.sh. (Andrew
   Ferguson via mahadev)
 
+  ZOOKEEPER-1501. Nagios plugin always returns OK when it cannot connect to
+  zookeeper. (Brian Sutherland via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
