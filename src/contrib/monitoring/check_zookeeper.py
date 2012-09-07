@@ -74,6 +74,11 @@ class NagiosHandler(object):
                 elif (warning < critical and critical <= value) or (warning > critical and critical >= value):
                     critical_state.append(host)
 
+        if not values:
+            # Zookeeper may be down, not serving requests or we may have a bad configuration
+            print 'Critical, %s not found' % opts.key
+            return 2
+
         values = ' '.join(values)
         if critical_state:
             print 'Critical "%s" %s!|%s' % (opts.key, ', '.join(critical_state), values)
