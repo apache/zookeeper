@@ -105,6 +105,9 @@ BUGFIXES:
   ZOOKEEPER-1380. zkperl: _zk_release_watch doesn't remove items properly from
   the watch list. (Botond Hejj via mahadev)
 
+  ZOOKEEPER-1501. Nagios plugin always returns OK when it cannot connect to
+  zookeeper. (Brian Sutherland via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
