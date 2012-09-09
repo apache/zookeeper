@@ -89,7 +89,6 @@ public class SaslAuthTest extends ClientBase {
     @Test
     public void testAuth() throws Exception {
         ZooKeeper zk = createClient();
-        Thread.sleep(1000);
         try {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             Thread.sleep(1000);
@@ -101,7 +100,6 @@ public class SaslAuthTest extends ClientBase {
     @Test
     public void testValidSaslIds() throws Exception {
         ZooKeeper zk = createClient();
-        Thread.sleep(1000);
 
         List<String> validIds = new ArrayList<String>();
         validIds.add("user");
@@ -122,7 +120,6 @@ public class SaslAuthTest extends ClientBase {
     @Test
     public void testInvalidSaslIds() throws Exception {
         ZooKeeper zk = createClient();
-        Thread.sleep(1000);
 
         List<String> invalidIds = new ArrayList<String>();
         invalidIds.add("user@KERB.REALM/server.com");

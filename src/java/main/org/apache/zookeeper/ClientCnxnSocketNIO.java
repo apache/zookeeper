@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +58,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
      * @throws InterruptedException
      * @throws IOException
      */
-    void doIO(List<Packet> pendingQueue, LinkedList<Packet> outgoingQueue) throws InterruptedException, IOException {
+    void doIO(List<Packet> pendingQueue, LinkedList<Packet> outgoingQueue, ClientCnxn cnxn)
+      throws InterruptedException, IOException {
         SocketChannel sock = (SocketChannel) sockKey.channel();
         if (sock == null) {
             throw new IOException("Socket is null!");
@@ -78,7 +80,10 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 } else if (!initialized) {
                     readConnectResult();
                     enableRead();
-                    if (!outgoingQueue.isEmpty()) {
+                    if (findSendablePacket(outgoingQueue,
+                            cnxn.sendThread.clientTunneledAuthenticationInProgress()) != null) {
+                        // Since SASL authentication has completed (if client is configured to do so),
+                        // outgoing packets waiting in the outgoingQueue can now be sent.
                         enableWrite();
                     }
                     lenBuffer.clear();
@@ -95,26 +100,82 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         }
         if (sockKey.isWritable()) {
             LinkedList<Packet> pending = new LinkedList<Packet>();
-            synchronized (outgoingQueue) {
-                if (!outgoingQueue.isEmpty()) {
+            Packet p = null;
+            synchronized(outgoingQueue) {
+                p = findSendablePacket(outgoingQueue,
+                        cnxn.sendThread.clientTunneledAuthenticationInProgress());
+
+                if (p != null) {
+                    outgoingQueue.removeFirstOccurrence(p);
                     updateLastSend();
-                    ByteBuffer pbb = outgoingQueue.getFirst().bb;
+                    if ((p.requestHeader != null) &&
+                            (p.requestHeader.getType() != OpCode.ping) &&
+                            (p.requestHeader.getType() != OpCode.auth)) {
+                        p.requestHeader.setXid(cnxn.getXid());
+                    }
+                    p.createBB();
+                    ByteBuffer pbb = p.bb;
                     sock.write(pbb);
                     if (!pbb.hasRemaining()) {
                         sentCount++;
-                        Packet p = outgoingQueue.removeFirst();
                         if (p.requestHeader != null
                                 && p.requestHeader.getType() != OpCode.ping
                                 && p.requestHeader.getType() != OpCode.auth) {
                             pending.add(p);
                         }
                     }
+                } else {
+                    // No suitable packet to send: turn off write interest flag.
+                    // Will be turned on later by a later call to enableWrite(),
+                    // from within ZooKeeperSaslClient (if client is configured
+                    // to attempt SASL authentication), or in either doIO() or
+                    // in doTransport() if not.
+                    disableWrite();
                 }
             }
             synchronized(pendingQueue) {
                 pendingQueue.addAll(pending);
             }
+
         }
+    }
+
+    private Packet findSendablePacket(LinkedList<Packet> outgoingQueue,
+                                      boolean clientTunneledAuthenticationInProgress) {
+        synchronized (outgoingQueue) {
+            if (!outgoingQueue.isEmpty()) {
+                if (clientTunneledAuthenticationInProgress) {
+                    Packet p = null;
+                    // Since client's authentication with server is in progress,
+                    // send only the null-header packet queued by primeConnection().
+                    // This packet must be sent so that the SASL authentication process
+                    // can proceed, but all other packets should wait until
+                    // SASL authentication completes.
+                    Iterator<Packet> iter = outgoingQueue.listIterator();
+                    while(iter.hasNext()) {
+                        p = iter.next();
+                        if (p.requestHeader == null) {
+                            // We've found the priming-packet.
+                            return p;
+                        } else {
+                            // Non-priming packet: defer it until later, leaving it in the queue
+                            // until authentication completes.
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("deferring non-priming packet: " + p +
+                                        "until SASL authentication completes.");
+                            }
+                        }
+                    }
+                    // no sendable packet found.
+                    return null;
+                } else {
+                    // Tunnelled authentication is not in progress: just
+                    // send the first packet in the queue.
+                    return outgoingQueue.getFirst();
+                }
+            }
+        }
+        return null;
     }
 
     @Override
@@ -200,7 +261,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     void registerAndConnect(SocketChannel sock, InetSocketAddress addr) 
     throws IOException {
         sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-        boolean immediateConnect = sock.connect(addr);            
+        boolean immediateConnect = sock.connect(addr);
         if (immediateConnect) {
             sendThread.primeConnection();
         }
@@ -269,7 +330,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     }
     
     @Override
-    void doTransport(int waitTimeOut, List<Packet> pendingQueue, LinkedList<Packet> outgoingQueue )
+    void doTransport(int waitTimeOut, List<Packet> pendingQueue, LinkedList<Packet> outgoingQueue,
+                     ClientCnxn cnxn)
             throws IOException, InterruptedException {
         selector.select(waitTimeOut);
         Set<SelectionKey> selected;
@@ -288,15 +350,14 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     sendThread.primeConnection();
                 }
             } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
-                doIO(pendingQueue, outgoingQueue);
+                doIO(pendingQueue, outgoingQueue, cnxn);
             }
         }
         if (sendThread.getZkState().isConnected()) {
             synchronized(outgoingQueue) {
-                if (!outgoingQueue.isEmpty()) {
+                if (findSendablePacket(outgoingQueue,
+                        cnxn.sendThread.clientTunneledAuthenticationInProgress()) != null) {
                     enableWrite();
-                } else {
-                    disableWrite();
                 }
             }
         }
@@ -318,7 +379,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         }
     }
 
-    private synchronized void disableWrite() {
+    @Override
+    public synchronized void disableWrite() {
         int i = sockKey.interestOps();
         if ((i & SelectionKey.OP_WRITE) != 0) {
             sockKey.interestOps(i & (~SelectionKey.OP_WRITE));
@@ -340,4 +402,17 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     Selector getSelector() {
         return selector;
     }
+
+    @Override
+    void sendPacket(Packet p) throws IOException {
+        SocketChannel sock = (SocketChannel) sockKey.channel();
+        if (sock == null) {
+            throw new IOException("Socket is null!");
+        }
+        p.createBB();
+        ByteBuffer pbb = p.bb;
+        sock.write(pbb);
+    }
+
+
 }

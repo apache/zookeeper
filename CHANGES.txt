@@ -128,6 +128,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1497. Allow server-side SASL login with JAAS configuration
   to be programmatically set (rather than only by reading JAAS
   configuration file) (Matteo Bertozzi via phunt)
+ 
+  ZOOKEEPER-1437. Client uses session before SASL authentication complete.
+  (Eugene Koontz via mahadev)
 
 Release 3.4.3 - 2012-02-06
 
