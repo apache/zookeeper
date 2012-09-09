@@ -21,17 +21,17 @@ package org.apache.zookeeper.client;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.GetSASLRequest;
-import org.apache.zookeeper.proto.ReplyHeader;
-import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetSASLResponse;
 import org.apache.zookeeper.server.auth.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -68,6 +68,7 @@ public class ZooKeeperSaslClient {
 
     private SaslState saslState = SaslState.INITIAL;
 
+    private boolean gotLastPacket = false;
     /** informational message indicating the current configuration status */
     private final String configStatus;
 
@@ -166,7 +167,7 @@ public class ZooKeeperSaslClient {
         public void processResult(int rc, String path, Object ctx, byte data[], Stat stat) {
             // processResult() is used by ClientCnxn's sendThread to respond to
             // data[] contains the Zookeeper Server's SASL token.
-            // ctx is the ZooKeeperSaslClient object. We use this object's prepareSaslResponseToServer() method
+            // ctx is the ZooKeeperSaslClient object. We use this object's respondToServer() method
             // to reply to the Zookeeper Server's SASL token
             ZooKeeperSaslClient client = ((ClientCnxn)ctx).zooKeeperSaslClient;
             if (client == null) {
@@ -181,7 +182,7 @@ public class ZooKeeperSaslClient {
                 usedata = new byte[0];
                 LOG.debug("ServerSaslResponseCallback(): using empty data[] as server response (length="+usedata.length+")");
             }
-            client.prepareSaslResponseToServer(usedata, (ClientCnxn)ctx);
+            client.respondToServer(usedata, (ClientCnxn)ctx);
         }
     }
 
@@ -242,37 +243,49 @@ public class ZooKeeperSaslClient {
                     return null;
                 }
             }
-        }
-        catch (LoginException e) {
+        } catch (LoginException e) {
+            // We throw LoginExceptions...
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
+            // ..but consume (with a log message) all other types of exceptions.
             LOG.error("Exception while trying to create SASL client: " + e);
             return null;
         }
     }
 
-    private void prepareSaslResponseToServer(byte[] serverToken, ClientCnxn cnxn) {
-        saslToken = serverToken;
-
+    public void respondToServer(byte[] serverToken, ClientCnxn cnxn) {
         if (saslClient == null) {
             LOG.error("saslClient is unexpectedly null. Cannot respond to server's SASL message; ignoring.");
             return;
         }
 
-        LOG.debug("saslToken (server) length: " + saslToken.length);
         if (!(saslClient.isComplete())) {
             try {
-                saslToken = createSaslToken(saslToken);
+                saslToken = createSaslToken(serverToken);
                 if (saslToken != null) {
-                    LOG.debug("saslToken (client) length: " + saslToken.length);
-                    queueSaslPacket(saslToken, cnxn);
+                    sendSaslPacket(saslToken, cnxn);
                 }
             } catch (SaslException e) {
                 LOG.error("SASL authentication failed using login context '" +
-                this.getLoginContext() + "'.");
+                        this.getLoginContext() + "'.");
                 saslState = SaslState.FAILED;
+                gotLastPacket = true;
             }
+        }
+
+        if (saslClient.isComplete()) {
+            // GSSAPI: server sends a final packet after authentication succeeds
+            // or fails.
+            if ((serverToken == null) && (saslClient.getMechanismName() == "GSSAPI"))
+                gotLastPacket = true;
+            // non-GSSAPI: no final packet from server.
+            if (saslClient.getMechanismName() != "GSSAPI") {
+                gotLastPacket = true;
+            }
+            // SASL authentication is completed, successfully or not:
+            // enable the socket's writable flag so that any packets waiting for authentication to complete in
+            // the outgoing queue will be sent to the Zookeeper server.
+            cnxn.enableWrite();
         }
     }
 
@@ -284,6 +297,7 @@ public class ZooKeeperSaslClient {
     private byte[] createSaslToken(final byte[] saslToken) throws SaslException {
         if (saslToken == null) {
             // TODO: introspect about runtime environment (such as jaas.conf)
+            saslState = SaslState.FAILED;
             throw new SaslException("Error in authenticating with a Zookeeper Quorum member: the quorum member's saslToken is null.");
         }
 
@@ -314,6 +328,7 @@ public class ZooKeeperSaslClient {
                     }
                     error += " Zookeeper Client will go to AUTH_FAILED state.";
                     LOG.error(error);
+                    saslState = SaslState.FAILED;
                     throw new SaslException(error);
                 }
             }
@@ -324,51 +339,73 @@ public class ZooKeeperSaslClient {
         }
     }
 
-    private void queueSaslPacket(byte[] saslToken, ClientCnxn cnxn) {
-        LOG.debug("ClientCnxn:sendSaslPacket:length="+saslToken.length);
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.sasl);
+    private void sendSaslPacket(byte[] saslToken, ClientCnxn cnxn)
+      throws SaslException{
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("ClientCnxn:sendSaslPacket:length="+saslToken.length);
+        }
+
         GetSASLRequest request = new GetSASLRequest();
         request.setToken(saslToken);
         SetSASLResponse response = new SetSASLResponse();
         ServerSaslResponseCallback cb = new ServerSaslResponseCallback();
-        ReplyHeader r = new ReplyHeader();
-        cnxn.queuePacket(h,r,request,response,cb);
-    }
-    
-    private void queueSaslPacket(ClientCnxn cnxn) throws SaslException {
-        queueSaslPacket(createSaslToken(), cnxn);
+
+        try {
+            cnxn.sendPacket(request,response,cb, ZooDefs.OpCode.sasl);
+        } catch (IOException e) {
+            throw new SaslException("Failed to send SASL packet to server.",
+                e);
+        }
     }
 
-    // used by ClientCnxn to know when to emit SaslAuthenticated event.
-    // transitions internally from INTERMEDIATE to COMPLETE as a side effect if
-    // it's ready to emit this event.
-    public boolean readyToSendSaslAuthEvent() {
+    private void sendSaslPacket(ClientCnxn cnxn) throws SaslException {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("ClientCnxn:sendSaslPacket:length="+saslToken.length);
+        }
+        GetSASLRequest request = new GetSASLRequest();
+        request.setToken(createSaslToken());
+        SetSASLResponse response = new SetSASLResponse();
+        ServerSaslResponseCallback cb = new ServerSaslResponseCallback();
+        try {
+            cnxn.sendPacket(request,response,cb, ZooDefs.OpCode.sasl);
+        } catch (IOException e) {
+            throw new SaslException("Failed to send SASL packet to server due " +
+              "to IOException:", e);
+        }
+    }
+
+    // used by ClientCnxn to know whether to emit a SASL-related event: either AuthFailed or SaslAuthenticated,
+    // or none, if not ready yet. Sets saslState to COMPLETE as a side-effect.
+    public KeeperState getKeeperState() {
         if (saslClient != null) {
+            if (saslState == SaslState.FAILED) {
+              return KeeperState.AuthFailed;
+            }
             if (saslClient.isComplete()) {
                 if (saslState == SaslState.INTERMEDIATE) {
                     saslState = SaslState.COMPLETE;
-                    return true;
+                    return KeeperState.SaslAuthenticated;
                 }
             }
         }
-        else {
-            LOG.warn("saslClient is null: client could not authenticate properly.");
-        }
-        return false;
+        // No event ready to emit yet.
+        return null;
     }
 
+    // Initialize the client's communications with the Zookeeper server by sending the server the first
+    // authentication packet.
     public void initialize(ClientCnxn cnxn) throws SaslException {
         if (saslClient == null) {
+            saslState = SaslState.FAILED;
             throw new SaslException("saslClient failed to initialize properly: it's null.");
         }
         if (saslState == SaslState.INITIAL) {
             if (saslClient.hasInitialResponse()) {
-                queueSaslPacket(cnxn);
+                sendSaslPacket(cnxn);
             }
             else {
                 byte[] emptyToken = new byte[0];
-                queueSaslPacket(emptyToken, cnxn);
+                sendSaslPacket(emptyToken, cnxn);
             }
             saslState = SaslState.INTERMEDIATE;
         }
@@ -442,4 +479,44 @@ public class ZooKeeperSaslClient {
             }
         }
     }
+
+    public boolean clientTunneledAuthenticationInProgress() {
+        // TODO: Rather than checking a disjunction here, should be a single member
+        // variable or method in this class to determine whether the client is
+        // configured to use SASL. (see also ZOOKEEPER-1455).
+        try {
+            if ((System.getProperty(Environment.JAAS_CONF_KEY) != null) ||
+                (javax.security.auth.login.Configuration.getConfiguration() != null)) {
+                // Client is configured to use SASL.
+
+                // 1. Authentication hasn't finished yet: we must wait for it to do so.
+                if ((isComplete() == false) &&
+                    (isFailed() == false)) {
+                    return true;
+                }
+
+                // 2. SASL authentication has succeeded or failed..
+                if (isComplete() || isFailed()) {
+                    if (gotLastPacket == false) {
+                        // ..but still in progress, because there is a final SASL
+                        // message from server which must be received.
+                    return true;
+                    }
+                }
+            }
+            // Either client is not configured to use a tunnelled authentication
+            // scheme, or tunnelled authentication has completed (successfully or
+            // not), and all server SASL messages have been received.
+            return false;
+        } catch (SecurityException e) {
+            // Thrown if the caller does not have permission to retrieve the Configuration.
+            // In this case, simply returning false is correct.
+            if (LOG.isDebugEnabled() == true) {
+                LOG.debug("Could not retrieve login configuration: " + e);
+            }
+            return false;
+        }
+    }
+
+
 }
