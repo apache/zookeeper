@@ -160,11 +160,15 @@ abstract class ClientCnxnSocket {
 
     abstract void enableWrite();
 
+    abstract void disableWrite();
+
     abstract void enableReadWriteOnly();
 
     abstract void doTransport(int waitTimeOut, List<Packet> pendingQueue,
-            LinkedList<Packet> outgoingQueue) throws IOException,
-            InterruptedException;
+            LinkedList<Packet> outgoingQueue, ClientCnxn cnxn)
+            throws IOException, InterruptedException;
 
     abstract void testableCloseSocket() throws IOException;
+
+    abstract void sendPacket(Packet p) throws IOException;
 }
