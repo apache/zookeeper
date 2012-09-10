@@ -1641,12 +1641,14 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
 #else
             errno = ETIMEDOUT;
 #endif
-            *fd=-1;
             *interest=0;
             *tv = get_timeval(0);
             return api_epilog(zh,handle_socket_error_msg(zh,
                     __LINE__,ZOPERATIONTIMEOUT,
-                    "connection timed out (exceeded timeout by %dms)",-recv_to));
+                    "connection to %s timed out (exceeded timeout by %dms)",
+                    format_endpoint_info(&zh->addrs[zh->connect_index]),
+                    -recv_to));
+
         }
         // We only allow 1/3 of our timeout time to expire before sending
         // a PING
