@@ -249,6 +249,9 @@ BUGFIXES:
   ZOOKEEPER-1437. Client uses session before SASL authentication complete
   (Eugene Koontz via mahadev)
 
+  ZOOKEEPER-1494. C client: socket leak after receive timeout in
+  zookeeper_interest() (Michi Mutsuzaki via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
