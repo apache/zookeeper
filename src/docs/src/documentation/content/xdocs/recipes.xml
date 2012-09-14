@@ -642,7 +642,7 @@
       </listitem>
 
       <listitem>
-        <para>Watch for changes on "ELECTION/guid-n_j", where j is the smallest
+        <para>Watch for changes on "ELECTION/guid-n_j", where j is the largest
         sequence number such that j &lt; i and n_j is a znode in C;</para>
       </listitem>
     </orderedlist>
@@ -661,7 +661,7 @@
 
       <listitem>
         <para>Otherwise, watch for changes on "ELECTION/guid-n_j", where j is the
-        smallest sequence number such that j &lt; i and n_j is a znode in C;
+        largest sequence number such that j &lt; i and n_j is a znode in C;
         </para>
       </listitem>
     </orderedlist>
@@ -672,7 +672,7 @@
       <listitem>
 	    <para>Note that the znode having no preceding znode on the list of
 	    children does not imply that the creator of this znode is aware that it is
-	    the current leader. Applications may consider creating a separate to znode
+	    the current leader. Applications may consider creating a separate znode
 	    to acknowledge that the leader has executed the leader procedure. </para>
       </listitem>
     </itemizedlist>
