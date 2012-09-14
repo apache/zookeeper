@@ -111,6 +111,9 @@ BUGFIXES:
   ZOOKEEPER-1494. C client: socket leak after receive timeout in
   zookeeper_interest() (Michi Mutsuzaki via mahadev)
 
+  ZOOKEEPER-1483. Fix leader election recipe documentation. (Michi Mutsuzaki
+  via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
