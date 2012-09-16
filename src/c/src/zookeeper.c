@@ -2521,22 +2521,6 @@ int zookeeper_close(zhandle_t *zh)
         /* make sure the close request is sent; we set timeout to an arbitrary
          * (but reasonable) number of milliseconds since we want the call to block*/
         rc=adaptor_send_queue(zh, 3000);
-
-        /* make sure server has read the close request and sent back a response*/ 
-        struct pollfd fd_s[1];
-        fd_s[0].fd = zh->fd;
-        fd_s[0].events = POLLIN;
-        int ret = poll(fd_s, 1, 1000);
-        if (ret == 0) {
-            LOG_WARN(("Timeout when waitting for server's reply after sending a close request, sessionId=%#llx\n",
-                zh->client_id.client_id));
-        } else if (ret < 0) {
-            LOG_WARN(("System error happens when waitting for server's reply, sessionId=%#llx\n",
-                zh->client_id.client_id));
-        } else {
-            // do nothing
-        }
-
     }else{
         LOG_INFO(("Freeing zookeeper resources for sessionId=%#llx\n",
                 zh->client_id.client_id));

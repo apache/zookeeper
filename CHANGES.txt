@@ -234,9 +234,6 @@ BUGFIXES:
   ZOOKEEPER-1328. Misplaced assertion for the test case 'FLELostMessageTest'
   and not identifying misfunctions. (Rakesh R via mahadev)
 
-  ZOOKEEPER-1105 c client zookeeper_close not send CLOSE_OP request to server
-  (lincoln.lee via michim)
-
   ZOOKEEPER-1380. zkperl: _zk_release_watch doesn't remove items properly from
   the watch list. (Botond Hejj via mahadev)
 
