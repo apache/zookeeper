@@ -99,9 +99,6 @@ BUGFIXES:
 
   ZOOKEEPER-1481 allow the C cli to run exists with a watcher (phunt via michim)
 
-  ZOOKEEPER-1105 c client zookeeper_close not send CLOSE_OP request to server
-  (lincoln.lee via michim)
-
   ZOOKEEPER-1380. zkperl: _zk_release_watch doesn't remove items properly from
   the watch list. (Botond Hejj via mahadev)
 
