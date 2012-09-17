@@ -252,6 +252,9 @@ BUGFIXES:
   ZOOKEEPER-1483. Fix leader election recipe documentation (Michi Mutsuzaki
   via mahadev) 
 
+  ZOOKEEPER-1496. Ephemeral node not getting cleared even after client has
+  exited. (Rakesh R via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
