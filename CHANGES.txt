@@ -1,4 +1,4 @@
-Release 3.4.4 - TBD
+Release 3.4.4 - 2012-09-17 
 
 Backward compatible changes:
 
