@@ -57,6 +57,15 @@ These release notes include new developer and user facing incompatibilities, fea
 <tbody>
 <row>
  <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1496">
+   ZOOKEEPER-1496</ulink>
+  </entry>
+  <entry>
+Ephemeral node not getting cleared even after client has exited
+</entry>
+</row>
+<row>
+ <entry>
  <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1048">
    ZOOKEEPER-1048</ulink>
   </entry>
