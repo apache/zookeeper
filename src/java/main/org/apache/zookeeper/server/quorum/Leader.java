@@ -32,10 +32,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.server.FinalRequestProcessor;
@@ -79,22 +79,66 @@ public class Leader {
     LearnerCnxAcceptor cnxAcceptor;
     
     // list of all the followers
-    public final HashSet<LearnerHandler> learners =
+    private final HashSet<LearnerHandler> learners =
         new HashSet<LearnerHandler>();
 
-    // list of followers that are ready to follow (i.e synced with the leader)    
-    public final HashSet<LearnerHandler> forwardingFollowers =
+    /**
+     * Returns a copy of the current learner snapshot
+     */
+    public List<LearnerHandler> getLearners() {
+        synchronized (learners) {
+            return new ArrayList<LearnerHandler>(learners);
+        }
+    }
+
+    // list of followers that are ready to follow (i.e synced with the leader)
+    private final HashSet<LearnerHandler> forwardingFollowers =
         new HashSet<LearnerHandler>();
     
-    protected final HashSet<LearnerHandler> observingLearners =
+    /**
+     * Returns a copy of the current forwarding follower snapshot
+     */
+    public List<LearnerHandler> getForwardingFollowers() {
+        synchronized (forwardingFollowers) {
+            return new ArrayList<LearnerHandler>(forwardingFollowers);
+        }
+    }
+
+    private void addForwardingFollower(LearnerHandler lh) {
+        synchronized (forwardingFollowers) {
+            forwardingFollowers.add(lh);
+        }
+    }
+
+    private final HashSet<LearnerHandler> observingLearners =
         new HashSet<LearnerHandler>();
         
-    //Pending sync requests
-    public final HashMap<Long,List<LearnerSyncRequest>> pendingSyncs =
+    /**
+     * Returns a copy of the current observer snapshot
+     */
+    public List<LearnerHandler> getObservingLearners() {
+        synchronized (observingLearners) {
+            return new ArrayList<LearnerHandler>(observingLearners);
+        }
+    }
+
+    private void addObserverLearnerHandler(LearnerHandler lh) {
+        synchronized (observingLearners) {
+            observingLearners.add(lh);
+        }
+    }
+
+    // Pending sync requests. Must access under 'this' lock.
+    private final HashMap<Long,List<LearnerSyncRequest>> pendingSyncs =
         new HashMap<Long,List<LearnerSyncRequest>>();
     
+    synchronized public int getNumPendingSyncs() {
+        return pendingSyncs.size();
+    }
+
     //Follower counter
     final AtomicLong followerCounter = new AtomicLong(-1);
+
     /**
      * Adds peer to the leader.
      * 
@@ -118,6 +162,9 @@ public class Leader {
         }        
         synchronized (learners) {
             learners.remove(peer);
+        }
+        synchronized (observingLearners) {
+            observingLearners.remove(peer);
         }
     }
 
@@ -350,9 +397,11 @@ public class Leader {
                     
                     shutdown("Waiting for a quorum of followers, only synced with: " + ackToString);
                     HashSet<Long> followerSet = new HashSet<Long>();
-                    for(LearnerHandler f : learners)
+
+                    for(LearnerHandler f : getLearners()) {
                         followerSet.add(f.getSid());
-                    
+                    }
+
                     if (self.getQuorumVerifier().containsQuorum(followerSet)) {
                     //if (followers.size() >= self.quorumPeers.size() / 2) {
                         LOG.warn("Enough followers present. "+
@@ -405,16 +454,16 @@ public class Leader {
 
                 // lock on the followers when we use it.
                 syncedSet.add(self.getId());
-                synchronized (learners) {
-                    for (LearnerHandler f : learners) {
-                        // Synced set is used to check we have a supporting quorum, so only
-                        // PARTICIPANT, not OBSERVER, learners should be used
-                        if (f.synced() && f.getLearnerType() == LearnerType.PARTICIPANT) {
-                            syncedSet.add(f.getSid());
-                        }
-                        f.ping();
+
+                for (LearnerHandler f : getLearners()) {
+                    // Synced set is used to check we have a supporting quorum, so only
+                    // PARTICIPANT, not OBSERVER, learners should be used
+                    if (f.synced() && f.getLearnerType() == LearnerType.PARTICIPANT) {
+                        syncedSet.add(f.getSid());
                     }
+                    f.ping();
                 }
+
               if (!tickSkip && !self.getQuorumVerifier().containsQuorum(syncedSet)) {
                 //if (!tickSkip && syncedCount < self.quorumPeers.size() / 2) {
                     // Lost quorum, shutdown
@@ -626,10 +675,8 @@ public class Leader {
      * send a packet to all observers     
      */
     void sendObserverPacket(QuorumPacket qp) {        
-        synchronized(observingLearners) {
-            for (LearnerHandler f : observingLearners) {                
-                f.queuePacket(qp);
-            }
+        for (LearnerHandler f : getObservingLearners()) {
+            f.queuePacket(qp);
         }
     }
 
@@ -789,13 +836,9 @@ public class Leader {
             }
         }
         if (handler.getLearnerType() == LearnerType.PARTICIPANT) {
-            synchronized (forwardingFollowers) {
-                forwardingFollowers.add(handler);
-            }
+            addForwardingFollower(handler);
         } else {
-            synchronized (observingLearners) {
-                observingLearners.add(handler);
-            }
+            addObserverLearnerHandler(handler);
         }
                 
         return lastProposed;

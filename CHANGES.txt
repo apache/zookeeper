@@ -135,6 +135,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1437. Client uses session before SASL authentication complete.
   (Eugene Koontz via mahadev)
 
+  ZOOKEEPER-1361. Leader.lead iterates over 'learners' set without proper
+  synchronisation. (Henry Robinson via mahadev)
+
 Release 3.4.3 - 2012-02-06
 
 Backward compatible changes:
