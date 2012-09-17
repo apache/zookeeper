@@ -18,7 +18,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
 "http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
 <article id="ar_ReleaseNotes">
-  <title>ZooKeeper 3.4.3 Release Notes</title>
+  <title>ZooKeeper 3.4.4 Release Notes</title>
 
   <articleinfo>
     <legalnotice>
@@ -42,6 +42,474 @@ These release notes include new developer and user facing incompatibilities, fea
 <itemizedlist>
   <listitem><para><ulink url="#changes">Changes</ulink></para></listitem>
 </itemizedlist>
+<section id="nchanges">
+<title>Changes Since 3.4.3</title>
+<table>
+<title>Changes Since ZooKeeper 3.4.3</title>
+<tgroup cols='2'>
+<colspec colname='c1'/><colspec colname='c2'/>
+<thead>
+<row>
+  <entry>Issue</entry>
+  <entry>Notes</entry>
+</row>
+</thead>
+<tbody>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1048">
+   ZOOKEEPER-1048</ulink>
+  </entry>
+  <entry>
+addauth command does not work in cli_mt/cli_st
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1163">
+   ZOOKEEPER-1163</ulink>
+  </entry>
+  <entry>
+Memory leak in zk_hashtable.c:do_insert_watcher_object()
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1210">
+   ZOOKEEPER-1210</ulink>
+  </entry>
+  <entry>
+Can't build ZooKeeper RPM with RPM >
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1236">
+   ZOOKEEPER-1236</ulink>
+  </entry>
+  <entry>
+Security uses proprietary Sun APIs
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1256">
+   ZOOKEEPER-1256</ulink>
+  </entry>
+  <entry>
+ClientPortBindTest is failing on Mac OS X
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1277">
+   ZOOKEEPER-1277</ulink>
+  </entry>
+  <entry>
+servers stop serving when lower 32bits of zxid roll over
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1307">
+   ZOOKEEPER-1307</ulink>
+  </entry>
+  <entry>
+zkCli.sh is exiting when an Invalid ACL exception is thrown from setACL command through client
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1318">
+   ZOOKEEPER-1318</ulink>
+  </entry>
+  <entry>
+In Python binding, get_children (and get and exists, and probably others) with expired session doesn't raise exception properly
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1339">
+   ZOOKEEPER-1339</ulink>
+  </entry>
+  <entry>
+C clien doesn't build with --enable-debug
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1344">
+   ZOOKEEPER-1344</ulink>
+  </entry>
+  <entry>
+ZooKeeper client multi-update command is not considering the Chroot request
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1354">
+   ZOOKEEPER-1354</ulink>
+  </entry>
+  <entry>
+AuthTest.testBadAuthThenSendOtherCommands fails intermittently
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1361">
+   ZOOKEEPER-1361</ulink>
+  </entry>
+  <entry>
+Leader.lead iterates over 'learners' set without proper synchronisation
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1380">
+   ZOOKEEPER-1380</ulink>
+  </entry>
+  <entry>
+zkperl: _zk_release_watch doesn't remove items properly from the watch list
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1384">
+   ZOOKEEPER-1384</ulink>
+  </entry>
+  <entry>
+test-cppunit overrides LD_LIBRARY_PATH and fails if gcc is in non-standard location
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1386">
+   ZOOKEEPER-1386</ulink>
+  </entry>
+  <entry>
+avoid flaky URL redirection in "ant javadoc" : replace "http://java.sun.com/javase/6/docs/api/" with "http://download.oracle.com/javase/6/docs/api/"
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1395">
+   ZOOKEEPER-1395</ulink>
+  </entry>
+  <entry>
+node-watcher double-free redux
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1403">
+   ZOOKEEPER-1403</ulink>
+  </entry>
+  <entry>
+zkCli.sh script quoting issue
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1406">
+   ZOOKEEPER-1406</ulink>
+  </entry>
+  <entry>
+dpkg init scripts don't restart - missing check_priv_sep_dir
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1412">
+   ZOOKEEPER-1412</ulink>
+  </entry>
+  <entry>
+java client watches inconsistently triggered on reconnect
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1419">
+   ZOOKEEPER-1419</ulink>
+  </entry>
+  <entry>
+Leader election never settles for a 5-node cluster
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1427">
+   ZOOKEEPER-1427</ulink>
+  </entry>
+  <entry>
+Writing to local files is done non-atomically
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1431">
+   ZOOKEEPER-1431</ulink>
+  </entry>
+  <entry>
+zkpython: async calls leak memory
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1437">
+   ZOOKEEPER-1437</ulink>
+  </entry>
+  <entry>
+Client uses session before SASL authentication complete
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1463">
+   ZOOKEEPER-1463</ulink>
+  </entry>
+  <entry>
+external inline function is not compatible with C99
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1465">
+   ZOOKEEPER-1465</ulink>
+  </entry>
+  <entry>
+Cluster availability following new leader election takes a long time with large datasets - is correlated to dataset size
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1466">
+   ZOOKEEPER-1466</ulink>
+  </entry>
+  <entry>
+QuorumCnxManager.shutdown missing synchronization
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1471">
+   ZOOKEEPER-1471</ulink>
+  </entry>
+  <entry>
+Jute generates invalid C++ code
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1480">
+   ZOOKEEPER-1480</ulink>
+  </entry>
+  <entry>
+ClientCnxn(1161) can't get the current zk server add, so that - Session 0x for server null, unexpected error
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1483">
+   ZOOKEEPER-1483</ulink>
+  </entry>
+  <entry>
+Fix leader election recipe documentation
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1489">
+   ZOOKEEPER-1489</ulink>
+  </entry>
+  <entry>
+Data loss after truncate on transaction log
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1490">
+   ZOOKEEPER-1490</ulink>
+  </entry>
+  <entry>
+If the configured log directory does not exist zookeeper will not start. Better to create the directory and start
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1493">
+   ZOOKEEPER-1493</ulink>
+  </entry>
+  <entry>
+C Client: zookeeper_process doesn't invoke completion callback if zookeeper_close has been called
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1494">
+   ZOOKEEPER-1494</ulink>
+  </entry>
+  <entry>
+C client: socket leak after receive timeout in zookeeper_interest()
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1496">
+   ZOOKEEPER-1496</ulink>
+  </entry>
+  <entry>
+Ephemeral node not getting cleared even after client has exited
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1501">
+   ZOOKEEPER-1501</ulink>
+  </entry>
+  <entry>
+Nagios plugin always returns OK when it cannot connect to zookeeper
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1514">
+   ZOOKEEPER-1514</ulink>
+  </entry>
+  <entry>
+FastLeaderElection - leader ignores the round information when joining a quorum
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1521">
+   ZOOKEEPER-1521</ulink>
+  </entry>
+  <entry>
+LearnerHandler initLimit/syncLimit problems specifying follower socket timeout limits
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1522">
+   ZOOKEEPER-1522</ulink>
+  </entry>
+  <entry>
+intermittent failures in Zab test due to NPE in recursiveDelete test function
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1536">
+   ZOOKEEPER-1536</ulink>
+  </entry>
+  <entry>
+c client : memory leak in winport.c
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1321">
+   ZOOKEEPER-1321</ulink>
+  </entry>
+  <entry>
+Add number of client connections metric in JMX and srvr
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1377">
+   ZOOKEEPER-1377</ulink>
+  </entry>
+  <entry>
+add support for dumping a snapshot file content (similar to LogFormatter)
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1389">
+   ZOOKEEPER-1389</ulink>
+  </entry>
+  <entry>
+it would be nice if start-foreground used exec $JAVA in order to get rid of the intermediate shell process
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1390">
+   ZOOKEEPER-1390</ulink>
+  </entry>
+  <entry>
+some expensive debug code not protected by a check for debug
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1433">
+   ZOOKEEPER-1433</ulink>
+  </entry>
+  <entry>
+improve ZxidRolloverTest (test seems flakey)
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1454">
+   ZOOKEEPER-1454</ulink>
+  </entry>
+  <entry>
+Document how to run autoreconf if cppunit is installed in a non-standard directory
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1481">
+   ZOOKEEPER-1481</ulink>
+  </entry>
+  <entry>
+allow the C cli to run exists with a watcher
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1497">
+   ZOOKEEPER-1497</ulink>
+  </entry>
+  <entry>
+Allow server-side SASL login with JAAS configuration to be programmatically set (rather than only by reading JAAS configuration file)
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1503">
+   ZOOKEEPER-1503</ulink>
+  </entry>
+  <entry>
+remove redundant JAAS configuration code in SaslAuthTest and SaslAuthFailTest
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1510">
+   ZOOKEEPER-1510</ulink>
+  </entry>
+  <entry>
+Should not log SASL errors for non-secure usage
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1450">
+   ZOOKEEPER-1450</ulink>
+  </entry>
+  <entry>
+Backport ZOOKEEPER-1294 fix to 3.4 and 3.3
+</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+</section>
+
 <section id="changes">
 <title>Changes Since ZooKeeper 3.4.2</title>
 
