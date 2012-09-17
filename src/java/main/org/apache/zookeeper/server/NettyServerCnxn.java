@@ -582,9 +582,9 @@ public class NettyServerCnxn extends ServerCnxn {
             if(stats.getServerState().equals("leader")) {
                 Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
 
-                print("followers", leader.learners.size());
-                print("synced_followers", leader.forwardingFollowers.size());
-                print("pending_syncs", leader.pendingSyncs.size());
+                print("followers", leader.getLearners().size());
+                print("synced_followers", leader.getForwardingFollowers().size());
+                print("pending_syncs", leader.getNumPendingSyncs());
             }
         }
 

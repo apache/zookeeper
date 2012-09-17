@@ -855,12 +855,8 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         List<String> l = new ArrayList<String>();
         synchronized (this) {
             if (leader != null) {
-                synchronized (leader.learners) {
-                    for (LearnerHandler fh :
-                        leader.learners)
-                    {
-                        if (fh.getSocket() == null)
-                            continue;
+                for (LearnerHandler fh : leader.getLearners()) {
+                    if (fh.getSocket() != null) {
                         String s = fh.getSocket().getRemoteSocketAddress().toString();
                         if (leader.isLearnerSynced(fh))
                             s += "*";

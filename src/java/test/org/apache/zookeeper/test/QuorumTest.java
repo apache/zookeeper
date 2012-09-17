@@ -151,8 +151,7 @@ public class QuorumTest extends ZKTestCase {
                 }
             }, null);
         }
-        ArrayList<LearnerHandler> fhs = new ArrayList<LearnerHandler>(leader.forwardingFollowers);
-        for(LearnerHandler f: fhs) {
+        for(LearnerHandler f : leader.getForwardingFollowers()) {
             f.getSocket().shutdownInput();
         }
         for(int i = 0; i < 5000; i++) {
