@@ -53,7 +53,7 @@ else
   . "$ZOOBINDIR"/zkEnv.sh
 fi
 
-if [ "x$SERVER_JVMFLAGS" ]
+if [ "x$SERVER_JVMFLAGS"  != "x" ]
 then
     JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
 fi
