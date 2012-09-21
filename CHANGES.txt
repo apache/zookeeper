@@ -1,3 +1,9 @@
+Release 3.3.7 - TBD
+Backward compatible changes:
+
+  ZOOKEEPER-1376. zkServer.sh does not correctly check for
+  $SERVER_JVMFLAGS (Skye W-M via henryr)
+
 Release 3.3.6 - 2012-08-01
 Backward compatible changes:
 
