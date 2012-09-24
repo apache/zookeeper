@@ -382,6 +382,8 @@ IMPROVEMENTS:
   to be programmatically set (rather than only by reading JAAS
   configuration file) (Matteo Bertozzi via phunt)
 
+  ZOOKEEPER-1238. Linger time should be -1 for Netty sockets. (Skye
+  W-M via henryr)
 
 Release 3.4.0 - 
 
