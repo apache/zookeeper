@@ -446,7 +446,7 @@ public class QuorumPeerConfig {
                        && clientPortAddress.getPort()!=qs.clientAddr.getPort())) 
                throw new ConfigException("client address for this server (id = " + serverId + ") in static config file is " + clientPortAddress + " is different from client address found in dynamic file: " + qs.clientAddr);                    
            } 
-            if (qs!=null) clientPortAddress = qs.clientAddr;                       
+            if (qs!=null && qs.clientAddr != null) clientPortAddress = qs.clientAddr;                       
             
             // Warn about inconsistent peer type
             LearnerType roleByServersList = quorumVerifier.getObservingMembers().containsKey(serverId) ? LearnerType.OBSERVER
