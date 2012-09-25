@@ -107,6 +107,9 @@ public class DynamicConfigBCTest extends QuorumPeer {
             QuorumPeerConfig config = new QuorumPeerConfig();
             config.parse(confFile.toString());
             
+            Assert.assertTrue(config.getClientPortAddress() != null 
+                && config.getClientPortAddress().getPort() == CLIENT_PORT_QP1);
+
             setDynamicConfigFilename(config.getDynamicConfigFilename());
             setConfigFileName(config.getConfigFilename());
             setConfigBackwardCompatibility(config.getConfigBackwardCompatibility());
