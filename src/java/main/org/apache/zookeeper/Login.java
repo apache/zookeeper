@@ -276,6 +276,10 @@ public class Login {
         return subject;
     }
 
+    public String getLoginContextName() {
+        return loginContextName;
+    }
+
     private synchronized LoginContext login(final String loginContextName) throws LoginException {
         if (loginContextName == null) {
             throw new LoginException("loginContext name (JAAS file section header) was null. " +
