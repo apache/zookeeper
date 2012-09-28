@@ -76,10 +76,10 @@ public class ZooKeeperSaslClient {
         return saslState;
     }
 
-    private String loginContext;
-
     public String getLoginContext() {
-      return loginContext;
+        if (login != null)
+            return login.getLoginContextName();
+        return null;
     }
 
     public ZooKeeperSaslClient(final String serverPrincipal)
@@ -193,7 +193,6 @@ public class ZooKeeperSaslClient {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("JAAS loginContext is: " + loginContext);
                 }
-                this.loginContext = loginContext;
                 // note that the login object is static: it's shared amongst all zookeeper-related connections.
                 // createSaslClient() must be declared synchronized so that login is initialized only once.
                 login = new Login(loginContext, new ClientCallbackHandler(null));
@@ -485,9 +484,14 @@ public class ZooKeeperSaslClient {
         // variable or method in this class to determine whether the client is
         // configured to use SASL. (see also ZOOKEEPER-1455).
         try {
-            if ((System.getProperty(Environment.JAAS_CONF_KEY) != null) ||
-                (javax.security.auth.login.Configuration.getConfiguration() != null)) {
-                // Client is configured to use SASL.
+  	    if ((System.getProperty(Environment.JAAS_CONF_KEY) != null) ||
+              ((javax.security.auth.login.Configuration.getConfiguration() != null) &&
+                  (javax.security.auth.login.Configuration.getConfiguration().
+                       getAppConfigurationEntry(System.
+                       getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY,"Client")) 
+                           != null))) {
+                // Client is configured to use a valid login Configuration, so
+                // authentication is either in progress, successful, or failed.
 
                 // 1. Authentication hasn't finished yet: we must wait for it to do so.
                 if ((isComplete() == false) &&
