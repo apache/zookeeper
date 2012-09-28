@@ -21,13 +21,10 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.junit.Assert;
@@ -68,20 +65,6 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
         }
     }
 
-    private AtomicInteger authFailed = new AtomicInteger(0);
-
-    private class MyWatcher extends CountdownWatcher {
-        @Override
-        public synchronized void process(WatchedEvent event) {
-            if (event.getState() == KeeperState.AuthFailed) {
-                authFailed.incrementAndGet();
-            }
-            else {
-                super.process(event);
-            }
-        }
-    }
-
     @Test
     public void testAuth() throws Exception {
         ZooKeeper zk = createClient();
@@ -95,4 +78,27 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
             zk.close();
         }
     }
+
+    @Test
+    public void testSaslConfig() throws Exception {
+        ZooKeeper zk = createClient();
+        try {
+            zk.getChildren("/", false);
+            Assert.assertFalse(zk.getSaslClient().
+                clientTunneledAuthenticationInProgress());
+            Assert.assertEquals(zk.getSaslClient().getSaslState(),
+                ZooKeeperSaslClient.SaslState.COMPLETE);
+            Assert.assertNotNull(
+                javax.security.auth.login.Configuration.getConfiguration().
+                    getAppConfigurationEntry("MyZookeeperClient"));
+            Assert.assertSame(zk.getSaslClient().getLoginContext(),
+                "MyZookeeperClient");
+        } catch (KeeperException e) {
+            Assert.fail("test failed :" + e);
+        } finally {
+            zk.close();
+        }
+    }
+
+
 }
