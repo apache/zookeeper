@@ -23,6 +23,7 @@ import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
+import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -92,6 +93,10 @@ public class ZooKeeper {
         //Keep these two lines together to keep the initialization order explicit
         LOG = LoggerFactory.getLogger(ZooKeeper.class);
         Environment.logEnv("Client environment:", LOG);
+    }
+
+    public ZooKeeperSaslClient getSaslClient() {
+        return cnxn.zooKeeperSaslClient;
     }
 
     private final ZKWatchManager watchManager = new ZKWatchManager();

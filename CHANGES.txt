@@ -255,6 +255,9 @@ BUGFIXES:
   ZOOKEEPER-1496. Ephemeral node not getting cleared even after client has
   exited. (Rakesh R via mahadev)
 
+  ZOOKEEPER-1550. ZooKeeperSaslClient does not finish anonymous login on
+  OpenJDK (Eugene Koontz via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
