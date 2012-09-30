@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.4.4 Release Notes</title>
+<title>ZooKeeper 3.4.5 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -202,10 +202,13 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.4.4 Release Notes</h1>
+<h1>ZooKeeper 3.4.5 Release Notes</h1>
 <div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
+<li>
+<a href="#rchanges">Changes Since 3.4.4</a>
+</li>
 <li>
 <a href="#nchanges">Changes Since 3.4.3</a>
 </li>
@@ -243,6 +246,52 @@ These release notes include new developer and user facing incompatibilities, fea
 </li>
 
 </ul>
+
+<a name="rchanges"></a>
+<h2 class="h3">Changes Since 3.4.4</h2>
+<div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.4.4</caption>
+
+<title>Changes Since ZooKeeper 3.4.4</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+<tr>
+ 
+<td>
+ <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1550">
+   ZOOKEEPER-1550</a>
+  </td>
+  <td>
+ZooKeeperSaslClient does not finish anonymous login on OpenJDK
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+ <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1376">
+   ZOOKEEPER-1376</a>
+  </td>
+  <td>
+zkServer.sh does not correctly check for $SERVER_JVMFLAGS
+</td>
+
+</tr>
+
+
+
+</table>
+</div>
 
 <a name="nchanges"></a>
 <h2 class="h3">Changes Since 3.4.3</h2>

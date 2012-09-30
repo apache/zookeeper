@@ -18,7 +18,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
 "http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
 <article id="ar_ReleaseNotes">
-  <title>ZooKeeper 3.4.4 Release Notes</title>
+  <title>ZooKeeper 3.4.5 Release Notes</title>
 
   <articleinfo>
     <legalnotice>
@@ -42,6 +42,42 @@ These release notes include new developer and user facing incompatibilities, fea
 <itemizedlist>
   <listitem><para><ulink url="#changes">Changes</ulink></para></listitem>
 </itemizedlist>
+<section id="rchanges">
+<title>Changes Since 3.4.4</title>
+<table>
+<title>Changes Since ZooKeeper 3.4.4</title>
+<tgroup cols='2'>
+<colspec colname='c1'/><colspec colname='c2'/>
+<thead>
+<row>
+  <entry>Issue</entry>
+  <entry>Notes</entry>
+</row>
+</thead>
+<tbody>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1550">
+   ZOOKEEPER-1550</ulink>
+  </entry>
+  <entry>
+ZooKeeperSaslClient does not finish anonymous login on OpenJDK
+</entry>
+</row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1376">
+   ZOOKEEPER-1376</ulink>
+  </entry>
+  <entry>
+zkServer.sh does not correctly check for $SERVER_JVMFLAGS
+</entry>
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</section>
 <section id="nchanges">
 <title>Changes Since 3.4.3</title>
 <table>
