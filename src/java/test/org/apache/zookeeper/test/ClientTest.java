@@ -523,6 +523,22 @@ public class ClientTest extends ClientBase {
 
     }
 
+    @Test
+    public void testLargeNodeData() throws Exception {
+        ZooKeeper zk= null;
+        String queue_handle = "/large";
+        try {
+            zk = createClient();
+
+            zk.create(queue_handle, new byte[500000], Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+        } finally {
+            if (zk != null) {
+                zk.close();
+            }
+        }
+
+    }
 
     private void verifyCreateFails(String path, ZooKeeper zk) throws Exception {
         try {
