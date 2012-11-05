@@ -73,6 +73,15 @@ ZooKeeperSaslClient does not finish anonymous login on OpenJDK
 zkServer.sh does not correctly check for $SERVER_JVMFLAGS
 </entry>
 </row>
+<row>
+ <entry>
+ <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1560">
+   ZOOKEEPER-1560</ulink>
+  </entry>
+  <entry>
+Zookeeper client hangs on creation of large nodes
+</entry>
+</row>
 
 </tbody>
 </tgroup>
