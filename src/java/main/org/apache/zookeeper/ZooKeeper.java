@@ -19,6 +19,7 @@
 package org.apache.zookeeper;
 
 import org.apache.zookeeper.AsyncCallback.*;
+import org.apache.zookeeper.ClientCnxn.SendThread;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
@@ -33,7 +34,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 
 /**
@@ -93,6 +97,61 @@ public class ZooKeeper {
         //Keep these two lines together to keep the initialization order explicit
         LOG = LoggerFactory.getLogger(ZooKeeper.class);
         Environment.logEnv("Client environment:", LOG);
+    }
+    
+    private final StaticHostProvider hostProvider;
+    
+    /**
+     * This function allows a client to update the connection string by providing 
+     * a new comma separated list of host:port pairs, each corresponding to a 
+     * ZooKeeper server. 
+     * <p>
+     * The function invokes a <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1355">
+     * probabilistic load-balancing algorithm</a> which may cause the client to disconnect from 
+     * its current host with the goal to achieve expected uniform number of connections per server 
+     * in the new list. In case the current host to which the client is connected is not in the new
+     * list this call will always cause the connection to be dropped. Otherwise, the decision
+     * is based on whether the number of servers has increased or decreased and by how much.
+     * For example, if the previous connection string contained 3 hosts and now the list contains
+     * these 3 hosts and 2 more hosts, 40% of clients connected to each of the 3 hosts will
+     * move to one of the new hosts in order to balance the load. The algorithm will disconnect 
+     * from the current host with probability 0.4 and in this case cause the client to connect 
+     * to one of the 2 new hosts, chosen at random.
+     * <p>
+     * If the connection is dropped, the client moves to a special mode "reconfigMode" where he chooses
+     * a new server to connect to using the probabilistic algorithm. After finding a server,
+     * or exhausting all servers in the new list after trying all of them and failing to connect,
+     * the client moves back to the normal mode of operation where it will pick an arbitrary server
+     * from the connectString and attempt to connect to it. If establishment of
+     * the connection fails, another server in the connect string will be tried
+     * (the order is non-deterministic, as we random shuffle the list), until a
+     * connection is established. The client will continue attempts until the
+     * session is explicitly closed (or the session is expired by the server).
+
+     * @param connectString
+     *            comma separated host:port pairs, each corresponding to a zk
+     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
+     *            If the optional chroot suffix is used the example would look
+     *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
+     *            where the client would be rooted at "/app/a" and all paths
+     *            would be relative to this root - ie getting/setting/etc...
+     *            "/foo/bar" would result in operations being run on
+     *            "/app/a/foo/bar" (from the server perspective).     
+     *
+     * @throws IOException in cases of network failure     
+     */
+    public void updateServerList(String connectString) throws IOException {
+        ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
+        Collection<InetSocketAddress> serverAddresses = connectStringParser.getServerAddresses();
+
+        ClientCnxnSocket clientCnxnSocket = cnxn.sendThread.getClientCnxnSocket();
+        InetSocketAddress currentHost = (InetSocketAddress) clientCnxnSocket.getRemoteSocketAddress();
+
+        boolean reconfigMode = hostProvider.updateServerList(serverAddresses, currentHost);
+
+        // cause disconnection - this will cause next to be called
+        // which will in turn call nextReconfigMode
+        if (reconfigMode) clientCnxnSocket.testableCloseSocket();
     }
 
     public ZooKeeperSaslClient getSaslClient() {
@@ -442,7 +501,8 @@ public class ZooKeeper {
 
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
-        HostProvider hostProvider = new StaticHostProvider(
+        
+        hostProvider = new StaticHostProvider(
                 connectStringParser.getServerAddresses());
         cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager,
@@ -580,10 +640,10 @@ public class ZooKeeper {
                 + (sessionPasswd == null ? "<null>" : "<hidden>"));
 
         watchManager.defaultWatcher = watcher;
-
+       
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
-        HostProvider hostProvider = new StaticHostProvider(
+        hostProvider = new StaticHostProvider(
                 connectStringParser.getServerAddresses());
         cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager,

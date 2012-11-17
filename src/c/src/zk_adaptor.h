@@ -28,6 +28,7 @@
 #endif
 #include "zookeeper.h"
 #include "zk_hashtable.h"
+#include "addrvec.h"
 
 /* predefined xid's values recognized as special by the server */
 #define WATCHER_EVENT_XID -1 
@@ -156,10 +157,11 @@ struct prime_struct {
 struct adaptor_threads {
      pthread_t io;
      pthread_t completion;
-     int threadsToWait;         // barrier
-     pthread_cond_t cond;       // barrier's conditional
-     pthread_mutex_t lock;      // ... and a lock
-     pthread_mutex_t zh_lock;   // critical section lock
+     int threadsToWait;             // barrier
+     pthread_cond_t cond;           // barrier's conditional
+     pthread_mutex_t lock;          // ... and a lock
+     pthread_mutex_t zh_lock;       // critical section lock
+     pthread_mutex_t reconfig_lock; // lock for reconfiguring cluster's ensemble
 #ifdef WIN32
      SOCKET self_pipe[2];
 #else
@@ -179,52 +181,71 @@ typedef struct _auth_list_head {
 /**
  * This structure represents the connection to zookeeper.
  */
-
 struct _zhandle {
 #ifdef WIN32
-    SOCKET fd; /* the descriptor used to talk to zookeeper */
+    SOCKET fd;                          // the descriptor used to talk to zookeeper
 #else
-    int fd; /* the descriptor used to talk to zookeeper */
+    int fd;                             // the descriptor used to talk to zookeeper
 #endif
-    char *hostname; /* the hostname of zookeeper */
-    struct sockaddr_storage *addrs; /* the addresses that correspond to the hostname */
-    int addrs_count; /* The number of addresses in the addrs array */
-    watcher_fn watcher; /* the registered watcher */
-    struct timeval last_recv; /* The time that the last message was received */
-    struct timeval last_send; /* The time that the last message was sent */
-    struct timeval last_ping; /* The time that the last PING was sent */
-    struct timeval next_deadline; /* The time of the next deadline */
-    int recv_timeout; /* The maximum amount of time that can go by without 
-     receiving anything from the zookeeper server */
-    buffer_list_t *input_buffer; /* the current buffer being read in */
-    buffer_head_t to_process; /* The buffers that have been read and are ready to be processed. */
-    buffer_head_t to_send; /* The packets queued to send */
-    completion_head_t sent_requests; /* The outstanding requests */
-    completion_head_t completions_to_process; /* completions that are ready to run */
-    int connect_index; /* The index of the address to connect to */
-    clientid_t client_id;
-    long long last_zxid;
-    int outstanding_sync; /* Number of outstanding synchronous requests */
-    struct _buffer_list primer_buffer; /* The buffer used for the handshake at the start of a connection */
-    struct prime_struct primer_storage; /* the connect response */
-    char primer_storage_buffer[40]; /* the true size of primer_storage */
-    volatile int state;
-    void *context;
-    auth_list_head_t auth_h; /* authentication data list */
+
+    // Hostlist and list of addresses
+    char *hostname;                     // hostname contains list of zookeeper servers to connect to
+    struct sockaddr_storage addr_cur;   // address of server we're currently connecting/connected to 
+
+    addrvec_t addrs;                    // current list of addresses we're connected to
+    addrvec_t addrs_old;                // old list of addresses that we are no longer connected to
+    addrvec_t addrs_new;                // new list of addresses to connect to if we're reconfiguring
+
+    int reconfig;                       // Are we in the process of reconfiguring cluster's ensemble
+    double pOld, pNew;                  // Probability for selecting between 'addrs_old' and 'addrs_new'
+    int delay;
+
+    watcher_fn watcher;                 // the registered watcher
+
+    // Message timings
+    struct timeval last_recv;           // time last message was received
+    struct timeval last_send;           // time last message was sent
+    struct timeval last_ping;           // time last PING was sent
+    struct timeval next_deadline;       // time of the next deadline
+    int recv_timeout;                   // max receive timeout for messages from server
+
+    // Buffers
+    buffer_list_t *input_buffer;        // current buffer being read in
+    buffer_head_t to_process;           // buffers that have been read and ready to be processed
+    buffer_head_t to_send;              // packets queued to send
+    completion_head_t sent_requests;    // outstanding requests
+    completion_head_t completions_to_process; // completions that are ready to run
+    int outstanding_sync;               // number of outstanding synchronous requests
+
+    // State info
+    volatile int state;                 // Current zookeeper state
+    void *context;                      // client-side provided context
+    clientid_t client_id;               // client-id
+    long long last_zxid;                // last zookeeper ID
+    auth_list_head_t auth_h;            // authentication data list
+
+    // Primer storage
+    struct _buffer_list primer_buffer;  // The buffer used for the handshake at the start of a connection
+    struct prime_struct primer_storage; // the connect response
+    char primer_storage_buffer[40];     // the true size of primer_storage
+
     /* zookeeper_close is not reentrant because it de-allocates the zhandler. 
      * This guard variable is used to defer the destruction of zhandle till 
      * right before top-level API call returns to the caller */
     int32_t ref_counter;
     volatile int close_requested;
     void *adaptor_priv;
+
     /* Used for debugging only: non-zero value indicates the time when the zookeeper_process
      * call returned while there was at least one unprocessed server response 
      * available in the socket recv buffer */
     struct timeval socket_readable;
-    
+
+    // Watchers
     zk_hashtable* active_node_watchers;   
     zk_hashtable* active_exist_watchers;
     zk_hashtable* active_child_watchers;
+
     /** used for chroot path at the client side **/
     char *chroot;
 };
@@ -246,13 +267,19 @@ void free_duplicate_path(const char* free_path, const char* path);
 void zoo_lock_auth(zhandle_t *zh);
 void zoo_unlock_auth(zhandle_t *zh);
 
+// ensemble reconfigure access guards
+void lock_reconfig(struct _zhandle *zh);
+void unlock_reconfig(struct _zhandle *zh);
+
 // critical section guards
 void enter_critical(zhandle_t* zh);
 void leave_critical(zhandle_t* zh);
+
 // zhandle object reference counting
 void api_prolog(zhandle_t* zh);
 int api_epilog(zhandle_t *zh, int rc);
 int32_t get_xid();
+
 // returns the new value of the ref counter
 int32_t inc_ref_counter(zhandle_t* zh,int i);
 

@@ -19,6 +19,8 @@
 package org.apache.zookeeper.client;
 
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.Collection;
 
 /**
  * A set of hosts a ZooKeeper client should connect to.
@@ -58,4 +60,13 @@ public interface HostProvider {
      * The HostProvider may use this notification to reset it's inner state.
      */
     public void onConnected();
+
+    /**
+     * Update the list of servers. This returns true if changing connections is necessary for load-balancing, false otherwise.
+     * @param serverAddresses new host list
+     * @param currentHost the host to which this client is currently connected
+     * @return true if changing connections is necessary for load-balancing, false otherwise  
+     */
+	boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost)
+			throws UnknownHostException;
 }

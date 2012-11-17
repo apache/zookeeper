@@ -255,6 +255,7 @@ int adaptor_init(zhandle_t *zh)
     zh->adaptor_priv = adaptor_threads;
     pthread_mutex_init(&zh->to_process.lock,0);
     pthread_mutex_init(&adaptor_threads->zh_lock,0);
+    pthread_mutex_init(&adaptor_threads->reconfig_lock,0);
     // to_send must be recursive mutex    
     pthread_mutexattr_init(&recursive_mx_attr);
     pthread_mutexattr_settype(&recursive_mx_attr, PTHREAD_MUTEX_RECURSIVE);
@@ -513,6 +514,19 @@ __attribute__((constructor)) int32_t get_xid()
         xid = time(0);
     }
     return fetch_and_add(&xid,1);
+}
+
+void lock_reconfig(struct _zhandle *zh)
+{
+    struct adaptor_threads *adaptor = zh->adaptor_priv;
+    if(adaptor)
+        pthread_mutex_lock(&adaptor->reconfig_lock);
+}
+void unlock_reconfig(struct _zhandle *zh)
+{
+    struct adaptor_threads *adaptor = zh->adaptor_priv;
+    if(adaptor)
+        pthread_mutex_unlock(&adaptor->reconfig_lock);
 }
 
 void enter_critical(zhandle_t* zh)

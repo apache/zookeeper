@@ -102,7 +102,7 @@ public:
         // memory
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
-        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs));
+        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs.data));
         // This cannot be maintained properly CPPUNIT_ASSERT_EQUAL(9,freeMock.callCounter);
     }
     void testCloseUnconnected1()
@@ -128,7 +128,7 @@ public:
         // memory
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
-        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs));
+        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs.data));
         // the close request sent?
         CPPUNIT_ASSERT_EQUAL(1,zkMock.counter);
     }
@@ -140,6 +140,7 @@ public:
 
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
+        CPPUNIT_ASSERT_EQUAL(ZOO_NOTCONNECTED_STATE, zoo_state(zh));
 
         Mock_gettimeofday timeMock;
         
@@ -173,7 +174,7 @@ public:
         // memory
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
-        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs));
+        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs.data));
         // the close request sent?
         CPPUNIT_ASSERT_EQUAL(1,(int)zkServer.closeSent);
     }
@@ -218,7 +219,7 @@ public:
         // memory
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.hostname));
-        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.addrs));
+        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.addrs.data));
         // make sure the close request NOT sent
         CPPUNIT_ASSERT_EQUAL(0,(int)zkServer.closeSent);
     }
@@ -249,7 +250,7 @@ public:
         // memory
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
-        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs));
+        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs.data));
         CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(adaptor));
         // Cannot be maintained accurately: CPPUNIT_ASSERT_EQUAL(10,freeMock.callCounter);
         // threads
@@ -313,7 +314,7 @@ public:
             // memory
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.hostname));
-            CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs));
+            CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh.addrs.data));
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(adaptor));
             // threads
             CPPUNIT_ASSERT_EQUAL(1,CheckedPthread::getDestroyCounter(adaptor->io));
@@ -378,7 +379,7 @@ public:
             // memory
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh));
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.hostname));
-            CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.addrs));
+            CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.addrs.data));
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(adaptor));
             // threads
             CPPUNIT_ASSERT_EQUAL(1,CheckedPthread::getDestroyCounter(adaptor->io));
@@ -444,7 +445,7 @@ public:
             // memory
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(lzh));
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.hostname));
-            CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.addrs));
+            CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(closeAction.lzh.addrs.data));
             CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(adaptor));
             // threads
             CPPUNIT_ASSERT_EQUAL(1,CheckedPthread::getDestroyCounter(adaptor->io));

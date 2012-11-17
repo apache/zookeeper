@@ -29,9 +29,12 @@ import org.junit.Test;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Random;
 
 public class StaticHostProviderTest extends ZKTestCase {
-
+    private Random r = new Random(1);
+    
     @Test
     public void testNextGoesRound() throws UnknownHostException {
         HostProvider hostProvider = getHostProvider(2);
@@ -85,14 +88,236 @@ public class StaticHostProviderTest extends ZKTestCase {
         assertNotSame(first, second);
     }
 
+    private final double slackPercent = 10;
+    private final int numClients = 10000;
+
+    @Test
+    public void testUpdateClientMigrateOrNot() throws UnknownHostException {
+        HostProvider hostProvider = getHostProvider(4); // 10.10.10.4:1238, 10.10.10.3:1237, 10.10.10.2:1236, 10.10.10.1:1235
+        Collection<InetSocketAddress> newList = getServerAddresses(3); // 10.10.10.3:1237, 10.10.10.2:1236, 10.10.10.1:1235
+        
+        InetSocketAddress myServer = new InetSocketAddress("10.10.10.3", 1237);
+        
+        // Number of machines becomes smaller, my server is in the new cluster
+        boolean disconnectRequired = hostProvider.updateServerList(newList, myServer);
+        assertTrue(!disconnectRequired);
+
+        // Number of machines stayed the same, my server is in the new cluster
+        disconnectRequired = hostProvider.updateServerList(newList, myServer);
+        assertTrue(!disconnectRequired);
+
+        // Number of machines became smaller, my server is not in the new
+        // cluster
+        newList = getServerAddresses(2); // 10.10.10.2:1236, 10.10.10.1:1235
+        disconnectRequired = hostProvider.updateServerList(newList, myServer);
+        assertTrue(disconnectRequired);
+
+        // Number of machines stayed the same, my server is not in the new
+        // cluster
+        disconnectRequired = hostProvider.updateServerList(newList, myServer);
+        assertTrue(disconnectRequired);
+
+        // Number of machines increased, my server is not in the new cluster
+        newList = new ArrayList<InetSocketAddress>(3);
+        for (int i = 4; i > 1; i--) { // 10.10.10.4:1238, 10.10.10.3:1237, 10.10.10.2:1236
+            newList.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+        }
+        myServer = new InetSocketAddress("10.10.10.1", 1235);
+        disconnectRequired = hostProvider.updateServerList(newList, myServer);
+        assertTrue(disconnectRequired);
+
+        // Number of machines increased, my server is in the new cluster
+        // Here whether to move or not depends on the difference of cluster
+        // sizes
+        // With probability 1 - |old|/|new} the client disconnects
+        // In the test below 1-9/10 = 1/10 chance of disconnecting
+        HostProvider[] hostProviderArray = new HostProvider[numClients];
+        newList = getServerAddresses(10);
+        int numDisconnects = 0;
+        for (int i = 0; i < numClients; i++) {
+            hostProviderArray[i] = getHostProvider(9);
+            disconnectRequired = hostProviderArray[i].updateServerList(newList, myServer);
+            if (disconnectRequired)
+                numDisconnects++;
+        }
+
+       // should be numClients/10 in expectation, we test that its numClients/10 +- slackPercent 
+        assertTrue(numDisconnects < upperboundCPS(numClients, 10));
+    }
+
+    @Test
+    public void testUpdateMigrationGoesRound() throws UnknownHostException {
+        HostProvider hostProvider = getHostProvider(4);
+        // old list (just the ports): 1238, 1237, 1236, 1235
+        Collection<InetSocketAddress> newList = new ArrayList<InetSocketAddress>(
+                10);
+        for (int i = 12; i > 2; i--) { // 1246, 1245, 1244, 1243, 1242, 1241,
+                                       // 1240, 1239, 1238, 1237
+            newList.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+        }
+
+        // servers from the old list that appear in the new list
+        Collection<InetSocketAddress> oldStaying = new ArrayList<InetSocketAddress>(2);
+        for (int i = 4; i > 2; i--) { // 1238, 1237
+            oldStaying.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+        }
+
+        // servers in the new list that are not in the old list
+        Collection<InetSocketAddress> newComing = new ArrayList<InetSocketAddress>(10);
+        for (int i = 12; i > 4; i--) {// 1246, 1245, 1244, 1243, 1242, 1241, 1240, 1139
+            newComing.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+        }
+
+        // Number of machines increases, my server is not in the new cluster
+        // load on old servers must be decreased, so must connect to one of the
+        // new servers
+        // i.e., pNew = 1.
+        boolean disconnectRequired = hostProvider.updateServerList(newList, new InetSocketAddress("10.10.10.1", 1235));
+        assertTrue(disconnectRequired);
+
+        // This means reconfigMode = true, and nextHostInReconfigMode will be
+        // called from next
+        // Since pNew = 1 we should first try the new servers
+        ArrayList<InetSocketAddress> seen = new ArrayList<InetSocketAddress>();
+        for (int i = 0; i < newComing.size(); i++) {
+            InetSocketAddress addr = hostProvider.next(0);
+            assertTrue(newComing.contains(addr));
+            assertTrue(!seen.contains(addr));
+            seen.add(addr);
+        }
+
+        // Next the old servers
+        seen.clear();
+        for (int i = 0; i < oldStaying.size(); i++) {
+            InetSocketAddress addr = hostProvider.next(0);
+            assertTrue(oldStaying.contains(addr));
+            assertTrue(!seen.contains(addr));
+            seen.add(addr);
+        }
+
+        // And now it goes back to normal next() so it should be everything
+        // together like in testNextGoesRound()
+        InetSocketAddress first = hostProvider.next(0);
+        assertTrue(first != null);
+        for (int i = 0; i < newList.size() - 1; i++) {
+            hostProvider.next(0);
+        }
+
+        assertEquals(first, hostProvider.next(0));
+    }
+
+    @Test
+    public void testUpdateLoadBalancing() throws UnknownHostException {
+        // Start with 9 servers and 10000 clients
+        boolean disconnectRequired;
+        HostProvider[] hostProviderArray = new HostProvider[numClients];
+        InetSocketAddress[] curHostForEachClient = new InetSocketAddress[numClients];
+        int[] numClientsPerHost = new int[9];
+
+        // initialization
+        for (int i = 0; i < numClients; i++) {
+            hostProviderArray[i] = getHostProvider(9);
+            curHostForEachClient[i] = hostProviderArray[i].next(0);
+            numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+        }
+
+        for (int i = 0; i < 9; i++) {
+            assertTrue(numClientsPerHost[i] <= upperboundCPS(numClients, 9));
+            assertTrue(numClientsPerHost[i] >= lowerboundCPS(numClients, 9));
+            numClientsPerHost[i] = 0; // prepare for next test
+        }
+
+        // remove host number 8 (the last one in a list of 9 hosts)
+        Collection<InetSocketAddress> newList = getServerAddresses(8);
+
+        for (int i = 0; i < numClients; i++) {
+            disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
+            if (disconnectRequired) curHostForEachClient[i] = hostProviderArray[i].next(0);
+            numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+        }
+
+        for (int i = 0; i < 8; i++) {
+            assertTrue(numClientsPerHost[i] <= upperboundCPS(numClients, 8));
+            assertTrue(numClientsPerHost[i] >= lowerboundCPS(numClients, 8));
+            numClientsPerHost[i] = 0; // prepare for next test
+        }
+        assertTrue(numClientsPerHost[8] == 0);
+
+        // remove hosts number 6 and 7 (the currently last two in the list)
+        newList = getServerAddresses(6);
+
+        for (int i = 0; i < numClients; i++) {
+            disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
+            if (disconnectRequired) curHostForEachClient[i] = hostProviderArray[i].next(0);
+            numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+        }
+
+        for (int i = 0; i < 6; i++) {
+            assertTrue(numClientsPerHost[i] <= upperboundCPS(numClients, 6));
+            assertTrue(numClientsPerHost[i] >= lowerboundCPS(numClients, 6));
+            numClientsPerHost[i] = 0; // prepare for next test
+        }
+        assertTrue(numClientsPerHost[6] == 0);
+        assertTrue(numClientsPerHost[7] == 0);
+        assertTrue(numClientsPerHost[8] == 0);
+
+        // remove host number 0 (the first one in the current list)
+        // and add back hosts 6, 7 and 8
+        newList = new ArrayList<InetSocketAddress>(8);
+        for (int i = 9; i > 1; i--) {
+            newList.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+        }
+
+        for (int i = 0; i < numClients; i++) {
+            disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
+            if (disconnectRequired) curHostForEachClient[i] = hostProviderArray[i].next(0);
+            numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+        }
+
+        assertTrue(numClientsPerHost[0] == 0);
+
+        for (int i = 1; i < 9; i++) {
+            assertTrue(numClientsPerHost[i] <= upperboundCPS(numClients, 8));
+            assertTrue(numClientsPerHost[i] >= lowerboundCPS(numClients, 8));
+            numClientsPerHost[i] = 0; // prepare for next test
+        }
+
+        // add back host number 0
+        newList = getServerAddresses(9);
+
+        for (int i = 0; i < numClients; i++) {
+            disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
+            if (disconnectRequired) curHostForEachClient[i] = hostProviderArray[i].next(0);
+            numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+        }
+
+        for (int i = 0; i < 9; i++) {
+            assertTrue(numClientsPerHost[i] <= upperboundCPS(numClients, 9));
+            assertTrue(numClientsPerHost[i] >= lowerboundCPS(numClients, 9));
+        }
+    }
+
     private StaticHostProvider getHostProvider(int size)
             throws UnknownHostException {
+        return new StaticHostProvider(getServerAddresses(size), r.nextLong());
+    }
+
+    private Collection<InetSocketAddress> getServerAddresses(int size) {
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(
                 size);
         while (size > 0) {
-            list.add(new InetSocketAddress("10.10.10." + size, 1234));
+            list.add(new InetSocketAddress("10.10.10." + size, 1234 + size));
             --size;
         }
-        return new StaticHostProvider(list);
+        return list;
     }
+
+    private double lowerboundCPS(int numClients, int numServers) {
+        return (1 - slackPercent/100.0) * numClients / numServers;
+    }
+
+    private double upperboundCPS(int numClients, int numServers) {
+        return (1 + slackPercent/100.0) * numClients / numServers;
+    }
+
 }

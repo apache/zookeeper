@@ -6,6 +6,9 @@ BUGFIXES:
 
 Backward compatible changes:
 
+NEW FEATURES:
+  ZOOKEEPER-1355. Add zk.updateServerList(newServerList) (Alex Shraer, Marshall McMullen via fpj)
+
 BUGFIXES:
 
   ZOOKEEPER-786. Exception in ZooKeeper.toString

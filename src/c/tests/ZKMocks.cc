@@ -507,7 +507,13 @@ void ZookeeperServer::notifyBufferSent(const std::string& buffer){
 void forceConnected(zhandle_t* zh){
     // simulate connected state
     zh->state=ZOO_CONNECTED_STATE;
+    
+    // Simulate we're connected to the first host in our host list
     zh->fd=ZookeeperServer::FD;
+    assert(zh->addrs.count > 0);
+    zh->addr_cur = zh->addrs.data[0];
+    zh->addrs.next++;
+
     zh->input_buffer=0;
     gettimeofday(&zh->last_recv,0);    
     gettimeofday(&zh->last_send,0);    
