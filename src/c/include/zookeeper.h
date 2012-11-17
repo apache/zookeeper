@@ -184,6 +184,7 @@ extern ZOOAPI const int ZOO_AUTH_FAILED_STATE;
 extern ZOOAPI const int ZOO_CONNECTING_STATE;
 extern ZOOAPI const int ZOO_ASSOCIATING_STATE;
 extern ZOOAPI const int ZOO_CONNECTED_STATE;
+extern ZOOAPI const int ZOO_NOTCONNECTED_STATE;
 // @}
 
 /**
@@ -448,6 +449,63 @@ typedef void (*watcher_fn)(zhandle_t *zh, int type,
  */
 ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
   int recv_timeout, const clientid_t *clientid, void *context, int flags);
+
+/**
+ * \brief update the list of servers this client will connect to.
+ * 
+ * This method allows a client to update the connection string by providing
+ * a new comma separated list of host:port pairs, each corresponding to a
+ * ZooKeeper server. 
+ * 
+ * This function invokes a probabilistic load-balancing algorithm which may cause
+ * the client to disconnect from its current host to achieve expected uniform 
+ * connections per server in the new list. In case the current host to which the
+ * client is connected is not in the new list this call will always cause the
+ * connection to be dropped. Otherwise, the decision is based on whether the 
+ * number of servers has increased or decreased and by how much.
+ * 
+ * If the connection is dropped, the client moves to a special "reconfig" mode
+ * where he chooses a new server to connect to using the probabilistic algorithm.
+ * After finding a server or exhaustively trying all the servers in the new list,
+ * the client moves back to the normal mode of operation where it will pick an
+ * arbitrary server from the 'host' string.
+ * 
+ * See {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1355} for the 
+ * protocol and its evaluation,
+ * 
+ * \param host comma separated host:port pairs, each corresponding to a zk
+ *   server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
+ * \return ZOK on success or one of the following errcodes on failure:
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
+ * ZSYSTEMERROR -- a system (OS) error occured; it's worth checking errno to get details
+ */
+ZOOAPI int zoo_set_servers(zhandle_t *zh, const char *hosts);
+
+/**
+ * \brief cycle to the next server on the next connection attempt.
+ * 
+ * Note: typically this method should NOT be used outside of testing.
+ *
+ * This method allows a client to cycle through the list of servers in it's
+ * connection pool to be used on the next connection attempt. This function does
+ * not actually trigger a connection or state change in any way. Its purpose is
+ * to allow testing changing servers on the fly and the probabilistic load
+ * balancing algorithm.
+ */
+ZOOAPI void zoo_cycle_next_server(zhandle_t *zh);
+
+/**
+ * \brief get current host:port this client is connecting/connected to.
+ * 
+ * Note: typically this method should NOT be used outside of testing.
+ *
+ * This method allows a client to get the current host:port that this client
+ * is either in the process of connecting to or is currently connected to. This
+ * is mainly used for testing purposes but might also come in handy as a general
+ * purpose tool to be used by other clients.
+ */
+ZOOAPI const char* zoo_get_current_server(zhandle_t* zh);
 
 /**
  * \brief close the zookeeper handle and free up any resources.

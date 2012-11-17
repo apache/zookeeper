@@ -19,7 +19,8 @@ libhashtable_la_SOURCES = $(HASHTABLE_SRC)
 COMMON_SRC = src/zookeeper.c include/zookeeper.h include/zookeeper_version.h include/zookeeper_log.h\
     src/recordio.c include/recordio.h include/proto.h \
     src/zk_adaptor.h generated/zookeeper.jute.c \
-    src/zookeeper_log.h src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c
+    src/zookeeper_log.h src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c \
+	src/addrvec.h src/addrvec.c
 
 # These are the symbols (classes, mostly) we want to export from our library.
 EXPORT_SYMBOLS = '(zoo_|zookeeper_|zhandle|Z|format_log_message|log_message|logLevel|deallocate_|zerror|is_unrecoverable)'
@@ -70,13 +71,26 @@ endif
 EXTRA_DIST+=$(wildcard ${srcdir}/tests/*.cc) $(wildcard ${srcdir}/tests/*.h) \
     ${srcdir}/tests/wrappers.opt ${srcdir}/tests/wrappers-mt.opt
 
-TEST_SOURCES = tests/TestDriver.cc tests/LibCMocks.cc tests/LibCSymTable.cc \
-    tests/MocksBase.cc  tests/ZKMocks.cc tests/Util.cc tests/ThreadingUtil.cc \
+# These tests are ordered in a logical manner such that each builds upon basic
+# functionality tested in prior tests. e.g. the most basic functionality is
+# tested in TestZookeeperInit and TestZookeeperClose and as such should be tested
+# first as a foundation with more complex test suites to follow.
+TEST_SOURCES = \
+	tests/TestDriver.cc \
+	tests/LibCMocks.cc \
+	tests/LibCSymTable.cc \
+	tests/MocksBase.cc \
+	tests/ZKMocks.cc \
+	tests/Util.cc \
+	tests/ThreadingUtil.cc \
+	tests/TestZookeeperInit.cc \
+	tests/TestZookeeperClose.cc \
+	tests/TestReconfig.cc \
     tests/TestClientRetry.cc \
-    tests/TestOperations.cc tests/TestZookeeperInit.cc \
-    tests/TestZookeeperClose.cc tests/TestClient.cc \
-    tests/TestMulti.cc tests/TestWatchers.cc
-
+	tests/TestOperations.cc \
+	tests/TestMulti.cc \
+	tests/TestClient.cc \
+	tests/TestWatchers.cc
 
 SYMBOL_WRAPPERS=$(shell cat ${srcdir}/tests/wrappers.opt)
 

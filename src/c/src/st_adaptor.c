@@ -95,5 +95,9 @@ int32_t get_xid()
     }
     return xid++;
 }
+
+void lock_reconfig(struct _zhandle *zh){}
+void unlock_reconfig(struct _zhandle *zh){}
+
 void enter_critical(zhandle_t* zh){}
 void leave_critical(zhandle_t* zh){}

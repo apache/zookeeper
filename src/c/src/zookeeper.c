@@ -74,6 +74,8 @@ const int ZOO_AUTH_FAILED_STATE = AUTH_FAILED_STATE_DEF;
 const int ZOO_CONNECTING_STATE = CONNECTING_STATE_DEF;
 const int ZOO_ASSOCIATING_STATE = ASSOCIATING_STATE_DEF;
 const int ZOO_CONNECTED_STATE = CONNECTED_STATE_DEF;
+const int ZOO_NOTCONNECTED_STATE = NOTCONNECTED_STATE_DEF;
+
 static __attribute__ ((unused)) const char* state2String(int state){
     switch(state){
     case 0:
@@ -176,7 +178,6 @@ typedef struct _completion_list {
 const char*err2string(int err);
 static int queue_session_event(zhandle_t *zh, int state);
 static const char* format_endpoint_info(const struct sockaddr_storage* ep);
-static const char* format_current_endpoint_info(zhandle_t* zh);
 
 /* deserialize forward declarations */
 static void deserialize_response(int type, int xid, int failed, int rc, completion_list_t *cptr, struct iarchive *ia);
@@ -398,14 +399,12 @@ static void destroy(zhandle_t *zh)
     if (zh->fd != -1) {
         close(zh->fd);
         zh->fd = -1;
+        memset(&zh->addr_cur, 0, sizeof(zh->addr_cur));
         zh->state = 0;
     }
-    if (zh->addrs != 0) {
-        free(zh->addrs);
-        zh->addrs = NULL;
-    }
+    addrvec_free(&zh->addrs);
 
-    if (zh->chroot != 0) {
+    if (zh->chroot != NULL) {
         free(zh->chroot);
         zh->chroot = NULL;
     }
@@ -429,6 +428,7 @@ static void setup_random()
         close(fd);
     }
     srandom(seed);
+    srand48(seed);
 #endif
 }
 
@@ -456,31 +456,67 @@ static int getaddrinfo_errno(int rc) {
 #endif
 
 /**
- * fill in the addrs array of the zookeeper servers in the zhandle. after filling
- * them in, we will permute them for load balancing.
+ * Count the number of hosts in the connection host string. This assumes it's
+ * a well-formed connection string whereby each host is separated by a comma.
  */
-int getaddrs(zhandle_t *zh)
+static int count_hosts(char *hosts)
 {
-    char *hosts = strdup(zh->hostname);
-    char *host;
-    char *strtok_last;
-    struct sockaddr_storage *addr;
-    int i;
-    int rc;
-    int alen = 0; /* the allocated length of the addrs array */
+    if (!hosts || strlen(hosts) == 0) {
+        return 0;
+    }
 
-    zh->addrs_count = 0;
-    if (zh->addrs) {
-        free(zh->addrs);
-        zh->addrs = 0;
+    uint32_t count = 0;
+    char *loc = hosts;
+
+    while ((loc = strchr(loc, ','))) {
+        count++;
+        loc+=1;
     }
-    if (!hosts) {
-         LOG_ERROR(("out of memory"));
+
+    return count+1;
+}
+
+/**
+ * Resolve hosts and populate provided address vector with shuffled results.
+ * The contents of the provided address vector will be initialized to an
+ * empty state.
+ */
+int resolve_hosts(const char *hosts_in, addrvec_t *avec)
+{
+    int rc = ZOK;
+
+    if (hosts_in == NULL || avec == NULL) {
+        return ZBADARGUMENTS;
+    }
+
+    // initialize address vector
+    addrvec_init(avec);
+
+    char *hosts = strdup(hosts_in);
+    if (hosts == NULL) {
+        LOG_ERROR(("out of memory"));
         errno=ENOMEM;
-        return ZSYSTEMERROR;
+        rc=ZSYSTEMERROR;
+        goto fail;
     }
-    zh->addrs = 0;
-    host=strtok_r(hosts, ",", &strtok_last);
+
+    int num_hosts = count_hosts(hosts);
+    if (num_hosts == 0) {
+        free(hosts);
+        return ZOK;
+    }
+
+    // Allocate list inside avec
+    rc = addrvec_alloc_capacity(avec, num_hosts);
+    if (rc != 0) {
+        LOG_ERROR(("out of memory"));
+        errno=ENOMEM;
+        rc=ZSYSTEMERROR;
+        goto fail;
+    }
+
+    char *strtok_last;
+    char * host = strtok_r(hosts, ",", &strtok_last);
     while(host) {
         char *port_spec = strrchr(host, ':');
         char *end_port_spec;
@@ -516,26 +552,25 @@ int getaddrs(zhandle_t *zh)
             goto fail;
         }
 
-        /* Setup the address array */
+        // Setup the address array
         for(ptr = he->h_addr_list;*ptr != 0; ptr++) {
-            if (zh->addrs_count == alen) {
-                alen += 16;
-                zh->addrs = realloc(zh->addrs, sizeof(*zh->addrs)*alen);
-                if (zh->addrs == 0) {
+            if (addrs->count == addrs->capacity) {
+                rc = addrvec_grow_default(addrs);
+                if (rc != 0) {
                     LOG_ERROR(("out of memory"));
                     errno=ENOMEM;
                     rc=ZSYSTEMERROR;
                     goto fail;
                 }
             }
-            addr = &zh->addrs[zh->addrs_count];
+            addr = &addrs->list[addrs->count];
             addr4 = (struct sockaddr_in*)addr;
             addr->ss_family = he->h_addrtype;
             if (addr->ss_family == AF_INET) {
                 addr4->sin_port = htons(port);
                 memset(&addr4->sin_zero, 0, sizeof(addr4->sin_zero));
                 memcpy(&addr4->sin_addr, *ptr, he->h_length);
-                zh->addrs_count++;
+                zh->addrs.count++;
             }
 #if defined(AF_INET6)
             else if (addr->ss_family == AF_INET6) {
@@ -546,12 +581,12 @@ int getaddrs(zhandle_t *zh)
                 addr6->sin6_scope_id = 0;
                 addr6->sin6_flowinfo = 0;
                 memcpy(&addr6->sin6_addr, *ptr, he->h_length);
-                zh->addrs_count++;
+                zh->addrs.count++;
             }
 #endif
             else {
                 LOG_WARN(("skipping unknown address family %x for %s",
-                         addr->ss_family, zh->hostname));
+                         addr->ss_family, hosts_in));
             }
         }
         host = strtok_r(0, ",", &strtok_last);
@@ -607,32 +642,27 @@ int getaddrs(zhandle_t *zh)
 
         for (res = res0; res; res = res->ai_next) {
             // Expand address list if needed
-            if (zh->addrs_count == alen) {
-                void *tmpaddr;
-                alen += 16;
-                tmpaddr = realloc(zh->addrs, sizeof(*zh->addrs)*alen);
-                if (tmpaddr == 0) {
+            if (avec->count == avec->capacity) {
+                rc = addrvec_grow_default(avec);
+                if (rc != 0) {
                     LOG_ERROR(("out of memory"));
                     errno=ENOMEM;
                     rc=ZSYSTEMERROR;
                     goto fail;
                 }
-                zh->addrs=tmpaddr;
             }
 
             // Copy addrinfo into address list
-            addr = &zh->addrs[zh->addrs_count];
             switch (res->ai_family) {
             case AF_INET:
 #if defined(AF_INET6)
             case AF_INET6:
 #endif
-                memcpy(addr, res->ai_addr, res->ai_addrlen);
-                ++zh->addrs_count;
+                addrvec_append_addrinfo(avec, res);
                 break;
             default:
                 LOG_WARN(("skipping unknown address family %x for %s",
-                res->ai_family, zh->hostname));
+                          res->ai_family, hosts_in));
                 break;
             }
         }
@@ -647,25 +677,179 @@ int getaddrs(zhandle_t *zh)
 
     if(!disable_conn_permute){
         setup_random();
-        /* Permute */
-        for (i = zh->addrs_count - 1; i > 0; --i) {
-            long int j = random()%(i+1);
-            if (i != j) {
-                struct sockaddr_storage t = zh->addrs[i];
-                zh->addrs[i] = zh->addrs[j];
-                zh->addrs[j] = t;
+        addrvec_shuffle(avec);
+    }
+
+    return ZOK;
+
+fail:
+    addrvec_free(avec);
+
+    if (hosts) {
+        free(hosts);
+        hosts = NULL;
+    }
+
+    return rc;
+}
+
+/**
+ * Updates the list of servers and determine if changing connections is necessary.
+ * Permutes server list for proper load balancing.
+ *
+ * Changing connections is necessary if one of the following holds:
+ * a) the server this client is currently connected is not in new address list.
+ *    Otherwise (if currentHost is in the new list):
+ * b) the number of servers in the cluster is increasing - in this case the load
+ *    on currentHost should decrease, which means that SOME of the clients 
+ *    connected to it will migrate to the new servers. The decision whether this
+ *    client migrates or not is probabilistic so that the expected number of 
+ *    clients connected to each server is the same.
+ *    
+ * If reconfig is set to true, the function sets pOld and pNew that correspond 
+ * to the probability to migrate to ones of the new servers or one of the old
+ * servers (migrating to one of the old servers is done only if our client's
+ * currentHost is not in new list). 
+ * 
+ * See zoo_cycle_next_server for the selection logic.
+ * 
+ * See {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1355} for the 
+ * protocol and its evaluation,
+ */
+int update_addrs(zhandle_t *zh)
+{
+    // Verify we have a valid handle
+    if (zh == NULL) {
+        return ZBADARGUMENTS;
+    }
+
+    // zh->hostname should always be set
+    if (zh->hostname == NULL)
+    {
+        return ZSYSTEMERROR;
+    } 
+
+    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
+    lock_reconfig(zh);
+
+    int rc = ZOK;
+    char *hosts = NULL;
+
+    // Copy zh->hostname for local use
+    hosts = strdup(zh->hostname);
+    if (hosts == NULL) {
+        rc = ZSYSTEMERROR;
+        goto fail;
+    }
+
+    addrvec_t resolved = { 0 };
+    rc = resolve_hosts(hosts, &resolved);
+    if (rc != ZOK)
+    {
+        goto fail;
+    }
+
+    // If the addrvec list is identical to last time we ran don't do anything
+    if (addrvec_eq(&zh->addrs, &resolved))
+    {
+        goto fail;
+    }
+
+    // Is the server we're connected to in the new resolved list?
+    int found_current = addrvec_contains(&resolved, &zh->addr_cur);
+
+    // Clear out old and new address lists
+    zh->reconfig = 1;
+    addrvec_free(&zh->addrs_old);
+    addrvec_free(&zh->addrs_new);
+
+    // Divide server list into addrs_old if in previous list and addrs_new if not
+    int i = 0;
+    for (i = 0; i < resolved.count; i++)
+    {
+        struct sockaddr_storage *resolved_address = &resolved.data[i];
+        if (addrvec_contains(&zh->addrs, resolved_address))
+        {
+            rc = addrvec_append(&zh->addrs_old, resolved_address);
+            if (rc != ZOK)
+            {
+                goto fail;
+            }
+        } 
+        else {
+            rc = addrvec_append(&zh->addrs_new, resolved_address);
+            if (rc != ZOK)
+            {
+                goto fail;
             }
         }
     }
-    return ZOK;
-fail:
-    if (zh->addrs) {
-        free(zh->addrs);
-        zh->addrs=0;
+
+    int num_old = zh->addrs_old.count;
+    int num_new = zh->addrs_new.count;
+
+    // Number of servers increased
+    if (num_old + num_new > zh->addrs.count)
+    {
+        if (found_current) {
+            // my server is in the new config, but load should be decreased.
+            // Need to decide if the client is moving to one of the new servers
+            if (drand48() <= (1 - ((double)zh->addrs.count) / (num_old + num_new))) {
+                zh->pNew = 1;
+                zh->pOld = 0;
+            } else {
+                // do nothing special -- stay with the current server
+                zh->reconfig = 0;
+            }
+        } else {
+            // my server is not in the new config, and load on old servers must 
+            // be decreased, so connect to one of the new servers
+            zh->pNew = 1;
+            zh->pOld = 0;
+        }
+    } 
+
+    // Number of servers stayed the same or decreased
+    else {
+        if (found_current) {
+            // my server is in the new config, and load should be increased, so
+            // stay with this server and do nothing special
+            zh->reconfig = 0;
+        } else {
+            zh->pOld = ((double) (num_old * (zh->addrs.count - (num_old + num_new)))) / ((num_old + num_new) * (zh->addrs.count - num_old));
+            zh->pNew = 1 - zh->pOld;
+        }
     }
+
+    addrvec_free(&zh->addrs);
+    zh->addrs = resolved;
+
+    // If we need to do a reconfig and we're currently connected to a server, 
+    // then force close that connection so on next interest() call we'll make a 
+    // new connection
+    if (zh->reconfig == 1 && zh->fd != -1)
+    {
+        close(zh->fd);
+        zh->fd = -1;
+        zh->state = ZOO_NOTCONNECTED_STATE;
+    }
+
+fail:
+
+    unlock_reconfig(zh);
+
+    // If we short-circuited out and never assigned resolved to zh->addrs then we 
+    // need to free resolved to avoid a memleak.
+    if (zh->addrs.data != resolved.data)
+    {
+        addrvec_free(&resolved);
+    }
+
     if (hosts) {
         free(hosts);
+        hosts = NULL;
     }
+
     return rc;
 }
 
@@ -791,8 +975,9 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
     if (!zh) {
         return 0;
     }
+    zh->hostname = NULL;
     zh->fd = -1;
-    zh->state = NOTCONNECTED_STATE_DEF;
+    zh->state = ZOO_NOTCONNECTED_STATE;
     zh->context = context;
     zh->recv_timeout = recv_timeout;
     init_auth_info(&zh->auth_h);
@@ -805,8 +990,7 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
         errno=EINVAL;
         goto abort;
     }
-    //parse the host to get the chroot if
-    //available
+    //parse the host to get the chroot if available
     index_chroot = strchr(host, '/');
     if (index_chroot) {
         zh->chroot = strdup(index_chroot);
@@ -835,10 +1019,9 @@ zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
     if (zh->hostname == 0) {
         goto abort;
     }
-    if(getaddrs(zh)!=0) {
+    if(update_addrs(zh) != 0) {
         goto abort;
     }
-    zh->connect_index = 0;
     if (clientid) {
         memcpy(&zh->client_id, clientid, sizeof(zh->client_id));
     } else {
@@ -866,6 +1049,134 @@ abort:
     free(zh);
     errno=errnosave;
     return 0;
+}
+
+/**
+ * Set a new list of zk servers to connect to.  Disconnect will occur if
+ * current connection endpoint is not in the list.
+ */
+int zoo_set_servers(zhandle_t *zh, const char *hosts)
+{
+    if (hosts == NULL)
+    {
+        LOG_ERROR(("New server list cannot be empty"));
+        return ZBADARGUMENTS;
+    }
+
+    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
+    lock_reconfig(zh);
+
+    // Reset hostname to new set of hosts to connect to
+    if (zh->hostname) {
+        free(zh->hostname);
+    }
+
+    zh->hostname = strdup(hosts);
+
+    unlock_reconfig(zh);
+
+    return update_addrs(zh);
+}
+
+/**
+ * Get the next server to connect to, when in 'reconfig' mode, which means that
+ * we've updated the server list to connect to, and are now trying to find some
+ * server to connect to. Once we get successfully connected, 'reconfig' mode is
+ * set to false. Similarly, if we tried to connect to all servers in new config
+ * and failed, 'reconfig' mode is set to false. 
+ *
+ * While in 'reconfig' mode, we should connect to a server in the new set of
+ * servers (addrs_new) with probability pNew and to servers in the old set of 
+ * servers (addrs_old) with probability pOld (which is just 1-pNew). If we tried
+ * out all servers in either, we continue to try servers from the other set, 
+ * regardless of pNew or pOld. If we tried all servers we give up and go back to
+ * the normal round robin mode
+ * 
+ * When called, must be protected by lock_reconfig(zh).
+ */
+static int get_next_server_in_reconfig(zhandle_t *zh)
+{
+    int take_new = drand48() <= zh->pNew;
+
+    LOG_DEBUG(("[OLD] count=%d capacity=%d next=%d hasnext=%d",
+               zh->addrs_old.count, zh->addrs_old.capacity, zh->addrs_old.next, 
+               addrvec_hasnext(&zh->addrs_old)));
+    LOG_DEBUG(("[NEW] count=%d capacity=%d next=%d hasnext=%d",
+               zh->addrs_new.count, zh->addrs_new.capacity, zh->addrs_new.next, 
+               addrvec_hasnext(&zh->addrs_new)));
+
+    // Take one of the new servers if we haven't tried them all yet
+    // and either the probability tells us to connect to one of the new servers
+    // or if we already tried them all then use one of the old servers
+    if (addrvec_hasnext(&zh->addrs_new) 
+            && (take_new || !addrvec_hasnext(&zh->addrs_old)))
+    {
+        addrvec_next(&zh->addrs_new, &zh->addr_cur);
+        LOG_DEBUG(("Using next from NEW=%s", format_endpoint_info(&zh->addr_cur)));
+        return 0;
+    }
+
+    // start taking old servers
+    if (addrvec_hasnext(&zh->addrs_old)) {
+        addrvec_next(&zh->addrs_old, &zh->addr_cur);
+        LOG_DEBUG(("Using next from OLD=%s", format_endpoint_info(&zh->addr_cur)));
+        return 0;
+    }
+
+    LOG_DEBUG(("Failed to find either new or old"));
+    memset(&zh->addr_cur, 0, sizeof(zh->addr_cur));
+    return 1;
+}
+
+/** 
+ * Cycle through our server list to the correct 'next' server. The 'next' server
+ * to connect to depends upon whether we're in a 'reconfig' mode or not. Reconfig
+ * mode means we've upated the server list and are now trying to find a server
+ * to connect to. Once we get connected, we are no longer in the reconfig mode.
+ * Similarly, if we try to connect to all the servers in the new configuration
+ * and failed, reconfig mode is set to false.
+ * 
+ * For more algorithm details, see get_next_server_in_reconfig.
+ */
+void zoo_cycle_next_server(zhandle_t *zh)
+{
+    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
+    lock_reconfig(zh);
+
+    memset(&zh->addr_cur, 0, sizeof(zh->addr_cur));
+
+    if (zh->reconfig)
+    {
+        if (get_next_server_in_reconfig(zh) == 0) {
+            unlock_reconfig(zh);
+            return;
+        }
+
+        // tried all new and old servers and couldn't connect
+        zh->reconfig = 0;
+    }
+
+    addrvec_next(&zh->addrs, &zh->addr_cur);
+
+    unlock_reconfig(zh);
+
+    return;
+}
+
+/** 
+ * Get the host:port for the server we are currently connecting to or connected
+ * to. This is largely for testing purposes but is also generally useful for
+ * other client software built on top of this client.
+ */
+const char* zoo_get_current_server(zhandle_t* zh)
+{
+    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
+    // Need the lock here as it is changed in update_addrs()
+    lock_reconfig(zh);
+
+    const char * endpoint_info = format_endpoint_info(&zh->addr_cur);
+    unlock_reconfig(zh);
+    return endpoint_info;
 }
 
 /**
@@ -1233,7 +1544,15 @@ static void handle_error(zhandle_t *zh,int rc)
     }
     cleanup_bufs(zh,1,rc);
     zh->fd = -1;
-    zh->connect_index++;
+
+    LOG_DEBUG(("Previous connection=[%s] delay=%d", zoo_get_current_server(zh), zh->delay));
+
+    // NOTE: If we're at the end of the list of addresses to connect to, then
+    // we want to delay the next connection attempt to avoid spinning.
+    // Then increment what host we'll connect to since we failed to connect to current
+    zh->delay = addrvec_atend(&zh->addrs);
+    addrvec_next(&zh->addrs, &zh->addr_cur);
+
     if (!is_unrecoverable(zh)) {
         zh->state = 0;
     }
@@ -1252,7 +1571,7 @@ static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
         vsnprintf(buf, sizeof(buf)-1,format,va);
         log_message(ZOO_LOG_LEVEL_ERROR,line,__func__,
             format_log_message("Socket [%s] zk retcode=%d, errno=%d(%s): %s",
-            format_current_endpoint_info(zh),rc,errno,strerror(errno),buf));
+            zoo_get_current_server(zh),rc,errno,strerror(errno),buf));
         va_end(va);
     }
     handle_error(zh,rc);
@@ -1335,7 +1654,7 @@ static int send_auth_info(zhandle_t *zh) {
         auth = auth->next;
     }
     zoo_unlock_auth(zh);
-    LOG_DEBUG(("Sending all auth info request to %s", format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending all auth info request to %s", zoo_get_current_server(zh)));
     return (rc <0) ? ZMARSHALLINGERROR:ZOK;
 }
 
@@ -1352,7 +1671,7 @@ static int send_last_auth_info(zhandle_t *zh)
     }
     rc = send_info_packet(zh, auth);
     zoo_unlock_auth(zh);
-    LOG_DEBUG(("Sending auth info request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending auth info request to %s",zoo_get_current_server(zh)));
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
 
@@ -1399,7 +1718,7 @@ static int send_set_watches(zhandle_t *zh)
     free_key_list(req.dataWatches.data, req.dataWatches.count);
     free_key_list(req.existWatches.data, req.existWatches.count);
     free_key_list(req.childWatches.data, req.childWatches.count);
-    LOG_DEBUG(("Sending set watches request to %s",format_current_endpoint_info(zh)));
+    LOG_DEBUG(("Sending set watches request to %s",zoo_get_current_server(zh)));
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
 
@@ -1540,7 +1859,6 @@ static struct timeval get_timeval(int interval)
 int zookeeper_interest(zhandle_t *zh, SOCKET *fd, int *interest,
      struct timeval *tv)
 {
-
     ULONG nonblocking_flag = 1;
 #else
 int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
@@ -1561,16 +1879,39 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
             LOG_WARN(("Exceeded deadline by %dms", time_left));
     }
     api_prolog(zh);
+
+    int rc = update_addrs(zh);
+    if (rc != ZOK) {
+        return api_epilog(zh, rc);
+    }
+
     *fd = zh->fd;
     *interest = 0;
     tv->tv_sec = 0;
     tv->tv_usec = 0;
+
     if (*fd == -1) {
-        if (zh->connect_index == zh->addrs_count) {
-            /* Wait a bit before trying again so that we don't spin */
-            zh->connect_index = 0;
-        }else {
-            int rc;
+
+        /* 
+         * If we previously failed to connect to server pool (zh->delay == 1)
+         * then we need delay our connection on this iteration 1/60 of the
+         * recv timeout before trying again so we don't spin.
+         *
+         * We always clear the delay setting. If we fail again, we'll set delay
+         * again and on the next iteration we'll do the same.
+         */
+        if (zh->delay == 1) {
+            *tv = get_timeval(zh->recv_timeout/60);
+            zh->delay = 0;
+
+            LOG_WARN(("Delaying connection after exhaustively trying all servers [%s]",
+                     zh->hostname));
+        } 
+
+        // No need to delay -- grab the next server and attempt connection
+        else {
+            zoo_cycle_next_server(zh);
+
 #ifdef WIN32
             char enable_tcp_nodelay = 1;
 #else
@@ -1578,7 +1919,7 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
 #endif
             int ssoresult;
 
-            zh->fd = socket(zh->addrs[zh->connect_index].ss_family, SOCK_STREAM, 0);
+            zh->fd = socket(zh->addr_cur.ss_family, SOCK_STREAM, 0);
             if (zh->fd < 0) {
                 return api_epilog(zh,handle_socket_error_msg(zh,__LINE__,
                                                              ZSYSTEMERROR, "socket() call failed"));
@@ -1593,41 +1934,44 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
             fcntl(zh->fd, F_SETFL, O_NONBLOCK|fcntl(zh->fd, F_GETFL, 0));
 #endif
 #if defined(AF_INET6)
-            if (zh->addrs[zh->connect_index].ss_family == AF_INET6) {
-                rc = connect(zh->fd, (struct sockaddr*) &zh->addrs[zh->connect_index], sizeof(struct sockaddr_in6));
+            if (zh->addr_cur.ss_family == AF_INET6) {
+                rc = connect(zh->fd, (struct sockaddr*)&zh->addr_cur, sizeof(struct sockaddr_in6));
             } else {
 #else
                LOG_DEBUG(("[zk] connect()\n"));
             {
 #endif
-                rc = connect(zh->fd, (struct sockaddr*) &zh->addrs[zh->connect_index], sizeof(struct sockaddr_in));
+                rc = connect(zh->fd, (struct sockaddr*)&zh->addr_cur, sizeof(struct sockaddr_in));
 #ifdef WIN32
                 get_errno();
 #endif
             }
             if (rc == -1) {
+
                 /* we are handling the non-blocking connect according to
                  * the description in section 16.3 "Non-blocking connect"
                  * in UNIX Network Programming vol 1, 3rd edition */
                 if (errno == EWOULDBLOCK || errno == EINPROGRESS)
                     zh->state = ZOO_CONNECTING_STATE;
                 else
+                {
                     return api_epilog(zh,handle_socket_error_msg(zh,__LINE__,
                             ZCONNECTIONLOSS,"connect() call failed"));
+                }
             } else {
                 if((rc=prime_connection(zh))!=0)
                     return api_epilog(zh,rc);
 
-                LOG_INFO(("Initiated connection to server [%s]",
-                        format_endpoint_info(&zh->addrs[zh->connect_index])));
+                LOG_INFO(("Initiated connection to server [%s]", format_endpoint_info(&zh->addr_cur)));
             }
+            *tv = get_timeval(zh->recv_timeout/3);
         }
         *fd = zh->fd;
-        *tv = get_timeval(zh->recv_timeout/3);
         zh->last_recv = now;
         zh->last_send = now;
         zh->last_ping = now;
     }
+
     if (zh->fd != -1) {
         int idle_recv = calculate_interval(&zh->last_recv, &now);
         int idle_send = calculate_interval(&zh->last_send, &now);
@@ -1646,7 +1990,7 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
             return api_epilog(zh,handle_socket_error_msg(zh,
                     __LINE__,ZOPERATIONTIMEOUT,
                     "connection to %s timed out (exceeded timeout by %dms)",
-                    format_endpoint_info(&zh->addrs[zh->connect_index]),
+                    format_endpoint_info(&zh->addr_cur),
                     -recv_to));
 
         }
@@ -1656,8 +2000,8 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
             send_to = zh->recv_timeout/3 - idle_send;
             if (send_to <= 0 && zh->sent_requests.head==0) {
 //                LOG_DEBUG(("Sending PING to %s (exceeded idle by %dms)",
-//                                format_current_endpoint_info(zh),-send_to));
-                int rc=send_ping(zh);
+//                                zoo_get_current_server(zh),-send_to));
+                rc = send_ping(zh);
                 if (rc < 0){
                     LOG_ERROR(("failed to send PING request (zk retcode=%d)",rc));
                     return api_epilog(zh,rc);
@@ -1677,7 +2021,7 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
         /* we are interested in a write if we are connected and have something
          * to send, or we are waiting for a connect to finish. */
         if ((zh->to_send.head && (zh->state == ZOO_CONNECTED_STATE))
-        || zh->state == ZOO_CONNECTING_STATE) {
+            || zh->state == ZOO_CONNECTING_STATE) {
             *interest |= ZOOKEEPER_WRITE;
         }
     }
@@ -1701,10 +2045,11 @@ static int check_events(zhandle_t *zh, int events)
             return handle_socket_error_msg(zh, __LINE__,ZCONNECTIONLOSS,
                 "server refused to accept the client");
         }
+
         if((rc=prime_connection(zh))!=0)
             return rc;
-        LOG_INFO(("initiated connection to server [%s]",
-                format_endpoint_info(&zh->addrs[zh->connect_index])));
+
+        LOG_INFO(("initiated connection to server [%s]", format_endpoint_info(&zh->addr_cur)));
         return ZOK;
     }
     if (zh->to_send.head && (events&ZOOKEEPER_WRITE)) {
@@ -1745,12 +2090,13 @@ static int check_events(zhandle_t *zh, int events)
                 } else {
                     zh->recv_timeout = zh->primer_storage.timeOut;
                     zh->client_id.client_id = newid;
-                 
+
                     memcpy(zh->client_id.passwd, &zh->primer_storage.passwd,
                            sizeof(zh->client_id.passwd));
                     zh->state = ZOO_CONNECTED_STATE;
+                    zh->reconfig = 0;
                     LOG_INFO(("session establishment complete on server [%s], sessionId=%#llx, negotiated timeout=%d",
-                              format_endpoint_info(&zh->addrs[zh->connect_index]),
+                              format_endpoint_info(&zh->addr_cur),
                               newid, zh->recv_timeout));
                     /* we want the auth to be sent for, but since both call push to front
                        we need to call send_watch_set first */
@@ -1866,7 +2212,7 @@ static void process_sync_completion(
         completion_list_t *cptr,
         struct sync_completion *sc,
         struct iarchive *ia,
-	zhandle_t *zh)
+    zhandle_t *zh)
 {
     LOG_DEBUG(("Processing sync_completion with type=%d xid=%#x rc=%d",
             cptr->c.type, cptr->xid, sc->rc));
@@ -2274,9 +2620,9 @@ int zookeeper_process(zhandle_t *zh, int events)
                 struct sync_completion
                         *sc = (struct sync_completion*)cptr->data;
                 sc->rc = rc;
-                
+
                 process_sync_completion(cptr, sc, ia, zh); 
-                
+
                 notify_sync_completion(sc);
                 free_buffer(bptr);
                 zh->outstanding_sync--;
@@ -2359,7 +2705,7 @@ static completion_list_t* create_completion_entry(int xid, int completion_type,
     }
     c->xid = xid;
     c->watcher = wo;
-    
+
     return c;
 }
 
@@ -2489,7 +2835,7 @@ int zookeeper_close(zhandle_t *zh)
          * completions from calling zookeeper_close before we have
          * completed the adaptor_finish call below. */
 
-	/* Signal any syncronous completions before joining the threads */
+    /* Signal any syncronous completions before joining the threads */
         enter_critical(zh);
         free_completions(zh,1,ZCLOSING);
         leave_critical(zh);
@@ -2506,7 +2852,7 @@ int zookeeper_close(zhandle_t *zh)
         struct oarchive *oa;
         struct RequestHeader h = { STRUCT_INITIALIZER (xid , get_xid()), STRUCT_INITIALIZER (type , ZOO_CLOSE_OP)};
         LOG_INFO(("Closing zookeeper sessionId=%#llx to [%s]\n",
-                zh->client_id.client_id,format_current_endpoint_info(zh)));
+                zh->client_id.client_id,zoo_get_current_server(zh)));
         oa = create_buffer_oarchive();
         rc = serialize_RequestHeader(oa, "header", &h);
         rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
@@ -2589,7 +2935,7 @@ static int Request_path_init(zhandle_t *zh, int flags,
         char **path_out, const char *path)
 {
     assert(path_out);
-    
+
     *path_out = prepend_string(zh, path);
     if (zh == NULL || !isValidPath(*path_out, flags)) {
         free_duplicate_path(*path_out, path);
@@ -2656,7 +3002,7 @@ int zoo_awget(zhandle_t *zh, const char *path,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -2701,7 +3047,7 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -2757,7 +3103,7 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -2797,7 +3143,7 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -2836,7 +3182,7 @@ int zoo_awexists(zhandle_t *zh, const char *path,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -2869,7 +3215,7 @@ static int zoo_awget_children_(zhandle_t *zh, const char *path,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -2917,7 +3263,7 @@ static int zoo_awget_children2_(zhandle_t *zh, const char *path,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -2960,7 +3306,7 @@ int zoo_async(zhandle_t *zh, const char *path,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -2990,7 +3336,7 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -3021,7 +3367,7 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
-            format_current_endpoint_info(zh)));
+            zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
@@ -3033,16 +3379,16 @@ static void op_result_string_completion(int err, const char *value, const void *
     struct zoo_op_result *result = (struct zoo_op_result *)data;
     assert(result);
     result->err = err;
-    
+
     if (result->value && value) {
         int len = strlen(value) + 1;
-		if (len > result->valuelen) {
-			len = result->valuelen;
-		}
-		if (len > 0) {
-			memcpy(result->value, value, len - 1);
-			result->value[len - 1] = '\0';
-		}
+        if (len > result->valuelen) {
+            len = result->valuelen;
+        }
+        if (len > 0) {
+            memcpy(result->value, value, len - 1);
+            result->value[len - 1] = '\0';
+        }
     } else {
         result->value = NULL;
     }
@@ -3100,7 +3446,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
 
         struct MultiHeader mh = { STRUCT_INITIALIZER(type, op->type), STRUCT_INITIALIZER(done, 0), STRUCT_INITIALIZER(err, -1) };
         rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
-     
+
         switch(op->type) {
             case ZOO_CREATE_OP: {
                 struct CreateRequest req;
@@ -3111,7 +3457,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                                         op->create_op.flags);
                 rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
                 result->value = op->create_op.buf;
-				result->valuelen = op->create_op.buflen;
+                result->valuelen = op->create_op.buflen;
 
                 enter_critical(zh);
                 entry = create_completion_entry(h.xid, COMPLETION_STRING, op_result_string_completion, result, 0, 0); 
@@ -3169,19 +3515,19 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     }
 
     rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
-  
+
     /* BEGIN: CRTICIAL SECTION */
     enter_critical(zh);
     rc = rc < 0 ? rc : add_multi_completion(zh, h.xid, completion, data, &clist);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    
+
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
     LOG_DEBUG(("Sending multi request xid=%#x with %d subrequests to %s",
-            h.xid, index, format_current_endpoint_info(zh)));
+            h.xid, index, zoo_get_current_server(zh)));
     /* make a best (non-blocking) effort to send the requests asap */
     adaptor_send_queue(zh, 0);
 
@@ -3234,12 +3580,12 @@ void zoo_check_op_init(zoo_op_t *op, const char *path, int version)
 int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_result_t *results)
 {
     int rc;
- 
+
     struct sync_completion *sc = alloc_sync_completion();
     if (!sc) {
         return ZSYSTEMERROR;
     }
-   
+
     rc = zoo_amulti(zh, count, ops, results, SYNCHRONOUS_MARKER, sc);
     if (rc == ZOK) {
         wait_sync_completion(sc);
@@ -3422,8 +3768,8 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
 
 static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 {
-    static char buf[128];
-    char addrstr[128];
+    static char buf[128] = { 0 };
+    char addrstr[128] = { 0 };
     void *inaddr;
 #ifdef WIN32
     char * addrstring;
@@ -3451,11 +3797,6 @@ static const char* format_endpoint_info(const struct sockaddr_storage* ep)
     sprintf(buf,"%s:%d",addrstr,ntohs(port));
 #endif    
     return buf;
-}
-
-static const char* format_current_endpoint_info(zhandle_t* zh)
-{
-    return format_endpoint_info(&zh->addrs[zh->connect_index]);
 }
 
 void zoo_deterministic_conn_order(int yesOrNo)

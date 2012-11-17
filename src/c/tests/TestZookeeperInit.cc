@@ -93,7 +93,7 @@ public:
     void testBasic()
     {
         const string EXPECTED_HOST("127.0.0.1:2121");
-        const int EXPECTED_ADDRS_COUNT =1;
+        const unsigned int EXPECTED_ADDRS_COUNT =1;
         const int EXPECTED_RECV_TIMEOUT=10000;
         clientid_t cid;
         memset(&cid,0xFE,sizeof(cid));
@@ -101,16 +101,16 @@ public:
         zh=zookeeper_init(EXPECTED_HOST.c_str(),watcher,EXPECTED_RECV_TIMEOUT,
                 &cid,(void*)1,0);
 
-        CPPUNIT_ASSERT(zh!=0);
+        CPPUNIT_ASSERT(zh != NULL);
         CPPUNIT_ASSERT(zh->fd == -1);
-        CPPUNIT_ASSERT(zh->hostname!=0);
-        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
+        CPPUNIT_ASSERT(zh->hostname != NULL);
+        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs.count);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_HOST,string(zh->hostname));
-        CPPUNIT_ASSERT(zh->state == NOTCONNECTED_STATE_DEF);
+        CPPUNIT_ASSERT(zh->state == ZOO_NOTCONNECTED_STATE);
         CPPUNIT_ASSERT(zh->context == (void*)1);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_RECV_TIMEOUT,zh->recv_timeout);
         CPPUNIT_ASSERT(zh->watcher == watcher);
-        CPPUNIT_ASSERT(zh->connect_index==0);
+        CPPUNIT_ASSERT(zh->addrs.next==0);
         CPPUNIT_ASSERT(zh->primer_buffer.buffer==zh->primer_storage_buffer);
         CPPUNIT_ASSERT(zh->primer_buffer.curr_offset ==0);
         CPPUNIT_ASSERT(zh->primer_buffer.len == sizeof(zh->primer_storage_buffer));
@@ -136,15 +136,15 @@ public:
     void testAddressResolution()
     {
         const char EXPECTED_IPS[][4]={{127,0,0,1}};
-        const int EXPECTED_ADDRS_COUNT =COUNTOF(EXPECTED_IPS);
+        const unsigned int EXPECTED_ADDRS_COUNT =COUNTOF(EXPECTED_IPS);
 
         zoo_deterministic_conn_order(1);
         zh=zookeeper_init("127.0.0.1:2121",0,10000,0,0,0);
 
         CPPUNIT_ASSERT(zh!=0);
-        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
-        for(int i=0;i<zh->addrs_count;i++){
-            sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs[i];
+        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs.count);
+        for(int i=0;i<zh->addrs.count;i++){
+            sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs.data[i];
             CPPUNIT_ASSERT(memcmp(EXPECTED_IPS[i],&addr->sin_addr,sizeof(addr->sin_addr))==0);
             CPPUNIT_ASSERT_EQUAL(2121,(int)ntohs(addr->sin_port));
         }
@@ -153,16 +153,16 @@ public:
     {
         const string EXPECTED_HOST("127.0.0.1:2121,127.0.0.2:3434");
         const char EXPECTED_IPS[][4]={{127,0,0,1},{127,0,0,2}};
-        const int EXPECTED_ADDRS_COUNT =COUNTOF(EXPECTED_IPS);
+        const unsigned int EXPECTED_ADDRS_COUNT =COUNTOF(EXPECTED_IPS);
 
         zoo_deterministic_conn_order(1);
         zh=zookeeper_init(EXPECTED_HOST.c_str(),0,1000,0,0,0);
 
         CPPUNIT_ASSERT(zh!=0);
-        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
+        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs.count);
 
-        for(int i=0;i<zh->addrs_count;i++){
-            sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs[i];
+        for(int i=0;i<zh->addrs.count;i++){
+            sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs.data[i];
             CPPUNIT_ASSERT(memcmp(EXPECTED_IPS[i],&addr->sin_addr,sizeof(addr->sin_addr))==0);
             if(i<1)
                 CPPUNIT_ASSERT_EQUAL(2121,(int)ntohs(addr->sin_port));
@@ -174,16 +174,16 @@ public:
     { 
         const string EXPECTED_HOST("127.0.0.1:2121,  127.0.0.2:3434");
         const char EXPECTED_IPS[][4]={{127,0,0,1},{127,0,0,2}};
-        const int EXPECTED_ADDRS_COUNT =COUNTOF(EXPECTED_IPS);
+        const unsigned int EXPECTED_ADDRS_COUNT =COUNTOF(EXPECTED_IPS);
 
         zoo_deterministic_conn_order(1);
         zh=zookeeper_init(EXPECTED_HOST.c_str(),0,1000,0,0,0);
 
         CPPUNIT_ASSERT(zh!=0);
-        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs_count);
+        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs.count);
 
-        for(int i=0;i<zh->addrs_count;i++){
-            sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs[i];
+        for(int i=0;i<zh->addrs.count;i++){
+            sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs.data[i];
             CPPUNIT_ASSERT(memcmp(EXPECTED_IPS[i],&addr->sin_addr,sizeof(addr->sin_addr))==0);
             if(i<1)
                 CPPUNIT_ASSERT_EQUAL(2121,(int)ntohs(addr->sin_port));
@@ -277,7 +277,7 @@ public:
     void testPermuteAddrsList()
     {
         const char EXPECTED[][5]={"\0\0\0\0","\1\1\1\1","\2\2\2\2","\3\3\3\3"};
-        const int EXPECTED_ADDR_COUNT=COUNTOF(EXPECTED);
+        const unsigned int EXPECTED_ADDR_COUNT=COUNTOF(EXPECTED);
 
         const int RAND_SEQ[]={0,1,1,-1};
         const int RAND_SIZE=COUNTOF(RAND_SEQ);
@@ -286,11 +286,11 @@ public:
         zh=zookeeper_init("0.0.0.0:123,1.1.1.1:123,2.2.2.2:123,3.3.3.3:123",0,1000,0,0,0);
 
         CPPUNIT_ASSERT(zh!=0);
-        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDR_COUNT,zh->addrs_count);
+        CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDR_COUNT,zh->addrs.count);
         const string EXPECTED_SEQ("3210");
         char ACTUAL_SEQ[EXPECTED_ADDR_COUNT+1]; ACTUAL_SEQ[EXPECTED_ADDR_COUNT]=0;
-        for(int i=0;i<zh->addrs_count;i++){
-            sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs[i];
+        for(int i=0;i<zh->addrs.count;i++){
+            sockaddr_in* addr=(struct sockaddr_in*)&zh->addrs.data[i];
             // match the first byte of the EXPECTED and of the actual address
             ACTUAL_SEQ[i]=((char*)&addr->sin_addr)[0]+'0';
         }
