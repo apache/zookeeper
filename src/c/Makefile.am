@@ -19,7 +19,7 @@ libhashtable_la_SOURCES = $(HASHTABLE_SRC)
 COMMON_SRC = src/zookeeper.c include/zookeeper.h include/zookeeper_version.h include/zookeeper_log.h\
     src/recordio.c include/recordio.h include/proto.h \
     src/zk_adaptor.h generated/zookeeper.jute.c \
-    src/zookeeper_log.h src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c \
+    src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c \
 	src/addrvec.h src/addrvec.c
 
 # These are the symbols (classes, mostly) we want to export from our library.
