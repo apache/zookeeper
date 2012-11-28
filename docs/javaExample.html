@@ -135,23 +135,8 @@ document.write("Last Published: " + document.lastModified);
 <a href="recipes.html">Recipes</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">BookKeeper</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">Admin &amp; Ops</div>
 <div id="menu_1.3" class="menuitemgroup">
-<div class="menuitem">
-<a href="bookkeeperStarted.html">Getting started</a>
-</div>
-<div class="menuitem">
-<a href="bookkeeperOverview.html">Overview</a>
-</div>
-<div class="menuitem">
-<a href="bookkeeperConfig.html">Setup guide</a>
-</div>
-<div class="menuitem">
-<a href="bookkeeperProgrammer.html">Programmer's guide</a>
-</div>
-</div>
-<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Admin &amp; Ops</div>
-<div id="menu_1.4" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperAdmin.html">Administrator's Guide</a>
 </div>
@@ -165,14 +150,14 @@ document.write("Last Published: " + document.lastModified);
 <a href="zookeeperObservers.html">Observers Guide</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Contributor</div>
-<div id="menu_1.5" class="menuitemgroup">
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Contributor</div>
+<div id="menu_1.4" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperInternals.html">ZooKeeper Internals</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
-<div id="menu_1.6" class="menuitemgroup">
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Miscellaneous</div>
+<div id="menu_1.5" class="menuitemgroup">
 <div class="menuitem">
 <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
 </div>
@@ -246,31 +231,35 @@ document.write("Last Published: " + document.lastModified);
 <ul>
 <li>
 <p>It takes as parameters:</p>
-    	
+        
 <ul>
-		
+        
 <li>
 <p>the address of the ZooKeeper service</p>
 </li>
-		
-<li> 
-<p>then name of a znode - the one to be watched</p>
+        
+<li>
+<p>the name of a znode - the one to be watched</p>
 </li>
-		
+        
+<li>
+<p>the name of a file to write the output to</p>
+</li>
+        
 <li>
 <p>an executable with arguments.</p>
 </li>
 </ul>
 </li>
-	
+    
 <li>
 <p>It fetches the data associated with the znode and starts the executable.</p>
 </li>
-	
+    
 <li>
 <p>If the znode changes, the client refetches the contents and restarts the executable.</p>
 </li>
-	
+    
 <li>
 <p>If the znode disappears, the client kills the executable.</p>
 </li>

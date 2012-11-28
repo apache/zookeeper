@@ -135,23 +135,8 @@ document.write("Last Published: " + document.lastModified);
 <a href="recipes.html">Recipes</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">BookKeeper</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">Admin &amp; Ops</div>
 <div id="menu_1.3" class="menuitemgroup">
-<div class="menuitem">
-<a href="bookkeeperStarted.html">Getting started</a>
-</div>
-<div class="menuitem">
-<a href="bookkeeperOverview.html">Overview</a>
-</div>
-<div class="menuitem">
-<a href="bookkeeperConfig.html">Setup guide</a>
-</div>
-<div class="menuitem">
-<a href="bookkeeperProgrammer.html">Programmer's guide</a>
-</div>
-</div>
-<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Admin &amp; Ops</div>
-<div id="menu_1.4" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperAdmin.html">Administrator's Guide</a>
 </div>
@@ -165,14 +150,14 @@ document.write("Last Published: " + document.lastModified);
 <a href="zookeeperObservers.html">Observers Guide</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Contributor</div>
-<div id="menu_1.5" class="menuitemgroup">
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Contributor</div>
+<div id="menu_1.4" class="menuitemgroup">
 <div class="menuitem">
 <a href="zookeeperInternals.html">ZooKeeper Internals</a>
 </div>
 </div>
-<div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
-<div id="menu_1.6" class="menuitemgroup">
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Miscellaneous</div>
+<div id="menu_1.5" class="menuitemgroup">
 <div class="menuitem">
 <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
 </div>
@@ -952,6 +937,38 @@ document.write("Last Published: " + document.lastModified);
       a saved session id and password. One of the clients will reestablish the connection
       and the second client will be disconnected (causing the pair to attempt to re-establish
       it's connection/session indefinitely).</p>
+<p> 
+<strong>Updating the list of servers</strong>.  We allow a client to 
+      update the connection string by providing a new comma separated list of host:port pairs, 
+      each corresponding to a ZooKeeper server. The function invokes a probabilistic load-balancing 
+      algorithm which may cause the client to disconnect from its current host with the goal
+      to achieve expected uniform number of connections per server in the new list. 
+      In case the current host to which the client is connected is not in the new list
+      this call will always cause the connection to be dropped. Otherwise, the decision
+	  is based on whether the number of servers has increased or decreased and by how much.	
+	</p>
+<p>
+      For example, if the previous connection string contained 3 hosts and now the list contains
+      these 3 hosts and 2 more hosts, 40% of clients connected to each of the 3 hosts will
+      move to one of the new hosts in order to balance the load. The algorithm will cause the client 
+      to drop its connection to the current host to which it is connected with probability 0.4 and in this 
+	  case cause the client to connect to one of the 2 new hosts, chosen at random.
+    </p>
+<p>
+	  Another example -- suppose we have 5 hosts and now update the list to remove 2 of the hosts, 
+	  the clients connected to the 3 remaining hosts will stay connected, whereas all clients connected 
+	  to the 2 removed hosts will need to move to one of the 3 hosts, chosen at random. If the connection
+	  is dropped, the client moves to a special mode where he chooses a new server to connect to using the
+	  probabilistic algorithm, and not just round robin. 
+    </p>
+<p>
+	  In the first example, each client decides to disconnect with probability 0.4 but once the decision is
+	  made, it will try to connect to a random new server and only if it cannot connect to any of the new 
+	  servers will it try to connect to the old ones. After finding a server, or trying all servers in the 
+	  new list and failing to connect, the client moves back to the normal mode of operation where it picks
+	  an arbitrary server from the connectString and attempt to connect to it. If that fails, is will continue
+	  trying different random servers in round robin. (see above the algorithm used to initially choose a server)
+    </p>
 </div>
 
   
