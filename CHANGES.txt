@@ -7,6 +7,9 @@ BUGFIXES:
   ZOOKEEPER-2347: Deadlock shutting down zookeeper
   (Rakesh R via rgs)
 
+  ZOOKEEPER-1474. Cannot build Zookeeper with IBM Java: use of Sun
+  MXBean classes (Adalberto Medeiros via phunt)
+
   ZOOKEEPER-2039. Jute compareBytes incorrect comparison index (Ian Dimayuga via fpj)
 
   ZOOKEEPER-1901. [JDK8] Sort children for comparison in AsyncOps tests
