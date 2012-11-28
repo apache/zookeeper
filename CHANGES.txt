@@ -1,3 +1,13 @@
+Release 3.4.6 - TBD
+
+Backward compatible changes:
+
+BUGFIXES:
+
+  ZOOKEEPER-1474. Cannot build Zookeeper with IBM Java: use of Sun
+  MXBean classes (Adalberto Medeiros via phunt)
+
+
 Release 3.4.5 - 2012-09-30
 
 Backward compatible changes:

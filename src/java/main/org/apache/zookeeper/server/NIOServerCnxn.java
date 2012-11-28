@@ -23,8 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -51,7 +49,7 @@ import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
-import com.sun.management.UnixOperatingSystemMXBean;
+import org.apache.zookeeper.server.util.OSMXBean;
 
 /**
  * This class handles communication with clients using NIO. There is one per
@@ -760,12 +758,10 @@ public class NIOServerCnxn extends ServerCnxn {
             print("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
             print("approximate_data_size", zkdb.getDataTree().approximateDataSize());
 
-            OperatingSystemMXBean osMbean = ManagementFactory.getOperatingSystemMXBean();
-            if(osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
-                UnixOperatingSystemMXBean unixos = (UnixOperatingSystemMXBean)osMbean;
-
-                print("open_file_descriptor_count", unixos.getOpenFileDescriptorCount());
-                print("max_file_descriptor_count", unixos.getMaxFileDescriptorCount());
+            OSMXBean osMbean = new OSMXBean();
+            if (osMbean != null && osMbean.getUnix() == true) {
+                print("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
+                print("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
             }
 
             if(stats.getServerState().equals("leader")) {
