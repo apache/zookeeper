@@ -548,7 +548,8 @@
       to achieve expected uniform number of connections per server in the new list. 
       In case the current host to which the client is connected is not in the new list
       this call will always cause the connection to be dropped. Otherwise, the decision
-	  is based on whether the number of servers has increased or decreased and by how much.
+	  is based on whether the number of servers has increased or decreased and by how much.	
+	</para>
 
     <para>
       For example, if the previous connection string contained 3 hosts and now the list contains

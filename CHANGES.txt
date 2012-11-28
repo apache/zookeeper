@@ -264,6 +264,9 @@ BUGFIXES:
   ZOOKEEPER-1585. make dist for src/c broken in trunk (Raul Gutierrez Segales
   via michim)
 
+  ZOOKEEPER-1590. Patch to add zk.updateServerList(newServerList)
+  broke the build (fpj via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
