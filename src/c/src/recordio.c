@@ -278,21 +278,27 @@ int ia_deserialize_string(struct iarchive *ia, const char *name, char **s)
     return 0;
 }
 
-static struct iarchive ia_default = { STRUCT_INITIALIZER (start_record ,ia_start_record),
-        STRUCT_INITIALIZER (end_record ,ia_end_record), STRUCT_INITIALIZER (start_vector , ia_start_vector),
-        STRUCT_INITIALIZER (end_vector ,ia_end_vector), STRUCT_INITIALIZER (deserialize_Bool , ia_deserialize_bool),
-        STRUCT_INITIALIZER (deserialize_Int ,ia_deserialize_int),
-        STRUCT_INITIALIZER (deserialize_Long , ia_deserialize_long) ,
-        STRUCT_INITIALIZER (deserialize_Buffer, ia_deserialize_buffer),
-        STRUCT_INITIALIZER (deserialize_String, ia_deserialize_string)   };
+static struct iarchive ia_default = {
+        ia_start_record,
+        ia_end_record,
+        ia_start_vector,
+        ia_end_vector,
+        ia_deserialize_bool,
+        ia_deserialize_int,
+        ia_deserialize_long ,
+        ia_deserialize_buffer,
+        ia_deserialize_string};
 
-static struct oarchive oa_default = { STRUCT_INITIALIZER (start_record , oa_start_record),
-        STRUCT_INITIALIZER (end_record , oa_end_record), STRUCT_INITIALIZER (start_vector , oa_start_vector),
-        STRUCT_INITIALIZER (end_vector , oa_end_vector), STRUCT_INITIALIZER (serialize_Bool , oa_serialize_bool),
-        STRUCT_INITIALIZER (serialize_Int , oa_serialize_int),
-        STRUCT_INITIALIZER (serialize_Long , oa_serialize_long) ,
-        STRUCT_INITIALIZER (serialize_Buffer , oa_serialize_buffer),
-        STRUCT_INITIALIZER (serialize_String , oa_serialize_string) };
+static struct oarchive oa_default = {
+        oa_start_record,
+        oa_end_record,
+        oa_start_vector,
+        oa_end_vector,
+        oa_serialize_bool,
+        oa_serialize_int,
+        oa_serialize_long ,
+        oa_serialize_buffer,
+        oa_serialize_string};
 
 struct iarchive *create_buffer_iarchive(char *buffer, int len)
 {

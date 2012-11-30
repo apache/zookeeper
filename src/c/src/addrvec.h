@@ -19,8 +19,6 @@
 #ifndef ADDRVEC_H_
 #define ADDRVEC_H_
 
-#include <inttypes.h>
-
 #ifndef WIN32
 #include <sys/types.h>
 #include <sys/socket.h>

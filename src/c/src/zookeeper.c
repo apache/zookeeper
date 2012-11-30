@@ -1620,7 +1620,7 @@ static void auth_completion_func(int rc, zhandle_t* zh)
 
 static int send_info_packet(zhandle_t *zh, auth_info* auth) {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER(xid , AUTH_XID), STRUCT_INITIALIZER(type , ZOO_SETAUTH_OP)};
+    struct RequestHeader h = {AUTH_XID, ZOO_SETAUTH_OP};
     struct AuthPacket req;
     int rc;
     oa = create_buffer_oarchive();
@@ -1688,7 +1688,7 @@ static void free_key_list(char **list, int count)
 static int send_set_watches(zhandle_t *zh)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER(xid , SET_WATCHES_XID), STRUCT_INITIALIZER(type , ZOO_SETWATCHES_OP)};
+    struct RequestHeader h = {SET_WATCHES_XID, ZOO_SETWATCHES_OP};
     struct SetWatches req;
     int rc;
 
@@ -1842,7 +1842,7 @@ static struct timeval get_timeval(int interval)
  {
     int rc;
     struct oarchive *oa = create_buffer_oarchive();
-    struct RequestHeader h = { STRUCT_INITIALIZER(xid ,PING_XID), STRUCT_INITIALIZER (type , ZOO_PING_OP) };
+    struct RequestHeader h = {PING_XID, ZOO_PING_OP};
 
     rc = serialize_RequestHeader(oa, "header", &h);
     enter_critical(zh);
@@ -2311,7 +2311,7 @@ static int deserialize_multi(int xid, completion_list_t *cptr, struct iarchive *
 {
     int rc = 0;
     completion_head_t *clist = &cptr->c.clist;
-    struct MultiHeader mhdr = { STRUCT_INITIALIZER(type , 0), STRUCT_INITIALIZER(done , 0), STRUCT_INITIALIZER(err , 0) };
+    struct MultiHeader mhdr = {0, 0, 0};
     assert(clist);
     deserialize_MultiHeader(ia, "multiheader", &mhdr);
     while (!mhdr.done) {
@@ -2850,7 +2850,7 @@ int zookeeper_close(zhandle_t *zh)
      * destroy the handle later. */
     if(zh->state==ZOO_CONNECTED_STATE){
         struct oarchive *oa;
-        struct RequestHeader h = { STRUCT_INITIALIZER (xid , get_xid()), STRUCT_INITIALIZER (type , ZOO_CLOSE_OP)};
+        struct RequestHeader h = {get_xid(), ZOO_CLOSE_OP};
         LOG_INFO(("Closing zookeeper sessionId=%#llx to [%s]\n",
                 zh->client_id.client_id,zoo_get_current_server(zh)));
         oa = create_buffer_oarchive();
@@ -2976,7 +2976,7 @@ int zoo_awget(zhandle_t *zh, const char *path,
 {
     struct oarchive *oa;
     char *server_path = prepend_string(zh, path);
-    struct RequestHeader h = { STRUCT_INITIALIZER (xid , get_xid()), STRUCT_INITIALIZER (type ,ZOO_GETDATA_OP)};
+    struct RequestHeader h = {get_xid(), ZOO_GETDATA_OP};
     struct GetDataRequest req =  { (char*)server_path, watcher!=0 };
     int rc;
 
@@ -3028,7 +3028,7 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
         int version, stat_completion_t dc, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER(xid , get_xid()), STRUCT_INITIALIZER (type , ZOO_SETDATA_OP)};
+    struct RequestHeader h = {get_xid(), ZOO_SETDATA_OP};
     struct SetDataRequest req;
     int rc = SetDataRequest_init(zh, &req, path, buffer, buflen, version);
     if (rc != ZOK) {
@@ -3082,7 +3082,7 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
         string_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER (xid , get_xid()), STRUCT_INITIALIZER (type ,ZOO_CREATE_OP) };
+    struct RequestHeader h = {get_xid(), ZOO_CREATE_OP};
     struct CreateRequest req;
 
     int rc = CreateRequest_init(zh, &req, 
@@ -3124,7 +3124,7 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
         void_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER (xid , get_xid()), STRUCT_INITIALIZER (type , ZOO_DELETE_OP)};
+    struct RequestHeader h = {get_xid(), ZOO_DELETE_OP};
     struct DeleteRequest req;
     int rc = DeleteRequest_init(zh, &req, path, version);
     if (rc != ZOK) {
@@ -3160,7 +3160,7 @@ int zoo_awexists(zhandle_t *zh, const char *path,
         stat_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER (xid ,get_xid()), STRUCT_INITIALIZER (type , ZOO_EXISTS_OP) };
+    struct RequestHeader h = {get_xid(), ZOO_EXISTS_OP};
     struct ExistsRequest req;
     int rc = Request_path_watch_init(zh, 0, &req.path, path, 
             &req.watch, watcher != NULL);
@@ -3194,7 +3194,7 @@ static int zoo_awget_children_(zhandle_t *zh, const char *path,
          const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER (xid , get_xid()), STRUCT_INITIALIZER (type , ZOO_GETCHILDREN_OP)};
+    struct RequestHeader h = {get_xid(), ZOO_GETCHILDREN_OP};
     struct GetChildrenRequest req ;
     int rc = Request_path_watch_init(zh, 0, &req.path, path, 
             &req.watch, watcher != NULL);
@@ -3242,7 +3242,7 @@ static int zoo_awget_children2_(zhandle_t *zh, const char *path,
 {
     /* invariant: (sc == NULL) != (sc == NULL) */
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER( xid, get_xid()), STRUCT_INITIALIZER (type ,ZOO_GETCHILDREN2_OP)};
+    struct RequestHeader h = {get_xid(), ZOO_GETCHILDREN2_OP};
     struct GetChildren2Request req ;
     int rc = Request_path_watch_init(zh, 0, &req.path, path, 
             &req.watch, watcher != NULL);
@@ -3287,7 +3287,7 @@ int zoo_async(zhandle_t *zh, const char *path,
         string_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER (xid , get_xid()), STRUCT_INITIALIZER (type , ZOO_SYNC_OP)};
+    struct RequestHeader h = {get_xid(), ZOO_SYNC_OP};
     struct SyncRequest req;
     int rc = Request_path_init(zh, 0, &req.path, path);
     if (rc != ZOK) {
@@ -3317,7 +3317,7 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
         const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER (xid , get_xid()), STRUCT_INITIALIZER(type ,ZOO_GETACL_OP)};
+    struct RequestHeader h = {get_xid(), ZOO_GETACL_OP};
     struct GetACLRequest req;
     int rc = Request_path_init(zh, 0, &req.path, path) ;
     if (rc != ZOK) {
@@ -3346,7 +3346,7 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
         struct ACL_vector *acl, void_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { STRUCT_INITIALIZER(xid ,get_xid()), STRUCT_INITIALIZER (type , ZOO_SETACL_OP)};
+    struct RequestHeader h = {get_xid(), ZOO_SETACL_OP};
     struct SetACLRequest req;
     int rc = Request_path_init(zh, 0, &req.path, path);
     if (rc != ZOK) {
@@ -3431,8 +3431,8 @@ static int CheckVersionRequest_init(zhandle_t *zh, struct CheckVersionRequest *r
 int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
         zoo_op_result_t *results, void_completion_t completion, const void *data)
 {
-    struct RequestHeader h = { STRUCT_INITIALIZER(xid, get_xid()), STRUCT_INITIALIZER(type, ZOO_MULTI_OP) };
-    struct MultiHeader mh = { STRUCT_INITIALIZER(type, -1), STRUCT_INITIALIZER(done, 1), STRUCT_INITIALIZER(err, -1) };
+    struct RequestHeader h = {get_xid(), ZOO_MULTI_OP};
+    struct MultiHeader mh = {-1, 1, -1};
     struct oarchive *oa = create_buffer_oarchive();
     completion_head_t clist = { 0 };
 
@@ -3444,7 +3444,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
         zoo_op_result_t *result = results+index;
         completion_list_t *entry = NULL;
 
-        struct MultiHeader mh = { STRUCT_INITIALIZER(type, op->type), STRUCT_INITIALIZER(done, 0), STRUCT_INITIALIZER(err, -1) };
+        struct MultiHeader mh = {op->type, 0, -1};
         rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
 
         switch(op->type) {
