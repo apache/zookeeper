@@ -270,6 +270,9 @@ BUGFIXES:
   ZOOKEEPER-1474. Cannot build Zookeeper with IBM Java: use of Sun
   MXBean classes (Adalberto Medeiros via phunt)
 
+  ZOOKEEPER-1591. Windows build is broken because inttypes.h doesn't exist
+  (Marshall McMullen via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

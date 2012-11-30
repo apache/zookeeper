@@ -19,10 +19,7 @@
 #define __RECORDIO_H__
 
 #include <sys/types.h>
-#ifndef WIN32
-#define STRUCT_INITIALIZER(l,r) .l = r
-#else
-#define STRUCT_INITIALIZER(l,r)  r
+#ifdef WIN32
 #include "winconfig.h"
 #endif
 
