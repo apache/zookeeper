@@ -413,7 +413,7 @@ public class Leader {
                 Thread.sleep(self.tickTime);
                 self.tick++;
             }
-            
+
             /**
              * WARNING: do not use this for anything other than QA testing
              * on a real cluster. Specifically to enable verification that quorum
@@ -421,7 +421,7 @@ public class Leader {
              * ZOOKEEPER-1277. Without this option it would take a very long
              * time (on order of a month say) to see the 4 billion writes
              * necessary to cause the roll-over to occur.
-             * 
+             *
              * This field allows you to override the zxid of the server. Typically
              * you'll want to set it to something like 0xfffffff0 and then
              * start the quorum, run some operations and see the re-election.
@@ -638,9 +638,23 @@ public class Leader {
          */
         public void processRequest(Request request) throws RequestProcessorException {
             next.processRequest(request);
-            Proposal p = leader.toBeApplied.peek();
-            if (p != null && p.request != null && p.request.zxid == request.zxid) {
-                leader.toBeApplied.remove();
+
+            // The only requests that should be on toBeApplied are write
+            // requests, for which we will have a hdr. We can't simply use
+            // request.zxid here because that is set on read requests to equal
+            // the zxid of the last write op.
+            if (request.getHdr() != null) {
+                long zxid = request.getHdr().getZxid();
+                Iterator<Proposal> iter = leader.toBeApplied.iterator();
+                if (iter.hasNext()) {
+                    Proposal p = iter.next();
+                    if (p.request != null && p.request.zxid == zxid) {
+                        iter.remove();
+                        return;
+                    }
+                }
+                LOG.error("Committed request not found on toBeApplied: "
+                          + request);
             }
         }
 
@@ -715,7 +729,7 @@ public class Leader {
     public long getEpoch(){
         return ZxidUtils.getEpochFromZxid(lastProposed);
     }
-    
+
     @SuppressWarnings("serial")
     public static class XidRolloverException extends Exception {
         public XidRolloverException(String message) {

@@ -95,22 +95,22 @@ public class FinalRequestProcessor implements RequestProcessor {
         }
         ProcessTxnResult rc = null;
         synchronized (zks.outstandingChanges) {
-            while (!zks.outstandingChanges.isEmpty()
-                    && zks.outstandingChanges.get(0).zxid <= request.zxid) {
-                ChangeRecord cr = zks.outstandingChanges.remove(0);
-                if (cr.zxid < request.zxid) {
-                    LOG.warn("Zxid outstanding "
-                            + cr.zxid
-                            + " is less than current " + request.zxid);
-                }
-                if (zks.outstandingChangesForPath.get(cr.path) == cr) {
-                    zks.outstandingChangesForPath.remove(cr.path);
-                }
-            }
             if (request.getHdr() != null) {
                 TxnHeader hdr = request.getHdr();
                 Record txn = request.getTxn();
-                
+                long zxid = hdr.getZxid();
+                while (!zks.outstandingChanges.isEmpty()
+                       && zks.outstandingChanges.get(0).zxid <= zxid) {
+                    ChangeRecord cr = zks.outstandingChanges.remove(0);
+                    if (cr.zxid < zxid) {
+                        LOG.warn("Zxid outstanding " + cr.zxid
+                                 + " is less than current " + zxid);
+                    }
+                    if (zks.outstandingChangesForPath.get(cr.path) == cr) {
+                        zks.outstandingChangesForPath.remove(cr.path);
+                    }
+                }
+
                 rc = zks.processTxn(hdr, txn);
             }
             // do not add non quorum packets to the queue.
