@@ -131,4 +131,12 @@
     <Method name="writeLongToFile" />
   </Match>
 
+  <!-- this is a helper routine to wakeup the main thread with the
+  state change happening in the routines that call it -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.quorum.CommitProcessor"/>
+    <Bug pattern="NN_NAKED_NOTIFY" />
+    <Method name="wakeup" />
+  </Match>
+
 </FindBugsFilter>

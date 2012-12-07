@@ -403,6 +403,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1238. Linger time should be -1 for Netty sockets. (Skye
   W-M via henryr)
 
+  ZOOKEEPER-1505. Multi-thread CommitProcessor (Jay Shrauner via phunt)
+
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
