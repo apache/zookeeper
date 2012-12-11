@@ -1000,8 +1000,13 @@ public class Zab1_0Test {
         peer.setCnxnFactory(new NullServerCnxnFactory());
         File version2 = new File(tmpDir, "version-2");
         version2.mkdir();
-        new FileOutputStream(new File(version2, "currentEpoch")).write("0\n".getBytes());
-        new FileOutputStream(new File(version2, "acceptedEpoch")).write("0\n".getBytes());
+        FileOutputStream fos;
+        fos = new FileOutputStream(new File(version2, "currentEpoch"));
+        fos.write("0\n".getBytes());
+        fos.close();
+        fos = new FileOutputStream(new File(version2, "acceptedEpoch"));
+        fos.write("0\n".getBytes());
+        fos.close();
         return peer;
     }
 }
