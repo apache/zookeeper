@@ -20,8 +20,6 @@ package org.apache.zookeeper.test;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -35,9 +33,8 @@ import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.Assert;
-
-import com.sun.management.UnixOperatingSystemMXBean;
 
 /**
  * Utility for quorum testing. Setups 2n+1 peers and allows to start/stop all
@@ -246,10 +243,9 @@ public class QuorumUtil {
     public void tearDown() throws Exception {
         LOG.info("TearDown started");
 
-        OperatingSystemMXBean osMbean = ManagementFactory.getOperatingSystemMXBean();
-        if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
-            UnixOperatingSystemMXBean unixos = (UnixOperatingSystemMXBean) osMbean;
-            LOG.info("fdcount after test is: " + unixos.getOpenFileDescriptorCount());
+        OSMXBean osMbean = new OSMXBean();
+        if (osMbean.getUnix() == true) {    
+            LOG.info("fdcount after test is: " + osMbean.getOpenFileDescriptorCount());
         }
 
         shutdownAll();
