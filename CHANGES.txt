@@ -405,6 +405,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1505. Multi-thread CommitProcessor (Jay Shrauner via phunt)
 
+  ZOOKEEPER-1564. Allow JUnit test build with IBM Java
+    (Paulo Ricardo Paz Vital via phunt)
+
 
 Release 3.4.0 - 
 
