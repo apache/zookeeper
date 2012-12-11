@@ -19,8 +19,6 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,10 +41,9 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.PrepRequestProcessor;
+import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.sun.management.UnixOperatingSystemMXBean;
 
 public class ClientTest extends ClientBase {
     protected static final Logger LOG = LoggerFactory.getLogger(ClientTest.class);
@@ -707,11 +704,8 @@ public class ClientTest extends ClientBase {
      */
     @Test
     public void testClientCleanup() throws Throwable {
-        OperatingSystemMXBean osMbean =
-            ManagementFactory.getOperatingSystemMXBean();
-        if (osMbean == null 
-                || !(osMbean instanceof UnixOperatingSystemMXBean))
-        {
+        OSMXBean osMbean = new OSMXBean();
+        if (osMbean.getUnix() == false) {
             LOG.warn("skipping testClientCleanup, only available on Unix");
             return;
         }
@@ -724,9 +718,7 @@ public class ClientTest extends ClientBase {
          * on unix systems (the only place sun has implemented as part of the
          * mgmt bean api).
          */
-        UnixOperatingSystemMXBean unixos =
-            (UnixOperatingSystemMXBean) osMbean;
-        long initialFdCount = unixos.getOpenFileDescriptorCount();
+        long initialFdCount = osMbean.getOpenFileDescriptorCount();
 
         VerifyClientCleanup threads[] = new VerifyClientCleanup[threadCount];
 
@@ -742,7 +734,7 @@ public class ClientTest extends ClientBase {
 
         // if this Assert.fails it means we are not cleaning up after the closed
         // sessions.
-        long currentCount = unixos.getOpenFileDescriptorCount();
+        long currentCount = osMbean.getOpenFileDescriptorCount();
         final String logmsg = "open fds after test ({}) are not significantly higher than before ({})";
         
         if (currentCount > initialFdCount + 10) {
