@@ -7,6 +7,11 @@ BUGFIXES:
   ZOOKEEPER-1474. Cannot build Zookeeper with IBM Java: use of Sun
   MXBean classes (Adalberto Medeiros via phunt)
 
+IMPROVEMENTS:
+
+  ZOOKEEPER-1564. Allow JUnit test build with IBM Java
+    (Paulo Ricardo Paz Vital via phunt)
+
 
 Release 3.4.5 - 2012-09-30
 
