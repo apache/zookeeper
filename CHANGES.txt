@@ -279,6 +279,8 @@ BUGFIXES:
   ZOOKEEPER-1513. "Unreasonable length" exception while starting a
   server (Skye W-M via phunt)
 
+  ZOOKEEPER-1581. change copyright in notice to 2012 (breed via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
