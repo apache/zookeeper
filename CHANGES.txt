@@ -419,6 +419,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1598. Ability to support more digits in the version string
   (Raja Aluri via phunt)
 
+  ZOOKEEPER-721. Minor cleanup related to the log4j version change
+  from 1.2.15 -> 1.2.16 (Sean Busbey via phunt)
 
 Release 3.4.0 - 
 

@@ -1379,7 +1379,7 @@
         <mkdir dir="${findbugs.out.dir}" />
         <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" 
                 outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
-            <auxClasspath path="${ivy.lib}/log4j-1.2.15.jar" />
+            <auxClasspath path="${ivy.lib}/log4j-1.2.16.jar" />
             <sourcePath path="${java.src.dir}" />
             <class location="${build.dir}/${final.name}.jar" />
         </findbugs>
