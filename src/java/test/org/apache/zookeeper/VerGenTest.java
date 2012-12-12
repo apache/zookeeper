@@ -43,7 +43,10 @@ public class VerGenTest extends ZKTestCase {
                             {"1.2.3", new Object[] {1, 2, 3, null}},
                             {"1.2.3-dev", new Object[] {1, 2, 3, "dev"}},
                             {"1.2.3-SNAPSHOT", new Object[] {1, 2, 3, "SNAPSHOT"}},
-                            {"1.2.3-foo-bar+123", new Object[] {1, 2, 3, "foo-bar+123"}}
+                            {"1.2.3-SNAPSHOT", new Object[] {1, 2, 3, "SNAPSHOT"}},
+                            {"1.2.3-foo-bar+123", new Object[] {1, 2, 3, "foo-bar+123"}},
+                            {"1.2.3.4.5-SNAPSHOT", new Object[] {1, 2, 3, "SNAPSHOT"}},
+                            {"1.2.3.4.5-foo-bar+123", new Object[] {1, 2, 3, "foo-bar+123"}}
             });
     }
 
