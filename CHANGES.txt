@@ -15,6 +15,9 @@ BUGFIXES:
 
   ZOOKEEPER-1581. change copyright in notice to 2012 (breed via phunt)
 
+  ZOOKEEPER-753. log4j dependency in the pom needs to have exclusion
+  lists (Sean Busbey via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
