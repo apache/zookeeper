@@ -356,12 +356,12 @@
     </target>
 
     <target name="ivy-retrieve" depends="init,ivy-init">
-      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="default"
+      <ivy:retrieve settingsRef="${ant.project.name}" conf="default"
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
     <target name="ivy-retrieve-test" depends="init,ivy-init">
-      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="test"
+      <ivy:retrieve settingsRef="${ant.project.name}" conf="test"
                     pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
@@ -372,12 +372,12 @@
 
     <target name="ivy-retrieve-jdiff" depends="init,ivy-init">
       <mkdir dir="${ivy.jdiff.lib}"/>
-      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="jdiff"
+      <ivy:retrieve settingsRef="${ant.project.name}" conf="jdiff"
                     pattern="${ivy.jdiff.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
     <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
-      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="releaseaudit"
+      <ivy:retrieve settingsRef="${ant.project.name}" conf="releaseaudit"
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
       <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
     </target>
@@ -1400,7 +1400,7 @@
         <mkdir dir="${findbugs.out.dir}" />
         <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" 
                 outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
-            <auxClasspath path="${ivy.lib}/log4j-1.2.15.jar" />
+            <auxClasspath path="${ivy.lib}/log4j-1.2.16.jar" />
             <sourcePath path="${java.src.dir}" />
             <class location="${build.dir}/${final.name}.jar" />
         </findbugs>

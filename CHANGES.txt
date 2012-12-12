@@ -10,6 +10,9 @@ BUGFIXES:
   ZOOKEEPER-1513. "Unreasonable length" exception while starting a
   server (Skye W-M via phunt)
 
+  ZOOKEEPER-753. log4j dependency in the pom needs to have exclusion
+  lists (Sean Busbey via phunt)
+
 IMPROVEMENTS:
 
 
