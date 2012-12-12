@@ -4,6 +4,8 @@ Backward compatible changes:
   ZOOKEEPER-1376. zkServer.sh does not correctly check for
   $SERVER_JVMFLAGS (Skye W-M via henryr)
 
+  ZOOKEEPER-1581. change copyright in notice to 2012 (breed via phunt)
+
 Release 3.3.6 - 2012-08-01
 Backward compatible changes:
 
