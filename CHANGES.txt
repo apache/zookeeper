@@ -10,6 +10,9 @@ BUGFIXES:
   ZOOKEEPER-1596. Zab1_0Test should ensure that the file is closed
   (Enis Soztutar via phunt)
 
+  ZOOKEEPER-1513. "Unreasonable length" exception while starting a
+  server (Skye W-M via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
