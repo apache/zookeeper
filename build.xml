@@ -67,6 +67,7 @@
     <property name="test.log.dir" value="${test.java.build.dir}/logs" />
     <property name="test.data.dir" value="${test.java.build.dir}/data" />
     <property name="test.data.invalid.dir" value="${test.data.dir}/invalidsnap" />
+    <property name="test.data.buffersize.dir" value="${test.data.dir}/buffersize" />
     <property name="test.cppunit.dir" value="${test.java.build.dir}/test-cppunit"/>
     <property name="test.tmp.dir" value="${test.java.build.dir}/tmp" />
     <property name="test.output" value="no" />
@@ -1144,6 +1145,7 @@
         <delete dir="${test.log.dir}" />
         <delete dir="${test.tmp.dir}" />
         <delete dir="${test.data.invalid.dir}" />
+        <delete dir="${test.data.buffersize.dir}" />
         <delete dir="${test.data.dir}" />
         <mkdir dir="${test.log.dir}" />
         <mkdir dir="${test.tmp.dir}" />
@@ -1151,6 +1153,10 @@
         <mkdir dir="${test.data.invalid.dir}" />
         <copy todir="${test.data.invalid.dir}">
             <fileset dir="${basedir}/src/java/test/data/invalidsnap"/>
+        </copy>
+        <mkdir dir="${test.data.buffersize.dir}" />
+        <copy todir="${test.data.buffersize.dir}">
+            <fileset dir="${basedir}/src/java/test/data/buffersize"/>
         </copy>
     </target>
 
