@@ -13,6 +13,9 @@ BUGFIXES:
   ZOOKEEPER-753. log4j dependency in the pom needs to have exclusion
   lists (Sean Busbey via phunt)
 
+  ZOOKEEPER-1553. Findbugs configuration is missing some dependencies
+  (Sean Busbey via phunt)
+
 IMPROVEMENTS:
 
 
