@@ -112,11 +112,11 @@ public class VerGen {
         public int micro;
         public String qualifier;
     }
-    
+
     public static Version parseVersionString(String input) {
         Version result = new Version();
 
-        Pattern p = Pattern.compile("^(\\d+).(\\d+).(\\d+)(-(.+))?$");
+        Pattern p = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)((\\.\\d+)*)(-(.+))?$");
         Matcher m = p.matcher(input);
 
         if (!m.matches()) {
@@ -125,8 +125,8 @@ public class VerGen {
         result.maj = Integer.parseInt(m.group(1));
         result.min = Integer.parseInt(m.group(2));
         result.micro = Integer.parseInt(m.group(3));
-        if (m.groupCount() == 5) {
-            result.qualifier = m.group(5);
+        if (m.groupCount() == 7) {
+            result.qualifier = m.group(7);
         } else {
             result.qualifier = null;
         }
