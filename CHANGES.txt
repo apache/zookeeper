@@ -29,6 +29,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1598. Ability to support more digits in the version string
   (Raja Aluri via phunt)
 
+  ZOOKEEPER-1583. Document maxClientCnxns in conf/zoo_sample.cfg
+  (Christopher Tubbs via phunt)
+
 
 Release 3.4.5 - 2012-09-30
 
