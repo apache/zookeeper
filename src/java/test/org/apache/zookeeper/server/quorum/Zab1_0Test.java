@@ -20,10 +20,12 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
@@ -43,16 +45,19 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ByteBufferOutputStream;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.Assert;
@@ -1005,5 +1010,47 @@ public class Zab1_0Test {
         fos.write("0\n".getBytes());
         fos.close();
         return peer;
+    }
+
+    private String readContentsOfFile(File f) throws IOException {
+        return new BufferedReader(new FileReader(f)).readLine();
+    }
+
+    @Test
+    public void testInitialAcceptedCurrent() throws Exception {
+        File tmpDir = File.createTempFile("test", ".dir");
+        tmpDir.delete();
+        tmpDir.mkdir();
+        try {
+            FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
+            File version2 = new File(tmpDir, "version-2");
+            version2.mkdir();
+            long zxid = ZxidUtils.makeZxid(3, 3);
+
+            TxnHeader hdr = new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error);
+            ErrorTxn txn = new ErrorTxn(1);
+            byte[] buf = Util.marshallTxnEntry(hdr, txn);
+            Request req = new Request(null, 1, 1, ZooDefs.OpCode.error,
+                    ByteBuffer.wrap(buf), null);
+            req.hdr = hdr;
+            req.txn = txn;
+            logFactory.append(req);
+            logFactory.commit();
+            ZKDatabase zkDb = new ZKDatabase(logFactory);
+            QuorumPeer peer = new QuorumPeer();
+            peer.setZKDatabase(zkDb);
+            peer.setTxnFactory(logFactory);
+            peer.getLastLoggedZxid();
+            Assert.assertEquals(3, peer.getAcceptedEpoch());
+            Assert.assertEquals(3, peer.getCurrentEpoch());
+            Assert.assertEquals(3, Integer
+                    .parseInt(readContentsOfFile(new File(version2,
+                            QuorumPeer.CURRENT_EPOCH_FILENAME))));
+            Assert.assertEquals(3, Integer
+                    .parseInt(readContentsOfFile(new File(version2,
+                            QuorumPeer.ACCEPTED_EPOCH_FILENAME))));
+        } finally {
+            recursiveDelete(tmpDir);
+        }
     }
 }
