@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
@@ -313,22 +314,15 @@ public class QuorumTest extends ZKTestCase {
         // break the quorum
         qu.shutdown(index);
 
+        // Wait until we disconnect to proceed
+        watcher.waitForDisconnected(CONNECTION_TIMEOUT);
+        
         // try to reestablish the quorum
         qu.start(index);
-        Assert.assertTrue("quorum reestablishment failed",
-                QuorumBase.waitForServerUp(
-                        "127.0.0.1:" + qu.getPeer(2).clientPort,
-                        CONNECTION_TIMEOUT));
 
-        for (int i = 0; i < 30; i++) {
-            try {
-                zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
-                break;
-            } catch(KeeperException.ConnectionLossException e) {
-                Thread.sleep(1000);
-            }
-            // test fails if we still can't connect to the quorum after 30 seconds.
+        try{
+            watcher.waitForConnected(30000);      
+        } catch(TimeoutException e) {
             Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
         }
 
