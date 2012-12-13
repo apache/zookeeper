@@ -284,6 +284,9 @@ BUGFIXES:
   ZOOKEEPER-1553. Findbugs configuration is missing some dependencies
   (Sean Busbey via phunt)
 
+  ZOOKEEPER-1478. Small bug in QuorumTest.testFollowersStartAfterLeader( )
+  (Alexander Shraer via fpj, breed, phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
