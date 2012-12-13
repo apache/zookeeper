@@ -425,6 +425,9 @@ IMPROVEMENTS:
   ZOOKEEPER-721. Minor cleanup related to the log4j version change
   from 1.2.15 -> 1.2.16 (Sean Busbey via phunt)
 
+  ZOOKEEPER-1583. Document maxClientCnxns in conf/zoo_sample.cfg
+  (Christopher Tubbs via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
