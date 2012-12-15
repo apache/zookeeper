@@ -173,6 +173,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1627. Add org.apache.zookeeper.common to exported packages
   in OSGi MANIFEST (Arnoud Glimmerveen via phunt)
 
+  ZOOKEEPER-1584. Adding mvn-install target for deploying the
+  zookeeper artifacts to .m2 repository (Ashish Singh via phunt)
+
   ZOOKEEPER-2402: Document client side properties (Arshad Mohammad via fpj)
 
 Release 3.4.5 - 2012-09-30
