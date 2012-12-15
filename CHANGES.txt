@@ -38,6 +38,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1583. Document maxClientCnxns in conf/zoo_sample.cfg
   (Christopher Tubbs via phunt)
 
+  ZOOKEEPER-1584. Adding mvn-install target for deploying the
+  zookeeper artifacts to .m2 repository (Ashish Singh via phunt)
+
 
 Release 3.4.5 - 2012-09-30
 
