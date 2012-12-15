@@ -17,7 +17,10 @@
    limitations under the License.
 -->
 
-<project name="ZooKeeper" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="ZooKeeper" default="jar" 
+xmlns:ivy="antlib:org.apache.ivy.ant"
+xmlns:artifact="antlib:org.apache.maven.artifact.ant"
+xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
     <property name="Name" value="ZooKeeper" />
     <property name="name" value="zookeeper" />
@@ -108,7 +111,14 @@
     <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
-
+    
+    <property name="mvnrepo" value="http://repo2.maven.org/maven2"/>
+    <property name="tsk.org" value="/org/apache/maven/maven-ant-tasks/"/>
+    <property name="ant-task.version" value="2.1.3"/>
+    <property name="ant_task_repo_url"
+        value="${mvnrepo}${tsk.org}${ant-task.version}/maven-ant-tasks-${ant-task.version}.jar"/>
+    <property name="ant_task.jar" location="${ivy.lib}/maven-ant-tasks-${ant-task.version}.jar"/>
+    
     <available property="clover.present"
                classname="com.cenqua.clover.CloverInstr"
                classpath="${clover.home}/lib/clover.jar"/>
@@ -1084,6 +1094,41 @@
       </copy>
       <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
 
+    </target>
+    
+    <!-- ====================================================== -->
+    <!-- mvn-install. Installing the jar and pom file to .m2    -->
+    <!-- ====================================================== -->
+     
+     <target name="ant-task-download" description="To download mvn-ant-task">
+       <get src="${ant_task_repo_url}" dest="${ant_task.jar}" usetimestamp="true"/>
+     </target>
+
+     <target name="mvn-taskdef" depends="ant-task-download">
+       <path id="mvn-ant-task.classpath" path="${ant_task.jar}"/>
+       <typedef resource="org/apache/maven/artifact/ant/antlib.xml"
+         uri="antlib:org.apache.maven.artifact.ant"
+         classpathref="mvn-ant-task.classpath"/>
+     </target>
+ 
+     <target name="mvn-install" depends="tar, mvn-taskdef">
+       <echo message="${dist.maven.dir}/${final.name}.pom" />
+       <echo message="${dist.maven.dir}/${final.name}.jar" />
+       <echo message="${dist.maven.dir}/${final.name}-sources.jar" />
+       <echo message="${dist.maven.dir}/${final.name}-javadoc.jar" />
+       <echo message="${dist.maven.dir}/${final.name}-tests.jar" />
+  
+       <artifact:pom id="zookeeper-pom" file="${dist.maven.dir}/${final.name}.pom"/>
+       <echo>The version is ${zookeeper-pom.version}</echo>
+       <echo message="${dist.maven.dir}/${final.name}.jar" />
+     
+       <artifact:install file="${dist.maven.dir}/${final.name}.jar">
+         <pom refid="zookeeper-pom" />
+         <attach file="${dist.maven.dir}/${final.name}.jar" type="jar"/>
+         <attach file="${dist.maven.dir}/${final.name}-sources.jar" type="jar" classifier="sources"/>
+         <attach file="${dist.maven.dir}/${final.name}-javadoc.jar" type="jar" classifier="javadoc"/>
+         <attach file="${dist.maven.dir}/${final.name}-tests.jar" type="jar" classifier="tests"/>
+       </artifact:install>
     </target>
 
     <!-- ====================================================== -->
