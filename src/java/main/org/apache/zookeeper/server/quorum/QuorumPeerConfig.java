@@ -28,6 +28,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
@@ -486,6 +488,11 @@ public class QuorumPeerConfig {
 
     public QuorumVerifier getQuorumVerifier() {   
         return quorumVerifier;
+    }
+
+    public Map<Long,QuorumServer> getServers() {
+        // returns all configuration servers -- participants and observers
+        return Collections.unmodifiableMap(quorumVerifier.getAllMembers());
     }
 
     public long getServerId() { return serverId; }
