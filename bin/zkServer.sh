@@ -187,6 +187,6 @@ status)
     fi
     ;;
 *)
-    echo "Usage: $0 {start|start-foreground|stop|restart|status|upgrade|print-cmd}" >&2
+    echo "Usage: $0 [--config <conf-dir>] {start|start-foreground|stop|restart|status|upgrade|print-cmd}" >&2
 
 esac

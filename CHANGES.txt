@@ -440,6 +440,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1602. a change to QuorumPeerConfig's API broke
   compatibility with HBase (Alexander Shraer via phunt)
 
+  ZOOKEEPER-1335. Add support for --config to zkEnv.sh to specify a config
+  directory different than what is expected (Arpit Gupta via mahadev)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
