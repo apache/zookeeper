@@ -27,6 +27,9 @@ BUGFIXES:
   ZOOKEEPER-1387. Wrong epoch file created
   (Benjamin Busjaeger via breed, phunt)
 
+  ZOOKEEPER-1578. org.apache.zookeeper.server.quorum.Zab1_0Test failed due to
+  hard code with 33556 port. (Li Ping via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
