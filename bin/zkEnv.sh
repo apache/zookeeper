@@ -21,10 +21,24 @@
 # We use ZOOCFGDIR if defined,
 # otherwise we use /etc/zookeeper
 # or the conf directory that is
-# a sibling of this script's directory
+# a sibling of this script's directory.
+# Or you can specify the ZOOCFGDIR using the
+# '--config' option in the command line.
 
 ZOOBINDIR=${ZOOBINDIR:-/usr/bin}
 ZOOKEEPER_PREFIX=${ZOOBINDIR}/..
+
+#check to see if the conf dir is given as an optional argument
+if [ $# -gt 1 ]
+then
+    if [ "--config" = "$1" ]
+	  then
+	      shift
+	      confdir=$1
+	      shift
+	      ZOOCFGDIR=$confdir
+    fi
+fi
 
 if [ "x$ZOOCFGDIR" = "x" ]
 then
