@@ -38,6 +38,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
@@ -957,7 +958,7 @@ public class Zab1_0Test {
         peer.setTxnFactory(logFactory);
         Field addrField = peer.getClass().getDeclaredField("myQuorumAddr");
         addrField.setAccessible(true);
-        addrField.set(peer, new InetSocketAddress(33556));
+        addrField.set(peer, new InetSocketAddress(PortAssignment.unique()));
         ZKDatabase zkDb = new ZKDatabase(logFactory);
         LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer, zkDb);
         return zk;
