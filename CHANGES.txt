@@ -19,6 +19,9 @@ BUGFIXES:
   ZOOKEEPER-1478. Small bug in QuorumTest.testFollowersStartAfterLeader( )
   (Alexander Shraer via fpj, breed, phunt)
 
+  ZOOKEEPER-1578. org.apache.zookeeper.server.quorum.Zab1_0Test failed due to
+  hard code with 33556 port. (Li Ping via mahadev)
+
 IMPROVEMENTS:
 
 
