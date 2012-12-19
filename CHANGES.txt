@@ -30,6 +30,9 @@ BUGFIXES:
   ZOOKEEPER-1578. org.apache.zookeeper.server.quorum.Zab1_0Test failed due to
   hard code with 33556 port. (Li Ping via mahadev)
 
+  ZOOKEEPER-1334. Zookeeper 3.4.x is not OSGi compliant - MANIFEST.MF
+  is flawed (Claus Ibsen via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
