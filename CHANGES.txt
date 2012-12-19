@@ -450,6 +450,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1335. Add support for --config to zkEnv.sh to specify a config
   directory different than what is expected (Arpit Gupta via mahadev)
 
+  ZOOKEEPER-1504. Multi-thread NIOServerCnxn (Jay Shrauner via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

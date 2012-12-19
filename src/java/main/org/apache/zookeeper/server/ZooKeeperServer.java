@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.sasl.SaslException;
 
@@ -93,7 +95,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected SessionTracker sessionTracker;
     private FileTxnSnapLog txnLogFactory = null;
     private ZKDatabase zkDb;
-    protected long hzxid = 0;
+    private final AtomicLong hzxid = new AtomicLong(0);
     public final static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
     protected volatile boolean running;
@@ -104,7 +106,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     static final private long superSecret = 0XB3415C00L;
 
-    int requestsInProcess;
+    private final AtomicInteger requestsInProcess = new AtomicInteger(0);
     final List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
     // this data structure must be accessed under the outstandingChanges lock
     final HashMap<String, ChangeRecord> outstandingChangesForPath =
@@ -257,19 +259,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-    /**
-     * This should be called from a synchronized block on this!
-     */
-    synchronized public long getZxid() {
-        return hzxid;
+    public long getZxid() {
+        return hzxid.get();
     }
 
-    synchronized long getNextZxid() {
-        return ++hzxid;
+    long getNextZxid() {
+        return hzxid.incrementAndGet();
     }
 
-    synchronized public void setZxid(long zxid) {
-        hzxid = zxid;
+    public void setZxid(long zxid) {
+        hzxid.set(zxid);
     }
 
     long getTime() {
@@ -436,16 +435,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         jmxDataTreeBean = null;
     }
 
-    synchronized public void incInProcess() {
-        requestsInProcess++;
+    public void incInProcess() {
+        requestsInProcess.incrementAndGet();
     }
 
-    synchronized public void decInProcess() {
-        requestsInProcess--;
+    public void decInProcess() {
+        requestsInProcess.decrementAndGet();
     }
 
     public int getInProcess() {
-        return requestsInProcess;
+        return requestsInProcess.get();
     }
 
     /**
