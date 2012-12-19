@@ -21,21 +21,22 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.management.JMException;
+import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
-import javax.security.auth.login.AppConfigurationEntry;
 
-import javax.management.JMException;
-
-import org.apache.zookeeper.Login;
 import org.apache.zookeeper.Environment;
+import org.apache.zookeeper.Login;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public abstract class ServerCnxnFactory {
 
@@ -57,9 +58,7 @@ public abstract class ServerCnxnFactory {
     public abstract Iterable<ServerCnxn> getConnections();
 
     public int getNumAliveConnections() {
-        synchronized(cnxns) {
-            return cnxns.size();
-        }
+        return cnxns.size();
     }
 
     public abstract void closeSession(long sessionId);
@@ -131,7 +130,10 @@ public abstract class ServerCnxnFactory {
     private final ConcurrentHashMap<ServerCnxn, ConnectionBean> connectionBeans =
         new ConcurrentHashMap<ServerCnxn, ConnectionBean>();
 
-    protected final HashSet<ServerCnxn> cnxns = new HashSet<ServerCnxn>();
+    // Connection set is relied on heavily by four letter commands
+    // Construct a ConcurrentHashSet using a ConcurrentHashMap
+    protected final Set<ServerCnxn> cnxns = Collections.newSetFromMap(
+        new ConcurrentHashMap<ServerCnxn, Boolean>());
     public void unregisterConnection(ServerCnxn serverCnxn) {
         ConnectionBean jmxConnectionBean = connectionBeans.remove(serverCnxn);
         if (jmxConnectionBean != null){

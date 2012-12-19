@@ -227,6 +227,14 @@ public abstract class ServerCnxn implements Stats, Watcher {
     protected final static int isroCmd = ByteBuffer.wrap("isro".getBytes())
             .getInt();
 
+    /*
+     * The control sequence sent by the telnet program when it closes a
+     * connection. Include simply to keep the logs cleaner (the server would
+     * close the connection anyway because it would parse this as a negative
+     * length).
+     */
+    protected final static int telnetCloseCmd = 0xfff4fffd;
+
     protected final static HashMap<Integer, String> cmd2String =
         new HashMap<Integer, String>();
 
@@ -248,6 +256,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         cmd2String.put(wchsCmd, "wchs");
         cmd2String.put(mntrCmd, "mntr");
         cmd2String.put(isroCmd, "isro");
+        cmd2String.put(telnetCloseCmd, "telnet close");
     }
 
     protected void packetReceived() {
