@@ -328,28 +328,40 @@ public class MultiTransactionTest extends ClientBase {
     @Test
     public void testOpResultEquals() {
         opEquals(new CreateResult("/foo"),
-                new CreateResult("/foo"),
-                new CreateResult("nope"));
+                 new CreateResult("/foo"),
+                 new CreateResult("nope"));
+
+        opEquals(new CreateResult("/foo"),
+                 new CreateResult("/foo"),
+                 new CreateResult("/foo", new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)));
+
+        opEquals(new CreateResult("/foo", new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                 new CreateResult("/foo", new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                 new CreateResult("nope", new Stat(11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111)));
+
+        opEquals(new CreateResult("/foo", new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                 new CreateResult("/foo", new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                 new CreateResult("/foo"));
 
         opEquals(new CheckResult(),
-                new CheckResult(),
-                null);
-        
+                 new CheckResult(),
+                 null);
+
         opEquals(new SetDataResult(new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
-                new SetDataResult(new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
-                new SetDataResult(new Stat(11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111)));
+                 new SetDataResult(new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                 new SetDataResult(new Stat(11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111)));
         
         opEquals(new ErrorResult(1),
-                new ErrorResult(1),
-                new ErrorResult(2));
+                 new ErrorResult(1),
+                 new ErrorResult(2));
         
         opEquals(new DeleteResult(),
-                new DeleteResult(),
-                null);
+                 new DeleteResult(),
+                 null);
 
         opEquals(new ErrorResult(1),
-                new ErrorResult(1),
-                new ErrorResult(2));
+                 new ErrorResult(1),
+                 new ErrorResult(2));
     }
 
     private void opEquals(OpResult expected, OpResult value, OpResult near) {

@@ -191,6 +191,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 #ifdef ZOO_IPV6_ENABLED
     CPPUNIT_TEST(testIPV6);
 #endif
+    CPPUNIT_TEST(testCreate);
     CPPUNIT_TEST(testPath);
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
@@ -375,6 +376,12 @@ public:
         if (path) {
             free(path);
         }
+    }
+
+    static void stringStatCompletion(int rc, const char *value, const struct Stat *stat,
+            const void *data) {
+        stringCompletion(rc, value, data);
+        CPPUNIT_ASSERT(stat != 0);
     }
 
     static void create_completion_fn(int rc, const char* value, const void *data) {
@@ -620,6 +627,33 @@ public:
         startServer();
         CPPUNIT_ASSERT(ctx5.waitForConnected(zk));
         CPPUNIT_ASSERT(zookeeper_get_connected_host(zk, &addr, &addr_len) != NULL);
+    }
+
+    void testCreate() {
+        watchctx_t ctx;
+        int rc = 0;
+        zhandle_t *zk = createClient(&ctx);
+        CPPUNIT_ASSERT(zk);
+        char pathbuf[80];
+
+        struct Stat stat_a = {0};
+        struct Stat stat_b = {0};
+        rc = zoo_create2(zk, "/testcreateA", "", 0,
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, sizeof(pathbuf), &stat_a);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT(strcmp(pathbuf, "/testcreateA") == 0);
+        CPPUNIT_ASSERT(stat_a.czxid > 0);
+        CPPUNIT_ASSERT(stat_a.mtime > 0);
+
+        rc = zoo_create2(zk, "/testcreateB", "", 0,
+                        &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, sizeof(pathbuf), &stat_b);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        CPPUNIT_ASSERT(strcmp(pathbuf, "/testcreateB") == 0);
+        CPPUNIT_ASSERT(stat_b.czxid > 0);
+        CPPUNIT_ASSERT(stat_b.mtime > 0);
+
+        // Should get different Stats back from different creates
+        CPPUNIT_ASSERT(Stat_eq(&stat_a, &stat_b) != 1);
     }
 
     void testGetChildren2() {
@@ -892,9 +926,17 @@ public:
 
         yield(zk, 0);
 
-        for(i = 0; i < COUNT/2; i++) {
+        for(i = 0; i < COUNT/4; i++) {
             sprintf(path, "/awar%d", i);
-            rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0, stringCompletion, strdup(path));
+            rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0,
+                stringCompletion, strdup(path));
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        }
+
+        for(i = COUNT/4; i < COUNT/2; i++) {
+            sprintf(path, "/awar%d", i);
+            rc = zoo_acreate2(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0,
+                stringStatCompletion, strdup(path));
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 

@@ -65,6 +65,7 @@ public class SerializeUtils {
         case OpCode.closeSession:
             return null;
         case OpCode.create:
+        case OpCode.create2:
             txn = new CreateTxn();
             break;
         case OpCode.delete:

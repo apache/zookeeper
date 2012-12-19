@@ -53,6 +53,8 @@ public class ZooDefs {
         public final int check = 13;
 
         public final int multi = 14;
+        
+        public final int create2 = 15;
 
         public final int auth = 100;
 

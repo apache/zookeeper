@@ -26,6 +26,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.AsyncOps.ACLCB;
 import org.apache.zookeeper.test.AsyncOps.Children2CB;
 import org.apache.zookeeper.test.AsyncOps.ChildrenCB;
+import org.apache.zookeeper.test.AsyncOps.Create2CB;
 import org.apache.zookeeper.test.AsyncOps.DataCB;
 import org.apache.zookeeper.test.AsyncOps.StatCB;
 import org.apache.zookeeper.test.AsyncOps.StringCB;
@@ -63,6 +64,11 @@ public class AsyncOpsTest extends ClientBase {
     @Test
     public void testAsyncCreate() {
         new StringCB(zk).verifyCreate();
+    }
+
+    @Test
+    public void testAsyncCreate2() {
+        new Create2CB(zk).verifyCreate();
     }
 
     @Test

@@ -29,6 +29,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.Create2Callback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -386,6 +387,64 @@ public class AsyncOps {
         @Override
         public String toString() {
             return super.toString() + children.toString(); 
+        }
+    }
+
+    public static class Create2CB extends AsyncCB implements Create2Callback {
+    	  byte[] data = new byte[10];
+        List<ACL> acl = Ids.CREATOR_ALL_ACL;
+        CreateMode flags = CreateMode.PERSISTENT;
+        String name = path;
+        Stat stat = new Stat();
+
+        Create2CB(ZooKeeper zk) {
+            this(zk, new CountDownLatch(1));
+        }
+
+        Create2CB(ZooKeeper zk, CountDownLatch latch) {
+            super(zk, latch);
+        }
+
+        public void setPath(String path) {
+            super.setPath(path);
+            this.name = path;
+        }
+
+        public String nodeName() {
+            return path.substring(path.lastIndexOf('/') + 1);
+        }
+
+        public void processResult(int rc, String path, Object ctx,
+                String name, Stat stat) {
+            this.name = name;
+            this.stat = stat;
+            super.processResult(Code.get(rc), path, ctx);
+        }
+
+        public AsyncCB create() {
+            zk.create(path, data, acl, flags, this, toString());
+            return this;
+        }
+
+        public void verifyCreate() {
+            create();
+            verify();
+        }
+
+        public void verifyCreateFailure_NodeExists() {
+            new Create2CB(zk).verifyCreate();
+            rc = Code.NODEEXISTS;
+            name = null;
+            zk.create(path, data, acl, flags, this, toString());
+            verify();
+        }
+
+        @Override
+        public String toString() {
+            return super.toString() + name + ":" +
+                (stat == null ? "null" : stat.getAversion() + ":" +
+            		 stat.getCversion() + ":" + stat.getEphemeralOwner() +
+                 ":" + stat.getVersion());
         }
     }
 

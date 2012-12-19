@@ -48,14 +48,28 @@ public abstract class OpResult {
      */
     public static class CreateResult extends OpResult {
         private String path;
+        private Stat stat;
 
         public CreateResult(String path) {
-            super(ZooDefs.OpCode.create);
+        	this(ZooDefs.OpCode.create, path, null);
+        }
+
+        public CreateResult(String path, Stat stat) {
+            this(ZooDefs.OpCode.create2, path, stat);
+        }
+
+        private CreateResult(int opcode, String path, Stat stat) {
+        	super(opcode);
             this.path = path;
+            this.stat = stat;
         }
 
         public String getPath() {
             return path;
+        }
+
+        public Stat getStat() {
+            return stat;
         }
 
         @Override
@@ -64,12 +78,18 @@ public abstract class OpResult {
             if (!(o instanceof CreateResult)) return false;
 
             CreateResult other = (CreateResult) o;
-            return getType() == other.getType() && path.equals(other.getPath());
+
+            boolean statsAreEqual = (stat == null && other.stat == null ||
+                        						(stat != null && other.stat != null &&
+                        					   stat.getMzxid() == other.stat.getMzxid()));
+            return getType() == other.getType() &&
+                   path.equals(other.getPath()) && statsAreEqual;
         }
 
         @Override
         public int hashCode() {
-            return getType() * 35 + path.hashCode();
+            return (int) (getType() * 35 + path.hashCode() +
+                    (stat == null ? 0 : stat.getMzxid()));
         }
     }
 

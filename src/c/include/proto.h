@@ -36,6 +36,7 @@ extern "C" {
 #define ZOO_GETCHILDREN2_OP 12
 #define ZOO_CHECK_OP 13
 #define ZOO_MULTI_OP 14
+#define ZOO_CREATE2_OP 15
 #define ZOO_CLOSE_OP -11
 #define ZOO_SETAUTH_OP 100
 #define ZOO_SETWATCHES_OP 101

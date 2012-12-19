@@ -44,6 +44,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.Create2Callback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -58,6 +59,7 @@ import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
+import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.GetACLResponse;
@@ -600,6 +602,18 @@ public class ClientCnxn {
                                     .substring(chrootPath.length())));
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null);
+                      }
+                  } else if (p.response instanceof Create2Response) {
+                	  Create2Callback cb = (Create2Callback) p.cb;
+                      Create2Response rsp = (Create2Response) p.response;
+                      if (rc == 0) {
+                          cb.processResult(rc, clientPath, p.ctx,
+                                  (chrootPath == null
+                                          ? rsp.getPath()
+                                          : rsp.getPath()
+                                    .substring(chrootPath.length())), rsp.getStat());
+                      } else {
+                          cb.processResult(rc, clientPath, p.ctx, null, null);
                       }
                   } else if (p.cb instanceof VoidCallback) {
                       VoidCallback cb = (VoidCallback) p.cb;

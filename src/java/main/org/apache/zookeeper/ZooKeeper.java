@@ -483,7 +483,7 @@ public class ZooKeeper {
      *            servers but there's partitioned server it could reach, it
      *            connects to one in read-only mode, i.e. read requests are
      *            allowed while write requests are not. It continues seeking for
-     *            majority in the background.
+     *           majority in the background.
      *
      * @throws IOException
      *             in cases of network failure
@@ -851,13 +851,103 @@ public class ZooKeeper {
     }
 
     /**
+     * Create a node with the given path and returns the Stat of that node. The
+     * node data will be the given data and node acl will be the given acl.
+     * <p>
+     * The flags argument specifies whether the created node will be ephemeral
+     * or not.
+     * <p>
+     * An ephemeral node will be removed by the ZooKeeper automatically when the
+     * session associated with the creation of the node expires.
+     * <p>
+     * The flags argument can also specify to create a sequential node. The
+     * actual path name of a sequential node will be the given path plus a
+     * suffix "i" where i is the current sequential number of the node. The sequence
+     * number is always fixed length of 10 digits, 0 padded. Once
+     * such a node is created, the sequential number will be incremented by one.
+     * <p>
+     * If a node with the same actual path already exists in the ZooKeeper, a
+     * KeeperException with error code KeeperException.NodeExists will be
+     * thrown. Note that since a different actual path is used for each
+     * invocation of creating sequential node with the same path argument, the
+     * call will never throw "file exists" KeeperException.
+     * <p>
+     * If the parent node does not exist in the ZooKeeper, a KeeperException
+     * with error code KeeperException.NoNode will be thrown.
+     * <p>
+     * An ephemeral node cannot have children. If the parent node of the given
+     * path is ephemeral, a KeeperException with error code
+     * KeeperException.NoChildrenForEphemerals will be thrown.
+     * <p>
+     * This operation, if successful, will trigger all the watches left on the
+     * node of the given path by exists and getData API calls, and the watches
+     * left on the parent node by getChildren API calls.
+     * <p>
+     * If a node is created successfully, the ZooKeeper server will trigger the
+     * watches on the path left by exists calls, and the watches on the parent
+     * of the node by getChildren calls.
+     * <p>
+     * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
+     * Arrays larger than this will cause a KeeperExecption to be thrown.
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param acl
+     *                the acl for the node
+     * @param createMode
+     *                specifying whether the node to be created is ephemeral
+     *                and/or sequential
+     * @param stat
+     *                The output Stat object.
+     * @return the actual path of the created node
+     * @throws KeeperException if the server returns a non-zero error code
+     * @throws KeeperException.InvalidACLException if the ACL is invalid, null, or empty
+     * @throws InterruptedException if the transaction is interrupted
+     * @throws IllegalArgumentException if an invalid path is specified
+     */
+    public String create(final String path, byte data[], List<ACL> acl,
+            CreateMode createMode, Stat stat)
+            throws KeeperException, InterruptedException {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath, createMode.isSequential());
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.create2);
+        Create2Request request = new Create2Request();
+        Create2Response response = new Create2Response();
+        request.setData(data);
+        request.setFlags(createMode.toFlag());
+        request.setPath(serverPath);
+        if (acl != null && acl.size() == 0) {
+            throw new KeeperException.InvalidACLException();
+        }
+        request.setAcl(acl);
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    clientPath);
+        }
+        if (stat != null) {
+            DataTree.copyStat(response.getStat(), stat);
+        }
+        if (cnxn.chrootPath == null) {
+            return response.getPath();
+        } else {
+            return response.getPath().substring(cnxn.chrootPath.length());
+        }
+    }
+
+    /**
      * The asynchronous version of create.
      *
      * @see #create(String, byte[], List, CreateMode)
      */
-
     public void create(final String path, byte data[], List<ACL> acl,
-            CreateMode createMode,  StringCallback cb, Object ctx)
+            CreateMode createMode, StringCallback cb, Object ctx)
     {
         final String clientPath = path;
         PathUtils.validatePath(clientPath, createMode.isSequential());
@@ -868,6 +958,32 @@ public class ZooKeeper {
         h.setType(ZooDefs.OpCode.create);
         CreateRequest request = new CreateRequest();
         CreateResponse response = new CreateResponse();
+        ReplyHeader r = new ReplyHeader();
+        request.setData(data);
+        request.setFlags(createMode.toFlag());
+        request.setPath(serverPath);
+        request.setAcl(acl);
+        cnxn.queuePacket(h, r, request, response, cb, clientPath,
+                serverPath, ctx, null);
+    }
+
+    /**
+     * The asynchronous version of create.
+     *
+     * @see #create(String, byte[], List, CreateMode, Stat)
+     */
+    public void create(final String path, byte data[], List<ACL> acl,
+            CreateMode createMode, Create2Callback cb, Object ctx)
+    {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath, createMode.isSequential());
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.create2);
+        Create2Request request = new Create2Request();
+        Create2Response response = new Create2Response();
         ReplyHeader r = new ReplyHeader();
         request.setData(data);
         request.setFlags(createMode.toFlag());
