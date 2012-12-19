@@ -117,6 +117,7 @@ public class Request {
         case OpCode.notification:
             return false;
         case OpCode.create:
+        case OpCode.create2:
         case OpCode.delete:
         case OpCode.createSession:
         case OpCode.exists:
@@ -149,6 +150,7 @@ public class Request {
         case OpCode.error:
         case OpCode.closeSession:
         case OpCode.create:
+        case OpCode.create2:
         case OpCode.createSession:
         case OpCode.delete:
         case OpCode.setACL:
@@ -167,6 +169,8 @@ public class Request {
             return "notification";
         case OpCode.create:
             return "create";
+        case OpCode.create2:
+            return "create2";
         case OpCode.setWatches:
             return "setWatches";
         case OpCode.delete:

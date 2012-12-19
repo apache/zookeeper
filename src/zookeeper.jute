@@ -119,6 +119,12 @@ module org.apache.zookeeper.proto {
         vector<org.apache.zookeeper.data.ACL> acl;
         int flags;
     }
+    class Create2Request {
+        ustring path;
+        buffer data;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        int flags;
+    }
     class DeleteRequest {
         ustring path;
         int version;
@@ -172,6 +178,10 @@ module org.apache.zookeeper.proto {
     }
     class CreateResponse {
         ustring path;
+    }
+    class Create2Response {
+        ustring path;
+        org.apache.zookeeper.data.Stat stat;
     }
     class ExistsRequest {
         ustring path;

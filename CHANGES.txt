@@ -452,6 +452,10 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1504. Multi-thread NIOServerCnxn (Jay Shrauner via phunt)
 
+  ZOOKEEPER-1297. Add stat information to create() call
+  (Lenni Kuff via phunt)
+
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

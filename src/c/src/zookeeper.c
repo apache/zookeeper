@@ -144,6 +144,7 @@ struct ACL_vector ZOO_CREATOR_ALL_ACL = { 1, _CREATOR_ALL_ACL_ACL};
 #define COMPLETION_ACLLIST 5
 #define COMPLETION_STRING 6
 #define COMPLETION_MULTI 7
+#define COMPLETION_STRING_STAT 8
 
 typedef struct _auth_completion_list {
     void_completion_t completion;
@@ -161,6 +162,7 @@ typedef struct completion {
         strings_stat_completion_t strings_stat_result;
         acl_completion_t acl_result;
         string_completion_t string_result;
+        string_stat_completion_t string_stat_result;
         struct watcher_object_list *watcher_result;
     };
     completion_head_t clist; /* For multi-op */
@@ -1837,6 +1839,9 @@ static struct timeval get_timeval(int interval)
      const void *data);
  static int add_string_completion(zhandle_t *zh, int xid,
      string_completion_t dc, const void *data);
+ static int add_string_stat_completion(zhandle_t *zh, int xid,
+     string_stat_completion_t dc, const void *data);
+
 
  int send_ping(zhandle_t* zh)
  {
@@ -2286,6 +2291,26 @@ static void process_sync_completion(
             deallocate_CreateResponse(&res);
         }
         break;
+    case COMPLETION_STRING_STAT:
+        if (sc->rc==0) {
+            struct Create2Response res;
+            int len;
+            const char * client_path;
+            deserialize_Create2Response(ia, "reply", &res);
+            client_path = sub_string(zh, res.path);
+            len = strlen(client_path) + 1;
+            if (len > sc->u.str.str_len) {
+                len = sc->u.str.str_len;
+            }
+            if (len > 0) {
+                memcpy(sc->u.str.str, client_path, len - 1);
+                sc->u.str.str[len - 1] = '\0';
+            }
+            free_duplicate_path(client_path, res.path);
+            sc->u.stat = res.stat;
+            deallocate_Create2Response(&res);
+        }
+        break;
     case COMPLETION_ACLLIST:
         if (sc->rc==0) {
             struct GetACLResponse res;
@@ -2396,6 +2421,18 @@ static void deserialize_response(int type, int xid, int failed, int rc, completi
             deserialize_CreateResponse(ia, "reply", &res);
             cptr->c.string_result(rc, res.path, cptr->data);
             deallocate_CreateResponse(&res);
+        }
+        break;
+    case COMPLETION_STRING_STAT:
+        LOG_DEBUG(("Calling COMPLETION_STRING_STAT for xid=%#x failed=%d, rc=%d",
+                    cptr->xid, failed, rc));
+        if (failed) {
+            cptr->c.string_stat_result(rc, 0, 0, cptr->data);
+        } else {
+            struct Create2Response res;
+            deserialize_Create2Response(ia, "reply", &res);
+            cptr->c.string_stat_result(rc, res.path, &res.stat, cptr->data);
+            deallocate_Create2Response(&res);
         }
         break;
     case COMPLETION_ACLLIST:
@@ -2694,6 +2731,8 @@ static completion_list_t* create_completion_entry(int xid, int completion_type,
     case COMPLETION_STRINGLIST_STAT:
         c->c.strings_stat_result = (strings_stat_completion_t)dc;
         break;
+    case COMPLETION_STRING_STAT:
+        c->c.string_stat_result = (string_stat_completion_t)dc;
     case COMPLETION_ACLLIST:
         c->c.acl_result = (acl_completion_t)dc;
         break;
@@ -2815,6 +2854,12 @@ static int add_string_completion(zhandle_t *zh, int xid,
         string_completion_t dc, const void *data)
 {
     return add_completion(zh, xid, COMPLETION_STRING, dc, data, 0, 0, 0);
+}
+
+static int add_string_stat_completion(zhandle_t *zh, int xid,
+        string_stat_completion_t dc, const void *data)
+{
+    return add_completion(zh, xid, COMPLETION_STRING_STAT, dc, data, 0, 0, 0);
 }
 
 static int add_multi_completion(zhandle_t *zh, int xid, void_completion_t dc,
@@ -3077,6 +3122,30 @@ static int CreateRequest_init(zhandle_t *zh, struct CreateRequest *req,
     return ZOK;
 }
 
+static int Create2Request_init(zhandle_t *zh, struct Create2Request *req,
+        const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl_entries, int flags)
+{
+    int rc;
+    assert(req);
+    rc = Request_path_init(zh, flags, &req->path, path);
+    assert(req);
+    if (rc != ZOK) {
+        return rc;
+    }
+    req->flags = flags;
+    req->data.buff = (char*)value;
+    req->data.len = valuelen;
+    if (acl_entries == 0) {
+        req->acl.count = 0;
+        req->acl.data = 0;
+    } else {
+        req->acl = *acl_entries;
+    }
+
+    return ZOK;
+}
+
 int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
         int valuelen, const struct ACL_vector *acl_entries, int flags,
         string_completion_t completion, const void *data)
@@ -3095,6 +3164,37 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_string_completion(zh, h.xid, completion, data);
+    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
+            get_buffer_len(oa));
+    leave_critical(zh);
+    free_duplicate_path(req.path, path);
+    /* We queued the buffer, so don't free it */
+    close_buffer_oarchive(&oa, 0);
+
+    LOG_DEBUG(("Sending request xid=%#x for path [%s] to %s",h.xid,path,
+            zoo_get_current_server(zh)));
+    /* make a best (non-blocking) effort to send the requests asap */
+    adaptor_send_queue(zh, 0);
+    return (rc < 0)?ZMARSHALLINGERROR:ZOK;
+}
+
+int zoo_acreate2(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl_entries, int flags,
+        string_stat_completion_t completion, const void *data)
+{
+    struct oarchive *oa;
+    struct RequestHeader h = { get_xid(), ZOO_CREATE2_OP };
+    struct Create2Request req;
+
+    int rc = Create2Request_init(zh, &req, path, value, valuelen, acl_entries, flags);
+    if (rc != ZOK) {
+        return rc;
+    }
+    oa = create_buffer_oarchive();
+    rc = serialize_RequestHeader(oa, "header", &h);
+    rc = rc < 0 ? rc : serialize_Create2Request(oa, "req", &req);
+    enter_critical(zh);
+    rc = rc < 0 ? rc : add_string_stat_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
@@ -3549,6 +3649,21 @@ void zoo_create_op_init(zoo_op_t *op, const char *path, const char *value,
     op->create_op.buflen = path_buffer_len;
 }
 
+void zoo_create2_op_init(zoo_op_t *op, const char *path, const char *value,
+        int valuelen,  const struct ACL_vector *acl, int flags, 
+        char *path_buffer, int path_buffer_len)
+{
+    assert(op);
+    op->type = ZOO_CREATE2_OP;
+    op->create_op.path = path;
+    op->create_op.data = value;
+    op->create_op.datalen = valuelen;
+    op->create_op.acl = acl;
+    op->create_op.flags = flags;
+    op->create_op.buf = path_buffer;
+    op->create_op.buflen = path_buffer_len;
+}
+
 void zoo_delete_op_init(zoo_op_t *op, const char *path, int version)
 {
     assert(op);
@@ -3822,6 +3937,30 @@ int zoo_create(zhandle_t *zh, const char *path, const char *value,
     if(rc==ZOK){
         wait_sync_completion(sc);
         rc = sc->rc;
+    }
+    free_sync_completion(sc);
+    return rc;
+}
+
+int zoo_create2(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl, int flags,
+        char *path_buffer, int path_buffer_len, struct Stat *stat)
+{
+    struct sync_completion *sc = alloc_sync_completion();
+    int rc;
+    if (!sc) {
+        return ZSYSTEMERROR;
+    }
+
+    sc->u.str.str = path_buffer;
+    sc->u.str.str_len = path_buffer_len;
+    rc=zoo_acreate2(zh, path, value, valuelen, acl, flags, SYNCHRONOUS_MARKER, sc);
+    if(rc==ZOK){
+        wait_sync_completion(sc);
+        rc = sc->rc;
+        if (rc == 0 && stat) {
+            *stat = sc->u.stat;
+        }
     }
     free_sync_completion(sc);
     return rc;

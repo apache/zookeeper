@@ -33,6 +33,7 @@ import org.apache.zookeeper.KeeperException.SessionMovedException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.ExistsRequest;
 import org.apache.zookeeper.proto.ExistsResponse;
@@ -193,6 +194,9 @@ public class FinalRequestProcessor implements RequestProcessor {
                         case OpCode.create:
                             subResult = new CreateResult(subTxnResult.path);
                             break;
+                        case OpCode.create2:
+                            subResult = new CreateResult(subTxnResult.path, subTxnResult.stat);
+                            break;
                         case OpCode.delete:
                             subResult = new DeleteResult();
                             break;
@@ -214,6 +218,12 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.create: {
                 lastOp = "CREA";
                 rsp = new CreateResponse(rc.path);
+                err = Code.get(rc.err);
+                break;
+            }
+            case OpCode.create2: {
+                lastOp = "CREA";
+                rsp = new Create2Response(rc.path, rc.stat);
                 err = Code.get(rc.err);
                 break;
             }

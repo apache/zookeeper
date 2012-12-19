@@ -38,6 +38,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.WatchedEvent;
@@ -396,18 +397,51 @@ public class DataTree {
     }
 
     /**
+     * Add a new node to the DataTree.
      * @param path
+     * 			  Path for the new node.
      * @param data
+     *            Data to store in the node.
      * @param acl
+     *            Node acls
      * @param ephemeralOwner
      *            the session id that owns this node. -1 indicates this is not
      *            an ephemeral node.
      * @param zxid
+     *            Transaction ID
      * @param time
+     * @throws NodeExistsException 
+     * @throws NoNodeException 
      * @throws KeeperException
      */
     public void createNode(final String path, byte data[], List<ACL> acl,
             long ephemeralOwner, int parentCVersion, long zxid, long time)
+    		throws NoNodeException, NodeExistsException {
+    	createNode(path, data, acl, ephemeralOwner, parentCVersion, zxid, time, null);
+    }
+    
+    /**
+     * Add a new node to the DataTree.
+     * @param path
+     * 			  Path for the new node.
+     * @param data
+     *            Data to store in the node.
+     * @param acl
+     *            Node acls
+     * @param ephemeralOwner
+     *            the session id that owns this node. -1 indicates this is not
+     *            an ephemeral node.
+     * @param zxid
+     *            Transaction ID
+     * @param time
+     * @param outputStat
+     * 			  A Stat object to store Stat output results into.
+     * @throws NodeExistsException 
+     * @throws NoNodeException 
+     * @throws KeeperException
+     */
+    public void createNode(final String path, byte data[], List<ACL> acl,
+            long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat)
             throws KeeperException.NoNodeException,
             KeeperException.NodeExistsException {
         int lastSlash = path.lastIndexOf('/');
@@ -451,6 +485,9 @@ public class DataTree {
                 synchronized (list) {
                     list.add(path);
                 }
+            }
+            if (outputStat != null) {
+            	child.copyStat(outputStat);
             }
         }
         // now check if its one of the zookeeper node child
@@ -741,7 +778,20 @@ public class DataTree {
                             createTxn.getAcl(),
                             createTxn.getEphemeral() ? header.getClientId() : 0,
                             createTxn.getParentCVersion(),
-                            header.getZxid(), header.getTime());
+                            header.getZxid(), header.getTime(), null);
+                    break;
+                case OpCode.create2:
+                    CreateTxn create2Txn = (CreateTxn) txn;
+                    rc.path = create2Txn.getPath();
+                    Stat stat = new Stat();
+                    createNode(
+                            create2Txn.getPath(),
+                            create2Txn.getData(),
+                            create2Txn.getAcl(),
+                            create2Txn.getEphemeral() ? header.getClientId() : 0,
+                            create2Txn.getParentCVersion(),
+                            header.getZxid(), header.getTime(), stat);
+                    rc.stat = stat;
                     break;
                 case OpCode.delete:
                     DeleteTxn deleteTxn = (DeleteTxn) txn;

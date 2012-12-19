@@ -46,11 +46,16 @@ public interface AsyncCallback {
         public void processResult(int rc, String path, Object ctx,
                 List<String> children, Stat stat);
     }
+    
+    interface Create2Callback extends AsyncCallback {
+        public void processResult(int rc, String path, Object ctx,
+        		String name, Stat stat);
+    }
 
     interface StringCallback extends AsyncCallback {
         public void processResult(int rc, String path, Object ctx, String name);
     }
-
+    
     interface VoidCallback extends AsyncCallback {
         public void processResult(int rc, String path, Object ctx);
     }
