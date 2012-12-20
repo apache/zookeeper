@@ -112,8 +112,9 @@ public final class StaticHostProvider implements HostProvider {
             throws UnknownHostException {
         List<InetSocketAddress> tmpList = new ArrayList<InetSocketAddress>(serverAddresses.size());       
         for (InetSocketAddress address : serverAddresses) {
-            InetAddress resolvedAddresses[] = InetAddress.getAllByName(address
-                    .getHostName());
+            InetAddress ia = address.getAddress();
+            InetAddress resolvedAddresses[] = InetAddress.getAllByName((ia!=null) ? ia.getHostAddress():
+                    address.getHostName());
             for (InetAddress resolvedAddress : resolvedAddresses) {
                 tmpList.add(new InetSocketAddress(resolvedAddress
                         .getHostAddress(), address.getPort()));
@@ -155,13 +156,15 @@ public final class StaticHostProvider implements HostProvider {
                     "A HostProvider may not be empty!");
         }
         // Check if client's current server is in the new list of servers
-        boolean myServerInNewConfig = false;        
+        boolean myServerInNewConfig = false;
         for (InetSocketAddress addr : resolvedList) {
-            if (addr.getHostName().equals(currentHost.getHostName())
-                    && addr.getPort() == currentHost.getPort()) {
-                myServerInNewConfig = true;
-                break;
-            }
+            if (addr.getPort() == currentHost.getPort() &&
+                    ((addr.getAddress()!=null && currentHost.getAddress()!=null &&
+                      addr.getAddress().equals(currentHost.getAddress()))
+                     || addr.getHostName().equals(currentHost.getHostName()))) {
+                   myServerInNewConfig = true;
+                   break;
+               }
         }
 
         synchronized(this) {

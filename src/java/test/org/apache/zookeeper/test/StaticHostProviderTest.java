@@ -26,18 +26,21 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.junit.Test;
+
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Random;
 
 public class StaticHostProviderTest extends ZKTestCase {
     private Random r = new Random(1);
-    
+
     @Test
     public void testNextGoesRound() throws UnknownHostException {
-        HostProvider hostProvider = getHostProvider(2);
+        HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         assertTrue(first != null);
         hostProvider.next(0);
@@ -46,7 +49,7 @@ public class StaticHostProviderTest extends ZKTestCase {
 
     @Test
     public void testNextGoesRoundAndSleeps() throws UnknownHostException {
-        int size = 2;
+        byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
             hostProvider.next(0);
@@ -60,7 +63,7 @@ public class StaticHostProviderTest extends ZKTestCase {
 
     @Test
     public void testNextDoesNotSleepForZero() throws UnknownHostException {
-        int size = 2;
+        byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
             hostProvider.next(0);
@@ -75,13 +78,13 @@ public class StaticHostProviderTest extends ZKTestCase {
     @Test
     public void testTwoConsequitiveCallsToNextReturnDifferentElement()
             throws UnknownHostException {
-        HostProvider hostProvider = getHostProvider(2);
+        HostProvider hostProvider = getHostProvider((byte) 2);
         assertNotSame(hostProvider.next(0), hostProvider.next(0));
     }
 
     @Test
     public void testOnConnectDoesNotReset() throws UnknownHostException {
-        HostProvider hostProvider = getHostProvider(2);
+        HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         hostProvider.onConnected();
         InetSocketAddress second = hostProvider.next(0);
@@ -93,11 +96,11 @@ public class StaticHostProviderTest extends ZKTestCase {
 
     @Test
     public void testUpdateClientMigrateOrNot() throws UnknownHostException {
-        HostProvider hostProvider = getHostProvider(4); // 10.10.10.4:1238, 10.10.10.3:1237, 10.10.10.2:1236, 10.10.10.1:1235
-        Collection<InetSocketAddress> newList = getServerAddresses(3); // 10.10.10.3:1237, 10.10.10.2:1236, 10.10.10.1:1235
-        
-        InetSocketAddress myServer = new InetSocketAddress("10.10.10.3", 1237);
-        
+        HostProvider hostProvider = getHostProvider((byte) 4); // 10.10.10.4:1238, 10.10.10.3:1237, 10.10.10.2:1236, 10.10.10.1:1235
+        Collection<InetSocketAddress> newList = getServerAddresses((byte) 3); // 10.10.10.3:1237, 10.10.10.2:1236, 10.10.10.1:1235
+
+        InetSocketAddress myServer = new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, 3}), 1237);
+
         // Number of machines becomes smaller, my server is in the new cluster
         boolean disconnectRequired = hostProvider.updateServerList(newList, myServer);
         assertTrue(!disconnectRequired);
@@ -108,7 +111,7 @@ public class StaticHostProviderTest extends ZKTestCase {
 
         // Number of machines became smaller, my server is not in the new
         // cluster
-        newList = getServerAddresses(2); // 10.10.10.2:1236, 10.10.10.1:1235
+        newList = getServerAddresses((byte) 2); // 10.10.10.2:1236, 10.10.10.1:1235
         disconnectRequired = hostProvider.updateServerList(newList, myServer);
         assertTrue(disconnectRequired);
 
@@ -119,10 +122,10 @@ public class StaticHostProviderTest extends ZKTestCase {
 
         // Number of machines increased, my server is not in the new cluster
         newList = new ArrayList<InetSocketAddress>(3);
-        for (int i = 4; i > 1; i--) { // 10.10.10.4:1238, 10.10.10.3:1237, 10.10.10.2:1236
-            newList.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+        for (byte i = 4; i > 1; i--) { // 10.10.10.4:1238, 10.10.10.3:1237, 10.10.10.2:1236
+            newList.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
-        myServer = new InetSocketAddress("10.10.10.1", 1235);
+        myServer = new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, 1}), 1235);
         disconnectRequired = hostProvider.updateServerList(newList, myServer);
         assertTrue(disconnectRequired);
 
@@ -132,10 +135,10 @@ public class StaticHostProviderTest extends ZKTestCase {
         // With probability 1 - |old|/|new} the client disconnects
         // In the test below 1-9/10 = 1/10 chance of disconnecting
         HostProvider[] hostProviderArray = new HostProvider[numClients];
-        newList = getServerAddresses(10);
+        newList = getServerAddresses((byte) 10);
         int numDisconnects = 0;
         for (int i = 0; i < numClients; i++) {
-            hostProviderArray[i] = getHostProvider(9);
+            hostProviderArray[i] = getHostProvider((byte) 9);
             disconnectRequired = hostProviderArray[i].updateServerList(newList, myServer);
             if (disconnectRequired)
                 numDisconnects++;
@@ -147,32 +150,33 @@ public class StaticHostProviderTest extends ZKTestCase {
 
     @Test
     public void testUpdateMigrationGoesRound() throws UnknownHostException {
-        HostProvider hostProvider = getHostProvider(4);
+        HostProvider hostProvider = getHostProvider((byte) 4);
         // old list (just the ports): 1238, 1237, 1236, 1235
         Collection<InetSocketAddress> newList = new ArrayList<InetSocketAddress>(
                 10);
-        for (int i = 12; i > 2; i--) { // 1246, 1245, 1244, 1243, 1242, 1241,
+        for (byte i = 12; i > 2; i--) { // 1246, 1245, 1244, 1243, 1242, 1241,
                                        // 1240, 1239, 1238, 1237
-            newList.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+            newList.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
 
         // servers from the old list that appear in the new list
         Collection<InetSocketAddress> oldStaying = new ArrayList<InetSocketAddress>(2);
-        for (int i = 4; i > 2; i--) { // 1238, 1237
-            oldStaying.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+        for (byte i = 4; i > 2; i--) { // 1238, 1237
+            oldStaying.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
 
         // servers in the new list that are not in the old list
         Collection<InetSocketAddress> newComing = new ArrayList<InetSocketAddress>(10);
-        for (int i = 12; i > 4; i--) {// 1246, 1245, 1244, 1243, 1242, 1241, 1240, 1139
-            newComing.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+        for (byte i = 12; i > 4; i--) {// 1246, 1245, 1244, 1243, 1242, 1241, 1240, 1139
+            newComing.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
 
         // Number of machines increases, my server is not in the new cluster
         // load on old servers must be decreased, so must connect to one of the
         // new servers
         // i.e., pNew = 1.
-        boolean disconnectRequired = hostProvider.updateServerList(newList, new InetSocketAddress("10.10.10.1", 1235));
+
+        boolean disconnectRequired = hostProvider.updateServerList(newList, new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, 1}), 1235));
         assertTrue(disconnectRequired);
 
         // This means reconfigMode = true, and nextHostInReconfigMode will be
@@ -216,7 +220,7 @@ public class StaticHostProviderTest extends ZKTestCase {
 
         // initialization
         for (int i = 0; i < numClients; i++) {
-            hostProviderArray[i] = getHostProvider(9);
+            hostProviderArray[i] = getHostProvider((byte) 9);
             curHostForEachClient[i] = hostProviderArray[i].next(0);
             numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
         }
@@ -228,7 +232,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         }
 
         // remove host number 8 (the last one in a list of 9 hosts)
-        Collection<InetSocketAddress> newList = getServerAddresses(8);
+        Collection<InetSocketAddress> newList = getServerAddresses((byte) 8);
 
         for (int i = 0; i < numClients; i++) {
             disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
@@ -244,7 +248,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         assertTrue(numClientsPerHost[8] == 0);
 
         // remove hosts number 6 and 7 (the currently last two in the list)
-        newList = getServerAddresses(6);
+        newList = getServerAddresses((byte) 6);
 
         for (int i = 0; i < numClients; i++) {
             disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
@@ -264,8 +268,8 @@ public class StaticHostProviderTest extends ZKTestCase {
         // remove host number 0 (the first one in the current list)
         // and add back hosts 6, 7 and 8
         newList = new ArrayList<InetSocketAddress>(8);
-        for (int i = 9; i > 1; i--) {
-            newList.add(new InetSocketAddress("10.10.10." + i, 1234 + i));
+        for (byte i = 9; i > 1; i--) {
+            newList.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
 
         for (int i = 0; i < numClients; i++) {
@@ -283,7 +287,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         }
 
         // add back host number 0
-        newList = getServerAddresses(9);
+        newList = getServerAddresses((byte) 9);
 
         for (int i = 0; i < numClients; i++) {
             disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
@@ -297,18 +301,27 @@ public class StaticHostProviderTest extends ZKTestCase {
         }
     }
 
-    private StaticHostProvider getHostProvider(int size)
+    private StaticHostProvider getHostProvider(byte size)
             throws UnknownHostException {
         return new StaticHostProvider(getServerAddresses(size), r.nextLong());
     }
 
-    private Collection<InetSocketAddress> getServerAddresses(int size) {
+    private HashMap<Byte, Collection<InetSocketAddress>> precomputedLists = new
+            HashMap<Byte, Collection<InetSocketAddress>>();
+    private Collection<InetSocketAddress> getServerAddresses(byte size)   {
+        if (precomputedLists.containsKey(size)) return precomputedLists.get(size);
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(
                 size);
         while (size > 0) {
-            list.add(new InetSocketAddress("10.10.10." + size, 1234 + size));
+            try {
+                list.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, size}), 1234 + size));
+            } catch (UnknownHostException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
             --size;
         }
+        precomputedLists.put(size, list);
         return list;
     }
 

@@ -296,6 +296,8 @@ BUGFIXES:
   ZOOKEEPER-1334. Zookeeper 3.4.x is not OSGi compliant - MANIFEST.MF
   is flawed (Claus Ibsen via phunt)
 
+  ZOOKEEPER-1603. StaticHostProviderTest testUpdateClientMigrateOrNot
+  hangs (Alexander Shraer via phunt)
 
 IMPROVEMENTS:
 
