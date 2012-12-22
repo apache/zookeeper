@@ -299,6 +299,8 @@ BUGFIXES:
   ZOOKEEPER-1603. StaticHostProviderTest testUpdateClientMigrateOrNot
   hangs (Alexander Shraer via phunt)
 
+  ZOOKEEPER-1597. Windows build failing (michim via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

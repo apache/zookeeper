@@ -18,6 +18,7 @@
 
 #ifdef WIN32
 #include "winport.h"
+#include <stdlib.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
@@ -284,6 +285,11 @@ int Win32WSAStartup()
 void Win32WSACleanup()
 {
        WSACleanup();
+}
+
+double drand48(void)
+{
+    return (double)(rand()) / RAND_MAX;
 }
 
 #endif //WIN32

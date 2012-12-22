@@ -20,6 +20,10 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#ifdef WIN32
+#include <WS2tcpip.h>
+#include "winport.h"
+#endif
 
 #include "addrvec.h"
 
@@ -64,6 +68,8 @@ int addrvec_alloc_capacity(addrvec_t* avec, uint32_t capacity)
 
 int addrvec_grow(addrvec_t *avec, uint32_t grow_amount)
 {
+    unsigned int old_capacity = 0;
+    struct sockaddr_storage *old_data = NULL;
     assert(avec);
 
     if (grow_amount == 0)
@@ -72,8 +78,8 @@ int addrvec_grow(addrvec_t *avec, uint32_t grow_amount)
     }
 
     // Save off old data and capacity in case there is a realloc failure
-    unsigned int old_capacity = avec->capacity;
-    struct sockaddr_storage *old_data = avec->data;
+    old_capacity = avec->capacity;
+    old_data = avec->data;
 
     avec->capacity += grow_amount;
     avec->data = realloc(avec->data, sizeof(*avec->data) * avec->capacity);
@@ -110,12 +116,12 @@ static int addrvec_grow_if_full(addrvec_t *avec)
 
 int addrvec_contains(const addrvec_t *avec, const struct sockaddr_storage *addr)
 {
+    uint32_t i = 0;
     if (!avec || !addr)
     { 
         return 0;
     }
 
-    int i = 0;
     for (i = 0; i < avec->count; i++)
     {
         if(memcmp(&avec->data[i], addr, INET_ADDRSTRLEN) == 0)
@@ -127,10 +133,11 @@ int addrvec_contains(const addrvec_t *avec, const struct sockaddr_storage *addr)
 
 int addrvec_append(addrvec_t *avec, const struct sockaddr_storage *addr)
 {
+    int rc = 0;
     assert(avec);
     assert(addr);
 
-    int rc = addrvec_grow_if_full(avec);
+    rc = addrvec_grow_if_full(avec);
     if (rc != 0)
     {
         return rc;
@@ -145,10 +152,11 @@ int addrvec_append(addrvec_t *avec, const struct sockaddr_storage *addr)
 
 int addrvec_append_addrinfo(addrvec_t *avec, const struct addrinfo *addrinfo)
 {
+    int rc = 0;
     assert(avec);
     assert(addrinfo);
 
-    int rc = addrvec_grow_if_full(avec);
+    rc = addrvec_grow_if_full(avec);
     if (rc != 0)
     {
         return rc;
@@ -203,12 +211,12 @@ void addrvec_next(addrvec_t *avec, struct sockaddr_storage *next)
 
 int addrvec_eq(const addrvec_t *a1, const addrvec_t *a2)
 {
+    uint32_t i = 0;
     if (a1->count != a2->count)
     {
         return 0;
     }
 
-    int i;
     for (i = 0; i < a1->count; ++i)
     {
         if (!addrvec_contains(a2, &a1->data[i]))
