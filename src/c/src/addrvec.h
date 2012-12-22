@@ -24,6 +24,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#else
+#include <WinSock2.h>
+#include "winstdint.h"
 #endif
 
 /**

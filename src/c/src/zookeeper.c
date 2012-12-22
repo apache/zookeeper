@@ -51,6 +51,8 @@
 #include <netdb.h>
 #include <unistd.h>
 #include "config.h"
+#else
+#include "winstdint.h"
 #endif
 
 #ifdef HAVE_SYS_UTSNAME_H
@@ -209,7 +211,7 @@ static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
 static int isValidPath(const char* path, const int flags);
 
 #ifdef _WINDOWS
-static int zookeeper_send(SOCKET s, const char* buf, int len)
+static int zookeeper_send(SOCKET s, const void* buf, int len)
 #else
 static ssize_t zookeeper_send(int s, const void* buf, size_t len)
 #endif
@@ -463,12 +465,11 @@ static int getaddrinfo_errno(int rc) {
  */
 static int count_hosts(char *hosts)
 {
+    uint32_t count = 0;
+    char *loc = hosts;
     if (!hosts || strlen(hosts) == 0) {
         return 0;
     }
-
-    uint32_t count = 0;
-    char *loc = hosts;
 
     while ((loc = strchr(loc, ','))) {
         count++;
@@ -486,6 +487,10 @@ static int count_hosts(char *hosts)
 int resolve_hosts(const char *hosts_in, addrvec_t *avec)
 {
     int rc = ZOK;
+    char *host = NULL;
+    char *hosts = NULL;
+    int num_hosts = 0;
+    char *strtok_last = NULL;
 
     if (hosts_in == NULL || avec == NULL) {
         return ZBADARGUMENTS;
@@ -494,7 +499,7 @@ int resolve_hosts(const char *hosts_in, addrvec_t *avec)
     // initialize address vector
     addrvec_init(avec);
 
-    char *hosts = strdup(hosts_in);
+    hosts = strdup(hosts_in);
     if (hosts == NULL) {
         LOG_ERROR(("out of memory"));
         errno=ENOMEM;
@@ -502,7 +507,7 @@ int resolve_hosts(const char *hosts_in, addrvec_t *avec)
         goto fail;
     }
 
-    int num_hosts = count_hosts(hosts);
+    num_hosts = count_hosts(hosts);
     if (num_hosts == 0) {
         free(hosts);
         return ZOK;
@@ -517,8 +522,7 @@ int resolve_hosts(const char *hosts_in, addrvec_t *avec)
         goto fail;
     }
 
-    char *strtok_last;
-    char * host = strtok_r(hosts, ",", &strtok_last);
+    host = strtok_r(hosts, ",", &strtok_last);
     while(host) {
         char *port_spec = strrchr(host, ':');
         char *end_port_spec;
@@ -720,6 +724,14 @@ fail:
  */
 int update_addrs(zhandle_t *zh)
 {
+    int rc = ZOK;
+    char *hosts = NULL;
+    uint32_t num_old = 0;
+    uint32_t num_new = 0;
+    uint32_t i = 0;
+    int found_current = 0;
+    addrvec_t resolved = { 0 };
+
     // Verify we have a valid handle
     if (zh == NULL) {
         return ZBADARGUMENTS;
@@ -734,9 +746,6 @@ int update_addrs(zhandle_t *zh)
     // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
     lock_reconfig(zh);
 
-    int rc = ZOK;
-    char *hosts = NULL;
-
     // Copy zh->hostname for local use
     hosts = strdup(zh->hostname);
     if (hosts == NULL) {
@@ -744,7 +753,6 @@ int update_addrs(zhandle_t *zh)
         goto fail;
     }
 
-    addrvec_t resolved = { 0 };
     rc = resolve_hosts(hosts, &resolved);
     if (rc != ZOK)
     {
@@ -758,7 +766,7 @@ int update_addrs(zhandle_t *zh)
     }
 
     // Is the server we're connected to in the new resolved list?
-    int found_current = addrvec_contains(&resolved, &zh->addr_cur);
+    found_current = addrvec_contains(&resolved, &zh->addr_cur);
 
     // Clear out old and new address lists
     zh->reconfig = 1;
@@ -766,7 +774,6 @@ int update_addrs(zhandle_t *zh)
     addrvec_free(&zh->addrs_new);
 
     // Divide server list into addrs_old if in previous list and addrs_new if not
-    int i = 0;
     for (i = 0; i < resolved.count; i++)
     {
         struct sockaddr_storage *resolved_address = &resolved.data[i];
@@ -787,8 +794,8 @@ int update_addrs(zhandle_t *zh)
         }
     }
 
-    int num_old = zh->addrs_old.count;
-    int num_new = zh->addrs_new.count;
+    num_old = zh->addrs_old.count;
+    num_new = zh->addrs_new.count;
 
     // Number of servers increased
     if (num_old + num_new > zh->addrs.count)
@@ -1172,11 +1179,13 @@ void zoo_cycle_next_server(zhandle_t *zh)
  */
 const char* zoo_get_current_server(zhandle_t* zh)
 {
+    const char *endpoint_info = NULL;
+
     // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
     // Need the lock here as it is changed in update_addrs()
     lock_reconfig(zh);
 
-    const char * endpoint_info = format_endpoint_info(&zh->addr_cur);
+    endpoint_info = format_endpoint_info(&zh->addr_cur);
     unlock_reconfig(zh);
     return endpoint_info;
 }
@@ -1870,6 +1879,7 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
      struct timeval *tv)
 {
 #endif
+    int rc = 0;
     struct timeval now;
     if(zh==0 || fd==0 ||interest==0 || tv==0)
         return ZBADARGUMENTS;
@@ -1885,7 +1895,7 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
     }
     api_prolog(zh);
 
-    int rc = update_addrs(zh);
+    rc = update_addrs(zh);
     if (rc != ZOK) {
         return api_epilog(zh, rc);
     }
@@ -1915,14 +1925,14 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
 
         // No need to delay -- grab the next server and attempt connection
         else {
-            zoo_cycle_next_server(zh);
+            int ssoresult;
 
 #ifdef WIN32
             char enable_tcp_nodelay = 1;
 #else
             int enable_tcp_nodelay = 1;
 #endif
-            int ssoresult;
+            zoo_cycle_next_server(zh);
 
             zh->fd = socket(zh->addr_cur.ss_family, SOCK_STREAM, 0);
             if (zh->fd < 0) {
