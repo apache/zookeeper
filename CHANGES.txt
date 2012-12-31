@@ -32,6 +32,9 @@ BUGFIXES:
 
   ZOOKEEPER-1334. Zookeeper 3.4.x is not OSGi compliant - MANIFEST.MF
   is flawed (Claus Ibsen via phunt)
+  
+  ZOOKEEPER-1535. ZK Shell/Cli re-executes last command on exit 
+  (Edward Ribeiro via camille)
 
 IMPROVEMENTS:
 
