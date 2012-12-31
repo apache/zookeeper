@@ -337,11 +337,6 @@ public class ZooKeeperMain {
                 }
             }
         }
-
-        boolean watch = processCmd(cl);
-        if (!watch) {
-            System.exit(0);
-        }
     }
 
     public void executeLine(String line)
