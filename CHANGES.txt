@@ -459,6 +459,7 @@ IMPROVEMENTS:
   ZOOKEEPER-1297. Add stat information to create() call
   (Lenni Kuff via phunt)
 
+  ZOOKEEPER-1535. ZK Shell/Cli re-executes last command on exit (Edward Ribeiro via camille)
 
 Release 3.4.0 - 
 
