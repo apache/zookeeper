@@ -461,8 +461,6 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1535. ZK Shell/Cli re-executes last command on exit (Edward Ribeiro via camille)
 
-  ZOOKEEPER-1324. Remove Duplicate NEWLEADER packets from the Leader to the Follower. (thawan via fpj)
-
 Release 3.4.0 - 
 
 Non-backward compatible changes:
