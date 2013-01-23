@@ -173,9 +173,23 @@ restart)
     ;;
 status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
+    clientPort=`grep "^[[:space:]]*clientPort" "$ZOOCFG" | sed -e 's/.*=//'`
+    if ! [ $clientPort ]
+    then
+       echo "Client port not found in static config file. Looking in dynamic config file."
+       dataDir=`grep "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//'`
+       myid=`cat "$dataDir/myid"`
+       dynamicConfigFile=`grep "^[[:space:]]*dynamicConfigFile" "$ZOOCFG" | sed -e 's/.*=//'`
+       clientPort=`grep "^[[:space:]]*server.$myid" "$dynamicConfigFile" | sed -e 's/.*=//' | sed -e 's/.*;//' | sed -e 's/.*://'`
+       if ! [[ "$clientPort" =~ ^[0-9]+$ ]] ; then
+          echo "Client port not found. Terminating."
+          exit 1
+       fi
+    fi
+    echo "Client port found: $clientPort"
     STAT=`$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
              -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain localhost \
-             $(grep "^[[:space:]]*clientPort" "$ZOOCFG" | sed -e 's/.*=//') srvr 2> /dev/null    \
+             $clientPort srvr 2> /dev/null    \
           | grep Mode`
     if [ "x$STAT" = "x" ]
     then

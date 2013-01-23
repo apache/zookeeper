@@ -301,6 +301,9 @@ BUGFIXES:
 
   ZOOKEEPER-1597. Windows build failing (michim via phunt)
 
+  ZOOKEEPER-1625. zkServer.sh is looking for clientPort in config file, but it
+  may no longer be there with ZK-1411 (Alexander Shraer via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
