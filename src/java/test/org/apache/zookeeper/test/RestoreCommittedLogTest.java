@@ -51,6 +51,8 @@ public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
      */
     @Test
     public void testRestoreCommittedLog() throws Exception {
+        System.setProperty(FileTxnSnapLog.ZOOKEEPER_CDH_RESTORE_COMMITTED_LOG, "true");
+
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);

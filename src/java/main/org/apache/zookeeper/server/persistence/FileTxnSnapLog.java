@@ -63,6 +63,11 @@ public class FileTxnSnapLog {
 
     public static final String ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT = "true";
 
+    public static final String ZOOKEEPER_CDH_RESTORE_COMMITTED_LOG =
+            "zookeeper.cdh.restoreCommittedLog";
+    private static final boolean RESTORE_COMMITTED_LOG =
+            Boolean.getBoolean(ZOOKEEPER_CDH_RESTORE_COMMITTED_LOG);
+
     /**
      * This listener helps
      * the external apis calling
@@ -183,7 +188,11 @@ public class FileTxnSnapLog {
                throw new IOException("Failed to process transaction type: " +
                      hdr.getType() + " error: " + e.getMessage(), e);
             }
-            listener.onTxnLoaded(hdr, itr.getTxn());
+            /* Addresses CDH-9900 - reduce the likelihood of sending a diff
+             * on leader change */
+            if (RESTORE_COMMITTED_LOG) {
+                listener.onTxnLoaded(hdr, itr.getTxn());
+            }
             if (!itr.next()) 
                 break;
         }
