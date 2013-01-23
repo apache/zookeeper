@@ -86,10 +86,6 @@ BUGFIXES:
 
   ZOOKEEPER-1471. Jute generates invalid C++ code
     (Michi Mutsuzaki via phunt)
-  
-  ZOOKEEPER-1465. Cluster availability following new leader election 
-    takes a long time with large datasets - is correlated to dataset size
-    (fpj and Thawan Kooburat via camille)
 
   ZOOKEEPER-1427. Writing to local files is done non-atomically (phunt)
 
