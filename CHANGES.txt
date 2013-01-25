@@ -311,6 +311,9 @@ BUGFIXES:
   ZK-1504) opens selectors but never closes them
   (Thawan Kooburat via phunt)
 
+  ZOOKEEPER-1628. Documented list of allowable characters in ZK doc
+  not in line with code (Gabriel Reid via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
