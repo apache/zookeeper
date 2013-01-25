@@ -307,6 +307,10 @@ BUGFIXES:
   ZOOKEEPER-1495. ZK client hangs when using a function not available
   on the server. (Skye W-M via phunt)
 
+  ZOOKEEPER-1620. NIOServerCnxnFactory (new code introduced in
+  ZK-1504) opens selectors but never closes them
+  (Thawan Kooburat via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
