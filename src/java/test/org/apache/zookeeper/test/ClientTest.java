@@ -18,32 +18,39 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.TestableZooKeeper;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.InvalidACLException;
+import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.Perms;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.ExistsRequest;
+import org.apache.zookeeper.proto.ExistsResponse;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClientTest extends ClientBase {
     protected static final Logger LOG = LoggerFactory.getLogger(ClientTest.class);
@@ -742,6 +749,35 @@ public class ClientTest extends ClientBase {
         	LOG.error(logmsg,Long.valueOf(currentCount),Long.valueOf(initialFdCount));
         } else {
         	LOG.info(logmsg,Long.valueOf(currentCount),Long.valueOf(initialFdCount));
+        }
+    }
+
+
+    /**
+     * We create a perfectly valid 'exists' request, except that the opcode is wrong.
+     * @return
+     * @throws Exception
+     */
+    @Test
+    public void testNonExistingOpCode() throws Exception  {
+        TestableZooKeeper zk = createClient();
+
+        final String path = "/m1";
+
+        RequestHeader h = new RequestHeader();
+        h.setType(888);  // This code does not exists
+        ExistsRequest request = new ExistsRequest();
+        request.setPath(path);
+        request.setWatch(false);
+        ExistsResponse response = new ExistsResponse();
+        ReplyHeader r = zk.submitRequest(h, request, response, null);
+
+        Assert.assertEquals(r.getErr(), Code.UNIMPLEMENTED.intValue());
+
+        try {
+            zk.exists("/m1", false);
+            fail("The connection should have been closed");
+        } catch (KeeperException.ConnectionLossException expected) {
         }
     }
 }
