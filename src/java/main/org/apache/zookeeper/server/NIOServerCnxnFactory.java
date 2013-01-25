@@ -132,6 +132,20 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             selector.wakeup();
         }
 
+        /**
+         * Close the selector. This should be called when the thread is about to
+         * exit and no operation is going to be performed on the Selector or
+         * SelectionKey
+         */
+        protected void closeSelector() {
+            try {
+                selector.close();
+            } catch (IOException e) {
+                LOG.warn("ignored exception during selector close "
+                        + e.getMessage());
+            }
+        }
+
         protected void cleanupSelectionKey(SelectionKey key) {
             if (key != null) {
                 try {
@@ -195,6 +209,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                     }
                 }
             } finally {
+                closeSelector();
                 // This will wake up the selector threads, and tell the
                 // worker thread pool to begin shutdown.
                 NIOServerCnxnFactory.this.stop();
@@ -391,6 +406,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 }
                 updateQueue.clear();
             } finally {
+                closeSelector();
                 // This will wake up the accept thread and the other selector
                 // threads, and tell the worker thread pool to begin shutdown.
                 NIOServerCnxnFactory.this.stop();
