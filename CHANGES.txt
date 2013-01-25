@@ -39,6 +39,9 @@ BUGFIXES:
   ZOOKEEPER-1495. ZK client hangs when using a function not available
   on the server. (Skye W-M via phunt)
 
+  ZOOKEEPER-1613. The documentation still points to 2008 in the
+  copyright notice (Edward Ribeiro via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
