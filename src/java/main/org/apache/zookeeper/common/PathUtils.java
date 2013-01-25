@@ -86,10 +86,10 @@ public class PathUtils {
                     reason = "relative paths not allowed @" + i;
                     break;
                 }
-            } else if (c > '\u0000' && c < '\u001f'
-                    || c > '\u007f' && c < '\u009F'
-                    || c > '\ud800' && c < '\uf8ff'
-                    || c > '\ufff0' && c < '\uffff') {
+            } else if (c > '\u0000' && c <= '\u001f'
+                    || c >= '\u007f' && c <= '\u009F'
+                    || c >= '\ud800' && c <= '\uf8ff'
+                    || c >= '\ufff0' && c <= '\uffff') {
                 reason = "invalid charater @" + i;
                 break;
             }

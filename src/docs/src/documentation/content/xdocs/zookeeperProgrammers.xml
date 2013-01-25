@@ -133,13 +133,13 @@
 
       <listitem>
         <para>The following characters can't be used because they don't
-        display well, or render in confusing ways: \u0001 - \u0019 and \u007F
+        display well, or render in confusing ways: \u0001 - \u001F and \u007F
         - \u009F.</para>
       </listitem>
 
       <listitem>
-        <para>The following characters are not allowed: \ud800 -uF8FFF,
-        \uFFF0-uFFFF, \uXFFFE - \uXFFFF (where X is a digit 1 - E), \uF0000 -
+        <para>The following characters are not allowed: \ud800 - uF8FF,
+        \uFFF0 - uFFFF, \uXFFFE - \uXFFFF (where X is a digit 1 - E), \uF0000 -
         \uFFFFF.</para>
       </listitem>
 
