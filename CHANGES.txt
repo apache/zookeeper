@@ -314,6 +314,9 @@ BUGFIXES:
   ZOOKEEPER-1628. Documented list of allowable characters in ZK doc
   not in line with code (Gabriel Reid via phunt)
 
+  ZOOKEEPER-1613. The documentation still points to 2008 in the
+  copyright notice (Edward Ribeiro via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
