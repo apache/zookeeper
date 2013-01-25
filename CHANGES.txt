@@ -6,6 +6,9 @@ Backward compatible changes:
 
   ZOOKEEPER-1581. change copyright in notice to 2012 (breed via phunt)
 
+  ZOOKEEPER-1613. The documentation still points to 2008 in the
+  copyright notice (Edward Ribeiro via phunt)
+
 Release 3.3.6 - 2012-08-01
 Backward compatible changes:
 
