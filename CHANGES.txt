@@ -471,6 +471,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1535. ZK Shell/Cli re-executes last command on exit (Edward Ribeiro via camille)
 
+  ZOOKEEPER-1619. Allow spaces in URL (Edward Ribeiro via phunt)
+
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
