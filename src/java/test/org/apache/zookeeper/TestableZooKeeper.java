@@ -22,6 +22,10 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.List;
 
+import org.apache.jute.Record;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
+
 public class TestableZooKeeper extends ZooKeeper {
 
     public TestableZooKeeper(String host, int sessionTimeout,
@@ -98,5 +102,10 @@ public class TestableZooKeeper extends ZooKeeper {
      */
     public long testableLastZxid() {
         return cnxn.getLastZxid();
+    }
+
+    public ReplyHeader submitRequest(RequestHeader h, Record request,
+            Record response, WatchRegistration watchRegistration) throws InterruptedException {
+        return cnxn.submitRequest(h, request, response, watchRegistration);
     }
 }
