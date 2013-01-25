@@ -482,6 +482,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1615. minor typos in ZooKeeper Programmer's Guide web page
   (Evan Zacks via phunt)
 
+  ZOOKEEPER-1601. document changes for multi-threaded CommitProcessor
+  and NIOServerCnxn (Thawan Kooburat via phunt)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

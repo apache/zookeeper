@@ -285,6 +285,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#Disabling+data+directory+autocreation">Disabling data directory autocreation</a>
 </li>
 <li>
+<a href="#sc_performance_options">Performance Tuning Options</a>
+</li>
+<li>
 <a href="#Communication+using+the+Netty+framework">Communication using the Netty framework</a>
 </li>
 </ul>
@@ -1496,6 +1499,69 @@ server.3=zoo3:2888:3888</pre>
         it does not create a config file, but rather requires a config
         file to be available in order to execute.
         </p>
+<a name="sc_performance_options"></a>
+<h4>Performance Tuning Options</h4>
+<p>
+<strong>New in 3.5.0:</strong> Several subsystems have been reworked
+        to improve read throughput. This includes multi-threading of the NIO communication subsystem and
+        request processing pipeline (Commit Processor). NIO is the default client/server communication
+        subsystem. Its threading model comprises 1 acceptor thread, 1-N selector threads and 0-M
+        socket I/O worker threads. In the request processing pipeline the system can be configured
+        to process multiple read request at once while maintaining the same consistency guarantee
+        (same-session read-after-write). The Commit Processor threading model comprises 1 main
+        thread and 0-N worker threads.
+        </p>
+<p>
+        The default values are aimed at maximizing read throughput on a dedicated ZooKeeper machine.
+        Both subsystems need to have sufficient amount of threads to achieve peak read throughput.
+        </p>
+<dl>
+
+          
+<dt>
+<term>zookeeper.nio.numSelectorThreads</term>
+</dt>
+<dd>
+<p>(Java system property only: <strong>zookeeper.nio.numSelectorThreads</strong>)
+              </p>
+<p>
+<strong>New in 3.5.0:</strong>
+              Number of NIO selector threads. At least 1 selector thread required.
+              It is recommended to use more than one selector for large numbers
+              of client connections. The default value is sqrt( number of cpu cores / 2 ).
+              </p>
+</dd>
+
+          
+<dt>
+<term>zookeeper.nio.numWorkerThreads</term>
+</dt>
+<dd>
+<p>(Java system property only: <strong>zookeeper.nio.numWorkerThreads</strong>)
+              </p>
+<p>
+<strong>New in 3.5.0:</strong>
+              Number of NIO worker threads. If configured with 0 worker threads, the selector threads
+              do the socket I/O directly. The default value is 2 times the number of cpu cores.
+              </p>
+</dd>
+
+          
+<dt>
+<term>zookeeper.commitProcessor.numWorkerThreads</term>
+</dt>
+<dd>
+<p>(Java system property only: <strong>zookeeper.commitProcessor.numWorkerThreads</strong>)
+              </p>
+<p>
+<strong>New in 3.5.0:</strong>
+              Number of Commit Processor worker threads. If configured with 0 worker threads, the main thread
+              will process the request directly. The default value is the number of cpu cores.
+              </p>
+</dd>
+
+        
+</dl>
 <a name="Communication+using+the+Netty+framework"></a>
 <h4>Communication using the Netty framework</h4>
 <p>
