@@ -481,7 +481,7 @@ document.write("Last Published: " + document.lastModified);
       <em>znode</em>. Znodes maintain a stat structure that
       includes version numbers for data changes, acl changes. The stat
       structure also has timestamps. The version number, together with the
-      timestamp allow ZooKeeper to validate the cache and to coordinate
+      timestamp, allows ZooKeeper to validate the cache and to coordinate
       updates. Each time a znode's data changes, the version number increases.
       For instance, whenever a client retrieves data, it also receives the
       version of the data. And when a client performs an update or a delete,
@@ -582,7 +582,7 @@ document.write("Last Published: " + document.lastModified);
 </p>
 
           
-<p>Every change to a a node will cause an increase to one of the
+<p>Every change to a node will cause an increase to one of the
           version numbers of that node. The three version numbers are version
           (number of changes to the data of a znode), cversion (number of
           changes to the children of a znode), and aversion (number of changes
@@ -927,7 +927,7 @@ document.write("Last Published: " + document.lastModified);
 <strong>Added in 3.2.0 -- SessionMovedException</strong>. There is an internal
       exception that is generally not seen by clients called the SessionMovedException.
       This exception occurs because a request was received on a connection for a session
-      which has be reestablished on a different server. The normal cause of this error is
+      which has been reestablished on a different server. The normal cause of this error is
       a client that sends a request to a server, but the network packet gets delayed, so
       the client times out and connects to a new server. When the delayed packet arrives at
       the first server, the old server detects that the session has moved, and closes the
@@ -936,7 +936,7 @@ document.write("Last Published: " + document.lastModified);
       condition can be seen is when two clients try to reestablish the same connection using
       a saved session id and password. One of the clients will reestablish the connection
       and the second client will be disconnected (causing the pair to attempt to re-establish
-      it's connection/session indefinitely).</p>
+      its connection/session indefinitely).</p>
 <p> 
 <strong>Updating the list of servers</strong>.  We allow a client to 
       update the connection string by providing a new comma separated list of host:port pairs, 
@@ -1047,13 +1047,13 @@ document.write("Last Published: " + document.lastModified);
     
 </ul>
 <p>Watches are maintained locally at the ZooKeeper server to which the
-    client is connected. This allows watches to be light weight to set,
+    client is connected. This allows watches to be lightweight to set,
     maintain, and dispatch. When a client connects to a new server, the watch
     will be triggered for any session events. Watches will not be received
     while disconnected from a server. When a client reconnects, any previously
     registered watches will be reregistered and triggered if needed. In
     general this all occurs transparently. There is one case where a watch
-    may be missed: a watch for the existance of a znode not yet created will
+    may be missed: a watch for the existence of a znode not yet created will
     be missed if the znode is created and deleted while disconnected.</p>
 <a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
@@ -1649,7 +1649,7 @@ authProvider.2=com.f.MyAuth2
               have been applied. On some failures (communication errors,
               timeouts, etc) the client will not know if the update has
               applied or not. We take steps to minimize the failures, but the
-              only guarantee is only present with successful return codes.
+              guarantee is only present with successful return codes.
               (This is called the <em>monotonicity condition</em> in Paxos.)</p>
             
 </li>
@@ -1672,7 +1672,7 @@ authProvider.2=com.f.MyAuth2
 </dt>
 <dd>
 <p>The clients view of the system is guaranteed to be up-to-date
-          within a certain time bound. (On the order of tens of seconds.)
+          within a certain time bound (on the order of tens of seconds).
           Either system changes will be seen by a client within this bound, or
           the client will detect a service outage.</p>
 </dd>
@@ -1975,7 +1975,7 @@ authProvider.2=com.f.MyAuth2
 <li>
             
 <p>Include ZooKeeper header: #include
-              &lt;zookeeper/zookeeper.h</p>
+              &lt;zookeeper/zookeeper.h&gt;</p>
           
 </li>
 

@@ -476,6 +476,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1619. Allow spaces in URL (Edward Ribeiro via phunt)
 
+  ZOOKEEPER-1615. minor typos in ZooKeeper Programmer's Guide web page
+  (Evan Zacks via phunt)
 
 Release 3.4.0 - 
 
