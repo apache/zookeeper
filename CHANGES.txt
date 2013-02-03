@@ -317,6 +317,9 @@ BUGFIXES:
   ZOOKEEPER-1613. The documentation still points to 2008 in the
   copyright notice (Edward Ribeiro via phunt)
 
+  ZOOKEEPER-1562. Memory leaks in zoo_multi API
+  (Deepak Jagtap via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
