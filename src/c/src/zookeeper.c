@@ -2364,6 +2364,10 @@ static int deserialize_multi(int xid, completion_list_t *cptr, struct iarchive *
 
         deserialize_response(entry->c.type, xid, mhdr.type == -1, mhdr.err, entry, ia);
         deserialize_MultiHeader(ia, "multiheader", &mhdr);
+        //While deserializing the response we must destroy completion entry for each operation in 
+        //the zoo_multi transaction. Otherwise this results in memory leak when client invokes zoo_multi
+        //operation.
+        destroy_completion_entry(entry);
     }
 
     return rc;
