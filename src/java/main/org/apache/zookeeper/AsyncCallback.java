@@ -59,4 +59,9 @@ public interface AsyncCallback {
     interface VoidCallback extends AsyncCallback {
         public void processResult(int rc, String path, Object ctx);
     }
+
+    interface MultiCallback extends AsyncCallback {
+        public void processResult(int rc, String path, Object ctx,
+                List<OpResult> opResults);
+    }
 }

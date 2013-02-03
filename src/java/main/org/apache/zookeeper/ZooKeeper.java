@@ -1079,14 +1079,27 @@ public class ZooKeeper {
      * @since 3.4.0
      */
     public List<OpResult> multi(Iterable<Op> ops) throws InterruptedException, KeeperException {
+        return multiInternal(generateMultiTransaction(ops));
+    }
+
+    /**
+     * The asynchronous version of multi.
+     *
+     * @see #multi(Iterable)
+     */
+    public void multi(Iterable<Op> ops, MultiCallback cb, Object ctx) {
+        multiInternal(generateMultiTransaction(ops), cb, ctx);
+    }
+
+    private MultiTransactionRecord generateMultiTransaction(Iterable<Op> ops) {
         // reconstructing transaction with the chroot prefix
         List<Op> transaction = new ArrayList<Op>();
         for (Op op : ops) {
             transaction.add(withRootPrefix(op));
         }
-        return multiInternal(new MultiTransactionRecord(transaction));
+        return new MultiTransactionRecord(transaction);
     }
-    
+
     private Op withRootPrefix(Op op) {
         if (null != op.getPath()) {
             final String serverPath = prependChroot(op.getPath());
@@ -1095,6 +1108,13 @@ public class ZooKeeper {
             }
         }
         return op;
+    }
+
+    protected void multiInternal(MultiTransactionRecord request, MultiCallback cb, Object ctx) {
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.multi);
+        MultiResponse response = new MultiResponse();
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, null, null, ctx, null);
     }
 
     protected List<OpResult> multiInternal(MultiTransactionRecord request)
