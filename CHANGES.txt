@@ -28,6 +28,12 @@ BUGFIXES:
   ZOOKEEPER-1535. ZK Shell/Cli re-executes last command on exit 
   (Edward Ribeiro via camille)
 
+  ZOOKEEPER-1495. ZK client hangs when using a function not available
+  on the server. (Skye W-M via phunt)
+
+  ZOOKEEPER-1562. Memory leaks in zoo_multi API
+  (Deepak Jagtap via phunt)
+
 IMPROVEMENTS:
 
 
