@@ -325,6 +325,9 @@ BUGFIXES:
   ZOOKEEPER-1645. ZooKeeper OSGi package imports not complete
   (Arnoud Glimmerveen via phunt)
 
+  ZOOKEEPER-1641. Using slope=positive results in a jagged ganglia
+  graph of packets rcvd/sent (Ben Hartshorne via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
