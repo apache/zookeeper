@@ -25,10 +25,17 @@ import sys
 import socket
 import time
 import re
+import copy
 
 from StringIO import StringIO
 
 TIME_BETWEEN_QUERIES = 20
+ZK_METRICS = {
+    'time' : 0,
+    'data' : {}
+}
+ZK_LAST_METRICS = copy.deepcopy(ZK_METRICS)
+
 
 class ZooKeeperServer(object):
 
@@ -38,12 +45,21 @@ class ZooKeeperServer(object):
 
     def get_stats(self):
         """ Get ZooKeeper server stats as a map """
+        global ZK_METRICS, ZK_LAST_METRICS
+        # update cache
+        ZK_METRICS = {
+          'time' : time.time(),
+          'data' : {}
+        }
         data = self._send_cmd('mntr')
         if data:
-            return self._parse(data)
+            parsed_data =  self._parse(data)
         else:
             data = self._send_cmd('stat')
-            return self._parse_stat(data)
+            parsed_data = self._parse_stat(data)
+        ZK_METRICS['data'] = parsed_data
+        ZK_LAST_METRICS = copy.deepcopy(ZK_METRICS)
+        return parsed_data
 
     def _create_socket(self):
         return socket.socket()
@@ -64,7 +80,7 @@ class ZooKeeperServer(object):
     def _parse(self, data):
         """ Parse the output from the 'mntr' 4letter word command """
         h = StringIO(data)
-        
+
         result = {}
         for line in h.readlines():
             try:
@@ -77,10 +93,12 @@ class ZooKeeperServer(object):
 
     def _parse_stat(self, data):
         """ Parse the output from the 'stat' 4letter word command """
+        global ZK_METRICS, ZK_LAST_METRICS
+
         h = StringIO(data)
 
         result = {}
-        
+
         version = h.readline()
         if version:
             result['zk_version'] = version[version.index(':')+1:].strip()
@@ -98,12 +116,27 @@ class ZooKeeperServer(object):
 
             m = re.match('Received: (\d+)', line)
             if m is not None:
-                result['zk_packets_received'] = int(m.group(1))
+                cur_packets = int(m.group(1))
+                packet_delta = cur_packets - ZK_LAST_METRICS['data'].get('zk_packets_received_total', cur_packets)
+                time_delta = ZK_METRICS['time'] - ZK_LAST_METRICS['time']
+                time_delta = 10.0
+                try:
+                    result['zk_packets_received_total'] = cur_packets
+                    result['zk_packets_received'] = packet_delta / float(time_delta)
+                except ZeroDivisionError:
+                    result['zk_packets_received'] = 0
                 continue
 
             m = re.match('Sent: (\d+)', line)
             if m is not None:
-                result['zk_packets_sent'] = int(m.group(1))
+                cur_packets = int(m.group(1))
+                packet_delta = cur_packets - ZK_LAST_METRICS['data'].get('zk_packets_sent_total', cur_packets)
+                time_delta = ZK_METRICS['time'] - ZK_LAST_METRICS['time']
+                try:
+                    result['zk_packets_sent_total'] = cur_packets
+                    result['zk_packets_sent'] = packet_delta / float(time_delta)
+                except ZeroDivisionError:
+                    result['zk_packets_sent'] = 0
                 continue
 
             m = re.match('Outstanding: (\d+)', line)
@@ -121,7 +154,7 @@ class ZooKeeperServer(object):
                 result['zk_znode_count'] = int(m.group(1))
                 continue
 
-        return result 
+        return result
 
     def _parse_line(self, line):
         try:
@@ -140,7 +173,7 @@ class ZooKeeperServer(object):
         return key, value
 
 def metric_handler(name):
-    if time.time() - metric_handler.timestamp > TIME_BETWEEN_QUERIES:
+    if time.time() - ZK_LAST_METRICS['time'] > TIME_BETWEEN_QUERIES:
         zk = ZooKeeperServer(metric_handler.host, metric_handler.port, 5)
         try:
             metric_handler.info = zk.get_stats()
@@ -162,12 +195,14 @@ def metric_init(params=None):
         'zk_max_latency': {'units': 'ms'},
         'zk_min_latency': {'units': 'ms'},
         'zk_packets_received': {
-            'units': 'packets',
-            'slope': 'positive'
+            'units': 'pps',
+            'value_type': 'float',
+            'format': '%f'
         },
         'zk_packets_sent': {
-            'units': 'packets',
-            'slope': 'positive'
+            'units': 'pps',
+            'value_type': 'double',
+            'format': '%f'
         },
         'zk_outstanding_requests': {'units': 'connections'},
         'zk_znode_count': {'units': 'znodes'},
@@ -203,7 +238,9 @@ def metric_cleanup():
 
 if __name__ == '__main__':
     ds = metric_init({'host':'localhost', 'port': '2181'})
-    for d in ds:
-        print "%s=%s" % (d['name'], metric_handler(d['name']))
+    while True:
+        for d in ds:
+            print "%s=%s" % (d['name'], metric_handler(d['name']))
+        time.sleep(10)
 
 
