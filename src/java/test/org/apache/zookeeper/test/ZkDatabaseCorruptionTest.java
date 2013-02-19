@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Arrays;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
@@ -83,30 +84,42 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         zk.close();
-        QuorumPeer leader;
+
+        long leaderSid = 1;
+        QuorumPeer leader = null;
         //find out who is the leader and kill it
-        if ( qb.s5.getPeerState() != ServerState.LEADING) {
-            throw new Exception("the last server is not the leader");
+        for (QuorumPeer quorumPeer : Arrays.asList(qb.s1, qb.s2, qb.s3, qb.s4, qb.s5)) {
+            if (quorumPeer.getPeerState() == ServerState.LEADING) {
+                leader = quorumPeer;
+                break;
+            }
+            ++leaderSid;
         }
-        leader = qb.s5;
-        // now corrupt the qurompeer database
+
+        Assert.assertNotNull("Cannot find the leader.", leader);
+        leader.shutdown();
+
+        // now corrupt the leader's database
         FileTxnSnapLog snapLog = leader.getTxnFactory();
         File snapDir= snapLog.getSnapDir();
         //corrupt all the snapshot in the snapshot directory
         corruptAllSnapshots(snapDir);
         qb.shutdownServers();
         qb.setupServers();
-        qb.s1.start();
-        qb.s2.start();
-        qb.s3.start();
-        qb.s4.start();
+
+        if (leaderSid != 1)qb.s1.start(); else leader = qb.s1;
+        if (leaderSid != 2)qb.s2.start(); else leader = qb.s2;
+        if (leaderSid != 3)qb.s3.start(); else leader = qb.s3;
+        if (leaderSid != 4)qb.s4.start(); else leader = qb.s4;
+        if (leaderSid != 5)qb.s5.start(); else leader = qb.s5;
+
         try {
-            qb.s5.start();
+            leader.start();
             Assert.assertTrue(false);
         } catch(RuntimeException re) {
             LOG.info("Got an error: expected", re);
         }
-        //waut for servers to be up
+        //wait for servers to be up
         String[] list = qb.hostPort.split(",");
         for (int i =0; i < 4; i++) {
             String hp = list[i];
@@ -122,10 +135,12 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         zk.close();
-        QuorumBase.shutdown(qb.s1);
-        QuorumBase.shutdown(qb.s2);
-        QuorumBase.shutdown(qb.s3);
-        QuorumBase.shutdown(qb.s4);
+
+        if (leaderSid != 1)QuorumBase.shutdown(qb.s1);
+        if (leaderSid != 2)QuorumBase.shutdown(qb.s2);
+        if (leaderSid != 3)QuorumBase.shutdown(qb.s3);
+        if (leaderSid != 4)QuorumBase.shutdown(qb.s4);
+        if (leaderSid != 5)QuorumBase.shutdown(qb.s5);
     }
 
 
