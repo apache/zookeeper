@@ -38,6 +38,7 @@ import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class WatcherTest extends ClientBase {
@@ -65,6 +66,14 @@ public class WatcherTest extends ClientBase {
                 }
             }
         }
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        // Reset to default value since some test cases set this to true.
+        // Needed for JDK7 since unit test can run is random order
+        ClientCnxn.setDisableAutoResetWatch(false);
     }
 
     /**

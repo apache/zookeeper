@@ -328,6 +328,9 @@ BUGFIXES:
   ZOOKEEPER-1641. Using slope=positive results in a jagged ganglia
   graph of packets rcvd/sent (Ben Hartshorne via phunt)
 
+  ZOOKEEPER-1648. Fix WatcherTest in JDK7
+  (Thawan Kooburat via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
