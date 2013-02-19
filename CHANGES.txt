@@ -48,6 +48,9 @@ BUGFIXES:
   ZOOKEEPER-1645. ZooKeeper OSGi package imports not complete
   (Arnoud Glimmerveen via phunt)
 
+  ZOOKEEPER-1648. Fix WatcherTest in JDK7
+  (Thawan Kooburat via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
