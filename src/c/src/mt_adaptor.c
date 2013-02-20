@@ -484,25 +484,9 @@ int32_t inc_ref_counter(zhandle_t* zh,int i)
 int32_t fetch_and_add(volatile int32_t* operand, int incr)
 {
 #ifndef WIN32
-    int32_t result;
-    asm __volatile__(
-         "lock xaddl %0,%1\n"
-         : "=r"(result), "=m"(*(int *)operand)
-         : "0"(incr)
-         : "memory");
-   return result;
+    return __sync_fetch_and_add(operand, incr);
 #else
-    volatile int32_t result;
-    _asm
-    {
-        mov eax, operand; //eax = v;
-       mov ebx, incr; // ebx = i;
-        mov ecx, 0x0; // ecx = 0;
-        lock xadd dword ptr [eax], ecx; 
-       lock xadd dword ptr [eax], ebx; 
-        mov result, ecx; // result = ebx;        
-     }
-     return result;    
+    return InterlockedExchangeAdd(operand, incr);
 #endif
 }
 

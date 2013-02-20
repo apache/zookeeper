@@ -505,6 +505,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1601. document changes for multi-threaded CommitProcessor
   and NIOServerCnxn (Thawan Kooburat via phunt)
 
+  ZOOKEEPER-1643. Windows: fetch_and_add not 64bit-compatible, may not be
+  correct (Erik Anderson via michim)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
