@@ -1,11 +1,8 @@
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zookeeper", "zookeeper.vcxproj", "{5754FB2B-5EA5-4988-851D-908CA533A626}"
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zookeeper", "zookeeper.vcproj", "{5754FB2B-5EA5-4988-851D-908CA533A626}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cli", "Cli.vcxproj", "{050228F9-070F-4806-A2B5-E6B95D8EC4AF}"
-	ProjectSection(ProjectDependencies) = postProject
-		{5754FB2B-5EA5-4988-851D-908CA533A626} = {5754FB2B-5EA5-4988-851D-908CA533A626}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cli", "Cli.vcproj", "{050228F9-070F-4806-A2B5-E6B95D8EC4AF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
