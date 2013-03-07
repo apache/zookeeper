@@ -4,6 +4,11 @@
 .revision/
 .settings/
 build/
+src/c/core.*
+src/c/TEST-*.txt
+src/c/*.la
+src/c/*.lo
+src/c/*.o
 src/c/generated/
 src/java/generated/
 src/java/lib/ant-eclipse-*

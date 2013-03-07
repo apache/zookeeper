@@ -61,6 +61,8 @@ public class TraceFormatter {
             return "closeSession";
         case OpCode.error:
             return "error";
+        case OpCode.reconfig:
+           return "reconfig";
         default:
             return "unknown " + op;
         }

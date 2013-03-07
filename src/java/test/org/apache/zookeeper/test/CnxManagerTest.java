@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -232,16 +233,18 @@ public class CnxManagerTest extends ZKTestCase {
         SocketChannel sc = SocketChannel.open();
         sc.socket().connect(peers.get(1L).electionAddr, 5000);
 
-        /*
-         * Write id first then negative length.
-         */
-        byte[] msgBytes = new byte[8];
-        ByteBuffer msgBuffer = ByteBuffer.wrap(msgBytes);
-        msgBuffer.putLong(2L);
-        msgBuffer.position(0);
-        sc.write(msgBuffer);
+        InetSocketAddress otherAddr = peers.get(new Long(2)).electionAddr;
+        DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
+        dout.writeLong(0xffff0000);
+        dout.writeLong(new Long(2));
+        String addr = otherAddr.getHostName()+ ":" + otherAddr.getPort();
+        byte[] addr_bytes = addr.getBytes();
+        dout.writeInt(addr_bytes.length);
+        dout.write(addr_bytes);
+        dout.flush();
+        
 
-        msgBuffer = ByteBuffer.wrap(new byte[4]);
+        ByteBuffer msgBuffer = ByteBuffer.wrap(new byte[4]);
         msgBuffer.putInt(-20);
         msgBuffer.position(0);
         sc.write(msgBuffer);

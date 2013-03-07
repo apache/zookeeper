@@ -8,9 +8,9 @@
  * with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ *uuuuu
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an "/RequuuAS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -25,6 +25,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -80,6 +81,8 @@ public class Request {
 
     private KeeperException e;
 
+    public QuorumVerifier qv = null;
+    
     public Object getOwner() {
         return owner;
     }
@@ -133,6 +136,7 @@ public class Request {
         case OpCode.ping:
         case OpCode.closeSession:
         case OpCode.setWatches:
+        case OpCode.reconfig:
             return true;
         default:
             return false;
@@ -157,6 +161,7 @@ public class Request {
         case OpCode.setData:
         case OpCode.check:
         case OpCode.multi:
+        case OpCode.reconfig:
             return true;
         default:
             return false;
@@ -203,6 +208,8 @@ public class Request {
             return "closeSession";
         case OpCode.error:
             return "error";
+        case OpCode.reconfig:
+           return "reconfig";
         default:
             return "unknown " + op;
         }

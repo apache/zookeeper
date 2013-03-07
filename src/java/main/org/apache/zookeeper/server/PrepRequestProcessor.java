@@ -20,13 +20,17 @@ package org.apache.zookeeper.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -46,18 +50,26 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.Create2Request;
 import org.apache.zookeeper.proto.DeleteRequest;
+import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -481,6 +493,114 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 nodeRecord.stat.setVersion(newVersion);
                 addChangeRecord(nodeRecord);
                 break;
+            case OpCode.reconfig:
+                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                ReconfigRequest reconfigRequest = (ReconfigRequest)record;                             
+                LeaderZooKeeperServer lzks = (LeaderZooKeeperServer)zks;
+                QuorumVerifier lastSeenQV = lzks.self.getLastSeenQuorumVerifier();                                                                                 
+                // check that there's no reconfig in progress
+                if (lastSeenQV.getVersion()!=lzks.self.getQuorumVerifier().getVersion()) {
+                       throw new KeeperException.ReconfigInProgress(); 
+                }
+                long configId = reconfigRequest.getCurConfigId();
+  
+                if (configId != -1 && configId!=lzks.self.getLastSeenQuorumVerifier().getVersion()){
+                   String msg = "Reconfiguration from version " + configId + " failed -- last seen version is " + lzks.self.getLastSeenQuorumVerifier().getVersion();
+                   throw new KeeperException.BadVersionException(msg);
+                }
+
+                String newMembers = reconfigRequest.getNewMembers();
+                
+                if (newMembers != null) { //non-incremental membership change                  
+                   LOG.info("Non-incremental reconfig");
+                
+                   // Input may be delimited by either commas or newlines so convert to common newline separated format
+                   newMembers = newMembers.replaceAll(",", "\n");
+                   
+                   try{
+                       Properties props = new Properties();                        
+                       props.load(new StringReader(newMembers));
+                       QuorumPeerConfig config = new QuorumPeerConfig();
+                       config.parseDynamicConfig(props, lzks.self.getElectionType(), true);
+                       request.qv = config.getQuorumVerifier();
+                       request.qv.setVersion(request.getHdr().getZxid());
+                   } catch (IOException e) {
+                       throw new KeeperException.BadArgumentsException(e.getMessage());
+                   } catch (ConfigException e) {
+                       throw new KeeperException.BadArgumentsException(e.getMessage());
+                   }                   
+                } else { //incremental change - must be a majority quorum system   
+                   LOG.info("Incremental reconfig");
+                   
+                   List<String> joiningServers = null; 
+                   String joiningServersString = reconfigRequest.getJoiningServers();
+                   if (joiningServersString != null)
+                   {
+                       joiningServers = StringUtils.split(joiningServersString,",");
+                   }
+                   
+                   List<String> leavingServers = null;
+                   String leavingServersString = reconfigRequest.getLeavingServers();
+                   if (leavingServersString != null)
+                   {
+                       leavingServers = StringUtils.split(leavingServersString, ",");
+                   }
+                   
+                   if (!(lastSeenQV instanceof QuorumMaj)) {
+                           String msg = "Incremental reconfiguration requested but last configuration seen has a non-majority quorum system";
+                           LOG.warn(msg);
+                           throw new KeeperException.BadArgumentsException(msg);               
+                   }
+                   Map<Long, QuorumServer> nextServers = new HashMap<Long, QuorumServer>(lastSeenQV.getAllMembers());
+                   try {                           
+                       if (leavingServers != null) {
+                           for (String leaving: leavingServers){
+                               long sid = Long.parseLong(leaving);
+                               nextServers.remove(sid);
+                           } 
+                       }
+                       if (joiningServers != null) {
+                           for (String joiner: joiningServers){
+                        	   // joiner should have the following format: server.x = server_spec;client_spec               
+                        	   String[] parts = StringUtils.split(joiner, "=").toArray(new String[0]);
+                               if (parts.length != 2) {
+                                   throw new KeeperException.BadArgumentsException("Wrong format of server string");
+                               }
+                               // extract server id x from first part of joiner: server.x
+                               Long sid = Long.parseLong(parts[0].substring(parts[0].lastIndexOf('.') + 1));
+                               QuorumServer qs = new QuorumServer(sid, parts[1]);
+                               if (qs.clientAddr == null || qs.electionAddr == null || qs.addr == null) {
+                                   throw new KeeperException.BadArgumentsException("Wrong format of server string - each server should have 3 ports specified"); 	   
+                               }
+                               nextServers.remove(qs.id);
+                               nextServers.put(Long.valueOf(qs.id), qs);
+                           }  
+                       }
+                   } catch (ConfigException e){
+                       throw new KeeperException.BadArgumentsException("Reconfiguration failed");
+                   }
+                   request.qv = new QuorumMaj(nextServers);
+                   request.qv.setVersion(request.getHdr().getZxid());
+                }                             
+                if (request.qv.getVotingMembers().size() < 2){
+                   String msg = "Reconfig failed - new configuration must include at least 2 followers";
+                   LOG.warn(msg);
+                   throw new KeeperException.BadArgumentsException(msg);
+               }
+                   
+                if (!lzks.getLeader().isQuorumSynced(request.qv)) {
+                   String msg2 = "Reconfig failed - there must be a connected and synced quorum in new configuration";
+                   LOG.warn(msg2);             
+                   throw new KeeperException.NewConfigNoQuorum();
+                }
+                
+                nodeRecord = getRecordForPath(ZooDefs.CONFIG_NODE);               
+                checkACL(zks, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo);                  
+                request.setTxn(new SetDataTxn(ZooDefs.CONFIG_NODE, request.qv.toString().getBytes(), -1));    
+                nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
+                nodeRecord.stat.setVersion(-1);                
+                addChangeRecord(nodeRecord);
+                break;                         
             case OpCode.setACL:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 SetACLRequest setAclRequest = (SetACLRequest)record;
@@ -584,6 +704,11 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             case OpCode.setData:
                 SetDataRequest setDataRequest = new SetDataRequest();                
                 pRequest2Txn(request.type, zks.getNextZxid(), request, setDataRequest, true);
+                break;
+            case OpCode.reconfig:
+                ReconfigRequest reconfigRequest = new ReconfigRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request, reconfigRequest);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, reconfigRequest, true);
                 break;
             case OpCode.setACL:
                 SetACLRequest setAclRequest = new SetACLRequest();                

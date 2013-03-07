@@ -109,7 +109,7 @@ public class QuorumMaj implements QuorumVerifier {
         return (long) 1;
     }
 
-    public byte[] toByteArray() {
+    public String toString() {
         StringBuilder sw = new StringBuilder();
 
         for (QuorumServer member : getAllMembers().values()) {
@@ -123,8 +123,8 @@ public class QuorumMaj implements QuorumVerifier {
         String hexVersion = Long.toHexString(version);
         sw.append("version=");
         sw.append(hexVersion);
-        return sw.toString().getBytes();
-    }
+        return sw.toString();
+    }    
 
     /**
      * Verifies if a set is a majority. Assumes that ackSet contains acks only
@@ -149,5 +149,8 @@ public class QuorumMaj implements QuorumVerifier {
     public long getVersion() {
         return version;
     }
-
+    
+    public void setVersion(long ver) {
+        version = ver;
+    }
 }

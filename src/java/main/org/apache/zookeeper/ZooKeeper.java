@@ -18,27 +18,60 @@
 
 package org.apache.zookeeper;
 
-import org.apache.zookeeper.AsyncCallback.*;
-import org.apache.zookeeper.ClientCnxn.SendThread;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.zookeeper.AsyncCallback.ACLCallback;
+import org.apache.zookeeper.AsyncCallback.Children2Callback;
+import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.Create2Callback;
+import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.MultiCallback;
+import org.apache.zookeeper.AsyncCallback.StatCallback;
+import org.apache.zookeeper.AsyncCallback.StringCallback;
+import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.client.ConnectStringParser;
-import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.*;
+import org.apache.zookeeper.proto.Create2Request;
+import org.apache.zookeeper.proto.Create2Response;
+import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.DeleteRequest;
+import org.apache.zookeeper.proto.ExistsRequest;
+import org.apache.zookeeper.proto.GetACLRequest;
+import org.apache.zookeeper.proto.GetACLResponse;
+import org.apache.zookeeper.proto.GetChildren2Request;
+import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetChildrenRequest;
+import org.apache.zookeeper.proto.GetChildrenResponse;
+import org.apache.zookeeper.proto.GetDataRequest;
+import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.ReconfigRequest;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.proto.SetACLRequest;
+import org.apache.zookeeper.proto.SetACLResponse;
+import org.apache.zookeeper.proto.SetDataRequest;
+import org.apache.zookeeper.proto.SetDataResponse;
+import org.apache.zookeeper.proto.SyncRequest;
+import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.UnknownHostException;
-import java.util.*;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -1414,6 +1447,181 @@ public class ZooKeeper {
         getData(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
     }
 
+    /**
+     * Return the last committed configuration (as known to the server to which the client is connected)
+     * and the stat of the configuration.
+     * <p>
+     * If the watch is non-null and the call is successful (no exception is
+     * thrown), a watch will be left on the configuration node (ZooDefs.CONFIG_NODE). The watch
+     * will be triggered by a successful reconfig operation
+     * <p>
+     * A KeeperException with error code KeeperException.NoNode will be thrown
+     * if the configuration node doesn't exists.
+     *
+     * @param watcher explicit watcher
+     * @param stat the stat of the configuration node ZooDefs.CONFIG_NODE
+     * @return configuration data stored in ZooDefs.CONFIG_NODE
+     * @throws KeeperException If the server signals an error with a non-zero error code
+     * @throws InterruptedException If the server transaction is interrupted.
+     */
+    public byte[] getConfig(Watcher watcher, Stat stat)
+        throws KeeperException, InterruptedException
+     {
+        final String configZnode = ZooDefs.CONFIG_NODE;
+ 
+        // the watch contains the un-chroot path
+        WatchRegistration wcb = null;
+        if (watcher != null) {
+            wcb = new DataWatchRegistration(watcher, configZnode);
+        }
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getData);
+        GetDataRequest request = new GetDataRequest();
+        request.setPath(configZnode);
+        request.setWatch(watcher != null);
+        GetDataResponse response = new GetDataResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                   configZnode);
+        }
+        if (stat != null) {
+            DataTree.copyStat(response.getStat(), stat);
+        }
+        return response.getData();
+    }
+
+    /**
+     * The asynchronous version of getConfig.
+     *
+     * @see #getConfig(Watcher, Stat)
+     */
+    public void getConfig(Watcher watcher,
+            DataCallback cb, Object ctx)
+    {
+        final String configZnode = ZooDefs.CONFIG_NODE;
+        
+        // the watch contains the un-chroot path
+        WatchRegistration wcb = null;
+        if (watcher != null) {
+            wcb = new DataWatchRegistration(watcher, configZnode);
+        }
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getData);
+        GetDataRequest request = new GetDataRequest();
+        request.setPath(configZnode);
+        request.setWatch(watcher != null);
+        GetDataResponse response = new GetDataResponse();
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
+               configZnode, configZnode, ctx, wcb);
+    }
+
+    
+    /**
+     * Return the last committed configuration (as known to the server to which the client is connected)
+     * and the stat of the configuration.
+     * <p>
+     * If the watch is true and the call is successful (no exception is
+     * thrown), a watch will be left on the configuration node (ZooDefs.CONFIG_NODE). The watch
+     * will be triggered by a successful reconfig operation
+     * <p>
+     * A KeeperException with error code KeeperException.NoNode will be thrown
+     * if no node with the given path exists.
+     *
+     * @param watch whether need to watch this node
+     * @param stat the stat of the configuration node ZooDefs.CONFIG_NODE
+     * @return configuration data stored in ZooDefs.CONFIG_NODE
+     * @throws KeeperException If the server signals an error with a non-zero error code
+     * @throws InterruptedException If the server transaction is interrupted.
+     */
+    public byte[] getConfig(boolean watch, Stat stat)
+            throws KeeperException, InterruptedException {
+        return getConfig(watch ? watchManager.defaultWatcher : null, stat);
+    }
+ 
+    /**
+     * The Asynchronous version of getConfig. 
+     * 
+     * @see #getData(String, boolean, Stat)
+     */
+    public void getConfig(boolean watch, DataCallback cb, Object ctx) {
+        getConfig(watch ? watchManager.defaultWatcher : null, cb, ctx);
+    }
+    
+    /**
+     * Reconfigure - add/remove servers. Return the new configuration.
+     * @param joiningServers
+     *                a comma separated list of servers being added (incremental reconfiguration)
+     * @param leavingServers
+     *                a comma separated list of servers being removed (incremental reconfiguration)
+     * @param newMembers
+     *                a comma separated list of new membership (non-incremental reconfiguration)
+     * @param fromConfig
+     *                version of the current configuration (optional - causes reconfiguration to throw an exception if configuration is no longer current)
+     * @return new configuration
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws KeeperException If the server signals an error with a non-zero error code.     
+     */
+    public byte[] reconfig(String joiningServers, String leavingServers, String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException
+    {
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.reconfig);       
+        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);        
+        GetDataResponse response = new GetDataResponse();       
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()), "");
+        }
+        DataTree.copyStat(response.getStat(), stat);
+        return response.getData();
+    }
+
+    /**
+     * Convenience wrapper around reconfig that takes Lists of strings instead of comma-separated servers.
+     *
+     * @see #reconfig
+     *
+     */
+    public byte[] reconfig(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException
+    {
+        return reconfig(StringUtils.joinStrings(joiningServers, ","), 
+        		StringUtils.joinStrings(leavingServers, ","), 
+        		StringUtils.joinStrings(newMembers, ","), 
+        		fromConfig, stat);
+    }
+
+    /**
+     * The Asynchronous version of reconfig. 
+     *
+     * @see #reconfig
+     *      
+     **/
+    public void reconfig(String joiningServers, String leavingServers, String newMembers, long fromConfig, DataCallback cb, Object ctx) throws KeeperException, InterruptedException
+    {
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.reconfig);       
+        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
+        GetDataResponse response = new GetDataResponse();
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
+               ZooDefs.CONFIG_NODE, ZooDefs.CONFIG_NODE, ctx, null);
+    }
+ 
+    /**
+     * Convenience wrapper around asynchronous reconfig that takes Lists of strings instead of comma-separated servers.
+     *
+     * @see #reconfig
+     *
+     */
+    public void reconfig(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, DataCallback cb, Object ctx) throws KeeperException, InterruptedException
+    {
+        reconfig(StringUtils.joinStrings(joiningServers, ","), 
+        		StringUtils.joinStrings(leavingServers, ","), 
+        		StringUtils.joinStrings(newMembers, ","), 
+        		fromConfig, cb, ctx);
+    }
+   
     /**
      * Set the data for the node of the given path if such a node exists and the
      * given version matches the version of the node (if the given version is

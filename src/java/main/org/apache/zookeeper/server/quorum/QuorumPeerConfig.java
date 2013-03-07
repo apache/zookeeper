@@ -70,7 +70,7 @@ public class QuorumPeerConfig {
 
     protected long serverId;
 
-    protected QuorumVerifier quorumVerifier = null;
+    protected QuorumVerifier quorumVerifier = null, lastSeenQuorumVerifier = null;
     protected int snapRetainCount = 3;
     protected int purgeInterval = 0;
 
@@ -121,7 +121,7 @@ public class QuorumPeerConfig {
             if (dynamicConfigFileStr == null) {
                 configBackwardCompatibilityMode = true;
                 configFileStr = path;                
-                parseDynamicConfig(cfg, electionAlg);
+                parseDynamicConfig(cfg, electionAlg, true);
                 checkValidity();                
             }
 
@@ -140,14 +140,37 @@ public class QuorumPeerConfig {
                } finally {
                    inConfig.close();
                }
-               parseDynamicConfig(dynamicCfg, electionAlg);
+               parseDynamicConfig(dynamicCfg, electionAlg, true);
                checkValidity();
            
            } catch (IOException e) {
                throw new ConfigException("Error processing " + dynamicConfigFileStr, e);
            } catch (IllegalArgumentException e) {
                throw new ConfigException("Error processing " + dynamicConfigFileStr, e);
-           }                   
+           }        
+           File nextDynamicConfigFile = new File(dynamicConfigFileStr + ".next");
+           if (nextDynamicConfigFile.exists()) {
+               try {           
+                   Properties dynamicConfigNextCfg = new Properties();
+                   FileInputStream inConfigNext = new FileInputStream(nextDynamicConfigFile);       
+                   try {
+                       dynamicConfigNextCfg.load(inConfigNext);
+                   } finally {
+                       inConfigNext.close();
+                   }
+                   boolean isHierarchical = false;
+                   for (Entry<Object, Object> entry : dynamicConfigNextCfg.entrySet()) {
+                       String key = entry.getKey().toString().trim();  
+                       if (key.startsWith("group") || key.startsWith("weight")) {
+                           isHierarchical = true;
+                           break;
+                       }
+                   }
+                   lastSeenQuorumVerifier = createQuorumVerifier(dynamicConfigNextCfg, isHierarchical);    
+               } catch (IOException e) {
+                   LOG.warn("NextQuorumVerifier is initiated to null");
+               }
+           }
         }
     }
 
@@ -258,7 +281,7 @@ public class QuorumPeerConfig {
             boolean configBackwardCompatibilityMode, QuorumVerifier qv) throws IOException {                             
         FileOutputStream outConfig = null;
        try {
-           byte b[] = qv.toByteArray();                                            
+           byte b[] = qv.toString().getBytes();                                            
            if (configBackwardCompatibilityMode) {
                dynamicConfigFilename = configFileStr + ".dynamic";
            }
@@ -353,7 +376,7 @@ public class QuorumPeerConfig {
      * @throws IOException
      * @throws ConfigException
      */
-    public void parseDynamicConfig(Properties dynamicConfigProp, int eAlg)
+    public void parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings)
     throws IOException, ConfigException {
        boolean isHierarchical = false;
         for (Entry<Object, Object> entry : dynamicConfigProp.entrySet()) {
@@ -387,13 +410,15 @@ public class QuorumPeerConfig {
             // b/w compatibility reasons we need to keep this here.
             LOG.error("Invalid configuration, only one server specified (ignoring)");
             //servers.clear();
-        } else if (numParticipators > 1) {         
-            if (numParticipators == 2) {
-                LOG.warn("No server failure will be tolerated. " +
-                    "You need at least 3 servers.");
-            } else if (numParticipators % 2 == 0) {
-                LOG.warn("Non-optimial configuration, consider an odd number of servers.");
-            }
+        } else if (numParticipators > 1) {
+           if (warnings) {
+                if (numParticipators == 2) {
+                    LOG.warn("No server failure will be tolerated. " +
+                        "You need at least 3 servers.");
+                } else if (numParticipators % 2 == 0) {
+                    LOG.warn("Non-optimial configuration, consider an odd number of servers.");
+                }
+           }
             /*
              * If using FLE, then every server requires a separate election
              * port.
@@ -488,6 +513,10 @@ public class QuorumPeerConfig {
 
     public QuorumVerifier getQuorumVerifier() {   
         return quorumVerifier;
+    }
+    
+    public QuorumVerifier getLastSeenQuorumVerifier() {   
+        return lastSeenQuorumVerifier;
     }
 
     public Map<Long,QuorumServer> getServers() {

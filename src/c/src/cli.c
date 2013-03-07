@@ -57,7 +57,7 @@ static int recvd=0;
 
 static int shutdownThisThing=0;
 
-static __attribute__ ((unused)) void 
+static __attribute__ ((unused)) void
 printProfileInfo(struct timeval start, struct timeval end, int thres,
                  const char* msg)
 {
@@ -159,10 +159,10 @@ void dumpStat(const struct Stat *stat) {
     }
     tctime = stat->ctime/1000;
     tmtime = stat->mtime/1000;
-       
+
     ctime_r(&tmtime, tmtimes);
     ctime_r(&tctime, tctimes);
-       
+
     fprintf(stderr, "\tctime = %s\tczxid=%llx\n"
     "\tmtime=%s\tmzxid=%llx\n"
     "\tversion=%x\taversion=%x\n"
@@ -326,6 +326,9 @@ void processline(char *line) {
       fprintf(stderr, "    myid\n");
       fprintf(stderr, "    verbose\n");
       fprintf(stderr, "    addauth <id> <scheme>\n");
+      fprintf(stderr, "    config\n");
+      fprintf(stderr, "    reconfig [-file <path> | -members <serverId=host:port1:port2;port3>,... | "
+                          " -add <serverId=host:port1:port2;port3>,... | -remove <serverId>,...] [-version <version>]\n");
       fprintf(stderr, "    quit\n");
       fprintf(stderr, "\n");
       fprintf(stderr, "    prefix the command with the character 'a' to run the command asynchronously.\n");
@@ -347,12 +350,122 @@ void processline(char *line) {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
             return;
         }
-               
+
         rc = zoo_aget(zh, line, 1, my_data_completion, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
-    } else if (startsWith(line, "set ")) {
+    } else if (strcmp(line, "config") == 0) {
+       gettimeofday(&startTime, 0);
+        rc = zoo_agetconfig(zh, 1, my_data_completion, strdup(ZOO_CONFIG_NODE));
+        if (rc) {
+            fprintf(stderr, "Error %d for %s\n", rc, line);
+        }
+   } else if (startsWith(line, "reconfig ")) {
+           line += 9;
+           int syntaxError = 0;
+
+           char* joining = NULL;
+           char* leaving = NULL;
+           char* members = NULL;
+           size_t members_size = 0;
+
+           int mode = 0; // 0 = not set, 1 = incremental, 2 = non-incremental
+           int64_t version = -1;
+
+           char *p = strtok (strdup(line)," ");
+
+           while (p != NULL) {
+               if (strcmp(p, "-add")==0) {
+                   p = strtok (NULL," ");
+                   if (mode == 2 || p == NULL) {
+                       syntaxError = 1;
+                       break;
+                   }
+                   mode = 1;
+                   joining = strdup(p);
+               } else if (strcmp(p, "-remove")==0){
+                   p = strtok (NULL," ");
+                   if (mode == 2 || p == NULL) {
+                       syntaxError = 1;
+                       break;
+                   }
+                   mode = 1;
+                   leaving = strdup(p);
+               } else if (strcmp(p, "-members")==0) {
+                   p = strtok (NULL," ");
+                   if (mode == 1 || p == NULL) {
+                       syntaxError = 1;
+                       break;
+                   }
+                   mode = 2;
+                   members = strdup(p);
+               } else if (strcmp(p, "-file")==0){
+                   p = strtok (NULL," ");
+                   if (mode == 1 || p == NULL) {
+                       syntaxError = 1;
+                       break;
+                   }
+                   mode = 2;
+                   FILE *fp = fopen(p, "r");
+                   if (fp == NULL) {
+                       fprintf(stderr, "Error reading file: %s\n", p);
+                       syntaxError = 1;
+                       break;
+                   }
+                   fseek(fp, 0L, SEEK_END);  /* Position to end of file */
+                   members_size = ftell(fp);     /* Get file length */
+                   rewind(fp);               /* Back to start of file */
+                   members = calloc(members_size + 1, sizeof(char));
+                   if(members == NULL )
+                   {
+                       fprintf(stderr, "\nInsufficient memory to read file: %s\n", p);
+                       syntaxError = 1;
+                       fclose(fp);
+                       break;
+                   }
+
+                   /* Read the entire file into members
+                    * NOTE: -- fread returns number of items successfully read
+                    * not the number of bytes. We're requesting one item of
+                    * members_size bytes. So we expect the return value here
+                    * to be 1.
+                    */
+                   if (fread(members, members_size, 1, fp) != 1){
+                       fprintf(stderr, "Error reading file: %s\n", p);
+                       syntaxError = 1;
+                       fclose(fp);
+                        break;
+                   }
+                   fclose(fp);
+               } else if (strcmp(p, "-version")==0){
+                   p = strtok (NULL," ");
+                   if (version != -1 || p == NULL){
+                       syntaxError = 1;
+                       break;
+                   }
+                   version = strtoull(p, NULL, 16);
+                   if (version < 0) {
+                       syntaxError = 1;
+                       break;
+                   }
+               } else {
+                   syntaxError = 1;
+                   break;
+               }
+               p = strtok (NULL," ");
+           }
+           if (syntaxError) return;
+
+           rc = zoo_areconfig(zh, joining, leaving, members, version, my_data_completion, strdup(line));
+           free(joining);
+           free(leaving);
+           free(members);
+           if (rc) {
+               fprintf(stderr, "Error %d for %s\n", rc, line);
+           }
+
+   } else if (startsWith(line, "set ")) {
         char *ptr;
         line += 4;
         if (line[0] != '/') {
@@ -497,7 +610,7 @@ void processline(char *line) {
         printf("session Id = %llx\n", _LL_CAST_ zoo_client_id(zh)->client_id);
     } else if (strcmp(line, "reinit") == 0) {
         zookeeper_close(zh);
-        // we can't send myid to the server here -- zookeeper_close() removes 
+        // we can't send myid to the server here -- zookeeper_close() removes
         // the session on the server. We must start anew.
         zh = zookeeper_init(hostPort, watcher, 30000, 0, 0, 0);
     } else if (startsWith(line, "quit")) {
@@ -528,7 +641,7 @@ int main(int argc, char **argv) {
 #endif
     char buffer[4096];
     char p[2048];
-#ifdef YCA  
+#ifdef YCA
     char *cert=0;
     char appId[64];
 #endif
@@ -656,7 +769,7 @@ int main(int argc, char **argv) {
           processline(cmd);
           processed=1;
         }
-        if (FD_ISSET(0, &rfds)) {
+        if (!processed && FD_ISSET(0, &rfds)) {
             int rc;
             int len = sizeof(buffer) - bufoff -1;
             if (len <= 0) {

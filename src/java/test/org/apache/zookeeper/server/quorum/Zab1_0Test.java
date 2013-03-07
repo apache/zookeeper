@@ -62,6 +62,7 @@ import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.Assert;
 import org.junit.Test;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -300,6 +301,9 @@ public class Zab1_0Test {
         public int getNumAliveConnections() {
             return 0;
         }
+		@Override
+		public void reconfigure(InetSocketAddress addr) {			
+		}
     }
     static Socket[] getSocketPair() throws IOException {
         ServerSocket ss = new ServerSocket();
@@ -496,41 +500,41 @@ public class Zab1_0Test {
     @Test
     public void testUnnecessarySnap() throws Exception {
         testPopulatedLeaderConversation(new PopulatedLeaderConversation() {
-           @Override
-           public void converseWithLeader(InputArchive ia, OutputArchive oa,
+            @Override
+            public void converseWithLeader(InputArchive ia, OutputArchive oa,
                     Leader l, long zxid) throws Exception {
-               
-               Assert.assertEquals(1, l.self.getAcceptedEpoch());
-               Assert.assertEquals(1, l.self.getCurrentEpoch());
-               
-               /* we test a normal run. everything should work out well. */
-               LearnerInfo li = new LearnerInfo(1, 0x10000);
-               byte liBytes[] = new byte[12];
-               ByteBufferOutputStream.record2ByteBuffer(li,
-                       ByteBuffer.wrap(liBytes));
-               QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 1,
-                       liBytes, null);
-               oa.writeRecord(qp, null);
-               
-               readPacketSkippingPing(ia, qp);
-               Assert.assertEquals(Leader.LEADERINFO, qp.getType());
-               Assert.assertEquals(ZxidUtils.makeZxid(2, 0), qp.getZxid());
-               Assert.assertEquals(ByteBuffer.wrap(qp.getData()).getInt(),
-                       0x10000);
-               Assert.assertEquals(2, l.self.getAcceptedEpoch());
-               Assert.assertEquals(1, l.self.getCurrentEpoch());
-               
-               byte epochBytes[] = new byte[4];
-               final ByteBuffer wrappedEpochBytes = ByteBuffer.wrap(epochBytes);
-               wrappedEpochBytes.putInt(1);
-               qp = new QuorumPacket(Leader.ACKEPOCH, zxid, epochBytes, null);
-               oa.writeRecord(qp, null);
-               
-               readPacketSkippingPing(ia, qp);
-               Assert.assertEquals(Leader.DIFF, qp.getType());
-           
-           }
-       }, 2);
+
+                Assert.assertEquals(1, l.self.getAcceptedEpoch());
+                Assert.assertEquals(1, l.self.getCurrentEpoch());
+
+                /* we test a normal run. everything should work out well. */
+                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                byte liBytes[] = new byte[20];
+                ByteBufferOutputStream.record2ByteBuffer(li,
+                        ByteBuffer.wrap(liBytes));
+                QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 1,
+                        liBytes, null);
+                oa.writeRecord(qp, null);
+
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.LEADERINFO, qp.getType());
+                Assert.assertEquals(ZxidUtils.makeZxid(2, 0), qp.getZxid());
+                Assert.assertEquals(ByteBuffer.wrap(qp.getData()).getInt(),
+                        0x10000);
+                Assert.assertEquals(2, l.self.getAcceptedEpoch());
+                Assert.assertEquals(1, l.self.getCurrentEpoch());
+
+                byte epochBytes[] = new byte[4];
+                final ByteBuffer wrappedEpochBytes = ByteBuffer.wrap(epochBytes);
+                wrappedEpochBytes.putInt(1);
+                qp = new QuorumPacket(Leader.ACKEPOCH, zxid, epochBytes, null);
+                oa.writeRecord(qp, null);
+
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.DIFF, qp.getType());
+
+            }
+        }, 2);
     }
     
     @Test
@@ -796,8 +800,8 @@ public class Zab1_0Test {
                 Assert.assertEquals(0, l.self.getCurrentEpoch());
                 
                 /* we test a normal run. everything should work out well. */
-                LearnerInfo li = new LearnerInfo(1, 0x10000);
-                byte liBytes[] = new byte[12];
+                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                byte liBytes[] = new byte[20];
                 ByteBufferOutputStream.record2ByteBuffer(li,
                         ByteBuffer.wrap(liBytes));
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0,
@@ -856,8 +860,8 @@ public class Zab1_0Test {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
                     throws IOException {
                 /* we test a normal run. everything should work out well. */
-                LearnerInfo li = new LearnerInfo(1, 0x10000);
-                byte liBytes[] = new byte[12];
+                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                byte liBytes[] = new byte[20];
                 ByteBufferOutputStream.record2ByteBuffer(li,
                         ByteBuffer.wrap(liBytes));
                 /* we are going to say we last acked epoch 20 */
@@ -905,8 +909,8 @@ public class Zab1_0Test {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
                     throws IOException, InterruptedException {
                 /* we test a normal run. everything should work out well. */            	
-                LearnerInfo li = new LearnerInfo(1, 0x10000);
-                byte liBytes[] = new byte[12];
+                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                byte liBytes[] = new byte[20];
                 ByteBufferOutputStream.record2ByteBuffer(li,
                         ByteBuffer.wrap(liBytes));
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0,

@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -34,13 +36,20 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
+
+import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -85,7 +94,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     QuorumBean jmxQuorumBean;
     LocalPeerBean jmxLocalPeerBean;
     LeaderElectionBean jmxLeaderElectionBean;
-    QuorumCnxManager qcm;
+    QuorumCnxManager qcm = null;
 
     /* ZKDatabase is a top level member of quorumpeer
      * which will be used in all the zookeeperservers
@@ -291,7 +300,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     }
 
     /**
-     * Sets the LearnerType both in the QuorumPeer and in the peerMap
+     * Sets the LearnerType
      */
     public void setLearnerType(LearnerType p) {
         learnerType = p;
@@ -332,7 +341,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * QuorumVerifier implementation; default (majority).
      */
 
-    private QuorumVerifier quorumVerifier;
+    //last committed quorum verifier
+    public QuorumVerifier quorumVerifier;
+    
+    //last proposed quorum verifier
+    public QuorumVerifier lastSeenQuorumVerifier = null;
 
     /**
      * My id
@@ -482,11 +495,21 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     }
 
     private ServerState state = ServerState.LOOKING;
+    
+    private boolean reconfigFlag = false; // indicates that a reconfig just committed
 
     public synchronized void setPeerState(ServerState newState){
         state=newState;
     }
-
+    public synchronized void reconfigFlagSet(){
+       reconfigFlag = true;
+    }
+    public synchronized void reconfigFlagClear(){
+       reconfigFlag = false;
+    }
+    public synchronized boolean isReconfigStateChange(){
+       return reconfigFlag;
+    }
     public synchronized ServerState getPeerState(){
         return state;
     }
@@ -574,6 +597,9 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     @Override
     public synchronized void start() {
+        if (!getView().containsKey(myid)) {
+            throw new RuntimeException("My id " + myid + " not in the peer list");
+         }
         loadDataBase();
         cnxnFactory.start();
         startLeaderElection();
@@ -630,22 +656,19 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         responder.interrupt();
     }
     synchronized public void startLeaderElection() {
-        try {
-            currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
-        } catch(IOException e) {
-            RuntimeException re = new RuntimeException(e.getMessage());
-            re.setStackTrace(e.getStackTrace());
-            throw re;
-        }
-        for (QuorumServer p : getView().values()) {
-            if (p.id == myid) {
-                myQuorumAddr = p.addr;
-                break;
-            }
-        }
-        if (myQuorumAddr == null) {
-            throw new RuntimeException("My id " + myid + " not in the peer list");
-        }
+       try {
+           if (getPeerState() == ServerState.LOOKING) {
+               currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
+           }
+       } catch(IOException e) {
+           RuntimeException re = new RuntimeException(e.getMessage());
+           re.setStackTrace(e.getStackTrace());
+           throw re;
+       }
+
+       // if (!getView().containsKey(myid)) {
+      //      throw new RuntimeException("My id " + myid + " not in the peer list");
+        //}
         if (electionType == 0) {
             try {
                 udpSocket = new DatagramSocket(myQuorumAddr.getPort());
@@ -795,6 +818,8 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         return null;
     }
 
+    boolean shuttingDownLE = false;
+    
     @Override
     public void run() {
         setName("QuorumPeer" + "[myid=" + getId() + "]" +
@@ -879,6 +904,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                         }
                     } else {
                         try {
+                           reconfigFlagClear();
+                            if (shuttingDownLE) {
+                               shuttingDownLE = false;
+                               startLeaderElection();
+                               }
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
@@ -895,21 +925,21 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                         LOG.warn("Unexpected exception",e );
                     } finally {
                         observer.shutdown();
-                        setObserver(null);
-                        setPeerState(ServerState.LOOKING);
+                        setObserver(null);  
+                       updateServerState();
                     }
                     break;
                 case FOLLOWING:
                     try {
-                        LOG.info("FOLLOWING");
+                       LOG.info("FOLLOWING");
                         setFollower(makeFollower(logFactory));
                         follower.followLeader();
                     } catch (Exception e) {
-                        LOG.warn("Unexpected exception",e);
+                       LOG.warn("Unexpected exception",e);
                     } finally {
-                        follower.shutdown();
-                        setFollower(null);
-                        setPeerState(ServerState.LOOKING);
+                       follower.shutdown();
+                       setFollower(null);
+                       updateServerState();
                     }
                     break;
                 case LEADING:
@@ -925,10 +955,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                             leader.shutdown("Forcing shutdown");
                             setLeader(null);
                         }
-                        setPeerState(ServerState.LOOKING);
+                        updateServerState();
                     }
                     break;
                 }
+                start_fle = System.currentTimeMillis();
             }
         } finally {
             LOG.warn("QuorumPeer main thread exited");
@@ -942,6 +973,29 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         }
     }
 
+    private synchronized void updateServerState(){
+       if (!reconfigFlag) {
+           setPeerState(ServerState.LOOKING);
+           LOG.warn("PeerState set to LOOKING");
+           return;
+       }
+       
+       if (getId() == getCurrentVote().getId()) {
+           setPeerState(ServerState.LEADING);
+           LOG.debug("PeerState set to LEADING");
+       } else if (getLearnerType() == LearnerType.PARTICIPANT) {
+           setPeerState(ServerState.FOLLOWING);
+           LOG.debug("PeerState set to FOLLOWING");
+       } else if (getLearnerType() == LearnerType.OBSERVER) {
+           setPeerState(ServerState.OBSERVING);
+           LOG.debug("PeerState set to OBSERVER");
+       } else { // currently shouldn't happen since there are only 2 learner types
+           setPeerState(ServerState.LOOKING);
+           LOG.debug("Shouldn't be here");
+       }       
+       reconfigFlag = false;   
+    }
+    
     public void shutdown() {
         running = false;
         if (leader != null) {
@@ -979,32 +1033,24 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * PeerType=PARTICIPANT.
      */
     public Map<Long,QuorumPeer.QuorumServer> getVotingView() {
-        Map<Long,QuorumPeer.QuorumServer> ret =
-            new HashMap<Long, QuorumPeer.QuorumServer>();
-        Map<Long,QuorumPeer.QuorumServer> view = getView();
-        for (QuorumServer server : view.values()) {
-            if (server.type == LearnerType.PARTICIPANT) {
-                ret.put(server.id, server);
-            }
-        }
-        return ret;
+        return getQuorumVerifier().getVotingMembers();
     }
 
     /**
      * Returns only observers, no followers.
      */
     public Map<Long,QuorumPeer.QuorumServer> getObservingView() {
-        Map<Long,QuorumPeer.QuorumServer> ret =
-            new HashMap<Long, QuorumPeer.QuorumServer>();
-        Map<Long,QuorumPeer.QuorumServer> view = getView();
-        for (QuorumServer server : view.values()) {
-            if (server.type == LearnerType.OBSERVER) {
-                ret.put(server.id, server);
-            }
-        }
-        return ret;
+       return getQuorumVerifier().getObservingMembers();
     }
 
+    public synchronized Set<Long> getAllKnownServerIds(){
+       Set<Long> tmp = new HashSet<Long>(getQuorumVerifier().getAllMembers().keySet());
+       if (getLastSeenQuorumVerifier()!=null) {
+           tmp.addAll(getLastSeenQuorumVerifier().getAllMembers().keySet());
+       }
+       return tmp;
+    }
+    
     /**
      * Check if a node is in the current view. With static membership, the
      * result of this check will never change; only when dynamic membership
@@ -1050,13 +1096,6 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         return QuorumStats.Provider.UNKNOWN_STATE;
     }
 
-
-    /**
-     * get the id of this quorum peer.
-     */
-    public long getMyid() {
-        return myid;
-    }
 
     /**
      * set the id of this quorum peer.
@@ -1138,13 +1177,13 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         props.load(new StringReader(s));
         
         QuorumPeerConfig config = new QuorumPeerConfig();
-        config.parseDynamicConfig(props, electionType);
+        config.parseDynamicConfig(props, electionType, false);
         
         return config.getQuorumVerifier();
     }
     
     /**
-     * Return QuorumVerifier object
+     * Return QuorumVerifier object for the last committed configuration
      */
 
     public synchronized QuorumVerifier getQuorumVerifier(){
@@ -1152,15 +1191,58 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 
     }
 
+    public synchronized QuorumVerifier getLastSeenQuorumVerifier(){
+        return lastSeenQuorumVerifier;        
+    }
+    
+    public synchronized void connectNewPeers(){
+       if (qcm!=null && getQuorumVerifier()!=null && getLastSeenQuorumVerifier()!=null) {
+           Map<Long, QuorumServer> committedView = getQuorumVerifier().getAllMembers();
+           for (Entry<Long, QuorumServer> e: getLastSeenQuorumVerifier().getAllMembers().entrySet()){
+               if (!committedView.containsKey(e.getKey())) 
+                   qcm.connectOne(e.getKey(), e.getValue().electionAddr);
+           }
+        }
+    }
+    
+    public synchronized void restartLeaderElection(QuorumVerifier qvOLD, QuorumVerifier qvNEW){
+        if (qvOLD == null || !qvOLD.equals(qvNEW)) {
+            LOG.warn("Restarting Leader Election");
+            getElectionAlg().shutdown();
+            startLeaderElection();
+        }           
+    }
+    
+    public synchronized void setLastSeenQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
+        if (lastSeenQuorumVerifier!=null && lastSeenQuorumVerifier.getVersion() >= qv.getVersion()) {
+           LOG.warn("setLastSeenQuorumVerifier called with stale config " + qv.getVersion() + 
+                   ". Current version: " + quorumVerifier.getVersion());
+          
+        }
+        lastSeenQuorumVerifier = qv;
+        connectNewPeers();
+        if (writeToDisk) {
+            try {
+               QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename + ".next", null, false, qv);
+           } catch(IOException e){
+                LOG.error("Error closing file: ", e.getMessage());
+            }
+        } 
+
+     }       
+    
     public synchronized QuorumVerifier setQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
         if ((quorumVerifier != null) && (quorumVerifier.getVersion() >= qv.getVersion())) {
-           LOG.warn("setQuorumVerifier called with stale config " + qv.getVersion() + 
+            // this is normal. For example - server found out about new config through FastLeaderElection gossiping
+           // and then got the same config in UPTODATE message so its already known
+           LOG.debug(getId() + " setQuorumVerifier called with known or old config " + qv.getVersion() + 
                    ". Current version: " + quorumVerifier.getVersion());
            return quorumVerifier;  
         }
         QuorumVerifier prevQV = quorumVerifier;
-        quorumVerifier = qv;
-        
+       quorumVerifier = qv;
+       if (lastSeenQuorumVerifier == null || (qv.getVersion() > lastSeenQuorumVerifier.getVersion()))
+           lastSeenQuorumVerifier = qv;
         if (writeToDisk) {
             try {
                 QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename, configFilename, configBackwardCompatibility, qv);
@@ -1173,14 +1255,17 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             }
         }
 
-        QuorumServer qs = qv.getAllMembers().get(getId());
-        if (qs!=null){
-            setQuorumAddress(qs.addr);
-            setElectionAddress(qs.electionAddr);
-            setClientAddress(qs.clientAddr);
-        }
-        return prevQV;
-    }
+        if (qv.getVersion() == lastSeenQuorumVerifier.getVersion()){
+           QuorumPeerConfig.deleteFile(dynamicConfigFilename + ".next");
+       }
+       QuorumServer qs = qv.getAllMembers().get(getId());
+       if (qs!=null){
+           setQuorumAddress(qs.addr);
+           setElectionAddress(qs.electionAddr);
+           setClientAddress(qs.clientAddr);
+       }
+       return prevQV;
+    }   
     /**
      * Get an instance of LeaderElection
      */
@@ -1229,9 +1314,6 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         return cnxnFactory.getLocalPort();
     }
 
-    public void setClientPortAddress(InetSocketAddress addr) {
-    }
-
     public void setTxnFactory(FileTxnSnapLog factory) {
         this.logFactory = factory;
     }
@@ -1247,7 +1329,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     public void setZKDatabase(ZKDatabase database) {
         this.zkDb = database;
     }
-
+    
+    public synchronized void initConfigInZKDatabase() {   
+        if (zkDb != null) zkDb.initConfigInZKDatabase(getQuorumVerifier());
+    }
+    
     public void setRunning(boolean running) {
         this.running = running;
     }
@@ -1340,4 +1426,98 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         acceptedEpoch = e;
         writeLongToFile(ACCEPTED_EPOCH_FILENAME, e);
     }
+   
+    public boolean processReconfig(QuorumVerifier qv, Long suggestedLeaderId, Long zxid, boolean restartLE){
+       InetSocketAddress oldClientAddr = getClientAddress();
+
+       // update last committed quorum verifier, write the new config to disk
+       // and restart leader election if config changed
+       QuorumVerifier prevQV = setQuorumVerifier(qv, true);
+
+       // There is no log record for the initial config, thus after syncing
+       // with leader
+       // /zookeeper/config is empty! it is also possible that last committed
+       // config is propagated during leader election
+       // without the propagation the corresponding log records.
+       // so we should explicitly do this (this is not necessary when we're
+       // already a Follower/Observer, only
+       // for Learner):
+       initConfigInZKDatabase();
+
+       if (prevQV.getVersion() < qv.getVersion()) {
+           if (restartLE) restartLeaderElection(prevQV, qv);
+
+           QuorumServer myNewQS = qv.getAllMembers().get(getId());
+           if (myNewQS != null && myNewQS.clientAddr != null
+                   && !myNewQS.clientAddr.equals(oldClientAddr)) {
+               cnxnFactory.reconfigure(myNewQS.clientAddr);
+           }
+           
+            boolean roleChange = updateLearnerType(qv);
+           boolean leaderChange = false;
+           if (suggestedLeaderId != null) {
+               // zxid should be non-null too
+               leaderChange = updateVote(suggestedLeaderId, zxid);
+           } else {
+               long currentLeaderId = getCurrentVote().getId();
+               InetSocketAddress currentLeaderAddr = prevQV.getVotingMembers()
+                       .get(currentLeaderId).addr;
+               leaderChange = (!qv.getVotingMembers().containsKey(
+                       currentLeaderId))
+                       || (!qv.getVotingMembers().get(currentLeaderId).addr
+                               .equals(currentLeaderAddr));
+               // we don't have a designated leader - need to go into leader
+               // election
+               reconfigFlagClear();
+           }
+           
+           if (roleChange || leaderChange) {
+               return true;
+           }
+       }
+       return false;
+
+   }
+    
+   private boolean updateLearnerType(QuorumVerifier newQV) {        
+       //check if I'm an observer in new config
+       if (newQV.getObservingMembers().containsKey(getId())) {
+           if (getLearnerType()!=LearnerType.OBSERVER){
+               setLearnerType(LearnerType.OBSERVER);
+               LOG.info("Becoming an observer");
+               reconfigFlagSet();
+               return true;
+           } else {
+               return false;           
+           }
+       } else if (newQV.getVotingMembers().containsKey(getId())) {
+           if (getLearnerType()!=LearnerType.PARTICIPANT){
+               setLearnerType(LearnerType.PARTICIPANT);
+               LOG.info("Becoming a voting participant");
+               reconfigFlagSet();
+               return true;
+           } else {
+               return false;
+           }
+       }
+       // I'm not in the view
+      if (getLearnerType()!=LearnerType.PARTICIPANT){
+          setLearnerType(LearnerType.PARTICIPANT);
+          LOG.info("Becoming a non-voting participant");
+          reconfigFlagSet();
+          return true;
+      }
+      return false;
+   }
+   
+   private boolean updateVote(long designatedLeader, long zxid){       
+       Vote currentVote = getCurrentVote();
+       if (currentVote!=null && designatedLeader != currentVote.getId()) {
+           setCurrentVote(new Vote(designatedLeader, zxid));
+           reconfigFlagSet();
+           LOG.warn("Suggested leader: " + designatedLeader);
+           return true;
+       }
+       return false;
+   }
 }

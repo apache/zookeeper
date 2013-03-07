@@ -80,6 +80,7 @@ public class ReadOnlyRequestProcessor extends Thread implements RequestProcessor
                 case OpCode.create:
                 case OpCode.delete:
                 case OpCode.setData:
+                case OpCode.reconfig:
                 case OpCode.setACL:
                 case OpCode.multi:
                 case OpCode.check:

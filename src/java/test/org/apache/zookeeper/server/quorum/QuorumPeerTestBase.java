@@ -53,17 +53,40 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
         }
     }
-
+    
+    public static class MainThreadReconfigRecovery extends MainThread {
+       final File nextDynamicConfigFile;
+       
+       public MainThreadReconfigRecovery(int myid, int clientPort,
+               String currentQuorumCfgSection, String nextQuorumCfgSection) 
+                       throws IOException {
+           super(myid, clientPort, currentQuorumCfgSection);
+           nextDynamicConfigFile = new File(tmpDir, "zoo.dynamic.next");
+           FileWriter fwriter = new FileWriter(nextDynamicConfigFile);
+            fwriter.write(nextQuorumCfgSection + "\n");
+            fwriter.flush();
+            fwriter.close();
+       }               
+    }
+    
     public static class MainThread implements Runnable {
         final File confFile;
         final File dynamicConfigFile;
+        final File tmpDir;
+        
         volatile TestQPMain main;
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
                 throws IOException {
-            File tmpDir = ClientBase.createTmpDir();
+            tmpDir = ClientBase.createTmpDir();
             LOG.info("id = " + myid + " tmpDir = " + tmpDir + " clientPort = "
                     + clientPort);
+
+            File dataDir = new File(tmpDir, "data");
+            if (!dataDir.mkdir()) {
+                throw new IOException("Unable to mkdir " + dataDir);
+            }
+
             confFile = new File(tmpDir, "zoo.cfg");
             dynamicConfigFile = new File(tmpDir, "zoo.dynamic");
 
@@ -71,11 +94,6 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write("tickTime=4000\n");
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
-
-            File dataDir = new File(tmpDir, "data");
-            if (!dataDir.mkdir()) {
-                throw new IOException("Unable to mkdir " + dataDir);
-            }
 
             // Convert windows path to UNIX to avoid problems with "\"
             String dir = dataDir.toString();
@@ -106,7 +124,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.flush();
             fwriter.close();
         }
-
+        
         Thread currentThread;
 
         synchronized public void start() {

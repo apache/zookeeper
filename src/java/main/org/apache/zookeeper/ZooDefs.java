@@ -25,6 +25,9 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 
 public class ZooDefs {
+   
+   final public static String CONFIG_NODE = "/zookeeper/config";
+   
     public interface OpCode {
         public final int notification = 0;
 
@@ -56,6 +59,8 @@ public class ZooDefs {
         
         public final int create2 = 15;
 
+        public final int reconfig = 16;
+        
         public final int auth = 100;
 
         public final int setWatches = 101;
@@ -117,5 +122,5 @@ public class ZooDefs {
 
     final public static String[] opNames = { "notification", "create",
             "delete", "exists", "getData", "setData", "getACL", "setACL",
-            "getChildren", "getChildren2", "getMaxChildren", "setMaxChildren", "ping" };
+            "getChildren", "getChildren2", "getMaxChildren", "setMaxChildren", "ping", "reconfig", "getConfig" };
 }
