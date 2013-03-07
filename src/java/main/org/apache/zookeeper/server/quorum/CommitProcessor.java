@@ -131,6 +131,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
             case OpCode.create:
             case OpCode.delete:
             case OpCode.setData:
+            case OpCode.reconfig:
             case OpCode.multi:
             case OpCode.setACL:
             case OpCode.createSession:

@@ -10,6 +10,8 @@ NEW FEATURES:
   ZOOKEEPER-1355. Add zk.updateServerList(newServerList) (Alex Shraer, Marshall McMullen via fpj)
 
   ZOOKEEPER-1572. Add an async (Java) interface for multi request (Sijie Guo via camille)
+
+  ZOOKEEPER-107. Allow dynamic changes to server cluster membership (Alex Shraer via breed)
   
 BUGFIXES:
 

@@ -43,6 +43,7 @@ import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -106,6 +107,16 @@ public class DataTree {
     private static final String quotaChildZookeeper = quotaZookeeper
             .substring(procZookeeper.length() + 1);
 
+    /**
+     * the zookeeper config node that acts as the config management node for
+     * zookeeper
+     */
+    private static final String configZookeeper = ZooDefs.CONFIG_NODE;
+
+    /** this will be the string thats stored as a child of /zookeeper */
+    private static final String configChildZookeeper = configZookeeper
+            .substring(procZookeeper.length() + 1);
+    
     /**
      * the path trie that keeps track fo the quota nodes in this datatree
      */
@@ -254,6 +265,13 @@ public class DataTree {
      */
     private final DataNode quotaDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
+    /**
+     * create a /zookeeper/config node for maintaining the configuration (membership and quorum system) info for
+     * zookeeper
+     */
+    private DataNode configDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
+
+    
     public DataTree() {
         /* Rather than fight it, let root have an alias */
         nodes.put("", root);
@@ -265,7 +283,19 @@ public class DataTree {
 
         procDataNode.addChild(quotaChildZookeeper);
         nodes.put(quotaZookeeper, quotaDataNode);
+        
+        addConfigNode();
     }
+
+     public void addConfigNode() {
+    	 DataNode zookeeperZnode = nodes.get(procZookeeper);
+         if (zookeeperZnode!=null) { // should always be the case
+        	 zookeeperZnode.addChild(configChildZookeeper);
+         } else {
+        	 LOG.error("There's no /zookeeper znode - this should never happen");
+         }
+         nodes.put(configZookeeper, configDataNode);   
+     }
 
     /**
      * is the path one of the special paths owned by zookeeper.
@@ -276,7 +306,7 @@ public class DataTree {
      */
     boolean isSpecialPath(String path) {
         if (rootZookeeper.equals(path) || procZookeeper.equals(path)
-                || quotaZookeeper.equals(path)) {
+                || quotaZookeeper.equals(path) || configZookeeper.equals(path)) {
             return true;
         }
         return false;
@@ -798,6 +828,7 @@ public class DataTree {
                     rc.path = deleteTxn.getPath();
                     deleteNode(deleteTxn.getPath(), header.getZxid());
                     break;
+                case OpCode.reconfig:
                 case OpCode.setData:
                     SetDataTxn setDataTxn = (SetDataTxn) txn;
                     rc.path = setDataTxn.getPath();

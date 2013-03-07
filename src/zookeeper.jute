@@ -92,14 +92,22 @@ module org.apache.zookeeper.proto {
         long zxid;
         int err;
     }
-    class GetDataRequest {
+    
+    class GetDataRequest {       
         ustring path;
         boolean watch;
     }
+    
     class SetDataRequest {
         ustring path;
         buffer data;
         int version;
+    }
+    class ReconfigRequest {
+        ustring joiningServers;
+        ustring leavingServers;
+        ustring newMembers;
+        long curConfigId;
     }
     class SetDataResponse {
         org.apache.zookeeper.data.Stat stat;
@@ -211,6 +219,7 @@ module org.apache.zookeeper.server.quorum {
     class LearnerInfo {
         long serverid;
         int protocolVersion;
+        long configVersion;
     }
     class QuorumPacket {
         int type; // Request, Ack, Commit, Ping

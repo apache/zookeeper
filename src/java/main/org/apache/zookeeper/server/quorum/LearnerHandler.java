@@ -245,19 +245,24 @@ public class LearnerHandler extends Thread {
                         + " is not FOLLOWERINFO or OBSERVERINFO!");
                 return;
             }
+ 
             byte learnerInfoData[] = qp.getData();
             if (learnerInfoData != null) {
-            	if (learnerInfoData.length == 8) {
-            		ByteBuffer bbsid = ByteBuffer.wrap(learnerInfoData);
-            		this.sid = bbsid.getLong();
-            	} else {
-            		LearnerInfo li = new LearnerInfo();
-            		ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(learnerInfoData), li);
-            		this.sid = li.getServerid();
-            		this.version = li.getProtocolVersion();
-            	}
+                ByteBuffer bbsid = ByteBuffer.wrap(learnerInfoData);
+                if (learnerInfoData.length >= 8) {
+                    this.sid = bbsid.getLong();
+                } 
+                if (learnerInfoData.length >= 12) {
+                    this.version = bbsid.getInt(); // protocolVersion
+                }
+                if (learnerInfoData.length >= 20) {
+                    long configVersion = bbsid.getLong();
+                    if (configVersion > leader.self.getQuorumVerifier().getVersion()) {
+                        throw new IOException("Follower is ahead of the leader (has a later activated configuration)");                     
+                    }
+                }
             } else {
-            	this.sid = leader.followerCounter.getAndDecrement();
+                this.sid = leader.followerCounter.getAndDecrement();
             }
 
             if (leader.self.getView().containsKey(this.sid)) {
@@ -277,6 +282,7 @@ public class LearnerHandler extends Thread {
             StateSummary ss = null;
             long zxid = qp.getZxid();
             long newEpoch = leader.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
+            long newLeaderZxid = ZxidUtils.makeZxid(newEpoch, 0);
 
             if (this.getVersion() < 0x10000) {
                 // we are going to have to extrapolate the epoch information
@@ -287,7 +293,7 @@ public class LearnerHandler extends Thread {
             } else {
                 byte ver[] = new byte[4];
                 ByteBuffer.wrap(ver).putInt(0x10000);
-                QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, ZxidUtils.makeZxid(newEpoch, 0), ver, null);
+                QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, newLeaderZxid, ver, null);
                 oa.writeRecord(newEpochPacket, "packet");
                 bufferedOutput.flush();
                 QuorumPacket ackEpochPacket = new QuorumPacket();
@@ -395,19 +401,25 @@ public class LearnerHandler extends Thread {
                     // just let the state transfer happen
                     LOG.debug("proposals is empty");
                 }               
-
                 LOG.info("Sending " + Leader.getPacketType(packetToSend));
                 leaderLastZxid = leader.startForwarding(this, updates);
 
             } finally {
                 rl.unlock();
             }
-
-             QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
-                    ZxidUtils.makeZxid(newEpoch, 0), null, null);
+          
+            LOG.debug("Sending NEWLEADER message to " + sid);
+            // the version of this quorumVerifier will be set by leader.lead() in case
+            // the leader is just being established. waitForEpochAck makes sure that readyToStart is true if
+            // we got here, so the version was set
+            
              if (getVersion() < 0x10000) {
+            	 QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
+                 		newLeaderZxid, null, null);
                 oa.writeRecord(newLeaderQP, "packet");
             } else {
+            	QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
+                		newLeaderZxid, leader.self.getLastSeenQuorumVerifier().toString().getBytes(), null);
                 queuedPackets.add(newLeaderQP);
             }
             bufferedOutput.flush();
@@ -456,6 +468,7 @@ public class LearnerHandler extends Thread {
                 LOG.error("Next packet was supposed to be an ACK");
                 return;
             }
+            LOG.debug("Received NEWLEADER-ACK message from " + sid);   
             leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
             
             // now that the ack has been processed expect the syncLimit
@@ -473,6 +486,7 @@ public class LearnerHandler extends Thread {
             // so we need to mark when the peer can actually start
             // using the data
             //
+            LOG.debug("Sending UPTODATE message to " + sid);      
             queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
 
             while (true) {

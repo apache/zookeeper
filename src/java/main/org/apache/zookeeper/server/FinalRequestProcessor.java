@@ -53,7 +53,7 @@ import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
-import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 
@@ -235,6 +235,12 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.setData: {
                 lastOp = "SETD";
                 rsp = new SetDataResponse(rc.stat);
+                err = Code.get(rc.err);
+                break;
+            }           
+            case OpCode.reconfig: {
+                lastOp = "RECO";               
+                rsp = new GetDataResponse(((QuorumZooKeeperServer)zks).self.getQuorumVerifier().toString().getBytes(), rc.stat);
                 err = Code.get(rc.err);
                 break;
             }

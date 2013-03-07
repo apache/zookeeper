@@ -65,7 +65,10 @@ public abstract class ServerCnxnFactory {
 
     public abstract void configure(InetSocketAddress addr,
                                    int maxClientCnxns) throws IOException;
-
+    
+    public abstract void reconfigure(InetSocketAddress addr);
+    
+    
     protected SaslServerCallbackHandler saslServerCallbackHandler;
     public Login login;
 

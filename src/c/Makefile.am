@@ -86,15 +86,19 @@ TEST_SOURCES = \
 	tests/TestZookeeperInit.cc \
 	tests/TestZookeeperClose.cc \
 	tests/TestReconfig.cc \
+	tests/TestReconfigServer.cc \
     tests/TestClientRetry.cc \
 	tests/TestOperations.cc \
 	tests/TestMulti.cc \
 	tests/TestClient.cc \
-	tests/TestWatchers.cc
+	tests/TestWatchers.cc \
+	tests/ZooKeeperQuorumServer.cc \
+	tests/ZooKeeperQuorumServer.h
 
 SYMBOL_WRAPPERS=$(shell cat ${srcdir}/tests/wrappers.opt)
 
 check_PROGRAMS = zktest-st
+TESTS_ENVIRONMENT = ZKROOT=${srcdir}/../..
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
 zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS)
 zktest_st_CXXFLAGS = -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(USEIPV6)
@@ -109,11 +113,7 @@ if WANT_SYNCAPI
   zktest_mt_LDFLAGS = -static-libtool-libs $(SYMBOL_WRAPPERS_MT)
 endif
 
-run-check: check
-	./zktest-st $(TEST_OPTIONS)
-if WANT_SYNCAPI
-	./zktest-mt $(TEST_OPTIONS)
-endif
+TESTS = $(check_PROGRAMS)
 
 clean-local: clean-check
 	$(RM) $(DX_CLEANFILES)

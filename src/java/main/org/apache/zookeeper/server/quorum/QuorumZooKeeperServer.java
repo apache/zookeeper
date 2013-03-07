@@ -28,7 +28,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * a quorum.
  */
 public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
-    protected final QuorumPeer self;
+    public final QuorumPeer self;
 
     protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
@@ -54,5 +54,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         pwriter.println(self.getQuorumAddress().getPort());
         pwriter.print("peerType=");
         pwriter.println(self.getLearnerType().ordinal());
+        pwriter.println("membership: ");
+        pwriter.print(new String(self.getQuorumVerifier().toString().getBytes()));
     }
 }

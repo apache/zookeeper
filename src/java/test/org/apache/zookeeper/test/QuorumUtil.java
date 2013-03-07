@@ -122,6 +122,9 @@ public class QuorumUtil {
         return peers.get(id);
     }
 
+    // This was added to avoid running into the problem of ZOOKEEPER-1539
+    public boolean disableJMXTest = false;
+    
     public void startAll() throws IOException {
         shutdownAll();
         for (int i = 1; i <= ALL; ++i) {
@@ -136,6 +139,9 @@ public class QuorumUtil {
             LOG.info(hp + " is accepting client connections");
         }
 
+        // This was added to avoid running into the problem of ZOOKEEPER-1539
+        if (disableJMXTest) return;
+        
         // interesting to see what's there...
         try {
             JMXEnv.dump();

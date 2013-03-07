@@ -151,6 +151,10 @@ public class QuorumPeerMain {
           quorumPeer.setConfigBackwardCompatibility(config.getConfigBackwardCompatibility());
           quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
           quorumPeer.setQuorumVerifier(config.getQuorumVerifier(), false);
+          if (config.getLastSeenQuorumVerifier()!=null) {
+              quorumPeer.setLastSeenQuorumVerifier(config.getLastSeenQuorumVerifier(), false);
+          }
+          quorumPeer.initConfigInZKDatabase();
           quorumPeer.setCnxnFactory(cnxnFactory);
           quorumPeer.setLearnerType(config.getPeerType());
           

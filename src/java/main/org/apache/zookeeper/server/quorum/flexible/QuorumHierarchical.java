@@ -241,7 +241,7 @@ public class QuorumHierarchical implements QuorumVerifier {
     public Map<Long, QuorumServer> getAllMembers() { 
        return allMembers;
     }
-    public byte[] toByteArray(){
+    public String toString(){
        StringWriter sw = new StringWriter();
        
        for (QuorumServer member: getAllMembers().values()){            
@@ -286,7 +286,7 @@ public class QuorumHierarchical implements QuorumVerifier {
        
        sw.append("version=" + Long.toHexString(version));
        
-       return sw.toString().getBytes();        
+       return sw.toString();        
     }
     
     /**
@@ -371,4 +371,9 @@ public class QuorumHierarchical implements QuorumVerifier {
    public long getVersion() {
        return version;
    }          
+
+   public void setVersion(long ver) {
+       version = ver;
+   }
+
 }

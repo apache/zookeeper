@@ -103,6 +103,10 @@ public abstract class KeeperException extends Exception {
                 return new UnimplementedException();
             case OPERATIONTIMEOUT:
                 return new OperationTimeoutException();
+            case NEWCONFIGNOQUORUM:
+               return new NewConfigNoQuorum();
+            case RECONFIGINPROGRESS:
+               return new ReconfigInProgress();
             case BADARGUMENTS:
                 return new BadArgumentsException();
             case APIERROR:
@@ -277,10 +281,16 @@ public abstract class KeeperException extends Exception {
          */
         @Deprecated
         public static final int AuthFailed = -115;
-        /**
-         * This value will be used directly in {@link CODE#SESSIONMOVED}
-         */
-        // public static final int SessionMoved = -118;
+        
+        // This value will be used directly in {@link CODE#SESSIONMOVED}
+        // public static final int SessionMoved = -118;       
+        
+        @Deprecated
+        public static final int NewConfigNoQuorum = -120;
+        
+        @Deprecated
+        public static final int ReconfigInProgress= -121;
+        
     }
 
     /** Codes which represent the various KeeperException
@@ -313,6 +323,11 @@ public abstract class KeeperException extends Exception {
         OPERATIONTIMEOUT (OperationTimeout),
         /** Invalid arguments */
         BADARGUMENTS (BadArguments),
+        /** No quorum of new config is connected and up-to-date with the leader of last commmitted config - try 
+         *  invoking reconfiguration after new servers are connected and synced */
+        NEWCONFIGNOQUORUM (NewConfigNoQuorum),
+        /** Another reconfiguration is in progress -- concurrent reconfigs not supported (yet) */
+        RECONFIGINPROGRESS (ReconfigInProgress),
         
         /** API errors.
          * This is never thrown by the server, it shouldn't be used other than
@@ -326,7 +341,8 @@ public abstract class KeeperException extends Exception {
         NONODE (NoNode),
         /** Not authenticated */
         NOAUTH (NoAuth),
-        /** Version conflict */
+        /** Version conflict
+            In case of reconfiguration: reconfig requested from config version X but last seen config has a different version Y */
         BADVERSION (BadVersion),
         /** Ephemeral nodes may not have children */
         NOCHILDRENFOREPHEMERALS (NoChildrenForEphemerals),
@@ -390,6 +406,10 @@ public abstract class KeeperException extends Exception {
                 return "ConnectionLoss";
             case MARSHALLINGERROR:
                 return "MarshallingError";
+            case NEWCONFIGNOQUORUM:
+               return "NewConfigNoQuorum";
+            case RECONFIGINPROGRESS:
+               return "ReconfigInProgress";
             case UNIMPLEMENTED:
                 return "Unimplemented";
             case OPERATIONTIMEOUT:
@@ -589,6 +609,24 @@ public abstract class KeeperException extends Exception {
         }
     }
 
+    /**
+     * @see Code#NEWCONFIGNOQUORUM
+     */
+    public static class NewConfigNoQuorum extends KeeperException {
+        public NewConfigNoQuorum() {
+            super(Code.NEWCONFIGNOQUORUM);
+        }
+    }
+    
+    /**
+     * @see Code#RECONFIGINPROGRESS
+     */
+    public static class ReconfigInProgress extends KeeperException {
+        public ReconfigInProgress() {
+            super(Code.RECONFIGINPROGRESS);
+        }
+    }
+    
     /**
      * @see Code#NOCHILDRENFOREPHEMERALS
      */

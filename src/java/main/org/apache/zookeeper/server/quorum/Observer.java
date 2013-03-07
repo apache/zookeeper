@@ -20,11 +20,19 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 
 import org.apache.jute.Record;
+import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.ObserverBean;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -54,10 +62,9 @@ public class Observer extends Learner{
 
     /**
      * the main method called by the observer to observe the leader
-     *
-     * @throws InterruptedException
+     * @throws Exception 
      */
-    void observeLeader() throws InterruptedException {
+    void observeLeader() throws Exception {
         zk.registerJMX(new ObserverBean(this, zk), self.jmxLocalPeerBean);
 
         try {
@@ -66,7 +73,9 @@ public class Observer extends Learner{
             try {
                 connectToLeader(addr);
                 long newLeaderZxid = registerWithLeader(Leader.OBSERVERINFO);
-
+                if (self.isReconfigStateChange())
+                   throw new Exception("learned about role change");
+ 
                 syncWithLeader(newLeaderZxid);
                 QuorumPacket qp = new QuorumPacket();
                 while (self.isRunning()) {
@@ -92,9 +101,9 @@ public class Observer extends Learner{
     /**
      * Controls the response of an observer to the receipt of a quorumpacket
      * @param qp
-     * @throws IOException
+     * @throws Exception 
      */
-    protected void processPacket(QuorumPacket qp) throws IOException{
+    protected void processPacket(QuorumPacket qp) throws Exception{
         switch (qp.getType()) {
         case Leader.PING:
             ping(qp);
@@ -120,6 +129,30 @@ public class Observer extends Learner{
             Request request = new Request (hdr.getClientId(),  hdr.getCxid(), hdr.getType(), hdr, txn, 0);
             ObserverZooKeeperServer obs = (ObserverZooKeeperServer)zk;
             obs.commitRequest(request);
+            break;
+        case Leader.INFORMANDACTIVATE:            
+            hdr = new TxnHeader();
+            
+           // get new designated leader from (current) leader's message
+            ByteBuffer buffer = ByteBuffer.wrap(qp.getData());    
+           long suggestedLeaderId = buffer.getLong();
+           
+            byte[] remainingdata = new byte[buffer.remaining()];
+            buffer.get(remainingdata);
+            txn = SerializeUtils.deserializeTxn(remainingdata, hdr);
+            QuorumVerifier qv = self.configFromString(new String(((SetDataTxn)txn).getData()));
+            
+            request = new Request (hdr.getClientId(),  hdr.getCxid(), hdr.getType(), hdr, txn, 0);
+            obs = (ObserverZooKeeperServer)zk;
+                        
+            boolean majorChange = 
+                self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
+           
+            obs.commitRequest(request);                                 
+
+            if (majorChange) {
+               throw new Exception("changes proposed in reconfig");
+           }            
             break;
         }
     }

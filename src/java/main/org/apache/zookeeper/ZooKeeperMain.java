@@ -49,9 +49,11 @@ import org.apache.zookeeper.cli.DeleteAllCommand;
 import org.apache.zookeeper.cli.DeleteCommand;
 import org.apache.zookeeper.cli.GetAclCommand;
 import org.apache.zookeeper.cli.GetCommand;
+import org.apache.zookeeper.cli.GetConfigCommand;
 import org.apache.zookeeper.cli.ListQuotaCommand;
 import org.apache.zookeeper.cli.Ls2Command;
 import org.apache.zookeeper.cli.LsCommand;
+import org.apache.zookeeper.cli.ReconfigCommand;
 import org.apache.zookeeper.cli.SetAclCommand;
 import org.apache.zookeeper.cli.SetCommand;
 import org.apache.zookeeper.cli.SetQuotaCommand;
@@ -105,6 +107,8 @@ public class ZooKeeperMain {
         new ListQuotaCommand().addToMap(commandMapCli);
         new DelQuotaCommand().addToMap(commandMapCli);
         new AddAuthCommand().addToMap(commandMapCli);
+        new ReconfigCommand().addToMap(commandMapCli);
+        new GetConfigCommand().addToMap(commandMapCli);
         
         // add all to commandMap
         for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {
@@ -583,6 +587,13 @@ public class ZooKeeperMain {
             System.err.println("Arguments are not valid : "+e.getPath());
         }catch (KeeperException.BadVersionException e) {
             System.err.println("version No is not valid : "+e.getPath());
+        }catch (KeeperException.ReconfigInProgress e) {
+            System.err.println("Another reconfiguration is in progress -- concurrent " +
+                   "reconfigs not supported (yet)");
+        }catch (KeeperException.NewConfigNoQuorum e) {
+            System.err.println("No quorum of new config is connected and " +
+                   "up-to-date with the leader of last commmitted config - try invoking reconfiguration after " +
+                   "new servers are connected and synced");
         }
         return false;
     }

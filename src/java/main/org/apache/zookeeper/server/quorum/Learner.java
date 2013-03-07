@@ -40,12 +40,19 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -262,7 +269,7 @@ public class Learner {
         /*
          * Add sid to payload
          */
-        LearnerInfo li = new LearnerInfo(self.getId(), 0x10000);
+        LearnerInfo li = new LearnerInfo(self.getId(), 0x10000, self.getQuorumVerifier().getVersion());
         ByteArrayOutputStream bsid = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(bsid);
         boa.writeRecord(li, "LearnerInfo");
@@ -309,10 +316,12 @@ public class Learner {
      * @throws IOException
      * @throws InterruptedException
      */
-    protected void syncWithLeader(long newLeaderZxid) throws IOException, InterruptedException{
+    protected void syncWithLeader(long newLeaderZxid) throws Exception{
         QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
         QuorumPacket qp = new QuorumPacket();
         long newEpoch = ZxidUtils.getEpochFromZxid(newLeaderZxid);
+        
+        QuorumVerifier newLeaderQV = null;
         
         readPacket(qp);   
         LinkedList<Long> packetsCommitted = new LinkedList<Long>();
@@ -351,6 +360,7 @@ public class Learner {
                 System.exit(13);
 
             }
+            zk.getZKDatabase().initConfigInZKDatabase(self.getQuorumVerifier());
             zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
             zk.createSessionTracker();            
             
@@ -376,14 +386,30 @@ public class Learner {
                             + Long.toHexString(lastQueued + 1));
                     }
                     lastQueued = pif.hdr.getZxid();
+                    
+                    if (pif.hdr.getType() == OpCode.reconfig){                
+                        SetDataTxn setDataTxn = (SetDataTxn) pif.rec;       
+                       QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData()));
+                       self.setLastSeenQuorumVerifier(qv, true);                               
+                    }
+                    
                     packetsNotCommitted.add(pif);
                     break;
                 case Leader.COMMIT:
+                case Leader.COMMITANDACTIVATE:
                     if (!snapshotTaken) {
                         pif = packetsNotCommitted.peekFirst();
                         if (pif.hdr.getZxid() != qp.getZxid()) {
                             LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
                         } else {
+                           if (qp.getType() == Leader.COMMITANDACTIVATE) {
+                               QuorumVerifier qv = self.configFromString(new String(((SetDataTxn)pif.rec).getData()));
+                               boolean majorChange =
+                                       self.processReconfig(qv, ByteBuffer.wrap(qp.getData()).getLong(), qp.getZxid(), true);
+                                if (majorChange) {
+                                   throw new Exception("changes proposed in reconfig");
+                                }
+                           }
                             zk.processTxn(pif.hdr, pif.rec);
                             packetsNotCommitted.remove();
                         }
@@ -392,18 +418,53 @@ public class Learner {
                     }
                     break;
                 case Leader.INFORM:
+                case Leader.INFORMANDACTIVATE: 
                     TxnHeader hdr = new TxnHeader();
-                    Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
+                    Record txn;
+                    if (qp.getType() == Leader.COMMITANDACTIVATE) {
+                       ByteBuffer buffer = ByteBuffer.wrap(qp.getData());    
+                       long suggestedLeaderId = buffer.getLong();                      
+                        byte[] remainingdata = new byte[buffer.remaining()];
+                        buffer.get(remainingdata);
+                        txn = SerializeUtils.deserializeTxn(remainingdata, hdr);
+                       QuorumVerifier qv = self.configFromString(new String(((SetDataTxn)txn).getData()));
+                       boolean majorChange =
+                               self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
+                        if (majorChange) {
+                           throw new Exception("changes proposed in reconfig");
+                        }
+                    } else {
+                       txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
+                    }
                     zk.processTxn(hdr, txn);
-                    break;
+                    break;                
                 case Leader.UPTODATE:
+                    LOG.info("Learner received UPTODATE message");                                      
+                    if (newLeaderQV!=null) {
+                       boolean majorChange =
+                           self.processReconfig(newLeaderQV, null, null, true);
+                       if (majorChange) {
+                           throw new Exception("changes proposed in reconfig");
+                       }
+                    }
                     if (!snapshotTaken) { // true for the pre v1.0 case
-                        zk.takeSnapshot();
+                       zk.takeSnapshot();
                         self.setCurrentEpoch(newEpoch);
                     }
-                    self.cnxnFactory.setZooKeeperServer(zk);                
+                    self.cnxnFactory.setZooKeeperServer(zk);
                     break outerLoop;
-                case Leader.NEWLEADER: // it will be NEWLEADER in v1.0
+                case Leader.NEWLEADER: // it will be NEWLEADER in v1.0        
+                   LOG.info("Learner received NEWLEADER message");
+                   if (qp.getData()!=null && qp.getData().length > 1) {
+                       try {                       
+                           QuorumVerifier qv = self.configFromString(new String(qp.getData()));
+                           self.setLastSeenQuorumVerifier(qv, true);
+                           newLeaderQV = qv;
+                       } catch (Exception e) {
+                           e.printStackTrace();
+                       }
+                   }
+                   
                     zk.takeSnapshot();
                     self.setCurrentEpoch(newEpoch);
                     snapshotTaken = true;

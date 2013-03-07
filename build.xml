@@ -1326,7 +1326,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
                 <env key="CALLER" value="ANT"/>
                 <env key="CLOVER_HOME" value="${clover.home}"/>
                 <env key="base_dir" value="${basedir}"/>
-		<arg line="clean run-check"/>
+		<arg line="clean check"/>
 	</exec>
     </target>
    

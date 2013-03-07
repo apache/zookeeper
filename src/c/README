@@ -64,7 +64,7 @@ tar downloaded from Apache please skip to step 2.
    Alternatively, you can also build and run a unit test suite (and
    you probably should).  Please make sure you have cppunit-1.10.x or
    higher installed before you execute step 4.  Once ./configure has
-   finished, do a "make run-check". It will build the libraries, build
+   finished, do a "make check". It will build the libraries, build
    the tests and run them.
 6) to generate doxygen documentation do a "make doxygen-doc". All
    documentations will be placed to a new subfolder named docs. By

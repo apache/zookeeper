@@ -360,7 +360,16 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         LOG.info("binding to port " + localAddress);
         parentChannel = bootstrap.bind(localAddress);
     }
-
+    
+    public void reconfigure(InetSocketAddress addr) 
+    {  
+       Channel oldChannel = parentChannel;
+       LOG.info("binding to port " + addr);
+        parentChannel = bootstrap.bind(addr);
+        localAddress = addr;  
+        oldChannel.close();
+    }
+    
     @Override
     public void startup(ZooKeeperServer zks) throws IOException,
             InterruptedException {

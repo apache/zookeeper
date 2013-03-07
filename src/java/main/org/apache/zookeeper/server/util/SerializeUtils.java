@@ -71,6 +71,7 @@ public class SerializeUtils {
         case OpCode.delete:
             txn = new DeleteTxn();
             break;
+        case OpCode.reconfig:
         case OpCode.setData:
             txn = new SetDataTxn();
             break;

@@ -176,7 +176,13 @@ public class QuorumCnxManager {
         try {
             // Sending id and challenge
             dout = new DataOutputStream(sock.getOutputStream());
+            // represents protocol version (in other words - message type)
+            dout.writeLong(0xffff0000);              
             dout.writeLong(self.getId());
+            String addr = self.getElectionAddress().getHostName() + ":" + self.getElectionAddress().getPort();
+            byte[] addr_bytes = addr.getBytes();
+            dout.writeInt(addr_bytes.length);
+            dout.write(addr_bytes);
             dout.flush();
         } catch (IOException e) {
             LOG.warn("Ignoring exception reading or writing challenge: ", e);
@@ -214,7 +220,6 @@ public class QuorumCnxManager {
         }
         return false;
     }
-
     
     
     /**
@@ -225,12 +230,33 @@ public class QuorumCnxManager {
      * 
      */
     public boolean receiveConnection(Socket sock) {
-        Long sid = null;
-        
+        Long sid = null, protocolVersion = null;
+        InetSocketAddress electionAddr;
         try {
-            // Read server id
             DataInputStream din = new DataInputStream(sock.getInputStream());
-            sid = din.readLong();
+            protocolVersion = din.readLong();
+            if (protocolVersion >= 0) { // this is a server id and not a protocol version
+               sid = protocolVersion;  
+                electionAddr = self.getVotingView().get(sid).electionAddr;
+            } else {
+                sid = din.readLong();
+                int num_remaining_bytes = din.readInt();
+                byte[] b = new byte[num_remaining_bytes];
+                int num_read = din.read(b);
+                if (num_read == num_remaining_bytes) {
+                    if (protocolVersion == 0xffff0000) {
+                        String addr = new String(b);
+                        String[] host_port = addr.split(":");
+                        electionAddr = new InetSocketAddress(host_port[0], Integer.parseInt(host_port[1]));                   
+                    } else {
+                        LOG.error("Got urecognized protocol version " + protocolVersion + " from " + sid);
+                        electionAddr = null;
+                    }
+                } else {
+                   LOG.error("Read only " + num_read + " bytes out of " + num_remaining_bytes + " sent by server " + sid);
+                   electionAddr = null;                
+                }
+            } 
             if (sid == QuorumPeer.OBSERVER_ID) {
                 /*
                  * Choose identifier at random. We need a value to identify
@@ -263,7 +289,7 @@ public class QuorumCnxManager {
              */
             LOG.debug("Create new connection to server: " + sid);
             closeSocket(sock);
-            connectOne(sid);
+            connectOne(sid, electionAddr);
 
             // Otherwise start worker threads to receive data.
         } else {
@@ -329,47 +355,75 @@ public class QuorumCnxManager {
     }
     
     /**
+     * Try to establish a connection to server with id sid using its electionAddr.
+     * 
+     *  @param sid  server id
+     *  @return boolean success indication
+     */
+    synchronized boolean connectOne(long sid, InetSocketAddress electionAddr){
+        if (senderWorkerMap.get(sid) != null) {
+            LOG.debug("There is a connection already for server " + sid);
+            return true;
+        }
+        try {
+
+             if (LOG.isDebugEnabled()) {
+                 LOG.debug("Opening channel to server " + sid);
+             }
+             Socket sock = new Socket();
+             setSockOpts(sock);
+             sock.connect(electionAddr, cnxTO);
+             if (LOG.isDebugEnabled()) {
+                 LOG.debug("Connected to server " + sid);
+             }
+             initiateConnection(sock, sid);
+             return true;
+         } catch (UnresolvedAddressException e) {
+             // Sun doesn't include the address that causes this
+             // exception to be thrown, also UAE cannot be wrapped cleanly
+             // so we log the exception in order to capture this critical
+             // detail.
+             LOG.warn("Cannot open channel to " + sid
+                     + " at election address " + electionAddr, e);
+             throw e;
+         } catch (IOException e) {
+             LOG.warn("Cannot open channel to " + sid
+                     + " at election address " + electionAddr,
+                     e);
+             return false;
+         }
+   
+    }
+    
+    /**
      * Try to establish a connection to server with id sid.
      * 
      *  @param sid  server id
      */
     
     synchronized void connectOne(long sid){
-        if (senderWorkerMap.get(sid) == null){
-            InetSocketAddress electionAddr;
+        if (senderWorkerMap.get(sid) != null) {
+             LOG.debug("There is a connection already for server " + sid);
+             return;
+        }
+        synchronized(self) {
+           boolean knownId = false;
             if (self.getView().containsKey(sid)) {
-                electionAddr = self.getView().get(sid).electionAddr;
-            } else {
+               knownId = true;
+                if (connectOne(sid, self.getView().get(sid).electionAddr))
+                   return;
+            } 
+            if (self.getLastSeenQuorumVerifier()!=null && self.getLastSeenQuorumVerifier().getAllMembers().containsKey(sid)
+                   && (!knownId || (self.getLastSeenQuorumVerifier().getAllMembers().get(sid).electionAddr !=
+                   self.getView().get(sid).electionAddr))) {
+               knownId = true;
+                if (connectOne(sid, self.getLastSeenQuorumVerifier().getAllMembers().get(sid).electionAddr))
+                   return;
+            } 
+            if (!knownId) {
                 LOG.warn("Invalid server id: " + sid);
                 return;
             }
-            try {
-
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Opening channel to server " + sid);
-                }
-                Socket sock = new Socket();
-                setSockOpts(sock);
-                sock.connect(self.getView().get(sid).electionAddr, cnxTO);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Connected to server " + sid);
-                }
-                initiateConnection(sock, sid);
-            } catch (UnresolvedAddressException e) {
-                // Sun doesn't include the address that causes this
-                // exception to be thrown, also UAE cannot be wrapped cleanly
-                // so we log the exception in order to capture this critical
-                // detail.
-                LOG.warn("Cannot open channel to " + sid
-                        + " at election address " + electionAddr, e);
-                throw e;
-            } catch (IOException e) {
-                LOG.warn("Cannot open channel to " + sid
-                        + " at election address " + electionAddr,
-                        e);
-            }
-        } else {
-            LOG.debug("There is a connection already for server " + sid);
         }
     }
     
