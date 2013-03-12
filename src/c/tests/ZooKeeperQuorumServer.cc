@@ -86,7 +86,7 @@ getMode() {
         return "follower";
     } else {
         printf("%s\n", result.c_str());
-        assert(!"unknown mode");
+        return "";
     }
 }
 
@@ -169,5 +169,21 @@ getCluster(uint32_t numServers) {
     for (int i = 0; i < numServers; i++) {
         cluster.push_back(new ZooKeeperQuorumServer(i, numServers));
     }
-    return cluster;
+
+    // Wait until all the servers start, and fail if they don't start within 10
+    // seconds.
+    for (int i = 0; i < 10; i++) {
+        int j = 0;
+        for (; j < cluster.size(); j++) {
+            if (cluster[j]->getMode() == "") {
+                // The server hasn't started.
+                sleep(1);
+                break;
+            }
+        }
+        if (j == cluster.size()) {
+            return cluster;
+        }
+    }
+    assert(!"The cluster didn't start for 10 seconds");
 }
