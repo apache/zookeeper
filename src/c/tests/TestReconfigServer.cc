@@ -69,8 +69,6 @@ TestReconfigServer::
 void TestReconfigServer::
 setUp() {
     cluster_ = ZooKeeperQuorumServer::getCluster(NUM_SERVERS);
-    // give the cluster some time to start up.
-    sleep(2);
 }
 
 void TestReconfigServer::
@@ -303,6 +301,7 @@ testRemoveConnectedFollower() {
         CPPUNIT_ASSERT(std::find(servers.begin(), servers.end(),
                        cluster_[i]->getServerString()) != servers.end());
     }
+    zookeeper_close(zk);
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestReconfigServer);
