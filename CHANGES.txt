@@ -339,6 +339,9 @@ BUGFIXES:
   ZOOKEEPER-1647. OSGi package import/export changes not applied to
   bin-jar (Arnoud Glimmerveen via phunt)
 
+  ZOOKEEPER-1672. zookeeper client does not accept "-members" option
+  in reconfig command (Xiaoshuang Wang via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

@@ -85,7 +85,7 @@ public class ReconfigCommand extends CliCommand {
         members = null;
         Parser parser = new PosixParser();
         cl = parser.parse(options, cmdArgs);
-        if (!cl.hasOption("file") && !cl.hasOption("add") && !cl.hasOption("remove")) {
+        if (!(cl.hasOption("file") || cl.hasOption("members")) && !cl.hasOption("add") && !cl.hasOption("remove")) {
             throw new ParseException(getUsageStr());
         }
         if (cl.hasOption("v")) {
