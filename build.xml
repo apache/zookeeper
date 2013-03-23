@@ -244,7 +244,7 @@
     <!-- ====================================================== -->
     <!-- Generate and compile the Java files                    -->
     <!-- ====================================================== -->
-    <target name="init">    
+    <target name="init" depends="jvm-check">    
         <mkdir dir="${build.classes}" />
 
         <mkdir dir="${ivy.lib}"/>
@@ -1670,6 +1670,20 @@
      <condition property="ant-eclipse.jar.exists">
        <available file="${lib.dir}/ant-eclipse-1.0-jvm1.2.jar"/>
      </condition>
+
+     <target name="jvm-check">
+       <property name="javaVersion" value="1.6"/>
+       <property name="requiredJavaVersion" value="xx${javaVersion}"/>
+       <property name="currentJavaVersion" value="xx${java.version}"/>
+       <condition property="jvm.fail">
+         <not>
+           <contains string="${currentJavaVersion}" substring="${requiredJavaVersion}"/>
+         </not>
+       </condition>
+       <fail if="jvm.fail">
+         Incorrect JVM, current = ${java.version}, required ${javaVersion}.
+       </fail>
+     </target>
 
      <target name="ant-eclipse-download" unless="ant-eclipse.jar.exists">
        <get src="http://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
