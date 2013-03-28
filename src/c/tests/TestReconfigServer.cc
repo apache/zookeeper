@@ -47,6 +47,7 @@ class TestReconfigServer : public CPPUNIT_NS::TestFixture {
     std::vector<int32_t> getFollowers();
     void parseConfig(char* buf, int len, std::vector<std::string>& servers,
                      std::string& version);
+    bool waitForConnected(zhandle_t* zh, uint32_t timeout_sec);
 };
 
 const uint32_t TestReconfigServer::NUM_SERVERS = 3;
@@ -118,6 +119,17 @@ parseConfig(char* buf, int len, std::vector<std::string>& servers,
     }
 }
 
+bool TestReconfigServer::
+waitForConnected(zhandle_t* zh, uint32_t timeout_sec) {
+    for (uint32_t i = 0; i < timeout_sec; i++) {
+        if (zoo_state(zh) == ZOO_CONNECTED_STATE) {
+            return true;
+        }
+        sleep(1);
+    }
+    return false;
+}
+
 /**
  * 1. Connect to the leader.
  * 2. Remove a follower using incremental reconfig.
@@ -136,6 +148,7 @@ testRemoveFollower() {
     CPPUNIT_ASSERT(leader >= 0);
     std::string host = cluster_[leader]->getHostPort();
     zhandle_t* zk = zookeeper_init(host.c_str(), NULL, 10000, NULL, NULL, 0);
+    CPPUNIT_ASSERT_EQUAL(true, waitForConnected(zk, 10));
     CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_getconfig(zk, 0, buf, &len, &stat));
 
     // check if all the servers are listed in the config.
@@ -201,6 +214,7 @@ testNonIncremental() {
     CPPUNIT_ASSERT(leader >= 0);
     std::string host = cluster_[leader]->getHostPort();
     zhandle_t* zk = zookeeper_init(host.c_str(), NULL, 10000, NULL, NULL, 0);
+    CPPUNIT_ASSERT_EQUAL(true, waitForConnected(zk, 10));
     CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_getconfig(zk, 0, buf, &len, &stat));
 
     // check if all the servers are listed in the config.
@@ -280,6 +294,7 @@ testRemoveConnectedFollower() {
     std::string hosts = ss.str().c_str();
     zoo_deterministic_conn_order(true);
     zhandle_t* zk = zookeeper_init(hosts.c_str(), NULL, 10000, NULL, NULL, 0);
+    CPPUNIT_ASSERT_EQUAL(true, waitForConnected(zk, 10));
     std::string connectedHost(zoo_get_current_server(zk));
     std::string portString = connectedHost.substr(connectedHost.find(":") + 1);
     uint32_t port;
