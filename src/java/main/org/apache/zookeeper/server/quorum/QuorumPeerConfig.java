@@ -225,7 +225,7 @@ public class QuorumPeerConfig {
                 snapRetainCount = Integer.parseInt(value);
             } else if (key.equals("autopurge.purgeInterval")) {
                 purgeInterval = Integer.parseInt(value);
-            } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.entrySet().contains("dynamicConfigFile")){                
+            } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")){                
                throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
             } else {
                 System.setProperty("zookeeper." + key, value);
