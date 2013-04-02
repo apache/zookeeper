@@ -57,6 +57,9 @@ BUGFIXES:
   ZOOKEEPER-1647. OSGi package import/export changes not applied to
   bin-jar (Arnoud Glimmerveen via phunt)
 
+  ZOOKEEPER-1633. Introduce a protocol version to connection initiation
+  message (Alexander Shraer via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
