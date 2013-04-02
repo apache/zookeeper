@@ -16,8 +16,9 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper.server.quorum;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -38,12 +39,13 @@ import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class CnxManagerTest extends ZKTestCase {
-    protected static final Logger LOG = LoggerFactory.getLogger(FLENewEpochTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(CnxManagerTest.class);
     protected static final int THRESHOLD = 4;
 
     int count;
@@ -264,6 +266,107 @@ public class CnxManagerTest extends ZKTestCase {
         cnxManager.halt();
     }   
 
+    /*
+     * Class used with testCnxFromFutureVersion
+     */
+    class TestCnxManager extends QuorumCnxManager {
+
+        TestCnxManager(QuorumPeer self) {
+            super(self);
+        }
+        
+        boolean senderWorkerMapContains(Long l){
+            return senderWorkerMap.containsKey(l);
+        }
+        
+        long getSid(Message m){
+            return m.sid;
+        }
+        
+        String getMsgString(Message m){
+            return new String(m.buffer.array());
+        }
+    }
+    
+    /**
+     * Before 3.5.0 a server sends its id when connecting to another server.
+     * Starting with 3.5.0 a server will send a protocol version, followed by
+     * its id, then number of bytes in the remainder of the message and finally
+     * the rest of the message. The test makes sure that a 3.4.6 server is able
+     * to detect that a connection message has this new format, extract the id,
+     * and skip the remainder of the message. 
+     * 
+     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1633}
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testCnxFromFutureVersion() throws Exception {               
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
+        TestCnxManager cnxManager = new TestCnxManager(peer);
+        QuorumCnxManager.Listener listener = cnxManager.listener;
+        if(listener != null){
+            listener.start();
+        } else {
+            Assert.fail("Null listener when initializing cnx manager");
+        }
+        
+        int port = peers.get(peer.getId()).electionAddr.getPort();
+        LOG.info("Election port: " + port);
+        
+        Thread.sleep(1000);
+        
+        SocketChannel sc = SocketChannel.open();
+        sc.socket().connect(peers.get(new Long(1)).electionAddr, 5000);
+        
+        InetSocketAddress otherAddr = peers.get(new Long(2)).electionAddr;
+        DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
+        // protocol version - a negative number
+        dout.writeLong(0xffff0000);
+        // server id
+        dout.writeLong(new Long(2));
+        // other stuff that a 3.5.0 server will send - not important for 3.4.6
+        // the 3.4.6 server should just skip it
+        String addr = otherAddr.getHostName()+ ":" + otherAddr.getPort();
+        byte[] addr_bytes = addr.getBytes();
+        dout.writeInt(addr_bytes.length);
+        dout.write(addr_bytes);
+        dout.flush();
+        
+        Thread.sleep(1000);
+        
+        Assert.assertEquals("Server 1 got connection request from server 2", 
+                true, cnxManager.senderWorkerMapContains(new Long(2)));
+      
+        // send another message to make sure the connection message was processed
+        // properly (mainly that its suffix was removed from the stream)
+        String testStr = "this is a test message string";
+        byte[] testStr_bytes = testStr.getBytes();
+        dout.writeInt(testStr_bytes.length);
+        dout.write(testStr_bytes);
+        dout.flush();
+        
+        Message m = null;
+        int numRetries = 1;
+        while((m == null) && (numRetries++ <= THRESHOLD)){
+            m = cnxManager.pollRecvQueue(3000, TimeUnit.MILLISECONDS);
+            if(m == null) cnxManager.connectAll();
+        }
+
+        if(numRetries > THRESHOLD){
+            Assert.fail("Test message hasn't been found in recvQueue");
+        }
+
+        //Assert.assertEquals("Message sender should be 2", 2, m.sid);
+        Assert.assertEquals("Message sender should be 2", 2, cnxManager.getSid(m));
+        Assert.assertEquals("Message from 2 doesn't match test sring", testStr, 
+                cnxManager.getMsgString(m));
+      
+        peer.shutdown();
+        cnxManager.halt();
+    }   
+
+    
     /*
      * Test if a receiveConnection is able to timeout on socket errors
      */

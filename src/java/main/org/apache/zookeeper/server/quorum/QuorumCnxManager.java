@@ -232,6 +232,17 @@ public class QuorumCnxManager {
             // Read server id
             DataInputStream din = new DataInputStream(sock.getInputStream());
             sid = din.readLong();
+            if (sid < 0) { // this is not a server id but a protocol version (see ZOOKEEPER-1633)
+                sid = din.readLong();
+                // next comes the #bytes in the remainder of the message
+                int num_remaining_bytes = din.readInt();
+                byte[] b = new byte[num_remaining_bytes];
+                // remove the remainder of the message from din
+                int num_read = din.read(b);
+                if (num_read != num_remaining_bytes) {
+                    LOG.error("Read only " + num_read + " bytes out of " + num_remaining_bytes + " sent by server " + sid);
+                }
+            }
             if (sid == QuorumPeer.OBSERVER_ID) {
                 /*
                  * Choose identifier at random. We need a value to identify
