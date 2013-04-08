@@ -15,5 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-/usr/sbin/userdel zookeeper 2> /dev/null >/dev/null
+case "$1" in
+    remove|purge)
+        /usr/sbin/userdel zookeeper 2> /dev/null >/dev/null
+        ;;
+esac
+
 exit 0
