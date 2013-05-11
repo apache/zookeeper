@@ -202,7 +202,7 @@ public class FLETest extends ZKTestCase {
                                  * joined.
                                  */
                                 successCount++;
-                                notify();
+                                self.notify();
                             }
                         
                             /*
@@ -301,8 +301,9 @@ public class FLETest extends ZKTestCase {
             port[i] = PortAssignment.unique();
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
-                            new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique()), new InetSocketAddress(port[i])));
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress("127.0.0.1", port[i])));
             tmpdir[i] = ClientBase.createTmpDir();           
         }
 
@@ -403,9 +404,9 @@ public class FLETest extends ZKTestCase {
             port[sid] = PortAssignment.unique();
             peers.put(Long.valueOf(sid),
                     new QuorumServer(sid,
-                            new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(port[sid])));
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress("127.0.0.1", port[sid])));
             tmpdir[sid] = ClientBase.createTmpDir();          
         }
         // start 2 peers and verify if they form the cluster

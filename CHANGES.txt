@@ -342,6 +342,9 @@ BUGFIXES:
   ZOOKEEPER-1672. zookeeper client does not accept "-members" option
   in reconfig command (Xiaoshuang Wang via phunt)
 
+  ZOOKEEPER-1700. FLETest consistently failing - setLastSeenQuorumVerifier
+  seems to be hanging (phunt via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
