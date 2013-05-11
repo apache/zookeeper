@@ -406,7 +406,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     /**
      * The current tick
      */
-    protected int tick;
+    protected volatile int tick;
 
     /**
      * @deprecated As of release 3.4.0, this class has been deprecated, since

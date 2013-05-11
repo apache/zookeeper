@@ -345,6 +345,9 @@ BUGFIXES:
   ZOOKEEPER-1700. FLETest consistently failing - setLastSeenQuorumVerifier
   seems to be hanging (phunt via fpj)
 
+  ZOOKEEPER-1697. large snapshots can cause continuous quorum failure
+  (phunt via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
