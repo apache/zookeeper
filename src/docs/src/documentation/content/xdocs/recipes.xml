@@ -203,7 +203,7 @@
 
                   <listitem>
                     <para>if <emphasis>p</emphasis> is the lowest process
-                      node in L, wait on highest process node in P</para>
+                      node in L, wait on highest process node in L</para>
                   </listitem>
 
                   <listitem>

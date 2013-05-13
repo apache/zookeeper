@@ -60,8 +60,10 @@ BUGFIXES:
   ZOOKEEPER-1633. Introduce a protocol version to connection initiation
   message (Alexander Shraer via michim)
 
-  ZOOKEEPER-1697:  large snapshots can cause continuous quorum failure
+  ZOOKEEPER-1697.  large snapshots can cause continuous quorum failure
   (phunt via fpj)
+
+  ZOOKEEPER-1706. Typo in Double Barriers example (Jingguo Yao via fpj)
 
 IMPROVEMENTS:
 
