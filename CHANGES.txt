@@ -348,6 +348,8 @@ BUGFIXES:
   ZOOKEEPER-1697. large snapshots can cause continuous quorum failure
   (phunt via fpj)
 
+  ZOOKEEPER-1706. Typo in Double Barriers example (Jingguo Yao via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
