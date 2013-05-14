@@ -475,8 +475,11 @@ public class LearnerHandler extends Thread {
                 LOG.error("Next packet was supposed to be an ACK");
                 return;
             }
-            LOG.info("Received NEWLEADER-ACK message from " + sid);
-            leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
+
+            if(LOG.isDebugEnabled()){
+            	LOG.debug("Received NEWLEADER-ACK message from " + sid);   
+            }
+            leader.waitForNewLeaderAck(getSid(), qp.getZxid(), getLearnerType());
             
             // now that the ack has been processed expect the syncLimit
             sock.setSoTimeout(leader.self.tickTime * leader.self.syncLimit);
