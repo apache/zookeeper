@@ -350,6 +350,9 @@ BUGFIXES:
 
   ZOOKEEPER-1706. Typo in Double Barriers example (Jingguo Yao via fpj)
 
+  ZOOKEEPER-1324. Remove Duplicate NEWLEADER packets 
+  from the Leader to the Follower. (Thawan, fpj via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
