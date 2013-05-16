@@ -64,6 +64,8 @@ BUGFIXES:
   (phunt via fpj)
 
   ZOOKEEPER-1706. Typo in Double Barriers example (Jingguo Yao via fpj)
+  
+  ZOOKEEPER-1642. Leader Loading Database Twice (fpj via camille)
 
 IMPROVEMENTS:
 
