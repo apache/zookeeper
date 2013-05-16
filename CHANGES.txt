@@ -352,6 +352,8 @@ BUGFIXES:
 
   ZOOKEEPER-1324. Remove Duplicate NEWLEADER packets 
   from the Leader to the Follower. (Thawan, fpj via fpj)
+  
+  ZOOKEEPER-1642. Leader Loading Database Twice (fpj via camille)
 
 IMPROVEMENTS:
 

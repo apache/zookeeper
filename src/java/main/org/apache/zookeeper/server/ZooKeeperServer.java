@@ -230,7 +230,31 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *  Restore sessions and data
      */
     public void loadData() throws IOException, InterruptedException {
-        setZxid(zkDb.loadDataBase());
+        /*
+         * When a new leader starts executing Leader#lead, it 
+         * invokes this method. The database, however, has been
+         * initialized before running leader election so that
+         * the server could pick its zxid for its initial vote.
+         * It does it by invoking QuorumPeer#getLastLoggedZxid.
+         * Consequently, we don't need to initialize it once more
+         * and avoid the penalty of loading it a second time. Not 
+         * reloading it is particularly important for applications
+         * that host a large database.
+         * 
+         * The following if block checks whether the database has
+         * been initialized or not. Note that this method is
+         * invoked by at least one other method: 
+         * ZooKeeperServer#startdata.
+         *  
+         * See ZOOKEEPER-1642 for more detail.
+         */
+        if(zkDb.isInitialized()){
+            setZxid(zkDb.getDataTreeLastProcessedZxid());
+        }
+        else {
+            setZxid(zkDb.loadDataBase());
+        }
+        
         // Clean up dead sessions
         LinkedList<Long> deadSessions = new LinkedList<Long>();
         for (Long session : zkDb.getSessions()) {
