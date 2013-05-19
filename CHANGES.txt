@@ -354,6 +354,8 @@ BUGFIXES:
   from the Leader to the Follower. (Thawan, fpj via fpj)
   
   ZOOKEEPER-1642. Leader Loading Database Twice (fpj via camille)
+  
+  ZOOKEEPER-1663. scripts don't work when path contains spaces (Amichai Rothman via camille)
 
 IMPROVEMENTS:
 
