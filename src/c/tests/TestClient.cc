@@ -46,6 +46,13 @@ struct buff_struct_2 {
     char *buffer;
 };
 
+// For testing LogMessage Callback functionality
+list<string> logMessages;
+void logMessageHandler(const char* message) {
+    cout << "Log Message Received: [" << message << "]" << endl;
+    logMessages.push_back(message);
+}
+
 static int Stat_eq(struct Stat* a, struct Stat* b)
 {
     if (a->czxid != b->czxid) return 0;
@@ -172,6 +179,7 @@ public:
         }
         return connected;
     }
+
     bool waitForDisconnected(zhandle_t *zh) {
         time_t expires = time(0) + 15;
         while(connected && time(0) < expires) {
@@ -179,11 +187,15 @@ public:
         }
         return !connected;
     }
+
 } watchctx_t;
 
 class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Zookeeper_simpleSystem);
+    CPPUNIT_TEST(testLogCallbackSet);
+    CPPUNIT_TEST(testLogCallbackInit);
+    CPPUNIT_TEST(testLogCallbackClear);
     CPPUNIT_TEST(testAsyncWatcherAutoReset);
     CPPUNIT_TEST(testDeserializeString);
 #ifdef THREADED
@@ -231,6 +243,13 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
         return createClient(hostPorts, ctx);
     }
 
+    zhandle_t *createClient(watchctx_t *ctx, log_callback_fn logCallback) {
+        zhandle_t *zk = zookeeper_init2(hostPorts, watcher, 10000, 0, ctx, 0, logCallback);
+        ctx->zh = zk;
+        sleep(1);
+        return zk;
+    }
+
     zhandle_t *createClient(const char *hp, watchctx_t *ctx) {
         zhandle_t *zk = zookeeper_init(hp, watcher, 10000, 0, ctx, 0);
         ctx->zh = zk;
@@ -264,7 +283,6 @@ public:
     {
         zoo_set_log_stream(logfile);
     }
-
 
     void startServer() {
         char cmd[1024];
@@ -905,6 +923,69 @@ public:
         rc = zoo_create(zk_ch, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, path_buffer, path_buffer_len);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         CPPUNIT_ASSERT_EQUAL(string(path), string(path_buffer));
+    }
+
+    // Test creating normal handle via zookeeper_init then explicitly setting callback
+    void testLogCallbackSet()
+    {
+        watchctx_t ctx;
+        CPPUNIT_ASSERT(logMessages.empty());
+        zhandle_t *zk = createClient(&ctx);
+
+        zoo_set_log_callback(zk, &logMessageHandler);
+        CPPUNIT_ASSERT_EQUAL(zoo_get_log_callback(zk), &logMessageHandler);
+
+        // Log 10 messages and ensure all go to callback
+        int expected = 10;
+        for (int i = 0; i < expected; i++)
+        {
+            LOG_INFO(LOGCALLBACK(zk), "%s #%d", __FUNCTION__, i);
+        }
+        CPPUNIT_ASSERT(expected == logMessages.size());
+    }
+
+    // Test creating handle via zookeeper_init2 to ensure all connection messages go to callback
+    void testLogCallbackInit()
+    {
+        logMessages.clear();
+        watchctx_t ctx;
+        zhandle_t *zk = createClient(&ctx, &logMessageHandler);
+        CPPUNIT_ASSERT_EQUAL(zoo_get_log_callback(zk), &logMessageHandler);
+
+        // All the connection messages should have gone to the callback -- don't
+        // want this to be a maintenance issue so we're not asserting exact count
+        int numBefore = logMessages.size();
+        CPPUNIT_ASSERT(numBefore != 0);
+
+        // Log 10 messages and ensure all go to callback
+        int expected = 10;
+        for (int i = 0; i < expected; i++)
+        {
+            LOG_INFO(LOGCALLBACK(zk), "%s #%d", __FUNCTION__, i);
+        }
+        CPPUNIT_ASSERT(logMessages.size() == numBefore + expected);
+    }
+
+    // Test clearing log callback -- logging should resume going to logstream
+    void testLogCallbackClear()
+    {
+        logMessages.clear();
+        watchctx_t ctx;
+        zhandle_t *zk = createClient(&ctx, &logMessageHandler);
+        CPPUNIT_ASSERT_EQUAL(zoo_get_log_callback(zk), &logMessageHandler);
+
+        // All the connection messages should have gone to the callback -- again, we don't
+        // want this to be a maintenance issue so we're not asserting exact count
+        int numBefore = logMessages.size();
+        CPPUNIT_ASSERT(numBefore > 0);
+
+        // Clear log_callback
+        zoo_set_log_callback(zk, NULL);
+
+        // Future log messages should go to logstream not callback
+        LOG_INFO(LOGCALLBACK(zk), __FUNCTION__);
+        int numAfter = logMessages.size();
+        CPPUNIT_ASSERT_EQUAL(numBefore, numAfter);
     }
 
     void testAsyncWatcherAutoReset()

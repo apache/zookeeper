@@ -26,23 +26,22 @@ extern "C" {
 #endif
 
 extern ZOOAPI ZooLogLevel logLevel;
-#define LOGSTREAM getLogStream()
+#define LOGCALLBACK(_zh) zoo_get_log_callback(_zh)
+#define LOGSTREAM NULL
 
-#define LOG_ERROR(x) if(logLevel>=ZOO_LOG_LEVEL_ERROR) \
-    log_message(ZOO_LOG_LEVEL_ERROR,__LINE__,__func__,format_log_message x)
-#define LOG_WARN(x) if(logLevel>=ZOO_LOG_LEVEL_WARN) \
-    log_message(ZOO_LOG_LEVEL_WARN,__LINE__,__func__,format_log_message x)
-#define LOG_INFO(x) if(logLevel>=ZOO_LOG_LEVEL_INFO) \
-    log_message(ZOO_LOG_LEVEL_INFO,__LINE__,__func__,format_log_message x)
-#define LOG_DEBUG(x) if(logLevel==ZOO_LOG_LEVEL_DEBUG) \
-    log_message(ZOO_LOG_LEVEL_DEBUG,__LINE__,__func__,format_log_message x)
+#define LOG_ERROR(_cb, ...) if(logLevel>=ZOO_LOG_LEVEL_ERROR) \
+    log_message(_cb, ZOO_LOG_LEVEL_ERROR, __LINE__, __func__, __VA_ARGS__)
+#define LOG_WARN(_cb, ...) if(logLevel>=ZOO_LOG_LEVEL_WARN) \
+    log_message(_cb, ZOO_LOG_LEVEL_WARN, __LINE__, __func__, __VA_ARGS__)
+#define LOG_INFO(_cb, ...) if(logLevel>=ZOO_LOG_LEVEL_INFO) \
+    log_message(_cb, ZOO_LOG_LEVEL_INFO, __LINE__, __func__, __VA_ARGS__)
+#define LOG_DEBUG(_cb, ...) if(logLevel==ZOO_LOG_LEVEL_DEBUG) \
+    log_message(_cb, ZOO_LOG_LEVEL_DEBUG, __LINE__, __func__, __VA_ARGS__)
 
-ZOOAPI void log_message(ZooLogLevel curLevel, int line,const char* funcName,
-    const char* message);
+ZOOAPI void log_message(log_callback_fn callback, ZooLogLevel curLevel,
+    int line, const char* funcName, const char* format, ...);
 
-ZOOAPI const char* format_log_message(const char* format,...);
-
-FILE* getLogStream();
+FILE* zoo_get_log_stream();
 
 #ifdef __cplusplus
 }

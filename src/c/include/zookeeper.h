@@ -427,6 +427,14 @@ typedef void (*watcher_fn)(zhandle_t *zh, int type,
         int state, const char *path,void *watcherCtx);
 
 /**
+ * \brief typedef for setting the log callback. It's a function pointer which
+ * returns void and accepts a const char* as its only argument.
+ *
+ * \param message message to be passed to the callback function.
+ */
+typedef void (*log_callback_fn)(const char *message);
+
+/**
  * \brief create a handle to used communicate with zookeeper.
  *
  * This method creates a new handle and a zookeeper session that corresponds
@@ -456,6 +464,45 @@ typedef void (*watcher_fn)(zhandle_t *zh, int type,
  */
 ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
   int recv_timeout, const clientid_t *clientid, void *context, int flags);
+
+/**
+ * \brief create a handle to communicate with zookeeper.
+ *
+ * This function is identical to \ref zookeeper_init except it allows one
+ * to specify an additional callback to be used for all logging for that
+ * specific connection. For more details on the logging callback see
+ * \ref zoo_get_log_callback and \ref zoo_set_log_callback.
+ *
+ * This method creates a new handle and a zookeeper session that corresponds
+ * to that handle. Session establishment is asynchronous, meaning that the
+ * session should not be considered established until (and unless) an
+ * event of state ZOO_CONNECTED_STATE is received.
+ * \param host comma separated host:port pairs, each corresponding to a zk
+ *   server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
+ * \param fn the global watcher callback function. When notifications are
+ *   triggered this function will be invoked.
+ * \param clientid the id of a previously established session that this
+ *   client will be reconnecting to. Pass 0 if not reconnecting to a previous
+ *   session. Clients can access the session id of an established, valid,
+ *   connection by calling \ref zoo_client_id. If the session corresponding to
+ *   the specified clientid has expired, or if the clientid is invalid for
+ *   any reason, the returned zhandle_t will be invalid -- the zhandle_t
+ *   state will indicate the reason for failure (typically
+ *   ZOO_EXPIRED_SESSION_STATE).
+ * \param context the handback object that will be associated with this instance
+ *   of zhandle_t. Application can access it (for example, in the watcher
+ *   callback) using \ref zoo_get_context. The object is not used by zookeeper
+ *   internally and can be null.
+ * \param flags reserved for future use. Should be set to zero.
+ * \param log_callback All log messages will be passed to this callback function.
+ *   For more details see \ref zoo_get_log_callback and \ref zoo_set_log_callback.
+ * \return a pointer to the opaque zhandle structure. If it fails to create
+ * a new zhandle the function returns NULL and the errno variable
+ * indicates the reason.
+ */
+ZOOAPI zhandle_t *zookeeper_init2(const char *host, watcher_fn fn,
+  int recv_timeout, const clientid_t *clientid, void *context, int flags,
+  log_callback_fn log_callback);
 
 /**
  * \brief update the list of servers this client will connect to.
@@ -1406,6 +1453,32 @@ ZOOAPI void zoo_set_debug_level(ZooLogLevel logLevel);
  * to its default value (stderr).
  */
 ZOOAPI void zoo_set_log_stream(FILE* logStream);
+
+/**
+ * \brief gets the callback to be used by this connection for logging.
+ *
+ * This is a per-connection logging mechanism that will take priority over
+ * the library-wide default log stream. That is, zookeeper library will first
+ * try to use a per-connection callback if available and if not, will fallback
+ * to using the logging stream. Passing in NULL resets the callback and will
+ * cause it to then fallback to using the logging stream as described in \ref
+ * zoo_set_log_stream.
+ */
+ZOOAPI log_callback_fn zoo_get_log_callback(const zhandle_t *zh);
+
+/**
+ * \brief sets the callback to be used by the library for logging
+ *
+ * Setting this callback has the effect of overriding the default log stream.
+ * Zookeeper will first try to use a per-connection callback if available
+ * and if not, will fallback to using the logging stream. Passing in NULL
+ * resets the callback and will cause it to then fallback to using the logging
+ * stream as described in \ref zoo_set_log_stream.
+ *
+ * Note: The provided callback will be invoked by multiple threads and therefore
+ * it needs to be thread-safe.
+ */
+ZOOAPI void zoo_set_log_callback(zhandle_t *zh, log_callback_fn callback);
 
 /**
  * \brief enable/disable quorum endpoint order randomization

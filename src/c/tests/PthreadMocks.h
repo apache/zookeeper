@@ -381,18 +381,18 @@ public:
         int ret=LIBC_SYMBOLS.pthread_create(t,a,threadFuncWrapper,
                 new ThreadContext(f,d));
         if(verbose)
-            TEST_TRACE(("thread created %p",*t));
+            TEST_TRACE("thread created %p",*t);
         return ret;
     }
     virtual int pthread_join(pthread_t t, void ** r){
-        if(verbose) TEST_TRACE(("thread joined %p",t));
+        if(verbose) TEST_TRACE("thread joined %p",t);
         int ret=LIBC_SYMBOLS.pthread_join(t,r);
         if(ret==0)
             markDestroyed(t);
         return ret;
     }
     virtual int pthread_detach(pthread_t t){
-        if(verbose) TEST_TRACE(("thread detached %p",t));
+        if(verbose) TEST_TRACE("thread detached %p",t);
         int ret=LIBC_SYMBOLS.pthread_detach(t);
         if(ret==0)
             markDestroyed(t);

@@ -36,8 +36,8 @@
     __real_##sym params
 
 // must include "src/zookeeper_log.h" to be able to use this macro
-#define TEST_TRACE(x) \
-    log_message(ZOO_LOG_LEVEL_DEBUG,__LINE__,__func__,format_log_message x)
+#define TEST_TRACE(x...) \
+    log_message(LOGSTREAM, ZOO_LOG_LEVEL_DEBUG,__LINE__,__func__,x)
 
 extern const std::string EMPTY_STRING;
 
