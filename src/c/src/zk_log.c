@@ -86,7 +86,7 @@ char* get_format_log_buffer(){
 ZooLogLevel logLevel=ZOO_LOG_LEVEL_INFO;
 
 static FILE* logStream=0;
-FILE* getLogStream(){
+FILE* zoo_get_log_stream(){
     if(logStream==0)
         logStream=stderr;
     return logStream;
@@ -122,44 +122,64 @@ static const char* time_now(char* now_str){
     return now_str;
 }
 
-void log_message(ZooLogLevel curLevel,int line,const char* funcName,
-    const char* message)
+void log_message(log_callback_fn callback, ZooLogLevel curLevel,
+    int line, const char* funcName, const char* format, ...)
 {
     static const char* dbgLevelStr[]={"ZOO_INVALID","ZOO_ERROR","ZOO_WARN",
             "ZOO_INFO","ZOO_DEBUG"};
+
+    char* buf = get_format_log_buffer();
+    if(!buf)
+    {
+        fprintf(stderr, "log_message: Unable to allocate memory buffer");
+        return;
+    }
+
     static pid_t pid=0;
+
+    if(pid==0)
+    {
+        pid=getpid();
+    }
+
 #ifdef WIN32
     char timebuf [TIME_NOW_BUF_SIZE];
-#endif
-    if(pid==0)pid=getpid();
-#ifndef THREADED
-    fprintf(LOGSTREAM, "%s:%d:%s@%s@%d: %s\n", time_now(get_time_buffer()),pid,
-            dbgLevelStr[curLevel],funcName,line,message);
+    const char* time = time_now(timebuf);
 #else
-#ifdef WIN32
-    fprintf(LOGSTREAM, "%s:%d(0x%lx):%s@%s@%d: %s\n", time_now(timebuf),pid,
-            (unsigned long int)(pthread_self().thread_id),
-            dbgLevelStr[curLevel],funcName,line,message);      
-#else
-    fprintf(LOGSTREAM, "%s:%d(0x%lx):%s@%s@%d: %s\n", time_now(get_time_buffer()),pid,
-            (unsigned long int)pthread_self(),
-            dbgLevelStr[curLevel],funcName,line,message);      
+    const char* time = time_now(get_time_buffer());
 #endif
-#endif
-    fflush(LOGSTREAM);
-}
 
-const char* format_log_message(const char* format,...)
-{
+#ifndef THREADED
+
+    int ofs = snprintf(buf, FORMAT_LOG_BUF_SIZE,
+                       "%s:%d:%s@%s@%d: ", time, pid,
+                       dbgLevelStr[curLevel], funcName, line);
+#else
+
+    #ifdef WIN32
+        unsigned long int tid = (unsigned long int)(pthread_self().thread_id);
+    #else
+        unsigned long int tid = (unsigned long int)(pthread_self());
+    #endif
+
+    int ofs = snprintf(buf, FORMAT_LOG_BUF_SIZE-1,
+                       "%s:%d(0x%lx):%s@%s@%d: ", time, pid, tid,
+                       dbgLevelStr[curLevel], funcName, line);
+#endif
+
+    // Now grab the actual message out of the variadic arg list
     va_list va;
-    char* buf=get_format_log_buffer();
-    if(!buf)
-        return "format_log_message: Unable to allocate memory buffer";
-    
-    va_start(va,format);
-    vsnprintf(buf, FORMAT_LOG_BUF_SIZE-1,format,va);
-    va_end(va); 
-    return buf;
+    va_start(va, format);
+    vsnprintf(buf+ofs, FORMAT_LOG_BUF_SIZE-1-ofs, format, va);
+    va_end(va);
+
+    if (callback)
+    {
+        callback(buf);
+    } else {
+        fprintf(zoo_get_log_stream(), "%s\n", buf);
+        fflush(zoo_get_log_stream());
+    }
 }
 
 void zoo_set_debug_level(ZooLogLevel level)

@@ -12,7 +12,10 @@ NEW FEATURES:
   ZOOKEEPER-1572. Add an async (Java) interface for multi request (Sijie Guo via camille)
 
   ZOOKEEPER-107. Allow dynamic changes to server cluster membership (Alex Shraer via breed)
-  
+
+  ZOOKEEPER-1400. Allow logging via callback instead of raw FILE pointer
+  (Marshall McMullen via michim)
+
 BUGFIXES:
 
   ZOOKEEPER-786. Exception in ZooKeeper.toString

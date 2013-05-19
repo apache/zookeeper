@@ -490,7 +490,7 @@ public:
                     break;
                 }
             }
-            //TEST_TRACE(("Finished %d iterations",i));
+            //TEST_TRACE("Finished %d iterations",i);
         }
         virtual void validate(const char* file, int line) const{
             CPPUNIT_ASSERT_EQUAL_MESSAGE_LOC("ZOK != rc",(int)ZOK,rc_,file,line);
@@ -525,7 +525,7 @@ public:
         zookeeper_close(lzh); 
   
         for(int counter=0; counter<200; counter++){
-            TEST_TRACE(("Loop count %d",counter));
+            TEST_TRACE("Loop count %d",counter);
             
             CloseFinally guard(&zh);
 
@@ -539,7 +539,7 @@ public:
             jmgr.startJobsImmediately();
             jmgr.wait();
             VALIDATE_JOBS(jmgr);
-            TEST_TRACE(("run %d finished",counter));
+            TEST_TRACE("run %d finished",counter);
         }
 
     }
@@ -564,7 +564,7 @@ public:
     void testOperationsAndDisconnectConcurrently1()
     {
         for(int counter=0; counter<50; counter++){
-            //TEST_TRACE(("Loop count %d",counter));
+            //TEST_TRACE("Loop count %d",counter);
             // frozen time -- no timeouts and no pings
             Mock_gettimeofday timeMock;
             
