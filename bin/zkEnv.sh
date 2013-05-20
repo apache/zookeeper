@@ -23,8 +23,8 @@
 # or the conf directory that is
 # a sibling of this script's directory
 
-ZOOBINDIR=${ZOOBINDIR:-/usr/bin}
-ZOOKEEPER_PREFIX=${ZOOBINDIR}/..
+ZOOBINDIR="${ZOOBINDIR:-/usr/bin}"
+ZOOKEEPER_PREFIX="${ZOOBINDIR}/.."
 
 if [ "x$ZOOCFGDIR" = "x" ]
 then
@@ -76,18 +76,19 @@ do
 done
 
 #make it work in the binary package
-if [ -e ${ZOOKEEPER_PREFIX}/share/zookeeper/zookeeper-*.jar ]; then
-  LIBPATH="${ZOOKEEPER_PREFIX}"/share/zookeeper/*.jar
+#(use array for LIBPATH to account for spaces within wildcard expansion)
+if [ -e "${ZOOKEEPER_PREFIX}"/share/zookeeper/zookeeper-*.jar ]; then
+  LIBPATH=("${ZOOKEEPER_PREFIX}"/share/zookeeper/*.jar)
 else
   #release tarball format
   for i in "$ZOOBINDIR"/../zookeeper-*.jar
   do
     CLASSPATH="$i:$CLASSPATH"
   done
-  LIBPATH="${ZOOBINDIR}"/../lib/*.jar
+  LIBPATH=("${ZOOBINDIR}"/../lib/*.jar)
 fi
 
-for i in ${LIBPATH}
+for i in "${LIBPATH[@]}"
 do
     CLASSPATH="$i:$CLASSPATH"
 done
