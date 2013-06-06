@@ -39,6 +39,7 @@ using namespace std;
 #include <errno.h>
 #include <recordio.h>
 #include "Util.h"
+#include "ZKMocks.h"
 
 struct buff_struct_2 {
     int32_t len;
@@ -214,6 +215,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testWatcherAutoResetWithGlobal);
     CPPUNIT_TEST(testWatcherAutoResetWithLocal);
     CPPUNIT_TEST(testGetChildren2);
+    CPPUNIT_TEST(testLastZxid);
 #endif
     CPPUNIT_TEST_SUITE_END();
 
@@ -1237,6 +1239,55 @@ public:
         zhandle_t *zk = createchClient(&ctx, "127.0.0.1:22181/testarwl/arwl");
         testWatcherAutoReset(zk, &ctx, &lctx);
       }
+    }
+
+    void testLastZxid() {
+      // ZOOKEEPER-1417: Test that c-client only update last zxid upon
+      // receiving request response only.
+      const int timeout = 5000;
+      int rc;
+      watchctx_t ctx1, ctx2;
+      zhandle_t *zk1 = zookeeper_init(hostPorts, NULL, timeout, 0, &ctx1, 0);
+      zhandle_t *zk2 = zookeeper_init(hostPorts, NULL, timeout, 0, &ctx2, 0);
+      CPPUNIT_ASSERT(zk1);
+      CPPUNIT_ASSERT(zk2);
+
+      int64_t original = zk2->last_zxid;
+
+      // Create txn to increase system zxid
+      rc = zoo_create(zk1, "/lastzxid", "", 0,
+                      &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+      // This should be enough time for zk2 to receive ping request
+      usleep(timeout/2 * 1000);
+
+      // check that zk1's last zxid is updated
+      struct Stat stat;
+      rc = zoo_exists(zk1, "/lastzxid", 0, &stat);
+      CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+      CPPUNIT_ASSERT_EQUAL((int64_t) zk1->last_zxid, stat.czxid);
+      // zk2's last zxid should remain the same
+      CPPUNIT_ASSERT_EQUAL(original, (int64_t) zk2->last_zxid);
+
+      // Perform read and also register a watch
+      rc = zoo_wexists(zk2, "/lastzxid", watcher, &ctx2, &stat);
+      CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+      int64_t updated = zk2->last_zxid;
+      // check that zk2's last zxid is updated
+      CPPUNIT_ASSERT_EQUAL(updated, stat.czxid);
+
+      // Increment system zxid again
+      rc = zoo_set(zk1, "/lastzxid", NULL, -1, -1);
+      CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+
+      // Wait for zk2 to get watch event
+      CPPUNIT_ASSERT(waitForEvent(zk2, &ctx2, 5));
+      // zk2's last zxid should remain the same
+      CPPUNIT_ASSERT_EQUAL(updated, (int64_t) zk2->last_zxid);
+
+      zookeeper_close(zk1);
+      zookeeper_close(zk2);
     }
 };
 
