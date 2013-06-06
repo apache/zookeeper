@@ -877,6 +877,8 @@ BUGFIXES:
   
   ZOOKEEPER-1354. AuthTest.testBadAuthThenSendOtherCommands fails intermittently (phunt via camille)
 
+  ZOOKEEPER-1417. investigate differences in client last zxid handling btw c and java clients (thawan via camille) 
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

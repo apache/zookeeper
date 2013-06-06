@@ -2597,11 +2597,6 @@ int zookeeper_process(zhandle_t *zh, int events)
         struct iarchive *ia = create_buffer_iarchive(
                                     bptr->buffer, bptr->curr_offset);
         deserialize_ReplyHeader(ia, "hdr", &hdr);
-        if (hdr.zxid > 0) {
-            zh->last_zxid = hdr.zxid;
-        } else {
-            // fprintf(stderr, "Got %#x for %#x\n", hdr.zxid, hdr.xid);
-        }
 
         if (hdr.xid == WATCHER_EVENT_XID) {
             struct WatcherEvent evt;
@@ -2666,6 +2661,10 @@ int zookeeper_process(zhandle_t *zh, int events)
                         hdr.xid,cptr->xid);
             }
 
+            if (hdr.xid != PING_XID && hdr.zxid > 0) {
+                // Update last_zxid only when it is a request response
+                zh->last_zxid = hdr.zxid;
+            }
             activateWatcher(zh, cptr->watcher, rc);
 
             if (cptr->c.void_result != SYNCHRONOUS_MARKER) {
