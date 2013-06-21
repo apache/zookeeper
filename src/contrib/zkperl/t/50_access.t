@@ -17,7 +17,7 @@
 # limitations under the License.
 
 use File::Spec;
-use Test::More tests => 38;
+use Test::More tests => 40;
 
 BEGIN { use_ok('Net::ZooKeeper', qw(:all)) };
 
@@ -50,6 +50,22 @@ SKIP: {
         keys(%{$no_read_acl->[0]}) == 3 and
         $no_read_acl->[0]->{'perms'} == ZOO_PERM_ALL),
        '_zk_acl_constant(): returned default ACL');
+
+    my $zoo_read_acl_unsafe = ZOO_READ_ACL_UNSAFE;
+    ok((ref($zoo_read_acl_unsafe) eq 'ARRAY' and
+        @{$zoo_read_acl_unsafe} == 1 and
+        ref($zoo_read_acl_unsafe->[0]) eq 'HASH' and
+        keys(%{$zoo_read_acl_unsafe->[0]}) == 3 and
+        $zoo_read_acl_unsafe->[0]->{'perms'} == ZOO_PERM_READ),
+       '_zk_acl_constant(): returned good ACL');
+
+    my $zoo_creator_all_acl = ZOO_CREATOR_ALL_ACL;
+    ok((ref($zoo_creator_all_acl) eq 'ARRAY' and
+        @{$zoo_creator_all_acl} == 1 and
+        ref($zoo_creator_all_acl->[0]) eq 'HASH' and
+        keys(%{$zoo_creator_all_acl->[0]}) == 3 and
+        $zoo_creator_all_acl->[0]->{'perms'} == ZOO_PERM_ALL),
+       '_zk_acl_constant(): returned good ACL');
 
     $no_read_acl->[0]->{'perms'} &= ~ZOO_PERM_READ;
     is($no_read_acl->[0]->{'perms'}, ((ZOO_PERM_ALL) & ~ZOO_PERM_READ),
