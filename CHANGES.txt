@@ -69,6 +69,8 @@ BUGFIXES:
   
   ZOOKEEPER-1663. scripts don't work when path contains spaces (Amichai Rothman via camille)
 
+  ZOOKEEPER-1714 perl client segfaults if ZOO_READ_ACL_UNSAFE constant is used
+  (Botond Hejj via camille)
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
