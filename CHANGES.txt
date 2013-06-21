@@ -530,6 +530,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1643. Windows: fetch_and_add not 64bit-compatible, may not be
   correct (Erik Anderson via michim)
+  
+  ZOOKEEPER-1714 perl client segfaults if ZOO_READ_ACL_UNSAFE constant is used
+  (Botond Hejj via camille)
 
 Release 3.4.0 - 
 
