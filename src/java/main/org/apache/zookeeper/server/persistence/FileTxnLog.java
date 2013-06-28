@@ -40,6 +40,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -338,7 +339,20 @@ public class FileTxnLog implements TxnLog {
      * logs
      */
     public TxnIterator read(long zxid) throws IOException {
-        return new FileTxnIterator(logDir, zxid);
+        return read(zxid, true);
+    }
+
+    /**
+     * start reading all the transactions from the given zxid.
+     *
+     * @param zxid the zxid to start reading transactions from
+     * @param fastForward true if the iterator should be fast forwarded to point
+     *        to the txn of a given zxid, else the iterator will point to the
+     *        starting txn of a txnlog that may contain txn of a given zxid
+     * @return returns an iterator to iterate through the transaction logs
+     */
+    public TxnIterator read(long zxid, boolean fastForward) throws IOException {
+        return new FileTxnIterator(logDir, zxid, fastForward);
     }
 
     /**
@@ -496,12 +510,34 @@ public class FileTxnLog implements TxnLog {
          * create an iterator over a transaction database directory
          * @param logDir the transaction database directory
          * @param zxid the zxid to start reading from
+         * @param fastForward   true if the iterator should be fast forwarded to
+         *        point to the txn of a given zxid, else the iterator will
+         *        point to the starting txn of a txnlog that may contain txn of
+         *        a given zxid
+         * @throws IOException
+         */
+        public FileTxnIterator(File logDir, long zxid, boolean fastForward)
+                throws IOException {
+            this.logDir = logDir;
+            this.zxid = zxid;
+            init();
+
+            if (fastForward && hdr != null) {
+                while (hdr.getZxid() < zxid) {
+                    if (!next())
+                        break;
+                }
+            }
+        }
+        
+        /**
+         * create an iterator over a transaction database directory
+         * @param logDir the transaction database directory
+         * @param zxid the zxid to start reading from
          * @throws IOException
          */
         public FileTxnIterator(File logDir, long zxid) throws IOException {
-          this.logDir = logDir;
-          this.zxid = zxid;
-          init();
+            this(logDir, zxid, true);
         }
 
         /**
@@ -525,10 +561,17 @@ public class FileTxnLog implements TxnLog {
             goToNextLog();
             if (!next())
                 return;
-            while (hdr.getZxid() < zxid) {
-                if (!next())
-                    return;
+        }
+        
+        /**
+         * Return total storage size of txnlog that will return by this iterator.
+         */
+        public long getStorageSize() {
+            long sum = 0;
+            for (File f : storedFiles) {
+                sum += f.length();
             }
+            return sum;
         }
 
         /**

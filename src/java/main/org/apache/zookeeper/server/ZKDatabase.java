@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -34,8 +35,6 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Watcher;
@@ -45,12 +44,15 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener;
+import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPacket;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class maintains the in memory database of zookeeper
@@ -70,6 +72,13 @@ public class ZKDatabase {
     protected ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
     protected FileTxnSnapLog snapLog;
     protected long minCommittedLog, maxCommittedLog;
+    
+    /**
+     * Default value is to use snapshot if txnlog size exceeds 1/3 the size of snapshot
+     */
+    public static final String SNAPSHOT_SIZE_FACTOR = "zookeeper.snapshotSizeFactor";
+    private double snapshotSizeFactor = 0.33;
+    
     public static final int commitLogCount = 500;
     protected static int commitLogBuffer = 700;
     protected LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
@@ -256,8 +265,65 @@ public class ZKDatabase {
             wl.unlock();
         }
     }
+    
+    public double getSnapshotSizeFactor() {
+        return snapshotSizeFactor;
+    }
 
+    public long calculateTxnLogSizeLimit() {
+        long snapSize = 0;
+        try {
+            snapSize = snapLog.findMostRecentSnapshot().length();
+        } catch (IOException e) {
+            LOG.error("Unable to get size of most recent snapshot");
+        }
+        return (long) (snapSize * snapshotSizeFactor);
+    }
 
+    /**
+     * Get proposals from txnlog. Only packet part of proposal is populated.
+     *
+     * @param startZxid the starting zxid of the proposal
+     * @param sizeLimit maximum on-disk size of txnlog to fetch
+     *                  0 is unlimited, negative value means disable.
+     * @return list of proposal (request part of each proposal is null)
+     */
+    public Iterator<Proposal> getProposalsFromTxnLog(long startZxid,
+                                                     long sizeLimit) {
+        if (sizeLimit < 0) {
+            LOG.debug("Negative size limit - retrieving proposal via txnlog is disabled");
+            return TxnLogProposalIterator.EMPTY_ITERATOR;
+        }
+
+        TxnIterator itr = null;
+        try {
+
+            itr = snapLog.readTxnLog(startZxid, false);
+
+            // If we cannot guarantee that this is strictly the starting txn
+            // after a given zxid, we should fail.
+            if ((itr.getHeader() != null)
+                    && (itr.getHeader().getZxid() > startZxid)) {
+                LOG.warn("Unable to find proposals from txnlog for zxid: "
+                        + startZxid);
+                return TxnLogProposalIterator.EMPTY_ITERATOR;
+            }
+
+            if (sizeLimit > 0) {
+                long txnSize = itr.getStorageSize();
+                if (txnSize > sizeLimit) {
+                    LOG.info("Txnlog size: " + txnSize + " exceeds sizeLimit: "
+                            + sizeLimit);
+                    return TxnLogProposalIterator.EMPTY_ITERATOR;
+                }
+            }
+        } catch (IOException e) {
+            LOG.error("Unable to read txnlog from disk", e);
+            return TxnLogProposalIterator.EMPTY_ITERATOR;
+        }
+        return new TxnLogProposalIterator(itr);
+    }
+    
     /**
      * remove a cnxn from the datatree
      * @param cnxn the cnxn to remove from the datatree
@@ -503,4 +569,11 @@ public class ZKDatabase {
         }
     }
  
+    /**
+     * Use for unit testing, so we can turn this feature on/off
+     * @param snapshotSizeFactor Set to minus value to turn this off.
+     */
+    public void setSnapshotSizeFactor(double snapshotSizeFactor) {
+        this.snapshotSizeFactor = snapshotSizeFactor;
+    }
 }

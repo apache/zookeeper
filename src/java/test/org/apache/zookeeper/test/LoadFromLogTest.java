@@ -46,6 +46,8 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.Util;
+import org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
@@ -104,6 +106,14 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         FileTxnLog txnLog = new FileTxnLog(logDir);
 
         TxnIterator itr = txnLog.read(0);
+        
+        // Check that storage space return some value
+        FileTxnIterator fileItr = (FileTxnIterator) itr;
+        long storageSize = fileItr.getStorageSize();
+        LOG.info("Txnlog size: " + storageSize + " bytes");
+        Assert.assertTrue("Storage size is greater than zero ",
+                (storageSize > 0));
+        
         long expectedZxid = 0;
         long lastZxid = 0;
         TxnHeader hdr;
@@ -118,8 +128,79 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         Assert.assertTrue("processed all transactions. " + expectedZxid + " == " + TOTAL_TRANSACTIONS, (expectedZxid == TOTAL_TRANSACTIONS));
     }
 
+    /**
+     * test that we fail to load txnlog of a request zxid that is older
+     * than what exist on disk
+     * @throws Exception an exception might be thrown here
+     */
+    @Test
+    public void testLoadFailure() throws Exception {
+        // setup a single server cluster
+        File tmpDir = ClientBase.createTmpDir();
+        ClientBase.setupTestEnv();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        // So we have at least 4 logs
+        SyncRequestProcessor.setSnapCount(50);
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        Assert.assertTrue("waiting for server being up ",
+                ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
 
+        // generate some transactions that will get logged
+        try {
+            for (int i = 0; i< NUM_MESSAGES; i++) {
+                zk.create("/data-", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT_SEQUENTIAL);
+            }
+        } finally {
+            zk.close();
+        }
+        f.shutdown();
+        Assert.assertTrue("waiting for server to shutdown",
+                ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
 
+        File logDir = new File(tmpDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
+        File[] logFiles = FileTxnLog.getLogFiles(logDir.listFiles(), 0);
+        // Verify that we have at least 4 txnlog
+        Assert.assertTrue(logFiles.length > 4);
+        // Delete the first log file, so we will fail to read it back from disk
+        Assert.assertTrue("delete the first log file", logFiles[0].delete());
+
+        // Find zxid for the second log
+        long secondStartZxid = Util.getZxidFromName(logFiles[1].getName(), "log");
+
+        FileTxnLog txnLog = new FileTxnLog(logDir);
+        TxnIterator itr = txnLog.read(1, false);
+
+        // Oldest log is already remove, so this should point to the start of
+        // of zxid on the second log
+        Assert.assertEquals(secondStartZxid, itr.getHeader().getZxid());
+
+        itr = txnLog.read(secondStartZxid, false);
+        Assert.assertEquals(secondStartZxid, itr.getHeader().getZxid());
+        Assert.assertTrue(itr.next());
+
+        // Trying to get a second txn on second txnlog give us the
+        // the start of second log, since the first one is removed
+        long nextZxid = itr.getHeader().getZxid();
+
+        itr = txnLog.read(nextZxid, false);
+        Assert.assertEquals(secondStartZxid, itr.getHeader().getZxid());
+
+        // Trying to get a first txn on the third give us the
+        // the start of second log, since the first one is removed
+        long thirdStartZxid = Util.getZxidFromName(logFiles[2].getName(), "log");
+        itr = txnLog.read(thirdStartZxid, false);
+        Assert.assertEquals(secondStartZxid, itr.getHeader().getZxid());
+        Assert.assertTrue(itr.next());
+
+        nextZxid = itr.getHeader().getZxid();
+        itr = txnLog.read(nextZxid, false);
+        Assert.assertEquals(secondStartZxid, itr.getHeader().getZxid());
+
+    }
 
     public void process(WatchedEvent event) {
     	switch (event.getType()) {

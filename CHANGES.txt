@@ -536,7 +536,8 @@ IMPROVEMENTS:
   
   ZOOKEEPER-1719. zkCli.sh, zkServer.sh and zkEnv.sh regression caused by ZOOKEEPER-1663
   (Marshall McMullen via camille)
-  
+
+  ZOOKEEPER-1413. Use on-disk transaction log for learner sync up (thawan)
 
 Release 3.4.0 - 
 
