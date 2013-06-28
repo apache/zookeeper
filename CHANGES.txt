@@ -533,6 +533,10 @@ IMPROVEMENTS:
   
   ZOOKEEPER-1714 perl client segfaults if ZOO_READ_ACL_UNSAFE constant is used
   (Botond Hejj via camille)
+  
+  ZOOKEEPER-1719. zkCli.sh, zkServer.sh and zkEnv.sh regression caused by ZOOKEEPER-1663
+  (Marshall McMullen via camille)
+  
 
 Release 3.4.0 - 
 
