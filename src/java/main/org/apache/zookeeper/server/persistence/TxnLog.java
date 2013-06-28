@@ -116,6 +116,13 @@ public interface TxnLog {
          * @throws IOException
          */
         void close() throws IOException;
+        
+        /**
+         * Get an estimated storage space used to store transaction records
+         * that will return by this iterator
+         * @throws IOException
+         */
+        long getStorageSize() throws IOException;
     }
 }
 

@@ -191,6 +191,33 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * Get TxnIterator for iterating through txnlog starting at a given zxid
+     *
+     * @param zxid starting zxid
+     * @return TxnIterator
+     * @throws IOException
+     */
+    public TxnIterator readTxnLog(long zxid) throws IOException {
+        return readTxnLog(zxid, true);
+    }
+
+    /**
+     * Get TxnIterator for iterating through txnlog starting at a given zxid
+     *
+     * @param zxid starting zxid
+     * @param fastForward true if the iterator should be fast forwarded to point
+     *        to the txn of a given zxid, else the iterator will point to the
+     *        starting txn of a txnlog that may contain txn of a given zxid
+     * @return TxnIterator
+     * @throws IOException
+     */
+    public TxnIterator readTxnLog(long zxid, boolean fastForward)
+            throws IOException {
+        FileTxnLog txnLog = new FileTxnLog(dataDir);
+        return txnLog.read(zxid, fastForward);
+    }
+    
+    /**
      * process the transaction on the datatree
      * @param hdr the hdr of the transaction
      * @param dt the datatree to apply transaction to
