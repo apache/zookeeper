@@ -360,6 +360,10 @@ BUGFIXES:
   
   ZOOKEEPER-1663. scripts don't work when path contains spaces (Amichai Rothman via camille)
 
+  ZOOKEEPER-1702. ZooKeeper client may write operation packets before
+  receiving successful response to connection request, can cause TCP
+  RST (Chris Nauroth via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
