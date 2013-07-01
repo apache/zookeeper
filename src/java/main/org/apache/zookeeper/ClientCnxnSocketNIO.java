@@ -134,6 +134,17 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     // to attempt SASL authentication), or in either doIO() or
                     // in doTransport() if not.
                     disableWrite();
+                } else if (!initialized && p != null && !p.bb.hasRemaining()) {
+                    // On initial connection, write the complete connect request
+                    // packet, but then disable further writes until after
+                    // receiving a successful connection response.  If the
+                    // session is expired, then the server sends the expiration
+                    // response and immediately closes its end of the socket.  If
+                    // the client is simultaneously writing on its end, then the
+                    // TCP stack may choose to abort with RST, in which case the
+                    // client would never receive the session expired event.  See
+                    // http://docs.oracle.com/javase/6/docs/technotes/guides/net/articles/connection_release.html
+                    disableWrite();
                 } else {
                     // Just in case
                     enableWrite();

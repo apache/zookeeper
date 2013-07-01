@@ -75,6 +75,10 @@ BUGFIXES:
   ZOOKEEPER-1719. zkCli.sh, zkServer.sh and zkEnv.sh regression caused by ZOOKEEPER-1663
   (Marshall McMullen via camille)
   
+  ZOOKEEPER-1702. ZooKeeper client may write operation packets before
+  receiving successful response to connection request, can cause TCP
+  RST (Chris Nauroth via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
