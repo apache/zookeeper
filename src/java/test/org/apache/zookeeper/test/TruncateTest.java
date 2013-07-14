@@ -26,6 +26,7 @@ import java.util.HashMap;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
@@ -53,7 +54,7 @@ import org.slf4j.LoggerFactory;
 public class TruncateTest extends ZKTestCase {
 	private static final Logger LOG = LoggerFactory.getLogger(TruncateTest.class);
     File dataDir1, dataDir2, dataDir3;
-    final int baseHostPort = 12233;
+    final int baseHostPort = PortAssignment.unique();
     
     @Before
     public void setUp() throws IOException {
@@ -161,9 +162,15 @@ public class TruncateTest extends ZKTestCase {
         
         // Start up two of the quorum and add 10 txns
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
-        peers.put(Long.valueOf(1), new QuorumServer(1, new InetSocketAddress("127.0.0.1", port1 + 1000)));
-        peers.put(Long.valueOf(2), new QuorumServer(2, new InetSocketAddress("127.0.0.1", port2 + 1000)));
-        peers.put(Long.valueOf(3), new QuorumServer(3, new InetSocketAddress("127.0.0.1", port3 + 1000)));
+        peers.put(Long.valueOf(1), new QuorumServer(1, new InetSocketAddress("127.0.0.1", port1 + 1000),
+        		new InetSocketAddress("127.0.0.1", port1 + 2000),
+        		new InetSocketAddress("127.0.0.1", port1 + 3000)));
+        peers.put(Long.valueOf(2), new QuorumServer(2, new InetSocketAddress("127.0.0.1", port2 + 1000),
+        		new InetSocketAddress("127.0.0.1", port2 + 2000),
+        		new InetSocketAddress("127.0.0.1", port2 + 3000)));
+        peers.put(Long.valueOf(3), new QuorumServer(3, new InetSocketAddress("127.0.0.1", port3 + 1000),
+        		new InetSocketAddress("127.0.0.1", port3 + 2000),
+        		new InetSocketAddress("127.0.0.1", port3 + 3000)));
 
         QuorumPeer s2 = new QuorumPeer(peers, dataDir2, dataDir2, port2, 0, 2, tickTime, initLimit, syncLimit);
         s2.start();
