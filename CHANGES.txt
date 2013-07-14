@@ -79,6 +79,8 @@ BUGFIXES:
   receiving successful response to connection request, can cause TCP
   RST (Chris Nauroth via phunt)
 
+  ZOOKEEPER-1629. testTransactionLogCorruption occasionally fails. (shralex via camille)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
