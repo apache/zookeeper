@@ -211,24 +211,26 @@ public class PortForwarder extends Thread {
                             sock.getInputStream(), target.getOutputStream()));
                     this.workers.execute(new PortForwardWorker(target, sock,
                             target.getInputStream(), sock.getOutputStream()));
-                } catch (SocketTimeoutException e) {
-                    LOG.warn("socket timed out local:" + sock.getLocalPort()
-                            + " from:" + sock.getPort()
+                } catch (SocketTimeoutException e) {               	
+                    LOG.warn("socket timed out local:" 
+                            + (sock != null ? sock.getLocalPort(): "")
+                            + " from:" + (sock != null ? sock.getPort(): "")
                             + " to:" + to, e);
                 } catch (ConnectException e) {
-                    LOG.warn("connection exception local:" + sock.getLocalPort()
-                            + " from:" + sock.getPort()
+                    LOG.warn("connection exception local:"
+                            + (sock != null ? sock.getLocalPort(): "")
+                            + " from:" + (sock != null ? sock.getPort(): "")
                             + " to:" + to, e);
                     sock.close();
                 } catch (IOException e) {
                     if (!"Socket closed".equals(e.getMessage())) {
-                        LOG.warn("unexpected exception local:" + sock.getLocalPort()
-                            + " from:" + sock.getPort()
-                            + " to:" + to, e);
+                        LOG.warn("unexpected exception local:" 
+                        		+ (sock != null ? sock.getLocalPort(): "")
+                                + " from:" + (sock != null ? sock.getPort(): "")
+                                + " to:" + to, e);
                         throw e;
                     }
                 }
-
             }
         } catch (IOException e) {
             LOG.error("Unexpected exception to:" + to, e);
