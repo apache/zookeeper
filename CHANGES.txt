@@ -81,6 +81,9 @@ BUGFIXES:
 
   ZOOKEEPER-1629. testTransactionLogCorruption occasionally fails. (shralex via camille)
 
+  ZOOKEEPER-1731. Unsynchronized access to ServerCnxnFactory.connectionBeans results in 
+  deadlock. (Dave Latham via camille)
+  
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
