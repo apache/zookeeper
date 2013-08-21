@@ -362,9 +362,8 @@ void processline(char *line) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
    } else if (startsWith(line, "reconfig ")) {
-           line += 9;
            int syntaxError = 0;
-
+           char* p = NULL;
            char* joining = NULL;
            char* leaving = NULL;
            char* members = NULL;
@@ -373,8 +372,8 @@ void processline(char *line) {
            int mode = 0; // 0 = not set, 1 = incremental, 2 = non-incremental
            int64_t version = -1;
 
-           char *p = strtok (strdup(line)," ");
-
+           line += 9;
+           p = strtok (strdup(line)," ");
            while (p != NULL) {
                if (strcmp(p, "-add")==0) {
                    p = strtok (NULL," ");
@@ -401,13 +400,14 @@ void processline(char *line) {
                    mode = 2;
                    members = strdup(p);
                } else if (strcmp(p, "-file")==0){
+                   FILE *fp = NULL;
                    p = strtok (NULL," ");
                    if (mode == 1 || p == NULL) {
                        syntaxError = 1;
                        break;
                    }
                    mode = 2;
-                   FILE *fp = fopen(p, "r");
+                   fp = fopen(p, "r");
                    if (fp == NULL) {
                        fprintf(stderr, "Error reading file: %s\n", p);
                        syntaxError = 1;
@@ -444,7 +444,11 @@ void processline(char *line) {
                        syntaxError = 1;
                        break;
                    }
+#ifdef WIN32
+                   version = _strtoui64(p, NULL, 16);
+#else
                    version = strtoull(p, NULL, 16);
+#endif
                    if (version < 0) {
                        syntaxError = 1;
                        break;
