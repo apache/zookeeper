@@ -114,7 +114,7 @@ int process_async(int outstanding_sync)
 unsigned __stdcall do_io( void * );
 unsigned __stdcall do_completion( void * );
 
-int handle_error(SOCKET sock, char* message)
+int handle_error(zhandle_t* zh, SOCKET sock, char* message)
 {
        LOG_ERROR(LOGCALLBACK(zh), "%s. %d",message, WSAGetLastError());
        closesocket (sock);
@@ -122,7 +122,7 @@ int handle_error(SOCKET sock, char* message)
 }
 
 //--create socket pair for interupting selects.
-int create_socket_pair(SOCKET fds[2]) 
+int create_socket_pair(zhandle_t* zh, SOCKET fds[2]) 
 { 
     struct sockaddr_in inaddr; 
     struct sockaddr addr; 
@@ -141,23 +141,23 @@ int create_socket_pair(SOCKET fds[2])
     inaddr.sin_port = 0; //--system assigns the port
 
     if ( setsockopt(lst,SOL_SOCKET,SO_REUSEADDR,(char*)&yes,sizeof(yes)) == SOCKET_ERROR  ) {
-       return handle_error(lst,"Error trying to set socket option.");          
+       return handle_error(zh, lst,"Error trying to set socket option.");          
     }  
     if (bind(lst,(struct sockaddr *)&inaddr,sizeof(inaddr)) == SOCKET_ERROR){
-       return handle_error(lst,"Error trying to bind socket.");                
+       return handle_error(zh, lst,"Error trying to bind socket.");                
     }
     if (listen(lst,1) == SOCKET_ERROR){
-       return handle_error(lst,"Error trying to listen on socket.");
+       return handle_error(zh, lst,"Error trying to listen on socket.");
     }
     len=sizeof(inaddr); 
     getsockname(lst, &addr,&len); 
     fds[0]=socket(AF_INET, SOCK_STREAM,0); 
     if (connect(fds[0],&addr,len) == SOCKET_ERROR){
-       return handle_error(lst, "Error while connecting to socket.");
+       return handle_error(zh, lst, "Error while connecting to socket.");
     }
     if ((fds[1]=accept(lst,0,0)) == INVALID_SOCKET){
        closesocket(fds[0]);
-       return handle_error(lst, "Error while accepting socket connection.");
+       return handle_error(zh, lst, "Error while accepting socket connection.");
     }
     closesocket(lst);  
     return 0;
@@ -238,7 +238,7 @@ int adaptor_init(zhandle_t *zh)
 
     /* We use a pipe for interrupting select() in unix/sol and socketpair in windows. */
 #ifdef WIN32   
-    if (create_socket_pair(adaptor_threads->self_pipe) == -1){
+    if (create_socket_pair(zh, adaptor_threads->self_pipe) == -1){
        LOG_ERROR(LOGCALLBACK(zh), "Can't make a socket.");
 #else
     if(pipe(adaptor_threads->self_pipe)==-1) {
