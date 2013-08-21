@@ -127,6 +127,18 @@ void log_message(log_callback_fn callback, ZooLogLevel curLevel,
 {
     static const char* dbgLevelStr[]={"ZOO_INVALID","ZOO_ERROR","ZOO_WARN",
             "ZOO_INFO","ZOO_DEBUG"};
+    static pid_t pid=0;
+    va_list va;
+    int ofs = 0;
+#ifdef THREADED
+    unsigned long int tid = 0;
+#endif
+#ifdef WIN32
+    char timebuf [TIME_NOW_BUF_SIZE];
+    const char* time = time_now(timebuf);
+#else
+    const char* time = time_now(get_time_buffer());
+#endif
 
     char* buf = get_format_log_buffer();
     if(!buf)
@@ -135,40 +147,31 @@ void log_message(log_callback_fn callback, ZooLogLevel curLevel,
         return;
     }
 
-    static pid_t pid=0;
-
     if(pid==0)
     {
         pid=getpid();
     }
 
-#ifdef WIN32
-    char timebuf [TIME_NOW_BUF_SIZE];
-    const char* time = time_now(timebuf);
-#else
-    const char* time = time_now(get_time_buffer());
-#endif
 
 #ifndef THREADED
 
-    int ofs = snprintf(buf, FORMAT_LOG_BUF_SIZE,
-                       "%s:%d:%s@%s@%d: ", time, pid,
-                       dbgLevelStr[curLevel], funcName, line);
+    ofs = snprintf(buf, FORMAT_LOG_BUF_SIZE,
+                   "%s:%d:%s@%s@%d: ", time, pid,
+                   dbgLevelStr[curLevel], funcName, line);
 #else
 
     #ifdef WIN32
-        unsigned long int tid = (unsigned long int)(pthread_self().thread_id);
+        tid = (unsigned long int)(pthread_self().thread_id);
     #else
-        unsigned long int tid = (unsigned long int)(pthread_self());
+        tid = (unsigned long int)(pthread_self());
     #endif
 
-    int ofs = snprintf(buf, FORMAT_LOG_BUF_SIZE-1,
-                       "%s:%d(0x%lx):%s@%s@%d: ", time, pid, tid,
-                       dbgLevelStr[curLevel], funcName, line);
+    ofs = snprintf(buf, FORMAT_LOG_BUF_SIZE-1,
+                   "%s:%d(0x%lx):%s@%s@%d: ", time, pid, tid,
+                   dbgLevelStr[curLevel], funcName, line);
 #endif
 
     // Now grab the actual message out of the variadic arg list
-    va_list va;
     va_start(va, format);
     vsnprintf(buf+ofs, FORMAT_LOG_BUF_SIZE-1-ofs, format, va);
     va_end(va);

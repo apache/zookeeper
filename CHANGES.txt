@@ -545,6 +545,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1413. Use on-disk transaction log for learner sync up (thawan)
 
+  ZOOKEEPER-1400. Allow logging via callback instead of raw FILE pointer (michi via fpj)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
