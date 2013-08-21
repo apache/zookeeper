@@ -3841,6 +3841,9 @@ int flush_send_queue(zhandle_t*zh, int timeout)
     lock_buffer_list(&zh->to_send);
     while (zh->to_send.head != 0&& zh->state == ZOO_CONNECTED_STATE) {
         if(timeout!=0){
+#ifndef WIN32
+            struct pollfd fds;
+#endif
             int elapsed;
             struct timeval now;
             gettimeofday(&now,0);
@@ -3857,7 +3860,6 @@ int flush_send_queue(zhandle_t*zh, int timeout)
             // Poll the socket
             rc = select((int)(zh->fd)+1, NULL,  &pollSet, NULL, &wait);
 #else
-            struct pollfd fds;
             fds.fd = zh->fd;
             fds.events = POLLOUT;
             fds.revents = 0;
