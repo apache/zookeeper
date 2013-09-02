@@ -53,6 +53,8 @@ BUGFIXES:
 
   ZOOKEEPER-1731. Unsynchronized access to ServerCnxnFactory.connectionBeans results in 
   deadlock. (Dave Latham via camille)
+
+  ZOOKEEPER-1379. 'printwatches, redo, history and connect '. client commands always print usage. This is not necessary (edward via fpj)
   
 IMPROVEMENTS:
 

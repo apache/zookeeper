@@ -810,7 +810,7 @@ public class ZooKeeperMain {
                 b = args[2].getBytes();
 
             zk.addAuthInfo(args[1], b);
-        } else {
+        } else if (!commandMap.containsKey(cmd)) {
             usage();
         }
         return watch;
