@@ -85,6 +85,8 @@ BUGFIXES:
   deadlock. (Dave Latham via camille)
 
   ZOOKEEPER-1713. wrong time calculation in zkfuse.cc (german via fpj)
+
+  ZOOKEEPER-1379. 'printwatches, redo, history and connect '. client commands always print usage. This is not necessary (edward via fpj)
   
 IMPROVEMENTS:
 
