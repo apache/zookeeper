@@ -365,6 +365,8 @@ BUGFIXES:
   RST (Chris Nauroth via phunt)
 
   ZOOKEEPER-1629. testTransactionLogCorruption occasionally fails. (shralex via camille)
+
+  ZOOKEEPER-1713. wrong time calculation in zkfuse.cc (german via fpj)
   
 IMPROVEMENTS:
 

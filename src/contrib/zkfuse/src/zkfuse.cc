@@ -81,7 +81,7 @@ uint64_t secsToMillisecs(uint64_t secs)
 inline
 uint64_t nanosecsToMillisecs(uint64_t nanosecs)
 {
-    return nanosecs * 1000000;
+    return nanosecs / 1000000;
 }
 inline
 uint64_t timespecToMillisecs(const struct timespec & ts)
