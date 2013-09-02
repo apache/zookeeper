@@ -663,14 +663,15 @@ public class ZooKeeperMain {
         if(cliCmd != null) {
             cliCmd.setZk(zk);
             watch = cliCmd.parse(args).exec();
-            } else {
-                usage();
-            }
+        } else if (!commandMap.containsKey(cmd)) {
+             usage();
+        }
+
         } catch (ParseException ex) {
             System.err.println(ex.getMessage());
-                usage();
+            usage();
             return false;
-            }
+        }
         return watch;
     }
-        }
+}
