@@ -369,6 +369,8 @@ BUGFIXES:
   ZOOKEEPER-1713. wrong time calculation in zkfuse.cc (german via fpj)
  
   ZOOKEEPER-1379. 'printwatches, redo, history and connect '. client commands always print usage. This is not necessary (edward via fpj)
+
+  ZOOKEEPER-1670. zookeeper should set a default value for SERVER_JVMFLAGS and CLIENT_JVMFLAGS so that memory usage is controlled (Arpit Gupta via fpj)
   
 IMPROVEMENTS:
 
