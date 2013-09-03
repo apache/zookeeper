@@ -113,3 +113,11 @@ then
 fi
 
 #echo "CLASSPATH=$CLASSPATH"
+
+# default heap for zookeeper server
+ZK_SERVER_HEAP="${ZK_SERVER_HEAP:-1000}"
+export SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"
+
+# default heap for zookeeper client
+ZK_CLIENT_HEAP="${ZK_CLIENT_HEAP:-256}"
+export CLIENT_JVMFLAGS="-Xmx${ZK_CLIENT_HEAP}m $CLIENT_JVMFLAGS"
