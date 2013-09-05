@@ -30,6 +30,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.apache.zookeeper.server.DataNode;
+import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import org.apache.zookeeper.Quotas;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.common.PathTrie;
+import java.lang.reflect.*;
 
 public class DataTreeTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
@@ -79,5 +87,36 @@ public class DataTreeTest extends ZKTestCase {
                 (prevCversion + 1) + ", " + (prevPzxid + 1) + ">, found: <" +
                 newCversion + ", " + newPzxid + ">",
                 (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
+    }
+   
+    @Test
+    public void testPathTrieClearOnDeserialize() throws Exception {
+
+        //Create a DataTree with quota nodes so PathTrie get updated
+        DataTree dserTree = new DataTree();
+        
+        dserTree.createNode("/bug", new byte[20], null, -1, 1, 1, 1);
+        dserTree.createNode(Quotas.quotaZookeeper+"/bug", null, null, -1, 1, 1, 1);
+        dserTree.createNode(Quotas.quotaPath("/bug"), new byte[20], null, -1, 1, 1, 1);
+        dserTree.createNode(Quotas.statPath("/bug"), new byte[20], null, -1, 1, 1, 1);
+        
+        //deserialize a DataTree; this should clear the old /bug nodes and pathTrie
+        DataTree tree = new DataTree();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+        tree.serialize(oa, "test");
+        baos.flush();
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        BinaryInputArchive ia = BinaryInputArchive.getArchive(bais);
+        dserTree.deserialize(ia, "test");
+
+        Field pfield = DataTree.class.getDeclaredField("pTrie");
+        pfield.setAccessible(true);
+        PathTrie pTrie = (PathTrie)pfield.get(dserTree);
+
+        //Check that the node path is removed from pTrie
+        Assert.assertEquals("/bug is still in pTrie", "", pTrie.findMaxPrefix("/bug"));       
     }
 }

@@ -1209,6 +1209,7 @@ public class DataTree {
     public void deserialize(InputArchive ia, String tag) throws IOException {
         deserializeList(longKeyMap, ia);
         nodes.clear();
+        pTrie.clear();
         String path = ia.readString("path");
         while (!"/".equals(path)) {
             DataNode node = new DataNode();
