@@ -557,6 +557,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1679. c client: use -Wdeclaration-after-statement (michi via fpj)
 
+  ZOOKEEPER-1750 Race condition producing NPE in NIOServerCnxn.toString
+  (Rakesh R via michim)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:

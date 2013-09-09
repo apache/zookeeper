@@ -31,7 +31,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -63,7 +62,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     private final NIOServerCnxnFactory factory;
 
-    private SocketChannel sock;
+    private final SocketChannel sock;
 
     private final SelectorThread selectorThread;
 
@@ -139,7 +138,7 @@ public class NIOServerCnxn extends ServerCnxn {
             * a tight while loop
             */
            if (bb != ServerCnxnFactory.closeConn) {
-               if (sock != null) {
+               if (sock.isOpen()) {
                    sock.configureBlocking(true);
                    sock.write(bb);
                }
@@ -307,7 +306,7 @@ public class NIOServerCnxn extends ServerCnxn {
      */
     void doIO(SelectionKey k) throws InterruptedException {
         try {
-            if (sock == null) {
+            if (sock.isOpen() == false) {
                 LOG.warn("trying to do i/o on a null socket for session:0x"
                          + Long.toHexString(sessionId));
 
@@ -993,7 +992,7 @@ public class NIOServerCnxn extends ServerCnxn {
      * Close resources associated with the sock of this cnxn.
      */
     private void closeSock() {
-        if (sock == null) {
+        if (sock.isOpen() == false) {
             return;
         }
 
@@ -1003,14 +1002,13 @@ public class NIOServerCnxn extends ServerCnxn {
                         " which had sessionid 0x" + Long.toHexString(sessionId) :
                         " (no session established for client)"));
         closeSock(sock);
-        sock = null;
     }
 
     /**
      * Close resources associated with a sock.
      */
     public static void closeSock(SocketChannel sock) {
-        if (sock == null) {
+        if (sock.isOpen() == false) {
             return;
         }
 
@@ -1152,14 +1150,14 @@ public class NIOServerCnxn extends ServerCnxn {
 
     @Override
     public InetSocketAddress getRemoteSocketAddress() {
-        if (sock == null) {
+        if (sock.isOpen() == false) {
             return null;
         }
         return (InetSocketAddress) sock.socket().getRemoteSocketAddress();
     }
 
     public InetAddress getSocketAddress() {
-        if (sock == null) {
+        if (sock.isOpen() == false) {
             return null;
         }
         return sock.socket().getInetAddress();
