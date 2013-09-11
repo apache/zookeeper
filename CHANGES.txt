@@ -374,6 +374,8 @@ BUGFIXES:
 
   ZOOKEEPER-1448. Node+Quota creation in transaction log can crash leader startup (Botond Hejj via fpj)
   
+  ZOOKEEPER-1664. Kerberos auth doesn't work with native platform GSS integration. (Boaz Kelmer via camille) 
+  
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
