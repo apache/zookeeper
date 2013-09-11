@@ -18,23 +18,11 @@
 
 package org.apache.zookeeper.client;
 
-import org.apache.zookeeper.AsyncCallback;
-import org.apache.zookeeper.ClientCnxn;
-import org.apache.zookeeper.Login;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.Environment;
-import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.GetSASLRequest;
-import org.apache.zookeeper.proto.SetSASLResponse;
-import org.apache.zookeeper.server.auth.KerberosName;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -49,6 +37,24 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
+
+import org.apache.zookeeper.AsyncCallback;
+import org.apache.zookeeper.ClientCnxn;
+import org.apache.zookeeper.Environment;
+import org.apache.zookeeper.Login;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.GetSASLRequest;
+import org.apache.zookeeper.proto.SetSASLResponse;
+import org.apache.zookeeper.server.auth.KerberosName;
+import org.ietf.jgss.GSSContext;
+import org.ietf.jgss.GSSCredential;
+import org.ietf.jgss.GSSException;
+import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.Oid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class manages SASL authentication for the client. It
@@ -213,6 +219,33 @@ public class ZooKeeperSaslClient {
                 return saslClient;
             }
             else { // GSSAPI.
+            	boolean usingNativeJgss =
+            			Boolean.getBoolean("sun.security.jgss.native");
+            	if (usingNativeJgss) {
+            		// http://docs.oracle.com/javase/6/docs/technotes/guides/security/jgss/jgss-features.html
+            		// """
+            		// In addition, when performing operations as a particular
+            		// Subject, e.g. Subject.doAs(...) or Subject.doAsPrivileged(...),
+            		// the to-be-used GSSCredential should be added to Subject's
+            		// private credential set. Otherwise, the GSS operations will
+            		// fail since no credential is found.
+            		// """
+            		try {
+            			GSSManager manager = GSSManager.getInstance();
+            			Oid krb5Mechanism = new Oid("1.2.840.113554.1.2.2");
+            			GSSCredential cred = manager.createCredential(null,
+            					GSSContext.DEFAULT_LIFETIME,
+            					krb5Mechanism,
+            					GSSCredential.INITIATE_ONLY);
+            			subject.getPrivateCredentials().add(cred);
+            			if (LOG.isDebugEnabled()) {
+            				LOG.debug("Added private credential to subject: " + cred);
+            			}
+            		} catch (GSSException ex) {
+            			LOG.warn("Cannot add private credential to subject; " +
+            					"authentication at the server may fail", ex);
+            		}
+            	}
                 final Object[] principals = subject.getPrincipals().toArray();
                 // determine client principal from subject.
                 final Principal clientPrincipal = (Principal)principals[0];
@@ -237,7 +270,7 @@ public class ZooKeeperSaslClient {
                     return saslClient;
                 }
                 catch (Exception e) {
-                    LOG.error("Error creating SASL client:" + e);
+                	LOG.error("Exception while trying to create SASL client", e);
                     e.printStackTrace();
                     return null;
                 }
