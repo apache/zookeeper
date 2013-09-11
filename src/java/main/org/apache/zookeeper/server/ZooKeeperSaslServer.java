@@ -21,13 +21,21 @@ package org.apache.zookeeper.server;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import javax.security.auth.Subject;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+
 import org.apache.zookeeper.Login;
+import org.ietf.jgss.GSSContext;
+import org.ietf.jgss.GSSCredential;
+import org.ietf.jgss.GSSException;
+import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.GSSName;
+import org.ietf.jgss.Oid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ZooKeeperSaslServer {
     public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.serverconfig";
@@ -68,9 +76,40 @@ public class ZooKeeperSaslServer {
                         final String mech = "GSSAPI";   // TODO: should depend on zoo.cfg specified mechs, but if subject is non-null, it can be assumed to be GSSAPI.
 
                         LOG.debug("serviceHostname is '"+ serviceHostname + "'");
-                        LOG.debug("servicePrincipalName is "+ servicePrincipalName + "'");
-                        LOG.debug("SASL mechanism(mech) is "+ mech +"'");
+                        LOG.debug("servicePrincipalName is '"+ servicePrincipalName + "'");
+                        LOG.debug("SASL mechanism(mech) is '"+ mech +"'");
 
+                        boolean usingNativeJgss =
+                        		Boolean.getBoolean("sun.security.jgss.native");
+                        if (usingNativeJgss) {
+                        	// http://docs.oracle.com/javase/6/docs/technotes/guides/security/jgss/jgss-features.html
+                        	// """
+                        	// In addition, when performing operations as a particular
+                        	// Subject, e.g. Subject.doAs(...) or
+                        	// Subject.doAsPrivileged(...), the to-be-used
+                        	// GSSCredential should be added to Subject's
+                        	// private credential set. Otherwise, the GSS operations
+                        	// will fail since no credential is found.
+                        	// """
+                        	try {
+                        		GSSManager manager = GSSManager.getInstance();
+                        		Oid krb5Mechanism = new Oid("1.2.840.113554.1.2.2");
+                        		GSSName gssName = manager.createName(
+                        				servicePrincipalName + "@" + serviceHostname,
+                        				GSSName.NT_HOSTBASED_SERVICE);
+                        		GSSCredential cred = manager.createCredential(gssName,
+                        				GSSContext.DEFAULT_LIFETIME,
+                        				krb5Mechanism,
+                        				GSSCredential.ACCEPT_ONLY);
+                        		subject.getPrivateCredentials().add(cred);
+                        		if (LOG.isDebugEnabled()) {
+                        			LOG.debug("Added private credential to subject: " + cred);
+                        		}
+                        	} catch (GSSException ex) {
+                        		LOG.warn("Cannot add private credential to subject; " +
+                        				"clients authentication may fail", ex);
+                        	}
+                        }
                         try {
                             return Subject.doAs(subject,new PrivilegedExceptionAction<SaslServer>() {
                                 public SaslServer run() {
@@ -94,8 +133,8 @@ public class ZooKeeperSaslServer {
                             e.printStackTrace();
                         }
                     }
-                    catch (Exception e) {
-                        LOG.error("server principal name/hostname determination error: " + e);
+                    catch (IndexOutOfBoundsException e) {
+                        LOG.error("server principal name/hostname determination error: ", e);
                     }
                 }
                 else {
@@ -106,7 +145,7 @@ public class ZooKeeperSaslServer {
                         return saslServer;
                     }
                     catch (SaslException e) {
-                        LOG.error("Zookeeper Quorum member failed to create a SaslServer to interact with a client during session initiation: " + e);
+                        LOG.error("Zookeeper Quorum member failed to create a SaslServer to interact with a client during session initiation", e);
                     }
                 }
             }
