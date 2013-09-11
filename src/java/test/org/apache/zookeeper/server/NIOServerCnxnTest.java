@@ -27,8 +27,12 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NIOServerCnxnTest extends ClientBase {
+    private static final Logger LOG = LoggerFactory
+                        .getLogger(NIOServerCnxnTest.class);
 
     /**
      * Test operations on ServerCnxn after socket closure.
@@ -52,10 +56,14 @@ public class NIOServerCnxnTest extends ClientBase {
                     serverFactory instanceof NIOServerCnxnFactory);
             Iterable<ServerCnxn> connections = serverFactory.getConnections();
             for (ServerCnxn serverCnxn : connections) {
-                String cnxnStr = serverCnxn.toString();
                 serverCnxn.close();
-                Assert.assertEquals("Connection mismatches!", cnxnStr,
-                        serverCnxn.toString());
+                try {
+                    serverCnxn.toString();
+                } catch (Exception e) {
+                    LOG.error("Exception while getting connection details!", e);
+                    Assert.fail("Shouldn't throw exception while "
+                            + "getting connection details!");
+                }
             }
         } finally {
             zk.close();
