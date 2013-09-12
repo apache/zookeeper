@@ -55,7 +55,10 @@ BUGFIXES:
   deadlock. (Dave Latham via camille)
 
   ZOOKEEPER-1379. 'printwatches, redo, history and connect '. client commands always print usage. This is not necessary (edward via fpj)
-  
+
+  ZOOKEEPER-1750. Race condition producing NPE in NIOServerCnxn.toString
+  (Rakesh R via michim)
+
 IMPROVEMENTS:
 
 
