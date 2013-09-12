@@ -60,7 +60,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     NIOServerCnxnFactory factory;
 
-    SocketChannel sock;
+    final SocketChannel sock;
 
     private final SelectionKey sk;
 
@@ -132,7 +132,7 @@ public class NIOServerCnxn extends ServerCnxn {
             */
            sock.configureBlocking(true);
            if (bb != ServerCnxnFactory.closeConn) {
-               if (sock != null) {
+               if (sock.isOpen()) {
                    sock.write(bb);
                }
                packetSent();
@@ -206,7 +206,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     void doIO(SelectionKey k) throws InterruptedException {
         try {
-            if (sock == null) {
+            if (sock.isOpen() == false) {
                 LOG.warn("trying to do i/o on a null socket for session:0x"
                          + Long.toHexString(sessionId));
 
@@ -990,7 +990,7 @@ public class NIOServerCnxn extends ServerCnxn {
      * Close resources associated with the sock of this cnxn. 
      */
     private void closeSock() {
-        if (sock == null) {
+        if (sock.isOpen() == false) {
             return;
         }
 
@@ -1039,7 +1039,6 @@ public class NIOServerCnxn extends ServerCnxn {
                 LOG.debug("ignoring exception during socketchannel close", e);
             }
         }
-        sock = null;
     }
     
     private final static byte fourBytes[] = new byte[4];
@@ -1136,7 +1135,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     @Override
     public InetSocketAddress getRemoteSocketAddress() {
-        if (sock == null) {
+        if (sock.isOpen() == false) {
             return null;
         }
         return (InetSocketAddress) sock.socket().getRemoteSocketAddress();

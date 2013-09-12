@@ -93,6 +93,10 @@ BUGFIXES:
   ZOOKEEPER-1448: Node+Quota creation in transaction log can crash leader startup (Botond Hejj via fpj) 
  
   ZOOKEEPER-1664. Kerberos auth doesn't work with native platform GSS integration. (Boaz Kelmer via camille) 
+
+  ZOOKEEPER-1750. Race condition producing NPE in NIOServerCnxn.toString
+  (Rakesh R via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
