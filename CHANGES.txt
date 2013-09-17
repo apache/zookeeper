@@ -97,6 +97,8 @@ BUGFIXES:
   ZOOKEEPER-1750. Race condition producing NPE in NIOServerCnxn.toString
   (Rakesh R via michim)
 
+  ZOOKEEPER-1754. Read-only server allows to create znode (Rakesh R via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
