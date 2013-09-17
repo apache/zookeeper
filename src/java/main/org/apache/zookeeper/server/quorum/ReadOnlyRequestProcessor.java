@@ -28,7 +28,6 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
-import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
 import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +77,7 @@ public class ReadOnlyRequestProcessor extends Thread implements RequestProcessor
                 switch (request.type) {
                 case OpCode.sync:
                 case OpCode.create:
+                case OpCode.create2:
                 case OpCode.delete:
                 case OpCode.setData:
                 case OpCode.reconfig:
