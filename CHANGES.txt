@@ -59,6 +59,9 @@ BUGFIXES:
   ZOOKEEPER-1750. Race condition producing NPE in NIOServerCnxn.toString
   (Rakesh R via michim)
 
+  ZOOKEEPER-1751. ClientCnxn#run could miss the second ping or connection get
+  dropped before a ping. (Jeffrey Zhong  via mahadev)
+
 IMPROVEMENTS:
 
 

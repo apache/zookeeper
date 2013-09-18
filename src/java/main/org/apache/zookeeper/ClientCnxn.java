@@ -976,6 +976,7 @@ public class ClientCnxn {
             clientCnxnSocket.updateLastSendAndHeard();
             int to;
             long lastPingRwServer = System.currentTimeMillis();
+            final int MAX_SEND_PING_INTERVAL = 10000; //10 seconds
             while (state.isAlive()) {
                 try {
                     if (!clientCnxnSocket.isConnected()) {
@@ -1039,9 +1040,12 @@ public class ClientCnxn {
                                         + Long.toHexString(sessionId));
                     }
                     if (state.isConnected()) {
-                        int timeToNextPing = readTimeout / 2
-                                - clientCnxnSocket.getIdleSend();
-                        if (timeToNextPing <= 0) {
+                    	//1000(1 second) is to prevent race condition missing to send the second ping
+                    	//also make sure not to send too many pings when readTimeout is small 
+                        int timeToNextPing = readTimeout / 2 - clientCnxnSocket.getIdleSend() - 
+                        		((clientCnxnSocket.getIdleSend() > 1000) ? 1000 : 0);
+                        //send a ping request either time is due or no packet sent out within MAX_SEND_PING_INTERVAL
+                        if (timeToNextPing <= 0 || clientCnxnSocket.getIdleSend() > MAX_SEND_PING_INTERVAL) {
                             sendPing();
                             clientCnxnSocket.updateLastSend();
                         } else {
