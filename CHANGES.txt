@@ -62,6 +62,8 @@ BUGFIXES:
   ZOOKEEPER-1751. ClientCnxn#run could miss the second ping or connection get
   dropped before a ping. (Jeffrey Zhong  via mahadev)
 
+  ZOOKEEPER-1657. Increased CPU usage by unnecessary SASL checks (Philip K. Warren via fpj)
+
 IMPROVEMENTS:
 
 

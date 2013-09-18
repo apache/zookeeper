@@ -56,6 +56,21 @@ import javax.security.sasl.SaslException;
  */
 public class ZooKeeperSaslClient {
     public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.clientconfig";
+    public static final String ENABLE_CLIENT_SASL_KEY = "zookeeper.sasl.client";
+    public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
+
+    /**
+     * Returns true if the SASL client is enabled. By default, the client
+     * is enabled but can be disabled by setting the system property
+     * <code>zookeeper.sasl.client</code> to <code>false</code>. See
+     * ZOOKEEPER-1657 for more information.
+     *
+     * @return If the SASL client is enabled.
+     */
+    public static boolean isEnabled() {
+        return Boolean.valueOf(System.getProperty(ENABLE_CLIENT_SASL_KEY, ENABLE_CLIENT_SASL_DEFAULT));
+    }
+
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperSaslClient.class);
     private static Login login = null;
     private SaslClient saslClient;
