@@ -1128,25 +1128,40 @@ public class ClientCnxn {
             LOG.info("Checking server " + addr + " for being r/w." +
                     " Timeout " + pingRwTimeout);
 
+            Socket sock = null;
+            BufferedReader br = null;
             try {
-                Socket sock = new Socket(addr.getHostName(), addr.getPort());
+                sock = new Socket(addr.getHostName(), addr.getPort());
                 sock.setSoLinger(false, -1);
                 sock.setSoTimeout(1000);
                 sock.setTcpNoDelay(true);
                 sock.getOutputStream().write("isro".getBytes());
                 sock.getOutputStream().flush();
                 sock.shutdownOutput();
-                BufferedReader br = new BufferedReader(
+                br = new BufferedReader(
                         new InputStreamReader(sock.getInputStream()));
                 result = br.readLine();
-                sock.close();
-                br.close();
             } catch (ConnectException e) {
                 // ignore, this just means server is not up
             } catch (IOException e) {
                 // some unexpected error, warn about it
                 LOG.warn("Exception while seeking for r/w server " +
                         e.getMessage(), e);
+            } finally {
+                if (sock != null) {
+                    try {
+                        sock.close();
+                    } catch (IOException e) {
+                        LOG.warn("Unexpected exception", e);
+                    }
+                }
+                if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        LOG.warn("Unexpected exception", e);
+                    }
+                }
             }
 
             if ("rw".equals(result)) {

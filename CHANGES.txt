@@ -104,6 +104,9 @@ BUGFIXES:
 
   ZOOKEEPER-1657. Increased CPU usage by unnecessary SASL checks (Philip K. Warren via fpj)
 
+  ZOOKEEPER-1753. ClientCnxn is not properly releasing the resources, 
+                  which are used to ping RwServer (Rakesh R via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
