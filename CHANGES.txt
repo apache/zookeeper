@@ -377,7 +377,10 @@ BUGFIXES:
   ZOOKEEPER-1664. Kerberos auth doesn't work with native platform GSS integration. (Boaz Kelmer via camille) 
 
   ZOOKEEPER-1754. Read-only server allows to create znode (Rakesh R via fpj)
-  
+ 
+  ZOOKEEPER-1751. ClientCnxn#run could miss the second ping or connection get
+  dropped before a ping. (Jeffrey Zhong via mahadev)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
