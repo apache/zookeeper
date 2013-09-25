@@ -47,6 +47,7 @@ import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -258,12 +259,21 @@ public class Leader {
     Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
         try {
-            ss = new ServerSocket();
+            if (self.getQuorumListenOnAllIPs()) {
+                ss = new ServerSocket(self.getQuorumAddress().getPort());
+            } else {
+                ss = new ServerSocket();
+            }
             ss.setReuseAddress(true);
-            ss.bind(new InetSocketAddress(self.getQuorumAddress().getPort()));
+            if (!self.getQuorumListenOnAllIPs()) {
+                ss.bind(self.getQuorumAddress());
+            }
         } catch (BindException e) {
-            LOG.error("Couldn't bind to port "
-                    + self.getQuorumAddress().getPort(), e);
+            if (self.getQuorumListenOnAllIPs()) {
+                LOG.error("Couldn't bind to port " + self.getQuorumAddress().getPort(), e);
+            } else {
+                LOG.error("Couldn't bind to " + self.getQuorumAddress(), e);
+            }
             throw e;
         }
         this.zk = zk;

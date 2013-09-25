@@ -529,14 +529,20 @@ public class QuorumCnxManager {
         @Override
         public void run() {
             int numRetries = 0;
+            InetSocketAddress addr;
+
             while((!shutdown) && (numRetries < 3)){
                 try {
                     ss = new ServerSocket();
                     ss.setReuseAddress(true);
-                    InetSocketAddress addr = self.getElectionAddress();
+                    if (self.getQuorumListenOnAllIPs()) {
+                        int port = self.getElectionAddress().getPort();
+                        addr = new InetSocketAddress(port);
+                    } else {
+                        addr = self.getElectionAddress();
+                    }
                     LOG.info("My election bind port: " + addr.toString());
                     setName(addr.toString());
-                    // we used to bind to the * address but this seems more correct
                     ss.bind(addr);
                     while (!shutdown) {
                         Socket client = ss.accept();
