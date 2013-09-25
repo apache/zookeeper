@@ -386,6 +386,8 @@ BUGFIXES:
   ZOOKEEPER-1753. ClientCnxn is not properly releasing the resources, 
                   which are used to ping RwServer (Rakesh R via fpj)
 
+  ZOOKEEPER-1096. Leader communication should listen on specified IP, not wildcard address (Jared Cantwell, German Blanco via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

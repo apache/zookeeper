@@ -67,6 +67,7 @@ public class QuorumPeerConfig {
     protected int syncLimit;
     protected int electionAlg = 3;
     protected int electionPort = 2182;
+    protected boolean quorumListenOnAllIPs = false;
 
     protected long serverId;
 
@@ -210,6 +211,8 @@ public class QuorumPeerConfig {
                 syncLimit = Integer.parseInt(value);
             } else if (key.equals("electionAlg")) {
                 electionAlg = Integer.parseInt(value);
+            } else if (key.equals("quorumListenOnAllIPs")) {
+                quorumListenOnAllIPs = Boolean.parseBoolean(value);
             } else if (key.equals("peerType")) {
                 if (value.toLowerCase().equals("observer")) {
                     peerType = LearnerType.OBSERVER;
@@ -544,4 +547,8 @@ public class QuorumPeerConfig {
         return configBackwardCompatibilityMode;
     }
     
+    public Boolean getQuorumListenOnAllIPs() {
+        return quorumListenOnAllIPs;
+    }
+
 }
