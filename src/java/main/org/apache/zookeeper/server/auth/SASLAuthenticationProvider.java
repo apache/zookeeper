@@ -39,9 +39,18 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
 
     public boolean matches(String id,String aclExpr) {
         if (System.getProperty("zookeeper.superUser") != null) {
-            return (id.equals(System.getProperty("zookeeper.superUser")) || id.equals(aclExpr));
+            if (id.equals(System.getProperty("zookeeper.superUser")) || id.equals(aclExpr)) {
+              return true;
+            }
         }
-        return (id.equals("super") || id.equals(aclExpr));
+        if ((id.equals("super") || id.equals(aclExpr))) {
+          return true;
+        }
+        String readAccessUser = System.getProperty("zookeeper.readUser");
+        if ( readAccessUser != null && aclExpr.equals(readAccessUser)) {
+          return true;
+        }
+        return false;
     }
 
     public boolean isAuthenticated() {

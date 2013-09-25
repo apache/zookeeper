@@ -571,6 +571,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1750 Race condition producing NPE in NIOServerCnxn.toString
   (Rakesh R via michim)
+  
+  ZOOKEEPER-1759. Adding ability to allow READ operations for authenticated users, 
+  versus keeping ACLs wide open for READ. (Yuliya Feldman via camille)
 
 Release 3.4.0 - 
 
