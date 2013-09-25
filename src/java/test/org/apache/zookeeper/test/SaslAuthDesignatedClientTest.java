@@ -21,12 +21,17 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -100,5 +105,54 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
         }
     }
 
-
+    @Test
+    public void testReadAccessUser() throws Exception {
+      System.setProperty("zookeeper.readUser","anyone");
+      ZooKeeper zk = createClient();
+      List<ACL> aclList = new ArrayList<ACL>();
+      ACL acl = new ACL(Perms.ADMIN | Perms.CREATE | Perms.WRITE | Perms.DELETE, new Id("sasl", "fakeuser"));
+      ACL acl1 = new ACL(Perms.READ, new Id("sasl", "anyone"));
+      aclList.add(acl);
+      aclList.add(acl1);
+      try { 
+        zk.create("/abc", "testData".getBytes(), aclList, CreateMode.PERSISTENT);
+      } catch (KeeperException e) {
+        Assert.fail("Unable to create znode");
+      }
+      zk.close();
+      Thread.sleep(100);
+      
+      // try to access it with different user (myuser)
+      zk = createClient();
+      
+      try {
+        zk.setData("/abc", "testData1".getBytes(), -1);
+        Assert.fail("Should not be able to set data");
+      } catch (KeeperException.NoAuthException e) {
+        // success
+      }
+      
+      try {
+        byte [] bytedata = zk.getData("/abc", null, null);
+        String data = new String(bytedata);
+        Assert.assertTrue("testData".equals(data));
+      } catch (KeeperException e) {
+        Assert.fail("failed to get data");
+      }
+      
+      zk.close();
+      Thread.sleep(100);
+      
+      // disable Client Sasl
+      System.setProperty(ZooKeeperSaslClient.ENABLE_CLIENT_SASL_KEY, "false");
+      
+      zk = createClient();
+      try {
+        zk.getData("/abc", null, null);
+        Assert.fail("Should not be able to read data when not authenticated");
+      } catch (KeeperException.NoAuthException e) {
+        // success
+      }
+      zk.close();
+    }
 }
