@@ -249,6 +249,12 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     protected volatile int tick;
 
     /**
+     * Whether or not to listen on all IPs for the two quorum ports
+     * (broadcast and fast leader election).
+     */
+    protected boolean quorumListenOnAllIPs = false;
+
+    /**
      * @deprecated As of release 3.4.0, this class has been deprecated, since
      * it is used with one of the udp-based versions of leader election, which
      * we are also deprecating. 
@@ -376,13 +382,14 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
             long myid, int tickTime, int initLimit, int syncLimit,
             ServerCnxnFactory cnxnFactory) throws IOException {
         this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, 
-        		initLimit, syncLimit, cnxnFactory, 
+        		initLimit, syncLimit, false, cnxnFactory, 
         		new QuorumMaj(countParticipants(quorumPeers)));
     }
     
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
+            boolean quorumListenOnAllIPs,
             ServerCnxnFactory cnxnFactory, 
             QuorumVerifier quorumConfig) throws IOException {
         this();
@@ -393,6 +400,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         this.tickTime = tickTime;
         this.initLimit = initLimit;
         this.syncLimit = syncLimit;        
+        this.quorumListenOnAllIPs = quorumListenOnAllIPs;
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
         this.zkDb = new ZKDatabase(this.logFactory);
         if(quorumConfig == null)
@@ -515,7 +523,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         throws IOException
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
-                myid,tickTime, initLimit,syncLimit,
+                myid,tickTime, initLimit,syncLimit, false,
                 ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
                 new QuorumMaj(countParticipants(quorumPeers)));
     }
@@ -531,7 +539,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         throws IOException
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
-                myid,tickTime, initLimit,syncLimit,
+                myid,tickTime, initLimit,syncLimit, false,
                 ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
                 quorumConfig);
     }
@@ -1014,6 +1022,14 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      */
     public void setElectionType(int electionType) {
         this.electionType = electionType;
+    }
+
+    public boolean getQuorumListenOnAllIPs() {
+        return quorumListenOnAllIPs;
+    }
+
+    public void setQuorumListenOnAllIPs(boolean quorumListenOnAllIPs) {
+        this.quorumListenOnAllIPs = quorumListenOnAllIPs;
     }
 
     public ServerCnxnFactory getCnxnFactory() {

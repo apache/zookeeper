@@ -39,6 +39,8 @@ import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.zookeeper.server.ZooKeeperServer;
+
 /**
  * This class implements a connection manager for leader election using TCP. It
  * maintains one connection for every pair of servers. The tricky part is to
@@ -487,13 +489,17 @@ public class QuorumCnxManager {
         @Override
         public void run() {
             int numRetries = 0;
+            InetSocketAddress addr;
             while((!shutdown) && (numRetries < 3)){
                 try {
                     ss = new ServerSocket();
                     ss.setReuseAddress(true);
-                    int port = self.quorumPeers.get(self.getId()).electionAddr
-                            .getPort();
-                    InetSocketAddress addr = new InetSocketAddress(port);
+                    if (self.getQuorumListenOnAllIPs()) {
+                        int port = self.quorumPeers.get(self.getId()).electionAddr.getPort();
+                        addr = new InetSocketAddress(port);
+                    } else {
+                        addr = self.quorumPeers.get(self.getId()).electionAddr;
+                    }
                     LOG.info("My election bind port: " + addr.toString());
                     setName(self.quorumPeers.get(self.getId()).electionAddr
                             .toString());

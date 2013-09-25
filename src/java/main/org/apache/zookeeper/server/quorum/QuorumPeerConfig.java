@@ -59,6 +59,7 @@ public class QuorumPeerConfig {
     protected int syncLimit;
     protected int electionAlg = 3;
     protected int electionPort = 2182;
+    protected boolean quorumListenOnAllIPs = false;
     protected final HashMap<Long,QuorumServer> servers =
         new HashMap<Long, QuorumServer>();
     protected final HashMap<Long,QuorumServer> observers =
@@ -157,6 +158,8 @@ public class QuorumPeerConfig {
                 syncLimit = Integer.parseInt(value);
             } else if (key.equals("electionAlg")) {
                 electionAlg = Integer.parseInt(value);
+            } else if (key.equals("quorumListenOnAllIPs")) {
+                quorumListenOnAllIPs = Boolean.parseBoolean(value);
             } else if (key.equals("peerType")) {
                 if (value.toLowerCase().equals("observer")) {
                     peerType = LearnerType.OBSERVER;
@@ -407,5 +410,9 @@ public class QuorumPeerConfig {
 
     public LearnerType getPeerType() {
         return peerType;
+    }
+
+    public Boolean getQuorumListenOnAllIPs() {
+        return quorumListenOnAllIPs;
     }
 }

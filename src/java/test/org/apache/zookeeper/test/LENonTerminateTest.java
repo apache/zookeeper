@@ -216,7 +216,7 @@ public class LENonTerminateTest extends ZKTestCase {
         throws IOException
         {
             super(quorumPeers, snapDir, logDir, electionAlg,
-                    myid,tickTime, initLimit,syncLimit,
+                    myid,tickTime, initLimit,syncLimit, false,
                     ServerCnxnFactory.createFactory(clientPort, -1),
                     new QuorumMaj(countParticipants(quorumPeers)));
         }
