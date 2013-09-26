@@ -114,6 +114,9 @@ BUGFIXES:
 
   ZOOKEEPER-87. Follower does not shut itself down if its too far behind the leader. (German Blanco via fpj)
 
+  ZOOKEEPER-1603. StaticHostProviderTest testUpdateClientMigrateOrNot hangs (fpj)
+
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
