@@ -57,8 +57,9 @@ public final class StaticHostProvider implements HostProvider {
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses)
             throws UnknownHostException {
         for (InetSocketAddress address : serverAddresses) {
-            InetAddress resolvedAddresses[] = InetAddress.getAllByName(address
-                    .getHostName());
+            InetAddress ia = address.getAddress();
+            InetAddress resolvedAddresses[] = InetAddress.getAllByName((ia!=null) ? ia.getHostAddress():
+                address.getHostName());
             for (InetAddress resolvedAddress : resolvedAddresses) {
                 this.serverAddresses.add(new InetSocketAddress(resolvedAddress
                         .getHostAddress(), address.getPort()));
