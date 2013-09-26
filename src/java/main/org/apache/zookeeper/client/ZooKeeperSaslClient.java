@@ -80,6 +80,7 @@ public class ZooKeeperSaslClient {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperSaslClient.class);
     private static Login login = null;
     private SaslClient saslClient;
+    private boolean isSASLConfigured = true;
 
     private byte[] saslToken = new byte[0];
 
@@ -104,7 +105,7 @@ public class ZooKeeperSaslClient {
     }
 
     public ZooKeeperSaslClient(final String serverPrincipal)
-            throws LoginException {
+            throws LoginException {    	
         /**
          * ZOOKEEPER-1373: allow system property to specify the JAAS
          * configuration section that the zookeeper client should use.
@@ -113,12 +114,12 @@ public class ZooKeeperSaslClient {
         String clientSection = System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client");
         // Note that 'Configuration' here refers to javax.security.auth.login.Configuration.
         AppConfigurationEntry entries[] = null;
-        SecurityException securityException = null;
+        RuntimeException runtimeException = null;
         try {
             entries = Configuration.getConfiguration().getAppConfigurationEntry(clientSection);
-        } catch (SecurityException e) {
+        } catch (RuntimeException e) {
             // handle below: might be harmless if the user doesn't intend to use JAAS authentication.
-            securityException = e;
+            runtimeException = e;
         }
         if (entries != null) {
             this.configStatus = "Will attempt to SASL-authenticate using Login Context section '" + clientSection + "'";
@@ -131,11 +132,11 @@ public class ZooKeeperSaslClient {
             if (explicitClientSection != null) {
                 // If the user explicitly overrides the default Login Context, they probably expected SASL to
                 // succeed. But if we got here, SASL failed.
-                if (securityException != null) {
+                if (runtimeException != null) {
                     throw new LoginException("Zookeeper client cannot authenticate using the " + explicitClientSection +
                             " section of the supplied JAAS configuration: '" +
                             System.getProperty(Environment.JAAS_CONF_KEY) + "' because of a " +
-                            "SecurityException: " + securityException);
+                            "RuntimeException: " + runtimeException);
                 } else {
                     throw new LoginException("Client cannot SASL-authenticate because the specified JAAS configuration " +
                             "section '" + explicitClientSection + "' could not be found.");
@@ -144,21 +145,22 @@ public class ZooKeeperSaslClient {
                 // The user did not override the default context. It might be that they just don't intend to use SASL,
                 // so log at INFO, not WARN, since they don't expect any SASL-related information.
                 String msg = "Will not attempt to authenticate using SASL ";
-                if (securityException != null) {
-                    msg += "(" + securityException.getLocalizedMessage() + ")";
+                if (runtimeException != null) {
+                    msg += "(" + runtimeException.getLocalizedMessage() + ")";
                 } else {
                     msg += "(unknown error)";
                 }
                 this.configStatus = msg;
+                this.isSASLConfigured = false;
             }
             if (System.getProperty(Environment.JAAS_CONF_KEY)  != null) {
                 // Again, the user explicitly set something SASL-related, so they probably expected SASL to succeed.
-                if (securityException != null) {
+                if (runtimeException != null) {
                     throw new LoginException("Zookeeper client cannot authenticate using the '" +
                             System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client") +
                             "' section of the supplied JAAS configuration: '" +
                             System.getProperty(Environment.JAAS_CONF_KEY) + "' because of a " +
-                            "SecurityException: " + securityException);
+                            "RuntimeException: " + runtimeException);
                 } else {
                     throw new LoginException("No JAAS configuration section named '" +
                             System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client") +
@@ -168,7 +170,7 @@ public class ZooKeeperSaslClient {
             }
         }
     }
-
+    
     /**
      * @return informational message indicating the current configuration status.
      */
@@ -528,6 +530,9 @@ public class ZooKeeperSaslClient {
     }
 
     public boolean clientTunneledAuthenticationInProgress() {
+    	if (!isSASLConfigured) {
+    	    return false;
+        } 
         // TODO: Rather than checking a disjunction here, should be a single member
         // variable or method in this class to determine whether the client is
         // configured to use SASL. (see also ZOOKEEPER-1455).
