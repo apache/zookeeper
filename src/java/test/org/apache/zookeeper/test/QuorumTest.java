@@ -352,7 +352,7 @@ public class QuorumTest extends ZKTestCase {
     throws IOException, InterruptedException, KeeperException{
         final Semaphore sem = new Semaphore(0);
 
-        QuorumUtil qu = new QuorumUtil(2);
+        QuorumUtil qu = new QuorumUtil(2, 10);
         qu.startQuorum();
 
         int index = 1;
