@@ -387,10 +387,11 @@ BUGFIXES:
                   which are used to ping RwServer (Rakesh R via fpj)
 
   ZOOKEEPER-1096. Leader communication should listen on specified IP, not wildcard address (Jared Cantwell, German Blanco via fpj)
-
  
   ZOOKEEPER-1696. Fail to run zookeeper client on Weblogic application server.
   (Jeffrey Zhong via mahadev)
+
+  ZOOKEEPER-87. Follower does not shut itself down if its too far behind the leader. (German Blanco via fpj)
 
 IMPROVEMENTS:
 

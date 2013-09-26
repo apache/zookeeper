@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.EOFException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -67,6 +68,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Zab1_0Test {
+    private static final int SYNC_LIMIT = 2;
+
     private static final Logger LOG = LoggerFactory.getLogger(Zab1_0Test.class);
 
     private static final class LeadThread extends Thread {
@@ -837,6 +840,73 @@ public class Zab1_0Test {
         });
     }
 
+    @Test
+    public void testTxnTimeout() throws Exception {
+        testLeaderConversation(new LeaderConversation() {
+            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
+                    throws IOException, InterruptedException, org.apache.zookeeper.server.quorum.Leader.XidRolloverException {
+                Assert.assertEquals(0, l.self.getAcceptedEpoch());
+                Assert.assertEquals(0, l.self.getCurrentEpoch());
+                
+                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                byte liBytes[] = new byte[20];
+                ByteBufferOutputStream.record2ByteBuffer(li,
+                        ByteBuffer.wrap(liBytes));
+                QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0,
+                        liBytes, null);
+                oa.writeRecord(qp, null);
+                
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.LEADERINFO, qp.getType());
+                Assert.assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
+                Assert.assertEquals(ByteBuffer.wrap(qp.getData()).getInt(),
+                        0x10000);
+                Assert.assertEquals(1, l.self.getAcceptedEpoch());
+                Assert.assertEquals(0, l.self.getCurrentEpoch());
+                
+                qp = new QuorumPacket(Leader.ACKEPOCH, 0, new byte[4], null);
+                oa.writeRecord(qp, null);
+                
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.DIFF, qp.getType());
+
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.NEWLEADER, qp.getType());
+                Assert.assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
+                Assert.assertEquals(1, l.self.getAcceptedEpoch());
+                Assert.assertEquals(1, l.self.getCurrentEpoch());
+                
+                qp = new QuorumPacket(Leader.ACK, qp.getZxid(), null, null);
+                oa.writeRecord(qp, null);
+
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.UPTODATE, qp.getType());
+
+                long zxid = l.zk.getZxid();
+                l.propose(new Request(1, 1, ZooDefs.OpCode.create,
+                            new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.create),
+                            new CreateTxn("/test", "hola".getBytes(), null, true, 0), zxid));
+
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.PROPOSAL, qp.getType());
+
+                LOG.info("Proposal sent.");
+
+                for (int i = 0; i < (2 * SYNC_LIMIT) + 2; i++) {
+                    try {
+                        ia.readRecord(qp, null);
+                        LOG.info("Ping received: " + i);
+                        qp = new  QuorumPacket(Leader.PING, qp.getZxid(), "".getBytes(), null);
+                        oa.writeRecord(qp, null);
+                    } catch (EOFException e) {
+                        return;
+                    }
+                }
+                Assert.fail("Connection hasn't been closed by leader after transaction times out.");
+            }
+        });
+    }
+
     private void deserializeSnapshot(InputArchive ia)
             throws IOException {
         ZKDatabase zkdb = new ZKDatabase(null);
@@ -981,7 +1051,7 @@ public class Zab1_0Test {
     private QuorumPeer createQuorumPeer(File tmpDir) throws IOException, FileNotFoundException {
         HashMap<Long, QuorumServer> peers = new HashMap<Long, QuorumServer>();
         QuorumPeer peer = new QuorumPeer();
-        peer.syncLimit = 2;
+        peer.syncLimit = SYNC_LIMIT;
         peer.initLimit = 2;
         peer.tickTime = 2000;
         

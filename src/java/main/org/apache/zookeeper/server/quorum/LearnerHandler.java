@@ -92,6 +92,63 @@ public class LearnerHandler extends Thread {
     final LinkedBlockingQueue<QuorumPacket> queuedPackets =
         new LinkedBlockingQueue<QuorumPacket>();
 
+    /**
+     * This class controls the time that the Leader has been
+     * waiting for acknowledgement of a proposal from this Learner.
+     * If the time is above syncLimit, the connection will be closed.
+     * It keeps track of only one proposal at a time, when the ACK for
+     * that proposal arrives, it switches to the last proposal received
+     * or clears the value if there is no pending proposal.
+     */
+    private class SyncLimitCheck {
+        private boolean started = false;
+        private long currentZxid = 0;
+        private long currentTime = 0;
+        private long nextZxid = 0;
+        private long nextTime = 0;
+
+        public synchronized void start() {
+            started = true;
+        }
+
+        public synchronized void updateProposal(long zxid, long time) {
+            if (!started) {
+                return;
+            }
+            if (currentTime == 0) {
+                currentTime = time;
+                currentZxid = zxid;
+            } else {
+                nextTime = time;
+                nextZxid = zxid;
+            }
+        }
+
+        public synchronized void updateAck(long zxid) {
+             if (currentZxid == zxid) {
+                 currentTime = nextTime;
+                 currentZxid = nextZxid;
+                 nextTime = 0;
+                 nextZxid = 0;
+             } else if (nextZxid == zxid) {
+                 LOG.warn("ACK for " + zxid + " received before ACK for " + currentZxid + "!!!!");
+                 nextTime = 0;
+                 nextZxid = 0;
+             }
+        }
+
+        public synchronized boolean check(long time) {
+            if (currentTime == 0) {
+                return true;
+            } else {
+                long msDelay = (time - currentTime) / 1000000;
+                return (msDelay < (leader.self.tickTime * leader.self.syncLimit));
+            }
+        }
+    };
+
+    private SyncLimitCheck syncLimitCheck = new SyncLimitCheck();
+
     private BinaryInputArchive ia;
 
     private BinaryOutputArchive oa;
@@ -170,6 +227,9 @@ public class LearnerHandler extends Thread {
                 }
                 if (p.getType() == Leader.PING) {
                     traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
+                }
+                if (p.getType() == Leader.PROPOSAL) {
+                    syncLimitCheck.updateProposal(p.getZxid(), System.nanoTime());
                 }
                 if (LOG.isTraceEnabled()) {
                     ZooTrace.logQuorumPacket(LOG, traceMask, 'o', p);
@@ -396,6 +456,8 @@ public class LearnerHandler extends Thread {
             	LOG.debug("Received NEWLEADER-ACK message from " + sid);   
             }
             leader.waitForNewLeaderAck(getSid(), qp.getZxid(), getLearnerType());
+
+            syncLimitCheck.start();
             
             // now that the ack has been processed expect the syncLimit
             sock.setSoTimeout(leader.self.tickTime * leader.self.syncLimit);
@@ -441,6 +503,7 @@ public class LearnerHandler extends Thread {
                             LOG.debug("Received ACK from Observer  " + this.sid);
                         }
                     }
+                    syncLimitCheck.updateAck(qp.getZxid());
                     leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
                     break;
                 case Leader.PING:
@@ -822,12 +885,16 @@ public class LearnerHandler extends Thread {
             return;
         }
         long id;
-        synchronized(leader) {
-            id = leader.lastProposed;
+        if (syncLimitCheck.check(System.nanoTime())) {
+            synchronized(leader) {
+                id = leader.lastProposed;
+            }
+            QuorumPacket ping = new QuorumPacket(Leader.PING, id, null, null);
+            queuePacket(ping);
+        } else {
+            LOG.warn("Closing connection to peer due to transaction timeout.");
+            shutdown();
         }
-        QuorumPacket ping = new QuorumPacket(Leader.PING, id,
-                null, null);
-        queuePacket(ping);
     }
 
     /**

@@ -79,7 +79,7 @@ public class QuorumUtil {
      * @param n
      *            number of peers in the ensemble will be 2n+1
      */
-    public QuorumUtil(int n) throws RuntimeException {
+    public QuorumUtil(int n, int syncLimit) throws RuntimeException {
         try {
             ClientBase.setupTestEnv();
             JMXEnv.setUp();
@@ -88,7 +88,7 @@ public class QuorumUtil {
             ALL = 2 * N + 1;
             tickTime = 2000;
             initLimit = 3;
-            syncLimit = 3;
+            this.syncLimit = syncLimit;
             electionAlg = 3;
             hostPort = "";
 
@@ -116,6 +116,10 @@ public class QuorumUtil {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public QuorumUtil(int n) throws RuntimeException {
+        this(n, 3);
     }
 
     public PeerStruct getPeer(int id) {
