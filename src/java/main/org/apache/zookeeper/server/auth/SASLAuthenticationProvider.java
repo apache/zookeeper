@@ -46,7 +46,7 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
         if ((id.equals("super") || id.equals(aclExpr))) {
           return true;
         }
-        String readAccessUser = System.getProperty("zookeeper.readUser");
+        String readAccessUser = System.getProperty("zookeeper.letAnySaslUserDoX");
         if ( readAccessUser != null && aclExpr.equals(readAccessUser)) {
           return true;
         }
