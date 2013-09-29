@@ -107,7 +107,7 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
 
     @Test
     public void testReadAccessUser() throws Exception {
-      System.setProperty("zookeeper.readUser","anyone");
+      System.setProperty("zookeeper.letAnySaslUserDoX","anyone");
       ZooKeeper zk = createClient();
       List<ACL> aclList = new ArrayList<ACL>();
       ACL acl = new ACL(Perms.ADMIN | Perms.CREATE | Perms.WRITE | Perms.DELETE, new Id("sasl", "fakeuser"));
@@ -146,13 +146,18 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
       // disable Client Sasl
       System.setProperty(ZooKeeperSaslClient.ENABLE_CLIENT_SASL_KEY, "false");
       
-      zk = createClient();
       try {
-        zk.getData("/abc", null, null);
-        Assert.fail("Should not be able to read data when not authenticated");
-      } catch (KeeperException.NoAuthException e) {
-        // success
+        zk = createClient();
+        try {
+          zk.getData("/abc", null, null);
+          Assert.fail("Should not be able to read data when not authenticated");
+        } catch (KeeperException.NoAuthException e) {
+          // success
+        }
+        zk.close();
+      } finally {
+        // enable Client Sasl
+        System.setProperty(ZooKeeperSaslClient.ENABLE_CLIENT_SASL_KEY, "true");
       }
-      zk.close();
     }
 }
