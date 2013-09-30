@@ -157,6 +157,7 @@ public class QuorumPeerMain {
           quorumPeer.initConfigInZKDatabase();
           quorumPeer.setCnxnFactory(cnxnFactory);
           quorumPeer.setLearnerType(config.getPeerType());
+          quorumPeer.setSyncEnabled(config.getSyncEnabled());
           quorumPeer.setQuorumListenOnAllIPs(config.getQuorumListenOnAllIPs());
           
           quorumPeer.start();
