@@ -402,6 +402,12 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * an acknowledgment
      */
     protected int syncLimit;
+    
+    /**
+     * Enables/Disables sync request processor. This option is enabled
+     * by default and is to be used with observers.
+     */
+    protected boolean syncEnabled;
 
     /**
      * The current tick
@@ -1294,6 +1300,35 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      */
     public void setSyncLimit(int syncLimit) {
         this.syncLimit = syncLimit;
+    }
+    
+    
+    /**
+     * The syncEnabled can also be set via a system property.
+     */
+    public static final String SYNC_ENABLED = "zookeeper.observer.syncEnabled";
+    
+    /**
+     * Return syncEnabled.
+     * 
+     * @return
+     */
+    public boolean getSyncEnabled() {
+        if (System.getProperty(SYNC_ENABLED) != null) {
+            LOG.info(SYNC_ENABLED + "=" + Boolean.getBoolean(SYNC_ENABLED));   
+            return Boolean.getBoolean(SYNC_ENABLED);
+        } else {        
+            return syncEnabled;
+        }
+    }
+    
+    /**
+     * Set syncEnabled.
+     * 
+     * @param syncEnabled
+     */
+    public void setSyncEnabled(boolean syncEnabled) {
+        this.syncEnabled = syncEnabled;
     }
 
     /**

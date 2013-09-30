@@ -581,6 +581,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1759. Adding ability to allow READ operations for authenticated users, 
   versus keeping ACLs wide open for READ. (Yuliya Feldman via camille)
 
+  ZOOKEEPER-1552. Enable sync request processor in Observer (thawan, fpj)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
