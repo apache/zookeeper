@@ -583,6 +583,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1552. Enable sync request processor in Observer (thawan, fpj)
 
+  ZOOKEEPER-1758. Add documentation for zookeeper.observer.syncEnabled flag
+  (thawan, fpj via thawan)
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
