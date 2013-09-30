@@ -826,6 +826,21 @@ server.3=zoo3:2888:3888</programlisting>
               to enable the auto purging. Defaults to 0.</para>
             </listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term>syncEnabled</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.observer.syncEnabled</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.4.6, 3.5.0:</emphasis>
+              The observers now log transaction and write snapshot to disk
+              by default like the participants. This reduces the recovery time
+              of the observers on restart. Set to "false" to disable this
+              feature. Default is "true"</para>
+            </listitem>
+          </varlistentry>
         </variablelist>
       </section>
 
