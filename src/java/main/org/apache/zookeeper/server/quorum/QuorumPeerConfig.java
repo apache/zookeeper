@@ -72,6 +72,7 @@ public class QuorumPeerConfig {
     protected QuorumVerifier quorumVerifier;
     protected int snapRetainCount = 3;
     protected int purgeInterval = 0;
+    protected boolean syncEnabled = true;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
     
@@ -169,6 +170,8 @@ public class QuorumPeerConfig {
                 {
                     throw new ConfigException("Unrecognised peertype: " + value);
                 }
+            } else if (key.equals( "syncEnabled" )) {
+                syncEnabled = Boolean.parseBoolean(value);
             } else if (key.equals("autopurge.snapRetainCount")) {
                 snapRetainCount = Integer.parseInt(value);
             } else if (key.equals("autopurge.purgeInterval")) {
@@ -394,6 +397,10 @@ public class QuorumPeerConfig {
 
     public int getPurgeInterval() {
         return purgeInterval;
+    }
+    
+    public boolean getSyncEnabled() {
+        return syncEnabled;
     }
 
     public QuorumVerifier getQuorumVerifier() {   
