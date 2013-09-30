@@ -135,6 +135,7 @@ IMPROVEMENTS:
   ZOOKEEPER-1615. minor typos in ZooKeeper Programmer's Guide web page
   (Evan Zacks via phunt)
 
+  ZOOKEEPER-1552. Enable sync request processor in Observer (thawan, fpj)
 
 Release 3.4.5 - 2012-09-30
 
