@@ -84,7 +84,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
     public static final String DATA_ENCRYPTION_MANAGER = "encryptionManager";
 
     private static final File defaultNodeViewersFile = new File(
-            "./config/defaultNodeVeiwers.cfg");
+            "./config/defaultNodeViewers.cfg");
     private static final File defaultConnectionFile = new File(
             "./config/defaultConnectionSettings.cfg");
 

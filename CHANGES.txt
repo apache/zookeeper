@@ -392,6 +392,9 @@ BUGFIXES:
   ZOOKEEPER-1696. Fail to run zookeeper client on Weblogic application server.
   (Jeffrey Zhong via mahadev)
 
+  ZOOKEEPER-1769. ZooInspector can't display node data/metadata/ACLs
+  (Benjamin Jaton via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
