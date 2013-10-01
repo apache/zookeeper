@@ -400,6 +400,9 @@ BUGFIXES:
   ZOOKEEPER-1655. Make jline dependency optional in maven pom
   (Thomas Weise via phunt)
 
+  ZOOKEEPER-1770. NullPointerException in SnapshotFormatter
+  (Germán Blanco via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
