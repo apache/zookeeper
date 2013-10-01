@@ -266,6 +266,8 @@ BUGFIXES:
   ZOOKEEPER-1496. Ephemeral node not getting cleared even after client has
   exited (Rakesh R via mahadev)
 
+  ZOOKEEPER-1718. Support JLine 2 (Manikumar Reddy via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1389. it would be nice if start-foreground used exec $JAVA
