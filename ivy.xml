@@ -27,8 +27,9 @@
 
   <configurations defaultconfmapping="default">
     <conf name="master"/>
-    <conf name="default"/>
+    <conf name="default" extends="optional"/>
     <conf name="test"/>
+    <conf name="optional"/> <!-- optional in generated pom -->
     <conf name="package" extends="master"/>
     <conf name="jdiff" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
@@ -45,7 +46,7 @@
   
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
     <dependency org="log4j" name="log4j" rev="1.2.16" transitive="false" conf="default"/>
-    <dependency org="jline" name="jline" rev="2.11" transitive="false" conf="default"/>
+    <dependency org="jline" name="jline" rev="2.11" transitive="false" conf="optional->default"/>
 
     <dependency org="org.jboss.netty" name="netty" conf="default" rev="3.2.5.Final">
       <artifact name="netty" type="jar" conf="default"/>

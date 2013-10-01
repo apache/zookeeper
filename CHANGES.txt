@@ -397,6 +397,9 @@ BUGFIXES:
 
   ZOOKEEPER-1718. Support JLine 2 (Manikumar Reddy via phunt)
 
+  ZOOKEEPER-1655. Make jline dependency optional in maven pom
+  (Thomas Weise via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
