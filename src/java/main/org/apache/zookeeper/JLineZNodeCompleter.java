@@ -20,12 +20,12 @@ package org.apache.zookeeper;
 
 import java.util.List;
 
-import jline.Completor;
+import jline.console.completer.Completer;
 
-class JLineZNodeCompletor implements Completor {
+class JLineZNodeCompleter implements Completer {
     private ZooKeeper zk;
 
-    public JLineZNodeCompletor(ZooKeeper zk) {
+    public JLineZNodeCompleter(ZooKeeper zk) {
         this.zk = zk;
     }
 
