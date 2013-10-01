@@ -88,8 +88,6 @@ BUGFIXES:
 
   ZOOKEEPER-1379. 'printwatches, redo, history and connect '. client commands always print usage. This is not necessary (edward via fpj)
 
-  ZOOKEEPER-1670: zookeeper should set a default value for SERVER_JVMFLAGS and CLIENT_JVMFLAGS so that memory usage is controlled (Arpit Gupta via fpj)
-
   ZOOKEEPER-1448: Node+Quota creation in transaction log can crash leader startup (Botond Hejj via fpj) 
  
   ZOOKEEPER-1664. Kerberos auth doesn't work with native platform GSS integration. (Boaz Kelmer via camille) 
