@@ -87,7 +87,11 @@ public class SnapshotFormatter {
         synchronized(n) { // keep findbugs happy
             System.out.println(name);
             printStat(n.stat);
-            System.out.println("  dataLength = " + n.data.length);
+            if (n.data != null) {
+                System.out.println("  dataLength = " + n.data.length);
+            } else {
+                System.out.println("  no data");
+            }
             children = n.getChildren();
         }
         if (children != null) {
