@@ -33,6 +33,9 @@ import org.apache.zookeeper.inspector.manager.ZooInspectorManagerImpl;
  * 
  */
 public class ZooInspector {
+	
+	public static IconResource iconResource;
+	
     /**
      * @param args
      *            - not used. The value of these parameters will have no effect
@@ -43,8 +46,9 @@ public class ZooInspector {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             JFrame frame = new JFrame("ZooInspector");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            iconResource = new IconResource();
             final ZooInspectorPanel zooInspectorPanel = new ZooInspectorPanel(
-                    new ZooInspectorManagerImpl(), new IconResource());
+                    new ZooInspectorManagerImpl(), iconResource);
             frame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosed(WindowEvent e) {
