@@ -395,6 +395,8 @@ BUGFIXES:
   ZOOKEEPER-1769. ZooInspector can't display node data/metadata/ACLs
   (Benjamin Jaton via phunt)
 
+  ZOOKEEPER-1718. Support JLine 2 (Manikumar Reddy via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

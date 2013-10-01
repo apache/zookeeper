@@ -293,9 +293,9 @@ public class ZooKeeperMain {
             boolean jlinemissing = false;
             // only use jline if it's in the classpath
             try {
-                Class<?> consoleC = Class.forName("jline.ConsoleReader");
+                Class<?> consoleC = Class.forName("jline.console.ConsoleReader");
                 Class<?> completorC =
-                    Class.forName("org.apache.zookeeper.JLineZNodeCompletor");
+                    Class.forName("org.apache.zookeeper.JLineZNodeCompleter");
 
                 System.out.println("JLine support is enabled");
 
@@ -304,8 +304,8 @@ public class ZooKeeperMain {
 
                 Object completor =
                     completorC.getConstructor(ZooKeeper.class).newInstance(zk);
-                Method addCompletor = consoleC.getMethod("addCompletor",
-                        Class.forName("jline.Completor"));
+                Method addCompletor = consoleC.getMethod("addCompleter",
+                        Class.forName("jline.console.completer.Completer"));
                 addCompletor.invoke(console, completor);
 
                 String line;
