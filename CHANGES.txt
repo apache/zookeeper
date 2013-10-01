@@ -70,6 +70,9 @@ BUGFIXES:
   ZOOKEEPER-1603. StaticHostProviderTest testUpdateClientMigrateOrNot hangs (fpj)
 
 
+  ZOOKEEPER-1770. NullPointerException in SnapshotFormatter
+  (Germán Blanco via phunt)
+
 IMPROVEMENTS:
 
 
