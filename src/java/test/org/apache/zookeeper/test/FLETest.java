@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ import org.junit.Test;
 
 public class FLETest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(FLETest.class);
+    private final int MAX_LOOP_COUNTER = 300;
     private FLETest.LEThread leThread;
 
     static class TestVote {
@@ -74,7 +76,8 @@ public class FLETest extends ZKTestCase {
     volatile long leader = -1;
     //volatile int round = 1;
     Random rand = new Random();
-
+    Set<Long> joinedThreads;
+    
     @Before
     public void setUp() throws Exception {
         count = 7;
@@ -86,6 +89,7 @@ public class FLETest extends ZKTestCase {
         tmpdir = new File[count];
         port = new int[count];
         successCount = 0;
+        joinedThreads = new HashSet<Long>();
     }
 
     @After
@@ -202,11 +206,12 @@ public class FLETest extends ZKTestCase {
                                  * joined.
                                  */
                                 successCount++;
+                                joinedThreads.add((long)i);
                                 self.notify();
                             }
                         
                             /*
-                             * I'm done so joining.
+                             * I'm done so joining. 
                              */
                             break;
                         } else {
@@ -236,12 +241,12 @@ public class FLETest extends ZKTestCase {
         boolean waitForQuorum(long id)
         throws InterruptedException {
             int loopCounter = 0;
-            while((quora.get(id).size() <= count/2) && (loopCounter < 50)){
+            while((quora.get(id).size() <= count/2) && (loopCounter < MAX_LOOP_COUNTER)){
                 Thread.sleep(100);
                 loopCounter++;
             }
             
-            if((loopCounter >= 50) && (quora.get(id).size() <= count/2)){
+            if((loopCounter >= MAX_LOOP_COUNTER) && (quora.get(id).size() <= count/2)){
                 return false;
             } else {
                 return true;
@@ -322,7 +327,9 @@ public class FLETest extends ZKTestCase {
 
         int waitCounter = 0;
         synchronized(this){
-            while(((successCount <= count/2) || (leader == -1)) && (waitCounter < 50)){
+            while(((successCount <= count/2) || (leader == -1))
+                && (waitCounter < MAX_LOOP_COUNTER))
+            {
                 this.wait(200);
                 waitCounter++;
             }
@@ -349,9 +356,9 @@ public class FLETest extends ZKTestCase {
        }
 
        /*
-        * The leader also has to join.
+        * I'm done so joining.
         */
-       if(threads.get((int) leader).isAlive()){
+       if(!joinedThreads.contains(leader)){
            Assert.fail("Leader hasn't joined: " + leader);
        }
     }
