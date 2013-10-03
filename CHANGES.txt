@@ -406,6 +406,9 @@ BUGFIXES:
   ZOOKEEPER-1733. FLETest#testLE is flaky on windows boxes
   (Jeffrey Zhong via phunt)
 
+  ZOOKEEPER-1773. incorrect reference to jline version/lib in docs
+  (Manikumar Reddy via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

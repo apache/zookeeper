@@ -198,7 +198,7 @@ server.3=zoo3:2888:3888</programlisting>
           <para>If your configuration file is set up, you can start a
           ZooKeeper server:</para>
 
-          <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf \
+          <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.16.jar:conf \
               org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
           </computeroutput></para>
           
@@ -224,7 +224,7 @@ server.3=zoo3:2888:3888</programlisting>
               <para>In Java, you can run the following command to execute
               simple operations:</para>
 
-              <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf:src/java/lib/jline-0.9.94.jar \
+              <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.16.jar:conf:src/java/lib/jline-2.11.jar \
       org.apache.zookeeper.ZooKeeperMain -server 127.0.0.1:2181</computeroutput></para>
             </listitem>
 
@@ -481,7 +481,7 @@ server.3=zoo3:2888:3888</programlisting>
         can be run as a cron job on the ZooKeeper server machines to
         clean up the logs daily.</para>
 
-        <programlisting> java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</programlisting>
+        <programlisting> java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.16.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</programlisting>
 
         <para>Automatic purging of the snapshots and corresponding
         transaction logs was introduced in version 3.4.0 and can be
