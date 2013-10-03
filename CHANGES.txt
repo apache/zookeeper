@@ -117,6 +117,8 @@ BUGFIXES:
   ZOOKEEPER-1770. NullPointerException in SnapshotFormatter
   (Germán Blanco via phunt)
 
+  ZOOKEEPER-732. Improper translation of error into Python exception (Andrei Savu, Lei Zhang, fpj via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
