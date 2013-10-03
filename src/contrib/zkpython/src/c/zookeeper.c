@@ -52,6 +52,8 @@ PyObject *err_to_exception(int errcode) {
   switch (errcode) {
   case ZSYSTEMERROR:
     return SystemErrorException;
+  case ZINVALIDSTATE:
+    return InvalidStateException;
   case ZRUNTIMEINCONSISTENCY:
     return RuntimeInconsistencyException;
   case ZDATAINCONSISTENCY:
@@ -66,8 +68,6 @@ PyObject *err_to_exception(int errcode) {
     return OperationTimeoutException;
   case ZBADARGUMENTS:
     return BadArgumentsException;
-  case ZINVALIDSTATE:
-    return InvalidStateException;
   case ZAPIERROR:
     return ApiErrorException;
   case ZNONODE:
@@ -92,6 +92,10 @@ PyObject *err_to_exception(int errcode) {
     return InvalidCallbackException;
   case ZSESSIONMOVED:
     return SessionMovedException;
+  case ZCLOSING:
+    return ClosingException;
+  case ZNOTHING:
+    return NothingException;
   case ZOK:
   default:
     return NULL;
