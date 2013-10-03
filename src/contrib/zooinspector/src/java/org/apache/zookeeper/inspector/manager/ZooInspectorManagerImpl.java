@@ -82,6 +82,15 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
      * file
      */
     public static final String DATA_ENCRYPTION_MANAGER = "encryptionManager";
+    /**
+     * The key used for the authentication scheme in the connection properties file
+     */
+    public static final String AUTH_SCHEME_KEY = "authScheme";
+    /**
+     * The key used for the authentication data in the connection properties file
+     */
+    public static final String AUTH_DATA_KEY = "authData";
+
 
     private static final File defaultNodeViewersFile = new File(
             "./config/defaultNodeViewers.cfg");
@@ -98,6 +107,8 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
     private String defaultEncryptionManager;
     private String defaultTimeout;
     private String defaultHosts;
+    private String defaultAuthScheme;
+    private String defaultAuthValue;
 
     /**
      * @throws IOException
@@ -124,6 +135,11 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
                         .getProperty(SESSION_TIMEOUT);
                 String encryptionManager = connectionProps
                         .getProperty(DATA_ENCRYPTION_MANAGER);
+                String authScheme = connectionProps
+                        .getProperty(AUTH_SCHEME_KEY);
+                String authData = connectionProps
+                        .getProperty(AUTH_DATA_KEY);
+
                 if (connectString == null || sessionTimeout == null) {
                     throw new IllegalArgumentException(
                             "Both connect string and session timeout are required.");
@@ -153,6 +169,9 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
                         }
                     }
                 });
+                if (authData != null && authData.length() > 0){
+                    this.zooKeeper.addAuthInfo(authScheme, authData.getBytes());
+                }
                 ((ZooKeeperRetry) this.zooKeeper).setRetryLimit(10);
                 connected = ((ZooKeeperRetry) this.zooKeeper).testConnection();
                 return connected;
@@ -571,10 +590,16 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
                 .asList(new String[] { defaultTimeout }));
         template.put(DATA_ENCRYPTION_MANAGER, Arrays
                 .asList(new String[] { defaultEncryptionManager }));
+        template.put(AUTH_SCHEME_KEY, Arrays
+                .asList(new String[] { defaultAuthScheme }));
+        template.put(AUTH_DATA_KEY, Arrays
+                .asList(new String[] { defaultAuthValue }));
         Map<String, String> labels = new LinkedHashMap<String, String>();
         labels.put(CONNECT_STRING, "Connect String");
         labels.put(SESSION_TIMEOUT, "Session Timeout");
         labels.put(DATA_ENCRYPTION_MANAGER, "Data Encryption Manager");
+        labels.put(AUTH_SCHEME_KEY, "Authentication Scheme");
+        labels.put(AUTH_DATA_KEY, "Authentication Data");
         return new Pair<Map<String, List<String>>, Map<String, String>>(
                 template, labels);
     }
@@ -738,10 +763,16 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
                     : props.getProperty(SESSION_TIMEOUT);
             defaultHosts = props.getProperty(CONNECT_STRING) == null ? "localhost:2181"
                     : props.getProperty(CONNECT_STRING);
+            defaultAuthScheme = props.getProperty(AUTH_SCHEME_KEY) == null ? ""
+                    : props.getProperty(AUTH_SCHEME_KEY);
+            defaultAuthValue = props.getProperty(AUTH_DATA_KEY) == null ? ""
+                    : props.getProperty(AUTH_DATA_KEY);
         } else {
             defaultEncryptionManager = "org.apache.zookeeper.inspector.encryption.BasicDataEncryptionManager";
             defaultTimeout = "5000";
             defaultHosts = "localhost:2181";
+            defaultAuthScheme = "";
+            defaultAuthValue = "";
         }
     }
 
