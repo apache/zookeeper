@@ -368,9 +368,13 @@ BUGFIXES:
 
   ZOOKEEPER-1713. wrong time calculation in zkfuse.cc (german via fpj)
  
-  ZOOKEEPER-1379. 'printwatches, redo, history and connect '. client commands always print usage. This is not necessary (edward via fpj)
+  ZOOKEEPER-1379. 'printwatches, redo, history and
+  connect '. client commands always print usage. This
+  is not necessary (edward via fpj)
 
-  ZOOKEEPER-1670. zookeeper should set a default value for SERVER_JVMFLAGS and CLIENT_JVMFLAGS so that memory usage is controlled (Arpit Gupta via fpj)
+  ZOOKEEPER-1670. zookeeper should set a default value
+  for SERVER_JVMFLAGS and CLIENT_JVMFLAGS so that memory
+  usage is controlled (Arpit Gupta via fpj)
 
   ZOOKEEPER-1448. Node+Quota creation in transaction log can crash leader startup (Botond Hejj via fpj)
   
@@ -381,13 +385,18 @@ BUGFIXES:
   ZOOKEEPER-1751. ClientCnxn#run could miss the second ping or connection get
   dropped before a ping. (Jeffrey Zhong via mahadev)
 
-  ZOOKEEPER-1657. Increased CPU usage by unnecessary SASL checks (Philip K. Warren via fpj)
+  ZOOKEEPER-1657. Increased CPU usage by unnecessary SASL
+   checks (Philip K. Warren via fpj)
 
   ZOOKEEPER-1753. ClientCnxn is not properly releasing the resources, 
                   which are used to ping RwServer (Rakesh R via fpj)
 
-  ZOOKEEPER-1096. Leader communication should listen on specified IP, not wildcard address (Jared Cantwell, German Blanco via fpj)
-  ZOOKEEPER-87. Follower does not shut itself down if its too far behind the leader. (German Blanco via fpj)
+  ZOOKEEPER-1096. Leader communication should listen on 
+  specified IP, not wildcard address (Jared Cantwell, 
+  German Blanco via fpj)
+
+  ZOOKEEPER-87. Follower does not shut itself down if its
+   too far behind the leader. (German Blanco via fpj)
 
   ZOOKEEPER-1696. Fail to run zookeeper client on Weblogic application server.
   (Jeffrey Zhong via mahadev)
@@ -408,6 +417,9 @@ BUGFIXES:
 
   ZOOKEEPER-1773. incorrect reference to jline version/lib in docs
   (Manikumar Reddy via phunt)
+
+  ZOOKEEPER-732. Improper translation of error into Python exception
+  (Andrei Savu, Lei Zhang, fpj via fpj)
 
 IMPROVEMENTS:
 
