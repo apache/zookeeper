@@ -153,7 +153,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     synchronized public void setSessionClosing(long sessionId) {
         if (LOG.isTraceEnabled()) {
-            LOG.info("Session closing: 0x" + Long.toHexString(sessionId));
+            LOG.trace("Session closing: 0x" + Long.toHexString(sessionId));
         }
         SessionImpl s = sessionsById.get(sessionId);
         if (s == null) {

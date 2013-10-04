@@ -421,6 +421,9 @@ BUGFIXES:
   ZOOKEEPER-732. Improper translation of error into Python exception
   (Andrei Savu, Lei Zhang, fpj via fpj)
 
+  ZOOKEEPER-1766 Consistent log severity level guards and statements
+  (Jackie Chang via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

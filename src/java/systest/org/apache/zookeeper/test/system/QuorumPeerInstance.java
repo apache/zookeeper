@@ -88,7 +88,7 @@ class QuorumPeerInstance implements Instance {
             // us which machine we are
             serverId = Integer.parseInt(parts[0]);
             if (LOG.isDebugEnabled()) {
-                LOG.info("Setting up server " + serverId);
+                LOG.debug("Setting up server " + serverId);
             }
             if (parts.length > 1 && parts[1].equals("false")) {
                 System.setProperty("zookeeper.leaderServes", "no");
