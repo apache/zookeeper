@@ -55,7 +55,7 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.MessageEvent;
 
 public class NettyServerCnxn extends ServerCnxn {
-    Logger LOG = LoggerFactory.getLogger(NettyServerCnxn.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxn.class);
     Channel channel;
     ChannelBuffer queuedBuffer;
     volatile boolean throttled;

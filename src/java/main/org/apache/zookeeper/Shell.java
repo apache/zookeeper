@@ -49,7 +49,7 @@ import org.apache.log4j.Logger;
  */
 abstract public class Shell {
   
-  Logger LOG = Logger.getLogger(Shell.class);
+  private static final Logger LOG = Logger.getLogger(Shell.class);
   
   /** a Unix command to get the current user's name */
   public final static String USER_NAME_COMMAND = "whoami";

@@ -58,7 +58,7 @@ import org.apache.zookeeper.server.util.OSMXBean;
  * client, but only one thread doing the communication.
  */
 public class NIOServerCnxn extends ServerCnxn {
-    static final Logger LOG = LoggerFactory.getLogger(NIOServerCnxn.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NIOServerCnxn.class);
 
     private final NIOServerCnxnFactory factory;
 

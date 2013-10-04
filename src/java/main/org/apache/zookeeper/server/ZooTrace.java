@@ -58,7 +58,7 @@ public class ZooTrace {
 
     public static void setTextTraceLevel(long mask) {
         traceMask = mask;
-        Logger LOG = LoggerFactory.getLogger(ZooTrace.class);
+        final Logger LOG = LoggerFactory.getLogger(ZooTrace.class);
         LOG.info("Set text trace mask to 0x" + Long.toHexString(mask));
     }
 

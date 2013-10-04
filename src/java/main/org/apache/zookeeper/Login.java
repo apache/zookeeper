@@ -41,7 +41,7 @@ import java.util.Random;
 import java.util.Set;
 
 public class Login {
-    Logger LOG = Logger.getLogger(Login.class);
+    private static final Logger LOG = Logger.getLogger(Login.class);
     public CallbackHandler callbackHandler;
 
     // LoginThread will sleep until 80% of time from last refresh to

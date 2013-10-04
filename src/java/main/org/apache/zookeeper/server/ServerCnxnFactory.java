@@ -46,7 +46,7 @@ public abstract class ServerCnxnFactory {
         public void processPacket(ByteBuffer packet, ServerCnxn src);
     }
     
-    Logger LOG = LoggerFactory.getLogger(ServerCnxnFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ServerCnxnFactory.class);
 
     /**
      * The buffer will cause the connection to be close when we do a send.

@@ -421,8 +421,10 @@ BUGFIXES:
   ZOOKEEPER-732. Improper translation of error into Python exception
   (Andrei Savu, Lei Zhang, fpj via fpj)
 
-  ZOOKEEPER-1766 Consistent log severity level guards and statements
+  ZOOKEEPER-1766. Consistent log severity level guards and statements
   (Jackie Chang via michim)
+
+  ZOOKEEPER-1778. Use static final Logger objects (Rakesh R via michim)
 
 IMPROVEMENTS:
 
