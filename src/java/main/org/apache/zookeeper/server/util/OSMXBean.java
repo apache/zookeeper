@@ -39,7 +39,7 @@ import java.lang.reflect.Method;
  */
 public class OSMXBean
 {
-    static final Logger LOG = LoggerFactory.getLogger(OSMXBean.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OSMXBean.class);
 
     private OperatingSystemMXBean osMbean;
 
