@@ -429,6 +429,9 @@ BUGFIXES:
   ZOOKEEPER-1551. Observers ignore txns that come after snapshot and UPTODATE 
   (thawan, fpj via thawan)
 
+  ZOOKEEPER-1781. ZooKeeper Server fails if snapCount is set to 1
+  (Takashi Ohnishi via phunt, breed)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
