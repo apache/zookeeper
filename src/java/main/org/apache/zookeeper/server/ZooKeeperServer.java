@@ -689,7 +689,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static int getSnapCount() {
         String sc = System.getProperty("zookeeper.snapCount");
         try {
-            return Integer.parseInt(sc);
+            int snapCount = Integer.parseInt(sc);
+
+            // snapCount must be 2 or more. See org.apache.zookeeper.server.SyncRequestProcessor
+            if( snapCount < 2 ) {
+                LOG.warn("SnapCount should be 2 or more. Now, snapCount is reset to 2");
+                snapCount = 2;
+            }
+            return snapCount;
         } catch (Exception e) {
             return 100000;
         }

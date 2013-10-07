@@ -1200,6 +1200,20 @@ server.3=zoo3:2888:3888</pre>
               be triggered. Set to a positive integer (1 and above)
               to enable the auto purging. Defaults to 0.</p>
 </dd>
+
+          
+<dt>
+<term>syncEnabled</term>
+</dt>
+<dd>
+<p>(Java system property: <strong>zookeeper.observer.syncEnabled</strong>)</p>
+<p>
+<strong>New in 3.4.6, 3.5.0:</strong>
+              The observers now log transaction and write snapshot to disk
+              by default like the participants. This reduces the recovery time
+              of the observers on restart. Set to "false" to disable this
+              feature. Default is "true"</p>
+</dd>
         
 </dl>
 <a name="sc_clusterOptions"></a>
@@ -1458,6 +1472,20 @@ server.3=zoo3:2888:3888</pre>
 <p>Skips ACL checks. This results in a boost in throughput,
               but opens up full access to the data tree to everyone.</p>
 </dd>
+
+          
+<dt>
+<term>quorumListenOnAllIPs</term>
+</dt>
+<dd>
+<p>When set to true the ZooKeeper server will listen  
+              for connections from its peers on all available IP addresses,
+              and not only the address configured in the server list of the
+              configuration file. It affects the connections handling the 
+              ZAB protocol and the Fast Leader Election protocol. Default
+              value is <strong>false</strong>.</p>
+</dd>
+
         
 </dl>
 <a name="Communication+using+the+Netty+framework"></a>
