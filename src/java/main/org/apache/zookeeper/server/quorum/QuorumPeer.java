@@ -247,7 +247,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * Enables/Disables sync request processor. This option is enabled
      * by default and is to be used with observers.
      */
-    protected boolean syncEnabled;
+    protected boolean syncEnabled = true;
 
     /**
      * The current tick
