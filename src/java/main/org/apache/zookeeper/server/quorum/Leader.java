@@ -1110,13 +1110,16 @@ public class Leader {
                         .getZxid(), null, null);
                 handler.queuePacket(qp);
             }
-            List<Long>zxids = new ArrayList<Long>(outstandingProposals.keySet());
-            Collections.sort(zxids);
-            for (Long zxid: zxids) {
-                if (zxid <= lastSeenZxid) {
-                    continue;
+            // Only participant need to get outstanding proposals
+            if (handler.getLearnerType() == LearnerType.PARTICIPANT) {
+                List<Long>zxids = new ArrayList<Long>(outstandingProposals.keySet());
+                Collections.sort(zxids);
+                for (Long zxid: zxids) {
+                    if (zxid <= lastSeenZxid) {
+                        continue;
+                    }
+                    handler.queuePacket(outstandingProposals.get(zxid).packet);
                 }
-                handler.queuePacket(outstandingProposals.get(zxid).packet);
             }
         }
         if (handler.getLearnerType() == LearnerType.PARTICIPANT) {
