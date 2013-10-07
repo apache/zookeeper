@@ -1074,13 +1074,10 @@ server.3=zoo3:2888:3888</pre>
 <dd>
 <p>(Java system property: <strong>zookeeper.snapCount</strong>)</p>
 <p>ZooKeeper logs transactions to a transaction
-              log. SnapCount defines a timing when a snapshot is started
-              and a new transaction logfile is created. A random number
-              between snapCount/2 and snapCount-1 is chosen and when the
-              number of transactions becomes bigger than it, ZooKeeper
-              server starts a snapshot. This prevents that all the ZooKeeper
-              servers in the ensemble start a snapshot at the same time.
-              The default snapCount is 100,000.</p>
+              log. After snapCount transactions are written to a log
+              file a snapshot is started and a new transaction log
+              file is created. The default snapCount is
+              100,000.</p>
 </dd>
 
           
