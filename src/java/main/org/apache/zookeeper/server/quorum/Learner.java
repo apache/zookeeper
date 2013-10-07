@@ -418,25 +418,42 @@ public class Learner {
                     }
                     break;
                 case Leader.INFORM:
-                case Leader.INFORMANDACTIVATE: 
-                    TxnHeader hdr = new TxnHeader();
-                    Record txn;
+                case Leader.INFORMANDACTIVATE:
+                    PacketInFlight packet = new PacketInFlight();
+                    packet.hdr = new TxnHeader();
+
                     if (qp.getType() == Leader.COMMITANDACTIVATE) {
-                       ByteBuffer buffer = ByteBuffer.wrap(qp.getData());    
-                       long suggestedLeaderId = buffer.getLong();                      
+                        ByteBuffer buffer = ByteBuffer.wrap(qp.getData());
+                        long suggestedLeaderId = buffer.getLong();
                         byte[] remainingdata = new byte[buffer.remaining()];
                         buffer.get(remainingdata);
-                        txn = SerializeUtils.deserializeTxn(remainingdata, hdr);
-                       QuorumVerifier qv = self.configFromString(new String(((SetDataTxn)txn).getData()));
-                       boolean majorChange =
-                               self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
+                        packet.rec = SerializeUtils.deserializeTxn(remainingdata, packet.hdr);
+                        QuorumVerifier qv = self.configFromString(new String(((SetDataTxn)packet.rec).getData()));
+                        boolean majorChange =
+                                self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
                         if (majorChange) {
-                           throw new Exception("changes proposed in reconfig");
+                            throw new Exception("changes proposed in reconfig");
                         }
                     } else {
-                       txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
+                        packet.rec = SerializeUtils.deserializeTxn(qp.getData(), packet.hdr);
+                        // Log warning message if txn comes out-of-order
+                        if (packet.hdr.getZxid() != lastQueued + 1) {
+                            LOG.warn("Got zxid 0x"
+                                    + Long.toHexString(packet.hdr.getZxid())
+                                    + " expected 0x"
+                                    + Long.toHexString(lastQueued + 1));
+                        }
+                        lastQueued = packet.hdr.getZxid();
                     }
-                    zk.processTxn(hdr, txn);
+
+                    if (!snapshotTaken) {
+                        // Apply to db directly if we haven't taken the snapshot
+                        zk.processTxn(packet.hdr, packet.rec);
+                    } else {
+                        packetsNotCommitted.add(packet);
+                        packetsCommitted.add(qp.getZxid());
+                    }
+
                     break;                
                 case Leader.UPTODATE:
                     LOG.info("Learner received UPTODATE message");                                      
@@ -486,6 +503,30 @@ public class Learner {
             for(Long zxid: packetsCommitted) {
                 fzk.commit(zxid);
             }
+        } else if (zk instanceof ObserverZooKeeperServer) {
+            // Similar to follower, we need to log requests between the snapshot
+            // and UPTODATE
+            ObserverZooKeeperServer ozk = (ObserverZooKeeperServer) zk;
+            for (PacketInFlight p : packetsNotCommitted) {
+                Long zxid = packetsCommitted.peekFirst();
+                if (p.hdr.getZxid() != zxid) {
+                    // log warning message if there is no matching commit
+                    // old leader send outstanding proposal to observer
+                    LOG.warn("Committing " + Long.toHexString(zxid)
+                            + ", but next proposal is "
+                            + Long.toHexString(p.hdr.getZxid()));
+                    continue;
+                }
+                packetsCommitted.remove();
+                Request request = new Request(null, p.hdr.getClientId(),
+                        p.hdr.getCxid(), p.hdr.getType(), null, null);
+                request.setTxn(p.rec);
+                request.setHdr(p.hdr);
+                ozk.commitRequest(request);
+            }
+        } else {
+            // New server type need to handle in-flight packets
+            throw new UnsupportedOperationException("Unknown server type");
         }
     }
     
