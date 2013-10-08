@@ -149,6 +149,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1758. Add documentation for zookeeper.observer.syncEnabled flag 
   (thawan, fpj via thawan)
 
+  ZOOKEEPER-1771. ZooInspector authentication (Benjamin Jaton via phunt)
+
 Release 3.4.5 - 2012-09-30
 
 Backward compatible changes:
