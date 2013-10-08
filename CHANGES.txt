@@ -432,6 +432,9 @@ BUGFIXES:
   ZOOKEEPER-1781. ZooKeeper Server fails if snapCount is set to 1
   (Takashi Ohnishi via phunt, breed)
 
+  ZOOKEEPER-1774. QuorumPeerMainTest fails consistently with
+  "complains about host" assertion failure (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

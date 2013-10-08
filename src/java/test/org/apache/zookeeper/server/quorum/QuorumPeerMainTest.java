@@ -401,7 +401,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             boolean isup =
                     ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                    5000);
+                    30000);
 
             Assert.assertFalse("Server never came up", isup);
 
