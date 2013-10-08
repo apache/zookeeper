@@ -73,6 +73,9 @@ BUGFIXES:
   ZOOKEEPER-1770. NullPointerException in SnapshotFormatter
   (Germán Blanco via phunt)
 
+  ZOOKEEPER-1774. QuorumPeerMainTest fails consistently with
+  "complains about host" assertion failure (phunt)
+
 IMPROVEMENTS:
 
 
