@@ -34,7 +34,7 @@ class TestBase(unittest.TestCase):
             f = open(logfile,"w")
             zookeeper.set_log_stream(f)
         except IOError:
-            print "Couldn't open " + logfile + " for writing"
+            print("Couldn't open " + logfile + " for writing")
 
 
     def setUp(self):
