@@ -16,7 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest, threading, re
+import unittest, threading, re, sys
+if sys.version_info < (3,):
+	range = xrange
 
 import zookeeper, zktestbase
 ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
@@ -71,7 +73,7 @@ class ConnectionTest(zktestbase.TestBase):
             cv.release()
 
         cv.acquire()
-        handles = [ zookeeper.init(self.host) for i in xrange(10) ]
+        handles = [ zookeeper.init(self.host) for i in range(10) ]
         ret = zookeeper.init(self.host, connection_watcher)
         cv.wait(15.0)
         cv.release()
@@ -93,7 +95,7 @@ class ConnectionTest(zktestbase.TestBase):
         """
         # We'd like to do more, but currently the C client doesn't
         # work with > 83 handles (fails to create a pipe) on MacOS 10.5.8
-        handles = [ zookeeper.init(self.host) for i in xrange(63) ]
+        handles = [ zookeeper.init(self.host) for i in range(9) ]
 
         cv = threading.Condition()
         self.connected = False
