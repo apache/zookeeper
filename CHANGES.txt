@@ -125,6 +125,9 @@ BUGFIXES:
   ZOOKEEPER-1774. QuorumPeerMainTest fails consistently with
   "complains about host" assertion failure (phunt)
 
+  ZOOKEEPER-877. zkpython does not work with python3.1
+  (Daniel Enman via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
