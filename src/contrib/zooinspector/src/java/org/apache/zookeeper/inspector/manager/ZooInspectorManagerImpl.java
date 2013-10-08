@@ -732,7 +732,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
                 try {
                     while (buff.ready()) {
                         String line = buff.readLine();
-                        if (line != null && line.length() > 0) {
+                        if (line != null && line.length() > 0 && !line.startsWith("#")) {
                             result.add(line);
                         }
                     }
