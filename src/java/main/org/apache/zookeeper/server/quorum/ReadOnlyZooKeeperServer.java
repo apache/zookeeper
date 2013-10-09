@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.PrintWriter;
+
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
@@ -36,11 +38,16 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * The very first processor in the chain of request processors is a
  * ReadOnlyRequestProcessor which drops state-changing requests.
  */
-public class ReadOnlyZooKeeperServer extends QuorumZooKeeperServer {
+public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
 
+    protected final QuorumPeer self;
     private volatile boolean shutdown = false;
-    ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, zkDb, self);
+
+    ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self,
+                            ZKDatabase zkDb) {
+        super(logFactory, self.tickTime, self.minSessionTimeout,
+              self.maxSessionTimeout, zkDb);
+        this.self = self;
     }
 
     @Override
@@ -141,4 +148,21 @@ public class ReadOnlyZooKeeperServer extends QuorumZooKeeperServer {
         super.shutdown();
     }
 
+    @Override
+    public void dumpConf(PrintWriter pwriter) {
+        super.dumpConf(pwriter);
+
+        pwriter.print("initLimit=");
+        pwriter.println(self.getInitLimit());
+        pwriter.print("syncLimit=");
+        pwriter.println(self.getSyncLimit());
+        pwriter.print("electionAlg=");
+        pwriter.println(self.getElectionType());
+        pwriter.print("electionPort=");
+        pwriter.println(self.getElectionAddress().getPort());
+        pwriter.print("quorumPort=");
+        pwriter.println(self.getQuorumAddress().getPort());
+        pwriter.print("peerType=");
+        pwriter.println(self.getLearnerType().ordinal());
+    }
 }

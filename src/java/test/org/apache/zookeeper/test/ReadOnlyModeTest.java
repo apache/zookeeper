@@ -123,6 +123,12 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         watcher.reset();
         qu.shutdown(2);
+        zk.close();
+
+        // Re-connect the client (in case we were connected to the shut down
+        // server and the local session was not persisted).
+        zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
+                watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
         // read operation during r/o mode
@@ -140,6 +146,13 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.start(2);
         Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(
                 "127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT));
+        zk.close();
+        watcher.reset();
+
+        // Re-connect the client (in case we were connected to the shut down
+        // server and the local session was not persisted).
+        zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
+                watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         zk.setData(node, "We're in the quorum now".getBytes(), -1);
 
@@ -175,6 +188,15 @@ public class ReadOnlyModeTest extends ZKTestCase {
         // kill peer and wait no more than 5 seconds for read-only server
         // to be started (which should take one tickTime (2 seconds))
         qu.shutdown(2);
+
+        // Re-connect the client (in case we were connected to the shut down
+        // server and the local session was not persisted).
+        zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
+                new Watcher() {
+                    public void process(WatchedEvent event) {
+                        states.add(event.getState());
+                    }
+                }, true);
         long start = System.currentTimeMillis();
         while (!(zk.getState() == States.CONNECTEDREADONLY)) {
             Thread.sleep(200);
@@ -228,7 +250,6 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @SuppressWarnings("deprecation")
     @Test(timeout = 90000)
     public void testSeekForRwServer() throws Exception {
-
         // setup the logger to capture all logs
         Layout layout = Logger.getRootLogger().getAppender("CONSOLE")
                 .getLayout();

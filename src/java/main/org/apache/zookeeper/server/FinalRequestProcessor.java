@@ -96,6 +96,11 @@ public class FinalRequestProcessor implements RequestProcessor {
         }
         ProcessTxnResult rc = null;
         synchronized (zks.outstandingChanges) {
+            // Need to process local session requests
+            rc = zks.processTxn(request);
+
+            // request.hdr is set for write requests, which are the only ones
+            // that add to outstandingChanges.
             if (request.getHdr() != null) {
                 TxnHeader hdr = request.getHdr();
                 Record txn = request.getTxn();
@@ -111,16 +116,15 @@ public class FinalRequestProcessor implements RequestProcessor {
                         zks.outstandingChangesForPath.remove(cr.path);
                     }
                 }
-
-                rc = zks.processTxn(hdr, txn);
             }
+
             // do not add non quorum packets to the queue.
-            if (Request.isQuorum(request.type)) {
+            if (request.isQuorum()) {
                 zks.getZKDatabase().addCommittedProposal(request);
             }
         }
 
-        if (request.getHdr() != null && request.getHdr().getType() == OpCode.closeSession) {
+        if (request.type == OpCode.closeSession) {
             ServerCnxnFactory scxn = zks.getServerCnxnFactory();
             // this might be possible since
             // we might just be playing diffs from the leader
@@ -145,8 +149,19 @@ public class FinalRequestProcessor implements RequestProcessor {
         Record rsp = null;
         try {
             if (request.getHdr() != null && request.getHdr().getType() == OpCode.error) {
-                throw KeeperException.create(KeeperException.Code.get((
-                        (ErrorTxn) request.getTxn()).getErr()));
+                /*
+                 * When local session upgrading is disabled, leader will
+                 * reject the ephemeral node creation due to session expire.
+                 * However, if this is the follower that issue the request,
+                 * it will have the correct error code, so we should use that
+                 * and report to user
+                 */
+                if (request.getException() != null) {
+                    throw request.getException();
+                } else {
+                    throw KeeperException.create(KeeperException.Code
+                            .get(((ErrorTxn) request.getTxn()).getErr()));
+                }
             }
 
             KeeperException ke = request.getException();

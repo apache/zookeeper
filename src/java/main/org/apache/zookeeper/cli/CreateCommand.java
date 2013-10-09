@@ -32,16 +32,16 @@ public class CreateCommand extends CliCommand {
     private static Options options = new Options();
     private String[] args;
     private CommandLine cl;
-    
+
     {
         options.addOption(new Option("e", false, "ephemeral"));
         options.addOption(new Option("s", false, "sequential"));
     }
-    
+
     public CreateCommand() {
         super("create", "[-s] [-e] path [data] [acl]");
     }
-    
+
 
     @Override
     public CliCommand parse(String[] cmdArgs) throws ParseException {
@@ -54,7 +54,7 @@ public class CreateCommand extends CliCommand {
         return this;
     }
 
-    
+
     @Override
     public boolean exec() throws KeeperException, InterruptedException {
         CreateMode flags = CreateMode.PERSISTENT;
@@ -74,8 +74,13 @@ public class CreateCommand extends CliCommand {
         if (args.length > 3) {
             acl = AclParser.parse(args[3]);
         }
-        String newPath = zk.create(path, data, acl, flags);
-        err.println("Created " + newPath);
+        try {
+            String newPath = zk.create(path, data, acl, flags);
+            err.println("Created " + newPath);
+        } catch(KeeperException.EphemeralOnLocalSessionException e) {
+            err.println("Unable to create ephemeral node on a local session");
+            return false;
+        }
         return true;
     }
 }

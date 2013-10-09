@@ -134,11 +134,12 @@ public class CommitProcessor extends Thread implements RequestProcessor {
             case OpCode.reconfig:
             case OpCode.multi:
             case OpCode.setACL:
-            case OpCode.createSession:
-            case OpCode.closeSession:
                 return true;
             case OpCode.sync:
-                return matchSyncs;
+                return matchSyncs;    
+            case OpCode.createSession:
+            case OpCode.closeSession:
+                return !request.isLocalSession();
             default:
                 return false;
         }

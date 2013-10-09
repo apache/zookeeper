@@ -18,19 +18,23 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Map;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.server.DataTreeBean;
+import org.apache.zookeeper.server.quorum.LearnerSessionTracker;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
- * Parent class for all ZooKeeperServers for Learners 
+ * Parent class for all ZooKeeperServers for Learners
  */
-public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {    
+public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
+
     public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
             ZKDatabase zkDb, QuorumPeer self)
@@ -42,47 +46,50 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     /**
      * Abstract method to return the learner associated with this server.
      * Since the Learner may change under our feet (when QuorumPeer reassigns
-     * it) we can't simply take a reference here. Instead, we need the 
-     * subclasses to implement this.     
+     * it) we can't simply take a reference here. Instead, we need the
+     * subclasses to implement this.
      */
-    abstract public Learner getLearner();        
-    
+    abstract public Learner getLearner();
+
     /**
      * Returns the current state of the session tracker. This is only currently
      * used by a Learner to build a ping response packet.
-     * 
+     *
      */
-    protected HashMap<Long, Integer> getTouchSnapshot() {
+    protected Map<Long, Integer> getTouchSnapshot() {
         if (sessionTracker != null) {
             return ((LearnerSessionTracker) sessionTracker).snapshot();
         }
-        return new HashMap<Long, Integer>();
+        Map<Long, Integer> map = Collections.emptyMap();
+        return map;
     }
-    
+
     /**
      * Returns the id of the associated QuorumPeer, which will do for a unique
-     * id of this server. 
+     * id of this server.
      */
     @Override
     public long getServerId() {
         return self.getId();
-    }    
-    
+    }
+
     @Override
     public void createSessionTracker() {
-        sessionTracker = new LearnerSessionTracker(this, getZKDatabase().getSessionWithTimeOuts(),
-                self.getId());
+        sessionTracker = new LearnerSessionTracker(
+                this, getZKDatabase().getSessionWithTimeOuts(),
+                this.tickTime, self.getId(), self.areLocalSessionsEnabled());
     }
-    
-    @Override
-    protected void startSessionTracker() {}
-    
+
     @Override
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,
             int sessionTimeout) throws IOException {
-        getLearner().validateSession(cnxn, sessionId, sessionTimeout);
+        if (upgradeableSessionTracker.isLocalSession(sessionId)) {
+            super.revalidateSession(cnxn, sessionId, sessionTimeout);
+        } else {
+            getLearner().validateSession(cnxn, sessionId, sessionTimeout);
+        }
     }
-    
+
     @Override
     protected void registerJMX() {
         // register with JMX

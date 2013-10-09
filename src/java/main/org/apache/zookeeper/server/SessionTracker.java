@@ -44,7 +44,22 @@ public interface SessionTracker {
 
     long createSession(int sessionTimeout);
 
-    void addSession(long id, int to);
+    /**
+     * Add a global session to those being tracked.
+     * @param id sessionId
+     * @param to sessionTimeout
+     * @return whether the session was newly added (if false, already existed)
+     */
+    boolean addGlobalSession(long id, int to);
+
+    /**
+     * Add a session to those being tracked. The session is added as a local
+     * session if they are enabled, otherwise as global.
+     * @param id sessionId
+     * @param to sessionTimeout
+     * @return whether the session was newly added (if false, already existed)
+     */
+    boolean addSession(long id, int to);
 
     /**
      * @param sessionId
@@ -60,7 +75,7 @@ public interface SessionTracker {
     void setSessionClosing(long sessionId);
 
     /**
-     * 
+     *
      */
     void shutdown();
 
@@ -69,7 +84,39 @@ public interface SessionTracker {
      */
     void removeSession(long sessionId);
 
-    void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, SessionMovedException;
+    /**
+     * @param sessionId
+     * @return whether or not the SessionTracker is aware of this session
+     */
+    boolean isTrackingSession(long sessionId);
+
+    /**
+     * Checks whether the SessionTracker is aware of this session, the session
+     * is still active, and the owner matches. If the owner wasn't previously
+     * set, this sets the owner of the session.
+     *
+     * UnknownSessionException should never been thrown to the client. It is
+     * only used internally to deal with possible local session from other
+     * machine
+     *
+     * @param sessionId
+     * @param owner
+     */
+    public void checkSession(long sessionId, Object owner)
+            throws KeeperException.SessionExpiredException,
+            KeeperException.SessionMovedException,
+            KeeperException.UnknownSessionException;
+
+    /**
+     * Strictly check that a given session is a global session or not
+     * @param sessionId
+     * @param owner
+     * @throws KeeperException.SessionExpiredException
+     * @throws KeeperException.SessionMovedException
+     */
+    public void checkGlobalSession(long sessionId, Object owner)
+            throws KeeperException.SessionExpiredException,
+            KeeperException.SessionMovedException;
 
     void setOwner(long id, Object owner) throws SessionExpiredException;
 

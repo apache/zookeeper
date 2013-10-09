@@ -76,15 +76,19 @@ public class PrepRequestProcessorTest extends ClientBase {
     
     private class MySessionTracker implements SessionTracker {
         @Override
-        public void addSession(long id, int to) {
+        public boolean addGlobalSession(long id, int to) {
             // TODO Auto-generated method stub
-            
+            return false;
+        }
+        @Override
+        public boolean addSession(long id, int to) {
+            // TODO Auto-generated method stub
+            return false;
         }
         @Override
         public void checkSession(long sessionId, Object owner)
                 throws SessionExpiredException, SessionMovedException {
             // TODO Auto-generated method stub
-            
         }
         @Override
         public long createSession(int sessionTimeout) {
@@ -94,23 +98,27 @@ public class PrepRequestProcessorTest extends ClientBase {
         @Override
         public void dumpSessions(PrintWriter pwriter) {
             // TODO Auto-generated method stub
-            
+
         }
          @Override
         public void removeSession(long sessionId) {
             // TODO Auto-generated method stub
-            
+
+        }
+        public int upgradeSession(long sessionId) {
+             // TODO Auto-generated method stub
+             return 0;
         }
         @Override
         public void setOwner(long id, Object owner)
                 throws SessionExpiredException {
             // TODO Auto-generated method stub
-            
+
         }
         @Override
         public void shutdown() {
             // TODO Auto-generated method stub
-            
+
         }
         @Override
         public boolean touchSession(long sessionId, int sessionTimeout) {
@@ -120,6 +128,16 @@ public class PrepRequestProcessorTest extends ClientBase {
         @Override
         public void setSessionClosing(long sessionId) {
           // TODO Auto-generated method stub
+        }
+        @Override
+        public boolean isTrackingSession(long sessionId) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+        @Override
+        public void checkGlobalSession(long sessionId, Object owner)
+                throws SessionExpiredException, SessionMovedException {
+            // TODO Auto-generated method stub
         }
     }
 }

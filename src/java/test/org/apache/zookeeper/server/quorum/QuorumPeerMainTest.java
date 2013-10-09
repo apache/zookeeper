@@ -113,7 +113,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     @Test
     public void testEarlyLeaderAbandonment() throws Exception {
         ClientBase.setupTestEnv();
-
         final int SERVER_COUNT = 3;
         final int clientPorts[] = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
@@ -143,10 +142,12 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             mt[i].start();
-        }
+            // Recreate a client session since the previous session was not persisted.
+            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
+         }
 
-        waitForAll(zk, States.CONNECTED);          
-                          
+        waitForAll(zk, States.CONNECTED);
+
 
         // ok lets find the leader and kill everything else, we have a few
         // seconds, so it should be plenty of time
@@ -182,6 +183,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
         for (int i = 0; i < SERVER_COUNT; i++) {
             if (i != leader) {
+                // Recreate a client session since the previous session was not persisted.
+                zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
                 waitForOne(zk[i], States.CONNECTED);
                 zk[i].create("/zk" + i, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
@@ -306,24 +309,29 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     }
 
     private void waitForOne(ZooKeeper zk, States state) throws InterruptedException {
+        int iterations = ClientBase.CONNECTION_TIMEOUT / 500;
         while (zk.getState() != state) {
+            if (iterations-- == 0) {
+                throw new RuntimeException("Waiting too long");
+            }
             Thread.sleep(500);
         }
     }
 
     private void waitForAll(ZooKeeper[] zks, States state) throws InterruptedException {
-        int iterations = 10;
+        int iterations = ClientBase.CONNECTION_TIMEOUT / 1000;
         boolean someoneNotConnected = true;
-        while (someoneNotConnected) {           
+        while (someoneNotConnected) {
             if (iterations-- == 0) {
                 ClientBase.logAllStackTraces();
                 throw new RuntimeException("Waiting too long");
             }
 
             someoneNotConnected = false;
-            for (ZooKeeper zk : zks) {                
+            for (ZooKeeper zk : zks) {
                 if (zk.getState() != state) {
                     someoneNotConnected = true;
+                    break;
                 }
             }
             Thread.sleep(1000);

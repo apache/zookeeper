@@ -287,6 +287,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return hzxid.get();
     }
 
+    public SessionTracker getSessionTracker() {
+        return sessionTracker;
+    }
+    
     long getNextZxid() {
         return hzxid.incrementAndGet();
     }
@@ -300,7 +304,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     private void close(long sessionId) {
-        submitRequest(null, sessionId, OpCode.closeSession, 0, null, null);
+        Request si = new Request(null, sessionId, 0, OpCode.closeSession, null, null);
+        setLocalSessionFlag(si);
+        submitRequest(si);
     }
 
     public void closeSession(long sessionId) {
@@ -409,7 +415,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         sessionTracker = new SessionTrackerImpl(this, zkDb.getSessionWithTimeOuts(),
                 tickTime, 1);
     }
-    
+
     protected void startSessionTracker() {
         ((SessionTrackerImpl)sessionTracker).start();
     }
@@ -518,13 +524,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     long createSession(ServerCnxn cnxn, byte passwd[], int timeout) {
+        if (passwd == null) {
+            // Possible since it's just deserialized from a packet on the wire.
+            passwd = new byte[0];
+        }
         long sessionId = sessionTracker.createSession(timeout);
         Random r = new Random(sessionId ^ superSecret);
         r.nextBytes(passwd);
         ByteBuffer to = ByteBuffer.allocate(4);
         to.putInt(timeout);
         cnxn.setSessionId(sessionId);
-        submitRequest(cnxn, sessionId, OpCode.createSession, 0, to, null);
+        Request si = new Request(cnxn, sessionId, 0, OpCode.createSession, to, null);
+        setLocalSessionFlag(si);
+        submitRequest(si);
         return sessionId;
     }
 
@@ -554,6 +566,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (checkPasswd(sessionId, passwd)) {
             revalidateSession(cnxn, sessionId, sessionTimeout);
         } else {
+            LOG.warn("Incorrect password from " + cnxn.getRemoteSocketAddress()
+                    + " for session 0x" + Long.toHexString(sessionId));
             finishSessionInit(cnxn, false);
         }
     }
@@ -618,15 +632,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     * @param cnxn
-     * @param sessionId
-     * @param xid
-     * @param bb
+     * If the underlying Zookeeper server support local session, this method
+     * will set a isLocalSession to true if a request is associated with
+     * a local session.
+     *
+     * @param si
      */
-    private void submitRequest(ServerCnxn cnxn, long sessionId, int type,
-            int xid, ByteBuffer bb, List<Id> authInfo) {
-        Request si = new Request(cnxn, sessionId, xid, type, bb, authInfo);
-        submitRequest(si);
+    protected void setLocalSessionFlag(Request si) {
     }
 
     public void submitRequest(Request si) {
@@ -919,6 +931,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
                   h.getType(), incomingBuffer, cnxn.getAuthInfo());
                 si.setOwner(ServerCnxn.me);
+                // Always treat packet from the client as a possible
+                // local request.
+                setLocalSessionFlag(si);
                 submitRequest(si);
             }
         }
@@ -966,17 +981,36 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // wrap SASL response token to client inside a Response object.
         return new SetSASLResponse(responseToken);
     }
-    
+
+    // entry point for quorum/Learner.java
     public ProcessTxnResult processTxn(TxnHeader hdr, Record txn) {
+        return processTxn(null, hdr, txn);
+    }
+
+    // entry point for FinalRequestProcessor.java
+    public ProcessTxnResult processTxn(Request request) {
+        return processTxn(request, request.getHdr(), request.getTxn());
+    }
+
+    private ProcessTxnResult processTxn(Request request, TxnHeader hdr,
+                                        Record txn) {
         ProcessTxnResult rc;
-        int opCode = hdr.getType();
-        long sessionId = hdr.getClientId();
-        rc = getZKDatabase().processTxn(hdr, txn);
+        int opCode = request != null ? request.type : hdr.getType();
+        long sessionId = request != null ? request.sessionId : hdr.getClientId();
+        if (hdr != null) {
+            rc = getZKDatabase().processTxn(hdr, txn);
+        } else {
+            rc = new ProcessTxnResult();
+        }
         if (opCode == OpCode.createSession) {
-            if (txn instanceof CreateSessionTxn) {
+            if (hdr != null && txn instanceof CreateSessionTxn) {
                 CreateSessionTxn cst = (CreateSessionTxn) txn;
-                sessionTracker.addSession(sessionId, cst
-                        .getTimeOut());
+                sessionTracker.addGlobalSession(sessionId, cst.getTimeOut());
+            } else if (request != null && request.isLocalSession()) {
+                request.request.rewind();
+                int timeout = request.request.getInt();
+                request.request.rewind();
+                sessionTracker.addSession(request.sessionId, timeout);
             } else {
                 LOG.warn("*****>>>>> Got "
                         + txn.getClass() + " "

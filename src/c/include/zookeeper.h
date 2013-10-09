@@ -116,8 +116,9 @@ enum ZOO_ERRORS {
   ZSESSIONMOVED = -118, /*!<session moved to another server, so operation is ignored */
   ZNEWCONFIGNOQUORUM = -120,  /*!< No quorum of new config is connected and up-to-date with the leader of last commmitted config - try
                                  invoking reconfiguration after new servers are connected and synced */
-  ZRECONFIGINPROGRESS = -121  /*!< Reconfiguration requested while another reconfiguration is currently in progress. This is currently
+  ZRECONFIGINPROGRESS = -121,  /*!< Reconfiguration requested while another reconfiguration is currently in progress. This is currently
                                        not supported. Please retry. */
+  ZEPHEMERALONLOCALSESSION = -122 /*!< Attempt to create ephemeral node on a local session */
 };
 
 #ifdef __cplusplus

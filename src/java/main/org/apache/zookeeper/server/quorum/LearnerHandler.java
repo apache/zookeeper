@@ -525,7 +525,7 @@ public class LearnerHandler extends Thread {
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     DataOutputStream dos = new DataOutputStream(bos);
                     dos.writeLong(id);
-                    boolean valid = leader.zk.touch(id, to);
+                    boolean valid = leader.zk.checkIfValidGlobalSession(id, to);
                     if (valid) {
                         try {
                             //set the session owner
@@ -559,7 +559,7 @@ public class LearnerHandler extends Thread {
                         si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
                     }
                     si.setOwner(this);
-                    leader.zk.submitRequest(si);
+                    leader.zk.submitLearnerRequest(si);
                     break;
                 default:
                 }

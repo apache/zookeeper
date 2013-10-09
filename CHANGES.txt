@@ -16,6 +16,8 @@ NEW FEATURES:
   ZOOKEEPER-1400. Allow logging via callback instead of raw FILE pointer
   (Marshall McMullen via michim)
 
+  ZOOKEEPER-1147. Add support for local sessions (Jay Shrauner, thawan via thawan)
+
 BUGFIXES:
 
   ZOOKEEPER-786. Exception in ZooKeeper.toString
