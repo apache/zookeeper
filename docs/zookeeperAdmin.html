@@ -389,8 +389,7 @@ document.write("Last Published: " + document.lastModified);
 <li>
             
 <p>FreeBSD is supported as a development and production
-              platform for clients only. Java NIO selector support in
-              the FreeBSD JVM is broken.</p>
+              platform for both server and client.</p>
           
 </li>
           
@@ -412,12 +411,13 @@ document.write("Last Published: " + document.lastModified);
 <a name="sc_requiredSoftware"></a>
 <h4>Required Software </h4>
 <p>ZooKeeper runs in Java, release 1.6 or greater (JDK 6 or
-          greater).  It runs as an <em>ensemble</em> of
-          ZooKeeper servers. Three ZooKeeper servers is the minimum
-          recommended size for an ensemble, and we also recommend that
-          they run on separate machines. At Yahoo!, ZooKeeper is
-          usually deployed on dedicated RHEL boxes, with dual-core
-          processors, 2GB of RAM, and 80GB IDE hard drives.</p>
+        greater, FreeBSD support requires openjdk7).  It runs as an
+        <em>ensemble</em> of ZooKeeper servers. Three
+        ZooKeeper servers is the minimum recommended size for an
+        ensemble, and we also recommend that they run on separate
+        machines. At Yahoo!, ZooKeeper is usually deployed on
+        dedicated RHEL boxes, with dual-core processors, 2GB of RAM,
+        and 80GB IDE hard drives.</p>
 <a name="sc_zkMulitServerSetup"></a>
 <h3 class="h4">Clustered (Multi-Server) Setup</h3>
 <p>For reliable ZooKeeper service, you should deploy ZooKeeper in a

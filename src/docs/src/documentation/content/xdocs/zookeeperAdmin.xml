@@ -85,8 +85,7 @@
           </listitem>
           <listitem>
             <para>FreeBSD is supported as a development and production
-              platform for clients only. Java NIO selector support in
-              the FreeBSD JVM is broken.</para>
+              platform for both server and client.</para>
           </listitem>
           <listitem>
             <para>Win32 is supported as a <emphasis>development
@@ -103,12 +102,13 @@
         <title>Required Software </title>
 
         <para>ZooKeeper runs in Java, release 1.6 or greater (JDK 6 or
-          greater).  It runs as an <emphasis>ensemble</emphasis> of
-          ZooKeeper servers. Three ZooKeeper servers is the minimum
-          recommended size for an ensemble, and we also recommend that
-          they run on separate machines. At Yahoo!, ZooKeeper is
-          usually deployed on dedicated RHEL boxes, with dual-core
-          processors, 2GB of RAM, and 80GB IDE hard drives.</para>
+        greater, FreeBSD support requires openjdk7).  It runs as an
+        <emphasis>ensemble</emphasis> of ZooKeeper servers. Three
+        ZooKeeper servers is the minimum recommended size for an
+        ensemble, and we also recommend that they run on separate
+        machines. At Yahoo!, ZooKeeper is usually deployed on
+        dedicated RHEL boxes, with dual-core processors, 2GB of RAM,
+        and 80GB IDE hard drives.</para>
       </section>
 
     </section>
