@@ -304,22 +304,20 @@ public class QuorumTest extends ZKTestCase {
         while(qu.getPeer(index).peer.leader == null)
             index++;
 
-        ZooKeeper zk = new ZooKeeper(
-                "127.0.0.1:" + qu.getPeer((index == 1)?2:1).peer.getClientPort(),
-                ClientBase.CONNECTION_TIMEOUT, watcher);
-        watcher.waitForConnected(CONNECTION_TIMEOUT);
-
         // break the quorum
         qu.shutdown(index);
-
-        // Wait until we disconnect to proceed
-        watcher.waitForDisconnected(CONNECTION_TIMEOUT);
         
         // try to reestablish the quorum
         qu.start(index);
+        
+        // Connect the client after services are restarted (otherwise we would get
+        // SessionExpiredException as the previous local session was not persisted).
+        ZooKeeper zk = new ZooKeeper(
+                "127.0.0.1:" + qu.getPeer((index == 1)?2:1).peer.getClientPort(),
+                ClientBase.CONNECTION_TIMEOUT, watcher);
 
         try{
-            watcher.waitForConnected(30000);      
+            watcher.waitForConnected(CONNECTION_TIMEOUT);      
         } catch(TimeoutException e) {
             Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
         }

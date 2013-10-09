@@ -83,6 +83,19 @@ public class Request {
 
     public QuorumVerifier qv = null;
     
+    /**
+     * If this is a create or close request for a local-only session.
+     */
+    private boolean isLocalSession = false;
+
+    public boolean isLocalSession() {
+        return isLocalSession;
+    }
+
+    public void setLocalSession(boolean isLocalSession) {
+        this.isLocalSession = isLocalSession;
+    }
+
     public Object getOwner() {
         return owner;
     }
@@ -119,43 +132,41 @@ public class Request {
         switch (type) {
         case OpCode.notification:
             return false;
+        case OpCode.check:
+        case OpCode.closeSession:
         case OpCode.create:
         case OpCode.create2:
-        case OpCode.delete:
         case OpCode.createSession:
+        case OpCode.delete:
         case OpCode.exists:
-        case OpCode.getData:
-        case OpCode.check:
-        case OpCode.multi:
-        case OpCode.setData:
-        case OpCode.sync:
         case OpCode.getACL:
-        case OpCode.setACL:
         case OpCode.getChildren:
         case OpCode.getChildren2:
+        case OpCode.getData:
+        case OpCode.multi:
         case OpCode.ping:
-        case OpCode.closeSession:
-        case OpCode.setWatches:
         case OpCode.reconfig:
+        case OpCode.setACL:
+        case OpCode.setData:
+        case OpCode.setWatches:
+        case OpCode.sync:
             return true;
         default:
             return false;
         }
     }
 
-    static boolean isQuorum(int type) {
-        switch (type) {
+    public boolean isQuorum() {
+        switch (this.type) {
         case OpCode.exists:
         case OpCode.getACL:
         case OpCode.getChildren:
         case OpCode.getChildren2:
         case OpCode.getData:
             return false;
-        case OpCode.error:
-        case OpCode.closeSession:
         case OpCode.create:
         case OpCode.create2:
-        case OpCode.createSession:
+        case OpCode.error:
         case OpCode.delete:
         case OpCode.setACL:
         case OpCode.setData:
@@ -163,6 +174,9 @@ public class Request {
         case OpCode.multi:
         case OpCode.reconfig:
             return true;
+        case OpCode.closeSession:
+        case OpCode.createSession:
+            return !this.isLocalSession;
         default:
             return false;
         }

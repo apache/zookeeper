@@ -30,6 +30,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -536,8 +537,7 @@ public class Learner {
         DataInputStream dis = new DataInputStream(bis);
         long sessionId = dis.readLong();
         boolean valid = dis.readBoolean();
-        ServerCnxn cnxn = pendingRevalidations
-        .remove(sessionId);
+        ServerCnxn cnxn = pendingRevalidations.remove(sessionId);
         if (cnxn == null) {
             LOG.warn("Missing session 0x"
                     + Long.toHexString(sessionId)
@@ -557,8 +557,7 @@ public class Learner {
         // Send back the ping with our session data
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(bos);
-        HashMap<Long, Integer> touchTable = zk
-                .getTouchSnapshot();
+        Map<Long, Integer> touchTable = zk.getTouchSnapshot();
         for (Entry<Long, Integer> entry : touchTable.entrySet()) {
             dos.writeLong(entry.getKey());
             dos.writeInt(entry.getValue());

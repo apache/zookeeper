@@ -135,7 +135,8 @@ public abstract class KeeperException extends Exception {
                 return new SessionMovedException();
             case NOTREADONLY:
                 return new NotReadOnlyException();
-            	
+            case EPHEMERALONLOCALSESSION:
+                return new EphemeralOnLocalSessionException();
             case OK:
             default:
                 throw new IllegalArgumentException("Invalid exception code");
@@ -222,6 +223,9 @@ public abstract class KeeperException extends Exception {
         @Deprecated
         public static final int BadArguments = -8;
 
+        @Deprecated
+        public static final int UnknownSession= -12;
+
         /**
          * @deprecated deprecated in 3.1.0, use {@link Code#APIERROR} instead
          */
@@ -291,6 +295,9 @@ public abstract class KeeperException extends Exception {
         @Deprecated
         public static final int ReconfigInProgress= -121;
         
+        @Deprecated
+        public static final int EphemeralOnLocalSession = -122;
+
     }
 
     /** Codes which represent the various KeeperException
@@ -328,6 +335,8 @@ public abstract class KeeperException extends Exception {
         NEWCONFIGNOQUORUM (NewConfigNoQuorum),
         /** Another reconfiguration is in progress -- concurrent reconfigs not supported (yet) */
         RECONFIGINPROGRESS (ReconfigInProgress),
+        /** Unknown session (internal server use only) */
+        UNKNOWNSESSION (UnknownSession),
         
         /** API errors.
          * This is never thrown by the server, it shouldn't be used other than
@@ -361,7 +370,9 @@ public abstract class KeeperException extends Exception {
         /** Session moved to another server, so operation is ignored */
         SESSIONMOVED (-118),
         /** State-changing request is passed to read-only server */
-        NOTREADONLY (-119);
+        NOTREADONLY (-119),
+        /** Attempt to create ephemeral node on a local session */
+        EPHEMERALONLOCALSESSION (EphemeralOnLocalSession);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
@@ -442,6 +453,8 @@ public abstract class KeeperException extends Exception {
                 return "Session moved";
             case NOTREADONLY:
                 return "Not a read-only call";
+            case EPHEMERALONLOCALSESSION:
+                return "Ephemeral node on local session";
             default:
                 return "Unknown error " + code;
         }
@@ -502,7 +515,7 @@ public abstract class KeeperException extends Exception {
      * If this exception was thrown by a multi-request then the (partial) results
      * and error codes can be retrieved using this getter.
      * @return A copy of the list of results from the operations in the multi-request.
-     * 
+     *
      * @since 3.4.0
      *
      */
@@ -701,7 +714,16 @@ public abstract class KeeperException extends Exception {
             super(Code.SESSIONEXPIRED);
         }
     }
-    
+
+    /**
+     * @see Code#UNKNOWNSESSION
+     */
+    public static class UnknownSessionException extends KeeperException {
+        public UnknownSessionException() {
+            super(Code.UNKNOWNSESSION);
+        }
+    }
+
     /**
      * @see Code#SESSIONMOVED
      */
@@ -717,6 +739,15 @@ public abstract class KeeperException extends Exception {
     public static class NotReadOnlyException extends KeeperException {
         public NotReadOnlyException() {
             super(Code.NOTREADONLY);
+        }
+    }
+
+    /**
+     * @see Code#EPHEMERALONLOCALSESSION
+     */
+    public static class EphemeralOnLocalSessionException extends KeeperException {
+        public EphemeralOnLocalSessionException() {
+            super(Code.EPHEMERALONLOCALSESSION);
         }
     }
 

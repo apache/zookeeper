@@ -381,6 +381,18 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     protected int tickTime;
 
     /**
+     * Whether learners in this quorum should create new sessions as local.
+     * False by default to preserve existing behavior.
+     */
+    protected boolean localSessionsEnabled = false;
+
+    /**
+     * Whether learners in this quorum should upgrade local sessions to
+     * global. Only matters if local sessions are enabled.
+     */
+    protected boolean localSessionsUpgradingEnabled = true;
+
+    /**
      * Minimum number of milliseconds to allow for session timeout.
      * A value of -1 indicates unset, use default.
      */
@@ -1142,6 +1154,28 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         return fac.getMaxClientCnxnsPerHost();
     }
 
+    /** Whether local sessions are enabled */
+    public boolean areLocalSessionsEnabled() {
+        return localSessionsEnabled;
+    }
+
+    /** Whether to enable local sessions */
+    public void enableLocalSessions(boolean flag) {
+        LOG.info("Local sessions " + (flag ? "enabled" : "disabled"));
+        localSessionsEnabled = flag;
+    }
+
+    /** Whether local sessions are allowed to upgrade to global sessions */
+    public boolean isLocalSessionsUpgradingEnabled() {
+        return localSessionsUpgradingEnabled;
+    }
+
+    /** Whether to allow local sessions to upgrade to global sessions */
+    public void enableLocalSessionsUpgrading(boolean flag) {
+        LOG.info("Local session upgrading " + (flag ? "enabled" : "disabled"));
+        localSessionsUpgradingEnabled = flag;
+    }
+
     /** minimum session timeout in milliseconds */
     public int getMinSessionTimeout() {
         return minSessionTimeout == -1 ? tickTime * 2 : minSessionTimeout;
@@ -1158,7 +1192,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         return maxSessionTimeout == -1 ? tickTime * 20 : maxSessionTimeout;
     }
 
-    /** minimum session timeout in milliseconds */
+    /** maximum session timeout in milliseconds */
     public void setMaxSessionTimeout(int max) {
         LOG.info("maxSessionTimeout set to " + max);
         this.maxSessionTimeout = max;

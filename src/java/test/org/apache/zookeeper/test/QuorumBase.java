@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -33,6 +34,7 @@ import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.Assert;
 import org.junit.Test;
@@ -60,7 +62,10 @@ public class QuorumBase extends ClientBase {
     protected int portClient3;
     protected int portClient4;
     protected int portClient5;
-    
+
+    protected boolean localSessionsEnabled = false;
+    protected boolean localSessionsUpgradingEnabled = false;
+
     @Test
     // This just avoids complaints by junit
     public void testNull() {
@@ -188,6 +193,17 @@ public class QuorumBase extends ClientBase {
         LOG.info("QuorumPeer 4 voting view: " + s4.getVotingView());
         LOG.info("QuorumPeer 5 voting view: " + s5.getVotingView());       
         
+        s1.enableLocalSessions(localSessionsEnabled);
+        s2.enableLocalSessions(localSessionsEnabled);
+        s3.enableLocalSessions(localSessionsEnabled);
+        s4.enableLocalSessions(localSessionsEnabled);
+        s5.enableLocalSessions(localSessionsEnabled);
+        s1.enableLocalSessionsUpgrading(localSessionsUpgradingEnabled);
+        s2.enableLocalSessionsUpgrading(localSessionsUpgradingEnabled);
+        s3.enableLocalSessionsUpgrading(localSessionsUpgradingEnabled);
+        s4.enableLocalSessionsUpgrading(localSessionsUpgradingEnabled);
+        s5.enableLocalSessionsUpgrading(localSessionsUpgradingEnabled);
+
         LOG.info("start QuorumPeer 1");
         s1.start();
         LOG.info("start QuorumPeer 2");
@@ -230,9 +246,33 @@ public class QuorumBase extends ClientBase {
         }
         JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
     }
-    
-    
-    public void setupServers() throws IOException {        
+
+    public int getLeaderIndex() {
+      if (s1.getPeerState() == ServerState.LEADING) {
+        return 0;
+      } else if (s2.getPeerState() == ServerState.LEADING) {
+        return 1;
+      } else if (s3.getPeerState() == ServerState.LEADING) {
+        return 2;
+      } else if (s4.getPeerState() == ServerState.LEADING) {
+        return 3;
+      } else if (s5.getPeerState() == ServerState.LEADING) {
+        return 4;
+      }
+      return -1;
+    }
+
+    public ArrayList<QuorumPeer> getPeerList() {
+        ArrayList<QuorumPeer> peers = new ArrayList<QuorumPeer>();
+        peers.add(s1);
+        peers.add(s2);
+        peers.add(s3);
+        peers.add(s4);
+        peers.add(s5);
+        return peers;
+    }
+
+    public void setupServers() throws IOException {
         setupServer(1);
         setupServer(2);
         setupServer(3);
@@ -303,7 +343,7 @@ public class QuorumBase extends ClientBase {
             Assert.assertEquals(portClient5, s5.getClientPort());
         }
     }
-    
+
     @Override
     public void tearDown() throws Exception {
         LOG.info("TearDown started");
@@ -334,6 +374,9 @@ public class QuorumBase extends ClientBase {
     }
 
     public static void shutdown(QuorumPeer qp) {
+        if (qp == null) {
+            return;
+        }
         try {
             LOG.info("Shutting down quorum peer " + qp.getName());
             qp.shutdown();

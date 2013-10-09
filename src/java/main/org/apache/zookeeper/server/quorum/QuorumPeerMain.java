@@ -110,7 +110,7 @@ public class QuorumPeerMain {
                 .getDataDir(), config.getDataLogDir(), config
                 .getSnapRetainCount(), config.getPurgeInterval());
         purgeMgr.start();
-        
+
         if (args.length == 1 && config.isDistributed()) {
             runFromConfig(config);
         } else {
@@ -127,17 +127,20 @@ public class QuorumPeerMain {
       } catch (JMException e) {
           LOG.warn("Unable to register log4j JMX control", e);
       }
-  
+
       LOG.info("Starting quorum peer");
       try {
           ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
           cnxnFactory.configure(config.getClientPortAddress(),
                                 config.getMaxClientCnxns());
-  
-          quorumPeer = new QuorumPeer();          
+
+          quorumPeer = new QuorumPeer();
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
                       config.getDataDir()));
+          quorumPeer.enableLocalSessions(config.areLocalSessionsEnabled());
+          quorumPeer.enableLocalSessionsUpgrading(
+              config.isLocalSessionsUpgradingEnabled());
           //quorumPeer.setQuorumPeers(config.getAllMembers());
           quorumPeer.setElectionType(config.getElectionAlg());
           quorumPeer.setMyid(config.getServerId());

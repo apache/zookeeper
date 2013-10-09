@@ -15,82 +15,202 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.quorum;
 
 import java.io.PrintWriter;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.zookeeper.server.SessionTracker;
+import org.apache.zookeeper.KeeperException.SessionExpiredException;
+import org.apache.zookeeper.KeeperException.SessionMovedException;
+import org.apache.zookeeper.KeeperException.UnknownSessionException;
 import org.apache.zookeeper.server.SessionTrackerImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * This is really just a shell of a SessionTracker that tracks session activity
- * to be forwarded to the Leader using a PING.
+ * The learner session tracker is used by learners (followers and observers) to
+ * track zookeeper sessions which may or may not be echoed to the leader.  When
+ * a new session is created it is saved locally in a wrapped
+ * LocalSessionTracker.  It can subsequently be upgraded to a global session
+ * as required.  If an upgrade is requested the session is removed from local
+ * collections while keeping the same session ID.  It is up to the caller to
+ * queue a session creation request for the leader.
+ * A secondary function of the learner session tracker is to remember sessions
+ * which have been touched in this service.  This information is passed along
+ * to the leader with a ping.
  */
-public class LearnerSessionTracker implements SessionTracker {
-    SessionExpirer expirer;
+public class LearnerSessionTracker extends UpgradeableSessionTracker {
+    private static final Logger LOG = LoggerFactory.getLogger(LearnerSessionTracker.class);
 
-    HashMap<Long, Integer> touchTable = new HashMap<Long, Integer>();
-    long serverId = 1;
-    long nextSessionId=0;
-    
-    private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
+    private final SessionExpirer expirer;
+    // Touch table for the global sessions
+    private final AtomicReference<Map<Long, Integer>> touchTable =
+        new AtomicReference<Map<Long, Integer>>();
+    private final long serverId;
+    private final AtomicLong nextSessionId = new AtomicLong();
+
+    private final boolean localSessionsEnabled;
+    private final ConcurrentMap<Long, Integer> globalSessionsWithTimeouts;
 
     public LearnerSessionTracker(SessionExpirer expirer,
-            ConcurrentHashMap<Long, Integer> sessionsWithTimeouts, long id) {
+            ConcurrentMap<Long, Integer> sessionsWithTimeouts,
+            int tickTime, long id, boolean localSessionsEnabled) {
         this.expirer = expirer;
-        this.sessionsWithTimeouts = sessionsWithTimeouts;
+        this.touchTable.set(new ConcurrentHashMap<Long, Integer>());
+        this.globalSessionsWithTimeouts = sessionsWithTimeouts;
         this.serverId = id;
-        nextSessionId = SessionTrackerImpl.initializeNextSession(this.serverId);
-        
+        nextSessionId.set(SessionTrackerImpl.initializeNextSession(serverId));
+
+        this.localSessionsEnabled = localSessionsEnabled;
+        if (this.localSessionsEnabled) {
+            createLocalSessionTracker(expirer, tickTime, id);
+        }
     }
 
-    synchronized public void removeSession(long sessionId) {
-        sessionsWithTimeouts.remove(sessionId);
-        touchTable.remove(sessionId);
+    public void removeSession(long sessionId) {
+        if (localSessionTracker != null) {
+            localSessionTracker.removeSession(sessionId);
+        }
+        globalSessionsWithTimeouts.remove(sessionId);
+        touchTable.get().remove(sessionId);
+    }
+
+    public void start() {
+        if (localSessionTracker != null) {
+            localSessionTracker.start();
+        }
     }
 
     public void shutdown() {
+        if (localSessionTracker != null) {
+            localSessionTracker.shutdown();
+        }
     }
 
-    synchronized public void addSession(long sessionId, int sessionTimeout) {
-        sessionsWithTimeouts.put(sessionId, sessionTimeout);
-        touchTable.put(sessionId, sessionTimeout);
+    public boolean isGlobalSession(long sessionId) {
+        return globalSessionsWithTimeouts.containsKey(sessionId);
     }
 
-    synchronized public boolean touchSession(long sessionId, int sessionTimeout) {
-        touchTable.put(sessionId, sessionTimeout);
+    public boolean addGlobalSession(long sessionId, int sessionTimeout) {
+        boolean added =
+            globalSessionsWithTimeouts.put(sessionId, sessionTimeout) == null;
+        if (localSessionsEnabled && added) {
+            // Only do extra logging so we know what kind of session this is
+            // if we're supporting both kinds of sessions
+            LOG.info("Adding global session 0x" + Long.toHexString(sessionId));
+        }
+        touchTable.get().put(sessionId, sessionTimeout);
+        return added;
+    }
+
+    public boolean addSession(long sessionId, int sessionTimeout) {
+        boolean added;
+        if (localSessionsEnabled && !isGlobalSession(sessionId)) {
+            added = localSessionTracker.addSession(sessionId, sessionTimeout);
+            // Check for race condition with session upgrading
+            if (isGlobalSession(sessionId)) {
+                added = false;
+                localSessionTracker.removeSession(sessionId);
+            } else if (added) {
+                LOG.info("Adding local session 0x"
+                         + Long.toHexString(sessionId));
+            }
+        } else {
+            added = addGlobalSession(sessionId, sessionTimeout);
+        }
+        return added;
+    }
+
+    public boolean touchSession(long sessionId, int sessionTimeout) {
+        if (localSessionsEnabled) {
+            if (localSessionTracker.touchSession(sessionId, sessionTimeout)) {
+                return true;
+            }
+            if (!isGlobalSession(sessionId)) {
+                return false;
+            }
+        }
+        touchTable.get().put(sessionId, sessionTimeout);
         return true;
     }
 
-    synchronized HashMap<Long, Integer> snapshot() {
-        HashMap<Long, Integer> oldTouchTable = touchTable;
-        touchTable = new HashMap<Long, Integer>();
-        return oldTouchTable;
+    public Map<Long, Integer> snapshot() {
+        return touchTable.getAndSet(new ConcurrentHashMap<Long, Integer>());
     }
 
-
-    synchronized public long createSession(int sessionTimeout) {
-        return (nextSessionId++);
+    public long createSession(int sessionTimeout) {
+        if (localSessionsEnabled) {
+            return localSessionTracker.createSession(sessionTimeout);
+        }
+        return nextSessionId.getAndIncrement();
     }
 
-    public void checkSession(long sessionId, Object owner)  {
-        // Nothing to do here. Sessions are checked at the Leader
+    public void checkSession(long sessionId, Object owner)
+            throws SessionExpiredException, SessionMovedException  {
+        if (localSessionTracker != null) {
+            try {
+                localSessionTracker.checkSession(sessionId, owner);
+                return;
+            } catch (UnknownSessionException e) {
+                // Check whether it's a global session. We can ignore those
+                // because they are handled at the leader, but if not, rethrow.
+                // We check local session status first to avoid race condition
+                // with session upgrading.
+                if (!isGlobalSession(sessionId)) {
+                    throw new SessionExpiredException();
+                }
+            }
+        }
     }
-    
-    public void setOwner(long sessionId, Object owner) {
-        // Nothing to do here. Sessions are checked at the Leader
+
+    public void setOwner(long sessionId, Object owner)
+            throws SessionExpiredException {
+        if (localSessionTracker != null) {
+            try {
+                localSessionTracker.setOwner(sessionId, owner);
+                return;
+            } catch (SessionExpiredException e) {
+                // Check whether it's a global session. We can ignore those
+                // because they are handled at the leader, but if not, rethrow.
+                // We check local session status first to avoid race condition
+                // with session upgrading.
+                if (!isGlobalSession(sessionId)) {
+                    throw e;
+                }
+            }
+        }
     }
 
     public void dumpSessions(PrintWriter pwriter) {
-    	// the original class didn't have tostring impl, so just
-    	// dup what we had before
-    	pwriter.println(toString());
+        if (localSessionTracker != null) {
+            pwriter.print("Local ");
+            localSessionTracker.dumpSessions(pwriter);
+        }
+        pwriter.print("Global Sessions(");
+        pwriter.print(globalSessionsWithTimeouts.size());
+        pwriter.println("):");
+        SortedSet<Long> sessionIds = new TreeSet<Long>(
+                globalSessionsWithTimeouts.keySet());
+        for (long sessionId : sessionIds) {
+            pwriter.print("0x");
+            pwriter.print(Long.toHexString(sessionId));
+            pwriter.print("\t");
+            pwriter.print(globalSessionsWithTimeouts.get(sessionId));
+            pwriter.println("ms");
+        }
     }
 
     public void setSessionClosing(long sessionId) {
-        // Nothing to do here.
+        // Global sessions handled on the leader; this call is a no-op if
+        // not tracked as a local session so safe to call in both cases.
+        if (localSessionTracker != null) {
+            localSessionTracker.setSessionClosing(sessionId);
+        }
     }
 }
