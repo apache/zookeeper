@@ -154,6 +154,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1771. ZooInspector authentication (Benjamin Jaton via phunt)
 
+  ZOOKEEPER-1627. Add org.apache.zookeeper.common to exported packages
+  in OSGi MANIFEST (Arnoud Glimmerveen via phunt)
+
 Release 3.4.5 - 2012-09-30
 
 Backward compatible changes:
