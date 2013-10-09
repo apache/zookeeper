@@ -634,6 +634,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1771. ZooInspector authentication (Benjamin Jaton via phunt)
 
+  ZOOKEEPER-1509. Please update documentation to reflect updated
+  FreeBSD support (George Neville-Neil via phunt)
 
 Release 3.4.0 - 
 
