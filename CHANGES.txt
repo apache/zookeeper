@@ -639,6 +639,11 @@ IMPROVEMENTS:
   ZOOKEEPER-1509. Please update documentation to reflect updated
   FreeBSD support (George Neville-Neil via phunt)
 
+  ZOOKEEPER-1627. Add org.apache.zookeeper.common to exported packages
+  in OSGi MANIFEST (Arnoud Glimmerveen via phunt)
+
+headers
+
 Release 3.4.0 - 
 
 Non-backward compatible changes:
