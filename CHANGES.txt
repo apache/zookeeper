@@ -75,6 +75,8 @@ BUGFIXES:
 
   ZOOKEEPER-1774. QuorumPeerMainTest fails consistently with
   "complains about host" assertion failure (phunt)
+  
+  ZOOKEEPER-1624. PrepRequestProcessor abort multi-operation incorrectly. (thawan via camille)
 
 IMPROVEMENTS:
 

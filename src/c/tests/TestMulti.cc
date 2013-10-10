@@ -177,6 +177,7 @@ class Zookeeper_multi : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testMultiFail);
     CPPUNIT_TEST(testCheck);
     CPPUNIT_TEST(testWatch);
+    CPPUNIT_TEST(testSequentialNodeCreateInAsyncMulti);
 #endif
     CPPUNIT_TEST_SUITE_END();
 
@@ -244,12 +245,20 @@ public:
         count++;
     }
 
+    static void multi_completion_fn_no_assert(int rc, const void *data) {
+        count++;
+    }
+
     static void waitForMultiCompletion(int seconds) {
         time_t expires = time(0) + seconds;
         while(count == 0 && time(0) < expires) {
             sleep(1);
         }
         count--;
+    }
+
+    static void resetCounter() {
+        count = 0;
     }
 
     /**
@@ -645,6 +654,47 @@ public:
 
         // wait for multi completion in doMultiInWatch
         waitForMultiCompletion(5);
+     }
+
+     /**
+      * ZOOKEEPER-1624: PendingChanges of create sequential node request didn't
+      * get rollbacked correctly when multi-op failed. This caused
+      * create sequential node request in subsequent multi-op to failed because
+      * sequential node name generation is incorrect.
+      *
+      * The check is to make sure that each request in multi-op failed with
+      * the correct reason.
+      */
+     void testSequentialNodeCreateInAsyncMulti() {
+         int rc;
+         watchctx_t ctx;
+         zhandle_t *zk = createClient(&ctx);
+
+         int iteration = 4;
+         int nops = 2;
+
+         zoo_op_result_t results[iteration][nops];
+         zoo_op_t ops[nops];
+         zoo_create_op_init(&ops[0], "/node-",   "", 0, &ZOO_OPEN_ACL_UNSAFE, ZOO_SEQUENCE, NULL, 0);
+         zoo_create_op_init(&ops[1], "/dup", "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, NULL, 0);
+         for (int i = 0; i < iteration ; ++i) {
+           rc = zoo_amulti(zk, nops, ops, results[i], multi_completion_fn_no_assert, 0);
+           CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+         }
+
+         waitForMultiCompletion(10);
+
+         CPPUNIT_ASSERT_EQUAL((int)ZOK, results[0][0].err);
+         CPPUNIT_ASSERT_EQUAL((int)ZOK, results[1][0].err);
+         CPPUNIT_ASSERT_EQUAL((int)ZOK, results[2][0].err);
+         CPPUNIT_ASSERT_EQUAL((int)ZOK, results[3][0].err);
+
+         CPPUNIT_ASSERT_EQUAL((int)ZOK, results[0][1].err);
+         CPPUNIT_ASSERT_EQUAL((int)ZNODEEXISTS, results[1][1].err);
+         CPPUNIT_ASSERT_EQUAL((int)ZNODEEXISTS, results[2][1].err);
+         CPPUNIT_ASSERT_EQUAL((int)ZNODEEXISTS, results[3][1].err);
+
+         resetCounter();
      }
 };
 
