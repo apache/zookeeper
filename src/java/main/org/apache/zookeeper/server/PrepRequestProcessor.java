@@ -215,6 +215,25 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if (cr != null) {
                     pendingChangeRecords.put(path, cr);
                 }
+
+                /*
+                 * ZOOKEEPER-1624 - We need to store for parent's ChangeRecord
+                 * of the parent node of a request. So that if this is a
+                 * sequential node creation request, rollbackPendingChanges()
+                 * can restore previous parent's ChangeRecord correctly.
+                 *
+                 * Otherwise, sequential node name generation will be incorrect
+                 * for a subsequent request.
+                 */
+                int lastSlash = path.lastIndexOf('/');
+                if (lastSlash == -1 || path.indexOf('\0') != -1) {
+                    continue;
+                }
+                String parentPath = path.substring(0, lastSlash);
+                ChangeRecord parentCr = getRecordForPath(parentPath);
+                if (parentCr != null) {
+                    pendingChangeRecords.put(parentPath, parentCr);
+                }
             } catch (KeeperException.NoNodeException e) {
                 // ignore this one
             }

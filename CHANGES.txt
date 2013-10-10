@@ -439,6 +439,8 @@ BUGFIXES:
 
   ZOOKEEPER-877. zkpython does not work with python3.1
   (Daniel Enman via phunt)
+  
+  ZOOKEEPER-1624. PrepRequestProcessor abort multi-operation incorrectly. (thawan via camille)
 
 IMPROVEMENTS:
 
