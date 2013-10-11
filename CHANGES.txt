@@ -130,6 +130,9 @@ BUGFIXES:
   
   ZOOKEEPER-1624. PrepRequestProcessor abort multi-operation incorrectly. (thawan via camille)
 
+  ZOOKEEPER-1610. Some classes are using == or != to compare
+  Long/String objects instead of .equals() (Edward Ribeiro via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
