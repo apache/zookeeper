@@ -330,10 +330,10 @@ public class ZooKeeperSaslClient {
         if (saslClient.isComplete()) {
             // GSSAPI: server sends a final packet after authentication succeeds
             // or fails.
-            if ((serverToken == null) && (saslClient.getMechanismName() == "GSSAPI"))
+            if ((serverToken == null) && (saslClient.getMechanismName().equals("GSSAPI")))
                 gotLastPacket = true;
             // non-GSSAPI: no final packet from server.
-            if (saslClient.getMechanismName() != "GSSAPI") {
+            if (!saslClient.getMechanismName().equals("GSSAPI")) {
                 gotLastPacket = true;
             }
             // SASL authentication is completed, successfully or not:
