@@ -103,15 +103,15 @@ public class QuorumHierarchical implements QuorumVerifier {
            if (qso == null || !qs.equals(qso)) return false;
        }
        for (Long sid: serverWeight.keySet()){
-           if (serverWeight.get(sid) != qm.serverWeight.get(sid))
+           if (!serverWeight.get(sid).equals(qm.serverWeight.get(sid)))
                return false;
        }
        for (Long sid: groupWeight.keySet()){
-           if (groupWeight.get(sid) != qm.groupWeight.get(sid))
+           if (!groupWeight.get(sid).equals(qm.groupWeight.get(sid)))
                return false;
        }
        for (Long sid: serverGroup.keySet()){
-           if (serverGroup.get(sid) != qm.serverGroup.get(sid))
+           if (!serverGroup.get(sid).equals(qm.serverGroup.get(sid)))
                return false;
        }
        return true;
