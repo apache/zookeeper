@@ -16,6 +16,7 @@
  */
 #include <algorithm>
 #include <cppunit/extensions/HelperMacros.h>
+#include <unistd.h>
 #include "zookeeper.h"
 
 #include "Util.h"

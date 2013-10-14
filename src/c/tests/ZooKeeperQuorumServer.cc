@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
 
 ZooKeeperQuorumServer::
 ZooKeeperQuorumServer(uint32_t id, uint32_t numServers) :

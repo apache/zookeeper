@@ -445,6 +445,9 @@ BUGFIXES:
   ZOOKEEPER-1610. Some classes are using == or != to compare
   Long/String objects instead of .equals() (Edward Ribeiro via phunt)
 
+  ZOOKEEPER-1795. unable to build c client on ubuntu
+  (Raul Gutierrez Segales via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
