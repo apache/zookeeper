@@ -133,6 +133,8 @@ BUGFIXES:
   ZOOKEEPER-1610. Some classes are using == or != to compare
   Long/String objects instead of .equals() (Edward Ribeiro via phunt)
 
+  ZOOKEEPER-1646. mt c client tests fail on Ubuntu Raring (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
