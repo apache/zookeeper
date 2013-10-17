@@ -310,6 +310,17 @@ int poll(struct pollfd *fds, POLL_NFDS_TYPE nfds, int timeout){
     
 }
 
+/*
+ * Recent gcc with -O2 and glibc FORTIFY feature may cause our poll
+ * mock to be ignored.
+ */
+#if __USE_FORTIFY_LEVEL > 0
+int __poll_chk (struct pollfd *__fds, nfds_t __nfds, int __timeout,
+                __SIZE_TYPE__ __fdslen) {
+    return poll(__fds, __nfds, __timeout);
+}
+#endif
+
 // *****************************************************************************
 // gettimeofday
 int gettimeofday(struct timeval *tp, GETTIMEOFDAY_ARG2_TYPE tzp){
