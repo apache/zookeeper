@@ -448,6 +448,8 @@ BUGFIXES:
   ZOOKEEPER-1795. unable to build c client on ubuntu
   (Raul Gutierrez Segales via phunt)
 
+  ZOOKEEPER-1646. mt c client tests fail on Ubuntu Raring (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
