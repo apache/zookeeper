@@ -33,23 +33,30 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ByteBufferOutputStream;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServer.DataTreeBuilder;
@@ -1201,6 +1208,84 @@ public class Zab1_0Test {
         });
     }
     
+    /**
+     * verify that a peer with dirty snapshot joining an established cluster
+     * does not go into an inconsistent state.
+     *
+     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1558}
+     */
+    @Test
+    public void testDirtySnapshot()
+    throws IOException,
+        InterruptedException,
+        KeeperException,
+        NoSuchFieldException,
+        IllegalAccessException {
+        Socket pair[] = getSocketPair();
+        Socket leaderSocket = pair[0];
+        Socket followerSocket = pair[1];
+        File tmpDir = File.createTempFile("test", "dir");
+        tmpDir.delete();
+        tmpDir.mkdir();
+        LeadThread leadThread = null;
+        Leader leader = null;
+        try {
+            // Setup a database with two znodes
+            FileTxnSnapLog snapLog = new FileTxnSnapLog(tmpDir, tmpDir);
+            ZKDatabase zkDb = new ZKDatabase(snapLog);
+
+            long zxid = ZxidUtils.makeZxid(0, 1);
+            String path = "/foo";
+            zkDb.processTxn(new TxnHeader(13,1000,zxid,30,ZooDefs.OpCode.create),
+                                            new CreateTxn(path, "fpjwasalsohere".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
+            Stat stat = new Stat();
+            Assert.assertEquals("fpjwasalsohere", new String(zkDb.getData(path, stat, null)));
+
+            // Close files
+            snapLog.close();
+
+            QuorumPeer peer = createQuorumPeer(tmpDir);
+
+            leader = createLeader(tmpDir, peer);
+            peer.leader = leader;
+
+            // Set the last accepted epoch and current epochs to be 1
+            peer.setAcceptedEpoch(0);
+            peer.setCurrentEpoch(0);
+
+            leadThread = new LeadThread(leader);
+            leadThread.start();
+
+            while(leader.cnxAcceptor == null || !leader.cnxAcceptor.isAlive()) {
+                Thread.sleep(20);
+            }
+
+            leader.shutdown("Shutting down the leader");
+
+            // Check if there is a valid snapshot (we better not have it)
+            File snapDir = new File (tmpDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
+            List<File> files = Util.sortDataDir(snapDir.listFiles(),"snapshot", false);
+
+            for (File f : files) {
+                try {
+                    Assert.assertFalse("Found a valid snapshot", Util.isValidSnapshot(f));
+                } catch (IOException e) {
+                    LOG.info("invalid snapshot " + f, e);
+                }
+            }
+
+        } finally {
+            if (leader != null) {
+                leader.shutdown("end of test");
+            }
+            if (leadThread != null) {
+                leadThread.interrupt();
+                leadThread.join();
+            }
+            recursiveDelete(tmpDir);
+        }
+    }
+
     private void recursiveDelete(File file) {
         if (file.isFile()) {
             file.delete();
