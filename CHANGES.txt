@@ -135,6 +135,8 @@ BUGFIXES:
 
   ZOOKEEPER-1646. mt c client tests fail on Ubuntu Raring (phunt)
 
+  ZOOKEEPER-1558. Leader should not snapshot uncommitted state (fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java

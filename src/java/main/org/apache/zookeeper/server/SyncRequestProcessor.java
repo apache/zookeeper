@@ -65,6 +65,12 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
      * The number of log entries to log before starting a snapshot
      */
     private static int snapCount = ZooKeeperServer.getSnapCount();
+    
+    /**
+     * The number of log entries before rolling the log, number
+     * is chosen randomly
+     */
+    private static int randRoll;
 
     private final Request requestOfDeath = Request.requestOfDeath;
 
@@ -76,7 +82,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
         this.nextProcessor = nextProcessor;
         running = true;
     }
-
+    
     /**
      * used by tests to check for changing
      * snapcounts
@@ -84,6 +90,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
      */
     public static void setSnapCount(int count) {
         snapCount = count;
+        randRoll = count;
     }
 
     /**
@@ -93,6 +100,18 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
     public static int getSnapCount() {
         return snapCount;
     }
+    
+    /**
+     * Sets the value of randRoll. This method 
+     * is here to avoid a findbugs warning for
+     * setting a static variable in an instance
+     * method. 
+     * 
+     * @param roll
+     */
+    private static void setRandRoll(int roll) {
+        randRoll = roll;
+    }
 
     @Override
     public void run() {
@@ -101,7 +120,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
 
             // we do this in an attempt to ensure that not all of the servers
             // in the ensemble take a snapshot at the same time
-            int randRoll = r.nextInt(snapCount/2);
+            setRandRoll(r.nextInt(snapCount/2));
             while (true) {
                 Request si = null;
                 if (toFlush.isEmpty()) {

@@ -434,7 +434,7 @@ public class Leader {
                 long zxid = Long.parseLong(initialZxid);
                 zk.setZxid((zk.getZxid() & 0xffffffff00000000L) | zxid);
             }
-
+            
             if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
                 self.cnxnFactory.setZooKeeperServer(zk);
             }
