@@ -1242,6 +1242,15 @@ public class Leader {
         }
         
         zk.startup();
+        /*
+         * Update the election vote here to ensure that all members of the
+         * ensemble report the same vote to new servers that start up and
+         * send leader election notifications to the ensemble.
+         * 
+         * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
+         */
+        self.updateElectionVote(getEpoch());
+
         zk.getZKDatabase().setlastProcessedZxid(zk.getZxid());
     }
 
