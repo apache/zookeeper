@@ -137,6 +137,8 @@ BUGFIXES:
 
   ZOOKEEPER-1558. Leader should not snapshot uncommitted state (fpj)
 
+  ZOOKEEPER-1732. ZooKeeper server unable to join established ensemble (German Blanco via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java

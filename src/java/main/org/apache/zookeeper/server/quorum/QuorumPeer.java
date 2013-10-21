@@ -1194,4 +1194,21 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
 		acceptedEpoch = e;
 		writeLongToFile(ACCEPTED_EPOCH_FILENAME, e);
 	}
+
+    /**
+     * Updates leader election info to avoid inconsistencies when
+     * a new server tries to join the ensemble.
+     * See ZOOKEEPER-1732 for more info.
+     */
+    protected void updateElectionVote(long newEpoch) {
+        Vote currentVote = getCurrentVote();
+        if (currentVote != null) {
+            setCurrentVote(new Vote(currentVote.getId(),
+                currentVote.getZxid(),
+                currentVote.getElectionEpoch(),
+                newEpoch,
+                currentVote.getState()));
+        }
+    }
+
 }

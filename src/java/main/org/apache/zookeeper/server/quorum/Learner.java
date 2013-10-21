@@ -435,6 +435,15 @@ public class Learner {
         writePacket(ack, true);
         sock.setSoTimeout(self.tickTime * self.syncLimit);
         zk.startup();
+        /*
+         * Update the election vote here to ensure that all members of the
+         * ensemble report the same vote to new servers that start up and
+         * send leader election notifications to the ensemble.
+         * 
+         * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
+         */
+        self.updateElectionVote(newEpoch);
+
         // We need to log the stuff that came in between the snapshot and the uptodate
         if (zk instanceof FollowerZooKeeperServer) {
             FollowerZooKeeperServer fzk = (FollowerZooKeeperServer)zk;

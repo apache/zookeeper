@@ -66,6 +66,14 @@ public class FastLeaderElection implements Election {
      */
 
     final static int maxNotificationInterval = 60000;
+    
+    /**
+     * This value is passed to the methods that check the quorum
+     * majority of an established ensemble for those values that
+     * should not be taken into account in the comparison 
+     * (electionEpoch and zxid). 
+     */
+    final static int IGNOREVALUE = -1;
 
     /**
      * Connection manager. Fast leader election uses TCP for
@@ -324,7 +332,7 @@ public class FastLeaderElection implements Election {
                                             ToSend.mType.notification,
                                             current.getId(),
                                             current.getZxid(),
-                                            logicalclock,
+                                            current.getElectionEpoch(),
                                             self.getPeerState(),
                                             response.sid,
                                             current.getPeerEpoch());
@@ -867,15 +875,25 @@ public class FastLeaderElection implements Election {
                             }
                         }
 
-                        /**
+                        /*
                          * Before joining an established ensemble, verify that
                          * a majority are following the same leader.
+                         * Only peer epoch is used to check that the votes come
+                         * from the same ensemble. This is because there is at
+                         * least one corner case in which the ensemble can be
+                         * created with inconsistent zxid and election epoch
+                         * info. However, given that only one ensemble can be
+                         * running at a single point in time and that each 
+                         * epoch is used only once, using only the epoch to 
+                         * compare the votes is sufficient.
+                         * 
+                         * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
                          */
-                        outofelection.put(n.sid, new Vote(n.leader, n.zxid,
-                                n.electionEpoch, n.peerEpoch, n.state));
+                        outofelection.put(n.sid, new Vote(n.leader, 
+                                IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state));
                         if (termPredicate(outofelection, new Vote(n.leader,
-                                n.zxid, n.electionEpoch, n.peerEpoch, n.state))
-                                && checkLeader(outofelection, n.leader, n.electionEpoch)) {
+                                IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state))
+                                && checkLeader(outofelection, n.leader, IGNOREVALUE)) {
                             synchronized(this){
                                 logicalclock = n.electionEpoch;
                                 self.setPeerState((n.leader == self.getId()) ?
