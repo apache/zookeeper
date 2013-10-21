@@ -1605,4 +1605,22 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
        }
        return false;
    }
+ 
+    /**
+     * Updates leader election info to avoid inconsistencies when
+     * a new server tries to join the ensemble.
+     * 
+     * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
+     */
+    protected void updateElectionVote(long newEpoch) {
+        Vote currentVote = getCurrentVote();
+        if (currentVote != null) {
+            setCurrentVote(new Vote(currentVote.getId(),
+                currentVote.getZxid(),
+                currentVote.getElectionEpoch(),
+                newEpoch,
+                currentVote.getState()));
+        }
+    }
+
 }

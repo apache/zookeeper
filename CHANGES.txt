@@ -450,6 +450,9 @@ BUGFIXES:
 
   ZOOKEEPER-1646. mt c client tests fail on Ubuntu Raring (phunt)
 
+  ZOOKEEPER-1732. ZooKeeper server unable to join established
+  ensemble (German Blanco via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
