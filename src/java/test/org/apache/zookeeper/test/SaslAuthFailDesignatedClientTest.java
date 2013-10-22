@@ -21,10 +21,12 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -84,7 +86,14 @@ public class SaslAuthFailDesignatedClientTest extends ClientBase {
 
     @Test
     public void testAuth() throws Exception {
-        ZooKeeper zk = createClient();
+        // Cannot use createClient here because server may close session before 
+        // JMXEnv.ensureAll is called which will fail the test case
+        CountdownWatcher watcher = new CountdownWatcher();
+        TestableZooKeeper zk = new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
+        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS))
+        {
+            Assert.fail("Unable to connect to server");
+        }
         try {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             Assert.fail("Should have gotten exception.");
