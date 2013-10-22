@@ -81,6 +81,9 @@ BUGFIXES:
   ZOOKEEPER-1610. Some classes are using == or != to compare
   Long/String objects instead of .equals() (Edward Ribeiro via phunt)
 
+  ZOOKEEPER-1799. SaslAuthFailDesignatedClientTest.testAuth fails
+  frequently on SUSE (Jeffrey Zhong via phunt)
+
 IMPROVEMENTS:
 
 
