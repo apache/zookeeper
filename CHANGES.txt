@@ -453,6 +453,9 @@ BUGFIXES:
   ZOOKEEPER-1732. ZooKeeper server unable to join established
   ensemble (German Blanco via fpj)
 
+  ZOOKEEPER-1667. Watch event isn't handled correctly when 
+  a client reestablish to a server (jacky007, fpj via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
