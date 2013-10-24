@@ -212,8 +212,15 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
             if(running){
                 this.join();
             }
+            if (!toFlush.isEmpty()) {
+                flush(toFlush);
+            }
         } catch(InterruptedException e) {
             LOG.warn("Interrupted while wating for " + this + " to finish");
+        } catch (IOException e) {
+            LOG.warn("Got IO exception during shutdown");
+        } catch (RequestProcessorException e) {
+            LOG.warn("Got request processor exception during shutdown");
         }
         if (nextProcessor != null) {
             nextProcessor.shutdown();
