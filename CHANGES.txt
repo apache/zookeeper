@@ -459,6 +459,9 @@ BUGFIXES:
   ZOOKEEPER-1799. SaslAuthFailDesignatedClientTest.testAuth fails
   frequently on SUSE (Jeffrey Zhong via phunt)
 
+  ZOOKEEPER-1557. jenkins jdk7 test failure in
+  testBadSaslAuthNotifiesWatch (Eugene Koontz via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
