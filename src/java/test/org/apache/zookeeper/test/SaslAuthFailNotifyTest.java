@@ -32,7 +32,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.junit.Test;
 import org.junit.Assert;
 
-public class SaslAuthFailTest extends ClientBase {
+public class SaslAuthFailNotifyTest extends ClientBase {
     static {
         System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         System.setProperty("zookeeper.allowSaslFailedClients","true");
@@ -59,18 +59,40 @@ public class SaslAuthFailTest extends ClientBase {
             // could not create tmp directory to hold JAAS conf file.
         }
     }
+
+    private AtomicInteger authFailed = new AtomicInteger(0);
     
-    @Test
-    public void testAuthFail() throws Exception {
-        ZooKeeper zk = createClient();
-        try {
-            zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            Assert.fail("Should have gotten exception.");
-        } catch(Exception e ) {
-            // ok, exception as expected.
-            LOG.info("Got exception as expected: " + e);
-        } finally {
-            zk.close();
+    @Override
+    protected TestableZooKeeper createClient(String hp)
+    throws IOException, InterruptedException
+    {
+        MyWatcher watcher = new MyWatcher();
+        return createClient(watcher, hp);
+    }
+
+    private class MyWatcher extends CountdownWatcher {
+        @Override
+        public synchronized void process(WatchedEvent event) {
+            if (event.getState() == KeeperState.AuthFailed) {
+                synchronized(authFailed) {
+                    authFailed.incrementAndGet();
+                    authFailed.notify();
+                }
+            }
+            else {
+                super.process(event);
+            }
         }
+    }
+
+    @Test
+    public void testBadSaslAuthNotifiesWatch() throws Exception {
+        ZooKeeper zk = createClient();
+        // wait for authFailed event from client's EventThread.
+        synchronized(authFailed) {
+            authFailed.wait();
+        }
+        Assert.assertEquals(authFailed.get(),1);
+        zk.close();
     }
 }
