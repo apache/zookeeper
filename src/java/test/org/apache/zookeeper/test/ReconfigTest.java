@@ -33,6 +33,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
@@ -627,6 +628,18 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     }
 
     @Test
+    public void testUnspecifiedClientAddress() throws Exception {
+    	int[] ports = new int[3];
+    	for (int port : ports) {
+    		port = PortAssignment.unique();
+    	}
+    	String server = "server.0=localhost:" + ports[0] + ":" + ports[1] + ";" + ports[2];
+    	QuorumServer qs = new QuorumServer(0, server);
+    	Assert.assertEquals(qs.clientAddr.getHostName(), "0.0.0.0");
+    	Assert.assertEquals(qs.clientAddr.getPort(), ports[2]);
+    }
+    
+    @Test
     public void testQuorumSystemChange() throws Exception {
         QuorumUtil qu = new QuorumUtil(3); // create 7 servers
         qu.disableJMXTest = true;
@@ -646,7 +659,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             members.add("server." + i + "=127.0.0.1:"
                     + qu.getPeer(i).peer.getQuorumAddress().getPort() + ":"
                     + qu.getPeer(i).peer.getElectionAddress().getPort() + ";"
-                    + qu.getPeer(i).peer.getClientPort());
+                    + "127.0.0.1:" + qu.getPeer(i).peer.getClientPort());
         }
 
         reconfig(zkArr[1], null, null, members, -1);
@@ -678,7 +691,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             members.add("server." + i + "=127.0.0.1:"
                     + qu.getPeer(i).peer.getQuorumAddress().getPort() + ":"
                     + qu.getPeer(i).peer.getElectionAddress().getPort() + ";"
-                    + qu.getPeer(i).peer.getClientPort());
+                    + "127.0.0.1:" + qu.getPeer(i).peer.getClientPort());
         }
 
         reconfig(zkArr[1], null, null, members, -1);

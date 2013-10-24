@@ -172,7 +172,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                 }
 
                 // is client_config a host:port or just a port
-                String hostname = (clientParts.length == 2) ? clientParts[0] : serverParts[0];
+                String hostname = (clientParts.length == 2) ? clientParts[0] : "0.0.0.0";
                 try {
                     clientAddr = new InetSocketAddress(hostname,
                             Integer.parseInt(clientParts[clientParts.length - 1]));
