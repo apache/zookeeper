@@ -152,6 +152,9 @@ BUGFIXES:
   ZOOKEEPER-1744. clientPortAddress breaks "zkServer.sh status"
   (Nick Ohanian via phunt)
 
+  ZOOKEEPER-1798. Fix race condition in testNormalObserverRun
+  (thawan, fpj via thawan)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
