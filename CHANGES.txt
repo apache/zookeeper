@@ -465,6 +465,9 @@ BUGFIXES:
   ZOOKEEPER-1744. clientPortAddress breaks "zkServer.sh status"
   (Nick Ohanian via phunt)
 
+  ZOOKEEPER-1499. clientPort config changes not backwards-compatible
+  (Alexander Shraer via phunt, breed)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
