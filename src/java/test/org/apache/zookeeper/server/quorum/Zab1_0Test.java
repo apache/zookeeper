@@ -1095,6 +1095,10 @@ public class Zab1_0Test {
                     Assert.assertEquals("data2", new String(o.zk
                             .getZKDatabase().getData("/foo2", stat, null)));
 
+                    // Shutdown sequence guarantee that all pending requests
+                    // in sync request processor get flush to disk
+                    o.zk.shutdown();
+
                     zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir));
                     lastZxid = zkDb2.loadDataBase();
                     Assert.assertEquals("data2", new String(zkDb2.getData("/foo1", stat, null)));
