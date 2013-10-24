@@ -149,6 +149,9 @@ BUGFIXES:
   ZOOKEEPER-1557. jenkins jdk7 test failure in
   testBadSaslAuthNotifiesWatch (Eugene Koontz via phunt)
 
+  ZOOKEEPER-1744. clientPortAddress breaks "zkServer.sh status"
+  (Nick Ohanian via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
