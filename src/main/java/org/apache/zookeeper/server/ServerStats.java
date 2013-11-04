@@ -18,11 +18,20 @@
 
 package org.apache.zookeeper.server;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.log4j.Logger;
+import org.apache.zookeeper.ZooDefs.OpCode;
+
 
 /**
  * Basic Server Statistics
  */
 public class ServerStats {
+	
+	private static final Logger LOG = Logger.getLogger(ServerStats.class);
+	
     private long packetsSent;
     private long packetsReceived;
     private long maxLatency;
@@ -30,6 +39,11 @@ public class ServerStats {
     private long totalLatency = 0;
     private long count = 0;
 
+    public final static String SERVER_PROCESS_STATS = "server_process_stats"; 
+    
+    //Add by nileader@gmail.com @see https://issues.apache.org/jira/browse/ZOOKEEPER-1804
+    final public static ConcurrentHashMap< Integer/**OpCode,request type*/, ServerProcessStats > real_time_sps = new ConcurrentHashMap< Integer, ServerProcessStats >();
+    
     private final Provider provider;
 
     public interface Provider {
@@ -37,6 +51,78 @@ public class ServerStats {
         public long getLastProcessedZxid();
         public String getState();
     }
+    
+    
+    static class ServerProcessStats{
+    
+    	private int type;
+    	private AtomicLong req_total = new AtomicLong();
+    	private double req_rwps = 0;
+    	
+    	public ServerProcessStats( int type ){
+    		this.type = type;
+    	}
+    	
+    	/**
+    	 * increment rwps to req_total
+    	 */
+    	public void incrementRWps(){
+    		req_total.incrementAndGet();
+    	}
+    	
+    	/**
+    	 * real time rwps.(req_rwps)
+    	 * @return
+    	 */
+    	public double getRWps(){
+    		return req_rwps;
+    	}
+    	/**
+    	 * Calculate rwps from req_total to req_rwps
+    	 * @param time s
+    	 */
+    	public void calculateRWps( double time ){
+    		req_rwps = req_total.getAndSet( 0 ) / ( time );
+    	}
+    }
+    
+	static {
+
+		if ( "true".equalsIgnoreCase( System.getProperty( SERVER_PROCESS_STATS, "false" ) ) ) {
+			// init the real_time_sps.
+			real_time_sps.put( OpCode.create, new ServerProcessStats( OpCode.create ) );
+			real_time_sps.put( OpCode.setWatches, new ServerProcessStats( OpCode.setWatches ) );
+			real_time_sps.put( OpCode.delete, new ServerProcessStats( OpCode.delete ) );
+			real_time_sps.put( OpCode.exists, new ServerProcessStats( OpCode.exists ) );
+			real_time_sps.put( OpCode.getData, new ServerProcessStats( OpCode.getData ) );
+			real_time_sps.put( OpCode.setData, new ServerProcessStats( OpCode.setData ) );
+			real_time_sps.put( OpCode.getChildren, new ServerProcessStats( OpCode.getChildren ) );
+			real_time_sps.put( OpCode.getChildren2, new ServerProcessStats( OpCode.getChildren2 ) );
+			real_time_sps.put( OpCode.createSession, new ServerProcessStats( OpCode.createSession ) );
+			real_time_sps.put( OpCode.closeSession, new ServerProcessStats( OpCode.closeSession ) );
+
+			new Thread( new Runnable() {
+				public void run() {
+					LOG.info( "[ServerProcessStats]ServerProcessStats started." );
+					while ( true ) {
+						long start = System.currentTimeMillis();
+						try {
+							Thread.sleep( 1000 * 10 );
+						} catch ( InterruptedException e ) {
+						}
+						try {
+							long time = System.currentTimeMillis() - start;
+							for ( int type : real_time_sps.keySet() ) {
+								real_time_sps.get( type ).calculateRWps( time / 1000.0 );
+							}
+						} catch ( Throwable e ) {
+							LOG.error( "[ServerProcessStats]Error when ServerProcessStats due to " + e.getMessage(), e );
+						}
+					}
+				}
+			} ).start();
+		}
+	}
     
     public ServerStats(Provider provider) {
         this.provider = provider;
@@ -128,5 +214,4 @@ public class ServerStats {
         resetLatency();
         resetRequestCounters();
     }
-
 }

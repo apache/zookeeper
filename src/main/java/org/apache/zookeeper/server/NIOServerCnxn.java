@@ -891,6 +891,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
      */
     private final static int wchsCmd =
         ByteBuffer.wrap("wchs".getBytes()).getInt();
+    
+    private final static int rwpsCmd =
+            ByteBuffer.wrap("rwps".getBytes()).getInt();
 
     private final static HashMap<Integer, String> cmd2String =
         new HashMap<Integer, String>();
@@ -911,6 +914,7 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         cmd2String.put(wchcCmd, "wchc");
         cmd2String.put(wchpCmd, "wchp");
         cmd2String.put(wchsCmd, "wchs");
+        cmd2String.put(rwpsCmd, "rwps");
     }
 
     /**
@@ -979,6 +983,9 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
 
     private static final String ZK_NOT_SERVING =
         "This ZooKeeper instance is not currently serving requests";
+    
+    private static final String SERVER_PROCESS_STATS_NOT_OPEN =
+            "server_process_stats not open, use -Dserver_process_stats=true to open.";
     
     /**
      * Set of threads for commmand ports. All the 4
@@ -1173,6 +1180,36 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         }
     }
     
+    private class RwpsCommand extends CommandThread {
+        public RwpsCommand(PrintWriter pw) {
+            super(pw);
+        }
+        
+		@Override
+        public void commandRun() {
+            if (zk == null) {
+                pw.println(ZK_NOT_SERVING);
+            }else if ( !"true".equalsIgnoreCase( System.getProperty( ServerStats.SERVER_PROCESS_STATS, "false" ) ) ) {
+            	pw.println( SERVER_PROCESS_STATS_NOT_OPEN );
+            }else {   
+                pw.print( "RealTime R/W Statistics:" );
+                if( ServerStats.real_time_sps.isEmpty() ){
+                	pw.print( "No request.\r\n" );
+                }else{
+                	StringBuilder sb = new StringBuilder();
+    				for( Integer type : ServerStats.real_time_sps.keySet() ){
+    					sb.append( "\r\n" )
+    					.append("\t")
+    					.append( Request.op2String( type ) + ": \t" + ServerStats.real_time_sps.get( type ).getRWps() )
+    					.append( "\r\n" );
+    				}
+                    pw.println( sb.toString() );
+                }
+            }
+            
+        }
+    }
+    
     private class ConsCommand extends CommandThread {
         public ConsCommand(PrintWriter pw) {
             super(pw);
@@ -1308,6 +1345,10 @@ public class NIOServerCnxn implements Watcher, ServerCnxn {
         } else if (len == wchpCmd || len == wchcCmd || len == wchsCmd) {
             WatchCommand wcmd = new WatchCommand(pwriter, len);
             wcmd.start();
+            return true;
+        } else if (len == rwpsCmd ) {
+            RwpsCommand rwps = new RwpsCommand(pwriter);
+            rwps.start();
             return true;
         }
         return false;

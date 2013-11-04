@@ -11,7 +11,7 @@
   <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper</artifactId>
   <packaging>jar</packaging>
-  <version>3.3.5</version>
+  <version>3.3.5-taobao</version>
   <dependencies>
     <dependency>
       <groupId>log4j</groupId>

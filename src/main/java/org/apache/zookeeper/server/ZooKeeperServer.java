@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
@@ -567,6 +568,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
     
     public void submitRequest(Request si) {
+    	
+    	if ( "true".equalsIgnoreCase( System.getProperty( ServerStats.SERVER_PROCESS_STATS, "false" ) ) ) {
+    		statTps( si.type );
+    	}
         if (firstProcessor == null) {
             synchronized (this) {
                 try {
@@ -733,4 +738,39 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     	zkDb.dumpEphemerals(pwriter);
     }
     
+    /**
+     * increment the tps of some types: 
+     * <p>
+     * create<br>
+     * setWatches<br>
+     * delete<br>
+     * exists<br>
+     * getData<br>
+     * setData<br>
+     * getChildren<br>
+     * getChildren2<br>
+     * createSession<br>
+     * closeSession<br>
+     * </p>
+     * @param type
+     */
+    private void statTps( int type ){
+    	
+        switch ( type ) {
+        case OpCode.create:
+        case OpCode.setWatches:
+        case OpCode.delete:
+        case OpCode.exists:
+        case OpCode.getData:
+        case OpCode.setData:
+        case OpCode.getChildren:
+        case OpCode.getChildren2:
+        case OpCode.createSession:
+        case OpCode.closeSession:
+        	ServerStats.real_time_sps.get( type ).incrementRWps();
+        	break;
+        default:
+        	return;
+        }
+    }
 }
