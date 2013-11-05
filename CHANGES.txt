@@ -674,6 +674,9 @@ IMPROVEMENTS:
   in OSGi MANIFEST (Arnoud Glimmerveen via phunt)
 
   ZOOKEEPER-1715. Upgrade netty version (Sean Bridges via phunt)
+  
+  ZOOKEEPER-1666. Avoid Reverse DNS lookup if the hostname in 
+  connection string is literal IP address. (George Cao via camille)
 
 headers
 

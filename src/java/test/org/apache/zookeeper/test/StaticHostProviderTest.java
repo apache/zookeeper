@@ -333,4 +333,33 @@ public class StaticHostProviderTest extends ZKTestCase {
         return (1 + slackPercent/100.0) * numClients / numServers;
     }
 
+    @Test
+    public void testLiteralIPNoReverseNS() throws Exception {
+        byte size = 30;
+        HostProvider hostProvider = getHostProviderUnresolved(size);
+        for (int i = 0; i < size; i++) {
+            InetSocketAddress next = hostProvider.next(0);
+            assertTrue(next instanceof InetSocketAddress);
+            assertTrue(!next.isUnresolved());
+            assertTrue(!next.toString().startsWith("/"));
+            // Do NOT trigger the reverse name service lookup.
+            String hostname = next.getHostName();
+            // In this case, the hostname equals literal IP address.
+            hostname.equals(next.getAddress().getHostAddress());
+        }
+    }
+
+    private StaticHostProvider getHostProviderUnresolved(byte size)
+            throws UnknownHostException {
+        return new StaticHostProvider(getUnresolvedServerAddresses(size), r.nextLong());
+    }
+
+    private Collection<InetSocketAddress> getUnresolvedServerAddresses(byte size) {
+        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+        while (size > 0) {
+            list.add(InetSocketAddress.createUnresolved("10.10.10." + size, 1234 + size));
+            --size;
+        }
+        return list;
+    }
 }
