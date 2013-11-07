@@ -918,6 +918,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                         };
                         try {
                             roZkMgr.start();
+                            reconfigFlagClear();
+                            if (shuttingDownLE) {
+                                shuttingDownLE = false;
+                                startLeaderElection();
+                            }
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
@@ -1292,14 +1297,23 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
        if (lastSeenQuorumVerifier == null || (qv.getVersion() > lastSeenQuorumVerifier.getVersion()))
            lastSeenQuorumVerifier = qv;
         if (writeToDisk) {
-            try {
-                QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename, configFilename, configBackwardCompatibility, qv);
-                if (configBackwardCompatibility) {
-                    dynamicConfigFilename = configFilename + ".dynamic";
-                    configBackwardCompatibility = false;
+                // we need to write the dynamic config file. Either it already exists
+                // or we have the old-style config file and we're in the backward compatibility mode,
+                // so we'll create the dynamic config file for the first time now
+                if (dynamicConfigFilename !=null || (configFilename !=null && configBackwardCompatibility)) { 
+                try {
+                    QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename, configFilename, configBackwardCompatibility, qv);
+                    if (configBackwardCompatibility) {
+                        dynamicConfigFilename = configFilename + ".dynamic";
+                        configBackwardCompatibility = false;
+                    }
+                } catch(IOException e){
+                    LOG.error("Error closing file: ", e.getMessage());     
                 }
-            } catch(IOException e){
-                LOG.error("Error closing file: ", e.getMessage());     
+            } else {
+                LOG.error("writeToDisk == true but dynamicConfigFilename == null, configFilename "
+                          + (configFilename == null ? "== null": "!=null")
+                          + " and configBackwardCompatibility == " + configBackwardCompatibility);
             }
         }
 
@@ -1529,7 +1543,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
        // for Learner):
        initConfigInZKDatabase();
 
-       if (prevQV.getVersion() < qv.getVersion()) {
+       if (prevQV.getVersion() < qv.getVersion() && !prevQV.equals(qv)) {
            if (restartLE) restartLeaderElection(prevQV, qv);
 
            QuorumServer myNewQS = qv.getAllMembers().get(getId());
@@ -1545,12 +1559,10 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                leaderChange = updateVote(suggestedLeaderId, zxid);
            } else {
                long currentLeaderId = getCurrentVote().getId();
-               InetSocketAddress currentLeaderAddr = prevQV.getVotingMembers()
-                       .get(currentLeaderId).addr;
-               leaderChange = (!qv.getVotingMembers().containsKey(
-                       currentLeaderId))
-                       || (!qv.getVotingMembers().get(currentLeaderId).addr
-                               .equals(currentLeaderAddr));
+               QuorumServer myleaderInCurQV = prevQV.getVotingMembers().get(currentLeaderId);
+               QuorumServer myleaderInNewQV = qv.getVotingMembers().get(currentLeaderId);
+               leaderChange = (myleaderInCurQV == null || myleaderInCurQV.addr == null || 
+                               myleaderInNewQV == null || !myleaderInCurQV.addr.equals(myleaderInNewQV.addr));
                // we don't have a designated leader - need to go into leader
                // election
                reconfigFlagClear();

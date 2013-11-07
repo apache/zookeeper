@@ -266,19 +266,22 @@ public class FastLeaderElection implements Election {
                                                        
                            synchronized(self){                             
                                try {
-                                   rqv = self.configFromString(new String(b));                                             
-                                   if (rqv.getVersion() > self.getQuorumVerifier().getVersion()) {
+                                   rqv = self.configFromString(new String(b));
+                                   QuorumVerifier curQV = self.getQuorumVerifier();
+                                   if (rqv.getVersion() > curQV.getVersion()) {
                                        LOG.info(self.getId() + " Received version: " + Long.toHexString(rqv.getVersion()) + " my version: " + Long.toHexString(self.getQuorumVerifier().getVersion()));
                                        self.processReconfig(rqv, null, null, false);
-                                       LOG.info("restarting leader election");
-                                       self.shuttingDownLE = true;
-                                       self.getElectionAlg().shutdown();
+                                       if (!rqv.equals(curQV)) {
+                                           LOG.info("restarting leader election");
+                                           self.shuttingDownLE = true;
+                                           self.getElectionAlg().shutdown();
+                                       }
                                    }           
                                } catch (IOException e) {                         
                                    LOG.error("Something went wrong while processing config received from " + response.sid);
                                } catch (ConfigException e) {
                                    LOG.error("Something went wrong while processing config received from " + response.sid);
-							   } 
+                               } 
                           }                                                       
                         } else {
                             if(LOG.isInfoEnabled()){

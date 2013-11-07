@@ -479,6 +479,37 @@ public class Leader {
                         + Long.toHexString(newLeaderProposal.packet.getZxid()));
             }
 
+            QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
+            QuorumVerifier curQV = self.getQuorumVerifier();
+            if (curQV.getVersion() == 0 && curQV.getVersion() == lastSeenQV.getVersion()) {
+                // This was added in ZOOKEEPER-1783. The initial config has version 0 (not explicitly
+                // specified by the user; the lack of version in a config file is interpreted as version=0). 
+                // As soon as a config is established we would like to increase its version so that it
+                // takes presedence over other initial configs that were not established (such as a config
+                // of a server trying to join the ensemble, which may be a partial view of the system, not the full config). 
+                // We chose to set the new version to the one of the NEWLEADER message. However, before we can do that
+                // there must be agreement on the new version, so we can only change the version when sending/receiving UPTODATE,
+                // not when sending/receiving NEWLEADER. In other words, we can't change curQV here since its the committed quorum verifier, 
+                // and there's still no agreement on the new version that we'd like to use. Instead, we use 
+                // lastSeenQuorumVerifier which is being sent with NEWLEADER message
+                // so its a good way to let followers know about the new version. (The original reason for sending 
+                // lastSeenQuorumVerifier with NEWLEADER is so that the leader completes any potentially uncommitted reconfigs
+                // that it finds before starting to propose operations. Here we're reusing the same code path for 
+                // reaching consensus on the new version number.)
+                
+                // It is important that this is done before the leader executes waitForEpochAck,
+                // so before LearnerHandlers return from their waitForEpochAck
+                // hence before they construct the NEWLEADER message containing
+                // the last-seen-quorumverifier of the leader, which we change below
+               try {
+                   QuorumVerifier newQV = self.configFromString(curQV.toString());
+                   newQV.setVersion(zk.getZxid());
+                   self.setLastSeenQuorumVerifier(newQV, true);    
+               } catch (Exception e) {
+                   throw new IOException(e);
+               }
+            }
+            
             newLeaderProposal.addQuorumVerifier(self.getQuorumVerifier());
             if (self.getLastSeenQuorumVerifier().getVersion() > self.getQuorumVerifier().getVersion()){
                newLeaderProposal.addQuorumVerifier(self.getLastSeenQuorumVerifier());

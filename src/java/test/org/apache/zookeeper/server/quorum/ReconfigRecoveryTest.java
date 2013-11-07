@@ -55,7 +55,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
                sb.append(server +"\n");
                if (i == 1) currentQuorumCfgSection = sb.toString();
         }
-        sb.append("version=1\n"); // version of current config is 0
+        sb.append("version=200000000\n"); // version of current config is 100000000
         nextQuorumCfgSection = sb.toString();
         
         // Both servers 0 and 1 will have the .next config file, which means
@@ -170,7 +170,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             sb.append(server +"\n");
            
         }
-        sb.append("version=1\n"); // version of current config is 0
+        sb.append("version=200000000\n"); // version of current config is 100000000
         nextQuorumCfgSection = sb.toString();
         
         MainThread mt[] = new MainThread[SERVER_COUNT];
@@ -236,7 +236,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
                sb.append(server +"\n");
                if (i == 1) currentQuorumCfgSection = sb.toString();
         }
-        sb.append("version=1\n"); // version of current config is 0
+        sb.append("version=200000000\n"); // version of current config is 100000000
         nextQuorumCfgSection = sb.toString();
         
         // lets start servers 2, 3, 4 with the new config
@@ -294,7 +294,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
                sb.append(server +"\n");
                if (i == 1) currentQuorumCfgSection = sb.toString();
         }
-        sb.append("version=1\n"); // version of current config is 0
+        sb.append("version=200000000\n"); // version of current config is 100000000
         nextQuorumCfgSection = sb.toString();
         
         // lets start servers 2, 3, 4 with the new config

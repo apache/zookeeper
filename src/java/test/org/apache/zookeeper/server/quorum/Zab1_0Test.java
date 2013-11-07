@@ -805,6 +805,7 @@ public class Zab1_0Test {
                     oa.writeRecord(qp, null);
                     qp.setType(Leader.NEWLEADER);
                     qp.setZxid(ZxidUtils.makeZxid(1, 0));
+                    qp.setData(null);
                     oa.writeRecord(qp, null);
                     qp.setType(Leader.UPTODATE);
                     qp.setZxid(0);
@@ -1225,9 +1226,6 @@ public class Zab1_0Test {
             throws IOException, NoSuchFieldException, IllegalAccessException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
-        Field addrField = peer.getClass().getDeclaredField("myQuorumAddr");
-        addrField.setAccessible(true);
-        addrField.set(peer, new InetSocketAddress(PortAssignment.unique()));
         ZKDatabase zkDb = new ZKDatabase(logFactory);
         LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer, zkDb);
         return zk;
