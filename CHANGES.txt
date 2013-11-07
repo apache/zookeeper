@@ -471,6 +471,9 @@ BUGFIXES:
   ZOOKEEPER-1798. Fix race condition in testNormalObserverRun
   (thawan, fpj via thawan)
 
+  ZOOKEEPER-1783. Distinguish initial configuration from first established
+  configuration (shralex via breed)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
