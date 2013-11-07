@@ -1,0 +1,80 @@
+Net::ZooKeeper - Perl extension for Apache ZooKeeper
+====================================================
+
+Net::ZooKeeper provides a Perl interface to the synchronous C API
+of Apache ZooKeeper.  ZooKeeper is coordination service for
+distributed applications and is a sub-project of the Apache Hadoop
+project.  For details see the ZooKeeper home page at:
+
+http://hadoop.apache.org/zookeeper/
+
+INSTALLATION
+
+To install this module type the following:
+
+    perl Makefile.PL \
+        --zookeeper-include=/path/to/zookeeper/client/include \
+        --zookeeper-lib=/path/to/zookeeper/client/lib
+    make
+    ZK_TEST_HOSTS=host:port,... make test
+    make install
+
+The path supplied to the --zookeeper-include option should
+identify the directory that contains the zookeeper.h and other
+ZooKeeper C include files.
+
+The path supplied to the --zookeeper-lib option should identify
+the directory that contains the libzookeeper_mt library.
+
+When running "make test", if no ZK_TEST_HOSTS environment
+variable is set, many tests will be skipped because no connection
+to a ZooKeeper server is available.  To execute these tests,
+the ZK_TEST_HOSTS variable may be assigned a list of one or more
+ZooKeeper host:port pairs, e.g., "localhost:7100,otherhost:7200".
+
+The ZK_TEST_PATH environment variable, if defined, specifies
+the ZooKeeper path under which all test nodes should be created.
+The tests expect to have full read/write/create/delete/admin
+ZooKeeper permissions under this path.  If no ZK_TEST_PATH
+variable is defined, the root ZooKeeper path ("/") is used.
+
+DEPENDENCIES
+
+Version 3.1.1 of ZooKeeper is required at a minimum.
+
+For version 3.1.1, you may also want to apply some of these
+additional patches to the ZooKeeper C API code:
+
+https://issues.apache.org/jira/browse/ZOOKEEPER-262
+https://issues.apache.org/jira/browse/ZOOKEEPER-318
+
+For version 3.1.1, you may also want to apply some of these
+additional patches to the ZooKeeper C API code:
+
+https://issues.apache.org/jira/browse/ZOOKEEPER-262
+https://issues.apache.org/jira/browse/ZOOKEEPER-466
+
+This module requires that the multi-threaded version of the
+ZooKeeper C API client library be available on your system.
+
+This in turn implies that the POSIX pthread library is available
+as well.
+
+COPYRIGHT AND LICENCE
+
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+

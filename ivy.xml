@@ -1,0 +1,57 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<ivy-module version="2.0"
+            xmlns:e="http://ant.apache.org/ivy/extra">
+
+  <info organisation="org.apache.zookeeper"
+        module="${name}" revision="${version}">
+    <license name="Apache 2.0"/>
+    <ivyauthor name="Apache Hadoop" url="http://hadoop.apache.org"/>
+    <description>ZooKeeper</description>
+  </info>
+
+  <configurations defaultconfmapping="default">
+    <conf name="default"/>
+    <conf name="test"/>
+    <conf name="jdiff" visibility="private"/>
+    <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
+  </configurations>
+
+  <dependencies>
+    <!-- transitive false turns off dependency checking, log4j deps seem borked -->
+    <dependency org="log4j" name="log4j" rev="1.2.15" transitive="false"/>
+    <dependency org="jline" name="jline" rev="0.9.94" transitive="false"/>
+
+    <dependency org="junit" name="junit" rev="4.8.1" conf="test->default"/>
+    <dependency org="checkstyle" name="checkstyle" rev="5.0"
+                conf="test->default"/>
+
+    <dependency org="jdiff" name="jdiff" rev="1.0.9"
+                conf="jdiff->default"/>
+    <dependency org="xerces" name="xerces" rev="1.4.4"
+                conf="jdiff->default"/>
+
+    <dependency org="org.apache.rat" name="apache-rat-tasks" 
+                rev="0.6" conf="releaseaudit->default"/>
+    <dependency org="commons-lang" name="commons-lang" 
+                rev="2.4" conf="releaseaudit->default"/>
+    <dependency org="commons-collections" name="commons-collections" 
+                rev="3.1" conf="releaseaudit->default"/>
+  </dependencies>
+
+</ivy-module>

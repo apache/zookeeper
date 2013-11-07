@@ -1,0 +1,1346 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="ZooKeeper" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+    <property name="Name" value="ZooKeeper" />
+    <property name="name" value="zookeeper" />
+
+    <property environment="env"/>
+    
+    <property name="version" value="3.3.5" />
+    <property name="final.name" value="${name}-${version}"/>
+    <property name="revision.dir" value="${basedir}/.revision" />
+    <property name="revision.properties" value="revision.properties" />
+    <property file="${basedir}/src/java/${revision.properties}" />
+    
+    <!-- Target Java 1.5 -->
+    <property name="javac.target" value="1.5" />
+
+    <property name="src.dir" value="${basedir}/src" />
+    <property name="java.src.dir" value="${src.dir}/java/main" />
+
+    <property name="lib.dir" value="${src.dir}/java/lib" />
+    <property name="lib.dir.includes" value="**/*.jar" />
+    <property name="lib.dir.excludes" value="**/excluded/" />
+
+    <!-- prior to ant 1.7.1 fileset always fails if dir doesn't exist
+         so just point to bin directory and provide settings that exclude
+         everything - user can change as appropriate -->
+    <property name="additional.lib.dir" value="bin" />
+    <property name="additional.lib.dir.includes" value="**/*.jar" />
+    <property name="additional.lib.dir.excludes" value="**/*.jar" />
+
+    <property name="build.dir" value="${basedir}/build" />
+    <property name="distribution" value="${basedir}/distribution" />
+    <property name="src_generated.dir" value="${src.dir}/java/generated" />
+    <property name="c.src.dir" value="${src.dir}/c" />    
+    <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
+
+    <property name="jute.file" value="${src.dir}/zookeeper.jute" />
+
+    <property name="build.classes" value="${build.dir}/classes"/>
+    <property name="build.docs" value="${build.dir}/docs" />
+    <property name="build.javadoc" value="${build.docs}/api" />
+    <property name="build.javadoc.dev" value="${build.docs}/dev-api"/>
+
+    <property name="test.java.build.dir" value="${build.dir}/test"/>
+    <property name="test.java.classes" value="${test.java.build.dir}/classes"/>
+    <property name="test.src.dir" value="${src.dir}/java/test"/>
+    <property name="systest.src.dir" value="${src.dir}/java/systest"/>
+    <property name="test.log.dir" value="${test.java.build.dir}/logs" />
+    <property name="test.data.dir" value="${test.java.build.dir}/data" />
+    <property name="test.data.upgrade.dir" value="${test.data.dir}/upgrade" />
+    <property name="test.data.invalid.dir" value="${test.data.dir}/invalidsnap" />
+    <property name="test.cppunit.dir" value="${test.java.build.dir}/test-cppunit"/>
+    <property name="test.tmp.dir" value="${test.java.build.dir}/tmp" />
+    <property name="test.output" value="no" />
+    <property name="test.timeout" value="900000" />
+    <property name="test.junit.output.format" value="plain" />
+    <property name="test.junit.fork.mode" value="perTest" />
+    <property name="test.junit.printsummary" value="yes" />
+    <property name="test.junit.haltonfailure" value="no" />
+    <property name="config.dir" value="${src.dir}/java/test/config" />
+    <property name="test.junit.maxmem" value="512m" />
+    <property name="test.quick" value="no" />
+    <property name="conf.dir" value="${basedir}/conf"/>
+    <property name="docs.dir" value="${basedir}/docs"/>
+    <property name="docs.src" value="${basedir}/src/docs"/>
+    <property name="javadoc.link.java"
+              value="http://docs.oracle.com/javase/6/docs/api/" />
+    <property name="javadoc.packages" value="org.apache.*" />
+
+    <property name="dist.dir" value="${build.dir}/${final.name}"/>
+    <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
+
+    <property name="clover.home" location="${env.CLOVER_HOME}"/>
+    <property name="clover.jar" location="${clover.home}/lib/clover.jar" />
+    <property name="clover.db.dir" location="${test.java.build.dir}/clover/db"/>
+    <property name="clover.report.dir"
+              location="${test.java.build.dir}/clover/reports"/>
+
+    <property name="contrib.dir" value="${src.dir}/contrib"/>
+    <property name="recipes.dir" value="${src.dir}/recipes"/>
+
+    <property name="ivy.version" value="2.1.0"/>
+    <property name="ivy.url"
+              value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
+    <property name="ivy.home" value="${user.home}/.ant" />
+    <property name="ivy.lib" value="${build.dir}/lib"/>
+    <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
+    <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
+    <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
+
+    <available property="clover.present"
+               classname="com.cenqua.clover.CloverInstr"
+               classpath="${clover.home}/lib/clover.jar"/>
+
+    <available file="${c.src.dir}/Makefile" property="Makefile.present"/>
+
+    <!-- check if clover reports should be generated -->
+    <condition property="clover.enabled">
+      <and>
+        <isset property="run.clover"/>
+        <isset property="clover.present"/>
+      </and>
+    </condition>
+
+
+    <property name="test.cobertura.output.format" value="html" />
+    <property name="coveragereport.dir" value="${build.dir}/cobertura" />
+
+    <!-- rats properties -->
+    <property name="rats_url" value="http://arat.googlecode.com/files/rat-lib-all-0.5.1.jar" />
+    <property name="rat.reporting.classname" value="rat.Report"/>
+
+        <!-- test patch properties -->
+    <property name="scratch.dir" value="${user.home}/tmp"/>
+    <property name="svn.cmd" value="svn"/>
+    <property name="grep.cmd" value="grep"/>
+    <property name="patch.cmd" value="patch"/>
+    <property name="make.cmd" value="make"/>
+    <property name="test_patch_sh" value="${test.src.dir}/bin/test-patch.sh"/>
+
+	<!-- jdiff.home property set -->
+    <property name="jdiff.home" value="${ivy.jdiff.lib}"/>
+    <property name="jdiff.build.dir" value="${build.docs}/jdiff"/>
+    <property name="jdiff.xml.dir" value="${lib.dir}/jdiff"/>
+    <property name="jdiff.stable" value="3.1.1"/>
+    <property name="jdiff.stable.javadoc" 
+            value="http://hadoop.apache.org/zookeeper/docs/r${jdiff.stable}/api/"/>
+
+    <!-- eclipse property set -->
+    <property name="build.dir.eclipse" value=".eclipse"/>
+    <property name="build.dir.eclipse-main-classes" value="${build.dir.eclipse}/classes-main"/>
+    <property name="build.dir.eclipse-test-classes" value="${build.dir.eclipse}/classes-test"/>
+
+
+    <!-- ====================================================== -->
+    <!-- Macro definitions                                      -->
+    <!-- ====================================================== -->
+    <macrodef name="macro_tar" description="Worker Macro for tar">
+      <attribute name="param.destfile"/>
+      <element name="param.listofitems"/>
+      <sequential>
+        <tar compression="gzip" longfile="gnu"
+             destfile="@{param.destfile}">
+          <param.listofitems/>
+        </tar>
+      </sequential>
+    </macrodef>
+
+    <!-- the normal classpath -->
+    <path id="java.classpath">
+      <pathelement location="${build.classes}"/>
+      <!-- allow the user to override (e.g. if there are local versions) -->
+      <fileset dir="${additional.lib.dir}">
+        <include name="${additional.lib.dir.includes}" />
+        <exclude name="${additional.lib.dir.excludes}" />
+      </fileset>
+      <fileset dir="${lib.dir}">
+        <include name="${lib.dir.includes}" />
+        <exclude name="${lib.dir.excludes}" />
+      </fileset>
+      <fileset dir="${ant.home}/lib">
+        <include name="ant.jar" />
+      </fileset>
+      <fileset dir="${ivy.lib}">
+        <include name="**/*.jar" />
+      </fileset>
+      <pathelement path="${clover.jar}" />
+    </path>
+
+    <path id="test.java.classpath">
+      <pathelement location="${test.java.classes}" />
+      <fileset dir="${ivy.test.lib}">
+        <include name="**/*.jar" />
+      </fileset>
+      <path refid="java.classpath"/>
+    </path>
+
+    <!-- ====================================================== -->
+    <!-- Generate and compile the Java files                    -->
+    <!-- ====================================================== -->
+    <target name="init">    
+        <mkdir dir="${build.classes}" />
+
+        <mkdir dir="${ivy.lib}"/>
+        <mkdir dir="${ivy.test.lib}"/>
+        <condition property="ivy.jar.exists">
+          <available file="${lib.dir}/ivy-${ivy.version}.jar"/>
+        </condition>
+
+        <tstamp>
+            <format property="build.time" pattern="MM/dd/yyyy HH:mm zz" timezone="GMT"/>
+            <format property="year" pattern="yyyy" timezone="GMT"/>
+        </tstamp>
+    </target>
+    
+    <target name="jute" depends="init">
+        <javac srcdir="${java.src.dir}" destdir="${build.classes}" target="${javac.target}"
+            includes="org/apache/jute/**" debug="on" />
+    </target>
+
+    <target name="compile_jute_uptodate">
+        <uptodate property="juteBuild.notRequired"
+                  srcfile="${jute.file}"
+                  targetfile="${src_generated.dir}/.generated"/>
+    </target>
+
+    <target name="compile_jute" depends="jute,compile_jute_uptodate" unless="juteBuild.notRequired">
+        <mkdir dir="${src_generated.dir}" />
+        <mkdir dir="${csrc_generated.dir}" />
+        <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
+            <arg value="-l" />
+            <arg value="java" />
+            <arg value="../../zookeeper.jute" /> 
+            <classpath>
+                <pathelement path="${build.classes}" />
+            </classpath>
+        </java>
+        
+        <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
+            <arg value="-l" />
+            <arg value="c" />
+            <arg value="../../zookeeper.jute" />
+            <classpath>
+                <pathelement path="${build.classes}" />
+            </classpath>
+        </java>
+
+        <touch file="${src_generated.dir}/.generated"/>
+    </target>
+
+    <target name="ver-gen" depends="init">
+        <javac srcdir="${java.src.dir}" destdir="${build.classes}" target="${javac.target}"
+            includes="org/apache/zookeeper/version/util/**" debug="on" />
+    </target>
+    
+    <target name="svn-revision" unless="lastRevision">
+        <mkdir dir="${revision.dir}" />
+        <condition property="shell.name" value="cmd" else="sh">
+      	    <os family="windows"/>
+        </condition>
+        <condition property="revision.cmd.line" 
+        	value="/c ${src.dir}\lastRevision.bat" else="${src.dir}/lastRevision.sh">
+      	    <os family="windows"/>
+        </condition>
+        <exec executable="${shell.name}">
+           <arg line="${revision.cmd.line} ${revision.dir}${file.separator}${revision.properties}"/>
+        </exec>
+        <property file="${revision.dir}/${revision.properties}" />
+    </target>
+    
+    <target name="version-info" depends="ver-gen,svn-revision">
+        <mkdir dir="${src_generated.dir}" />
+        <java classname="org.apache.zookeeper.version.util.VerGen" fork="true" 
+                dir="${src_generated.dir}">
+            <arg value="${version}" />
+            <arg value="${lastRevision}" />
+            <arg value="${build.time}" />
+            <classpath>
+                <pathelement path="${build.classes}" />
+            </classpath>
+        </java>
+    </target>
+    
+    <target name="build-generated" depends="compile_jute,version-info" >
+        <javac srcdir="${src_generated.dir}" destdir="${build.classes}" 
+            target="${javac.target}" debug="on" />
+    </target>
+    
+    <target name="ivy-download" unless="ivy.jar.exists" depends="init">
+      <delete dir="${lib.dir}"
+              includes="ivy-*.jar" excludes="ivy-${ivy.version}.jar"/>
+      <get src="${ivy.url}/${ivy.version}/ivy-${ivy.version}.jar"
+           dest="${lib.dir}/ivy-${ivy.version}.jar" usetimestamp="true"/>
+    </target>
+
+    <target name="ivy-taskdef" unless="ivy.initialized">
+      <taskdef resource="org/apache/ivy/ant/antlib.xml"
+               uri="antlib:org.apache.ivy.ant" classpathref="java.classpath"/>
+      <!-- ensure that ivy taskdef is only run once, otw ant will error -->
+      <property name="ivy.initialized" value="true"/> 
+    </target>
+
+    <target name="ivy-init" depends="ivy-download,ivy-taskdef">
+      <ivy:settings id="${ant.project.name}" file="${ivysettings.xml}"/>
+    </target>
+
+    <target name="ivy-retrieve" depends="init,ivy-init">
+      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="default"
+                    pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+    </target>
+
+    <target name="ivy-retrieve-test" depends="init,ivy-init">
+      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="test"
+                    pattern="${ivy.test.lib}/[artifact]-[revision].[ext]"/>
+    </target>
+
+    <target name="ivy-retrieve-jdiff" depends="init,ivy-init">
+      <mkdir dir="${ivy.jdiff.lib}"/>
+      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="jdiff"
+                    pattern="${ivy.jdiff.lib}/[artifact]-[revision].[ext]"/>
+    </target>
+
+    <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
+      <ivy:retrieve settingsRef="${ant.project.name}" type="jar" conf="releaseaudit"
+                    pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+      <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
+    </target>
+
+    <target name="compile" depends="ivy-retrieve,clover,build-generated">
+        <javac srcdir="${java.src.dir}" destdir="${build.classes}" 
+               target="${javac.target}" debug="on">
+            <classpath refid="java.classpath"/>
+            <compilerarg value="-Xlint:all"/>
+            <compilerarg value="-Xlint:-path"/>
+        </javac>
+    </target>
+
+    <target name="compile-test" depends="ivy-retrieve-test,compile">
+      <mkdir dir="${test.java.classes}"/>
+      <javac srcdir="${test.src.dir}" destdir="${test.java.classes}"
+             target="${javac.target}" debug="on">
+        <classpath refid="test.java.classpath"/>
+      </javac>
+      <javac srcdir="${systest.src.dir}" destdir="${test.java.classes}"
+             target="${javac.target}" debug="on">
+        <classpath refid="test.java.classpath"/>
+      </javac>
+    </target>
+
+    <!-- ====================================================== -->
+    <!-- Documentation                                          -->
+    <!-- ====================================================== -->
+    <target name="docs" depends="forrest.check" description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line." if="forrest.home">
+      <condition property="forrest.exec" value="forrest.bat" else="forrest">
+      	<os family="windows"/>
+      </condition>
+      <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
+            failonerror="true">
+      </exec>
+      <copy todir="${docs.dir}">
+        <fileset dir="${docs.src}/build/site/" />
+      </copy>
+      <style basedir="${conf.dir}" destdir="${docs.dir}"
+             includes="zookeeper-default.xml" style="conf/configuration.xsl"/>
+    </target>
+
+    <target name="forrest.check" unless="forrest.home">
+      <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
+    </target>
+
+    <!-- Javadoc -->
+    <target name="javadoc-dev" depends="jar"
+            description="Generate javadoc for zookeeper developers">
+      <mkdir dir="${build.javadoc.dev}"/>
+      <javadoc
+         overview="${java.src.dir}/overview.html"
+         packagenames="org.apache.zookeeper.*"
+         destdir="${build.javadoc.dev}"
+         author="true"
+         version="true"
+         use="true"
+         windowtitle="${Name} ${version} API"
+         doctitle="${Name} ${version} API"
+         bottom="Copyright &amp;copy; ${year} The Apache Software Foundation"
+         >
+    	<packageset dir="${java.src.dir}">
+          <include name="org/apache/**"/>
+          <exclude name="org/apache/jute/**"/>
+    	</packageset>
+    	<packageset dir="${src_generated.dir}"/>
+        <link href="${javadoc.link.java}"/>
+        <classpath refid="java.classpath"/>
+      </javadoc>
+    </target>	
+
+    <target name="javadoc" depends="jar" description="Generate javadoc">
+      <mkdir dir="${build.javadoc}"/>
+      <javadoc
+         overview="${java.src.dir}/overview.html"
+         packagenames="org.apache.zookeeper.*"
+         destdir="${build.javadoc}"
+         author="true"
+         version="true"
+         use="true"
+         Public="yes"
+         windowtitle="${Name} ${version} API"
+         doctitle="${Name} ${version} API"
+         bottom="Copyright &amp;copy; ${year} The Apache Software Foundation"
+         >
+    	<fileset dir="${java.src.dir}">
+          <include name="org/apache/**/*Main.java"/>
+          <include name="org/apache/zookeeper/AsyncCallback.java"/>
+          <include name="org/apache/zookeeper/CreateMode.java"/>
+          <include name="org/apache/zookeeper/KeeperException.java"/>
+          <include name="org/apache/zookeeper/ServerAdminClient.java"/>
+          <include name="org/apache/zookeeper/Watcher.java"/>
+          <include name="org/apache/zookeeper/ZooDefs.java"/>
+          <include name="org/apache/zookeeper/ZooKeeper.java"/>
+          <include name="org/apache/zookeeper/server/LogFormatter.java"/>
+          <include name="org/apache/zookeeper/server/PurgeTxnLog.java"/>
+          <exclude name="org/apache/zookeeper/server/quorum/QuorumPacket"/>
+    	</fileset>
+    	<packageset dir="${src_generated.dir}">
+          <exclude name="org/apache/zookeeper/proto"/>
+          <exclude name="org/apache/zookeeper/txn"/>
+          <exclude name="org/apache/zookeeper/version"/>
+          <exclude name="org/apache/zookeeper/server/**"/>
+    	</packageset>
+        <link href="${javadoc.link.java}"/>
+        <classpath>
+		<fileset dir="${basedir}">
+			<include name="${jar.name}"/>
+		</fileset> 
+        <path refid="java.classpath"/>
+	</classpath>
+      </javadoc>
+    </target>	
+
+    <!-- ====================================================== -->
+    <!-- Make zookeeper.jar                                     -->
+    <!-- ====================================================== -->
+    <target name="jar" depends="compile">
+        <java classname="org.apache.zookeeper.Version" fork="true"
+              outputproperty="revision" failonerror="true">
+            <arg value="--revision" />
+            <classpath>
+                <pathelement path="${build.classes}" />
+                <pathelement path="${clover.jar}" />
+            </classpath>
+        </java>
+        <exec executable="hostname" outputproperty="host.name"/>
+        <jar jarfile="${build.dir}/${final.name}.jar">
+            <fileset file="LICENSE.txt" />
+            <fileset dir="${build.classes}" excludes="**/.generated"/>
+            <fileset dir="${java.src.dir}"/>
+            <fileset dir="${src_generated.dir}" excludes="**/.generated"/>
+            <manifest>
+                <attribute name="Main-Class" value="org.apache.zookeeper.server.quorum.QuorumPeer" />
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${build.time}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
+                <attribute name="Implementation-Version" value="${revision}"/> 
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            	
+            	<!-- The following are OSGi manifest headers -->
+            	<!-- currently hardcoded, when things get more complicated we could use BND 
+            	http://www.aqute.biz/Code/Bnd to generate them -->
+                <attribute name="Bundle-Vendor" value="The Apache Software Foundation"/>
+                <attribute name="Bundle-Name" value="ZooKeeper Bundle"/>
+                <attribute name="Bundle-SymbolicName" value="org.apache.hadoop.zookeeper"/>
+                <attribute name="Bundle-ManifestVersion" value="2"/>
+                <attribute name="Bundle-Version" value="${version}"/>
+                <attribute name="Bundle-License" value="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+                <attribute name="Bundle-DocURL" value="http://hadoop.apache.org/zookeeper"/>
+                <attribute name="Import-Package" value='javax.management,org.apache.log4j,org.osgi.framework;version="[1.4,2.0)",org.osgi.util.tracker;version="[1.1,2.0)"'/>
+                <attribute name="Export-Package" value='org.apache.zookeeper;version="${version}",org.apache.zookeeper.data;version="${version}",org.apache.zookeeper.version;version="${version}",org.apache.zookeeper.server;version="${version}",org.apache.zookeeper.server.quorum;version="${version}"'/>
+            </manifest>
+        </jar>
+    </target>
+    
+    <!-- ====================================================== -->
+    <!-- Make zookeeper-bin.jar                                 -->
+    <!-- ====================================================== -->
+    <target name="bin-jar" depends="compile">
+        <java classname="org.apache.zookeeper.Version" fork="true"
+              outputproperty="revision" failonerror="true">
+            <arg value="--revision" />
+            <classpath>
+                <pathelement path="${build.classes}" />
+                <pathelement path="${clover.jar}" />
+            </classpath>
+        </java>
+        <exec executable="hostname" outputproperty="host.name"/>
+        <jar jarfile="${build.dir}/${final.name}-bin.jar">
+            <fileset file="LICENSE.txt" />
+            <fileset dir="${build.classes}" excludes="**/.generated"/>
+            <manifest>
+                <attribute name="Main-Class" value="org.apache.zookeeper.server.quorum.QuorumPeer" />
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${build.time}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
+                <attribute name="Implementation-Version" value="${revision}"/> 
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            	
+            	<!-- The following are OSGi manifest headers -->
+            	<!-- currently hardcoded, when things get more complicated we could use BND 
+            	http://www.aqute.biz/Code/Bnd to generate them -->
+                <attribute name="Bundle-Vendor" value="The Apache Software Foundation"/>
+                <attribute name="Bundle-Name" value="ZooKeeper Bundle"/>
+                <attribute name="Bundle-SymbolicName" value="org.apache.hadoop.zookeeper"/>
+                <attribute name="Bundle-ManifestVersion" value="2"/>
+                <attribute name="Bundle-Version" value="${version}"/>
+                <attribute name="Bundle-License" value="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+                <attribute name="Bundle-DocURL" value="http://hadoop.apache.org/zookeeper"/>
+                <attribute name="Import-Package" value='javax.management,org.apache.log4j,org.osgi.framework;version="[1.4,2.0)",org.osgi.util.tracker;version="[1.1,2.0)"'/>
+                <attribute name="Export-Package" value='org.apache.zookeeper;version="${version}",org.apache.zookeeper.data;version="${version}",org.apache.zookeeper.version;version="${version}",org.apache.zookeeper.server;version="${version}",org.apache.zookeeper.server.quorum;version="${version}"'/>
+            </manifest>
+        </jar>
+    </target>
+
+	<!-- ====================================================== -->
+    <!-- Make zookeeper-sources.jar                                 -->
+    <!-- ====================================================== -->
+    <target name="src-jar" depends="build-generated">
+        <jar jarfile="${build.dir}/${final.name}-sources.jar">
+            <fileset file="LICENSE.txt" />
+            <fileset dir="${java.src.dir}"/>
+            <fileset dir="${src_generated.dir}" excludes="**/.generated"/>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${build.time}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
+                <attribute name="Implementation-Version" value="${revision}"/> 
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            </manifest>
+        </jar>
+    </target>
+
+	<!-- ====================================================== -->
+    <!-- Make zookeeper-javadoc.jar                                 -->
+    <!-- ====================================================== -->
+    <target name="javadoc-jar" depends="javadoc">
+        <jar jarfile="${build.dir}/${final.name}-javadoc.jar">
+            <fileset file="LICENSE.txt" />
+            <fileset dir="${build.javadoc}"/>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-At" value="${build.time}"/>
+                <attribute name="Built-On" value="${host.name}" />
+                <attribute name="Implementation-Title" value="org.apache.zookeeper"/>
+                <attribute name="Implementation-Version" value="${revision}"/> 
+                <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
+            </manifest>
+        </jar>
+    </target>
+
+	<!-- ================================================================== -->
+    <!-- D I S T R I B U T I O N                                            -->
+    <!-- ================================================================== -->
+    <!--                                                                    -->
+    <!-- ================================================================== -->
+    <target name="package"
+            depends="jar,bin-jar,src-jar,javadoc-jar,api-report,create-cppunit-configure,compile-test"
+            description="Build distribution">
+      <mkdir dir="${dist.dir}"/>
+      <mkdir dir="${dist.dir}/lib"/>
+      <mkdir dir="${dist.dir}/contrib"/>
+      <mkdir dir="${dist.dir}/recipes"/>
+      <mkdir dir="${dist.dir}/bin"/>
+      <mkdir dir="${dist.dir}/docs"/>
+      <mkdir dir="${dist.dir}/docs/jdiff"/>
+      <mkdir dir="${dist.dir}/docs/api"/>
+
+      <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
+        <fileset dir="${lib.dir}">
+          <exclude name="**/ivy*.jar" />
+        </fileset>
+        <fileset dir="${ivy.lib}"/>
+      </copy>
+
+      <subant target="package">
+        <!--Pass down the version in case its needed again and the target
+            distribution directory so contribs know where to install to.-->
+        <property name="version" value="${version}"/>
+        <property name="dist.dir" value="${dist.dir}"/>
+        <fileset file="${contrib.dir}/build.xml"/>
+        <fileset file="${recipes.dir}/build.xml"/>
+      </subant>  	
+
+      <copy todir="${dist.dir}"> 
+        <fileset file="${build.dir}/${final.name}.jar"/>
+      </copy>
+
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.dir}/${final.name}.jar" algorithm="sha1"/>
+
+      <mkdir dir="${dist.maven.dir}"/>
+
+      <copy file="${build.dir}/${final.name}-bin.jar"
+            tofile="${dist.maven.dir}/${final.name}.jar"/> 
+      <copy todir="${dist.maven.dir}"> 
+        <fileset file="${build.dir}/${final.name}-sources.jar"/>
+        <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
+      </copy>
+
+      <copy file="${dist.dir}/contrib/bookkeeper/${final.name}-bookkeeper.jar" 
+           tofile="${dist.maven.dir}/bookkeeper-${version}.jar"/>
+      <copy file="${contrib.dir}/bookkeeper/bookkeeper.pom"
+           tofile="${dist.maven.dir}/bookkeeper-${version}.pom"/>
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="sha1"/>
+      
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
+  
+      <ivy:makepom  ivyfile="${basedir}/ivy.xml"
+                   pomfile="${dist.maven.dir}/${final.name}.pom">
+        <mapping conf="default" scope="compile"/>
+        <mapping conf="test" scope="test"/>
+      </ivy:makepom>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
+
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.pom" algorithm="sha1"/>
+      <copy todir="${dist.dir}/bin">
+        <fileset dir="bin"/>
+      </copy>
+
+      <copy todir="${dist.dir}/conf">
+        <fileset dir="${conf.dir}" excludes="**/*.template"/>
+      </copy>
+
+      <copy todir="${dist.dir}/docs">
+        <fileset dir="${docs.dir}" />
+        <fileset dir="${build.docs}"/>
+      </copy>
+
+      <copy todir="${dist.dir}">
+        <fileset dir=".">
+          <include name="*.txt" />
+        </fileset>
+        <fileset file="build.xml"/>
+        <fileset file="ivy.xml"/>
+        <fileset file="ivysettings.xml"/>
+      </copy>
+
+      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
+        <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+      </copy>
+  	  
+      <chmod perm="ugo+x" type="file" parallel="false">
+        <fileset dir="${dist.dir}/bin"/>
+        <fileset dir="${dist.dir}/src/contrib/">
+          <include name="*/bin/*" />
+        </fileset>
+      </chmod>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Make release tarball                                               -->
+    <!-- ================================================================== -->
+    <target name="tar" depends="package" description="Make release tarball">
+      <macro_tar param.destfile="${build.dir}/${final.name}.tar.gz">
+        <param.listofitems>
+          <!-- it's unfortunate that the binaries have to be duplicated
+               however that's the only way ant currently supports afaik -->
+          <tarfileset dir="${build.dir}" mode="664">
+            <exclude name="${final.name}/bin/*" />
+            <exclude name="${final.name}/contrib/*/bin/*" />
+
+            <exclude name="${final.name}/**/compile" />
+            <exclude name="${final.name}/**/config.guess" />
+            <exclude name="${final.name}/**/config.sub" />
+            <exclude name="${final.name}/**/configure" />
+            <exclude name="${final.name}/**/depcomp" />
+            <exclude name="${final.name}/**/install-sh" />
+            <exclude name="${final.name}/**/ltmain.sh" />
+            <exclude name="${final.name}/**/missing" />
+
+            <exclude name="${final.name}/**/*.sh" />
+
+            <include name="${final.name}/**" />
+          </tarfileset>
+          <tarfileset dir="${build.dir}" mode="755">
+            <!-- be sure to add to exclude list above if you add here -->
+            <include name="${final.name}/bin/*" />
+            <include name="${final.name}/contrib/*/bin/*" />
+
+            <!-- autotools related commands -->
+            <include name="${final.name}/**/compile" />
+            <include name="${final.name}/**/config.guess" />
+            <include name="${final.name}/**/config.sub" />
+            <include name="${final.name}/**/configure" />
+            <include name="${final.name}/**/depcomp" />
+            <include name="${final.name}/**/install-sh" />
+            <include name="${final.name}/**/ltmain.sh" />
+            <include name="${final.name}/**/missing" />
+
+            <!-- any shell scripts -->
+            <include name="${final.name}/**/*.sh" />
+          </tarfileset>
+        </param.listofitems>
+      </macro_tar>
+    </target>
+
+    <target name="binary" depends="package"
+            description="Make tarball without source and documentation">
+      <macro_tar param.destfile="${build.dir}/${final.name}-bin.tar.gz">
+        <param.listofitems>
+          <tarfileset dir="${build.dir}" mode="664">
+            <include name="${final.name}/src/c/**" />
+            <exclude name="${final.name}/src/c/generated/**" />
+          </tarfileset>
+          <tarfileset dir="${build.dir}" mode="664">
+            <exclude name="${final.name}/bin/*" />
+            <exclude name="${final.name}/src/**" />
+            <exclude name="${final.name}/docs/**" />
+            <include name="${final.name}/**" />
+          </tarfileset>
+          <tarfileset dir="${build.dir}" mode="755">
+            <include name="${final.name}/bin/*" />
+          </tarfileset>
+        </param.listofitems>
+      </macro_tar>
+    </target>
+
+    <!-- ====================================================== -->
+    <!-- Clean.  Delete the build files, and their directories  -->
+    <!-- ====================================================== -->
+    <target name="clean" depends="clean-contrib,clean-recipes"
+            description="Clean.  Delete the build files, and their directories">
+      <delete dir="${build.dir}"/>
+      <delete dir="${docs.src}/build"/>
+      <delete dir="${src_generated.dir}" />
+      <delete dir="${csrc_generated.dir}" />
+      <delete file="${lib.dir}/Null.java"/>
+      <delete file="${lib.dir}/rats.jar" />
+      <delete file="${jdiff.xml.dir}/${name}_${version}.xml"/>	
+      <delete file="${jar.name}" />
+      <delete dir="${distribution}"/>
+      <delete dir="${revision.dir}"/>
+      <delete>
+        <fileset dir="${basedir}" includes="*.jar,*.tar.gz"/>
+      </delete>
+    </target>
+
+    <target name="clean-contrib">
+      <subant target="clean">        
+        <fileset file="${contrib.dir}/build.xml"/>
+      </subant>  	
+    </target>
+
+   <target name="clean-recipes">
+     <subant target="clean">
+       <fileset file="${recipes.dir}/build.xml"/>
+     </subant>
+   </target>
+
+    <!-- ====================================================== -->
+    <!-- Run unit tests                                         -->
+    <!-- ====================================================== -->
+    <target name="test-init" depends="jar,compile-test">
+        <delete dir="${test.log.dir}" />
+        <delete dir="${test.tmp.dir}" />
+        <delete dir="${test.data.upgrade.dir}" />
+        <delete dir="${test.data.invalid.dir}" />
+        <delete dir="${test.data.dir}" />
+        <mkdir dir="${test.log.dir}" />
+        <mkdir dir="${test.tmp.dir}" />
+        <mkdir dir="${test.data.dir}" />
+        <mkdir dir="${test.data.upgrade.dir}" />
+        <mkdir dir="${test.data.invalid.dir}" />
+        <copy todir="${test.data.upgrade.dir}">
+            <fileset dir="${basedir}/src/java/test/data/upgrade"/>
+        </copy>
+        <copy todir="${test.data.invalid.dir}">
+            <fileset dir="${basedir}/src/java/test/data/invalidsnap"/>
+        </copy>
+       
+    </target>
+
+    <condition property="quicktest">
+      <and>
+        <equals arg1="${test.quick}" arg2="yes"/>
+        <not>
+          <isset property="testcase"/>
+        </not>
+      </and>
+    </condition>
+    <condition property="fulltest">
+      <and>
+        <equals arg1="${test.quick}" arg2="no"/>
+        <not>
+          <isset property="testcase"/>
+        </not>
+      </and>
+    </condition>
+
+    <target name="junit.run">
+        <junit showoutput="${test.output}"
+               printsummary="${test.junit.printsummary}"
+               haltonfailure="${test.junit.haltonfailure}"
+               fork="yes"
+               forkmode="${test.junit.fork.mode}"
+               maxmemory="${test.junit.maxmem}"
+               dir="${basedir}" timeout="${test.timeout}"
+               errorProperty="tests.failed" failureProperty="tests.failed">
+          <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+          <sysproperty key="test.data.dir" value="${test.data.dir}" />
+          <sysproperty key="log4j.configuration"
+                       value="file:${basedir}/conf/log4j.properties" />
+          <!-- superDigest is used by the tests/main code. If this is not set
+               as part of starting the jvm there is no guarantee that the static
+               initializers in the java code will see this (esp when running
+               with junit fork mode set to "once")-->
+          <sysproperty key="zookeeper.DigestAuthenticationProvider.superDigest"
+                       value="super:D/InIHSb7yEEbrWz8b9l71RjZJU=" />
+          <classpath refid="test.java.classpath"/>
+          <classpath>
+            <pathelement path="${test.java.classes}" />
+          </classpath>
+          <formatter type="${test.junit.output.format}" />
+          <batchtest todir="${test.log.dir}" if="quicktest">
+            <fileset dir="${test.src.dir}">
+              <include name="**/*${test.category}Test.java"/>
+              <exclude name="**/*HammerTest.java"/>
+            </fileset>
+          </batchtest>
+          <batchtest todir="${test.log.dir}" if="fulltest">
+            <fileset dir="${test.src.dir}">
+              <include name="**/*${test.category}Test.java"/>
+            </fileset>
+          </batchtest>
+          <batchtest todir="${test.log.dir}" if="testcase">
+            <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
+          </batchtest>
+        </junit>
+        <fail if="tests.failed">Tests failed!</fail>
+    </target>
+
+    <target name="check-cppunit-configure" depends="init" >
+      <condition property="need.cppunit.configure">
+        <not> <available file="${c.src.dir}/configure"/> </not>
+      </condition>
+    </target>	
+
+    <target name="check-cppunit-makefile" depends="init" >
+    	<condition property="need.cppunit.makefile">
+       		<not> <available file="${test.cppunit.dir}/Makefile"/> </not>
+    	</condition>
+    </target>
+
+    <!--
+       1. If we have a Makefile it will handle up-to-date check and also
+          regenerate the configure script if missing. (done)
+       2. If we don't have a Makefile use the configure script to 
+          regenerate it. (done)
+       3. If we don't have a Makefile nor a configure script then it's
+          last resort and run autoreconf, then configure (done)
+      -->
+
+    <target name="create-cppunit-configure" depends="check-cppunit-configure"
+            if="need.cppunit.configure">
+      <exec executable="autoreconf" dir="${c.src.dir}" searchpath="yes"
+            failonerror="yes">
+        <arg value="-if"/>
+      </exec>
+    </target>
+
+    <target name="create-cppunit-makefile" depends="check-cppunit-makefile" 
+                                           if="need.cppunit.makefile">
+      <antcall target="create-cppunit-configure">
+        <param name="cppunit" value="true"/>
+      </antcall>
+    	<mkdir dir="${test.cppunit.dir}"/>
+    	<exec executable="${c.src.dir}/configure" dir="${test.cppunit.dir}"
+          	failonerror="yes">
+                <env key="base_dir" value="${basedir}"/>
+                <env key="CALLER" value="ANT"/>
+      		<arg value="--prefix=${test.cppunit.dir}"/>
+    	</exec>
+    </target>
+
+    <target name="call-test-cppunit" description="to execute cppunit tests">
+	<antcall target="create-cppunit-makefile"/>
+	<antcall target="test-cppunit">
+		<param name="cppunit" value="true"/>
+	</antcall>
+    </target>			
+
+
+    <target name="test-cppunit"
+            depends="compile_jute, jar, create-cppunit-makefile"
+            if="cppunit"
+		description="to run cppunit test cases">
+        <property name="lib.cppunit" value="/usr/local/lib"/>
+        <exec dir="${test.cppunit.dir}" executable="make" failonerror="true">
+		<env key="LD_LIBRARY_PATH" value="${lib.cppunit}"/>
+		<env key="PATH" path="${env.PATH};${c.src.dir};"/>
+                <env key="CALLER" value="ANT"/>
+                <env key="CLOVER_HOME" value="${clover.home}"/>
+                <env key="base_dir" value="${basedir}"/>
+		<arg line="clean run-check"/>
+	</exec>
+    </target>
+   
+    <target name="test-unit-category">
+      <property name="test.category" value="Unit"/>
+    </target>
+    <target name="test-unit" depends="test-init,test-unit-category,junit.run"/>
+
+    <target name="test-func-category">
+      <property name="test.category" value="Func"/>
+    </target>
+    <target name="test-func" depends="test-init,test-func-category,junit.run"/>
+
+    <target name="test-perf-category">
+      <property name="test.category" value="Perf"/>
+    </target>
+    <target name="test-perf" depends="test-init,test-perf-category,junit.run"/>
+
+    <target name="test-category">
+      <property name="test.category" value=""/>
+    </target>
+
+    <target name="test" description="to run core and contrib tests">
+	<antcall target="test-core"/>
+	<antcall target="test-contrib"/>
+    </target>
+ 
+    <target name="test-contrib" description="to run contrib tests">
+	<!-- yet to implement -->
+    </target>
+    
+    <target name="test-core-java" depends="test-init, test-category, junit.run"/> 
+
+    <target name="test-core-cppunit" depends="test-init, test-category, call-test-cppunit"/> 
+
+    <target name="test-core" depends="test-core-java, test-core-cppunit"/> 
+
+    <!-- ====================================================== -->
+    <!-- Run optional third-party tool targets                  -->
+    <!-- ====================================================== -->
+
+    <!-- clover code coverage -->
+    <target name="clover" depends="clover.setup, clover.info" 
+            description="Instrument the Unit tests using Clover.  Requires a Clover license and CLOVER_HOME environment variable set appropriately.  To use, specify -Drun.clover=true on the command line."/>
+
+    <target name="clover.setup" if="clover.enabled">
+      <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
+      <mkdir dir="${clover.db.dir}"/>
+      <clover-setup initString="${clover.db.dir}/zookeeper_coverage.db">
+        <fileset dir="${java.src.dir}"
+                 includes="org/apache/zookeeper/**/*"
+                 excludes="org/apache/zookeeper/version/**/*"/>
+      </clover-setup>
+    </target>
+
+    <target name="clover.info" if="run.clover" unless="clover.present">
+      <echo>
+        Clover not found. Code coverage reports disabled.
+      </echo>
+    </target>
+
+    <target name="clover.check">
+      <fail unless="clover.present">
+        ##################################################################
+        Clover not found.
+        Please make sure clover.jar is in ANT_HOME/lib, or made available
+        to Ant using other mechanisms like -lib or CLASSPATH.
+        ##################################################################
+      </fail>
+    </target>
+
+    <target name="generate-clover-reports" depends="clover.check, clover">
+      <mkdir dir="${clover.report.dir}"/>
+      <clover-report>
+        <current outfile="${clover.report.dir}" title="${final.name}">
+          <format type="html"/>
+        </current>
+      </clover-report>
+      <clover-report>
+        <current outfile="${clover.report.dir}/clover.xml" title="${final.name}">
+          <format type="xml"/>
+        </current>
+      </clover-report>
+    </target>
+
+    <!-- Run with 'ant -Dfindbugs.home="path to Findbugs directory" findbugs -->
+    <property name="findbugs.home" value="" />
+    <target name="findbugs" depends="check-for-findbugs, jar" if="findbugs.present">
+        <property name="findbugs.out.dir" value="${test.java.build.dir}/findbugs" />
+        <property name="findbugs.exclude.file" value="${config.dir}/findbugsExcludeFile.xml" />
+        <property name="findbugs.report.htmlfile" value="${findbugs.out.dir}/zookeeper-findbugs-report.html" />
+        <property name="findbugs.report.xmlfile" value="${findbugs.out.dir}/zookeeper-findbugs-report.xml" />
+        <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" 
+                classpath="${findbugs.home}/lib/findbugs-ant.jar" />
+        <mkdir dir="${findbugs.out.dir}" />
+        <findbugs home="${findbugs.home}" output="xml:withMessages" excludeFilter="${findbugs.exclude.file}" 
+                outputFile="${findbugs.report.xmlfile}" effort="max" jvmargs="-Xmx512M">
+            <auxClasspath path="${ivy.lib}/log4j-1.2.15.jar" />
+            <sourcePath path="${java.src.dir}" />
+            <class location="${build.dir}/${final.name}.jar" />
+        </findbugs>
+        <xslt style="${findbugs.home}/src/xsl/default.xsl" in="${findbugs.report.xmlfile}" 
+                out="${findbugs.report.htmlfile}" />
+    </target>
+
+    <target name="check-for-findbugs">
+        <available property="findbugs.present" file="${findbugs.home}/lib/findbugs.jar" />
+    </target>
+
+    <!-- Code coverage -->
+    <target name="cobertura-instrument" depends="compile-test">
+      <taskdef resource="tasks.properties">
+        <classpath>
+          <pathelement path="${lib.dir}/cobertura/cobertura.jar" />
+          <fileset dir="${lib.dir}/cobertura/lib">
+            <include name="*.jar"/>
+          </fileset>
+          <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+          </fileset>
+          <fileset dir="${ivy.lib}">
+            <include name="**/*.jar" />
+          </fileset>
+        </classpath>
+      </taskdef>
+
+      <cobertura-instrument todir="${build.dir}/cobertura">
+        <fileset dir="${build.classes}">
+          <include name="org/apache/zookeeper/**/*.class"/>
+        </fileset>
+      </cobertura-instrument>
+    </target>
+
+    <target name="cobertura-test" depends="test-init,cobertura-instrument">
+        <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no" fork="yes" 
+               maxmemory="${test.junit.maxmem}" dir="${basedir}" timeout="${test.timeout}"
+               errorProperty="tests.failed" failureProperty="tests.failed">
+            <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+            <sysproperty key="test.data.dir" value="${test.data.dir}" />
+            <sysproperty key="log4j.configuration"
+                         value="file:${basedir}/conf/log4j.properties" />
+            <classpath>
+                <pathelement path="${build.dir}/cobertura" />
+                <pathelement path="${lib.dir}/cobertura/cobertura.jar" />
+                <fileset dir="${lib.dir}/cobertura/lib">
+                    <include name="*.jar"/>
+                </fileset>
+                <fileset dir="${lib.dir}">
+                    <include name="*.jar"/>
+                </fileset>
+                <fileset dir="${ivy.lib}">
+                  <include name="**/*.jar" />
+                </fileset>
+            </classpath>
+            <classpath>
+                <pathelement path="${test.java.classes}" />
+            </classpath>
+            <classpath refid="test.java.classpath"/>
+            <classpath>
+                <pathelement path="${build.classes}" />
+            </classpath>
+
+            <formatter type="${test.junit.output.format}" />
+            <batchtest todir="${test.log.dir}" unless="testcase">
+                <fileset dir="${test.src.dir}"
+                         includes="**/*Test.java"/>
+            </batchtest>
+            <batchtest todir="${test.log.dir}" if="testcase">
+                <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
+            </batchtest>
+        </junit>
+        <fail if="tests.failed">Tests failed!</fail>
+    </target>
+
+    <target name="cobertura-report" depends="cobertura-test">
+        <cobertura-report format="${test.cobertura.output.format}"
+                          destdir="${coveragereport.dir}" > 
+            <fileset dir="${java.src.dir}">
+                <include name="**/*.java" />
+            </fileset>
+            <fileset dir="${src_generated.dir}">
+                <include name="**/*.java" />
+            </fileset>
+        </cobertura-report>
+    </target>
+
+    <target name="checkstyle" depends="checkstyle.check, set-checkstyle-classpath" if="checkstyle.home" 
+			description="Run optional third-party tool targets">
+    	<taskdef resource="checkstyletask.properties">
+        	<classpath refid="checkstyle-classpath"/>
+        </taskdef>
+        <mkdir dir="${test.java.build.dir}"/>
+        <checkstyle config="${test.src.dir}/checkstyle.xml" failOnViolation="false">
+        	<fileset dir="${src.dir}/java" includes="**/*.java" excludes="**/generated/**"/>
+        	<formatter type="xml" toFile="${test.java.build.dir}/checkstyle-errors.xml"/>
+        </checkstyle>
+        <xslt style="${test.src.dir}/checkstyle-noframes-sorted.xsl" in="${test.java.build.dir}/checkstyle-errors.xml"
+        	out="${test.java.build.dir}/checkstyle-errors.html"/>
+    </target>
+
+    <target name="checkstyle.check" unless="checkstyle.home">
+    	<fail message="'checkstyle.home' is not defined. Please pass -Dcheckstyle.home=&lt;base of checkstyle installation&gt; 
+		to Ant on the command-line." />
+    </target>
+    
+    <target name="set-checkstyle-classpath">
+    	<path id="checkstyle-classpath">
+        	<fileset dir="${checkstyle.home}">
+			<include name="**/*.jar"/>
+         	</fileset>
+ 	</path>
+    </target>	
+
+    <!-- ================================================================== -->
+    <!-- Perform audit activities for the release                           -->
+    <!-- ================================================================== -->
+    <target name="rats-taskdef" depends="ivy-retrieve-releaseaudit">
+      <typedef format="xml" resource="org/apache/rat/anttasks/antlib.xml" uri="antlib:org.apache.rat.anttasks"
+               classpathref="releaseaudit-classpath"/>
+    </target>
+
+    <target name="releaseaudit" depends="package,rats-taskdef" description="Release Audit activities">
+      <rat:report xmlns:rat="antlib:org.apache.rat.anttasks">
+        <fileset dir="${dist.dir}">
+          <exclude name="**/*.m4"/>
+          <exclude name="**/*.md5"/>
+          <exclude name="**/*.pom"/>
+          <exclude name="**/*.sha1"/>
+          <exclude name="**/.gitignore"/>
+          <exclude name="**/Makefile**"/>
+          <exclude name="**/configure**"/>
+          <exclude name="**/*Doxyfile"/>
+          <exclude name="**/*.am"/>
+          <exclude name="**/compile"/>
+          <exclude name="**/depcomp"/>
+          <exclude name="**/install-sh"/>
+          <exclude name="**/ltmain.sh"/>
+          <exclude name="**/missing"/>
+          <exclude name="**/wrappers*.opt"/>
+          <exclude name="CHANGES.txt"/>
+          <exclude name="**/VERSION"/>
+          <exclude name="**/ChangeLog"/>
+          <exclude name="**/OldChangeLog"/>
+          <exclude name="**/Changes"/>
+          <exclude name="**/contrib/zkperl/MANIFEST"/>
+          <exclude name="**/conf/*"/>
+          <exclude name="**/docs/"/>
+          <exclude name="**/lib/jdiff/"/>
+          <exclude name="src/c/autom4te.cache/**"/>
+          <exclude name="src/c/config**"/>
+          <exclude name="src/c/src/hashtable/"/>
+          <exclude name="src/java/generated/.generated/"/>
+          <exclude name="src/java/test/checkstyle*.xml"/>
+          <exclude name="src/java/test/checkstyle*.xsl"/>
+          <exclude name="src/java/test/config/findbugs*.xml"/>
+        </fileset>
+      </rat:report>
+    </target>
+
+    <target name="findbugs.check" depends="check-for-findbugs" unless="findbugs.present">
+    	<fail message="'findbugs.home' is not defined. Please pass -Dfindbugs.home=&lt;base of Findbugs installation&gt; 
+		to Ant on the command-line." />
+    </target>
+
+    <target name="patch.check" unless="patch.file">
+  	<fail message="'patch.file' is not defined. Please pass -Dpatch.file=&lt;location of patch file&gt; 
+		to Ant on the command-line." />
+    </target>
+
+    <target name="test-patch" depends="patch.check,findbugs.check,forrest.check">
+  	<exec executable="bash" failonerror="true">
+    		<arg value="${test_patch_sh}"/>
+    		<arg value="DEVELOPER"/>
+    		<arg value="${patch.file}"/>
+    		<arg value="${scratch.dir}"/>
+    		<arg value="${svn.cmd}"/>
+    		<arg value="${grep.cmd}"/>
+    		<arg value="${patch.cmd}"/>
+    		<arg value="${findbugs.home}"/>
+    		<arg value="${forrest.home}"/>
+    		<arg value="${basedir}"/>
+    		<arg value="${java5.home}"/>
+        	<arg value="${ant.project.name}"/>
+  	</exec>
+    </target>
+
+    <target name="hudson-test-patch" depends="findbugs.check,forrest.check">
+  	<exec executable="bash" failonerror="true">
+    		<arg value="${test_patch_sh}"/>
+    		<arg value="HUDSON"/>
+    		<arg value="${scratch.dir}"/>
+    		<arg value="${support.dir}"/>
+    		<arg value="${ps.cmd}"/>
+    		<arg value="${wget.cmd}"/>
+    		<arg value="${jiracli.cmd}"/>
+    		<arg value="${svn.cmd}"/>
+    		<arg value="${grep.cmd}"/>
+    		<arg value="${patch.cmd}"/>
+    		<arg value="${findbugs.home}"/>
+    		<arg value="${forrest.home}"/>
+    		<arg value="${eclipse.home}"/>
+    		<arg value="${python.home}"/>
+    		<arg value="${basedir}"/>
+    		<arg value="${trigger.url}"/>
+    		<arg value="${jira.passwd}"/>
+    		<arg value="${java5.home}"/>
+    		<arg value="${curl.cmd}"/>
+    		<arg value="${defect}"/>
+		<arg value="${ant.project.name}"/>
+    	</exec>
+     </target>
+
+     <!-- this target runs the hudson trunk build -->
+     <target name="hudson-test-trunk" depends="docs,tar,findbugs"/>
+
+     <target name="api-xml" depends="ivy-retrieve-jdiff, javadoc, write-null">
+       <javadoc>
+         <doclet name="jdiff.JDiff"
+                 path="${ivy.jdiff.lib}/jdiff-1.0.9.jar:${ivy.jdiff.lib}/xerces-1.4.4.jar">
+           <param name="-apidir" value="${jdiff.xml.dir}"/>
+           <param name="-apiname" value="${name} ${version}"/>
+         </doclet>
+         <packageset dir="${java.src.dir}">
+           <include name="org/apache/zookeeper"/>
+           <exclude name="org/apache/jute"/>
+         </packageset>
+         <classpath>
+           <pathelement location="${build.classes}"/>
+           <fileset dir="${lib.dir}">
+             <include name="**/*.jar" />
+             <exclude name="**/excluded/" />
+           </fileset>
+           <fileset dir="${ivy.lib}">
+             <include name="**/*.jar" />
+           </fileset>
+         </classpath>
+       </javadoc>
+     </target>
+     
+     <target name="write-null">
+       <exec executable="touch">
+         <arg value="${jdiff.home}/Null.java"/>
+       </exec>
+     </target> 
+
+     <target name="api-report" depends="api-xml">
+       <mkdir dir="${jdiff.build.dir}"/>
+       <javadoc sourcepath="${java.src.dir}"
+                destdir="${jdiff.build.dir}"
+                excludepackagenames="org.apache.jute"	
+                sourceFiles="${jdiff.home}/Null.java">
+         <doclet name="jdiff.JDiff"
+                 path="${ivy.jdiff.lib}/jdiff-1.0.9.jar:${ivy.jdiff.lib}/xerces-1.4.4.jar">
+           <param name="-oldapi" value="${name} ${jdiff.stable}"/>
+           <param name="-newapi" value="${name} ${version}"/>
+           <param name="-oldapidir" value="${jdiff.xml.dir}"/>
+           <param name="-newapidir" value="${jdiff.xml.dir}"/>
+           <param name="-javadocold" value="${jdiff.stable.javadoc}"/>
+           <param name="-javadocnew" value="../../api/"/>
+           <param name="-stats"/>
+         </doclet>
+         <classpath>
+           <pathelement location="${build.classes}"/>
+           <fileset dir="${lib.dir}">
+             <include name="**/*.jar" />
+             <exclude name="**/excluded/" />
+           </fileset>
+           <fileset dir="${ivy.lib}">
+             <include name="**/*.jar" />
+           </fileset>
+         </classpath>
+       </javadoc>
+     </target>
+
+     <condition property="ant-eclipse.jar.exists">
+       <available file="${lib.dir}/ant-eclipse-1.0-jvm1.2.jar"/>
+     </condition>
+
+     <target name="ant-eclipse-download" unless="ant-eclipse.jar.exists">
+       <get src="http://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
+            dest="${src.dir}/java/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
+
+       <bunzip2 src="${src.dir}/java/ant-eclipse-1.0.bin.tar.bz2"/>
+
+       <untar src="${src.dir}/java/ant-eclipse-1.0.bin.tar"
+              dest="${src.dir}/java">
+         <patternset>
+           <include name="lib/ant-eclipse-1.0-jvm1.2.jar"/>
+         </patternset>
+       </untar>
+
+       <delete file="${src.dir}/java/ant-eclipse-1.0.bin.tar" />
+       <delete file="${src.dir}/java/ant-eclipse-1.0.bin.tar.bz2" />
+     </target>
+
+     <target name="eclipse"
+             depends="ant-eclipse-download,init,ivy-retrieve,build-generated,ivy-retrieve-test"
+             description="Create eclipse project files">
+       <ivy:resolve useOrigin="true" conf="test"/>
+       <ivy:cachepath pathid="default.path.id" conf="default" />
+       <ivy:cachepath pathid="junit.path.id" conf="test" transitive="false"/>
+       <taskdef name="eclipse"
+                classname="prantl.ant.eclipse.EclipseTask"
+                classpathref="java.classpath" />
+       <eclipse updatealways="true">
+         <settings>
+           <jdtcore compilercompliance="6.0" />
+           <resources encoding="UTF-8" />
+         </settings>
+         <project name="${ant.project.name}" />
+         <classpath>
+           <source path="${java.src.dir}"
+                   output="${build.dir.eclipse-main-classes}" />
+           <source path="${src_generated.dir}"
+                   output="${build.dir.eclipse-main-classes}" />
+           <source path="${test.src.dir}"
+                   output="${build.dir.eclipse-test-classes}" />
+           <source path="${systest.src.dir}"
+                   output="${build.dir.eclipse-test-classes}" />
+
+           <output path="${build.dir.eclipse-main-classes}" />
+           <library pathref="default.path.id" exported="true" />
+           <library pathref="junit.path.id" exported="false" />
+         </classpath>
+       </eclipse>
+     </target>
+
+     <target name="clean-eclipse" description="Clean eclipse files">
+       <delete file=".classpath" />
+       <delete file=".eclipse" />
+       <delete file=".project" />
+       <delete dir=".settings" />
+       <delete dir="${build.dir.eclipse}" />
+     </target>
+
+</project>

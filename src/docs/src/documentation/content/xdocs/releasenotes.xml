@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="ar_ReleaseNotes">
+  <title>ZooKeeper 3.3.5 Release Notes</title>
+
+  <articleinfo>
+    <legalnotice>
+      <para>Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License. You may
+      obtain a copy of the License at <ulink
+      url="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</ulink>.</para>
+
+      <para>Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied. See the License for the specific language governing permissions
+      and limitations under the License.</para>
+    </legalnotice>
+  </articleinfo>
+
+<para>
+These release notes include new developer and user facing
+incompatibilities, features, and major improvements.
+</para>
+
+<para>See <ulink
+url="http://hadoop.apache.org/zookeeper/docs/r3.0.1/releasenotes.html#migration">3.0
+release notes and migration instructions</ulink> if you are upgrading
+from version 2 of ZooKeeper (SourceForge) to version 3 or
+later.</para>
+
+<section id="changes">
+<title>Changes Since ZooKeeper 3.3.4</title>
+
+<table>
+<title>Changes Since ZooKeeper 3.3.4</title>
+<tgroup cols='2'>
+<colspec colname='c1'/><colspec colname='c2'/>
+<thead>
+<row>
+  <entry>Issue</entry>
+  <entry>Notes</entry>
+</row>
+</thead>
+<tbody>
+
+<row><entry>        Bug
+</entry><entry></entry></row>
+
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-973'>ZOOKEEPER-973</ulink>]</entry><entry>         bind() could fail on Leader because it does not setReuseAddress on its ServerSocket 
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1089'>ZOOKEEPER-1089</ulink>]</entry><entry>         zkServer.sh status does not work due to invalid option of nc
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1277'>ZOOKEEPER-1277</ulink>]</entry><entry>         servers stop serving when lower 32bits of zxid roll over
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1309'>ZOOKEEPER-1309</ulink>]</entry><entry>         Creating a new ZooKeeper client can leak file handles
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1352'>ZOOKEEPER-1352</ulink>]</entry><entry>         server.InvalidSnapshotTest is using connection timeouts that are too short
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1353'>ZOOKEEPER-1353</ulink>]</entry><entry>         C client test suite fails consistently
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1367'>ZOOKEEPER-1367</ulink>]</entry><entry>         Data inconsistencies and unexpired ephemeral nodes after cluster restart
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1386'>ZOOKEEPER-1386</ulink>]</entry><entry>         avoid flaky URL redirection in &quot;ant javadoc&quot; : replace &quot;http://java.sun.com/javase/6/docs/api/&quot; with &quot;http://download.oracle.com/javase/6/docs/api/&quot; 
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1412'>ZOOKEEPER-1412</ulink>]</entry><entry>         java client watches inconsistently triggered on reconnect
+</entry></row>
+        
+<row><entry>        Improvement
+</entry><entry></entry></row>
+
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1345'>ZOOKEEPER-1345</ulink>]</entry><entry>         Add a .gitignore file with general exclusions and Eclipse project files excluded
+</entry></row>
+<row><entry>[<ulink url='https://issues.apache.org/jira/browse/ZOOKEEPER-1389'>ZOOKEEPER-1389</ulink>]</entry><entry>         it would be nice if start-foreground used exec $JAVA in order to get rid of the intermediate shell process
+</entry></row>
+
+</tbody></tgroup></table>
+
+</section>
+</article>

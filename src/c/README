@@ -1,0 +1,124 @@
+                     Zookeeper C client library 
+
+
+This package provides a C client interface to Zookeeper server.
+
+For the latest information about ZooKeeper, please visit our website at:
+   http://hadoop.apache.org/zookeeper/
+and our wiki, at:
+   http://wiki.apache.org/hadoop/ZooKeeper
+
+Full documentation for this release can also be found in ../../docs/index.html
+
+
+OVERVIEW
+
+The client supports two types of APIs -- synchronous and asynchronous.
+
+Asynchronous API provides non-blocking operations with completion callbacks and 
+relies on the application to implement event multiplexing on its behalf.
+
+On the other hand, Synchronous API provides a blocking flavor of
+zookeeper operations and runs its own event loop in a separate thread.
+
+Sync and Async APIs can be mixed and matched within the same application.
+
+The package includes two shared libraries: zookeeper_st and
+zookeeper_mt. The former only provides the Async API and is not
+thread-safe. The only reason this library exists is to support the
+platforms were pthread library is not available or unstable
+(i.e. FreeBSD 4.x). In all other cases the application developers are
+advised to link against zookeeper_mt as it includes support for both
+Sync and Async API.
+
+
+INSTALLATION
+
+If you're building the client from a source checkout you need to
+follow the steps outlined below. If you're building from a release
+tar downloaded from Apache please skip to step 2.
+
+1) do a "ant compile_jute" from the zookeeper top level directory (.../trunk).
+   This will create a directory named "generated" under src/c.  Skip to step 3.
+2) unzip/untar the source tarball and cd to the zookeeper-x.x.x/src/c directory
+3) change directory to src/c and do a "autoreconf -if" to bootstrap
+   autoconf, automake and libtool. Please make sure you have autoconf
+   version 2.59 or greater installed.
+4) do a "./configure [OPTIONS]" to generate the makefile. See INSTALL
+   for general information about running configure. Additionally, the
+   configure supports the following options:
+   --enable-debug     enables optimization and enables debug info compiler
+                      options, disabled by default
+   --without-syncapi  disables Sync API support; zookeeper_mt library won't
+                      be built, enabled by default
+   --disable-static   do not build static libraries, enabled by default
+   --disable-shared   do not build shared libraries, enabled by default
+   --without-cppunit  do not build the test library, enabled by default.
+
+5) do a "make" or "make install" to build the libraries and install them. 
+   Alternatively, you can also build and run a unit test suite (and
+   you probably should).  Please make sure you have cppunit-1.10.x or
+   higher installed before you execute step 4.  Once ./configure has
+   finished, do a "make run-check". It will build the libraries, build
+   the tests and run them.
+6) to generate doxygen documentation do a "make doxygen-doc". All
+   documentations will be placed to a new subfolder named docs. By
+   default only HTML documentation is generated.  For information on
+   other document formats please use "./configure --help"
+
+
+USING THE CLIENT
+
+You can test your client by running a zookeeper server (see
+instructions on the project wiki page on how to run it) and connecting
+to it using the zookeeper shell application cli that is built as part
+of the installation procedure.
+
+cli_mt (multithreaded, built against zookeeper_mt library) is shown in
+this example, but you could also use cli_st (singlethreaded, built
+against zookeeper_st library):
+
+$ cli_mt zookeeper_host:9876
+
+This is a client application that gives you a shell for executing
+simple zookeeper commands. Once successfully started and connected to
+the server it displays a shell prompt.
+
+You can now enter zookeeper commands. For example, to create a node:
+
+> create /my_new_node
+
+To verify that the node's been created:
+
+> ls /
+
+You should see a list of nodes who are the children of the root node "/".
+
+Here's a list of command supported by the cli shell:
+
+ls <path>             -- list children of a znode identified by <path>. The
+                         command set a children watch on the znode.
+get <path>            -- get the value of a znode at <path>
+set <path> <value>    -- set the value of a znode at <path> to <value>
+create [+e|+s] <path> -- create a znode as a child of znode <path>; 
+                         use +e option to create an ephemeral znode,
+                         use +s option to create a znode with a sequence number 
+                         appended to the name. The operation will fail if 
+                         the parent znode (the one identified by <path>) doesn't
+                         exist.
+delete <path>         -- delete the znode at <path>. The command will fail if the znode
+                         has children.
+sync <path>           -- make sure all pending updates have been applied to znode at <path>
+exists <path>         -- returns a result code indicating whether the znode at <path>
+                         exists. The command also sets a znode watch.
+myid                  -- prints out the current zookeeper session id.
+quit                  -- exit the shell.
+
+In order to be able to use the zookeeper API in your application you have to
+1) remember to include the zookeeper header 
+   #include <zookeeper/zookeeper.h>
+2) use -DTHREADED compiler option to enable Sync API; in this case you should
+   be linking your code against zookeeper_mt library
+
+Please take a look at cli.c to understand how to use the two API types. 
+(TODO: some kind of short tutorial would be helpful, I guess)

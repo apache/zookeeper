@@ -1,5 +1,10 @@
-﻿#
-.project
 .classpath
+.eclipse/
+.project
+.revision/
 .settings/
-target/
+build/
+src/c/generated/
+src/java/generated/
+src/java/lib/ant-eclipse-*
+src/java/lib/ivy-*

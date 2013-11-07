@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="zkpython" default="install">
+  <import file="../build-contrib.xml"/>
+  <property name="python.src.dir" value="src/python"/>
+  <property name="test.build.dir" value="build/test/" />
+  <property name="test.src.dir" value="src/test"/>
+  <property name="test.log.dir" value="${build.test}/logs" />
+  <property name="test.output" value="no" />
+  <property name="test.timeout" value="900000" />
+
+  <target name="test"
+          depends="compile,test-init,test-category,test-start,python-test,test-stop" />
+	
+    <target name="test-init" depends="checkMainCompiled">
+        <delete dir="${test.log.dir}" />
+        <mkdir dir="${test.log.dir}" />
+    </target>
+
+    <target name="test-start">
+      <exec executable="${test.src.dir}/zkServer.sh" failonerror="true">
+        <arg value="startClean"/>
+      </exec>
+    </target>
+
+    <target name="test-stop">
+      <exec executable="${test.src.dir}/zkServer.sh" failonerror="true">
+        <arg value="stop"/>
+      </exec>
+    </target>
+
+    <target name="test-category">
+         <property name="test.category" value=""/>
+    </target>
+
+    <target name="python-test">
+      <exec executable="${test.src.dir}/run_tests.sh" failonerror="true">
+        <arg value="${test.src.dir}"/>
+        <arg value="${test.log.dir}"/>
+      </exec>
+    </target>
+
+    <target name="compile">
+      <exec executable="python" failonerror="true">
+        <arg value="${python.src.dir}/setup.py"/>
+        <arg value="build"/>
+        <arg value="--build-base=${build.dir}"/>
+      </exec>
+    </target>
+
+    <target name="install" depends="compile">
+      <exec executable="python" failonerror="true">
+        <arg value="${python.src.dir}/setup.py"/>
+        <arg value="build"/>
+        <arg value="--build-base=${build.dir}"/>
+        <arg value="install"/>
+      </exec>
+    </target>
+
+    <target name="package" unless="skip.contrib">
+      <echo message="contrib: ${name}"/>
+
+      <mkdir dir="${build.dir}"/>
+      <copy todir="${build.dir}">
+        <fileset dir="${basedir}">
+          <exclude name="**/VERSION"/>
+        </fileset>
+      </copy>
+      <exec executable="echo" output="${build.dir}/VERSION">
+        <arg line="${version}" />
+      </exec>
+
+      <mkdir dir="${dist.dir}/contrib/${name}"/>
+      <copy todir="${dist.dir}/contrib/${name}">
+        <fileset dir="${build.dir}">
+          <exclude name="**/temp*"/>
+        </fileset>
+      </copy>
+    </target>
+</project>
+

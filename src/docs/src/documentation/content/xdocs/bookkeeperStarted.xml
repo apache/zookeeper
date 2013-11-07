@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="bk_GettStartedGuide">
+  <title>BookKeeper Getting Started Guide</title>
+
+  <articleinfo>
+    <legalnotice>
+      <para>Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License. You may
+      obtain a copy of the License at <ulink
+      url="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</ulink>.</para>
+
+      <para>Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied. See the License for the specific language governing permissions
+      and limitations under the License.</para>
+    </legalnotice>
+
+    <abstract>
+      <para>This guide contains detailed information about using BookKeeper
+      for logging. It discusses the basic operations BookKeeper supports, 
+      and how to create logs and perform basic read and write operations on these
+      logs.</para>
+    </abstract>
+  </articleinfo>
+  <section id="bk_GettingStarted">
+    <title>Getting Started: Setting up BookKeeper to write logs.</title>
+
+    <para>This document contains information to get you started quickly with
+    BookKeeper. It is aimed primarily at developers willing to try it out, and
+    contains simple installation instructions for a simple BookKeeper installation
+    and a simple programming example. For further programming detail, please refer to 
+    <ulink url="bookkeeperProgrammer.html">BookKeeper Programmer's Guide</ulink>.
+    </para>
+  
+	  <section id="bk_Prerequisites">
+    	  <title>Pre-requisites</title>
+	      <para>See <ulink url="bookkeeperConfig.html#bk_sysReq">
+    	      System Requirements</ulink> in the Admin guide.</para>
+	    </section>
+
+	  <section id="bk_Download">
+      	<title>Download</title>
+		<para> BookKeeper is distributed along with ZooKeeper. To get a ZooKeeper distribution, 
+			   download a recent
+    	    <ulink url="http://hadoop.apache.org/zookeeper/releases.html">
+        	  stable</ulink> release from one of the Apache Download
+       	 Mirrors.</para>
+	  </section>
+	  
+	  <section id="bk_localBK">
+      	<title>LocalBookKeeper</title>
+		<para> Under org.apache.bookkeeper.util, you'll find a java program
+		called LocalBookKeeper.java that sets you up to run BookKeeper on a 
+		single machine. This is far from ideal from a performance perspective,
+		but the program is useful for both test and educational purposes.
+		</para>
+	  </section>
+	  
+	  <section id="bk_setupBookies">
+      	<title>Setting up bookies</title>
+		<para> If you're bold and you want more than just running things locally, then
+		you'll need to run bookies in different servers. You'll need at least three bookies
+		to start with.  
+		</para>
+		
+		<para>
+		For each bookie, we need to execute a command like the following:
+		</para>
+		
+		<para><computeroutput>
+		java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar:../log4j/apache-log4j-1.2.15/log4j-1.2.15.jar\
+		-Dlog4j.configuration=log4j.properties org.apache.bookkeeper.proto.BookieServer 3181 /path_to_log_device/\
+		/path_to_ledger_device/
+		</computeroutput></para>
+		
+		<para> "/path_to_log_device/" and "/path_to_ledger_device/" are different paths. Also, port 3181
+		is the port that a bookie listens on for connection requests from clients. 
+		</para>
+	  </section>
+	  
+	  <section id="bk_setupZK">
+	  	<title>Setting up ZooKeeper</title>
+	  	<para> ZooKeeper stores metadata on behalf of BookKeeper clients and bookies. To get a minimal 
+	  	ZooKeeper installation to work with BookKeeper, we can set up one server running in
+	  	standalone mode. Once we have the server running, we need to create a few znodes:
+	  	</para>
+	  	
+	  	<orderedlist>
+	  	<listitem>
+	  	<para><computeroutput>
+	  	/ledgers	
+	  	</computeroutput></para>
+	  	</listitem>
+	  	
+	  	<listitem>
+	  	<para><computeroutput>
+	  	/ledgers/available
+	  	</computeroutput></para>
+	  	</listitem>
+	  	
+	  	<listitem>
+	  	<para> For each bookie, we add one znode such that the name of the znode is the
+	  	concatenation of the machine name and the port number that the bookie is 
+	  	listening on. For example, if a bookie is running on bookie.foo.com an is listening 
+	  	on port 3181, we add a znode 
+	  	<computeroutput>/ledgers/available/bookie.foo.com:3181</computeroutput>.  
+	  	</para>
+	  	</listitem>
+	  	</orderedlist>
+	  </section>
+	  
+	  <section id="bk_example">
+	    <title>Example</title>
+	    <para>
+	    In the following excerpt of code, we:
+	    </para>
+	    
+	    <orderedlist>
+	    	<listitem>
+	    	<para>
+	    	Create a ledger;
+	    	</para>
+	    	</listitem>
+	    	
+	    	<listitem>
+	    	<para>
+	    	Write to the ledger;
+	    	</para>
+	    	</listitem>
+	    	
+	    	<listitem>
+	    	<para>
+	    	Close the ledger;
+	    	</para>
+	    	</listitem>
+	    	
+	    	<listitem>
+	    	<para>
+	    	Open the same ledger for reading;
+	    	</para>
+	    	</listitem>
+	    	
+	    	<listitem>
+	    	<para>
+	    	Read from the ledger;
+	    	</para>
+	    	</listitem>
+	    	
+	    	<listitem>
+	    	<para>
+	    	Close the ledger again;
+	    	</para>
+	    	</listitem>
+	    </orderedlist>
+	    
+	    <programlisting>
+LedgerHandle lh = bkc.createLedger(ledgerPassword);
+ledgerId = lh.getId();
+ByteBuffer entry = ByteBuffer.allocate(4);
+
+for(int i = 0; i &lt; 10; i++){
+	entry.putInt(i);
+	entry.position(0);
+	entries.add(entry.array());				
+	lh.addEntry(entry.array());
+}
+lh.close();
+lh = bkc.openLedger(ledgerId, ledgerPassword);		
+			
+LedgerSequence ls = lh.readEntries(0, 9);
+int i = 0;
+while(ls.hasMoreElements()){
+	ByteBuffer origbb = ByteBuffer.wrap(
+				entries.get(i++));
+	Integer origEntry = origbb.getInt();
+	ByteBuffer result = ByteBuffer.wrap(
+				ls.nextElement().getEntry());
+
+	Integer retrEntry = result.getInt();
+}
+lh.close();
+	    </programlisting>
+	  </section>  
+  </section>
+</article>

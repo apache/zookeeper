@@ -1,0 +1,3 @@
+-Wl,--wrap -Wl,pthread_mutex_lock
+-Wl,--wrap -Wl,pthread_mutex_trylock
+-Wl,--wrap -Wl,pthread_mutex_unlock
