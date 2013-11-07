@@ -737,7 +737,7 @@ server.3=zoo3:2888:3888</programlisting>
            </varlistentry>
 
            <varlistentry>
-             <term>clientPortBindAddress</term>
+             <term>clientPortAddress</term>
 
              <listitem>
                <para><emphasis role="bold">New in 3.3.0:</emphasis> the
@@ -772,6 +772,21 @@ server.3=zoo3:2888:3888</programlisting>
               maximum session timeout in milliseconds that the server
               will allow the client to negotiate. Defaults to 20 times
               the <emphasis role="bold">tickTime</emphasis>.</para>
+            </listitem>
+           </varlistentry>
+
+          <varlistentry>
+            <term>fsync.warningthresholdms</term>
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">fsync.warningthresholdms</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.3.4:</emphasis> A
+              warning message will be output to the log whenever an
+              fsync in the Transactional Log (WAL) takes longer than
+              this value. The values is specified in milliseconds and
+              defaults to 1000. This value can only be set as a system
+              property.</para>
             </listitem>
            </varlistentry>
         </variablelist>
@@ -928,7 +943,7 @@ server.3=zoo3:2888:3888</programlisting>
               role="bold">cnxTimeout</emphasis>)</para>
 
               <para>Sets the timeout value for opening connections for leader election notifications. 
-              Only applicable if you are using electionAlg 3. 
+              Only applicable if you are using electionAlg 3.
               </para>
 
               <note>
@@ -1033,48 +1048,6 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
         </variablelist>
       </section>
-
-      <section>
-        <title>Communication using the Netty framework</title>
-
-        <para><emphasis role="bold">New in
-            3.4:</emphasis> <ulink url="http://jboss.org/netty">Netty</ulink>
-            is an NIO based client/server communication framework, it
-            simplifies (over NIO being used directly) many of the
-            complexities of network level communication for java
-            applications. Additionally the Netty framework has built
-            in support for encryption (SSL) and authentication
-            (certificates). These are optional features and can be
-            turned on or off individually.
-        </para>
-        <para>Prior to version 3.4 ZooKeeper has always used NIO
-            directly, however in versions 3.4 and later Netty is
-            supported as an option to NIO (replaces). NIO continues to
-            be the default for both server and client, however Netty
-            based communication can be used in place of NIO by the
-            setting of environment variables.  Set
-            "zookeeper.serverCnxnFactory" to
-            "org.apache.zookeeper.server.NettyServerCnxnFactory" to
-            enable the server to use Netty.  Set
-            "zookeeper.clientCnxnFactory" to
-            "org.apache.zookeeper.NettyClientCnxnFactory" to enable
-            the client to use Netty. You have the option to set this
-            on either the client(s) or server(s), typically you would
-            want to set this on both, however that is at your
-            discretion.
-        </para>
-        <para>
-          TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
-        </para>
-        <para>
-          TBD - how to manage encryption
-        </para>
-        <para>
-          TBD - how to manage certificates
-        </para>
-
-      </section>
-
     </section>
 
     <section id="sc_zkCommands">
@@ -1212,45 +1185,6 @@ server.3=zoo3:2888:3888</programlisting>
             sessions. Note, depending on the number of watches this
             operation may be expensive (ie impact server performance),
             use it carefully.</para>
-          </listitem>
-        </varlistentry>
-
-
-        <varlistentry>
-          <term>mntr</term>
-
-          <listitem>
-            <para><emphasis role="bold">New in 3.4.0:</emphasis> Outputs a list 
-            of variables that could be used for monitoring the health of the cluster.</para>
-
-            <programlisting>$ echo mntr | nc localhost 2185
-
-zk_version  3.4.0
-zk_avg_latency  0
-zk_max_latency  0
-zk_min_latency  0
-zk_packets_received 70
-zk_packets_sent 69
-zk_outstanding_requests 0
-zk_server_state leader
-zk_znode_count   4
-zk_watch_count  0
-zk_ephemerals_count 0
-zk_approximate_data_size    27
-zk_followers    4                   - only exposed by the Leader
-zk_synced_followers 4               - only exposed by the Leader
-zk_pending_syncs    0               - only exposed by the Leader
-zk_open_file_descriptor_count 23    - only available on Unix platforms
-zk_max_file_descriptor_count 1024   - only available on Unix platforms
-</programlisting>
-
-          <para>The output is compatible with java properties format and the content 
-        may change over time (new keys added). Your scripts should expect changes.</para>
-
-          <para>ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader. </para>
-
-          <para>The output contains multiple lines with the following format:</para>
-          <programlisting>key \t value</programlisting>
           </listitem>
         </varlistentry>
       </variablelist>

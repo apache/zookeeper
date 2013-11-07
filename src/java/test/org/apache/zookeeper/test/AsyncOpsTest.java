@@ -23,8 +23,8 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.AsyncOps.ACLCB;
-import org.apache.zookeeper.test.AsyncOps.Children2CB;
 import org.apache.zookeeper.test.AsyncOps.ChildrenCB;
+import org.apache.zookeeper.test.AsyncOps.Children2CB;
 import org.apache.zookeeper.test.AsyncOps.DataCB;
 import org.apache.zookeeper.test.AsyncOps.StatCB;
 import org.apache.zookeeper.test.AsyncOps.StringCB;
@@ -33,6 +33,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * Functional testing of asynchronous operations, both positive and negative
+ * testing.
+ *
+ * This just scratches the surface, but exercises the basic async functionality.
+ */
 public class AsyncOpsTest extends ClientBase {
     private static final Logger LOG = Logger.getLogger(AsyncOpsTest.class);
 
@@ -40,10 +46,10 @@ public class AsyncOpsTest extends ClientBase {
 
     @Before
     @Override
-    public void setUp() throws Exception {
+    protected void setUp() throws Exception {
         super.setUp();
 
-        LOG.info("Creating client " + getTestName());
+        LOG.info("STARTING " + getName());
 
         zk = createClient();
         zk.addAuthInfo("digest", "ben:passwd".getBytes());
@@ -51,12 +57,14 @@ public class AsyncOpsTest extends ClientBase {
 
     @After
     @Override
-    public void tearDown() throws Exception {
+    protected void tearDown() throws Exception {
         zk.close();
 
         super.tearDown();
 
         LOG.info("Test clients shutting down");
+
+        LOG.info("FINISHED " + getName());
     }
 
     @Test

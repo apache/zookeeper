@@ -25,8 +25,8 @@ package org.apache.jute.compiler;
 abstract class JCompType extends JType {
     
     /** Creates a new instance of JCompType */
-    JCompType(String cType, String cppType, String csharpType, String javaType, String suffix, String wrapper, String csharpWrapper) {
-        super(cType, cppType, csharpType, javaType, suffix, wrapper, csharpWrapper, null);
+    JCompType(String cType, String cppType, String javaType, String suffix, String wrapper) {
+        super(cType, cppType, javaType, suffix, wrapper, null);
     }
     
     String genCppGetSet(String fname, int fIdx) {
@@ -49,18 +49,5 @@ abstract class JCompType extends JType {
     
     String genJavaHashCode(String fname) {
         return "    ret = "+fname+".hashCode();\n";
-    }
-
-    String genCsharpHashCode(String fname) {
-        return "    ret = "+capitalize(fname)+".GetHashCode();\n";
-    }
-
-    String genCsharpEquals(String name, String peer) {
-        String[] peerSplit = peer.split("\\.");
-        return "    ret = "+capitalize(name)+".Equals("+peerSplit[0] + "." + capitalize(peerSplit[1]) + ");\n";
-    }
-
-    String genCsharpCompareTo(String name) {
-        return "    ret = "+capitalize(name)+".CompareTo(peer."+capitalize(name)+");\n";
     }
 }

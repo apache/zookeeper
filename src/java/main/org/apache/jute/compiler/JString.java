@@ -25,7 +25,7 @@ public class JString extends JCompType {
     
     /** Creates a new instance of JString */
     public JString() {
-        super("char *", " ::std::string", "string", "String", "String", "String", "string");
+        super("char *", " ::std::string", "String", "String", "String");
     }
     
     public String getSignature() {

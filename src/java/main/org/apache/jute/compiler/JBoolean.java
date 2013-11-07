@@ -25,7 +25,7 @@ public class JBoolean extends JType {
     
     /** Creates a new instance of JBoolean */
     public JBoolean() {
-        super("int32_t", "bool", "bool", "boolean", "Bool", "Boolean", "bool", "toBoolean");
+        super("int32_t", "bool", "boolean", "Bool", "Boolean", "toBoolean");
     }
     
     public String getSignature() {
@@ -38,13 +38,5 @@ public class JBoolean extends JType {
     
     public String genJavaHashCode(String fname) {
         return "     ret = ("+fname+")?0:1;\n";
-    }
-
-    String genCsharpHashCode(String fname) {
-        return "     ret = ("+capitalize(fname)+")?0:1;\n";
-    }
-
-    String genCsharpCompareTo(String name) {
-        return "    ret = ("+capitalize(name)+" == peer."+capitalize(name)+")? 0 : ("+capitalize(name)+"?1:-1);\n";
     }
 }

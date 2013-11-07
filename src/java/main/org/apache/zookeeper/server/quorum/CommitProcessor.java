@@ -46,6 +46,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     LinkedList<Request> committedRequests = new LinkedList<Request>();
 
     RequestProcessor nextProcessor;
+    ArrayList<Request> toProcess = new ArrayList<Request>();
 
     /**
      * This flag indicates whether we need to wait for a response to come back from the
@@ -65,8 +66,7 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     @Override
     public void run() {
         try {
-            Request nextPending = null;
-            ArrayList<Request> toProcess = new ArrayList<Request>();
+            Request nextPending = null;            
             while (!finished) {
                 int len = toProcess.size();
                 for (int i = 0; i < len; i++) {
@@ -176,7 +176,6 @@ public class CommitProcessor extends Thread implements RequestProcessor {
     }
 
     public void shutdown() {
-        LOG.info("Shutting down");
         synchronized (this) {
             finished = true;
             queuedRequests.clear();

@@ -112,7 +112,7 @@ public class SetTest extends Base {
                     CreateMode.PERSISTENT);
         }
 
-        WebResource wr = znodesr.path(path).queryParam("dataformat", encoding);
+        WebResource wr = r.path(path).queryParam("dataformat", encoding);
         if (data == null) {
             wr = wr.queryParam("null", "true");
         }

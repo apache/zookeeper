@@ -96,7 +96,7 @@ class ACLTest(zktestbase.TestBase):
       
     def test_invalid_acl2(self):
       """Verify all required keys are present in the ACL."""
-      invalid_acl = [{"schema": "digest", "id": "zebra"}],
+      invalid_acl = [{"schema": "digest", "id": "zebra"}]
       self.assertRaises(zookeeper.InvalidACLException,
                         zookeeper.create,
                         self.handle,

@@ -24,21 +24,39 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class FLELostMessageTest extends ZKTestCase {
+
+/**
+ * This test uses a mock server to interact with a ZooKeeper peer and 
+ * reproduces a specific sequence of messages that can cause FLE to fail.
+ * In particular, it reproduces the following scenario:
+ * 
+ * 1- We have an ensemble of 3 servers, but only two start;
+ * 2- Process 0 elects 1, but 1 fails to receive the message from 0
+ * stating that it changed its vote to 1;
+ * 3- The next from 0 that 1 receives is a notification that 0 is 
+ * following 1. However, because 1 does not receive a notification 
+ * from 0 while 0 is following, it may end up not becoming leader
+ * with old code.
+ * 
+ * This test checks that this sequence of messages does not lead to a 
+ * deadlock. In practice, even if this situation occurs in a run, it would
+ * have to occur continuously to prevent a leader from being elected 
+ * forever. This happens with low probability. 
+ *
+ */
+public class FLELostMessageTest extends TestCase {
     protected static final Logger LOG = Logger.getLogger(FLELostMessageTest.class);
 
     
@@ -49,18 +67,21 @@ public class FLELostMessageTest extends ZKTestCase {
     
     QuorumCnxManager cnxManager;
    
-    @Before
+    @Override
     public void setUp() throws Exception {
         count = 3;
 
         peers = new HashMap<Long,QuorumServer>(count);
         tmpdir = new File[count];
         port = new int[count];
+        
+        LOG.info("SetUp " + getName());
     }
 
-    @After
+    @Override
     public void tearDown() throws Exception {
         cnxManager.halt();
+        LOG.info("FINISHED " + getName());
     }
 
 
@@ -84,7 +105,7 @@ public class FLELostMessageTest extends ZKTestCase {
                 v = peer.getElectionAlg().lookForLeader();
 
                 if (v == null){
-                    Assert.fail("Thread " + i + " got a null vote");
+                    fail("Thread " + i + " got a null vote");
                 }
 
                 /*
@@ -95,7 +116,7 @@ public class FLELostMessageTest extends ZKTestCase {
 
                 LOG.info("Finished election: " + i + ", " + v.id);
                     
-                Assert.assertTrue("State is not leading.", peer.getPeerState() == ServerState.LEADING);
+                assertTrue("State is not leading.", peer.getPeerState() == ServerState.LEADING);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -106,7 +127,7 @@ public class FLELostMessageTest extends ZKTestCase {
     public void testLostMessage() throws Exception {
         FastLeaderElection le[] = new FastLeaderElection[count];
         
-        LOG.info("TestLE: " + getTestName()+ ", " + count);
+        LOG.info("TestLE: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
             peers.put(Long.valueOf(i),
@@ -121,7 +142,7 @@ public class FLELostMessageTest extends ZKTestCase {
          * Start server 0
          */
             
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 1000, 2, 2);
         peer.startLeaderElection();
         LEThread thread = new LEThread(peer, 1);
         thread.start();
@@ -132,7 +153,7 @@ public class FLELostMessageTest extends ZKTestCase {
         mockServer();
         thread.join(5000);
         if (thread.isAlive()) {
-            Assert.fail("Threads didn't join");
+            fail("Threads didn't join");
         }
     }
         
@@ -157,7 +178,7 @@ public class FLELostMessageTest extends ZKTestCase {
         /*
          * Create an instance of the connection manager
          */
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
         cnxManager = new QuorumCnxManager(peer);
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){

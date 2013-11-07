@@ -37,8 +37,7 @@ public class JVector extends JCompType {
     
     /** Creates a new instance of JVector */
     public JVector(JType t) {
-        super("struct " + extractVectorName(t), " ::std::vector<"+t.getCppType()+">", "System.Collections.Generic.List<" + t.getCsharpType() + ">", "java.util.List<" + t.getJavaType() + ">", "Vector",
-                "System.Collections.Generic.List<" + t.getCsharpType() + ">", "java.util.ArrayList<" + t.getJavaType() + ">");
+        super("struct " + extractVectorName(t), " ::std::vector<"+t.getCppType()+">", "java.util.List<" + t.getJavaType() + ">", "Vector", "java.util.ArrayList<" + t.getJavaType() + ">");
         mElement = t;
     }
     
@@ -101,53 +100,7 @@ public class JVector extends JCompType {
     	return mElement;
     }
 
-    public String genCsharpWriteWrapper(String fname, String tag) {
-        StringBuilder ret = new StringBuilder("    {\n");
-        incrLevel();
-        ret.append("      a_.StartVector("+capitalize(fname)+",\""+tag+"\");\n");
-        ret.append("      if ("+capitalize(fname)+"!= null) {");
-        ret.append("          int "+getId("len")+" = "+capitalize(fname)+".Count;\n");
-        ret.append("          for(int "+getId("vidx")+" = 0; "+getId("vidx")+"<"+getId("len")+"; "+getId("vidx")+"++) {\n");
-        ret.append("            "+mElement.getCsharpWrapperType()+" "+getId("e")+" = ("+mElement.getCsharpWrapperType()+") "+capitalize(fname)+"["+getId("vidx")+"];\n");
-        ret.append(mElement.genCsharpWriteWrapper(getId("e"), getId("e")));
-        ret.append("          }\n");
-        ret.append("      }\n");
-        ret.append("      a_.EndVector("+capitalize(fname)+",\""+tag+"\");\n");
-        ret.append("    }\n");
-        decrLevel();
-        return ret.toString();
-    }
-
-    String genCsharpWriteMethod(String fname, String tag) {
-        return genCsharpWriteWrapper(fname, tag);
-    }
-
-    public String genCsharpReadWrapper(String fname, String tag, boolean decl) {
-        StringBuilder ret = new StringBuilder("");
-        if (decl) {
-            ret.append("      System.Collections.Generic.List<" + mElement.getCsharpType()+ "> "+capitalize(fname)+";\n");
-        }
-        ret.append("    {\n");
-        incrLevel();
-        ret.append("      IIndex "+getId("vidx")+" = a_.StartVector(\""+tag+"\");\n");
-        ret.append("      if ("+getId("vidx")+"!= null) {");
-        ret.append("          "+capitalize(fname)+"=new System.Collections.Generic.List<"+ mElement.getCsharpType() + ">();\n");
-        ret.append("          for (; !"+getId("vidx")+".Done(); "+getId("vidx")+".Incr()) {\n");
-        ret.append(mElement.genCsharpReadWrapper(getId("e"), getId("e"), true));
-        ret.append("            "+capitalize(fname)+".Add("+getId("e")+");\n");
-        ret.append("          }\n");
-        ret.append("      }\n");
-        ret.append("    a_.EndVector(\""+tag+"\");\n");
-        decrLevel();
-        ret.append("    }\n");
-        return ret.toString();
-    }
-    
-    String genCsharpReadMethod(String fname, String tag) {
-        return genCsharpReadWrapper(fname, tag, false);
-    }
-
-    static public String extractVectorName(JType jvType) {
+	static public String extractVectorName(JType jvType) {
 		return JRecord.extractMethodSuffix(jvType)+"_vector";
 	}
 }

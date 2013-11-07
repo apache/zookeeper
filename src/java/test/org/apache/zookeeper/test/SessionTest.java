@@ -22,13 +22,17 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -36,34 +40,31 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-public class SessionTest extends ZKTestCase {
+public class SessionTest extends TestCase implements Watcher {
     protected static final Logger LOG = Logger.getLogger(SessionTest.class);
 
     private static final String HOSTPORT = "127.0.0.1:" +
             PortAssignment.unique();
-    
-    private ServerCnxnFactory serverFactory;
+    private NIOServerCnxn.Factory serverFactory;
 
     private CountDownLatch startSignal;
 
     File tmpDir;
-
+    
     private final int TICK_TIME = 3000;
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        LOG.info("STARTING " + getName());
+
         if (tmpDir == null) {
             tmpDir = ClientBase.createTmpDir();
         }
@@ -72,20 +73,21 @@ public class SessionTest extends ZKTestCase {
         ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, TICK_TIME);
 
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        serverFactory = ServerCnxnFactory.createFactory(PORT, -1);
+        serverFactory = new NIOServerCnxn.Factory(new InetSocketAddress(PORT));
         serverFactory.startup(zs);
 
-        Assert.assertTrue("waiting for server up",
+        assertTrue("waiting for server up",
                    ClientBase.waitForServerUp(HOSTPORT,
                                               CONNECTION_TIMEOUT));
     }
-
-    @After
-    public void tearDown() throws Exception {
+    @Override
+    protected void tearDown() throws Exception {
         serverFactory.shutdown();
-        Assert.assertTrue("waiting for server down",
+        assertTrue("waiting for server down",
                    ClientBase.waitForServerDown(HOSTPORT,
                                                 CONNECTION_TIMEOUT));
+
+        LOG.info("FINISHED " + getName());
     }
 
     private static class CountdownWatcher implements Watcher {
@@ -119,13 +121,13 @@ public class SessionTest extends ZKTestCase {
         DisconnectableZooKeeper zk =
                 new DisconnectableZooKeeper(HOSTPORT, timeout, watcher);
         if(!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS)) {
-            Assert.fail("Unable to connect to server");
+            fail("Unable to connect to server");
         }
 
         return zk;
     }
 
-// FIXME this test is Assert.failing due to client close race condition fixing in separate patch for ZOOKEEPER-63
+// FIXME this test is failing due to client close race condition fixing in separate patch for ZOOKEEPER-63
 //    /**
 //     * this test checks to see if the sessionid that was created for the
 //     * first zookeeper client can be reused for the second one immidiately
@@ -152,26 +154,10 @@ public class SessionTest extends ZKTestCase {
 //
 //        LOG.info("Opened reuse");
 //
-//        Assert.assertEquals(sessionId, zk.getSessionId());
+//        assertEquals(sessionId, zk.getSessionId());
 //
 //        zk.close();
 //    }
-
-    private class MyWatcher implements Watcher {
-        private String name;
-        public MyWatcher(String name) {
-            this.name = name;
-        }
-        public void process(WatchedEvent event) {
-            LOG.info(name + " event:" + event.getState() + " "
-                    + event.getType() + " " + event.getPath());
-            if (event.getState() == KeeperState.SyncConnected
-                    && startSignal != null && startSignal.getCount() > 0)
-            {
-                startSignal.countDown();
-            }
-        }
-    }
 
     /**
      * This test verifies that when the session id is reused, and the original
@@ -195,9 +181,9 @@ public class SessionTest extends ZKTestCase {
 
         Stat stat = new Stat();
         startSignal = new CountDownLatch(1);
-        zk = new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT,
-                new MyWatcher("testSession"), zk.getSessionId(),
-                zk.getSessionPasswd());
+        zk = new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this,
+                               zk.getSessionId(),
+                               zk.getSessionPasswd());
         startSignal.await();
 
         LOG.info("zk with session id 0x" + Long.toHexString(zk.getSessionId())
@@ -207,10 +193,29 @@ public class SessionTest extends ZKTestCase {
         zk.close();
 
         zk = createClient();
-        Assert.assertEquals(null, zk.exists("/e", false));
+        assertEquals(null, zk.exists("/e", false));
         LOG.info("before close zk with session id 0x"
                 + Long.toHexString(zk.getSessionId()) + "!");
         zk.close();
+        try {
+            zk.getData("/e", false, stat);
+            Assert.fail("Should have received a SessionExpiredException");
+        } catch(KeeperException.SessionExpiredException e) {}
+        
+        AsyncCallback.DataCallback cb = new AsyncCallback.DataCallback() {
+            String status = "not done";
+            public void processResult(int rc, String p, Object c, byte[] b, Stat s) {
+                synchronized(this) { status = KeeperException.Code.get(rc).toString(); this.notify(); }
+            }
+           public String toString() { return status; }
+        };
+        zk.getData("/e", false, cb, null);
+        synchronized(cb) {
+            if (cb.toString().equals("not done")) {
+                cb.wait(1000);
+            }
+        }
+        Assert.assertEquals(KeeperException.Code.SESSIONEXPIRED.toString(), cb.toString());        
     }
 
     private List<Thread> findThreads(String name) {
@@ -261,7 +266,7 @@ public class SessionTest extends ZKTestCase {
         Thread.sleep(TIMEOUT*2);
         sendThread.resume();
         eventThread.join(TIMEOUT);
-        Assert.assertFalse("EventThread is still running", eventThread.isAlive());
+        assertFalse("EventThread is still running", eventThread.isAlive());
 
         zk = createClient(TIMEOUT);
         zk.create("/stest", new byte[0], Ids.OPEN_ACL_UNSAFE,
@@ -272,9 +277,9 @@ public class SessionTest extends ZKTestCase {
         setUp();
 
         zk = createClient(TIMEOUT);
-        Assert.assertTrue(zk.exists("/stest", false) != null);
+        assertTrue(zk.exists("/stest", false) != null);
         Thread.sleep(TIMEOUT*2);
-        Assert.assertTrue(zk.exists("/stest", false) == null);
+        assertTrue(zk.exists("/stest", false) == null);
         zk.close();
     }
 
@@ -287,35 +292,28 @@ public class SessionTest extends ZKTestCase {
      * @throws KeeperException
      */
     @Test
-    @Ignore
-    public void testSessionMove() throws Exception {
+    public void testSessionMove() throws IOException, InterruptedException, KeeperException {
         String hostPorts[] = HOSTPORT.split(",");
-        DisconnectableZooKeeper zk = new DisconnectableZooKeeper(hostPorts[0],
-                CONNECTION_TIMEOUT, new MyWatcher("0"));
-        zk.create("/sessionMoveTest", new byte[0], Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
+        ZooKeeper zk = new DisconnectableZooKeeper(hostPorts[0], CONNECTION_TIMEOUT, this);
+        zk.create("/sessionMoveTest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         // we want to loop through the list twice
         for(int i = 0; i < hostPorts.length*2; i++) {
-            zk.dontReconnect();
             // This should stomp the zk handle
-            DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(
-                    hostPorts[(i+1)%hostPorts.length],
-                    CONNECTION_TIMEOUT,
-                    new MyWatcher(Integer.toString(i+1)),
+            ZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[(i+1)%hostPorts.length], CONNECTION_TIMEOUT, this,
                     zk.getSessionId(),
                     zk.getSessionPasswd());
             zknew.setData("/", new byte[1], -1);
             try {
                 zk.setData("/", new byte[1], -1);
-                Assert.fail("Should have lost the connection");
+                fail("Should have lost the connection");
             } catch(KeeperException.ConnectionLossException e) {
-                LOG.info("Got connection loss exception as expected");
             }
             //zk.close();
             zk = zknew;
         }
         zk.close();
     }
+    @Test
     /**
      * This test makes sure that duplicate state changes are not communicated
      * to the client watcher. For example we should not notify state as
@@ -323,7 +321,6 @@ public class SessionTest extends ZKTestCase {
      * we don't consider a dup state notification if the event type is
      * not "None" (ie non-None communicates an event).
      */
-    @Test
     public void testSessionStateNoDupStateReporting()
         throws IOException, InterruptedException, KeeperException
     {
@@ -343,20 +340,20 @@ public class SessionTest extends ZKTestCase {
         // verify that the size is just 2 - ie connect then disconnect
         // if the client attempts reconnect and we are not handling current
         // state correctly (ie eventing on duplicate disconnects) then we'll
-        // see a disconnect for each Assert.failed connection attempt
-        Assert.assertEquals(2, watcher.states.size());
+        // see a disconnect for each failed connection attempt
+        assertEquals(2, watcher.states.size());
 
         zk.close();
     }
 
+    @Test
     /**
      * Verify access to the negotiated session timeout.
      */
-    @Test
     public void testSessionTimeoutAccess() throws Exception {
         // validate typical case - requested == negotiated
         DisconnectableZooKeeper zk = createClient(TICK_TIME * 4);
-        Assert.assertEquals(TICK_TIME * 4, zk.getSessionTimeout());
+        assertEquals(TICK_TIME * 4, zk.getSessionTimeout());
         // make sure tostring works in both cases
         LOG.info(zk.toString());
         zk.close();
@@ -364,14 +361,14 @@ public class SessionTest extends ZKTestCase {
 
         // validate lower limit
         zk = createClient(TICK_TIME);
-        Assert.assertEquals(TICK_TIME * 2, zk.getSessionTimeout());
+        assertEquals(TICK_TIME * 2, zk.getSessionTimeout());
         LOG.info(zk.toString());
         zk.close();
         LOG.info(zk.toString());
 
         // validate upper limit
         zk = createClient(TICK_TIME * 30);
-        Assert.assertEquals(TICK_TIME * 20, zk.getSessionTimeout());
+        assertEquals(TICK_TIME * 20, zk.getSessionTimeout());
         LOG.info(zk.toString());
         zk.close();
         LOG.info(zk.toString());
@@ -387,21 +384,28 @@ public class SessionTest extends ZKTestCase {
         }
     }
 
+    public void process(WatchedEvent event) {
+        LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
+        if (event.getState() == KeeperState.SyncConnected
+                && startSignal != null && startSignal.getCount() > 0)
+        {
+            startSignal.countDown();
+        }
+    }
+
     @Test
     public void testMinMaxSessionTimeout() throws Exception {
         // override the defaults
         final int MINSESS = 20000;
         final int MAXSESS = 240000;
-        {
-            ZooKeeperServer zs = ClientBase.getServer(serverFactory);
-            zs.setMinSessionTimeout(MINSESS);
-            zs.setMaxSessionTimeout(MAXSESS);
-        }
+        ZooKeeperServer zs = serverFactory.getZooKeeperServer();
+        zs.setMinSessionTimeout(MINSESS);
+        zs.setMaxSessionTimeout(MAXSESS);
 
         // validate typical case - requested == negotiated
         int timeout = 120000;
         DisconnectableZooKeeper zk = createClient(timeout);
-        Assert.assertEquals(timeout, zk.getSessionTimeout());
+        assertEquals(timeout, zk.getSessionTimeout());
         // make sure tostring works in both cases
         LOG.info(zk.toString());
         zk.close();
@@ -409,14 +413,14 @@ public class SessionTest extends ZKTestCase {
 
         // validate lower limit
         zk = createClient(MINSESS/2);
-        Assert.assertEquals(MINSESS, zk.getSessionTimeout());
+        assertEquals(MINSESS, zk.getSessionTimeout());
         LOG.info(zk.toString());
         zk.close();
         LOG.info(zk.toString());
 
         // validate upper limit
         zk = createClient(MAXSESS * 2);
-        Assert.assertEquals(MAXSESS, zk.getSessionTimeout());
+        assertEquals(MAXSESS, zk.getSessionTimeout());
         LOG.info(zk.toString());
         zk.close();
         LOG.info(zk.toString());

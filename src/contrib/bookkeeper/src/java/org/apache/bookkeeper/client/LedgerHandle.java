@@ -27,8 +27,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Queue;
-import java.util.concurrent.Semaphore;
-
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.AsyncCallback.AddCallback;
 import org.apache.bookkeeper.client.AsyncCallback.CloseCallback;
@@ -60,39 +58,31 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
   final long ledgerId;
   long lastAddPushed;
   long lastAddConfirmed;
+  long length;
   final DigestManager macManager;
   final DistributionSchedule distributionSchedule;
 
-  final Semaphore opCounterSem;
-  private Integer throttling = 5000;
-  
   final Queue<PendingAddOp> pendingAddOps = new ArrayDeque<PendingAddOp>();
-  
+
   LedgerHandle(BookKeeper bk, long ledgerId, LedgerMetadata metadata,
-      DigestType digestType, byte[] password)
-      throws GeneralSecurityException, NumberFormatException {
+      DigestType digestType, byte[] password) throws GeneralSecurityException {
     this.bk = bk;
     this.metadata = metadata;
     if (metadata.isClosed()) {
       lastAddConfirmed = lastAddPushed = metadata.close;
+      length = metadata.length;
     } else {
       lastAddConfirmed = lastAddPushed = -1;
+      length = 0;
     }
-    
+
     this.ledgerId = ledgerId;
-    
-    String throttleValue = System.getProperty("throttle");
-    if(throttleValue != null){
-        this.throttling = new Integer(throttleValue); 
-    }
-    this.opCounterSem = new Semaphore(throttling);
-    
     macManager = DigestManager.instantiate(ledgerId, password, digestType);
     this.ledgerKey = MacDigestManager.genDigest("ledger", password);
     distributionSchedule = new RoundRobinDistributionSchedule(
         metadata.quorumSize, metadata.ensembleSize);
   }
-  
+
   /**
    * Get the id of the current ledger
    * 
@@ -149,12 +139,23 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
   }
   
   /**
-   * Return total number of available slots.
-   * 
-   * @return int    available slots
+   *  Add to the length of the ledger in bytes.
+   *  
+   * @param delta
+   * @return
    */
-  Semaphore getAvailablePermits(){
-      return this.opCounterSem;
+  long addToLength(long delta){
+      this.length += delta;
+      return this.length;
+  }
+  
+  /**
+   * Returns the length of the ledger in bytes. 
+   * 
+   * @return
+   */
+  public long getLength(){
+      return this.length;
   }
   
   /**
@@ -212,6 +213,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
 
       @Override
       public void safeRun() {
+        metadata.length = length;
         // Close operation is idempotent, so no need to check if we are
         // already closed
         metadata.close(lastAddConfirmed);
@@ -220,7 +222,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("Closing ledger: " + ledgerId + " at entryId: "
-              + metadata.close);
+              + metadata.close + " with this many bytes: " + metadata.length);
         }
 
         writeLedgerConfig(new StatCallback() {
@@ -277,7 +279,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
    *          control object
    */
   public void asyncReadEntries(long firstEntry, long lastEntry,
-      ReadCallback cb, Object ctx) throws InterruptedException {
+      ReadCallback cb, Object ctx) {
     // Little sanity check
     if (firstEntry < 0 || lastEntry > lastAddConfirmed
         || firstEntry > lastEntry) {
@@ -286,6 +288,7 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
     }
 
     new PendingReadOp(this, firstEntry, lastEntry, cb, ctx).initiate();
+
   }
 
   /**
@@ -317,33 +320,27 @@ public class LedgerHandle implements ReadCallback, AddCallback, CloseCallback {
    *          some control object
    */
   public void asyncAddEntry(final byte[] data, final AddCallback cb,
-      final Object ctx) throws InterruptedException {
-      opCounterSem.acquire();
-      
-      try{
-          bk.mainWorkerPool.submitOrdered(ledgerId, new SafeRunnable() {
-              @Override
-              public void safeRun() {
-                  if (metadata.isClosed()) {
-                      LOG.warn("Attempt to add to closed ledger: " + ledgerId);
-                      LedgerHandle.this.opCounterSem.release();
-                      cb.addComplete(BKException.Code.LedgerClosedException,
-                              LedgerHandle.this, -1, ctx);
-                      return;
-                  }
+      final Object ctx) {
+    bk.mainWorkerPool.submitOrdered(ledgerId, new SafeRunnable() {
+      @Override
+      public void safeRun() {
+        if (metadata.isClosed()) {
+          LOG.warn("Attempt to add to closed ledger: " + ledgerId);
+          cb.addComplete(BKException.Code.LedgerClosedException,
+              LedgerHandle.this, -1, ctx);
+          return;
+        }
 
-                  long entryId = ++lastAddPushed;
-                  PendingAddOp op = new PendingAddOp(LedgerHandle.this, cb, ctx, entryId);
-                  pendingAddOps.add(op);
-                  ChannelBuffer toSend = macManager.computeDigestAndPackageForSending(
-                          entryId, lastAddConfirmed, data);
-                  op.initiate(toSend);
-              }
-          });
-      } catch (RuntimeException e) {
-          opCounterSem.release();
-          throw e;
+        long entryId = ++lastAddPushed;
+        long currentLength = addToLength(data.length);
+        PendingAddOp op = new PendingAddOp(LedgerHandle.this, cb, ctx, entryId);
+        pendingAddOps.add(op);
+        ChannelBuffer toSend = macManager.computeDigestAndPackageForSending(
+                entryId, lastAddConfirmed, currentLength, data);
+        op.initiate(toSend);
+
       }
+    });
   }
 
   // close the ledger and send fails to all the adds in the pipeline

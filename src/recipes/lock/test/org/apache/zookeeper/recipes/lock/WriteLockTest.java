@@ -23,10 +23,6 @@ import org.apache.zookeeper.test.ClientBase;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-
 /**
  * test for writelock
  */
@@ -39,7 +35,6 @@ public class WriteLockTest extends ClientBase {
     private boolean workAroundClosingLastZNodeFails = true;
     private boolean killLeader = true;
 
-    @Test
     public void testRun() throws Exception {
         runTest(3);
     }
@@ -73,11 +68,11 @@ public class WriteLockTest extends ClientBase {
         dumpNodes(count);
 
         // lets assert that the first election is the leader
-        Assert.assertTrue("The first znode should be the leader " + first.getId(), first.isOwner());
+        assertTrue("The first znode should be the leader " + first.getId(), first.isOwner());
 
         for (int i = 1; i < count; i++) {
             WriteLock node = nodes[i];
-            Assert.assertFalse("Node should not be the leader " + node.getId(), node.isOwner());
+            assertFalse("Node should not be the leader " + node.getId(), node.isOwner());
         }
 
         if (count > 1) {
@@ -91,11 +86,11 @@ public class WriteLockTest extends ClientBase {
             WriteLock second = nodes[1];
             dumpNodes(count);
             // lets assert that the first election is the leader
-            Assert.assertTrue("The second znode should be the leader " + second.getId(), second.isOwner());
+            assertTrue("The second znode should be the leader " + second.getId(), second.isOwner());
 
             for (int i = 2; i < count; i++) {
                 WriteLock node = nodes[i];
-                Assert.assertFalse("Node should not be the leader " + node.getId(), node.isOwner());
+                assertFalse("Node should not be the leader " + node.getId(), node.isOwner());
             }
             }
 
@@ -131,8 +126,8 @@ public class WriteLockTest extends ClientBase {
         }
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @Override
+    protected void tearDown() throws Exception {
         if (nodes != null) {
             for (int i = 0; i < nodes.length; i++) {
                 WriteLock node = nodes[i];

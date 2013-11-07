@@ -1,3 +1,0 @@
-Hedwig is a large scale pub/sub system built on top of ZooKeeper and BookKeeper.
-
-For documentation on building, setting up, and using Hedwig see the `doc` directory.

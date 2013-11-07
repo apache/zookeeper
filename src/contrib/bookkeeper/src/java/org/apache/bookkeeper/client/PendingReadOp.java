@@ -22,6 +22,7 @@ package org.apache.bookkeeper.client;
  */
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -33,6 +34,8 @@ import org.apache.bookkeeper.proto.BookkeeperInternalCallbacks.ReadEntryCallback
 import org.apache.log4j.Logger;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+
+import java.io.IOException;
 
 /**
  * Sequence of entries of a ledger that represents a pending read operation.
@@ -64,18 +67,12 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
         numPendingReads = endEntryId - startEntryId + 1;
     }
 
-    public void initiate() throws InterruptedException {
+    public void initiate() {
         long nextEnsembleChange = startEntryId, i = startEntryId;
 
         ArrayList<InetSocketAddress> ensemble = null;
         do {
 
-            if(LOG.isDebugEnabled()){
-                LOG.debug("Acquiring lock: " + i);
-            }
-           
-            lh.opCounterSem.acquire();
-            
             if (i == nextEnsembleChange) {
                 ensemble = lh.metadata.getEnsemble(i);
                 nextEnsembleChange = lh.metadata.getNextEnsembleChange(i);
@@ -86,13 +83,14 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
             sendRead(ensemble, entry, BKException.Code.ReadException);
 
         } while (i <= endEntryId);
+
     }
 
     void sendRead(ArrayList<InetSocketAddress> ensemble, LedgerEntry entry, int lastErrorCode) {
         if (entry.nextReplicaIndexToReadFrom >= lh.metadata.quorumSize) {
             // we are done, the read has failed from all replicas, just fail the
             // read
-            submitCallback(lastErrorCode);
+            cb.readComplete(lastErrorCode, lh, null, ctx);
             return;
         }
 
@@ -128,25 +126,21 @@ class PendingReadOp implements Enumeration<LedgerEntry>, ReadEntryCallback {
         }
 
         entry.entryDataStream = is;
+        
+        
+        /*
+         * The length is a long and it is the last field of the metadata of an entry.
+         * Consequently, we have to subtract 8 from METADATA_LENGTH to get the length.
+         */
+        entry.length = buffer.getLong(DigestManager.METADATA_LENGTH - 8);
 
         numPendingReads--;
         if (numPendingReads == 0) {
-            submitCallback(BKException.Code.OK);
+            cb.readComplete(BKException.Code.OK, lh, PendingReadOp.this, PendingReadOp.this.ctx);
         }
-        
-        if(LOG.isDebugEnabled()){
-            LOG.debug("Releasing lock: " + entryId);
-        }
-        
-        lh.opCounterSem.release();
-        
-        if(numPendingReads < 0)
-            LOG.error("Read too many values");
+
     }
 
-    private void submitCallback(int code){
-        cb.readComplete(code, lh, PendingReadOp.this, PendingReadOp.this.ctx);
-    }
     public boolean hasMoreElements() {
         return !seq.isEmpty();
     }

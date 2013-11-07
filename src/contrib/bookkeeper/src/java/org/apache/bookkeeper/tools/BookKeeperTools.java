@@ -573,12 +573,7 @@ public class BookKeeperTools {
                         new LedgerMultiCallbackWrapper(ledgerMcb), null);
                 for (final Long startEntryId : ledgerFragmentsToRecover) {
                     Long endEntryId = ledgerFragmentsRange.get(startEntryId);
-                    try {
-                        recoverLedgerFragment(bookieSrc, lh, startEntryId, endEntryId, ledgerFragmentMcb, newBookie);
-                    } catch(InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
+                    recoverLedgerFragment(bookieSrc, lh, startEntryId, endEntryId, ledgerFragmentMcb, newBookie);
                 }
             }
         }, null);
@@ -607,7 +602,7 @@ public class BookKeeperTools {
      */
     private void recoverLedgerFragment(final InetSocketAddress bookieSrc, final LedgerHandle lh,
             final Long startEntryId, final Long endEntryId, final MultiCallback ledgerFragmentMcb,
-            final InetSocketAddress newBookie) throws InterruptedException {
+            final InetSocketAddress newBookie) {
         if (endEntryId == null) {
             /*
              * Ideally this should never happen if bookie failure is taken care
@@ -668,7 +663,7 @@ public class BookKeeperTools {
      *            entries that were stored on the failed bookie.
      */
     private void recoverLedgerFragmentEntry(final Long entryId, final LedgerHandle lh,
-            final MultiCallback ledgerFragmentEntryMcb, final InetSocketAddress newBookie) throws InterruptedException {
+            final MultiCallback ledgerFragmentEntryMcb, final InetSocketAddress newBookie) {
         /*
          * Read the ledger entry using the LedgerHandle. This will allow us to
          * read the entry from one of the other replicated bookies other than
@@ -686,8 +681,9 @@ public class BookKeeperTools {
                  * Now that we've read the ledger entry, write it to the new
                  * bookie we've selected.
                  */
+                LedgerEntry entry = seq.nextElement();
                 ChannelBuffer toSend = lh.getDigestManager().computeDigestAndPackageForSending(entryId,
-                        lh.getLastAddConfirmed(), seq.nextElement().getEntry());
+                        lh.getLastAddConfirmed(), entry.getLength(), entry.getEntry());
                 bkc.getBookieClient().addEntry(newBookie, lh.getId(), lh.getLedgerKey(), entryId, toSend,
                         new WriteCallback() {
                             @Override

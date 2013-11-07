@@ -22,20 +22,22 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.junit.Before;
 import org.junit.Test;
 
 public class ChrootClientTest extends ClientTest {
     private static final Logger LOG = Logger.getLogger(ChrootClientTest.class);
 
+    @Before
     @Override
-    public void setUp() throws Exception {
+    protected void setUp() throws Exception {
         String hp = hostPort;
         hostPort = hostPort + "/chrootclienttest";
 
         System.out.println(hostPort);
         super.setUp();
 
-        LOG.info("STARTING " + getTestName());
+        LOG.info("STARTING " + getName());
 
         ZooKeeper zk = createClient(hp);
         try {

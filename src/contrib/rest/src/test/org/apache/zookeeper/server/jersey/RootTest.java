@@ -19,13 +19,19 @@
 package org.apache.zookeeper.server.jersey;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.jersey.jaxb.ZPath;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -47,7 +53,7 @@ public class RootTest extends Base {
         String name = "roottest-create";
         byte[] data = "foo".getBytes();
 
-        WebResource wr = znodesr.path(path).queryParam("dataformat", "utf8")
+        WebResource wr = r.path(path).queryParam("dataformat", "utf8")
             .queryParam("name", name);
         Builder builder = wr.accept(MediaType.APPLICATION_JSON);
 
@@ -57,7 +63,7 @@ public class RootTest extends Base {
 
         ZPath zpath = cr.getEntity(ZPath.class);
         assertEquals(new ZPath(path + name), zpath);
-        assertEquals(znodesr.path(path).toString(), zpath.uri);
+        assertEquals(r.path(path).toString(), zpath.uri);
 
         // use out-of-band method to verify
         byte[] rdata = zk.getData(zpath.path, false, new Stat());

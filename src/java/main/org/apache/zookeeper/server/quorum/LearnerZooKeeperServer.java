@@ -70,14 +70,17 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     }    
     
     @Override
-    protected void createSessionTracker() {
+    public void createSessionTracker() {
         sessionTracker = new LearnerSessionTracker(this, getZKDatabase().getSessionWithTimeOuts(),
                 self.getId());
     }
     
     @Override
+    protected void startSessionTracker() {}
+    
+    @Override
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,
-            int sessionTimeout) throws IOException {
+            int sessionTimeout) throws IOException, InterruptedException {
         getLearner().validateSession(cnxn, sessionId, sessionTimeout);
     }
     

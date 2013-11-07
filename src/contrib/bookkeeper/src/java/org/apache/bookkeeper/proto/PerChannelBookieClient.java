@@ -23,7 +23,6 @@ import java.net.InetSocketAddress;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.bookkeeper.client.BKException;
@@ -70,7 +69,6 @@ public class PerChannelBookieClient extends SimpleChannelHandler implements Chan
 
     InetSocketAddress addr;
     boolean connected = false;
-    Semaphore opCounterSem = new Semaphore(2000);
     AtomicLong totalBytesOutstanding;
     ClientSocketChannelFactory channelFactory;
     OrderedSafeExecutor executor;
@@ -208,7 +206,6 @@ public class PerChannelBookieClient extends SimpleChannelHandler implements Chan
             Object ctx) {
 
         final int entrySize = toSend.readableBytes();
-        
         // if (totalBytesOutstanding.get() > maxMemory) {
         // // TODO: how to throttle, throw an exception, or call the callback?
         // // Maybe this should be done at the layer above?

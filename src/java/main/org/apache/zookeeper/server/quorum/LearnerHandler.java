@@ -29,6 +29,8 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -254,79 +256,110 @@ public class LearnerHandler extends Thread {
             long peerLastZxid = qp.getZxid();
             /* the default to send to the follower */
             int packetToSend = Leader.SNAP;
-            boolean logTxns = true;
             long zxidToSend = 0;
-            
+            long leaderLastZxid = 0;
             /** the packets that the follower needs to get updates from **/
             long updates = peerLastZxid;
             
             /* we are sending the diff check if we have proposals in memory to be able to 
              * send a diff to the 
              */ 
-            LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
-            synchronized(proposals) {
+            ReentrantReadWriteLock lock = leader.zk.getZKDatabase().getLogLock();
+            ReadLock rl = lock.readLock();
+            try {
+                rl.lock();        
+                final long maxCommittedLog = leader.zk.getZKDatabase().getmaxCommittedLog();
+                final long minCommittedLog = leader.zk.getZKDatabase().getminCommittedLog();
+                LOG.info("Synchronizing with Follower sid: " + this.sid
+                        +" maxCommittedLog ="+Long.toHexString(maxCommittedLog)
+                        +" minCommittedLog = "+Long.toHexString(minCommittedLog)
+                        +" peerLastZxid = "+Long.toHexString(peerLastZxid));
+
+                LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
+
                 if (proposals.size() != 0) {
-                    if ((leader.zk.getZKDatabase().getmaxCommittedLog() >= peerLastZxid)
-                            && (leader.zk.getZKDatabase().getminCommittedLog() <= peerLastZxid)) {
-                        packetToSend = Leader.DIFF;
-                        zxidToSend = leader.zk.getZKDatabase().getmaxCommittedLog();
+                    if ((maxCommittedLog >= peerLastZxid)
+                            && (minCommittedLog <= peerLastZxid)) {
+
+                        // as we look through proposals, this variable keeps track of previous
+                        // proposal Id.
+                        long prevProposalZxid = minCommittedLog;
+
+                        // Keep track of whether we are about to send the first packet.
+                        // Before sending the first packet, we have to tell the learner
+                        // whether to expect a trunc or a diff
+                        boolean firstPacket=true;
+
                         for (Proposal propose: proposals) {
-                            if (propose.packet.getZxid() > peerLastZxid) {
+                            // skip the proposals the peer already has
+                            if (propose.packet.getZxid() <= peerLastZxid) {
+                                prevProposalZxid = propose.packet.getZxid();
+                                continue;
+                            } else {
+                                // If we are sending the first packet, figure out whether to trunc
+                                // in case the follower has some proposals that the leader doesn't
+                                if (firstPacket) {
+                                    firstPacket = false;
+                                    // Does the peer have some proposals that the leader hasn't seen yet
+                                    if (prevProposalZxid < peerLastZxid) {
+                                        // send a trunc message before sending the diff
+                                        packetToSend = Leader.TRUNC;
+                                        LOG.info("Sending TRUNC");
+                                        zxidToSend = prevProposalZxid;
+                                        updates = zxidToSend;
+                                    } 
+                                    else {
+                                        // Just send the diff
+                                        packetToSend = Leader.DIFF;
+                                        LOG.info("Sending diff");
+                                        zxidToSend = maxCommittedLog;        
+                                    }
+
+                                }
                                 queuePacket(propose.packet);
                                 QuorumPacket qcommit = new QuorumPacket(Leader.COMMIT, propose.packet.getZxid(),
                                         null, null);
                                 queuePacket(qcommit);
-
                             }
                         }
+                    } else if (peerLastZxid > maxCommittedLog) {
+                        packetToSend = Leader.TRUNC;
+                        zxidToSend = maxCommittedLog;
+                        updates = zxidToSend;
                     }
+                } else {
+                    // just let the state transfer happen
+                }               
+
+                leaderLastZxid = leader.startForwarding(this, updates);
+                if (peerLastZxid == leaderLastZxid) {
+                    // We are in sync so we'll do an empty diff
+                    packetToSend = Leader.DIFF;
+                    zxidToSend = leaderLastZxid;
                 }
-                else {
-                    logTxns = false;
-                }            
-            }
-            
-            //check if we decided to send a diff or we need to send a truncate
-            // we avoid using epochs for truncating because epochs make things
-            // complicated. Two epochs might have the last 32 bits as same.
-            // only if we know that there is a committed zxid in the queue that
-            // is less than the one the peer has we send a trunc else to make
-            // things simple we just send sanpshot.
-            if (logTxns && (peerLastZxid > leader.zk.getZKDatabase().getmaxCommittedLog())) {
-                // this is the only case that we are sure that
-                // we can ask the peer to truncate the log
-                packetToSend = Leader.TRUNC;
-                zxidToSend = leader.zk.getZKDatabase().getmaxCommittedLog();
-                updates = zxidToSend;
-            }
-            
-            /* see what other packets from the proposal
-             * and tobeapplied queues need to be sent
-             * and then decide if we can just send a DIFF
-             * or we actually need to send the whole snapshot
-             */
-            long leaderLastZxid = leader.startForwarding(this, updates);
-            // a special case when both the ids are the same 
-            if (peerLastZxid == leaderLastZxid) {
-                packetToSend = Leader.DIFF;
-                zxidToSend = leaderLastZxid;
+            } finally {
+                rl.unlock();
             }
 
             QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
                     leaderLastZxid, null, null);
             oa.writeRecord(newLeaderQP, "packet");
             bufferedOutput.flush();
-            
-           
+            //Need to set the zxidToSend to the latest zxid
+            if (packetToSend == Leader.SNAP) {
+                zxidToSend = leader.zk.getZKDatabase().getDataTreeLastProcessedZxid();
+            }
             oa.writeRecord(new QuorumPacket(packetToSend, zxidToSend, null, null), "packet");
             bufferedOutput.flush();
             
             /* if we are not truncating or sending a diff just send a snapshot */
             if (packetToSend == Leader.SNAP) {
-                LOG.warn("Sending snapshot last zxid of peer is 0x"
+                LOG.info("Sending snapshot last zxid of peer is 0x"
                         + Long.toHexString(peerLastZxid) + " " 
                         + " zxid of leader is 0x"
-                        + Long.toHexString(leaderLastZxid));
+                        + Long.toHexString(leaderLastZxid)
+                        + "sent zxid of db as 0x" 
+                        + Long.toHexString(zxidToSend));
                 // Dump data to peer
                 leader.zk.getZKDatabase().serializeSnapshot(oa);
                 oa.writeString("BenWasHere", "signature");
@@ -370,8 +403,8 @@ public class LearnerHandler extends Thread {
              * Wait until leader starts up
              */
             synchronized(leader.zk){
-                while(!leader.zk.isRunning() && !this.isInterrupted()){
-                    leader.zk.wait(20);
+                while(!leader.zk.isRunning()){
+                    leader.zk.wait(500);
                 }
             }
             
@@ -449,14 +482,14 @@ public class LearnerHandler extends Thread {
                     cxid = bb.getInt();
                     type = bb.getInt();
                     bb = bb.slice();
+                    Request si;
                     if(type == OpCode.sync){
-                     	leader.zk.submitRequest(new LearnerSyncRequest(this, sessionId, cxid, type, bb,
-                                qp.getAuthinfo()));
+                        si = new LearnerSyncRequest(this, sessionId, cxid, type, bb, qp.getAuthinfo());
                     } else {
-                        Request si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
-                        si.setOwner(this);
-                        leader.zk.submitRequest(si);
+                        si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
                     }
+                    si.setOwner(this);
+                    leader.zk.submitRequest(si);
                     break;
                 default:
                 }
@@ -524,6 +557,6 @@ public class LearnerHandler extends Thread {
 
     public boolean synced() {
         return isAlive()
-                && tickOfLastAck >= leader.self.tick - leader.self.syncLimit;
+        && tickOfLastAck >= leader.self.tick - leader.self.syncLimit;
     }
 }

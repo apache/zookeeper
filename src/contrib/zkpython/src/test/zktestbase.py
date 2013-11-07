@@ -21,9 +21,11 @@ import unittest, threading, zookeeper
 ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
 
 class TestBase(unittest.TestCase):
+    SERVER_PORT = 22182
+    
     def __init__(self,methodName='runTest'):
         unittest.TestCase.__init__(self,methodName)
-        self.host = "localhost:22182"
+        self.host = "localhost:%d" % self.SERVER_PORT
         self.connected = False
         self.handle = -1
         logdir = os.environ.get("ZKPY_LOG_DIR")

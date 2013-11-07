@@ -581,11 +581,13 @@ int main(int argc, char **argv) {
         FD_SET(0, &rfds);
         rc = select(fd+1, &rfds, &wfds, &efds, &tv);
         events = 0;
-        if (FD_ISSET(fd, &rfds)) {
-            events |= ZOOKEEPER_READ;
-        }
-        if (FD_ISSET(fd, &wfds)) {
-            events |= ZOOKEEPER_WRITE;
+        if (rc > 0) {
+            if (FD_ISSET(fd, &rfds)) {
+           	    events |= ZOOKEEPER_READ;
+            }
+            if (FD_ISSET(fd, &wfds)) {
+                events |= ZOOKEEPER_WRITE;
+            }
         }
         if(batchMode && processed==0){
           //batch mode

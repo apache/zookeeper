@@ -20,36 +20,36 @@ package org.apache.zookeeper.test;
 
 import java.util.EnumSet;
 
+import junit.framework.TestCase;
+
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.KeeperException.Code;
-import org.junit.Assert;
 import org.junit.Test;
 
-public class CreateModeTest extends ZKTestCase {
+public class CreateModeTest extends TestCase {
     
     @Test
     public void testBasicCreateMode() {
         CreateMode cm = CreateMode.PERSISTENT;
-        Assert.assertEquals(cm.toFlag(), 0);
-        Assert.assertFalse(cm.isEphemeral());
-        Assert.assertFalse(cm.isSequential());
+        assertEquals(cm.toFlag(), 0);
+        assertFalse(cm.isEphemeral());
+        assertFalse(cm.isSequential());
         
         cm = CreateMode.EPHEMERAL;
-        Assert.assertEquals(cm.toFlag(), 1);
-        Assert.assertTrue(cm.isEphemeral());
-        Assert.assertFalse(cm.isSequential());
+        assertEquals(cm.toFlag(), 1);
+        assertTrue(cm.isEphemeral());
+        assertFalse(cm.isSequential());
         
         cm = CreateMode.PERSISTENT_SEQUENTIAL;
-        Assert.assertEquals(cm.toFlag(), 2);
-        Assert.assertFalse(cm.isEphemeral());
-        Assert.assertTrue(cm.isSequential());
+        assertEquals(cm.toFlag(), 2);
+        assertFalse(cm.isEphemeral());
+        assertTrue(cm.isSequential());
         
         cm = CreateMode.EPHEMERAL_SEQUENTIAL;
-        Assert.assertEquals(cm.toFlag(), 3);
-        Assert.assertTrue(cm.isEphemeral());
-        Assert.assertTrue(cm.isSequential());
+        assertEquals(cm.toFlag(), 3);
+        assertTrue(cm.isEphemeral());
+        assertTrue(cm.isSequential());
     }
     
     @Test
@@ -58,7 +58,7 @@ public class CreateModeTest extends ZKTestCase {
         EnumSet<CreateMode> allModes = EnumSet.allOf(CreateMode.class);
 
         for(CreateMode cm : allModes) {
-            Assert.assertEquals(cm, CreateMode.fromFlag( cm.toFlag() ) );
+            assertEquals(cm, CreateMode.fromFlag( cm.toFlag() ) );
         }
     }
 
@@ -66,16 +66,16 @@ public class CreateModeTest extends ZKTestCase {
     public void testInvalidFlagConversion() throws KeeperException {
         try {
             CreateMode cm = CreateMode.fromFlag(99);
-            Assert.fail("Shouldn't be able to convert 99 to a CreateMode.");
+            fail("Shouldn't be able to convert 99 to a CreateMode.");
         } catch(KeeperException ke) {
-            Assert.assertEquals(Code.BADARGUMENTS, ke.code());
+            assertEquals(Code.BADARGUMENTS, ke.code());
         }
 
         try {
             CreateMode cm = CreateMode.fromFlag(-1);
-            Assert.fail("Shouldn't be able to convert -1 to a CreateMode.");
+            fail("Shouldn't be able to convert -1 to a CreateMode.");
         } catch(KeeperException ke) {
-            Assert.assertEquals(Code.BADARGUMENTS, ke.code());
+            assertEquals(Code.BADARGUMENTS, ke.code());
         }
     }
 }

@@ -29,7 +29,6 @@ import org.apache.log4j.Logger;
 /**
  * This unit test tests ledger recovery.
  * 
- * 
  */
 
 public class LedgerRecoveryTest extends BaseTestCase {
@@ -54,6 +53,8 @@ public class LedgerRecoveryTest extends BaseTestCase {
             beforelh.addEntry(tmp.getBytes());
         }
 
+        long length = (long) (numEntries * tmp.length());
+        
         /*
          * Try to open ledger.
          */
@@ -63,7 +64,9 @@ public class LedgerRecoveryTest extends BaseTestCase {
          * Check if has recovered properly.
          */
         assertTrue("Has not recovered correctly: " + afterlh.getLastAddConfirmed(),
-                afterlh.getLastAddConfirmed() == numEntries - 1);        
+                afterlh.getLastAddConfirmed() == numEntries - 1);       
+        assertTrue("Has not set the length correctly: " + afterlh.getLength() + ", " + length, 
+                afterlh.getLength() == length);
     }
     
     @Test

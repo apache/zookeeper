@@ -383,14 +383,14 @@ public class FastLeaderElection implements Election {
             this.ws = new WorkerSender(manager);
 
             Thread t = new Thread(this.ws,
-                    "WorkerSender(" + Thread.currentThread().getName() + ")");
+                    "WorkerSender Thread");
             t.setDaemon(true);
             t.start();
 
             this.wr = new WorkerReceiver(manager);
 
             t = new Thread(this.wr,
-                    "WorkerReceiver(" + Thread.currentThread().getName() + ")");
+                                    "WorkerReceiver Thread");
             t.setDaemon(true);
             t.start();
         }

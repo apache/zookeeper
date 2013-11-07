@@ -22,7 +22,8 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.TestableZooKeeper;
-import org.junit.Assert;
+import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+import org.apache.zookeeper.test.ClientBase.HostPort;
 import org.junit.Test;
 
 public class FourLetterWordsQuorumTest extends QuorumBase {
@@ -89,8 +90,6 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "stat", "Outstanding");
             verify(hp, "srvr", "Outstanding");
             verify(hp, "cons", "queued");
-
-            verify(hp, "mntr", "zk_version\t");
         }
     }
 
@@ -101,10 +100,10 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             String resp = send4LetterWord(hpobj.host, hpobj.port, cmd);
             LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
             if (cmd.equals("dump")) {
-                Assert.assertTrue(resp.contains(expected)
+                assertTrue(resp.contains(expected)
                         || resp.contains("Sessions with Ephemerals"));
             } else {
-                Assert.assertTrue(resp.contains(expected));
+                assertTrue(resp.contains(expected));
             }
         }
     }

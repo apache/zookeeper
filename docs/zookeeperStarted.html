@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>ZooKeeper Getting Started Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>ZooKeeper Getting Started Guide</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -237,12 +238,13 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
 
   
-<a name="N10009"></a><a name="ch_GettingStarted"></a>
+<a name="ch_GettingStarted"></a>
 <h2 class="h3">Getting Started: Coordinating Distributed Applications with
       ZooKeeper</h2>
 <div class="section">
@@ -255,17 +257,17 @@ document.write("Last Published: " + document.lastModified);
     deployments, and optimizing the transaction log. However for the complete
     instructions for commercial deployments, please refer to the <a href="zookeeperAdmin.html">ZooKeeper
     Administrator's Guide</a>.</p>
-<a name="N10016"></a><a name="sc_Prerequisites"></a>
+<a name="sc_Prerequisites"></a>
 <h3 class="h4">Pre-requisites</h3>
 <p>See <a href="zookeeperAdmin.html#sc_systemReq">
           System Requirements</a> in the Admin guide.</p>
-<a name="N10024"></a><a name="sc_Download"></a>
+<a name="sc_Download"></a>
 <h3 class="h4">Download</h3>
 <p>To get a ZooKeeper distribution, download a recent
         <a href="http://hadoop.apache.org/zookeeper/releases.html">
           stable</a> release from one of the Apache Download
         Mirrors.</p>
-<a name="N10032"></a><a name="sc_InstallingSingleMode"></a>
+<a name="sc_InstallingSingleMode"></a>
 <h3 class="h4">Standalone Operation</h3>
 <p>Setting up a ZooKeeper server in standalone mode is
       straightforward. The server is contained in a single JAR file,
@@ -337,13 +339,13 @@ clientPort=2181
       This is fine for most development situations, but to run ZooKeeper in
       replicated mode, please see <a href="#sc_RunningReplicatedZooKeeper">Running Replicated
       ZooKeeper</a>.</p>
-<a name="N10083"></a><a name="sc_FileManagement"></a>
+<a name="sc_FileManagement"></a>
 <h3 class="h4">Managing ZooKeeper Storage</h3>
 <p>For long running production systems ZooKeeper storage must
       be managed externally (dataDir and logs). See the section on
       <a href="zookeeperAdmin.html#sc_maintenance">maintenance</a> for
       more details.</p>
-<a name="N10091"></a><a name="sc_ConnectingToZooKeeper"></a>
+<a name="sc_ConnectingToZooKeeper"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p>Once ZooKeeper is running, you have several options for connection
       to it:</p>
@@ -516,7 +518,7 @@ numChildren = 0
 [zkshell: 18]
 </pre>
 <p>That's it for now.  To explore more, continue with the rest of this document and see the <a href="zookeeperProgrammers.html">Programmer's Guide</a>. </p>
-<a name="N10130"></a><a name="sc_ProgrammingToZooKeeper"></a>
+<a name="sc_ProgrammingToZooKeeper"></a>
 <h3 class="h4">Programming to ZooKeeper</h3>
 <p>ZooKeeper has a Java bindings and C bindings. They are
       functionally equivalent. The C bindings exist in two variants: single
@@ -524,7 +526,7 @@ numChildren = 0
       is done. For more information, see the <a href="zookeeperProgrammers.html#ch_programStructureWithExample">Programming
       Examples in the ZooKeeper Programmer's Guide</a> for
       sample code using of the different APIs.</p>
-<a name="N1013E"></a><a name="sc_RunningReplicatedZooKeeper"></a>
+<a name="sc_RunningReplicatedZooKeeper"></a>
 <h3 class="h4">Running Replicated ZooKeeper</h3>
 <p>Running ZooKeeper in standalone mode is convenient for evaluation,
       some development, and testing. But in production, you should run
@@ -584,7 +586,7 @@ server.3=zoo3:2888:3888
       
 </div>
 </div>
-<a name="N1017B"></a><a name="Other+Optimizations"></a>
+<a name="Other+Optimizations"></a>
 <h3 class="h4">Other Optimizations</h3>
 <p>There are a couple of other configuration parameters that can
       greatly increase performance:</p>

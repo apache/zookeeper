@@ -20,29 +20,34 @@ package org.apache.zookeeper.test;
 
 import java.io.File;
 
+import junit.framework.TestCase;
+
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class QuorumZxidSyncTest extends ZKTestCase {
+/**
+ * Test what happens when logs fall behind the snapshots or a follower has a
+ * higher epoch than a leader.
+ */
+public class QuorumZxidSyncTest extends TestCase {
     QuorumBase qb = new QuorumBase();
-
+    
     @Before
-    public void setUp() throws Exception {
-        qb.setUp();
+    @Override
+    protected void setUp() throws Exception {
+    	qb.setUp();
     }
-
+    
+    @Test
     /**
      * find out what happens when a follower connects to leader that is behind
      */
-    @Test
     public void testBehindLeader() throws Exception {
         // crank up the epoch numbers
         ClientBase.waitForServerUp(qb.hostPort, 10000);
@@ -84,25 +89,25 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         qb.s2.start();
         qb.s3.start();
         qb.s4.start();
-        Assert.assertTrue("Servers didn't come up", ClientBase.waitForServerUp(qb.hostPort, 10000));
+        assertTrue("Servers didn't come up", ClientBase.waitForServerUp(qb.hostPort, 10000));
         qb.s5.start();
         String hostPort = "127.0.0.1:" + qb.s5.getClientPort();
-        Assert.assertFalse("Servers came up, but shouldn't have since it's ahead of leader",
+        assertFalse("Servers came up, but shouldn't have since it's ahead of leader",
                 ClientBase.waitForServerUp(hostPort, 10000));
     }
-
+    
     private void deleteFiles(File f) {
         File v = new File(f, "version-2");
         for(File c: v.listFiles()) {
             c.delete();
         }
     }
-
+    
+    @Test
     /**
      * find out what happens when the latest state is in the snapshots not
      * the logs.
      */
-    @Test
     public void testLateLogs() throws Exception {
         // crank up the epoch numbers
         ClientBase.waitForServerUp(qb.hostPort, 10000);
@@ -152,9 +157,9 @@ public class QuorumZxidSyncTest extends ZKTestCase {
             }
         }
         zk.close();
-        Assert.assertTrue("Didn't see /2 (went back in time)", saw2);
+        assertTrue("Didn't see /2 (went back in time)", saw2);
     }
-
+    
     private void deleteLogs(File f) {
         File v = new File(f, "version-2");
         for(File c: v.listFiles()) {
@@ -163,8 +168,9 @@ public class QuorumZxidSyncTest extends ZKTestCase {
             }
         }
     }
-
+    
     @After
+    @Override
     public void tearDown() throws Exception {
         qb.tearDown();
     }

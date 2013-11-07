@@ -25,10 +25,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
 
@@ -36,10 +37,10 @@ import org.apache.zookeeper.test.QuorumBase;
  * Has some common functionality for tests that work with QuorumPeers.
  * Override process(WatchedEvent) to implement the Watcher interface
  */
-public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
+public class QuorumPeerTestBase extends TestCase implements Watcher {
     protected static final Logger LOG =
         Logger.getLogger(QuorumPeerTestBase.class);
-    
+
     public void process(WatchedEvent event) {
         // ignore for this test
     }
@@ -55,7 +56,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
     public static class MainThread extends Thread {
         final File confFile;
-        final TestQPMain main;
+        volatile TestQPMain main;
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
             throws IOException
@@ -82,7 +83,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                 dir = dir.replace('\\', '/');
             }
             fwriter.write("dataDir=" + dir + "\n");
-            
+
             fwriter.write("clientPort=" + clientPort + "\n");
             fwriter.write(quorumCfgSection + "\n");
             fwriter.flush();
@@ -97,6 +98,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             main = new TestQPMain();
         }
 
+        Thread currentThread;
+        synchronized public void start() {
+            main = new TestQPMain();
+            currentThread = new Thread(this);
+            currentThread.start();
+        }
         public void run() {
             String args[] = new String[1];
             args[0] = confFile.toString();
@@ -105,11 +112,18 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             } catch (Exception e) {
                 // test will still fail even though we just log/ignore
                 LOG.error("unexpected exception in run", e);
+            } finally {
+                currentThread = null;
             }
         }
 
-        public void shutdown() {
-            main.shutdown();
+        public void shutdown() throws InterruptedException {
+            Thread t = currentThread;
+            if (t != null && t.isAlive()) {
+                main.shutdown();
+                t.join(500);
+            }
         }
+
     }
 }

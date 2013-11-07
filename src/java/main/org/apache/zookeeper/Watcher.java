@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper;
 
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+
 /**
  * This interface specifies the public interface an event handler class must
  * implement. A ZooKeeper client will get various events from the ZooKeepr
@@ -53,18 +55,18 @@ public interface Watcher {
              * in the host connection parameter during ZooKeeper client
              * creation). */
             SyncConnected (3),
+            
+            /**
+             * Auth failed state
+             * 
+             */
+            AuthFailed(4),
 
             /** The serving cluster has expired this session. The ZooKeeper
              * client connection (the session) is no longer valid. You must
              * create a new client connection (instantiate a new ZooKeeper
              * instance) if you with to access the ensemble. */
-            Expired (-112),
-
-            /**
-             * Auth failed state
-             * 
-             */
-            AuthFailed(4);
+            Expired (-112);
 
             private final int intValue;     // Integer representation of value
                                             // for sending over wire

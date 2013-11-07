@@ -28,28 +28,37 @@ import java.util.Enumeration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
 import org.junit.Test;
 
-public class ClientPortBindTest extends ZKTestCase implements Watcher {
+public class ClientPortBindTest extends TestCase implements Watcher {
     protected static final Logger LOG = 
         Logger.getLogger(ClientPortBindTest.class);
 
     private volatile CountDownLatch startSignal;
 
+    @Override
+    protected void setUp() throws Exception {
+        LOG.info("STARTING " + getName());
+    }
+    @Override
+    protected void tearDown() throws Exception {
+        LOG.info("FINISHED " + getName());
+    }
+
+    @Test
     /**
      * Verify that the server binds to the specified address
      */
-    @Test
     public void testBindByAddress() throws Exception {
         String bindAddress = null;
         Enumeration<NetworkInterface> intfs =
@@ -82,12 +91,12 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(
-                new InetSocketAddress(bindAddress, PORT), -1);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+                new InetSocketAddress(bindAddress, PORT));
         f.startup(zks);
         LOG.info("starting up the the server, waiting");
 
-        Assert.assertTrue("waiting for server up",
+        assertTrue("waiting for server up",
                    ClientBase.waitForServerUp(HOSTPORT,
                                    CONNECTION_TIMEOUT));
 
@@ -96,12 +105,12 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
         try {
             startSignal.await(CONNECTION_TIMEOUT,
                     TimeUnit.MILLISECONDS);
-            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
+            assertTrue("count == 0", startSignal.getCount() == 0);
             zk.close();
         } finally {
             f.shutdown();
 
-            Assert.assertTrue("waiting for server down",
+            assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(HOSTPORT,
                                                     CONNECTION_TIMEOUT));
         }

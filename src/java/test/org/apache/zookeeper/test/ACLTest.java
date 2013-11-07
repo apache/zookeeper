@@ -21,60 +21,67 @@ package org.apache.zookeeper.test;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
-import org.junit.Test;
 
-public class ACLTest extends ZKTestCase implements Watcher {
+public class ACLTest extends TestCase implements Watcher {
     private static final Logger LOG = Logger.getLogger(ACLTest.class);
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();
     private volatile CountDownLatch startSignal;
 
-    @Test
+    @Override
+    protected void setUp() throws Exception {
+        LOG.info("STARTING " + getName());
+    }
+    @Override
+    protected void tearDown() throws Exception {
+        LOG.info("FINISHED " + getName());
+    }
+
     public void testDisconnectedAddAuth() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+                new InetSocketAddress(PORT));
         f.startup(zks);
+        LOG.info("starting up the zookeeper server .. waiting");
+        assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         try {
-            LOG.info("starting up the zookeeper server .. waiting");
-            Assert.assertTrue("waiting for server being up",
-                    ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-            ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
-            try {
-                zk.addAuthInfo("digest", "pat:test".getBytes());
-                zk.setACL("/", Ids.CREATOR_ALL_ACL, -1);
-            } finally {
-                zk.close();
-            }
+            zk.addAuthInfo("digest", "pat:test".getBytes());
+            zk.setACL("/", Ids.CREATOR_ALL_ACL, -1);
         } finally {
-            f.shutdown();
-
-            Assert.assertTrue("waiting for server down",
-                    ClientBase.waitForServerDown(HOSTPORT,
-                            ClientBase.CONNECTION_TIMEOUT));
+            zk.close();
         }
+
+        f.shutdown();
+
+        assertTrue("waiting for server down",
+                   ClientBase.waitForServerDown(HOSTPORT,
+                           ClientBase.CONNECTION_TIMEOUT));
     }
 
     /**
@@ -82,85 +89,80 @@ public class ACLTest extends ZKTestCase implements Watcher {
      * a few acls and there references in the data
      * node is actually working.
      */
-    @Test
     public void testAcls() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+                new InetSocketAddress(PORT));
         f.startup(zks);
-        ZooKeeper zk;
+        LOG.info("starting up the zookeeper server .. waiting");
+        assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         String path;
-        try {
-            LOG.info("starting up the zookeeper server .. waiting");
-            Assert.assertTrue("waiting for server being up",
-                    ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-            zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
-            LOG.info("starting creating acls");
-            for (int i = 0; i < 100; i++) {
-                path = "/" + i;
-                zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.PERSISTENT);
-            }
-            Assert.assertTrue("size of the acl map ", (1 == zks.getZKDatabase().getAclSize()));
-            for (int j = 100; j < 200; j++) {
-                path = "/" + j;
-                ACL acl = new ACL();
-                acl.setPerms(0);
-                Id id = new Id();
-                id.setId("1.1.1."+j);
-                id.setScheme("ip");
-                acl.setId(id);
-                ArrayList<ACL> list = new ArrayList<ACL>();
-                list.add(acl);
-                zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
-            }
-            Assert.assertTrue("size of the acl map ", (101 == zks.getZKDatabase().getAclSize()));
-        } finally {
-            // now shutdown the server and restart it
-            f.shutdown();
-            Assert.assertTrue("waiting for server down",
-                    ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+        LOG.info("starting creating acls");
+        for (int i = 0; i < 100; i++) {
+            path = "/" + i;
+            zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
         }
+        assertTrue("size of the acl map ", (1 == zks.getZKDatabase().getAclSize()));
+        for (int j = 100; j < 200; j++) {
+            path = "/" + j;
+            ACL acl = new ACL();
+            acl.setPerms(0);
+            Id id = new Id();
+            id.setId("1.1.1."+j);
+            id.setScheme("ip");
+            acl.setId(id);
+            ArrayList<ACL> list = new ArrayList<ACL>();
+            list.add(acl);
+            zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
+        }
+        assertTrue("size of the acl map ", (101 == zks.getZKDatabase().getAclSize()));
+        // now shutdown the server and restart it
+        f.shutdown();
+        assertTrue("waiting for server down",
+                ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
         startSignal = new CountDownLatch(1);
 
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        f = ServerCnxnFactory.createFactory(PORT, -1);
+        f = new NIOServerCnxn.Factory(new InetSocketAddress(PORT));
 
         f.startup(zks);
-        try {
-            Assert.assertTrue("waiting for server up",
-                       ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-    
-            startSignal.await(CONNECTION_TIMEOUT,
-                    TimeUnit.MILLISECONDS);
-            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
-    
-            Assert.assertTrue("acl map ", (101 == zks.getZKDatabase().getAclSize()));
-            for (int j = 200; j < 205; j++) {
-                path = "/" + j;
-                ACL acl = new ACL();
-                acl.setPerms(0);
-                Id id = new Id();
-                id.setId("1.1.1."+j);
-                id.setScheme("ip");
-                acl.setId(id);
-                ArrayList<ACL> list = new ArrayList<ACL>();
-                list.add(acl);
-                zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
-            }
-            Assert.assertTrue("acl map ", (106 == zks.getZKDatabase().getAclSize()));
-    
-            zk.close();
-        } finally {
-            f.shutdown();
-    
-            Assert.assertTrue("waiting for server down",
-                       ClientBase.waitForServerDown(HOSTPORT,
-                               ClientBase.CONNECTION_TIMEOUT));
+
+        assertTrue("waiting for server up",
+                   ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+
+        startSignal.await(CONNECTION_TIMEOUT,
+                TimeUnit.MILLISECONDS);
+        assertTrue("count == 0", startSignal.getCount() == 0);
+
+        assertTrue("acl map ", (101 == zks.getZKDatabase().getAclSize()));
+        for (int j = 200; j < 205; j++) {
+            path = "/" + j;
+            ACL acl = new ACL();
+            acl.setPerms(0);
+            Id id = new Id();
+            id.setId("1.1.1."+j);
+            id.setScheme("ip");
+            acl.setId(id);
+            ArrayList<ACL> list = new ArrayList<ACL>();
+            list.add(acl);
+            zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
         }
+        assertTrue("acl map ", (106 == zks.getZKDatabase().getAclSize()));
+
+        zk.close();
+
+        f.shutdown();
+
+        assertTrue("waiting for server down",
+                   ClientBase.waitForServerDown(HOSTPORT,
+                           ClientBase.CONNECTION_TIMEOUT));
 
     }
 

@@ -27,12 +27,7 @@
   <!-- We want to catch all exceptions and cleanup, regardless of source
        (incl runtime) -->
   <Match>
-    <Class name="org.apache.zookeeper.NIOClientCnxn$NIOSendThread" />
-    <Method name="run" />
-    <Bug pattern="REC_CATCH_EXCEPTION" />
-  </Match>
-  <Match>
-    <Class name="org.apache.zookeeper.NettyClientCnxn$NettySendThread" />
+    <Class name="org.apache.zookeeper.ClientCnxn$SendThread" />
     <Method name="run" />
     <Bug pattern="REC_CATCH_EXCEPTION" />
   </Match>
@@ -82,14 +77,6 @@
 
   <Match>
     <Class name="org.apache.zookeeper.ClientCnxn"/>
-      <Bug code="EI, EI2" />
-  </Match>
-  <Match>
-    <Class name="org.apache.zookeeper.NIOClientCnxn"/>
-      <Bug code="EI, EI2" />
-  </Match>
-  <Match>
-    <Class name="org.apache.zookeeper.NettyClientCnxn"/>
       <Bug code="EI, EI2" />
   </Match>
 

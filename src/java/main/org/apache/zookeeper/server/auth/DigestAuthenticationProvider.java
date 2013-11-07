@@ -102,9 +102,9 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         try {
             String digest = generateDigest(id);
             if (digest.equals(superDigest)) {
-                cnxn.addAuthInfo(new Id("super", ""));
+                cnxn.getAuthInfo().add(new Id("super", ""));
             }
-            cnxn.addAuthInfo(new Id(getScheme(), digest));
+            cnxn.getAuthInfo().add(new Id(getScheme(), digest));
             return KeeperException.Code.OK;
         } catch (NoSuchAlgorithmException e) {
             LOG.error("Missing algorithm",e);

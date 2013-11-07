@@ -25,9 +25,9 @@ import java.util.List;
 import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -49,9 +49,12 @@ import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
+import org.apache.zookeeper.server.NIOServerCnxn.CnxnStats;
+import org.apache.zookeeper.server.NIOServerCnxn.Factory;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This Request processor actually applies any transaction associated with a
@@ -98,20 +101,10 @@ public class FinalRequestProcessor implements RequestProcessor {
                 }
             }
             if (request.hdr != null) {
-                rc = zks.getZKDatabase().processTxn(request.hdr, request.txn);
-                if (request.type == OpCode.createSession) {
-                    if (request.txn instanceof CreateSessionTxn) {
-                        CreateSessionTxn cst = (CreateSessionTxn) request.txn;
-                        zks.sessionTracker.addSession(request.sessionId, cst
-                                .getTimeOut());
-                    } else {
-                        LOG.warn("*****>>>>> Got "
-                                + request.txn.getClass() + " "
-                                + request.txn.toString());
-                    }
-                } else if (request.type == OpCode.closeSession) {
-                    zks.sessionTracker.removeSession(request.sessionId);
-                }
+               TxnHeader hdr = request.hdr;
+               Record txn = request.txn;
+
+               rc = zks.processTxn(hdr, txn);
             }
             // do not add non quorum packets to the queue.
             if (Request.isQuorum(request.type)) {
@@ -120,7 +113,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         }
 
         if (request.hdr != null && request.hdr.getType() == OpCode.closeSession) {
-            ServerCnxnFactory scxn = zks.getServerCnxnFactory();
+            Factory scxn = zks.getServerCnxnFactory();
             // this might be possible since
             // we might just be playing diffs from the leader
             if (scxn != null && request.cnxn == null) {
@@ -162,7 +155,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 zks.serverStats().updateLatency(request.createTime);
 
                 lastOp = "PING";
-                cnxn.updateStatsForResponse(request.cxid, request.zxid, lastOp,
+                ((CnxnStats)cnxn.getStats())
+                .updateForResponse(request.cxid, request.zxid, lastOp,
                         request.createTime, System.currentTimeMillis());
 
                 cnxn.sendResponse(new ReplyHeader(-2,
@@ -173,10 +167,11 @@ public class FinalRequestProcessor implements RequestProcessor {
                 zks.serverStats().updateLatency(request.createTime);
 
                 lastOp = "SESS";
-                cnxn.updateStatsForResponse(request.cxid, request.zxid, lastOp,
+                ((CnxnStats)cnxn.getStats())
+                .updateForResponse(request.cxid, request.zxid, lastOp,
                         request.createTime, System.currentTimeMillis());
 
-                zks.finishSessionInit(request.cnxn, true);
+                cnxn.finishSessionInit(true);
                 return;
             }
             case OpCode.create: {
@@ -351,11 +346,13 @@ public class FinalRequestProcessor implements RequestProcessor {
             err = Code.MARSHALLINGERROR;
         }
 
+        long lastZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
         ReplyHeader hdr =
-            new ReplyHeader(request.cxid, request.zxid, err.intValue());
+            new ReplyHeader(request.cxid, lastZxid, err.intValue());
 
         zks.serverStats().updateLatency(request.createTime);
-        cnxn.updateStatsForResponse(request.cxid, request.zxid, lastOp,
+        ((CnxnStats)cnxn.getStats())
+            .updateForResponse(request.cxid, lastZxid, lastOp,
                     request.createTime, System.currentTimeMillis());
 
         try {

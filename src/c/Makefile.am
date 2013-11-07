@@ -3,7 +3,7 @@ include $(top_srcdir)/aminclude.am
 
 AM_CPPFLAGS = -I${srcdir}/include -I${srcdir}/tests -I${srcdir}/generated
 AM_CFLAGS = -Wall -Werror 
-AM_CXXFLAGS = -Wall $(USEIPV6)
+CXXFLAGS = -Wall -g $(USEIPV6)
 
 LIB_LDFLAGS = -no-undefined -version-info 2
 

@@ -56,16 +56,19 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
             this.sessionId = sessionId;
             this.timeout = timeout;
             this.tickTime = expireTime;
+            isClosing = false;
         }
 
         final long sessionId;
         final int timeout;
         long tickTime;
+        boolean isClosing;
 
         Object owner;
 
         public long getSessionId() { return sessionId; }
         public int getTimeout() { return timeout; }
+        public boolean isClosing() { return isClosing; }
     }
 
     public static long initializeNextSession(long id) {
@@ -188,6 +191,17 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
         return true;
     }
 
+    synchronized public void setSessionClosing(long sessionId) {
+        if (LOG.isTraceEnabled()) {
+            LOG.info("Session closing: 0x" + Long.toHexString(sessionId));
+        }
+        SessionImpl s = sessionsById.get(sessionId);
+        if (s == null) {
+            return;
+        }
+        s.isClosing = true;
+    }
+
     synchronized public void removeSession(long sessionId) {
         SessionImpl s = sessionsById.remove(sessionId);
         sessionsWithTimeout.remove(sessionId);
@@ -202,8 +216,6 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
     }
 
     public void shutdown() {
-        LOG.info("Shutting down");
-
         running = false;
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
@@ -239,7 +251,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     synchronized public void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException {
         SessionImpl session = sessionsById.get(sessionId);
-        if (session == null) {
+        if (session == null || session.isClosing()) {
             throw new KeeperException.SessionExpiredException();
         }
         if (session.owner == null) {

@@ -25,7 +25,7 @@ public class JDouble extends JType {
     
     /** Creates a new instance of JDouble */
     public JDouble() {
-        super("double", "double", "double", "double", "Double", "Double", "double", "toDouble");
+        super("double", "double", "double", "Double", "Double", "toDouble");
     }
     
     public String getSignature() {

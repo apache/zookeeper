@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,29 +39,25 @@ import java.util.concurrent.TimeoutException;
 
 import javax.management.MBeanServerConnection;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
-import org.apache.log4j.Priority;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
-import org.apache.zookeeper.ThreadUtil;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
+import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 
-import com.j2speed.accessor.FieldAccessor;
 import com.sun.management.UnixOperatingSystemMXBean;
 
-public abstract class ClientBase extends ZKTestCase {
+public abstract class ClientBase extends TestCase {
     protected static final Logger LOG = Logger.getLogger(ClientBase.class);
 
     public static int CONNECTION_TIMEOUT = 30000;
@@ -69,11 +66,8 @@ public abstract class ClientBase extends ZKTestCase {
 
     protected String hostPort = "127.0.0.1:" + PortAssignment.unique();
     protected int maxCnxns = 0;
-    protected ServerCnxnFactory serverFactory = null;
+    protected NIOServerCnxn.Factory serverFactory = null;
     protected File tmpDir = null;
-    
-    long initialFdCount;
-    
     public ClientBase() {
         super();
     }
@@ -88,7 +82,7 @@ public abstract class ClientBase extends ZKTestCase {
         public void process(WatchedEvent event) { /* nada */ }
     }
 
-    protected static class CountdownWatcher implements Watcher {
+    public static class CountdownWatcher implements Watcher {
         // XXX this doesn't need to be volatile! (Should probably be final)
         volatile CountDownLatch clientConnected;
         volatile boolean connected;
@@ -110,10 +104,12 @@ public abstract class ClientBase extends ZKTestCase {
                 notifyAll();
             }
         }
-        synchronized boolean isConnected() {
+        synchronized public boolean isConnected() {
             return connected;
         }
-        synchronized void waitForConnected(long timeout) throws InterruptedException, TimeoutException {
+        synchronized public void waitForConnected(long timeout)
+            throws InterruptedException, TimeoutException
+        {
             long expire = System.currentTimeMillis() + timeout;
             long left = timeout;
             while(!connected && left > 0) {
@@ -125,7 +121,9 @@ public abstract class ClientBase extends ZKTestCase {
 
             }
         }
-        synchronized void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
+        synchronized public void waitForDisconnected(long timeout)
+            throws InterruptedException, TimeoutException
+        {
             long expire = System.currentTimeMillis() + timeout;
             long left = timeout;
             while(connected && left > 0) {
@@ -169,12 +167,12 @@ public abstract class ClientBase extends ZKTestCase {
         TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
         if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS))
         {
-            Assert.fail("Unable to connect to server");
+            fail("Unable to connect to server");
         }
         synchronized(this) {
             if (!allClientsSetup) {
                 LOG.error("allClients never setup");
-                Assert.fail("allClients never setup");
+                fail("allClients never setup");
             }
             if (allClients != null) {
                 allClients.add(zk);
@@ -211,44 +209,6 @@ public abstract class ClientBase extends ZKTestCase {
             alist.add(new HostPort(host,port));
         }
         return alist;
-    }
-
-    /**
-     * Send the 4letterword
-     * @param host the destination host
-     * @param port the destination port
-     * @param cmd the 4letterword
-     * @return
-     * @throws IOException
-     */
-    public static String send4LetterWord(String host, int port, String cmd)
-        throws IOException
-    {
-        LOG.info("connecting to " + host + " " + port);
-        Socket sock = new Socket(host, port);
-        BufferedReader reader = null;
-        try {
-            OutputStream outstream = sock.getOutputStream();
-            outstream.write(cmd.getBytes());
-            outstream.flush();
-            // this replicates NC - close the output stream before reading
-            sock.shutdownOutput();
-
-            reader =
-                new BufferedReader(
-                        new InputStreamReader(sock.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
-            }
-            return sb.toString();
-        } finally {
-            sock.close();
-            if (reader != null) {
-                reader.close();
-            }
-        }
     }
 
     public static boolean waitForServerUp(String hp, long timeout) {
@@ -299,27 +259,15 @@ public abstract class ClientBase extends ZKTestCase {
         return false;
     }
 
-    static void verifyThreadTerminated(Thread thread, int index, long millis)
+    static void verifyThreadTerminated(Thread thread, long millis)
         throws InterruptedException
     {
-        long start = java.lang.System.currentTimeMillis();
         thread.join(millis);
-        long end = java.lang.System.currentTimeMillis();
         if (thread.isAlive()) {
-            List<Thread> otherThreads = ThreadUtil.getThreadsFiltered(String.valueOf(index), thread);
-            StringBuilder err = new StringBuilder();
-            err.append("Thread that did not join:\n")
-               .append(ThreadUtil.formatThread(thread))
-               .append("other Threads:\n");
-            for(Thread otherThread : otherThreads){
-                err.append(ThreadUtil.formatThread(otherThread));
-            }
-            
-            LOG.error(err);
-            Assert.fail("thread " + thread.getName()
-                    + " still alive after waiting "
-                    + (end - start)
-                    +" milliseconds for join");
+            LOG.error("Thread " + thread.getName() + " : "
+                    + Arrays.toString(thread.getStackTrace()));
+            assertFalse("thread " + thread.getName()
+                    + " still alive after join", true);
         }
     }
 
@@ -332,8 +280,8 @@ public abstract class ClientBase extends ZKTestCase {
         // don't delete tmpFile - this ensures we don't attempt to create
         // a tmpDir with a duplicate name
         File tmpDir = new File(tmpFile + ".dir");
-        Assert.assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
-        Assert.assertTrue(tmpDir.mkdirs());
+        assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
+        assertTrue(tmpDir.mkdirs());
 
         return tmpDir;
     }
@@ -347,42 +295,37 @@ public abstract class ClientBase extends ZKTestCase {
         return Integer.parseInt(portstr);
     }
 
-    static ServerCnxnFactory createNewServerInstance(File dataDir,
-            ServerCnxnFactory factory, String hostPort, int maxCnxns)
+    public static NIOServerCnxn.Factory createNewServerInstance(File dataDir,
+            NIOServerCnxn.Factory factory, String hostPort, int maxCnxns)
         throws IOException, InterruptedException
     {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         final int PORT = getPort(hostPort);
         if (factory == null) {
-            factory = ServerCnxnFactory.createFactory(PORT, maxCnxns);
+            factory = new NIOServerCnxn.Factory(new InetSocketAddress(PORT),maxCnxns);
         }
         factory.startup(zks);
-        Assert.assertTrue("waiting for server up",
+        assertTrue("waiting for server up",
                    ClientBase.waitForServerUp("127.0.0.1:" + PORT,
                                               CONNECTION_TIMEOUT));
 
         return factory;
     }
 
-    static void shutdownServerInstance(ServerCnxnFactory factory,
+    static void shutdownServerInstance(NIOServerCnxn.Factory factory,
             String hostPort)
-    {
-        if (factory != null) {
-            ZKDatabase zkDb;
-            {
-                ZooKeeperServer zs = getServer(factory);
-        
-                zkDb = zs.getZKDatabase();
-            }
+    {    	
+    	if (factory != null) {
+    	    ZKDatabase zkDb = factory.getZooKeeperServer().getZKDatabase();
             factory.shutdown();
             try {
                 zkDb.close();
             } catch (IOException ie) {
                 LOG.warn("Error closing logs ", ie);
-            }
+       	 	}
             final int PORT = getPort(hostPort);
 
-            Assert.assertTrue("waiting for server down",
+            assertTrue("waiting for server down",
                        ClientBase.waitForServerDown("127.0.0.1:" + PORT,
                                                     CONNECTION_TIMEOUT));
         }
@@ -394,7 +337,7 @@ public abstract class ClientBase extends ZKTestCase {
     public static void setupTestEnv() {
         // during the tests we run with 100K prealloc in the logs.
         // on windows systems prealloc of 64M was seen to take ~15seconds
-        // resulting in test Assert.failure (client timeout on first session).
+        // resulting in test failure (client timeout on first session).
         // set env and directly in order to handle static init/gc issues
         System.setProperty("zookeeper.preAllocSize", "100");
         FileTxnLog.setPreallocSize(100 * 1024);
@@ -405,8 +348,19 @@ public abstract class ClientBase extends ZKTestCase {
         allClientsSetup = true;
     }
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        LOG.info("STARTING " + getName());
+        setupTestEnv();
+
+        JMXEnv.setUp();
+
+        setUpAll();
+
+        tmpDir = createTmpDir(BASETEST);
+
+        startServer();
+
         /* some useful information - log the number of fds used before
          * and after a test is run. Helps to verify we are freeing resources
          * correctly. Unfortunately this only works on unix systems (the
@@ -417,20 +371,9 @@ public abstract class ClientBase extends ZKTestCase {
         if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
             UnixOperatingSystemMXBean unixos =
                 (UnixOperatingSystemMXBean)osMbean;
-            initialFdCount = unixos.getOpenFileDescriptorCount();
             LOG.info("Initial fdcount is: "
-                    + initialFdCount);
+                    + unixos.getOpenFileDescriptorCount());
         }
-
-        setupTestEnv();
-
-        JMXEnv.setUp();
-
-        setUpAll();
-
-        tmpDir = createTmpDir(BASETEST);
-
-        startServer();
 
         LOG.info("Client test setup finished");
     }
@@ -450,16 +393,6 @@ public abstract class ClientBase extends ZKTestCase {
         JMXEnv.ensureOnly();
     }
 
-    protected static ZooKeeperServer getServer(ServerCnxnFactory fac) {
-        // access the private field - test only
-        FieldAccessor<ServerCnxnFactory,ZooKeeperServer> zkServerAcc =
-            new FieldAccessor<ServerCnxnFactory,ZooKeeperServer>
-                    ("zkServer", ServerCnxnFactory.class);
-        ZooKeeperServer zs = zkServerAcc.get(fac);
-
-        return zs;
-    }
-
     protected void tearDownAll() throws Exception {
         synchronized (this) {
             for (ZooKeeper zk : allClients) {
@@ -474,22 +407,9 @@ public abstract class ClientBase extends ZKTestCase {
         }
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @Override
+    protected void tearDown() throws Exception {
         LOG.info("tearDown starting");
-
-        tearDownAll();
-
-        stopServer();
-
-        if (tmpDir != null) {
-            Assert.assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
-        }
-
-        // This has to be set to null when the same instance of this class is reused between test cases
-        serverFactory = null;
-
-        JMXEnv.tearDown();
 
         /* some useful information - log the number of fds used before
          * and after a test is run. Helps to verify we are freeing resources
@@ -501,16 +421,24 @@ public abstract class ClientBase extends ZKTestCase {
         if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
             UnixOperatingSystemMXBean unixos =
                 (UnixOperatingSystemMXBean)osMbean;
-            long fdCount = unixos.getOpenFileDescriptorCount();
-            String message = "fdcount after test is: "
-                    + fdCount + " at start it was " + initialFdCount;
-            LOG.info(message);
-            if (fdCount > initialFdCount) {
-                LOG.info("sleeping for 20 secs");
-                //Thread.sleep(60000);
-                //assertTrue(message, fdCount <= initialFdCount);
-            }
+            LOG.info("fdcount after test is: "
+                    + unixos.getOpenFileDescriptorCount());
         }
+
+        tearDownAll();
+
+        stopServer();
+
+        if (tmpDir != null) {
+            assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
+        }
+
+        // This has to be set to null when the same instance of this class is reused between test cases
+        serverFactory = null;
+
+        JMXEnv.tearDown();
+
+        LOG.info("FINISHED " + getName());
     }
 
     public static MBeanServerConnection jmxConn() throws IOException {
@@ -521,7 +449,7 @@ public abstract class ClientBase extends ZKTestCase {
         if (d.isDirectory()) {
             File children[] = d.listFiles();
             for (File f : children) {
-                Assert.assertTrue("delete " + f.toString(), recursiveDelete(f));
+                assertTrue("delete " + f.toString(), recursiveDelete(f));
             }
         }
         return d.delete();
@@ -560,7 +488,7 @@ public abstract class ClientBase extends ZKTestCase {
             for (String hp : parts) {
                 try {
                     ZooKeeper zk = createClient(hp);
-
+                   
                     try {
                         newcounts[i++] = zk.getChildren("/", false).size();
                     } finally {
@@ -568,7 +496,7 @@ public abstract class ClientBase extends ZKTestCase {
                     }
                 } catch (Throwable t) {
                     failed++;
-                    // if session creation Assert.fails dump the thread stack
+                    // if session creation fails dump the thread stack
                     // and try the next server
                     logAllStackTraces();
                 }
@@ -583,8 +511,8 @@ public abstract class ClientBase extends ZKTestCase {
                 counts = newcounts;
                 Thread.sleep(10000);
             }
-
-            // don't keep this up too long, will Assert.assert false below
+            
+            // don't keep this up too long, will assert false below
             if (failed > 10) {
                 break;
             }
@@ -592,14 +520,7 @@ public abstract class ClientBase extends ZKTestCase {
 
         // verify all the servers reporting same number of nodes
         for (int i = 1; i < parts.length; i++) {
-            int priority = Priority.INFO_INT;
-            if (counts[i-1] == counts[i]) {
-                priority = Priority.INFO_INT;
-            } else {
-                priority = Priority.ERROR_INT;
-            }
-            LOG.log(Priority.toPriority(priority),
-                    "node count not consistent" + counts[i-1] + " " + counts[i]);
+            assertEquals("node count not consistent", counts[i-1], counts[i]);
         }
     }
 }

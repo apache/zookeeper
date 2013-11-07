@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>BookKeeper overview</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>BookKeeper overview</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -230,14 +231,15 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
   
-<a name="N10009"></a><a name="bk_Overview"></a>
+<a name="bk_Overview"></a>
 <h2 class="h3">BookKeeper overview</h2>
 <div class="section">
-<a name="N1000F"></a><a name="bk_Intro"></a>
+<a name="bk_Intro"></a>
 <h3 class="h4">BookKeeper introduction</h3>
 <p>
 	BookKeeper is a replicated service to reliably log streams of records. In BookKeeper, 
@@ -287,7 +289,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	
 </ul>
-<a name="N10034"></a><a name="bk_moreDetail"></a>
+<a name="bk_moreDetail"></a>
 <h3 class="h4">In slightly more detail...</h3>
 <p> BookKeeper implements highly available logs, and it has been designed with write-ahead logging in mind. Besides high availability
     due to the replicated nature of the service, it provides high throughput due to striping. As we write entries in a subset of bookies of an
@@ -308,7 +310,7 @@ document.write("Last Published: " + document.lastModified);
 	Although two clients may try to recover a ledger concurrently, only one will succeed, the first one that is able to create the close znode
 	for the ledger.
 	</p>
-<a name="N10044"></a><a name="bk_basicComponents"></a>
+<a name="bk_basicComponents"></a>
 <h3 class="h4">Bookkeeper elements and concepts</h3>
 <p> 
 	BookKeeper uses four basic elements:
@@ -361,7 +363,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-<a name="N10078"></a><a name="bk_initialDesign"></a>
+<a name="bk_initialDesign"></a>
 <h3 class="h4">Bookkeeper initial design</h3>
 <p>
     A set of bookies implements BookKeeper, and we use a quorum-based protocol to replicate data across the bookies. 
@@ -544,7 +546,7 @@ document.write("Last Published: " + document.lastModified);
 	invalid (a bad MAC for example), the client will make a request to a different bookie. By using quorum writes, 
 	as long as enough bookies are up we are guaranteed to eventually be able to read an entry.
 	</p>
-<a name="N10132"></a><a name="bk_metadata"></a>
+<a name="bk_metadata"></a>
 <h3 class="h4">Bookkeeper metadata management</h3>
 <p>
 	There are some meta data that needs to be made available to BookKeeper clients:
@@ -592,7 +594,7 @@ document.write("Last Published: " + document.lastModified);
 	use znodes to track ledger creation and deletion and also to know the end of the ledger and the bookies that 
 	were used to store the ledger. Bookies also watch the ledger list so that they can cleanup ledgers that get deleted.
 	</p>
-<a name="N1015A"></a><a name="bk_closingOut"></a>
+<a name="bk_closingOut"></a>
 <h3 class="h4">Closing out ledgers</h3>
 <p>
 	The process of closing out the ledger and finding the last ledger is difficult due to the durability guarantees of BookKeeper:

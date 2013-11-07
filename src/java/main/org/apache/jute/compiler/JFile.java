@@ -73,10 +73,6 @@ public class JFile {
         	CGenerator gen = new CGenerator(mName, mInclFiles, mRecords,
         	        outputDirectory);
         	gen.genCode();
-        } else if ("csharp".equals(language)) {
-        	CSharpGenerator gen = new CSharpGenerator(mName, mInclFiles, mRecords,
-        	        outputDirectory);
-        	gen.genCode();
         } else {
             throw new IOException("Cannnot recognize language:" + language);
         }

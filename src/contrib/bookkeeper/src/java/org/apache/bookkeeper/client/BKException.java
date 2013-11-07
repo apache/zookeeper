@@ -70,8 +70,6 @@ public abstract class BKException extends Exception {
             return new BKWriteException();
         case Code.NoSuchEntryException:
             return new BKNoSuchEntryException();
-        case Code.IncorrectParameterException:
-            return new BKIncorrectParameterException();
         default:
             return new BKIllegalOpException();
         }
@@ -96,8 +94,7 @@ public abstract class BKException extends Exception {
         int LedgerClosedException = -11;
         int WriteException = -12;
         int NoSuchEntryException = -13;
-        int IncorrectParameterException = -14;
-        
+
         int IllegalOpException = -100;
     }
 
@@ -139,8 +136,6 @@ public abstract class BKException extends Exception {
             return "Write failed on bookie";
         case Code.NoSuchEntryException:
             return "No such entry";
-        case Code.IncorrectParameterException:
-            return "Incorrect parameter input";
         default:
             return "Invalid operation";
         }
@@ -227,12 +222,6 @@ public abstract class BKException extends Exception {
     public static class BKLedgerClosedException extends BKException {
         public BKLedgerClosedException() {
             super(Code.LedgerClosedException);
-        }
-    }
-    
-    public static class BKIncorrectParameterException extends BKException {
-        public BKIncorrectParameterException() {
-            super(Code.IncorrectParameterException);
         }
     }
 }

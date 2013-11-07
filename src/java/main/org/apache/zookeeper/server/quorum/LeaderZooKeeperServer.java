@@ -77,9 +77,13 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
     
     @Override
-    protected void createSessionTracker() {
+    public void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, getZKDatabase().getSessionWithTimeOuts(),
                 tickTime, self.getId());
+    }
+    
+    @Override
+    protected void startSessionTracker() {
         ((SessionTrackerImpl)sessionTracker).start();
     }
 
@@ -163,7 +167,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     
     @Override
     protected void revalidateSession(ServerCnxn cnxn, long sessionId,
-        int sessionTimeout) throws IOException {
+        int sessionTimeout) throws IOException, InterruptedException {
         super.revalidateSession(cnxn, sessionId, sessionTimeout);
         try {
             // setowner as the leader itself, unless updated

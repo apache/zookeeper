@@ -28,6 +28,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,11 +36,14 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
+import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This class is the superclass of two of the three main actors in a ZK
@@ -47,6 +51,10 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
  * a good deal of code which is moved into Peer to avoid duplication. 
  */
 public class Learner {       
+    static class PacketInFlight {
+        TxnHeader hdr;
+        Record rec;
+    }
     QuorumPeer self;
     LearnerZooKeeperServer zk;
     
@@ -88,10 +96,11 @@ public class Learner {
      *                the timeout for which the session is valid
      * @return
      * @throws IOException
+     * @throws InterruptedException
      */
     void validateSession(ServerCnxn cnxn, long clientId, int timeout)
-            throws IOException {
-        LOG.info("Revalidating client: 0x" + Long.toHexString(clientId));
+            throws IOException, InterruptedException {
+        LOG.info("Revalidating client: " + clientId);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         dos.writeLong(clientId);
@@ -275,7 +284,8 @@ public class Learner {
         QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
         QuorumPacket qp = new QuorumPacket();
         
-        readPacket(qp);        
+        readPacket(qp);   
+        LinkedList<PacketInFlight> packetsNotCommitted = new LinkedList<PacketInFlight>();
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
                 LOG.info("Getting a diff from the leader 0x" + Long.toHexString(qp.getZxid()));                
@@ -289,7 +299,7 @@ public class Learner {
                 String signature = leaderIs.readString("signature");
                 if (!signature.equals("BenWasHere")) {
                     LOG.error("Missing signature. Got " + signature);
-                    throw new IOException("Missing signature");
+                    throw new IOException("Missing signature");                   
                 }
             } else if (qp.getType() == Leader.TRUNC) {
                 //we need to truncate the log to the lastzxid of the leader
@@ -310,15 +320,64 @@ public class Learner {
                 System.exit(13);
 
             }
+            zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
+            zk.createSessionTracker();
             if(LOG.isInfoEnabled()){
                 LOG.info("Setting leader epoch " + Long.toHexString(newLeaderZxid >> 32L));
             }
-            zk.getZKDatabase().setlastProcessedZxid(newLeaderZxid);
+                        
+            long lastQueued = 0;
+            // we are now going to start getting transactions to apply followed by an UPTODATE
+            outerLoop:
+            while (self.isRunning()) {
+                readPacket(qp);
+                switch(qp.getType()) {
+                case Leader.PROPOSAL:
+                    PacketInFlight pif = new PacketInFlight();
+                    pif.hdr = new TxnHeader();
+                    BinaryInputArchive ia = BinaryInputArchive
+                            .getArchive(new ByteArrayInputStream(qp.getData()));
+                    pif.rec     = SerializeUtils.deserializeTxn(ia, pif.hdr);
+                    if (pif.hdr.    getZxid() != lastQueued + 1) {
+                    LOG.warn("Got zxid 0x"
+                            + Long.toHexString(pif.hdr.getZxid())
+                            + " expected 0x"
+                            + Long.toHexString(lastQueued + 1));
+                    }
+                    lastQueued = pif.hdr.getZxid();
+                    packetsNotCommitted.add(pif);
+                    break;
+                case Leader.COMMIT:
+                    pif = packetsNotCommitted.peekFirst();
+                    if (pif.hdr.getZxid() != qp.getZxid()) {
+                        LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
+                    } else {
+                        zk.processTxn(pif.hdr, pif.rec);
+                        packetsNotCommitted.remove();
+                    }
+                    break;
+                case Leader.INFORM:
+                    TxnHeader hdr = new TxnHeader();
+                    ia = BinaryInputArchive
+                            .getArchive(new ByteArrayInputStream(qp.getData()));
+                    Record txn = SerializeUtils.deserializeTxn(ia, hdr);
+                    zk.processTxn(hdr, txn);
+                    break;
+                case Leader.UPTODATE:
+                    zk.takeSnapshot();
+                    self.cnxnFactory.setZooKeeperServer(zk);                
+                    break outerLoop;
+                }
+            }
         }
         ack.setZxid(newLeaderZxid & ~0xffffffffL);
         writePacket(ack, true);
         sock.setSoTimeout(self.tickTime * self.syncLimit);
         zk.startup();
+        //We have to have a commit processor to do this
+        for(PacketInFlight p: packetsNotCommitted) {
+            ((FollowerZooKeeperServer)zk).logRequest(p.hdr, p.rec);
+        }
     }
     
     protected void revalidate(QuorumPacket qp) throws IOException {
@@ -335,7 +394,7 @@ public class Learner {
                         + Long.toHexString(sessionId)
                         + " for validation");
             } else {
-                zk.finishSessionInit(cnxn, valid);
+                cnxn.finishSessionInit(valid);
             }
         }
         if (LOG.isTraceEnabled()) {
@@ -368,7 +427,7 @@ public class Learner {
         // set the zookeeper server to null
         self.cnxnFactory.setZooKeeperServer(null);
         // clear all the connections
-        self.cnxnFactory.closeAll();
+        self.cnxnFactory.clear();
         // shutdown previous zookeeper
         if (zk != null) {
             zk.shutdown();

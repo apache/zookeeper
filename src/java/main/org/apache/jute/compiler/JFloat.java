@@ -25,7 +25,7 @@ public class JFloat extends JType {
     
     /** Creates a new instance of JFloat */
     public JFloat() {
-        super("float", "float", "float", "float", "Float", "Float", "float", "toFloat");
+        super("float", "float", "float", "Float", "Float", "toFloat");
     }
     
     public String getSignature() {

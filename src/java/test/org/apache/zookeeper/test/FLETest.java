@@ -25,20 +25,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class FLETest extends ZKTestCase {
+public class FLETest extends TestCase {
     protected static final Logger LOG = Logger.getLogger(FLETest.class);
     private FLETest.LEThread leThread;
 
@@ -74,7 +72,7 @@ public class FLETest extends ZKTestCase {
     //volatile int round = 1;
     Random rand = new Random();
 
-    @Before
+    @Override
     public void setUp() throws Exception {
         count = 7;
 
@@ -86,14 +84,17 @@ public class FLETest extends ZKTestCase {
         port = new int[count];
         successCount = 0;
         finalObj = new Object();
+
+        LOG.info("SetUp " + getName());
     }
 
-    @After
+    @Override
     public void tearDown() throws Exception {
         for (int i = 0; i < threads.size(); i++) {
             leThread = threads.get(i);
             QuorumBase.shutdown(leThread.peer);
         }
+        LOG.info("FINISHED " + getName());
     }
 
     class LEThread extends Thread {
@@ -135,7 +136,7 @@ public class FLETest extends ZKTestCase {
                     if (v.id == ((long) i)) {
                         /*
                          * A leader executes this part of the code. If it is the first leader to be
-                         * elected, then it Assert.fails right after. Otherwise, it waits until it has enough
+                         * elected, then it fails right after. Otherwise, it waits until it has enough
                          * followers supporting it.
                          */
                         LOG.info("I'm the leader: " + i);
@@ -260,7 +261,7 @@ public class FLETest extends ZKTestCase {
         leaderDies = true;
         boolean allowOneBadLeader = leaderDies;
 
-        LOG.info("TestLE: " + getTestName()+ ", " + count);
+        LOG.info("TestLE: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
@@ -272,13 +273,13 @@ public class FLETest extends ZKTestCase {
 
         for(int i = 0; i < le.length; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
-                    port[i], 3, i, 2, 2, 2);
+                    port[i], 3, i, 1000, 2, 2);
             peer.startLeaderElection();
             LEThread thread = new LEThread(peer, i);
             thread.start();
             threads.add(thread);
         }
-        LOG.info("Started threads " + getTestName());
+        LOG.info("Started threads " + getName());
 
 
         int waitCounter = 0;
@@ -305,11 +306,11 @@ public class FLETest extends ZKTestCase {
         * If we have a majority, then we are good to go.
         */
        if(successCount <= count/2){
-           Assert.fail("Fewer than a a majority has joined");
+           fail("Fewer than a a majority has joined");
        }
 
        if(threads.get((int) leader).isAlive()){
-           Assert.fail("Leader hasn't joined: " + leader);
+           fail("Leader hasn't joined: " + leader);
        }
     }
 }

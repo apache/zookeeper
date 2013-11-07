@@ -65,7 +65,6 @@ public class ZooKeeperMain {
         commandMap.put("close","");
         commandMap.put("create", "[-s] [-e] path data acl");
         commandMap.put("delete","path [version]");
-        commandMap.put("rmr","path");
         commandMap.put("set","path data [version]");
         commandMap.put("get","path [watch]");
         commandMap.put("ls","path [watch]");
@@ -653,7 +652,7 @@ public class ZooKeeperMain {
         } 
         
         // Below commands all need a live connection
-        if (zk == null || !zk.getState().isAlive()) {
+        if (zk == null || !zk.state.isAlive()) {
             System.out.println("Not connected");
             return false;
         }
@@ -682,9 +681,6 @@ public class ZooKeeperMain {
         } else if (cmd.equals("delete") && args.length >= 2) {
             path = args[1];
             zk.delete(path, watch ? Integer.parseInt(args[2]) : -1);
-        } else if (cmd.equals("rmr") && args.length >= 2) {
-            path = args[1];
-            zk.deleteRecursive(path);
         } else if (cmd.equals("set") && args.length >= 3) {
             path = args[1];
             stat = zk.setData(path, args[2].getBytes(),

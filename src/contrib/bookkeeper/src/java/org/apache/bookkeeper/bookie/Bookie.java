@@ -63,9 +63,13 @@ public class Bookie extends Thread {
     
     // ZK registration path for this bookie
     static final String BOOKIE_REGISTRATION_PATH = "/ledgers/available/";
+    static final String LEDGERS_PATH = "/ledgers";
 
     // ZooKeeper client instance for the Bookie
     ZooKeeper zk;
+    
+    // Running flag
+    private volatile boolean running = false;
 
     public static class NoLedgerException extends IOException {
         private static final long serialVersionUID = 1L;
@@ -135,7 +139,7 @@ public class Bookie extends Thread {
         instantiateZookeeperClient(port, zkServers);
         this.journalDirectory = journalDirectory;
         this.ledgerDirectories = ledgerDirectories;
-        entryLogger = new EntryLogger(ledgerDirectories, this);
+        entryLogger = new EntryLogger(ledgerDirectories);
         ledgerCache = new LedgerCache(ledgerDirectories);
         lastLogMark.readLog();
         final long markedLogId = lastLogMark.txnLogId;
@@ -205,9 +209,7 @@ public class Bookie extends Thread {
         syncThread.start();
     }
 
-    /**
-     * Instantiate the ZooKeeper client for the Bookie.
-     */
+    // Method to instantiate the ZooKeeper client for the Bookie.
     private void instantiateZookeeperClient(int port, String zkServers) throws IOException {
         if (zkServers == null) {
             LOG.warn("No ZK servers passed to Bookie constructor so BookKeeper clients won't know about this server!");
@@ -378,6 +380,10 @@ public class Bookie extends Thread {
     
     private LastLogMark lastLogMark = new LastLogMark(0, 0);
     
+    public boolean isRunning(){
+        return running;
+    }
+    
     @Override
     public void run() {
         LinkedList<QueueEntry> toFlush = new LinkedList<QueueEntry>();
@@ -390,6 +396,7 @@ public class Bookie extends Thread {
             long nextPrealloc = preAllocSize;
             long lastFlushPosition = 0;
             logFile.write(zeros, nextPrealloc);
+            running = true;
             // TODO: Currently, when we roll over the journal logs, the older
             // ones are never garbage collected. We should remove a journal log
             // once all of its entries have been synced with the entry logs.
@@ -432,6 +439,7 @@ public class Bookie extends Thread {
         } catch (Exception e) {
             LOG.fatal("Bookie thread exiting", e);
         }
+        running = false;
     }
 
     private FileChannel openChannel(long logId) throws FileNotFoundException {
@@ -442,8 +450,7 @@ public class Bookie extends Thread {
     }
 
     public void shutdown() throws InterruptedException {
-        // Shutdown the ZK client
-        if(zk != null) zk.close();
+    	if(zk != null) zk.close();
         this.interrupt();
         this.join();
         syncThread.running = false;
@@ -451,8 +458,6 @@ public class Bookie extends Thread {
         for(LedgerDescriptor d: ledgers.values()) {
             d.close();
         }
-        // Shutdown the EntryLogger which has the GarbageCollector Thread running
-        entryLogger.shutdown();
     }
     
     public void addEntry(ByteBuffer entry, WriteCallback cb, Object ctx, byte[] masterKey)

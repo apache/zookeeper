@@ -25,12 +25,13 @@ import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -40,11 +41,10 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class AsyncTest extends ZKTestCase
+public class AsyncTest extends TestCase
     implements StringCallback, VoidCallback, DataCallback
 {
     private static final Logger LOG = Logger.getLogger(AsyncTest.class);
@@ -52,19 +52,23 @@ public class AsyncTest extends ZKTestCase
     private QuorumBase qb = new QuorumBase();
 
     @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        LOG.info("STARTING " + getName());
         qb.setUp();
     }
 
-    public void restart() throws Exception {
+    protected void restart() throws Exception {
         JMXEnv.setUp();
         qb.startServers();
     }
 
     @After
-    public void tearDown() throws Exception {
+    @Override
+    protected void tearDown() throws Exception {
         LOG.info("Test clients shutting down");
         qb.tearDown();
+        LOG.info("FINISHED " + getName());
     }
 
     private static class CountdownWatcher implements Watcher {
@@ -89,7 +93,7 @@ public class AsyncTest extends ZKTestCase
         if(!watcher.clientConnected.await(CONNECTION_TIMEOUT,
                 TimeUnit.MILLISECONDS))
         {
-            Assert.fail("Unable to connect to server");
+            fail("Unable to connect to server");
         }
         return zk;
     }
@@ -113,11 +117,11 @@ public class AsyncTest extends ZKTestCase
                     results.wait();
                 }
             }
-            Assert.assertEquals(0, (int) results.get(0));
-            Assert.assertEquals(Code.NOAUTH, Code.get(results.get(1)));
-            Assert.assertEquals(0, (int) results.get(2));
-            Assert.assertEquals(0, (int) results.get(3));
-            Assert.assertEquals(0, (int) results.get(4));
+            assertEquals(0, (int) results.get(0));
+            assertEquals(Code.NOAUTH, Code.get(results.get(1)));
+            assertEquals(0, (int) results.get(2));
+            assertEquals(0, (int) results.get(3));
+            assertEquals(0, (int) results.get(4));
         } finally {
             zk.close();
         }
@@ -127,9 +131,9 @@ public class AsyncTest extends ZKTestCase
             zk.addAuthInfo("digest", "ben:passwd2".getBytes());
             try {
                 zk.getData("/ben2", false, new Stat());
-                Assert.fail("Should have received a permission error");
+                fail("Should have received a permission error");
             } catch (KeeperException e) {
-                Assert.assertEquals(Code.NOAUTH, e.code());
+                assertEquals(Code.NOAUTH, e.code());
             }
         } finally {
             zk.close();

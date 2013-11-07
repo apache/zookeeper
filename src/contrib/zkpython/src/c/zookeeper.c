@@ -301,17 +301,17 @@ int check_is_acl(PyObject *o) {
       return 0;
     }
     entry = PyDict_GetItemString( element, "perms" );
-    if (entry == Py_None) {
+    if (entry == NULL) {
       return 0;
     }
 
     entry = PyDict_GetItemString( element, "scheme" );
-    if (entry == Py_None) {
+    if (entry == NULL) {
       return 0;
     }
 
     entry = PyDict_GetItemString( element, "id" );
-    if (entry == Py_None) {
+    if (entry == NULL) {
       return 0;
     }
   }
@@ -436,7 +436,7 @@ void watcher_dispatch(zhandle_t *zzh, int type, int state,
   if (PyObject_CallObject((PyObject*)callback, arglist) == NULL) {
     PyErr_Print();
   }
-  if (pyw->permanent == 0) {
+  if (pyw->permanent == 0 && (type != ZOO_SESSION_EVENT || is_unrecoverable(zzh) == ZINVALIDSTATE)) {
     free_pywatcher(pyw);
   }
   PyGILState_Release(gstate);
@@ -1387,7 +1387,7 @@ PyObject *pyzoo_recv_timeout(PyObject *self, PyObject *args)
   return Py_BuildValue("i",recv_timeout);  
 }
 
-/* Returns True if connection is unrecoverable, False otherwise */
+/* Returns > 0 if connection is unrecoverable, 0 otherwise */
 PyObject *pyis_unrecoverable(PyObject *self, PyObject *args)
 {
   int zkhid;
@@ -1395,9 +1395,7 @@ PyObject *pyis_unrecoverable(PyObject *self, PyObject *args)
     return NULL;
   CHECK_ZHANDLE(zkhid);
   int ret = is_unrecoverable(zhandles[zkhid]);
-  if (ret > 0)
-    Py_RETURN_TRUE;
-  Py_RETURN_FALSE;
+  return Py_BuildValue("i",ret); // TODO: make this a boolean
 }
 
 /* Set the debug level for logging, returns None */
@@ -1515,12 +1513,6 @@ PyMODINIT_FUNC initzookeeper(void) {
 
   PyModule_AddObject(module, "ZooKeeperException", ZooKeeperException);
   Py_INCREF(ZooKeeperException);
-
-  int size = 10;
-  char version_str[size];
-  snprintf(version_str, size, "%i.%i.%i", ZOO_MAJOR_VERSION, ZOO_MINOR_VERSION, ZOO_PATCH_VERSION);
-
-  PyModule_AddStringConstant(module, "__version__", version_str);
 
   ADD_INTCONSTANT(PERM_READ);
   ADD_INTCONSTANT(PERM_WRITE);

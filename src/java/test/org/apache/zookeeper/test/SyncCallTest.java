@@ -27,14 +27,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
 import org.junit.Test;
+
 
 public class SyncCallTest extends ClientBase
     implements ChildrenCallback, Children2Callback, StringCallback, VoidCallback
@@ -67,10 +67,10 @@ public class SyncCallTest extends ClientBase
             LOG.info("Submitted all operations:" + (new Date()).toString());
             
             if(!opsCount.await(10000, TimeUnit.MILLISECONDS))
-                Assert.fail("Haven't received all confirmations" + opsCount.getCount());
+                fail("Haven't received all confirmations" + opsCount.getCount());
 
             for(int i = 0; i < limit ; i++){
-                Assert.assertEquals(0, (int) results.get(i));
+                assertEquals(0, (int) results.get(i));
             }
             
         } catch (IOException e) {

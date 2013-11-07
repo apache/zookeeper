@@ -26,12 +26,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedInputStream;
+
+import junit.framework.TestCase;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
@@ -40,7 +43,6 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -48,15 +50,23 @@ import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
 import org.junit.Test;
 
-public class CRCTest extends ZKTestCase implements Watcher {
+public class CRCTest extends TestCase implements Watcher{
     private static final Logger LOG = Logger.getLogger(CRCTest.class);
 
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();
     private volatile CountDownLatch startSignal;
+
+    @Override
+    protected void setUp() throws Exception {
+        LOG.info("STARTING " + getName());
+    }
+    @Override
+    protected void tearDown() throws Exception {
+        LOG.info("FINISHED " + getName());
+    }
 
     /**
      * corrupt a file by writing m at 500 b
@@ -115,10 +125,11 @@ public class CRCTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(150);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+                new InetSocketAddress(PORT));
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        Assert.assertTrue("waiting for server being up",
+        assertTrue("waiting for server being up",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         try {
@@ -130,7 +141,7 @@ public class CRCTest extends ZKTestCase implements Watcher {
             zk.close();
         }
         f.shutdown();
-        Assert.assertTrue("waiting for server down",
+        assertTrue("waiting for server down",
                    ClientBase.waitForServerDown(HOSTPORT,
                            ClientBase.CONNECTION_TIMEOUT));
 
@@ -153,7 +164,7 @@ public class CRCTest extends ZKTestCase implements Watcher {
         try {
             while (itr.next()) {
             }
-            Assert.assertTrue(false);
+            assertTrue(false);
         } catch(IOException ie) {
             LOG.info("crc corruption", ie);
         }
@@ -174,7 +185,7 @@ public class CRCTest extends ZKTestCase implements Watcher {
             corruptFile(snapFile);
             cfile = getCheckSum(snap, snapFile);
         }
-        Assert.assertTrue(cfile);
+        assertTrue(cfile);
    }
 
     public void process(WatchedEvent event) {

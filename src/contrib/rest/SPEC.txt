@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-A REST HTTP gateway for ZooKeeper
-=================================
+An HTTP gateway for ZooKeeper
 
-Specification Version: 2
+Specification Version: 1
 
-ZooKeeper is meant to enable distributed coordination and also store
+ZooKeeper is a meant to enable distributed coordination and also store
 system configuration and other relatively small amounts of information
 that must be stored in a persistent and consistent manner. The
 information stored in ZooKeeper is meant to be highly available to a
@@ -42,16 +41,14 @@ would be a less cumbersome interface than the ZooKeeper library.
 This document describes a gatway for using HTTP to interact with a
 ZooKeeper repository.
 
+
 Binding ZooKeeper to HTTP
--------------------------
 
 Encoding
---------
 
 UTF-8 unless otherwise noted
 
 Paths
------
 
 A ZooKeeper paths are mapped to IRIs and URIs as follows. ZK paths
 are converted to IRIs by simply percent-encoding any characters in the
@@ -70,7 +67,6 @@ designers, but both recommend that application designers use NFC as a
 best practice.
 
 Root
-----
 
 The following examples assume that the ZooKeeper znode heirarchy is
 bound to the root of the HTTP servers namespace. This may not be the
@@ -81,11 +77,10 @@ example the URL for accessing /a/b/c may be:
 
 This is perfectly valid. Users of the REST service should be aware of
 this fact and code their clients to support any root (in this case
-"/zookeeper" on the server localhost).
+"/zookeeper/znodes/v1" on the server localhost).
 
 
 Basics: GET, PUT, HEAD, and DELETE
-----------------------------------
 
 HTTP's GET, PUT, HEAD, and DELETE operations map naturally to
 ZooKeeper's "get," "set," "exists," and "delete" operations.
@@ -101,7 +96,6 @@ cycles. Set/delete requests may include an optional parameter
 
 
 Getting ZooKeeper children
---------------------------
 
 We overload the GET method to return the children of a ZooKeeper. In
 particular, the GET method takes an optional parameter "view" which
@@ -109,7 +103,7 @@ could be set to one of type values, either "data" or "children". The
 default is "data". Thus, to get the children of a znode named
 "/a/b/c", then the GET request should start:
 
-  GET /znodes/v1/a/b/c?view=children HTTP/1.1
+  GET /a/b/c?view=children HTTP/1.1
 
 If the requested view is "data", then the data of a znode is returned
 as described in the previous section. If the requested view is
@@ -118,45 +112,13 @@ document, or in a JSON object. (The default is JSON, but this can be
 controlled changed by setting the Accept header.)
 
 
-Creating a ZooKeeper session
-----------------------------
-
-In order to be able to create ephemeral nodes you first need to start
-a new session.
-
-  POST /sessions/v1?op=create&expire=<SECONDS> HTTP/1.1
-
-If the session creation is successful, then a 201 code will be returned.
-
-A session is just an UUID that you can pass around as a parameter and
-the REST server will foward your request on the attached persistent 
-connection.
-
-Keeping a session alive
------------------------
-
-To keep a session alive you must send hearbeat requests:
-
-  PUT /sessions/v1/<SESSION-UUID> HTTP/1.1
-
-Closing a ZooKeeper session
----------------------------
-
-You can close a connection by sending a DELETE request.
-
-  DELETE /sessions/v1/<SESSION-UUID> HTTP/1.1
-
-If you don't close a session it will automatically expire after
-the amount of time you specified on creation. 
-
 Creating a ZooKeeper znode
---------------------------
 
 We use the POST method to create a ZooKeeper znode. For example, to
 create a znode named "c" under a parent named "/a/b", then the POST
 request should start:
 
-  POST /znodes/v1/a/b?op=create&name=c HTTP/1.1
+  POST /a/b?op=create&name=c HTTP/1.1
 
 If the creation is successful, then a 201 code will be returned. If
 it fails, then a number of different codes might be returned
@@ -176,17 +138,12 @@ be provided explicitly if desired.)
 
 On success the actual path of the created znode will be returned.
 
-If you want to create an ephemeral node you need to specify an
-additional "ephemeral=true" parameter. (Note that "ephemeral" is an optional
-parameter, that defaults to "false")
-
 (Note: ZooKeeper also allows the client to set ACLs for the
 newly-created znode. This feature is not currently supported by the
 HTTP gateway to ZooKeeper.)
 
 
 Content types and negotiation
------------------------------
 
 ZooKeeper REST gateway implementations may support three content-types
 for request and response messages:
@@ -235,10 +192,6 @@ PATH
   uri is the full URI of the znode as seen by the REST server, does not
   include any query parameters (i.e. it's the path to the REST resource)
 
-SESSION
-  id : string UUID
-  uri : string
-
 CHILD
   PATH
   child_uri_template: string
@@ -272,7 +225,6 @@ STAT
 
 
 Error Codes
------------
 
 The ZooKeeper gateway uses HTTP response codes as follows:
 
@@ -297,7 +249,6 @@ server, the resulting Web Server might behave differently, e.g., it
 might do redirection, check other headers, etc.
 
 Error Messages
---------------
 
 Error messages are returned to the caller, format is dependent on the
 format requested in the call. 
@@ -321,7 +272,6 @@ format requested in the call.
 
 
 Binding ZooKeeper to an HTTP server
------------------------------------
 
 It might be sage to assume that everyone is happy to run an Apache
 server, and thus write a "mod_zookeeper" for Apache that works only

@@ -32,36 +32,32 @@ import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
+
 
 public class ZkDatabaseCorruptionTest extends QuorumBase {
     protected static final Logger LOG = Logger.getLogger(ZkDatabaseCorruptionTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
-
+    
     private final QuorumBase qb = new QuorumBase();
-
+    
     @Before
     @Override
-    public void setUp() throws Exception {
-        LOG.info("STARTING quorum " + getClass().getName());
+    protected void setUp() throws Exception {
+    	LOG.info("STARTING " + getClass().getName());
         qb.setUp();
     }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        LOG.info("STOPPING quorum " + getClass().getName());
+        
+    protected void tearDown() throws Exception {
+    	LOG.info("STOPPING " + getClass().getName());
     }
-
+    
     private void corruptFile(File f) throws IOException {
         RandomAccessFile outFile = new RandomAccessFile(f, "rw");
         outFile.write("fail servers".getBytes());
         outFile.close();
     }
-
+    
     private void corruptAllSnapshots(File snapDir) throws IOException {
         File[] listFiles = snapDir.listFiles();
         for (File f: listFiles) {
@@ -70,8 +66,7 @@ public class ZkDatabaseCorruptionTest extends QuorumBase {
             }
         }
     }
-
-    @Test
+    
     public void testCorruption() throws Exception {
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         ClientBase.waitForServerUp(qb.hostPort, 10000);
@@ -102,7 +97,7 @@ public class ZkDatabaseCorruptionTest extends QuorumBase {
         qb.s4.start();
         try {
             qb.s5.start();
-            Assert.assertTrue(false);
+            assertTrue(false);
         } catch(RuntimeException re) {
             LOG.info("Got an error: expected", re);
         }
@@ -110,12 +105,12 @@ public class ZkDatabaseCorruptionTest extends QuorumBase {
         String[] list = qb.hostPort.split(",");
         for (int i =0; i < 4; i++) {
             String hp = list[i];
-          Assert.assertTrue("waiting for server up",
+          assertTrue("waiting for server up",
                        ClientBase.waitForServerUp(hp,
                                     CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
         }
-
+        
         zk = qb.createClient();
         SyncRequestProcessor.setSnapCount(100);
         for (int i = 2000; i < 4000; i++) {
@@ -126,7 +121,7 @@ public class ZkDatabaseCorruptionTest extends QuorumBase {
         QuorumBase.shutdown(qb.s2);
         QuorumBase.shutdown(qb.s3);
         QuorumBase.shutdown(qb.s4);
-    }
+    } 
 
-
+    
 }

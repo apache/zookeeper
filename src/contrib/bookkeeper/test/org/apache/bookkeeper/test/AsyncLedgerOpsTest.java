@@ -139,7 +139,7 @@ public class AsyncLedgerOpsTest extends BaseTestCase implements AddCallback, Rea
                 }
             }
 
-            LOG.debug("*** WRITE COMPLETE ***");
+            LOG.info("*** WRITE COMPLETE ***");
             // close ledger
             synchronized (ctx) {
                 lh.asyncClose(this, ctx);

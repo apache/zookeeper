@@ -37,7 +37,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.server.NIOServerCnxnFactory;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
@@ -56,7 +56,7 @@ public abstract class BaseTestCase extends TestCase {
     static Integer ZooKeeperDefaultPort = 2181;
     ZooKeeperServer zks;
     ZooKeeper zkc; // zookeeper client
-    NIOServerCnxnFactory serverFactory;
+    NIOServerCnxn.Factory serverFactory;
     File ZkTmpDir;
 
     // BookKeeper
@@ -89,8 +89,7 @@ public abstract class BaseTestCase extends TestCase {
         ZkTmpDir.mkdir();
 
         zks = new ZooKeeperServer(ZkTmpDir, ZkTmpDir, ZooKeeperDefaultPort);
-        serverFactory = new NIOServerCnxnFactory();
-        serverFactory.configure(new InetSocketAddress(ZooKeeperDefaultPort), 100);
+        serverFactory = new NIOServerCnxn.Factory(new InetSocketAddress(ZooKeeperDefaultPort));
         serverFactory.startup(zks);
 
         boolean b = ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT);

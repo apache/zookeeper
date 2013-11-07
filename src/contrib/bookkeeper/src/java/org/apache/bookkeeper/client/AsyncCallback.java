@@ -99,18 +99,6 @@ public interface AsyncCallback {
         Object ctx);
   }
   
-  public interface DeleteCallback {
-      /**
-       * Callback definition for delete operations
-       * 
-       * @param rc
-       *          return code
-       * @param ctx
-       *          control object
-       */
-      void deleteComplete(int rc, Object ctx);
-    }
-
   public interface RecoverCallback {
       /**
        * Callback definition for bookie recover operations
@@ -121,6 +109,5 @@ public interface AsyncCallback {
        *          control object
        */
       void recoverComplete(int rc, Object ctx);
-    }
-
+  }
 }

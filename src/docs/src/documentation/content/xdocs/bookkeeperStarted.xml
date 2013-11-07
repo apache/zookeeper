@@ -87,17 +87,13 @@
 		</para>
 		
 		<para><computeroutput>
-		java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar\
-		:../log4j/apache-log4j-1.2.15/log4j-1.2.15.jar -Dlog4j.configuration=log4j.properties\ 
-		org.apache.bookkeeper.proto.BookieServer 3181 127.0.0.1:2181 /path_to_log_device/\
+		java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar:../log4j/apache-log4j-1.2.15/log4j-1.2.15.jar\
+		-Dlog4j.configuration=log4j.properties org.apache.bookkeeper.proto.BookieServer 3181 /path_to_log_device/\
 		/path_to_ledger_device/
 		</computeroutput></para>
 		
 		<para> "/path_to_log_device/" and "/path_to_ledger_device/" are different paths. Also, port 3181
-		is the port that a bookie listens on for connection requests from clients. 127.0.0.1:2181 is the hostname:port 
-		for the ZooKeeper server. In this example, the standalone ZooKeeper server is running locally on port 2181.
-		If we had multiple ZooKeeper servers, this parameter would be a comma separated list of all the hostname:port
-		values corresponding to them.
+		is the port that a bookie listens on for connection requests from clients. 
 		</para>
 	  </section>
 	  

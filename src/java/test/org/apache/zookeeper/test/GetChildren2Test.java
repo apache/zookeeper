@@ -28,26 +28,26 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ *
+ */
 public class GetChildren2Test extends ClientBase {
     private ZooKeeper zk;
-
-    @Override
-    public void setUp() throws Exception {
+    
+    protected void setUp() throws Exception {
         super.setUp();
-
+        
         zk = createClient();
     }
 
-    @Override
-    public void tearDown() throws Exception {
+    protected void tearDown() throws Exception {
         super.tearDown();
-
+        
         zk.close();
     }
-
+    
     @Test
     public void testChild()
         throws IOException, KeeperException, InterruptedException
@@ -63,29 +63,29 @@ public class GetChildren2Test extends ClientBase {
         Stat stat = new Stat();
         List<String> s = zk.getChildren(name, false, stat);
 
-        Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-        Assert.assertEquals(stat.getCzxid() + 1, stat.getPzxid());
-        Assert.assertEquals(stat.getCtime(), stat.getMtime());
-        Assert.assertEquals(1, stat.getCversion());
-        Assert.assertEquals(0, stat.getVersion());
-        Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(0, stat.getEphemeralOwner());
-        Assert.assertEquals(name.length(), stat.getDataLength());
-        Assert.assertEquals(1, stat.getNumChildren());
-        Assert.assertEquals(s.size(), stat.getNumChildren());
+        assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid() + 1, stat.getPzxid());
+        assertEquals(stat.getCtime(), stat.getMtime());
+        assertEquals(1, stat.getCversion());
+        assertEquals(0, stat.getVersion());
+        assertEquals(0, stat.getAversion());
+        assertEquals(0, stat.getEphemeralOwner());
+        assertEquals(name.length(), stat.getDataLength());
+        assertEquals(1, stat.getNumChildren());
+        assertEquals(s.size(), stat.getNumChildren());
 
         s = zk.getChildren(childname, false, stat);
 
-        Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-        Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
-        Assert.assertEquals(stat.getCtime(), stat.getMtime());
-        Assert.assertEquals(0, stat.getCversion());
-        Assert.assertEquals(0, stat.getVersion());
-        Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(zk.getSessionId(), stat.getEphemeralOwner());
-        Assert.assertEquals(childname.length(), stat.getDataLength());
-        Assert.assertEquals(0, stat.getNumChildren());
-        Assert.assertEquals(s.size(), stat.getNumChildren());
+        assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid(), stat.getPzxid());
+        assertEquals(stat.getCtime(), stat.getMtime());
+        assertEquals(0, stat.getCversion());
+        assertEquals(0, stat.getVersion());
+        assertEquals(0, stat.getAversion());
+        assertEquals(zk.getSessionId(), stat.getEphemeralOwner());
+        assertEquals(childname.length(), stat.getDataLength());
+        assertEquals(0, stat.getNumChildren());
+        assertEquals(s.size(), stat.getNumChildren());
     }
 
     @Test
@@ -114,23 +114,23 @@ public class GetChildren2Test extends ClientBase {
             Stat stat = new Stat();
             List<String> s = zk.getChildren(name, false, stat);
 
-            Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-            Assert.assertEquals(stat.getCzxid() + i + 1, stat.getPzxid());
-            Assert.assertEquals(stat.getCtime(), stat.getMtime());
-            Assert.assertEquals(i + 1, stat.getCversion());
-            Assert.assertEquals(0, stat.getVersion());
-            Assert.assertEquals(0, stat.getAversion());
-            Assert.assertEquals(0, stat.getEphemeralOwner());
-            Assert.assertEquals(name.length(), stat.getDataLength());
-            Assert.assertEquals(i + 1, stat.getNumChildren());
-            Assert.assertEquals(s.size(), stat.getNumChildren());
+            assertEquals(stat.getCzxid(), stat.getMzxid());
+            assertEquals(stat.getCzxid() + i + 1, stat.getPzxid());
+            assertEquals(stat.getCtime(), stat.getMtime());
+            assertEquals(i + 1, stat.getCversion());
+            assertEquals(0, stat.getVersion());
+            assertEquals(0, stat.getAversion());
+            assertEquals(0, stat.getEphemeralOwner());
+            assertEquals(name.length(), stat.getDataLength());
+            assertEquals(i + 1, stat.getNumChildren());
+            assertEquals(s.size(), stat.getNumChildren());
         }
         List<String> p = zk.getChildren(name, false, null);
         List<String> c_a = children_s;
         List<String> c_b = p;
         Collections.sort(c_a);
         Collections.sort(c_b);
-        Assert.assertEquals(c_a.size(), 10);
-        Assert.assertEquals(c_a, c_b);
+        assertEquals(c_a.size(), 10);
+        assertEquals(c_a, c_b);
     }
 }

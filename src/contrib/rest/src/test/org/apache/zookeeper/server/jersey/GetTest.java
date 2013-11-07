@@ -107,7 +107,7 @@ public class GetTest extends Base {
             }
         }
 
-        ClientResponse cr = znodesr.path(path).queryParam("dataformat", encoding)
+        ClientResponse cr = r.path(path).queryParam("dataformat", encoding)
             .accept(accept).get(ClientResponse.class);
         assertEquals(expectedStatus, cr.getClientResponseStatus());
 
@@ -117,6 +117,6 @@ public class GetTest extends Base {
 
         ZStat zstat = cr.getEntity(ZStat.class);
         assertEquals(expectedStat, zstat);
-        assertEquals(znodesr.path(path).toString(), zstat.uri);
+        assertEquals(r.path(path).toString(), zstat.uri);
     }
 }

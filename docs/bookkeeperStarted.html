@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>BookKeeper Getting Started Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>BookKeeper Getting Started Guide</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -230,11 +231,12 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
   
-<a name="N10009"></a><a name="bk_GettingStarted"></a>
+<a name="bk_GettingStarted"></a>
 <h2 class="h3">Getting Started: Setting up BookKeeper to write logs.</h2>
 <div class="section">
 <p>This document contains information to get you started quickly with
@@ -243,25 +245,25 @@ document.write("Last Published: " + document.lastModified);
     and a simple programming example. For further programming detail, please refer to 
     <a href="bookkeeperProgrammer.html">BookKeeper Programmer's Guide</a>.
     </p>
-<a name="N10016"></a><a name="bk_Prerequisites"></a>
+<a name="bk_Prerequisites"></a>
 <h3 class="h4">Pre-requisites</h3>
 <p>See <a href="bookkeeperConfig.html#bk_sysReq">
     	      System Requirements</a> in the Admin guide.</p>
-<a name="N10024"></a><a name="bk_Download"></a>
+<a name="bk_Download"></a>
 <h3 class="h4">Download</h3>
 <p> BookKeeper is distributed along with ZooKeeper. To get a ZooKeeper distribution, 
 			   download a recent
     	    <a href="http://hadoop.apache.org/zookeeper/releases.html">
         	  stable</a> release from one of the Apache Download
        	 Mirrors.</p>
-<a name="N10032"></a><a name="bk_localBK"></a>
+<a name="bk_localBK"></a>
 <h3 class="h4">LocalBookKeeper</h3>
 <p> Under org.apache.bookkeeper.util, you'll find a java program
 		called LocalBookKeeper.java that sets you up to run BookKeeper on a 
 		single machine. This is far from ideal from a performance perspective,
 		but the program is useful for both test and educational purposes.
 		</p>
-<a name="N1003C"></a><a name="bk_setupBookies"></a>
+<a name="bk_setupBookies"></a>
 <h3 class="h4">Setting up bookies</h3>
 <p> If you're bold and you want more than just running things locally, then
 		you'll need to run bookies in different servers. You'll need at least three bookies
@@ -272,19 +274,15 @@ document.write("Last Published: " + document.lastModified);
 		</p>
 <p>
 <span class="codefrag computeroutput">
-		java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar\
-		:../log4j/apache-log4j-1.2.15/log4j-1.2.15.jar -Dlog4j.configuration=log4j.properties\ 
-		org.apache.bookkeeper.proto.BookieServer 3181 127.0.0.1:2181 /path_to_log_device/\
+		java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar:../log4j/apache-log4j-1.2.15/log4j-1.2.15.jar\
+		-Dlog4j.configuration=log4j.properties org.apache.bookkeeper.proto.BookieServer 3181 /path_to_log_device/\
 		/path_to_ledger_device/
 		</span>
 </p>
 <p> "/path_to_log_device/" and "/path_to_ledger_device/" are different paths. Also, port 3181
-		is the port that a bookie listens on for connection requests from clients. 127.0.0.1:2181 is the hostname:port 
-		for the ZooKeeper server. In this example, the standalone ZooKeeper server is running locally on port 2181.
-		If we had multiple ZooKeeper servers, this parameter would be a comma separated list of all the hostname:port
-		values corresponding to them.
+		is the port that a bookie listens on for connection requests from clients. 
 		</p>
-<a name="N10051"></a><a name="bk_setupZK"></a>
+<a name="bk_setupZK"></a>
 <h3 class="h4">Setting up ZooKeeper</h3>
 <p> ZooKeeper stores metadata on behalf of BookKeeper clients and bookies. To get a minimal 
 	  	ZooKeeper installation to work with BookKeeper, we can set up one server running in
@@ -326,7 +324,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	  	
 </ol>
-<a name="N10078"></a><a name="bk_example"></a>
+<a name="bk_example"></a>
 <h3 class="h4">Example</h3>
 <p>
 	    In the following excerpt of code, we:

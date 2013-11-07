@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>BookKeeper Getting Started Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>BookKeeper Getting Started Guide</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -226,18 +227,16 @@ document.write("Last Published: " + document.lastModified);
 <li>
 <a href="#bk_readLedger"> Reading from ledger </a>
 </li>
-<li>
-<a href="#bk_deleteLedger"> Deleting a ledger </a>
-</li>
 </ul>
 </li>
 </ul>
+</div>
 </div>
   
 
   
   
-<a name="N10009"></a><a name="bk_GettingStarted"></a>
+<a name="bk_GettingStarted"></a>
 <h2 class="h3">Programming with BookKeeper</h2>
 <div class="section">
 <ul>
@@ -295,18 +294,9 @@ document.write("Last Published: " + document.lastModified);
       
 </li>
       
-      
-<li>
-        
-<p>
-<a href="#bk_deleteLedger"> Deleting a ledger </a>
-</p>
-      
-</li>
-      
     
 </ul>
-<a name="N1004A"></a><a name="bk_instance"></a>
+<a name="bk_instance"></a>
 <h3 class="h4"> Instantiating BookKeeper.</h3>
 <p>
     The first step to use BookKeeper is to instantiate a BookKeeper object:
@@ -403,7 +393,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-<a name="N100B1"></a><a name="bk_createLedger"></a>
+<a name="bk_createLedger"></a>
 <h3 class="h4"> Creating a ledger. </h3>
 <p> Before writing entries to BookKeeper, it is necessary to create a ledger. 
     With the current BookKeeper API, it is possible to create a ledger both synchronously
@@ -549,7 +539,7 @@ document.write("Last Published: " + document.lastModified);
 	The <span class="codefrag computeroutput">ctx</span> object passed as a parameter to the call to create a ledger
 	is the one same returned in the callback.
     </p>
-<a name="N10166"></a><a name="bk_writeLedger"></a>
+<a name="bk_writeLedger"></a>
 <h3 class="h4"> Adding entries to a ledger. </h3>
 <p>
     Once we have a ledger handle <span class="codefrag computeroutput">lh</span> obtained through a call to create a ledger, we
@@ -659,7 +649,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	
 </ul>
-<a name="N10201"></a><a name="bk_closeLedger"></a>
+<a name="bk_closeLedger"></a>
 <h3 class="h4"> Closing a ledger. </h3>
 <p>
     Once a client is done writing, it closes the ledger. The following methods belong
@@ -742,7 +732,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	
 </ul>
-<a name="N10276"></a><a name="bk_openLedger"></a>
+<a name="bk_openLedger"></a>
 <h3 class="h4"> Opening a ledger. </h3>
 <p>
     To read from a ledger, a client must open it first. The following methods belong
@@ -854,7 +844,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 	
 </ul>
-<a name="N1030D"></a><a name="bk_readLedger"></a>
+<a name="bk_readLedger"></a>
 <h3 class="h4"> Reading from ledger </h3>
 <p>
     Read calls may request one or more consecutive entries. The following methods belong
@@ -957,87 +947,6 @@ document.write("Last Published: " + document.lastModified);
 		
 </li>
 
-		
-<li>
-		
-<p>
-		
-<span class="codefrag computeroutput">ctx</span> is control object used for accountability purposes. 
-		</p>
-		
-</li>
-	
-</ul>
-<a name="N103A4"></a><a name="bk_deleteLedger"></a>
-<h3 class="h4"> Deleting a ledger </h3>
-<p>
-    Once a client is done with a ledger and is sure that nobody will ever need to read from it again, they can delete the ledger.
-    The following methods belong to <span class="codefrag computeroutput">org.apache.bookkeeper.client.BookKeeper</span>.
-    </p>
-<p>
-   	
-<strong>Synchronous delete:</strong>
-   	
-</p>
-<p>
-    
-<span class="codefrag computeroutput">
-        public void deleteLedger(long lId) throws InterruptedException, BKException
-    </span>
-    
-</p>
-<ul>
-	
-<li>
-	
-<p>
-	
-<span class="codefrag computeroutput">lId</span> is the ledger identifier;
-	</p>
-	
-</li>
-	
-</ul>
-<p>
-   	
-<strong>Asynchronous delete:</strong>
-    
-</p>
-<p>
-      
-<span class="codefrag computeroutput">
-	 public void asyncDeleteLedger(long lId, DeleteCallback cb, Object ctx) 
-      </span>
-    
-</p>
-<p>
-    It takes a ledger identifier. Additionally, it takes a callback object 
-    <span class="codefrag computeroutput">cb</span> and a control object <span class="codefrag computeroutput">ctx</span>. The callback object must implement
-    the <span class="codefrag computeroutput">DeleteCallback</span> interface in <span class="codefrag computeroutput">org.apache.bookkeeper.client.AsyncCallback</span>, and
-	a class implementing it has to implement a method called <span class="codefrag computeroutput">deleteComplete</span>
-	that has the following signature: 
-    </p>
-<p>
-	
-<span class="codefrag computeroutput">
-	void deleteComplete(int rc, Object ctx)
-	</span>    
-	
-</p>
-<p>
-	where:
-	</p>
-<ul>
-		
-<li>
-		
-<p>
-		
-<span class="codefrag computeroutput">rc</span> is a return code (please refer to <span class="codefrag computeroutput">org.apache.bookeeper.client.BKDefs</span> for a list);
-		</p>
-		
-</li>
-	
 		
 <li>
 		

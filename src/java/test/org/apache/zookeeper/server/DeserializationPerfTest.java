@@ -22,15 +22,15 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import junit.framework.TestCase;
+
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZKTestCase;
-import org.junit.Assert;
 import org.junit.Test;
 
-public class DeserializationPerfTest extends ZKTestCase {
+public class DeserializationPerfTest extends TestCase {
     protected static final Logger LOG = Logger.getLogger(DeserializationPerfTest.class);
 
     private static void deserializeTree(int depth, int width, int len)
@@ -60,7 +60,7 @@ public class DeserializationPerfTest extends ZKTestCase {
         long durationms = (end - start) / 1000000L;
         long pernodeus = ((end - start) / 1000L) / count;
 
-        Assert.assertEquals(count, dserTree.getNodeCount());
+        assertEquals(count, dserTree.getNodeCount());
 
         LOG.info("Deserialized " + count + " nodes in " + durationms
                 + " ms (" + pernodeus + "us/node), depth=" + depth + " width="

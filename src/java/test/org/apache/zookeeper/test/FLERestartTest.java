@@ -26,20 +26,18 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class FLERestartTest extends ZKTestCase {
+public class FLERestartTest extends TestCase {
     protected static final Logger LOG = Logger.getLogger(FLETest.class);
 
     static class TestVote {
@@ -76,7 +74,7 @@ public class FLERestartTest extends ZKTestCase {
     //volatile int round = 1;
     Random rand = new Random();
 
-    @Before
+    @Override
     public void setUp() throws Exception {
         count = 3;
 
@@ -88,13 +86,16 @@ public class FLERestartTest extends ZKTestCase {
         port = new int[count];
         successCount = 0;
         finish = new Semaphore(0);
+
+        LOG.info("SetUp " + getName());
     }
 
-    @After
+    @Override
     public void tearDown() throws Exception {
         for(int i = 0; i < restartThreads.size(); i++) {
             ((FastLeaderElection) restartThreads.get(i).peer.getElectionAlg()).shutdown();
         }
+        LOG.info("FINISHED " + getName());
     }
 
     class FLERestartThread extends Thread {
@@ -135,7 +136,7 @@ public class FLERestartTest extends ZKTestCase {
                             QuorumBase.shutdown(peer);
                             ((FastLeaderElection) restartThreads.get(i).peer.getElectionAlg()).shutdown();
 
-                            peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2);
+                            peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2);
                             peer.startLeaderElection();
                             peerRound++;
                         } else {
@@ -174,7 +175,7 @@ public class FLERestartTest extends ZKTestCase {
         leaderDies = true;
         boolean allowOneBadLeader = leaderDies;
 
-        LOG.info("TestLE: " + getTestName()+ ", " + count);
+        LOG.info("TestLE: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
@@ -185,17 +186,17 @@ public class FLERestartTest extends ZKTestCase {
         }
 
         for(int i = 0; i < count; i++) {
-            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 2, 2, 2);
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2);
             peer.startLeaderElection();
             FLERestartThread thread = new FLERestartThread(peer, i);
             thread.start();
             restartThreads.add(thread);
         }
-        LOG.info("Started threads " + getTestName());
+        LOG.info("Started threads " + getName());
         for(int i = 0; i < restartThreads.size(); i++) {
             restartThreads.get(i).join(10000);
             if (restartThreads.get(i).isAlive()) {
-                Assert.fail("Threads didn't join");
+                fail("Threads didn't join");
             }
 
         }

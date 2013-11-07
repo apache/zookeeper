@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -30,8 +31,8 @@ import org.apache.jute.Record;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
@@ -44,6 +45,7 @@ import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
+import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
@@ -84,8 +86,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
 
     public PrepRequestProcessor(ZooKeeperServer zks,
             RequestProcessor nextProcessor) {
-        super("ProcessThread(sid:" + zks.getServerId()
-                + " cport:" + zks.getClientPort() + "):");
+        super("ProcessThread:" + zks.getClientPort());
         this.nextProcessor = nextProcessor;
         this.zks = zks;
     }
@@ -116,6 +117,13 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             }
         } catch (InterruptedException e) {
             LOG.error("Unexpected interruption", e);
+        } catch (RequestProcessorException e) {
+            if (e.getCause() instanceof XidRolloverException) {
+                LOG.info(e.getCause().getMessage());
+            }
+            LOG.error("Unexpected exception", e);
+        } catch (Exception e) {
+            LOG.error("Unexpected exception", e);
         }
         LOG.info("PrepRequestProcessor exited loop!");
     }
@@ -168,6 +176,11 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         if (acl == null || acl.size() == 0) {
             return;
         }
+        for (Id authId : ids) {
+            if (authId.getScheme().equals("super")) {
+                return;
+            }
+        }
         for (ACL a : acl) {
             Id id = a.getId();
             if ((a.getPerms() & perm) != 0) {
@@ -178,10 +191,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 AuthenticationProvider ap = ProviderRegistry.getProvider(id
                         .getScheme());
                 if (ap != null) {
-                    for (Id authId : ids) {
-                        if (authId.getScheme().equals("super")) {
-                            return;
-                        }
+                    for (Id authId : ids) {                        
                         if (authId.getScheme().equals(id.getScheme())
                                 && ap.matches(authId.getId(), id.getId())) {
                             return;
@@ -200,7 +210,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      * @param request
      */
     @SuppressWarnings("unchecked")
-    protected void pRequest(Request request) {
+    protected void pRequest(Request request) throws RequestProcessorException {
         // LOG.info("Prep>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = 0x" + Long.toHexString(request.sessionId));
         TxnHeader txnHeader = null;
@@ -233,7 +243,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 CreateMode createMode =
                     CreateMode.fromFlag(createRequest.getFlags());
                 if (createMode.isSequential()) {
-                    path = path + String.format("%010d", parentCVersion);
+                    path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
                 }
                 try {
                     PathUtils.validatePath(path);
@@ -382,7 +392,10 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                         addChangeRecord(new ChangeRecord(txnHeader.getZxid(),
                                 path2Delete, null, 0, null));
                     }
+
+                    zks.sessionTracker.setSessionClosing(request.sessionId);
                 }
+
                 LOG.info("Processed session termination for sessionid: 0x"
                         + Long.toHexString(request.sessionId));
                 break;
@@ -506,7 +519,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
     }
 
     public void shutdown() {
-        LOG.info("Shutting down");
         submittedRequests.clear();
         submittedRequests.add(Request.requestOfDeath);
         nextProcessor.shutdown();

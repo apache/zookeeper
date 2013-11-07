@@ -22,7 +22,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.TestableZooKeeper;
-import org.junit.Assert;
+import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 import org.junit.Test;
 
 public class FourLetterWordsTest extends ClientBase {
@@ -87,13 +87,12 @@ public class FourLetterWordsTest extends ClientBase {
         verify("stat", "Outstanding");
         verify("srvr", "Outstanding");
         verify("cons", "queued");
-        verify("mntr", "zk_server_state\tstandalone");
     }
 
     private void verify(String cmd, String expected) throws IOException {
         HostPort hpobj = parseHostPortList(hostPort).get(0);
         String resp = send4LetterWord(hpobj.host, hpobj.port, cmd);
         LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
-        Assert.assertTrue(resp.contains(expected));
+        assertTrue(resp.contains(expected));
     }
 }

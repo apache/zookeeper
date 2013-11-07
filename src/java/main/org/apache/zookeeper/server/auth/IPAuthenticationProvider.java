@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server.auth;
 
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.KeeperException;
 
 public class IPAuthenticationProvider implements AuthenticationProvider {
 
@@ -31,8 +31,8 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
     public KeeperException.Code
         handleAuthentication(ServerCnxn cnxn, byte[] authData)
     {
-        String id = cnxn.getRemoteSocketAddress().getAddress().getHostAddress();
-        cnxn.addAuthInfo(new Id(getScheme(), id));
+        String id = cnxn.getRemoteAddress().getAddress().getHostAddress();
+        cnxn.getAuthInfo().add(new Id(getScheme(), id));
         return KeeperException.Code.OK;
     }
 

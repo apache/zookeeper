@@ -29,16 +29,31 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeperMain;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
-import org.junit.Test;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
+/**
+ * this class tests quota on a single
+ * zookeeper server.
+ *
+ */
 public class ZooKeeperQuotaTest extends ClientBase {
     private static final Logger LOG = Logger.getLogger(
             ZooKeeperQuotaTest.class);
 
-    @Test
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        LOG.info("STARTING " + getClass().getName());
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        LOG.info("STOPPING " + getClass().getName());
+    }
+
     public void testQuota() throws IOException,
-        InterruptedException, KeeperException {
+        InterruptedException, KeeperException, Exception {
         final ZooKeeper zk = createClient();
         final String path = "/a/b/v";
         // making sure setdata works on /
@@ -59,13 +74,20 @@ public class ZooKeeperQuotaTest extends ClientBase {
         String absolutePath = Quotas.quotaZookeeper + path + "/" + Quotas.limitNode;
         byte[] data = zk.getData(absolutePath, false, new Stat());
         StatsTrack st = new StatsTrack(new String(data));
-        Assert.assertTrue("bytes are set", st.getBytes() == 1000L);
-        Assert.assertTrue("num count is set", st.getCount() == 1000);
+        assertTrue("bytes are set", st.getBytes() == 1000L);
+        assertTrue("num count is set", st.getCount() == 1000);
 
         String statPath = Quotas.quotaZookeeper + path + "/" + Quotas.statNode;
         byte[] qdata = zk.getData(statPath, false, new Stat());
         StatsTrack qst = new StatsTrack(new String(qdata));
-        Assert.assertTrue("bytes are set", qst.getBytes() == 8L);
-        Assert.assertTrue("cound is set", qst.getCount() == 2);
+        assertTrue("bytes are set", qst.getBytes() == 8L);
+        assertTrue("count is set", qst.getCount() == 2);
+        stopServer();
+        startServer();
+        stopServer();
+        startServer();
+        ZooKeeperServer server = serverFactory.getZooKeeperServer();
+        assertNotNull("Quota is still set",
+                server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path) != null);
     }
 }

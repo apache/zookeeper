@@ -107,7 +107,7 @@ public class GetChildrenTest extends Base {
             }
         }
 
-        ClientResponse cr = znodesr.path(path).queryParam("view", "children")
+        ClientResponse cr = r.path(path).queryParam("view", "children")
             .accept(accept).get(ClientResponse.class);
         assertEquals(expectedStatus, cr.getClientResponseStatus());
 
@@ -120,16 +120,16 @@ public class GetChildrenTest extends Base {
             Collections.sort(expectedChildren);
             Collections.sort(zchildren.children);
             assertEquals(expectedChildren, zchildren.children);
-            assertEquals(znodesr.path(path).toString(), zchildren.uri);
-            assertEquals(znodesr.path(path).toString() + "/{child}",
+            assertEquals(r.path(path).toString(), zchildren.uri);
+            assertEquals(r.path(path).toString() + "/{child}",
                     zchildren.child_uri_template);
         } else if (accept.equals(MediaType.APPLICATION_XML)) {
             ZChildren zchildren = cr.getEntity(ZChildren.class);
             Collections.sort(expectedChildren);
             Collections.sort(zchildren.children);
             assertEquals(expectedChildren, zchildren.children);
-            assertEquals(znodesr.path(path).toString(), zchildren.uri);
-            assertEquals(znodesr.path(path).toString() + "/{child}",
+            assertEquals(r.path(path).toString(), zchildren.uri);
+            assertEquals(r.path(path).toString() + "/{child}",
                     zchildren.child_uri_template);
         } else {
             fail("unknown accept type");

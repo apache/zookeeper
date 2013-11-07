@@ -21,6 +21,11 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.junit.Test;
 
+/**
+ * Mimics QuorumHierarchical test, but on an ensemble that includes 2 
+ * observers.
+ */
+
 public class ObserverHierarchicalQuorumTest extends HierarchicalQuorumTest {
     private static final Logger LOG = Logger.getLogger(QuorumBase.class);
        

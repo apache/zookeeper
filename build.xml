@@ -24,7 +24,7 @@
 
     <property environment="env"/>
     
-    <property name="version" value="3.4.0" />
+    <property name="version" value="3.3.5" />
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
@@ -62,7 +62,6 @@
 
     <property name="test.java.build.dir" value="${build.dir}/test"/>
     <property name="test.java.classes" value="${test.java.build.dir}/classes"/>
-    <property name="test.lib.dir" value="${src.dir}/java/libtest" />
     <property name="test.src.dir" value="${src.dir}/java/test"/>
     <property name="systest.src.dir" value="${src.dir}/java/systest"/>
     <property name="test.log.dir" value="${test.java.build.dir}/logs" />
@@ -84,7 +83,7 @@
     <property name="docs.dir" value="${basedir}/docs"/>
     <property name="docs.src" value="${basedir}/src/docs"/>
     <property name="javadoc.link.java"
-              value="http://java.sun.com/javase/6/docs/api/" />
+              value="http://docs.oracle.com/javase/6/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
 
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
@@ -336,10 +335,6 @@
     </target>
 
     <target name="compile-test" depends="ivy-retrieve-test,compile">
-      <copy todir="${ivy.test.lib}">
-        <fileset dir="${test.lib.dir}" includes="*.jar"/>
-      </copy>
-
       <mkdir dir="${test.java.classes}"/>
       <javac srcdir="${test.src.dir}" destdir="${test.java.classes}"
              target="${javac.target}" debug="on">
@@ -360,7 +355,6 @@
       </condition>
       <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
             failonerror="true">
-        <env key="JAVA_HOME" value="${java5.home}"/>
       </exec>
       <copy todir="${docs.dir}">
         <fileset dir="${docs.src}/build/site/" />
@@ -369,14 +363,10 @@
              includes="zookeeper-default.xml" style="conf/configuration.xsl"/>
     </target>
 
-    <target name="forrest.check" unless="forrest.home" depends="java5.check">
+    <target name="forrest.check" unless="forrest.home">
       <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
     </target>
 
-    <target name="java5.check" unless="java5.home">
-      <fail message="'java5.home' is not defined.  Forrest requires Java 5.  Please pass -Djava5.home=&lt;base of Java 5 distribution&gt; to Ant on the command-line." />
-    </target>
-	
     <!-- Javadoc -->
     <target name="javadoc-dev" depends="jar"
             description="Generate javadoc for zookeeper developers">
@@ -614,15 +604,22 @@
         <fileset file="${build.dir}/${final.name}-sources.jar"/>
         <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
       </copy>
-      
+
+      <copy file="${dist.dir}/contrib/bookkeeper/${final.name}-bookkeeper.jar" 
+           tofile="${dist.maven.dir}/bookkeeper-${version}.jar"/>
+      <copy file="${contrib.dir}/bookkeeper/bookkeeper.pom"
+           tofile="${dist.maven.dir}/bookkeeper-${version}.pom"/>
       <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="sha1"/>
+      
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.jar" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.jar" algorithm="sha1"/>
       <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="sha1"/>
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
-
-      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
+  
+      <ivy:makepom  ivyfile="${basedir}/ivy.xml"
                    pomfile="${dist.maven.dir}/${final.name}.pom">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
@@ -630,6 +627,8 @@
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
 
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/bookkeeper-${version}.pom" algorithm="sha1"/>
       <copy todir="${dist.dir}/bin">
         <fileset dir="bin"/>
       </copy>

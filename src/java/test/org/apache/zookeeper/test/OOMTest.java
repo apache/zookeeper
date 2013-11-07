@@ -22,26 +22,30 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
+
+import junit.framework.TestCase;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
 import org.junit.Test;
 
-public class OOMTest extends ZKTestCase implements Watcher {
+/**
+ *
+ */
+public class OOMTest extends TestCase implements Watcher {
     @Test
     public void testOOM() throws IOException, InterruptedException, KeeperException {
-        // This test takes too long tos run!
+        // This test takes too long to run!
         if (true)
             return;
         File tmpDir = ClientBase.createTmpDir();
@@ -60,9 +64,10 @@ public class OOMTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 
         final int PORT = PortAssignment.unique();
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        NIOServerCnxn.Factory f = new NIOServerCnxn.Factory(
+                new InetSocketAddress(PORT));
         f.startup(zks);
-        Assert.assertTrue("waiting for server up",
+        assertTrue("waiting for server up",
                    ClientBase.waitForServerUp("127.0.0.1:" + PORT,
                                               CONNECTION_TIMEOUT));
 
@@ -98,7 +103,7 @@ public class OOMTest extends ZKTestCase implements Watcher {
         hog.get(0)[0] = (byte) 1;
 
         f.shutdown();
-        Assert.assertTrue("waiting for server down",
+        assertTrue("waiting for server down",
                    ClientBase.waitForServerDown("127.0.0.1:" + PORT,
                                                 CONNECTION_TIMEOUT));
     }

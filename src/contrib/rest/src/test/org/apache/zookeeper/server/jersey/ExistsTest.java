@@ -59,7 +59,7 @@ public class ExistsTest extends Base {
     }
 
     private void verify(String type) {
-        ClientResponse cr = znodesr.path(path).accept(type).type(type).head();
+        ClientResponse cr = r.path(path).accept(type).type(type).head();
         if (type.equals(MediaType.APPLICATION_OCTET_STREAM)
                 && expectedStatus == ClientResponse.Status.OK) {
             assertEquals(ClientResponse.Status.NO_CONTENT,

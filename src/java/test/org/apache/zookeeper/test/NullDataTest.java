@@ -28,15 +28,13 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class NullDataTest extends ClientBase implements StatCallback {
     String snapCount;
     CountDownLatch cn = new CountDownLatch(1);
     
     @Override
-    public void setUp() throws Exception {
+    protected void setUp() throws Exception {
         // Change the snapcount to happen more often
         snapCount = System.getProperty("zookeeper.snapCount", "1024");
         System.setProperty("zookeeper.snapCount", "10");
@@ -44,12 +42,11 @@ public class NullDataTest extends ClientBase implements StatCallback {
     }
     
     @Override
-    public void tearDown() throws Exception {
+    protected void tearDown() throws Exception {
         System.setProperty("zookeeper.snapCount", snapCount);
         super.tearDown();
     }
     
-    @Test
     public void testNullData() throws IOException, 
         InterruptedException, KeeperException {
         String path = "/SIZE";
@@ -61,7 +58,7 @@ public class NullDataTest extends ClientBase implements StatCallback {
             zk.exists(path, false);
             zk.exists(path, false, this , null);
             cn.await(10, TimeUnit.SECONDS);
-            Assert.assertSame(0L, cn.getCount());
+            assertSame(0L, cn.getCount());
         } finally {
             if(zk != null)
                 zk.close();

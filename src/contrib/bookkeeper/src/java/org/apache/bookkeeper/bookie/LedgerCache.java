@@ -33,8 +33,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.apache.log4j.Logger;
 
@@ -50,8 +48,6 @@ public class LedgerCache {
 
     public LedgerCache(File ledgerDirectories[]) {
         this.ledgerDirectories = ledgerDirectories;
-        // Retrieve all of the active ledgers.
-        getActiveLedgers();
     }
     /**
      * the list of potentially clean ledgers
@@ -67,9 +63,6 @@ public class LedgerCache {
     
     LinkedList<Long> openLedgers = new LinkedList<Long>();
     
-    // Stores the set of active (non-deleted) ledgers.
-    ConcurrentMap<Long, Boolean> activeLedgers = new ConcurrentHashMap<Long, Boolean>();
-
     static int OPEN_FILE_LIMIT = 900;
     static {
         if (System.getProperty("openFileLimit") != null) {
@@ -215,12 +208,6 @@ public class LedgerCache {
                     File dir = pickDirs(ledgerDirectories);
                     lf = new File(dir, ledgerName);
                     checkParents(lf);
-                    // A new ledger index file has been created for this Bookie.
-                    // Add this new ledger to the set of active ledgers.
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("New ledger index file created for ledgerId: " + ledger);
-                    }
-                    activeLedgers.put(ledger, true);
                 }
                 if (openLedgers.size() > OPEN_FILE_LIMIT) {
                     fileInfoCache.remove(openLedgers.removeFirst()).close();
@@ -464,73 +451,4 @@ public class LedgerCache {
         
         return lastEntry;
     }
-
-    /**
-     * This method will look within the ledger directories for the ledger index
-     * files. That will comprise the set of active ledgers this particular
-     * BookieServer knows about that have not yet been deleted by the BookKeeper
-     * Client. This is called only once during initialization.
-     */
-    private void getActiveLedgers() {
-        // Ledger index files are stored in a file hierarchy with a parent and
-        // grandParent directory. We'll have to go two levels deep into these
-        // directories to find the index files.
-        for (File ledgerDirectory : ledgerDirectories) {
-            for (File grandParent : ledgerDirectory.listFiles()) {
-                if (grandParent.isDirectory()) {
-                    for (File parent : grandParent.listFiles()) {
-                        if (parent.isDirectory()) {
-                            for (File index : parent.listFiles()) {
-                                if (!index.isFile() || !index.getName().endsWith(".idx")) {
-                                    continue;
-                                }
-                                // We've found a ledger index file. The file name is the 
-                                // HexString representation of the ledgerId.
-                                String ledgerIdInHex = index.getName().substring(0, index.getName().length() - 4);
-                                activeLedgers.put(Long.parseLong(ledgerIdInHex, 16), true);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Active ledgers found: " + activeLedgers);
-        }
-    }
-    
-    /**
-     * This method is called whenever a ledger is deleted by the BookKeeper Client
-     * and we want to remove all relevant data for it stored in the LedgerCache.
-     */
-    void deleteLedger(long ledgerId) throws IOException {
-        if (LOG.isDebugEnabled())
-            LOG.debug("Deleting ledgerId: " + ledgerId);
-        // Delete the ledger's index file and close the FileInfo
-        FileInfo fi = getFileInfo(ledgerId, false);
-        fi.getFile().delete();
-        fi.close();
-
-        // Remove it from the activeLedgers set
-        activeLedgers.remove(ledgerId);
-
-        // Now remove it from all the other lists and maps. 
-        // These data structures need to be synchronized first before removing entries. 
-        synchronized(this) {
-            pages.remove(ledgerId);
-        }
-        synchronized(fileInfoCache) {
-            fileInfoCache.remove(ledgerId);
-        }
-        synchronized(cleanLedgers) {
-            cleanLedgers.remove(ledgerId);
-        }
-        synchronized(dirtyLedgers) {
-            dirtyLedgers.remove(ledgerId);
-        }
-        synchronized(openLedgers) {
-            openLedgers.remove(ledgerId);
-        }
-    }
-
 }

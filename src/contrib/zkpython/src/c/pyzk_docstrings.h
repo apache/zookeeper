@@ -287,7 +287,7 @@ const char pyzk_is_unrecoverable_doc[] =
 " zh the zookeeper handle (see zookeeper.init)\n"
 "\n"
 "RETURNS:\n"
-  "True if connection is unrecoverable, otherwise False\n";
+  "INVALIDSTATE if connection is unrecoverable\n";
 
 const char pyzk_set_debug_level_doc[] = 
 "\brief sets the debugging level for the library \n"

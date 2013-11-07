@@ -462,7 +462,7 @@ int getaddrs(zhandle_t *zh)
         *port_spec = '\0';
         port_spec++;
         port = strtol(port_spec, &end_port_spec, 0);
-        if (!*port_spec || *end_port_spec) {
+        if (!*port_spec || *end_port_spec || port == 0) {
             LOG_ERROR(("invalid port in %s", host));
             errno=EINVAL;
             rc=ZBADARGUMENTS;
@@ -545,7 +545,6 @@ int getaddrs(zhandle_t *zh)
             //bug in getaddrinfo implementation when it returns
             //EAI_BADFLAGS or EAI_ADDRFAMILY with AF_UNSPEC and 
             // ai_flags as AI_ADDRCONFIG
-#ifdef AI_ADDRCONFIG
             if ((hints.ai_flags == AI_ADDRCONFIG) && 
                 ((rc ==EAI_BADFLAGS) || (rc == EAI_ADDRFAMILY))) {
                 //reset ai_flags to null
@@ -553,7 +552,6 @@ int getaddrs(zhandle_t *zh)
                 //retry getaddrinfo
                 rc = getaddrinfo(host, port_spec, &hints, &res0);
             }
-#endif
             if (rc != 0) {
                 errno = getaddrinfo_errno(rc);
                 LOG_ERROR(("getaddrinfo: %s\n", strerror(errno)));
@@ -1956,7 +1954,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                     destroy_completion_entry(cptr);
                     cptr = NULL;
                 }
-                return ZINVALIDSTATE;
+                return api_epilog(zh,ZINVALIDSTATE);
             }
             assert(cptr);
             /* The requests are going to come back in order */
@@ -2229,14 +2227,15 @@ static int add_completion(zhandle_t *zh, int xid, int completion_type,
     lock_completion_list(&zh->sent_requests);
     if (zh->close_requested != 1) {
         queue_completion_nolock(&zh->sent_requests, c, add_to_front);
+        if (dc == SYNCHRONOUS_MARKER) {
+            zh->outstanding_sync++;
+        }
         rc = ZOK;
     } else {
+        free(c);
         rc = ZINVALIDSTATE;
     }
     unlock_completion_list(&zh->sent_requests);
-    if (dc == SYNCHRONOUS_MARKER) {
-        zh->outstanding_sync++;
-    }
     return rc;
 }
 
@@ -2290,7 +2289,11 @@ int zookeeper_close(zhandle_t *zh)
 
     zh->close_requested=1;
     if (inc_ref_counter(zh,0)!=0) {
-        cleanup_bufs(zh, 1, ZCLOSING);
+	/* Signal any syncronous completions before joining the threads */
+        enter_critical(zh);
+        free_completions(zh,1,ZCLOSING);
+        leave_critical(zh);
+
         adaptor_finish(zh);
         return ZOK;
     }
@@ -2933,6 +2936,12 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
 
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
+
+    // [ZOOKEEPER-800] zoo_add_auth should return ZINVALIDSTATE if
+    // the connection is closed. 
+    if (zoo_state(zh) == 0) {
+        return ZINVALIDSTATE;
+    }
 
     if(cert!=NULL && certLen!=0){
         auth.buff=calloc(1,certLen);

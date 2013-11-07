@@ -100,7 +100,6 @@ public class FollowerRequestProcessor extends Thread implements
     }
 
     public void shutdown() {
-        LOG.info("Shutting down");
         finished = true;
         queuedRequests.clear();
         queuedRequests.add(Request.requestOfDeath);

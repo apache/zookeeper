@@ -32,8 +32,17 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
-import org.junit.Assert;
+import org.junit.After;
 import org.junit.Test;
+
+/**
+ * Comprehensive test of hierarchical quorums, assuming servers with zero weight.
+ * This test uses ClientTest to verify that the ensemble works after a leader is 
+ * elected.
+ * 
+ * This implementation is based on QuorumBase, the main difference being that it 
+ * uses hierarchical quorums and FLE.
+ */
 
 public class HierarchicalQuorumTest extends ClientBase {
     private static final Logger LOG = Logger.getLogger(QuorumBase.class);
@@ -56,7 +65,8 @@ public class HierarchicalQuorumTest extends ClientBase {
     protected final ClientHammerTest cht = new ClientHammerTest();
     
     @Override
-    public void setUp() throws Exception {
+    protected void setUp() throws Exception {
+        LOG.info("STARTING " + getName());
         setupTestEnv();
 
         JMXEnv.setUp();
@@ -150,17 +160,17 @@ public class HierarchicalQuorumTest extends ClientBase {
         LOG.info("creating QuorumPeer 1 port " + port1);
         QuorumHierarchical hq1 = new QuorumHierarchical(qp); 
         s1 = new QuorumPeer(peers, s1dir, s1dir, port1, 3, 1, tickTime, initLimit, syncLimit, hq1);
-        Assert.assertEquals(port1, s1.getClientPort());
+        assertEquals(port1, s1.getClientPort());
         
         LOG.info("creating QuorumPeer 2 port " + port2);
         QuorumHierarchical hq2 = new QuorumHierarchical(qp); 
         s2 = new QuorumPeer(peers, s2dir, s2dir, port2, 3, 2, tickTime, initLimit, syncLimit, hq2);
-        Assert.assertEquals(port2, s2.getClientPort());
+        assertEquals(port2, s2.getClientPort());
         
         LOG.info("creating QuorumPeer 3 port " + port3);
         QuorumHierarchical hq3 = new QuorumHierarchical(qp); 
         s3 = new QuorumPeer(peers, s3dir, s3dir, port3, 3, 3, tickTime, initLimit, syncLimit, hq3);
-        Assert.assertEquals(port3, s3.getClientPort());
+        assertEquals(port3, s3.getClientPort());
         
         LOG.info("creating QuorumPeer 4 port " + port4);
         QuorumHierarchical hq4 = new QuorumHierarchical(qp); 
@@ -168,7 +178,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         if (withObservers) {
             s4.setLearnerType(QuorumPeer.LearnerType.OBSERVER);
         }
-        Assert.assertEquals(port4, s4.getClientPort());
+        assertEquals(port4, s4.getClientPort());
                        
         LOG.info("creating QuorumPeer 5 port " + port5);
         QuorumHierarchical hq5 = new QuorumHierarchical(qp); 
@@ -176,7 +186,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         if (withObservers) {
             s5.setLearnerType(QuorumPeer.LearnerType.OBSERVER);
         }
-        Assert.assertEquals(port5, s5.getClientPort());
+        assertEquals(port5, s5.getClientPort());
         
         // Observers are currently only compatible with LeaderElection
         if (withObservers) {
@@ -201,7 +211,7 @@ public class HierarchicalQuorumTest extends ClientBase {
 
         LOG.info ("Closing ports " + hostPort);
         for (String hp : hostPort.split(",")) {
-            Assert.assertTrue("waiting for server up",
+            assertTrue("waiting for server up",
                        ClientBase.waitForServerUp(hp,
                                     CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
@@ -230,8 +240,9 @@ public class HierarchicalQuorumTest extends ClientBase {
         JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
     }
 
+    @After
     @Override
-    public void tearDown() throws Exception {
+    protected void tearDown() throws Exception {
         LOG.info("TearDown started");
         cht.tearDownAll();
 
@@ -247,13 +258,15 @@ public class HierarchicalQuorumTest extends ClientBase {
         shutdown(s5);
         
         for (String hp : hostPort.split(",")) {
-            Assert.assertTrue("waiting for server down",
+            assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(hp,
                                            ClientBase.CONNECTION_TIMEOUT));
             LOG.info(hp + " is no longer accepting client connections");
         }
 
         JMXEnv.tearDown();
+
+        LOG.info("FINISHED " + getName());
     }
 
     protected void shutdown(QuorumPeer qp) {

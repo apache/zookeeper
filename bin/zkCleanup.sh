@@ -36,16 +36,16 @@ ZOOBINDIR=`dirname "$ZOOBIN"`
 
 . "$ZOOBINDIR"/zkEnv.sh
 
-ZOODATADIR=$(grep '^dataDir=' "$ZOOCFG" | sed -e 's/.*=//')
-ZOODATALOGDIR=$(grep '^dataLogDir=' "$ZOOCFG" | sed -e 's/.*=//')
+ZOODATADIR=$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" | sed -e 's/.*=//')
+ZOODATALOGDIR=$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" | sed -e 's/.*=//')
 
 if [ "x$ZOODATALOGDIR" = "x" ]
 then
-echo java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
      -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.server.PurgeTxnLog "$ZOODATADIR" $*
 else
-echo java "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+$JAVA "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
      -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.server.PurgeTxnLog "$ZOODATALOGDIR" "$ZOODATADIR" $*
 fi

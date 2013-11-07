@@ -41,7 +41,7 @@
 			<fileset file="${basedir}/lib/log4j.properties" />
 		</copy>
 		<copy todir="${build.dir}/lib">
-			<fileset file="../../../build/zookeeper-3.3.0.jar" />
+			<fileset file="../../../build/zookeeper-3.3.1.jar" />
 		</copy>
 		<copy todir="${build.dir}">
 			<fileset dir="${basedir}" includes="*.*" excludes="build.xml,ivy.xml" />
@@ -55,7 +55,7 @@
 		<jar jarfile="${jarname}">
 			<manifest>
 				<attribute name="Main-Class" value="org.apache.zookeeper.inspector.ZooInspector" />
-				<attribute name="Class-Path" value="lib/log4j-1.2.15.jar lib/TableLayout-20050920.jar lib/zookeeper-3.3.0.jar lib/jToaster-1.0.4.jar lib" />
+				<attribute name="Class-Path" value="lib/log4j-1.2.15.jar lib/TableLayout-20050920.jar lib/zookeeper-3.3.1.jar lib/jToaster-1.0.4.jar lib" />
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Built-At" value="${build.time}" />
 				<attribute name="Built-On" value="${host.name}" />
@@ -144,7 +144,7 @@
 			<fileset file="${basedir}/lib/jtoaster-1.0.4.jar" />
 		</copy>
 		<copy todir="${dist.dir}/contrib/${name}/lib">
-			<fileset file="../../../build/zookeeper-3.3.0.jar" />
+			<fileset file="../../../build/zookeeper-3.3.1.jar" />
 		</copy>
 	</target>
 

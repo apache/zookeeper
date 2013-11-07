@@ -29,8 +29,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class ChrootTest extends ClientBase {
     private class MyWatcher implements Watcher {
@@ -48,13 +46,12 @@ public class ChrootTest extends ClientBase {
         }
         public boolean matches() throws InterruptedException {
             if (!latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
-                Assert.fail("No watch received within timeout period " + path);
+                fail("No watch received within timeout period " + path);
             }
             return path.equals(eventPath);
         }
     }
 
-    @Test
     public void testChrootSynchronous()
         throws IOException, InterruptedException, KeeperException
     {
@@ -68,7 +65,7 @@ public class ChrootTest extends ClientBase {
         }
         ZooKeeper zk2 = createClient(hostPort + "/ch1");
         try {
-            Assert.assertEquals("/ch2",
+            assertEquals("/ch2",
                     zk2.create("/ch2", null, Ids.OPEN_ACL_UNSAFE,
                             CreateMode.PERSISTENT));
         } finally {
@@ -81,12 +78,12 @@ public class ChrootTest extends ClientBase {
         try {
             // check get
             MyWatcher w1 = new MyWatcher("/ch1");
-            Assert.assertNotNull(zk1.exists("/ch1", w1));
+            assertNotNull(zk1.exists("/ch1", w1));
             MyWatcher w2 = new MyWatcher("/ch1/ch2");
-            Assert.assertNotNull(zk1.exists("/ch1/ch2", w2));
+            assertNotNull(zk1.exists("/ch1/ch2", w2));
 
             MyWatcher w3 = new MyWatcher("/ch2");
-            Assert.assertNotNull(zk2.exists("/ch2", w3));
+            assertNotNull(zk2.exists("/ch2", w3));
             
             // set watches on child
             MyWatcher w4 = new MyWatcher("/ch1");
@@ -99,33 +96,33 @@ public class ChrootTest extends ClientBase {
             zk2.setData("/ch2", "2".getBytes(), -1);
 
             // check watches
-            Assert.assertTrue(w1.matches());
-            Assert.assertTrue(w2.matches());
-            Assert.assertTrue(w3.matches());
+            assertTrue(w1.matches());
+            assertTrue(w2.matches());
+            assertTrue(w3.matches());
 
             // check exceptions
             try {
                 zk2.setData("/ch3", "3".getBytes(), -1);
             } catch (KeeperException.NoNodeException e) {
-                Assert.assertEquals("/ch3", e.getPath());
+                assertEquals("/ch3", e.getPath());
             }
 
-            Assert.assertTrue(Arrays.equals("1".getBytes(),
+            assertTrue(Arrays.equals("1".getBytes(),
                     zk1.getData("/ch1", false, null)));
-            Assert.assertTrue(Arrays.equals("2".getBytes(),
+            assertTrue(Arrays.equals("2".getBytes(),
                     zk1.getData("/ch1/ch2", false, null)));
-            Assert.assertTrue(Arrays.equals("2".getBytes(),
+            assertTrue(Arrays.equals("2".getBytes(),
                     zk2.getData("/ch2", false, null)));
 
             // check delete
             zk2.delete("/ch2", -1);
-            Assert.assertTrue(w4.matches());
-            Assert.assertTrue(w5.matches());
+            assertTrue(w4.matches());
+            assertTrue(w5.matches());
             
             zk1.delete("/ch1", -1);
-            Assert.assertNull(zk1.exists("/ch1", false));
-            Assert.assertNull(zk1.exists("/ch1/ch2", false));
-            Assert.assertNull(zk2.exists("/ch2", false));
+            assertNull(zk1.exists("/ch1", false));
+            assertNull(zk1.exists("/ch1/ch2", false));
+            assertNull(zk2.exists("/ch2", false));
         } finally {
             if(zk1 != null)
                 zk1.close();

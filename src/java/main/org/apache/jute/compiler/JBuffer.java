@@ -25,7 +25,7 @@ public class JBuffer extends JCompType {
     
     /** Creates a new instance of JBuffer */
     public JBuffer() {
-        super("struct buffer", " ::std::string", "byte[]", "byte[]", "Buffer", "byte[]", "byte[]");
+        super("struct buffer", " ::std::string", "byte[]", "Buffer", "byte[]");
     }
     
     public String genCppGetSet(String fname, int fIdx) {

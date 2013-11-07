@@ -145,10 +145,6 @@ class LedgerCreateOp implements StringCallback, StatCallback {
             LOG.error("Security exception while creating ledger: " + ledgerId, e);
             cb.createComplete(BKException.Code.DigestNotInitializedException, null, this.ctx);
             return;
-        } catch (NumberFormatException e) {
-            LOG.error("Incorrectly entered parameter throttle: " + System.getProperty("throttle"), e);
-            cb.createComplete(BKException.Code.IncorrectParameterException, null, this.ctx);
-            return;
         }
 
         lh.writeLedgerConfig(this, null);

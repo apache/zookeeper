@@ -80,17 +80,6 @@ public class BufferedChannel
         return position;
     }
     
-    /**
-     * Retrieve the current size of the underlying FileChannel
-     * 
-     * @return FileChannel size measured in bytes
-     * 
-     * @throws IOException if some I/O error occurs reading the FileChannel
-     */
-    public long size() throws IOException {
-        return bc.size();
-    }
-    
     public void flush(boolean sync) throws IOException {
         synchronized(this) {
             if (writeBuffer == null) {

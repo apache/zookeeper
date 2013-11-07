@@ -20,13 +20,16 @@ package org.apache.zookeeper.test;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * Mimics QuorumHammerTest, but with 2 observers in the 5 Learner ensemble.
+ */
 public class ObserverQuorumHammerTest extends QuorumHammerTest {
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
     
     @Before
     @Override
-    public void setUp() throws Exception {
+    protected void setUp() throws Exception {
         qb.setUp(true);
         cht.hostPort = qb.hostPort;
         cht.setUpAll();

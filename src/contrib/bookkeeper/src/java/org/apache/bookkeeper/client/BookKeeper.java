@@ -23,18 +23,19 @@ package org.apache.bookkeeper.client;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;
-
+import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.AsyncCallback.CreateCallback;
-import org.apache.bookkeeper.client.AsyncCallback.DeleteCallback;
 import org.apache.bookkeeper.client.AsyncCallback.OpenCallback;
 import org.apache.bookkeeper.client.BKException.Code;
+import org.apache.bookkeeper.client.SyncCounter;
 import org.apache.bookkeeper.proto.BookieClient;
 import org.apache.bookkeeper.util.OrderedSafeExecutor;
 import org.apache.log4j.Logger;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
+
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 
@@ -42,8 +43,8 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
  * BookKeeper client. We assume there is one single writer to a ledger at any
  * time.
  * 
- * There are four possible operations: start a new ledger, write to a ledger,
- * read from a ledger and delete a ledger.
+ * There are three possible operations: start a new ledger, write to a ledger,
+ * and read from a ledger.
  * 
  * The exceptions resulting from synchronous calls and error code resulting from
  * asynchronous calls can be found in the class {@link BKException}.
@@ -51,7 +52,7 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
  * 
  */
 
-public class BookKeeper implements OpenCallback, CreateCallback, DeleteCallback {
+public class BookKeeper implements OpenCallback, CreateCallback {
 
   static final Logger LOG = Logger.getLogger(BookKeeper.class);
 
@@ -341,56 +342,6 @@ public class BookKeeper implements OpenCallback, CreateCallback, DeleteCallback 
     return counter.getLh();
   }
 
-  /**
-   * Deletes a ledger asynchronously.
-   * 
-   * @param lId
-   *            ledger Id
-   * @param cb
-   *            deleteCallback implementation
-   * @param ctx
-   *            optional control object
-   */
-  public void asyncDeleteLedger(long lId, DeleteCallback cb, Object ctx) {
-      new LedgerDeleteOp(this, lId, cb, ctx).initiate();
-  }
-  
-  /**
-   * Delete callback implementation for synchronous delete call.
-   * 
-   * @param rc
-   *            return code
-   * @param ctx
-   *            optional control object
-   */
-  public void deleteComplete(int rc, Object ctx) {
-      SyncCounter counter = (SyncCounter) ctx;
-      counter.setrc(rc);
-      counter.dec();
-  }
-
-  /**
-   * Synchronous call to delete a ledger. Parameters match those of
-   * {@link #asyncDeleteLedger(long, DeleteCallback, Object)}
-   * 
-   * @param lId
-   *            ledgerId
-   * @throws InterruptedException
-   * @throws BKException
-   */
-  public void deleteLedger(long lId) throws InterruptedException, BKException {
-      SyncCounter counter = new SyncCounter();
-      counter.inc();
-      // Call asynchronous version
-      asyncDeleteLedger(lId, this, counter);
-      // Wait
-      counter.block(0);
-      if (counter.getrc() != KeeperException.Code.OK.intValue()) { 
-          LOG.error("ZooKeeper error deleting ledger node: " + counter.getrc());
-          throw BKException.create(Code.ZKException);
-      }
-  }
-  
   /**
    * Shuts down client.
    * 

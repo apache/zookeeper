@@ -32,8 +32,6 @@ import java.util.Properties;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
-
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -331,21 +329,9 @@ public class QuorumPeerConfig {
             }
             try {
                 serverId = Long.parseLong(myIdString);
-                MDC.put("myid", serverId);
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("serverid " + myIdString
                         + " is not a number");
-            }
-            
-            // Warn about inconsistent peer type
-            LearnerType roleByServersList = observers.containsKey(serverId) ? LearnerType.OBSERVER
-                    : LearnerType.PARTICIPANT;
-            if (roleByServersList != peerType) {
-                LOG.warn("Peer type from servers list (" + roleByServersList
-                        + ") doesn't match peerType (" + peerType
-                        + "). Defaulting to servers list.");
-    
-                peerType = roleByServersList;
             }
         }
     }

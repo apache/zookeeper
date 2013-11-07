@@ -114,7 +114,6 @@ public class ObserverRequestProcessor extends Thread implements
      * Shutdown the processor.
      */
     public void shutdown() {
-        LOG.info("Shutting down");
         finished = true;
         queuedRequests.clear();
         queuedRequests.add(Request.requestOfDeath);

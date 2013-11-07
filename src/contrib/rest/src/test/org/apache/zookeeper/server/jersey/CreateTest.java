@@ -116,7 +116,7 @@ public class CreateTest extends Base {
     public void testCreate() throws Exception {
         LOG.info("STARTING " + getName());
 
-        WebResource wr = znodesr.path(path).queryParam("dataformat", encoding)
+        WebResource wr = r.path(path).queryParam("dataformat", encoding)
             .queryParam("name", name);
         if (data == null) {
             wr = wr.queryParam("null", "true");
@@ -142,10 +142,10 @@ public class CreateTest extends Base {
         ZPath zpath = cr.getEntity(ZPath.class);
         if (sequence) {
             assertTrue(zpath.path.startsWith(expectedPath.path));
-            assertTrue(zpath.uri.startsWith(znodesr.path(path).toString()));
+            assertTrue(zpath.uri.startsWith(r.path(path).toString()));
         } else {
             assertEquals(expectedPath, zpath);
-            assertEquals(znodesr.path(path).toString(), zpath.uri);
+            assertEquals(r.path(path).toString(), zpath.uri);
         }
 
         // use out-of-band method to verify

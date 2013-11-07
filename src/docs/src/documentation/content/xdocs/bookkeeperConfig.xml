@@ -100,9 +100,8 @@
  	   </para>
  	   
  	   <para><computeroutput>
-		java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar\
-		:../log4j/apache-log4j-1.2.15/log4j-1.2.15.jar -Dlog4j.configuration=log4j.properties\ 
-		org.apache.bookkeeper.proto.BookieServer 3181 127.0.0.1:2181 /path_to_log_device/\
+		java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar:../log4j/apache-log4j-1.2.15/log4j-1.2.15.jar\
+		-Dlog4j.configuration=log4j.properties org.apache.bookkeeper.proto.BookieServer 3181 /path_to_log_device/\
 		/path_to_ledger_device/
 	   </computeroutput></para>
  	   
@@ -114,12 +113,6 @@
  	   	<listitem>
  	   	<para>
  	   		Port number that the bookie listens on;
- 	   	</para>
- 	   	</listitem>
- 	   	
- 	   	<listitem>
- 	   	<para>
- 	   		Comma separated list of ZooKeeper servers with a hostname:port format;
  	   	</para>
  	   	</listitem>
  	   	

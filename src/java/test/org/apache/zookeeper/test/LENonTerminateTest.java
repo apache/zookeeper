@@ -25,17 +25,17 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.LeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -44,11 +44,12 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class LENonTerminateTest extends ZKTestCase {
+/**
+ * Tests that a particular run of LeaderElection terminates correctly.
+ */
+public class LENonTerminateTest extends TestCase {
     public class MockLeaderElection extends LeaderElection {
         public MockLeaderElection(QuorumPeer self) {
             super(self);            
@@ -94,9 +95,7 @@ public class LENonTerminateTest extends ZKTestCase {
                 requestBuffer.putInt(xid);
                 requestPacket.setLength(4);
                 HashSet<Long> heardFrom = new HashSet<Long>();
-                for (QuorumServer server :
-                    (Collection<QuorumServer>)self.getVotingView().values())
-                {
+                for (QuorumServer server : self.getVotingView().values()) {
                     LOG.info("Server address: " + server.addr);
                     try {
                         requestPacket.setSocketAddress(server.addr);
@@ -154,7 +153,7 @@ public class LENonTerminateTest extends ZKTestCase {
                  */
                 LOG.info("Waiting for first round of voting to complete");
                 latch.countDown();
-                Assert.assertTrue("Thread timed out waiting for latch",
+                assertTrue("Thread timed out waiting for latch",
                         latch.await(10000, TimeUnit.MILLISECONDS));
                 
                 // ZOOKEEPER-569:
@@ -216,7 +215,7 @@ public class LENonTerminateTest extends ZKTestCase {
         {
             super(quorumPeers, snapDir, logDir, electionAlg,
                     myid,tickTime, initLimit,syncLimit,
-                    ServerCnxnFactory.createFactory(clientPort, -1),
+                    new NIOServerCnxn.Factory(new InetSocketAddress(clientPort)),
                     new QuorumMaj(countParticipants(quorumPeers)));
         }
         
@@ -234,15 +233,22 @@ public class LENonTerminateTest extends ZKTestCase {
     File tmpdir[];
     int port[];   
    
-    @Before
+    @Override
     public void setUp() throws Exception {
         count = 3;
 
         peers = new HashMap<Long,QuorumServer>(count);
         tmpdir = new File[count];
         port = new int[count];
+        
+        LOG.info("SetUp " + getName());
     }
 
+    @Override
+    public void tearDown() throws Exception {
+        LOG.info("FINISHED " + getName());
+    }
+    
     static final CountDownLatch latch = new CountDownLatch(2);
     static final CountDownLatch mockLatch = new CountDownLatch(1);
 
@@ -266,7 +272,7 @@ public class LENonTerminateTest extends ZKTestCase {
                 v = peer.getElectionAlg().lookForLeader();
 
                 if (v == null){
-                    Assert.fail("Thread " + i + " got a null vote");
+                    fail("Thread " + i + " got a null vote");
                 }                                
 
                 /*
@@ -294,7 +300,7 @@ public class LENonTerminateTest extends ZKTestCase {
      */
     @Test
     public void testNonTermination() throws Exception {                
-        LOG.info("TestNonTermination: " + getTestName()+ ", " + count);
+        LOG.info("TestNonTermination: " + getName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
             peers.put(Long.valueOf(i),
@@ -325,13 +331,13 @@ public class LENonTerminateTest extends ZKTestCase {
                     mockServer();
                 } catch (Exception e) {
                     LOG.error(e);
-                    Assert.fail("Exception when running mocked server " + e);
+                    fail("Exception when running mocked server " + e);
                 }
             }
         };        
         
         thread3.start();
-        Assert.assertTrue("mockServer did not start in 5s",
+        assertTrue("mockServer did not start in 5s",
                 mockLatch.await(5000, TimeUnit.MILLISECONDS));
         thread1.start();
         thread2.start();
@@ -342,13 +348,13 @@ public class LENonTerminateTest extends ZKTestCase {
         thread2.join(15000);
         thread3.join(15000);
         if (thread1.isAlive() || thread2.isAlive() || thread3.isAlive()) {
-            Assert.fail("Threads didn't join");
+            fail("Threads didn't join");
         }
     }
      
     /**
      * MockServer plays the role of peer C. Respond to two requests for votes
-     * with vote for self and then Assert.fail. 
+     * with vote for self and then fail. 
      */
     void mockServer() throws InterruptedException, IOException {          
         byte b[] = new byte[36];

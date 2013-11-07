@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>ZooKeeper Quota's Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -204,6 +204,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 <h1>ZooKeeper Quota's Guide</h1>
 <h3>A Guide to Deployment and Administration</h3>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -222,11 +223,12 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
 	
 	
 	
 	
-<a name="N1000B"></a><a name="zookeeper_quotas"></a>
+<a name="zookeeper_quotas"></a>
 <h2 class="h3">Quotas</h2>
 <div class="section">
 <p> ZooKeeper has both namespace and bytes quotas. You can use the ZooKeeperMain class to setup quotas.
@@ -238,7 +240,7 @@ document.write("Last Published: " + document.lastModified);
 	 org.apache.zookeeper.ZooKeeperMain -server host:port</span>
 </p>
 <p> The above command gives you a command line option of using quotas.</p>
-<a name="N1001F"></a><a name="Setting+Quotas"></a>
+<a name="Setting+Quotas"></a>
 <h3 class="h4">Setting Quotas</h3>
 <p>You can use 
 	 <em>setquota</em> to set a quota on a ZooKeeper node. It has an option of setting quota with
@@ -247,12 +249,12 @@ document.write("Last Published: " + document.lastModified);
 <p> The ZooKeeper quota are stored in ZooKeeper itself in /zookeeper/quota. To disable other people from
 	changing the quota's set the ACL for /zookeeper/quota such that only admins are able to read and write to it.
 	</p>
-<a name="N1002F"></a><a name="Listing+Quotas"></a>
+<a name="Listing+Quotas"></a>
 <h3 class="h4">Listing Quotas</h3>
 <p> You can use
 	<em>listquota</em> to list a quota on a ZooKeeper node.
 	</p>
-<a name="N1003C"></a><a name="Deleting+Quotas"></a>
+<a name="Deleting+Quotas"></a>
 <h3 class="h4"> Deleting Quotas</h3>
 <p> You can use
 	<em>delquota</em> to delete quota on a ZooKeeper node.

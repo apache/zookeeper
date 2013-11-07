@@ -18,6 +18,10 @@
 
 package org.apache.zookeeper.test;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertSame;
+import static junit.framework.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -27,8 +31,8 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
-import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -37,8 +41,22 @@ import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
 
+/**
+ * The intent of these classes is to support testing the functionality of
+ * asynchronous client operations. Both positive as well as negative tests.
+ * 
+ * This code acts as a "contract checker" of sorts. We look at the 
+ * actual output as well as the expected output - if the actual output 
+ * changes over time this code should catch the regression and alert to a 
+ * potentially unwanted (unexpected) change.
+ * 
+ * In addition these classes can be re-used by other tests that need to
+ * perform these operations. In general the classes err on the side of
+ * convention over a lot of setup - such that you can use start using them
+ * w/o a lot of though (default path/data/acl/etc...). See AsyncOpsTest
+ * for some good examples of use.
+ */
 public class AsyncOps {
     /**
      * This is the base class for all of the async callback classes. It will
@@ -103,14 +121,14 @@ public class AsyncOps {
             try {
                 latch.await(defaultTimeoutMillis, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                Assert.fail("unexpected interrupt");
+                fail("unexpected interrupt");
             }
             // on the lookout for timeout
-            Assert.assertSame(0L, latch.getCount());
+            assertSame(0L, latch.getCount());
             
             String actual = toString();
             
-            Assert.assertEquals(expected, actual);
+            assertEquals(expected, actual);
         }
     }
     

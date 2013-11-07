@@ -197,7 +197,7 @@ public class DataTree {
     /**
      * converts a list of longs to a list of acls.
      *
-     * @param longs
+     * @param longVal
      *            the list of longs
      * @return a list of ACLs that map to longs
      */
@@ -241,15 +241,6 @@ public class DataTree {
 
     public int getWatchCount() {
         return dataWatches.size() + childWatches.size();
-    }
-
-    public int getEphemeralsCount() {
-        Map<Long, HashSet<String>> map = this.getEphemeralsMap();
-        int result = 0;
-        for (HashSet<String> set : map.values()) {
-            result += set.size();
-        }
-        return result;
     }
 
     /**
@@ -378,11 +369,11 @@ public class DataTree {
         synchronized (node) {
             thisStats = new StatsTrack(new String(node.data));
         }
-        if (thisStats.getCount() < updatedStat.getCount()) {
+        if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
             LOG
-                    .warn("Quota exceeded: " + lastPrefix + " count="
-                            + updatedStat.getCount() + " limit="
-                            + thisStats.getCount());
+            .warn("Quota exceeded: " + lastPrefix + " count="
+                    + updatedStat.getCount() + " limit="
+                    + thisStats.getCount());
         }
     }
 
@@ -424,11 +415,11 @@ public class DataTree {
         synchronized (node) {
             thisStats = new StatsTrack(new String(node.data));
         }
-        if (thisStats.getBytes() < updatedStat.getBytes()) {
+        if (thisStats.getBytes() > -1 && (thisStats.getBytes() < updatedStat.getBytes())) {
             LOG
-                    .warn("Quota exceeded: " + lastPrefix + " bytes="
-                            + updatedStat.getBytes() + " limit="
-                            + thisStats.getBytes());
+            .warn("Quota exceeded: " + lastPrefix + " bytes="
+                    + updatedStat.getBytes() + " limit="
+                    + thisStats.getBytes());
         }
     }
 
@@ -504,8 +495,8 @@ public class DataTree {
             }
         }
         // also check to update the quotas for this node
-        String lastPrefix = pTrie.findMaxPrefix(path);
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+        String lastPrefix;
+        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
             // ok we have some match and need to update
             updateCount(lastPrefix, 1);
             updateBytes(lastPrefix, data == null ? 0 : data.length);
@@ -564,8 +555,8 @@ public class DataTree {
         }
 
         // also check to update the quotas for this node
-        String lastPrefix = pTrie.findMaxPrefix(path);
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+        String lastPrefix;
+        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
             // ok we have some match and need to update
             updateCount(lastPrefix, -1);
             int bytes = 0;
@@ -604,16 +595,33 @@ public class DataTree {
             n.copyStat(s);
         }
         // now update if the path is in a quota subtree.
-        String lastPrefix = pTrie.findMaxPrefix(path);
-        // do nothing for the root.
-        // we are not keeping a quota on the zookeeper
-        // root node for now.
-        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
-            this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
-                    - (lastdata == null ? 0 : lastdata.length));
+        String lastPrefix;
+        if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
+          this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
+              - (lastdata == null ? 0 : lastdata.length));
         }
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
         return s;
+    }
+
+    /**
+     * If there is a quota set, return the appropriate prefix for that quota
+     * Else return null
+     * @param path The ZK path to check for quota
+     * @return Max quota prefix, or null if none
+     */
+    public String getMaxPrefixWithQuota(String path) {
+        // do nothing for the root.
+        // we are not keeping a quota on the zookeeper
+        // root node for now.
+        String lastPrefix = pTrie.findMaxPrefix(path);
+
+        if (!rootZookeeper.equals(lastPrefix) && !("".equals(lastPrefix))) {
+            return lastPrefix;
+        }
+        else {
+            return null;
+        }
     }
 
     public byte[] getData(String path, Stat stat, Watcher watcher)
@@ -763,17 +771,18 @@ public class DataTree {
                 case OpCode.create:
                     CreateTxn createTxn = (CreateTxn) txn;
                     debug = "Create transaction for " + createTxn.getPath();
+                    rc.path = createTxn.getPath();
                     createNode(
                             createTxn.getPath(),
                             createTxn.getData(),
                             createTxn.getAcl(),
                             createTxn.getEphemeral() ? header.getClientId() : 0,
                             header.getZxid(), header.getTime());
-                    rc.path = createTxn.getPath();
                     break;
                 case OpCode.delete:
                     DeleteTxn deleteTxn = (DeleteTxn) txn;
                     debug = "Delete transaction for " + deleteTxn.getPath();
+                    rc.path = deleteTxn.getPath();
                     deleteNode(deleteTxn.getPath(), header.getZxid());
                     break;
                 case OpCode.setData:
@@ -800,11 +809,8 @@ public class DataTree {
                     break;
             }
         } catch (KeeperException e) {
-            // These are expected errors since we take a lazy snapshot
-            if (initialized
-                    || (e.code() != Code.NONODE && e.code() != Code.NODEEXISTS)) {
-                LOG.warn("Failed:" + debug, e);
-            }
+             LOG.debug("Failed: " + debug, e);
+             rc.err = e.code().intValue();
         }
         return rc;
     }
@@ -849,9 +855,7 @@ public class DataTree {
      *
      * @param path
      *            the path to be used
-     * @param bytes
-     *            the long bytes
-     * @param count
+     * @param counts
      *            the int count
      */
     private void getCounts(String path, Counts counts) {
@@ -917,26 +921,24 @@ public class DataTree {
                 children = childs.toArray(new String[childs.size()]);
             }
         }
-        if (children != null) {
-            if (children.length == 0) {
-                // this node does not have a child
-                // is the leaf node
-                // check if its the leaf node
-                String endString = "/" + Quotas.limitNode;
-                if (path.endsWith(endString)) {
-                    // ok this is the limit node
-                    // get the real node and update
-                    // the count and the bytes
-                    String realPath = path.substring(Quotas.quotaZookeeper
-                            .length(), path.indexOf(endString));
-                    updateQuotaForPath(realPath);
-                    this.pTrie.addPath(realPath);
-                }
-                return;
+        if (children == null || children.length == 0) {
+            // this node does not have a child
+            // is the leaf node
+            // check if its the leaf node
+            String endString = "/" + Quotas.limitNode;
+            if (path.endsWith(endString)) {
+                // ok this is the limit node
+                // get the real node and update
+                // the count and the bytes
+                String realPath = path.substring(Quotas.quotaZookeeper
+                        .length(), path.indexOf(endString));
+                updateQuotaForPath(realPath);
+                this.pTrie.addPath(realPath);
             }
-            for (String child : children) {
-                traverseNode(path + "/" + child);
-            }
+            return;
+        }
+        for (String child : children) {
+            traverseNode(path + "/" + child);
         }
     }
 
@@ -1189,6 +1191,35 @@ public class DataTree {
             } else {
                 this.childWatches.addWatch(path, watcher);
             }
+        }
+    }
+
+     /**
+      * If the znode for the specified path is found, then this method
+      * increments the cversion and sets its pzxid to the zxid passed
+      * in the second argument. A NoNodeException is thrown if the znode is
+      * not found.
+      *
+      * @param path
+      *     Full path to the znode whose cversion needs to be incremented.
+      *     A "/" at the end of the path is ignored.
+      * @param zxid
+      *     Value to be assigned to pzxid
+      * @throws KeeperException.NoNodeException
+      *     If znode not found.
+      **/
+    public void incrementCversion(String path, long zxid)
+        throws KeeperException.NoNodeException {
+        if (path.endsWith("/")) {
+           path = path.substring(0, path.length() - 1);
+        }
+        DataNode node = nodes.get(path);
+        if (node == null) {
+            throw new KeeperException.NoNodeException(path);
+        }
+        synchronized (node) {
+            node.stat.setCversion(node.stat.getCversion() + 1);
+            node.stat.setPzxid(zxid);
         }
     }
 }

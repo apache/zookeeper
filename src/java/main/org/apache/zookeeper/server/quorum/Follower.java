@@ -59,8 +59,8 @@ public class Follower extends Learner{
      */
     void followLeader() throws InterruptedException {
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
-        try {
-            InetSocketAddress addr = findLeader();
+        try {            
+            InetSocketAddress addr = findLeader();            
             try {
                 connectToLeader(addr);
                 long newLeaderZxid = registerWithLeader(Leader.FOLLOWERINFO);
@@ -76,8 +76,8 @@ public class Follower extends Learner{
                 QuorumPacket qp = new QuorumPacket();
                 while (self.isRunning()) {
                     readPacket(qp);
-                    processPacket(qp);
-                }
+                    processPacket(qp);                   
+                }                              
             } catch (IOException e) {
                 LOG.warn("Exception when following the leader", e);
                 try {
@@ -125,8 +125,7 @@ public class Follower extends Learner{
             fzk.commit(qp.getZxid());
             break;
         case Leader.UPTODATE:
-            fzk.takeSnapshot();
-            self.cnxnFactory.setZooKeeperServer(fzk);
+            LOG.error("Received an UPTODATE message after Follower started");
             break;
         case Leader.REVALIDATE:
             revalidate(qp);
@@ -136,6 +135,7 @@ public class Follower extends Learner{
             break;
         }
     }
+
 
     /**
      * The zxid of the last operation seen

@@ -22,29 +22,25 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class ClientRetry extends ClientBase {
 
-    @Override
     public void setUp() throws Exception {
         maxCnxns = 1;
-        super.setUp();
+        super.setUp();     
     }
     /*
-     * This is a simple test - try to connect two clients to a server
-     * accepting a maximum of one connection from each address. Check that
+     * This is a simple test - try to connect two clients to a server 
+     * accepting a maximum of one connection from each address. Check that 
      * only one is accepted. Close that connection, and check that the other
-     * eventually connects.
-     *
-     * There is a possibility of a false positive here, as when zk2 is tested
+     * eventually connects. 
+     * 
+     * There is a possibility of a false positive here, as when zk2 is tested 
      * for having connected it might not have been given enough time, and finish
      * connecting after the test is done. Since the
-     * server doesn't tell the client why it hasn't connected, there's no
-     * obvious way to detect the difference.
+     * server doesn't tell the client why it hasn't connected, there's no 
+     * obvious way to detect the difference. 
      */
-    @Test
     public void testClientRetry() throws IOException, InterruptedException, TimeoutException{
         CountdownWatcher cdw1 = new CountdownWatcher();
         CountdownWatcher cdw2 = new CountdownWatcher();
@@ -55,12 +51,12 @@ public class ClientRetry extends ClientBase {
             try {
                 States s1 = zk.getState();
                 States s2 = zk2.getState();
-                Assert.assertSame(s1,States.CONNECTED);
-                Assert.assertSame(s2,States.CONNECTING);
+                assertSame(s1,States.CONNECTED);
+                assertSame(s2,States.CONNECTING);
                 cdw1.reset();
                 cdw1.waitForDisconnected(CONNECTION_TIMEOUT);
                 cdw2.waitForConnected(CONNECTION_TIMEOUT);
-                Assert.assertSame(zk2.getState(),States.CONNECTED);
+                assertSame(zk2.getState(),States.CONNECTED);
             } finally {
                 zk2.close();
             }
@@ -69,4 +65,4 @@ public class ClientRetry extends ClientBase {
         }
     }
 }
-
+           

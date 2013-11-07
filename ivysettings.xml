@@ -20,7 +20,7 @@
   <property name="repo.maven.org"
     value="http://repo1.maven.org/maven2/" override="false"/>
   <property name="repo.jboss.org"
-    value="http://repository.jboss.org/nexus/content/groups/public/" override="false"/>
+    value="http://repository.jboss.com/maven2/" override="false"/>
   <property name="repo.sun.org"
     value="http://download.java.net/maven/2/" override="false"/>
   <property name="maven2.pattern"

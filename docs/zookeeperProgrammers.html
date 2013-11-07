@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>ZooKeeper Programmer's Guide</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -204,6 +204,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 <h1>ZooKeeper Programmer's Guide</h1>
 <h3>Developing Distributed Applications that use ZooKeeper</h3>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -323,6 +324,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
@@ -330,7 +332,7 @@ document.write("Last Published: " + document.lastModified);
   
 
   
-<a name="N1000B"></a><a name="_introduction"></a>
+<a name="_introduction"></a>
 <h2 class="h3">Introduction</h2>
 <div class="section">
 <p>This document is a guide for developers wishing to create
@@ -433,7 +435,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N1007D"></a><a name="ch_zkDataModel"></a>
+<a name="ch_zkDataModel"></a>
 <h2 class="h3">The ZooKeeper Data Model</h2>
 <div class="section">
 <p>ZooKeeper has a hierarchal name space, much like a distributed file
@@ -488,7 +490,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-<a name="N100A7"></a><a name="sc_zkDataModel_znodes"></a>
+<a name="sc_zkDataModel_znodes"></a>
 <h3 class="h4">ZNodes</h3>
 <p>Every node in a ZooKeeper tree is referred to as a
       <em>znode</em>. Znodes maintain a stat structure that
@@ -520,14 +522,14 @@ document.write("Last Published: " + document.lastModified);
 </div>
 <p>Znodes are the main enitity that a programmer access. They have
       several characteristics that are worth mentioning here.</p>
-<a name="N100CA"></a><a name="sc_zkDataMode_watches"></a>
+<a name="sc_zkDataMode_watches"></a>
 <h4>Watches</h4>
 <p>Clients can set watches on znodes. Changes to that znode trigger
         the watch and then clear the watch. When a watch triggers, ZooKeeper
         sends the client a notification. More information about watches can be
         found in the section 
 	    <a href="#ch_zkWatches">ZooKeeper Watches</a>.</p>
-<a name="N100D8"></a><a name="Data+Access"></a>
+<a name="Data+Access"></a>
 <h4>Data Access</h4>
 <p>The data stored at each znode in a namespace is read and written
         atomically. Reads get all the data bytes associated with a znode and a
@@ -547,13 +549,13 @@ document.write("Last Published: " + document.lastModified);
         large data storage is needed, the usually pattern of dealing with such
         data is to store it on a bulk storage system, such as NFS or HDFS, and
         store pointers to the storage locations in ZooKeeper.</p>
-<a name="N100E5"></a><a name="Ephemeral+Nodes"></a>
+<a name="Ephemeral+Nodes"></a>
 <h4>Ephemeral Nodes</h4>
 <p>ZooKeeper also has the notion of ephemeral nodes. These znodes
         exists as long as the session that created the znode is active. When
         the session ends the znode is deleted. Because of this behavior
         ephemeral znodes are not allowed to have children.</p>
-<a name="N100EF"></a><a name="Sequence+Nodes+--+Unique+Naming"></a>
+<a name="Sequence+Nodes+--+Unique+Naming"></a>
 <h4>Sequence Nodes -- Unique Naming</h4>
 <p>When creating a znode you can also request that
         ZooKeeper append a monotonically increasing counter to the end
@@ -567,7 +569,7 @@ document.write("Last Published: " + document.lastModified);
         (4bytes) maintained by the parent node, the counter will
         overflow when incremented beyond 2147483647 (resulting in a
         name "&lt;path&gt;-2147483647").</p>
-<a name="N100FE"></a><a name="sc_timeInZk"></a>
+<a name="sc_timeInZk"></a>
 <h3 class="h4">Time in ZooKeeper</h3>
 <p>ZooKeeper tracks time multiple ways:</p>
 <ul>
@@ -636,7 +638,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N10136"></a><a name="sc_zkStatStructure"></a>
+<a name="sc_zkStatStructure"></a>
 <h3 class="h4">ZooKeeper Stat Structure</h3>
 <p>The Stat structure for each znode in ZooKeeper is made up of the
       following fields:</p>
@@ -771,7 +773,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N101A8"></a><a name="ch_zkSessions"></a>
+<a name="ch_zkSessions"></a>
 <h2 class="h3">ZooKeeper Sessions</h2>
 <div class="section">
 <p>A ZooKeeper client establishes a session with the ZooKeeper
@@ -953,7 +955,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N10203"></a><a name="ch_zkWatches"></a>
+<a name="ch_zkWatches"></a>
 <h2 class="h3">ZooKeeper Watches</h2>
 <div class="section">
 <p>All of the read operations in ZooKeeper - <strong>getData()</strong>, <strong>getChildren()</strong>, and <strong>exists()</strong> - have the option of setting a watch as a
@@ -1036,7 +1038,7 @@ document.write("Last Published: " + document.lastModified);
     general this all occurs transparently. There is one case where a watch
     may be missed: a watch for the existance of a znode not yet created will
     be missed if the znode is created and deleted while disconnected.</p>
-<a name="N10239"></a><a name="sc_WatchGuarantees"></a>
+<a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
 <p>With regard to watches, ZooKeeper maintains these
       guarantees:</p>
@@ -1071,7 +1073,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
       
 </ul>
-<a name="N1025E"></a><a name="sc_WatchRememberThese"></a>
+<a name="sc_WatchRememberThese"></a>
 <h3 class="h4">Things to Remember about Watches</h3>
 <ul>
         
@@ -1130,7 +1132,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
   
-<a name="N1028A"></a><a name="sc_ZooKeeperAccessControl"></a>
+<a name="sc_ZooKeeperAccessControl"></a>
 <h2 class="h3">ZooKeeper access control using ACLs</h2>
 <div class="section">
 <p>ZooKeeper uses ACLs to control access to its znodes (the
@@ -1165,7 +1167,7 @@ document.write("Last Published: " + document.lastModified);
     example, the pair <em>(ip:19.22.0.0/16, READ)</em>
     gives the <em>READ</em> permission to any clients with
     an IP address that starts with 19.22.</p>
-<a name="N102BD"></a><a name="sc_ACLPermissions"></a>
+<a name="sc_ACLPermissions"></a>
 <h3 class="h4">ACL Permissions</h3>
 <p>ZooKeeper supports the following permissions:</p>
 <ul>
@@ -1221,7 +1223,7 @@ document.write("Last Published: " + document.lastModified);
       node, but nothing more. (The problem is, if you want to call
       zoo_exists() on a node that doesn't exist, there is no
       permission to check.)</p>
-<a name="N10313"></a><a name="sc_BuiltinACLSchemes"></a>
+<a name="sc_BuiltinACLSchemes"></a>
 <h4>Builtin ACL Schemes</h4>
 <p>ZooKeeeper has the following built in schemes:</p>
 <ul>
@@ -1270,7 +1272,7 @@ document.write("Last Published: " + document.lastModified);
 
       
 </ul>
-<a name="N10357"></a><a name="ZooKeeper+C+client+API"></a>
+<a name="ZooKeeper+C+client+API"></a>
 <h4>ZooKeeper C client API</h4>
 <p>The following constants are provided by the ZooKeeper C
       library:</p>
@@ -1492,7 +1494,7 @@ int main(int argc, char argv) {
 </div>
 
   
-<a name="N1046E"></a><a name="sc_ZooKeeperPluggableAuthentication"></a>
+<a name="sc_ZooKeeperPluggableAuthentication"></a>
 <h2 class="h3">Pluggable ZooKeeper authentication</h2>
 <div class="section">
 <p>ZooKeeper runs in a variety of different environments with
@@ -1578,7 +1580,7 @@ authProvider.2=com.f.MyAuth2
 </div>
       
   
-<a name="N104DA"></a><a name="ch_zkGuarantees"></a>
+<a name="ch_zkGuarantees"></a>
 <h2 class="h3">Consistency Guarantees</h2>
 <div class="section">
 <p>ZooKeeper is a high performance, scalable service. Both reads and
@@ -1704,12 +1706,12 @@ authProvider.2=com.f.MyAuth2
 </div>
 
   
-<a name="N10541"></a><a name="ch_bindings"></a>
+<a name="ch_bindings"></a>
 <h2 class="h3">Bindings</h2>
 <div class="section">
 <p>The ZooKeeper client libraries come in two languages: Java and C.
     The following sections describe these.</p>
-<a name="N1054A"></a><a name="Java+Binding"></a>
+<a name="Java+Binding"></a>
 <h3 class="h4">Java Binding</h3>
 <p>There are two packages that make up the ZooKeeper Java binding:
       <strong>org.apache.zookeeper</strong> and <strong>org.apache.zookeeper.data</strong>. The rest of the
@@ -1776,7 +1778,7 @@ authProvider.2=com.f.MyAuth2
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid.
       On a close, the two threads shut down and any further access on zookeeper
       handle is undefined behavior and should be avoided. </p>
-<a name="N10593"></a><a name="C+Binding"></a>
+<a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
       The multi-threaded library is easiest to use and is most similar to the
@@ -1793,7 +1795,7 @@ authProvider.2=com.f.MyAuth2
       (i.e. FreeBSD 4.x). In all other cases, application developers should
       link with zookeeper_mt, as it includes support for both Sync and Async
       API.</p>
-<a name="N105A2"></a><a name="Installation"></a>
+<a name="Installation"></a>
 <h4>Installation</h4>
 <p>If you're building the client from a check-out from the Apache
         repository, follow the steps outlined below. If you're building from a
@@ -1924,7 +1926,7 @@ authProvider.2=com.f.MyAuth2
 </li>
         
 </ol>
-<a name="N1064B"></a><a name="Using+the+C+Client"></a>
+<a name="Using+the+C+Client"></a>
 <h4>Using the C Client</h4>
 <p>You can test your client by running a ZooKeeper server (see
         instructions on the project wiki page on how to run it) and connecting
@@ -1982,7 +1984,7 @@ authProvider.2=com.f.MyAuth2
 </div>
 
    
-<a name="N10691"></a><a name="ch_guideToZkOperations"></a>
+<a name="ch_guideToZkOperations"></a>
 <h2 class="h3">Building Blocks: A Guide to ZooKeeper Operations</h2>
 <div class="section">
 <p>This section surveys all the operations a developer can perform
@@ -2000,28 +2002,28 @@ authProvider.2=com.f.MyAuth2
 </li>
     
 </ul>
-<a name="N106A5"></a><a name="sc_errorsZk"></a>
+<a name="sc_errorsZk"></a>
 <h3 class="h4">Handling Errors</h3>
 <p>Both the Java and C client bindings may report errors. The Java client binding does so by throwing KeeperException, calling code() on the exception will return the specific error code. The C client binding returns an error code as defined in the enum ZOO_ERRORS. API callbacks indicate result code for both language bindings. See the API documentation (javadoc for Java, doxygen for C) for full details on the possible errors and their meaning.</p>
-<a name="N106AF"></a><a name="sc_connectingToZk"></a>
+<a name="sc_connectingToZk"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
 <p></p>
-<a name="N106B8"></a><a name="sc_readOps"></a>
+<a name="sc_readOps"></a>
 <h3 class="h4">Read Operations</h3>
 <p></p>
-<a name="N106C1"></a><a name="sc_writeOps"></a>
+<a name="sc_writeOps"></a>
 <h3 class="h4">Write Operations</h3>
 <p></p>
-<a name="N106CA"></a><a name="sc_handlingWatches"></a>
+<a name="sc_handlingWatches"></a>
 <h3 class="h4">Handling Watches</h3>
 <p></p>
-<a name="N106D3"></a><a name="sc_miscOps"></a>
+<a name="sc_miscOps"></a>
 <h3 class="h4">Miscelleaneous ZooKeeper Operations</h3>
 <p></p>
 </div>
 
   
-<a name="N106DD"></a><a name="ch_programStructureWithExample"></a>
+<a name="ch_programStructureWithExample"></a>
 <h2 class="h3">Program Structure, with Simple Example</h2>
 <div class="section">
 <p>
@@ -2030,7 +2032,7 @@ authProvider.2=com.f.MyAuth2
 </div>
 
   
-<a name="N106E8"></a><a name="ch_gotchas"></a>
+<a name="ch_gotchas"></a>
 <h2 class="h3">Gotchas: Common Problems and Troubleshooting</h2>
 <div class="section">
 <p>So now you know ZooKeeper. It's fast, simple, your application

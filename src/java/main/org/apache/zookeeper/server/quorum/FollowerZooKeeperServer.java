@@ -80,7 +80,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
                 new SendAckRequestProcessor((Learner)getFollower()));
         syncProcessor.start();
     }
-
+    
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<Request>();
 
     public void logRequest(TxnHeader hdr, Record txn) {
@@ -135,7 +135,6 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     
     @Override
     public void shutdown() {
-        LOG.info("Shutting down");
         try {
             super.shutdown();
         } catch (Exception e) {

@@ -34,20 +34,6 @@
     <property name="test.junit.haltonfailure" value="no" />
     <property name="test.junit.maxmem" value="512m" />
 
-    <!-- ====================================================== -->
-    <!-- Macro definitions                                      -->
-    <!-- ====================================================== -->
-    <macrodef name="macro_tar" description="Worker Macro for tar">
-      <attribute name="param.destfile"/>
-      <element name="param.listofitems"/>
-      <sequential>
-        <tar compression="gzip" longfile="gnu"
-             destfile="@{param.destfile}">
-          <param.listofitems/>
-        </tar>
-      </sequential>
-    </macrodef>
-
   <target name="setjarname">
     <property name="jarname"
               value="${build.dir}/zookeeper-${version}-${name}.jar"/>
@@ -134,33 +120,21 @@
     </jar>
   </target>
 
-  <target name="run" depends="jar">
+  <target name="runrestserver" depends="jar">
     <echo message="contrib: ${name}"/>
     <java classname="org.apache.zookeeper.server.jersey.RestMain" fork="true">
+      <arg value="http://localhost:9998/" />
+      <arg value="localhost:2181" />
       <classpath>
         <pathelement path="${jarname}" />
         <fileset dir="${build.dir}/lib" includes="*.jar"/>
         <fileset dir="${zk.root}/build" includes="zookeeper-*.jar"/>
-        <pathelement path="${zk.root}/src/contrib/${name}/conf" />
+        <pathelement path="${zk.root}/conf" />
         <fileset dir="${zk.root}/src/java/lib">
           <include name="**/*.jar" />
         </fileset>
       </classpath>
     </java>
-  </target>
-
-  <target name="tar" depends="clean, jar">
-    <echo message="building tar.gz: ${name}" />
-    <macro_tar param.destfile="${build.dir}/zookeeper-${version}-${name}.tar.gz">
-      <param.listofitems>
-        <tarfileset dir="${build.dir}/lib" prefix="lib" includes="**/*.jar" />
-        <tarfileset file="${build.dir}/zookeeper-*-rest.jar" />
-        <tarfileset dir="${zk.root}/build" includes="zookeeper-*.jar" prefix="lib" />
-        <tarfileset dir="${zk.root}/src/contrib/${name}/conf" prefix="conf" />
-        <tarfileset dir="${zk.root}/src/java/lib" prefix="lib" includes="**/*.jar" />
-        <tarfileset file="${zk.root}/src/contrib/${name}/rest.sh" />
-      </param.listofitems>
-    </macro_tar>
   </target>
 
 </project>

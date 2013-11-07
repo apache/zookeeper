@@ -75,7 +75,7 @@ public class DeleteTest extends Base {
                     CreateMode.PERSISTENT_SEQUENTIAL);
         }
 
-        ClientResponse cr = znodesr.path(zpath).accept(type).type(type)
+        ClientResponse cr = r.path(zpath).accept(type).type(type)
             .delete(ClientResponse.class);
         assertEquals(expectedStatus, cr.getClientResponseStatus());
 

@@ -25,35 +25,35 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ *
+ */
 public class StatTest extends ClientBase {
     private ZooKeeper zk;
-
-    @Override
-    public void setUp() throws Exception {
+    
+    protected void setUp() throws Exception {
         super.setUp();
-
+        
         zk = createClient();
     }
 
-    @Override
-    public void tearDown() throws Exception {
+    protected void tearDown() throws Exception {
         super.tearDown();
-
+        
         zk.close();
     }
-
+    
     /**
-     * Create a new Stat, fill in dummy values trying to catch Assert.failure
+     * Create a new Stat, fill in dummy values trying to catch failure
      * to copy in client or server code.
-     *
+     * 
      * @return a new stat with dummy values
      */
     private Stat newStat() {
         Stat stat = new Stat();
-
+        
         stat.setAversion(100);
         stat.setCtime(100);
         stat.setCversion(100);
@@ -65,7 +65,7 @@ public class StatTest extends ClientBase {
         stat.setNumChildren(100);
         stat.setPzxid(100);
         stat.setVersion(100);
-
+        
         return stat;
     }
 
@@ -76,21 +76,21 @@ public class StatTest extends ClientBase {
         String name = "/foo";
         zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-
+        
         Stat stat;
-
+        
         stat = newStat();
         zk.getData(name, false, stat);
-
-        Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-        Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
-        Assert.assertEquals(stat.getCtime(), stat.getMtime());
-        Assert.assertEquals(0, stat.getCversion());
-        Assert.assertEquals(0, stat.getVersion());
-        Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(0, stat.getEphemeralOwner());
-        Assert.assertEquals(name.length(), stat.getDataLength());
-        Assert.assertEquals(0, stat.getNumChildren());
+        
+        assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid(), stat.getPzxid());
+        assertEquals(stat.getCtime(), stat.getMtime());
+        assertEquals(0, stat.getCversion());
+        assertEquals(0, stat.getVersion());
+        assertEquals(0, stat.getAversion());
+        assertEquals(0, stat.getEphemeralOwner());
+        assertEquals(name.length(), stat.getDataLength());
+        assertEquals(0, stat.getNumChildren());
     }
 
     @Test
@@ -100,38 +100,38 @@ public class StatTest extends ClientBase {
         String name = "/foo";
         zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-
+        
         String childname = name + "/bar";
         zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.EPHEMERAL);
 
         Stat stat;
-
+        
         stat = newStat();
         zk.getData(name, false, stat);
 
-        Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-        Assert.assertEquals(stat.getCzxid() + 1, stat.getPzxid());
-        Assert.assertEquals(stat.getCtime(), stat.getMtime());
-        Assert.assertEquals(1, stat.getCversion());
-        Assert.assertEquals(0, stat.getVersion());
-        Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(0, stat.getEphemeralOwner());
-        Assert.assertEquals(name.length(), stat.getDataLength());
-        Assert.assertEquals(1, stat.getNumChildren());
+        assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid() + 1, stat.getPzxid());
+        assertEquals(stat.getCtime(), stat.getMtime());
+        assertEquals(1, stat.getCversion());
+        assertEquals(0, stat.getVersion());
+        assertEquals(0, stat.getAversion());
+        assertEquals(0, stat.getEphemeralOwner());
+        assertEquals(name.length(), stat.getDataLength());
+        assertEquals(1, stat.getNumChildren());
 
         stat = newStat();
         zk.getData(childname, false, stat);
 
-        Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-        Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
-        Assert.assertEquals(stat.getCtime(), stat.getMtime());
-        Assert.assertEquals(0, stat.getCversion());
-        Assert.assertEquals(0, stat.getVersion());
-        Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(zk.getSessionId(), stat.getEphemeralOwner());
-        Assert.assertEquals(childname.length(), stat.getDataLength());
-        Assert.assertEquals(0, stat.getNumChildren());
+        assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid(), stat.getPzxid());
+        assertEquals(stat.getCtime(), stat.getMtime());
+        assertEquals(0, stat.getCversion());
+        assertEquals(0, stat.getVersion());
+        assertEquals(0, stat.getAversion());
+        assertEquals(zk.getSessionId(), stat.getEphemeralOwner());
+        assertEquals(childname.length(), stat.getDataLength());
+        assertEquals(0, stat.getNumChildren());
     }
 
     @Test
@@ -141,26 +141,26 @@ public class StatTest extends ClientBase {
         String name = "/foo";
         zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-
+        
         for(int i = 0; i < 10; i++) {
             String childname = name + "/bar" + i;
             zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.EPHEMERAL);
 
             Stat stat;
-
+            
             stat = newStat();
             zk.getData(name, false, stat);
-
-            Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-            Assert.assertEquals(stat.getCzxid() + i + 1, stat.getPzxid());
-            Assert.assertEquals(stat.getCtime(), stat.getMtime());
-            Assert.assertEquals(i + 1, stat.getCversion());
-            Assert.assertEquals(0, stat.getVersion());
-            Assert.assertEquals(0, stat.getAversion());
-            Assert.assertEquals(0, stat.getEphemeralOwner());
-            Assert.assertEquals(name.length(), stat.getDataLength());
-            Assert.assertEquals(i + 1, stat.getNumChildren());
+    
+            assertEquals(stat.getCzxid(), stat.getMzxid());
+            assertEquals(stat.getCzxid() + i + 1, stat.getPzxid());
+            assertEquals(stat.getCtime(), stat.getMtime());
+            assertEquals(i + 1, stat.getCversion());
+            assertEquals(0, stat.getVersion());
+            assertEquals(0, stat.getAversion());
+            assertEquals(0, stat.getEphemeralOwner());
+            assertEquals(name.length(), stat.getDataLength());
+            assertEquals(i + 1, stat.getNumChildren());
         }
     }
 
@@ -171,35 +171,35 @@ public class StatTest extends ClientBase {
         String name = "/foo";
         zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-
+        
         Stat stat;
-
+        
         stat = newStat();
         zk.getData(name, false, stat);
-
-        Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-        Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
-        Assert.assertEquals(stat.getCtime(), stat.getMtime());
-        Assert.assertEquals(0, stat.getCversion());
-        Assert.assertEquals(0, stat.getVersion());
-        Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(0, stat.getEphemeralOwner());
-        Assert.assertEquals(name.length(), stat.getDataLength());
-        Assert.assertEquals(0, stat.getNumChildren());
+        
+        assertEquals(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid(), stat.getPzxid());
+        assertEquals(stat.getCtime(), stat.getMtime());
+        assertEquals(0, stat.getCversion());
+        assertEquals(0, stat.getVersion());
+        assertEquals(0, stat.getAversion());
+        assertEquals(0, stat.getEphemeralOwner());
+        assertEquals(name.length(), stat.getDataLength());
+        assertEquals(0, stat.getNumChildren());
 
         zk.setData(name, (name + name).getBytes(), -1);
-
+        
         stat = newStat();
         zk.getData(name, false, stat);
-
-        Assert.assertNotSame(stat.getCzxid(), stat.getMzxid());
-        Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
-        Assert.assertNotSame(stat.getCtime(), stat.getMtime());
-        Assert.assertEquals(0, stat.getCversion());
-        Assert.assertEquals(1, stat.getVersion());
-        Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(0, stat.getEphemeralOwner());
-        Assert.assertEquals(name.length() * 2, stat.getDataLength());
-        Assert.assertEquals(0, stat.getNumChildren());
+        
+        assertNotSame(stat.getCzxid(), stat.getMzxid());
+        assertEquals(stat.getCzxid(), stat.getPzxid());
+        assertNotSame(stat.getCtime(), stat.getMtime());
+        assertEquals(0, stat.getCversion());
+        assertEquals(1, stat.getVersion());
+        assertEquals(0, stat.getAversion());
+        assertEquals(0, stat.getEphemeralOwner());
+        assertEquals(name.length() * 2, stat.getDataLength());
+        assertEquals(0, stat.getNumChildren());
     }
 }

@@ -114,10 +114,6 @@ class LedgerOpenOp implements DataCallback {
             LOG.error("Security exception while opening ledger: " + ledgerId, e);
             cb.openComplete(BKException.Code.DigestNotInitializedException, null, this.ctx);
             return;
-        } catch (NumberFormatException e) {
-            LOG.error("Incorrectly entered parameter throttle: " + System.getProperty("throttle"), e);
-            cb.openComplete(BKException.Code.IncorrectParameterException, null, this.ctx);
-            return;
         }
 
         if (metadata.close != LedgerMetadata.NOTCLOSED) {

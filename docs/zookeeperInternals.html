@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>ZooKeeper Internals</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>ZooKeeper Internals</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -249,12 +250,13 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
 
   
-<a name="N10009"></a><a name="ch_Introduction"></a>
+<a name="ch_Introduction"></a>
 <h2 class="h3">Introduction</h2>
 <div class="section">
 <p>This document contains information on the inner workings of ZooKeeper. 
@@ -278,12 +280,12 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
 
-<a name="N10022"></a><a name="sc_atomicBroadcast"></a>
+<a name="sc_atomicBroadcast"></a>
 <h2 class="h3">Atomic Broadcast</h2>
 <div class="section">
 <p>
 At the heart of ZooKeeper is an atomic messaging system that keeps all of the servers in sync.</p>
-<a name="N1002B"></a><a name="sc_guaranteesPropertiesDefinitions"></a>
+<a name="sc_guaranteesPropertiesDefinitions"></a>
 <h3 class="h4">Guarantees, Properties, and Definitions</h3>
 <p>
 The specific guarantees provided by the messaging system used by ZooKeeper are the following:</p>
@@ -472,7 +474,7 @@ yourself, <em>Does the set of proposals that the leader believes has been commit
 included all the proposals that really have been committed?</em> The answer is <em>yes</em>. 
 Below, we make clear why.)
 </p>
-<a name="N100B9"></a><a name="sc_leaderElection"></a>
+<a name="sc_leaderElection"></a>
 <h3 class="h4">Leader Activation</h3>
 <p>
 Leader activation includes leader election. We currently have two leader election 
@@ -558,7 +560,7 @@ NEW_LEADER proposal will not be committed since the leader will not have quorum.
 When this happens, the leader and any remaining followers will timeout and go back 
 to leader election.
 </p>
-<a name="N100F7"></a><a name="sc_activeMessaging"></a>
+<a name="sc_activeMessaging"></a>
 <h3 class="h4">Active Messaging</h3>
 <p>
 Leader Activation does all the heavy lifting. Once the leader is coronated he can 
@@ -606,7 +608,7 @@ message when that proposal is committed.</p>
 
 
 </ul>
-<a name="N1011E"></a><a name="sc_summary"></a>
+<a name="sc_summary"></a>
 <h3 class="h4">Summary</h3>
 <p>So there you go. Why does it work? Specifically, why does is set of proposals 
 believed by a new leader always contain any proposal that has actually been committed? 
@@ -618,7 +620,7 @@ follow a single leader at a time; a new leader has seen all committed proposals
 from the previous epoch since it has seen the highest zxid from a quorum of servers; 
 any uncommited proposals from a previous epoch seen by a new leader will be committed 
 by that leader before it becomes active.</p>
-<a name="N10127"></a><a name="sc_comparisons"></a>
+<a name="sc_comparisons"></a>
 <h3 class="h4">Comparisons</h3>
 <p>
 Isn't this just Multi-Paxos? No, Multi-Paxos requires some way of assuring that 
@@ -638,7 +640,7 @@ proposals and to not worry about duplicate proposals for a given zxid.
 </div>
 
 
-<a name="N10134"></a><a name="sc_quorum"></a>
+<a name="sc_quorum"></a>
 <h2 class="h3">Quorums</h2>
 <div class="section">
 <p>
@@ -673,7 +675,7 @@ hierarchy of groups.
 </div>
 
 
-<a name="N10147"></a><a name="sc_logging"></a>
+<a name="sc_logging"></a>
 <h2 class="h3">Logging</h2>
 <div class="section">
 <p>
@@ -684,10 +686,10 @@ ZooKeeper, see the <a href="zookeeperAdmin.html#sc_logging">Logging</a> section
 of the <a href="zookeeperAdmin.html">ZooKeeper Administrator's Guide.</a>
 
 </p>
-<a name="N1015C"></a><a name="sc_developerGuidelines"></a>
+<a name="sc_developerGuidelines"></a>
 <h3 class="h4">Developer Guidelines</h3>
 <p>Please follow these guidelines when submitting code. Patch reviewers will look for the following:</p>
-<a name="N10164"></a><a name="sc_rightLevel"></a>
+<a name="sc_rightLevel"></a>
 <h4>Logging at the Right Level</h4>
 <p>
 There are <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html#FATAL">6 levels of logging in log4j</a>. 
@@ -722,7 +724,7 @@ It's important to pick the right one. In order of higher to lower severity:</p>
 <p>
 ZooKeeper is typically run in production such that log messages of INFO level 
 severity and higher (more severe) are output to the log.</p>
-<a name="N1018F"></a><a name="sc_log4jIdioms"></a>
+<a name="sc_log4jIdioms"></a>
 <h4>Use of Standard log4j Idioms</h4>
 <p>
 <em>Static Message Logging</em>

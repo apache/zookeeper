@@ -43,14 +43,6 @@ public class JField {
 	public String genCDecl() {
 		return mType.genCDecl(mName);
 	}
-
-    public String genCsharpDecl() {
-        return mType.genCsharpDecl(mName);
-    }
-
-    public String genCsharpConstructorParam(String fname) {
-        return mType.genCsharpConstructorParam(fname);
-    }
 	
     public String genJavaDecl() {
         return mType.genJavaDecl(mName);
@@ -62,10 +54,6 @@ public class JField {
     
     public String getName() {
         return mName;
-    }
-
-    public String getCsharpName() {
-        return "Id".equals(mName) ? "ZKId" : mName;
     }
     
     public String getTag() {
@@ -79,35 +67,6 @@ public class JField {
     public String genCppGetSet(int fIdx) {
         return mType.genCppGetSet(mName, fIdx);
     }
-
-    public String genCsharpConstructorSet(String fname) {
-        return mType.genCsharpConstructorSet(mName, fname);
-    }
-
-    public String genCsharpGetSet(int fIdx) {
-        return mType.genCsharpGetSet(getCsharpName(), fIdx);
-    }
-
-    public String genCsharpWriteMethodName() {
-        return mType.genCsharpWriteMethod(getCsharpName(), getTag());
-    }
-
-    public String genCsharpReadMethodName() {
-        return mType.genCsharpReadMethod(getCsharpName(), getTag());
-    }
-
-    public String genCsharpCompareTo() {
-        return mType.genCsharpCompareTo(getCsharpName());
-    }
-
-    public String genCsharpEquals() {
-        return mType.genCsharpEquals(getCsharpName(), "peer."+getCsharpName());
-    }
-
-    public String genCsharpHashCode() {
-        return mType.genCsharpHashCode(getCsharpName());
-    }
-
     
     public String genJavaGetSet(int fIdx) {
         return mType.genJavaGetSet(mName, fIdx);
@@ -136,5 +95,4 @@ public class JField {
     public String genJavaConstructorSet(String fname) {
         return mType.genJavaConstructorSet(mName, fname);
     }
-
 }

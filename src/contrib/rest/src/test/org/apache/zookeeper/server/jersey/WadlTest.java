@@ -34,7 +34,7 @@ public class WadlTest extends Base {
 
     @Test
     public void testApplicationWadl() {
-        WebResource r = client.resource(BASEURI);
+        WebResource r = c.resource(BASEURI);
         String serviceWadl = r.path("application.wadl").
                 accept(MediaTypes.WADL).get(String.class);
         assertTrue("Something wrong. Returned wadl length not > 0.",

@@ -24,22 +24,22 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * Test stand-alone server.
  *
  */
-public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
+public class ZooKeeperServerMainTest extends TestCase implements Watcher {
     protected static final Logger LOG =
         Logger.getLogger(ZooKeeperServerMainTest.class);
 
@@ -104,6 +104,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
      */
     @Test
     public void testStandalone() throws Exception {
+        LOG.info("STARTING " + getName());
         ClientBase.setupTestEnv();
 
         final int CLIENT_PORT = 3181;
@@ -111,7 +112,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT);
         main.start();
 
-        Assert.assertTrue("waiting for server being up",
+        assertTrue("waiting for server being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                         CONNECTION_TIMEOUT));
 
@@ -121,12 +122,12 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
         zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
         zk.close();
 
         main.shutdown();
 
-        Assert.assertTrue("waiting for server down",
+        assertTrue("waiting for server down",
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
                         ClientBase.CONNECTION_TIMEOUT));
     }

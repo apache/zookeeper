@@ -24,17 +24,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.LeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.junit.Assert;
-import org.junit.Test;
 
-public class LETest extends ZKTestCase {
+public class LETest extends TestCase {
     private static final Logger LOG = Logger.getLogger(LETest.class);
     volatile Vote votes[];
     volatile boolean leaderDies;
@@ -86,8 +85,6 @@ public class LETest extends ZKTestCase {
             }
         }
     }
-
-    @Test
     public void testLE() throws Exception {
         int count = 30;
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>(count);
@@ -108,7 +105,7 @@ public class LETest extends ZKTestCase {
         boolean allowOneBadLeader = leaderDies;
         for(int i = 0; i < le.length; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
-                    port[i], 0, i, 2, 2, 2);
+                    port[i], 0, i, 1000, 2, 2);
             peer.startLeaderElection();
             le[i] = new LeaderElection(peer);
             LEThread thread = new LEThread(le[i], peer, i);
@@ -118,19 +115,19 @@ public class LETest extends ZKTestCase {
         for(int i = 0; i < threads.size(); i++) {
             threads.get(i).join(15000);
             if (threads.get(i).isAlive()) {
-                Assert.fail("Threads didn't join");
+                fail("Threads didn't join");
             }
         }
         long id = votes[0].id;
         for(int i = 1; i < votes.length; i++) {
             if (votes[i] == null) {
-                Assert.fail("Thread " + i + " had a null vote");
+                fail("Thread " + i + " had a null vote");
             }
             if (votes[i].id != id) {
                 if (allowOneBadLeader && votes[i].id == i) {
                     allowOneBadLeader = false;
                 } else {
-                    Assert.fail("Thread " + i + " got " + votes[i].id + " expected " + id);
+                    fail("Thread " + i + " got " + votes[i].id + " expected " + id);
                 }
             }
         }

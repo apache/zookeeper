@@ -32,18 +32,10 @@
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
   </configurations>
 
-  <publications>
-    <artifact name='org.jboss.netty' type='jar' ext='jar' />
-  </publications>
-
   <dependencies>
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
-    <dependency org="log4j" name="log4j" rev="1.2.15" transitive="false" conf="default"/>
-    <dependency org="jline" name="jline" rev="0.9.94" transitive="false" conf="default"/>
-
-    <dependency org="org.jboss.netty" name="netty" conf="default" rev="3.2.1.Final">
-      <artifact name="netty" type="jar" conf="default"/>
-    </dependency>
+    <dependency org="log4j" name="log4j" rev="1.2.15" transitive="false"/>
+    <dependency org="jline" name="jline" rev="0.9.94" transitive="false"/>
 
     <dependency org="junit" name="junit" rev="4.8.1" conf="test->default"/>
     <dependency org="checkstyle" name="checkstyle" rev="5.0"

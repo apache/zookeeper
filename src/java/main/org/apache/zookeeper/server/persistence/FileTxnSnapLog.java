@@ -33,6 +33,11 @@ import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
+import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.KeeperException;
 
 /**
  * This is a helper class 
@@ -123,7 +128,7 @@ public class FileTxnSnapLog {
             PlayBackListener listener) throws IOException {
         snapLog.deserialize(dt, sessions);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
-        TxnIterator itr = txnLog.read(dt.lastProcessedZxid);
+        TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
         while (true) {
@@ -141,7 +146,12 @@ public class FileTxnSnapLog {
             } else {
                 highestZxid = hdr.getZxid();
             }
-            processTransaction(hdr,dt,sessions, itr.getTxn());
+            try {
+            	processTransaction(hdr,dt,sessions, itr.getTxn());
+            } catch(KeeperException.NoNodeException e) {
+            	throw new IOException("Failed to process transaction type: " +
+            			hdr.getType() + " error: " + e.getMessage());
+            }
             if (!itr.next()) 
                 break;
         }
@@ -155,8 +165,10 @@ public class FileTxnSnapLog {
      * @param sessions the sessions to be restored
      * @param txn the transaction to be applied
      */
-    private void processTransaction(TxnHeader hdr,DataTree dt,
-            Map<Long, Integer> sessions, Record txn){
+    public void processTransaction(TxnHeader hdr,DataTree dt,
+            Map<Long, Integer> sessions, Record txn)
+        throws KeeperException.NoNodeException {
+        ProcessTxnResult rc;
         switch (hdr.getType()) {
         case OpCode.createSession:
             sessions.put(hdr.getClientId(),
@@ -169,7 +181,7 @@ public class FileTxnSnapLog {
                                 + ((CreateSessionTxn) txn).getTimeOut());
             }
             // give dataTree a chance to sync its lastProcessedZxid
-            dt.processTxn(hdr, txn);
+            rc = dt.processTxn(hdr, txn);
             break;
         case OpCode.closeSession:
             sessions.remove(hdr.getClientId());
@@ -178,11 +190,45 @@ public class FileTxnSnapLog {
                         "playLog --- close session in log: "
                                 + Long.toHexString(hdr.getClientId()));
             }
-            dt.processTxn(hdr, txn);
+            rc = dt.processTxn(hdr, txn);
             break;
         default:
-            dt.processTxn(hdr, txn);
-        }        
+            rc = dt.processTxn(hdr, txn);
+        }
+
+        /**
+         * Snapshots are taken lazily. It can happen that the child
+         * znodes of a parent are modified (deleted or created) after the parent
+         * is serialized. Therefore, while replaying logs during restore, a
+         * delete/create might fail because the node was already
+         * deleted/created.
+         *
+         * After seeing this failure, we should increment
+         * the cversion of the parent znode since the parent was serialized
+         * before its children.
+         *
+         * Note, such failures on DT should be seen only during
+         * restore.
+         */
+        if ((hdr.getType() == OpCode.delete &&
+                 rc.err == Code.NONODE.intValue()) ||
+            (hdr.getType() == OpCode.create &&
+                rc.err == Code.NODEEXISTS.intValue())) {
+            LOG.debug("Failed Txn: " + hdr.getType() + " path:" +
+                  rc.path + " err: " + rc.err);
+            int lastSlash = rc.path.lastIndexOf('/');
+            String parentName = rc.path.substring(0, lastSlash);
+            try {
+                dt.incrementCversion(parentName, hdr.getZxid());
+            } catch (KeeperException.NoNodeException e) {
+                LOG.error("Failed to increment parent cversion for: " +
+                      parentName, e);
+                throw e;
+            }
+        } else if (rc.err != Code.OK.intValue()) {
+            LOG.debug("Ignoring processTxn failure hdr: " + hdr.getType() +
+                  " : error: " + rc.err);
+        }
     }
     
     /**

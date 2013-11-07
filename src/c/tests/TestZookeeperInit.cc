@@ -230,7 +230,7 @@ public:
         const string INVALID_HOST("host1:1111+host:123");
         zh=zookeeper_init(INVALID_HOST.c_str(),0,0,0,0,0);
         CPPUNIT_ASSERT(zh==0);
-        CPPUNIT_ASSERT_EQUAL(ENOENT,errno);
+        CPPUNIT_ASSERT((ENOENT|EINVAL) & errno);
     }
     void testNonexistentHost()
     {

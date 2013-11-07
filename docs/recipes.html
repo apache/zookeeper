@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>ZooKeeper Recipes and Solutions</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>ZooKeeper Recipes and Solutions</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -249,12 +250,13 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
 
   
-<a name="N10009"></a><a name="ch_recipes"></a>
+<a name="ch_recipes"></a>
 <h2 class="h3">A Guide to Creating Higher-level Constructs with ZooKeeper</h2>
 <div class="section">
 <p>In this article, you'll find guidelines for using
@@ -279,7 +281,7 @@ document.write("Last Published: " + document.lastModified);
     as event handles or queues, a more practical means of performing the same
     function. In general, the examples in this section are designed to
     stimulate thought.</p>
-<a name="N10021"></a><a name="sc_outOfTheBox"></a>
+<a name="sc_outOfTheBox"></a>
 <h3 class="h4">Out of the Box Applications: Name Service, Configuration, Group
     Membership</h3>
 <p>Name service and configuration are two of the primary applications
@@ -290,7 +292,7 @@ document.write("Last Published: " + document.lastModified);
     group create ephemeral nodes under the group node. Nodes of the members
     that fail abnormally will be removed automatically when ZooKeeper detects
     the failure.</p>
-<a name="N10031"></a><a name="sc_recipes_eventHandles"></a>
+<a name="sc_recipes_eventHandles"></a>
 <h3 class="h4">Barriers</h3>
 <p>Distributed systems use <em>barriers</em>
       to block processing of a set of nodes until a condition is met
@@ -334,7 +336,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ol>
-<a name="N10067"></a><a name="sc_doubleBarriers"></a>
+<a name="sc_doubleBarriers"></a>
 <h4>Double Barriers</h4>
 <p>Double barriers enable clients to synchronize the beginning and
       the end of a computation. When enough processes have joined the barrier,
@@ -500,7 +502,7 @@ document.write("Last Published: " + document.lastModified);
       (picking the highest for simplicity) to go away. This means that only a
       single process wakes up on each node deletion except for the last node,
       which wakes up everyone when it is removed.</p>
-<a name="N1011A"></a><a name="sc_recipes_Queues"></a>
+<a name="sc_recipes_Queues"></a>
 <h3 class="h4">Queues</h3>
 <p>Distributed queues are a common data structure. To implement a
     distributed queue in ZooKeeper, first designate a znode to hold the queue,
@@ -528,7 +530,7 @@ document.write("Last Published: " + document.lastModified);
     
 </div>
 </div>
-<a name="N1013E"></a><a name="sc_recipes_priorityQueues"></a>
+<a name="sc_recipes_priorityQueues"></a>
 <h4>Priority Queues</h4>
 <p>To implement a priority queue, you need only make two simple
       changes to the generic <a href="#sc_recipes_Queues">queue
@@ -538,7 +540,7 @@ document.write("Last Published: " + document.lastModified);
       from the queue, a client uses an up-to-date children list meaning that
       the client will invalidate previously obtained children lists if a watch
       notification triggers for the queue node.</p>
-<a name="N1014D"></a><a name="sc_recipes_Locks"></a>
+<a name="sc_recipes_Locks"></a>
 <h3 class="h4">Locks</h3>
 <p>Fully distributed locks that are globally synchronous, meaning at
     any snapshot in time no two clients think they hold the same lock. These
@@ -637,7 +639,7 @@ document.write("Last Published: " + document.lastModified);
 </li>
     
 </ul>
-<a name="N101BF"></a><a name="Shared+Locks"></a>
+<a name="Shared+Locks"></a>
 <h4>Shared Locks</h4>
 <p>You can implement shared locks by with a few changes to the lock
       protocol:</p>
@@ -799,7 +801,7 @@ document.write("Last Published: " + document.lastModified);
       
 </div>
 </div>
-<a name="N1028B"></a><a name="sc_recoverableSharedLocks"></a>
+<a name="sc_recoverableSharedLocks"></a>
 <h4>Recoverable Shared Locks</h4>
 <p>With minor modifications to the Shared Lock protocol, you make
       shared locks revocable by modifying the shared lock protocol:</p>
@@ -821,7 +823,7 @@ document.write("Last Published: " + document.lastModified);
       Laser Beams</em> by stipulating in your protocol that the revoker
       is allowed to delete the lock node if after some length of time the lock
       isn't deleted by the lock holder.</p>
-<a name="N102B7"></a><a name="sc_recipes_twoPhasedCommit"></a>
+<a name="sc_recipes_twoPhasedCommit"></a>
 <h3 class="h4">Two-phased Commit</h3>
 <p>A two-phase commit protocol is an algorithm that lets all clients in
     a distributed system agree either to commit a transaction or abort.</p>
@@ -853,7 +855,7 @@ document.write("Last Published: " + document.lastModified);
 <p>To address the second problem, you can have the coordinator
     propagate the transaction to the sites, and have each site creating its
     own ephemeral node.</p>
-<a name="N102D0"></a><a name="sc_leaderElection"></a>
+<a name="sc_leaderElection"></a>
 <h3 class="h4">Leader Election</h3>
 <p>A simple way of doing leader election with ZooKeeper is to use the
     <strong>SEQUENCE|EPHEMERAL</strong> flags when creating

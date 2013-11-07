@@ -39,6 +39,7 @@ img { border: 0; }
 }
 
 .note, .warning, .fixme {
+  clear:right;
   border: solid black 1px;
   margin: 1em 3em;
 }

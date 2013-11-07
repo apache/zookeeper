@@ -21,10 +21,8 @@ package org.apache.zookeeper;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -105,7 +103,6 @@ import org.apache.zookeeper.server.DataTree;
  */
 public class ZooKeeper {
     private static final Logger LOG;
-    public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
 
     static {
         LOG = Logger.getLogger(ZooKeeper.class);
@@ -117,16 +114,22 @@ public class ZooKeeper {
     private final ZKWatchManager watchManager = new ZKWatchManager();
 
     List<String> getDataWatches() {
-        List<String> rc = new ArrayList<String>(watchManager.dataWatches.keySet());
-        return rc;
+        synchronized(watchManager.dataWatches) {
+            List<String> rc = new ArrayList<String>(watchManager.dataWatches.keySet());
+            return rc;
+        }
     }
     List<String> getExistWatches() {
-        List<String> rc =  new ArrayList<String>(watchManager.existWatches.keySet());
-        return rc;
+        synchronized(watchManager.existWatches) {
+            List<String> rc =  new ArrayList<String>(watchManager.existWatches.keySet());
+            return rc;
+        }
     }
     List<String> getChildWatches() {
-        List<String> rc = new ArrayList<String>(watchManager.childWatches.keySet());
-        return rc;
+        synchronized(watchManager.childWatches) {
+            List<String> rc = new ArrayList<String>(watchManager.childWatches.keySet());
+            return rc;
+        }
     }
 
 /**
@@ -155,7 +158,6 @@ public class ZooKeeper {
         /* (non-Javadoc)
          * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState, Event.EventType, java.lang.String)
          */
-        @Override
         public Set<Watcher> materialize(Watcher.Event.KeeperState state,
                                         Watcher.Event.EventType type,
                                         String clientPath)
@@ -324,6 +326,8 @@ public class ZooKeeper {
         }
     }
 
+    volatile States state;
+
     protected final ClientCnxn cnxn;
 
     /**
@@ -376,8 +380,7 @@ public class ZooKeeper {
                 + " sessionTimeout=" + sessionTimeout + " watcher=" + watcher);
 
         watchManager.defaultWatcher = watcher;
-        cnxn = new ClientCnxn(connectString, sessionTimeout, this,
-                watchManager, getClientCnxnSocket());
+        cnxn = new ClientCnxn(connectString, sessionTimeout, this, watchManager);
         cnxn.start();
     }
 
@@ -439,13 +442,13 @@ public class ZooKeeper {
         LOG.info("Initiating client connection, connectString=" + connectString
                 + " sessionTimeout=" + sessionTimeout
                 + " watcher=" + watcher
-                + " sessionId=" + Long.toHexString(sessionId)
+                + " sessionId=" + sessionId
                 + " sessionPasswd="
                 + (sessionPasswd == null ? "<null>" : "<hidden>"));
 
         watchManager.defaultWatcher = watcher;
-        cnxn = new ClientCnxn(connectString, sessionTimeout, this,
-                watchManager, getClientCnxnSocket(), sessionId, sessionPasswd);
+        cnxn = new ClientCnxn(connectString, sessionTimeout, this, watchManager,
+                sessionId, sessionPasswd);
         cnxn.start();
     }
 
@@ -519,7 +522,7 @@ public class ZooKeeper {
      * @throws InterruptedException
      */
     public synchronized void close() throws InterruptedException {
-        if (!cnxn.getState().isAlive()) {
+        if (!state.isAlive()) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Close called on already closed client");
             }
@@ -733,93 +736,6 @@ public class ZooKeeper {
         }
     }
 
-    
-    /**
-     * Recursively delete the node with the given path. 
-     * <p>
-     * Important: All versions, of all nodes, under the given node are deleted.
-     * <p>
-     * If there is an error with deleting one of the sub-nodes in the tree, 
-     * this operation would abort and would be the responsibility of the app to handle the same.
-     * 
-     * See {@link #delete(String, int)} for more details.
-     * 
-     * @throws IllegalArgumentException if an invalid path is specified
-     */
-    public void deleteRecursive(final String pathRoot)
-        throws InterruptedException, KeeperException
-    {
-        PathUtils.validatePath(pathRoot);
-      
-        List<String> tree = this.listSubTreeBFS(pathRoot);
-        LOG.debug("Deleting " + tree);
-        LOG.debug("Deleting " + tree.size() + " subnodes ");
-        for (int i = tree.size() - 1; i >= 0 ; --i) {
-            //Delete the leaves first and eventually get rid of the root
-            this.delete(tree.get(i), -1); //Delete all versions of the node with -1.
-        }
-    }
-    
-
-    /**
-     * Recursively delete the node with the given path. (async version).
-     * 
-     * <p>
-     * Important: All versions, of all nodes, under the given node are deleted.
-     * <p>
-     * If there is an error with deleting one of the sub-nodes in the tree, 
-     * this operation would abort and would be the responsibility of the app to handle the same.
-     * <p>
-     * 
-     * @throws IllegalArgumentException if an invalid path is specified
-     */
-    public void deleteRecursive(final String pathRoot, VoidCallback cb,
-        Object ctx)
-        throws InterruptedException, KeeperException
-    {
-        PathUtils.validatePath(pathRoot);
-      
-        List<String> tree = this.listSubTreeBFS(pathRoot);
-        LOG.debug("Deleting " + tree);
-        LOG.debug("Deleting " + tree.size() + " subnodes ");
-        for (int i = tree.size() - 1; i >= 0 ; --i) {
-            //Delete the leaves first and eventually get rid of the root
-            this.delete(tree.get(i), -1, cb, ctx); //Delete all versions of the node with -1.
-        }
-    }
-    
-    /**
-     * BFS Traversal of the system under pathRoot, with the entries in the list, in the same order as that of the traversal.
-     * <p>
-     * <b>Important:</b> This is <i>not an atomic snapshot</i> of the tree ever, but the state as it exists across multiple RPCs from zkClient to the ensemble.
-     * For practical purposes, it is suggested to bring the clients to the ensemble down (i.e. prevent writes to pathRoot) to 'simulate' a snapshot behavior.   
-     * 
-     * @param pathRoot The znode path, for which the entire subtree needs to be listed.
-     * @throws InterruptedException 
-     * @throws KeeperException 
-     */
-    public List<String> listSubTreeBFS(final String pathRoot) throws KeeperException, InterruptedException {
-        Deque<String> queue = new LinkedList<String>();
-        List<String> tree = new ArrayList<String>();
-        queue.add(pathRoot);
-        tree.add(pathRoot);
-        while (true) {
-            String node = queue.pollFirst();
-            if (node == null) {
-                break;
-            }
-            List<String> children = this.getChildren(node, false);
-            for (final String child : children) {
-                final String childPath = node + "/" + child;
-                queue.add(childPath);
-                tree.add(childPath);
-            }
-        }
-        return tree;
-    }
-    
-
-    
     /**
      * The Asynchronous version of delete. The request doesn't actually until
      * the asynchronous callback is called.
@@ -1558,7 +1474,7 @@ public class ZooKeeper {
     }
 
     public States getState() {
-        return cnxn.getState();
+        return state;
     }
 
     /**
@@ -1618,7 +1534,7 @@ public class ZooKeeper {
      *         not connected
      */
     protected SocketAddress testableRemoteSocketAddress() {
-        return cnxn.sendThread.getSocket().getRemoteSocketAddress();
+        return cnxn.getRemoteSocketAddress();
     }
 
     /** 
@@ -1631,23 +1547,6 @@ public class ZooKeeper {
      *         not connected
      */
     protected SocketAddress testableLocalSocketAddress() {
-        return cnxn.sendThread.getSocket().getLocalSocketAddress();
-    }
-
-    private static ClientCnxnSocket getClientCnxnSocket() throws IOException {
-        String clientCnxnSocketName = System
-                .getProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET);
-        if (clientCnxnSocketName == null) {
-            clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
-        }
-        try {
-            return (ClientCnxnSocket) Class.forName(clientCnxnSocketName)
-                    .newInstance();
-        } catch (Exception e) {
-            IOException ioe = new IOException("Couldn't instantiate "
-                    + clientCnxnSocketName);
-            ioe.initCause(e);
-            throw ioe;
-        }
+        return cnxn.getLocalSocketAddress();
     }
 }

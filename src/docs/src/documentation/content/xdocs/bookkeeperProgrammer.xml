@@ -69,10 +69,6 @@
         <para><xref linkend="bk_readLedger" /></para>
       </listitem>
       
-      <listitem>
-        <para><xref linkend="bk_deleteLedger" /></para>
-      </listitem>
-      
     </itemizedlist>
     
     <section id="bk_instance">
@@ -601,72 +597,6 @@
 		</para>
 		</listitem>
 
-		<listitem>
-		<para>
-		<computeroutput>ctx</computeroutput> is control object used for accountability purposes. 
-		</para>
-		</listitem>
-	</itemizedlist>	
-    </section>
-
-    <section id="bk_deleteLedger">
-    <title> Deleting a ledger </title>
-    <para>
-    Once a client is done with a ledger and is sure that nobody will ever need to read from it again, they can delete the ledger.
-    The following methods belong to <computeroutput>org.apache.bookkeeper.client.BookKeeper</computeroutput>.
-    </para>
-    
-    <para>
-   	<emphasis role="bold">Synchronous delete:</emphasis>
-   	</para>
-    
-    <para>
-    <computeroutput>
-        public void deleteLedger(long lId) throws InterruptedException, BKException
-    </computeroutput>
-    </para>
-
-	<itemizedlist>
-	<listitem>
-	<para>
-	<computeroutput>lId</computeroutput> is the ledger identifier;
-	</para>
-	</listitem>
-	</itemizedlist>
-    
-    <para>
-   	<emphasis role="bold">Asynchronous delete:</emphasis>
-    </para>
-    <para>
-      <computeroutput>
-	 public void asyncDeleteLedger(long lId, DeleteCallback cb, Object ctx) 
-      </computeroutput>
-    </para>
-	
-    <para>
-    It takes a ledger identifier. Additionally, it takes a callback object 
-    <computeroutput>cb</computeroutput> and a control object <computeroutput>ctx</computeroutput>. The callback object must implement
-    the <computeroutput>DeleteCallback</computeroutput> interface in <computeroutput>org.apache.bookkeeper.client.AsyncCallback</computeroutput>, and
-	a class implementing it has to implement a method called <computeroutput>deleteComplete</computeroutput>
-	that has the following signature: 
-    </para>
-
-	<para>
-	<computeroutput>
-	void deleteComplete(int rc, Object ctx)
-	</computeroutput>    
-	</para>
-	
-	<para>
-	where:
-	</para>
-	<itemizedlist>
-		<listitem>
-		<para>
-		<computeroutput>rc</computeroutput> is a return code (please refer to <computeroutput>org.apache.bookeeper.client.BKDefs</computeroutput> for a list);
-		</para>
-		</listitem>
-	
 		<listitem>
 		<para>
 		<computeroutput>ctx</computeroutput> is control object used for accountability purposes. 

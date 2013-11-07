@@ -23,6 +23,11 @@ import java.io.IOException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 
+/**
+ * Specialized form of ZooKeeper specific for testing. Typically provides
+ * the ability to do unsafe or incorrect operations that allow negative
+ * testing.
+ */
 public class DisconnectableZooKeeper extends ZooKeeper {
     public DisconnectableZooKeeper(String host, int sessionTimeout, Watcher watcher)
         throws IOException
@@ -46,13 +51,4 @@ public class DisconnectableZooKeeper extends ZooKeeper {
         cnxn.disconnect();
     }
 
-    /**
-     * Prevent the client from automatically reconnecting if the connection to the
-     * server is lost
-     */
-    public void dontReconnect() throws Exception {
-        java.lang.reflect.Field f = cnxn.getClass().getDeclaredField("closing");
-        f.setAccessible(true);
-        f.setBoolean(cnxn, true);
-    }
 }

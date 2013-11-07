@@ -24,7 +24,7 @@ import javax.management.JMException;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.jmx.ManagedUtil;
-import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -118,9 +118,9 @@ public class QuorumPeerMain {
   
       LOG.info("Starting quorum peer");
       try {
-          ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
-          cnxnFactory.configure(config.getClientPortAddress(),
-                                config.getMaxClientCnxns());
+          NIOServerCnxn.Factory cnxnFactory =
+              new NIOServerCnxn.Factory(config.getClientPortAddress(),
+                      config.getMaxClientCnxns());
   
           quorumPeer = new QuorumPeer();
           quorumPeer.setClientPortAddress(config.getClientPortAddress());

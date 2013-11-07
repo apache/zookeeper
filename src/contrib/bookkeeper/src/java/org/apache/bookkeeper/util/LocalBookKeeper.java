@@ -38,7 +38,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.server.NIOServerCnxnFactory;
+import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 public class LocalBookKeeper {
@@ -62,7 +62,7 @@ public class LocalBookKeeper {
 	}
 	
 	private final String HOSTPORT = "127.0.0.1:2181";
-	NIOServerCnxnFactory serverFactory;
+	NIOServerCnxn.Factory serverFactory;
 	ZooKeeperServer zks;
 	ZooKeeper zkc;
 	int ZooKeeperDefaultPort = 2181;
@@ -77,7 +77,7 @@ public class LocalBookKeeper {
 	 * @param args
 	 */
 	
-	private void runZookeeper(int maxCC) throws IOException{
+	private void runZookeeper() throws IOException{
 		// create a ZooKeeper server(dataDir, dataLogDir, port)
 		LOG.info("Starting ZK server");
 		//ServerStats.registerAsConcrete();
@@ -88,8 +88,7 @@ public class LocalBookKeeper {
 		    
 		try {
 			zks = new ZooKeeperServer(ZkTmpDir, ZkTmpDir, ZooKeeperDefaultPort);
-			serverFactory =  new NIOServerCnxnFactory();
-			serverFactory.configure(new InetSocketAddress(ZooKeeperDefaultPort), maxCC);
+			serverFactory =  new NIOServerCnxn.Factory(new InetSocketAddress(ZooKeeperDefaultPort));
 			serverFactory.startup(zks);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -144,7 +143,7 @@ public class LocalBookKeeper {
 			System.exit(-1);
 		}
 		LocalBookKeeper lb = new LocalBookKeeper(Integer.parseInt(args[0]));
-		lb.runZookeeper(1000);
+		lb.runZookeeper();
 		lb.initializeZookeper();
 		lb.runBookies();
 		while (true){

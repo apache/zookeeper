@@ -3,7 +3,7 @@
 <head>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta content="Apache Forrest" name="Generator">
-<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
 <title>ZooKeeper Java Example</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
@@ -67,7 +67,7 @@
 <a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -203,6 +203,7 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 <h1>ZooKeeper Java Example</h1>
+<div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
 <li>
@@ -227,18 +228,19 @@ document.write("Last Published: " + document.lastModified);
 </li>
 </ul>
 </div>
+</div>
   
 
   
 
   
-<a name="N10009"></a><a name="ch_Introduction"></a>
+<a name="ch_Introduction"></a>
 <h2 class="h3">A Simple Watch Client</h2>
 <div class="section">
 <p>To introduce you to the ZooKeeper Java API, we develop here a very simple 
     watch client. This ZooKeeper client watches a ZooKeeper node for changes 
     and responds to by starting or stopping a program.</p>
-<a name="N10012"></a><a name="sc_requirements"></a>
+<a name="sc_requirements"></a>
 <h3 class="h4">Requirements</h3>
 <p>The client has four requirements:</p>
 <ul>
@@ -273,7 +275,7 @@ document.write("Last Published: " + document.lastModified);
 <p>If the znode disappears, the client kills the executable.</p>
 </li>
 </ul>
-<a name="N1003B"></a><a name="sc_design"></a>
+<a name="sc_design"></a>
 <h3 class="h4">Program Design</h3>
 <p>Conventionally, ZooKeeper applications are broken into two units, one which maintains the connection, 
    and the other which monitors data.  In this application, the class called the <strong>Executor</strong> 
@@ -285,7 +287,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 
    
-<a name="N1004C"></a><a name="sc_executor"></a>
+<a name="sc_executor"></a>
 <h2 class="h3">The Executor Class</h2>
 <div class="section">
 <p>The Executor object is the primary container of the sample application. It contains 
@@ -431,7 +433,7 @@ public void closing(int rc) {
 </pre>
 </div>
 
-<a name="N100A0"></a><a name="sc_DataMonitor"></a>
+<a name="sc_DataMonitor"></a>
 <h2 class="h3">The DataMonitor Class</h2>
 <div class="section">
 <p>
@@ -571,7 +573,7 @@ function, when DataMonitor gets an event for a znode, it calls
 </div>
 
 
-<a name="N10104"></a><a name="sc_completeSourceCode"></a>
+<a name="sc_completeSourceCode"></a>
 <h2 class="h3">Complete Source Listings</h2>
 <div class="section">
 <div class="note example">
