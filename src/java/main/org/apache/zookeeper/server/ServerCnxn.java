@@ -213,6 +213,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
     protected final static int wchsCmd =
         ByteBuffer.wrap("wchs".getBytes()).getInt();
 
+    protected final static int rwpsCmd =
+    	ByteBuffer.wrap("rwps".getBytes()).getInt();
+    
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
@@ -256,6 +259,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         cmd2String.put(wchsCmd, "wchs");
         cmd2String.put(mntrCmd, "mntr");
         cmd2String.put(isroCmd, "isro");
+        cmd2String.put(rwpsCmd, "rwps");
         cmd2String.put(telnetCloseCmd, "telnet close");
     }
 

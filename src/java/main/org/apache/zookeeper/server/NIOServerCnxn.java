@@ -495,6 +495,9 @@ public class NIOServerCnxn extends ServerCnxn {
 
     private static final String ZK_NOT_SERVING =
         "This ZooKeeper instance is not currently serving requests";
+    
+    private static final String SERVER_PROCESS_STATS_NOT_OPEN =
+    	"server_process_stats not open, use -Dserver_process_stats=true to open.";
 
     /**
      * Set of threads for commmand ports. All the 4
@@ -734,6 +737,35 @@ public class NIOServerCnxn extends ServerCnxn {
             }
         }
     }
+    
+    private class RwpsCommand extends CommandThread {
+        public RwpsCommand( PrintWriter pw ) {
+                super( pw );
+        }
+
+        @Override
+        public void commandRun() {
+                if ( zkServer == null ) {
+                        pw.println( ZK_NOT_SERVING );
+                } else if ( !"true".equalsIgnoreCase( System.getProperty( ServerStats.SERVER_PROCESS_STATS, "false" ) ) ) {
+                        pw.println( SERVER_PROCESS_STATS_NOT_OPEN );
+                } else {
+                        pw.print( "RealTime R/W Statistics:" );
+                        if ( ServerStats.real_time_sps.isEmpty() ) {
+                                pw.print( "No request.\r\n" );
+                        } else {
+                                StringBuilder sb = new StringBuilder();
+                                for ( Integer type : ServerStats.real_time_sps.keySet() ) {
+                                        sb.append( "\r\n" ).append( "\t" )
+                                                        .append( Request.op2String( type ) + ": \t" + ServerStats.real_time_sps.get( type ).getRWps() )
+                                                        .append( "\r\n" );
+                                }
+                                pw.println( sb.toString() );
+                        }
+                }
+
+        }
+    }
 
     private class MonitorCommand extends CommandThread {
 
@@ -900,7 +932,11 @@ public class NIOServerCnxn extends ServerCnxn {
             WatchCommand wcmd = new WatchCommand(pwriter, len);
             wcmd.start();
             return true;
-        } else if (len == mntrCmd) {
+        } else if ( len == rwpsCmd ) {
+            RwpsCommand rwps = new RwpsCommand( pwriter );
+            rwps.start();
+            return true;
+        }else if (len == mntrCmd) {
             MonitorCommand mntr = new MonitorCommand(pwriter);
             mntr.start();
             return true;

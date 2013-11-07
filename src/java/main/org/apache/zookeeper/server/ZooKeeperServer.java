@@ -642,6 +642,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void submitRequest(Request si) {
+    	
+		if ( "true".equalsIgnoreCase( System.getProperty( ServerStats.SERVER_PROCESS_STATS, "false" ) ) ) {
+			statTps( si.type );
+		}
         if (firstProcessor == null) {
             synchronized (this) {
                 try {
@@ -1021,5 +1025,42 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         return rc;
     }
+    
+	/**
+	 * increment the tps of some types:
+	 * <p>
+	 * create<br>
+	 * setWatches<br>
+	 * delete<br>
+	 * exists<br>
+	 * getData<br>
+	 * setData<br>
+	 * getChildren<br>
+	 * getChildren2<br>
+	 * createSession<br>
+	 * closeSession<br>
+	 * </p>
+	 * 
+	 * @param type
+	 */
+	private void statTps( int type ) {
+
+		switch ( type ) {
+		case OpCode.create:
+		case OpCode.setWatches:
+		case OpCode.delete:
+		case OpCode.exists:
+		case OpCode.getData:
+		case OpCode.setData:
+		case OpCode.getChildren:
+		case OpCode.getChildren2:
+		case OpCode.createSession:
+		case OpCode.closeSession:
+			ServerStats.real_time_sps.get( type ).incrementRWps();
+			break;
+		default:
+			return;
+		}
+	}
 
 }
