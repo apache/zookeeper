@@ -174,12 +174,14 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
                 }
                 ((ZooKeeperRetry) this.zooKeeper).setRetryLimit(10);
                 connected = ((ZooKeeperRetry) this.zooKeeper).testConnection();
-                return connected;
             }
         } catch (Exception e) {
+            connected = false;
             e.printStackTrace();
         }
-        connected = false;
+        if (!connected){
+        	disconnect();
+        }
         return connected;
     }
 

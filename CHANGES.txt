@@ -474,6 +474,9 @@ BUGFIXES:
   ZOOKEEPER-1783. Distinguish initial configuration from first established
   configuration (shralex via breed)
 
+  ZOOKEEPER-1812. ZooInspector reconnection always fails if first
+  connection fails (Benjamin Jaton via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
