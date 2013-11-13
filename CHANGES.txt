@@ -186,6 +186,10 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1627. Add org.apache.zookeeper.common to exported packages
   in OSGi MANIFEST (Arnoud Glimmerveen via phunt)
+  
+  ZOOKEEPER-1666. Avoid Reverse DNS lookup if the hostname in 
+  connection string is literal IP address. (George Cao via camille)
+  
 
 Release 3.4.5 - 2012-09-30
 
