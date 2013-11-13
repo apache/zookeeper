@@ -61,11 +61,25 @@ public final class StaticHostProvider implements HostProvider {
             InetAddress resolvedAddresses[] = InetAddress.getAllByName((ia!=null) ? ia.getHostAddress():
                 address.getHostName());
             for (InetAddress resolvedAddress : resolvedAddresses) {
-                this.serverAddresses.add(new InetSocketAddress(resolvedAddress
-                        .getHostAddress(), address.getPort()));
+                // If hostName is null but the address is not, we can tell that
+                // the hostName is an literal IP address. Then we can set the host string as the hostname
+                // safely to avoid reverse DNS lookup.
+                // As far as i know, the only way to check if the hostName is null is use toString().
+                // Both the two implementations of InetAddress are final class, so we can trust the return value of
+                // the toString() method.
+                if (resolvedAddress.toString().startsWith("/") 
+                        && resolvedAddress.getAddress() != null) {
+                    this.serverAddresses.add(
+                            new InetSocketAddress(InetAddress.getByAddress(
+                                    address.getHostName(),
+                                    resolvedAddress.getAddress()), 
+                                    address.getPort()));
+                } else {
+                    this.serverAddresses.add(new InetSocketAddress(resolvedAddress.getHostAddress(), address.getPort()));
+                }  
             }
         }
-
+        
         if (this.serverAddresses.isEmpty()) {
             throw new IllegalArgumentException(
                     "A HostProvider may not be empty!");

@@ -35,10 +35,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Random;
 
 public class StaticHostProviderTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProviderTest.class);
-
+    
     @Test
     public void testNextGoesRound() throws UnknownHostException {
         HostProvider hostProvider = getHostProvider((byte) 2);
@@ -92,6 +94,36 @@ public class StaticHostProviderTest extends ZKTestCase {
         assertNotSame(first, second);
     }
 
+    @Test
+    public void testLiteralIPNoReverseNS() throws Exception {
+        byte size = 30;
+        HostProvider hostProvider = getHostProviderUnresolved(size);
+        for (int i = 0; i < size; i++) {
+            InetSocketAddress next = hostProvider.next(0);
+            assertTrue(next instanceof InetSocketAddress);
+            assertTrue(!next.isUnresolved());
+            assertTrue("Did not match "+ next.toString(), !next.toString().startsWith("/"));
+            // Do NOT trigger the reverse name service lookup.
+            String hostname = next.getHostName();
+            // In this case, the hostname equals literal IP address.
+            hostname.equals(next.getAddress().getHostAddress());
+        }
+    }
+
+    private StaticHostProvider getHostProviderUnresolved(byte size)
+            throws UnknownHostException {
+        return new StaticHostProvider(getUnresolvedServerAddresses(size));
+    }
+
+    private Collection<InetSocketAddress> getUnresolvedServerAddresses(byte size) {
+        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+        while (size > 0) {
+            list.add(InetSocketAddress.createUnresolved("10.10.10." + size, 1234 + size));
+            --size;
+        }
+        return list;
+    }
+    
     private StaticHostProvider getHostProvider(byte size)
             throws UnknownHostException {
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(
