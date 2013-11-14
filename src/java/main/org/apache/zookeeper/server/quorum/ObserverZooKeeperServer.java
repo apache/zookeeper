@@ -136,4 +136,12 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     public String getState() {
         return "observer";
     };    
+
+    @Override
+    public void shutdown() {
+        super.shutdown();
+        if (syncRequestProcessorEnabled && syncProcessor != null) {
+            syncProcessor.shutdown();
+        }
+    }
 }
