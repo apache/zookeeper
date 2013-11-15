@@ -139,8 +139,7 @@
 
       <listitem>
         <para>The following characters are not allowed: \ud800 -uF8FFF,
-        \uFFF0-uFFFF, \uXFFFE - \uXFFFF (where X is a digit 1 - E), \uF0000 -
-        \uFFFFF.</para>
+        \uFFF0 - uFFFF.</para>
       </listitem>
 
       <listitem>
