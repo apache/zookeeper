@@ -172,7 +172,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1584. Adding mvn-install target for deploying the
   zookeeper artifacts to .m2 repository (Ashish Singh via phunt)
 
-  ZOOKEEPER-1324. Remove Duplicate NEWLEADER packets from the Leader to the Follower. (thawan, fpj via fpj)
+  ZOOKEEPER-1324. Remove Duplicate NEWLEADER packets from the
+  Leader to the Follower. (thawan, fpj via fpj)
 
   ZOOKEEPER-1615. minor typos in ZooKeeper Programmer's Guide web page
   (Evan Zacks via phunt)
@@ -189,7 +190,9 @@ IMPROVEMENTS:
   
   ZOOKEEPER-1666. Avoid Reverse DNS lookup if the hostname in 
   connection string is literal IP address. (George Cao via camille)
-  
+ 
+  ZOOKEEPER-1786. ZooKeeper data model documentation is incorrect
+  (Niraj Tolia via fpj)
 
 Release 3.4.5 - 2012-09-30
 
