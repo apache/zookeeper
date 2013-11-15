@@ -684,6 +684,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1666. Avoid Reverse DNS lookup if the hostname in 
   connection string is literal IP address. (George Cao via camille)
 
+  ZOOKEEPER-1786. ZooKeeper data model documentation is incorrect
+  (Niraj Tolia via fpj)
+
 headers
 
 Release 3.4.0 - 
