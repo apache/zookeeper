@@ -93,6 +93,13 @@ public class FastLeaderElection implements Election {
 
     static public class Notification {
         /*
+         * Format version, introduced in 3.4.6
+         */
+        
+        public final static int CURRENTVERSION = 0x1; 
+        int version;
+                
+        /*
          * Proposed leader
          */
         long leader;
@@ -121,6 +128,39 @@ public class FastLeaderElection implements Election {
          * epoch of the proposed leader
          */
         long peerEpoch;
+        
+        @Override
+        public String toString() {
+            return new String(Long.toHexString(version) + " (message format version), " 
+                    + leader + " (n.leader), 0x"
+                    + Long.toHexString(zxid) + " (n.zxid), 0x"
+                    + Long.toHexString(electionEpoch) + " (n.round), " + state
+                    + " (n.state), " + sid + " (n.sid), 0x"
+                    + Long.toHexString(peerEpoch) + " (n.peerEpoch) ");
+        }
+    }
+    
+    static ByteBuffer buildMsg(int state,
+            long leader,
+            long zxid,
+            long electionEpoch,
+            long epoch) {
+        byte requestBytes[] = new byte[40];
+        ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
+
+        /*
+         * Building notification packet to send 
+         */
+
+        requestBuffer.clear();
+        requestBuffer.putInt(state);
+        requestBuffer.putLong(leader);
+        requestBuffer.putLong(zxid);
+        requestBuffer.putLong(electionEpoch);
+        requestBuffer.putLong(epoch);
+        requestBuffer.putInt(Notification.CURRENTVERSION);
+        
+        return requestBuffer;
     }
 
     /**
@@ -188,7 +228,7 @@ public class FastLeaderElection implements Election {
      * spawns a new thread.
      */
 
-    private class Messenger {
+    protected class Messenger {
 
         /**
          * Receives messages from instance of QuorumCnxManager on
@@ -250,6 +290,9 @@ public class FastLeaderElection implements Election {
                             boolean backCompatibility = (response.buffer.capacity() == 28);
                             response.buffer.clear();
 
+                            // Instantiate Notification and set its attributes
+                            Notification n = new Notification();
+                            
                             // State of peer that sent this message
                             QuorumPeer.ServerState ackstate = QuorumPeer.ServerState.LOOKING;
                             switch (response.buffer.getInt()) {
@@ -265,10 +308,10 @@ public class FastLeaderElection implements Election {
                             case 3:
                                 ackstate = QuorumPeer.ServerState.OBSERVING;
                                 break;
+                            default:
+                                continue;
                             }
-
-                            // Instantiate Notification and set its attributes
-                            Notification n = new Notification();
+                            
                             n.leader = response.buffer.getLong();
                             n.zxid = response.buffer.getLong();
                             n.electionEpoch = response.buffer.getLong();
@@ -282,6 +325,12 @@ public class FastLeaderElection implements Election {
                                 }
                                 n.peerEpoch = ZxidUtils.getEpochFromZxid(n.zxid);
                             }
+
+                            /*
+                             * Version added in 3.4.6
+                             */
+
+                            n.version = (response.buffer.remaining() >= 4) ? response.buffer.getInt() : 0x0;
 
                             /*
                              * Print notification info
@@ -383,23 +432,13 @@ public class FastLeaderElection implements Election {
              *
              * @param m     message to send
              */
-            private void process(ToSend m) {
-                byte requestBytes[] = new byte[36];
-                ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
-
-                /*
-                 * Building notification packet to send
-                 */
-
-                requestBuffer.clear();
-                requestBuffer.putInt(m.state.ordinal());
-                requestBuffer.putLong(m.leader);
-                requestBuffer.putLong(m.zxid);
-                requestBuffer.putLong(m.electionEpoch);
-                requestBuffer.putLong(m.peerEpoch);
-
+            void process(ToSend m) {
+                ByteBuffer requestBuffer = buildMsg(m.state.ordinal(), 
+                                                        m.leader,
+                                                        m.zxid, 
+                                                        m.electionEpoch, 
+                                                        m.peerEpoch);
                 manager.toSend(m.sid, requestBuffer);
-
             }
         }
 
@@ -547,11 +586,7 @@ public class FastLeaderElection implements Election {
 
 
     private void printNotification(Notification n){
-        LOG.info("Notification: " + n.leader + " (n.leader), 0x"
-                + Long.toHexString(n.zxid) + " (n.zxid), 0x"
-                + Long.toHexString(n.electionEpoch) + " (n.round), " + n.state
-                + " (n.state), " + n.sid + " (n.sid), 0x"
-                + Long.toHexString(n.peerEpoch) + " (n.peerEPoch), "
+        LOG.info("Notification: " + n.toString()
                 + self.getPeerState() + " (my state)");
     }
 

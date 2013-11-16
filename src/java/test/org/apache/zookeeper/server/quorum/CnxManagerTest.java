@@ -74,20 +74,7 @@ public class CnxManagerTest extends ZKTestCase {
     }
 
     ByteBuffer createMsg(int state, long leader, long zxid, long epoch){
-        byte requestBytes[] = new byte[28];
-        ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
-
-        /*
-         * Building notification packet to send
-         */
-
-        requestBuffer.clear();
-        requestBuffer.putInt(state);
-        requestBuffer.putLong(leader);
-        requestBuffer.putLong(zxid);
-        requestBuffer.putLong(epoch);
-
-        return requestBuffer;
+        return FastLeaderElection.buildMsg(state, leader, zxid, 0, epoch);
     }
 
     class CnxManagerThread extends Thread {

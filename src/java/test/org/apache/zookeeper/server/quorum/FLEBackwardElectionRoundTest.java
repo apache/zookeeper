@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,12 +32,12 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.apache.zookeeper.test.FLETestUtils.LEThread;
 
 public class FLEBackwardElectionRoundTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(FLELostMessageTest.class);
@@ -118,7 +118,8 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         QuorumCnxManager.Listener listener = cnxManagers[0].listener;
         listener.start();
 
-        cnxManagers[0].toSend(0l, FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 0, 0, 1));
+        ByteBuffer msg = FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 0, 0, 1);
+        cnxManagers[0].toSend(0l, msg);
         
         /*
          * Start mock server 2
@@ -128,7 +129,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         listener = cnxManagers[1].listener;
         listener.start();
 
-        cnxManagers[1].toSend(0l, FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 0, 0, 1));
+        cnxManagers[1].toSend(0l, msg);
         
         /*
          * Run another instance of leader election.
@@ -140,8 +141,8 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         /*
          * Send the same messages, this time should not make 0 the leader.
          */
-        cnxManagers[0].toSend(0l, FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 0, 0, 1));
-        cnxManagers[1].toSend(0l, FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 0, 0, 1));
+        cnxManagers[0].toSend(0l, msg);
+        cnxManagers[1].toSend(0l, msg);
         
         
         thread.join(5000);
