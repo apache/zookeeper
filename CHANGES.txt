@@ -160,6 +160,8 @@ BUGFIXES:
   ZOOKEEPER-1812. ZooInspector reconnection always fails if first
   connection fails (Benjamin Jaton via phunt)
 
+  ZOOKEEPER-1597. Windows build failing (michim via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
