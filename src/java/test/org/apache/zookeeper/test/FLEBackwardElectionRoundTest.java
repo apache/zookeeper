@@ -93,9 +93,10 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         for(int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
             peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress(clientport),
-                            new InetSocketAddress(PortAssignment.unique())));
+                new QuorumServer(i,
+                    new InetSocketAddress("127.0.0.1", clientport),
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = clientport;
         }

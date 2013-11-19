@@ -477,6 +477,9 @@ BUGFIXES:
   ZOOKEEPER-1812. ZooInspector reconnection always fails if first
   connection fails (Benjamin Jaton via phunt)
 
+  ZOOKEEPER-1815. Tolerate incorrectly set system hostname in tests
+  (some one via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
