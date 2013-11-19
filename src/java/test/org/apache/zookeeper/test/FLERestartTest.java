@@ -159,9 +159,11 @@ public class FLERestartTest extends ZKTestCase {
         LOG.info("TestLE: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique())));
+                new QuorumServer(i,
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = PortAssignment.unique();
         }

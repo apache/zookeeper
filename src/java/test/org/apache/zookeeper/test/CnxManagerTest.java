@@ -65,10 +65,13 @@ public class CnxManagerTest extends ZKTestCase {
             peerQuorumPort[i] = PortAssignment.unique();
             peerClientPort[i] = PortAssignment.unique();
             peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress(peerQuorumPort[i]),
-                    new InetSocketAddress(PortAssignment.unique()), 
-                    new InetSocketAddress(peerClientPort[i])));
+                new QuorumServer(i,
+                    new InetSocketAddress(
+                        "127.0.0.1", peerQuorumPort[i]),
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress(
+                        "127.0.0.1", peerClientPort[i])));
             peerTmpdir[i] = ClientBase.createTmpDir();
         }
     }

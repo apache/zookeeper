@@ -305,10 +305,13 @@ public class FLETest extends ZKTestCase {
         for(int i = 0; i < count; i++) {
             port[i] = PortAssignment.unique();
             peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                    new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                    new InetSocketAddress("127.0.0.1", port[i])));
+                new QuorumServer(i,
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress(
+                        "127.0.0.1", port[i])));
             tmpdir[i] = ClientBase.createTmpDir();           
         }
 
@@ -410,10 +413,13 @@ public class FLETest extends ZKTestCase {
         for(sid = 0; sid < 3; sid++) {
             port[sid] = PortAssignment.unique();
             peers.put(Long.valueOf(sid),
-                    new QuorumServer(sid,
-                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                    new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                    new InetSocketAddress("127.0.0.1", port[sid])));
+                new QuorumServer(sid,
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress(
+                        "127.0.0.1", port[sid])));
             tmpdir[sid] = ClientBase.createTmpDir();          
         }
         // start 2 peers and verify if they form the cluster
@@ -467,9 +473,11 @@ public class FLETest extends ZKTestCase {
         ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
         for(sid = 0; sid < 3; sid++) {
             peers.put(Long.valueOf(sid),
-                    new QuorumServer(sid,
-                            new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique())));
+                new QuorumServer(sid,
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique()),
+                    new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique())));
             tmpdir[sid] = ClientBase.createTmpDir();
             port[sid] = PortAssignment.unique();
         }

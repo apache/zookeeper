@@ -29,6 +29,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.EOFException;
 import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -309,8 +310,8 @@ public class Zab1_0Test {
 		}
     }
     static Socket[] getSocketPair() throws IOException {
-        ServerSocket ss = new ServerSocket();
-        ss.bind(null);
+        ServerSocket ss =
+            new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
         InetSocketAddress endPoint = (InetSocketAddress) ss.getLocalSocketAddress();
         Socket s = new Socket(endPoint.getAddress(), endPoint.getPort());
         return new Socket[] { s, ss.accept() };
@@ -464,8 +465,8 @@ public class Zab1_0Test {
             follower = createFollower(tmpDir, peer);
             peer.follower = follower;
             
-            ServerSocket ss = new ServerSocket();
-            ss.bind(null);
+            ServerSocket ss =
+                new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
             follower.setLeaderSocketAddress((InetSocketAddress)ss.getLocalSocketAddress());
             final Follower followerForThread = follower;
             
@@ -517,8 +518,8 @@ public class Zab1_0Test {
             observer = createObserver(tmpDir, peer);
             peer.observer = observer;
 
-            ServerSocket ss = new ServerSocket();
-            ss.bind(null);
+            ServerSocket ss =
+                new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
             observer.setLeaderSocketAddress((InetSocketAddress)ss.getLocalSocketAddress());
             final Observer observerForThread = observer;
 
@@ -1291,9 +1292,18 @@ public class Zab1_0Test {
         peer.initLimit = 2;
         peer.tickTime = 2000;
         
-        peers.put(0L, new QuorumServer(0, new InetSocketAddress(33221), new InetSocketAddress(33231), new InetSocketAddress(33241)));
-        peers.put(1L, new QuorumServer(1, new InetSocketAddress(33223), new InetSocketAddress(33233), new InetSocketAddress(33243))); 
-        peers.put(2L, new QuorumServer(2, new InetSocketAddress(33224), new InetSocketAddress(33234), new InetSocketAddress(33245))); 
+        peers.put(0L, new QuorumServer(
+            0, new InetSocketAddress("127.0.0.1", 33221),
+               new InetSocketAddress("127.0.0.1", 33231),
+               new InetSocketAddress("127.0.0.1", 33241)));
+        peers.put(1L, new QuorumServer(
+            1, new InetSocketAddress("127.0.0.1", 33223),
+               new InetSocketAddress("127.0.0.1", 33233),
+               new InetSocketAddress("127.0.0.1", 33243)));
+        peers.put(2L, new QuorumServer(
+            2, new InetSocketAddress("127.0.0.1", 33224),
+               new InetSocketAddress("127.0.0.1", 33234),
+               new InetSocketAddress("127.0.0.1", 33245)));
         
         peer.setQuorumVerifier(new QuorumMaj(peers), false);
         peer.setCnxnFactory(new NullServerCnxnFactory());

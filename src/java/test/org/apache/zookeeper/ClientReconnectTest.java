@@ -60,7 +60,7 @@ public class ClientReconnectTest extends TestCase {
     public void testClientReconnect() throws IOException, InterruptedException {
         HostProvider hostProvider = mock(HostProvider.class);
         when(hostProvider.size()).thenReturn(1);
-        InetSocketAddress inaddr = new InetSocketAddress(1111);
+        InetSocketAddress inaddr = new InetSocketAddress("127.0.0.1", 1111);
         when(hostProvider.next(anyLong())).thenReturn(inaddr);
         ZooKeeper zk = mock(ZooKeeper.class);
         sc =  SocketChannel.open();
