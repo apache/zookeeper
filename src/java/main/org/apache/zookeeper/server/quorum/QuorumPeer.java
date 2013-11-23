@@ -204,6 +204,11 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      * This is who I think the leader currently is.
      */
     volatile private Vote currentVote;
+    
+    /**
+     * ... and its counterpart for backward compatibility
+     */
+    volatile private Vote bcVote;
         
     public synchronized Vote getCurrentVote(){
         return currentVote;
@@ -211,8 +216,20 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
        
     public synchronized void setCurrentVote(Vote v){
         currentVote = v;
-    }    
+    }
+    
+    synchronized Vote getBCVote() {
+        if (bcVote == null) {
+            return currentVote;
+        } else {
+            return bcVote;
+        }
+    }
 
+    synchronized void setBCVote(Vote v) {
+        bcVote = v;
+    }
+    
     volatile boolean running = true;
 
     /**
@@ -715,6 +732,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                         };
                         try {
                             roZkMgr.start();
+                            setBCVote(null);
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception",e);
@@ -727,6 +745,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
                         }
                     } else {
                         try {
+                            setBCVote(null);
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
@@ -1202,6 +1221,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      */
     protected void updateElectionVote(long newEpoch) {
         Vote currentVote = getCurrentVote();
+        setBCVote(currentVote);
         if (currentVote != null) {
             setCurrentVote(new Vote(currentVote.getId(),
                 currentVote.getZxid(),

@@ -66,14 +66,6 @@ public class FastLeaderElection implements Election {
      */
 
     final static int maxNotificationInterval = 60000;
-    
-    /**
-     * This value is passed to the methods that check the quorum
-     * majority of an established ensemble for those values that
-     * should not be taken into account in the comparison 
-     * (electionEpoch and zxid). 
-     */
-    final static int IGNOREVALUE = -1;
 
     /**
      * Connection manager. Fast leader election uses TCP for
@@ -330,7 +322,8 @@ public class FastLeaderElection implements Election {
                              * Version added in 3.4.6
                              */
 
-                            n.version = (response.buffer.remaining() >= 4) ? response.buffer.getInt() : 0x0;
+                            n.version = (response.buffer.remaining() >= 4) ? 
+                                         response.buffer.getInt() : 0x0;
 
                             /*
                              * Print notification info
@@ -377,14 +370,29 @@ public class FastLeaderElection implements Election {
                                                 Long.toHexString(current.getZxid()) +
                                                 " leader=" + current.getId());
                                     }
-                                    ToSend notmsg = new ToSend(
-                                            ToSend.mType.notification,
-                                            current.getId(),
-                                            current.getZxid(),
-                                            current.getElectionEpoch(),
-                                            self.getPeerState(),
-                                            response.sid,
-                                            current.getPeerEpoch());
+                                    
+                                    ToSend notmsg;
+                                    if(n.version > 0x0) {
+                                        notmsg = new ToSend(
+                                                ToSend.mType.notification,
+                                                current.getId(),
+                                                current.getZxid(),
+                                                current.getElectionEpoch(),
+                                                self.getPeerState(),
+                                                response.sid,
+                                                current.getPeerEpoch());
+                                        
+                                    } else {
+                                        Vote bcVote = self.getBCVote();
+                                        notmsg = new ToSend(
+                                                ToSend.mType.notification,
+                                                bcVote.getId(),
+                                                bcVote.getZxid(),
+                                                bcVote.getElectionEpoch(),
+                                                self.getPeerState(),
+                                                response.sid,
+                                                bcVote.getPeerEpoch());
+                                    }
                                     sendqueue.offer(notmsg);
                                 }
                             }
@@ -625,7 +633,7 @@ public class FastLeaderElection implements Election {
      *  @param l        Identifier of the vote received last
      *  @param zxid     zxid of the the vote received last
      */
-    private boolean termPredicate(
+    protected boolean termPredicate(
             HashMap<Long, Vote> votes,
             Vote vote) {
 
@@ -655,7 +663,7 @@ public class FastLeaderElection implements Election {
      * @param   leader  leader id
      * @param   electionEpoch   epoch id
      */
-    private boolean checkLeader(
+    protected boolean checkLeader(
             HashMap<Long, Vote> votes,
             long leader,
             long electionEpoch){
@@ -677,6 +685,30 @@ public class FastLeaderElection implements Election {
         } 
 
         return predicate;
+    }
+    
+    /**
+     * This predicate checks that a leader has been elected. It doesn't
+     * make a lot of sense without context (check lookForLeader) and it
+     * has been separated for testing purposes.
+     * 
+     * @param recv  map of received votes 
+     * @param ooe   map containing out of election votes (LEADING or FOLLOWING)
+     * @param n     Notification
+     * @return          
+     */
+    protected boolean ooePredicate(HashMap<Long,Vote> recv, 
+                                    HashMap<Long,Vote> ooe, 
+                                    Notification n) {
+        
+        return (termPredicate(recv, new Vote(n.version, 
+                                             n.leader,
+                                             n.zxid, 
+                                             n.electionEpoch, 
+                                             n.peerEpoch, 
+                                             n.state))
+                && checkLeader(ooe, n.leader, n.electionEpoch));
+        
     }
 
     synchronized void updateProposal(long leader, long zxid, long epoch){
@@ -881,7 +913,9 @@ public class FastLeaderElection implements Election {
                                         ServerState.LEADING: learningState());
 
                                 Vote endVote = new Vote(proposedLeader,
-                                        proposedZxid, proposedEpoch);
+                                                        proposedZxid,
+                                                        logicalclock,
+                                                        proposedEpoch);
                                 leaveInstance(endVote);
                                 return endVote;
                             }
@@ -897,51 +931,52 @@ public class FastLeaderElection implements Election {
                          * together.
                          */
                         if(n.electionEpoch == logicalclock){
-                            recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
-                            if(termPredicate(recvset, new Vote(n.leader,
-                                            n.zxid, n.electionEpoch, n.peerEpoch, n.state))
-                                            && checkLeader(outofelection, n.leader, n.electionEpoch)) {
+                            recvset.put(n.sid, new Vote(n.leader,
+                                                          n.zxid,
+                                                          n.electionEpoch,
+                                                          n.peerEpoch));
+                           
+                            if(ooePredicate(recvset, outofelection, n)) {
                                 self.setPeerState((n.leader == self.getId()) ?
                                         ServerState.LEADING: learningState());
 
-                                Vote endVote = new Vote(n.leader, n.zxid, n.peerEpoch);
+                                Vote endVote = new Vote(n.leader, 
+                                        n.zxid, 
+                                        n.electionEpoch, 
+                                        n.peerEpoch);
                                 leaveInstance(endVote);
                                 return endVote;
                             }
                         }
 
                         /*
-                         * Before joining an established ensemble, verify that
-                         * a majority are following the same leader.
-                         * Only peer epoch is used to check that the votes come
-                         * from the same ensemble. This is because there is at
-                         * least one corner case in which the ensemble can be
-                         * created with inconsistent zxid and election epoch
-                         * info. However, given that only one ensemble can be
-                         * running at a single point in time and that each 
-                         * epoch is used only once, using only the epoch to 
-                         * compare the votes is sufficient.
-                         * 
-                         * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
+                         * Before joining an established ensemble, verify
+                         * a majority is following the same leader.
                          */
-                        outofelection.put(n.sid, new Vote(n.leader, 
-                                IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state));
-                        if (termPredicate(outofelection, new Vote(n.leader,
-                                IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state))
-                                && checkLeader(outofelection, n.leader, IGNOREVALUE)) {
+                        outofelection.put(n.sid, new Vote(n.version,
+                                                            n.leader,
+                                                            n.zxid,
+                                                            n.electionEpoch,
+                                                            n.peerEpoch,
+                                                            n.state));
+           
+                        if(ooePredicate(outofelection, outofelection, n)) {
                             synchronized(this){
                                 logicalclock = n.electionEpoch;
                                 self.setPeerState((n.leader == self.getId()) ?
                                         ServerState.LEADING: learningState());
                             }
-                            Vote endVote = new Vote(n.leader, n.zxid, n.peerEpoch);
+                            Vote endVote = new Vote(n.leader,
+                                                    n.zxid,
+                                                    n.electionEpoch,
+                                                    n.peerEpoch);
                             leaveInstance(endVote);
                             return endVote;
                         }
                         break;
                     default:
-                        LOG.warn("Notification state unrecoginized: " + n.state
-                              + " (n.state), " + n.sid + " (n.sid)");
+                        LOG.warn("Notification state unrecognized: {} (n.state), {} (n.sid)",
+                                n.state, n.sid);
                         break;
                     }
                 } else {

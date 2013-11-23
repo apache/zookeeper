@@ -19,9 +19,12 @@
 package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class Vote {
+    private static final Logger LOG = LoggerFactory.getLogger(Vote.class);
     
     public Vote(long id, 
                     long zxid) {
@@ -125,19 +128,42 @@ public class Vote {
             return false;
         }
         Vote other = (Vote) o;
-        return (id == other.id
+        
+        
+        /*
+         * There are two things going on in the logic below.
+         * First, we compare votes of servers out of election
+         * using only id and peer epoch. Second, if one version
+         * is 0x0 and the other isn't, then we only use the
+         * leader id. This case is here to enable rolling upgrades.
+         * 
+         * {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1805}
+         */
+        if ((state == ServerState.LOOKING) ||
+                (other.state == ServerState.LOOKING)) {
+            return (id == other.id
                     && zxid == other.zxid
                     && electionEpoch == other.electionEpoch
                     && peerEpoch == other.peerEpoch);
-
+        } else {
+            if ((version > 0x0) ^ (other.version > 0x0)) {
+                return id == other.id;
+            } else {
+                return (id == other.id
+                        && peerEpoch == other.peerEpoch);
+            }
+        } 
     }
-    
+
     @Override
     public int hashCode() {
         return (int) (id & zxid);
     }
 
     public String toString() {
-        return "(" + id + ", " + Long.toHexString(zxid) + ", " + Long.toHexString(peerEpoch) + ")";
+        return String.format("(%d, %s, %s)",
+                                id,
+                                Long.toHexString(zxid),
+                                Long.toHexString(peerEpoch));
     }
 }
