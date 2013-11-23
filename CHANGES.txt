@@ -162,6 +162,8 @@ BUGFIXES:
 
   ZOOKEEPER-1597. Windows build failing (michim via fpj)
 
+  ZOOKEEPER-1817. Fix don't care for b3.4 (fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
