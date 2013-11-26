@@ -20,8 +20,13 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileReader;
 import java.io.LineNumberReader;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -29,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Layout;
@@ -44,8 +50,10 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,6 +64,9 @@ import org.junit.Test;
  *
  */
 public class QuorumPeerMainTest extends QuorumPeerTestBase {
+    protected static final Logger LOG =
+        Logger.getLogger(QuorumPeerMainTest.class);
+
 	/**
      * Verify the ability to start a cluster.
      */
@@ -668,5 +679,107 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
            Assert.fail("QuorumPeer took " + (end -start) +
                     " to shutdown, expected " + maxwait);
         }
+    }
+
+    static long readLongFromFile(File file) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        String line = "";
+        try {
+            line = br.readLine();
+            return Long.parseLong(line);
+        } catch(NumberFormatException e) {
+            throw new IOException("Found " + line + " in " + file);
+        } finally {
+            br.close();
+        }
+    }
+
+    static void writeLongToFile(File file, long value) throws IOException {
+        AtomicFileOutputStream out = new AtomicFileOutputStream(file);
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out));
+        try {
+            bw.write(Long.toString(value));
+            bw.flush();
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            LOG.error("Failed to write new file " + file, e);
+            out.abort();
+            throw e;
+        }
+    }
+
+    /**
+     * ZOOKEEPER-1653 Make sure the server starts if the current epoch is less
+     * than the epoch from last logged zxid and updatingEpoch file exists.
+     */
+    @Test
+    public void testUpdatingEpoch() throws Exception {
+        // Create a cluster and restart them multiple times to bump the epoch.
+        int numServers = 3;
+        Servers servers = LaunchServers(numServers);
+        File currentEpochFile;
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < numServers; j++) {
+                servers.mt[j].shutdown();
+            }
+            waitForAll(servers.zk, States.CONNECTING);
+            for (int j = 0; j < numServers; j++) {
+                servers.mt[j].start();
+            }
+            waitForAll(servers.zk, States.CONNECTED);
+        }
+
+        // Current epoch is 11 now.
+        for (int i = 0; i < numServers; i++) {
+            currentEpochFile = new File(
+                new File(servers.mt[i].dataDir, "version-2"),
+                QuorumPeer.CURRENT_EPOCH_FILENAME);
+            LOG.info("Validating current epoch: " + servers.mt[i].dataDir);
+            Assert.assertEquals("Current epoch should be 11.", 11,
+                                readLongFromFile(currentEpochFile));
+        }
+
+        // Find a follower and get epoch from the last logged zxid.
+        int followerIndex = -1;
+        for (int i = 0; i < numServers; i++) {
+            if (servers.mt[i].main.quorumPeer.leader == null) {
+                followerIndex = i;
+                break;
+            }
+        }
+        Assert.assertTrue("Found a valid follower",
+                          followerIndex >= 0 && followerIndex < numServers);
+        MainThread follower = servers.mt[followerIndex];
+        long zxid = follower.main.quorumPeer.getLastLoggedZxid();
+        long epochFromZxid = ZxidUtils.getEpochFromZxid(zxid);
+
+        // Shutdown the cluster
+        for (int i = 0; i < numServers; i++) {
+          servers.mt[i].shutdown();
+        }
+        waitForAll(servers.zk, States.CONNECTING);
+
+        // Make current epoch less than epoch from the last logged zxid.
+        // The server should fail to start.
+        File followerDataDir = new File(follower.dataDir, "version-2");
+        currentEpochFile = new File(followerDataDir,
+                QuorumPeer.CURRENT_EPOCH_FILENAME);
+        writeLongToFile(currentEpochFile, epochFromZxid - 1);
+        follower.start();
+        Assert.assertTrue(follower.mainFailed.await(10, TimeUnit.SECONDS));
+
+        // Touch the updateEpoch file. Now the server should start.
+        File updatingEpochFile = new File(followerDataDir,
+                QuorumPeer.UPDATING_EPOCH_FILENAME);
+        updatingEpochFile.createNewFile();
+        for (int i = 0; i < numServers; i++) {
+          servers.mt[i].start();
+        }
+        waitForAll(servers.zk, States.CONNECTED);
+        Assert.assertNotNull("Make sure the server started with acceptEpoch",
+                             follower.main.quorumPeer.getActiveServer());
+        Assert.assertFalse("updatingEpoch file should get deleted",
+                           updatingEpochFile.exists());
     }
 }

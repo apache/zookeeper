@@ -24,6 +24,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -57,6 +58,8 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     public static class MainThread implements Runnable {
         final File confFile;
         volatile TestQPMain main;
+        final File dataDir;
+        CountDownLatch mainFailed;
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
                 throws IOException {
@@ -70,7 +73,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
 
-            File dataDir = new File(tmpDir, "data");
+            dataDir = new File(tmpDir, "data");
             if (!dataDir.mkdir()) {
                 throw new IOException("Unable to mkdir " + dataDir);
             }
@@ -101,6 +104,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             main = new TestQPMain();
             currentThread = new Thread(this);
             currentThread.start();
+            mainFailed = new CountDownLatch(1);
         }
 
         public void run() {
@@ -111,6 +115,8 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             } catch (Exception e) {
                 // test will still fail even though we just log/ignore
                 LOG.error("unexpected exception in run", e);
+                main.shutdown();
+                mainFailed.countDown();
             } finally {
                 currentThread = null;
             }
