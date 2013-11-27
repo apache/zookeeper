@@ -480,6 +480,9 @@ BUGFIXES:
   ZOOKEEPER-1815. Tolerate incorrectly set system hostname in tests
   (some one via michim)
 
+  ZOOKEEPER-1821. very ugly warning when compiling load_gen.c
+  (german blanco via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
