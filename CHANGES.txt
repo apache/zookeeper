@@ -167,6 +167,9 @@ BUGFIXES:
   ZOOKEEPER-1653. zookeeper fails to start because of inconsistent
   epoch (michim via fpj)
 
+  ZOOKEEPER-1821. very ugly warning when compiling load_gen.c
+  (german blanco via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
