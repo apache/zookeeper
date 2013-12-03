@@ -181,7 +181,7 @@ def metric_handler(name):
             print >>sys.stderr, e
             metric_handler.info = {}
 
-    return metric_handler.info.get(name, 0)
+    return metric_handler.info
 
 def metric_init(params=None):
     params = params or {}
@@ -239,8 +239,11 @@ def metric_cleanup():
 if __name__ == '__main__':
     ds = metric_init({'host':'localhost', 'port': '2181'})
     while True:
+        metrics_data = metric_handler()
         for d in ds:
-            print "%s=%s" % (d['name'], metric_handler(d['name']))
+            zk_metric_key = d['name']
+            if metrics_data.has_key(zk_metric_key):
+                print "%s=%s" % (zk_metric_key, metrics_data[zk_metric_key])
         time.sleep(10)
 
 
