@@ -56,7 +56,12 @@ class ZooKeeperServer(object):
         s.connect(self._address)
         s.send(cmd)
 
-        data = s.recv(2048)
+        data = ""
+        newdata = s.recv(2048)
+        while newdata:
+            data += newdata
+            newdata = s.recv(2048)
+
         s.close()
 
         return data
