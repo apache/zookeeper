@@ -182,10 +182,21 @@ void my_string_completion(int rc, const char *name, const void *data) {
       shutdownThisThing=1;
 }
 
+void my_string_completion_free_data(int rc, const char *name, const void *data) {
+    my_string_completion(rc, name, data);
+    free((void*)data);
+}
+
 void my_string_stat_completion(int rc, const char *name, const struct Stat *stat,
         const void *data)  {
     my_string_completion(rc, name, data);
     dumpStat(stat);
+}
+
+void my_string_stat_completion_free_data(int rc, const char *name,
+        const struct Stat *stat, const void *data)  {
+    my_string_stat_completion(rc, name, stat, data);
+    free((void*)data);
 }
 
 void my_data_completion(int rc, const char *value, int value_len,
@@ -544,10 +555,10 @@ void processline(char *line) {
 //        }
         if (is_create2) {
           rc = zoo_acreate2(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, flags,
-                my_string_stat_completion, strdup(line));
+                my_string_stat_completion_free_data, strdup(line));
         } else {
           rc = zoo_acreate(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, flags,
-                  my_string_completion, strdup(line));
+                my_string_completion_free_data, strdup(line));
         }
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
@@ -572,7 +583,7 @@ void processline(char *line) {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
             return;
         }
-        rc = zoo_async(zh, line, my_string_completion, strdup(line));
+        rc = zoo_async(zh, line, my_string_completion_free_data, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }

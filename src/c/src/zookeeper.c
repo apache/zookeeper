@@ -417,6 +417,8 @@ static void destroy(zhandle_t *zh)
     destroy_zk_hashtable(zh->active_node_watchers);
     destroy_zk_hashtable(zh->active_exist_watchers);
     destroy_zk_hashtable(zh->active_child_watchers);
+    addrvec_free(&zh->addrs_old);
+    addrvec_free(&zh->addrs_new);
 }
 
 static void setup_random()
