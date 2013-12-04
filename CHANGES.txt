@@ -170,6 +170,8 @@ BUGFIXES:
   ZOOKEEPER-1821. very ugly warning when compiling load_gen.c
   (german blanco via fpj)
 
+  ZOOKEEPER-1632. fix memory leaks in cli_st (fpj via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
