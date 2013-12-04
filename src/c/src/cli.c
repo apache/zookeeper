@@ -182,6 +182,11 @@ void my_string_completion(int rc, const char *name, const void *data) {
       shutdownThisThing=1;
 }
 
+void my_string_completion_free_data(int rc, const char *name, const void *data) {
+    my_string_completion(rc, name, data);
+    free((void*)data);
+}
+
 void my_data_completion(int rc, const char *value, int value_len,
         const struct Stat *stat, const void *data) {
     struct timeval tv;
@@ -418,7 +423,7 @@ void processline(char *line) {
 //                    my_string_completion, strdup(line));
 //        }
         rc = zoo_acreate(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, flags,
-                my_string_completion, strdup(line));
+                my_string_completion_free_data, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
@@ -442,7 +447,7 @@ void processline(char *line) {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
             return;
         }
-        rc = zoo_async(zh, line, my_string_completion, strdup(line));
+        rc = zoo_async(zh, line, my_string_completion_free_data, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
