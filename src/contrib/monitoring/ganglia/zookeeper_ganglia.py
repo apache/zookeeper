@@ -85,8 +85,18 @@ class ZooKeeperServer(object):
         if version:
             result['zk_version'] = version[version.index(':')+1:].strip()
 
-        # skip all lines until we find the empty one
-        while h.readline().strip(): pass
+        # count the number of connected clients till you get to a blank line
+        line = h.readline().strip()
+        num_clients=0
+        while line: # this will break on the first empty line
+            # lines that look like this are connected clients:
+            # /10.0.0.128:38471[1](queued=0,recved=302,sent=302)
+            m = re.match('/[0-9.]+:\d+.*', line)
+            if m is not None:
+                num_clients += 1
+            # get the next line and repeat
+            line = h.readline().strip()
+        result['zk_connected_clients'] = num_clients
 
         for line in h.readlines():
             m = re.match('Latency min/avg/max: (\d+)/(\d+)/(\d+)', line)
@@ -169,6 +179,7 @@ def metric_init(params=None):
             'units': 'packets',
             'slope': 'positive'
         },
+        'zk_connected_clients': {'units': 'connections'},
         'zk_outstanding_requests': {'units': 'connections'},
         'zk_znode_count': {'units': 'znodes'},
         'zk_watch_count': {'units': 'watches'},

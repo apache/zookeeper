@@ -35,6 +35,7 @@ collection_group {
   metric { name = "zk_min_latency" }
   metric { name = "zk_packets_received" }
   metric { name = "zk_packets_sent" }
+  metric { name = "zk_connected_clients" }
   metric { name = "zk_outstanding_requests" }
   metric { name = "zk_znode_count" }
   metric { name = "zk_watch_count" }
