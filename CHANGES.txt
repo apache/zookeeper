@@ -485,6 +485,9 @@ BUGFIXES:
 
   ZOOKEEPER-1632. fix memory leaks in cli_st (fpj via michim)
 
+  ZOOKEEPER-1459. Standalone ZooKeeperServer is not closing
+  the transaction log files on shutdown (Rakesh R via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
