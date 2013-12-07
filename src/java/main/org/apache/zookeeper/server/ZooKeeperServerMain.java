@@ -98,6 +98,7 @@ public class ZooKeeperServerMain {
      */
     public void runFromConfig(ServerConfig config) throws IOException {
         LOG.info("Starting server");
+        FileTxnSnapLog txnLog = null;
         try {
             // Note that this thread isn't going to be doing anything else,
             // so rather than spawning another thread, we will just call
@@ -105,9 +106,9 @@ public class ZooKeeperServerMain {
             // create a file logger url from the command line args
             ZooKeeperServer zkServer = new ZooKeeperServer();
 
-            FileTxnSnapLog ftxn = new FileTxnSnapLog(new
-                   File(config.dataLogDir), new File(config.dataDir));
-            zkServer.setTxnLogFactory(ftxn);
+            txnLog = new FileTxnSnapLog(new File(config.dataLogDir), new File(
+                    config.dataDir));
+            zkServer.setTxnLogFactory(txnLog);
             zkServer.setTickTime(config.tickTime);
             zkServer.setMinSessionTimeout(config.minSessionTimeout);
             zkServer.setMaxSessionTimeout(config.maxSessionTimeout);
@@ -122,6 +123,10 @@ public class ZooKeeperServerMain {
         } catch (InterruptedException e) {
             // warn, but generally this is ok
             LOG.warn("Server interrupted", e);
+        } finally {
+            if (txnLog != null) {
+                txnLog.close();
+            }
         }
     }
 
