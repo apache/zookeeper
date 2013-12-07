@@ -47,10 +47,11 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     public static class MainThread extends Thread {
         final File confFile;
         final TestZKSMain main;
+        final File tmpDir;
 
         public MainThread(int clientPort) throws IOException {
             super("Standalone server with clientPort:" + clientPort);
-            File tmpDir = ClientBase.createTmpDir();
+            tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
 
             FileWriter fwriter = new FileWriter(confFile);
@@ -89,8 +90,24 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             }
         }
 
-        public void shutdown() {
+        public void shutdown() throws IOException {
             main.shutdown();
+        }
+
+        void deleteDirs() throws IOException{
+            delete(tmpDir);
+        }
+
+        void delete(File f) throws IOException {
+            if (f.isDirectory()) {
+                for (File c : f.listFiles())
+                    delete(c);
+            }
+            if (!f.delete())
+                // double check for the file existence
+                if (f.exists()) {
+                    throw new IOException("Failed to delete file: " + f);
+                }
         }
     }
 
@@ -126,6 +143,8 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         zk.close();
 
         main.shutdown();
+        main.join();
+        main.deleteDirs();
 
         Assert.assertTrue("waiting for server down",
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
