@@ -11,6 +11,7 @@ Pre-requisites
   a. fuse
   b. log4cxx
   c. pthread
+  d. boost
 
 Build instructions
 ------------------
