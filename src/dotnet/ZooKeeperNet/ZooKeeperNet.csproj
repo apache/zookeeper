@@ -169,6 +169,8 @@
     <Compile Include="IWatcher.cs" />
     <Compile Include="ZKWatchManager.cs" />
     <Compile Include="ZooKeeper.cs" />
+    <Compile Include="ZooKeeperEndpoint.cs" />
+    <Compile Include="ZooKeeperEndpoints.cs" />
     <Compile Include="ZooKeeperEx.cs" />
   </ItemGroup>
   <ItemGroup>

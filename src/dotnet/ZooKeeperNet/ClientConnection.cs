@@ -34,6 +34,7 @@
         //TODO find an elegant way to set this parameter
         public const int packetLen = 4096 * 1024;
         internal static readonly bool disableAutoWatchReset = false;
+        private static readonly TimeSpan defaultConnectTimeout = new TimeSpan(0, 0, 0, 0, 500);
         internal const int maxSpin = 30;
 
         //static ClientConnection()
@@ -58,9 +59,8 @@
         internal readonly ZKWatchManager watcher;
         internal readonly List<IPEndPoint> serverAddrs = new List<IPEndPoint>();
         internal readonly List<AuthData> authInfo = new List<AuthData>();
-        //what the....we use default socket connection time out
-        //internal TimeSpan connectTimeout;
         internal TimeSpan readTimeout;
+        
         private int isClosed;
         public bool IsClosed
         {
@@ -72,6 +72,7 @@
         internal ClientConnectionRequestProducer producer;
         internal ClientConnectionEventConsumer consumer;
 
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ClientConnection"/> class.
         /// </summary>
@@ -79,10 +80,24 @@
         /// <param name="sessionTimeout">The session timeout.</param>
         /// <param name="zooKeeper">The zoo keeper.</param>
         /// <param name="watcher">The watch manager.</param>
-        public ClientConnection(string connectionString, TimeSpan sessionTimeout, ZooKeeper zooKeeper, ZKWatchManager watcher) :
-            this(connectionString, sessionTimeout, zooKeeper, watcher, 0, new byte[16])
+        public ClientConnection(string connectionString, TimeSpan sessionTimeout, ZooKeeper zooKeeper, ZKWatchManager watcher):
+            this(connectionString, sessionTimeout, zooKeeper, watcher, 0, new byte[16], defaultConnectTimeout)
         {
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ClientConnection"/> class.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <param name="sessionTimeout">The session timeout.</param>
+        /// <param name="zooKeeper">The zoo keeper.</param>
+        /// <param name="watcher">The watch manager.</param>
+        /// <param name="connectTimeout">Connection Timeout.</param>
+        public ClientConnection(string connectionString, TimeSpan sessionTimeout, ZooKeeper zooKeeper, ZKWatchManager watcher, TimeSpan connectTimeout) :
+            this(connectionString, sessionTimeout, zooKeeper, watcher, 0, new byte[16], connectTimeout)
+        {
+        }
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ClientConnection"/> class.
@@ -94,6 +109,22 @@
         /// <param name="sessionId">The session id.</param>
         /// <param name="sessionPasswd">The session passwd.</param>
         public ClientConnection(string hosts, TimeSpan sessionTimeout, ZooKeeper zooKeeper, ZKWatchManager watcher, long sessionId, byte[] sessionPasswd)
+            : this(hosts, sessionTimeout, zooKeeper, watcher, 0, new byte[16], defaultConnectTimeout)
+        {
+        }
+
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ClientConnection"/> class.
+        /// </summary>
+        /// <param name="hosts">The hosts.</param>
+        /// <param name="sessionTimeout">The session timeout.</param>
+        /// <param name="zooKeeper">The zoo keeper.</param>
+        /// <param name="watcher">The watch manager.</param>
+        /// <param name="sessionId">The session id.</param>
+        /// <param name="sessionPasswd">The session passwd.</param>
+        /// <param name="connectTimeout">Connection Timeout.</param>
+        public ClientConnection(string hosts, TimeSpan sessionTimeout, ZooKeeper zooKeeper, ZKWatchManager watcher, long sessionId, byte[] sessionPasswd, TimeSpan connectTimeout)
         {
             this.hosts = hosts;
             this.zooKeeper = zooKeeper;
@@ -101,6 +132,7 @@
             SessionTimeout = sessionTimeout;
             SessionId = sessionId;
             SessionPassword = sessionPasswd;
+            ConnectionTimeout = connectTimeout;
 
             // parse out chroot, if any
             hosts = SetChrootPath();
@@ -178,12 +210,21 @@
         /// <value>The session timeout.</value>
         public TimeSpan SessionTimeout { get; private set; }
 
+
+        /// <summary>
+        /// Gets or sets the connection timeout.
+        /// </summary>
+        /// <value>The connection timeout.</value>
+        public TimeSpan ConnectionTimeout { get; private set; }
+
+
         /// <summary>
         /// Gets or sets the session password.
         /// </summary>
         /// <value>The session password.</value>
         public byte[] SessionPassword { get; internal set; }
 
+        
         /// <summary>
         /// Gets or sets the session id.
         /// </summary>

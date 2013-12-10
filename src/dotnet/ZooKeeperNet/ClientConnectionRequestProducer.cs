@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Collections.Concurrent;
 using ZooKeeperNet.IO;
 
@@ -36,10 +37,7 @@ namespace ZooKeeperNet
         public int OutgoingQueueCount { get { return outgoingQueue.Count; } }
 
         private TcpClient client;
-        private int lastConnectIndex;
         private readonly Random random = new Random();
-        private int nextAddrToTry;
-        private int currentConnectIndex;
         private int initialized;
         internal long lastZxid;
         private long lastPingSentNs;
@@ -50,6 +48,8 @@ namespace ZooKeeperNet
         internal int sentCount;
         internal int recvCount;
         internal int negotiatedSessionTimeout;
+
+        private ZooKeeperEndpoints zkEndpoints;
 
         private int connectionClosed;
         public bool IsConnectionClosedByServer
@@ -68,6 +68,7 @@ namespace ZooKeeperNet
         {
             this.conn = conn;
             zooKeeper = conn.zooKeeper;
+            zkEndpoints = new ZooKeeperEndpoints(conn.serverAddrs);
             requestThread = new Thread(new SafeThreadStart(SendRequests).Run) { Name = new StringBuilder("ZK-SendThread ").Append(conn.zooKeeper.Id).ToString(), IsBackground = true };
         }
 
@@ -208,14 +209,14 @@ namespace ZooKeeperNet
                 LOG.Debug("SendThread exitedloop.");
         }
 
-        private void Cleanup()
-        {            
-            if (client != null)
+        private void Cleanup(TcpClient tcpClient)
+        {
+            if (tcpClient != null)
             {
                 try
                 {
                     // close the connection
-                    client.Close();
+                    tcpClient.Close();
                 }
                 catch (IOException e)
                 {
@@ -224,10 +225,10 @@ namespace ZooKeeperNet
                 }
                 finally
                 {
-                    client = null;
+                    tcpClient = null;
                 }
             }
-           
+
             lock (outgoingQueue)
             {
                 foreach (var packet in outgoingQueue)
@@ -242,55 +243,105 @@ namespace ZooKeeperNet
                 ConLossPacket(pack);
         }
 
+        private void Cleanup()
+        {
+            Cleanup(client);
+        }
+
         private void StartConnect()
         {
-            if (lastConnectIndex == -1)
+            zooKeeper.State = ZooKeeper.States.CONNECTING;
+            TcpClient tempClient = null;
+            WaitHandle wh = null;
+
+            do
             {
-                // We don't want to delay the first try at a connect, so we
-                // start with -1 the first time around
-                lastConnectIndex = 0;
-            }
-            else
-            {
-                try
-                {
-                    Thread.Sleep(new TimeSpan(0, 0, 0, 0, random.Next(0, 50)));
-                }
-                catch (ThreadInterruptedException e1)
-                {
-                    LOG.Warn("Unexpected exception", e1);
-                }
-                if (nextAddrToTry == lastConnectIndex)
+                if (zkEndpoints.EndPointID != -1)
                 {
                     try
                     {
-                        // Try not to spin too fast!
-                        Thread.Sleep(1000);
+                        Thread.Sleep(new TimeSpan(0, 0, 0, 0, random.Next(0, 50)));
                     }
-                    catch (ThreadInterruptedException e)
+                    catch (ThreadInterruptedException e1)
                     {
-                        LOG.Warn("Unexpected exception", e);
+                        LOG.Warn("Unexpected exception", e1);
+                    }
+                    if (!zkEndpoints.IsNextEndPointAvailable)
+                    {
+                        try
+                        {
+                            // Try not to spin too fast!
+                            Thread.Sleep(1000);
+                        }
+                        catch (ThreadInterruptedException e)
+                        {
+                            LOG.Warn("Unexpected exception", e);
+                        }
                     }
                 }
+
+                //advance through available connections;
+                zkEndpoints.GetNextAvailableEndpoint();
+
+                Cleanup(tempClient);
+                LOG.InfoFormat("Opening socket connection to server {0}", zkEndpoints.CurrentEndPoint.ServerAddress);
+                tempClient = new TcpClient();
+                tempClient.LingerState = new LingerOption(false, 0);
+                tempClient.NoDelay = true; 
+            
+                Interlocked.Exchange(ref initialized, 0);
+                IsConnectionClosedByServer = false;
+
+                try
+                {
+                    IAsyncResult ar = tempClient.BeginConnect(zkEndpoints.CurrentEndPoint.ServerAddress.Address,
+                                                          zkEndpoints.CurrentEndPoint.ServerAddress.Port,
+                                                          null,
+                                                          null);
+
+                    wh = ar.AsyncWaitHandle;
+                    if (!ar.AsyncWaitHandle.WaitOne(conn.ConnectionTimeout, false))
+                    {
+                        Cleanup(tempClient);
+                        throw new TimeoutException();
+                    }
+
+                    tempClient.EndConnect(ar);
+
+                    zkEndpoints.CurrentEndPoint.SetAsSuccess();
+
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    if (ex is SocketException || ex is TimeoutException)
+                    {
+                        Cleanup(tempClient);
+
+                        zkEndpoints.CurrentEndPoint.SetAsFailure();
+
+                        LOG.WarnFormat(string.Format("Failed to connect to {0}:{1}.",
+                            zkEndpoints.CurrentEndPoint.ServerAddress.Address.ToString(),
+                            zkEndpoints.CurrentEndPoint.ServerAddress.Port.ToString()));
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                finally
+                {
+                    wh.Close();
+                }
             }
-            zooKeeper.State = ZooKeeper.States.CONNECTING;
-            currentConnectIndex = nextAddrToTry;
-            IPEndPoint addr = conn.serverAddrs[nextAddrToTry];
-            nextAddrToTry++;
-            if (nextAddrToTry == conn.serverAddrs.Count)
-                nextAddrToTry = 0;
+            while(zkEndpoints.IsNextEndPointAvailable);
 
-            Cleanup();
-            LOG.InfoFormat("Opening socket connection to server {0}", addr);
-            client = new TcpClient();
-            client.LingerState = new LingerOption(false, 0);
-            client.NoDelay = true; 
-            
-            Interlocked.Exchange(ref initialized, 0);
-            IsConnectionClosedByServer = false;
-            
-            client.Connect(addr);
+            if (tempClient == null)
+            {
+                throw KeeperException.Create(KeeperException.Code.CONNECTIONLOSS);
+            }
 
+            client = tempClient;
             client.GetStream().BeginRead(incomingBuffer, 0, incomingBuffer.Length, ReceiveAsynch, incomingBuffer);
             PrimeConnection();
         }
@@ -374,7 +425,6 @@ namespace ZooKeeperNet
         private void PrimeConnection()
         {
             LOG.InfoFormat("Socket connection established to {0}, initiating session", client.Client.RemoteEndPoint);
-            lastConnectIndex = currentConnectIndex;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid, Convert.ToInt32(conn.SessionTimeout.TotalMilliseconds), conn.SessionId, conn.SessionPassword);
 
             lock (outgoingQueue)
