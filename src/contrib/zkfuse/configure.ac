@@ -23,7 +23,7 @@ AC_PROG_CXX
 
 # Checks for libraries.
 AC_CHECK_LIB([fuse], [main])
-AC_CHECK_LIB([log4cxx], [main])
+AC_CHECK_LIB([log4cxx], [main], [], [AC_MSG_ERROR("We need log4cxx to build zkfuse")])
 AC_CHECK_LIB([thread], [thr_create])
 AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([rt], [clock_gettime])
@@ -32,7 +32,8 @@ AC_CHECK_LIB([nsl], [gethostbyname])
 AC_CHECK_LIB([ulockmgr], [ulockmgr_op])
 
 ZOOKEEPER_PATH=${BUILD_PATH}/../../c
-AC_CHECK_LIB(zookeeper_mt, main, [ZOOKEEPER_LD="-L${ZOOKEEPER_PATH}/.libs -lzookeeper_mt"],,["-L${ZOOKEEPER_PATH}/.libs"])
+ZOOKEEPER_BUILD_PATH=${BUILD_PATH}/../../../build/c
+AC_CHECK_LIB(zookeeper_mt, main, [ZOOKEEPER_LD="-L${ZOOKEEPER_BUILD_PATH}/.libs -lzookeeper_mt"],,["-L${ZOOKEEPER_BUILD_PATH}/.libs"])
 
 AC_SUBST(ZOOKEEPER_PATH)
 AC_SUBST(ZOOKEEPER_LD)
@@ -41,6 +42,7 @@ AC_SUBST(ZOOKEEPER_LD)
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h stdlib.h string.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/utility.hpp boost/weak_ptr.hpp],, AC_MSG_ERROR([boost library headers not found. Please install boost library.]))
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
