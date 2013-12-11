@@ -179,6 +179,9 @@ BUGFIXES:
   (Raul Gutierrez Segales via michim)
 
   ZOOKEEPER-1834. Catch IOException in FileTxnLog (fpj via michim)
+  
+  ZOOKEEPER-1382. Zookeeper server holds onto dead/expired session ids in the watch data structures
+  (Germán Blanco and Michael Morello via camille)
 
 IMPROVEMENTS:
 
