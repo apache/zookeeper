@@ -90,6 +90,8 @@ BUGFIXES:
   ZOOKEEPER-1459. Standalone ZooKeeperServer is not closing 
   the transaction log files on shutdown (Rakesh R via fpj)
 
+  ZOOKEEPER-1834. Catch IOException in FileTxnLog (fpj via michim)
+
 IMPROVEMENTS:
 
 
