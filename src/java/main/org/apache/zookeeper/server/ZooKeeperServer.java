@@ -606,6 +606,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                         + " with negotiated timeout " + cnxn.getSessionTimeout()
                         + " for client "
                         + cnxn.getRemoteSocketAddress());
+                cnxn.enableRecv();
             } else {
 
                 LOG.info("Invalid session 0x"
@@ -616,7 +617,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 cnxn.sendBuffer(ServerCnxnFactory.closeConn);
             }
 
-            cnxn.enableRecv();
         } catch (Exception e) {
             LOG.warn("Exception while establishing session, closing", e);
             cnxn.close();
