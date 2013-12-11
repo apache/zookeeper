@@ -179,6 +179,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1841. problem in QuorumTest (Germán via fpj)
 
+  ZOOKEEPER-1382. Zookeeper server holds onto dead/expired session ids in the watch data structures
+  (Germán Blanco and Michael Morello via camille)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1583. Document maxClientCnxns in conf/zoo_sample.cfg
