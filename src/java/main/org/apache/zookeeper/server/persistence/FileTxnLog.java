@@ -627,6 +627,9 @@ public class FileTxnLog implements TxnLog {
                 }
                 // if we went to the next log file, we should call next() again
                 return next();
+            } catch (IOException e) {
+                inputStream.close();
+                throw e;
             }
             return true;
         }

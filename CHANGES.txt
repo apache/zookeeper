@@ -178,6 +178,8 @@ BUGFIXES:
   ZOOKEEPER-1019. zkfuse doesn't list dependency on boost in README
   (Raul Gutierrez Segales via michim)
 
+  ZOOKEEPER-1834. Catch IOException in FileTxnLog (fpj via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
