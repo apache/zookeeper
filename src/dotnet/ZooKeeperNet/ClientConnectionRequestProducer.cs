@@ -320,7 +320,7 @@ namespace ZooKeeperNet
 
                         zkEndpoints.CurrentEndPoint.SetAsFailure();
 
-                        LOG.WarnFormat(string.Format("Failed to connect to {0}:{1}.",
+                        LOG.ErrorFormat(string.Format("Failed to connect to {0}:{1}.",
                             zkEndpoints.CurrentEndPoint.ServerAddress.Address.ToString(),
                             zkEndpoints.CurrentEndPoint.ServerAddress.Port.ToString()));
                     }
