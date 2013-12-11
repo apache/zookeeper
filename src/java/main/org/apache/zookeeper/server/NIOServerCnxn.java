@@ -302,11 +302,18 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     /**
+     * Only used in order to allow testing
+     */
+    protected boolean isSocketOpen() {
+        return sock.isOpen();
+    }
+
+    /**
      * Handles read/write IO on connection.
      */
     void doIO(SelectionKey k) throws InterruptedException {
         try {
-            if (sock.isOpen() == false) {
+            if (isSocketOpen() == false) {
                 LOG.warn("trying to do i/o on a null socket for session:0x"
                          + Long.toHexString(sessionId));
 
