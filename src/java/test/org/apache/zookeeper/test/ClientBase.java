@@ -191,13 +191,12 @@ public abstract class ClientBase extends ZKTestCase {
             }
             if (allClients != null) {
                 allClients.add(zk);
+                JMXEnv.ensureAll("0x" + Long.toHexString(zk.getSessionId()));
             } else {
                 // test done - close the zk, not needed
                 zk.close();
             }
         }
-
-        JMXEnv.ensureAll("0x" + Long.toHexString(zk.getSessionId()));
 
         return zk;
     }
