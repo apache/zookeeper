@@ -122,16 +122,22 @@ public class JMXEnv {
      * Note that these are components of the name, and in particular
      * order matters - you want the more specific name (leafs) specified
      * before their parent(s) (since names are hierarchical)
+     * It waits in a loop up to 5 seconds before failing if there is a
+     * mismatch.
      * @param expectedNames
      * @return
      * @throws IOException
      * @throws MalformedObjectNameException
      */
     public static Set<ObjectName> ensureOnly(String... expectedNames)
-        throws IOException
+        throws IOException, InterruptedException
     {
         LOG.info("ensureOnly:" + Arrays.toString(expectedNames));
         Set<ObjectName> beans = ensureAll(expectedNames);
+        for (int i = 0; (i < 50) && (beans.size() != 0); i++) {
+            Thread.sleep(100);
+            beans = ensureAll(expectedNames);
+        }
         for (ObjectName bean : beans) {
             LOG.info("unexpected:" + bean.toString());
         }
