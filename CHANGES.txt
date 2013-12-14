@@ -219,6 +219,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1786. ZooKeeper data model documentation is incorrect
   (Niraj Tolia via fpj)
 
+  ZOOKEEPER-1715. Upgrade netty version (Sean Bridges via michim)
+
 Release 3.4.5 - 2012-09-30
 
 Backward compatible changes:
