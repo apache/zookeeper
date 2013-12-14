@@ -155,9 +155,13 @@ public class NettyServerCnxn extends ServerCnxn {
         ResumeMessageEvent(Channel channel) {
             this.channel = channel;
         }
+        @Override
         public Object getMessage() {return null;}
+        @Override
         public SocketAddress getRemoteAddress() {return null;}
+        @Override
         public Channel getChannel() {return channel;}
+        @Override
         public ChannelFuture getFuture() {return null;}
     };
     
@@ -739,7 +743,7 @@ public class NettyServerCnxn extends ServerCnxn {
                             zks.processPacket(this, bb);
 
                             if (zks.shouldThrottle(outstandingCount.incrementAndGet())) {
-                                disableRecv();
+                                disableRecvNoWait();
                             }
                         } else {
                             LOG.debug("got conn req request from "
@@ -803,13 +807,17 @@ public class NettyServerCnxn extends ServerCnxn {
 
     @Override
     public void disableRecv() {
+        disableRecvNoWait().awaitUninterruptibly();
+    }
+    
+    private ChannelFuture disableRecvNoWait() {
         throttled = true;
         if (LOG.isDebugEnabled()) {
             LOG.debug("Throttling - disabling recv " + this);
         }
-        channel.setReadable(false).awaitUninterruptibly();
+        return channel.setReadable(false);
     }
-
+    
     @Override
     public long getOutstandingRequests() {
         return outstandingCount.longValue();
@@ -832,6 +840,7 @@ public class NettyServerCnxn extends ServerCnxn {
 
     /** Send close connection packet to the client.
      */
+    @Override
     public void sendCloseSession() {
         sendBuffer(ServerCnxnFactory.closeConn);
     }
