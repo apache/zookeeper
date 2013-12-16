@@ -188,6 +188,9 @@ BUGFIXES:
 
   ZOOKEEPER-1839. Deadlock in NettyServerCnxn (Rakesh R via michim)
 
+  ZOOKEEPER-1622. session ids will be negative in the year 2022
+  (Eric Newton via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
