@@ -108,12 +108,12 @@ public class NettyServerCnxn extends ServerCnxn {
                             .getRemoteAddress()).getAddress());
                 s.remove(this);
             }
-    
-            if (channel.isOpen()) {
-                channel.close();
-            }
-            factory.unregisterConnection(this);
         }
+
+        if (channel.isOpen()) {
+            channel.close();
+        }
+        factory.unregisterConnection(this);
     }
 
     @Override

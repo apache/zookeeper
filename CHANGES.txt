@@ -496,6 +496,8 @@ BUGFIXES:
   ZOOKEEPER-1382. Zookeeper server holds onto dead/expired session ids in the watch data structures
   (Germán Blanco and Michael Morello via camille)
 
+  ZOOKEEPER-1839. Deadlock in NettyServerCnxn (Rakesh R via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
