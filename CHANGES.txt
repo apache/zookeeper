@@ -186,6 +186,8 @@ BUGFIXES:
   ZOOKEEPER-1837. Fix JMXEnv checks (potential race conditions)
   (Germán Blanco via fpj)
 
+  ZOOKEEPER-1839. Deadlock in NettyServerCnxn (Rakesh R via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
