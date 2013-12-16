@@ -2034,13 +2034,15 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
         // a PING
         if (zh->state==ZOO_CONNECTED_STATE) {
             send_to = zh->recv_timeout/3 - idle_send;
-            if (send_to <= 0 && zh->sent_requests.head==0) {
-//                LOG_DEBUG(LOGCALLBACK(zh), "Sending PING to %s (exceeded idle by %dms)",
-//                                zoo_get_current_server(zh),-send_to);
-                rc = send_ping(zh);
-                if (rc < 0){
-                    LOG_ERROR(LOGCALLBACK(zh), "failed to send PING request (zk retcode=%d)",rc);
-                    return api_epilog(zh,rc);
+            if (send_to <= 0) {
+                if (zh->sent_requests.head == 0) {
+//                  LOG_DEBUG(LOGCALLBACK(zh), "Sending PING to %s (exceeded idle by %dms)",
+//                            zoo_get_current_server(zh),-send_to);
+                    rc = send_ping(zh);
+                    if (rc < 0) {
+                        LOG_ERROR(LOGCALLBACK(zh), "failed to send PING request (zk retcode=%d)",rc);
+                        return api_epilog(zh,rc);
+                    }
                 }
                 send_to = zh->recv_timeout/3;
             }
