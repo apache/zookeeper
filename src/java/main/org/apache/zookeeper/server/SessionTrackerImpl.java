@@ -74,7 +74,7 @@ public class SessionTrackerImpl extends Thread implements SessionTracker {
 
     public static long initializeNextSession(long id) {
         long nextSid = 0;
-        nextSid = (System.currentTimeMillis() << 24) >> 8;
+        nextSid = (System.currentTimeMillis() << 24) >>> 8;
         nextSid =  nextSid | (id <<56);
         return nextSid;
     }
