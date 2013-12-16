@@ -191,6 +191,9 @@ BUGFIXES:
   ZOOKEEPER-1622. session ids will be negative in the year 2022
   (Eric Newton via phunt)
 
+  ZOOKEEPER-1756. zookeeper_interest() in C client can return a timeval of 0
+  (Eric Lindvall via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
