@@ -1108,10 +1108,14 @@ public class ZooKeeper {
      * partially succeeded if this exception is thrown.
      * @throws KeeperException If the operation could not be completed
      * due to some error in doing one of the specified ops.
+     * @throws IllegalArgumentException if an invalid path is specified
      *
      * @since 3.4.0
      */
     public List<OpResult> multi(Iterable<Op> ops) throws InterruptedException, KeeperException {
+        for (Op op : ops) {
+            op.validate();
+        }
         return multiInternal(generateMultiTransaction(ops));
     }
 
@@ -1121,7 +1125,43 @@ public class ZooKeeper {
      * @see #multi(Iterable)
      */
     public void multi(Iterable<Op> ops, MultiCallback cb, Object ctx) {
+        List<OpResult> results = validatePath(ops);
+        if (results.size() > 0) {
+            cb.processResult(KeeperException.Code.BADARGUMENTS.intValue(),
+                    null, ctx, results);
+            return;
+        }
         multiInternal(generateMultiTransaction(ops), cb, ctx);
+    }
+
+    private List<OpResult> validatePath(Iterable<Op> ops) {
+        List<OpResult> results = new ArrayList<OpResult>();
+        boolean error = false;
+        for (Op op : ops) {
+            try {
+                op.validate();
+            } catch (IllegalArgumentException iae) {
+                LOG.error("IllegalArgumentException: " + iae.getMessage());
+                ErrorResult err = new ErrorResult(
+                        KeeperException.Code.BADARGUMENTS.intValue());
+                results.add(err);
+                error = true;
+                continue;
+            } catch (KeeperException ke) {
+                LOG.error("KeeperException: " + ke.getMessage());
+                ErrorResult err = new ErrorResult(ke.code().intValue());
+                results.add(err);
+                error = true;
+                continue;
+            }
+            ErrorResult err = new ErrorResult(
+                    KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+            results.add(err);
+        }
+        if (false == error) {
+            results.clear();
+        }
+        return results;
     }
 
     private MultiTransactionRecord generateMultiTransaction(Iterable<Op> ops) {
