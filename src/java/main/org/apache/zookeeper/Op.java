@@ -18,6 +18,7 @@
 package org.apache.zookeeper;
 
 import org.apache.jute.Record;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.proto.CreateRequest;
@@ -162,6 +163,18 @@ public abstract class Op {
      */
     abstract Op withChroot(String addRootPrefix);
 
+    /**
+     * Performs client path validations.
+     * 
+     * @throws IllegalArgumentException
+     *             if an invalid path is specified
+     * @throws KeeperException.BadArgumentsException
+     *             if an invalid create mode flag is specified
+     */
+    void validate() throws KeeperException {
+        PathUtils.validatePath(path);
+    }
+
     //////////////////
     // these internal classes are public, but should not generally be referenced.
     //
@@ -221,6 +234,12 @@ public abstract class Op {
         @Override
         Op withChroot(String path) {
             return new Create(path, data, acl, flags);
+        }
+
+        @Override
+        void validate() throws KeeperException {
+            CreateMode createMode = CreateMode.fromFlag(flags);
+            PathUtils.validatePath(getPath(), createMode.isSequential());
         }
     }
 

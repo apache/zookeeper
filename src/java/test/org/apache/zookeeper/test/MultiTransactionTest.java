@@ -60,7 +60,106 @@ public class MultiTransactionTest extends ClientBase {
         zk = createClient();
     }
 
-    
+        /**
+         * Test verifies the multi calls with invalid znode path
+         */
+        @Test(timeout = 90000)
+        public void testInvalidPath() throws Exception {
+        // create with CreateMode
+        List<Op> opList = Arrays.asList(Op.create("/multi0", new byte[0],
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create(
+                "/multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT), Op.create("/multi2", new byte[0],
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        try {
+            zk.multi(opList);
+            Assert.fail("Shouldn't have validated in ZooKeeper client!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        // create with valid sequential flag
+        opList = Arrays.asList(Op.create("/multi0", new byte[0],
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create(
+                "multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                CreateMode.EPHEMERAL_SEQUENTIAL.toFlag()), Op.create("/multi2",
+                new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        try {
+            zk.multi(opList);
+            Assert.fail("Shouldn't have validated in ZooKeeper client!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        // check
+        opList = Arrays.asList(Op.check("/multi0", -1),
+                Op.check("/multi1/", 100), Op.check("/multi2", 5));
+        try {
+            zk.multi(opList);
+            Assert.fail("Shouldn't have validated in ZooKeeper client!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        // delete
+        opList = Arrays.asList(Op.delete("/multi0", -1),
+                Op.delete("/multi1/", 100), Op.delete("/multi2", 5));
+        try {
+            zk.multi(opList);
+            Assert.fail("Shouldn't have validated in ZooKeeper client!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        // setdata
+        opList = Arrays.asList(Op.setData("/multi0", new byte[0], -1),
+                Op.setData("/multi1/", new byte[0], -1),
+                Op.setData("/multi2", new byte[0], -1),
+                Op.setData("multi3", new byte[0], -1));
+        try {
+            zk.multi(opList);
+            Assert.fail("Shouldn't have validated in ZooKeeper client!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies the multi calls with blank znode path
+     */
+    @Test(timeout = 90000)
+    public void testBlankPath() throws Exception {
+        // delete
+        List<Op> opList = Arrays.asList(Op.delete("/multi0", -1),
+                Op.delete(null, 100), Op.delete("/multi2", 5),
+                Op.delete("", -1));
+        try {
+            zk.multi(opList);
+            Assert.fail("Shouldn't have validated in ZooKeeper client!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies the multi.create with invalid createModeFlag
+     */
+    @Test(timeout = 90000)
+    public void testInvalidCreateModeFlag() throws Exception {
+        int createModeFlag = 6789;
+        List<Op> opList = Arrays.asList(Op.create("/multi0", new byte[0],
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create(
+                "/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, createModeFlag),
+                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT));
+        try {
+            zk.multi(opList);
+            Assert.fail("Shouldn't have validated in ZooKeeper client!");
+        } catch (KeeperException.BadArgumentsException e) {
+            // expected
+        }
+    }
+
     @Test
     public void testChRootCreateDelete() throws Exception {
         // creating the subtree for chRoot clients.

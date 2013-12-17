@@ -194,6 +194,9 @@ BUGFIXES:
   ZOOKEEPER-1756. zookeeper_interest() in C client can return a timeval of 0
   (Eric Lindvall via michim)
 
+  ZOOKEEPER-1388. Client side 'PathValidation' is missing for the
+  multi-transaction api. (Rakesh R via marshallm, phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java

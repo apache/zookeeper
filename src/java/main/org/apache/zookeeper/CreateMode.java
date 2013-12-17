@@ -83,8 +83,10 @@ public enum CreateMode {
         case 3: return CreateMode.EPHEMERAL_SEQUENTIAL ;
 
         default:
-            LOG.error("Received an invalid flag value to convert to a CreateMode");
-            throw new KeeperException.BadArgumentsException(); 
+            String errMsg = "Received an invalid flag value: " + flag
+                    + " to convert to a CreateMode";
+            LOG.error(errMsg);
+            throw new KeeperException.BadArgumentsException(errMsg);
         }
     }
 }
