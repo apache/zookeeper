@@ -115,6 +115,50 @@ public class MultiTransactionTest extends ClientBase {
         }
     }
 
+    private void multiHavingErrors(ZooKeeper zk, Iterable<Op> ops,
+            List<Integer> expectedResultCodes, String expectedErr)
+            throws KeeperException, InterruptedException {
+        if (useAsync) {
+            final MultiResult res = new MultiResult();
+            zk.multi(ops, new MultiCallback() {
+                @Override
+                public void processResult(int rc, String path, Object ctx,
+                        List<OpResult> opResults) {
+                    synchronized (res) {
+                        res.rc = rc;
+                        res.results = opResults;
+                        res.finished = true;
+                        res.notifyAll();
+                    }
+                }
+            }, null);
+            synchronized (res) {
+                while (!res.finished) {
+                    res.wait();
+                }
+            }
+            for (int i = 0; i < res.results.size(); i++) {
+                OpResult opResult = res.results.get(i);
+                Assert.assertTrue("Did't recieve proper error response",
+                        opResult instanceof ErrorResult);
+                ErrorResult errRes = (ErrorResult) opResult;
+                Assert.assertEquals("Did't recieve proper error code",
+                        expectedResultCodes.get(i).intValue(), errRes.getErr());
+            }
+        } else {
+            try {
+                zk.multi(ops);
+                Assert.fail("Shouldn't have validated in ZooKeeper client!");
+            } catch (KeeperException e) {
+                Assert.assertEquals("Wrong exception", expectedErr, e.code()
+                        .name());
+            } catch (IllegalArgumentException e) {
+                Assert.assertEquals("Wrong exception", expectedErr,
+                        e.getMessage());
+            }
+        }
+    }
+
     private List<OpResult> commit(Transaction txn)
     throws KeeperException, InterruptedException {
         if (useAsync) {
@@ -145,7 +189,101 @@ public class MultiTransactionTest extends ClientBase {
             return txn.commit();
         }
     }
-    
+
+    /**
+     * Test verifies the multi calls with invalid znode path
+     */
+    @Test(timeout = 90000)
+    public void testInvalidPath() throws Exception {
+        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY
+                .intValue());
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY
+                .intValue());
+        // create with CreateMode
+        List<Op> opList = Arrays.asList(Op.create("/multi0", new byte[0],
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create(
+                "/multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT), Op.create("/multi2", new byte[0],
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        String expectedErr = "Path must not end with / character";
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+
+        // create with valid sequential flag
+        opList = Arrays.asList(Op.create("/multi0", new byte[0],
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create(
+                "multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                CreateMode.EPHEMERAL_SEQUENTIAL.toFlag()), Op.create("/multi2",
+                new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        expectedErr = "Path must start with / character";
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+
+        // check
+        opList = Arrays.asList(Op.check("/multi0", -1),
+                Op.check("/multi1/", 100), Op.check("/multi2", 5));
+        expectedErr = "Path must not end with / character";
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+
+        // delete
+        opList = Arrays.asList(Op.delete("/multi0", -1),
+                Op.delete("/multi1/", 100), Op.delete("/multi2", 5));
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+
+        // Multiple bad arguments
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+
+        // setdata
+        opList = Arrays.asList(Op.setData("/multi0", new byte[0], -1),
+                Op.setData("/multi1/", new byte[0], -1),
+                Op.setData("/multi2", new byte[0], -1),
+                Op.setData("multi3", new byte[0], -1));
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+    }
+
+    /**
+     * Test verifies the multi calls with blank znode path
+     */
+    @Test(timeout = 90000)
+    public void testBlankPath() throws Exception {
+        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY
+                .intValue());
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY
+                .intValue());
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+
+        // delete
+        String expectedErr = "Path cannot be null";
+        List<Op> opList = Arrays.asList(Op.delete("/multi0", -1),
+                Op.delete(null, 100), Op.delete("/multi2", 5),
+                Op.delete("", -1));
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+    }
+
+    /**
+     * Test verifies the multi.create with invalid createModeFlag
+     */
+    @Test(timeout = 90000)
+    public void testInvalidCreateModeFlag() throws Exception {
+        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY
+                .intValue());
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY
+                .intValue());
+
+        int createModeFlag = 6789;
+        List<Op> opList = Arrays.asList(Op.create("/multi0", new byte[0],
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create(
+                "/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, createModeFlag),
+                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT));
+        String expectedErr = KeeperException.Code.BADARGUMENTS.name();
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+    }
+
     @Test
     public void testChRootCreateDelete() throws Exception {
         // creating the subtree for chRoot clients.
