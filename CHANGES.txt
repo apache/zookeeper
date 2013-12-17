@@ -4,6 +4,9 @@ Backward compatible changes:
 
 BUGFIXES:
 
+  ZOOKEEPER-1388. Client side 'PathValidation' is missing for the
+  multi-transaction api. (Rakesh R via marshallm, phunt)
+
   ZOOKEEPER-1448: Node+Quota creation in transaction log can crash leader startup (Botond Hejj via fpj)
 
   ZOOKEEPER-2347: Deadlock shutting down zookeeper
