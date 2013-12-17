@@ -899,10 +899,14 @@ public class ZooKeeper {
      * partially succeeded if this exception is thrown.
      * @throws KeeperException If the operation could not be completed
      * due to some error in doing one of the specified ops.
+     * @throws IllegalArgumentException if an invalid path is specified
      *
      * @since 3.4.0
      */
     public List<OpResult> multi(Iterable<Op> ops) throws InterruptedException, KeeperException {
+        for (Op op : ops) {
+            op.validate();
+        }
         // reconstructing transaction with the chroot prefix
         List<Op> transaction = new ArrayList<Op>();
         for (Op op : ops) {
