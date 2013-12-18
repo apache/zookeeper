@@ -197,6 +197,8 @@ BUGFIXES:
   ZOOKEEPER-1388. Client side 'PathValidation' is missing for the
   multi-transaction api. (Rakesh R via marshallm, phunt)
 
+  ZOOKEEPER-1841. problem in QuorumTest (Germán via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
