@@ -200,7 +200,7 @@ BUGFIXES:
   ZOOKEEPER-1841. problem in QuorumTest (Germán via fpj)
 
   ZOOKEEPER-1733. FLETest#testLE is flaky on windows boxes 
-  (michim via fpj)
+  (michim, Jeffrey Zhong via fpj)
 
 IMPROVEMENTS:
 
