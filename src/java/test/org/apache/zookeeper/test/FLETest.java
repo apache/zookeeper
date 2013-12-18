@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +75,7 @@ public class FLETest extends ZKTestCase {
     volatile long leader = -1;
     //volatile int round = 1;
     Random rand = new Random();
+    Set<Long> joinedThreads;
 
     @Before
     public void setUp() throws Exception {
@@ -87,6 +89,7 @@ public class FLETest extends ZKTestCase {
         port = new int[count];
         successCount = 0;
         finalObj = new Object();
+        joinedThreads = new HashSet<Long>();
     }
 
     @After
@@ -180,6 +183,7 @@ public class FLETest extends ZKTestCase {
                                 if(leader == i){
                                     synchronized(finalObj){
                                         successCount++;
+                                        joinedThreads.add((long)i);
                                         if(successCount > (count/2)) finalObj.notify();
                                     }
 
@@ -224,6 +228,7 @@ public class FLETest extends ZKTestCase {
                                 if (leader == votes[i].getId()) {
                                     synchronized(finalObj){
                                         successCount++;
+                                        joinedThreads.add((long)i);
                                         if(successCount > (count/2)) finalObj.notify();
                                     }
                                     break;
@@ -309,8 +314,10 @@ public class FLETest extends ZKTestCase {
            Assert.fail("Fewer than a a majority has joined");
        }
 
-       if(threads.get((int) leader).isAlive()){
-           Assert.fail("Leader hasn't joined: " + leader);
+       synchronized(finalObj){
+           if(!joinedThreads.contains(leader)){
+               Assert.fail("Leader hasn't joined: " + leader);
+           }
        }
     }
 
