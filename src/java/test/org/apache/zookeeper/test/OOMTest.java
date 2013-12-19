@@ -98,6 +98,7 @@ public class OOMTest extends ZKTestCase implements Watcher {
         hog.get(0)[0] = (byte) 1;
 
         f.shutdown();
+        zks.shutdown();
         Assert.assertTrue("waiting for server down",
                    ClientBase.waitForServerDown("127.0.0.1:" + PORT,
                                                 CONNECTION_TIMEOUT));
