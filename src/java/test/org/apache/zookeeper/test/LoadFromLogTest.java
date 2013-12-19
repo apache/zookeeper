@@ -117,6 +117,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         }while(itr.next());
 
         Assert.assertTrue("processed all transactions. " + expectedZxid + " == " + TOTAL_TRANSACTIONS, (expectedZxid == TOTAL_TRANSACTIONS));
+        zks.shutdown();
     }
 
 
@@ -339,6 +340,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 				+ " expected " + NUM_MESSAGES,
 				(children.length == NUM_MESSAGES));
 		f.shutdown();
+                zks.shutdown();
 	}
 
     /**
@@ -391,6 +393,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
                 .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
         f.shutdown();
+        zks.shutdown();
     }
 
     /**

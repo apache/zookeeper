@@ -57,6 +57,7 @@ public class SessionTest extends ZKTestCase {
             PortAssignment.unique();
     
     private ServerCnxnFactory serverFactory;
+    private ZooKeeperServer zs;
 
     private CountDownLatch startSignal;
 
@@ -71,7 +72,7 @@ public class SessionTest extends ZKTestCase {
         }
 
         ClientBase.setupTestEnv();
-        ZooKeeperServer zs = new ZooKeeperServer(tmpDir, tmpDir, TICK_TIME);
+        zs = new ZooKeeperServer(tmpDir, tmpDir, TICK_TIME);
 
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         serverFactory = ServerCnxnFactory.createFactory(PORT, -1);
@@ -85,6 +86,7 @@ public class SessionTest extends ZKTestCase {
     @After
     public void tearDown() throws Exception {
         serverFactory.shutdown();
+        zs.shutdown();
         Assert.assertTrue("waiting for server down",
                    ClientBase.waitForServerDown(HOSTPORT,
                                                 CONNECTION_TIMEOUT));
