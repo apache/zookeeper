@@ -110,8 +110,8 @@ public class ACLCountTest extends ZKTestCase implements Watcher {
           Assert.assertTrue(false);
         }
 
-        Assert.assertTrue(true);
-
+        f.shutdown();
+        zks.shutdown();
     }
 
 

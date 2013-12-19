@@ -105,6 +105,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             }
 
             f.shutdown();
+            zks.shutdown();
             Assert.assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(HOSTPORT,
                                           CONNECTION_TIMEOUT));
@@ -142,6 +143,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                 }
             }
             f.shutdown();
+            zks.shutdown();
 
             Assert.assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(HOSTPORT,
@@ -181,6 +183,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             zk.close();
 
             f.shutdown();
+            zks.shutdown();
 
             Assert.assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(HOSTPORT,

@@ -78,6 +78,7 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
             }
         }
         Assert.assertTrue("exactly 3 snapshots ", (numSnaps == 3));
+        zks.shutdown();
     }
 
     public void process(WatchedEvent event) {

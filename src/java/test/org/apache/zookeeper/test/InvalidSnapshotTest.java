@@ -107,6 +107,7 @@ public class InvalidSnapshotTest extends ZKTestCase implements Watcher {
             zk.close();
         }
         f.shutdown();
+        zks.shutdown();
         Assert.assertTrue("waiting for server down",
                    ClientBase.waitForServerDown(HOSTPORT,
                            ClientBase.CONNECTION_TIMEOUT));

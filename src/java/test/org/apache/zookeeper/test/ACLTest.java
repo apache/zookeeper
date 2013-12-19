@@ -71,7 +71,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             }
         } finally {
             f.shutdown();
-
+            zks.shutdown();
             Assert.assertTrue("waiting for server down",
                     ClientBase.waitForServerDown(HOSTPORT,
                             ClientBase.CONNECTION_TIMEOUT));
@@ -122,6 +122,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
         } finally {
             // now shutdown the server and restart it
             f.shutdown();
+            zks.shutdown();
             Assert.assertTrue("waiting for server down",
                     ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
         }
@@ -157,7 +158,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             zk.close();
         } finally {
             f.shutdown();
-    
+            zks.shutdown();
             Assert.assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(HOSTPORT,
                                ClientBase.CONNECTION_TIMEOUT));
