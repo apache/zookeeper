@@ -244,6 +244,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1715. Upgrade netty version (Sean Bridges via michim)
 
+  ZOOKEEPER-1430. add maven deploy support to the build
+  (Giridharan Kesavan via phunt)
+
 Release 3.4.5 - 2012-09-30
 
 Backward compatible changes:
