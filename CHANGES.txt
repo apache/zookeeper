@@ -717,6 +717,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1786. ZooKeeper data model documentation is incorrect
   (Niraj Tolia via fpj)
 
+  ZOOKEEPER-1430. add maven deploy support to the build
+  (Giridharan Kesavan via phunt)
+
 headers
 
 Release 3.4.0 - 
