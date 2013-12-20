@@ -22,12 +22,15 @@ xmlns:ivy="antlib:org.apache.ivy.ant"
 xmlns:artifact="antlib:org.apache.maven.artifact.ant"
 xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
+    <!-- read build.properties from the basedir if any -->
+    <property file="${basedir}/build.properties" />
+
     <property name="Name" value="ZooKeeper" />
     <property name="name" value="zookeeper" />
 
     <property environment="env"/>
     
-    <property name="version" value="3.4.5" />
+    <property name="version" value="3.4.6-SNAPSHOT" />
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
@@ -176,6 +179,24 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="package.share.dir" value="/share/zookeeper"/>
     <property name="package.buildroot" value="/tmp/zookeeper_package_build_${user.name}"/>
     <property name="package.build.dir" value="/tmp/zookeeper_package_build_${user.name}/BUILD"/>
+
+    <!-- artifact publishing property set -->
+    <property name="staging_repo_id" value="apache.staging.https"/>
+    <property name="wagon-http.version" value="2.4"/>
+    <property name="snapshots_repo_id" value="apache.snapshots.https"/>
+    <property name="asfrepo" value="https://repository.apache.org"/> 
+    <property name="snapshots_repo_url" 
+      value="${asfrepo}/content/repositories/snapshots"/> 
+    <property name="staging_repo_url"
+      value="${asfrepo}/service/local/staging/deploy/maven2"/> 
+    <property name="gpg-plugin" 
+      value="org.apache.maven.plugins:maven-gpg-plugin:1.4:sign-and-deploy-file"/>
+    <property name="deploy-plugin" 
+      value="org.apache.maven.plugins:maven-deploy-plugin:2.8.1:deploy-file"/>
+    <property name="main-jar" value="${dist.maven.dir}/${final.name}.jar"/>
+    <property name="tests-jar" value="${dist.maven.dir}/${final.name}-tests.jar"/>
+    <property name="sources-jar" value="${dist.maven.dir}/${final.name}-sources.jar"/>
+    <property name="javadoc-jar" value="${dist.maven.dir}/${final.name}-javadoc.jar"/>
 
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
@@ -365,6 +386,11 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
     </target>
 
+    <target name="ivy-retrieve-mvn-ant-task" depends="init,ivy-init">
+      <ivy:retrieve settingsRef="${ant.project.name}" conf="mvn-ant-task"
+                    pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+      <ivy:cachepath pathid="mvn-ant-task-classpath" conf="mvn-ant-task"/>
+    </target>
     <target name="compile" depends="ivy-retrieve,clover,build-generated">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" debug="on">
@@ -688,7 +714,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         <fileset file="${build.dir}/${final.name}-sources.jar"/>
         <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
       </copy>
-      
+
       <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="sha1"/>
       <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="md5"/>
@@ -703,7 +729,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       </ivy:makepom>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
-      
+
       <copy file="${build.dir}/${final.name}-test.jar"
             tofile="${dist.maven.dir}/${final.name}-tests.jar"/> 
       <checksum file="${dist.maven.dir}/${final.name}-tests.jar" algorithm="sha1"/>
@@ -776,7 +802,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         <property name="package.share" value="/share/zookeeper"/>
         <fileset file="${contrib.dir}/build.xml"/>
         <fileset file="${recipes.dir}/build.xml"/>
-      </subant>  	
+      </subant>
 
       <copy todir="${dist.dir}/share/zookeeper"> 
         <fileset file="${build.dir}/${final.name}.jar"/>
@@ -802,26 +828,18 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.maven.dir}/${final.name}.pom">
+                   pomfile="${dist.maven.dir}/${name}.pom">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
-      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
-      <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${name}.pom" algorithm="md5"/>
+      <checksum file="${dist.maven.dir}/${name}.pom" algorithm="sha1"/>
       
       
       <copy file="${build.dir}/${final.name}-test.jar"
-            tofile="${dist.maven.dir}/${final.name}-test.jar"/> 
-      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="sha1"/>
-      <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="md5"/>
-      <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.maven.dir}/${final.name}-test.pom"
-		   artifactName="zookeeper-test">
-        <mapping conf="default" scope="compile"/>
-        <mapping conf="test" scope="test"/>
-      </ivy:makepom>
-      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="md5"/>
-      <checksum file="${dist.maven.dir}/${final.name}-test.pom" algorithm="sha1"/>
+            tofile="${dist.maven.dir}/${final.name}-tests.jar"/>
+      <checksum file="${dist.maven.dir}/${final.name}-tests.jar" algorithm="sha1"/>
+      <checksum file="${dist.maven.dir}/${final.name}-tests.jar" algorithm="md5"/>
 
 
       <copy todir="${dist.dir}/bin">
@@ -1095,30 +1113,64 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
 
     </target>
-    
+
+    <!-- ====================================================== -->
+    <!-- mvn-deploy. Publishing jars to nexus -->
+    <!-- ====================================================== -->
+
+    <macrodef name="deploy" description="macro definition for publishing artifacts to nexus snapshots">
+      <attribute name="jars" default="${tests-jar},${sources-jar},${javadoc-jar}"/>
+      <attribute name="maven-jar" default="${main-jar}"/>
+      <attribute name="repo-url" default="${snapshots_repo_url}"/>
+      <attribute name="repo-id" default="${snapshots_repo_id}"/>
+      <attribute name="profile" default="-P!gpg"/>
+      <attribute name="plugin" default="${deploy-plugin}"/>
+      <attribute name="attachas" default="tests,sources,javadoc"/>
+      <sequential>
+	<artifact:mvn>
+	  <arg value="@{plugin}"/>
+	  <arg value="-Durl=@{repo-url}"/>
+	  <arg value="-DrepositoryId=@{repo-id}"/>
+	  <arg value="-Dfiles=@{jars}"/>
+	  <arg value="-Dfile=@{maven-jar}"/>
+	  <arg value="-Dpackaging=jar"/>
+	  <arg value="-DpomFile=${dist.maven.dir}/${name}.pom"/>
+	  <arg value="-Dclassifiers=@{attachas}"/>
+	  <arg value="-Dtype=jar"/>
+	  <arg value="-Dtypes=jar,jar,jar"/>
+	  <arg value="@{profile}"/>
+	</artifact:mvn>
+      </sequential>
+    </macrodef>
+
+    <target name="mvn-deploy" depends="mvn-taskdef, bin-package, simpledeploy, signanddeploy"
+     description="To deploy jar's to a maven repository"/>
+
+    <target name="signanddeploy" if="staging">
+      <deploy repo-url="${staging_repo_url}" repo-id="${staging_repo_id}" plugin="${gpg-plugin}" profile="-Pgpg"/>
+    </target> 
+
+    <target name="simpledeploy" unless="staging">
+      <deploy plugin="${deploy-plugin}"/>
+    </target>
+
     <!-- ====================================================== -->
     <!-- mvn-install. Installing the jar and pom file to .m2    -->
     <!-- ====================================================== -->
      
-     <target name="ant-task-download" description="To download mvn-ant-task">
-       <get src="${ant_task_repo_url}" dest="${ant_task.jar}" usetimestamp="true"/>
+     <target name="mvn-taskdef" depends="ivy-retrieve-mvn-ant-task">
+        <typedef resource="org/apache/maven/artifact/ant/antlib.xml"
+        uri="antlib:org.apache.maven.artifact.ant" classpathref="mvn-ant-task-classpath"/>
      </target>
 
-     <target name="mvn-taskdef" depends="ant-task-download">
-       <path id="mvn-ant-task.classpath" path="${ant_task.jar}"/>
-       <typedef resource="org/apache/maven/artifact/ant/antlib.xml"
-         uri="antlib:org.apache.maven.artifact.ant"
-         classpathref="mvn-ant-task.classpath"/>
-     </target>
- 
-     <target name="mvn-install" depends="tar, mvn-taskdef">
+     <target name="mvn-install" depends="bin-package, mvn-taskdef">
        <echo message="${dist.maven.dir}/${final.name}.pom" />
        <echo message="${dist.maven.dir}/${final.name}.jar" />
        <echo message="${dist.maven.dir}/${final.name}-sources.jar" />
        <echo message="${dist.maven.dir}/${final.name}-javadoc.jar" />
        <echo message="${dist.maven.dir}/${final.name}-tests.jar" />
   
-       <artifact:pom id="zookeeper-pom" file="${dist.maven.dir}/${final.name}.pom"/>
+       <artifact:pom id="zookeeper-pom" file="${dist.maven.dir}/${name}.pom"/>
        <echo>The version is ${zookeeper-pom.version}</echo>
        <echo message="${dist.maven.dir}/${final.name}.jar" />
      
