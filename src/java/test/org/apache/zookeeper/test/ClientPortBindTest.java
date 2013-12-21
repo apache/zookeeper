@@ -99,6 +99,7 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
             zk.close();
         } finally {
             f.shutdown();
+            zks.shutdown();
 
             Assert.assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(HOSTPORT,

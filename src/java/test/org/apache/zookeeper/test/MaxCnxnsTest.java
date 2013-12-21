@@ -49,6 +49,7 @@ public class MaxCnxnsTest extends ClientBase {
         }
 
         public void run() {
+            SocketChannel sChannel = null;
             try {
                 /*
                  * For future unwary socket programmers: although connect 'blocks' it
@@ -56,7 +57,7 @@ public class MaxCnxnsTest extends ClientBase {
                  * you can not assume that all the sockets are connected at the end of
                  * this for loop.
                  */
-                SocketChannel sChannel = SocketChannel.open();
+                sChannel = SocketChannel.open();
                 sChannel.connect(new InetSocketAddress(host,port));
                 // Construct a connection request
                 ConnectRequest conReq = new ConnectRequest(0, 0,
@@ -94,6 +95,14 @@ public class MaxCnxnsTest extends ClientBase {
             }
             catch (IOException io) {
                 // "Connection reset by peer"
+            } finally {
+                if (sChannel != null) {
+                    try {
+                        sChannel.close();
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                }
             }
         }
     }

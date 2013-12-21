@@ -50,6 +50,14 @@ public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
             LOG.info("RUNNING TEST METHOD " + name);
             try {
                 super.evaluate();
+                Runtime rt = Runtime.getRuntime();
+                long usedKB = (rt.totalMemory() - rt.freeMemory()) / 1024;
+                LOG.info("Memory used {}", usedKB);
+                ThreadGroup tg = Thread.currentThread().getThreadGroup();
+                while (tg.getParent() != null) {
+                    tg = tg.getParent();
+                }
+                LOG.info("Number of threads {}", tg.activeCount());
             } catch (Throwable t) {
                 LOG.info("TEST METHOD FAILED " + name, t);
                 throw t;
