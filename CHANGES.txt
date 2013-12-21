@@ -507,6 +507,9 @@ BUGFIXES:
   ZOOKEEPER-1388. Client side 'PathValidation' is missing for the
   multi-transaction api. (Rakesh R via marshallm, phunt)
 
+  ZOOKEEPER-1849. Need to properly tear down tests in various cases
+  (Germán Blanco via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

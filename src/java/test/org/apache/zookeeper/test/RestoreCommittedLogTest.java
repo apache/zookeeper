@@ -68,6 +68,7 @@ public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
             zk.close();
         }
         f.shutdown();
+        zks.shutdown();
         Assert.assertTrue("waiting for server to shutdown",
                 ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
 
@@ -78,6 +79,7 @@ public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
         int logsize = committedLog.size();
         LOG.info("committedLog size = " + logsize);
         Assert.assertTrue("log size != 0", (logsize != 0));
+        zks.shutdown();
     }
 
     public void process(WatchedEvent event) {
