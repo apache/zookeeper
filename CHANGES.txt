@@ -205,6 +205,10 @@ BUGFIXES:
   ZOOKEEPER-1849. Need to properly tear down tests in various
   cases (Germán via fpj) 
 
+  ZOOKEEPER-1179. NettyServerCnxn does not properly close
+  socket on 4 letter word requests (Rakesh R, Germán Blanco
+  via fpj)
+
 
 IMPROVEMENTS:
 
