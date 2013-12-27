@@ -215,7 +215,7 @@ public class NettyServerCnxn extends ServerCnxn {
     @Override
     public void sendBuffer(ByteBuffer sendBuffer) {
         if (sendBuffer == ServerCnxnFactory.closeConn) {
-            channel.close();
+            close();
             return;
         }
         channel.write(wrappedBuffer(sendBuffer));
