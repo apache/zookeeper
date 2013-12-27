@@ -53,9 +53,9 @@ public class NettyServerCnxnTest extends ClientBase {
      * Test verifies the channel closure - while closing the channel
      * servercnxnfactory should remove all channel references to avoid
      * duplicate channel closure. Duplicate closure may result in 
-     * indefinite hanging due to netty open issue:
+     * indefinite hanging due to netty open issue.
      * 
-     * {@see https://issues.jboss.org/browse/NETTY-412}
+     * @see <a href="https://issues.jboss.org/browse/NETTY-412">NETTY-412</a>
      */
     @Test(timeout = 30000)
     public void testSendCloseSession() throws Exception {
