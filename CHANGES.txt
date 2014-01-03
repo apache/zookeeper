@@ -513,6 +513,8 @@ BUGFIXES:
   ZOOKEEPER-1179. NettyServerCnxn does not properly close socket on
   4 letter word requests (Rakesh R, Germán Blanco via fpj)
 
+  ZOOKEEPER-1852. ServerCnxnFactory instance is not properly 
+  cleanedup (Rakesh R via fpj)
 
 IMPROVEMENTS:
 
