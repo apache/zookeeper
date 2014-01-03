@@ -325,20 +325,25 @@ public abstract class ClientBase extends ZKTestCase {
         return Integer.parseInt(portstr);
     }
 
-    public static ServerCnxnFactory createNewServerInstance(File dataDir,
-            ServerCnxnFactory factory, String hostPort, int maxCnxns)
-        throws IOException, InterruptedException
-    {
+    public static void startServerInstance(File dataDir,
+            ServerCnxnFactory factory, String hostPort) throws IOException,
+            InterruptedException {
+        final int port = getPort(hostPort);
+        LOG.info("STARTING server instance 127.0.0.1:{}", port);
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
-        final int PORT = getPort(hostPort);
-        if (factory == null) {
-            factory = ServerCnxnFactory.createFactory(PORT, maxCnxns);
-        }
         factory.startup(zks);
-        Assert.assertTrue("waiting for server up",
-                   ClientBase.waitForServerUp("127.0.0.1:" + PORT,
-                                              CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(
+                "127.0.0.1:" + port, CONNECTION_TIMEOUT));
+    }
 
+    public static ServerCnxnFactory createNewServerInstance(
+            ServerCnxnFactory factory, String hostPort, int maxCnxns)
+            throws IOException, InterruptedException {
+        final int port = getPort(hostPort);
+        LOG.info("CREATING server instance 127.0.0.1:{}", port);
+        if (factory == null) {
+            factory = ServerCnxnFactory.createFactory(port, maxCnxns);
+        }
         return factory;
     }
 
@@ -346,15 +351,18 @@ public abstract class ClientBase extends ZKTestCase {
             String hostPort)
     {
         if (factory != null) {
-            ZKDatabase zkDb;
+            ZKDatabase zkDb = null;
             {
                 ZooKeeperServer zs = getServer(factory);
-
-                zkDb = zs.getZKDatabase();
+                if (zs != null) {
+                    zkDb = zs.getZKDatabase();
+                }
             }
             factory.shutdown();
             try {
-                zkDb.close();
+                if (zkDb != null) {
+                    zkDb.close();
+                }
             } catch (IOException ie) {
                 LOG.warn("Error closing logs ", ie);
             }
@@ -412,7 +420,9 @@ public abstract class ClientBase extends ZKTestCase {
 
     protected void startServer() throws Exception {
         LOG.info("STARTING server");
-        serverFactory = createNewServerInstance(tmpDir, serverFactory, hostPort, maxCnxns);
+        serverFactory = createNewServerInstance(serverFactory, hostPort,
+                maxCnxns);
+        startServerInstance(tmpDir, serverFactory, hostPort);
         // ensure that only server and data bean are registered
         JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
     }

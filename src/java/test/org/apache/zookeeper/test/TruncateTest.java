@@ -125,7 +125,10 @@ public class TruncateTest extends ZKTestCase {
     public void testTruncate() throws IOException, InterruptedException, KeeperException {
         // Prime the server that is going to come in late with 50 txns
         String hostPort = "127.0.0.1:" + baseHostPort;
-        ServerCnxnFactory factory = ClientBase.createNewServerInstance(dataDir1, null, hostPort, 100);
+        int maxCnxns = 100;
+        ServerCnxnFactory factory = ClientBase.createNewServerInstance(null,
+                hostPort, maxCnxns);
+        ClientBase.startServerInstance(dataDir1, factory, hostPort);
         ClientBase.shutdownServerInstance(factory, hostPort);
 
         // standalone starts with 0 epoch while quorum starts with 1
@@ -133,7 +136,8 @@ public class TruncateTest extends ZKTestCase {
         File newfile = new File(new File(dataDir1, "version-2"), "snapshot.100000000");
         origfile.renameTo(newfile);
 
-        factory = ClientBase.createNewServerInstance(dataDir1, null, hostPort, 100);
+        factory = ClientBase.createNewServerInstance(null, hostPort, maxCnxns);
+        ClientBase.startServerInstance(dataDir1, factory, hostPort);
 
         ZooKeeper zk = new ZooKeeper(hostPort, 15000, nullWatcher);
         for(int i = 0; i < 50; i++) {
