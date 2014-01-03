@@ -327,6 +327,9 @@ public abstract class ClientBase extends ZKTestCase {
         return Integer.parseInt(portstr);
     }
 
+    /**
+     * Starting the given server instance
+     */
     public static void startServerInstance(File dataDir,
             ServerCnxnFactory factory, String hostPort) throws IOException,
             InterruptedException {
@@ -338,6 +341,20 @@ public abstract class ClientBase extends ZKTestCase {
                 "127.0.0.1:" + port, CONNECTION_TIMEOUT));
     }
 
+    /**
+     * This method instantiates a new server. Starting of the server
+     * instance has been moved to a separate method
+     * {@link ClientBase#startServerInstance(File, ServerCnxnFactory, String)}.
+     * Because any exception on starting the server would leave the server
+     * running and the caller would not be able to shutdown the instance. This
+     * may affect other test cases.
+     * 
+     * @return newly created server instance
+     * 
+     * @see <a
+     *      href="https://issues.apache.org/jira/browse/ZOOKEEPER-1852">ZOOKEEPER-1852</a>
+     *      for more information.
+     */
     public static ServerCnxnFactory createNewServerInstance(
             ServerCnxnFactory factory, String hostPort, int maxCnxns)
             throws IOException, InterruptedException {
