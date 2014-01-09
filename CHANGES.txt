@@ -212,6 +212,8 @@ BUGFIXES:
   ZOOKEEPER-1852. ServerCnxnFactory instance is not properly
   cleanedup (Rakesh R via fpj)
 
+  ZOOKEEPER-1414. QuorumPeerMainTest.testQuorum, testBadPackets are failing
+  intermittently (Rakesh R via michim)
 
 IMPROVEMENTS:
 
