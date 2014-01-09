@@ -94,6 +94,7 @@ public class GetProposalFromTxnTest extends ZKTestCase implements Watcher {
 
         // shutdown and start zookeeper again
         f.shutdown();
+        zks.shutdown();
         Assert.assertTrue("waiting for server to shutdown",
                 ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
@@ -135,6 +136,8 @@ public class GetProposalFromTxnTest extends ZKTestCase implements Watcher {
 
         itr = db.getProposalsFromTxnLog(zxids[MSG_COUNT / 2], sizeLimit);
         Assert.assertFalse("Expect empty proposal", (itr.hasNext()));
+        f.shutdown();
+        zks.shutdown();
     }
 
     public void process(WatchedEvent event) {
