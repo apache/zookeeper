@@ -186,6 +186,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Zookeeper_simpleSystem);
     CPPUNIT_TEST(testAsyncWatcherAutoReset);
     CPPUNIT_TEST(testDeserializeString);
+    CPPUNIT_TEST(testFirstServerDown);
 #ifdef THREADED
     CPPUNIT_TEST(testNullData);
 #ifdef ZOO_IPV6_ENABLED
@@ -286,6 +287,17 @@ public:
         int zrc = 0;
         struct String_vector str_vec = {0, NULL};
         zrc = zoo_wget_children(zzh, "/mytest", default_zoo_watcher, NULL, &str_vec);
+    }
+
+    /** ZOOKEEPER-1057 This checks that the client connects to the second server when the first is not reachable **/
+    void testFirstServerDown() {
+        watchctx_t ctx;
+
+        zoo_deterministic_conn_order(true);
+
+        zhandle_t* zk = createClient("127.0.0.1:22182,127.0.0.1:22181", &ctx);
+        CPPUNIT_ASSERT(zk != 0);
+        CPPUNIT_ASSERT(ctx.waitForConnected(zk));
     }
     
     /** this checks for a deadlock in calling zookeeper_close and calls from a default watcher that might get triggered just when zookeeper_close() is in progress **/
