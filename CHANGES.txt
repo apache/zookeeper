@@ -107,6 +107,9 @@ BUGFIXES:
   ZOOKEEPER-1057. zookeeper c-client, connection to offline server fails to
   successfully fallback to second zk host (Germán Blanco via michim)
 
+  ZOOKEEPER-1857. PrepRequestProcessotTest doesn't shutdown ZooKeeper server
+  (Germán Blanco via michim)
+
 IMPROVEMENTS:
 
 
