@@ -23,6 +23,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.KeeperException.Code;
@@ -43,6 +44,7 @@ import org.junit.Test;
 public class PrepRequestProcessorTest extends ClientBase {
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final int CONNECTION_TIMEOUT = 3000;
+    private final CountDownLatch testEnd = new CountDownLatch(1);
 
     @Test
     public void testPRequest() throws Exception {
@@ -59,14 +61,17 @@ public class PrepRequestProcessorTest extends ClientBase {
         PrepRequestProcessor processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
         Request foo = new Request(null, 1l, 1, OpCode.create, ByteBuffer.allocate(3), null);
         processor.pRequest(foo);
+        testEnd.await(5, java.util.concurrent.TimeUnit.SECONDS);
+        f.shutdown();
+        zks.shutdown();
     }
  
 
     private class MyRequestProcessor implements RequestProcessor {
         @Override
         public void processRequest(Request request) {
-          Assert.assertEquals("Request should have marshalling error", new ErrorTxn(Code.MARSHALLINGERROR.intValue()),  request.txn);
-            
+            Assert.assertEquals("Request should have marshalling error", new ErrorTxn(Code.MARSHALLINGERROR.intValue()),  request.txn);
+            testEnd.countDown();            
         }
         @Override
         public void shutdown() {
