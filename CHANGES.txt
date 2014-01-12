@@ -110,6 +110,9 @@ BUGFIXES:
   ZOOKEEPER-1857. PrepRequestProcessotTest doesn't shutdown ZooKeeper server
   (Germán Blanco via michim)
 
+  ZOOKEEPER-1238. when the linger time was changed for NIO the patch missed
+  Netty (Skye Wanderman-Milne via fpj)
+
 IMPROVEMENTS:
 
 
