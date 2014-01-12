@@ -249,7 +249,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         bootstrap.setOption("reuseAddress", true);
         // child channels
         bootstrap.setOption("child.tcpNoDelay", true);
-        bootstrap.setOption("child.soLinger", 2);
+        /* set socket linger to off, so that socket close does not block */
+        bootstrap.setOption("child.soLinger", -1);
 
         bootstrap.getPipeline().addLast("servercnxnfactory", channelHandler);
     }
