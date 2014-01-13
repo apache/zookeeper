@@ -525,6 +525,9 @@ BUGFIXES:
   ZOOKEEPER-1857. PrepRequestProcessotTest doesn't shutdown ZooKeeper server
   (Germán Blanco via michim)
 
+  ZOOKEEPER-1860. Async versions of reconfig don't actually throw
+  KeeperException nor InterruptedException (Raul Gutierrez Segales via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
