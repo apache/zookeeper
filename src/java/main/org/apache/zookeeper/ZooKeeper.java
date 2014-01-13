@@ -1638,7 +1638,8 @@ public class ZooKeeper {
      * @see #reconfig
      *      
      **/
-    public void reconfig(String joiningServers, String leavingServers, String newMembers, long fromConfig, DataCallback cb, Object ctx) throws KeeperException, InterruptedException
+    public void reconfig(String joiningServers, String leavingServers,
+        String newMembers, long fromConfig, DataCallback cb, Object ctx)
     {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.reconfig);       
@@ -1654,7 +1655,9 @@ public class ZooKeeper {
      * @see #reconfig
      *
      */
-    public void reconfig(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, DataCallback cb, Object ctx) throws KeeperException, InterruptedException
+    public void reconfig(List<String> joiningServers,
+        List<String> leavingServers, List<String> newMembers, long fromConfig,
+        DataCallback cb, Object ctx)
     {
         reconfig(StringUtils.joinStrings(joiningServers, ","), 
         		StringUtils.joinStrings(leavingServers, ","), 
