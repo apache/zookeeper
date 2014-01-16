@@ -84,34 +84,43 @@ public class JMXEnv {
      * Note that these are components of the name, and in particular
      * order matters - you want the more specific name (leafs) specified
      * before their parent(s) (since names are hierarchical)
+     * It waits in a loop up to 60 seconds before failing if there is a
+     * mismatch.
      * @param expectedNames
      * @return
      * @throws IOException
      * @throws MalformedObjectNameException
      */
     public static Set<ObjectName> ensureAll(String... expectedNames)
-        throws IOException
+        throws IOException, InterruptedException
     {
         Set<ObjectName> beans;
-        try {
-            beans = conn().queryNames(
-                    new ObjectName(CommonNames.DOMAIN + ":*"), null);
-        } catch (MalformedObjectNameException e) {
-            throw new RuntimeException(e);
-        }
-        
-        Set<ObjectName> found = new HashSet<ObjectName>();
-        for (String name : expectedNames) {
-            LOG.info("expect:" + name);
-            for (ObjectName bean : beans) {
-                if (bean.toString().contains(name)) {
-                    LOG.info("found:" + name + " " + bean);
-                    found.add(bean);
-                    break;
-                }
+        Set<ObjectName> found;
+        int nTry = 0;
+        do {
+            if (nTry++ > 0) {
+                Thread.sleep(100);
             }
-            beans.removeAll(found);
-        }
+            try {
+                beans = conn().queryNames(
+                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+            } catch (MalformedObjectNameException e) {
+                throw new RuntimeException(e);
+            }
+        
+            found = new HashSet<ObjectName>();
+            for (String name : expectedNames) {
+                LOG.info("expect:" + name);
+                for (ObjectName bean : beans) {
+                    if (bean.toString().contains(name)) {
+                        LOG.info("found:" + name + " " + bean);
+                        found.add(bean);
+                        break;
+                    }
+                }
+                beans.removeAll(found);
+            }
+        } while ((expectedNames.length != found.size()) && (nTry < 600));
         TestCase.assertEquals("expected " + Arrays.toString(expectedNames),
                 expectedNames.length, found.size());
         return beans;
@@ -122,8 +131,6 @@ public class JMXEnv {
      * Note that these are components of the name, and in particular
      * order matters - you want the more specific name (leafs) specified
      * before their parent(s) (since names are hierarchical)
-     * It waits in a loop up to 5 seconds before failing if there is a
-     * mismatch.
      * @param expectedNames
      * @return
      * @throws IOException
@@ -134,10 +141,6 @@ public class JMXEnv {
     {
         LOG.info("ensureOnly:" + Arrays.toString(expectedNames));
         Set<ObjectName> beans = ensureAll(expectedNames);
-        for (int i = 0; (i < 50) && (beans.size() != 0); i++) {
-            Thread.sleep(100);
-            beans = ensureAll(expectedNames);
-        }
         for (ObjectName bean : beans) {
             LOG.info("unexpected:" + bean.toString());
         }
@@ -146,23 +149,44 @@ public class JMXEnv {
     }
     
     public static void ensureNone(String... expectedNames)
-        throws IOException
+        throws IOException, InterruptedException
     {
         Set<ObjectName> beans;
-        try {
-            beans = conn().queryNames(
-                    new ObjectName(CommonNames.DOMAIN + ":*"), null);
-        } catch (MalformedObjectNameException e) {
-            throw new RuntimeException(e);
-        }
-        
-        for (String name : expectedNames) {
-            for (ObjectName bean : beans) {
-                if (bean.toString().contains(name)) {
-                    LOG.info("didntexpect:" + name);
-                    TestCase.fail(name + " " + bean.toString());
+        int nTry = 0;
+        boolean foundUnexpected = false;
+        String unexpectedName = "";
+        do {
+            if (nTry++ > 0) {
+                Thread.sleep(100);
+            }
+            try {
+                beans = conn().queryNames(
+                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+            } catch (MalformedObjectNameException e) {
+                throw new RuntimeException(e);
+            }
+  
+            foundUnexpected = false; 
+            for (String name : expectedNames) {
+                for (ObjectName bean : beans) {
+                    if (bean.toString().contains(name)) {
+                        LOG.info("didntexpect:" + name);
+                        foundUnexpected = true;
+                        unexpectedName = name + " " + bean.toString();
+                        break;
+                    }
+                }
+                if (foundUnexpected) {
+                    break;
                 }
             }
+        } while ((foundUnexpected) && (nTry < 600));
+        if (foundUnexpected) {
+            LOG.info("List of all beans follows:");
+            for (ObjectName bean : beans) {
+                LOG.info("bean:" + bean.toString());
+            }
+            TestCase.fail(unexpectedName);
         }
     }
 
