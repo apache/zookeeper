@@ -528,6 +528,9 @@ BUGFIXES:
   ZOOKEEPER-1860. Async versions of reconfig don't actually throw
   KeeperException nor InterruptedException (Raul Gutierrez Segales via phunt)
 
+  ZOOKEEPER-1837. Fix JMXEnv checks (potential race conditions)
+  (Germán Blanco via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
