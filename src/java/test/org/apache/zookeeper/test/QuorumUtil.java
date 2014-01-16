@@ -160,6 +160,8 @@ public class QuorumUtil {
             JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
         } catch (IOException e) {
             LOG.warn("IOException during JMXEnv operation", e);
+        } catch (InterruptedException e) {
+            LOG.warn("InterruptedException during JMXEnv operation", e);
         }
     }
 
