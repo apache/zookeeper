@@ -127,7 +127,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 
     @Override
     public int getGlobalOutstandingLimit() {
-        return super.getGlobalOutstandingLimit() / (self.getQuorumSize() - 1);
+        int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
+        return super.getGlobalOutstandingLimit() / divisor;
     }
 
     @Override

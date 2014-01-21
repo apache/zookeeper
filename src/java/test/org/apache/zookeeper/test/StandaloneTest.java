@@ -27,6 +27,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.Assert;
 import org.junit.Test;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 
 /**
  * Standalone server tests.
@@ -56,9 +57,11 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         try {
             Assert.assertTrue("waiting for server 1 being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                            CONNECTION_TIMEOUT));
-        } finally {
-            q1.shutdown();
+                    CONNECTION_TIMEOUT));
+    } finally {
+        Assert.assertFalse("Error- MainThread started in Quorum Mode!",
+                   q1.isQuorumPeerRunning());
+        q1.shutdown();
         }
     }    
     

@@ -47,7 +47,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     private static final Logger LOG = LoggerFactory
             .getLogger(ReconfigTest.class);
 
-    private String reconfig(ZooKeeper zk, List<String> joiningServers,
+    public static String reconfig(ZooKeeper zk, List<String> joiningServers,
             List<String> leavingServers, List<String> newMembers, long fromConfig)
             throws KeeperException, InterruptedException {
         byte[] config = null;

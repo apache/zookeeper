@@ -49,6 +49,7 @@ import org.apache.zookeeper.server.util.VerifyingFileFactory;
 
 public class QuorumPeerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
+    private static boolean standaloneEnabled = true;
 
     protected InetSocketAddress clientPortAddress;
     protected File dataDir;
@@ -125,7 +126,7 @@ public class QuorumPeerConfig {
             if (dynamicConfigFileStr == null) {
                 configBackwardCompatibilityMode = true;
                 configFileStr = path;                
-                parseDynamicConfig(cfg, electionAlg, true);
+                quorumVerifier = parseDynamicConfig(cfg, electionAlg, true, configBackwardCompatibilityMode);
                 checkValidity();                
             }
 
@@ -144,7 +145,7 @@ public class QuorumPeerConfig {
                } finally {
                    inConfig.close();
                }
-               parseDynamicConfig(dynamicCfg, electionAlg, true);
+               quorumVerifier = parseDynamicConfig(dynamicCfg, electionAlg, true, configBackwardCompatibilityMode);
                checkValidity();
            
            } catch (IOException e) {
@@ -237,8 +238,16 @@ public class QuorumPeerConfig {
                 snapRetainCount = Integer.parseInt(value);
             } else if (key.equals("autopurge.purgeInterval")) {
                 purgeInterval = Integer.parseInt(value);
-            } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")){                
-               throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
+            } else if (key.equals("standaloneEnabled")) {
+                if (value.toLowerCase().equals("true")) {
+                    setStandaloneEnabled(true);
+                } else if (value.toLowerCase().equals("false")) {
+                    setStandaloneEnabled(false);
+                } else {
+                    throw new ConfigException("Invalid option for standalone mode. Choose 'true' or 'false.'");
+                }
+            } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
+                throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -370,7 +379,7 @@ public class QuorumPeerConfig {
     }
     
     
-    private QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical) throws ConfigException{
+    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical) throws ConfigException{
        if(isHierarchical){
             return new QuorumHierarchical(dynamicConfigProp);
         } else {
@@ -383,13 +392,14 @@ public class QuorumPeerConfig {
     }
     
     /**
-     * Parse dynamic configuration file.
+     * Parse dynamic configuration file and return
+     * quorumVerifier for new configuration.
      * @param zkProp Properties to parse from.
      * @throws IOException
      * @throws ConfigException
      */
-    public void parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings)
-    throws IOException, ConfigException {
+    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings,
+	   boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
        boolean isHierarchical = false;
         for (Entry<Object, Object> entry : dynamicConfigProp.entrySet()) {
             String key = entry.getKey().toString().trim();                    
@@ -401,54 +411,51 @@ public class QuorumPeerConfig {
             }
         }
         
-        quorumVerifier = createQuorumVerifier(dynamicConfigProp, isHierarchical);                      
+        QuorumVerifier qv = createQuorumVerifier(dynamicConfigProp, isHierarchical);
                
-        int numParticipators = quorumVerifier.getVotingMembers().size();
-        int numObservers = quorumVerifier.getObservingMembers().size();        
+        int numParticipators = qv.getVotingMembers().size();
+        int numObservers = qv.getObservingMembers().size();
         if (numParticipators == 0) {
             if (numObservers > 0) {
                 throw new IllegalArgumentException("Observers w/o participants is an invalid configuration");
             }
-            // Not a quorum configuration so return immediately - not an error
-            // case (for b/w compatibility), server will default to standalone
-            // mode.
-            return;
-        } else if (numParticipators == 1) {            
+        } else if (numParticipators == 1 && standaloneEnabled) {
+            // HBase currently adds a single server line to the config, for
+            // b/w compatibility reasons we need to keep this here. If standaloneEnabled
+            // is true, the QuorumPeerMain script will create a standalone server instead
+            // of a quorum configuration
+            LOG.error("Invalid configuration, only one server specified (ignoring)");
             if (numObservers > 0) {
                 throw new IllegalArgumentException("Observers w/o quorum is an invalid configuration");
             }
-
-            // HBase currently adds a single server line to the config, for
-            // b/w compatibility reasons we need to keep this here.
-            LOG.error("Invalid configuration, only one server specified (ignoring)");
-            //servers.clear();
-        } else if (numParticipators > 1) {
-           if (warnings) {
-                if (numParticipators == 2) {
+        } else {
+            if (warnings) {
+                if (numParticipators <= 2) {
                     LOG.warn("No server failure will be tolerated. " +
                         "You need at least 3 servers.");
                 } else if (numParticipators % 2 == 0) {
                     LOG.warn("Non-optimial configuration, consider an odd number of servers.");
                 }
-           }
+            }
             /*
              * If using FLE, then every server requires a separate election
              * port.
              */            
            if (eAlg != 0) {
-               for (QuorumServer s : quorumVerifier.getVotingMembers().values()) {
+               for (QuorumServer s : qv.getVotingMembers().values()) {
                    if (s.electionAddr == null)
                        throw new IllegalArgumentException(
                                "Missing election port for server: " + s.id);
                }
            }   
         }
+        return qv;
     }
     
 
     public void checkValidity() throws IOException, ConfigException{
-
-       if (quorumVerifier.getVotingMembers().size() > 1) {
+       int numMembers = quorumVerifier.getVotingMembers().size();
+       if (numMembers > 1  || (!standaloneEnabled && numMembers > 0)) {
            if (initLimit == 0) {
                throw new IllegalArgumentException("initLimit is not set");
            }
@@ -546,7 +553,9 @@ public class QuorumPeerConfig {
 
     public long getServerId() { return serverId; }
 
-    public boolean isDistributed() { return (quorumVerifier!=null && quorumVerifier.getVotingMembers().size() > 1); }
+    public boolean isDistributed() {
+        return quorumVerifier!=null && (!standaloneEnabled || quorumVerifier.getVotingMembers().size() > 1);
+    }
 
     public LearnerType getPeerType() {
         return peerType;
@@ -566,6 +575,14 @@ public class QuorumPeerConfig {
     
     public Boolean getQuorumListenOnAllIPs() {
         return quorumListenOnAllIPs;
+    }
+ 
+    public static boolean isStandaloneEnabled() {
+	return standaloneEnabled;
+    }
+    
+    public static void setStandaloneEnabled(boolean enabled) {
+	standaloneEnabled = enabled;
     }
 
 }

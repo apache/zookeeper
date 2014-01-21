@@ -1228,11 +1228,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
     public QuorumVerifier configFromString(String s) throws IOException, ConfigException{
         Properties props = new Properties();        
         props.load(new StringReader(s));
-        
-        QuorumPeerConfig config = new QuorumPeerConfig();
-        config.parseDynamicConfig(props, electionType, false);
-        
-        return config.getQuorumVerifier();
+        return QuorumPeerConfig.parseDynamicConfig(props, electionType, false, false);
     }
     
     /**

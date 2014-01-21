@@ -121,7 +121,6 @@ public class ReconfigCommand extends CliCommand {
         if (cl.hasOption("file")) {
             try {           
                 FileInputStream inConfig = new FileInputStream(cl.getOptionValue("file"));
-                QuorumPeerConfig config = new QuorumPeerConfig();                       
                 Properties dynamicCfg = new Properties();
                 try {
                     dynamicCfg.load(inConfig);
@@ -131,8 +130,7 @@ public class ReconfigCommand extends CliCommand {
                 //check that membership makes sense; leader will make these checks again
                 //don't check for leader election ports since 
                 //client doesn't know what leader election alg is used
-                config.parseDynamicConfig(dynamicCfg, 0, true);                               
-                members = config.getQuorumVerifier().toString();                    
+                members = QuorumPeerConfig.parseDynamicConfig(dynamicCfg, 0, true, false).toString();
             } catch (Exception e) {
                 throw new ParseException("Error processing " + cl.getOptionValue("file") + e.getMessage());                
             } 
