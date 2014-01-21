@@ -18,6 +18,8 @@ NEW FEATURES:
 
   ZOOKEEPER-1147. Add support for local sessions (Jay Shrauner, thawan via thawan)
 
+  ZOOKEEPER-1691. Add a flag to disable standalone mode (Helen Hastings via michim)
+
 BUGFIXES:
 
   ZOOKEEPER-786. Exception in ZooKeeper.toString

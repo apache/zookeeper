@@ -539,9 +539,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                    try{
                        Properties props = new Properties();                        
                        props.load(new StringReader(newMembers));
-                       QuorumPeerConfig config = new QuorumPeerConfig();
-                       config.parseDynamicConfig(props, lzks.self.getElectionType(), true);
-                       request.qv = config.getQuorumVerifier();
+                       request.qv = QuorumPeerConfig.parseDynamicConfig(props, lzks.self.getElectionType(), true, false);
                        request.qv.setVersion(request.getHdr().getZxid());
                    } catch (IOException e) {
                        throw new KeeperException.BadArgumentsException(e.getMessage());
@@ -600,12 +598,16 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                    }
                    request.qv = new QuorumMaj(nextServers);
                    request.qv.setVersion(request.getHdr().getZxid());
-                }                             
-                if (request.qv.getVotingMembers().size() < 2){
+                }
+                if (QuorumPeerConfig.isStandaloneEnabled() && request.qv.getVotingMembers().size() < 2) {
                    String msg = "Reconfig failed - new configuration must include at least 2 followers";
                    LOG.warn(msg);
                    throw new KeeperException.BadArgumentsException(msg);
-               }
+                } else if (request.qv.getVotingMembers().size() < 1) {
+                   String msg = "Reconfig failed - new configuration must include at least 1 follower";
+                   LOG.warn(msg);
+                   throw new KeeperException.BadArgumentsException(msg);
+                }                           
                    
                 if (!lzks.getLeader().isQuorumSynced(request.qv)) {
                    String msg2 = "Reconfig failed - there must be a connected and synced quorum in new configuration";

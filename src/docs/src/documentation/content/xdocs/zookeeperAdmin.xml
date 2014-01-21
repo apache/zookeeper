@@ -1000,6 +1000,24 @@ server.3=zoo3:2888:3888</programlisting>
               </note>
             </listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term>standaloneEnabled</term>
+
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para><emphasis role="bold">New in 3.5.0:</emphasis>
+              When set to false, a single server can be started in replicated
+              mode, a lone participant can run with observers, and a cluster
+              can reconfigure down to one node, and up from one node. The
+              default is true for backwards compatibility. It can be set
+              using QuorumPeerConfig's setStandaloneEnabled method or by
+              adding "standaloneEnabled=false" or "standaloneEnabled=true"
+              to a server's config file.
+              </para>
+            </listitem>
+          </varlistentry>
         </variablelist>
         <para></para>
       </section>
