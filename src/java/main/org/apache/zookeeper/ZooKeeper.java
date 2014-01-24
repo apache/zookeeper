@@ -38,7 +38,11 @@ import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.KeeperException.NoWatcherException;
 import org.apache.zookeeper.OpResult.ErrorResult;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
@@ -61,6 +65,7 @@ import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.ReconfigRequest;
+import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetACLRequest;
@@ -219,7 +224,7 @@ public class ZooKeeper {
      * the public methods will not be exposed as part of the ZooKeeper client
      * API.
      */
-    private static class ZKWatchManager implements ClientWatchManager {
+    static class ZKWatchManager implements ClientWatchManager {
         private final Map<String, Set<Watcher>> dataWatches =
             new HashMap<String, Set<Watcher>>();
         private final Map<String, Set<Watcher>> existWatches =
@@ -235,6 +240,178 @@ public class ZooKeeper {
             }
         }
 
+        public Map<EventType, Set<Watcher>> removeWatcher(String clientPath,
+                Watcher watcher, WatcherType watcherType, boolean local, int rc)
+                throws KeeperException {
+            // Validate the provided znode path contains the given watcher of
+            // watcherType
+            containsWatcher(clientPath, watcher, watcherType);
+
+            Map<EventType, Set<Watcher>> removedWatchers = new HashMap<EventType, Set<Watcher>>();
+            HashSet<Watcher> childWatchersToRem = new HashSet<Watcher>();
+            removedWatchers
+                    .put(EventType.ChildWatchRemoved, childWatchersToRem);
+            HashSet<Watcher> dataWatchersToRem = new HashSet<Watcher>();
+            removedWatchers.put(EventType.DataWatchRemoved, dataWatchersToRem);
+            boolean removedWatcher = false;
+            switch (watcherType) {
+            case Children: {
+                synchronized (childWatches) {
+                    removedWatcher = removeWatches(childWatches, watcher,
+                            clientPath, local, rc, childWatchersToRem);
+                }
+                break;
+            }
+            case Data: {
+                synchronized (dataWatches) {
+                    removedWatcher = removeWatches(dataWatches, watcher,
+                            clientPath, local, rc, dataWatchersToRem);
+                }
+
+                synchronized (existWatches) {
+                    boolean removedDataWatcher = removeWatches(existWatches,
+                            watcher, clientPath, local, rc, dataWatchersToRem);
+                    removedWatcher |= removedDataWatcher;
+                }
+                break;
+            }
+            case Any: {
+                synchronized (childWatches) {
+                    removedWatcher = removeWatches(childWatches, watcher,
+                            clientPath, local, rc, childWatchersToRem);
+                }
+
+                synchronized (dataWatches) {
+                    boolean removedDataWatcher = removeWatches(dataWatches,
+                            watcher, clientPath, local, rc, dataWatchersToRem);
+                    removedWatcher |= removedDataWatcher;
+                }
+                synchronized (existWatches) {
+                    boolean removedDataWatcher = removeWatches(existWatches,
+                            watcher, clientPath, local, rc, dataWatchersToRem);
+                    removedWatcher |= removedDataWatcher;
+                }
+            }
+            }
+            // Watcher function doesn't exists for the specified params
+            if (!removedWatcher) {
+                throw new KeeperException.NoWatcherException(clientPath);
+            }
+            return removedWatchers;
+        }
+
+        private boolean contains(String path, Watcher watcherObj,
+                Map<String, Set<Watcher>> pathVsWatchers) {
+            boolean watcherExists = true;
+            if (pathVsWatchers == null || pathVsWatchers.size() == 0) {
+                watcherExists = false;
+            } else {
+                Set<Watcher> watchers = pathVsWatchers.get(path);
+                if (watchers == null) {
+                    watcherExists = false;
+                } else if (watcherObj == null) {
+                    watcherExists = watchers.size() > 0;
+                } else {
+                    watcherExists = watchers.contains(watcherObj);
+                }
+            }
+            return watcherExists;
+        }
+
+        /**
+         * Validate the provided znode path contains the given watcher and
+         * watcherType
+         * 
+         * @param path
+         *            - client path
+         * @param watcher
+         *            - watcher object reference
+         * @param watcherType
+         *            - type of the watcher
+         * @throws NoWatcherException
+        */
+        void containsWatcher(String path, Watcher watcher,
+                WatcherType watcherType) throws NoWatcherException{
+            boolean containsWatcher = false;
+            switch (watcherType) {
+            case Children: {
+                synchronized (childWatches) {
+                    containsWatcher = contains(path, watcher, childWatches);
+                }
+                break;
+            }
+            case Data: {
+                synchronized (dataWatches) {
+                    containsWatcher = contains(path, watcher, dataWatches);
+                }
+
+                synchronized (existWatches) {
+                    boolean contains_temp = contains(path, watcher,
+                            existWatches);
+                    containsWatcher |= contains_temp;
+                }
+                break;
+            }
+            case Any: {
+                synchronized (childWatches) {
+                    containsWatcher = contains(path, watcher, childWatches);
+                }
+
+                synchronized (dataWatches) {
+                    boolean contains_temp = contains(path, watcher, dataWatches);
+                    containsWatcher |= contains_temp;
+                }
+                synchronized (existWatches) {
+                    boolean contains_temp = contains(path, watcher,
+                            existWatches);
+                    containsWatcher |= contains_temp;
+                }
+            }
+            }
+            // Watcher function doesn't exists for the specified params
+            if (!containsWatcher) {
+                throw new KeeperException.NoWatcherException(path);
+            }
+        }
+
+        private boolean removeWatches(Map<String, Set<Watcher>> pathVsWatcher,
+                Watcher watcher, String path, boolean local, int rc,
+                Set<Watcher> removedWatchers) throws KeeperException {
+            if (!local && rc != Code.OK.intValue()) {
+                throw KeeperException
+                        .create(KeeperException.Code.get(rc), path);
+            }
+            boolean success = false;
+            // When local flag is true, remove watchers for the given path
+            // irrespective of rc. Otherwise shouldn't remove watchers locally
+            // when sees failure from server.
+            if (rc == Code.OK.intValue() || (local && rc != Code.OK.intValue())) {
+                // Remove all the watchers for the given path
+                if (watcher == null) {
+                    Set<Watcher> pathWatchers = pathVsWatcher.remove(path);
+                    if (pathWatchers != null) {
+                        // found path watchers
+                        removedWatchers.addAll(pathWatchers);
+                        success = true;
+                    }
+                } else {
+                    Set<Watcher> watchers = pathVsWatcher.get(path);
+                    if (watchers != null) {
+                        if (watchers.remove(watcher)) {
+                            // found path watcher
+                            removedWatchers.add(watcher);
+                            // cleanup <path vs watchlist>
+                            if (watchers.size() <= 0) {
+                                pathVsWatcher.remove(path);
+                            }
+                            success = true;
+                        }
+                    }
+                }
+            }
+            return success;
+        }
+        
         /* (non-Javadoc)
          * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState, 
          *                                                        Event.EventType, java.lang.String)
@@ -2133,6 +2310,95 @@ public class ZooKeeper {
         request.setPath(serverPath);
         cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
                 clientPath, serverPath, ctx, null);
+    }
+
+    /**
+     * For the given znode path, removes the specified watcher of given
+     * watcherType.
+     * 
+     * <p>
+     * If watcher is null, all watchers for the given path and watcherType will
+     * be removed. Otherwise only the specified watcher corresponding to the
+     * passed path and watcherType will be removed.
+     * <p>
+     * A successful call guarantees that, the removed watcher won't be
+     * triggered.
+     * <p>
+     * 
+     * @param path
+     *            - the path of the node
+     * @param watcher
+     *            - a concrete watcher or null to remove all watchers for the
+     *            given path and watcherType
+     * @param watcherType
+     *            - the type of watcher to be removed
+     * @param local
+     *            - whether the watcher can be removed locally when there is no
+     *            server connection
+     * @throws InterruptedException
+     *             if the server transaction is interrupted.
+     * @throws KeeperException.NoWatcher
+     *             if no watcher exists that match the specified parameters
+     * @throws KeeperException
+     *             if the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException
+     *             if an invalid path is specified
+     * 
+     * @since 3.5.0
+     */
+    public void removeWatches(String path, Watcher watcher,
+            WatcherType watcherType, boolean local)
+            throws InterruptedException, KeeperException {
+        PathUtils.validatePath(path);
+        final String clientPath = path;
+        // Validating the existence of watcher.
+        watchManager.containsWatcher(clientPath, watcher, watcherType);
+        final String serverPath = prependChroot(clientPath);
+
+        WatchDeregistration wcb = new WatchDeregistration(clientPath, watcher,
+                watcherType, local, watchManager);
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.removeWatches);
+        RemoveWatchesRequest request = new RemoveWatchesRequest();
+        request.setPath(serverPath);
+        request.setType(watcherType.getIntValue());
+
+        ReplyHeader r = cnxn.submitRequest(h, request, null, null, wcb);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    clientPath);
+        }
+    }
+
+    /**
+     * The asynchronous version of removeWatches.
+     * 
+     * @see #removeWatches
+     */
+    public void removeWatches(String path, Watcher watcher,
+            WatcherType watcherType, boolean local, VoidCallback cb, Object ctx) {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        // Validating the existence of watcher.
+        try {
+            watchManager.containsWatcher(clientPath, watcher, watcherType);
+        } catch (NoWatcherException nwe) {
+            LOG.error("Failed to find watcher!", nwe);
+            cb.processResult(nwe.code().intValue(), clientPath, ctx);
+            return;
+        }
+
+        final String serverPath = prependChroot(clientPath);
+        WatchDeregistration wcb = new WatchDeregistration(clientPath, watcher,
+                watcherType, local, watchManager);
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.removeWatches);
+        RemoveWatchesRequest request = new RemoveWatchesRequest();
+        request.setPath(serverPath);
+        request.setType(watcherType.getIntValue());
+        cnxn.queuePacket(h, new ReplyHeader(), request, null, cb, clientPath,
+                serverPath, ctx, null, wcb);
     }
 
     public States getState() {

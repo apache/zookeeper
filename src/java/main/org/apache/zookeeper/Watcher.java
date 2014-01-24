@@ -117,7 +117,9 @@ public interface Watcher {
             NodeCreated (1),
             NodeDeleted (2),
             NodeDataChanged (3),
-            NodeChildrenChanged (4);
+            NodeChildrenChanged (4),
+            DataWatchRemoved (5),
+            ChildWatchRemoved (6);
 
             private final int intValue;     // Integer representation of value
                                             // for sending over wire
@@ -137,11 +139,46 @@ public interface Watcher {
                     case  2: return EventType.NodeDeleted;
                     case  3: return EventType.NodeDataChanged;
                     case  4: return EventType.NodeChildrenChanged;
+                    case  5: return EventType.DataWatchRemoved;
+                    case  6: return EventType.ChildWatchRemoved;
 
                     default:
                         throw new RuntimeException("Invalid integer value for conversion to EventType");
                 }
             }           
+        }
+    }
+
+    /**
+     * Enumeration of types of watchers
+     */
+    public enum WatcherType {
+        Children(1), Data(2), Any(3);
+
+        // Integer representation of value
+        private final int intValue;
+
+        private WatcherType(int intValue) {
+            this.intValue = intValue;
+        }
+
+        public int getIntValue() {
+            return intValue;
+        }
+
+        public static WatcherType fromInt(int intValue) {
+            switch (intValue) {
+            case 1:
+                return WatcherType.Children;
+            case 2:
+                return WatcherType.Data;
+            case 3:
+                return WatcherType.Any;
+
+            default:
+                throw new RuntimeException(
+                        "Invalid integer value for conversion to WatcherType");
+            }
         }
     }
 
