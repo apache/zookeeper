@@ -168,4 +168,20 @@ class WatchManager {
             }
         }
     }
+
+    synchronized void removeWatcher(String path, Watcher watcher) {
+        HashSet<String> paths = watch2Paths.get(watcher);
+        if (paths == null) {
+            return;
+        }
+        paths.remove(path);
+        HashSet<Watcher> list = watchTable.get(path);
+        if (list == null) {
+            return;
+        }
+        list.remove(watcher);
+        if (list.size() == 0) {
+            watchTable.remove(path);
+        }
+    }
 }

@@ -137,6 +137,8 @@ public abstract class KeeperException extends Exception {
                 return new NotReadOnlyException();
             case EPHEMERALONLOCALSESSION:
                 return new EphemeralOnLocalSessionException();
+            case NOWATCHER:
+                return new NoWatcherException();
             case OK:
             default:
                 throw new IllegalArgumentException("Invalid exception code");
@@ -372,7 +374,9 @@ public abstract class KeeperException extends Exception {
         /** State-changing request is passed to read-only server */
         NOTREADONLY (-119),
         /** Attempt to create ephemeral node on a local session */
-        EPHEMERALONLOCALSESSION (EphemeralOnLocalSession);
+        EPHEMERALONLOCALSESSION (EphemeralOnLocalSession),
+        /** Attempts to remove a non-existing watcher */
+        NOWATCHER (-123);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
@@ -455,6 +459,8 @@ public abstract class KeeperException extends Exception {
                 return "Not a read-only call";
             case EPHEMERALONLOCALSESSION:
                 return "Ephemeral node on local session";
+            case NOWATCHER:
+                return "No such watcher";
             default:
                 return "Unknown error " + code;
         }
@@ -766,6 +772,19 @@ public abstract class KeeperException extends Exception {
     public static class UnimplementedException extends KeeperException {
         public UnimplementedException() {
             super(Code.UNIMPLEMENTED);
+        }
+    }
+
+    /**
+     * @see Code#NOWATCHER
+     */
+    public static class NoWatcherException extends KeeperException {
+        public NoWatcherException() {
+            super(Code.NOWATCHER);
+        }
+
+        public NoWatcherException(String path) {
+            super(Code.NOWATCHER, path);
         }
     }
 }

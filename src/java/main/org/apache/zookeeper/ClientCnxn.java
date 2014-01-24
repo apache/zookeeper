@@ -28,10 +28,13 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -50,6 +53,7 @@ import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
@@ -257,6 +261,8 @@ public class ClientCnxn {
 
         public boolean readOnly;
 
+        WatchDeregistration watchDeregistration;
+
         /** Convenience ctor */
         Packet(RequestHeader requestHeader, ReplyHeader replyHeader,
                Record request, Record response,
@@ -457,19 +463,33 @@ public class ClientCnxn {
         }
 
         public void queueEvent(WatchedEvent event) {
+            queueEvent(event, null);
+        }
+
+        private void queueEvent(WatchedEvent event,
+                Set<Watcher> materializedWatchers) {
             if (event.getType() == EventType.None
                     && sessionState == event.getState()) {
                 return;
             }
             sessionState = event.getState();
-
-            // materialize the watchers based on the event
-            WatcherSetEventPair pair = new WatcherSetEventPair(
-                    watcher.materialize(event.getState(), event.getType(),
-                            event.getPath()),
-                            event);
+            final Set<Watcher> watchers;
+            if (materializedWatchers == null) {
+                // materialize the watchers based on the event
+                watchers = watcher.materialize(event.getState(),
+                        event.getType(), event.getPath());
+            } else {
+                watchers = new HashSet<Watcher>();
+                watchers.addAll(materializedWatchers);
+            }
+            WatcherSetEventPair pair = new WatcherSetEventPair(watchers, event);
             // queue the pair (watch set & event) for later processing
             waitingEvents.add(pair);
+        }
+
+        public void queueCallback(AsyncCallback cb, int rc, String path,
+                Object ctx) {
+            waitingEvents.add(new LocalCallback(cb, rc, path, ctx));
         }
 
        public void queuePacket(Packet packet) {
@@ -525,7 +545,31 @@ public class ClientCnxn {
                           LOG.error("Error while calling watcher ", t);
                       }
                   }
-              } else {
+                } else if (event instanceof LocalCallback) {
+                    LocalCallback lcb = (LocalCallback) event;
+                    if (lcb.cb instanceof StatCallback) {
+                        ((StatCallback) lcb.cb).processResult(lcb.rc, lcb.path,
+                                lcb.ctx, null);
+                    } else if (lcb.cb instanceof DataCallback) {
+                        ((DataCallback) lcb.cb).processResult(lcb.rc, lcb.path,
+                                lcb.ctx, null, null);
+                    } else if (lcb.cb instanceof ACLCallback) {
+                        ((ACLCallback) lcb.cb).processResult(lcb.rc, lcb.path,
+                                lcb.ctx, null, null);
+                    } else if (lcb.cb instanceof ChildrenCallback) {
+                        ((ChildrenCallback) lcb.cb).processResult(lcb.rc,
+                                lcb.path, lcb.ctx, null);
+                    } else if (lcb.cb instanceof Children2Callback) {
+                        ((Children2Callback) lcb.cb).processResult(lcb.rc,
+                                lcb.path, lcb.ctx, null, null);
+                    } else if (lcb.cb instanceof StringCallback) {
+                        ((StringCallback) lcb.cb).processResult(lcb.rc,
+                                lcb.path, lcb.ctx, null);
+                    } else {
+                        ((VoidCallback) lcb.cb).processResult(lcb.rc, lcb.path,
+                                lcb.ctx);
+                    }
+                } else {
                   Packet p = (Packet) event;
                   int rc = 0;
                   String clientPath = p.clientPath;
@@ -646,8 +690,34 @@ public class ClientCnxn {
     }
 
     private void finishPacket(Packet p) {
+        int err = p.replyHeader.getErr();
         if (p.watchRegistration != null) {
-            p.watchRegistration.register(p.replyHeader.getErr());
+            p.watchRegistration.register(err);
+        }
+        // Add all the removed watch events to the event queue, so that the
+        // clients will be notified with 'Data/Child WatchRemoved' event type.
+        if (p.watchDeregistration != null) {
+            Map<EventType, Set<Watcher>> materializedWatchers = null;
+            try {
+                materializedWatchers = p.watchDeregistration.unregister(err);
+                for (Entry<EventType, Set<Watcher>> entry : materializedWatchers
+                        .entrySet()) {
+                    Set<Watcher> watchers = entry.getValue();
+                    if (watchers.size() > 0) {
+                        queueEvent(p.watchDeregistration.getClientPath(), err,
+                                watchers, entry.getKey());
+                        // ignore connectionloss when removing from local
+                        // session
+                        p.replyHeader.setErr(Code.OK.intValue());
+                    }
+                }
+            } catch (KeeperException.NoWatcherException nwe) {
+                LOG.error("Failed to find watcher!", nwe);
+                p.replyHeader.setErr(nwe.code().intValue());
+            } catch (KeeperException ke) {
+                LOG.error("Exception when removing watcher", ke);
+                p.replyHeader.setErr(ke.code().intValue());
+            }
         }
 
         if (p.cb == null) {
@@ -659,6 +729,22 @@ public class ClientCnxn {
             p.finished = true;
             eventThread.queuePacket(p);
         }
+    }
+
+    void queueEvent(String clientPath, int err,
+            Set<Watcher> materializedWatchers, EventType eventType) {
+        KeeperState sessionState = KeeperState.SyncConnected;
+        if (KeeperException.Code.SESSIONEXPIRED.intValue() == err
+                || KeeperException.Code.CONNECTIONLOSS.intValue() == err) {
+            sessionState = Event.KeeperState.Disconnected;
+        }
+        WatchedEvent event = new WatchedEvent(eventType, sessionState,
+                clientPath);
+        eventThread.queueEvent(event, materializedWatchers);
+    }
+
+    void queueCallback(AsyncCallback cb, int rc, String path, Object ctx) {
+        eventThread.queueCallback(cb, rc, path, ctx);
     }
 
     private void conLossPacket(Packet p) {
@@ -1360,9 +1446,16 @@ public class ClientCnxn {
     public ReplyHeader submitRequest(RequestHeader h, Record request,
             Record response, WatchRegistration watchRegistration)
             throws InterruptedException {
+        return submitRequest(h, request, response, watchRegistration, null);
+    }
+
+    public ReplyHeader submitRequest(RequestHeader h, Record request,
+            Record response, WatchRegistration watchRegistration,
+            WatchDeregistration watchDeregistration)
+            throws InterruptedException {
         ReplyHeader r = new ReplyHeader();
         Packet packet = queuePacket(h, r, request, response, null, null, null,
-                    null, watchRegistration);
+                null, watchRegistration, watchDeregistration);
         synchronized (packet) {
             while (!packet.finished) {
                 packet.wait();
@@ -1394,8 +1487,15 @@ public class ClientCnxn {
 
     Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
             Record response, AsyncCallback cb, String clientPath,
-            String serverPath, Object ctx, WatchRegistration watchRegistration)
-    {
+            String serverPath, Object ctx, WatchRegistration watchRegistration) {
+        return queuePacket(h, r, request, response, cb, clientPath, serverPath,
+                ctx, watchRegistration, null);
+    }
+
+    Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
+            Record response, AsyncCallback cb, String clientPath,
+            String serverPath, Object ctx, WatchRegistration watchRegistration,
+            WatchDeregistration watchDeregistration) {
         Packet packet = null;
 
         // Note that we do not generate the Xid for the packet yet. It is
@@ -1407,6 +1507,7 @@ public class ClientCnxn {
             packet.ctx = ctx;
             packet.clientPath = clientPath;
             packet.serverPath = serverPath;
+            packet.watchDeregistration = watchDeregistration;
             if (!state.isAlive() || closing) {
                 conLossPacket(packet);
             } else {
@@ -1434,5 +1535,19 @@ public class ClientCnxn {
 
     States getState() {
         return state;
+    }
+
+    private static class LocalCallback {
+        private final AsyncCallback cb;
+        private final int rc;
+        private final String path;
+        private final Object ctx;
+
+        public LocalCallback(AsyncCallback cb, int rc, String path, Object ctx) {
+            this.cb = cb;
+            this.rc = rc;
+            this.path = path;
+            this.ctx = ctx;
+        }
     }
 }

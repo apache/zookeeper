@@ -60,7 +60,9 @@ public class ZooDefs {
         public final int create2 = 15;
 
         public final int reconfig = 16;
-        
+
+        public final int removeWatches = 17;
+
         public final int auth = 100;
 
         public final int setWatches = 101;

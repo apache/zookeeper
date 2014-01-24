@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +42,7 @@ import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
@@ -1360,6 +1360,21 @@ public class DataTree {
                 node.stat.setCversion(newCversion);
                 node.stat.setPzxid(zxid);
             }
+        }
+    }
+
+    public void removeWatch(String path, WatcherType type, Watcher watcher) {
+        switch (type) {
+        case Children:
+            this.childWatches.removeWatcher(path, watcher);
+            break;
+        case Data:
+            this.dataWatches.removeWatcher(path, watcher);
+            break;
+        case Any:
+            this.childWatches.removeWatcher(path, watcher);
+            this.dataWatches.removeWatcher(path, watcher);
+            break;
         }
     }
 }

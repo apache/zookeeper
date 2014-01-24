@@ -38,6 +38,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -575,5 +576,19 @@ public class ZKDatabase {
      */
     public void setSnapshotSizeFactor(double snapshotSizeFactor) {
         this.snapshotSizeFactor = snapshotSizeFactor;
+    }
+
+    /**
+     * Remove watch from the datatree
+     * 
+     * @param path
+     *            node to remove watches from
+     * @param type
+     *            type of watcher to remove
+     * @param watcher
+     *            watcher function to remove
+     */
+    public void removeWatch(String path, WatcherType type, Watcher watcher) {
+        dataTree.removeWatch(path, type, watcher);
     }
 }

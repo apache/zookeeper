@@ -20,6 +20,9 @@ NEW FEATURES:
 
   ZOOKEEPER-1691. Add a flag to disable standalone mode (Helen Hastings via michim)
 
+  ZOOKEEPER-442. need a way to remove watches that are no longer of
+  interest (Rakesh R, Daniel Gómez Ferro via phunt)
+
 BUGFIXES:
 
   ZOOKEEPER-786. Exception in ZooKeeper.toString
