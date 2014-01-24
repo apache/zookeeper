@@ -29,15 +29,20 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+
+import junit.framework.TestCase;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -191,7 +196,7 @@ public abstract class ClientBase extends ZKTestCase {
             }
             if (allClients != null) {
                 allClients.add(zk);
-                JMXEnv.ensureAll("0x" + Long.toHexString(zk.getSessionId()));
+                JMXEnv.ensureAll(getHexSessionId(zk.getSessionId()));
             } else {
                 // test done - close the zk, not needed
                 zk.close();
@@ -445,8 +450,46 @@ public abstract class ClientBase extends ZKTestCase {
         serverFactory = createNewServerInstance(serverFactory, hostPort,
                 maxCnxns);
         startServerInstance(tmpDir, serverFactory, hostPort);
-        // ensure that only server and data bean are registered
-        JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
+        // ensure that server and data bean are registered
+        Set<ObjectName> children = JMXEnv.ensureParent("InMemoryDataTree",
+                "StandaloneServer_port");
+        // Remove beans which are related to zk client sessions. Strong
+        // assertions cannot be done for these client sessions because
+        // registeration of these beans with server will happen only on their
+        // respective reconnection interval
+        verifyUnexpectedBeans(children);
+    }
+
+    private void verifyUnexpectedBeans(Set<ObjectName> children) {
+        if (allClients != null) {
+            for (ZooKeeper zkc : allClients) {
+                Iterator<ObjectName> childItr = children.iterator();
+                while (childItr.hasNext()) {
+                    ObjectName clientBean = childItr.next();
+                    if (clientBean.toString().contains(
+                            getHexSessionId(zkc.getSessionId()))) {
+                        LOG.info("found name:" + zkc.getSessionId()
+                                + " client bean:" + clientBean.toString());
+                        childItr.remove();
+                    }
+                }
+            }
+        }
+        for (ObjectName bean : children) {
+            LOG.info("unexpected:" + bean.toString());
+        }
+        TestCase.assertEquals("Unexpected bean exists!", 0, children.size());
+    }
+
+    /**
+     * Returns a string representation of the given long value session id
+     * 
+     * @param sessionId
+     *            long value of session id
+     * @return string representation of session id
+     */
+    protected static String getHexSessionId(long sessionId) {
+        return "0x" + Long.toHexString(sessionId);
     }
 
     protected void stopServer() throws Exception {

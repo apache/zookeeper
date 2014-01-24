@@ -57,7 +57,7 @@ public class FourLetterWordsTest extends ClientBase {
         verify("cons", "queued");
 
         TestableZooKeeper zk = createClient();
-        String sid = "0x" + Long.toHexString(zk.getSessionId());
+        String sid = getHexSessionId(zk.getSessionId());
 
         verify("stat", "queued");
         verify("srvr", "Outstanding");
