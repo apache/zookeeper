@@ -204,4 +204,69 @@ public class JMXEnv {
         }
     }
 
+    /**
+     * Ensure that the specified parent names are registered. Note that these
+     * are components of the name. It waits in a loop up to 60 seconds before
+     * failing if there is a mismatch. This will return the beans which are not
+     * matched.
+     * 
+     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1858}
+     * 
+     * @param expectedNames
+     *            - expected beans
+     * @return the beans which are not matched with the given expected names
+     * 
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static Set<ObjectName> ensureParent(String... expectedNames)
+            throws IOException, InterruptedException {
+        LOG.info("ensureParent:" + Arrays.toString(expectedNames));
+
+        Set<ObjectName> beans;
+        int nTry = 0;
+        Set<ObjectName> found = new HashSet<ObjectName>();
+        do {
+            if (nTry++ > 0) {
+                Thread.sleep(500);
+            }
+            try {
+                beans = conn().queryNames(
+                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+            } catch (MalformedObjectNameException e) {
+                throw new RuntimeException(e);
+            }
+            found.clear();
+            for (String name : expectedNames) {
+                LOG.info("expect:" + name);
+                for (ObjectName bean : beans) {
+                    // check the existence of name in bean
+                    if (compare(bean.toString(), name)) {
+                        LOG.info("found:" + name + " " + bean);
+                        found.add(bean);
+                        break;
+                    }
+                }
+                beans.removeAll(found);
+            }
+        } while (expectedNames.length != found.size() && nTry < 120);
+        TestCase.assertEquals("expected " + Arrays.toString(expectedNames),
+                expectedNames.length, found.size());
+        return beans;
+    }
+
+    /**
+     * Comparing that the given name exists in the bean. For component beans,
+     * the component name will be present at the end of the bean name
+     * 
+     * For example 'StandaloneServer' will present in the bean name like
+     * 'org.apache.ZooKeeperService:name0=StandaloneServer_port-1'
+     */
+    private static boolean compare(String bean, String name) {
+        String[] names = bean.split("=");
+        if (names.length > 0 && names[names.length - 1].contains(name)) {
+            return true;
+        }
+        return false;
+    }
 }
