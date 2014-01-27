@@ -121,12 +121,16 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         }
         //wait for servers to be up
         String[] list = qb.hostPort.split(",");
-        for (int i =0; i < 4; i++) {
-            String hp = list[i];
-          Assert.assertTrue("waiting for server up",
-                       ClientBase.waitForServerUp(hp,
-                                    CONNECTION_TIMEOUT));
-            LOG.info(hp + " is accepting client connections");
+        for (int i = 0; i < 5; i++) {
+            if(leaderSid != (i + 1)) {
+                String hp = list[i];
+                Assert.assertTrue("waiting for server up",
+                        ClientBase.waitForServerUp(hp,
+                                CONNECTION_TIMEOUT));
+                LOG.info("{} is accepting client connections", hp);
+            } else {
+                LOG.info("Skipping the leader");
+            }
         }
 
         zk = qb.createClient();
