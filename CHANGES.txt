@@ -539,6 +539,8 @@ BUGFIXES:
   ZOOKEEPER-1858. JMX checks - potential race conditions while stopping
   and starting server (Rakesh R via fpj)
 
+  ZOOKEEPER-1867. Bug in ZkDatabaseCorruptionTest (fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
