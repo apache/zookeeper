@@ -60,14 +60,18 @@ public class JMXEnv {
     
     public static void tearDown() {
         try {
-            cc.close();
+            if (cc != null) {
+                cc.close();
+            }
         } catch (IOException e) {
             LOG.warn("Unexpected, ignoring", e);
             
         }
         cc = null;
         try {
-            cs.stop();
+            if (cs != null) {
+                cs.stop();
+            }
         } catch (IOException e) {
             LOG.warn("Unexpected, ignoring", e);
             
