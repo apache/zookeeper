@@ -231,6 +231,9 @@ BUGFIXES:
   and starting server (Rakesh R via fpj)
 
   ZOOKEEPER-1867. Bug in ZkDatabaseCorruptionTest (fpj)
+ 
+  ZOOKEEPER-1872. QuorumPeer is not shutdown in few cases
+  (Rakesh R via fpj)
 
 IMPROVEMENTS:
 
