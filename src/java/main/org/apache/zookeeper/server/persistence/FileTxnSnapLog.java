@@ -256,20 +256,15 @@ public class FileTxnSnapLog {
         }
 
         /**
-         * This should never happen. A NONODE can never show up in the
-         * transaction logs. This is more indicative of a corrupt transaction
-         * log. Refer ZOOKEEPER-1333 for more info.
+         * Snapshots are lazily created. So when a snapshot is in progress,
+         * there is a chance for later transactions to make into the
+         * snapshot. Then when the snapshot is restored, NONODE/NODEEXISTS
+         * errors could occur. It should be safe to ignore these.
          */
         if (rc.err != Code.OK.intValue()) {
-            if (hdr.getType() == OpCode.create && rc.err == Code.NONODE.intValue()) {
-                int lastSlash = rc.path.lastIndexOf('/');
-                String parentName = rc.path.substring(0, lastSlash);
-                LOG.error("Parent {} missing for {}", parentName, rc.path);
-                throw new KeeperException.NoNodeException(parentName);
-            } else {
-                LOG.debug("Ignoring processTxn failure hdr: " + hdr.getType() +
-                        " : error: " + rc.err);
-            }
+            LOG.debug(
+                    "Ignoring processTxn failure hdr: {}, error: {}, path: {}",
+                    hdr.getType(), rc.err, rc.path);
         }
     }
 
