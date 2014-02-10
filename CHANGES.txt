@@ -238,6 +238,9 @@ BUGFIXES:
   ZOOKEEPER-1573. Unable to load database due to missing parent node
   (Vinayakumar B via phunt, fpj)
 
+  ZOOKEEPER-1811. The ZooKeeperSaslClient service name principal is
+  hardcoded to "zookeeper" (Harsh J via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
