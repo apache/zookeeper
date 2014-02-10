@@ -235,6 +235,9 @@ BUGFIXES:
   ZOOKEEPER-1872. QuorumPeer is not shutdown in few cases
   (Rakesh R via fpj)
 
+  ZOOKEEPER-1573. Unable to load database due to missing parent node
+  (Vinayakumar B via phunt, fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
