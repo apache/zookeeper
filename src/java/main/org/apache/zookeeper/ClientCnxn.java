@@ -85,6 +85,9 @@ import org.slf4j.LoggerFactory;
 public class ClientCnxn {
     private static final Logger LOG = LoggerFactory.getLogger(ClientCnxn.class);
 
+    private static final String ZK_SASL_CLIENT_USERNAME =
+        "zookeeper.sasl.client.username";
+
     /** This controls whether automatic watch resetting is enabled.
      * Clients automatically reset watches during session reconnect, this
      * option allows the client to turn off this behavior by setting
@@ -941,7 +944,11 @@ public class ClientCnxn {
                     "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
             if (ZooKeeperSaslClient.isEnabled()) {
                 try {
-                    zooKeeperSaslClient = new ZooKeeperSaslClient("zookeeper/"+addr.getHostName());
+                    String principalUserName = System.getProperty(
+                            ZK_SASL_CLIENT_USERNAME, "zookeeper");
+                    zooKeeperSaslClient =
+                        new ZooKeeperSaslClient(
+                                principalUserName+"/"+addr.getHostName());
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.

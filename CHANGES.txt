@@ -121,6 +121,9 @@ BUGFIXES:
 
   ZOOKEEPER-1867. Bug in ZkDatabaseCorruptionTest (fpj)
 
+  ZOOKEEPER-1811. The ZooKeeperSaslClient service name principal is
+  hardcoded to "zookeeper" (Harsh J via phunt)
+
 IMPROVEMENTS:
 
 
