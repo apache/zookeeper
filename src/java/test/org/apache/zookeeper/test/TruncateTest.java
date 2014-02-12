@@ -110,6 +110,8 @@ public class TruncateTest extends ZKTestCase {
         txn = iter.getTxn();
         Assert.assertEquals(200, hdr.getZxid());
         Assert.assertTrue(txn instanceof SetDataTxn);
+        iter.close();
+        ClientBase.recursiveDelete(tmpdir);
     }
 
     private void append(ZKDatabase zkdb, int i) throws IOException {

@@ -307,6 +307,7 @@ public class ZKDatabase {
                     && (itr.getHeader().getZxid() > startZxid)) {
                 LOG.warn("Unable to find proposals from txnlog for zxid: "
                         + startZxid);
+                itr.close();
                 return TxnLogProposalIterator.EMPTY_ITERATOR;
             }
 
@@ -315,11 +316,19 @@ public class ZKDatabase {
                 if (txnSize > sizeLimit) {
                     LOG.info("Txnlog size: " + txnSize + " exceeds sizeLimit: "
                             + sizeLimit);
+                    itr.close();
                     return TxnLogProposalIterator.EMPTY_ITERATOR;
                 }
             }
         } catch (IOException e) {
             LOG.error("Unable to read txnlog from disk", e);
+            try {
+                if (itr != null) {
+                    itr.close();
+                }
+            } catch (IOException ioe) {
+                LOG.warn("Error closing file iterator", ioe);
+            }
             return TxnLogProposalIterator.EMPTY_ITERATOR;
         }
         return new TxnLogProposalIterator(itr);
