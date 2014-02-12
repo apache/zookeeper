@@ -547,6 +547,9 @@ BUGFIXES:
   ZOOKEEPER-1811. The ZooKeeperSaslClient service name principal is
   hardcoded to "zookeeper" (Harsh J via phunt)
 
+  ZOOKEEPER-1874 Add proper teardown/cleanups in ReconfigTest to shutdown
+  quorumpeer (Rakesh R and Germán Blanco via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

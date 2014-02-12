@@ -39,6 +39,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.junit.Assert;
+import org.junit.After;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,15 @@ import org.slf4j.LoggerFactory;
 public class ReconfigTest extends ZKTestCase implements DataCallback{
     private static final Logger LOG = LoggerFactory
             .getLogger(ReconfigTest.class);
+
+    private QuorumUtil qu;
+
+    @After
+    public void tearDown() throws Exception {
+        if (qu != null) {
+            qu.tearDown();
+        }
+    }
 
     public static String reconfig(ZooKeeper zk, List<String> joiningServers,
             List<String> leavingServers, List<String> newMembers, long fromConfig)
@@ -180,7 +190,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
  
     @Test
     public void testRemoveAddOne() throws Exception {
-        QuorumUtil qu = new QuorumUtil(1); // create 3 servers
+        qu = new QuorumUtil(1); // create 3 servers
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
@@ -257,7 +267,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
      */
     @Test
     public void testRemoveAddTwo() throws Exception {
-        QuorumUtil qu = new QuorumUtil(2); // create 5 servers
+        qu = new QuorumUtil(2); // create 5 servers
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
@@ -356,7 +366,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
     @Test
     public void testBulkReconfig() throws Exception {
-        QuorumUtil qu = new QuorumUtil(3); // create 7 servers
+        qu = new QuorumUtil(3); // create 7 servers
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
@@ -394,7 +404,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
     @Test
     public void testRemoveOneAsynchronous() throws Exception {
-        QuorumUtil qu = new QuorumUtil(2); 
+        qu = new QuorumUtil(2); 
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
@@ -434,7 +444,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     
     @Test
     public void testRoleChange() throws Exception {
-        QuorumUtil qu = new QuorumUtil(1); // create 3 servers
+        qu = new QuorumUtil(1); // create 3 servers
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
@@ -508,7 +518,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
     @Test
     public void testPortChange() throws Exception {
-        QuorumUtil qu = new QuorumUtil(1); // create 3 servers
+        qu = new QuorumUtil(1); // create 3 servers
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
@@ -623,7 +633,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     
     @Test
     public void testQuorumSystemChange() throws Exception {
-        QuorumUtil qu = new QuorumUtil(3); // create 7 servers
+        qu = new QuorumUtil(3); // create 7 servers
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
@@ -699,7 +709,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     
     @Test
     public void testInitialConfigHasPositiveVersion() throws Exception {
-        QuorumUtil qu = new QuorumUtil(1); // create 3 servers
+        qu = new QuorumUtil(1); // create 3 servers
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
