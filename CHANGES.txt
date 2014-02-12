@@ -241,6 +241,9 @@ BUGFIXES:
   ZOOKEEPER-1811. The ZooKeeperSaslClient service name principal is
   hardcoded to "zookeeper" (Harsh J via phunt)
 
+  ZOOKEEPER-1873. Unnecessarily InstanceNotFoundException is coming when
+  unregister failed jmxbeans (Rakesh R via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
