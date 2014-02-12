@@ -32,6 +32,7 @@ import java.util.Queue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.server.TxnLogProposalIterator;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
@@ -313,6 +314,32 @@ public class LearnerHandlerTest extends ZKTestCase {
         queuedPacketMatches(new long[] { 5, 6, 7, 8 });
         reset();
 
+    }
+
+    /**
+     * Test case verifying TxnLogProposalIterator closure.
+     */
+    @Test
+    public void testTxnLogProposalIteratorClosure() throws Exception {
+        long peerZxid;
+
+        // CommmitedLog is empty, we will use txnlog up to lastProcessZxid
+        db = new MockZKDatabase(null) {
+            @Override
+            public Iterator<Proposal> getProposalsFromTxnLog(long peerZxid,
+                    long limit) {
+                return TxnLogProposalIterator.EMPTY_ITERATOR;
+            }
+        };
+        db.lastProcessedZxid = 7;
+        db.txnLog.add(createProposal(2));
+        db.txnLog.add(createProposal(3));
+
+        // Peer zxid
+        peerZxid = 4;
+        assertTrue("Couldn't identify snapshot transfer!",
+                learnerHandler.syncFollower(peerZxid, db, leader));
+        reset();
     }
 
     /**

@@ -286,9 +286,10 @@ public class FileTxnLog implements TxnLog {
         // if a log file is more recent we must scan it to find
         // the highest zxid
         long zxid = maxLog;
+        TxnIterator itr = null;
         try {
             FileTxnLog txn = new FileTxnLog(logDir);
-            TxnIterator itr = txn.read(maxLog);
+            itr = txn.read(maxLog);
             while (true) {
                 if(!itr.next())
                     break;
@@ -297,8 +298,20 @@ public class FileTxnLog implements TxnLog {
             }
         } catch (IOException e) {
             LOG.warn("Unexpected exception", e);
+        } finally {
+            close(itr);
         }
         return zxid;
+    }
+
+    private void close(TxnIterator itr) {
+        if (itr != null) {
+            try {
+                itr.close();
+            } catch (IOException ioe) {
+                LOG.warn("Error closing file iterator", ioe);
+            }
+        }
     }
 
     /**
@@ -361,17 +374,22 @@ public class FileTxnLog implements TxnLog {
      * @return true if successful false if not
      */
     public boolean truncate(long zxid) throws IOException {
-        FileTxnIterator itr = new FileTxnIterator(this.logDir, zxid);
-        PositionInputStream input = itr.inputStream;
-        long pos = input.getPosition();
-        // now, truncate at the current position
-        RandomAccessFile raf=new RandomAccessFile(itr.logFile,"rw");
-        raf.setLength(pos);
-        raf.close();
-        while(itr.goToNextLog()) {
-            if (!itr.logFile.delete()) {
-                LOG.warn("Unable to truncate " + itr.logFile);
+        FileTxnIterator itr = null;
+        try {
+            itr = new FileTxnIterator(this.logDir, zxid);
+            PositionInputStream input = itr.inputStream;
+            long pos = input.getPosition();
+            // now, truncate at the current position
+            RandomAccessFile raf=new RandomAccessFile(itr.logFile,"rw");
+            raf.setLength(pos);
+            raf.close();
+            while(itr.goToNextLog()) {
+                if (!itr.logFile.delete()) {
+                    LOG.warn("Unable to truncate {}", itr.logFile);
+                }
             }
+        } finally {
+            close(itr);
         }
         return true;
     }
@@ -700,7 +718,9 @@ public class FileTxnLog implements TxnLog {
          * and release the resources.
          */
         public void close() throws IOException {
-            inputStream.close();
+            if (inputStream != null) {
+                inputStream.close();
+            }
         }
     }
 

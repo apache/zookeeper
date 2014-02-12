@@ -39,6 +39,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.TxnLogProposalIterator;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
@@ -728,6 +729,11 @@ public class LearnerHandler extends Thread {
                     currentZxid = queueCommittedProposals(committedLogItr, currentZxid,
                                                          null, maxCommittedLog);
                     needSnap = false;
+                }
+                // closing the resources
+                if (txnLogItr instanceof TxnLogProposalIterator) {
+                    TxnLogProposalIterator txnProposalItr = (TxnLogProposalIterator) txnLogItr;
+                    txnProposalItr.close();
                 }
             } else {
                 LOG.warn("Unhandled scenario for peer sid: " +  getSid());

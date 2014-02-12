@@ -162,30 +162,36 @@ public class FileTxnSnapLog {
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
-        while (true) {
-            // iterator points to
-            // the first valid txn when initialized
-            hdr = itr.getHeader();
-            if (hdr == null) {
-                //empty logs
-                return dt.lastProcessedZxid;
+        try {
+            while (true) {
+                // iterator points to
+                // the first valid txn when initialized
+                hdr = itr.getHeader();
+                if (hdr == null) {
+                    //empty logs
+                    return dt.lastProcessedZxid;
+                }
+                if (hdr.getZxid() < highestZxid && highestZxid != 0) {
+                    LOG.error("{}(higestZxid) > {}(next log) for type {}",
+                            new Object[] { highestZxid, hdr.getZxid(),
+                                    hdr.getType() });
+                } else {
+                    highestZxid = hdr.getZxid();
+                }
+                try {
+                    processTransaction(hdr,dt,sessions, itr.getTxn());
+                } catch(KeeperException.NoNodeException e) {
+                   throw new IOException("Failed to process transaction type: " +
+                         hdr.getType() + " error: " + e.getMessage(), e);
+                }
+                listener.onTxnLoaded(hdr, itr.getTxn());
+                if (!itr.next())
+                    break;
             }
-            if (hdr.getZxid() < highestZxid && highestZxid != 0) {
-                LOG.error(highestZxid + "(higestZxid) > "
-                        + hdr.getZxid() + "(next log) for type "
-                        + hdr.getType());
-            } else {
-                highestZxid = hdr.getZxid();
+        } finally {
+            if (itr != null) {
+                itr.close();
             }
-            try {
-                processTransaction(hdr,dt,sessions, itr.getTxn());
-            } catch(KeeperException.NoNodeException e) {
-               throw new IOException("Failed to process transaction type: " +
-                     hdr.getType() + " error: " + e.getMessage(), e);
-            }
-            listener.onTxnLoaded(hdr, itr.getTxn());
-            if (!itr.next())
-                break;
         }
         return highestZxid;
     }

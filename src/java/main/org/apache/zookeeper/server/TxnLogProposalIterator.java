@@ -95,6 +95,20 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Close the files and release the resources which are used for iterating
+     * transaction records
+     */
+    public void close() {
+        if(itr != null){
+            try {
+                itr.close();
+            } catch (IOException ioe) {
+                LOG.warn("Error closing file iterator", ioe);
+            }
+        }
+    }
+
     private TxnLogProposalIterator() {
     }
 
