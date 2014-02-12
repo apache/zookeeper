@@ -89,13 +89,13 @@ public class MBeanRegistry {
             assert path != null;
         }
         path = makeFullPath(path, parent);
-        mapBean2Path.put(bean, path);
-        mapName2Bean.put(bean.getName(), bean);
         if(bean.isHidden())
             return;
         ObjectName oname = makeObjectName(path, bean);
         try {
             mBeanServer.registerMBean(bean, oname);
+            mapBean2Path.put(bean, path);
+            mapName2Bean.put(bean.getName(), bean);
         } catch (JMException e) {
             LOG.warn("Failed to register MBean " + bean.getName());
             throw e;
