@@ -554,6 +554,9 @@ BUGFIXES:
   unregister failed jmxbeans (Rakesh R via michim)
 
   ZOOKEEPER-1844. TruncateTest fails on windows (Rakesh R via fpj)
+  
+  ZOOKEEPER-1861. ConcurrentHashMap isn't used properly in QuorumCnxManager 
+  (Ted Yu via camille)
 
 IMPROVEMENTS:
 
