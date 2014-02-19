@@ -245,6 +245,9 @@ BUGFIXES:
   unregister failed jmxbeans (Rakesh R via michim)
 
   ZOOKEEPER-1844. TruncateTest fails on windows (Rakesh R via fpj)
+  
+  ZOOKEEPER-1755. Concurrent operations of four letter 'dump' ephemeral 
+  command and killSession causing NPE (Rakesh R via camille)
 
 IMPROVEMENTS:
 
