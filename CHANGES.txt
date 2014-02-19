@@ -558,6 +558,8 @@ BUGFIXES:
   ZOOKEEPER-1861. ConcurrentHashMap isn't used properly in QuorumCnxManager 
   (Ted Yu via camille)
 
+  ZOOKEEPER-1755. Concurrent operations of four letter 'dump' ephemeral 
+  command and killSession causing NPE (Rakesh R via camille)
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
