@@ -16,10 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
@@ -30,14 +32,17 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.apache.zookeeper.server.DataNode;
-import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import org.apache.zookeeper.Quotas;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.common.PathTrie;
 import java.lang.reflect.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DataTreeTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
@@ -54,7 +59,59 @@ public class DataTreeTest extends ZKTestCase {
         dt=null;
     }
 
-    @Test
+    /**
+     * For ZOOKEEPER-1755 - Test race condition when taking dumpEphemerals and
+     * removing the session related ephemerals from DataTree structure
+     */
+    @Test(timeout = 60000)
+    public void testDumpEphemerals() throws Exception {
+        int count = 1000;
+        long session = 1000;
+        long zxid = 2000;
+        final DataTree dataTree = new DataTree();
+        LOG.info("Create {} zkclient sessions and its ephemeral nodes", count);
+        createEphemeralNode(session, dataTree, count);
+        final AtomicBoolean exceptionDuringDumpEphemerals = new AtomicBoolean(
+                false);
+        final AtomicBoolean running = new AtomicBoolean(true);
+        Thread thread = new Thread() {
+            public void run() {
+                PrintWriter pwriter = new PrintWriter(new StringWriter());
+                try {
+                    while (running.get()) {
+                        dataTree.dumpEphemerals(pwriter);
+                    }
+                } catch (Exception e) {
+                    LOG.error("Received exception while dumpEphemerals!", e);
+                    exceptionDuringDumpEphemerals.set(true);
+                }
+            };
+        };
+        thread.start();
+        LOG.debug("Killing {} zkclient sessions and its ephemeral nodes", count);
+        killZkClientSession(session, zxid, dataTree, count);
+        running.set(false);
+        thread.join();
+        Assert.assertFalse("Should have got exception while dumpEphemerals!",
+                exceptionDuringDumpEphemerals.get());
+    }
+
+    private void killZkClientSession(long session, long zxid,
+            final DataTree dataTree, int count) {
+        for (int i = 0; i < count; i++) {
+            dataTree.killSession(session + i, zxid);
+        }
+    }
+
+    private void createEphemeralNode(long session, final DataTree dataTree,
+            int count) throws NoNodeException, NodeExistsException {
+        for (int i = 0; i < count; i++) {
+            dataTree.createNode("/test" + i, new byte[0], null, session + i,
+                    dataTree.getNode("/").stat.getCversion() + 1, 1, 1);
+        }
+    }
+    
+    @Test(timeout = 60000)
     public void testRootWatchTriggered() throws Exception {
         class MyWatcher implements Watcher{
             boolean fired=false;
@@ -74,7 +131,7 @@ public class DataTreeTest extends ZKTestCase {
     /**
      * For ZOOKEEPER-1046 test if cversion is getting incremented correctly.
      */
-    @Test
+    @Test(timeout = 60000)
     public void testIncrementCversion() throws Exception {
         dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion()+1, 1, 1);
         DataNode zk = dt.getNode("/test");
@@ -89,7 +146,7 @@ public class DataTreeTest extends ZKTestCase {
                 (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
     }
    
-    @Test
+    @Test(timeout = 60000)
     public void testPathTrieClearOnDeserialize() throws Exception {
 
         //Create a DataTree with quota nodes so PathTrie get updated

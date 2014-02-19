@@ -1275,9 +1275,11 @@ public class DataTree {
             pwriter.print("0x" + Long.toHexString(k));
             pwriter.println(":");
             HashSet<String> tmp = ephemerals.get(k);
-            synchronized (tmp) {
-                for (String path : tmp) {
-                    pwriter.println("\t" + path);
+            if (tmp != null) {
+                synchronized (tmp) {
+                    for (String path : tmp) {
+                        pwriter.println("\t" + path);
+                    }
                 }
             }
         }
