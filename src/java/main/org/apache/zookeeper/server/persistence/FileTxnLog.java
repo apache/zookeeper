@@ -162,8 +162,10 @@ public class FileTxnLog implements TxnLog {
     public synchronized void rollLog() throws IOException {
         if (logStream != null) {
             this.logStream.flush();
+            this.logStream.close();  // closes fos
             this.logStream = null;
             oa = null;
+            fos = null;
         }
     }
 
