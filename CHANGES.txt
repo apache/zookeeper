@@ -560,6 +560,10 @@ BUGFIXES:
 
   ZOOKEEPER-1755. Concurrent operations of four letter 'dump' ephemeral 
   command and killSession causing NPE (Rakesh R via camille)
+
+  ZOOKEEPER-1779. ReconfigTest littering the source root with test files
+  (Abhiraj Butala via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

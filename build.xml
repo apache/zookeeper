@@ -1280,7 +1280,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
                fork="yes"
                forkmode="${test.junit.fork.mode}"
                maxmemory="${test.junit.maxmem}"
-               dir="${basedir}" timeout="${test.timeout}"
+               dir="${test.java.build.dir}" timeout="${test.timeout}"
                errorProperty="tests.failed" failureProperty="tests.failed">
           <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
           <sysproperty key="test.data.dir" value="${test.data.dir}" />
