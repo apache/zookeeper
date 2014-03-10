@@ -564,6 +564,9 @@ BUGFIXES:
   ZOOKEEPER-1779. ReconfigTest littering the source root with test files
   (Abhiraj Butala via michim)
 
+  ZOOKEEPER-1888. ZkCli.cmd commands fail with "'java' is not recognized as an
+  internal or external command" (Ivan Mitic via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

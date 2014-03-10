@@ -18,7 +18,7 @@ setlocal
 call "%~dp0zkEnv.cmd"
 
 set ZOOMAIN=org.apache.zookeeper.ZooKeeperMain
-java "-Dzookeeper.log.dir=%ZOO_LOG_DIR%" "-Dzookeeper.root.logger=%ZOO_LOG4J_PROP%" -cp "%CLASSPATH%" %ZOOMAIN% %*
+call %JAVA% "-Dzookeeper.log.dir=%ZOO_LOG_DIR%" "-Dzookeeper.root.logger=%ZOO_LOG4J_PROP%" -cp "%CLASSPATH%" %ZOOMAIN% %*
 
 endlocal
 
