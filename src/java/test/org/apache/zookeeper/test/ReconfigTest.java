@@ -539,25 +539,37 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         joiningServers.add("server." + observerIndex + "=localhost:" + port1
                 + ":" + port2 + ":observer;localhost:" + port3);
 
+        // create a /test znode and check that read/write works before
+        // any reconfig is invoked
+        testNormalOperation(zkArr[observerIndex], zkArr[followerIndex]);
+
         reconfig(zkArr[followerIndex], joiningServers, null, null, -1);
 
-       try {
-            zkArr[observerIndex].create("/test", "asdfg".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            Assert.fail("client port didn't change");
+        // the change of port may not be immediate -- we repeatedly
+        // invoke an operation expecting it to eventually fail once
+        // the client port of observerIndex changes. If it didn't
+        // change -- that's an error.
+        try {
+          for (int i=0; i < 30; i++) {
+            Thread.sleep(1000);
+            zkArr[observerIndex].setData("/test", "teststr".getBytes(), -1);
+          }
+          Assert.fail("client port didn't change");
         } catch (KeeperException.ConnectionLossException e) {
             zkArr[observerIndex] = new ZooKeeper("127.0.0.1:"
                     + qu.getPeer(observerIndex).peer.getClientPort(),
-                    ClientBase.CONNECTION_TIMEOUT, null);
+                    ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+                        public void process(WatchedEvent event) {}});
         }
-      
+
         leaderIndex = getLeaderId(qu);
 
         followerIndex = 1;
         while (followerIndex == leaderIndex || followerIndex == observerIndex)
             followerIndex++;
-        
+
         testNormalOperation(zkArr[observerIndex], zkArr[followerIndex]);
-        
+
         testServerHasConfig(zkArr[observerIndex], joiningServers, null);
 
         Assert.assertTrue(qu.getPeer(observerIndex).peer.getQuorumAddress()
