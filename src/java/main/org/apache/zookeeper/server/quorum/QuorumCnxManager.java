@@ -545,15 +545,19 @@ public class QuorumCnxManager {
                 } catch (IOException e) {
                     if ( !shutdown ) {
                         LOG.error("Exception while listening", e);
-                        numRetries++;
-                        try {
-                            ss.close();
-                            Thread.sleep(1000);
-                        } catch (IOException ie) {
+                    }
+                    numRetries++;
+                    try {
+                        ss.close();
+                        Thread.sleep(1000);
+                    } catch (IOException ie) {
+                        if ( !shutdown ) {
                             LOG.error("Error closing server socket", ie);
-                        } catch (InterruptedException ie) {
+                        }
+                    } catch (InterruptedException ie) {
+                        if ( !shutdown ) {
                             LOG.error("Interrupted while sleeping. " +
-                                      "Ignoring exception", ie);
+                                "Ignoring exception", ie);
                         }
                     }
                 }
