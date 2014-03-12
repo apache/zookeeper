@@ -789,6 +789,8 @@ IMPROVEMENTS:
   ZOOKEEPER-1440. Spurious log error messages when QuorumCnxManager is shutting
   down (Jordan Zimmerman via michim)
 
+  ZOOKEEPER-1638. Redundant zk.getZKDatabase().clear(); (neil bhakta via michim)
+
 headers
 
 Release 3.4.0 - 
