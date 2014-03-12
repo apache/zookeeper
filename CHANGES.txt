@@ -783,6 +783,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1430. add maven deploy support to the build
   (Giridharan Kesavan via phunt)
 
+  ZOOKEEPER-1440. Spurious log error messages when QuorumCnxManager is shutting
+  down (Jordan Zimmerman via michim)
+
 headers
 
 Release 3.4.0 - 
