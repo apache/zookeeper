@@ -1259,8 +1259,8 @@ public:
       const int timeout = 5000;
       int rc;
       watchctx_t ctx1, ctx2;
-      zhandle_t *zk1 = createClient(&ctx1);
-      zhandle_t *zk2 = createClient(&ctx2);
+      zhandle_t *zk1 = zookeeper_init(hostPorts, NULL, timeout, 0, &ctx1, 0);
+      zhandle_t *zk2 = zookeeper_init(hostPorts, NULL, timeout, 0, &ctx2, 0);
       CPPUNIT_ASSERT(zk1);
       CPPUNIT_ASSERT(zk2);
 

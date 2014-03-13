@@ -570,9 +570,6 @@ BUGFIXES:
   ZOOKEEPER-1662. Fix to two small bugs in ReconfigTest.testPortChange()
   (Alexander Shraer via michim)
 
-  ZOOKEEPER-1883. C client unit test failures (Raul Gutierrez Segales via
-  michim)
-
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
