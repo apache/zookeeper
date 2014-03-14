@@ -1,3 +1,11 @@
+Backward compatible changes:
+
+BUGFIXES:
+
+  ZOOKEEPER-1888. ZkCli.cmd commands fail with "'java' is not recognized as an
+  internal or external command" (Ivan Mitic via michim)
+
+
 Release 3.4.6 - 2014-03-10 
 
 Backward compatible changes:

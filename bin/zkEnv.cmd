@@ -32,3 +32,16 @@ SET CLASSPATH=%~dp0..\build\classes;%~dp0..\build\lib\*;%CLASSPATH%
 
 set ZOOCFG=%ZOOCFGDIR%\zoo.cfg
 
+@REM setup java environment variables
+
+if not defined JAVA_HOME (
+  echo Error: JAVA_HOME is not set.
+  goto :eof
+)
+
+if not exist %JAVA_HOME%\bin\java.exe (
+  echo Error: JAVA_HOME is incorrectly set.
+  goto :eof
+)
+
+set JAVA=%JAVA_HOME%\bin\java
