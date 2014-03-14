@@ -267,11 +267,6 @@ public class QuorumPeerConfig {
         }
         if (dataLogDir == null) {
             dataLogDir = dataDir;
-        } else {
-            if (!dataLogDir.isDirectory()) {
-                throw new IllegalArgumentException("dataLogDir " + dataLogDir
-                        + " is missing.");
-            }
         }
         if (clientPortAddress != null) {
            if (clientPort == 0) {

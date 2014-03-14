@@ -573,6 +573,9 @@ BUGFIXES:
   ZOOKEEPER-1883. C client unit test failures (Raul Gutierrez Segales via
   michim)
 
+  ZOOKEEPER-1878. Inconsistent behavior in autocreation of dataDir and
+  dataLogDir (Rakesh R via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
