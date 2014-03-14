@@ -576,6 +576,9 @@ BUGFIXES:
   ZOOKEEPER-1878. Inconsistent behavior in autocreation of dataDir and
   dataLogDir (Rakesh R via michim)
 
+  ZOOKEEPER-1862. ServerCnxnTest.testServerCnxnExpiry is intermittently failing
+  (Rakesh R via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

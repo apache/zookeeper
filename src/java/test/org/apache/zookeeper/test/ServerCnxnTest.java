@@ -100,11 +100,7 @@ public class ServerCnxnTest extends ClientBase {
             reader =
                     new BufferedReader(
                             new InputStreamReader(sock.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
-            }
+            StringBuilder sb = readLine(reader);
             return sb.toString();
         } finally {
             sock.close();
@@ -112,5 +108,22 @@ public class ServerCnxnTest extends ClientBase {
                 reader.close();
             }
         }
+    }
+
+    private static StringBuilder readLine(BufferedReader reader) {
+        StringBuilder sb = new StringBuilder();
+        String line;
+        try {
+            while((line = reader.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+        } catch (IOException ioe) {
+            // During connection expiry the server will close the connection.
+            // After the socket is closed, when the client tries to read a
+            // line of text it will throw java.net.SocketException.
+            // @see jira issue ZOOKEEPER-1862
+            LOG.info("Connnection is expired", ioe);
+        }
+        return sb;
     }
 }
