@@ -49,7 +49,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         final TestZKSMain main;
         final File tmpDir;
 
-        public MainThread(int clientPort) throws IOException {
+        public MainThread(int clientPort, boolean preCreateDirs) throws IOException {
             super("Standalone server with clientPort:" + clientPort);
             tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
@@ -60,18 +60,23 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             fwriter.write("syncLimit=5\n");
 
             File dataDir = new File(tmpDir, "data");
-            if (!dataDir.mkdir()) {
-                throw new IOException("unable to mkdir " + dataDir);
+            String dir = dataDir.toString();
+            String dirLog = dataDir.toString() + "_txnlog";
+            if (preCreateDirs) {
+                if (!dataDir.mkdir()) {
+                    throw new IOException("unable to mkdir " + dataDir);
+                }
+                dirLog = dataDir.toString();
             }
             
             // Convert windows path to UNIX to avoid problems with "\"
-            String dir = dataDir.toString();
             String osname = java.lang.System.getProperty("os.name");
             if (osname.toLowerCase().contains("windows")) {
                 dir = dir.replace('\\', '/');
+                dirLog = dirLog.replace('\\', '/');
             }
             fwriter.write("dataDir=" + dir + "\n");
-            
+            fwriter.write("dataLogDir=" + dirLog + "\n");
             fwriter.write("clientPort=" + clientPort + "\n");
             fwriter.flush();
             fwriter.close();
@@ -126,7 +131,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
         final int CLIENT_PORT = 3181;
 
-        MainThread main = new MainThread(CLIENT_PORT);
+        MainThread main = new MainThread(CLIENT_PORT, true);
         main.start();
 
         Assert.assertTrue("waiting for server being up",
@@ -148,6 +153,41 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
         Assert.assertTrue("waiting for server down",
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
+                        ClientBase.CONNECTION_TIMEOUT));
+    }
+
+    /**
+     * Test verifies the auto creation of data dir and data log dir.
+     */
+    @Test(timeout = 30000)
+    public void testAutoCreateDataLogDir() throws Exception {
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT = 3181;
+
+        MainThread main = new MainThread(CLIENT_PORT, false);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        main.start();
+
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
+
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT, this);
+
+        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo", null, null)),
+                "foobar");
+        zk.close();
+
+        main.shutdown();
+        main.join();
+        main.deleteDirs();
+
+        Assert.assertTrue("waiting for server down", ClientBase
+                .waitForServerDown("127.0.0.1:" + CLIENT_PORT,
                         ClientBase.CONNECTION_TIMEOUT));
     }
 
