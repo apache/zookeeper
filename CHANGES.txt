@@ -5,6 +5,9 @@ BUGFIXES:
   ZOOKEEPER-1888. ZkCli.cmd commands fail with "'java' is not recognized as an
   internal or external command" (Ivan Mitic via michim)
 
+  ZOOKEEPER-1878. Inconsistent behavior in autocreation of dataDir and
+  dataLogDir (Rakesh R via michim)
+
 
 Release 3.4.6 - 2014-03-10 
 
