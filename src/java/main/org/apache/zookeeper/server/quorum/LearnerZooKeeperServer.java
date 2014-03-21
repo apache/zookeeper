@@ -26,6 +26,7 @@ import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.quorum.LearnerSessionTracker;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -34,6 +35,12 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * Parent class for all ZooKeeperServers for Learners
  */
 public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
+
+    /*
+     * Request processors
+     */
+    protected CommitProcessor commitProcessor;
+    protected SyncRequestProcessor syncProcessor;
 
     public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
@@ -147,5 +154,23 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
             LOG.warn("Failed to unregister with JMX", e);
         }
         jmxServerBean = null;
+    }
+
+    @Override
+    public void shutdown() {
+        LOG.info("Shutting down");
+        try {
+            super.shutdown();
+        } catch (Exception e) {
+            LOG.warn("Ignoring unexpected exception during shutdown", e);
+        }
+        try {
+            if (syncProcessor != null) {
+                syncProcessor.shutdown();
+            }
+        } catch (Exception e) {
+            LOG.warn("Ignoring unexpected exception in syncprocessor shutdown",
+                    e);
+        }
     }
 }
