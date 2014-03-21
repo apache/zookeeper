@@ -46,12 +46,6 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     private boolean syncRequestProcessorEnabled = this.self.getSyncEnabled();
     
     /*
-     * Request processors
-     */
-    private CommitProcessor commitProcessor;
-    private SyncRequestProcessor syncProcessor;
-    
-    /*
      * Pending sync requests
      */
     ConcurrentLinkedQueue<Request> pendingSyncs = 

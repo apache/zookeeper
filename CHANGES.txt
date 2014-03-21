@@ -797,6 +797,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1638. Redundant zk.getZKDatabase().clear(); (neil bhakta via michim)
 
+  ZOOKEEPER-1796. Move common code from {Follower, Observer}ZooKeeperServer into
+  LearnerZooKeeperServer (Raul Gutierrez Segales via michim)
+
 headers
 
 Release 3.4.0 - 
