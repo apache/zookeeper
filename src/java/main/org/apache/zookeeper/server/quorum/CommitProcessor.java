@@ -28,6 +28,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.WorkerService;
+import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 
 /**
  * This RequestProcessor matches the incoming committed requests with the
@@ -62,7 +63,8 @@ import org.apache.zookeeper.server.WorkerService;
  * The current implementation solves the third constraint by simply allowing no
  * read requests to be processed in parallel with write requests.
  */
-public class CommitProcessor extends Thread implements RequestProcessor {
+public class CommitProcessor extends ZooKeeperCriticalThread implements
+        RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(CommitProcessor.class);
 
     /** Default: numCores */

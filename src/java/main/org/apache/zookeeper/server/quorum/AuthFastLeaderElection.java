@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -206,12 +207,13 @@ public class AuthFastLeaderElection implements Election {
         final ConcurrentHashMap<Long, Semaphore> ackMutex;
         final ConcurrentHashMap<InetSocketAddress, ConcurrentHashMap<Long, Long>> addrChallengeMap;
 
-        class WorkerReceiver implements Runnable {
+        class WorkerReceiver extends ZooKeeperThread {
 
             DatagramSocket mySocket;
             Messenger myMsg;
 
             WorkerReceiver(DatagramSocket s, Messenger msg) {
+                super("WorkerReceiver-" + s.getRemoteSocketAddress());
                 mySocket = s;
                 myMsg = msg;
             }
@@ -397,7 +399,7 @@ public class AuthFastLeaderElection implements Election {
             }
         }
 
-        class WorkerSender implements Runnable {
+        class WorkerSender extends ZooKeeperThread {
 
             Random rand;
             int maxAttempts;
@@ -408,6 +410,7 @@ public class AuthFastLeaderElection implements Election {
              */
 
             WorkerSender(int attempts) {
+                super("WorkerSender");
                 maxAttempts = attempts;
                 rand = new Random(java.lang.Thread.currentThread().getId()
                         + System.currentTimeMillis());

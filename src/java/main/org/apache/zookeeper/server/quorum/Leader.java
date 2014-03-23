@@ -21,7 +21,6 @@ package org.apache.zookeeper.server.quorum;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.BindException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -44,10 +43,10 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -388,8 +387,12 @@ public class Leader {
 
     private final Proposal newLeaderProposal = new Proposal();
 
-    class LearnerCnxAcceptor extends Thread{
+    class LearnerCnxAcceptor extends ZooKeeperThread {
         private volatile boolean stop = false;
+
+        public LearnerCnxAcceptor() {
+            super("LearnerCnxAcceptor-" + ss.getLocalSocketAddress());
+        }
 
         @Override
         public void run() {
@@ -459,7 +462,6 @@ public class Leader {
             // Start thread that waits for connection requests from
             // new followers.
             cnxAcceptor = new LearnerCnxAcceptor();
-            cnxAcceptor.setName("LearnerCnxAcceptor-" + ss.getLocalSocketAddress());
             cnxAcceptor.start();
 
             long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
