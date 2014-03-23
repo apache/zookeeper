@@ -579,6 +579,9 @@ BUGFIXES:
   ZOOKEEPER-1862. ServerCnxnTest.testServerCnxnExpiry is intermittently failing
   (Rakesh R via michim)
 
+  ZOOKEEPER-1901. [JDK8] Sort children for comparison in AsyncOps tests
+  (Andrew Purtell via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
