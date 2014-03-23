@@ -118,7 +118,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
      * of code shared by the AcceptThread (which selects on the listen socket)
      * and SelectorThread (which selects on client connections) classes.
      */
-    private abstract class AbstractSelectThread extends Thread {
+    private abstract class AbstractSelectThread extends ZooKeeperThread {
         protected final Selector selector;
 
         public AbstractSelectThread(String name) throws IOException {
@@ -561,7 +561,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
      * This thread is responsible for closing stale connections so that
      * connections on which no session is established are properly expired.
      */
-    private class ConnectionExpirerThread extends Thread {
+    private class ConnectionExpirerThread extends ZooKeeperThread {
         ConnectionExpirerThread() {
             super("ConnnectionExpirer");
         }

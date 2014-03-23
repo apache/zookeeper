@@ -130,14 +130,23 @@ public class WorkerService {
                 workRequest.cleanup();
             }
         } else {
-            scheduledWorkRequest.run();
+            // When there is no worker thread pool, do the work directly
+            // and wait for its completion
+            scheduledWorkRequest.start();
+            try {
+                scheduledWorkRequest.join();
+            } catch (InterruptedException e) {
+                LOG.warn("Unexpected exception", e);
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
-    private class ScheduledWorkRequest implements Runnable {
+    private class ScheduledWorkRequest extends ZooKeeperThread {
         private final WorkRequest workRequest;
 
         ScheduledWorkRequest(WorkRequest workRequest) {
+            super("ScheduledWorkRequest");
             this.workRequest = workRequest;
         }
 

@@ -800,6 +800,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1796. Move common code from {Follower, Observer}ZooKeeperServer into
   LearnerZooKeeperServer (Raul Gutierrez Segales via michim)
 
+  ZOOKEEPER-602. log all exceptions not caught by ZK threads (Rakesh R via
+  michim)
+
 headers
 
 Release 3.4.0 - 

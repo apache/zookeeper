@@ -28,6 +28,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.txn.ErrorTxn;
 
@@ -35,7 +36,7 @@ import org.apache.zookeeper.txn.ErrorTxn;
  * This RequestProcessor forwards any requests that modify the state of the
  * system to the Leader.
  */
-public class ObserverRequestProcessor extends Thread implements
+public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
         RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(ObserverRequestProcessor.class);
 
