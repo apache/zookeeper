@@ -5,6 +5,10 @@ Backward compatible changes:
 BUGFIXES:
 
   ZOOKEEPER-2039. Jute compareBytes incorrect comparison index (Ian Dimayuga via fpj)
+
+  ZOOKEEPER-1901. [JDK8] Sort children for comparison in AsyncOps tests
+  (Andrew Purtell via michim)
+
   ZOOKEEPER-1596. Zab1_0Test should ensure that the file is closed
   (Enis Soztutar via phunt)
 

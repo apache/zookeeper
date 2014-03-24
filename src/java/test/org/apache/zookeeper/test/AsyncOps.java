@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -235,6 +236,7 @@ public class AsyncOps {
         {
             this.children =
                 (children == null ? new ArrayList<String>() : children);
+            Collections.sort(this.children);
             super.processResult(Code.get(rc), path, ctx);
         }
         
@@ -320,6 +322,7 @@ public class AsyncOps {
         {
             this.children =
                 (children == null ? new ArrayList<String>() : children);
+            Collections.sort(this.children);
             super.processResult(Code.get(rc), path, ctx);
         }
         
