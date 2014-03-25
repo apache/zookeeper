@@ -143,8 +143,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.txnLogFactory = txnLogFactory;
         this.zkDb = zkDb;
         this.tickTime = tickTime;
-        this.minSessionTimeout = minSessionTimeout;
-        this.maxSessionTimeout = maxSessionTimeout;
+        setMinSessionTimeout(minSessionTimeout);
+        setMaxSessionTimeout(maxSessionTimeout);
 
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
@@ -758,21 +758,21 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public int getMinSessionTimeout() {
-        return minSessionTimeout == -1 ? tickTime * 2 : minSessionTimeout;
+        return minSessionTimeout;
     }
 
     public void setMinSessionTimeout(int min) {
-        LOG.info("minSessionTimeout set to " + min);
-        this.minSessionTimeout = min;
+        this.minSessionTimeout = min == -1 ? tickTime * 2 : min;
+        LOG.info("minSessionTimeout set to {}", this.minSessionTimeout);
     }
 
     public int getMaxSessionTimeout() {
-        return maxSessionTimeout == -1 ? tickTime * 20 : maxSessionTimeout;
+        return maxSessionTimeout;
     }
 
     public void setMaxSessionTimeout(int max) {
-        LOG.info("maxSessionTimeout set to " + max);
-        this.maxSessionTimeout = max;
+        this.maxSessionTimeout = max == -1 ? tickTime * 20 : max;
+        LOG.info("maxSessionTimeout set to {}", this.maxSessionTimeout);
     }
 
     public int getClientPort() {

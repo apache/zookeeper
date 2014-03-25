@@ -79,6 +79,15 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Assert.assertTrue("waiting for server 2 being up",
                         ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                         CONNECTION_TIMEOUT));
+        QuorumPeer quorumPeer = q1.main.quorumPeer;
+
+        int tickTime = quorumPeer.getTickTime();
+        Assert.assertEquals(
+                "Default value of minimumSessionTimeOut is not considered",
+                tickTime * 2, quorumPeer.getMinSessionTimeout());
+        Assert.assertEquals(
+                "Default value of maximumSessionTimeOut is not considered",
+                tickTime * 20, quorumPeer.getMaxSessionTimeout());
 
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1,
                 ClientBase.CONNECTION_TIMEOUT, this);
@@ -671,4 +680,90 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                     " to shutdown, expected " + maxwait);
         }
     }
+
+    /**
+     * Test verifies that the server is able to redefine the min/max session
+     * timeouts
+     */
+    @Test
+    public void testMinMaxSessionTimeOut() throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
+
+        String quorumCfgSection = "server.1=127.0.0.1:"
+                + PortAssignment.unique() + ":" + PortAssignment.unique()
+                + "\nserver.2=127.0.0.1:" + PortAssignment.unique() + ":"
+                + PortAssignment.unique();
+
+        final int minSessionTimeOut = 10000;
+        final int maxSessionTimeOut = 15000;
+        final String configs = "maxSessionTimeout=" + maxSessionTimeOut + "\n"
+                + "minSessionTimeout=" + minSessionTimeOut + "\n";
+
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection,
+                configs);
+        MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection,
+                configs);
+        q1.start();
+        q2.start();
+
+        Assert.assertTrue("waiting for server 1 being up", ClientBase
+                .waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                        CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server 2 being up", ClientBase
+                .waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                        CONNECTION_TIMEOUT));
+
+        QuorumPeer quorumPeer = q1.main.quorumPeer;
+
+        Assert.assertEquals("minimumSessionTimeOut is not considered",
+                minSessionTimeOut, quorumPeer.getMinSessionTimeout());
+        Assert.assertEquals("maximumSessionTimeOut is not considered",
+                maxSessionTimeOut, quorumPeer.getMaxSessionTimeout());
+    }
+
+    /**
+     * Test verifies that the server is able to redefine if user configured only
+     * minSessionTimeout limit
+     */
+    @Test
+    public void testWithOnlyMinSessionTimeout() throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
+
+        String quorumCfgSection = "server.1=127.0.0.1:"
+                + PortAssignment.unique() + ":" + PortAssignment.unique()
+                + "\nserver.2=127.0.0.1:" + PortAssignment.unique() + ":"
+                + PortAssignment.unique();
+
+        final int minSessionTimeOut = 15000;
+        final String configs = "minSessionTimeout=" + minSessionTimeOut + "\n";
+
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection,
+                configs);
+        MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection,
+                configs);
+        q1.start();
+        q2.start();
+
+        Assert.assertTrue("waiting for server 1 being up", ClientBase
+                .waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                        CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server 2 being up", ClientBase
+                .waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                        CONNECTION_TIMEOUT));
+
+        QuorumPeer quorumPeer = q1.main.quorumPeer;
+        final int maxSessionTimeOut = quorumPeer.tickTime * 20;
+
+        Assert.assertEquals("minimumSessionTimeOut is not considered",
+                minSessionTimeOut, quorumPeer.getMinSessionTimeout());
+        Assert.assertEquals("maximumSessionTimeOut is wrong",
+                maxSessionTimeOut, quorumPeer.getMaxSessionTimeout());
+    }
+
 }

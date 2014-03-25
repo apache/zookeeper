@@ -23,16 +23,22 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,12 +51,15 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     protected static final Logger LOG =
         LoggerFactory.getLogger(ZooKeeperServerMainTest.class);
 
+    private CountDownLatch clientConnected = new CountDownLatch(1);
+
     public static class MainThread extends Thread {
         final File confFile;
         final TestZKSMain main;
         final File tmpDir;
 
-        public MainThread(int clientPort, boolean preCreateDirs) throws IOException {
+        public MainThread(int clientPort, boolean preCreateDirs, String configs)
+                throws IOException {
             super("Standalone server with clientPort:" + clientPort);
             tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
@@ -59,6 +68,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             fwriter.write("tickTime=2000\n");
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
+            if(configs != null){
+                fwriter.write(configs);
+            }
 
             File dataDir = new File(tmpDir, "data");
             String dir = dataDir.toString();
@@ -130,9 +142,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     public void testStandalone() throws Exception {
         ClientBase.setupTestEnv();
 
-        final int CLIENT_PORT = 3181;
+        final int CLIENT_PORT = PortAssignment.unique();
 
-        MainThread main = new MainThread(CLIENT_PORT, true);
+        MainThread main = new MainThread(CLIENT_PORT, true, null);
         main.start();
 
         Assert.assertTrue("waiting for server being up",
@@ -165,9 +177,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     public void testWithoutAutoCreateDataLogDir() throws Exception {
         ClientBase.setupTestEnv();
         System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "false");
-        final int CLIENT_PORT = 3181;
+        final int CLIENT_PORT = PortAssignment.unique();
 
-        MainThread main = new MainThread(CLIENT_PORT, false);
+        MainThread main = new MainThread(CLIENT_PORT, false, null);
         String args[] = new String[1];
         args[0] = main.confFile.toString();
         main.start();
@@ -185,9 +197,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     public void testWithAutoCreateDataLogDir() throws Exception {
         ClientBase.setupTestEnv();
         System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "true");
-        final int CLIENT_PORT = 3181;
+        final int CLIENT_PORT = PortAssignment.unique();
 
-        MainThread main = new MainThread(CLIENT_PORT, false);
+        MainThread main = new MainThread(CLIENT_PORT, false, null);
         String args[] = new String[1];
         args[0] = main.confFile.toString();
         main.start();
@@ -214,7 +226,114 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                         ClientBase.CONNECTION_TIMEOUT));
     }
 
+    /**
+     * Test verifies that the server shouldn't allow minsessiontimeout >
+     * maxsessiontimeout
+     */
+    @Test
+    public void testWithMinSessionTimeoutGreaterThanMaxSessionTimeout()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final int tickTime = 2000;
+        final int minSessionTimeout = 20 * tickTime + 1000; // min is higher
+        final int maxSessionTimeout = tickTime * 2 - 100; // max is lower
+        final String configs = "maxSessionTimeout=" + maxSessionTimeout + "\n"
+                + "minSessionTimeout=" + minSessionTimeout + "\n";
+        MainThread main = new MainThread(CLIENT_PORT, false, configs);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        try {
+            main.main.initializeAndRun(args);
+            Assert.fail("Must throw exception as "
+                    + "minsessiontimeout > maxsessiontimeout");
+        } catch (ConfigException iae) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies that the server is able to redefine if user configured only
+     * minSessionTimeout limit
+     */
+    @Test
+    public void testWithOnlyMinSessionTimeout() throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final int tickTime = 2000;
+        final int minSessionTimeout = tickTime * 2 - 100;
+        int maxSessionTimeout = 20 * tickTime;
+        final String configs = "minSessionTimeout=" + minSessionTimeout + "\n";
+        MainThread main = new MainThread(CLIENT_PORT, false, configs);
+        main.start();
+
+        String HOSTPORT = "127.0.0.1:" + CLIENT_PORT;
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        // create session with min value
+        verifySessionTimeOut(minSessionTimeout, minSessionTimeout, HOSTPORT);
+        verifySessionTimeOut(minSessionTimeout - 2000, minSessionTimeout,
+                HOSTPORT);
+        // create session with max value
+        verifySessionTimeOut(maxSessionTimeout, maxSessionTimeout, HOSTPORT);
+        verifySessionTimeOut(maxSessionTimeout + 2000, maxSessionTimeout,
+                HOSTPORT);
+        main.shutdown();
+        Assert.assertTrue("waiting for server down", ClientBase
+                .waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+    }
+
+    /**
+     * Test verifies that the server is able to redefine the min/max session
+     * timeouts
+     */
+    @Test
+    public void testMinMaxSessionTimeOut() throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final int tickTime = 2000;
+        final int minSessionTimeout = tickTime * 2 - 100;
+        final int maxSessionTimeout = 20 * tickTime + 1000;
+        final String configs = "maxSessionTimeout=" + maxSessionTimeout + "\n"
+                + "minSessionTimeout=" + minSessionTimeout + "\n";
+        MainThread main = new MainThread(CLIENT_PORT, false, configs);
+        main.start();
+
+        String HOSTPORT = "127.0.0.1:" + CLIENT_PORT;
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        // create session with min value
+        verifySessionTimeOut(minSessionTimeout, minSessionTimeout, HOSTPORT);
+        verifySessionTimeOut(minSessionTimeout - 2000, minSessionTimeout,
+                HOSTPORT);
+        // create session with max value
+        verifySessionTimeOut(maxSessionTimeout, maxSessionTimeout, HOSTPORT);
+        verifySessionTimeOut(maxSessionTimeout + 2000, maxSessionTimeout,
+                HOSTPORT);
+        main.shutdown();
+
+        Assert.assertTrue("waiting for server down", ClientBase
+                .waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+    }
+
+    private void verifySessionTimeOut(int sessionTimeout,
+            int expectedSessionTimeout, String HOSTPORT) throws IOException,
+            KeeperException, InterruptedException {
+        clientConnected = new CountDownLatch(1);
+        ZooKeeper zk = new ZooKeeper(HOSTPORT, sessionTimeout, this);
+        Assert.assertTrue("Failed to establish zkclient connection!",
+                clientConnected.await(sessionTimeout, TimeUnit.MILLISECONDS));
+        Assert.assertEquals("Not able to configure the sessionTimeout values",
+                expectedSessionTimeout, zk.getSessionTimeout());
+        zk.close();
+    }
+
     public void process(WatchedEvent event) {
-        // ignore for this test
+        if (event.getState() == KeeperState.SyncConnected) {
+            clientConnected.countDown();
+        }
     }
 }
