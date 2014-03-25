@@ -1184,7 +1184,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     /** minimum session timeout in milliseconds */
     public int getMinSessionTimeout() {
-        return minSessionTimeout == -1 ? tickTime * 2 : minSessionTimeout;
+        return minSessionTimeout;
     }
 
     /** minimum session timeout in milliseconds */
@@ -1195,7 +1195,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     /** maximum session timeout in milliseconds */
     public int getMaxSessionTimeout() {
-        return maxSessionTimeout == -1 ? tickTime * 20 : maxSessionTimeout;
+        return maxSessionTimeout;
     }
 
     /** maximum session timeout in milliseconds */

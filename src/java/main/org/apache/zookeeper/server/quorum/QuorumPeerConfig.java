@@ -280,6 +280,10 @@ public class QuorumPeerConfig {
         if (tickTime == 0) {
             throw new IllegalArgumentException("tickTime is not set");
         }
+
+        minSessionTimeout = minSessionTimeout == -1 ? tickTime * 2 : minSessionTimeout;
+        maxSessionTimeout = maxSessionTimeout == -1 ? tickTime * 20 : maxSessionTimeout;
+
         if (minSessionTimeout > maxSessionTimeout) {
             throw new IllegalArgumentException(
                     "minSessionTimeout must not be larger than maxSessionTimeout");

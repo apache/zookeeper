@@ -78,6 +78,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
                 throws IOException {
+            this(myid, clientPort, quorumCfgSection, null);
+        }
+
+        public MainThread(int myid, int clientPort, String quorumCfgSection,
+                String configs)
+                throws IOException {
             tmpDir = ClientBase.createTmpDir();
             LOG.info("id = " + myid + " tmpDir = " + tmpDir + " clientPort = "
                     + clientPort);
@@ -94,6 +100,9 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write("tickTime=4000\n");
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
+            if(configs != null){
+                fwriter.write(configs);
+            }
 
             // Convert windows path to UNIX to avoid problems with "\"
             String dir = dataDir.toString();
