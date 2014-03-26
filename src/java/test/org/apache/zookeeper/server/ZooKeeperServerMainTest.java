@@ -177,16 +177,22 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     public void testWithoutAutoCreateDataLogDir() throws Exception {
         ClientBase.setupTestEnv();
         System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "false");
-        final int CLIENT_PORT = PortAssignment.unique();
+        try {
+            final int CLIENT_PORT = PortAssignment.unique();
 
-        MainThread main = new MainThread(CLIENT_PORT, false, null);
-        String args[] = new String[1];
-        args[0] = main.confFile.toString();
-        main.start();
+            MainThread main = new MainThread(CLIENT_PORT, false, null);
+            String args[] = new String[1];
+            args[0] = main.confFile.toString();
+            main.start();
 
-        Assert.assertFalse("waiting for server being up", ClientBase
-                .waitForServerUp("127.0.0.1:" + CLIENT_PORT,
-                        CONNECTION_TIMEOUT / 2));
+            Assert.assertFalse("waiting for server being up", ClientBase
+                    .waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                            CONNECTION_TIMEOUT / 2));
+        } finally {
+            // resets "zookeeper.datadir.autocreate" flag
+            System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE,
+                    FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT);
+        }
     }
 
     /**
