@@ -194,8 +194,7 @@ public class WatcherTest extends ClientBase {
            zk.exists("/test", watches[i], cbs[i], count);
        }
        zk.exists("/test", false);
-       zk.pauseCnxn(3000);
-       Thread.sleep(50);
+       Assert.assertTrue("Failed to pause the connection!", zk.pauseCnxn(3000));
        zk2.close();
        stopServer();
        watches[0].waitForDisconnected(60000);
