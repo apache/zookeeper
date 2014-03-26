@@ -585,6 +585,9 @@ BUGFIXES:
   ZOOKEEPER-1263. fix handling of min/max session timeout value initialization
   (Rakesh R via michim)
 
+  ZOOKEEPER-1904. WatcherTest#testWatchAutoResetWithPending is failing
+  (Rakesh R via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
