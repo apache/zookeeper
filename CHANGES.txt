@@ -263,6 +263,9 @@ BUGFIXES:
   ZOOKEEPER-1755. Concurrent operations of four letter 'dump' ephemeral 
   command and killSession causing NPE (Rakesh R via camille)
 
+  ZOOKEEPER-1904. WatcherTest#testWatchAutoResetWithPending is failing
+  (Rakesh R via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1564. Allow JUnit test build with IBM Java
