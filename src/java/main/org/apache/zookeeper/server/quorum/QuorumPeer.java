@@ -47,6 +47,7 @@ import java.util.Set;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.AtomicFileOutputStream;
+import org.apache.zookeeper.common.HostNameUtils;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.DataNode;
@@ -233,7 +234,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             else if (type == LearnerType.PARTICIPANT) sw.append(":participant");            
             if (clientAddr!=null){
                 sw.append(";");
-                sw.append(clientAddr.getHostName() + ":" + String.valueOf(clientAddr.getPort()));
+                sw.append(HostNameUtils.getHostString(clientAddr));
+                sw.append(":");
+                sw.append(String.valueOf(clientAddr.getPort()));
             }
             return sw.toString();       
         }

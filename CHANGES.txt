@@ -581,6 +581,8 @@ BUGFIXES:
 
   ZOOKEEPER-1901. [JDK8] Sort children for comparison in AsyncOps tests
   (Andrew Purtell via michim)
+  
+  ZOOKEEPER-1894. ObserverTest.testObserver fails consistently. (michim via camille)
 
   ZOOKEEPER-1263. fix handling of min/max session timeout value initialization
   (Rakesh R via michim)
