@@ -819,6 +819,10 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1408. CLI: sort output of ls command (Hartmut Lang via michim)
 
+  ZOOKEEPER-1219. LeaderElectionSupport recipe is unnecessarily dispatching the
+  READY_START event even if the ELECTED node stopped/expired simultaneously.
+  (Rakesh R via michim)
+
 headers
 
 Release 3.4.0 - 

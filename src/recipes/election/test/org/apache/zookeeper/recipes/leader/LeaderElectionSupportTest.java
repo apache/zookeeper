@@ -29,6 +29,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.recipes.leader.LeaderElectionSupport.EventType;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Before;
@@ -202,6 +203,54 @@ public class LeaderElectionSupportTest extends ClientBase {
     electionSupport.stop();
   }
 
+  @Test
+  public void testReadyOffer() throws Exception {
+      final ArrayList<EventType> events = new ArrayList<EventType>();
+      final CountDownLatch electedComplete = new CountDownLatch(1);
+
+      final LeaderElectionSupport electionSupport1 = createLeaderElectionSupport();
+      electionSupport1.start();
+      LeaderElectionSupport electionSupport2 = createLeaderElectionSupport();
+      LeaderElectionAware listener = new LeaderElectionAware() {
+          boolean stoppedElectedNode = false;
+          @Override
+          public void onElectionEvent(EventType eventType) {
+              events.add(eventType);
+              if (!stoppedElectedNode
+                      && eventType == EventType.DETERMINE_COMPLETE) {
+                  stoppedElectedNode = true;
+                  try {
+                      // stopping the ELECTED node, so re-election will happen.
+                      electionSupport1.stop();
+                  } catch (Exception e) {
+                      logger.error("Unexpected error", e);
+                  }
+              }
+              if (eventType == EventType.ELECTED_COMPLETE) {
+                  electedComplete.countDown();
+              }
+          }
+      };
+      electionSupport2.addListener(listener);
+      electionSupport2.start();
+      // waiting for re-election.
+      electedComplete.await(CONNECTION_TIMEOUT / 3, TimeUnit.MILLISECONDS);
+
+      final ArrayList<EventType> expectedevents = new ArrayList<EventType>();
+      expectedevents.add(EventType.START);
+      expectedevents.add(EventType.OFFER_START);
+      expectedevents.add(EventType.OFFER_COMPLETE);
+      expectedevents.add(EventType.DETERMINE_START);
+      expectedevents.add(EventType.DETERMINE_COMPLETE);
+      expectedevents.add(EventType.DETERMINE_START);
+      expectedevents.add(EventType.DETERMINE_COMPLETE);
+      expectedevents.add(EventType.ELECTED_START);
+      expectedevents.add(EventType.ELECTED_COMPLETE);
+      Assert.assertEquals("Events has failed to executed in the order",
+              expectedevents, events);
+      electionSupport2.stop();
+  }
+  
   private LeaderElectionSupport createLeaderElectionSupport() {
     LeaderElectionSupport electionSupport = new LeaderElectionSupport();
 
