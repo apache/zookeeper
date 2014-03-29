@@ -29,7 +29,11 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
     <property environment="env"/>
     
-    <property name="version" value="3.5.0-SNAPSHOT" />
+    <property name="version-major" value="3" />
+    <property name="version-minor" value="5" />
+    <property name="version-patch" value="0" />
+    <property name="version" value="${version-major}.${version-minor}.${version-patch}-SNAPSHOT" />
+
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
@@ -354,7 +358,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         </java>
     </target>
     
-    <target name="build-generated" depends="compile_jute,version-info" >
+    <target name="build-generated" depends="compile_jute,version-info,process-template" >
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" includeantruntime="false"
             target="${javac.target}" source="${javac.source}" debug="on" />
     </target>
@@ -404,6 +408,24 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
     </target>
 
+    <target name="process-template">
+      <copy todir="${c.src.dir}" verbose="true" overwrite="true" failonerror="true">
+        <fileset dir="${c.src.dir}">
+          <include name="configure.ac.in"/>
+          <include name="include/zookeeper_version.h.in"/>
+        </fileset>
+        <mapper>
+          <globmapper from="*.in" to="*"/>
+        </mapper>
+        <filterchain>
+          <striplinecomments>
+	     <comment value="!" />
+	  </striplinecomments>
+          <expandproperties />
+        </filterchain>
+      </copy>
+    </target>
+    
     <target name="ivy-retrieve-mvn-ant-task" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="mvn-ant-task"
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
