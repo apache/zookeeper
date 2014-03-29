@@ -817,6 +817,8 @@ IMPROVEMENTS:
   ZOOKEEPER-297. centralize version numbering in the source/build (Diego de
   Oliveira via michim)
 
+  ZOOKEEPER-1408. CLI: sort output of ls command (Hartmut Lang via michim)
+
 headers
 
 Release 3.4.0 - 

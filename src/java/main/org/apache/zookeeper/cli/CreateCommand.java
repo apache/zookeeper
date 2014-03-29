@@ -80,6 +80,9 @@ public class CreateCommand extends CliCommand {
         } catch(KeeperException.EphemeralOnLocalSessionException e) {
             err.println("Unable to create ephemeral node on a local session");
             return false;
+        } catch (KeeperException.InvalidACLException ex) {
+            err.println(ex.getMessage());
+            return false;
         }
         return true;
     }

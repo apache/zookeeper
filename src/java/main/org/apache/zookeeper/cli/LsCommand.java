@@ -16,9 +16,11 @@
  */
 package org.apache.zookeeper.cli;
 
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.cli.*;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 
 /**
  * ls command for cli
@@ -31,11 +33,12 @@ public class LsCommand extends CliCommand {
 
     {
         options.addOption("?", false, "help");
+        options.addOption("s", false, "stat");
         options.addOption("w", false, "watch");
     }
 
     public LsCommand() {
-        super("ls", "[-w] path");
+        super("ls", "[-s] [-w] path");
     }
 
     private void printHelp() {
@@ -78,8 +81,42 @@ public class LsCommand extends CliCommand {
     public boolean exec() throws KeeperException, InterruptedException {
         String path = args[1];
         boolean watch = cl.hasOption("w");
-        List<String> children = zk.getChildren(path, watch);
-        out.println(children);
+        boolean withStat = cl.hasOption("s");
+        try {
+            Stat stat = new Stat();
+            List<String> children;
+            if (withStat) {
+                // with stat
+                children = zk.getChildren(path, watch, stat);
+            } else {
+                // without stat
+                children = zk.getChildren(path, watch);
+            }
+            out.println(printChildren(children));
+            if (withStat) {
+                new StatPrinter(out).print(stat);
+            }
+        } catch (KeeperException.NoAuthException ex) {
+            err.println(ex.getMessage());
+            watch = false;
+        }
         return watch;
+    }
+
+    private String printChildren(List<String> children) {
+        Collections.sort(children);
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (String child : children) {
+            if (!first) {
+                sb.append(", ");
+            } else {
+                first = false;
+            }
+            sb.append(child);
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }
