@@ -42,21 +42,26 @@ abstract public class CliCommand {
      * @param optionStr the string used to call this command 
      */
     public CliCommand(String cmdStr, String optionStr) {
-        this(cmdStr, optionStr, System.out, System.err);
+        this.out = System.out;
+        this.err = System.err;
+        this.cmdStr = cmdStr;
+        this.optionStr = optionStr;
     }
 
     /**
-     * a CLI command with command string and options.
-     * @param cmdStr the string used to call this command
-     * @param optionStr the string used to call this command
-     * @param out stream used for all normal printing
-     * @param err stream used for all error printing
+     * Set out printStream (useable for testing)
+     * @param out 
      */
-    public CliCommand(String cmdStr, String optionStr, PrintStream out, PrintStream err) {
+    public void setOut(PrintStream out) {
         this.out = out;
+    }
+
+    /**
+     * Set err printStream (useable for testing)
+     * @param err 
+     */
+    public void setErr(PrintStream err) {
         this.err = err;
-        this.cmdStr = cmdStr;
-        this.optionStr = optionStr;
     }
 
     /**

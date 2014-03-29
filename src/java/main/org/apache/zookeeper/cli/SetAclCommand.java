@@ -71,7 +71,7 @@ public class SetAclCommand extends CliCommand {
                 new StatPrinter(out).print(stat);
             }
         } catch (KeeperException.InvalidACLException ex) {
-            err.println("Invalid ACL: " + aclStr);
+            err.println(ex.getMessage());
         } catch (KeeperException.NoAuthException ex) {
             err.println(ex.getMessage());
         }

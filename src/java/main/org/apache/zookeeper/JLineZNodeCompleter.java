@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import java.util.Collections;
 import java.util.List;
 
 import jline.console.completer.Completer;
@@ -79,6 +80,7 @@ class JLineZNodeCompleter implements Completer {
         catch( KeeperException e) {
             return 0;
         }
+        Collections.sort(candidates);
         return candidates.size() == 0 ? buffer.length() : buffer.lastIndexOf("/") + 1;
     }
 }

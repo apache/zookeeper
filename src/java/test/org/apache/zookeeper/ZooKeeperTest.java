@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.cli.LsCommand;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
@@ -365,6 +366,30 @@ public class ZooKeeperTest extends ClientBase {
         if (errContent.toString().contains("ZooKeeper -server host:port cmd args")) {
             fail("CLI commands (history, redo, connect, printwatches) display usage info!");
         }
+    }
+
+    @Test
+    public void testSortedLs() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+
+        zkMain.executeLine("create /aa1");
+        zkMain.executeLine("create /aa2");
+        zkMain.executeLine("create /aa3");
+        zkMain.executeLine("create /test1");
+        zkMain.executeLine("create /zk1");
+
+        // call ls and put result in byteStream
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(byteStream);
+        String lsCmd = "ls /";
+        LsCommand entity = new LsCommand();
+        entity.setZk(zk);
+        entity.setOut(out);
+        entity.parse(lsCmd.split(" ")).exec();
+
+        String result = byteStream.toString();
+        assertTrue(result, result.contains("[aa1, aa2, aa3, test1, zk1, zookeeper]"));
     }
 
 }

@@ -56,7 +56,7 @@ public class DeleteCommand extends CliCommand {
         if (args.length > 2) {
             // rewrite to option
             String [] newCmd = new String[4];
-            newCmd[0] = cmdArgs [0];
+            newCmd[0] = cmdArgs[0];
             newCmd[1] = "-v";
             newCmd[2] = cmdArgs[2]; // version
             newCmd[3] = cmdArgs[1]; // path            
