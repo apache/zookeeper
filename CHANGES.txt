@@ -814,6 +814,9 @@ IMPROVEMENTS:
   ZOOKEEPER-602. log all exceptions not caught by ZK threads (Rakesh R via
   michim)
 
+  ZOOKEEPER-297. centralize version numbering in the source/build (Diego de
+  Oliveira via michim)
+
 headers
 
 Release 3.4.0 - 
