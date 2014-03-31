@@ -222,7 +222,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             StringWriter sw = new StringWriter();            
             //addr should never be null, but just to make sure
             if (addr !=null) { 
-                sw.append(addr.getHostName());
+                sw.append(HostNameUtils.getHostString(addr));
                 sw.append(":");
                 sw.append(String.valueOf(addr.getPort()));
             }
