@@ -513,8 +513,14 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 break;
             case OpCode.reconfig:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                ReconfigRequest reconfigRequest = (ReconfigRequest)record;                             
-                LeaderZooKeeperServer lzks = (LeaderZooKeeperServer)zks;
+                ReconfigRequest reconfigRequest = (ReconfigRequest)record; 
+                LeaderZooKeeperServer lzks;
+                try {
+                    lzks = (LeaderZooKeeperServer)zks;
+                } catch (ClassCastException e) {
+                    // standalone mode - reconfiguration currently not supported
+                    throw new KeeperException.UnimplementedException();
+                }
                 QuorumVerifier lastSeenQV = lzks.self.getLastSeenQuorumVerifier();                                                                                 
                 // check that there's no reconfig in progress
                 if (lastSeenQV.getVersion()!=lzks.self.getQuorumVerifier().getVersion()) {
