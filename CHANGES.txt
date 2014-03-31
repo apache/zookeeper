@@ -823,6 +823,9 @@ IMPROVEMENTS:
   READY_START event even if the ELECTED node stopped/expired simultaneously.
   (Rakesh R via michim)
 
+  ZOOKEEPER-1728. Better error message when reconfig invoked in standalone mode
+  (Alexander Shraer via michim)
+
 headers
 
 Release 3.4.0 - 
