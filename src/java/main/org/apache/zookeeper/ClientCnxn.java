@@ -1432,7 +1432,8 @@ public class ClientCnxn {
 
     private int xid = 1;
 
-    private volatile States state = States.NOT_CONNECTED;
+    // @VisibleForTesting
+    volatile States state = States.NOT_CONNECTED;
 
     /*
      * getXid() is called externally by ClientCnxnNIO::doIO() when packets are sent from the outgoingQueue to

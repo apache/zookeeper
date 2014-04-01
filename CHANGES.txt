@@ -833,6 +833,9 @@ IMPROVEMENTS:
   write new config to disk or create new connections (Alexander Shraer via
   michim)
 
+  ZOOKEEPER-1730. Make ZooKeeper easier to test - support simulating a session
+  expiration (Jordan Zimmerman via michim)
+
 headers
 
 Release 3.4.0 - 
