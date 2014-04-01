@@ -829,6 +829,10 @@ IMPROVEMENTS:
   ZOOKEEPER-1728. Better error message when reconfig invoked in standalone mode
   (Alexander Shraer via michim)
 
+  ZOOKEEPER-1701. When new and old config have the same version, no need to
+  write new config to disk or create new connections (Alexander Shraer via
+  michim)
+
 headers
 
 Release 3.4.0 - 
