@@ -32,6 +32,19 @@ class GetSetTest(zktestbase.TestBase):
         except:
             pass
 
+    def test_empty_node(self):
+        """
+        Test for a bug when instead of empty string we can get
+        random data from buffer malloc'ed to hold node contents.
+        See ZOOKEEPER-1906 for details
+        """
+        NODE_PATH = "/zk-python-test-empty-node"
+        self.ensureDeleted(NODE_PATH)
+        zookeeper.create(self.handle, NODE_PATH, "",
+                         [{"perms":0x1f, "scheme":"world", "id" :"anyone"}])
+        (data,stat) = zookeeper.get(self.handle, NODE_PATH, None)
+        self.assertEqual(data, "", "Data is not empty as expected: " + data)
+
     def test_sync_getset(self):
         self.assertEqual(self.connected, True, "Not connected!")
         (data,stat) = zookeeper.get(self.handle, "/zk-python-getsettest", None)
