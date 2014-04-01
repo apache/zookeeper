@@ -1223,7 +1223,7 @@ static PyObject *pyzoo_get(PyObject *self, PyObject *args)
   }
 
   PyObject *stat_dict = build_stat( &stat );
-  PyObject *ret = Py_BuildValue( "(s#,N)", buffer,buffer_len, stat_dict );
+  PyObject *ret = Py_BuildValue( "(s#,N)", buffer,buffer_len < 0 ? 0 : buffer_len, stat_dict );
   free(buffer);
 
   return ret;

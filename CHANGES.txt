@@ -593,6 +593,9 @@ BUGFIXES:
   ZOOKEEPER-1725. Zookeeper Dynamic Conf writes out hostnames when IPs are
   supplied (Alexander Shraer via michim)
 
+  ZOOKEEPER-1906. zkpython: invalid data in GetData for empty node
+  (Nikita Vetoshkin via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
