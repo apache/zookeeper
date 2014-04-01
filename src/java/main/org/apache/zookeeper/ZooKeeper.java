@@ -136,7 +136,7 @@ public class ZooKeeper {
         LOG = LoggerFactory.getLogger(ZooKeeper.class);
         Environment.logEnv("Client environment:", LOG);
     }
-    
+
     private final StaticHostProvider hostProvider;
     
     /**
@@ -860,6 +860,11 @@ public class ZooKeeper {
                 getClientCnxnSocket(), sessionId, sessionPasswd, canBeReadOnly);
         cnxn.seenRwServerBefore = true; // since user has provided sessionId
         cnxn.start();
+    }
+
+    // VisibleForTesting
+    public Testable getTestable() {
+        return new ZooKeeperTestable(this, cnxn);
     }
 
     /**
