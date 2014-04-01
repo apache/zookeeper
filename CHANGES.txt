@@ -11,6 +11,9 @@ BUGFIXES:
   ZOOKEEPER-1901. [JDK8] Sort children for comparison in AsyncOps tests
   (Andrew Purtell via michim)
 
+  ZOOKEEPER-1906. zkpython: invalid data in GetData for empty node
+  (Nikita Vetoshkin via michim)
+
 
 Release 3.4.6 - 2014-03-10 
 
