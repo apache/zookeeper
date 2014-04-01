@@ -1267,10 +1267,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
     
     public synchronized void setLastSeenQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
-        if (lastSeenQuorumVerifier!=null && lastSeenQuorumVerifier.getVersion() >= qv.getVersion()) {
-           LOG.warn("setLastSeenQuorumVerifier called with stale config " + qv.getVersion() + 
+        if (lastSeenQuorumVerifier!=null && lastSeenQuorumVerifier.getVersion() > qv.getVersion()) {
+           LOG.error("setLastSeenQuorumVerifier called with stale config " + qv.getVersion() + 
                    ". Current version: " + quorumVerifier.getVersion());
           
+        }
+        // assuming that a version uniquely identifies a configuration, so if
+        // version is the same, nothing to do here.
+        if (lastSeenQuorumVerifier != null &&
+            lastSeenQuorumVerifier.getVersion() == qv.getVersion()) {
+            return;
         }
         lastSeenQuorumVerifier = qv;
         connectNewPeers();
