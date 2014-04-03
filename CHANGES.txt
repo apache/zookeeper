@@ -14,6 +14,8 @@ BUGFIXES:
   ZOOKEEPER-1906. zkpython: invalid data in GetData for empty node
   (Nikita Vetoshkin via michim)
 
+  ZOOKEEPER-1897. ZK Shell/Cli not processing commands (stack via michim)
+
 
 Release 3.4.6 - 2014-03-10 
 
