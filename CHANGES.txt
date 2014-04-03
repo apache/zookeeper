@@ -844,6 +844,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1730. Make ZooKeeper easier to test - support simulating a session
   expiration (Jordan Zimmerman via michim)
 
+  ZOOKEEPER-1831. Document remove watches details to the guide (Rakesh R via
+  michim)
+
 headers
 
 Release 3.4.0 - 

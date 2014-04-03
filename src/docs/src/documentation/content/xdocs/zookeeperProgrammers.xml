@@ -677,7 +677,28 @@
         </listitem>
       </itemizedlist>
 	</section>
-	
+
+    <section id="sc_WatchRemoval">
+      <title>Remove Watches</title>
+      <para>We can remove the watches registered on a znode with a call to 
+      removeWatches. Also, a ZooKeeper client can remove watches locally even
+      if there is no server connection by setting the local flag to true. The 
+      following list details the events which will be triggered after the 
+      successful watch removal.
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para><emphasis role="bold">Child Remove event:</emphasis></para>
+          <para>Watcher which was added with a call to getChildren.</para>
+        </listitem>
+        
+        <listitem>
+          <para><emphasis role="bold">Data Remove event:</emphasis></para>
+          <para>Watcher which was added with a call to exists or getData.</para>
+        </listitem>
+      </itemizedlist>
+   </section>
+
     <section id="sc_WatchGuarantees">
       <title>What ZooKeeper Guarantees about Watches</title>
 
