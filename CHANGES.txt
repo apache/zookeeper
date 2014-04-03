@@ -23,6 +23,9 @@ NEW FEATURES:
   ZOOKEEPER-442. need a way to remove watches that are no longer of
   interest (Rakesh R, Daniel Gómez Ferro via phunt)
 
+  ZOOKEEPER-1830. Support command line shell for removing watches
+  (Rakesh R via michim)
+
 BUGFIXES:
 
   ZOOKEEPER-786. Exception in ZooKeeper.toString
