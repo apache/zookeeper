@@ -48,6 +48,7 @@ import org.apache.zookeeper.cli.CreateCommand;
 import org.apache.zookeeper.cli.DelQuotaCommand;
 import org.apache.zookeeper.cli.DeleteAllCommand;
 import org.apache.zookeeper.cli.DeleteCommand;
+import org.apache.zookeeper.cli.RemoveWatchesCommand;
 import org.apache.zookeeper.cli.GetAclCommand;
 import org.apache.zookeeper.cli.GetCommand;
 import org.apache.zookeeper.cli.ListQuotaCommand;
@@ -107,6 +108,7 @@ public class ZooKeeperMain {
         new ListQuotaCommand().addToMap(commandMapCli);
         new DelQuotaCommand().addToMap(commandMapCli);
         new AddAuthCommand().addToMap(commandMapCli);
+        new RemoveWatchesCommand().addToMap(commandMapCli);
         
         // add all to commandMap
         for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {
