@@ -596,6 +596,8 @@ BUGFIXES:
   ZOOKEEPER-1906. zkpython: invalid data in GetData for empty node
   (Nikita Vetoshkin via michim)
 
+  ZOOKEEPER-1897. ZK Shell/Cli not processing commands (stack via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

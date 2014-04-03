@@ -340,6 +340,9 @@ public class ZooKeeperMain {
                     executeLine(line);
                 }
             }
+        } else {
+            // Command line args non-null.  Run what was passed.
+            processCmd(cl);
         }
     }
 
