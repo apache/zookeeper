@@ -8,6 +8,9 @@ Backward compatible changes:
   ZOOKEEPER-1830. Support command line shell for removing watches
   (Rakesh R via michim)
 
+  ZOOKEEPER-1831. Document remove watches details to the guide (Rakesh R via
+  michim)
+
 BUGFIXES:
 
   ZOOKEEPER-2141 ACL cache in DataTree never removes entries (Adam Milne-Smith via camille)
