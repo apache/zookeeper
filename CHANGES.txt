@@ -847,6 +847,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1831. Document remove watches details to the guide (Rakesh R via
   michim)
 
+  ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
+  source and text files (Raja Aluri via michim)
+
 headers
 
 Release 3.4.0 - 
