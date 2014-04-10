@@ -44,4 +44,5 @@ if not exist %JAVA_HOME%\bin\java.exe (
   goto :eof
 )
 
-set JAVA=%JAVA_HOME%\bin\java
+set JAVA=%JAVA_HOME%\bin\java
+
