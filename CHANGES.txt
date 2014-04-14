@@ -601,6 +601,10 @@ BUGFIXES:
 
   ZOOKEEPER-1897. ZK Shell/Cli not processing commands (stack via michim)
 
+  ZOOKEEPER-1357. Zab1_0Test uses hard-wired port numbers. Specifically, it uses
+  the same port for leader in two different tests. The second test periodically
+  fails complaining that the port is still in use. (Alexander Shraer via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

@@ -1293,17 +1293,17 @@ public class Zab1_0Test {
         peer.tickTime = 2000;
         
         peers.put(0L, new QuorumServer(
-            0, new InetSocketAddress("127.0.0.1", 33221),
-               new InetSocketAddress("127.0.0.1", 33231),
-               new InetSocketAddress("127.0.0.1", 33241)));
+            0, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+               new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+               new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
         peers.put(1L, new QuorumServer(
-            1, new InetSocketAddress("127.0.0.1", 33223),
-               new InetSocketAddress("127.0.0.1", 33233),
-               new InetSocketAddress("127.0.0.1", 33243)));
+            1, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+               new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+               new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
         peers.put(2L, new QuorumServer(
-            2, new InetSocketAddress("127.0.0.1", 33224),
-               new InetSocketAddress("127.0.0.1", 33234),
-               new InetSocketAddress("127.0.0.1", 33245)));
+            2, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+               new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+               new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
         
         peer.setQuorumVerifier(new QuorumMaj(peers), false);
         peer.setCnxnFactory(new NullServerCnxnFactory());
