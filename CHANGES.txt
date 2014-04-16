@@ -26,6 +26,9 @@ NEW FEATURES:
   ZOOKEEPER-1830. Support command line shell for removing watches
   (Rakesh R via michim)
 
+  ZOOKEEPER-1887. C implementation of removeWatches (Raul Gutierrez Segales via
+  michim)
+
 BUGFIXES:
 
   ZOOKEEPER-786. Exception in ZooKeeper.toString
