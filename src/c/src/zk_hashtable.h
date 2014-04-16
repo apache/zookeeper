@@ -48,6 +48,18 @@ typedef struct _watcher_registration {
     const char* path;
 } watcher_registration_t;
 
+/**
+ * A watcher deregistration gets temporarily stored with the completion entry until
+ * the server response comes back at which moment we can remove the watchers from
+ * the active watchers map.
+ */
+typedef struct _watcher_deregistration {
+    watcher_fn watcher;
+    void* context;
+    ZooWatcherType type;
+    const char* path;
+} watcher_deregistration_t;
+
 zk_hashtable* create_zk_hashtable();
 void destroy_zk_hashtable(zk_hashtable* ht);
 
@@ -59,8 +71,13 @@ char **collect_keys(zk_hashtable *ht, int *count);
  * active watchers (only if the checker allows to do so)
  */
     void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc);
+    void deactivateWatcher(zhandle_t *zh, watcher_deregistration_t *dereg, int rc);
     watcher_object_list_t *collectWatchers(zhandle_t *zh,int type, char *path);
     void deliverWatchers(zhandle_t *zh, int type, int state, char *path, struct watcher_object_list **list);
+    void removeWatchers(zhandle_t *zh, const char* path, ZooWatcherType type,
+                        watcher_fn watcher, void *watcherCtx);
+    int pathHasWatcher(zhandle_t *zh, const char *path, int wtype,
+                       watcher_fn watcher, void *watcherCtx);
 
 #ifdef __cplusplus
 }

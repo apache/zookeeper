@@ -11,6 +11,9 @@ Backward compatible changes:
   ZOOKEEPER-1831. Document remove watches details to the guide (Rakesh R via
   michim)
 
+  ZOOKEEPER-1887. C implementation of removeWatches (Raul Gutierrez Segales via
+  michim)
+
 BUGFIXES:
 
   ZOOKEEPER-2141 ACL cache in DataTree never removes entries (Adam Milne-Smith via camille)
