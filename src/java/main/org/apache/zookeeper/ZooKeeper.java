@@ -106,7 +106,7 @@ public class ZooKeeper implements AutoCloseable {
         return cnxn.zooKeeperSaslClient;
     }
 
-    private final ZKWatchManager watchManager = new ZKWatchManager();
+    private final ZKWatchManager watchManager;
 
     List<String> getDataWatches() {
         synchronized(watchManager.dataWatches) {
@@ -284,7 +284,7 @@ public class ZooKeeper implements AutoCloseable {
             }
         }
 
-        private boolean removeWatches(Map<String, Set<Watcher>> pathVsWatcher,
+        protected boolean removeWatches(Map<String, Set<Watcher>> pathVsWatcher,
                 Watcher watcher, String path, boolean local, int rc,
                 Set<Watcher> removedWatchers) throws KeeperException {
             if (!local && rc != Code.OK.intValue()) {
@@ -618,6 +618,7 @@ public class ZooKeeper implements AutoCloseable {
         LOG.info("Initiating client connection, connectString=" + connectString
                 + " sessionTimeout=" + sessionTimeout + " watcher=" + watcher);
 
+        watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
 
         ConnectStringParser connectStringParser = new ConnectStringParser(
@@ -759,6 +760,7 @@ public class ZooKeeper implements AutoCloseable {
                 + " sessionPasswd="
                 + (sessionPasswd == null ? "<null>" : "<hidden>"));
 
+        watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
 
         ConnectStringParser connectStringParser = new ConnectStringParser(
@@ -775,6 +777,11 @@ public class ZooKeeper implements AutoCloseable {
     // VisibleForTesting
     public Testable getTestable() {
         return new ZooKeeperTestable(this, cnxn);
+    }
+
+    /* Useful for testing watch handling behavior */
+    protected ZKWatchManager defaultWatchManager() {
+        return new ZKWatchManager();
     }
 
     /**

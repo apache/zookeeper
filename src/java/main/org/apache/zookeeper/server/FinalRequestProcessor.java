@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.data.Id;
@@ -386,8 +387,15 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         removeWatches);
                 WatcherType type = WatcherType.fromInt(removeWatches.getType());
-                zks.getZKDatabase().removeWatch(removeWatches.getPath(), type,
-                        cnxn);
+                boolean removed = zks.getZKDatabase().removeWatch(
+                        removeWatches.getPath(), type, cnxn);
+
+                if (!removed) {
+                    String msg = String.format(Locale.ENGLISH, "%s (type: %s)",
+                            new Object[] { removeWatches.getPath(), type });
+                    throw new KeeperException.NoWatcherException(msg);
+                }
+
                 break;
             }
             }
