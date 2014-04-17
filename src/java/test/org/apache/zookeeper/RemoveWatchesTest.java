@@ -23,10 +23,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.KeeperException.NoWatcherException;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -689,6 +693,87 @@ public class RemoveWatchesTest extends ClientBase {
         removeWatches(zk2, "/node1", w1, WatcherType.Any, false, Code.OK);
         Assert.assertTrue("Didn't remove child watcher", w1.matches());
         Assert.assertFalse("Shouldn't remove data watcher", w2.matches());
+    }
+
+    /**
+     * Verify that if a given watcher doesn't exist, the server properly
+     * returns an error code for it.
+     *
+     * In our Java client implementation, we check that a given watch exists at
+     * two points:
+     *
+     * 1) before submitting the RemoveWatches request
+     * 2) after a successful server response, when the watcher needs to be
+     *    removed
+     *
+     * Since this can be racy (i.e. a watch can fire while a RemoveWatches
+     * request is in-flight), we need to verify that the watch was actually
+     * removed (i.e. from ZKDatabase and DataTree) and return NOWATCHER if
+     * needed.
+     *
+     * Also, other implementations might not do a client side check before
+     * submitting a RemoveWatches request. If we don't do a server side check,
+     * we would just return ZOK even if no watch was removed.
+     *
+     */
+    @Test(timeout = 90000)
+    public void testNoWatcherServerException()
+            throws InterruptedException, IOException, TimeoutException {
+        CountdownWatcher watcher = new CountdownWatcher();
+        MyZooKeeper zk = new MyZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
+        boolean nw = false;
+
+        watcher.waitForConnected(CONNECTION_TIMEOUT);
+
+        try {
+            zk.removeWatches("/nowatchhere", null, WatcherType.Data, false);
+        } catch (KeeperException nwe) {
+            if (nwe.code().intValue() == Code.NOWATCHER.intValue()) {
+                nw = true;
+            }
+        }
+
+        Assert.assertTrue("Server didn't return NOWATCHER",
+                zk.getRemoveWatchesRC() == Code.NOWATCHER.intValue());
+        Assert.assertTrue("NoWatcherException didn't happen", nw);
+    }
+
+    /* a mocked ZK class that doesn't do client-side verification
+     * before/after calling removeWatches */
+    private class MyZooKeeper extends ZooKeeper {
+        class MyWatchManager extends ZKWatchManager {
+            public int lastrc;
+
+            /* Pretend that any watcher exists */
+            void containsWatcher(String path, Watcher watcher,
+                    WatcherType watcherType) throws NoWatcherException {
+            }
+
+            /* save the return error code by the server */
+            protected boolean removeWatches(
+                Map<String, Set<Watcher>> pathVsWatcher,
+                Watcher watcher, String path, boolean local, int rc,
+                Set<Watcher> removedWatchers) throws KeeperException {
+                lastrc = rc;
+                return false;
+            }
+        }
+
+        public MyZooKeeper(String hp, int timeout, Watcher watcher)
+                throws IOException {
+            super(hp, timeout, watcher, false);
+        }
+
+        private MyWatchManager myWatchManager;
+
+        protected ZKWatchManager defaultWatchManager() {
+            myWatchManager = new MyWatchManager();
+            return myWatchManager;
+        }
+
+        public int getRemoveWatchesRC() {
+            return myWatchManager.lastrc;
+        }
     }
 
     private class MyWatcher implements Watcher {
