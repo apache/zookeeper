@@ -1365,18 +1365,26 @@ public class DataTree {
         }
     }
 
-    public void removeWatch(String path, WatcherType type, Watcher watcher) {
+    public boolean removeWatch(String path, WatcherType type, Watcher watcher) {
+        boolean removed = false;
+
         switch (type) {
         case Children:
-            this.childWatches.removeWatcher(path, watcher);
+            removed = this.childWatches.removeWatcher(path, watcher);
             break;
         case Data:
-            this.dataWatches.removeWatcher(path, watcher);
+            removed = this.dataWatches.removeWatcher(path, watcher);
             break;
         case Any:
-            this.childWatches.removeWatcher(path, watcher);
-            this.dataWatches.removeWatcher(path, watcher);
+            if (this.childWatches.removeWatcher(path, watcher)) {
+                removed = true;
+            }
+            if (this.dataWatches.removeWatcher(path, watcher)) {
+                removed = true;
+            }
             break;
         }
+
+        return removed;
     }
 }

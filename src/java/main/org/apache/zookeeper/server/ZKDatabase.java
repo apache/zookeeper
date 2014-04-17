@@ -597,7 +597,7 @@ public class ZKDatabase {
      * @param watcher
      *            watcher function to remove
      */
-    public void removeWatch(String path, WatcherType type, Watcher watcher) {
-        dataTree.removeWatch(path, type, watcher);
+    public boolean removeWatch(String path, WatcherType type, Watcher watcher) {
+        return dataTree.removeWatch(path, type, watcher);
     }
 }
