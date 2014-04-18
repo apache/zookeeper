@@ -614,6 +614,9 @@ BUGFIXES:
   ZOOKEEPER-1909. removeWatches doesn't return NOWATCHER when there is
   no watch set (Raul Gutierrez Segales via rakeshr)
 
+  ZOOKEEPER-1913. Invalid manifest files due to bogus revision property value
+  (Raul Gutierrez Segales via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
