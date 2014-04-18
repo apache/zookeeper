@@ -16,6 +16,9 @@ BUGFIXES:
 
   ZOOKEEPER-1897. ZK Shell/Cli not processing commands (stack via michim)
 
+  ZOOKEEPER-1913. Invalid manifest files due to bogus revision property value
+  (Raul Gutierrez Segales via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for

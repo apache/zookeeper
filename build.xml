@@ -531,7 +531,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <!-- ====================================================== -->
     <target name="jar" depends="compile">
         <java classname="org.apache.zookeeper.Version" fork="true"
-              outputproperty="revision" failonerror="true">
+              outputproperty="revision" errorproperty="revision.error" failonerror="true">
             <arg value="--revision" />
             <classpath>
                 <pathelement path="${build.classes}" />
