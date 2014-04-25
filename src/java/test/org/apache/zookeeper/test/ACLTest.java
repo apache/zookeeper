@@ -40,6 +40,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,6 +49,16 @@ public class ACLTest extends ZKTestCase implements Watcher {
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();
     private volatile CountDownLatch startSignal;
+
+    @Test
+    public void testIPAuthenticationIsValidCIDR() throws Exception {
+        IPAuthenticationProvider prov = new IPAuthenticationProvider();
+        Assert.assertTrue("testing no netmask", prov.isValid("127.0.0.1"));
+        Assert.assertTrue("testing single ip netmask", prov.isValid("127.0.0.1/32"));
+        Assert.assertTrue("testing lowest netmask possible", prov.isValid("127.0.0.1/0"));
+        Assert.assertFalse("testing netmask too high", prov.isValid("127.0.0.1/33"));
+        Assert.assertFalse("testing netmask too low", prov.isValid("10.0.0.1/-1"));
+    }
 
     @Test
     public void testDisconnectedAddAuth() throws Exception {

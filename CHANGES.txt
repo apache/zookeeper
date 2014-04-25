@@ -239,6 +239,9 @@ Release 3.4.4 - 2012-09-17
 
 Backward compatible changes:
 
+  ZOOKEEPER-1673. Zookeeper don't support cidr in expression in ACL with ip
+  scheme (Craig Condit via michim)
+
   ZOOKEEPER-1910. RemoveWatches wrongly removes the watcher if multiple watches 
   exists on a path (Rakesh R via camille)
 
