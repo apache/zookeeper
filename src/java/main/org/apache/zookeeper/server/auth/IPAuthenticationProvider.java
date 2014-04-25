@@ -112,6 +112,21 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
     }
 
     public boolean isValid(String id) {
-        return addr2Bytes(id) != null;
+        String parts[] = id.split("/", 2);
+        byte aclAddr[] = addr2Bytes(parts[0]);
+        if (aclAddr == null) {
+            return false;
+        }
+        if (parts.length == 2) {
+            try {
+                int bits = Integer.parseInt(parts[1]);
+                if (bits < 0 || bits > aclAddr.length * 8) {
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        return true;
     }
 }

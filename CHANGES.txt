@@ -623,6 +623,9 @@ BUGFIXES:
   ZOOKEEPER-1819. DeserializationPerfTest calls method with wrong arguments
   (Daniel Knightly via michim)
 
+  ZOOKEEPER-1673. Zookeeper don't support cidr in expression in ACL with ip
+  scheme (Craig Condit via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
