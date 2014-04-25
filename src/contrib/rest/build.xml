@@ -48,6 +48,22 @@
       </sequential>
     </macrodef>
 
+  <target name="package" depends="jar" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+    <mkdir dir="${dist.dir}${package.share}/contrib/${name}"/>
+    <copy todir="${dist.dir}${package.share}/contrib/${name}">
+      <fileset dir="${build.dir}">
+        <include name="zookeeper-${version}-${name}.jar" />
+      </fileset>
+    </copy>
+    <copy todir="${dist.dir}${package.share}/contrib/${name}/lib">
+      <fileset dir="${build.dir}/lib" />
+    </copy>
+    <copy todir="${dist.dir}${package.share}/contrib/${name}/conf">
+      <fileset dir="conf" />
+    </copy>
+  </target>
+
   <target name="setjarname">
     <property name="jarname"
               value="${build.dir}/zookeeper-${version}-${name}.jar"/>
