@@ -40,7 +40,7 @@ public class DeserializationPerfTest extends ZKTestCase {
         int count;
         {
             DataTree tree = new DataTree();
-            SerializationPerfTest.createNodes(tree, "/", depth, tree.getNode("/").stat.getCversion(), width, new byte[len]);
+            SerializationPerfTest.createNodes(tree, "/", depth, width, tree.getNode("/").stat.getCversion(), new byte[len]);
             count = tree.getNodeCount();
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
