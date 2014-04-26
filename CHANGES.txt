@@ -626,6 +626,8 @@ BUGFIXES:
   ZOOKEEPER-1673. Zookeeper don't support cidr in expression in ACL with ip
   scheme (Craig Condit via michim)
 
+  ZOOKEEPER-1843. Oddity in ByteBufferInputStream skip (Bill Havanki via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
