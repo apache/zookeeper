@@ -64,10 +64,10 @@ public class ByteBufferInputStream extends InputStream {
 
     @Override
     public long skip(long n) throws IOException {
-        long newPos = bb.position() + n;
-        if (newPos > bb.remaining()) {
-            n = bb.remaining();
+        if (n < 0L) {
+            return 0;
         }
+        n = Math.min(n, bb.remaining());
         bb.position(bb.position() + (int) n);
         return n;
     }
