@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.jute.Record;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
@@ -50,6 +51,7 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Request;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateRequest;
@@ -2327,21 +2329,16 @@ public class ZooKeeper {
     /**
      * For the given znode path, removes the specified watcher of given
      * watcherType.
-     * 
+     *
      * <p>
-     * If watcher is null, all watchers for the given path and watcherType will
-     * be removed. Otherwise only the specified watcher corresponding to the
-     * passed path and watcherType will be removed.
-     * <p>
-     * A successful call guarantees that, the removed watcher won't be
-     * triggered.
-     * <p>
-     * 
+     * Watcher shouldn't be null. A successful call guarantees that, the
+     * removed watcher won't be triggered.
+     * </p>
+     *
      * @param path
      *            - the path of the node
      * @param watcher
-     *            - a concrete watcher or null to remove all watchers for the
-     *            given path and watcherType
+     *            - a concrete watcher
      * @param watcherType
      *            - the type of watcher to be removed
      * @param local
@@ -2354,26 +2351,100 @@ public class ZooKeeper {
      * @throws KeeperException
      *             if the server signals an error with a non-zero error code.
      * @throws IllegalArgumentException
-     *             if an invalid path is specified
-     * 
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> {@code path} is invalid
+     *             <li> {@code watcher} is null
+     *             </ul>
+     *
      * @since 3.5.0
      */
     public void removeWatches(String path, Watcher watcher,
             WatcherType watcherType, boolean local)
             throws InterruptedException, KeeperException {
+        validateWatcher(watcher);
+        removeWatches(ZooDefs.OpCode.checkWatches, path, watcher,
+                watcherType, local);
+    }
+
+    /**
+     * The asynchronous version of removeWatches.
+     *
+     * @see #removeWatches
+     */
+    public void removeWatches(String path, Watcher watcher,
+            WatcherType watcherType, boolean local, VoidCallback cb, Object ctx) {
+        validateWatcher(watcher);
+        removeWatches(ZooDefs.OpCode.checkWatches, path, watcher,
+                watcherType, local, cb, ctx);
+    }
+
+    /**
+     * For the given znode path, removes all the registered watchers of given
+     * watcherType.
+     *
+     * <p>
+     * A successful call guarantees that, the removed watchers won't be
+     * triggered.
+     * </p>
+     *
+     * @param path
+     *            - the path of the node
+     * @param watcherType
+     *            - the type of watcher to be removed
+     * @param local
+     *            - whether watches can be removed locally when there is no
+     *            server connection
+     * @throws InterruptedException
+     *             if the server transaction is interrupted.
+     * @throws KeeperException.NoWatcher
+     *             if no watcher exists that match the specified parameters
+     * @throws KeeperException
+     *             if the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException
+     *             if an invalid {@code path} is specified
+     *
+     * @since 3.5.0
+     */
+    public void removeAllWatches(String path, WatcherType watcherType,
+            boolean local) throws InterruptedException, KeeperException {
+
+        removeWatches(ZooDefs.OpCode.removeWatches, path, null, watcherType,
+                local);
+    }
+
+    /**
+     * The asynchronous version of removeAllWatches.
+     *
+     * @see #removeAllWatches
+     */
+    public void removeAllWatches(String path, WatcherType watcherType,
+            boolean local, VoidCallback cb, Object ctx) {
+
+        removeWatches(ZooDefs.OpCode.removeWatches, path, null,
+                watcherType, local, cb, ctx);
+    }
+
+    private void validateWatcher(Watcher watcher) {
+        if (watcher == null) {
+            throw new IllegalArgumentException(
+                    "Invalid Watcher, shouldn't be null!");
+        }
+    }
+
+    private void removeWatches(int opCode, String path, Watcher watcher,
+            WatcherType watcherType, boolean local)
+            throws InterruptedException, KeeperException {
         PathUtils.validatePath(path);
         final String clientPath = path;
-        // Validating the existence of watcher.
-        watchManager.containsWatcher(clientPath, watcher, watcherType);
         final String serverPath = prependChroot(clientPath);
-
         WatchDeregistration wcb = new WatchDeregistration(clientPath, watcher,
                 watcherType, local, watchManager);
+
         RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.removeWatches);
-        RemoveWatchesRequest request = new RemoveWatchesRequest();
-        request.setPath(serverPath);
-        request.setType(watcherType.getIntValue());
+        h.setType(opCode);
+        Record request = getRemoveWatchesRequest(opCode, watcherType,
+                serverPath);
 
         ReplyHeader r = cnxn.submitRequest(h, request, null, null, wcb);
         if (r.getErr() != 0) {
@@ -2382,35 +2453,41 @@ public class ZooKeeper {
         }
     }
 
-    /**
-     * The asynchronous version of removeWatches.
-     * 
-     * @see #removeWatches
-     */
-    public void removeWatches(String path, Watcher watcher,
+    private void removeWatches(int opCode, String path, Watcher watcher,
             WatcherType watcherType, boolean local, VoidCallback cb, Object ctx) {
+        PathUtils.validatePath(path);
         final String clientPath = path;
-        PathUtils.validatePath(clientPath);
-
-        // Validating the existence of watcher.
-        try {
-            watchManager.containsWatcher(clientPath, watcher, watcherType);
-        } catch (NoWatcherException nwe) {
-            LOG.error("Failed to find watcher!", nwe);
-            cb.processResult(nwe.code().intValue(), clientPath, ctx);
-            return;
-        }
-
         final String serverPath = prependChroot(clientPath);
         WatchDeregistration wcb = new WatchDeregistration(clientPath, watcher,
                 watcherType, local, watchManager);
+
         RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.removeWatches);
-        RemoveWatchesRequest request = new RemoveWatchesRequest();
-        request.setPath(serverPath);
-        request.setType(watcherType.getIntValue());
+        h.setType(opCode);
+        Record request = getRemoveWatchesRequest(opCode, watcherType,
+                serverPath);
+
         cnxn.queuePacket(h, new ReplyHeader(), request, null, cb, clientPath,
                 serverPath, ctx, null, wcb);
+    }
+
+    private Record getRemoveWatchesRequest(int opCode, WatcherType watcherType,
+            final String serverPath) {
+        Record request = null;
+        switch (opCode) {
+        case ZooDefs.OpCode.checkWatches:
+            CheckWatchesRequest chkReq = new CheckWatchesRequest();
+            chkReq.setPath(serverPath);
+            chkReq.setType(watcherType.getIntValue());
+            request = chkReq;
+            break;
+        case ZooDefs.OpCode.removeWatches:
+            RemoveWatchesRequest rmReq = new RemoveWatchesRequest();
+            rmReq.setPath(serverPath);
+            rmReq.setType(watcherType.getIntValue());
+            request = rmReq;
+            break;
+        }
+        return request;
     }
 
     public States getState() {

@@ -627,6 +627,9 @@ BUGFIXES:
   scheme (Craig Condit via michim)
 
   ZOOKEEPER-1843. Oddity in ByteBufferInputStream skip (Bill Havanki via michim)
+  
+  ZOOKEEPER-1910. RemoveWatches wrongly removes the watcher if multiple watches 
+  exists on a path (Rakesh R via camille)
 
 IMPROVEMENTS:
 

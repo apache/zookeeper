@@ -101,6 +101,26 @@ public class RemoveWatchesTest extends ClientBase {
         }
     }
 
+    private void removeAllWatches(ZooKeeper zk, String path,
+            WatcherType watcherType, boolean local, KeeperException.Code rc)
+            throws InterruptedException, KeeperException {
+        LOG.info("Sending removeWatches req using zk {} path: {} type: {} ",
+                new Object[] { zk, path, watcherType });
+        if (useAsync) {
+            MyCallback c1 = new MyCallback(rc.intValue(), path);
+            zk.removeAllWatches(path, watcherType, local, c1, null);
+            Assert.assertTrue("Didn't succeeds removeWatch operation",
+                    c1.matches());
+            if (KeeperException.Code.OK.intValue() != c1.rc) {
+                KeeperException ke = KeeperException
+                        .create(KeeperException.Code.get(c1.rc));
+                throw ke;
+            }
+        } else {
+            zk.removeAllWatches(path, watcherType, local);
+        }
+    }
+
     /**
      * Test verifies removal of single watcher when there is server connection
      */
@@ -232,7 +252,8 @@ public class RemoveWatchesTest extends ClientBase {
         LOG.info("Adding child watcher {} on path {}", new Object[] { w2,
                 "/node1" });
         zk2.getChildren("/node1", w2);
-        removeWatches(zk2, "/node1", null, WatcherType.Any, false, Code.OK);
+        removeWatches(zk2, "/node1", w1, WatcherType.Any, false, Code.OK);
+        removeWatches(zk2, "/node1", w2, WatcherType.Any, false, Code.OK);
         zk1.create("/node1/child", null, Ids.OPEN_ACL_UNSAFE,
                 CreateMode.EPHEMERAL);
         Assert.assertTrue("Didn't remove data watcher", w1.matches());
@@ -263,7 +284,8 @@ public class RemoveWatchesTest extends ClientBase {
         LOG.info("Adding child watcher {} on path {}", new Object[] { w2,
                 "/node1" });
         zk2.getChildren("/node1", w2);
-        removeWatches(zk2, "/node1", null, WatcherType.Data, false, Code.OK);
+        removeWatches(zk2, "/node1", w1, WatcherType.Data, false, Code.OK);
+        removeWatches(zk2, "/node1", w2, WatcherType.Data, false, Code.OK);
         zk1.create("/node1/child", null, Ids.OPEN_ACL_UNSAFE,
                 CreateMode.EPHEMERAL);
         Assert.assertTrue("Didn't remove data watcher", w1.matches());
@@ -316,7 +338,8 @@ public class RemoveWatchesTest extends ClientBase {
         LOG.info("Adding child watcher {} on path {}", new Object[] { w2,
                 "/node1" });
         zk2.getChildren("/node1", w2);
-        removeWatches(zk2, "/node1", null, WatcherType.Children, false, Code.OK);
+        removeWatches(zk2, "/node1", w1, WatcherType.Children, false, Code.OK);
+        removeWatches(zk2, "/node1", w2, WatcherType.Children, false, Code.OK);
         zk1.setData("/node1", "test".getBytes(), -1);
         Assert.assertTrue("Didn't remove child watcher", w1.matches());
         Assert.assertTrue("Didn't remove child watcher", w2.matches());
@@ -393,13 +416,6 @@ public class RemoveWatchesTest extends ClientBase {
         }
         try {
             removeWatches(zk2, "/nonexists", w3, WatcherType.Data, false,
-                    Code.NOWATCHER);
-            Assert.fail("Should throw exception as given watcher doesn't exists");
-        } catch (KeeperException.NoWatcherException nwe) {
-            // expected
-        }
-        try {
-            removeWatches(zk2, "/nonexists", null, WatcherType.Data, false,
                     Code.NOWATCHER);
             Assert.fail("Should throw exception as given watcher doesn't exists");
         } catch (KeeperException.NoWatcherException nwe) {
@@ -726,7 +742,7 @@ public class RemoveWatchesTest extends ClientBase {
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
         try {
-            zk.removeWatches("/nowatchhere", null, WatcherType.Data, false);
+            zk.removeWatches("/nowatchhere", watcher, WatcherType.Data, false);
         } catch (KeeperException nwe) {
             if (nwe.code().intValue() == Code.NOWATCHER.intValue()) {
                 nw = true;
@@ -736,6 +752,334 @@ public class RemoveWatchesTest extends ClientBase {
         Assert.assertTrue("Server didn't return NOWATCHER",
                 zk.getRemoveWatchesRC() == Code.NOWATCHER.intValue());
         Assert.assertTrue("NoWatcherException didn't happen", nw);
+    }
+
+    /**
+     * Test verifies given watcher doesn't exists!
+     */
+    @Test(timeout = 90000)
+    public void testRemoveAllNoWatcherException() throws IOException,
+            InterruptedException, KeeperException {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        try {
+            removeAllWatches(zk2, "/node1", WatcherType.Any, false,
+                    Code.NOWATCHER);
+            Assert.fail("Should throw exception as given watcher doesn't exists");
+        } catch (KeeperException.NoWatcherException nwe) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies null watcher
+     */
+    @Test(timeout = 30000)
+    public void testNullWatcherReference() throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        try {
+            if (useAsync) {
+                zk1.removeWatches("/node1", null, WatcherType.Data, false,
+                        null, null);
+            } else {
+                zk1.removeWatches("/node1", null, WatcherType.Data, false);
+            }
+            Assert.fail("Must throw IllegalArgumentException as watcher is null!");
+        } catch (IllegalArgumentException iae) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies WatcherType.Data - removes only the configured data watcher
+     * function
+     */
+    @Test(timeout = 90000)
+    public void testRemoveWhenMultipleDataWatchesOnAPath() throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        final CountDownLatch dataWatchCount = new CountDownLatch(1);
+        final CountDownLatch rmWatchCount = new CountDownLatch(1);
+        Watcher w1 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                if (event.getType() == EventType.DataWatchRemoved) {
+                    rmWatchCount.countDown();
+                }
+            }
+        };
+        Watcher w2 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                if (event.getType() == EventType.NodeDataChanged) {
+                    dataWatchCount.countDown();
+                }
+            }
+        };
+        // Add multiple data watches
+        LOG.info("Adding data watcher {} on path {}", new Object[] { w1,
+                "/node1" });
+        Assert.assertNotNull("Didn't set data watches",
+                zk2.exists("/node1", w1));
+        LOG.info("Adding data watcher {} on path {}", new Object[] { w2,
+                "/node1" });
+        Assert.assertNotNull("Didn't set data watches",
+                zk2.exists("/node1", w2));
+
+        removeWatches(zk2, "/node1", w1, WatcherType.Data, false, Code.OK);
+        Assert.assertTrue("Didn't remove data watcher",
+                rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk1.setData("/node1", "test".getBytes(), -1);
+        LOG.info("Waiting for data watchers to be notified");
+        Assert.assertTrue("Didn't get data watch notification!",
+                dataWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+    }
+
+    /**
+     * Test verifies WatcherType.Children - removes only the configured child
+     * watcher function
+     */
+    @Test(timeout = 90000)
+    public void testRemoveWhenMultipleChildWatchesOnAPath() throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        final CountDownLatch childWatchCount = new CountDownLatch(1);
+        final CountDownLatch rmWatchCount = new CountDownLatch(1);
+        Watcher w1 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                if (event.getType() == EventType.ChildWatchRemoved) {
+                    rmWatchCount.countDown();
+                }
+            }
+        };
+        Watcher w2 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                if (event.getType() == EventType.NodeChildrenChanged) {
+                    childWatchCount.countDown();
+                }
+            }
+        };
+        // Add multiple child watches
+        LOG.info("Adding child watcher {} on path {}", new Object[] { w1,
+                "/node1" });
+        Assert.assertEquals("Didn't set child watches", 0,
+                zk2.getChildren("/node1", w1).size());
+        LOG.info("Adding child watcher {} on path {}", new Object[] { w2,
+                "/node1" });
+        Assert.assertEquals("Didn't set child watches", 0,
+                zk2.getChildren("/node1", w2).size());
+
+        removeWatches(zk2, "/node1", w1, WatcherType.Children, false, Code.OK);
+        Assert.assertTrue("Didn't remove child watcher",
+                rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk1.create("/node1/node2", null, Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        LOG.info("Waiting for child watchers to be notified");
+        Assert.assertTrue("Didn't get child watch notification!",
+                childWatchCount
+                        .await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+    }
+
+    /**
+     * Test verifies WatcherType.Data - removes only the configured data watcher
+     * function
+     */
+    @Test(timeout = 90000)
+    public void testRemoveAllDataWatchesOnAPath() throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        final CountDownLatch dWatchCount = new CountDownLatch(2);
+        final CountDownLatch rmWatchCount = new CountDownLatch(2);
+        Watcher w1 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                switch (event.getType()) {
+                case DataWatchRemoved:
+                    rmWatchCount.countDown();
+                    break;
+                case NodeDataChanged:
+                    dWatchCount.countDown();
+                    break;
+                default:
+                    break;
+                }
+            }
+        };
+        Watcher w2 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                switch (event.getType()) {
+                case DataWatchRemoved:
+                    rmWatchCount.countDown();
+                    break;
+                case NodeDataChanged:
+                    dWatchCount.countDown();
+                    break;
+                default:
+                    break;
+                }
+            }
+        };
+        // Add multiple data watches
+        LOG.info("Adding data watcher {} on path {}", new Object[] { w1,
+                "/node1" });
+        Assert.assertNotNull("Didn't set data watches",
+                zk2.exists("/node1", w1));
+        LOG.info("Adding data watcher {} on path {}", new Object[] { w2,
+                "/node1" });
+        Assert.assertNotNull("Didn't set data watches",
+                zk2.exists("/node1", w2));
+
+        removeAllWatches(zk2, "/node1", WatcherType.Data, false, Code.OK);
+        Assert.assertTrue("Didn't remove data watcher",
+                rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk1.setData("/node1", "test".getBytes(), -1);
+        LOG.info("Waiting for data watchers notification after watch removal");
+        Assert.assertFalse("Received data watch notification!",
+                dWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+        Assert.assertEquals("Received watch notification after removal!", 2,
+                dWatchCount.getCount());
+    }
+
+    /**
+     * Test verifies WatcherType.Children - removes only the configured child
+     * watcher function
+     */
+    @Test(timeout = 90000)
+    public void testRemoveAllChildWatchesOnAPath() throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        final CountDownLatch cWatchCount = new CountDownLatch(2);
+        final CountDownLatch rmWatchCount = new CountDownLatch(2);
+        Watcher w1 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                switch (event.getType()) {
+                case ChildWatchRemoved:
+                    rmWatchCount.countDown();
+                    break;
+                case NodeChildrenChanged:
+                    cWatchCount.countDown();
+                    break;
+                default:
+                    break;
+                }
+            }
+        };
+        Watcher w2 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                switch (event.getType()) {
+                case ChildWatchRemoved:
+                    rmWatchCount.countDown();
+                    break;
+                case NodeChildrenChanged:
+                    cWatchCount.countDown();
+                    break;
+                default:
+                    break;
+                }
+            }
+        };
+        // Add multiple child watches
+        LOG.info("Adding child watcher {} on path {}", new Object[] { w1,
+                "/node1" });
+        Assert.assertEquals("Didn't set child watches", 0,
+                zk2.getChildren("/node1", w1).size());
+        LOG.info("Adding child watcher {} on path {}", new Object[] { w2,
+                "/node1" });
+        Assert.assertEquals("Didn't set child watches", 0,
+                zk2.getChildren("/node1", w2).size());
+
+        removeAllWatches(zk2, "/node1", WatcherType.Children, false, Code.OK);
+        Assert.assertTrue("Didn't remove child watcher",
+                rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk1.create("/node1/node2", null, Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        LOG.info("Waiting for child watchers to be notified");
+        Assert.assertFalse("Didn't get child watch notification!",
+                cWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+        Assert.assertEquals("Received watch notification after removal!", 2,
+                cWatchCount.getCount());
+    }
+
+    /**
+     * Test verifies WatcherType.Any - removes all the configured child,data
+     * watcher functions
+     */
+    @Test(timeout = 90000)
+    public void testRemoveAllWatchesOnAPath() throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        final CountDownLatch watchCount = new CountDownLatch(2);
+        final CountDownLatch rmWatchCount = new CountDownLatch(4);
+        Watcher w1 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                switch (event.getType()) {
+                case ChildWatchRemoved:
+                case DataWatchRemoved:
+                    rmWatchCount.countDown();
+                    break;
+                case NodeChildrenChanged:
+                case NodeDataChanged:
+                    watchCount.countDown();
+                    break;
+                default:
+                    break;
+                }
+            }
+        };
+        Watcher w2 = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                switch (event.getType()) {
+                case ChildWatchRemoved:
+                case DataWatchRemoved:
+                    rmWatchCount.countDown();
+                    break;
+                case NodeChildrenChanged:
+                case NodeDataChanged:
+                    watchCount.countDown();
+                    break;
+                default:
+                    break;
+                }
+            }
+        };
+        // Add multiple child watches
+        LOG.info("Adding child watcher {} on path {}", new Object[] { w1,
+                "/node1" });
+        Assert.assertEquals("Didn't set child watches", 0,
+                zk2.getChildren("/node1", w1).size());
+        LOG.info("Adding child watcher {} on path {}", new Object[] { w2,
+                "/node1" });
+        Assert.assertEquals("Didn't set child watches", 0,
+                zk2.getChildren("/node1", w2).size());
+
+        // Add multiple data watches
+        LOG.info("Adding data watcher {} on path {}", new Object[] { w1,
+                "/node1" });
+        Assert.assertNotNull("Didn't set data watches",
+                zk2.exists("/node1", w1));
+        LOG.info("Adding data watcher {} on path {}", new Object[] { w2,
+                "/node1" });
+        Assert.assertNotNull("Didn't set data watches",
+                zk2.exists("/node1", w2));
+
+        removeAllWatches(zk2, "/node1", WatcherType.Any, false, Code.OK);
+        Assert.assertTrue("Didn't remove data watcher",
+                rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk1.create("/node1/node2", null, Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        zk1.setData("/node1", "test".getBytes(), -1);
+
+        LOG.info("Waiting for child/data watchers notification after watch removal");
+        Assert.assertFalse("Received watch notification after removal!",
+                watchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+        Assert.assertEquals("Received watch notification after removal!", 2,
+                watchCount.getCount());
     }
 
     /* a mocked ZK class that doesn't do client-side verification
