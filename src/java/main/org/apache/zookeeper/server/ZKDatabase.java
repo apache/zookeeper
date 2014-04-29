@@ -588,6 +588,20 @@ public class ZKDatabase {
     }
 
     /**
+     * Check whether the given watcher exists in datatree
+     *
+     * @param path
+     *            node to check watcher existence
+     * @param type
+     *            type of watcher
+     * @param watcher
+     *            watcher function
+     */
+    public boolean containsWatcher(String path, WatcherType type, Watcher watcher) {
+        return dataTree.containsWatcher(path, type, watcher);
+    }
+
+    /**
      * Remove watch from the datatree
      * 
      * @param path

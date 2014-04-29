@@ -1365,9 +1365,29 @@ public class DataTree {
         }
     }
 
+    public boolean containsWatcher(String path, WatcherType type, Watcher watcher) {
+        boolean containsWatcher = false;
+        switch (type) {
+        case Children:
+            containsWatcher = this.childWatches.containsWatcher(path, watcher);
+            break;
+        case Data:
+            containsWatcher = this.dataWatches.containsWatcher(path, watcher);
+            break;
+        case Any:
+            if (this.childWatches.containsWatcher(path, watcher)) {
+                containsWatcher = true;
+            }
+            if (this.dataWatches.containsWatcher(path, watcher)) {
+                containsWatcher = true;
+            }
+            break;
+        }
+        return containsWatcher;
+    }
+
     public boolean removeWatch(String path, WatcherType type, Watcher watcher) {
         boolean removed = false;
-
         switch (type) {
         case Children:
             removed = this.childWatches.removeWatcher(path, watcher);
@@ -1384,7 +1404,6 @@ public class DataTree {
             }
             break;
         }
-
         return removed;
     }
 }

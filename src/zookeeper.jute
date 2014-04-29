@@ -213,6 +213,10 @@ module org.apache.zookeeper.proto {
         vector<org.apache.zookeeper.data.ACL> acl;
         org.apache.zookeeper.data.Stat stat;
     }
+    class CheckWatchesRequest {
+        ustring path;
+        int type;
+    }
     class RemoveWatchesRequest {
         ustring path;
         int type;

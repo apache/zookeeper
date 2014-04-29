@@ -35,6 +35,7 @@ import org.apache.zookeeper.KeeperException.SessionMovedException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.ExistsRequest;
@@ -394,6 +395,21 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new GetChildren2Response(children, stat);
                 break;
             }
+            case OpCode.checkWatches: {
+                lastOp = "CHKW";
+                CheckWatchesRequest checkWatches = new CheckWatchesRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request,
+                        checkWatches);
+                WatcherType type = WatcherType.fromInt(checkWatches.getType());
+                boolean containsWatcher = zks.getZKDatabase().containsWatcher(
+                        checkWatches.getPath(), type, cnxn);
+                if (!containsWatcher) {
+                    String msg = String.format(Locale.ENGLISH, "%s (type: %s)",
+                            new Object[] { checkWatches.getPath(), type });
+                    throw new KeeperException.NoWatcherException(msg);
+                }
+                break;
+            }
             case OpCode.removeWatches: {
                 lastOp = "REMW";
                 RemoveWatchesRequest removeWatches = new RemoveWatchesRequest();
@@ -402,13 +418,11 @@ public class FinalRequestProcessor implements RequestProcessor {
                 WatcherType type = WatcherType.fromInt(removeWatches.getType());
                 boolean removed = zks.getZKDatabase().removeWatch(
                         removeWatches.getPath(), type, cnxn);
-
                 if (!removed) {
                     String msg = String.format(Locale.ENGLISH, "%s (type: %s)",
                             new Object[] { removeWatches.getPath(), type });
                     throw new KeeperException.NoWatcherException(msg);
                 }
-
                 break;
             }
             }

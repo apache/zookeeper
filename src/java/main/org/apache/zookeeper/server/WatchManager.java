@@ -169,6 +169,32 @@ class WatchManager {
         }
     }
 
+    /**
+     * Checks the specified watcher exists for the given path
+     *
+     * @param path
+     *            znode path
+     * @param watcher
+     *            watcher object reference
+     * @return true if the watcher exists, false otherwise
+     */
+    synchronized boolean containsWatcher(String path, Watcher watcher) {
+        HashSet<String> paths = watch2Paths.get(watcher);
+        if (paths == null || !paths.contains(path)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Removes the specified watcher for the given path
+     *
+     * @param path
+     *            znode path
+     * @param watcher
+     *            watcher object reference
+     * @return true if the watcher successfully removed, false otherwise
+     */
     synchronized boolean removeWatcher(String path, Watcher watcher) {
         HashSet<String> paths = watch2Paths.get(watcher);
         if (paths == null || !paths.remove(path)) {

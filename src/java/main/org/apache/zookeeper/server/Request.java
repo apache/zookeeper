@@ -150,6 +150,7 @@ public class Request {
         case OpCode.setData:
         case OpCode.setWatches:
         case OpCode.sync:
+        case OpCode.checkWatches:
         case OpCode.removeWatches:
             return true;
         default:
@@ -225,6 +226,8 @@ public class Request {
             return "error";
         case OpCode.reconfig:
            return "reconfig";
+        case OpCode.checkWatches:
+            return "checkWatches";
         case OpCode.removeWatches:
             return "removeWatches";
         default:
