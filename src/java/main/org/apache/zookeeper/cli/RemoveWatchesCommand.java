@@ -74,7 +74,7 @@ public class RemoveWatchesCommand extends CliCommand {
         boolean local = cl.hasOption("l");
 
         try {
-            zk.removeWatches(path, null, wtype, local);
+            zk.removeAllWatches(path, wtype, local);
         } catch (KeeperException.NoWatcherException ex) {
             err.println(ex.getMessage());
             return false;

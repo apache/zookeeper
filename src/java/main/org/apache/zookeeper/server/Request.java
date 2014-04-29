@@ -129,6 +129,7 @@ public class Request {
         case OpCode.ping:
         case OpCode.closeSession:
         case OpCode.setWatches:
+        case OpCode.checkWatches:
         case OpCode.removeWatches:
             return true;
         default:
@@ -197,6 +198,8 @@ public class Request {
             return "closeSession";
         case OpCode.error:
             return "error";
+        case OpCode.checkWatches:
+            return "checkWatches";
         case OpCode.removeWatches:
             return "removeWatches";
         default:
