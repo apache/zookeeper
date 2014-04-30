@@ -93,6 +93,13 @@ enum ZOO_ERRORS {
   ZOPERATIONTIMEOUT = -7, /*!< Operation timeout */
   ZBADARGUMENTS = -8, /*!< Invalid arguments */
   ZINVALIDSTATE = -9, /*!< Invliad zhandle state */
+  ZNEWCONFIGNOQUORUM = -13, /*!< No quorum of new config is connected and
+                                 up-to-date with the leader of last commmitted
+                                 config - try invoking reconfiguration after new
+                                 servers are connected and synced */
+  ZRECONFIGINPROGRESS = -14, /*!< Reconfiguration requested while another
+                                  reconfiguration is currently in progress. This
+                                  is currently not supported. Please retry. */
 
   /** API errors.
    * This is never thrown by the server, it shouldn't be used other than
@@ -114,12 +121,8 @@ enum ZOO_ERRORS {
   ZCLOSING = -116, /*!< ZooKeeper is closing */
   ZNOTHING = -117, /*!< (not error) no server responses to process */
   ZSESSIONMOVED = -118, /*!<session moved to another server, so operation is ignored */
-  ZNEWCONFIGNOQUORUM = -120,  /*!< No quorum of new config is connected and up-to-date with the leader of last commmitted config - try
-                                 invoking reconfiguration after new servers are connected and synced */
-  ZRECONFIGINPROGRESS = -121,  /*!< Reconfiguration requested while another reconfiguration is currently in progress. This is currently
-                                       not supported. Please retry. */
-  ZEPHEMERALONLOCALSESSION = -122, /*!< Attempt to create ephemeral node on a local session */
-  ZNOWATCHER = -123 /*!< The watcher couldn't be found */
+  ZEPHEMERALONLOCALSESSION = -120, /*!< Attempt to create ephemeral node on a local session */
+  ZNOWATCHER = -121 /*!< The watcher couldn't be found */
 };
 
 #ifdef __cplusplus

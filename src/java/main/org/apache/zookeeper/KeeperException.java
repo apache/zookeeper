@@ -229,6 +229,20 @@ public abstract class KeeperException extends Exception {
         public static final int UnknownSession= -12;
 
         /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#NEWCONFIGNOQUORUM}
+         * instead
+         */
+        @Deprecated
+        public static final int NewConfigNoQuorum = -13;
+
+        /**
+         * @deprecated deprecated in 3.1.0, use {@link Code#RECONFIGINPROGRESS}
+         * instead
+         */
+        @Deprecated
+        public static final int ReconfigInProgress= -14;
+
+        /**
          * @deprecated deprecated in 3.1.0, use {@link Code#APIERROR} instead
          */
         @Deprecated
@@ -292,13 +306,7 @@ public abstract class KeeperException extends Exception {
         // public static final int SessionMoved = -118;       
         
         @Deprecated
-        public static final int NewConfigNoQuorum = -120;
-        
-        @Deprecated
-        public static final int ReconfigInProgress= -121;
-        
-        @Deprecated
-        public static final int EphemeralOnLocalSession = -122;
+        public static final int EphemeralOnLocalSession = -120;
 
     }
 
@@ -376,7 +384,7 @@ public abstract class KeeperException extends Exception {
         /** Attempt to create ephemeral node on a local session */
         EPHEMERALONLOCALSESSION (EphemeralOnLocalSession),
         /** Attempts to remove a non-existing watcher */
-        NOWATCHER (-123);
+        NOWATCHER (-121);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();

@@ -630,6 +630,9 @@ BUGFIXES:
   
   ZOOKEEPER-1910. RemoveWatches wrongly removes the watcher if multiple watches 
   exists on a path (Rakesh R via camille)
+  
+  ZOOKEEPER-1695. Inconsistent error code and type for new errors introduced
+  by dynamic reconfiguration (Michi Mutsuzaki via rakeshr)
 
 IMPROVEMENTS:
 
