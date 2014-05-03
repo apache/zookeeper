@@ -463,7 +463,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             cnxn.disableSelectable();
             key.interestOps(0);
             touchCnxn(cnxn);
-            workerPool.schedule(workRequest);
+            workerPool.schedule(workRequest, cnxn.getSessionId());
         }
 
         /**
