@@ -526,8 +526,8 @@
 
 	</section>
 
-    <section id="sc_recoverableSharedLocks">
-      <title>Recoverable Shared Locks</title>
+    <section id="sc_revocableSharedLocks">
+      <title>Revocable Shared Locks</title>
 
       <para>With minor modifications to the Shared Lock protocol, you make
       shared locks revocable by modifying the shared lock protocol:</para>

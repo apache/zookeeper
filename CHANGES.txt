@@ -1791,6 +1791,9 @@ IMPROVEMENTS:
   ZOOKEEPER-601. allow configuration of session timeout min/max bounds (phunt
   via mahadev)
 
+  ZOOKEEPER-751. Recipe heading refers to 'recoverable' but should be
+  'revocable' (Michi Mutsuzaki via rakeshr)
+
 NEW FEATURES:
   ZOOKEEPER-539. generate eclipse project via ant target. (phunt via mahadev)
 
