@@ -221,7 +221,7 @@ ZooKeeper host:port cmd args
         delquota [-n|-b] path
         quit
         printwatches on|off
-        createpath data acl
+        create path data acl
         stat path [watch]
         listquota path
         history

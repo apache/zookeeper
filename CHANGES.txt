@@ -634,6 +634,8 @@ BUGFIXES:
   ZOOKEEPER-1695. Inconsistent error code and type for new errors introduced
   by dynamic reconfiguration (Michi Mutsuzaki via rakeshr)
 
+  ZOOKEEPER-1923. A typo in zookeeperStarted document (Chengwei Yang via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
