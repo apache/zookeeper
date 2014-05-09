@@ -22,6 +22,9 @@ BUGFIXES:
   ZOOKEEPER-1911. REST contrib module does not include all required files when
   packaged (Sean Mackrory via michim)
 
+  ZOOKEEPER-1926. Unit tests should only use build/test/data for data (Enis
+  Soztutar via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
