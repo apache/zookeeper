@@ -37,6 +37,8 @@ import org.junit.runner.JUnitCore;
 
 @Ignore("No tests in this class.")
 public class BaseSysTest extends TestCase {
+    private static final File testData = new File(
+            System.getProperty("test.data.dir", "build/test/data"));
     private static int fakeBasePort = 33222;
     private static String zkHostPort;
     protected String prefix = "/sysTest";
@@ -148,7 +150,7 @@ public class BaseSysTest extends TestCase {
         }
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < count; i++) {
-            qpsDirs[i] = File.createTempFile("sysTest", ".tmp");
+            qpsDirs[i] = File.createTempFile("sysTest", ".tmp", testData);
             qpsDirs[i].delete();
             qpsDirs[i].mkdir();
             int port = fakeBasePort+10+i;

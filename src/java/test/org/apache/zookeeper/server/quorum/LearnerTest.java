@@ -40,6 +40,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class LearnerTest extends ZKTestCase {
+    private static final File testData = new File(
+        System.getProperty("test.data.dir", "build/test/data"));
+
     static class SimpleLearnerZooKeeperServer extends LearnerZooKeeperServer {
 
         Learner learner;
@@ -76,7 +79,7 @@ public class LearnerTest extends ZKTestCase {
 
     @Test
     public void syncTest() throws Exception {
-        File tmpFile = File.createTempFile("test", ".dir");
+        File tmpFile = File.createTempFile("test", ".dir", testData);
         tmpFile.delete();
         try {
             FileTxnSnapLog ftsl = new FileTxnSnapLog(tmpFile, tmpFile);
