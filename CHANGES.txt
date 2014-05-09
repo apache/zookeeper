@@ -636,6 +636,9 @@ BUGFIXES:
 
   ZOOKEEPER-1923. A typo in zookeeperStarted document (Chengwei Yang via michim)
 
+  ZOOKEEPER-1926. Unit tests should only use build/test/data for data (Enis
+  Soztutar via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
