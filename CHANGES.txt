@@ -639,6 +639,9 @@ BUGFIXES:
   ZOOKEEPER-1926. Unit tests should only use build/test/data for data (Enis
   Soztutar via michim)
 
+  ZOOKEEPER-1891. StaticHostProviderTest.testUpdateLoadBalancing times out
+  (Michi Mutsuzaki via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
