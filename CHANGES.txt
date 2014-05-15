@@ -891,6 +891,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
   source and text files (Raja Aluri via michim)
 
+  ZOOKEEPER-657. Cut down the running time of ZKDatabase corruption
+  (Michi Mutsuzaki via rakeshr)
+
 headers
 
 Release 3.4.0 - 
