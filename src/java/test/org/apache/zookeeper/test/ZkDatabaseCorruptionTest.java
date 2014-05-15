@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 
+import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -72,6 +73,13 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         }
     }
 
+    private class NoopStringCallback implements AsyncCallback.StringCallback {
+        @Override
+        public void processResult(int rc, String path, Object ctx,
+                                  String name) {
+        }
+    }
+
     @Test
     public void testCorruption() throws Exception {
         ClientBase.waitForServerUp(qb.hostPort, 10000);
@@ -81,7 +89,8 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             }});
         SyncRequestProcessor.setSnapCount(100);
         for (int i = 0; i < 2000; i++) {
-            zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                      CreateMode.PERSISTENT, new NoopStringCallback(), null);
         }
         zk.close();
 
@@ -136,7 +145,8 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         zk = qb.createClient();
         SyncRequestProcessor.setSnapCount(100);
         for (int i = 2000; i < 4000; i++) {
-            zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                      CreateMode.PERSISTENT, new NoopStringCallback(), null);
         }
         zk.close();
 
