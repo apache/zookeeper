@@ -202,7 +202,7 @@ void addrvec_next(addrvec_t *avec, struct sockaddr_storage *next)
 
     if (!addrvec_hasnext(avec))
     {
-        next = NULL;
+        memset(next, 0, sizeof(*next));
         return;
     }
 
