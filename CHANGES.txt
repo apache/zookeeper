@@ -645,6 +645,9 @@ BUGFIXES:
   ZOOKEEPER-1836. addrvec_next() fails to set next parameter if
   addrvec_hasnext() returns false (Dutch T. Meyer via michim)
 
+  ZOOKEEPER-1062. Net-ZooKeeper: Net::ZooKeeper consumes 100% cpu on wait
+  (Botond Hejj via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
