@@ -25,6 +25,9 @@ BUGFIXES:
   ZOOKEEPER-1926. Unit tests should only use build/test/data for data (Enis
   Soztutar via michim)
 
+  ZOOKEEPER-1062. Net-ZooKeeper: Net::ZooKeeper consumes 100% cpu on wait
+  (Botond Hejj via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
