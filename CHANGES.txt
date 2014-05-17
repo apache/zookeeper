@@ -648,6 +648,9 @@ BUGFIXES:
   ZOOKEEPER-1062. Net-ZooKeeper: Net::ZooKeeper consumes 100% cpu on wait
   (Botond Hejj via michim)
 
+  ZOOKEEPER-1864. quorumVerifier is null when creating a QuorumPeerConfig
+  from parsing a Properties object (Michi Mutsuzaki via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

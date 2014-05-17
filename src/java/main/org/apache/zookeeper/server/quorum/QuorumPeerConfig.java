@@ -115,21 +115,12 @@ public class QuorumPeerConfig {
             FileInputStream in = new FileInputStream(configFile);
             try {
                 cfg.load(in);
+                configFileStr = path;
             } finally {
                 in.close();
             }
             
             parseProperties(cfg);
-            
-            // backward compatibility - dynamic configuration in the same file as static configuration params
-            // see writeDynamicConfig() - we change the config file to new format if reconfig happens
-            if (dynamicConfigFileStr == null) {
-                configBackwardCompatibilityMode = true;
-                configFileStr = path;                
-                quorumVerifier = parseDynamicConfig(cfg, electionAlg, true, configBackwardCompatibilityMode);
-                checkValidity();                
-            }
-
         } catch (IOException e) {
             throw new ConfigException("Error processing " + path, e);
         } catch (IllegalArgumentException e) {
@@ -288,6 +279,16 @@ public class QuorumPeerConfig {
             throw new IllegalArgumentException(
                     "minSessionTimeout must not be larger than maxSessionTimeout");
         }          
+
+        // backward compatibility - dynamic configuration in the same file as
+        // static configuration params see writeDynamicConfig() - we change the
+        // config file to new format if reconfig happens
+        if (dynamicConfigFileStr == null) {
+            configBackwardCompatibilityMode = true;
+            quorumVerifier = parseDynamicConfig(zkProp, electionAlg, true,
+                configBackwardCompatibilityMode);
+            checkValidity();
+        }
     }
     
     /**
