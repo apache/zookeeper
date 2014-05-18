@@ -654,6 +654,9 @@ BUGFIXES:
   ZOOKEEPER-1797. PurgeTxnLog may delete data logs during roll (Rakesh R via
   michim)
 
+  ZOOKEEPER-1791. ZooKeeper package includes unnecessary jars that are part of
+  the package. (mahadev via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
