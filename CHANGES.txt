@@ -651,6 +651,9 @@ BUGFIXES:
   ZOOKEEPER-1864. quorumVerifier is null when creating a QuorumPeerConfig
   from parsing a Properties object (Michi Mutsuzaki via rakeshr)
 
+  ZOOKEEPER-1797. PurgeTxnLog may delete data logs during roll (Rakesh R via
+  michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
