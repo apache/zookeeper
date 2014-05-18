@@ -93,10 +93,11 @@ import org.slf4j.LoggerFactory;
 public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeer.class);
 
-    QuorumBean jmxQuorumBean;
+    private QuorumBean jmxQuorumBean;
     LocalPeerBean jmxLocalPeerBean;
+    private Set<RemotePeerBean> jmxRemotePeerBean;
     LeaderElectionBean jmxLeaderElectionBean;
-    QuorumCnxManager qcm = null;
+    private QuorumCnxManager qcm;
 
     /* ZKDatabase is a top level member of quorumpeer
      * which will be used in all the zookeeperservers
@@ -584,6 +585,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumPeer() {
         super("QuorumPeer");
         quorumStats = new QuorumStats(this);
+        jmxRemotePeerBean = new HashSet<RemotePeerBean>();
     }
 
 
@@ -871,6 +873,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     }
                 } else {
                     p = new RemotePeerBean(s);
+                    jmxRemotePeerBean.add((RemotePeerBean) p);
                     try {
                         MBeanRegistry.getInstance().register(p, jmxQuorumBean);
                     } catch (Exception e) {
@@ -998,13 +1001,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         } finally {
             LOG.warn("QuorumPeer main thread exited");
-            try {
-                MBeanRegistry.getInstance().unregisterAll();
-            } catch (Exception e) {
-                LOG.warn("Failed to unregister with JMX", e);
+            MBeanRegistry instance = MBeanRegistry.getInstance();
+            instance.unregister(jmxQuorumBean);
+            instance.unregister(jmxLocalPeerBean);
+
+            for (RemotePeerBean remotePeerBean : jmxRemotePeerBean) {
+                instance.unregister(remotePeerBean);
             }
+
             jmxQuorumBean = null;
             jmxLocalPeerBean = null;
+            jmxRemotePeerBean = null;
         }
     }
 
