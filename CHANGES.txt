@@ -657,6 +657,10 @@ BUGFIXES:
   ZOOKEEPER-1791. ZooKeeper package includes unnecessary jars that are part of
   the package. (mahadev via michim)
 
+  ZOOKEEPER-1214. QuorumPeer should unregister only its previsously registered
+  MBeans instead of use MBeanRegistry.unregisterAll() method.
+  (César Álvarez Núñez via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

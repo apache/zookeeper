@@ -19,7 +19,10 @@
 package org.apache.zookeeper.jmx;
 
 import java.lang.management.ManagementFactory;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.management.JMException;
@@ -42,12 +45,11 @@ public class MBeanRegistry {
     
     private static MBeanRegistry instance = new MBeanRegistry(); 
     
+    private final Object LOCK = new Object();
+    
     private Map<ZKMBeanInfo, String> mapBean2Path =
         new ConcurrentHashMap<ZKMBeanInfo, String>();
     
-    private Map<String, ZKMBeanInfo> mapName2Bean =
-        new ConcurrentHashMap<String, ZKMBeanInfo>();
-
     private MBeanServer mBeanServer;
 
     public static MBeanRegistry getInstance() {
@@ -93,9 +95,10 @@ public class MBeanRegistry {
             return;
         ObjectName oname = makeObjectName(path, bean);
         try {
-            mBeanServer.registerMBean(bean, oname);
-            mapBean2Path.put(bean, path);
-            mapName2Bean.put(bean.getName(), bean);
+            synchronized (LOCK) {
+                mBeanServer.registerMBean(bean, oname);
+                mapBean2Path.put(bean, path);
+            }
         } catch (JMException e) {
             LOG.warn("Failed to register MBean " + bean.getName());
             throw e;
@@ -107,19 +110,28 @@ public class MBeanRegistry {
      * @param path
      * @param bean
      */
-    private void unregister(String path,ZKMBeanInfo bean) throws JMException {
+    private void unregister(String path,ZKMBeanInfo bean) throws JMException  {
         if(path==null)
             return;
         if (!bean.isHidden()) {
-            try {
-                mBeanServer.unregisterMBean(makeObjectName(path, bean));
-            } catch (JMException e) {
-                LOG.warn("Failed to unregister MBean " + bean.getName());
-                throw e;
+            final ObjectName objName = makeObjectName(path, bean);
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Unregister MBean [{}]", objName);
+            }
+            synchronized (LOCK) {
+               mBeanServer.unregisterMBean(objName);
             }
         }        
     }
     
+    /**
+     * @return a {@link Collection} with the {@link ZKMBeanInfo} instances not
+     *         unregistered. Mainly for testing purposes.
+     */
+    public Set<ZKMBeanInfo> getRegisteredBeans() {
+        return new HashSet<ZKMBeanInfo>(mapBean2Path.keySet());
+    }
+
     /**
      * Unregister MBean.
      * @param bean
@@ -127,29 +139,16 @@ public class MBeanRegistry {
     public void unregister(ZKMBeanInfo bean) {
         if(bean==null)
             return;
-        String path=mapBean2Path.get(bean);
+        String path = mapBean2Path.remove(bean);
         try {
             unregister(path,bean);
         } catch (JMException e) {
-            LOG.warn("Error during unregister", e);
+            LOG.warn("Error during unregister of [{}]", bean.getName(), e);
+        } catch (Throwable t) {
+            LOG.error("Unexpected exception during unregister of [{}]. It should be reviewed and fixed.", bean.getName(), t);
         }
-        mapBean2Path.remove(bean);
-        mapName2Bean.remove(bean.getName());
     }
-    /**
-     * Unregister all currently registered MBeans
-     */
-    public void unregisterAll() {
-        for(Map.Entry<ZKMBeanInfo,String> e: mapBean2Path.entrySet()) {
-            try {
-                unregister(e.getValue(), e.getKey());
-            } catch (JMException e1) {
-                LOG.warn("Error during unregister", e1);
-            }
-        }
-        mapBean2Path.clear();
-        mapName2Bean.clear();
-    }
+
     /**
      * Generate a filesystem-like path.
      * @param prefix path prefix

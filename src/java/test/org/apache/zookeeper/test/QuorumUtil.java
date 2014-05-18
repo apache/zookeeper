@@ -306,4 +306,21 @@ public class QuorumUtil {
         shutdownAll();
         JMXEnv.tearDown();
     }
+
+    public int getLeaderServer() {
+        int index = 0;
+        for (int i = 1; i <= ALL; i++) {
+            if (getPeer(i).peer.leader != null) {
+                index = i;
+                break;
+            }
+        }
+
+        Assert.assertTrue("Leader server not found.", index > 0);
+        return index;
+    }
+
+    public String getConnectionStringForServer(final int index) {
+        return "127.0.0.1:" + getPeer(index).clientPort;
+    }
 }
