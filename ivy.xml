@@ -46,7 +46,7 @@
     <dependency org="commons-cli" name="commons-cli" rev="1.2" />
   
     <dependency org="org.apache.maven.wagon" name="wagon-http" rev="2.4" conf="mvn-ant-task->default"/>
-    <dependency org="org.apache.maven" name="maven-ant-tasks" rev="2.1.3" conf="mvn-ant-task->default"/>
+    <dependency org="org.apache.maven" name="maven-ant-tasks" rev="2.1.3" conf="mvn-ant-task->master"/>
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
     <dependency org="log4j" name="log4j" rev="1.2.16" transitive="false" conf="default"/>
     <dependency org="jline" name="jline" rev="2.11" transitive="false" conf="optional->default"/>

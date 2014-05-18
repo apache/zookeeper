@@ -20,7 +20,7 @@
 <project name="zookeepercontrib" default="compile" basedir=".">
 
   <property name="contribfilesetincludes" value="*/build.xml" />
-  <property name="contribfilesetexcludes" value="" />
+  <property name="contribfilesetexcludes" value="fatjar/build.xml" />
 
   <fileset id="contribfileset" dir=".">
     <include name="${contribfilesetincludes}"/>
