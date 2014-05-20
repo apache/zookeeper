@@ -913,6 +913,9 @@ IMPROVEMENTS:
   ZOOKEEPER-657. Cut down the running time of ZKDatabase corruption
   (Michi Mutsuzaki via rakeshr)
 
+  ZOOKEEPER-716. dump server memory detail to the log during startup
+  (Michi Mutsuzaki via rakeshr)
+
 headers
 
 Release 3.4.0 - 
