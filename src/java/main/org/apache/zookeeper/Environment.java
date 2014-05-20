@@ -89,7 +89,17 @@ public class Environment {
                 System.getProperty("user.home", "<NA>"));
         put(l, "user.dir",
                 System.getProperty("user.dir", "<NA>"));
-        
+
+        // Get memory information.
+        Runtime runtime = Runtime.getRuntime();
+        int mb = 1024 * 1024;
+        put(l, "os.memory.free",
+               Long.toString(runtime.freeMemory() / mb) + "MB");
+        put(l, "os.memory.max",
+               Long.toString(runtime.maxMemory() / mb) + "MB");
+        put(l, "os.memory.total",
+               Long.toString(runtime.totalMemory() / mb) + "MB");
+
         return l;
     }
     
