@@ -661,6 +661,9 @@ BUGFIXES:
   MBeans instead of use MBeanRegistry.unregisterAll() method.
   (César Álvarez Núñez via michim)
 
+  ZOOKEEPER-1699. Leader should timeout and give up leadership when losing
+  quorum of last proposed configuration (Alexander Shraer via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

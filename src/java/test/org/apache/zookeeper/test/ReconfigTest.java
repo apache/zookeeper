@@ -33,6 +33,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.quorum.QuorumStats;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
@@ -399,6 +400,50 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         
         testNormalOperation(zkArr[1], zkArr[2]);
 
+        closeAllHandles(zkArr);
+    }
+
+    @Test
+    public void testLeaderTimesoutOnNewQuorum() throws Exception {
+        qu = new QuorumUtil(1); // create 3 servers
+        qu.disableJMXTest = true;
+        qu.startAll();
+        ZooKeeper[] zkArr = createHandles(qu);
+
+        List<String> leavingServers = new ArrayList<String>();
+        leavingServers.add("3");
+        qu.shutdown(2);
+        try {
+            // Since we just shut down server 2, its still considered "synced"
+            // by the leader, which allows us to start the reconfig 
+            // (PrepRequestProcessor checks that a quorum of the new
+            // config is synced before starting a reconfig).
+            // We try to remove server 3, which requires a quorum of {1,2,3}
+            // (we have that) and of {1,2}, but 2 is down so we won't get a
+            // quorum of new config ACKs.
+            zkArr[1].reconfig(null, leavingServers, null, -1, new Stat());
+            Assert.fail("Reconfig should have failed since we don't have quorum of new config");
+        } catch (KeeperException.ConnectionLossException e) {
+            // We expect leader to loose quorum of proposed config and time out
+        } catch (Exception e) {
+            Assert.fail("Should have been ConnectionLossException!");
+        }
+
+        // The leader should time out and remaining servers should go into
+        // LOOKING state. A new leader won't be established since that 
+        // would require completing the reconfig, which is not possible while
+        // 2 is down.
+        Assert.assertEquals(QuorumStats.Provider.LOOKING_STATE,
+                qu.getPeer(1).peer.getServerState());
+        Assert.assertEquals(QuorumStats.Provider.LOOKING_STATE,
+                qu.getPeer(3).peer.getServerState());
+
+        qu.restart(2);
+
+        // Now that 2 is back up, they'll complete the reconfig removing 3 and
+        // can process other ops.
+        testServerHasConfig(zkArr[1], null, leavingServers);
+        testNormalOperation(zkArr[1], zkArr[2]);
         closeAllHandles(zkArr);
     }
 
