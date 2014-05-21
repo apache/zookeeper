@@ -80,8 +80,8 @@ TEST_SOURCES = tests/TestDriver.cc tests/LibCMocks.cc tests/LibCSymTable.cc \
     tests/MocksBase.cc  tests/ZKMocks.cc tests/Util.cc tests/ThreadingUtil.cc \
     tests/TestClientRetry.cc \
     tests/TestOperations.cc tests/TestZookeeperInit.cc \
-    tests/TestZookeeperClose.cc tests/TestClient.cc \
-    tests/TestMulti.cc tests/TestWatchers.cc
+    tests/TestZookeeperClose.cc \
+    tests/TestMulti.cc tests/TestWatchers.cc tests/TestClient.cc 
 
 
 SYMBOL_WRAPPERS=$(shell cat ${srcdir}/tests/wrappers.opt)
