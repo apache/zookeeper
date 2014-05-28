@@ -603,7 +603,7 @@
     znodes that represent "proposals" of clients. The idea is to have a znode,
     say "/election", such that each znode creates a child znode "/election/guid-n_"
     with both flags SEQUENCE|EPHEMERAL. With the sequence flag, ZooKeeper
-    automatically appends a sequence number that is greater that any one
+    automatically appends a sequence number that is greater than any one
     previously appended to a child of "/election". The process that created
     the znode with the smallest appended sequence number is the leader.
     </para>
