@@ -919,6 +919,8 @@ IMPROVEMENTS:
   ZOOKEEPER-716. dump server memory detail to the log during startup
   (Michi Mutsuzaki via rakeshr)
 
+  ZOOKEEPER-1930. A typo in zookeeper recipes.html (Chengwei Yang via michim)
+
 headers
 
 Release 3.4.0 - 
