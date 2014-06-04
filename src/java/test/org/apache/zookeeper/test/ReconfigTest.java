@@ -32,7 +32,10 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.common.HostNameUtils;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.jmx.CommonNames;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumStats;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -777,5 +780,194 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             long version = qv.getVersion();
             Assert.assertTrue(version == 0x100000000L);
         }
+    }
+
+    /**
+     * Tests verifies the jmx attributes of local and remote peer bean - remove
+     * one quorum peer and again adding it back
+     */
+    @Test
+    public void testJMXBeanAfterRemoveAddOne() throws Exception {
+        qu = new QuorumUtil(1); // create 3 servers
+        qu.disableJMXTest = true;
+        qu.startAll();
+        ZooKeeper[] zkArr = createHandles(qu);
+
+        List<String> leavingServers = new ArrayList<String>();
+        List<String> joiningServers = new ArrayList<String>();
+
+        // assert remotePeerBean.1 of ReplicatedServer_2
+        int leavingIndex = 1;
+        int replica2 = 2;
+        QuorumPeer peer2 = qu.getPeer(replica2).peer;
+        QuorumServer leavingQS2 = peer2.getView().get(new Long(leavingIndex));
+        String remotePeerBean2 = CommonNames.DOMAIN
+                + ":name0=ReplicatedServer_id" + replica2 + ",name1=replica."
+                + leavingIndex;
+        assertRemotePeerMXBeanAttributes(leavingQS2, remotePeerBean2);
+
+        // assert remotePeerBean.1 of ReplicatedServer_3
+        int replica3 = 3;
+        QuorumPeer peer3 = qu.getPeer(replica3).peer;
+        QuorumServer leavingQS3 = peer3.getView().get(new Long(leavingIndex));
+        String remotePeerBean3 = CommonNames.DOMAIN
+                + ":name0=ReplicatedServer_id" + replica3 + ",name1=replica."
+                + leavingIndex;
+        assertRemotePeerMXBeanAttributes(leavingQS3, remotePeerBean3);
+
+        ZooKeeper zk = zkArr[leavingIndex];
+
+        leavingServers.add(Integer.toString(leavingIndex));
+
+        // remember this server so we can add it back later
+        joiningServers.add("server." + leavingIndex + "=127.0.0.1:"
+                + qu.getPeer(leavingIndex).peer.getQuorumAddress().getPort()
+                + ":"
+                + qu.getPeer(leavingIndex).peer.getElectionAddress().getPort()
+                + ":participant;127.0.0.1:"
+                + qu.getPeer(leavingIndex).peer.getClientPort());
+
+        // Remove ReplicatedServer_1 from the ensemble
+        reconfig(zk, null, leavingServers, null, -1);
+
+        // localPeerBean.1 of ReplicatedServer_1
+        QuorumPeer removedPeer = qu.getPeer(leavingIndex).peer;
+        String localPeerBean = CommonNames.DOMAIN
+                + ":name0=ReplicatedServer_id" + leavingIndex
+                + ",name1=replica." + leavingIndex;
+        assertLocalPeerMXBeanAttributes(removedPeer, localPeerBean, false);
+
+        // remotePeerBean.1 shouldn't exists in ReplicatedServer_2
+        JMXEnv.ensureNone(remotePeerBean2);
+        // remotePeerBean.1 shouldn't exists in ReplicatedServer_3
+        JMXEnv.ensureNone(remotePeerBean3);
+
+        // Add ReplicatedServer_1 back to the ensemble
+        reconfig(zk, joiningServers, null, null, -1);
+
+        // localPeerBean.1 of ReplicatedServer_1
+        assertLocalPeerMXBeanAttributes(removedPeer, localPeerBean, true);
+
+        // assert remotePeerBean.1 of ReplicatedServer_2
+        leavingQS2 = peer2.getView().get(new Long(leavingIndex));
+        assertRemotePeerMXBeanAttributes(leavingQS2, remotePeerBean2);
+
+        // assert remotePeerBean.1 of ReplicatedServer_3
+        leavingQS3 = peer3.getView().get(new Long(leavingIndex));
+        assertRemotePeerMXBeanAttributes(leavingQS3, remotePeerBean3);
+
+        closeAllHandles(zkArr);
+    }
+
+    /**
+     * Tests verifies the jmx attributes of local and remote peer bean - change
+     * participant to observer role
+     */
+    @Test
+    public void testJMXBeanAfterRoleChange() throws Exception {
+        qu = new QuorumUtil(1); // create 3 servers
+        qu.disableJMXTest = true;
+        qu.startAll();
+        ZooKeeper[] zkArr = createHandles(qu);
+
+        // changing a server's role / port is done by "adding" it with the same
+        // id but different role / port
+        List<String> joiningServers = new ArrayList<String>();
+
+        // assert remotePeerBean.1 of ReplicatedServer_2
+        int changingIndex = 1;
+        int replica2 = 2;
+        QuorumPeer peer2 = qu.getPeer(replica2).peer;
+        QuorumServer changingQS2 = peer2.getView().get(new Long(changingIndex));
+        String remotePeerBean2 = CommonNames.DOMAIN
+                + ":name0=ReplicatedServer_id" + replica2 + ",name1=replica."
+                + changingIndex;
+        assertRemotePeerMXBeanAttributes(changingQS2, remotePeerBean2);
+
+        // assert remotePeerBean.1 of ReplicatedServer_3
+        int replica3 = 3;
+        QuorumPeer peer3 = qu.getPeer(replica3).peer;
+        QuorumServer changingQS3 = peer3.getView().get(new Long(changingIndex));
+        String remotePeerBean3 = CommonNames.DOMAIN
+                + ":name0=ReplicatedServer_id" + replica3 + ",name1=replica."
+                + changingIndex;
+        assertRemotePeerMXBeanAttributes(changingQS3, remotePeerBean3);
+
+        String newRole = "observer";
+
+        ZooKeeper zk = zkArr[changingIndex];
+
+        // exactly as it is now, except for role change
+        joiningServers.add("server." + changingIndex + "=127.0.0.1:"
+                + qu.getPeer(changingIndex).peer.getQuorumAddress().getPort()
+                + ":"
+                + qu.getPeer(changingIndex).peer.getElectionAddress().getPort()
+                + ":" + newRole + ";127.0.0.1:"
+                + qu.getPeer(changingIndex).peer.getClientPort());
+
+        reconfig(zk, joiningServers, null, null, -1);
+        testNormalOperation(zkArr[changingIndex], zk);
+
+        Assert.assertTrue(qu.getPeer(changingIndex).peer.observer != null
+                && qu.getPeer(changingIndex).peer.follower == null
+                && qu.getPeer(changingIndex).peer.leader == null);
+        Assert.assertTrue(qu.getPeer(changingIndex).peer.getPeerState() == ServerState.OBSERVING);
+
+        QuorumPeer qp = qu.getPeer(changingIndex).peer;
+        String localPeerBeanName = CommonNames.DOMAIN
+                + ":name0=ReplicatedServer_id" + changingIndex
+                + ",name1=replica." + changingIndex;
+
+        // localPeerBean.1 of ReplicatedServer_1
+        assertLocalPeerMXBeanAttributes(qp, localPeerBeanName, true);
+
+        // assert remotePeerBean.1 of ReplicatedServer_2
+        changingQS2 = peer2.getView().get(new Long(changingIndex));
+        assertRemotePeerMXBeanAttributes(changingQS2, remotePeerBean2);
+
+        // assert remotePeerBean.1 of ReplicatedServer_3
+        changingQS3 = peer3.getView().get(new Long(changingIndex));
+        assertRemotePeerMXBeanAttributes(changingQS3, remotePeerBean3);
+
+        closeAllHandles(zkArr);
+    }
+
+    private void assertLocalPeerMXBeanAttributes(QuorumPeer qp,
+            String beanName, Boolean isPartOfEnsemble) throws Exception {
+        Assert.assertEquals("Mismatches LearnerType!", qp.getLearnerType()
+                .name(), JMXEnv.ensureBeanAttribute(beanName, "LearnerType"));
+        Assert.assertEquals("Mismatches ClientAddress!",
+                HostNameUtils.getHostString(qp.getClientAddress()) + ":"
+                        + qp.getClientAddress().getPort(),
+                JMXEnv.ensureBeanAttribute(beanName, "ClientAddress"));
+        Assert.assertEquals("Mismatches LearnerType!",
+                HostNameUtils.getHostString(qp.getElectionAddress()) + ":"
+                        + qp.getElectionAddress().getPort(),
+                JMXEnv.ensureBeanAttribute(beanName, "ElectionAddress"));
+        Assert.assertEquals("Mismatches PartOfEnsemble!", isPartOfEnsemble,
+                JMXEnv.ensureBeanAttribute(beanName, "PartOfEnsemble"));
+        Assert.assertEquals("Mismatches ConfigVersion!", qp.getQuorumVerifier()
+                .getVersion(), JMXEnv.ensureBeanAttribute(beanName,
+                "ConfigVersion"));
+        Assert.assertEquals("Mismatches QuorumSystemInfo!", qp
+                .getQuorumVerifier().toString(), JMXEnv.ensureBeanAttribute(
+                beanName, "QuorumSystemInfo"));
+    }
+
+    private void assertRemotePeerMXBeanAttributes(QuorumServer qs,
+            String beanName) throws Exception {
+        Assert.assertEquals("Mismatches LearnerType!", qs.type.name(),
+                JMXEnv.ensureBeanAttribute(beanName, "LearnerType"));
+        Assert.assertEquals("Mismatches ClientAddress!",
+                HostNameUtils.getHostString(qs.clientAddr) + ":"
+                        + qs.clientAddr.getPort(),
+                JMXEnv.ensureBeanAttribute(beanName, "ClientAddress"));
+        Assert.assertEquals("Mismatches ElectionAddress!",
+                HostNameUtils.getHostString(qs.electionAddr) + ":"
+                        + qs.electionAddr.getPort(),
+                JMXEnv.ensureBeanAttribute(beanName, "ElectionAddress"));
+        Assert.assertEquals("Mismatches QuorumAddress!", qs.addr.getHostName()
+                + ":" + qs.addr.getPort(),
+                JMXEnv.ensureBeanAttribute(beanName, "QuorumAddress"));
     }
 }

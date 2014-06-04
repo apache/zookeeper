@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.common.HostNameUtils;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 /**
  * A remote peer bean only provides limited information about the remote peer,
@@ -31,6 +31,11 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
     public RemotePeerBean(QuorumPeer.QuorumServer peer){
         this.peer=peer;
     }
+
+    public void setQuorumServer(QuorumPeer.QuorumServer peer) {
+        this.peer = peer;
+    }
+
     public String getName() {
         return "replica."+peer.id;
     }
@@ -42,4 +47,17 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
         return peer.addr.getHostName()+":"+peer.addr.getPort();
     }
 
+    public String getElectionAddress() {
+        return HostNameUtils.getHostString(peer.electionAddr) + ":"
+                + peer.electionAddr.getPort();
+    }
+
+    public String getClientAddress() {
+        return HostNameUtils.getHostString(peer.clientAddr) + ":"
+                + peer.clientAddr.getPort();
+    }
+
+    public String getLearnerType() {
+        return peer.type.toString();
+    }
 }
