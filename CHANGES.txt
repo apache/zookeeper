@@ -921,6 +921,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1930. A typo in zookeeper recipes.html (Chengwei Yang via michim)
 
+  ZOOKEEPER-1659. Add JMX support for dynamic reconfiguration (Rakesh R via
+  michim)
+
 headers
 
 Release 3.4.0 - 

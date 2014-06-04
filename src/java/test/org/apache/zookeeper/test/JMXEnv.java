@@ -256,6 +256,52 @@ public class JMXEnv {
     }
 
     /**
+     * Ensure that the specified bean name and its attribute is registered. Note
+     * that these are components of the name. It waits in a loop up to 60
+     * seconds before failing if there is a mismatch. This will return the beans
+     * which are not matched.
+     *
+     * @param expectedName
+     *            - expected bean
+     * @param expectedAttribute
+     *            - expected attribute
+     * @return the value of the attribute
+     *
+     * @throws Exception
+     */
+    public static Object ensureBeanAttribute(String expectedName,
+            String expectedAttribute) throws Exception {
+        String value = "";
+        LOG.info("ensure bean:{}, attribute:{}", new Object[] { expectedName,
+                expectedAttribute });
+
+        Set<ObjectName> beans;
+        int nTry = 0;
+        do {
+            if (nTry++ > 0) {
+                Thread.sleep(500);
+            }
+            try {
+                beans = conn().queryNames(
+                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+            } catch (MalformedObjectNameException e) {
+                throw new RuntimeException(e);
+            }
+            LOG.info("expect:" + expectedName);
+            for (ObjectName bean : beans) {
+                // check the existence of name in bean
+                if (bean.toString().equals(expectedName)) {
+                    LOG.info("found:{} {}", new Object[] { expectedName, bean });
+                    return conn().getAttribute(bean, expectedAttribute);
+                }
+            }
+        } while (nTry < 120);
+        TestCase.fail("Failed to find bean:" + expectedName + ", attribute:"
+                + expectedAttribute);
+        return value;
+    }
+
+    /**
      * Comparing that the given name exists in the bean. For component beans,
      * the component name will be present at the end of the bean name
      * 

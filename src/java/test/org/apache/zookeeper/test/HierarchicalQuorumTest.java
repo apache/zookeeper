@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
@@ -256,6 +257,16 @@ public class HierarchicalQuorumTest extends ClientBase {
             ensureNames.add("name0=ReplicatedServer_id" + i);
         }
         JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
+
+        for (int i = 1; i <= 5; i++) {
+            String bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
+                    + ",name1=replica." + i;
+            JMXEnv.ensureBeanAttribute(bean, "ConfigVersion");
+            JMXEnv.ensureBeanAttribute(bean, "LearnerType");
+            JMXEnv.ensureBeanAttribute(bean, "ClientAddress");
+            JMXEnv.ensureBeanAttribute(bean, "ElectionAddress");
+            JMXEnv.ensureBeanAttribute(bean, "QuorumSystemInfo");
+        }
     }
 
     @Override

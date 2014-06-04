@@ -95,7 +95,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private QuorumBean jmxQuorumBean;
     LocalPeerBean jmxLocalPeerBean;
-    private Set<RemotePeerBean> jmxRemotePeerBean;
+    private Map<Long, RemotePeerBean> jmxRemotePeerBean;
     LeaderElectionBean jmxLeaderElectionBean;
     private QuorumCnxManager qcm;
 
@@ -585,7 +585,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumPeer() {
         super("QuorumPeer");
         quorumStats = new QuorumStats(this);
-        jmxRemotePeerBean = new HashSet<RemotePeerBean>();
+        jmxRemotePeerBean = new HashMap<Long, RemotePeerBean>();
     }
 
 
@@ -872,10 +872,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         jmxLocalPeerBean = null;
                     }
                 } else {
-                    p = new RemotePeerBean(s);
-                    jmxRemotePeerBean.add((RemotePeerBean) p);
+                    RemotePeerBean rBean = new RemotePeerBean(s);
                     try {
-                        MBeanRegistry.getInstance().register(p, jmxQuorumBean);
+                        MBeanRegistry.getInstance().register(rBean, jmxQuorumBean);
+                        jmxRemotePeerBean.put(s.id, rBean);
                     } catch (Exception e) {
                         LOG.warn("Failed to register with JMX", e);
                     }
@@ -1005,7 +1005,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             instance.unregister(jmxQuorumBean);
             instance.unregister(jmxLocalPeerBean);
 
-            for (RemotePeerBean remotePeerBean : jmxRemotePeerBean) {
+            for (RemotePeerBean remotePeerBean : jmxRemotePeerBean.values()) {
                 instance.unregister(remotePeerBean);
             }
 
@@ -1557,9 +1557,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
        initConfigInZKDatabase();
 
        if (prevQV.getVersion() < qv.getVersion() && !prevQV.equals(qv)) {
+           Map<Long, QuorumServer> newMembers = qv.getAllMembers();
+           updateRemotePeerMXBeans(newMembers);
            if (restartLE) restartLeaderElection(prevQV, qv);
 
-           QuorumServer myNewQS = qv.getAllMembers().get(getId());
+           QuorumServer myNewQS = newMembers.get(getId());
            if (myNewQS != null && myNewQS.clientAddr != null
                    && !myNewQS.clientAddr.equals(oldClientAddr)) {
                cnxnFactory.reconfigure(myNewQS.clientAddr);
@@ -1588,7 +1590,41 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
        return false;
 
    }
-    
+
+    private void updateRemotePeerMXBeans(Map<Long, QuorumServer> newMembers) {
+        Set<Long> existingMembers = new HashSet<Long>(newMembers.keySet());
+        existingMembers.retainAll(jmxRemotePeerBean.keySet());
+        for (Long id : existingMembers) {
+            RemotePeerBean rBean = jmxRemotePeerBean.get(id);
+            rBean.setQuorumServer(newMembers.get(id));
+        }
+
+        Set<Long> joiningMembers = new HashSet<Long>(newMembers.keySet());
+        joiningMembers.removeAll(jmxRemotePeerBean.keySet());
+        joiningMembers.remove(getId()); // remove self as it is local bean
+        for (Long id : joiningMembers) {
+            QuorumServer qs = newMembers.get(id);
+            RemotePeerBean rBean = new RemotePeerBean(qs);
+            try {
+                MBeanRegistry.getInstance().register(rBean, jmxQuorumBean);
+                jmxRemotePeerBean.put(qs.id, rBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to register with JMX", e);
+            }
+        }
+
+        Set<Long> leavingMembers = new HashSet<Long>(jmxRemotePeerBean.keySet());
+        leavingMembers.removeAll(newMembers.keySet());
+        for (Long id : leavingMembers) {
+            RemotePeerBean rBean = jmxRemotePeerBean.remove(id);
+            try {
+                MBeanRegistry.getInstance().unregister(rBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to unregister with JMX", e);
+            }
+        }
+    }
+
    private boolean updateLearnerType(QuorumVerifier newQV) {        
        //check if I'm an observer in new config
        if (newQV.getObservingMembers().containsKey(getId())) {
