@@ -72,6 +72,21 @@ public class Leader {
         }
     }
 
+    // Throttle when there are too many concurrent snapshots being sent to observers
+    private static final String MAX_CONCURRENT_SNAPSHOTS = "zookeeper.leader.maxConcurrentSnapshots";
+    private static final int maxConcurrentSnapshots;
+    private static final String MAX_CONCURRENT_SNAPSHOT_TIMEOUT = "zookeeper.leader.maxConcurrentSnapshotTimeout";
+    private static final long maxConcurrentSnapshotTimeout;
+    static {
+        maxConcurrentSnapshots = Integer.getInteger(MAX_CONCURRENT_SNAPSHOTS, 10);
+        LOG.info(MAX_CONCURRENT_SNAPSHOTS + " = " + maxConcurrentSnapshots);
+        maxConcurrentSnapshotTimeout = Long.getLong(MAX_CONCURRENT_SNAPSHOT_TIMEOUT, 5);
+        LOG.info(MAX_CONCURRENT_SNAPSHOT_TIMEOUT + " = " + maxConcurrentSnapshotTimeout);
+    }
+
+    private final LearnerSnapshotThrottler learnerSnapshotThrottler = 
+        new LearnerSnapshotThrottler(maxConcurrentSnapshots, maxConcurrentSnapshotTimeout);
+
     final LeaderZooKeeperServer zk;
 
     final QuorumPeer self;
@@ -1050,6 +1065,10 @@ public class Leader {
             sendPacket(pp);
         }
         return p;
+    }
+    
+    public LearnerSnapshotThrottler getLearnerSnapshotThrottler() {
+        return learnerSnapshotThrottler;
     }
 
     /**

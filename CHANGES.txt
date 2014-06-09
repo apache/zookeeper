@@ -29,6 +29,9 @@ NEW FEATURES:
   ZOOKEEPER-1887. C implementation of removeWatches (Raul Gutierrez Segales via
   michim)
 
+  ZOOKEEPER-1928. add configurable throttling to the number of snapshots
+  concurrently sent by a leader (Edward Carter via fpj)
+
 BUGFIXES:
 
   ZOOKEEPER-786. Exception in ZooKeeper.toString
@@ -729,7 +732,7 @@ IMPROVEMENTS:
   ZOOKEEPER-756. some cleanup and improvements for zooinspector
   (Colin Goodheart-Smithe & Thomas Koch via phunt)
 
-  ZOOKEEPER-1292. FLETest is flaky (flp via breed)
+  ZOOKEEPER-1292. FLETest is flaky (fpj via breed)
 
   ZOOKEEPER-1326. The CLI commands "delete" and "rmr" are confusing.
   Can we have "rm" + "rmr" instead? (Harsh J via phunt)
@@ -923,6 +926,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1659. Add JMX support for dynamic reconfiguration (Rakesh R via
   michim)
+  
+  ZOOKEEPER-1928. add configurable throttling to the number of snapshots
+  concurrently sent by a leader (Edward Carter via fpj)
 
 headers
 

@@ -423,20 +423,29 @@ public class LearnerHandler extends ZooKeeperThread {
 
             /* if we are not truncating or sending a diff just send a snapshot */
             if (needSnap) {
-                long zxidToSend = leader.zk.getZKDatabase().getDataTreeLastProcessedZxid();
-                oa.writeRecord(new QuorumPacket(Leader.SNAP, zxidToSend, null, null), "packet");
-                bufferedOutput.flush();
+                boolean exemptFromThrottle = getLearnerType() != LearnerType.OBSERVER;
+                LearnerSnapshot snapshot = 
+                        leader.getLearnerSnapshotThrottler().beginSnapshot(exemptFromThrottle);
+                try {
+                    long zxidToSend = leader.zk.getZKDatabase().getDataTreeLastProcessedZxid();
+                    oa.writeRecord(new QuorumPacket(Leader.SNAP, zxidToSend, null, null), "packet");
+                    bufferedOutput.flush();
 
-                LOG.info("Sending snapshot last zxid of peer is 0x"
-                        + Long.toHexString(peerLastZxid) + " "
-                        + "zxid of leader is 0x"
-                        + Long.toHexString(leaderLastZxid) + " "
-                        + "sent zxid of db as 0x"
-                        + Long.toHexString(zxidToSend));
-                // Dump data to peer
-                leader.zk.getZKDatabase().serializeSnapshot(oa);
-                oa.writeString("BenWasHere", "signature");
-                bufferedOutput.flush();
+                    LOG.info("Sending snapshot last zxid of peer is 0x{}, zxid of leader is 0x{}, "
+                            + "send zxid of db as 0x{}, {} concurrent snapshots, " 
+                            + "snapshot was {} from throttle",
+                            Long.toHexString(peerLastZxid), 
+                            Long.toHexString(leaderLastZxid),
+                            Long.toHexString(zxidToSend), 
+                            snapshot.getConcurrentSnapshotNumber(),
+                            snapshot.isEssential() ? "exempt" : "not exempt");
+                    // Dump data to peer
+                    leader.zk.getZKDatabase().serializeSnapshot(oa);
+                    oa.writeString("BenWasHere", "signature");
+                    bufferedOutput.flush();
+                } finally {
+                    snapshot.close();
+                }
             }
 
             // Start thread that blast packets in the queue to learner
@@ -580,6 +589,8 @@ public class LearnerHandler extends ZooKeeperThread {
             }
         } catch (InterruptedException e) {
             LOG.error("Unexpected exception causing shutdown", e);
+        } catch (SnapshotThrottleException e) {
+            LOG.error("too many concurrent snapshots: " + e);
         } finally {
             LOG.warn("******* GOODBYE "
                     + (sock != null ? sock.getRemoteSocketAddress() : "<null>")
