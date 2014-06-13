@@ -35,6 +35,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.Random;
 
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -827,13 +828,15 @@ public class AuthFastLeaderElection implements Election {
      * @throws InterruptedException
      */
     public Vote lookForLeader() throws InterruptedException {
-        try {
-            self.jmxLeaderElectionBean = new LeaderElectionBean();
-            MBeanRegistry.getInstance().register(
-                    self.jmxLeaderElectionBean, self.jmxLocalPeerBean);        
-        } catch (Exception e) {
-            LOG.warn("Failed to register with JMX", e);
-            self.jmxLeaderElectionBean = null;
+        if (ServerCnxnFactory.jmxIsEnabled()) {
+            try {
+                self.jmxLeaderElectionBean = new LeaderElectionBean();
+                MBeanRegistry.getInstance().register(
+                        self.jmxLeaderElectionBean, self.jmxLocalPeerBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to register with JMX", e);
+                self.jmxLeaderElectionBean = null;
+            }
         }
 
         try {

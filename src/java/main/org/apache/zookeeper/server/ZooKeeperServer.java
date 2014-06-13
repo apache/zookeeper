@@ -361,11 +361,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // register with JMX
         try {
             jmxServerBean = new ZooKeeperServerBean(this);
-            MBeanRegistry.getInstance().register(jmxServerBean, null);
+            if (ServerCnxnFactory.jmxIsEnabled()) {
+                MBeanRegistry.getInstance().register(jmxServerBean, null);
+            }
 
             try {
                 jmxDataTreeBean = new DataTreeBean(zkDb.getDataTree());
-                MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
+                if (ServerCnxnFactory.jmxIsEnabled()) {
+                    MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
+                }
             } catch (Exception e) {
                 LOG.warn("Failed to register with JMX", e);
                 jmxDataTreeBean = null;

@@ -28,6 +28,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -780,13 +781,15 @@ public class FastLeaderElection implements Election {
      * sends notifications to all other peers.
      */
     public Vote lookForLeader() throws InterruptedException {
-        try {
-            self.jmxLeaderElectionBean = new LeaderElectionBean();
-            MBeanRegistry.getInstance().register(
-                    self.jmxLeaderElectionBean, self.jmxLocalPeerBean);
-        } catch (Exception e) {
-            LOG.warn("Failed to register with JMX", e);
-            self.jmxLeaderElectionBean = null;
+        if (ServerCnxnFactory.jmxIsEnabled()) {
+            try {
+                self.jmxLeaderElectionBean = new LeaderElectionBean();
+                MBeanRegistry.getInstance().register(
+                        self.jmxLeaderElectionBean, self.jmxLocalPeerBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to register with JMX", e);
+                self.jmxLeaderElectionBean = null;
+            }
         }
         if (self.start_fle == 0) {
            self.start_fle = System.currentTimeMillis();

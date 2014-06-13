@@ -27,6 +27,7 @@ import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.quorum.LearnerSessionTracker;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -100,12 +101,14 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     @Override
     protected void registerJMX() {
         // register with JMX
-        try {
-            jmxDataTreeBean = new DataTreeBean(getZKDatabase().getDataTree());
-            MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
-        } catch (Exception e) {
-            LOG.warn("Failed to register with JMX", e);
-            jmxDataTreeBean = null;
+        if (ServerCnxnFactory.jmxIsEnabled()) {
+            try {
+                jmxDataTreeBean = new DataTreeBean(getZKDatabase().getDataTree());
+                MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to register with JMX", e);
+                jmxDataTreeBean = null;
+            }
         }
     }
 
@@ -113,21 +116,23 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
             LocalPeerBean localPeerBean)
     {
         // register with JMX
-        if (self.jmxLeaderElectionBean != null) {
+        if (ServerCnxnFactory.jmxIsEnabled()) {
+            if (self.jmxLeaderElectionBean != null) {
+                try {
+                    MBeanRegistry.getInstance().unregister(self.jmxLeaderElectionBean);
+                } catch (Exception e) {
+                    LOG.warn("Failed to register with JMX", e);
+                }
+                self.jmxLeaderElectionBean = null;
+            }
+
             try {
-                MBeanRegistry.getInstance().unregister(self.jmxLeaderElectionBean);
+                jmxServerBean = serverBean;
+                MBeanRegistry.getInstance().register(serverBean, localPeerBean);
             } catch (Exception e) {
                 LOG.warn("Failed to register with JMX", e);
+                jmxServerBean = null;
             }
-            self.jmxLeaderElectionBean = null;
-        }
-
-        try {
-            jmxServerBean = serverBean;
-            MBeanRegistry.getInstance().register(serverBean, localPeerBean);
-        } catch (Exception e) {
-            LOG.warn("Failed to register with JMX", e);
-            jmxServerBean = null;
         }
     }
 

@@ -25,6 +25,7 @@ import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
@@ -75,23 +76,27 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     @Override
     protected void registerJMX() {
         // register with JMX
-        try {
-            jmxDataTreeBean = new DataTreeBean(getZKDatabase().getDataTree());
-            MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
-        } catch (Exception e) {
-            LOG.warn("Failed to register with JMX", e);
-            jmxDataTreeBean = null;
+        if (ServerCnxnFactory.jmxIsEnabled()) {
+            try {
+                jmxDataTreeBean = new DataTreeBean(getZKDatabase().getDataTree());
+                MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to register with JMX", e);
+                jmxDataTreeBean = null;
+            }
         }
     }
 
     public void registerJMX(ZooKeeperServerBean serverBean, LocalPeerBean localPeerBean) {
         // register with JMX
-        try {
-            jmxServerBean = serverBean;
-            MBeanRegistry.getInstance().register(serverBean, localPeerBean);
-        } catch (Exception e) {
-            LOG.warn("Failed to register with JMX", e);
-            jmxServerBean = null;
+        if (ServerCnxnFactory.jmxIsEnabled()) {
+            try {
+                jmxServerBean = serverBean;
+                MBeanRegistry.getInstance().register(serverBean, localPeerBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to register with JMX", e);
+                jmxServerBean = null;
+            }
         }
     }
 

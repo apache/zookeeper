@@ -128,6 +128,11 @@ public abstract class ServerCnxnFactory {
         return factory;
     }
 
+    static final private boolean jmxEnabled = !Boolean.getBoolean("zookeeper.server.jmx.disable");
+    static public boolean jmxIsEnabled() {
+        return jmxEnabled;
+    }
+
     public abstract InetSocketAddress getLocalAddress();
 
     private final ConcurrentHashMap<ServerCnxn, ConnectionBean> connectionBeans =
@@ -145,7 +150,7 @@ public abstract class ServerCnxnFactory {
     }
     
     public void registerConnection(ServerCnxn serverCnxn) {
-        if (zkServer != null) {
+        if ((zkServer != null) && jmxIsEnabled()) {
             ConnectionBean jmxConnectionBean = new ConnectionBean(serverCnxn, zkServer);
             try {
                 MBeanRegistry.getInstance().register(jmxConnectionBean, zkServer.jmxServerBean);
