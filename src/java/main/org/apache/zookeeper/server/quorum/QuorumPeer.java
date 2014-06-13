@@ -679,23 +679,25 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
         LOG.debug("Starting quorum peer");
         try {
             jmxQuorumBean = new QuorumBean(this);
-            MBeanRegistry.getInstance().register(jmxQuorumBean, null);
-            for(QuorumServer s: getView().values()){
-                ZKMBeanInfo p;
-                if (getId() == s.id) {
-                    p = jmxLocalPeerBean = new LocalPeerBean(this);
-                    try {
-                        MBeanRegistry.getInstance().register(p, jmxQuorumBean);
-                    } catch (Exception e) {
-                        LOG.warn("Failed to register with JMX", e);
-                        jmxLocalPeerBean = null;
-                    }
-                } else {
-                    p = new RemotePeerBean(s);
-                    try {
-                        MBeanRegistry.getInstance().register(p, jmxQuorumBean);
-                    } catch (Exception e) {
-                        LOG.warn("Failed to register with JMX", e);
+            if (ServerCnxnFactory.jmxIsEnabled()) {
+                MBeanRegistry.getInstance().register(jmxQuorumBean, null);
+                for(QuorumServer s: getView().values()){
+                    ZKMBeanInfo p;
+                    if (getId() == s.id) {
+                        p = jmxLocalPeerBean = new LocalPeerBean(this);
+                        try {
+                            MBeanRegistry.getInstance().register(p, jmxQuorumBean);
+                        } catch (Exception e) {
+                            LOG.warn("Failed to register with JMX", e);
+                            jmxLocalPeerBean = null;
+                        }
+                    } else {
+                        p = new RemotePeerBean(s);
+                        try {
+                            MBeanRegistry.getInstance().register(p, jmxQuorumBean);
+                        } catch (Exception e) {
+                            LOG.warn("Failed to register with JMX", e);
+                        }
                     }
                 }
             }

@@ -36,6 +36,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -66,6 +67,20 @@ public class LearnerTest extends ZKTestCase {
 		public void startup() {
 			startupCalled = true;
 		}
+
+		public DataTreeBean getJmxDataTreeBean() {
+			return jmxDataTreeBean;
+		}
+
+		@Override
+		public void registerJMX() {
+			super.registerJMX();
+		}
+
+		@Override
+		public void unregisterJMX() {
+			super.unregisterJMX();
+		}
 	}
 	class SimpleLearner extends Learner {
 		SimpleLearner(FileTxnSnapLog ftsl) throws IOException {
@@ -83,6 +98,43 @@ public class LearnerTest extends ZKTestCase {
 		}
 		for(File child: dir.listFiles()) {
 			recursiveDelete(child);
+		}
+	}
+
+	@Test
+	public void testDisallowJMX() throws IOException {
+		File tmpFile = File.createTempFile("test", ".dir");
+		tmpFile.delete();
+		try {
+			FileTxnSnapLog ftsl = new FileTxnSnapLog(tmpFile, tmpFile);
+
+			// positive test
+			SimpleLearnerZooKeeperServer s = new SimpleLearnerZooKeeperServer(ftsl); 
+			s.registerJMX();
+			try {
+				Assert.assertNotNull(s.getJmxDataTreeBean());
+			}
+			finally {
+				s.unregisterJMX();
+			}
+
+			// negative test
+			System.setProperty("zookeeper.server.jmx.disable", "true");
+			try {
+				s = new SimpleLearnerZooKeeperServer(ftsl);
+				s.registerJMX();
+				try {
+					Assert.assertNull(s.getJmxDataTreeBean());
+				}
+				finally {
+					s.unregisterJMX();
+				}
+			}
+			finally {
+				System.clearProperty("zookeeper.server.disable-jmx");
+			}
+		} finally {
+			recursiveDelete(tmpFile);
 		}
 	}
 	@Test
