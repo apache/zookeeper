@@ -942,6 +942,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1746. AsyncCallback.*Callback don't have any Javadoc
   (Hongchao Deng via phunt)
 
+  ZOOKEEPER-1938. bump version in the C library as we prepare for
+  3.5.0 release (Raul Gutierrez Segales via phunt)
+
 headers
 
 Release 3.4.0 - 
