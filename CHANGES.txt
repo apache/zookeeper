@@ -667,6 +667,9 @@ BUGFIXES:
   ZOOKEEPER-1699. Leader should timeout and give up leadership when losing
   quorum of last proposed configuration (Alexander Shraer via michim)
 
+  ZOOKEEPER-1870. flakey test in StandaloneDisabledTest.startSingleServerTest 
+  (Helen Hastings via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
