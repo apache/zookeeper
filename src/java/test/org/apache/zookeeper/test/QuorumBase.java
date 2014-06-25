@@ -388,9 +388,13 @@ public class QuorumBase extends ClientBase {
                 LOG.info("No election available to shutdown " + qp.getName());
             }
             LOG.info("Waiting for " + qp.getName() + " to exit thread");
-            qp.join(30000);
+            long readTimeout = qp.getTickTime() * qp.getInitLimit();
+            long connectTimeout = qp.getTickTime() * qp.getSyncLimit();
+            long maxTimeout = Math.max(readTimeout, connectTimeout);
+            maxTimeout = Math.max(maxTimeout, ClientBase.CONNECTION_TIMEOUT);
+            qp.join(maxTimeout * 2);
             if (qp.isAlive()) {
-                Assert.fail("QP failed to shutdown in 30 seconds: " + qp.getName());
+                Assert.fail("QP failed to shutdown in " + (maxTimeout * 2) + " seconds: " + qp.getName());
             }
         } catch (InterruptedException e) {
             LOG.debug("QP interrupted: " + qp.getName(), e);
