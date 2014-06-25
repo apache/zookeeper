@@ -18,7 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import java.lang.Exception;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -26,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Op;
+import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
@@ -35,6 +39,7 @@ import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
@@ -149,9 +154,19 @@ public class AsyncOps {
             zk.create(path, data, acl, flags, this, toString());
             return this;
         }
+
+        public AsyncCB createEphemeral() {
+            zk.create(path, data, acl, CreateMode.EPHEMERAL, this, toString());
+            return this;
+        }
         
         public void verifyCreate() {
             create();
+            verify();
+        }
+
+        public void verifyCreateEphemeral() {
+            createEphemeral();
             verify();
         }
         
@@ -163,7 +178,28 @@ public class AsyncOps {
             zk.create(path, data, acl, flags, this, toString());
             verify();
         }
-        
+
+        public void verifyCreateFailure_NoNode() {
+
+            rc = Code.NONODE;
+            name = null;
+            path = path + "/bar";
+            zk.create(path, data, acl, flags, this, toString());
+
+            verify();
+        }
+
+        public void verifyCreateFailure_NoChildForEphemeral() {
+            new StringCB(zk).verifyCreateEphemeral();
+
+            rc = Code.NOCHILDRENFOREPHEMERALS;
+            name = null;
+            path = path + "/bar";
+            zk.create(path, data, acl, flags, this, toString());
+
+            verify();
+        }
+
         @Override
         public String toString() {
             return super.toString() + name; 
@@ -202,11 +238,24 @@ public class AsyncOps {
             zk.getACL(path, stat, this, toString());
             verify();
         }
+
+        public void verifyGetACLFailure_NoNode(){
+            rc = Code.NONODE;
+            stat = null;
+            acl = null;
+            zk.getACL(path, stat, this, toString());
+
+            verify();
+        }
         
         public String toString(List<ACL> acls) {
+            if (acls == null) {
+                return "";
+            }
+
             StringBuilder result = new StringBuilder();
             for(ACL acl : acls) {
-                result.append(acl.getPerms() + "::");
+                result.append(acl.getPerms()).append("::");
             }
             return result.toString();
         }
@@ -438,7 +487,30 @@ public class AsyncOps {
             new Create2CB(zk).verifyCreate();
             rc = Code.NODEEXISTS;
             name = null;
+            stat = null;
             zk.create(path, data, acl, flags, this, toString());
+            verify();
+        }
+
+        public void verifyCreateFailure_NoNode() {
+            rc = Code.NONODE;
+            name = null;
+            stat = null;
+            path = path + "/bar";
+            zk.create(path, data, acl, flags, this, toString());
+
+            verify();
+        }
+
+        public void verifyCreateFailure_NoChildForEphemeral() {
+            new StringCB(zk).verifyCreateEphemeral();
+
+            rc = Code.NOCHILDRENFOREPHEMERALS;
+            name = null;
+            stat = null;
+            path = path + "/bar";
+            zk.create(path, data, acl, flags, this, toString());
+
             verify();
         }
 
@@ -537,6 +609,16 @@ public class AsyncOps {
             zk.setACL(path, acl, version, this, toString());
             verify();
         }
+
+        public void verifySetACLFailure_BadVersion() {
+            new StringCB(zk).verifyCreate();
+
+            rc = Code.BADVERSION;
+            stat = null;
+            zk.setACL(path, acl, version + 1, this, toString());
+
+            verify();
+        }
         
         public void setData() {
             zk.setData(path, data, version, this, toString());
@@ -554,6 +636,16 @@ public class AsyncOps {
             rc = KeeperException.Code.NONODE;
             stat = null;
             zk.setData(path, data, version, this, toString());
+            verify();
+        }
+
+        public void verifySetDataFailure_BadVersion() {
+            new StringCB(zk).verifyCreate();
+
+            rc = Code.BADVERSION;
+            stat = null;
+            zk.setData(path, data, version + 1, this, toString());
+
             verify();
         }
         
@@ -612,6 +704,24 @@ public class AsyncOps {
             zk.delete(path, version, this, toString());
             verify();
         }
+
+        public void verifyDeleteFailure_BadVersion() {
+            new StringCB(zk).verifyCreate();
+            rc = Code.BADVERSION;
+            zk.delete(path, version + 1, this, toString());
+            verify();
+        }
+
+        public void verifyDeleteFailure_NotEmpty() {
+            StringCB scb = new StringCB(zk);
+            scb.create();
+            scb.setPath(path + "/bar");
+            scb.create();
+
+            rc = Code.NOTEMPTY;
+            zk.delete(path, version, this, toString());
+            verify();
+        }
         
         public void sync() {
             zk.sync(path, this, toString());
@@ -628,5 +738,90 @@ public class AsyncOps {
         }
     }
 
+    public static class MultiCB implements MultiCallback {
+        ZooKeeper zk;
+        int rc;
+        List<OpResult> opResults;
+        final CountDownLatch latch = new CountDownLatch(1);
 
+        MultiCB(ZooKeeper zk) {
+            this.zk = zk;
+        }
+
+        public void processResult(int rc, String path, Object ctx,
+                                  List<OpResult> opResults) {
+            this.rc = rc;
+            this.opResults = opResults;
+            latch.countDown();
+        }
+
+        void latch_await(){
+            try {
+                latch.await(10000, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Assert.fail("unexpected interrupt");
+            }
+            Assert.assertSame(0L, latch.getCount());
+        }
+
+        public void verifyMulti() {
+            List<Op> ops = Arrays.asList(
+                    Op.create("/multi", new byte[0],
+                            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.delete("/multi", -1));
+            zk.multi(ops, this, null);
+            latch_await();
+
+            Assert.assertEquals(this.rc, KeeperException.Code.OK.intValue());
+            Assert.assertTrue(this.opResults.get(0) instanceof OpResult.CreateResult);
+            Assert.assertTrue(this.opResults.get(1) instanceof OpResult.DeleteResult);
+        }
+
+        public void verifyMultiFailure_AllErrorResult() {
+            List<Op> ops = Arrays.asList(
+                    Op.create("/multi", new byte[0],
+                            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.delete("/nonexist1", -1),
+                    Op.setData("/multi", "test".getBytes(), -1));
+            zk.multi(ops, this, null);
+            latch_await();
+
+            Assert.assertTrue(this.opResults.get(0) instanceof OpResult.ErrorResult);
+            Assert.assertTrue(this.opResults.get(1) instanceof OpResult.ErrorResult);
+            Assert.assertTrue(this.opResults.get(2) instanceof OpResult.ErrorResult);
+        }
+
+        public void verifyMultiFailure_NoSideEffect() throws KeeperException, InterruptedException {
+            List<Op> ops = Arrays.asList(
+                    Op.create("/multi", new byte[0],
+                            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.delete("/nonexist1", -1));
+            zk.multi(ops, this, null);
+            latch_await();
+
+            Assert.assertTrue(this.opResults.get(0) instanceof OpResult.ErrorResult);
+            Assert.assertNull(zk.exists("/multi", false));
+        }
+
+        public void verifyMultiSequential_NoSideEffect() throws Exception{
+            StringCB scb = new StringCB(zk);
+            scb.verifyCreate();
+            String path = scb.path + "-";
+            String seqPath = path + "0000000002";
+
+            zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            Assert.assertNotNull(zk.exists(path + "0000000001", false));
+
+            List<Op> ops = Arrays.asList(
+                    Op.create(path , new byte[0],
+                            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL),
+                    Op.delete("/nonexist", -1));
+            zk.multi(ops, this, null);
+            latch_await();
+
+            Assert.assertNull(zk.exists(seqPath, false));
+            zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            Assert.assertNotNull(zk.exists(seqPath, false));
+        }
+    }
 }
