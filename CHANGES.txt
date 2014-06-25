@@ -670,6 +670,9 @@ BUGFIXES:
   ZOOKEEPER-1870. flakey test in StandaloneDisabledTest.startSingleServerTest 
   (Helen Hastings via fpj)
 
+  ZOOKEEPER-1945. deb - zkCli.sh, zkServer.sh and zkEnv.sh regression caused
+  by ZOOKEEPER-1663 (Mark Flickinger via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
