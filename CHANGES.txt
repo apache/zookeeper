@@ -42,6 +42,9 @@ IMPROVEMENTS:
   ZOOKEEPER-657. Cut down the running time of ZKDatabase corruption
   (Michi Mutsuzaki via rakeshr)
 
+  ZOOKEEPER-1746. AsyncCallback.*Callback don't have any Javadoc
+  (Hongchao Deng via phunt)
+
 Release 3.4.6 - 2014-03-10 
 
 Backward compatible changes:
