@@ -277,6 +277,7 @@ public class FastLeaderElection implements Election {
                                            LOG.info("restarting leader election");
                                            self.shuttingDownLE = true;
                                            self.getElectionAlg().shutdown();
+                                           break;
                                        }
                                    }           
                                } catch (IOException e) {                         
@@ -573,6 +574,8 @@ public class FastLeaderElection implements Election {
     volatile boolean stop;
     public void shutdown(){
         stop = true;
+        proposedLeader = -1;
+        proposedZxid = -1;
         LOG.debug("Shutting down connection manager");
         manager.halt();
         LOG.debug("Shutting down messenger");
@@ -713,7 +716,7 @@ public class FastLeaderElection implements Election {
         proposedEpoch = epoch;
     }
 
-    synchronized Vote getVote(){
+    synchronized public Vote getVote(){
         return new Vote(proposedLeader, proposedZxid, proposedEpoch);
     }
 

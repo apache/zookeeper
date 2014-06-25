@@ -173,7 +173,8 @@ public class CnxManagerTest extends ZKTestCase {
             if(thread.failed)
                 Assert.fail("Did not receive expected message");
         }
-
+        cnxManager.halt();
+        Assert.assertFalse(cnxManager.listener.isAlive());
     }
 
     @Test
@@ -206,7 +207,8 @@ public class CnxManagerTest extends ZKTestCase {
         long end = System.currentTimeMillis();
 
         if((end - begin) > 6000) Assert.fail("Waited more than necessary");
-
+        cnxManager.halt();
+        Assert.assertFalse(cnxManager.listener.isAlive());
     }
 
     /**
@@ -269,6 +271,7 @@ public class CnxManagerTest extends ZKTestCase {
         }
         peer.shutdown();
         cnxManager.halt();
+        Assert.assertFalse(cnxManager.listener.isAlive());
     }
 
     /*
@@ -295,6 +298,8 @@ public class CnxManagerTest extends ZKTestCase {
         cnxManager.receiveConnection(sock);
         long end = System.currentTimeMillis();
         if((end - begin) > ((peer.getSyncLimit() * peer.getTickTime()) + 500)) Assert.fail("Waited more than necessary");
+        cnxManager.halt();
+        Assert.assertFalse(cnxManager.listener.isAlive());
     }
 
     /*

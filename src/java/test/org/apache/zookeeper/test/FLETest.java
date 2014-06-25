@@ -162,7 +162,11 @@ public class FLETest extends ZKTestCase {
                         LOG.info("I'm the leader: " + i);
                         if (lc < this.totalRounds) {
                             LOG.info("Leader " + i + " dying");
-                            ((FastLeaderElection) peer.getElectionAlg()).shutdown();
+                            FastLeaderElection election =
+                                (FastLeaderElection) peer.getElectionAlg();
+                            election.shutdown();
+                            // Make sure the vote is reset to -1 after shutdown.
+                            Assert.assertEquals(-1, election.getVote().getId());
                             LOG.info("Leader " + i + " dead");
                             
                             break;

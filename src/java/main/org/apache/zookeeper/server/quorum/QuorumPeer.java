@@ -1269,6 +1269,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         if (qvOLD == null || !qvOLD.equals(qvNEW)) {
             LOG.warn("Restarting Leader Election");
             getElectionAlg().shutdown();
+            shuttingDownLE = false;
             startLeaderElection();
         }           
     }

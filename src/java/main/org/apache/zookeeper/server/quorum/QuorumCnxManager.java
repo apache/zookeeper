@@ -457,6 +457,12 @@ public class QuorumCnxManager {
         LOG.debug("Halting listener");
         listener.halt();
         
+        // Wait for the listener to terminate.
+        try {
+            listener.join();
+        } catch (InterruptedException ex) {
+            LOG.warn("Got interrupted before joining the listener", ex);
+        }
         softHalt();
     }
    
@@ -551,22 +557,19 @@ public class QuorumCnxManager {
                         numRetries = 0;
                     }
                 } catch (IOException e) {
-                    if ( !shutdown ) {
-                        LOG.error("Exception while listening", e);
+                    if (shutdown) {
+                        break;
                     }
+                    LOG.error("Exception while listening", e);
                     numRetries++;
                     try {
                         ss.close();
                         Thread.sleep(1000);
                     } catch (IOException ie) {
-                        if ( !shutdown ) {
-                            LOG.error("Error closing server socket", ie);
-                        }
+                        LOG.error("Error closing server socket", ie);
                     } catch (InterruptedException ie) {
-                        if ( !shutdown ) {
-                            LOG.error("Interrupted while sleeping. " +
-                                "Ignoring exception", ie);
-                        }
+                        LOG.error("Interrupted while sleeping. " +
+                            "Ignoring exception", ie);
                     }
                 }
             }
@@ -576,9 +579,17 @@ public class QuorumCnxManager {
                         + "I won't be able to participate in leader "
                         + "election any longer: "
                         + self.getElectionAddress());
+            } else if (ss != null) {
+                // Clean up for shutdown.
+                try {
+                    ss.close();
+                } catch (IOException ie) {
+                    // Don't log an error for shutdown.
+                    LOG.debug("Error closing server socket", ie);
+                }
             }
         }
-        
+
         /**
          * Halts this listener thread.
          */
