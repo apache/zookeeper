@@ -31,6 +31,9 @@ BUGFIXES:
   ZOOKEEPER-1797. PurgeTxnLog may delete data logs during roll (Rakesh R via
   michim)
 
+  ZOOKEEPER-1945. deb - zkCli.sh, zkServer.sh and zkEnv.sh regression caused
+  by ZOOKEEPER-1663 (Mark Flickinger via fpj) 
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
