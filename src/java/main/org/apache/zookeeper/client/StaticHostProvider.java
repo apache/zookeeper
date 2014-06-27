@@ -68,12 +68,10 @@ public final class StaticHostProvider implements HostProvider {
      * 
      * @param serverAddresses
      *            possibly unresolved ZooKeeper server addresses
-     * @throws UnknownHostException
      * @throws IllegalArgumentException
      *             if serverAddresses is empty or resolves to an empty list
      */
-    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses)
-            throws UnknownHostException {
+    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
        sourceOfRandomness = new Random(System.currentTimeMillis() ^ this.hashCode());
 
         this.serverAddresses = resolveAndShuffle(serverAddresses);
@@ -92,12 +90,11 @@ public final class StaticHostProvider implements HostProvider {
      * @param serverAddresses
      *            possibly unresolved ZooKeeper server addresses
      * @param randomnessSeed a seed used to initialize sourceOfRandomnes
-     * @throws UnknownHostException
      * @throws IllegalArgumentException
      *             if serverAddresses is empty or resolves to an empty list
      */
-    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses, long randomnessSeed)
-            throws UnknownHostException {
+    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses,
+        long randomnessSeed) {
         sourceOfRandomness = new Random(randomnessSeed);
 
         this.serverAddresses = resolveAndShuffle(serverAddresses);
@@ -109,18 +106,22 @@ public final class StaticHostProvider implements HostProvider {
         lastIndex = -1;              
     }
 
-    private List<InetSocketAddress> resolveAndShuffle(Collection<InetSocketAddress> serverAddresses)
-            throws UnknownHostException {
+    private List<InetSocketAddress> resolveAndShuffle(Collection<InetSocketAddress> serverAddresses) {
         List<InetSocketAddress> tmpList = new ArrayList<InetSocketAddress>(serverAddresses.size());       
         for (InetSocketAddress address : serverAddresses) {
-            InetAddress ia = address.getAddress();
-            InetAddress resolvedAddresses[] = InetAddress.getAllByName((ia!=null) ? ia.getHostAddress():
-                    address.getHostName());
-            for (InetAddress resolvedAddress : resolvedAddresses) {
-                tmpList.add(new InetSocketAddress(InetAddress.getByAddress(
-                                HostNameUtils.getHostString(address),
-                                resolvedAddress.getAddress()),
-                                address.getPort()));
+            try {
+                InetAddress ia = address.getAddress();
+                String addr = (ia != null) ? ia.getHostAddress() :
+                                             address.getHostName();
+                InetAddress resolvedAddresses[] = InetAddress.getAllByName(addr);
+                for (InetAddress resolvedAddress : resolvedAddresses) {
+                    tmpList.add(new InetSocketAddress(InetAddress.getByAddress(
+                                    HostNameUtils.getHostString(address),
+                                    resolvedAddress.getAddress()),
+                                    address.getPort()));
+                }
+            } catch (UnknownHostException ex) {
+                LOG.warn("No IP address found for server: {}", address, ex);
             }
         }
         Collections.shuffle(tmpList, sourceOfRandomness);
@@ -151,7 +152,8 @@ public final class StaticHostProvider implements HostProvider {
 
 
     @Override
-    public boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost) throws UnknownHostException {        
+    public boolean updateServerList(Collection<InetSocketAddress> serverAddresses, 
+        InetSocketAddress currentHost) {
         // Resolve server addresses and shuffle them
         List<InetSocketAddress> resolvedList = resolveAndShuffle(serverAddresses);
         if (resolvedList.isEmpty()) {
