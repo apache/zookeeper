@@ -39,7 +39,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     private Random r = new Random(1);
 
     @Test
-    public void testNextGoesRound() throws UnknownHostException {
+    public void testNextGoesRound() {
         HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         assertTrue(first != null);
@@ -48,7 +48,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextGoesRoundAndSleeps() throws UnknownHostException {
+    public void testNextGoesRoundAndSleeps() {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -62,7 +62,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextDoesNotSleepForZero() throws UnknownHostException {
+    public void testNextDoesNotSleepForZero() {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -75,15 +75,34 @@ public class StaticHostProviderTest extends ZKTestCase {
         assertTrue(5 > stop - start);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testTwoInvalidHostAddresses() {
+        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>();
+        list.add(new InetSocketAddress("a", 2181));
+        list.add(new InetSocketAddress("b", 2181));
+        new StaticHostProvider(list);
+    }
+
     @Test
-    public void testTwoConsequitiveCallsToNextReturnDifferentElement()
-            throws UnknownHostException {
+    public void testOneInvalidHostAddresses() {
+        Collection<InetSocketAddress> addr = getServerAddresses((byte) 1);
+        addr.add(new InetSocketAddress("a", 2181));
+
+        StaticHostProvider sp = new StaticHostProvider(addr);
+        InetSocketAddress n1 = sp.next(0);
+        InetSocketAddress n2 = sp.next(0);
+
+        assertEquals(n2, n1);
+    }
+
+    @Test
+    public void testTwoConsequitiveCallsToNextReturnDifferentElement() {
         HostProvider hostProvider = getHostProvider((byte) 2);
         assertNotSame(hostProvider.next(0), hostProvider.next(0));
     }
 
     @Test
-    public void testOnConnectDoesNotReset() throws UnknownHostException {
+    public void testOnConnectDoesNotReset() {
         HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         hostProvider.onConnected();
@@ -301,8 +320,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         }
     }
 
-    private StaticHostProvider getHostProvider(byte size)
-            throws UnknownHostException {
+    private StaticHostProvider getHostProvider(byte size) {
         return new StaticHostProvider(getServerAddresses(size), r.nextLong());
     }
 

@@ -944,6 +944,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1938. bump version in the C library as we prepare for
   3.5.0 release (Raul Gutierrez Segales via phunt)
+  
+  ZOOKEEPER-1576. Zookeeper cluster - failed to connect to cluster if one of the 
+  provided IPs causes java.net.UnknownHostException (Edward Ribeiro via camille)
 
 headers
 
