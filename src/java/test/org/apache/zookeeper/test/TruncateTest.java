@@ -126,6 +126,34 @@ public class TruncateTest extends ZKTestCase {
         zkdb.commit();
     }
 
+    
+    @Test
+    public void testTruncationNullLog() throws Exception {
+        File tmpdir = ClientBase.createTmpDir();
+        FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpdir, tmpdir);
+        ZKDatabase zkdb = new ZKDatabase(snaplog);
+
+        for (int i = 1; i <= 100; i++) {
+            append(zkdb, i);
+        }
+        File[] logs = snaplog.getDataDir().listFiles();
+        for(int i = 0; i < logs.length; i++) {
+            logs[i].delete();
+        }
+        try {
+            zkdb.truncateLog(1);
+            Assert.assertTrue("Should not get here", false);
+        }
+        catch(IOException e) {
+            Assert.assertTrue("Should have received an IOException", true);
+        }
+        catch(NullPointerException npe) {
+            Assert.fail("This should not throw NPE!");
+        }
+ 
+        ClientBase.recursiveDelete(tmpdir);
+    }
+    
     @Test
     public void testTruncate() throws IOException, InterruptedException, KeeperException {
         // Prime the server that is going to come in late with 50 txns

@@ -54,6 +54,8 @@ Backward compatible changes:
 
 BUGFIXES:
 
+  ZOOKEEPER-1900. NullPointerException in truncate (Camille Fournier)
+
   ZOOKEEPER-1474. Cannot build Zookeeper with IBM Java: use of Sun
   MXBean classes (Adalberto Medeiros via phunt)
 
