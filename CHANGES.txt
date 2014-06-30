@@ -34,6 +34,8 @@ NEW FEATURES:
 
 BUGFIXES:
 
+  ZOOKEEPER-1900. NullPointerException in truncate (Camille Fournier)
+
   ZOOKEEPER-786. Exception in ZooKeeper.toString
   (Thomas Koch via phunt)
 

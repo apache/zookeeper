@@ -378,6 +378,11 @@ public class FileTxnLog implements TxnLog {
         try {
             itr = new FileTxnIterator(this.logDir, zxid);
             PositionInputStream input = itr.inputStream;
+            if(input == null) {
+                throw new IOException("No log files found to truncate! This could " +
+                        "happen if you still have snapshots from an old setup or " +
+                        "log files were deleted accidentally or dataLogDir was changed in zoo.cfg.");
+            }
             long pos = input.getPosition();
             // now, truncate at the current position
             RandomAccessFile raf=new RandomAccessFile(itr.logFile,"rw");

@@ -82,7 +82,7 @@ public class Observer extends Learner{
                     readPacket(qp);
                     processPacket(qp);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOG.warn("Exception when observing the leader", e);
                 try {
                     sock.close();
