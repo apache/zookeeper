@@ -113,6 +113,33 @@ public class TruncateTest extends ZKTestCase {
         iter.close();
         ClientBase.recursiveDelete(tmpdir);
     }
+    
+    @Test
+    public void testTruncationNullLog() throws Exception {
+        File tmpdir = ClientBase.createTmpDir();
+        FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpdir, tmpdir);
+        ZKDatabase zkdb = new ZKDatabase(snaplog);
+
+        for (int i = 1; i <= 100; i++) {
+            append(zkdb, i);
+        }
+        File[] logs = snaplog.getDataDir().listFiles();
+        for(int i = 0; i < logs.length; i++) {
+            logs[i].delete();
+        }
+        try {
+            zkdb.truncateLog(1);
+            Assert.assertTrue("Should not get here", false);
+        }
+        catch(IOException e) {
+            Assert.assertTrue("Should have received an IOException", true);
+        }
+        catch(NullPointerException npe) {
+            Assert.fail("This should not throw NPE!");
+        }
+ 
+        ClientBase.recursiveDelete(tmpdir);
+    }
 
     private void append(ZKDatabase zkdb, int i) throws IOException {
         TxnHeader hdr = new TxnHeader(1, 1, i, 1, ZooDefs.OpCode.setData);
