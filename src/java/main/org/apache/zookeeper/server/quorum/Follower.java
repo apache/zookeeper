@@ -85,7 +85,7 @@ public class Follower extends Learner{
                     readPacket(qp);
                     processPacket(qp);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOG.warn("Exception when following the leader", e);
                 try {
                     sock.close();
