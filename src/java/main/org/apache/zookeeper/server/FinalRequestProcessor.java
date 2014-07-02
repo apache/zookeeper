@@ -178,15 +178,8 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             switch (request.type) {
             case OpCode.ping: {
-                zks.serverStats().updateLatency(request.createTime);
-
                 lastOp = "PING";
-                cnxn.updateStatsForResponse(request.cxid, request.zxid, lastOp,
-                        request.createTime, System.currentTimeMillis());
-
-                cnxn.sendResponse(new ReplyHeader(-2,
-                        zks.getZKDatabase().getDataTreeLastProcessedZxid(), 0), null, "response");
-                return;
+                break;
             }
             case OpCode.createSession: {
                 zks.serverStats().updateLatency(request.createTime);
