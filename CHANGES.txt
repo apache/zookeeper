@@ -950,6 +950,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1576. Zookeeper cluster - failed to connect to cluster if one of the 
   provided IPs causes java.net.UnknownHostException (Edward Ribeiro via camille)
 
+  ZOOKEEPER-1918. Add 64 bit Windows as a supported development
+  platform (Michi Mutsuzaki via phunt)
+
 headers
 
 Release 3.4.0 - 

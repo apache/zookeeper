@@ -92,6 +92,10 @@
             platform</emphasis> only for both server and client.</para>
           </listitem>
           <listitem>
+            <para>Win64 is supported as a <emphasis>development
+            platform</emphasis> only for both server and client.</para>
+          </listitem>
+          <listitem>
             <para>MacOSX is supported as a <emphasis>development
             platform</emphasis> only for both server and client.</para>
           </listitem>
