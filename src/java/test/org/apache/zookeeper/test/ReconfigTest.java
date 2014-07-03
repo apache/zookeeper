@@ -626,6 +626,8 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 .getPort() == port2);
         Assert.assertTrue(qu.getPeer(observerIndex).peer.getClientPort() == port3);
         Assert.assertTrue(qu.getPeer(observerIndex).peer.getPeerState() == ServerState.OBSERVING);
+        Assert.assertTrue(qu.getPeer(observerIndex).peer.getName()
+                .endsWith(String.format(":%d", port3)));
 
         joiningServers.clear();
 

@@ -854,8 +854,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     
     @Override
     public void run() {
-        setName("QuorumPeer" + "[myid=" + getId() + "]" +
-                cnxnFactory.getLocalAddress());
+        updateThreadName();
 
         LOG.debug("Starting quorum peer");
         try {
@@ -1566,6 +1565,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
            if (myNewQS != null && myNewQS.clientAddr != null
                    && !myNewQS.clientAddr.equals(oldClientAddr)) {
                cnxnFactory.reconfigure(myNewQS.clientAddr);
+               updateThreadName();
            }
            
             boolean roleChange = updateLearnerType(qv);
@@ -1685,4 +1685,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
+    private void updateThreadName() {
+       setName("QuorumPeer" + "[myid=" + getId() + "]" +
+               cnxnFactory.getLocalAddress());
+    }
 }
