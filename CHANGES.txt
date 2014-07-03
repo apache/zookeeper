@@ -953,6 +953,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1918. Add 64 bit Windows as a supported development
   platform (Michi Mutsuzaki via phunt)
 
+  ZOOKEEPER-1946. Server logging should reflect dynamically
+  reconfigured address (Niko Vuokko via phunt and Alexander Shraer)
+
 headers
 
 Release 3.4.0 - 
