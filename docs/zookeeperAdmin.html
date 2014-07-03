@@ -402,6 +402,13 @@ document.write("Last Published: " + document.lastModified);
           
 <li>
             
+<p>Win64 is supported as a <em>development
+            platform</em> only for both server and client.</p>
+          
+</li>
+          
+<li>
+            
 <p>MacOSX is supported as a <em>development
             platform</em> only for both server and client.</p>
           
@@ -1357,6 +1364,24 @@ server.3=zoo3:2888:3888</pre>
               
 </div>
 </div>
+</dd>
+
+          
+<dt>
+<term>standaloneEnabled</term>
+</dt>
+<dd>
+<p>(No Java system property)</p>
+<p>
+<strong>New in 3.5.0:</strong>
+              When set to false, a single server can be started in replicated
+              mode, a lone participant can run with observers, and a cluster
+              can reconfigure down to one node, and up from one node. The
+              default is true for backwards compatibility. It can be set
+              using QuorumPeerConfig's setStandaloneEnabled method or by
+              adding "standaloneEnabled=false" or "standaloneEnabled=true"
+              to a server's config file.
+              </p>
 </dd>
         
 </dl>
