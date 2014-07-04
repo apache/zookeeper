@@ -678,6 +678,9 @@ BUGFIXES:
   ZOOKEEPER-1939. ReconfigRecoveryTest.testNextConfigUnreachable is
   failing (Rakesh R via phunt)
 
+  ZOOKEEPER-1835. dynamic configuration file renaming fails on Windows
+  (Bruno Freudensprung via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

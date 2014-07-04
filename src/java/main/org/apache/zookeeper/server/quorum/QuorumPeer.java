@@ -28,6 +28,7 @@ import java.io.StringWriter;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -46,7 +47,8 @@ import java.util.Set;
 
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.common.AtomicFileOutputStream;
+import org.apache.zookeeper.common.AtomicFileWritingIdiom;
+import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.HostNameUtils;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
@@ -1488,30 +1490,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 	 * @param value the long value to write to the named file
 	 * @throws IOException if the file cannot be written atomically
 	 */
-    private void writeLongToFile(String name, long value) throws IOException {
+    private void writeLongToFile(String name, final long value) throws IOException {
         File file = new File(logFactory.getSnapDir(), name);
-        AtomicFileOutputStream out = new AtomicFileOutputStream(file);
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out));
-        boolean aborted = false;
-        try {
-            bw.write(Long.toString(value));
-            bw.flush();
-            
-            out.flush();
-        } catch (IOException e) {
-            LOG.error("Failed to write new file " + file, e);
-            // worst case here the tmp file/resources(fd) are not cleaned up
-            //   and the caller will be notified (IOException)
-            aborted = true;
-            out.abort();
-            throw e;
-        } finally {
-            if (!aborted) {
-                // if the close operation (rename) fails we'll get notified.
-                // worst case the tmp file may still exist
-                out.close();
+        new AtomicFileWritingIdiom(file, new WriterStatement() {
+            @Override
+            public void write(Writer bw) throws IOException {
+                bw.write(Long.toString(value));
             }
-        }
+        });
     }
 
     public long getCurrentEpoch() throws IOException {

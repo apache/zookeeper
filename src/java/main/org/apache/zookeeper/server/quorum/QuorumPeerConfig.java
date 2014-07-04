@@ -26,6 +26,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -36,8 +38,9 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-
-
+import org.apache.zookeeper.common.AtomicFileWritingIdiom;
+import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
+import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -299,74 +302,55 @@ public class QuorumPeerConfig {
      * @param qv
      */
     public static void writeDynamicConfig(String dynamicConfigFilename, String configFileStr, 
-            boolean configBackwardCompatibilityMode, QuorumVerifier qv) throws IOException {                             
-        FileOutputStream outConfig = null;
-       try {
-           byte b[] = qv.toString().getBytes();                                            
-           if (configBackwardCompatibilityMode) {
-               dynamicConfigFilename = configFileStr + ".dynamic";
-           }
-           String tmpFilename = dynamicConfigFilename + ".tmp";
-           outConfig = new FileOutputStream(tmpFilename);
-           
-           outConfig.write(b);
-           outConfig.close();
-           File curFile = new File(dynamicConfigFilename);
-           File tmpFile = new File(tmpFilename);
-           if (!tmpFile.renameTo(curFile)) {
-               throw new IOException("renaming " + tmpFile.toString() + " to " + curFile.toString() + " failed!");
-           }
-       } finally{
-           if (outConfig!=null) { 
-               outConfig.close();
-           }
-       }
-       // the following is for users who run without a dynamic config file (old config file)
-       // if the configuration changes (reconfiguration executes), we create a dynamic config
-       // file, remove all the dynamic definitions from the config file and add a pointer
-       // to the config file. The dynamic config file's name will be the same as the config file's
-       // with ".dynamic" appended to it
+            boolean configBackwardCompatibilityMode, final QuorumVerifier qv) throws IOException {
+
+        if (configBackwardCompatibilityMode) {
+            dynamicConfigFilename = configFileStr + ".dynamic";
+        }
+        final String actualDynamicConfigFilename = dynamicConfigFilename;
+        new AtomicFileWritingIdiom(new File(actualDynamicConfigFilename), new OutputStreamStatement() {
+            @Override
+            public void write(OutputStream outConfig) throws IOException {
+                byte b[] = qv.toString().getBytes();
+                outConfig.write(b);
+            }
+        });
+        // the following is for users who run without a dynamic config file (old config file)
+        // if the configuration changes (reconfiguration executes), we create a dynamic config
+        // file, remove all the dynamic definitions from the config file and add a pointer
+        // to the config file. The dynamic config file's name will be the same as the config file's
+        // with ".dynamic" appended to it
        
         if (configBackwardCompatibilityMode) {
-           BufferedWriter out = null;
-               try {
-                   File configFile = (new VerifyingFileFactory.Builder(LOG)
-                       .warnForRelativePath()
-                       .failForNonExistingPath()
-                       .build()).create(configFileStr);
-                       
-                   Properties cfg = new Properties();
-                   FileInputStream in = new FileInputStream(configFile);
-                   try {
-                       cfg.load(in);
-                   } finally {
-                       in.close();
-                   }
-                   String tmpFilename = configFileStr + ".tmp";                    
-                   FileWriter fstream = new FileWriter(tmpFilename);
-                   out = new BufferedWriter(fstream);                 
+               File configFile = (new VerifyingFileFactory.Builder(LOG)
+                   .warnForRelativePath()
+                   .failForNonExistingPath()
+                   .build()).create(configFileStr);
                    
-                   for (Entry<Object, Object> entry : cfg.entrySet()) {
-                       String key = entry.getKey().toString().trim();
-                       String value = entry.getValue().toString().trim();    
-                       if (!key.startsWith("server.") && !key.startsWith("group") 
-                               && !key.startsWith("weight") && !key.equals("clientPort") && !key.equals("clientPortAddress")){
-                           out.write(key.concat("=").concat(value).concat("\n"));
-                       }
-                   }                      
-                   out.write("dynamicConfigFile=".concat(dynamicConfigFilename).concat("\n"));
-                   out.close();
-                   File tmpFile = new File(tmpFilename);
-                   if (!tmpFile.renameTo(configFile)) {
-                       throw new IOException("renaming " + tmpFile.toString() + " to " + configFile.toString() + " failed!");
-                   }
-               } finally{
-                   if (out!=null) {
-                           out.close();
-                   }
+               final Properties cfg = new Properties();
+               FileInputStream in = new FileInputStream(configFile);
+               try {
+                   cfg.load(in);
+               } finally {
+                   in.close();
                }
-           }
-   } 
+               new AtomicFileWritingIdiom(new File(configFileStr), new WriterStatement() {
+                   @Override
+                   public void write(Writer out) throws IOException {
+                       for (Entry<Object, Object> entry : cfg.entrySet()) {
+                           String key = entry.getKey().toString().trim();
+                           String value = entry.getValue().toString().trim();    
+                           if (!key.startsWith("server.") && !key.startsWith("group") 
+                                   && !key.startsWith("weight") && !key.equals("clientPort") && !key.equals("clientPortAddress")){
+                               out.write(key.concat("=").concat(value).concat("\n"));
+                           }
+                       }                      
+                       out.write("dynamicConfigFile=".concat(actualDynamicConfigFilename).concat("\n"));
+                    
+                   }
+               });
+          }
+    } 
     public static void deleteFile(String filename){        
        File f = new File(filename);
        if (f.exists()) {
