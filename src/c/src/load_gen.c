@@ -75,8 +75,8 @@ void waitCounter(){
 }
 
 void listener(zhandle_t *zzh, int type, int state, const char *path,void* ctx) {
-    if(type == ZOO_SESSION_EVENT){
-        if(state == ZOO_CONNECTED_STATE){
+    if (type == ZOO_SESSION_EVENT) {
+        if (state == ZOO_CONNECTED_STATE || state == ZOO_READONLY_STATE) {
             pthread_mutex_lock(&lock);
             pthread_cond_broadcast(&cond);
             pthread_mutex_unlock(&lock);

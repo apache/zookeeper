@@ -32,6 +32,8 @@ NEW FEATURES:
   ZOOKEEPER-1928. add configurable throttling to the number of snapshots
   concurrently sent by a leader (Edward Carter via fpj)
 
+  ZOOKEEPER-827. enable r/o mode in C client library (rgs via fpj)
+
 BUGFIXES:
 
   ZOOKEEPER-1900. NullPointerException in truncate (Camille Fournier)

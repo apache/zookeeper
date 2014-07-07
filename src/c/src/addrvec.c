@@ -194,20 +194,44 @@ int addrvec_atend(const addrvec_t *avec)
 
 void addrvec_next(addrvec_t *avec, struct sockaddr_storage *next)
 {
+    int index;
+
     // If we're at the end of the list, then reset index to start
-    if (addrvec_atend(avec))
-    {
+    if (addrvec_atend(avec)) {
         avec->next = 0;
     }
 
-    if (!addrvec_hasnext(avec))
-    {
+    if (!addrvec_hasnext(avec)) {
+        if (next) {
+            memset(next, 0, sizeof(*next));
+        }
+
+        return;
+    }
+
+    index = avec->next++;
+
+    if (next) {
+        *next = avec->data[index];
+    }
+}
+
+void addrvec_peek(addrvec_t *avec, struct sockaddr_storage *next)
+{
+    int index = avec->next;
+
+    if (avec->count == 0) {
         memset(next, 0, sizeof(*next));
         return;
     }
 
-    *next = avec->data[avec->next++];
+    if (addrvec_atend(avec)) {
+        index = 0;
+    }
+
+    *next = avec->data[index];
 }
+
 
 int addrvec_eq(const addrvec_t *a1, const addrvec_t *a2)
 {

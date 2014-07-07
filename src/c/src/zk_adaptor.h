@@ -42,6 +42,7 @@
 #define CONNECTING_STATE_DEF 1
 #define ASSOCIATING_STATE_DEF 2
 #define CONNECTED_STATE_DEF 3
+#define READONLY_STATE_DEF 5
 #define NOTCONNECTED_STATE_DEF 999
 
 /* zookeeper event type constants */
@@ -131,7 +132,7 @@ typedef struct _buffer_list {
 } buffer_list_t;
 
 /* the size of connect request */
-#define HANDSHAKE_REQ_SIZE 44
+#define HANDSHAKE_REQ_SIZE 45
 /* connect request */
 struct connect_req {
     int32_t protocolVersion;
@@ -140,6 +141,7 @@ struct connect_req {
     int64_t sessionId;
     int32_t passwd_len;
     char passwd[16];
+    char readOnly;
 };
 
 /* the connect response */
@@ -150,6 +152,7 @@ struct prime_struct {
     int64_t sessionId;
     int32_t passwd_len;
     char passwd[16];
+    char readOnly;
 }; 
 
 #ifdef THREADED
@@ -217,6 +220,10 @@ struct _zhandle {
     completion_head_t completions_to_process; // completions that are ready to run
     int outstanding_sync;               // number of outstanding synchronous requests
 
+    /* read-only mode specific fields */
+    struct timeval last_ping_rw; /* The last time we checked server for being r/w */
+    int ping_rw_timeout; /* The time that can go by before checking next server */
+
     // State info
     volatile int state;                 // Current zookeeper state
     void *context;                      // client-side provided context
@@ -228,7 +235,7 @@ struct _zhandle {
     // Primer storage
     struct _buffer_list primer_buffer;  // The buffer used for the handshake at the start of a connection
     struct prime_struct primer_storage; // the connect response
-    char primer_storage_buffer[40];     // the true size of primer_storage
+    char primer_storage_buffer[41];     // the true size of primer_storage
 
     /* zookeeper_close is not reentrant because it de-allocates the zhandler. 
      * This guard variable is used to defer the destruction of zhandle till 
@@ -249,6 +256,11 @@ struct _zhandle {
 
     /** used for chroot path at the client side **/
     char *chroot;
+
+    /** Indicates if this client is allowed to go to r/o mode */
+    char allow_read_only;
+    /** Indicates if we connected to a majority server before */
+    char seen_rw_server_before;
 };
 
 
