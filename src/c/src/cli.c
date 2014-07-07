@@ -76,6 +76,8 @@ static const char* state2String(int state){
     return "ASSOCIATING_STATE";
   if (state == ZOO_CONNECTED_STATE)
     return "CONNECTED_STATE";
+  if (state == ZOO_READONLY_STATE)
+    return "READONLY_STATE";
   if (state == ZOO_EXPIRED_SESSION_STATE)
     return "EXPIRED_SESSION_STATE";
   if (state == ZOO_AUTH_FAILED_STATE)
@@ -661,6 +663,7 @@ int main(int argc, char **argv) {
     char appId[64];
 #endif
     int bufoff = 0;
+    int flags, i;
     FILE *fh;
 
     if (argc < 2) {
@@ -690,6 +693,15 @@ int main(int argc, char **argv) {
         }
       }
     }
+
+    flags = 0;
+    for (i = 1; i < argc; ++i) {
+      if (strcmp("-r", argv[i]) == 0) {
+        flags = ZOO_READONLY;
+        break;
+      }
+    }
+
 #ifdef YCA
     strcpy(appId,"yahoo.example.yca_test");
     cert = yca_get_cert_once(appId);
@@ -708,7 +720,7 @@ int main(int argc, char **argv) {
     zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
     zoo_deterministic_conn_order(1); // enable deterministic order
     hostPort = argv[1];
-    zh = zookeeper_init(hostPort, watcher, 30000, &myid, 0, 0);
+    zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
     if (!zh) {
         return errno;
     }

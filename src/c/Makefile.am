@@ -93,7 +93,9 @@ TEST_SOURCES = \
 	tests/TestWatchers.cc \
 	tests/TestClient.cc \
 	tests/ZooKeeperQuorumServer.cc \
-	tests/ZooKeeperQuorumServer.h
+	tests/ZooKeeperQuorumServer.h \
+	tests/TestReadOnlyClient.cc \
+	$(NULL)
 
 SYMBOL_WRAPPERS=$(shell cat ${srcdir}/tests/wrappers.opt)
 

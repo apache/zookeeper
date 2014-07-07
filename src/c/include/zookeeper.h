@@ -121,8 +121,10 @@ enum ZOO_ERRORS {
   ZCLOSING = -116, /*!< ZooKeeper is closing */
   ZNOTHING = -117, /*!< (not error) no server responses to process */
   ZSESSIONMOVED = -118, /*!<session moved to another server, so operation is ignored */
+  ZNOTREADONLY = -119, /*!< state-changing request is passed to read-only server */
   ZEPHEMERALONLOCALSESSION = -120, /*!< Attempt to create ephemeral node on a local session */
-  ZNOWATCHER = -121 /*!< The watcher couldn't be found */
+  ZNOWATCHER = -121, /*!< The watcher couldn't be found */
+  ZRWSERVERFOUND = -122 /*!< r/w server found while in r/o mode */
 };
 
 #ifdef __cplusplus
@@ -146,6 +148,9 @@ extern ZOOAPI const int ZOO_PERM_ALL;
 
 
 #define ZOO_CONFIG_NODE "/zookeeper/config"
+
+/* flags for zookeeper_init{,2} */
+#define ZOO_READONLY         1
 
 /** This Id represents anyone. */
 extern ZOOAPI struct Id ZOO_ANYONE_ID_UNSAFE;
@@ -196,6 +201,7 @@ extern ZOOAPI const int ZOO_AUTH_FAILED_STATE;
 extern ZOOAPI const int ZOO_CONNECTING_STATE;
 extern ZOOAPI const int ZOO_ASSOCIATING_STATE;
 extern ZOOAPI const int ZOO_CONNECTED_STATE;
+extern ZOOAPI const int ZOO_READONLY_STATE;
 extern ZOOAPI const int ZOO_NOTCONNECTED_STATE;
 // @}
 

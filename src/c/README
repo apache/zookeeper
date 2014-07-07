@@ -85,6 +85,10 @@ against zookeeper_st library):
 
 $ cli_mt zookeeper_host:9876
 
+To start a client with read-only mode enabled, use the -r flag:
+
+$ cli_mt -r zookeeper_host:9876
+
 This is a client application that gives you a shell for executing
 simple zookeeper commands. Once successfully started and connected to
 the server it displays a shell prompt.

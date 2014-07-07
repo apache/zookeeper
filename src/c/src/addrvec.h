@@ -111,12 +111,19 @@ int addrvec_hasnext(const addrvec_t *avec);
 int addrvec_atend(const addrvec_t *avec);
 
 /**
- * Get the next entry from the addrvec and update the associated index. 
+ * Get the next entry from the addrvec and update the associated index.
+ *
+ * If next is NULL, the index will still be updated.
  * 
  * If the current index points at (or after) the last element in the vector then
  * it will loop back around and start at the beginning of the list.
  */
 void addrvec_next(addrvec_t *avec, struct sockaddr_storage *next);
+
+/**
+ * Retrieves the next entry from the addrvec but doesn't update the index.
+ */
+void addrvec_peek(addrvec_t *avec, struct sockaddr_storage *next);
 
 /**
  * Compare two addrvecs for equality. 
