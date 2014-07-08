@@ -140,8 +140,6 @@ public class FLEZeroWeightTest extends ZKTestCase {
 
     @Test
     public void testZeroWeightQuorum() throws Exception {
-        FastLeaderElection le[] = new FastLeaderElection[count];
-
         LOG.info("TestZeroWeightQuorum: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             InetSocketAddress addr1 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
@@ -153,7 +151,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
             tmpdir[i] = ClientBase.createTmpDir();
         }
 
-        for(int i = 0; i < le.length; i++) {
+        for(int i = 0; i < count; i++) {
             QuorumHierarchical hq = new QuorumHierarchical(qp);
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, hq);
             peer.startLeaderElection();
