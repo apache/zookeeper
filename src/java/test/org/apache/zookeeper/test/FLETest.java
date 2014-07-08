@@ -297,7 +297,6 @@ public class FLETest extends ZKTestCase {
      * @throws Exception
      */
     private void runElection(int rounds) throws Exception {
-        FastLeaderElection le[] = new FastLeaderElection[count];
         ConcurrentHashMap<Long, HashSet<Integer> > quora = 
             new ConcurrentHashMap<Long, HashSet<Integer> >();
 
@@ -322,7 +321,7 @@ public class FLETest extends ZKTestCase {
         /*
          * Start one LEThread for each peer we want to run.
          */
-        for(int i = 0; i < le.length; i++) {
+        for(int i = 0; i < count; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
                     port[i], 3, i, 1000, 2, 2);
             peer.startLeaderElection();

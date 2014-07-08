@@ -152,8 +152,6 @@ public class FLENewEpochTest extends ZKTestCase {
       @Test
       public void testLENewEpoch() throws Exception {
 
-          FastLeaderElection le[] = new FastLeaderElection[count];
-
           LOG.info("TestLE: " + getTestName()+ ", " + count);
           for(int i = 0; i < count; i++) {
               peers.put(Long.valueOf(i),
@@ -166,7 +164,7 @@ public class FLENewEpochTest extends ZKTestCase {
               port[i] = PortAssignment.unique();
           }
 
-          for(int i = 1; i < le.length; i++) {
+          for(int i = 1; i < count; i++) {
               QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2);
               peer.startLeaderElection();
               LEThread thread = new LEThread(peer, i);

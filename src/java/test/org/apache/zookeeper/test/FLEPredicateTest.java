@@ -78,6 +78,7 @@ public class FLEPredicateTest extends ZKTestCase {
                                         PortAssignment.unique(), 3, 0, 1000, 2, 2);
         
             MockFLE mock = new MockFLE(peer);
+            mock.start();
             
             /*
              * Lower epoch must return false
