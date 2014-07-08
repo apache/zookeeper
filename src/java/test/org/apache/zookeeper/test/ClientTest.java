@@ -162,6 +162,12 @@ public class ClientTest extends ClientBase {
             List<ACL> acls = zk.getACL("/acltest", new Stat());
             Assert.assertEquals(1, acls.size());
             Assert.assertEquals(Ids.OPEN_ACL_UNSAFE, acls);
+
+            // The stat parameter should be optional.
+            acls = zk.getACL("/acltest", null);
+            Assert.assertEquals(1, acls.size());
+            Assert.assertEquals(Ids.OPEN_ACL_UNSAFE, acls);
+
             zk.close();
         } finally {
             if (zk != null) {
