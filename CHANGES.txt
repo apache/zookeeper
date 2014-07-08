@@ -37,6 +37,9 @@ BUGFIXES:
   ZOOKEEPER-1939. ReconfigRecoveryTest.testNextConfigUnreachable is
   failing (Rakesh R via phunt)
 
+  ZOOKEEPER-1222. getACL should only call DataTree.copyStat when passed in
+  stat is not null (Michi Mutsuzaki via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
