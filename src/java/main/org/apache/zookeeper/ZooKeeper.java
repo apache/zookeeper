@@ -1306,7 +1306,8 @@ public class ZooKeeper {
      * @param path
      *                the given path for the node
      * @param stat
-     *                the stat of the node will be copied to this parameter.
+     *                the stat of the node will be copied to this parameter if
+     *                not null.
      * @return the ACL array of the given node.
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
@@ -1330,7 +1331,9 @@ public class ZooKeeper {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
                     clientPath);
         }
-        DataTree.copyStat(response.getStat(), stat);
+        if (stat != null) {
+            DataTree.copyStat(response.getStat(), stat);
+        }
         return response.getAcl();
     }
 
