@@ -686,6 +686,9 @@ BUGFIXES:
   ZOOKEEPER-1810. Add version to FLE notifications for trunk Germán Blanco via
   michim)
 
+  ZOOKEEPER-1222. getACL should only call DataTree.copyStat when passed in
+  stat is not null (Michi Mutsuzaki via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

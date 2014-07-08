@@ -424,7 +424,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             // We try to remove server 3, which requires a quorum of {1,2,3}
             // (we have that) and of {1,2}, but 2 is down so we won't get a
             // quorum of new config ACKs.
-            zkArr[1].reconfig(null, leavingServers, null, -1, new Stat());
+            zkArr[1].reconfig(null, leavingServers, null, -1, null);
             Assert.fail("Reconfig should have failed since we don't have quorum of new config");
         } catch (KeeperException.ConnectionLossException e) {
             // We expect leader to loose quorum of proposed config and time out
