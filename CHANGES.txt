@@ -967,6 +967,10 @@ IMPROVEMENTS:
   ZOOKEEPER-1946. Server logging should reflect dynamically
   reconfigured address (Niko Vuokko via phunt and Alexander Shraer)
 
+  ZOOKEEPER-1953. Add solution and project files to enable build with current
+  Visual Studio editions (VS 2012/2013)- 32-bit and 64-bit.
+  (Orion Hodson via fpj)
+
 headers
 
 Release 3.4.0 - 
