@@ -689,6 +689,8 @@ BUGFIXES:
   ZOOKEEPER-1222. getACL should only call DataTree.copyStat when passed in
   stat is not null (Michi Mutsuzaki via rakeshr)
 
+  ZOOKEEPER-1964. Fix Flaky Test in ReconfigTest.java (Hongchao Deng via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
