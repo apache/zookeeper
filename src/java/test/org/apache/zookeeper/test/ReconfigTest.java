@@ -19,6 +19,8 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -956,20 +958,42 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 beanName, "QuorumSystemInfo"));
     }
 
+    String getAddrPortFromBean(String beanName, String attribute) throws Exception {
+        String name = (String) JMXEnv.ensureBeanAttribute(
+                beanName, attribute);
+
+        if ( ! name.contains(":") ) {
+            return name;
+        }
+
+        return getNumericalAddrPort(name);
+    }
+
+    String getNumericalAddrPort(String name) throws UnknownHostException {
+        String port = name.split(":")[1];
+        String addr = name.split(":")[0];
+        addr = InetAddress.getByName(addr).getHostAddress();
+        return addr + ":" + port;
+    }
+
     private void assertRemotePeerMXBeanAttributes(QuorumServer qs,
             String beanName) throws Exception {
         Assert.assertEquals("Mismatches LearnerType!", qs.type.name(),
                 JMXEnv.ensureBeanAttribute(beanName, "LearnerType"));
         Assert.assertEquals("Mismatches ClientAddress!",
-                HostNameUtils.getHostString(qs.clientAddr) + ":"
-                        + qs.clientAddr.getPort(),
-                JMXEnv.ensureBeanAttribute(beanName, "ClientAddress"));
+                getNumericalAddrPort(
+                        HostNameUtils.getHostString(qs.clientAddr) + ":"
+                        + qs.clientAddr.getPort() ),
+                getAddrPortFromBean(beanName, "ClientAddress") );
         Assert.assertEquals("Mismatches ElectionAddress!",
-                HostNameUtils.getHostString(qs.electionAddr) + ":"
-                        + qs.electionAddr.getPort(),
-                JMXEnv.ensureBeanAttribute(beanName, "ElectionAddress"));
-        Assert.assertEquals("Mismatches QuorumAddress!", qs.addr.getHostName()
-                + ":" + qs.addr.getPort(),
-                JMXEnv.ensureBeanAttribute(beanName, "QuorumAddress"));
+                getNumericalAddrPort(
+                        HostNameUtils.getHostString(qs.electionAddr) + ":"
+                        + qs.electionAddr.getPort() ),
+                getAddrPortFromBean(beanName, "ElectionAddress") );
+        Assert.assertEquals("Mismatches QuorumAddress!",
+                getNumericalAddrPort(
+                        qs.addr.getHostName() + ":"
+                        + qs.addr.getPort() ),
+                getAddrPortFromBean(beanName, "QuorumAddress") );
     }
 }
