@@ -690,6 +690,9 @@ BUGFIXES:
   stat is not null (Michi Mutsuzaki via rakeshr)
 
   ZOOKEEPER-1964. Fix Flaky Test in ReconfigTest.java (Hongchao Deng via fpj)
+  
+  ZOOKEEPER-1863. Race condition in commit processor leading to out of order 
+  request completion, xid mismatch on client. (fpj and Dutch T Meyer via camille)
 
 IMPROVEMENTS:
 
