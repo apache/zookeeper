@@ -17,3 +17,5 @@
 *.cmd    text eol=crlf
 *.csproj text merge=union eol=crlf
 *.sln    text merge=union eol=crlf
+*.vcxproj text merge=union eol=crlf
+*.vcxproj.filters text merge=union eol=crlf

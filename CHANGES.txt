@@ -694,6 +694,8 @@ BUGFIXES:
   ZOOKEEPER-1863. Race condition in commit processor leading to out of order 
   request completion, xid mismatch on client. (fpj and Dutch T Meyer via camille)
 
+  ZOOKEEPER-1966. VS and line breaks (Orion Hodson via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
