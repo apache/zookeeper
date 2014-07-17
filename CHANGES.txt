@@ -696,6 +696,9 @@ BUGFIXES:
 
   ZOOKEEPER-1966. VS and line breaks (Orion Hodson via fpj)
 
+  ZOOKEEPER-1683. ZooKeeper client NPE when updating server list on disconnected
+  client (shralex via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

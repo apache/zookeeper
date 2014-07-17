@@ -123,21 +123,25 @@ public class StaticHostProviderTest extends ZKTestCase {
         // Number of machines becomes smaller, my server is in the new cluster
         boolean disconnectRequired = hostProvider.updateServerList(newList, myServer);
         assertTrue(!disconnectRequired);
-
+        hostProvider.onConnected();
+        
         // Number of machines stayed the same, my server is in the new cluster
         disconnectRequired = hostProvider.updateServerList(newList, myServer);
         assertTrue(!disconnectRequired);
+        hostProvider.onConnected();
 
         // Number of machines became smaller, my server is not in the new
         // cluster
         newList = getServerAddresses((byte) 2); // 10.10.10.2:1236, 10.10.10.1:1235
         disconnectRequired = hostProvider.updateServerList(newList, myServer);
         assertTrue(disconnectRequired);
+        hostProvider.onConnected();
 
         // Number of machines stayed the same, my server is not in the new
         // cluster
         disconnectRequired = hostProvider.updateServerList(newList, myServer);
         assertTrue(disconnectRequired);
+        hostProvider.onConnected();
 
         // Number of machines increased, my server is not in the new cluster
         newList = new ArrayList<InetSocketAddress>(3);
@@ -147,6 +151,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         myServer = new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, 1}), 1235);
         disconnectRequired = hostProvider.updateServerList(newList, myServer);
         assertTrue(disconnectRequired);
+        hostProvider.onConnected();
 
         // Number of machines increased, my server is in the new cluster
         // Here whether to move or not depends on the difference of cluster
@@ -162,6 +167,7 @@ public class StaticHostProviderTest extends ZKTestCase {
             if (disconnectRequired)
                 numDisconnects++;
         }
+        hostProvider.onConnected();
 
        // should be numClients/10 in expectation, we test that its numClients/10 +- slackPercent 
         assertTrue(numDisconnects < upperboundCPS(numClients, 10));
@@ -227,6 +233,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         }
 
         assertEquals(first, hostProvider.next(0));
+        hostProvider.onConnected();
     }
 
     @Test
@@ -242,6 +249,7 @@ public class StaticHostProviderTest extends ZKTestCase {
             hostProviderArray[i] = getHostProvider((byte) 9);
             curHostForEachClient[i] = hostProviderArray[i].next(0);
             numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+            hostProviderArray[i].onConnected();
         }
 
         for (int i = 0; i < 9; i++) {
@@ -257,6 +265,7 @@ public class StaticHostProviderTest extends ZKTestCase {
             disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
             if (disconnectRequired) curHostForEachClient[i] = hostProviderArray[i].next(0);
             numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+            hostProviderArray[i].onConnected();
         }
 
         for (int i = 0; i < 8; i++) {
@@ -273,6 +282,7 @@ public class StaticHostProviderTest extends ZKTestCase {
             disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
             if (disconnectRequired) curHostForEachClient[i] = hostProviderArray[i].next(0);
             numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+            hostProviderArray[i].onConnected();
         }
 
         for (int i = 0; i < 6; i++) {
@@ -295,6 +305,7 @@ public class StaticHostProviderTest extends ZKTestCase {
             disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
             if (disconnectRequired) curHostForEachClient[i] = hostProviderArray[i].next(0);
             numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+            hostProviderArray[i].onConnected();
         }
 
         assertTrue(numClientsPerHost[0] == 0);
@@ -312,6 +323,130 @@ public class StaticHostProviderTest extends ZKTestCase {
             disconnectRequired = hostProviderArray[i].updateServerList(newList, curHostForEachClient[i]);
             if (disconnectRequired) curHostForEachClient[i] = hostProviderArray[i].next(0);
             numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+            hostProviderArray[i].onConnected();
+        }
+
+        for (int i = 0; i < 9; i++) {
+            assertTrue(numClientsPerHost[i] <= upperboundCPS(numClients, 9));
+            assertTrue(numClientsPerHost[i] >= lowerboundCPS(numClients, 9));
+        }
+    }
+
+    @Test
+    public void testNoCurrentHostDuringNormalMode() throws UnknownHostException {
+        // Start with 9 servers and 10000 clients
+        boolean disconnectRequired;
+        StaticHostProvider[] hostProviderArray = new StaticHostProvider[numClients];
+        InetSocketAddress[] curHostForEachClient = new InetSocketAddress[numClients];
+        int[] numClientsPerHost = new int[9];
+
+        // initialization
+        for (int i = 0; i < numClients; i++) {
+            hostProviderArray[i] = getHostProvider((byte) 9);
+            if (i >= (numClients / 2)) {
+                curHostForEachClient[i] = hostProviderArray[i].next(0);
+            } else {
+                // its supposed to be the first server on serverList.
+                // we'll set it later, see below (*)
+                curHostForEachClient[i] = null;
+            }
+        }
+
+        // remove hosts 7 and 8 (the last two in a list of 9 hosts)
+        Collection<InetSocketAddress> newList = getServerAddresses((byte) 7);
+
+        for (int i = 0; i < numClients; i++) {
+            // tests the case currentHost == null && lastIndex == -1
+            // calls next for clients with index < numClients/2
+            disconnectRequired = hostProviderArray[i].updateServerList(newList,
+                    curHostForEachClient[i]);
+            if (disconnectRequired)
+                curHostForEachClient[i] = hostProviderArray[i].next(0);
+            else if (curHostForEachClient[i] == null) {
+                // (*) setting it to what it should be
+                curHostForEachClient[i] = hostProviderArray[i]
+                        .getServerAtIndex(0);
+            }
+            numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+            // sets lastIndex, resets reconfigMode
+            hostProviderArray[i].onConnected();
+        }
+
+        for (int i = 0; i < 7; i++) {
+            assertTrue(numClientsPerHost[i] <= upperboundCPS(numClients, 7));
+            assertTrue(numClientsPerHost[i] >= lowerboundCPS(numClients, 7));
+            numClientsPerHost[i] = 0; // prepare for next test
+        }
+        assertTrue(numClientsPerHost[7] == 0);
+        assertTrue(numClientsPerHost[8] == 0);
+
+        // add back server 7
+        newList = getServerAddresses((byte) 8);
+
+        for (int i = 0; i < numClients; i++) {
+            InetSocketAddress myServer = (i < (numClients / 2)) ? null
+                    : curHostForEachClient[i];
+            // tests the case currentHost == null && lastIndex >= 0
+            disconnectRequired = hostProviderArray[i].updateServerList(newList,
+                    myServer);
+            if (disconnectRequired)
+                curHostForEachClient[i] = hostProviderArray[i].next(0);
+            numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+            hostProviderArray[i].onConnected();
+        }
+
+        for (int i = 0; i < 8; i++) {
+            assertTrue(numClientsPerHost[i] <= upperboundCPS(numClients, 8));
+            assertTrue(numClientsPerHost[i] >= lowerboundCPS(numClients, 8));
+        }
+    }
+
+    @Test
+    public void testReconfigDuringReconfigMode() throws UnknownHostException {
+        // Start with 9 servers and 10000 clients
+        boolean disconnectRequired;
+        StaticHostProvider[] hostProviderArray = new StaticHostProvider[numClients];
+        InetSocketAddress[] curHostForEachClient = new InetSocketAddress[numClients];
+        int[] numClientsPerHost = new int[9];
+
+        // initialization
+        for (int i = 0; i < numClients; i++) {
+            hostProviderArray[i] = getHostProvider((byte) 9);
+            curHostForEachClient[i] = hostProviderArray[i].next(0);
+        }
+
+        // remove hosts 7 and 8 (the last two in a list of 9 hosts)
+        Collection<InetSocketAddress> newList = getServerAddresses((byte) 7);
+
+        for (int i = 0; i < numClients; i++) {
+            // sets reconfigMode
+            hostProviderArray[i].updateServerList(newList,
+                    curHostForEachClient[i]);
+        }
+
+        // add back servers 7 and 8 while still in reconfigMode (we didn't call
+        // next)
+        newList = getServerAddresses((byte) 9);
+
+        for (int i = 0; i < numClients; i++) {
+            InetSocketAddress myServer = (i < (numClients / 2)) ? null
+                    : curHostForEachClient[i];
+            // for i < (numClients/2) this tests the case currentHost == null &&
+            // reconfigMode = true
+            // for i >= (numClients/2) this tests the case currentHost!=null &&
+            // reconfigMode = true
+            disconnectRequired = hostProviderArray[i].updateServerList(newList,
+                    myServer);
+            if (disconnectRequired)
+                curHostForEachClient[i] = hostProviderArray[i].next(0);
+            else {
+                // currentIndex was set by the call to updateServerList, which
+                // called next
+                curHostForEachClient[i] = hostProviderArray[i]
+                        .getServerAtCurrentIndex();
+            }
+            numClientsPerHost[curHostForEachClient[i].getPort() - 1235]++;
+            hostProviderArray[i].onConnected();
         }
 
         for (int i = 0; i < 9; i++) {
