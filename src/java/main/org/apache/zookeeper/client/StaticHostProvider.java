@@ -152,8 +152,9 @@ public final class StaticHostProvider implements HostProvider {
 
 
     @Override
-    public boolean updateServerList(Collection<InetSocketAddress> serverAddresses, 
-        InetSocketAddress currentHost) {
+    public synchronized boolean updateServerList(
+            Collection<InetSocketAddress> serverAddresses,
+            InetSocketAddress currentHost) {
         // Resolve server addresses and shuffle them
         List<InetSocketAddress> resolvedList = resolveAndShuffle(serverAddresses);
         if (resolvedList.isEmpty()) {
@@ -162,74 +163,106 @@ public final class StaticHostProvider implements HostProvider {
         }
         // Check if client's current server is in the new list of servers
         boolean myServerInNewConfig = false;
-        for (InetSocketAddress addr : resolvedList) {
-            if (addr.getPort() == currentHost.getPort() &&
-                    ((addr.getAddress()!=null && currentHost.getAddress()!=null &&
-                      addr.getAddress().equals(currentHost.getAddress()))
-                     || addr.getHostName().equals(currentHost.getHostName()))) {
-                   myServerInNewConfig = true;
-                   break;
-               }
+
+        InetSocketAddress myServer = currentHost;
+
+        // choose "current" server according to the client rebalancing algorithm
+        if (reconfigMode) {
+            myServer = next(0);
         }
 
-        synchronized(this) {
-            reconfigMode = true;
+        // if the client is not currently connected to any server
+        if (myServer == null) {
+            // reconfigMode = false (next shouldn't return null).
+            if (lastIndex >= 0) {
+                // take the last server to which we were connected
+                myServer = this.serverAddresses.get(lastIndex);
+            } else {
+                // take the first server on the list
+                myServer = this.serverAddresses.get(0);
+            }
+        }
 
-            newServers.clear();
-            oldServers.clear();
-            // Divide the new servers into oldServers that were in the previous list
-            // and newServers that were not in the previous list
-            for (InetSocketAddress resolvedAddress : resolvedList) {                
-                if (this.serverAddresses.contains(resolvedAddress)) {
-                    oldServers.add(resolvedAddress);
-                } else {
-                    newServers.add(resolvedAddress);
-                }
-            }        
+        for (InetSocketAddress addr : resolvedList) {
+            if (addr.getPort() == myServer.getPort()
+                    && ((addr.getAddress() != null
+                            && myServer.getAddress() != null && addr
+                            .getAddress().equals(myServer.getAddress())) || addr
+                            .getHostName().equals(myServer.getHostName()))) {
+                myServerInNewConfig = true;
+                break;
+            }
+        }
 
-            int numOld = oldServers.size();
-            int numNew = newServers.size();                        
+        reconfigMode = true;
 
-            // number of servers increased
-            if (numOld + numNew > this.serverAddresses.size()) {
-                if (myServerInNewConfig) {
-                    // my server is in new config, but load should be decreased.
-                    // Need to decide if this client
-                    // is moving to one of the new servers
-                    if (sourceOfRandomness.nextFloat() <= (1 - ((float) this.serverAddresses
-                            .size()) / (numOld + numNew))) {
-                        pNew = 1;
-                        pOld = 0;
-                    } else {
-                        // do nothing special - stay with the current server
-                        reconfigMode = false;
-                    }
-                } else {
-                    // my server is not in new config, and load on old servers must
-                    // be decreased, so connect to
-                    // one of the new servers
+        newServers.clear();
+        oldServers.clear();
+        // Divide the new servers into oldServers that were in the previous list
+        // and newServers that were not in the previous list
+        for (InetSocketAddress resolvedAddress : resolvedList) {
+            if (this.serverAddresses.contains(resolvedAddress)) {
+                oldServers.add(resolvedAddress);
+            } else {
+                newServers.add(resolvedAddress);
+            }
+        }
+
+        int numOld = oldServers.size();
+        int numNew = newServers.size();
+
+        // number of servers increased
+        if (numOld + numNew > this.serverAddresses.size()) {
+            if (myServerInNewConfig) {
+                // my server is in new config, but load should be decreased.
+                // Need to decide if this client
+                // is moving to one of the new servers
+                if (sourceOfRandomness.nextFloat() <= (1 - ((float) this.serverAddresses
+                        .size()) / (numOld + numNew))) {
                     pNew = 1;
                     pOld = 0;
-                }
-            } else { // number of servers stayed the same or decreased
-                if (myServerInNewConfig) {
-                    // my server is in new config, and load should be increased, so
-                    // stay with this server and do nothing special
-                    reconfigMode = false;
                 } else {
-                    pOld = ((float) (numOld * (this.serverAddresses.size() - (numOld + numNew))))
-                            / ((numOld + numNew) * (this.serverAddresses.size() - numOld));
-                    pNew = 1 - pOld;
+                    // do nothing special - stay with the current server
+                    reconfigMode = false;
                 }
+            } else {
+                // my server is not in new config, and load on old servers must
+                // be decreased, so connect to
+                // one of the new servers
+                pNew = 1;
+                pOld = 0;
             }
-
-            this.serverAddresses = resolvedList;    
-            currentIndexOld = -1;
-            currentIndexNew = -1; 
-            currentIndex = -1;
-            lastIndex = -1;                
-            return reconfigMode;
+        } else { // number of servers stayed the same or decreased
+            if (myServerInNewConfig) {
+                // my server is in new config, and load should be increased, so
+                // stay with this server and do nothing special
+                reconfigMode = false;
+            } else {
+                pOld = ((float) (numOld * (this.serverAddresses.size() - (numOld + numNew))))
+                        / ((numOld + numNew) * (this.serverAddresses.size() - numOld));
+                pNew = 1 - pOld;
+            }
         }
+
+        if (!reconfigMode) {
+            currentIndex = resolvedList.indexOf(getServerAtCurrentIndex());
+        } else {
+            currentIndex = -1;
+        }
+        this.serverAddresses = resolvedList;
+        currentIndexOld = -1;
+        currentIndexNew = -1;
+        lastIndex = currentIndex;
+        return reconfigMode;
+    }
+
+    public synchronized InetSocketAddress getServerAtIndex(int i) {
+    	if (i < 0 || i >= serverAddresses.size()) return null;
+    	return serverAddresses.get(i);
+    }
+    
+    public synchronized InetSocketAddress getServerAtCurrentIndex() {
+    	return getServerAtIndex(currentIndex);
     }
 
     public synchronized int size() {
@@ -279,7 +312,10 @@ public final class StaticHostProvider implements HostProvider {
         synchronized(this) {
             if (reconfigMode) {
                 addr = nextHostInReconfigMode();
-                if (addr != null) return addr;                
+                if (addr != null) {
+                	currentIndex = serverAddresses.indexOf(addr);
+                	return addr;                
+                }
                 //tried all servers and couldn't connect
                 reconfigMode = false;
                 needToSleep = (spinDelay > 0);

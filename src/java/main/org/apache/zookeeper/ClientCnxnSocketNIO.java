@@ -377,7 +377,12 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     @Override
     void testableCloseSocket() throws IOException {
         LOG.info("testableCloseSocket() called");
-        ((SocketChannel) sockKey.channel()).socket().close();
+        // sockKey may be concurrently accessed by multiple
+        // threads. We use tmp here to avoid a race condition
+        SelectionKey tmp = sockKey;
+        if (tmp!=null) {
+           ((SocketChannel) tmp.channel()).socket().close();
+        }
     }
 
     @Override

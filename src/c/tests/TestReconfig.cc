@@ -470,11 +470,13 @@ public:
 
             // Assert next server is in the 'new' list
             size_t found = newComing.find(next);
-            CPPUNIT_ASSERT(found != string::npos);
+            CPPUNIT_ASSERT_MESSAGE(next + " not in newComing list",
+                                   found != string::npos);
 
             // Assert not in seen list then append
             found = seen.find(next);
-            CPPUNIT_ASSERT(found == string::npos);
+            CPPUNIT_ASSERT_MESSAGE(next + " in seen list",
+                                   found == string::npos);
             seen += found + ", ";
         }
 
