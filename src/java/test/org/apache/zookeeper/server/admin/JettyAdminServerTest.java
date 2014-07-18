@@ -40,11 +40,13 @@ public class JettyAdminServerTest extends ZKTestCase{
     protected static final Logger LOG = LoggerFactory.getLogger(JettyAdminServerTest.class);
 
     private static final String URL_FORMAT = "http://localhost:%d/commands";
+    private static final int jettyAdminPort = PortAssignment.unique();
 
     @Before
     public void enableServer() {
         // Override setting in ZKTestCase
         System.setProperty("zookeeper.admin.enableServer", "true");
+        System.setProperty("zookeeper.admin.serverPort", "" + jettyAdminPort);
     }
 
     /**
@@ -55,7 +57,7 @@ public class JettyAdminServerTest extends ZKTestCase{
         JettyAdminServer server = new JettyAdminServer();;
         try {
             server.start();
-            queryAdminServer(JettyAdminServer.DEFAULT_PORT);
+            queryAdminServer(jettyAdminPort);
         } finally {
             server.shutdown();
         }
@@ -77,7 +79,7 @@ public class JettyAdminServerTest extends ZKTestCase{
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT));
 
-        queryAdminServer(JettyAdminServer.DEFAULT_PORT);
+        queryAdminServer(jettyAdminPort);
 
         main.shutdown();
 
