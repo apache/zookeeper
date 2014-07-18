@@ -702,6 +702,9 @@ BUGFIXES:
   ZOOKEEPER-1683. ZooKeeper client NPE when updating server list on disconnected
   client (shralex via michim)
 
+  ZOOKEEPER-1969. Fix Port Already In Use for JettyAdminServerTest
+  (Hongchao Deng via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
