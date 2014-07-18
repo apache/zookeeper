@@ -18,7 +18,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -212,5 +214,10 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         if (localSessionTracker != null) {
             localSessionTracker.setSessionClosing(sessionId);
         }
+    }
+
+    @Override
+    public Map<Long, Set<Long>> getSessionExpiryMap() {
+        return new HashMap<Long, Set<Long>>();
     }
 }

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -223,7 +224,7 @@ public class DataTree {
         return dataWatches.size() + childWatches.size();
     }
 
-    int getEphemeralsCount() {
+    public int getEphemeralsCount() {
         int result = 0;
         for (HashSet<String> set : ephemerals.values()) {
             result += set.size();
@@ -1264,6 +1265,36 @@ public class DataTree {
     }
 
     /**
+     * Returns a watch report.
+     *
+     * @return watch report
+     * @see WatchesReport
+     */
+    public synchronized WatchesReport getWatches() {
+        return dataWatches.getWatches();
+    }
+
+    /**
+     * Returns a watch report by path.
+     *
+     * @return watch report
+     * @see WatchesPathReport
+     */
+    public synchronized WatchesPathReport getWatchesByPath() {
+        return dataWatches.getWatchesByPath();
+    }
+
+    /**
+     * Returns a watch summary.
+     *
+     * @return watch summary
+     * @see WatchesSummary
+     */
+    public synchronized WatchesSummary getWatchesSummary() {
+        return dataWatches.getWatchesSummary();
+    }
+
+    /**
      * Write a text dump of all the ephemerals in the datatree.
      * @param pwriter the output to write to
      */
@@ -1283,6 +1314,21 @@ public class DataTree {
                 }
             }
         }
+    }
+
+    /**
+     * Returns a mapping of session ID to ephemeral znodes.
+     *
+     * @return map of session ID to sets of ephemeral znodes
+     */
+    public Map<Long, Set<String>> getEphemerals() {
+        HashMap<Long, Set<String>> ephemeralsCopy = new HashMap<Long, Set<String>>();
+        for (Entry<Long, HashSet<String>> e : ephemerals.entrySet()) {
+            synchronized (e.getValue()) {
+                ephemeralsCopy.put(e.getKey(), new HashSet<String>(e.getValue()));
+            }
+        }
+        return ephemeralsCopy;
     }
 
     public void removeCnxn(Watcher watcher) {

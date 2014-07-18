@@ -1320,194 +1320,266 @@ server.3=zoo3:2888:3888</programlisting>
 
       </section>
 
+      <section id="sc_adminserver_config">
+        <title>AdminServer configuration</title>
+        <para><emphasis role="bold">New in 3.5.0:</emphasis> The following
+        options are used to configure the <ulink
+        url="#sc_adminserver">AdminServer</ulink>.</para>
+
+        <variablelist>
+          <varlistentry>
+            <term>admin.enableServer</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.admin.enableServer</emphasis>)</para>
+
+              <para>Set to "false" to disable the AdminServer.  By default the
+              AdminServer is enabled.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>admin.serverPort</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.admin.serverPort</emphasis>)</para>
+
+              <para>The port the embedded Jetty server listens on.  Defaults to 8080.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>admin.commandURL</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.admin.commandURL</emphasis>)</para>
+
+              <para>The URL for listing and issuing commands relative to the
+              root URL.  Defaults to "/commands".</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+
     </section>
 
     <section id="sc_zkCommands">
-      <title>ZooKeeper Commands: The Four Letter Words</title>
+      <title>ZooKeeper Commands</title>
 
-      <para>ZooKeeper responds to a small set of commands. Each command is
-      composed of four letters. You issue the commands to ZooKeeper via telnet
-      or nc, at the client port.</para>
+      <section>
+        <title>The Four Letter Words</title>
+        <para>ZooKeeper responds to a small set of commands. Each command is
+        composed of four letters. You issue the commands to ZooKeeper via telnet
+        or nc, at the client port.</para>
 
-      <para>Three of the more interesting commands: "stat" gives some
-      general information about the server and connected clients,
-      while "srvr" and "cons" give extended details on server and
-      connections respectively.</para>
+        <para>Three of the more interesting commands: "stat" gives some
+        general information about the server and connected clients,
+        while "srvr" and "cons" give extended details on server and
+        connections respectively.</para>
 
-      <variablelist>
-        <varlistentry>
-          <term>conf</term>
+        <variablelist>
+          <varlistentry>
+            <term>conf</term>
 
-          <listitem>
-            <para><emphasis role="bold">New in 3.3.0:</emphasis> Print
-            details about serving configuration.</para>
-          </listitem>
+            <listitem>
+              <para><emphasis role="bold">New in 3.3.0:</emphasis> Print
+              details about serving configuration.</para>
+            </listitem>
 
-        </varlistentry>
+          </varlistentry>
 
-        <varlistentry>
-          <term>cons</term>
+          <varlistentry>
+            <term>cons</term>
 
-          <listitem>
-            <para><emphasis role="bold">New in 3.3.0:</emphasis> List
-            full connection/session details for all clients connected
-            to this server. Includes information on numbers of packets
-            received/sent, session id, operation latencies, last
-            operation performed, etc...</para>
-          </listitem>
+            <listitem>
+              <para><emphasis role="bold">New in 3.3.0:</emphasis> List
+              full connection/session details for all clients connected
+              to this server. Includes information on numbers of packets
+              received/sent, session id, operation latencies, last
+              operation performed, etc...</para>
+            </listitem>
 
-        </varlistentry>
+          </varlistentry>
 
-        <varlistentry>
-          <term>crst</term>
+          <varlistentry>
+            <term>crst</term>
 
-          <listitem>
-            <para><emphasis role="bold">New in 3.3.0:</emphasis> Reset
-            connection/session statistics for all connections.</para>
-          </listitem>
-        </varlistentry>
+            <listitem>
+              <para><emphasis role="bold">New in 3.3.0:</emphasis> Reset
+              connection/session statistics for all connections.</para>
+            </listitem>
+          </varlistentry>
 
-        <varlistentry>
-          <term>dump</term>
+          <varlistentry>
+            <term>dump</term>
 
-          <listitem>
-            <para>Lists the outstanding sessions and ephemeral nodes. This
-            only works on the leader.</para>
-          </listitem>
-        </varlistentry>
+            <listitem>
+              <para>Lists the outstanding sessions and ephemeral nodes. This
+              only works on the leader.</para>
+            </listitem>
+          </varlistentry>
 
-        <varlistentry>
-          <term>envi</term>
+          <varlistentry>
+            <term>envi</term>
 
-          <listitem>
-            <para>Print details about serving environment</para>
-          </listitem>
-        </varlistentry>
+            <listitem>
+              <para>Print details about serving environment</para>
+            </listitem>
+          </varlistentry>
 
-        <varlistentry>
-          <term>ruok</term>
+          <varlistentry>
+            <term>ruok</term>
 
-          <listitem>
-            <para>Tests if server is running in a non-error state. The server
-            will respond with imok if it is running. Otherwise it will not
-            respond at all.</para>
+            <listitem>
+              <para>Tests if server is running in a non-error state. The server
+              will respond with imok if it is running. Otherwise it will not
+              respond at all.</para>
 
-            <para>A response of "imok" does not necessarily indicate that the
-            server has joined the quorum, just that the server process is active
-            and bound to the specified client port. Use "stat" for details on
-            state wrt quorum and client connection information.</para>
-          </listitem>
-        </varlistentry>
+              <para>A response of "imok" does not necessarily indicate that the
+              server has joined the quorum, just that the server process is active
+              and bound to the specified client port. Use "stat" for details on
+              state wrt quorum and client connection information.</para>
+            </listitem>
+          </varlistentry>
 
-        <varlistentry>
-          <term>srst</term>
+          <varlistentry>
+            <term>srst</term>
 
-          <listitem>
-            <para>Reset server statistics.</para>
-          </listitem>
-        </varlistentry>
+            <listitem>
+              <para>Reset server statistics.</para>
+            </listitem>
+          </varlistentry>
 
-        <varlistentry>
-          <term>srvr</term>
+          <varlistentry>
+            <term>srvr</term>
 
-          <listitem>
-            <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
-            full details for the server.</para>
-          </listitem>
-        </varlistentry>
+            <listitem>
+              <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
+              full details for the server.</para>
+            </listitem>
+          </varlistentry>
 
-        <varlistentry>
-          <term>stat</term>
+          <varlistentry>
+            <term>stat</term>
 
-          <listitem>
-            <para>Lists brief details for the server and connected
-            clients.</para>
-          </listitem>
-        </varlistentry>
+            <listitem>
+              <para>Lists brief details for the server and connected
+              clients.</para>
+            </listitem>
+          </varlistentry>
 
-        <varlistentry>
-          <term>wchs</term>
+          <varlistentry>
+            <term>wchs</term>
 
-          <listitem>
-            <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
-            brief information on watches for the server.</para>
-          </listitem>
-        </varlistentry>
+            <listitem>
+              <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
+              brief information on watches for the server.</para>
+            </listitem>
+          </varlistentry>
 
-        <varlistentry>
-          <term>wchc</term>
+          <varlistentry>
+            <term>wchc</term>
 
-          <listitem>
-            <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
-            detailed information on watches for the server, by
-            session.  This outputs a list of sessions(connections)
-            with associated watches (paths). Note, depending on the
-            number of watches this operation may be expensive (ie
-            impact server performance), use it carefully.</para>
-          </listitem>
-        </varlistentry>
+            <listitem>
+              <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
+              detailed information on watches for the server, by
+              session.  This outputs a list of sessions(connections)
+              with associated watches (paths). Note, depending on the
+              number of watches this operation may be expensive (ie
+              impact server performance), use it carefully.</para>
+            </listitem>
+          </varlistentry>
 
-        <varlistentry>
-          <term>wchp</term>
+          <varlistentry>
+            <term>wchp</term>
 
-          <listitem>
-            <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
-            detailed information on watches for the server, by path.
-            This outputs a list of paths (znodes) with associated
-            sessions. Note, depending on the number of watches this
-            operation may be expensive (ie impact server performance),
-            use it carefully.</para>
-          </listitem>
-        </varlistentry>
+            <listitem>
+              <para><emphasis role="bold">New in 3.3.0:</emphasis> Lists
+              detailed information on watches for the server, by path.
+              This outputs a list of paths (znodes) with associated
+              sessions. Note, depending on the number of watches this
+              operation may be expensive (ie impact server performance),
+              use it carefully.</para>
+            </listitem>
+          </varlistentry>
 
 
-        <varlistentry>
-          <term>mntr</term>
+          <varlistentry>
+            <term>mntr</term>
 
-          <listitem>
-            <para><emphasis role="bold">New in 3.4.0:</emphasis> Outputs a list 
-            of variables that could be used for monitoring the health of the cluster.</para>
+            <listitem>
+              <para><emphasis role="bold">New in 3.4.0:</emphasis> Outputs a list 
+              of variables that could be used for monitoring the health of the cluster.</para>
 
-            <programlisting>$ echo mntr | nc localhost 2185
+              <programlisting>$ echo mntr | nc localhost 2185
 
-zk_version  3.4.0
-zk_avg_latency  0
-zk_max_latency  0
-zk_min_latency  0
-zk_packets_received 70
-zk_packets_sent 69
-zk_outstanding_requests 0
-zk_server_state leader
-zk_znode_count   4
-zk_watch_count  0
-zk_ephemerals_count 0
-zk_approximate_data_size    27
-zk_followers    4                   - only exposed by the Leader
-zk_synced_followers 4               - only exposed by the Leader
-zk_pending_syncs    0               - only exposed by the Leader
-zk_open_file_descriptor_count 23    - only available on Unix platforms
-zk_max_file_descriptor_count 1024   - only available on Unix platforms
-</programlisting>
+              zk_version  3.4.0
+              zk_avg_latency  0
+              zk_max_latency  0
+              zk_min_latency  0
+              zk_packets_received 70
+              zk_packets_sent 69
+              zk_outstanding_requests 0
+              zk_server_state leader
+              zk_znode_count   4
+              zk_watch_count  0
+              zk_ephemerals_count 0
+              zk_approximate_data_size    27
+              zk_followers    4                   - only exposed by the Leader
+              zk_synced_followers 4               - only exposed by the Leader
+              zk_pending_syncs    0               - only exposed by the Leader
+              zk_open_file_descriptor_count 23    - only available on Unix platforms
+              zk_max_file_descriptor_count 1024   - only available on Unix platforms
+              </programlisting>
 
-          <para>The output is compatible with java properties format and the content 
-        may change over time (new keys added). Your scripts should expect changes.</para>
+              <para>The output is compatible with java properties format and the content 
+              may change over time (new keys added). Your scripts should expect changes.</para>
 
-          <para>ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader. </para>
+              <para>ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader. </para>
 
-          <para>The output contains multiple lines with the following format:</para>
-          <programlisting>key \t value</programlisting>
-          </listitem>
-        </varlistentry>
-      </variablelist>
+              <para>The output contains multiple lines with the following format:</para>
+              <programlisting>key \t value</programlisting>
+            </listitem>
+          </varlistentry>
+        </variablelist>
 
-      <para>Here's an example of the <emphasis role="bold">ruok</emphasis>
-      command:</para>
+        <para>Here's an example of the <emphasis role="bold">ruok</emphasis>
+        command:</para>
 
-      <programlisting>$ echo ruok | nc 127.0.0.1 5111
-imok
-</programlisting>
+        <programlisting>$ echo ruok | nc 127.0.0.1 5111
+        imok
+        </programlisting>
 
-    
+      </section>
+      <section id="sc_adminserver">
+        <title>The AdminServer</title>
+        <para><emphasis role="bold">New in 3.5.0: </emphasis>The AdminServer is
+        an embedded Jetty server that provides an HTTP interface to the four
+        letter word commands.  By default, the server is started on port 8080,
+        and commands are issued by going to the URL "/commands/[command name]",
+        e.g., http://localhost:8080/commands/stat.  The command response is
+        returned as JSON.  Unlike the original protocol, commands are not
+        restricted to four-letter names, and commands can have multiple names;
+        for instance, "stmk" can also be referred to as "set_trace_mask".  To
+        view a list of all available commands, point a browser to the URL
+        /commands (e.g., http://localhost:8080/commands).  See the <ulink
+        url="#sc_adminserver_config">AdminServer configuration options</ulink>
+        for how to change the port and URLs.</para>
+
+        <para>The AdminServer is enabled by default, but can be disabled by either:</para>
+        <itemizedlist>
+          <listitem><para>Setting the zookeeper.admin.enableServer system
+          property to false.</para></listitem>
+          <listitem><para>Removing Jetty from the classpath.  (This option is
+          useful if you would like to override ZooKeeper's jetty
+          dependency.)</para></listitem>
+        </itemizedlist>
+        <para>Note that the TCP four letter word interface is still available if
+        the AdminServer is disabled.</para>
+      </section>
     </section>
 
     <section id="sc_dataFileManagement">

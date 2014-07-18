@@ -23,6 +23,9 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.zookeeper.PortAssignment;
@@ -144,6 +147,10 @@ public class PrepRequestProcessorTest extends ClientBase {
         public void checkGlobalSession(long sessionId, Object owner)
                 throws SessionExpiredException, SessionMovedException {
             // TODO Auto-generated method stub
+        }
+        @Override
+        public Map<Long, Set<Long>> getSessionExpiryMap() {
+            return new HashMap<Long, Set<Long>>();
         }
     }
 }

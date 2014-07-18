@@ -76,5 +76,8 @@
                 rev="3.2.1" conf="releaseaudit->default"/>
 
     <dependency org="net.java.dev.javacc" name="javacc" rev="5.0" />
+
+    <dependency org="org.mortbay.jetty" name="jetty" rev="6.1.26" />
+    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.11" />
   </dependencies>
 </ivy-module>

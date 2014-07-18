@@ -23,6 +23,9 @@ import java.io.IOException;
 import javax.management.JMException;
 
 import org.apache.zookeeper.jmx.ManagedUtil;
+import org.apache.zookeeper.server.admin.AdminServer;
+import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
+import org.apache.zookeeper.server.admin.AdminServerFactory;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -40,6 +43,8 @@ public class ZooKeeperServerMain {
         "Usage: ZooKeeperServerMain configfile | port datadir [ticktime] [maxcnxns]";
 
     private ServerCnxnFactory cnxnFactory;
+
+    private AdminServer adminServer;
 
     /*
      * Start up the ZooKeeper server.
@@ -63,6 +68,10 @@ public class ZooKeeperServerMain {
             LOG.error("Unable to access datadir, exiting abnormally", e);
             System.err.println("Unable to access datadir, exiting abnormally");
             System.exit(3);
+        } catch (AdminServerException e) {
+            LOG.error("Unable to start AdminServer, exiting abnormally", e);
+            System.err.println("Unable to start AdminServer, exiting abnormally");
+            System.exit(4);
         } catch (Exception e) {
             LOG.error("Unexpected exception, exiting abnormally", e);
             System.exit(1);
@@ -72,7 +81,7 @@ public class ZooKeeperServerMain {
     }
 
     protected void initializeAndRun(String[] args)
-        throws ConfigException, IOException
+        throws ConfigException, IOException, AdminServerException
     {
         try {
             ManagedUtil.registerLog4jMBeans();
@@ -94,8 +103,9 @@ public class ZooKeeperServerMain {
      * Run from a ServerConfig.
      * @param config ServerConfig to use.
      * @throws IOException
+     * @throws AdminServerException
      */
-    public void runFromConfig(ServerConfig config) throws IOException {
+    public void runFromConfig(ServerConfig config) throws IOException, AdminServerException {
         LOG.info("Starting server");
         FileTxnSnapLog txnLog = null;
         try {
@@ -106,6 +116,11 @@ public class ZooKeeperServerMain {
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
             ZooKeeperServer zkServer = new ZooKeeperServer( txnLog,
                     config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
+
+            // Start Admin server
+            adminServer = AdminServerFactory.createAdminServer();
+            adminServer.setZooKeeperServer(zkServer);
+            adminServer.start();
 
             cnxnFactory = ServerCnxnFactory.createFactory();
             cnxnFactory.configure(config.getClientPortAddress(),
@@ -130,5 +145,10 @@ public class ZooKeeperServerMain {
      */
     protected void shutdown() {
         cnxnFactory.shutdown();
+        try {
+            adminServer.shutdown();
+        } catch (AdminServerException e) {
+            LOG.warn("Problem stopping AdminServer", e);
+        }
     }
 }
