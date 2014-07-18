@@ -77,7 +77,9 @@
 
     <dependency org="net.java.dev.javacc" name="javacc" rev="5.0" />
 
-    <dependency org="org.mortbay.jetty" name="jetty" rev="6.1.26" />
-    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.11" />
+    <dependency org="org.mortbay.jetty" name="jetty" rev="6.1.26"
+                conf="optional->default"/>
+    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.11"
+                conf="optional->default"/>
   </dependencies>
 </ivy-module>
