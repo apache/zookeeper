@@ -82,6 +82,7 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                     zks.getFollower().request(request);
                     break;
                 case OpCode.create:
+                case OpCode.create2:
                 case OpCode.delete:
                 case OpCode.setData:
                 case OpCode.reconfig:

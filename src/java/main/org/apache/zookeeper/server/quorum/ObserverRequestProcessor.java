@@ -91,6 +91,7 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
                     zks.getObserver().request(request);
                     break;
                 case OpCode.create:
+                case OpCode.create2:
                 case OpCode.delete:
                 case OpCode.setData:
                 case OpCode.reconfig:

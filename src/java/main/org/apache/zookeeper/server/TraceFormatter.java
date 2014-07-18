@@ -35,6 +35,8 @@ public class TraceFormatter {
             return "notification";
         case OpCode.create:
             return "create";
+        case OpCode.create2:
+            return "create2";
         case OpCode.delete:
             return "delete";
         case OpCode.exists:

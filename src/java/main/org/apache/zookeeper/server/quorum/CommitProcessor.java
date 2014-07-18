@@ -131,6 +131,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
     protected boolean needCommit(Request request) {
         switch (request.type) {
             case OpCode.create:
+            case OpCode.create2:
             case OpCode.delete:
             case OpCode.setData:
             case OpCode.reconfig:

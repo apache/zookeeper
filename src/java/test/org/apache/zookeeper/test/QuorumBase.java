@@ -43,6 +43,8 @@ import org.junit.Test;
 public class QuorumBase extends ClientBase {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumBase.class);
 
+    private static final String LOCALADDR = "127.0.0.1";
+
     File s1dir, s2dir, s3dir, s4dir, s5dir;
     QuorumPeer s1, s2, s3, s4, s5;
     protected int port1;
@@ -136,29 +138,29 @@ public class QuorumBase extends ClientBase {
         int syncLimit = 3;
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1, 
-                new InetSocketAddress("127.0.0.1", port1 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE1 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient1),
+                new InetSocketAddress(LOCALADDR, port1 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE1 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient1),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(2), new QuorumServer(2, 
-                new InetSocketAddress("127.0.0.1", port2 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE2 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient2),
+                new InetSocketAddress(LOCALADDR, port2 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE2 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient2),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(3), new QuorumServer(3, 
-                new InetSocketAddress("127.0.0.1", port3 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE3 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient3),
+                new InetSocketAddress(LOCALADDR, port3 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE3 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient3),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(4), new QuorumServer(4, 
-                new InetSocketAddress("127.0.0.1", port4 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE4 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient4),
+                new InetSocketAddress(LOCALADDR, port4 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE4 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient4),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(5), new QuorumServer(5, 
-                new InetSocketAddress("127.0.0.1", port5 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE5 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient5),
+                new InetSocketAddress(LOCALADDR, port5 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE5 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient5),
                 LearnerType.PARTICIPANT));
         
         if (withObservers) {
@@ -262,6 +264,17 @@ public class QuorumBase extends ClientBase {
       return -1;
     }
 
+    public String getPeersMatching(ServerState state) {
+        StringBuilder hosts = new StringBuilder();
+        for (QuorumPeer p : getPeerList()) {
+            if (p.getPeerState() == state) {
+                hosts.append(String.format("%s:%d,", LOCALADDR, p.getClientAddress().getPort()));
+            }
+        }
+        LOG.info("getPeersMatching ports are {}", hosts);
+        return hosts.toString();
+    }
+
     public ArrayList<QuorumPeer> getPeerList() {
         ArrayList<QuorumPeer> peers = new ArrayList<QuorumPeer>();
         peers.add(s1);
@@ -290,29 +303,29 @@ public class QuorumBase extends ClientBase {
             peers = new HashMap<Long,QuorumServer>();
 
             peers.put(Long.valueOf(1), new QuorumServer(1, 
-                new InetSocketAddress("127.0.0.1", port1 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE1 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient1),
+                new InetSocketAddress(LOCALADDR, port1 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE1 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient1),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(2), new QuorumServer(2, 
-                new InetSocketAddress("127.0.0.1", port2 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE2 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient2),
+                new InetSocketAddress(LOCALADDR, port2 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE2 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient2),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(3), new QuorumServer(3, 
-                new InetSocketAddress("127.0.0.1", port3 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE3 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient3),
+                new InetSocketAddress(LOCALADDR, port3 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE3 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient3),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(4), new QuorumServer(4, 
-                new InetSocketAddress("127.0.0.1", port4 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE4 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient4),
+                new InetSocketAddress(LOCALADDR, port4 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE4 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient4),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(5), new QuorumServer(5, 
-                new InetSocketAddress("127.0.0.1", port5 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE5 + 1000),
-                new InetSocketAddress("127.0.0.1", portClient5),
+                new InetSocketAddress(LOCALADDR, port5 + 1000),
+                new InetSocketAddress(LOCALADDR, portLE5 + 1000),
+                new InetSocketAddress(LOCALADDR, portClient5),
                 LearnerType.PARTICIPANT));
         }
         
@@ -412,5 +425,11 @@ public class QuorumBase extends ClientBase {
     {
         CountdownWatcher watcher = new CountdownWatcher();
         return createClient(watcher, hp);
+    }
+
+    protected TestableZooKeeper createClient(CountdownWatcher watcher, ServerState state)
+        throws IOException, InterruptedException
+    {
+        return createClient(watcher, getPeersMatching(state));
     }
 }
