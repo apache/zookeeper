@@ -52,17 +52,17 @@ public class ZooTrace {
             | SERVER_PACKET_TRACE_MASK | SESSION_TRACE_MASK
             | WARNING_TRACE_MASK;
 
-    public static long getTextTraceLevel() {
+    public static synchronized long getTextTraceLevel() {
         return traceMask;
     }
 
-    public static void setTextTraceLevel(long mask) {
+    public static synchronized void setTextTraceLevel(long mask) {
         traceMask = mask;
         final Logger LOG = LoggerFactory.getLogger(ZooTrace.class);
         LOG.info("Set text trace mask to 0x" + Long.toHexString(mask));
     }
 
-    public static boolean isTraceEnabled(Logger log, long mask) {
+    public static synchronized boolean isTraceEnabled(Logger log, long mask) {
         return log.isTraceEnabled() && (mask & traceMask) != 0;
     }
 

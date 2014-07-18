@@ -69,6 +69,7 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
         registerJMX(new ReadOnlyBean(this), self.jmxLocalPeerBean);
         super.startup();
         self.cnxnFactory.setZooKeeperServer(this);
+        self.adminServer.setZooKeeperServer(this);
         LOG.info("Read-only server started");
     }
 
@@ -143,6 +144,8 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
         self.cnxnFactory.setZooKeeperServer(null);
         // clear all the connections
         self.cnxnFactory.closeAll();
+
+        self.adminServer.setZooKeeperServer(null);
 
         // shutdown the server itself
         super.shutdown();

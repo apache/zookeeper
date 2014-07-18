@@ -20,9 +20,13 @@ package org.apache.zookeeper.server;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.KeeperException;
@@ -103,7 +107,24 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
         pwriter.print("Session ");
         sessionExpiryQueue.dump(pwriter);
     }
-    
+
+    /**
+     * Returns a mapping from time to session IDs of sessions expiring at that time.
+     */
+    synchronized public Map<Long, Set<Long>> getSessionExpiryMap() {
+        // Convert time -> sessions map to time -> session IDs map
+        Map<Long, Set<SessionImpl>> expiryMap = sessionExpiryQueue.getExpiryMap();
+        Map<Long, Set<Long>> sessionExpiryMap = new TreeMap<Long, Set<Long>>();
+        for (Entry<Long, Set<SessionImpl>> e : expiryMap.entrySet()) {
+            Set<Long> ids = new HashSet<Long>();
+            sessionExpiryMap.put(e.getKey(), ids);
+            for (SessionImpl s : e.getValue()) {
+                ids.add(s.sessionId);
+            }
+        }
+        return sessionExpiryMap;
+    }
+
     @Override
     public String toString() {
         StringWriter sw = new StringWriter();

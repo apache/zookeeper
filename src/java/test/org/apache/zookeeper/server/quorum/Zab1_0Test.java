@@ -35,6 +35,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -311,6 +312,13 @@ public class Zab1_0Test {
 		@Override
 		public void reconfigure(InetSocketAddress addr) {			
 		}
+        @Override
+        public void resetAllConnectionStats() {
+        }
+        @Override
+        public Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief) {
+            return null;
+        }
     }
     static Socket[] getSocketPair() throws IOException {
         ServerSocket ss =

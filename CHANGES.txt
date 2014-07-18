@@ -34,6 +34,9 @@ NEW FEATURES:
 
   ZOOKEEPER-827. enable r/o mode in C client library (rgs via fpj)
 
+  ZOOKEEPER-1346. Add Jetty HTTP server support for four letter words.
+  (Skye Wanderman-Milne, Bill Havanki via phunt)
+
 BUGFIXES:
 
   ZOOKEEPER-1900. NullPointerException in truncate (Camille Fournier)

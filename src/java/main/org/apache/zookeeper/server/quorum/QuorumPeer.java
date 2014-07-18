@@ -57,6 +57,9 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperThread;
+import org.apache.zookeeper.server.admin.AdminServer;
+import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
+import org.apache.zookeeper.server.admin.AdminServerFactory;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
@@ -584,10 +587,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private final QuorumStats quorumStats;
 
+    AdminServer adminServer;
+
     public QuorumPeer() {
         super("QuorumPeer");
         quorumStats = new QuorumStats(this);
         jmxRemotePeerBean = new HashMap<Long, RemotePeerBean>();
+        adminServer = AdminServerFactory.createAdminServer();
     }
 
 
@@ -623,6 +629,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.dynamicConfigFilename = (memFilename != null) ? memFilename : "zoo_replicated" + myid + ".dynamic";
         if(quorumConfig == null) quorumConfig = new QuorumMaj(quorumPeers);
         setQuorumVerifier(quorumConfig, false);
+        adminServer = AdminServerFactory.createAdminServer();
     }
 
     QuorumStats quorumStats() {
@@ -636,6 +643,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
          }
         loadDataBase();
         cnxnFactory.start();
+        try {
+            adminServer.start();
+        } catch (AdminServerException e) {
+            LOG.warn("Problem starting AdminServer", e);
+            System.out.println(e);
+        }
         startLeaderElection();
         super.start();
     }
@@ -1052,6 +1065,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         cnxnFactory.shutdown();
         if(udpSocket != null) {
             udpSocket.close();
+        }
+
+        try {
+            adminServer.shutdown();
+        } catch (AdminServerException e) {
+            LOG.warn("Problem stopping AdminServer", e);
         }
 
         if(getElectionAlg() != null){

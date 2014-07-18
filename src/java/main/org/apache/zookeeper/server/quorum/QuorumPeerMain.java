@@ -28,6 +28,7 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.DatadirCleanupManager;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
+import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -89,6 +90,10 @@ public class QuorumPeerMain {
             LOG.error("Unable to access datadir, exiting abnormally", e);
             System.err.println("Unable to access datadir, exiting abnormally");
             System.exit(3);
+        } catch (AdminServerException e) {
+            LOG.error("Unable to start AdminServer, exiting abnormally", e);
+            System.err.println("Unable to start AdminServer, exiting abnormally");
+            System.exit(4);
         } catch (Exception e) {
             LOG.error("Unexpected exception, exiting abnormally", e);
             System.exit(1);
@@ -98,7 +103,7 @@ public class QuorumPeerMain {
     }
 
     protected void initializeAndRun(String[] args)
-        throws ConfigException, IOException
+        throws ConfigException, IOException, AdminServerException
     {
         QuorumPeerConfig config = new QuorumPeerConfig();
         if (args.length == 1) {
@@ -121,7 +126,7 @@ public class QuorumPeerMain {
         }
     }
 
-    public void runFromConfig(QuorumPeerConfig config) throws IOException {
+    public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
       try {
           ManagedUtil.registerLog4jMBeans();
       } catch (JMException e) {

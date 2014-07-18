@@ -23,6 +23,8 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.management.JMException;
@@ -59,6 +61,10 @@ public abstract class ServerCnxnFactory {
 
     public int getNumAliveConnections() {
         return cnxns.size();
+    }
+
+    public ZooKeeperServer getZooKeeperServer() {
+        return zkServer;
     }
 
     public abstract void closeSession(long sessionId);
@@ -129,6 +135,10 @@ public abstract class ServerCnxnFactory {
     }
 
     public abstract InetSocketAddress getLocalAddress();
+
+    public abstract void resetAllConnectionStats();
+
+    public abstract Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief);
 
     private final ConcurrentHashMap<ServerCnxn, ConnectionBean> connectionBeans =
         new ConcurrentHashMap<ServerCnxn, ConnectionBean>();

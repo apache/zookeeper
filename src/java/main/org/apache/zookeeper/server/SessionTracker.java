@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server;
 
 import java.io.PrintWriter;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
@@ -125,4 +127,9 @@ public interface SessionTracker {
      * @param pwriter the output writer
      */
     void dumpSessions(PrintWriter pwriter);
+
+    /**
+     * Returns a mapping of time to session IDs that expire at that time.
+     */
+    Map<Long, Set<Long>> getSessionExpiryMap();
 }

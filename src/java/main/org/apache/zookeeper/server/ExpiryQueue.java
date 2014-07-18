@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
@@ -175,6 +176,13 @@ public class ExpiryQueue<E> {
                 }
             }
         }
+    }
+
+    /**
+     * Returns an unmodifiable view of the expiration time -> elements mapping.
+     */
+    public Map<Long, Set<E>> getExpiryMap() {
+        return Collections.unmodifiableMap(expiryMap);
     }
 }
 

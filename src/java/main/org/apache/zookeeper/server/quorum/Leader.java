@@ -533,6 +533,9 @@ public class Leader {
             if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
                 self.cnxnFactory.setZooKeeperServer(zk);
             }
+
+            self.adminServer.setZooKeeperServer(zk);
+
             // Everything is a go, simply start counting the ticks
             // WARNING: I couldn't find any wait statement on a synchronized
             // block that would be notified by this notifyAll() call, so
@@ -619,6 +622,7 @@ public class Leader {
 
         // NIO should not accept conenctions
         self.cnxnFactory.setZooKeeperServer(null);
+        self.adminServer.setZooKeeperServer(null);
         try {
             ss.close();
         } catch (IOException e) {

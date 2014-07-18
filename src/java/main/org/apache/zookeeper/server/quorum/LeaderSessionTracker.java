@@ -18,6 +18,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.PrintWriter;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
@@ -199,5 +202,18 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
             localSessionTracker.setSessionClosing(sessionId);
         }
         globalSessionTracker.setSessionClosing(sessionId);
+    }
+
+    public Map<Long, Set<Long>> getSessionExpiryMap() {
+        Map<Long, Set<Long>> sessionExpiryMap;
+        // combine local and global sessions, getting local first so upgrades
+        // to global are caught
+        if (localSessionTracker != null) {
+            sessionExpiryMap = localSessionTracker.getSessionExpiryMap();
+        } else {
+            sessionExpiryMap = new TreeMap<Long, Set<Long>>();
+        }
+        sessionExpiryMap.putAll(globalSessionTracker.getSessionExpiryMap());
+        return sessionExpiryMap;
     }
 }

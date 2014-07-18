@@ -27,11 +27,14 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.Set;
 
 import javax.security.sasl.SaslException;
 
@@ -186,6 +189,18 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         pwriter.print("serverId=");
         pwriter.println(getServerId());
+    }
+
+    public ZooKeeperServerConf getConf() {
+        return new ZooKeeperServerConf
+            (getClientPort(),
+             zkDb.snapLog.getSnapDir().getAbsolutePath(),
+             zkDb.snapLog.getDataDir().getAbsolutePath(),
+             getTickTime(),
+             serverCnxnFactory.getMaxClientCnxnsPerHost(),
+             getMinSessionTimeout(),
+             getMaxSessionTimeout(),
+             getServerId());
     }
 
     /**
@@ -795,6 +810,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         zkDb.dumpEphemerals(pwriter);
     }
 
+    public Map<Long, Set<String>> getEphemerals() {
+        return zkDb.getEphemerals();
+    }
+
     public void processConnectRequest(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
@@ -1020,6 +1039,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             sessionTracker.removeSession(sessionId);
         }
         return rc;
+    }
+
+    public Map<Long, Set<Long>> getSessionExpiryMap() {
+        return sessionTracker.getSessionExpiryMap();
     }
 
 }

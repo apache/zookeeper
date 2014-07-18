@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.server.admin.JettyAdminServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
 
@@ -78,15 +79,20 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
                 throws IOException {
-            this(myid, clientPort, quorumCfgSection, null);
+            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null);
         }
 
-        public MainThread(int myid, int clientPort, String quorumCfgSection,
+        public MainThread(int myid, int clientPort, String quorumCfgSection, String configs)
+                throws IOException {
+            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, configs);
+        }
+
+        public MainThread(int myid, int clientPort, int adminServerPort, String quorumCfgSection,
                 String configs)
                 throws IOException {
             tmpDir = ClientBase.createTmpDir();
             LOG.info("id = " + myid + " tmpDir = " + tmpDir + " clientPort = "
-                    + clientPort);
+                    + clientPort + " adminServerPort = " + adminServerPort);
 
             File dataDir = new File(tmpDir, "data");
             if (!dataDir.mkdir()) {
@@ -116,6 +122,8 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write("dataDir=" + dir + "\n");
 
             fwriter.write("clientPort=" + clientPort + "\n");
+
+            fwriter.write("admin.serverPort=" + adminServerPort + "\n");
 
             fwriter.write("dynamicConfigFile=" + dynamicConfigFilename + "\n");
 

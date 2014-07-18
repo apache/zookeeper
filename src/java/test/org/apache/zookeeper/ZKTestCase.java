@@ -47,6 +47,10 @@ public class ZKTestCase {
     public MethodRule watchman = new TestWatchman() {
         @Override
         public void starting(FrameworkMethod method) {
+            // By default, disable starting a JettyAdminServer in tests to avoid
+            // accidentally attempting to start multiple admin servers on the
+            // same port.
+            System.setProperty("zookeeper.admin.enableServer", "false");
             testName = method.getName();
             LOG.info("STARTING " + testName);
         }

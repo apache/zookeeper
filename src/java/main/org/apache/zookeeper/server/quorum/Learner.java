@@ -469,6 +469,7 @@ public class Learner {
                         self.setCurrentEpoch(newEpoch);
                     }
                     self.cnxnFactory.setZooKeeperServer(zk);
+                    self.adminServer.setZooKeeperServer(zk);
                     break outerLoop;
                 case Leader.NEWLEADER: // it will be NEWLEADER in v1.0        
                    LOG.info("Learner received NEWLEADER message");
@@ -583,6 +584,7 @@ public class Learner {
         self.cnxnFactory.setZooKeeperServer(null);
         // clear all the connections
         self.cnxnFactory.closeAll();
+        self.adminServer.setZooKeeperServer(null);
         // shutdown previous zookeeper
         if (zk != null) {
             zk.shutdown();

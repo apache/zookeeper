@@ -85,6 +85,10 @@ public class ServerStats {
     	return provider.getNumAliveConnections();
     }
 
+    public boolean isProviderNull() {
+        return provider == null;
+    }
+
     @Override
     public String toString(){
         StringBuilder sb = new StringBuilder();

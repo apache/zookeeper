@@ -31,10 +31,10 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Queue;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -938,4 +938,21 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         cnxnExpiryQueue.dump(pwriter);
     }
 
+    @Override
+    public void resetAllConnectionStats() {
+        // No need to synchronize since cnxns is backed by a ConcurrentHashMap
+        for(ServerCnxn c : cnxns){
+            c.resetStats();
+        }
+    }
+
+    @Override
+    public Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief) {
+        HashSet<Map<String,Object>> info = new HashSet<Map<String,Object>>();
+        // No need to synchronize since cnxns is backed by a ConcurrentHashMap
+        for (ServerCnxn c : cnxns) {
+            info.add(c.getConnectionInfo(brief));
+        }
+        return info;
+    }
 }

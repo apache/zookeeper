@@ -25,11 +25,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -44,6 +43,8 @@ import org.jboss.netty.channel.WriteCompletionEvent;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
@@ -260,23 +261,20 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         if (LOG.isDebugEnabled()) {
             LOG.debug("closeAll()");
         }
-
-        NettyServerCnxn[] allCnxns = null;
-        synchronized (cnxns) {
-            allCnxns = cnxns.toArray(new NettyServerCnxn[cnxns.size()]);
-        }
-        // got to clear all the connections that we have in the selector
-        for (NettyServerCnxn cnxn : allCnxns) {
+        // clear all the connections on which we are selecting
+        int length = cnxns.size();
+        for (ServerCnxn cnxn : cnxns) {
             try {
+                // This will remove the cnxn from cnxns
                 cnxn.close();
             } catch (Exception e) {
                 LOG.warn("Ignoring exception closing cnxn sessionid 0x"
-                                + Long.toHexString(cnxn.getSessionId()), e);
+                         + Long.toHexString(cnxn.getSessionId()), e);
             }
         }
         if (LOG.isDebugEnabled()) {
             LOG.debug("allChannels size:" + allChannels.size() + " cnxns size:"
-                    + allCnxns.length);
+                    + length);
         }
     }
 
@@ -285,11 +283,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         if (LOG.isDebugEnabled()) {
             LOG.debug("closeSession sessionid:0x" + sessionId);
         }
-        NettyServerCnxn[] allCnxns = null;
-        synchronized (cnxns) {
-            allCnxns = cnxns.toArray(new NettyServerCnxn[cnxns.size()]);
-        }
-        for (NettyServerCnxn cnxn : allCnxns) {
+        for (ServerCnxn cnxn : cnxns) {
             if (cnxn.getSessionId() == sessionId) {
                 try {
                     cnxn.close();
@@ -393,20 +387,36 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     private void addCnxn(NettyServerCnxn cnxn) {
-        synchronized (cnxns) {
-            cnxns.add(cnxn);
-            synchronized (ipMap){
-                InetAddress addr =
-                    ((InetSocketAddress)cnxn.channel.getRemoteAddress())
-                        .getAddress();
-                Set<NettyServerCnxn> s = ipMap.get(addr);
-                if (s == null) {
-                    s = new HashSet<NettyServerCnxn>();
-                }
-                s.add(cnxn);
-                ipMap.put(addr,s);
+        cnxns.add(cnxn);
+        synchronized (ipMap){
+            InetAddress addr =
+                ((InetSocketAddress)cnxn.channel.getRemoteAddress())
+                    .getAddress();
+            Set<NettyServerCnxn> s = ipMap.get(addr);
+            if (s == null) {
+                s = new HashSet<NettyServerCnxn>();
             }
+            s.add(cnxn);
+            ipMap.put(addr,s);
         }
+    }
+
+    @Override
+    public void resetAllConnectionStats() {
+        // No need to synchronize since cnxns is backed by a ConcurrentHashMap
+        for(ServerCnxn c : cnxns){
+            c.resetStats();
+        }
+    }
+
+    @Override
+    public Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief) {
+        HashSet<Map<String,Object>> info = new HashSet<Map<String,Object>>();
+        // No need to synchronize since cnxns is backed by a ConcurrentHashMap
+        for (ServerCnxn c : cnxns) {
+            info.add(c.getConnectionInfo(brief));
+        }
+        return info;
     }
 
 }
