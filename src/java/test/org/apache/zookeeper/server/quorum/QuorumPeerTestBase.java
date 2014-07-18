@@ -55,21 +55,6 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
     }
     
-    public static class MainThreadReconfigRecovery extends MainThread {
-       final File nextDynamicConfigFile;
-       
-       public MainThreadReconfigRecovery(int myid, int clientPort,
-               String currentQuorumCfgSection, String nextQuorumCfgSection) 
-                       throws IOException {
-           super(myid, clientPort, currentQuorumCfgSection);
-           nextDynamicConfigFile = new File(tmpDir, "zoo.dynamic.next");
-           FileWriter fwriter = new FileWriter(nextDynamicConfigFile);
-            fwriter.write(nextQuorumCfgSection + "\n");
-            fwriter.flush();
-            fwriter.close();
-       }               
-    }
-    
     public static class MainThread implements Runnable {
         final File confFile;
         final File dynamicConfigFile;
@@ -141,7 +126,16 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.flush();
             fwriter.close();
         }
-        
+
+        public void writeTempDynamicConfigFile(String nextQuorumCfgSection)
+                throws IOException {
+            File nextDynamicConfigFile = new File(tmpDir, "zoo.dynamic.next");
+            FileWriter fwriter = new FileWriter(nextDynamicConfigFile);
+            fwriter.write(nextQuorumCfgSection + "\n");
+            fwriter.flush();
+            fwriter.close();
+        }
+
         Thread currentThread;
 
         synchronized public void start() {

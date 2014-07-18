@@ -708,6 +708,9 @@ BUGFIXES:
   ZOOKEEPER-1851. Follower and Observer Request Processors Do Not Forward
   create2 Requests (Chris Chen via rakeshr)
 
+  ZOOKEEPER-1807. Observers spam each other creating connections to the
+  election addr (Alex Shraer via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

@@ -315,7 +315,7 @@ public class FastLeaderElection implements Election {
                          * If it is from a non-voting server (such as an observer or
                          * a non-voting follower), respond right away.
                          */
-                        if(!self.getVotingView().containsKey(response.sid)){
+                        if(!self.getCurrentAndNextConfigVoters().contains(response.sid)) {
                             Vote current = self.getCurrentVote();
                             QuorumVerifier qv = self.getQuorumVerifier();
                             ToSend notmsg = new ToSend(ToSend.mType.notification,
@@ -658,7 +658,7 @@ public class FastLeaderElection implements Election {
      * Send notifications to all peers upon a change in our vote
      */
     private void sendNotifications() {
-        for (long sid : self.getAllKnownServerIds()) {
+        for (long sid : self.getCurrentAndNextConfigVoters()) {
             QuorumVerifier qv = self.getQuorumVerifier();
             ToSend notmsg = new ToSend(ToSend.mType.notification,
                     proposedLeader,
@@ -718,31 +718,36 @@ public class FastLeaderElection implements Election {
     }
 
     /**
-     * Termination predicate. Given a set of votes, determines if
-     * have sufficient to declare the end of the election round.
-     *
-     *  @param votes    Set of votes
-     *  @param vote        Identifier of the vote received last
+     * Termination predicate. Given a set of votes, determines if have
+     * sufficient to declare the end of the election round.
+     * 
+     * @param votes
+     *            Set of votes
+     * @param vote
+     *            Identifier of the vote received last
      */
-    private boolean termPredicate(
-            HashMap<Long, Vote> votes,
-            Vote vote) {
-
-        HashSet<Long> set = new HashSet<Long>();
+    private boolean termPredicate(HashMap<Long, Vote> votes, Vote vote) {
+        SyncedLearnerTracker voteSet = new SyncedLearnerTracker();
+        voteSet.addQuorumVerifier(self.getQuorumVerifier());
+        if (self.getLastSeenQuorumVerifier() != null
+                && self.getLastSeenQuorumVerifier().getVersion() > self
+                        .getQuorumVerifier().getVersion()) {
+            voteSet.addQuorumVerifier(self.getLastSeenQuorumVerifier());
+        }
 
         /*
-         * First make the views consistent. Sometimes peers will have
-         * different zxids for a server depending on timing.
+         * First make the views consistent. Sometimes peers will have different
+         * zxids for a server depending on timing.
          */
-        for (Map.Entry<Long,Vote> entry : votes.entrySet()) {
-            if (self.getQuorumVerifier().getVotingMembers().containsKey(entry.getKey())
-                    && vote.equals(entry.getValue())){
-                set.add(entry.getKey());
+        for (Map.Entry<Long, Vote> entry : votes.entrySet()) {
+            if (vote.equals(entry.getValue())) {
+                voteSet.addAck(entry.getKey());
             }
         }
 
-        return self.getQuorumVerifier().containsQuorum(set);
+        return voteSet.hasAllQuorums();
     }
+
     /**
      * In the case there is a leader elected, and a quorum supporting
      * this leader, we have to check if the leader has voted and acked
@@ -914,10 +919,10 @@ public class FastLeaderElection implements Election {
                     notTimeout = (tmpTimeOut < maxNotificationInterval?
                             tmpTimeOut : maxNotificationInterval);
                     LOG.info("Notification time out: " + notTimeout);
-                }
-                else if(self.getVotingView().containsKey(n.sid)) {
+                } 
+                else if (self.getCurrentAndNextConfigVoters().contains(n.sid)) {
                     /*
-                     * Only proceed if the vote comes from a replica in the
+                     * Only proceed if the vote comes from a replica in the current or next
                      * voting view.
                      */
                     switch (n.state) {

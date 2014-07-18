@@ -1107,12 +1107,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
        return getQuorumVerifier().getObservingMembers();
     }
 
-    public synchronized Set<Long> getAllKnownServerIds(){
-       Set<Long> tmp = new HashSet<Long>(getQuorumVerifier().getAllMembers().keySet());
-       if (getLastSeenQuorumVerifier()!=null) {
-           tmp.addAll(getLastSeenQuorumVerifier().getAllMembers().keySet());
-       }
-       return tmp;
+    public synchronized Set<Long> getCurrentAndNextConfigVoters() {
+        Set<Long> voterIds = new HashSet<Long>(getQuorumVerifier()
+                .getVotingMembers().keySet());
+        if (getLastSeenQuorumVerifier() != null) {
+            voterIds.addAll(getLastSeenQuorumVerifier().getVotingMembers()
+                    .keySet());
+        }
+        return voterIds;
     }
     
     /**
