@@ -142,10 +142,6 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="test.cobertura.output.format" value="html" />
     <property name="coveragereport.dir" value="${build.dir}/cobertura" />
 
-    <!-- rats properties -->
-    <property name="rats_url" value="http://arat.googlecode.com/files/rat-lib-all-0.5.1.jar" />
-    <property name="rat.reporting.classname" value="rat.Report"/>
-
         <!-- test patch properties -->
     <property name="scratch.dir" value="${user.home}/tmp"/>
     <property name="svn.cmd" value="svn"/>
@@ -1641,10 +1637,13 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
           <exclude name="**/compile"/>
           <exclude name="**/depcomp"/>
           <exclude name="**/install-sh"/>
+          <exclude name="**/log4j.properties"/>
           <exclude name="**/ltmain.sh"/>
           <exclude name="**/missing"/>
           <exclude name="**/wrappers*.opt"/>
           <exclude name="CHANGES.txt"/>
+          <exclude name="README_packaging.txt"/>
+          <exclude name="**/TODO"/>
           <exclude name="**/VERSION"/>
           <exclude name="**/ChangeLog"/>
           <exclude name="**/OldChangeLog"/>
@@ -1653,14 +1652,32 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
           <exclude name="**/conf/*"/>
           <exclude name="**/docs/"/>
           <exclude name="**/lib/jdiff/"/>
+          <exclude name="contrib/ZooInspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="src/c/*.la"/>
+          <exclude name="src/c/*.lo"/>
+          <exclude name="src/c/.libs/"/>
           <exclude name="src/c/autom4te.cache/**"/>
           <exclude name="src/c/config**"/>
+          <exclude name="src/c/include/winstdint.h"/>
           <exclude name="src/c/src/hashtable/"/>
+          <exclude name="src/c/test-driver"/>
+          <exclude name="src/c/tests/quorum.cfg"/>
+          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="src/contrib/monitoring/JMX-RESOURCES"/>
+          <exclude name="src/contrib/zooinspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
           <exclude name="src/java/generated/.generated/"/>
           <exclude name="src/java/test/checkstyle*.xml"/>
           <exclude name="src/java/test/checkstyle*.xsl"/>
           <exclude name="src/java/test/config/findbugs*.xml"/>
           <exclude name="src/**/*.vcproj"/>
+          <exclude name="src/**/*.vcxproj*"/>
           <exclude name="src/**/*.sln"/>
         </fileset>
       </rat:report>

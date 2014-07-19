@@ -996,6 +996,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1968. Make Jetty dependencies optional in ivy.xml
   (Bill Havanki via phunt)
 
+  ZOOKEEPER-927. there are currently 24 RAT warnings in the build --
+  address directly or via exclusions (Michi Mutsuzaki via phunt)
+
 headers
 
 Release 3.4.0 - 

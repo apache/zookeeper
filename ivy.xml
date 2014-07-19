@@ -69,7 +69,7 @@
                 conf="jdiff->default"/>
 
     <dependency org="org.apache.rat" name="apache-rat-tasks" 
-                rev="0.7" conf="releaseaudit->default"/>
+                rev="0.10" conf="releaseaudit->default"/>
     <dependency org="commons-lang" name="commons-lang" 
                 rev="2.6" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
