@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 import org.apache.zookeeper.KeeperException.NoNodeException;
@@ -434,7 +435,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /**
      * The current tick
      */
-    protected volatile int tick;
+    protected AtomicInteger tick = new AtomicInteger();
 
     /**
      * Whether or not to listen on all IPs for the two quorum ports
@@ -1257,7 +1258,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * Get the current tick
      */
     public int getTick() {
-        return tick;
+        return tick.get();
     }
 
     public QuorumVerifier configFromString(String s) throws IOException, ConfigException{

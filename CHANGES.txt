@@ -711,6 +711,9 @@ BUGFIXES:
   ZOOKEEPER-1807. Observers spam each other creating connections to the
   election addr (Alex Shraer via fpj)
 
+  ZOOKEEPER-1972. Fix invalid volatile long/int increment (++)
+  (Hongchao Deng via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
