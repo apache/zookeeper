@@ -322,7 +322,7 @@ public class LearnerHandler extends ZooKeeperThread {
     @Override
     public void run() {
         try {
-            tickOfNextAckDeadline = leader.self.tick
+            tickOfNextAckDeadline = leader.self.tick.get()
                     + leader.self.initLimit + leader.self.syncLimit;
 
             ia = BinaryInputArchive.getArchive(new BufferedInputStream(sock
@@ -499,7 +499,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 if (LOG.isTraceEnabled()) {
                     ZooTrace.logQuorumPacket(LOG, traceMask, 'i', qp);
                 }
-                tickOfNextAckDeadline = leader.self.tick + leader.self.syncLimit;
+                tickOfNextAckDeadline = leader.self.tick.get() + leader.self.syncLimit;
 
 
                 ByteBuffer bb;
@@ -931,7 +931,7 @@ public class LearnerHandler extends ZooKeeperThread {
 
     public boolean synced() {
         return isAlive()
-        && leader.self.tick <= tickOfNextAckDeadline;
+        && leader.self.tick.get() <= tickOfNextAckDeadline;
     }
     
     /**

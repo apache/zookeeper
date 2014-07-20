@@ -414,7 +414,7 @@ public class Leader {
         zk.registerJMX(new LeaderBean(this, zk), self.jmxLocalPeerBean);
 
         try {
-            self.tick = 0;
+            self.tick.set(0);
             zk.loadData();
 
             leaderStateSummary = new StateSummary(self.getCurrentEpoch(), zk.getLastProcessedZxid());
@@ -558,7 +558,7 @@ public class Leader {
                     }
 
                     if (!tickSkip) {
-                        self.tick++;
+                        self.tick.incrementAndGet();
                     }
 
                     // We use an instance of SyncedLearnerTracker to
