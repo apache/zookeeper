@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.server.admin;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,10 +36,9 @@ import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
+import org.apache.zookeeper.server.util.OSMXBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.sun.management.UnixOperatingSystemMXBean;
 
 /**
  * Class containing static methods for registering and running Commands, as well
@@ -310,13 +307,9 @@ public class Commands {
             response.put("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
             response.put("approximate_data_size", zkdb.getDataTree().approximateDataSize());
 
-            OperatingSystemMXBean osMbean = ManagementFactory.getOperatingSystemMXBean();
-            if (osMbean != null && osMbean instanceof UnixOperatingSystemMXBean) {
-                UnixOperatingSystemMXBean unixos = (UnixOperatingSystemMXBean) osMbean;
-
-                response.put("open_file_descriptor_count", unixos.getOpenFileDescriptorCount());
-                response.put("max_file_descriptor_count", unixos.getMaxFileDescriptorCount());
-            }
+            OSMXBean osMbean = new OSMXBean();
+            response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
+            response.put("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
 
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
