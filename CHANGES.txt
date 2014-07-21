@@ -717,6 +717,9 @@ BUGFIXES:
   ZOOKEEPER-1973. Jetty Server changes broke ibm6 support
   (Bill Havanki via phunt)
 
+  ZOOKEEPER-1975. Turn off "internationalization warnings" in findbugs
+  exclude file (phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
