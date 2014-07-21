@@ -139,4 +139,9 @@
     <Method name="wakeup" />
   </Match>
 
+  <!-- Disable encoding warnings -->
+  <Match>
+    <Bug pattern="DM_DEFAULT_ENCODING" />
+  </Match>
+
 </FindBugsFilter>
