@@ -696,6 +696,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 request.setTxn(new CheckVersionTxn(path, checkAndIncVersion(nodeRecord.stat.getVersion(),
                         checkVersionRequest.getVersion(), path)));
                 break;
+            default:
+                LOG.warn("unknown type " + type);
+                break;
         }
     }
 
@@ -842,6 +845,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.removeWatches:
                 zks.sessionTracker.checkSession(request.sessionId,
                         request.getOwner());
+                break;
+            default:
+                LOG.warn("unknown type " + request.type);
                 break;
             }
         } catch (KeeperException e) {

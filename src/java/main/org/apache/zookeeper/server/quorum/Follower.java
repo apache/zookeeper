@@ -163,6 +163,9 @@ public class Follower extends Learner{
         case Leader.SYNC:
             fzk.sync();
             break;
+        default:
+            LOG.warn("unknown type " + qp.getType());
+            break;
         }
     }
 

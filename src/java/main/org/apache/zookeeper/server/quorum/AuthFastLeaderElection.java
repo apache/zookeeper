@@ -276,6 +276,9 @@ public class AuthFastLeaderElection implements Election {
                     case 2:
                         ackstate = QuorumPeer.ServerState.FOLLOWING;
                         break;
+                    default:
+                        LOG.warn("unknown type " + responseBuffer.getInt());
+                        break;
                     }
 
                     Vote current = self.getCurrentVote();
@@ -697,6 +700,9 @@ public class AuthFastLeaderElection implements Election {
                     } catch (IOException e) {
                         LOG.warn("Exception while sending ack: ", e);
                     }
+                    break;
+                default:
+                    LOG.warn("unknown type " + m.type);
                     break;
                 }
             }
