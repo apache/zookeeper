@@ -2493,6 +2493,9 @@ public class ZooKeeper {
             rmReq.setType(watcherType.getIntValue());
             request = rmReq;
             break;
+        default:
+            LOG.warn("unknown type " + opCode);
+            break;
         }
         return request;
     }

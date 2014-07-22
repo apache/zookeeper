@@ -723,6 +723,9 @@ BUGFIXES:
   ZOOKEEPER-1979. Fix Performance Warnings found by Findbugs 2.0.3
   (Hongchao Deng via phunt)
 
+  ZOOKEEPER-1981. Fix Dodgy Code Warnings identified by findbugs 2.0.3
+  (Hongchao Deng via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
