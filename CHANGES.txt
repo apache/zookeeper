@@ -726,6 +726,9 @@ BUGFIXES:
   ZOOKEEPER-1981. Fix Dodgy Code Warnings identified by findbugs 2.0.3
   (Hongchao Deng via phunt)
 
+  ZOOKEEPER-1984. testLeaderTimesoutOnNewQuorum is a flakey test
+  (Alex Shraer via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

@@ -442,13 +442,6 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 qu.getPeer(1).peer.getServerState());
         Assert.assertEquals(QuorumStats.Provider.LOOKING_STATE,
                 qu.getPeer(3).peer.getServerState());
-
-        qu.restart(2);
-
-        // Now that 2 is back up, they'll complete the reconfig removing 3 and
-        // can process other ops.
-        testServerHasConfig(zkArr[1], null, leavingServers);
-        testNormalOperation(zkArr[1], zkArr[2]);
         closeAllHandles(zkArr);
     }
 
