@@ -732,6 +732,9 @@ BUGFIXES:
   ZOOKEEPER-1789. 3.4.x observer causes NPE on 3.5.0 (trunk)
   participants (Alex Shraer via phunt)
 
+  ZOOKEEPER-1982. Refactor (touch|add)Session in
+  SessionTrackerImpl.java (Hongchao Deng via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
