@@ -231,13 +231,12 @@ public class QuorumCnxManager {
      */
     public boolean receiveConnection(Socket sock) {
         Long sid = null, protocolVersion = null;
-        InetSocketAddress electionAddr;
+        InetSocketAddress electionAddr = null;
         try {
             DataInputStream din = new DataInputStream(sock.getInputStream());
             protocolVersion = din.readLong();
             if (protocolVersion >= 0) { // this is a server id and not a protocol version
-               sid = protocolVersion;  
-                electionAddr = self.getVotingView().get(sid).electionAddr;
+                sid = protocolVersion;
             } else {
                 sid = din.readLong();
                 int num_remaining_bytes = din.readInt();
@@ -250,11 +249,9 @@ public class QuorumCnxManager {
                         electionAddr = new InetSocketAddress(host_port[0], Integer.parseInt(host_port[1]));                   
                     } else {
                         LOG.error("Got urecognized protocol version " + protocolVersion + " from " + sid);
-                        electionAddr = null;
                     }
                 } else {
-                   LOG.error("Read only " + num_read + " bytes out of " + num_remaining_bytes + " sent by server " + sid);
-                   electionAddr = null;                
+                   LOG.error("Read only " + num_read + " bytes out of " + num_remaining_bytes + " sent by server " + sid);          
                 }
             } 
             if (sid == QuorumPeer.OBSERVER_ID) {
@@ -289,7 +286,12 @@ public class QuorumCnxManager {
              */
             LOG.debug("Create new connection to server: " + sid);
             closeSocket(sock);
-            connectOne(sid, electionAddr);
+
+            if (electionAddr != null) {
+                connectOne(sid, electionAddr);
+            } else {
+                connectOne(sid);
+            }
 
             // Otherwise start worker threads to receive data.
         } else {
