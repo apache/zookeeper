@@ -79,7 +79,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
      * 5 bytes are from timestamp, and low order 2 bytes are 0s.
      */
     public static long initializeNextSession(long id) {
-        long nextSid = 0;
+        long nextSid;
         nextSid = (System.currentTimeMillis() << 24) >>> 8;
         nextSid =  nextSid | (id <<56);
         return nextSid;
@@ -157,19 +157,42 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
     }
 
     synchronized public boolean touchSession(long sessionId, int timeout) {
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG,
-                                     ZooTrace.CLIENT_PING_TRACE_MASK,
-                                     "SessionTrackerImpl --- Touch session: 0x"
-                    + Long.toHexString(sessionId) + " with timeout " + timeout);
-        }
         SessionImpl s = sessionsById.get(sessionId);
-        // Return false, if the session doesn't exists or marked as closing
-        if (s == null || s.isClosing()) {
+
+        if (s == null) {
+            logTraceTouchInvalidSession(sessionId, timeout);
             return false;
         }
-        sessionExpiryQueue.update(s, timeout);
+
+        if (s.isClosing()) {
+            logTraceTouchClosingSession(sessionId, timeout);
+            return false;
+        }
+
+        updateSessionExpiry(s, timeout);
         return true;
+    }
+
+    private void updateSessionExpiry(SessionImpl s, int timeout) {
+        logTraceTouchSession(s.sessionId, timeout, "");
+        sessionExpiryQueue.update(s, timeout);
+    }
+
+    private void logTraceTouchSession(long sessionId, int timeout, String sessionStatus){
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                    ZooTrace.CLIENT_PING_TRACE_MASK,
+                    "SessionTrackerImpl --- Touch " + sessionStatus + "session: 0x"
+                            + Long.toHexString(sessionId) + " with timeout " + timeout);
+        }
+    }
+
+    private void logTraceTouchInvalidSession(long sessionId, int timeout) {
+        logTraceTouchSession(sessionId, timeout, "invalid");
+    }
+
+    private void logTraceTouchClosingSession(long sessionId, int timeout) {
+        logTraceTouchSession(sessionId, timeout, "closing");
     }
 
     public int getSessionTimeout(long sessionId) {
@@ -222,22 +245,34 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
     }
 
     public synchronized boolean addSession(long id, int sessionTimeout) {
+        sessionsWithTimeout.put(id, sessionTimeout);
+
         boolean added = false;
 
-        sessionsWithTimeout.put(id, sessionTimeout);
-        if (sessionsById.get(id) == null) {
-            SessionImpl s = new SessionImpl(id, sessionTimeout);
-            sessionsById.put(id, s);
+        SessionImpl session = sessionsById.get(id);
+        if (session == null){
+            session = new SessionImpl(id, sessionTimeout);
+        }
+
+        // findbugs2.0.3 complains about get after put.
+        // long term strategy would be use computeIfAbsent after JDK 1.8
+        SessionImpl existedSession = sessionsById.putIfAbsent(id, session);
+
+        if (existedSession != null) {
+            session = existedSession;
+        } else {
             added = true;
             LOG.debug("Adding session 0x" + Long.toHexString(id));
         }
+
         if (LOG.isTraceEnabled()) {
             String actionStr = added ? "Adding" : "Existing";
             ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
                     "SessionTrackerImpl --- " + actionStr + " session 0x"
                     + Long.toHexString(id) + " " + sessionTimeout);
         }
-        touchSession(id, sessionTimeout);
+
+        updateSessionExpiry(session, sessionTimeout);
         return added;
     }
 
