@@ -738,6 +738,9 @@ BUGFIXES:
   ZOOKEEPER-1937. init script needs fixing for ZOOKEEPER-1719
   (Marshall McMullen via phunt)
 
+  ZOOKEEPER-1877. Malformed ACL Id can crash server with skipACL=yes
+  (Chris Chen via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
