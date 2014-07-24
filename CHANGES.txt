@@ -1023,6 +1023,9 @@ IMPROVEMENTS:
   ZOOKEEPER-927. there are currently 24 RAT warnings in the build --
   address directly or via exclusions (Michi Mutsuzaki via phunt)
 
+  ZOOKEEPER-1986. refactor log trace on touchSession
+  (Hongchao Deng via phunt)
+
 headers
 
 Release 3.4.0 - 

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -179,20 +180,22 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
     }
 
     private void logTraceTouchSession(long sessionId, int timeout, String sessionStatus){
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG,
-                    ZooTrace.CLIENT_PING_TRACE_MASK,
-                    "SessionTrackerImpl --- Touch " + sessionStatus + "session: 0x"
-                            + Long.toHexString(sessionId) + " with timeout " + timeout);
-        }
+        if (!LOG.isTraceEnabled())
+            return;
+
+        String msg = MessageFormat.format(
+                "SessionTrackerImpl --- Touch {0}session: 0x{1} with timeout {2}",
+                sessionStatus, Long.toHexString(sessionId), Integer.toString(timeout));
+
+        ZooTrace.logTraceMessage(LOG, ZooTrace.CLIENT_PING_TRACE_MASK, msg);
     }
 
     private void logTraceTouchInvalidSession(long sessionId, int timeout) {
-        logTraceTouchSession(sessionId, timeout, "invalid");
+        logTraceTouchSession(sessionId, timeout, "invalid ");
     }
 
     private void logTraceTouchClosingSession(long sessionId, int timeout) {
-        logTraceTouchSession(sessionId, timeout, "closing");
+        logTraceTouchSession(sessionId, timeout, "closing ");
     }
 
     public int getSessionTimeout(long sessionId) {
