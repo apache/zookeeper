@@ -735,6 +735,9 @@ BUGFIXES:
   ZOOKEEPER-1982. Refactor (touch|add)Session in
   SessionTrackerImpl.java (Hongchao Deng via phunt)
 
+  ZOOKEEPER-1937. init script needs fixing for ZOOKEEPER-1719
+  (Marshall McMullen via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
