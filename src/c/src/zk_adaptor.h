@@ -230,7 +230,8 @@ struct _zhandle {
     clientid_t client_id;               // client-id
     long long last_zxid;                // last zookeeper ID
     auth_list_head_t auth_h;            // authentication data list
-    log_callback_fn log_callback;       // Callback for logging (falls back to logging to stderr)  
+    log_callback_fn log_callback;       // Callback for logging (falls back to logging to stderr)
+    int io_count;			// counts the number of iterations of do_io
 
     // Primer storage
     struct _buffer_list primer_buffer;  // The buffer used for the handshake at the start of a connection

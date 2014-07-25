@@ -744,6 +744,9 @@ BUGFIXES:
   ZOOKEEPER-1974. winvs2008 jenkins job failing with "unresolved
   external symbol" (flavio via phunt)
 
+  ZOOKEEPER-1933. Windows release build of zk client cannot connect to
+  zk server (Orion Hodson via fpj, phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

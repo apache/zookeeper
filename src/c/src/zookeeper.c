@@ -1077,6 +1077,7 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
     } else {
         memset(&zh->client_id, 0, sizeof(zh->client_id));
     }
+    zh->io_count = 0;
     zh->primer_buffer.buffer = zh->primer_storage_buffer;
     zh->primer_buffer.curr_offset = 0;
     zh->primer_buffer.len = sizeof(zh->primer_storage_buffer);
