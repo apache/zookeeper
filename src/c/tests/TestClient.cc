@@ -338,6 +338,20 @@ public:
         zrc = zoo_delete(zh, "/mytest/test1", -1);
         zookeeper_close(zh);
     }
+
+    void testBadDescriptor() {
+        int zrc = 0;
+        watchctx_t *ctx;
+        zhandle_t *zh = zookeeper_init(hostPorts, NULL, 10000, 0, ctx, 0);
+        sleep(1);
+        zh->io_count = 0;
+        //close socket
+        close(zh->fd);
+        sleep(1);
+        //Check that doIo isn't spinning
+        CPPUNIT_ASSERT(zh->io_count < 2);
+        zookeeper_close(zh);
+    }
     
 
     void testPing()
