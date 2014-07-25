@@ -741,6 +741,9 @@ BUGFIXES:
   ZOOKEEPER-1877. Malformed ACL Id can crash server with skipACL=yes
   (Chris Chen via phunt)
 
+  ZOOKEEPER-1974. winvs2008 jenkins job failing with "unresolved
+  external symbol" (flavio via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,

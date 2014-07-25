@@ -2004,8 +2004,9 @@ static void zookeeper_set_sock_noblock(zhandle_t *zh, socket_t sock)
 
 static void zookeeper_set_sock_timeout(zhandle_t *zh, socket_t s, int timeout)
 {
-    struct timeval tv = { .tv_sec = timeout };
+    struct timeval tv;
 
+    tv.tv_sec = timeout;
     setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(struct timeval));
     setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval));
 }
