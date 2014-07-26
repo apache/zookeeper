@@ -304,9 +304,6 @@ public class QuorumPeerConfig {
     public static void writeDynamicConfig(String dynamicConfigFilename, String configFileStr, 
             boolean configBackwardCompatibilityMode, final QuorumVerifier qv) throws IOException {
 
-        if (configBackwardCompatibilityMode) {
-            dynamicConfigFilename = configFileStr + ".dynamic";
-        }
         final String actualDynamicConfigFilename = dynamicConfigFilename;
         new AtomicFileWritingIdiom(new File(actualDynamicConfigFilename), new OutputStreamStatement() {
             @Override

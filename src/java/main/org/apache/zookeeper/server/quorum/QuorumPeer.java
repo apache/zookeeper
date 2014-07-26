@@ -45,12 +45,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.HostNameUtils;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.DataNode;
@@ -319,7 +319,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
        
     protected synchronized void setDynamicConfigFilename(String s) {
-        dynamicConfigFilename = s;
+        dynamicConfigFilename = PathUtils.normalizeFileSystemPath(s);
     }
 
     protected synchronized String getDynamicConfigFilename() {
@@ -1341,11 +1341,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 // so we'll create the dynamic config file for the first time now
                 if (dynamicConfigFilename !=null || (configFilename !=null && configBackwardCompatibility)) { 
                 try {
-                    QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename, configFilename, configBackwardCompatibility, qv);
                     if (configBackwardCompatibility) {
-                        dynamicConfigFilename = configFilename + ".dynamic";
-                        configBackwardCompatibility = false;
+                        setDynamicConfigFilename(configFilename + ".dynamic");
                     }
+                    QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename, configFilename, configBackwardCompatibility, qv);
+                    configBackwardCompatibility = false;
                 } catch(IOException e){
                     LOG.error("Error closing file: ", e.getMessage());     
                 }

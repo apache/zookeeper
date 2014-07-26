@@ -37,6 +37,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.test.ClientBase;
@@ -82,12 +83,8 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 dirLog = dataDir.toString();
             }
             
-            // Convert windows path to UNIX to avoid problems with "\"
-            String osname = java.lang.System.getProperty("os.name");
-            if (osname.toLowerCase().contains("windows")) {
-                dir = dir.replace('\\', '/');
-                dirLog = dirLog.replace('\\', '/');
-            }
+            dir = PathUtils.normalizeFileSystemPath(dir);
+            dirLog = PathUtils.normalizeFileSystemPath(dirLog);
             fwriter.write("dataDir=" + dir + "\n");
             fwriter.write("dataLogDir=" + dirLog + "\n");
             fwriter.write("clientPort=" + clientPort + "\n");
