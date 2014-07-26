@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.server.admin.JettyAdminServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
@@ -64,16 +65,26 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
                 throws IOException {
-            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null);
+            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, true);
+        }
+
+        public MainThread(int myid, int clientPort, String quorumCfgSection, boolean writeDynamicConfigFile)
+                throws IOException {
+            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, writeDynamicConfigFile);
         }
 
         public MainThread(int myid, int clientPort, String quorumCfgSection, String configs)
                 throws IOException {
-            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, configs);
+            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, configs, true);
         }
 
         public MainThread(int myid, int clientPort, int adminServerPort, String quorumCfgSection,
-                String configs)
+                String configs)  throws IOException {
+            this(myid, clientPort, adminServerPort, quorumCfgSection, configs, true);
+        }
+
+        public MainThread(int myid, int clientPort, int adminServerPort, String quorumCfgSection,
+                String configs, boolean writeDynamicConfigFile)
                 throws IOException {
             tmpDir = ClientBase.createTmpDir();
             LOG.info("id = " + myid + " tmpDir = " + tmpDir + " clientPort = "
@@ -85,7 +96,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
 
             confFile = new File(tmpDir, "zoo.cfg");
-            dynamicConfigFile = new File(tmpDir, "zoo.dynamic");
+            dynamicConfigFile = new File(tmpDir, "zoo.cfg.dynamic");
 
             FileWriter fwriter = new FileWriter(confFile);
             fwriter.write("tickTime=4000\n");
@@ -96,27 +107,24 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
 
             // Convert windows path to UNIX to avoid problems with "\"
-            String dir = dataDir.toString();
-            String dynamicConfigFilename = dynamicConfigFile.toString();
-            String osname = java.lang.System.getProperty("os.name");
-            if (osname.toLowerCase().contains("windows")) {
-                dir = dir.replace('\\', '/');
-                dynamicConfigFilename = dynamicConfigFilename
-                        .replace('\\', '/');
-            }
+            String dir = PathUtils.normalizeFileSystemPath(dataDir.toString());
+
             fwriter.write("dataDir=" + dir + "\n");
 
             fwriter.write("clientPort=" + clientPort + "\n");
 
             fwriter.write("admin.serverPort=" + adminServerPort + "\n");
 
-            fwriter.write("dynamicConfigFile=" + dynamicConfigFilename + "\n");
-
-            fwriter.flush();
-            fwriter.close();
-
-            fwriter = new FileWriter(dynamicConfigFile);
-            fwriter.write(quorumCfgSection + "\n");
+            if (writeDynamicConfigFile) {
+                String dynamicConfigFilename = PathUtils.normalizeFileSystemPath(dynamicConfigFile.toString());
+                fwriter.write("dynamicConfigFile=" + dynamicConfigFilename + "\n");
+                FileWriter fDynamicConfigWriter = new FileWriter(dynamicConfigFile);
+                fDynamicConfigWriter.write(quorumCfgSection + "\n");
+                fDynamicConfigWriter.flush();
+                fDynamicConfigWriter.close();
+            } else {
+                fwriter.write(quorumCfgSection + "\n");
+            }
             fwriter.flush();
             fwriter.close();
 
@@ -129,7 +137,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         public void writeTempDynamicConfigFile(String nextQuorumCfgSection)
                 throws IOException {
-            File nextDynamicConfigFile = new File(tmpDir, "zoo.dynamic.next");
+            File nextDynamicConfigFile = new File(tmpDir, "zoo.cfg.dynamic.next");
             FileWriter fwriter = new FileWriter(nextDynamicConfigFile);
             fwriter.write(nextQuorumCfgSection + "\n");
             fwriter.flush();

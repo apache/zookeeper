@@ -747,6 +747,9 @@ BUGFIXES:
   ZOOKEEPER-1933. Windows release build of zk client cannot connect to
   zk server (Orion Hodson via fpj, phunt)
 
+  ZOOKEEPER-1988. new test patch to verify dynamic reconfig backward
+  compatibility (Alexander Shraer via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
