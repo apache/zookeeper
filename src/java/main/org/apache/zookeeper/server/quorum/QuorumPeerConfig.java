@@ -300,9 +300,12 @@ public class QuorumPeerConfig {
      * @param configFileStr
      * @param configBackwardCompatibilityMode
      * @param qv
+     * @param needEraseStaticClientInfo indicates whether we need to erase the clientPort
+     *                    and clientPortAddress from static config file.
      */
-    public static void writeDynamicConfig(String dynamicConfigFilename, String configFileStr, 
-            boolean configBackwardCompatibilityMode, final QuorumVerifier qv) throws IOException {
+    public static void writeDynamicConfig(String dynamicConfigFilename, String configFileStr,
+            final boolean configBackwardCompatibilityMode, final QuorumVerifier qv,
+            final boolean needEraseStaticClientInfo) throws IOException {
 
         final String actualDynamicConfigFilename = dynamicConfigFilename;
         new AtomicFileWritingIdiom(new File(actualDynamicConfigFilename), new OutputStreamStatement() {
@@ -313,41 +316,68 @@ public class QuorumPeerConfig {
             }
         });
         // the following is for users who run without a dynamic config file (old config file)
-        // if the configuration changes (reconfiguration executes), we create a dynamic config
-        // file, remove all the dynamic definitions from the config file and add a pointer
+        // we create a dynamic config file, remove all the dynamic definitions from the config file and add a pointer
         // to the config file. The dynamic config file's name will be the same as the config file's
         // with ".dynamic" appended to it
-       
-        if (configBackwardCompatibilityMode) {
-               File configFile = (new VerifyingFileFactory.Builder(LOG)
-                   .warnForRelativePath()
-                   .failForNonExistingPath()
-                   .build()).create(configFileStr);
-                   
-               final Properties cfg = new Properties();
-               FileInputStream in = new FileInputStream(configFile);
-               try {
-                   cfg.load(in);
-               } finally {
-                   in.close();
-               }
-               new AtomicFileWritingIdiom(new File(configFileStr), new WriterStatement() {
-                   @Override
-                   public void write(Writer out) throws IOException {
-                       for (Entry<Object, Object> entry : cfg.entrySet()) {
-                           String key = entry.getKey().toString().trim();
-                           String value = entry.getValue().toString().trim();    
-                           if (!key.startsWith("server.") && !key.startsWith("group") 
-                                   && !key.startsWith("weight") && !key.equals("clientPort") && !key.equals("clientPortAddress")){
-                               out.write(key.concat("=").concat(value).concat("\n"));
-                           }
-                       }                      
-                       out.write("dynamicConfigFile=".concat(actualDynamicConfigFilename).concat("\n"));
-                    
-                   }
-               });
-          }
-    } 
+
+        if (!configBackwardCompatibilityMode && !needEraseStaticClientInfo)
+            return;
+
+        editStaticConfig(configFileStr, actualDynamicConfigFilename,
+                configBackwardCompatibilityMode, needEraseStaticClientInfo);
+    }
+
+    private static void editStaticConfig(final String configFileStr,
+                                         final String dynamicFileStr,
+                                         final boolean backwardCompatible,
+                                         final boolean eraseClientPortAddress)
+            throws IOException {
+        // Some tests may not have a static config file.
+        if (configFileStr == null)
+            return;
+
+        File configFile = (new VerifyingFileFactory.Builder(LOG)
+                .warnForRelativePath()
+                .failForNonExistingPath()
+                .build()).create(configFileStr);
+
+        final Properties cfg = new Properties();
+        FileInputStream in = new FileInputStream(configFile);
+        try {
+            cfg.load(in);
+        } finally {
+            in.close();
+        }
+
+        new AtomicFileWritingIdiom(new File(configFileStr), new WriterStatement() {
+            @Override
+            public void write(Writer out) throws IOException {
+                for (Entry<Object, Object> entry : cfg.entrySet()) {
+                    String key = entry.getKey().toString().trim();
+
+                    if (key.startsWith("server.")
+                        || key.startsWith("group")
+                        || key.startsWith("weight")
+                        || (eraseClientPortAddress
+                            && (key.startsWith("clientPort")
+                                || key.startsWith("clientPortAddress")))) {
+                        // not writing them back to static file
+                        continue;
+                    }
+
+                    String value = entry.getValue().toString().trim();
+                    out.write(key.concat("=").concat(value).concat("\n"));
+                }
+
+                if ( ! backwardCompatible )
+                    return;
+
+                out.write("dynamicConfigFile=".concat(dynamicFileStr).concat("\n"));
+            }
+        });
+    }
+
+
     public static void deleteFile(String filename){        
        File f = new File(filename);
        if (f.exists()) {
@@ -375,7 +405,7 @@ public class QuorumPeerConfig {
     /**
      * Parse dynamic configuration file and return
      * quorumVerifier for new configuration.
-     * @param zkProp Properties to parse from.
+     * @param dynamicConfigProp Properties to parse from.
      * @throws IOException
      * @throws ConfigException
      */
@@ -467,12 +497,15 @@ public class QuorumPeerConfig {
 
             QuorumServer qs = quorumVerifier.getAllMembers().get(serverId);
             if (clientPortAddress!=null && qs!=null && qs.clientAddr!=null){ 
-               if ((!clientPortAddress.getAddress().isAnyLocalAddress()
+                if ((!clientPortAddress.getAddress().isAnyLocalAddress()
                        && !clientPortAddress.equals(qs.clientAddr)) || 
                    (clientPortAddress.getAddress().isAnyLocalAddress() 
                        && clientPortAddress.getPort()!=qs.clientAddr.getPort())) 
-               throw new ConfigException("client address for this server (id = " + serverId + ") in static config file is " + clientPortAddress + " is different from client address found in dynamic file: " + qs.clientAddr);                    
-           } 
+                    throw new ConfigException("client address for this server (id = " + serverId + ") in static config file is " + clientPortAddress + " is different from client address found in dynamic file: " + qs.clientAddr);
+                else {
+                    editStaticConfig(configFileStr, null, false, true);
+                }
+            }
             if (qs!=null && qs.clientAddr != null) clientPortAddress = qs.clientAddr;                       
             
             // Warn about inconsistent peer type

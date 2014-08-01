@@ -1315,7 +1315,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         connectNewPeers();
         if (writeToDisk) {
             try {
-               QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename + ".next", null, false, qv);
+                QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename + ".next", null, false, qv, false);
            } catch(IOException e){
                 LOG.error("Error closing file: ", e.getMessage());
             }
@@ -1344,7 +1344,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     if (configBackwardCompatibility) {
                         setDynamicConfigFilename(configFilename + ".dynamic");
                     }
-                    QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename, configFilename, configBackwardCompatibility, qv);
+                    QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename, configFilename,
+                            configBackwardCompatibility, qv,
+                            needEraseClientInfoFromStaticConfig(prevQV, qv));
                     configBackwardCompatibility = false;
                 } catch(IOException e){
                     LOG.error("Error closing file: ", e.getMessage());     
@@ -1366,11 +1368,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
            setClientAddress(qs.clientAddr);
        }
        return prevQV;
-    }   
+    }
+
+    private boolean needEraseClientInfoFromStaticConfig(QuorumVerifier oldQV,
+            QuorumVerifier newQV) {
+        QuorumServer myOldSpec = oldQV.getAllMembers().get(getId());
+        QuorumServer myNewSpec = newQV.getAllMembers().get(getId());
+        return (myNewSpec != null && myNewSpec.clientAddr != null 
+                     && (myOldSpec == null || myOldSpec.clientAddr == null));
+    }
+
     /**
      * Get an instance of LeaderElection
      */
-
     public Election getElectionAlg(){
         return electionAlg;
     }

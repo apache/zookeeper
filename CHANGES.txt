@@ -39,6 +39,8 @@ NEW FEATURES:
 
 BUGFIXES:
 
+  ZOOKEEPER-1992. Backward compatibility of the static configuration file (Hongchao Deng via Alex Shraer).
+
   ZOOKEEPER-1900. NullPointerException in truncate (Camille Fournier)
 
   ZOOKEEPER-786. Exception in ZooKeeper.toString
