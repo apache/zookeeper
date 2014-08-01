@@ -1,10 +1,4 @@
-Trunk
-
-Non-backward compatible changes:
-
-BUGFIXES:
-
-Backward compatible changes:
+Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
   ZOOKEEPER-1355. Add zk.updateServerList(newServerList) (Alex Shraer, Marshall McMullen via fpj)
