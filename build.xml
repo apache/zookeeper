@@ -30,7 +30,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property environment="env"/>
     
     <property name="version-major" value="3" />
-    <property name="version-minor" value="5" />
+    <property name="version-minor" value="6" />
     <property name="version-patch" value="0" />
     <property name="version" value="${version-major}.${version-minor}.${version-patch}-SNAPSHOT" />
 
