@@ -154,9 +154,7 @@ public class QuorumPeerMain {
           quorumPeer.setMaxSessionTimeout(config.getMaxSessionTimeout());
           quorumPeer.setInitLimit(config.getInitLimit());
           quorumPeer.setSyncLimit(config.getSyncLimit());
-          quorumPeer.setDynamicConfigFilename(config.getDynamicConfigFilename());
           quorumPeer.setConfigFileName(config.getConfigFilename());
-          quorumPeer.setConfigBackwardCompatibility(config.getConfigBackwardCompatibility());
           quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
           quorumPeer.setQuorumVerifier(config.getQuorumVerifier(), false);
           if (config.getLastSeenQuorumVerifier()!=null) {
