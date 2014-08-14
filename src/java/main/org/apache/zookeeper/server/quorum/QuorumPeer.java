@@ -18,14 +18,10 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -45,15 +41,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.zookeeper.KeeperException.NoNodeException;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.HostNameUtils;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -317,32 +310,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         learnerType = p;
     }
 
-       
-    protected synchronized void setDynamicConfigFilename(String s) {
-        dynamicConfigFilename = PathUtils.normalizeFileSystemPath(s);
-    }
-
-    protected synchronized String getDynamicConfigFilename() {
-        return dynamicConfigFilename;
-    }
-
     protected synchronized void setConfigFileName(String s) {
         configFilename = s;
     }
 
-    protected synchronized void setConfigBackwardCompatibility(boolean bc) {
-        configBackwardCompatibility = bc;
-    }
-    
-    protected synchronized boolean getConfigBackwardCompatibility() {
-        return configBackwardCompatibility;
-    }
-    
-    private String dynamicConfigFilename = null;
-    
     private String configFilename = null;
-    
-    private boolean configBackwardCompatibility = false;
 
     public int getQuorumSize(){
         return getVotingView().size();
@@ -606,9 +578,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
             ServerCnxnFactory cnxnFactory) throws IOException {
-        this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, 
-                initLimit, syncLimit, false, cnxnFactory, 
-                new QuorumMaj(quorumPeers), null);
+        this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime,
+                initLimit, syncLimit, false, cnxnFactory,
+                new QuorumMaj(quorumPeers));
     }
 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
@@ -616,7 +588,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             long myid, int tickTime, int initLimit, int syncLimit,
             boolean quorumListenOnAllIPs,
             ServerCnxnFactory cnxnFactory,
-            QuorumVerifier quorumConfig, String memFilename) throws IOException {
+            QuorumVerifier quorumConfig) throws IOException {
         this();
         this.cnxnFactory = cnxnFactory;
         this.electionType = electionType;
@@ -627,7 +599,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.quorumListenOnAllIPs = quorumListenOnAllIPs;
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
         this.zkDb = new ZKDatabase(this.logFactory);
-        this.dynamicConfigFilename = (memFilename != null) ? memFilename : "zoo_replicated" + myid + ".dynamic";
         if(quorumConfig == null) quorumConfig = new QuorumMaj(quorumPeers);
         setQuorumVerifier(quorumConfig, false);
         adminServer = AdminServerFactory.createAdminServer();
@@ -757,7 +728,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,
                 ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
-                new QuorumMaj(quorumPeers), null);
+                new QuorumMaj(quorumPeers));
     }
 
     /**
@@ -773,7 +744,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,
                 ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
-                quorumConfig, null);
+                quorumConfig);
     }
 
     /**
@@ -1289,7 +1260,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
            }
         }
     }
-    
+
     public synchronized void restartLeaderElection(QuorumVerifier qvOLD, QuorumVerifier qvNEW){
         if (qvOLD == null || !qvOLD.equals(qvNEW)) {
             LOG.warn("Restarting Leader Election");
@@ -1297,6 +1268,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             shuttingDownLE = false;
             startLeaderElection();
         }           
+    }
+
+    public String getNextDynamicConfigFilename() {
+        return configFilename + QuorumPeerConfig.nextDynamicConfigFileSuffix;
     }
     
     public synchronized void setLastSeenQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
@@ -1315,9 +1290,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         connectNewPeers();
         if (writeToDisk) {
             try {
-                QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename + ".next", null, false, qv, false);
+                QuorumPeerConfig.writeDynamicConfig(
+                        getNextDynamicConfigFilename(), qv, true);
            } catch(IOException e){
-                LOG.error("Error closing file: ", e.getMessage());
+                LOG.error("Error writing next dynamic config file to disk: ", e.getMessage());
             }
         } 
 
@@ -1332,50 +1308,48 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
            return quorumVerifier;  
         }
         QuorumVerifier prevQV = quorumVerifier;
-       quorumVerifier = qv;
-       if (lastSeenQuorumVerifier == null || (qv.getVersion() > lastSeenQuorumVerifier.getVersion()))
-           lastSeenQuorumVerifier = qv;
+        quorumVerifier = qv;
+        if (lastSeenQuorumVerifier == null || (qv.getVersion() > lastSeenQuorumVerifier.getVersion()))
+            lastSeenQuorumVerifier = qv;
+
         if (writeToDisk) {
-                // we need to write the dynamic config file. Either it already exists
-                // or we have the old-style config file and we're in the backward compatibility mode,
-                // so we'll create the dynamic config file for the first time now
-                if (dynamicConfigFilename !=null || (configFilename !=null && configBackwardCompatibility)) { 
+            // some tests initialize QuorumPeer without a static config file
+            if (configFilename != null) {
                 try {
-                    if (configBackwardCompatibility) {
-                        setDynamicConfigFilename(configFilename + ".dynamic");
-                    }
-                    QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename, configFilename,
-                            configBackwardCompatibility, qv,
-                            needEraseClientInfoFromStaticConfig(prevQV, qv));
-                    configBackwardCompatibility = false;
-                } catch(IOException e){
-                    LOG.error("Error closing file: ", e.getMessage());     
+                    String dynamicConfigFilename = makeDynamicConfigFilename(
+                            qv.getVersion());
+                    QuorumPeerConfig.writeDynamicConfig(
+                            dynamicConfigFilename, qv, false);
+                    QuorumPeerConfig.editStaticConfig(configFilename,
+                            dynamicConfigFilename,
+                            needEraseClientInfoFromStaticConfig());
+                } catch (IOException e) {
+                    LOG.error("Error closing file: ", e.getMessage());
                 }
             } else {
-                LOG.error("writeToDisk == true but dynamicConfigFilename == null, configFilename "
-                          + (configFilename == null ? "== null": "!=null")
-                          + " and configBackwardCompatibility == " + configBackwardCompatibility);
+                LOG.error("writeToDisk == true but configFilename == null");
             }
         }
 
         if (qv.getVersion() == lastSeenQuorumVerifier.getVersion()){
-           QuorumPeerConfig.deleteFile(dynamicConfigFilename + ".next");
-       }
-       QuorumServer qs = qv.getAllMembers().get(getId());
-       if (qs!=null){
-           setQuorumAddress(qs.addr);
-           setElectionAddress(qs.electionAddr);
-           setClientAddress(qs.clientAddr);
-       }
-       return prevQV;
+           QuorumPeerConfig.deleteFile( getNextDynamicConfigFilename() );
+        }
+        QuorumServer qs = qv.getAllMembers().get(getId());
+        if (qs!=null){
+            setQuorumAddress(qs.addr);
+            setElectionAddress(qs.electionAddr);
+            setClientAddress(qs.clientAddr);
+        }
+        return prevQV;
     }
 
-    private boolean needEraseClientInfoFromStaticConfig(QuorumVerifier oldQV,
-            QuorumVerifier newQV) {
-        QuorumServer myOldSpec = oldQV.getAllMembers().get(getId());
-        QuorumServer myNewSpec = newQV.getAllMembers().get(getId());
-        return (myNewSpec != null && myNewSpec.clientAddr != null 
-                     && (myOldSpec == null || myOldSpec.clientAddr == null));
+    private String makeDynamicConfigFilename(long version) {
+        return configFilename + ".dynamic." + Long.toHexString(version);
+    }
+
+    private boolean needEraseClientInfoFromStaticConfig() {
+        QuorumServer server = quorumVerifier.getAllMembers().get(getId());
+        return (server != null && server.clientAddr != null);
     }
 
     /**
