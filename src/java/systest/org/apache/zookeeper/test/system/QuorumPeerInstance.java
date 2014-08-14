@@ -166,8 +166,8 @@ class QuorumPeerInstance implements Instance {
             peers = new HashMap<Long,QuorumServer>();
             for(int i = 0; i < parts.length; i++) {
                 // parts[i] == "host:leaderPort:leaderElectionPort;clientPort"
-                String subparts[] = (parts[i].split(";"))[0].split(":");
-		String clientPort = (parts[i].split(";"))[1];
+                String subparts[] = ((parts[i].split(";"))[0]).split(":");
+                String clientPort = (parts[i].split(";"))[1];
                 peers.put(Long.valueOf(i),
                           new QuorumServer(
                                 i,
