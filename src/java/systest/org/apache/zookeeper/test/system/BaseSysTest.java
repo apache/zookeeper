@@ -126,8 +126,9 @@ public class BaseSysTest extends TestCase {
                     sbClient.append(',');
                     sbServer.append(',');
                 }
-                sbClient.append(r[0]);
-                sbServer.append(r[1]);
+                sbClient.append(r[0]); // r[0] == "host:clientPort"
+                sbServer.append(r[1]); // r[1] == "host:leaderPort:leaderElectionPort"
+                sbServer.append(";"+(r[0].split(":"))[1]); // Appending ";clientPort"
             }
             serverHostPort = sbClient.toString();
             quorumHostPort = sbServer.toString();
