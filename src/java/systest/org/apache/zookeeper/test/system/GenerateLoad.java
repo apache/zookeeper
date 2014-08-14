@@ -603,8 +603,9 @@ public class GenerateLoad {
                         quorumHostPort.append(',');
                         zkHostPort.append(',');
                     }
-                    zkHostPort.append(r[0]);
-                    quorumHostPort.append(r[1]);
+                    zkHostPort.append(r[0]);     // r[0] == "host:clientPort"
+                    quorumHostPort.append(r[1]); // r[1] == "host:leaderPort:leaderElectionPort"
+                    quorumHostPort.append(";"+(r[0].split(":"))[1]); // Appending ";clientPort"
                 }
                 for (int i = 0; i < serverCount; i++) {
                     QuorumPeerInstance.startInstance(im, quorumHostPort
