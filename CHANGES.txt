@@ -10,6 +10,8 @@ IMPROVEMENTS:
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
+  ZOOKEEPER-1994. Auto-backup configuration files; config version becomes part of filename (Hongchao Deng via shralex)
+
   ZOOKEEPER-1355. Add zk.updateServerList(newServerList) (Alex Shraer, Marshall McMullen via fpj)
 
   ZOOKEEPER-1572. Add an async (Java) interface for multi request (Sijie Guo via camille)

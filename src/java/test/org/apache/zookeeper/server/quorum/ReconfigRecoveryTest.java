@@ -56,9 +56,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             allServers.add(server);
             sb.append(server + "\n");
             if (i == 1)
-                currentQuorumCfgSection = sb.toString() + "version=100000000\n";
+                currentQuorumCfgSection = sb.toString();
         }
-        sb.append("version=200000000\n"); // version of current config is 100000000
         nextQuorumCfgSection = sb.toString();
 
         // Both servers 0 and 1 will have the .next config file, which means
@@ -67,12 +66,13 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         MainThread mt[] = new MainThread[SERVER_COUNT];
         ZooKeeper zk[] = new ZooKeeper[SERVER_COUNT];
         for (int i = 0; i < SERVER_COUNT - 1; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection);
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection,
+                    true, "100000000");
             // note that we should run the server, shut it down and only then
             // simulate a reconfig in progress by writing the temp file, but here no
             // other server is competing with them in FLE, so we can skip this step
             // (server 2 is booted after FLE ends)
-            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection);
+            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection, "200000000");
             mt[i].start();
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
                     ClientBase.CONNECTION_TIMEOUT, this);
@@ -132,9 +132,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         StringBuilder sb = new StringBuilder();
         String server;
 
-        String currentQuorumCfg = null, currentQuorumCfgSection = null, nextQuorumCfgSection = null;
+        String currentQuorumCfg, nextQuorumCfgSection;
 
-        ArrayList<String> allServersCurrent = new ArrayList<String>();
         ArrayList<String> allServersNext = new ArrayList<String>();
 
         for (int i = 0; i < 2; i++) {
@@ -142,13 +141,10 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             server = "server." + i + "=localhost:" + PortAssignment.unique()
                     + ":" + PortAssignment.unique() + ":participant;localhost:"
                     + oldClientPorts[i];
-            allServersCurrent.add(server);
             sb.append(server + "\n");
         }
 
         currentQuorumCfg = sb.toString();
-        sb.append("version=100000000\n");
-        currentQuorumCfgSection = sb.toString();
 
         sb = new StringBuilder();
         String role;
@@ -165,7 +161,6 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             allServersNext.add(server);
             sb.append(server + "\n");
         }
-        sb.append("version=200000000\n"); // version of current config is 100000000
         nextQuorumCfgSection = sb.toString();
 
         MainThread mt[] = new MainThread[SERVER_COUNT];
@@ -173,8 +168,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
         // run servers 0 and 1 normally
         for (int i = 0; i < 2; i++) {
-            mt[i] = new MainThread(i, oldClientPorts[i],
-                    currentQuorumCfgSection);
+            mt[i] = new MainThread(i, oldClientPorts[i], currentQuorumCfg,
+                    true, "100000000");
             mt[i].start();
             zk[i] = new ZooKeeper("127.0.0.1:" + oldClientPorts[i],
                     ClientBase.CONNECTION_TIMEOUT, this);
@@ -203,7 +198,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < 2; i++) {
-            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection);
+            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection, "200000000");
             mt[i].start();
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
                     ClientBase.CONNECTION_TIMEOUT, this);
@@ -252,18 +247,15 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
         String currentQuorumCfgSection = null, nextQuorumCfgSection;
 
-        ArrayList<String> allServers = new ArrayList<String>();
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique()
                     + ":" + PortAssignment.unique() + ":participant;localhost:"
                     + clientPorts[i];
-            allServers.add(server);
             sb.append(server + "\n");
             if (i == 1)
-                currentQuorumCfgSection = sb.toString() + "version=100000000\n";
+                currentQuorumCfgSection = sb.toString();
         }
-        sb.append("version=200000000\n"); // version of current config is 100000000 
         nextQuorumCfgSection = sb.toString();
 
         MainThread mt[] = new MainThread[SERVER_COUNT];
@@ -272,11 +264,12 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         // Both servers 0 and 1 will have the .next config file, which means
         // for them that a reconfiguration was in progress when they failed
         for (int i = 0; i < 2; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection);
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection,
+                    true, "100000000");
             // note that we should run the server, shut it down and only then
             // simulate a reconfig in progress by writing the temp file, but here no
             // other server is competing with them in FLE, so we can skip this step
-            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection);
+            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection, "200000000");
             mt[i].start();
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
                     ClientBase.CONNECTION_TIMEOUT, this);
@@ -322,16 +315,16 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
                     + clientPorts[i];
             allServers.add(server);
             sb.append(server + "\n");
-            if (i == 1) currentQuorumCfgSection = sb.toString() + "version=100000000\n";
+            if (i == 1) currentQuorumCfgSection = sb.toString();
         }
-        sb.append("version=200000000\n"); // version of current config is 100000000
         nextQuorumCfgSection = sb.toString();
 
         // lets start servers 2, 3, 4 with the new config
         MainThread mt[] = new MainThread[SERVER_COUNT];
         ZooKeeper zk[] = new ZooKeeper[SERVER_COUNT];
         for (int i = 2; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], nextQuorumCfgSection);
+            mt[i] = new MainThread(i, clientPorts[i], nextQuorumCfgSection,
+                    true, "200000000");
             mt[i].start();
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
                     ClientBase.CONNECTION_TIMEOUT, this);
@@ -350,8 +343,9 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         // for them that a reconfiguration was in progress when they failed
         // and the leader will complete it.
         for (int i = 0; i < 2; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection);
-            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection);
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection,
+                    true, "100000000");
+            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection, "200000000");
             mt[i].start();
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
                     ClientBase.CONNECTION_TIMEOUT, this);
@@ -402,7 +396,6 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         HashSet<Integer> observers = new HashSet<Integer>();
         observers.add(2);
         StringBuilder sb = generateConfig(3, ports, observers);
-        sb.append("version=100000000");
         currentQuorumCfgSection = sb.toString();
 
         // generate new config string
@@ -414,20 +407,21 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             allServersNext.add(server);
             sb.append(server + "\n");
         }
-        sb.append("version=200000000"); // version of current config is 100000000
         nextQuorumCfgSection = sb.toString();
 
         MainThread mt[] = new MainThread[SERVER_COUNT];
         ZooKeeper zk[] = new ZooKeeper[SERVER_COUNT];
 
         // start server 2 with old config, where it is an observer
-        mt[2] = new MainThread(2, ports[2][2], currentQuorumCfgSection);
+        mt[2] = new MainThread(2, ports[2][2], currentQuorumCfgSection,
+                true, "100000000");
         mt[2].start();
         zk[2] = new ZooKeeper("127.0.0.1:" + ports[2][2],
                 ClientBase.CONNECTION_TIMEOUT, this);
 
         // start server 3 with new config
-        mt[3] = new MainThread(3, ports[3][2], nextQuorumCfgSection);
+        mt[3] = new MainThread(3, ports[3][2], nextQuorumCfgSection,
+                true, "200000000");
         mt[3].start();
         zk[3] = new ZooKeeper("127.0.0.1:" + ports[3][2],
                 ClientBase.CONNECTION_TIMEOUT, this);
@@ -439,9 +433,9 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             ReconfigTest.testServerHasConfig(zk[i], allServersNext, null);
         }
 
-        Assert.assertEquals(nextQuorumCfgSection,
+        Assert.assertEquals(nextQuorumCfgSection + "version=200000000",
                 ReconfigTest.testServerHasConfig(zk[2], null, null));
-        Assert.assertEquals(nextQuorumCfgSection,
+        Assert.assertEquals(nextQuorumCfgSection + "version=200000000",
                 ReconfigTest.testServerHasConfig(zk[3], null, null));
         ReconfigTest.testNormalOperation(zk[2], zk[2]);
         ReconfigTest.testNormalOperation(zk[3], zk[2]);
@@ -470,7 +464,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
         final int SERVER_COUNT = 4;
         int[][] ports = generatePorts(SERVER_COUNT);
-        String currentQuorumCfg, currentQuorumCfgSection, nextQuorumCfgSection;
+        String currentQuorumCfg, nextQuorumCfgSection;
 
         // generate old config string
         HashSet<Integer> observers = new HashSet<Integer>();
@@ -478,14 +472,13 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
         StringBuilder sb = generateConfig(3, ports, observers);
         currentQuorumCfg = sb.toString();
-        sb.append("version=100000000");
-        currentQuorumCfgSection = sb.toString();
 
         // Run servers 0..2 for a while
         MainThread mt[] = new MainThread[SERVER_COUNT];
         ZooKeeper zk[] = new ZooKeeper[SERVER_COUNT];
         for (int i = 0; i <= 2; i++) {
-            mt[i] = new MainThread(i, ports[i][2], currentQuorumCfgSection);
+            mt[i] = new MainThread(i, ports[i][2], currentQuorumCfg
+                    , true, "100000000");
             mt[i].start();
             zk[i] = new ZooKeeper("127.0.0.1:" + ports[i][2],
                     ClientBase.CONNECTION_TIMEOUT, this);
@@ -514,13 +507,12 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             allServersNext.add(server);
             sb.append(server + "\n");
         }
-        sb.append("version=200000000"); // version of current config is 100000000
         nextQuorumCfgSection = sb.toString();
 
         // simulate reconfig in progress - servers 0..2 have a temp reconfig
         // file when they boot
         for (int i = 0; i <= 2; i++) {
-            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection);
+            mt[i].writeTempDynamicConfigFile(nextQuorumCfgSection, "200000000");
             mt[i].start();
             zk[i] = new ZooKeeper("127.0.0.1:" + ports[i][2],
                     ClientBase.CONNECTION_TIMEOUT, this);
@@ -536,15 +528,15 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         for (int i = 2; i < SERVER_COUNT; i++) {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2],
-                            CONNECTION_TIMEOUT * 2));
+                            CONNECTION_TIMEOUT * 3));
             ReconfigTest.testServerHasConfig(zk[i], allServersNext, null);
         }
 
         ReconfigTest.testNormalOperation(zk[0], zk[2]);
         ReconfigTest.testNormalOperation(zk[3], zk[1]);
-        Assert.assertEquals(nextQuorumCfgSection,
+        Assert.assertEquals(nextQuorumCfgSection + "version=200000000",
                 ReconfigTest.testServerHasConfig(zk[2], null, null));
-        Assert.assertEquals(nextQuorumCfgSection,
+        Assert.assertEquals(nextQuorumCfgSection + "version=200000000",
                 ReconfigTest.testServerHasConfig(zk[3], null, null));
 
         for (int i = 0; i < SERVER_COUNT; i++) {

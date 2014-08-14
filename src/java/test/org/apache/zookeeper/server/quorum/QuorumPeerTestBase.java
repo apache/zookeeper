@@ -22,8 +22,14 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,9 +64,8 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     
     public static class MainThread implements Runnable {
         final File confFile;
-        final File dynamicConfigFile;
         final File tmpDir;
-        
+
         volatile TestQPMain main;
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
@@ -71,6 +76,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         public MainThread(int myid, int clientPort, String quorumCfgSection, boolean writeDynamicConfigFile)
                 throws IOException {
             this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, writeDynamicConfigFile);
+        }
+
+        public MainThread(int myid, int clientPort, String quorumCfgSection, boolean writeDynamicConfigFile,
+                          String version) throws IOException {
+            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null,
+                    writeDynamicConfigFile, version);
         }
 
         public MainThread(int myid, int clientPort, String quorumCfgSection, String configs)
@@ -86,6 +97,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         public MainThread(int myid, int clientPort, int adminServerPort, String quorumCfgSection,
                 String configs, boolean writeDynamicConfigFile)
                 throws IOException {
+            this(myid, clientPort, adminServerPort, quorumCfgSection, configs, writeDynamicConfigFile, null);
+        }
+
+        public MainThread(int myid, int clientPort, int adminServerPort, String quorumCfgSection,
+                          String configs, boolean writeDynamicConfigFile, String version)
+                throws IOException {
             tmpDir = ClientBase.createTmpDir();
             LOG.info("id = " + myid + " tmpDir = " + tmpDir + " clientPort = "
                     + clientPort + " adminServerPort = " + adminServerPort);
@@ -96,7 +113,6 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
 
             confFile = new File(tmpDir, "zoo.cfg");
-            dynamicConfigFile = new File(tmpDir, "zoo.cfg.dynamic");
 
             FileWriter fwriter = new FileWriter(confFile);
             fwriter.write("tickTime=4000\n");
@@ -116,14 +132,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write("admin.serverPort=" + adminServerPort + "\n");
 
             if (writeDynamicConfigFile) {
-                String dynamicConfigFilename = PathUtils.normalizeFileSystemPath(dynamicConfigFile.toString());
+                String dynamicConfigFilename = createDynamicFile(quorumCfgSection, version);
                 fwriter.write("dynamicConfigFile=" + dynamicConfigFilename + "\n");
-                FileWriter fDynamicConfigWriter = new FileWriter(dynamicConfigFile);
-                fDynamicConfigWriter.write(quorumCfgSection + "\n");
-                fDynamicConfigWriter.flush();
-                fDynamicConfigWriter.close();
             } else {
-                fwriter.write(quorumCfgSection + "\n");
+                fwriter.write(quorumCfgSection);
             }
             fwriter.flush();
             fwriter.close();
@@ -135,11 +147,49 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.close();
         }
 
-        public void writeTempDynamicConfigFile(String nextQuorumCfgSection)
+        private String createDynamicFile(String quorumCfgSection, String version)
                 throws IOException {
-            File nextDynamicConfigFile = new File(tmpDir, "zoo.cfg.dynamic.next");
+            String filename = "zoo.cfg.dynamic";
+            if( version != null ){
+                filename = filename + "." + version;
+            }
+
+            File dynamicConfigFile = new File(tmpDir, filename);
+            String dynamicConfigFilename = PathUtils.normalizeFileSystemPath(dynamicConfigFile.toString());
+
+            FileWriter fDynamicConfigWriter = new FileWriter(dynamicConfigFile);
+            fDynamicConfigWriter.write(quorumCfgSection);
+            fDynamicConfigWriter.flush();
+            fDynamicConfigWriter.close();
+
+            return dynamicConfigFilename;
+        }
+
+        public File[] getDynamicFiles() {
+            return getFilesWithPrefix("zoo.cfg.dynamic");
+        }
+
+        public File[] getFilesWithPrefix(final String prefix) {
+            return tmpDir.listFiles(new FilenameFilter() {      
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.startsWith(prefix);
+                }});
+        }
+
+        public File getFileByName(String filename) {
+            File f = new File(tmpDir.getPath(), filename);
+            return f.isFile() ? f : null;
+        }
+
+        public void writeTempDynamicConfigFile(String nextQuorumCfgSection, String version)
+                throws IOException {
+            File nextDynamicConfigFile = new File(tmpDir,
+                    "zoo.cfg" + QuorumPeerConfig.nextDynamicConfigFileSuffix);
             FileWriter fwriter = new FileWriter(nextDynamicConfigFile);
-            fwriter.write(nextQuorumCfgSection + "\n");
+            fwriter.write(nextQuorumCfgSection
+                    + "\n"
+                    + "version=" + version);
             fwriter.flush();
             fwriter.close();
         }
@@ -192,6 +242,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         public boolean isQuorumPeerRunning() {
             return main.quorumPeer != null;
+        }
+
+        public String getPropFromStaticFile(String key) throws IOException {
+            Properties props = new Properties();
+            props.load(new FileReader(confFile));
+            return props.getProperty(key, "");
         }
     }
 }
