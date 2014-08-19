@@ -54,9 +54,10 @@ import org.apache.zookeeper.server.util.VerifyingFileFactory;
 
 public class QuorumPeerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
-    private static boolean standaloneEnabled = true;
-
+    private static final int UNSET_SERVERID = -1;
     public static final String nextDynamicConfigFileSuffix = ".dynamic.next";
+
+    private static boolean standaloneEnabled = true;
 
     protected InetSocketAddress clientPortAddress;
     protected File dataDir;
@@ -78,7 +79,7 @@ public class QuorumPeerConfig {
     protected int electionPort = 2182;
     protected boolean quorumListenOnAllIPs = false;
 
-    protected long serverId;
+    protected long serverId = UNSET_SERVERID;
 
     protected QuorumVerifier quorumVerifier = null, lastSeenQuorumVerifier = null;
     protected int snapRetainCount = 3;
@@ -152,9 +153,8 @@ public class QuorumPeerConfig {
                } finally {
                    inConfig.close();
                }
-               quorumVerifier = parseDynamicConfig(dynamicCfg, electionAlg, true, false);
-               checkValidity();
-           
+               setupQuorumPeerConfig(dynamicCfg, false);
+
            } catch (IOException e) {
                throw new ConfigException("Error processing " + dynamicConfigFileStr, e);
            } catch (IllegalArgumentException e) {
@@ -318,9 +318,11 @@ public class QuorumPeerConfig {
         // backward compatibility - dynamic configuration in the same file as
         // static configuration params see writeDynamicConfig()
         if (dynamicConfigFileStr == null) {
-            backupOldConfig();
-            quorumVerifier = parseDynamicConfig(zkProp, electionAlg, true, true);
-            checkValidity();
+            setupQuorumPeerConfig(zkProp, true);
+            if (isDistributed()) {
+                // we don't backup static config for standalone mode.
+                backupOldConfig();
+            }
         }
     }
 
@@ -464,7 +466,16 @@ public class QuorumPeerConfig {
             return new QuorumMaj(dynamicConfigProp);            
         }          
     }
-    
+
+    void setupQuorumPeerConfig(Properties prop, boolean configBackwardCompatibilityMode)
+            throws IOException, ConfigException {
+        quorumVerifier = parseDynamicConfig(prop, electionAlg, true, configBackwardCompatibilityMode);
+        setupMyId();
+        setupClientPort();
+        setupPeerType();
+        checkValidity();
+    }
+
     /**
      * Parse dynamic configuration file and return
      * quorumVerifier for new configuration.
@@ -490,6 +501,10 @@ public class QuorumPeerConfig {
         int numParticipators = qv.getVotingMembers().size();
         int numObservers = qv.getObservingMembers().size();
         if (numParticipators == 0) {
+            if (!standaloneEnabled) {
+                throw new IllegalArgumentException("standaloneEnabled = false then " +
+                        "number of participants should be >0");
+            }
             if (numObservers > 0) {
                 throw new IllegalArgumentException("Observers w/o participants is an invalid configuration");
             }
@@ -525,64 +540,73 @@ public class QuorumPeerConfig {
         }
         return qv;
     }
-    
+
+    private void setupMyId() throws IOException {
+        File myIdFile = new File(dataDir, "myid");
+        // standalone server doesn't need myid file.
+        if (!myIdFile.isFile()) {
+            return;
+        }
+        BufferedReader br = new BufferedReader(new FileReader(myIdFile));
+        String myIdString;
+        try {
+            myIdString = br.readLine();
+        } finally {
+            br.close();
+        }
+        try {
+            serverId = Long.parseLong(myIdString);
+            MDC.put("myid", myIdString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("serverid " + myIdString
+                    + " is not a number");
+        }
+    }
+
+    private void setupClientPort() throws ConfigException {
+        if (serverId == UNSET_SERVERID) {
+            return;
+        }
+        QuorumServer qs = quorumVerifier.getAllMembers().get(serverId);
+        if (clientPortAddress != null && qs != null && qs.clientAddr != null) {
+            if ((!clientPortAddress.getAddress().isAnyLocalAddress()
+                    && !clientPortAddress.equals(qs.clientAddr)) ||
+                    (clientPortAddress.getAddress().isAnyLocalAddress()
+                            && clientPortAddress.getPort() != qs.clientAddr.getPort()))
+                throw new ConfigException("client address for this server (id = " + serverId +
+                        ") in static config file is " + clientPortAddress +
+                        " is different from client address found in dynamic file: " + qs.clientAddr);
+        }
+        if (qs != null && qs.clientAddr != null) clientPortAddress = qs.clientAddr;
+    }
+
+    private void setupPeerType() {
+        // Warn about inconsistent peer type
+        LearnerType roleByServersList = quorumVerifier.getObservingMembers().containsKey(serverId) ? LearnerType.OBSERVER
+                : LearnerType.PARTICIPANT;
+        if (roleByServersList != peerType) {
+            LOG.warn("Peer type from servers list (" + roleByServersList
+                    + ") doesn't match peerType (" + peerType
+                    + "). Defaulting to servers list.");
+
+            peerType = roleByServersList;
+        }
+    }
 
     public void checkValidity() throws IOException, ConfigException{
-       int numMembers = quorumVerifier.getVotingMembers().size();
-       if (numMembers > 1  || (!standaloneEnabled && numMembers > 0)) {
-           if (initLimit == 0) {
-               throw new IllegalArgumentException("initLimit is not set");
-           }
-           if (syncLimit == 0) {
-               throw new IllegalArgumentException("syncLimit is not set");
-           }
-            
-                                     
-            File myIdFile = new File(dataDir, "myid");
-            if (!myIdFile.exists()) {
-                throw new IllegalArgumentException(myIdFile.toString()
-                        + " file is missing");
+        if (isDistributed()) {
+            if (initLimit == 0) {
+                throw new IllegalArgumentException("initLimit is not set");
             }
-            BufferedReader br = new BufferedReader(new FileReader(myIdFile));
-            String myIdString;
-            try {
-                myIdString = br.readLine();
-            } finally {
-                br.close();
+            if (syncLimit == 0) {
+                throw new IllegalArgumentException("syncLimit is not set");
             }
-            try {
-                serverId = Long.parseLong(myIdString);
-                MDC.put("myid", myIdString);
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("serverid " + myIdString
-                        + " is not a number");
+            if (serverId == UNSET_SERVERID) {
+                throw new IllegalArgumentException("myid file is missing");
             }
-
-            QuorumServer qs = quorumVerifier.getAllMembers().get(serverId);
-            if (clientPortAddress!=null && qs!=null && qs.clientAddr!=null){ 
-                if ((!clientPortAddress.getAddress().isAnyLocalAddress()
-                       && !clientPortAddress.equals(qs.clientAddr)) || 
-                   (clientPortAddress.getAddress().isAnyLocalAddress() 
-                       && clientPortAddress.getPort()!=qs.clientAddr.getPort())) 
-                    throw new ConfigException("client address for this server (id = " + serverId + ") in static config file is " + clientPortAddress + " is different from client address found in dynamic file: " + qs.clientAddr);
-            }
-            if (qs!=null && qs.clientAddr != null) clientPortAddress = qs.clientAddr;                       
-            
-            // Warn about inconsistent peer type
-            LearnerType roleByServersList = quorumVerifier.getObservingMembers().containsKey(serverId) ? LearnerType.OBSERVER
-                    : LearnerType.PARTICIPANT;
-            if (roleByServersList != peerType) {
-                LOG.warn("Peer type from servers list (" + roleByServersList
-                        + ") doesn't match peerType (" + peerType
-                        + "). Defaulting to servers list.");
-
-                peerType = roleByServersList;
-            }
-           
        }
-
     }
-    
+
     public InetSocketAddress getClientPortAddress() { return clientPortAddress; }
     public File getDataDir() { return dataDir; }
     public File getDataLogDir() { return dataLogDir; }

@@ -43,6 +43,8 @@ NEW FEATURES:
   (Skye Wanderman-Milne, Bill Havanki via phunt)
 
 BUGFIXES:
+  ZOOKEEPER-2006. Standalone mode won't take client port from dynamic config. (Hongchao Deng via Alex Shraer)
+
   ZOOKEEPER-2008. Missing leader election port in system test. (Kfir Lev-Ari via Alex Shraer).
 
   ZOOKEEPER-1992. Backward compatibility of the static configuration file (Hongchao Deng via Alex Shraer).

@@ -43,37 +43,75 @@ import org.junit.Test;
  */
 public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
     protected static final Logger LOG =
-        LoggerFactory.getLogger(StandaloneTest.class);    
-      
+        LoggerFactory.getLogger(StandaloneTest.class);
+
     /**
-     * Ensure that a single standalone server comes up when misconfigured
-     * with a single server.# line in the configuration. This handles the
-     * case of HBase, which configures zoo.cfg in this way. Maintain b/w
-     * compatibility.
-     * TODO remove in a future version (4.0.0 hopefully)
+     * This test wouldn't create any dynamic config.
+     * However, it adds a "clientPort=XXX" in static config file.
+     * It checks the standard way of standalone mode.
      */
     @Test
-    public void testStandaloneQuorum() throws Exception {
+    public void testNoDynamicConfig() throws Exception {
         ClientBase.setupTestEnv();
-        final int CLIENT_PORT_QP1 = PortAssignment.unique();        
-        
-        String quorumCfgSection =
-            "server.1=127.0.0.1:" + (PortAssignment.unique())
-            + ":" + (PortAssignment.unique()) + ";" + CLIENT_PORT_QP1 + "\n";
-                    
-        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
-        q1.start();
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        MainThread mt = new MainThread(
+                MainThread.UNSET_MYID, CLIENT_PORT, "", false);
+        verifyStandalone(mt, CLIENT_PORT);
+    }
+
+    /**
+     * This test creates a dynamic config of new format.
+     * The dynamic config is written in dynamic config file.
+     * It checks that the client port will be read from the dynamic config.
+     *
+     * This handles the case of HBase, which adds a single server line to the config.
+     * Maintain b/w compatibility.
+     */
+    @Test
+    public void testClientPortInDynamicFile() throws Exception {
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        String quorumCfgSection = "server.1=127.0.0.1:" +
+                (PortAssignment.unique()) + ":" + (PortAssignment.unique())
+                + ":participant;" + CLIENT_PORT + "\n";
+
+        MainThread mt = new MainThread(1, quorumCfgSection);
+        verifyStandalone(mt, CLIENT_PORT);
+    }
+
+    /**
+     * This test creates a dynamic config of new format.
+     * The dynamic config is written in static config file.
+     * It checks that the client port will be read from the dynamic config.
+     */
+    @Test
+    public void testClientPortInStaticFile() throws Exception {
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        String quorumCfgSection = "server.1=127.0.0.1:" +
+                (PortAssignment.unique()) + ":" + (PortAssignment.unique())
+                + ":participant;" + CLIENT_PORT + "\n";
+
+        MainThread mt = new MainThread(1, quorumCfgSection, false);
+        verifyStandalone(mt, CLIENT_PORT);
+    }
+
+    void verifyStandalone(MainThread mt, int clientPort) throws InterruptedException {
+        mt.start();
         try {
             Assert.assertTrue("waiting for server 1 being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                    CONNECTION_TIMEOUT));
-    } finally {
-        Assert.assertFalse("Error- MainThread started in Quorum Mode!",
-                   q1.isQuorumPeerRunning());
-        q1.shutdown();
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPort,
+                            CONNECTION_TIMEOUT));
+        } finally {
+            Assert.assertFalse("Error- MainThread started in Quorum Mode!",
+                    mt.isQuorumPeerRunning());
+            mt.shutdown();
         }
-    }    
-    
+    }
+
     /**
      * Verify that reconfiguration in standalone mode fails with
      * KeeperException.UnimplementedException.
