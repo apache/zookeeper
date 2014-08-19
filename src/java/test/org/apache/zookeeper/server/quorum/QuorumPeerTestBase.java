@@ -66,7 +66,20 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         final File confFile;
         final File tmpDir;
 
+        public static final int UNSET_STATIC_CLIENTPORT = -1;
+        // standalone mode doens't need myid
+        public static final int UNSET_MYID = -1;
+
         volatile TestQPMain main;
+
+        public MainThread(int myid, String quorumCfgSection) throws IOException {
+            this(myid, quorumCfgSection, true);
+        }
+
+        public MainThread(int myid, String quorumCfgSection, boolean writeDynamicConfigFile)
+                throws IOException {
+            this(myid, UNSET_STATIC_CLIENTPORT, quorumCfgSection, writeDynamicConfigFile);
+        }
 
         public MainThread(int myid, int clientPort, String quorumCfgSection)
                 throws IOException {
@@ -126,10 +139,14 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             String dir = PathUtils.normalizeFileSystemPath(dataDir.toString());
 
             fwriter.write("dataDir=" + dir + "\n");
-
-            fwriter.write("clientPort=" + clientPort + "\n");
-
             fwriter.write("admin.serverPort=" + adminServerPort + "\n");
+
+            // For backward compatibility test, some tests create dynamic configuration
+            // without setting client port.
+            // This could happen both in static file or dynamic file.
+            if (clientPort != UNSET_STATIC_CLIENTPORT) {
+                fwriter.write("clientPort=" + clientPort + "\n");
+            }
 
             if (writeDynamicConfigFile) {
                 String dynamicConfigFilename = createDynamicFile(quorumCfgSection, version);
