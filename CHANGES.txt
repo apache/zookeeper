@@ -760,6 +760,8 @@ BUGFIXES:
   ZOOKEEPER-1988. new test patch to verify dynamic reconfig backward
   compatibility (Alexander Shraer via rakeshr)
 
+  ZOOKEEPER-2000. Fix ReconfigTest.testPortChange (Alexander Shraer via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1170. Fix compiler (eclipse) warnings: unused imports,
