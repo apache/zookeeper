@@ -171,7 +171,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         return leaderId;
     }
 
-    private ZooKeeper[] createHandles(QuorumUtil qu) throws IOException {
+    public static ZooKeeper[] createHandles(QuorumUtil qu) throws IOException {
         // create an extra handle, so we can index the handles from 1 to qu.ALL
         // using the server id.
         ZooKeeper[] zkArr = new ZooKeeper[qu.ALL + 1];
@@ -187,7 +187,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         return zkArr;
     }
 
-    private void closeAllHandles(ZooKeeper[] zkArr) throws InterruptedException {
+    public static void closeAllHandles(ZooKeeper[] zkArr) throws InterruptedException {
         for (ZooKeeper zk : zkArr)
             if (zk != null)
                 zk.close();
@@ -405,43 +405,6 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         
         testNormalOperation(zkArr[1], zkArr[2]);
 
-        closeAllHandles(zkArr);
-    }
-
-    @Test
-    public void testLeaderTimesoutOnNewQuorum() throws Exception {
-        qu = new QuorumUtil(1); // create 3 servers
-        qu.disableJMXTest = true;
-        qu.startAll();
-        ZooKeeper[] zkArr = createHandles(qu);
-
-        List<String> leavingServers = new ArrayList<String>();
-        leavingServers.add("3");
-        qu.shutdown(2);
-        try {
-            // Since we just shut down server 2, its still considered "synced"
-            // by the leader, which allows us to start the reconfig 
-            // (PrepRequestProcessor checks that a quorum of the new
-            // config is synced before starting a reconfig).
-            // We try to remove server 3, which requires a quorum of {1,2,3}
-            // (we have that) and of {1,2}, but 2 is down so we won't get a
-            // quorum of new config ACKs.
-            zkArr[1].reconfig(null, leavingServers, null, -1, null);
-            Assert.fail("Reconfig should have failed since we don't have quorum of new config");
-        } catch (KeeperException.ConnectionLossException e) {
-            // We expect leader to loose quorum of proposed config and time out
-        } catch (Exception e) {
-            Assert.fail("Should have been ConnectionLossException!");
-        }
-
-        // The leader should time out and remaining servers should go into
-        // LOOKING state. A new leader won't be established since that 
-        // would require completing the reconfig, which is not possible while
-        // 2 is down.
-        Assert.assertEquals(QuorumStats.Provider.LOOKING_STATE,
-                qu.getPeer(1).peer.getServerState());
-        Assert.assertEquals(QuorumStats.Provider.LOOKING_STATE,
-                qu.getPeer(3).peer.getServerState());
         closeAllHandles(zkArr);
     }
 

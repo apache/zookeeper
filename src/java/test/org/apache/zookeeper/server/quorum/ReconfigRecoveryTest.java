@@ -548,7 +548,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
     /*
      * Generates 3 ports per server
      */
-    private int[][] generatePorts(int numServers) {
+    public static int[][] generatePorts(int numServers) {
         int[][] ports = new int[numServers][];
         for (int i = 0; i < numServers; i++) {
             ports[i] = new int[3];
@@ -563,7 +563,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
      * Creates a configuration string for servers 0..numServers-1 Ids in
      * observerIds correspond to observers, other ids are for participants.
      */
-    private StringBuilder generateConfig(int numServers, int[][] ports,
+    public static StringBuilder generateConfig(int numServers, int[][] ports,
             HashSet<Integer> observerIds) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < numServers; i++) {
