@@ -1055,6 +1055,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1986. refactor log trace on touchSession
   (Hongchao Deng via phunt)
 
+  ZOOKEEPER-2017 New tests for reconfig failure cases (Alexander Shraer and
+  Hongchao Deng via michim)
+
 headers
 
 Release 3.4.0 - 
