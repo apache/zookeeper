@@ -5,7 +5,8 @@ NEW FEATURES:
 BUGFIXES:
 
 IMPROVEMENTS:
-
+  ZOOKEEPER-2017 New tests for reconfig failure cases (Alexander Shraer and
+  Hongchao Deng via michim)
 
 Release 3.5.0 - 8/4/2014
 
