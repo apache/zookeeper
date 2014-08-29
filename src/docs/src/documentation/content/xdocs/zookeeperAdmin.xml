@@ -590,6 +590,14 @@ server.3=zoo3:2888:3888</programlisting>
       must be taken to ensure that the list of servers in all of the different
       configuration files match.</para>
 
+      <note>
+        <para>In 3.5.0 and later, some of these parameters should be placed in
+         a dynamic configuration file. If they are placed in the static
+         configuration file, ZooKeeper will automatically move them over to the
+         dynamic configuration file. See <ulink url="zookeeperReconfig.html">
+         Dynamic Reconfiguration</ulink> for more information.</para>
+      </note>
+
       <section id="sc_minimumConfiguration">
         <title>Minimum Configuration</title>
 

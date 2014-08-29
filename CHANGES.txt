@@ -5,7 +5,7 @@ NEW FEATURES:
 BUGFIXES:
 
 IMPROVEMENTS:
-
+  ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
 Release 3.5.0 - 8/4/2014
 
