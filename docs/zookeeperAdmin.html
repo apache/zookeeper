@@ -149,6 +149,9 @@ document.write("Last Published: " + document.lastModified);
 <div class="menuitem">
 <a href="zookeeperObservers.html">Observers Guide</a>
 </div>
+<div class="menuitem">
+<a href="zookeeperReconfig.html">Dynamic Reconfiguration</a>
+</div>
 </div>
 <div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Contributor</div>
 <div id="menu_1.4" class="menuitemgroup">
@@ -979,6 +982,18 @@ server.3=zoo3:2888:3888</pre>
       layouts are the same. If servers use different configuration files, care
       must be taken to ensure that the list of servers in all of the different
       configuration files match.</p>
+<div class="note">
+<div class="label">Note</div>
+<div class="content">
+        
+<p>In 3.5.0 and later, some of these parameters should be placed in
+         a dynamic configuration file. If they are placed in the static
+         configuration file, ZooKeeper will automatically move them over to the
+         dynamic configuration file. See <a href="zookeeperReconfig.html">
+         Dynamic Reconfiguration</a> for more information.</p>
+      
+</div>
+</div>
 <a name="sc_minimumConfiguration"></a>
 <h4>Minimum Configuration</h4>
 <p>Here are the minimum configuration keywords that must be defined
