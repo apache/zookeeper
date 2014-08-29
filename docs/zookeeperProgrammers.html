@@ -149,6 +149,9 @@ document.write("Last Published: " + document.lastModified);
 <div class="menuitem">
 <a href="zookeeperObservers.html">Observers Guide</a>
 </div>
+<div class="menuitem">
+<a href="zookeeperReconfig.html">Dynamic Reconfiguration</a>
+</div>
 </div>
 <div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Contributor</div>
 <div id="menu_1.4" class="menuitemgroup">
@@ -418,7 +421,7 @@ document.write("Last Published: " + document.lastModified);
     useful, ZooKeeper-related information.</p>
 <p>Most of information in this document is written to be accessible as
     stand-alone reference material. However, before starting your first
-    ZooKeeper application, you should probably at least read the chapters on
+    ZooKeeper application, you should probably at least read the chaptes on
     the <a href="#ch_zkDataModel">ZooKeeper Data Model</a> and <a href="#ch_guideToZkOperations">ZooKeeper Basic Operations</a>. Also,
     the <a href="#ch_programStructureWithExample">Simple Programmming
     Example</a> <em>[tbd]</em> is helpful for understanding the basic
@@ -434,7 +437,7 @@ document.write("Last Published: " + document.lastModified);
     data associated with it as well as children. It is like having a file
     system that allows a file to also be a directory. Paths to nodes are
     always expressed as canonical, absolute, slash-separated paths; there are
-    no relative references. Any unicode character can be used in a path subject
+    no relative reference. Any unicode character can be used in a path subject
     to the following constraints:</p>
 <ul>
       
