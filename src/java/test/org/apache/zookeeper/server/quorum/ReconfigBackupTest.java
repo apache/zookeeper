@@ -104,6 +104,10 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             staticBackupContent[i] = getFileContent(backupFile);
             Assert.assertEquals(staticFileContent[i], staticBackupContent[i]);
         }
+
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i].shutdown();
+        }
     }
 
     /**
@@ -334,6 +338,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                 String otherDynamicFileContent = getFileContent(dynamicConfigFile);
                 Assert.assertEquals(dynamicFileContent, otherDynamicFileContent);
             }
+
+            zk.close();
         }
 
         // finally, we should also check that the lag-off server has updated
@@ -341,5 +347,9 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         Assert.assertTrue(
                 mt[lagOffServerId].getPropFromStaticFile("dynamicConfigFile")
                         .endsWith(".200000000"));
+
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i].shutdown();
+        }
     }
 }
