@@ -10,6 +10,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2017 New tests for reconfig failure cases (Alexander Shraer and
   Hongchao Deng via michim)
 
+  ZOOKEEPER-2030 dynamicConfigFile should have an absolute path, not a relative
+  path, to the dynamic configuration file (Alexander Shraer via michim)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
