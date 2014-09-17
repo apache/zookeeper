@@ -7,6 +7,9 @@ BUGFIXES:
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
+  ZOOKEEPER-2030 dynamicConfigFile should have an absolute path, not a relative
+  path, to the dynamic configuration file (Alexander Shraer via michim)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
