@@ -405,6 +405,11 @@ public class QuorumPeerConfig {
                 .failForNonExistingPath()
                 .build()).create(configFileStr);
 
+        final File dynamicFile = (new VerifyingFileFactory.Builder(LOG)
+                .warnForRelativePath()
+                .failForNonExistingPath()
+                .build()).create(dynamicFileStr);
+        
         final Properties cfg = new Properties();
         FileInputStream in = new FileInputStream(configFile);
         try {
@@ -436,7 +441,7 @@ public class QuorumPeerConfig {
 
                 // updates the dynamic file pointer
                 out.write("dynamicConfigFile="
-                         .concat(dynamicFileStr)
+                         .concat(dynamicFile.getCanonicalPath())
                          .concat("\n"));
             }
         });
