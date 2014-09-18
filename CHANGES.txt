@@ -13,6 +13,8 @@ IMPROVEMENTS:
   ZOOKEEPER-2030 dynamicConfigFile should have an absolute path, not a relative
   path, to the dynamic configuration file (Alexander Shraer via michim)
 
+  ZOOKEEPER-2039 Jute compareBytes incorrect comparison index (Ian Dimayuga via fpj) 
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
