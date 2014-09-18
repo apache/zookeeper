@@ -40,6 +40,8 @@ BUGFIXES:
   ZOOKEEPER-1222. getACL should only call DataTree.copyStat when passed in
   stat is not null (Michi Mutsuzaki via rakeshr)
 
+  ZOOKEEPER-2039. Jute compareBytes incorrect comparison index (Ian Dimayuga via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
