@@ -42,6 +42,8 @@ BUGFIXES:
 
   ZOOKEEPER-2039. Jute compareBytes incorrect comparison index (Ian Dimayuga via fpj)
 
+  ZOOKEEPER-2047 testTruncationNullLog fails on windows (flavio via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
