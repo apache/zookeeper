@@ -3,6 +3,7 @@ Trunk
 NEW FEATURES:
 
 BUGFIXES:
+  ZOOKEEPER-2047 testTruncationNullLog fails on windows (flavio via rakeshr)
 
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
