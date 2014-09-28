@@ -44,6 +44,8 @@ BUGFIXES:
 
   ZOOKEEPER-2047 testTruncationNullLog fails on windows (flavio via rakeshr)
 
+  ZOOKEEPER-2026 Startup order in ServerCnxnFactory-ies is wrong (Stevo Slavic via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for

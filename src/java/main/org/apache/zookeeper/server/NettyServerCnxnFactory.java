@@ -368,9 +368,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     public void startup(ZooKeeperServer zks) throws IOException,
             InterruptedException {
         start();
+        setZooKeeperServer(zks);
         zks.startdata();
         zks.startup();
-        setZooKeeperServer(zks);
     }
 
     @Override
