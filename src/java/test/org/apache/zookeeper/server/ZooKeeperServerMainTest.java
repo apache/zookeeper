@@ -334,6 +334,77 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         zk.close();
     }
 
+    @Test
+    public void testJMXRegistrationWithNIO() throws Exception {
+        ClientBase.setupTestEnv();
+        File tmpDir_1 = ClientBase.createTmpDir();
+        ServerCnxnFactory server_1 = startServer(tmpDir_1);
+        File tmpDir_2 = ClientBase.createTmpDir();
+        ServerCnxnFactory server_2 = startServer(tmpDir_2);
+
+        server_1.shutdown();
+        server_2.shutdown();
+
+        deleteFile(tmpDir_1);
+        deleteFile(tmpDir_2);
+    }
+
+    @Test
+    public void testJMXRegistrationWithNetty() throws Exception {
+        String originalServerCnxnFactory = System
+                .getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
+                NettyServerCnxnFactory.class.getName());
+        try {
+            ClientBase.setupTestEnv();
+            File tmpDir_1 = ClientBase.createTmpDir();
+            ServerCnxnFactory server_1 = startServer(tmpDir_1);
+            File tmpDir_2 = ClientBase.createTmpDir();
+            ServerCnxnFactory server_2 = startServer(tmpDir_2);
+
+            server_1.shutdown();
+            server_2.shutdown();
+
+            deleteFile(tmpDir_1);
+            deleteFile(tmpDir_2);
+        } finally {
+            // setting back
+            if (originalServerCnxnFactory == null
+                    || originalServerCnxnFactory.isEmpty()) {
+                System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+            } else {
+                System.setProperty(
+                        ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
+                        originalServerCnxnFactory);
+            }
+        }
+    }
+
+    private void deleteFile(File f) throws IOException {
+        if (f.isDirectory()) {
+            for (File c : f.listFiles())
+                deleteFile(c);
+        }
+        if (!f.delete())
+            // double check for the file existence
+            if (f.exists()) {
+                throw new IOException("Failed to delete file: " + f);
+            }
+    }
+
+    private ServerCnxnFactory startServer(File tmpDir) throws IOException,
+            InterruptedException {
+        final int CLIENT_PORT = PortAssignment.unique();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);
+        f.startup(zks);
+        Assert.assertNotNull("JMX initialization failed!", zks.jmxServerBean);
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
+        return f;
+    }
+
     public void process(WatchedEvent event) {
         if (event.getState() == KeeperState.SyncConnected) {
             clientConnected.countDown();
