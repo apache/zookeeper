@@ -119,9 +119,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
     public void startup(ZooKeeperServer zks) throws IOException,
             InterruptedException {
         start();
+        setZooKeeperServer(zks);
         zks.startdata();
         zks.startup();
-        setZooKeeperServer(zks);
     }
 
     @Override
