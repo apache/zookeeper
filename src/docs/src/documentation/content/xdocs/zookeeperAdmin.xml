@@ -1454,6 +1454,13 @@ imok
         and maintenance of ZooKeeper storage.
         </para>
       </section>
+      <note>
+      <para>The data stored in these files is not encrypted. In the case of
+      storing sensitive data in ZooKeeper (which is fairly uncommon), necessary
+      measures need to be taken to prevent unauthorized access. Such measures
+      are external to ZooKeeper (e.g., control access to the files) and
+      depend on the individual settings in which it is being deployed. </para>
+      </note>
     </section>
 
     <section id="sc_commonProblems">
