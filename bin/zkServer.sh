@@ -32,11 +32,32 @@ fi
 
 if [ "x$JMXDISABLE" = "x" ]
 then
-    echo "JMX enabled by default" >&2
+  echo "ZooKeeper JMX enabled by default" >&2
+  if [ "x$JMXPORT" = "x" ]
+  then
     # for some reason these two options are necessary on jdk6 on Ubuntu
     #   accord to the docs they are not necessary, but otw jconsole cannot
     #   do a local attach
     ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=$JMXLOCALONLY org.apache.zookeeper.server.quorum.QuorumPeerMain"
+  else
+    if [ "x$JMXAUTH" = "x" ]
+    then
+      JMXAUTH=false
+    fi
+    if [ "x$JMXSSL" = "x" ]
+    then
+      JMXSSL=false
+    fi
+    if [ "x$JMXLOG4J" = "x" ]
+    then
+      JMXLOG4J=true
+    fi
+    echo "ZooKeeper remote JMX Port set to $JMXPORT" >&2
+    echo "ZooKeeper remote JMX authenticate set to $JMXAUTH" >&2
+    echo "ZooKeeper remote JMX ssl set to $JMXSSL" >&2
+    echo "ZooKeeper remote JMX log4j set to $JMXLOG4J" >&2
+    ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=$JMXPORT -Dcom.sun.management.jmxremote.authenticate=$JMXAUTH -Dcom.sun.management.jmxremote.ssl=$JMXSSL -Dzookeeper.jmx.log4j.disable=$JMXLOG4J org.apache.zookeeper.server.quorum.QuorumPeerMain"
+  fi
 else
     echo "JMX disabled by user request" >&2
     ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
