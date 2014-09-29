@@ -59,6 +59,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1917. Apache Zookeeper logs cleartext admin passwords (fpj via michim)
 
+  ZOOKEEPER-1948 Enable JMX remote monitoring (Biju Nair via rakeshr)
+
 Release 3.4.6 - 2014-03-10 
 
 Backward compatible changes:
