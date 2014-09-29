@@ -18,6 +18,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2039 Jute compareBytes incorrect comparison index (Ian Dimayuga via fpj) 
 
+  ZOOKEEPER-1917 Apache Zookeeper logs cleartext admin passwords (fpj via michim)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
