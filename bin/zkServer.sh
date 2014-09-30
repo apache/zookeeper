@@ -133,7 +133,8 @@ if [ ! -w "$ZOO_LOG_DIR" ] ; then
 mkdir -p "$ZOO_LOG_DIR"
 fi
 
-_ZOO_DAEMON_OUT="$ZOO_LOG_DIR/zookeeper.out"
+_ZOO_OUT="$ZOO_LOG_DIR/zookeeper.out"
+_ZOO_ERR="$ZOO_LOG_DIR/zookeeper.err"
 
 case $1 in
 start)
@@ -144,21 +145,23 @@ start)
          exit 0
       fi
     fi
+    rm -f "$_ZOO_ERR"
     nohup "$JAVA" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
     "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
-    if [ $? -eq 0 ]
+    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" \
+    > "$_ZOO_OUT" 2>&1 < /dev/null || mv "$_ZOO_OUT" "$_ZOO_ERR" &
+    sleep 1
+    if [ ! -f "$_ZOO_ERR" ]
     then
       if /bin/echo -n $! > "$ZOOPIDFILE"
       then
-        sleep 1
         echo STARTED
       else
-        echo FAILED TO WRITE PID
+        echo FAILED TO WRITE PID FILE "$ZOOPIDFILE"
         exit 1
       fi
     else
-      echo SERVER DID NOT START
+      echo SERVER DID NOT START: SEE "$_ZOO_ERR"
       exit 1
     fi
     ;;
@@ -172,7 +175,7 @@ start-foreground)
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG"
     ;;
 print-cmd)
-    echo "\"$JAVA\" $ZOO_DATADIR_AUTOCREATE -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_DAEMON_OUT\" 2>&1 < /dev/null"
+    echo "\"$JAVA\" $ZOO_DATADIR_AUTOCREATE -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_OUT\" 2>&1 < /dev/null"
     ;;
 stop)
     echo -n "Stopping zookeeper ... "
