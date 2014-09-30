@@ -148,12 +148,14 @@ start)
     rm -f "$_ZOO_ERR"
     nohup "$JAVA" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
     "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
-    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" \
-    > "$_ZOO_OUT" 2>&1 < /dev/null || mv "$_ZOO_OUT" "$_ZOO_ERR" &
+    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_OUT" 2>&1 < /dev/null &
+    sleep 1
+    ZOOPID=$!
+    ps -p$ZOOPID || wait $ZOOPID || echo "rc=$?. SEE $_ZOO_OUT">"$_ZOO_ERR"&
     sleep 1
     if [ ! -f "$_ZOO_ERR" ]
     then
-      if /bin/echo -n $! > "$ZOOPIDFILE"
+      if /bin/echo -n $ZOOPID > "$ZOOPIDFILE"
       then
         echo STARTED
       else
@@ -161,7 +163,7 @@ start)
         exit 1
       fi
     else
-      echo SERVER DID NOT START: SEE "$_ZOO_ERR"
+      cat "$_ZOO_ERR"
       exit 1
     fi
     ;;
