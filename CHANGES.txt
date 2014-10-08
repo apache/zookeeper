@@ -22,6 +22,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1948 Enable JMX remote monitoring (Biju Nair via rakeshr)
 
+  ZOOKEEPER-2054 test-patch.sh: don't set ulimit -n (michim via rakeshr)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:

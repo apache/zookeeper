@@ -13,7 +13,6 @@
 
 
 #set -x
-ulimit -n 1024
 
 ### Setup some variables.  
 ### SVN_REVISION and BUILD_URL are set by Hudson if it is run by patch process
