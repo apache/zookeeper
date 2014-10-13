@@ -7,6 +7,8 @@ BUGFIXES:
 
   ZOOKEEPER-2026 Startup order in ServerCnxnFactory-ies is wrong (Stevo Slavic via rakeshr)
 
+ ZOOKEEPER-2058 rat: exclude *.cer files  (michim via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
