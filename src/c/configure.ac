@@ -109,6 +109,26 @@ AM_CONDITIONAL([WANT_SYNCAPI],[test "x$with_syncapi" != xno])
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h unistd.h sys/utsname.h])
 
+# Checks for htonll. This was borrowed from librabbitmq.
+AC_MSG_CHECKING([if htonll is defined])
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM(
+     [[
+        #include <arpa/inet.h>
+     ]],
+     [[
+       return htonll(0);
+     ]]
+  )],
+  [
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(HAVE_HTONLL, 1, [Define to 1 if the function (or macro) htonll exists.])
+  ],
+  [
+    AC_MSG_RESULT(no)
+  ]
+)
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
