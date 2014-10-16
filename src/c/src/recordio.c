@@ -80,7 +80,7 @@ int oa_serialize_int(struct oarchive *oa, const char *tag, const int32_t *d)
     priv->off+=sizeof(i);
     return 0;
 }
-int64_t htonll(int64_t v)
+int64_t zoo_htonll(int64_t v)
 {
     int i = 0;
     char *s = (char *)&v;
@@ -98,7 +98,7 @@ int64_t htonll(int64_t v)
 
 int oa_serialize_long(struct oarchive *oa, const char *tag, const int64_t *d)
 {
-    const int64_t i = htonll(*d);
+    const int64_t i = zoo_htonll(*d);
     struct buff_struct *priv = oa->priv;
     if ((priv->len - priv->off) < sizeof(i)) {
         int rc = resize_buffer(priv, priv->len + sizeof(i));
@@ -207,7 +207,7 @@ int ia_deserialize_long(struct iarchive *ia, const char *tag, int64_t *count)
     }
     memcpy(count, priv->buffer+priv->off, sizeof(*count));
     priv->off+=sizeof(*count);
-    v = htonll(*count); // htonll and  ntohll do the same
+    v = zoo_htonll(*count); // htonll and  ntohll do the same
     *count = v;
     return 0;
 }
