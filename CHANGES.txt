@@ -46,6 +46,9 @@ BUGFIXES:
 
   ZOOKEEPER-2026 Startup order in ServerCnxnFactory-ies is wrong (Stevo Slavic via rakeshr)
 
+  ZOOKEEPER-2049 Yosemite build failure: htonll conflict (Till Toenshoff via
+  michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for

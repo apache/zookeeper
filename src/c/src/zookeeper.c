@@ -1408,7 +1408,7 @@ static int serialize_prime_connect(struct connect_req *req, char* buffer){
     memcpy(buffer + offset, &req->protocolVersion, sizeof(req->protocolVersion));
     offset = offset +  sizeof(req->protocolVersion);
 
-    req->lastZxidSeen = htonll(req->lastZxidSeen);
+    req->lastZxidSeen = zoo_htonll(req->lastZxidSeen);
     memcpy(buffer + offset, &req->lastZxidSeen, sizeof(req->lastZxidSeen));
     offset = offset +  sizeof(req->lastZxidSeen);
 
@@ -1416,7 +1416,7 @@ static int serialize_prime_connect(struct connect_req *req, char* buffer){
     memcpy(buffer + offset, &req->timeOut, sizeof(req->timeOut));
     offset = offset +  sizeof(req->timeOut);
 
-    req->sessionId = htonll(req->sessionId);
+    req->sessionId = zoo_htonll(req->sessionId);
     memcpy(buffer + offset, &req->sessionId, sizeof(req->sessionId));
     offset = offset +  sizeof(req->sessionId);
 
@@ -1447,7 +1447,7 @@ static int serialize_prime_connect(struct connect_req *req, char* buffer){
      memcpy(&req->sessionId, buffer + offset, sizeof(req->sessionId));
      offset = offset +  sizeof(req->sessionId);
 
-     req->sessionId = htonll(req->sessionId);
+     req->sessionId = zoo_htonll(req->sessionId);
      memcpy(&req->passwd_len, buffer + offset, sizeof(req->passwd_len));
      offset = offset +  sizeof(req->passwd_len);
 
