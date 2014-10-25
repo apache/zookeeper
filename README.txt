@@ -1,4 +1,4 @@
-For the latest information about ZooKeeper, please visit our website at:
+For the latest information about Apache ZooKeeper, please visit our website at:
 
    http://zookeeper.apache.org/
 
@@ -11,7 +11,7 @@ Full documentation for this release can also be found in docs/index.html
 ---------------------------
 Packaging/release artifacts
 
-The release artifact contains the following jar file at the toplevel:
+The release artifact contains the following jar file at the top level:
 
 zookeeper-<version>.jar         - legacy jar file which contains all classes
                                   and source files. Prior to version 3.3.0 this
@@ -28,9 +28,10 @@ zookeeper-<version>-javadoc.jar - contains only javadoc files
 
 These bin/src/javadoc jars were added specifically to support Maven/Ivy which have 
 the ability to pull these down automatically as part of your build process. 
-The content of the legacy jar and the bin+sources jar are the same.
+The contents of the legacy jar and the bin + sources jars are the same.
 
-As of version 3.3.0 bin/sources/javadoc jars contained in dist-maven directory
-are deployed to the Apache Maven repository after the release has been accepted
-by Apache:
-  http://people.apache.org/repo/m2-ibiblio-rsync-repository/
+As of version 3.3.0, the bin, sources and javadoc jars contained in the
+dist-maven directory are deployed to the central repository after the release
+is voted on and approved by the Apache ZooKeeper PMC:
+
+  https://repo1.maven.org/maven2/org/apache/zookeeper/zookeeper/
