@@ -159,14 +159,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         ChangeRecord lastChange = null;
         synchronized (zks.outstandingChanges) {
             lastChange = zks.outstandingChangesForPath.get(path);
-            /*
-            for (int i = 0; i < zks.outstandingChanges.size(); i++) {
-                ChangeRecord c = zks.outstandingChanges.get(i);
-                if (c.path.equals(path)) {
-                    lastChange = c;
-                }
-            }
-            */
             if (lastChange == null) {
                 DataNode n = zks.getZKDatabase().getNode(path);
                 if (n != null) {
@@ -188,6 +180,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         return lastChange;
     }
 
+    private ChangeRecord getOutstandingChange(String path) {
+        synchronized (zks.outstandingChanges) {
+            return zks.outstandingChangesForPath.get(path);
+        }
+    }
+
     private void addChangeRecord(ChangeRecord c) {
         synchronized (zks.outstandingChanges) {
             zks.outstandingChanges.add(c);
@@ -202,39 +200,37 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
      * of a failed multi-op.
      *
      * @param multiRequest
+     * @return a map that contains previously existed records that probably need to be
+     *         rolled back in any failure.
      */
     private Map<String, ChangeRecord> getPendingChanges(MultiTransactionRecord multiRequest) {
         HashMap<String, ChangeRecord> pendingChangeRecords = new HashMap<String, ChangeRecord>();
 
-        for(Op op: multiRequest) {
+        for (Op op : multiRequest) {
             String path = op.getPath();
+            ChangeRecord cr = getOutstandingChange(path);
+            // only previously existing records need to be rolled back.
+            if (cr != null) {
+                pendingChangeRecords.put(path, cr);
+            }
 
-            try {
-                ChangeRecord cr = getRecordForPath(path);
-                if (cr != null) {
-                    pendingChangeRecords.put(path, cr);
-                }
-
-                /*
-                 * ZOOKEEPER-1624 - We need to store for parent's ChangeRecord
-                 * of the parent node of a request. So that if this is a
-                 * sequential node creation request, rollbackPendingChanges()
-                 * can restore previous parent's ChangeRecord correctly.
-                 *
-                 * Otherwise, sequential node name generation will be incorrect
-                 * for a subsequent request.
-                 */
-                int lastSlash = path.lastIndexOf('/');
-                if (lastSlash == -1 || path.indexOf('\0') != -1) {
-                    continue;
-                }
-                String parentPath = path.substring(0, lastSlash);
-                ChangeRecord parentCr = getRecordForPath(parentPath);
-                if (parentCr != null) {
-                    pendingChangeRecords.put(parentPath, parentCr);
-                }
-            } catch (KeeperException.NoNodeException e) {
-                // ignore this one
+            /*
+             * ZOOKEEPER-1624 - We need to store for parent's ChangeRecord
+             * of the parent node of a request. So that if this is a
+             * sequential node creation request, rollbackPendingChanges()
+             * can restore previous parent's ChangeRecord correctly.
+             *
+             * Otherwise, sequential node name generation will be incorrect
+             * for a subsequent request.
+             */
+            int lastSlash = path.lastIndexOf('/');
+            if (lastSlash == -1 || path.indexOf('\0') != -1) {
+                continue;
+            }
+            String parentPath = path.substring(0, lastSlash);
+            ChangeRecord parentCr = getOutstandingChange(parentPath);
+            if (parentCr != null) {
+                pendingChangeRecords.put(parentPath, parentCr);
             }
         }
 
@@ -252,7 +248,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
      * @param pendingChangeRecords
      */
     void rollbackPendingChanges(long zxid, Map<String, ChangeRecord>pendingChangeRecords) {
-
         synchronized (zks.outstandingChanges) {
             // Grab a list iterator starting at the END of the list so we can iterate in reverse
             ListIterator<ChangeRecord> iter = zks.outstandingChanges.listIterator(zks.outstandingChanges.size());
@@ -260,27 +255,30 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 ChangeRecord c = iter.previous();
                 if (c.zxid == zxid) {
                     iter.remove();
+                    // Remove all outstanding changes for paths of this multi.
+                    // Previous records will be added back later.
                     zks.outstandingChangesForPath.remove(c.path);
                 } else {
                     break;
                 }
             }
 
-            boolean empty = zks.outstandingChanges.isEmpty();
-            long firstZxid = 0;
-            if (!empty) {
-                firstZxid = zks.outstandingChanges.get(0).zxid;
+            // we don't need to roll back any records because there is nothing left.
+            if (zks.outstandingChanges.isEmpty()) {
+                return;
             }
 
-            Iterator<ChangeRecord> priorIter = pendingChangeRecords.values().iterator();
-            while (priorIter.hasNext()) {
-                ChangeRecord c = priorIter.next();
+            long firstZxid = zks.outstandingChanges.get(0).zxid;
 
-                /* Don't apply any prior change records less than firstZxid */
-                if (!empty && (c.zxid < firstZxid)) {
+            for (ChangeRecord c : pendingChangeRecords.values()) {
+                // Don't apply any prior change records less than firstZxid.
+                // Note that previous outstanding requests might have been removed
+                // once they are completed.
+                if (c.zxid < firstZxid) {
                     continue;
                 }
 
+                // add previously existing records back.
                 zks.outstandingChangesForPath.put(c.path, c);
             }
         }
