@@ -49,6 +49,9 @@ BUGFIXES:
   ZOOKEEPER-2049 Yosemite build failure: htonll conflict (Till Toenshoff via
   michim)
 
+  ZOOKEEPER-2052 Unable to delete a node when the node has no children 
+  (Hongchao Deng and Yip Ng via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
