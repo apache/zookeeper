@@ -12,6 +12,9 @@ BUGFIXES:
   ZOOKEEPER-2049 Yosemite build failure: htonll conflict (Till Toenshoff via
   michim)
 
+  ZOOKEEPER-2052 Unable to delete a node when the node has no children
+  (Hongchao Deng and Yip Ng via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 

@@ -1,10 +1,11 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -239,6 +240,58 @@ public class MultiTransactionTest extends ClientBase {
                 Op.setData("/multi2", new byte[0], -1),
                 Op.setData("multi3", new byte[0], -1));
         multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+    }
+
+    /**
+     * ZOOKEEPER-2052:
+     * Multi abort shouldn't have any side effect.
+     * We fix a bug in rollback and the following scenario should work:
+     * 1. multi delete abort because of not empty directory
+     * 2. ephemeral nodes under that directory are deleted
+     * 3. multi delete should succeed.
+     */
+    @Test
+    public void testMultiRollback() throws Exception {
+        zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        ZooKeeper epheZk = createClient();
+        epheZk.create("/foo/bar", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+
+        List<Op> opList = Arrays.asList(Op.delete("/foo", -1));
+        try {
+            zk.multi(opList);
+            Assert.fail("multi delete should failed for not empty directory");
+        } catch (KeeperException.NotEmptyException e) {
+        }
+
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        zk.exists("/foo/bar", new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                if (event.getType() == Event.EventType.NodeDeleted){
+                    latch.countDown();
+                }
+            }
+        });
+
+        epheZk.close();
+
+        latch.await();
+
+        try {
+            zk.getData("/foo/bar", false, null);
+            Assert.fail("ephemeral node should have been deleted");
+        } catch (KeeperException.NoNodeException e) {
+        }
+
+        zk.multi(opList);
+
+        try {
+            zk.getData("/foo", false, null);
+            Assert.fail("persistent node should have been deleted after multi");
+        } catch (KeeperException.NoNodeException e) {
+        }
     }
 
     /**
