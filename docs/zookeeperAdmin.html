@@ -2005,6 +2005,18 @@ server.3=zoo3:2888:3888</pre>
         this document for more details on setting a retention policy
         and maintenance of ZooKeeper storage.
         </p>
+<div class="note">
+<div class="label">Note</div>
+<div class="content">
+        
+<p>The data stored in these files is not encrypted. In the case of
+        storing sensitive data in ZooKeeper, necessary measures need to be
+        taken to prevent unauthorized access. Such measures are external to
+        ZooKeeper (e.g., control access to the files) and depend on the
+        individual settings in which it is being deployed. </p>
+        
+</div>
+</div>
 <a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring
