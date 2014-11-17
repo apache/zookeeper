@@ -180,7 +180,7 @@ stop)
     then
       echo "no zookeeper to stop (could not find file $ZOOPIDFILE)"
     else
-      $KILL -9 $(cat "$ZOOPIDFILE")
+      $KILL $(cat "$ZOOPIDFILE")
       rm "$ZOOPIDFILE"
       echo STOPPED
     fi
