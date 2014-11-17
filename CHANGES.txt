@@ -23,6 +23,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1948 Enable JMX remote monitoring (Biju Nair via rakeshr)
 
+  ZOOKEEPER-2079 Stop daemon with "kill" rather than "kill -9" (Guillaume ALAUX
+  via michim)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
