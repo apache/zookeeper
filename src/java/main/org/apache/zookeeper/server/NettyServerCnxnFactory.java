@@ -183,9 +183,11 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                         cnxn.queuedBuffer = dynamicBuffer(buf.readableBytes());
                     }
                     cnxn.queuedBuffer.writeBytes(buf);
-                    LOG.debug(Long.toHexString(cnxn.sessionId)
-                            + " queuedBuffer 0x"
-                            + ChannelBuffers.hexDump(cnxn.queuedBuffer));
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace(Long.toHexString(cnxn.sessionId)
+                                + " queuedBuffer 0x"
+                                + ChannelBuffers.hexDump(cnxn.queuedBuffer));
+                    }
                 } else {
                     LOG.debug("not throttled");
                     if (cnxn.queuedBuffer != null) {
