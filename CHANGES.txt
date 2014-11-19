@@ -51,6 +51,8 @@ BUGFIXES:
 
   ZOOKEEPER-2052 Unable to delete a node when the node has no children 
   (Hongchao Deng and Yip Ng via rakeshr)
+ 
+  ZOOKEEPER-2060 Trace bug in NettyServerCnxnFactory (Ian via fpj)
 
 IMPROVEMENTS:
 
