@@ -351,11 +351,21 @@ public class Log4JSource implements LogSource {
 		
 		LogIterator iter = s.iterator(starttime, endtime);
 		System.out.println(iter);
+		try {
+		  iter.close();
+		} catch (IOException ioe) {
+		  System.out.println(ioe.getMessage());
+		}
 	    }; };
 	    Thread t2 = new Thread() { public void run () { 
 		
 		LogIterator iter = s.iterator(starttime, endtime);
 		System.out.println(iter);
+		try {
+		  iter.close();
+		} catch (IOException ioe) {
+		  System.out.println(ioe.getMessage());
+		}
 	    }; };
 	    Thread t3 = new Thread() { public void run () { 
 		
