@@ -16,6 +16,8 @@ BUGFIXES:
   (Hongchao Deng and Yip Ng via rakeshr)
 
   ZOOKEEPER-2064 Prevent resource leak in various classes (Ted Yu via fpj)
+  
+  ZOOKEEPER-2060 Trace bug in NettyServerCnxnFactory (Ian via fpj)
 
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
@@ -38,8 +40,6 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2079 Stop daemon with "kill" rather than "kill -9" (Guillaume ALAUX
   via michim)
-
-  ZOOKEEPER-2060 Trace bug in NettyServerCnxnFactory (Ian via fpj)
 
 Release 3.5.0 - 8/4/2014
 
