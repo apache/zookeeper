@@ -39,9 +39,12 @@ public class StaticContent extends HttpServlet {
 	    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 	    return;
 	}
-	
-	while (resource.available() > 0) {
+	try {
+	  while (resource.available() > 0) {
 	    response.getWriter().write(resource.read());
+	  }
+	} finally {
+	  resource.close();
 	}
 	//        response.setContentType("text/plain;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);

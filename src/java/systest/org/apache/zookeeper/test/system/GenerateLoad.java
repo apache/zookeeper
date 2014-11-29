@@ -699,12 +699,16 @@ public class GenerateLoad {
         s.getOutputStream().write("stat".getBytes());
         BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
         String line;
-        while((line = br.readLine()) != null) {
+        try {
+          while((line = br.readLine()) != null) {
             if (line.startsWith("Mode: ")) {
-                return line.substring(6);
+              return line.substring(6);
             }
+          }
+          return "unknown";
+        } finally {
+          s.close();
         }
-        return "unknown";
     }
 
     private static void doUsage() {
