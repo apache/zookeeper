@@ -324,5 +324,6 @@ public class RandomAccessFileReader extends Reader implements DataInput {
 	System.out.println(f.readLine());
 	f.seek(pos2);
 	System.out.println(f.readLine());
+	f.close();
     }
 };

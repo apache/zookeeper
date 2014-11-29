@@ -81,6 +81,7 @@ public class NumEvents extends JsonServlet
 	if (LOG.isDebugEnabled()) {
 	    LOG.debug("handle(start= " + starttime + ", end=" + endtime + ", numEntries=" + size +")");
 	}
+	iter.close();
 	return JSONValue.toJSONString(data);
     }
 }
