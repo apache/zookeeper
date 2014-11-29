@@ -67,7 +67,12 @@ class QuorumPeerInstance implements Instance {
             Properties p;
             if (zkDirs.exists()) {
                 p = new Properties();
-                p.load(new FileInputStream(zkDirs));
+                FileInputStream input = new FileInputStream(zkDirs);
+                try {
+                  p.load(input);
+                } finally {
+                  input.close();
+                }
             } else {
                 p = System.getProperties();
             }
