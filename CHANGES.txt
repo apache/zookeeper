@@ -41,6 +41,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2079 Stop daemon with "kill" rather than "kill -9" (Guillaume ALAUX
   via michim)
 
+  ZOOKEEPER-1963 Make JDK 7 the minimum requirement for Zookeeper 
+  (Hongchao via fpj)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
