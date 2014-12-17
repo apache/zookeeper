@@ -39,8 +39,8 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="revision.properties" value="revision.properties" />
     <property file="${basedir}/src/java/${revision.properties}" />
     
-    <property name="javac.target" value="1.5" />
-    <property name="javac.source" value="1.5" />
+    <property name="javac.target" value="1.7" />
+    <property name="javac.source" value="1.7" />
 
     <property name="src.dir" value="${basedir}/src" />
     <property name="java.src.dir" value="${src.dir}/java/main" />
