@@ -17,4 +17,4 @@
 
 getent group hadoop 2>/dev/null >/dev/null || /usr/sbin/groupadd -r hadoop
 
-/usr/sbin/useradd --comment "ZooKeeper" --shell /bin/bash -M -r --groups hadoop --home /usr/share/zookeeper zookeeper 2> /dev/null || :
+/usr/sbin/useradd --comment "ZooKeeper" --shell /bin/bash -r --groups hadoop --home /usr/share/zookeeper zookeeper 2> /dev/null || :
