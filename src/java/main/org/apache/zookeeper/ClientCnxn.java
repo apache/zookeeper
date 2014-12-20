@@ -22,13 +22,13 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +36,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.security.auth.login.LoginException;
@@ -134,7 +135,7 @@ public class ClientCnxn {
     /**
      * These are the packets that need to be sent.
      */
-    private final LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
+    private final LinkedBlockingDeque<Packet> outgoingQueue = new LinkedBlockingDeque<Packet>();
 
     private int connectTimeout;
 
@@ -883,7 +884,7 @@ public class ClientCnxn {
             // If SASL authentication is currently in progress, construct and
             // send a response packet immediately, rather than queuing a
             // response as with other packets.
-            if (clientTunneledAuthenticationInProgress()) {
+            if (tunnelAuthInProgress()) {
                 GetSASLRequest request = new GetSASLRequest();
                 request.deserialize(bbia,"token");
                 zooKeeperSaslClient.respondToServer(request.getToken(),
@@ -959,6 +960,9 @@ public class ClientCnxn {
             return clientCnxnSocket;
         }
 
+        /**
+         * Setup session, previous watches, authentication.
+         */
         void primeConnection() throws IOException {
             LOG.info("Socket connection established to "
                      + clientCnxnSocket.getRemoteSocketAddress()
@@ -967,38 +971,36 @@ public class ClientCnxn {
             long sessId = (seenRwServerBefore) ? sessionId : 0;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid,
                     sessionTimeout, sessId, sessionPasswd);
-            synchronized (outgoingQueue) {
-                // We add backwards since we are pushing into the front
-                // Only send if there's a pending watch
-                // TODO: here we have the only remaining use of zooKeeper in
-                // this class. It's to be eliminated!
-                if (!disableAutoWatchReset) {
-                    List<String> dataWatches = zooKeeper.getDataWatches();
-                    List<String> existWatches = zooKeeper.getExistWatches();
-                    List<String> childWatches = zooKeeper.getChildWatches();
-                    if (!dataWatches.isEmpty()
-                                || !existWatches.isEmpty() || !childWatches.isEmpty()) {
-                        SetWatches sw = new SetWatches(lastZxid,
-                                prependChroot(dataWatches),
-                                prependChroot(existWatches),
-                                prependChroot(childWatches));
-                        RequestHeader h = new RequestHeader();
-                        h.setType(ZooDefs.OpCode.setWatches);
-                        h.setXid(-8);
-                        Packet packet = new Packet(h, new ReplyHeader(), sw, null, null);
-                        outgoingQueue.addFirst(packet);
-                    }
+            // We add backwards since we are pushing into the front
+            // Only send if there's a pending watch
+            // TODO: here we have the only remaining use of zooKeeper in
+            // this class. It's to be eliminated!
+            if (!disableAutoWatchReset) {
+                List<String> dataWatches = zooKeeper.getDataWatches();
+                List<String> existWatches = zooKeeper.getExistWatches();
+                List<String> childWatches = zooKeeper.getChildWatches();
+                if (!dataWatches.isEmpty()
+                        || !existWatches.isEmpty() || !childWatches.isEmpty()) {
+                    SetWatches sw = new SetWatches(lastZxid,
+                            prependChroot(dataWatches),
+                            prependChroot(existWatches),
+                            prependChroot(childWatches));
+                    RequestHeader h = new RequestHeader();
+                    h.setType(ZooDefs.OpCode.setWatches);
+                    h.setXid(-8);
+                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null);
+                    outgoingQueue.addFirst(packet);
                 }
-
-                for (AuthData id : authInfo) {
-                    outgoingQueue.addFirst(new Packet(new RequestHeader(-4,
-                            OpCode.auth), null, new AuthPacket(0, id.scheme,
-                            id.data), null, null));
-                }
-                outgoingQueue.addFirst(new Packet(null, null, conReq,
-                            null, null, readOnly));
             }
-            clientCnxnSocket.enableReadWriteOnly();
+
+            for (AuthData id : authInfo) {
+                outgoingQueue.addFirst(new Packet(new RequestHeader(-4,
+                        OpCode.auth), null, new AuthPacket(0, id.scheme,
+                        id.data), null, null));
+            }
+            outgoingQueue.addFirst(new Packet(null, null, conReq,
+                    null, null, readOnly));
+            clientCnxnSocket.connectionPrimed();
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Session establishment request sent on "
                         + clientCnxnSocket.getRemoteSocketAddress());
@@ -1095,10 +1097,9 @@ public class ClientCnxn {
 
         private static final String RETRY_CONN_MSG =
             ", closing socket connection and attempting reconnect";
-        
         @Override
         public void run() {
-            clientCnxnSocket.introduce(this,sessionId);
+            clientCnxnSocket.introduce(this, sessionId, outgoingQueue);
             clientCnxnSocket.updateNow();
             clientCnxnSocket.updateLastSendAndHeard();
             int to;
@@ -1189,7 +1190,7 @@ public class ClientCnxn {
                         to = Math.min(to, pingRwTimeout - idlePingRwServer);
                     }
 
-                    clientCnxnSocket.doTransport(to, pendingQueue, outgoingQueue, ClientCnxn.this);
+                    clientCnxnSocket.doTransport(to, pendingQueue, ClientCnxn.this);
                 } catch (Throwable e) {
                     if (closing) {
                         if (LOG.isDebugEnabled()) {
@@ -1218,6 +1219,8 @@ public class ClientCnxn {
                                             + ", unexpected error"
                                             + RETRY_CONN_MSG, e);
                         }
+                        // At this point, there might still be new packets appended to outgoingQueue.
+                        // they will be handled in next connection or cleared up if closed.
                         cleanup();
                         if (state.isAlive()) {
                             eventThread.queueEvent(new WatchedEvent(
@@ -1230,6 +1233,8 @@ public class ClientCnxn {
                     }
                 }
             }
+            // When it comes to this point, it guarantees that later queued packet to outgoingQueue will be
+            // notified of death.
             cleanup();
             clientCnxnSocket.close();
             if (state.isAlive()) {
@@ -1300,11 +1305,14 @@ public class ClientCnxn {
                 }
                 pendingQueue.clear();
             }
-            synchronized (outgoingQueue) {
-                for (Packet p : outgoingQueue) {
-                    conLossPacket(p);
-                }
-                outgoingQueue.clear();
+            // We can't call outgoingQueue.clear() here because
+            // between iterating and clear up there might be new
+            // packets added in queuePacket().
+            Iterator<Packet> iter = outgoingQueue.iterator();
+            while (iter.hasNext()) {
+                Packet p = iter.next();
+                conLossPacket(p);
+                iter.remove();
             }
         }
 
@@ -1357,14 +1365,14 @@ public class ClientCnxn {
 
         void close() {
             state = States.CLOSED;
-            clientCnxnSocket.wakeupCnxn();
+            clientCnxnSocket.onClosing();
         }
 
         void testableCloseSocket() throws IOException {
             clientCnxnSocket.testableCloseSocket();
         }
 
-        public boolean clientTunneledAuthenticationInProgress() {
+        public boolean tunnelAuthInProgress() {
             // 1. SASL client is disabled.
             if (!ZooKeeperSaslClient.isEnabled()) {
                 return false;
@@ -1464,8 +1472,8 @@ public class ClientCnxn {
         return r;
     }
 
-    public void enableWrite() {
-        sendThread.getClientCnxnSocket().enableWrite();
+    public void saslCompleted() {
+        sendThread.getClientCnxnSocket().saslCompleted();
     }
 
     public void sendPacket(Record request, Record response, AsyncCallback cb, int opCode)
@@ -1501,25 +1509,23 @@ public class ClientCnxn {
         // Note that we do not generate the Xid for the packet yet. It is
         // generated later at send-time, by an implementation of ClientCnxnSocket::doIO(),
         // where the packet is actually sent.
-        synchronized (outgoingQueue) {
-            packet = new Packet(h, r, request, response, watchRegistration);
-            packet.cb = cb;
-            packet.ctx = ctx;
-            packet.clientPath = clientPath;
-            packet.serverPath = serverPath;
-            packet.watchDeregistration = watchDeregistration;
-            if (!state.isAlive() || closing) {
-                conLossPacket(packet);
-            } else {
-                // If the client is asking to close the session then
-                // mark as closing
-                if (h.getType() == OpCode.closeSession) {
-                    closing = true;
-                }
-                outgoingQueue.add(packet);
+        packet = new Packet(h, r, request, response, watchRegistration);
+        packet.cb = cb;
+        packet.ctx = ctx;
+        packet.clientPath = clientPath;
+        packet.serverPath = serverPath;
+        packet.watchDeregistration = watchDeregistration;
+        if (!state.isAlive() || closing) {
+            conLossPacket(packet);
+        } else {
+            // If the client is asking to close the session then
+            // mark as closing
+            if (h.getType() == OpCode.closeSession) {
+                closing = true;
             }
+            outgoingQueue.add(packet);
         }
-        sendThread.getClientCnxnSocket().wakeupCnxn();
+        sendThread.getClientCnxnSocket().packetAdded();
         return packet;
     }
 
