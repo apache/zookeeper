@@ -1,6 +1,7 @@
 Trunk
 
 NEW FEATURES:
+  ZOOKEEPER-2069 Netty Support for ClientCnxnSocket (Hongchao via fpj)
 
 BUGFIXES:
   ZOOKEEPER-2047 testTruncationNullLog fails on windows (flavio via rakeshr)
@@ -43,8 +44,6 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1963 Make JDK 7 the minimum requirement for Zookeeper 
   (Hongchao via fpj)
-
-  ZOOKEEPER-2069 Netty Support for ClientCnxnSocket (Hongchao via fpj)
 
 Release 3.5.0 - 8/4/2014
 
