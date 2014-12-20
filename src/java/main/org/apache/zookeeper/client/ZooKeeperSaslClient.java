@@ -339,7 +339,7 @@ public class ZooKeeperSaslClient {
             // SASL authentication is completed, successfully or not:
             // enable the socket's writable flag so that any packets waiting for authentication to complete in
             // the outgoing queue will be sent to the Zookeeper server.
-            cnxn.enableWrite();
+            cnxn.saslCompleted();
         }
     }
 
