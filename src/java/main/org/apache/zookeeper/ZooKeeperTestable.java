@@ -41,7 +41,7 @@ class ZooKeeperTestable implements Testable {
                 Watcher.Event.EventType.None,
                 Watcher.Event.KeeperState.Expired, null));
         clientCnxn.eventThread.queueEventOfDeath();
-        clientCnxn.sendThread.getClientCnxnSocket().wakeupCnxn();
         clientCnxn.state = ZooKeeper.States.CLOSED;
+        clientCnxn.sendThread.getClientCnxnSocket().onClosing();
     }
 }

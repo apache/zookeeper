@@ -842,11 +842,6 @@ public class ClientTest extends ClientBase {
         ReplyHeader r = zk.submitRequest(h, request, response, null);
 
         Assert.assertEquals(r.getErr(), Code.UNIMPLEMENTED.intValue());
-
-        try {
-            zk.exists("/m1", false);
-            fail("The connection should have been closed");
-        } catch (KeeperException.ConnectionLossException expected) {
-        }
+        zk.testableWaitForShutdown(CONNECTION_TIMEOUT);
     }
 }
