@@ -478,8 +478,8 @@ void *do_completion(void *v)
         pthread_mutex_unlock(&zh->completions_to_process.lock);
         process_completions(zh);
     }
-    api_epilog(zh, 0);    
     LOG_DEBUG(LOGCALLBACK(zh), "completion thread terminated");
+    api_epilog(zh, 0);    
     return 0;
 }
 
