@@ -124,7 +124,7 @@ public class PathTrie {
                 }
                 TrieNode childNode = children.get(childName);
                 // this is the only child node.
-                if (childNode.getChildren().length == 1) { 
+                if (getChildren().length == 1) { 
                     childNode.setParent(null);
                     children.remove(childName);
                 }
