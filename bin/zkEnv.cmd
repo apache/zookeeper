@@ -39,10 +39,10 @@ if not defined JAVA_HOME (
   goto :eof
 )
 
-if not exist %JAVA_HOME%\bin\java.exe (
+if not exist "%JAVA_HOME%\bin\java.exe" (
   echo Error: JAVA_HOME is incorrectly set.
   goto :eof
 )
 
-set JAVA=%JAVA_HOME%\bin\java
+set JAVA="%JAVA_HOME%\bin\java"
 
