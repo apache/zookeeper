@@ -422,7 +422,7 @@ public class Learner {
                     PacketInFlight packet = new PacketInFlight();
                     packet.hdr = new TxnHeader();
 
-                    if (qp.getType() == Leader.COMMITANDACTIVATE) {
+                    if (qp.getType() == Leader.INFORMANDACTIVATE) {
                         ByteBuffer buffer = ByteBuffer.wrap(qp.getData());
                         long suggestedLeaderId = buffer.getLong();
                         byte[] remainingdata = new byte[buffer.remaining()];
