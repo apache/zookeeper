@@ -4,6 +4,8 @@ NEW FEATURES:
   ZOOKEEPER-2069 Netty Support for ClientCnxnSocket (Hongchao via fpj)
 
 BUGFIXES:
+  ZOOKEEPER-1784 wrong check for COMMITANDACTIVATE in observer code, Learner.java (rgs via shralex).
+
   ZOOKEEPER-2047 testTruncationNullLog fails on windows (flavio via rakeshr)
 
   ZOOKEEPER-2026 Startup order in ServerCnxnFactory-ies is wrong (Stevo Slavic via rakeshr)
