@@ -390,7 +390,7 @@ server.3=zoo3:2888:3888</programlisting>
       <title>Single Machine Requirements</title>
 
       <para>If ZooKeeper has to contend with other applications for
-        access to resourses like storage media, CPU, network, or
+        access to resources like storage media, CPU, network, or
         memory, its performance will suffer markedly.  ZooKeeper has
         strong durability guarantees, which means it uses storage
         media to log changes before the operation responsible for the

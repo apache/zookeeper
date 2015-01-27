@@ -136,7 +136,7 @@
     <section>
       <title>Nodes and ephemeral nodes</title>
 
-      <para>Unlike is standard file systems, each node in a ZooKeeper
+      <para>Unlike standard file systems, each node in a ZooKeeper
       namespace can have data associated with it as well as children. It is
       like having a file-system that allows a file to also be a directory.
       (ZooKeeper was designed to store coordination data: status information,
@@ -166,9 +166,9 @@
       <title>Conditional updates and watches</title>
 
       <para>ZooKeeper supports the concept of <emphasis>watches</emphasis>.
-      Clients can set a watch on a znodes. A watch will be triggered and
-      removed when the znode changes. When a watch is triggered the client
-      receives a packet saying that the znode has changed. And if the
+      Clients can set a watch on a znode. A watch will be triggered and
+      removed when the znode changes. When a watch is triggered, the client
+      receives a packet saying that the znode has changed. If the
       connection between the client and one of the Zoo Keeper servers is
       broken, the client will receive a local notification. These can be used
       to <emphasis>[tbd]</emphasis>.</para>
@@ -293,7 +293,7 @@
       of the ZooKeeper service. With the exception of the request processor,
      each of
       the servers that make up the ZooKeeper service replicates its own copy
-      of each of components.</para>
+      of each of the components.</para>
 
       <figure id="fg_zkComponents">
         <title>ZooKeeper Components</title>
