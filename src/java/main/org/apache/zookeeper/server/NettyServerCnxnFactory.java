@@ -35,7 +35,10 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
@@ -242,7 +245,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
     
     CnxnChannelHandler channelHandler = new CnxnChannelHandler();
-    
+
     NettyServerCnxnFactory() {
         bootstrap = new ServerBootstrap(
                 new NioServerSocketChannelFactory(
@@ -254,8 +257,15 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         bootstrap.setOption("child.tcpNoDelay", true);
         /* set socket linger to off, so that socket close does not block */
         bootstrap.setOption("child.soLinger", -1);
+        bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+            @Override
+            public ChannelPipeline getPipeline() throws Exception {
+                ChannelPipeline p = Channels.pipeline();
+                p.addLast("servercnxnfactory", channelHandler);
 
-        bootstrap.getPipeline().addLast("servercnxnfactory", channelHandler);
+                return p;
+            }
+        });
     }
     
     @Override
