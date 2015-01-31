@@ -21,6 +21,9 @@ BUGFIXES:
   ZOOKEEPER-2072 Netty Server Should Configure Child Channel Pipeline By Specifying 
   ChannelPipelineFactory (Hongchao via rakeshr)
 
+  ZOOKEEPER-2111 Not isAlive states should be synchronized in ClientCnxn 
+  (Hongchao via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
