@@ -41,6 +41,7 @@ import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
@@ -570,17 +571,17 @@ public class ZKDatabase {
         this.snapLog.close();
     }
 
-    public synchronized void initConfigInZKDatabase(QuorumVerifier qv) {   
-    	if (qv == null) return; // only happens during tests
+    public synchronized void initConfigInZKDatabase(QuorumVerifier qv) {
+        if (qv == null) return; // only happens during tests
         try {
-             if (this.dataTree.getNode(ZooDefs.CONFIG_NODE) == null) {
-            	 // should only happen during upgrade
-            	 LOG.warn("configuration znode missing (hould only happen during upgrade), creating the node");
-                 this.dataTree.addConfigNode();
-             }
-             this.dataTree.setData(ZooDefs.CONFIG_NODE, qv.toString().getBytes(), -1, qv.getVersion(), System.currentTimeMillis());           
+            if (this.dataTree.getNode(ZooDefs.CONFIG_NODE) == null) {
+                // should only happen during upgrade
+                LOG.warn("configuration znode missing (hould only happen during upgrade), creating the node");
+                this.dataTree.addConfigNode();
+            }
+            this.dataTree.setData(ZooDefs.CONFIG_NODE, qv.toString().getBytes(), -1, qv.getVersion(), Time.currentWallTime());
         } catch (NoNodeException e) {
-           System.out.println("configuration node missing - should not happen");         
+            System.out.println("configuration node missing - should not happen");
         }
     }
  

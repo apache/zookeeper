@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -417,7 +418,7 @@ public class AuthFastLeaderElection implements Election {
                 super("WorkerSender");
                 maxAttempts = attempts;
                 rand = new Random(java.lang.Thread.currentThread().getId()
-                        + System.currentTimeMillis());
+                        + Time.currentElapsedTime());
             }
 
             long genChallenge() {

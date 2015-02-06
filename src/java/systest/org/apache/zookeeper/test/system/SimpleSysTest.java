@@ -31,6 +31,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Test;
+import org.apache.zookeeper.common.Time;
 
 /**
  * This does a basic system test. It starts up an ensemble of servers and a set of clients.
@@ -46,8 +47,8 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
     
     synchronized private boolean waitForConnect(ZooKeeper zk, long timeout) throws InterruptedException {
         connected = (zk.getState() == States.CONNECTED);
-        long end = System.currentTimeMillis() + timeout;
-        while(!connected && end > System.currentTimeMillis()) {
+        long end = Time.currentElapsedTime() + timeout;
+        while(!connected && end > Time.currentElapsedTime()) {
             wait(timeout);
             connected = (zk.getState() == States.CONNECTED);
         }

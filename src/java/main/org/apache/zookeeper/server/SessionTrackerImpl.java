@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +82,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
      */
     public static long initializeNextSession(long id) {
         long nextSid;
-        nextSid = (System.currentTimeMillis() << 24) >>> 8;
+        nextSid = (Time.currentElapsedTime() << 24) >>> 8;
         nextSid =  nextSid | (id <<56);
         return nextSid;
     }
