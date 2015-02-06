@@ -20,6 +20,8 @@ package org.apache.zookeeper.server;
 
 
 
+import org.apache.zookeeper.common.Time;
+
 /**
  * Basic Server Statistics
  */
@@ -107,7 +109,7 @@ public class ServerStats {
     }
     // mutators
     synchronized void updateLatency(long requestCreateTime) {
-        long latency = System.currentTimeMillis() - requestCreateTime;
+        long latency = Time.currentElapsedTime() - requestCreateTime;
         totalLatency += latency;
         count++;
         if (latency < minLatency) {

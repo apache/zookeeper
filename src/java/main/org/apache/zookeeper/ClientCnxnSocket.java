@@ -27,6 +27,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.ClientCnxn.Packet;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.proto.ConnectResponse;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.slf4j.Logger;
@@ -77,7 +78,7 @@ abstract class ClientCnxnSocket {
     }
 
     void updateNow() {
-        now = System.currentTimeMillis();
+        now = Time.currentElapsedTime();
     }
 
     int getIdleRecv() {

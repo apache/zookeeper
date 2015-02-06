@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.jute.Record;
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
@@ -182,7 +183,7 @@ public class FinalRequestProcessor implements RequestProcessor {
 
                 lastOp = "PING";
                 cnxn.updateStatsForResponse(request.cxid, request.zxid, lastOp,
-                        request.createTime, System.currentTimeMillis());
+                        request.createTime, Time.currentElapsedTime());
 
                 cnxn.sendResponse(new ReplyHeader(-2,
                         zks.getZKDatabase().getDataTreeLastProcessedZxid(), 0), null, "response");
@@ -193,7 +194,7 @@ public class FinalRequestProcessor implements RequestProcessor {
 
                 lastOp = "SESS";
                 cnxn.updateStatsForResponse(request.cxid, request.zxid, lastOp,
-                        request.createTime, System.currentTimeMillis());
+                        request.createTime, Time.currentElapsedTime());
 
                 zks.finishSessionInit(request.cnxn, true);
                 return;
@@ -459,7 +460,7 @@ public class FinalRequestProcessor implements RequestProcessor {
 
         zks.serverStats().updateLatency(request.createTime);
         cnxn.updateStatsForResponse(request.cxid, lastZxid, lastOp,
-                    request.createTime, System.currentTimeMillis());
+                    request.createTime, Time.currentElapsedTime());
 
         try {
             cnxn.sendResponse(hdr, rsp, "response");
