@@ -41,6 +41,7 @@ import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
@@ -312,10 +313,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void setZxid(long zxid) {
         hzxid.set(zxid);
-    }
-
-    long getTime() {
-        return System.currentTimeMillis();
     }
 
     private void close(long sessionId) {

@@ -42,6 +42,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.Before;
@@ -197,13 +198,12 @@ public class ReadOnlyModeTest extends ZKTestCase {
                         states.add(event.getState());
                     }
                 }, true);
-        long start = System.currentTimeMillis();
+        long start = Time.currentElapsedTime();
         while (!(zk.getState() == States.CONNECTEDREADONLY)) {
             Thread.sleep(200);
             // FIXME this was originally 5 seconds, but realistically, on random/slow/virt hosts, there is no way to guarantee this
-            Assert.assertTrue("Can't connect to the server", System
-                    .currentTimeMillis()
-                    - start < 30000);
+            Assert.assertTrue("Can't connect to the server",
+                              Time.currentElapsedTime() - start < 30000);
         }
 
         // At this point states list should contain, in the given order,

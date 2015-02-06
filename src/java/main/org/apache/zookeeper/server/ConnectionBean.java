@@ -22,10 +22,10 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.Date;
 
 import javax.management.ObjectName;
 
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.MBeanRegistry;
@@ -164,7 +164,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     }
 
     public String getLastResponseTime() {
-        return new Date(stats.getLastResponseTime()).toString();
+        return Time.elapsedTimeToDate(stats.getLastResponseTime()).toString();
     }
 
     public long getLastLatency() {
