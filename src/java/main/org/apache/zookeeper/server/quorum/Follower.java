@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
@@ -61,7 +62,7 @@ public class Follower extends Learner{
      * @throws InterruptedException
      */
     void followLeader() throws InterruptedException {
-        self.end_fle = System.currentTimeMillis();
+        self.end_fle = Time.currentElapsedTime();
         LOG.info("FOLLOWING - LEADER ELECTION TOOK - " +
               (self.end_fle - self.start_fle));
         self.start_fle = 0;

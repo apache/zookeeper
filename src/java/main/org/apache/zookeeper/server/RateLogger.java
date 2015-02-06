@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 
 public class RateLogger {
@@ -43,7 +44,7 @@ public class RateLogger {
     }
 
     public void rateLimitLog(String newMsg) {
-        long now = System.currentTimeMillis();
+        long now = Time.currentElapsedTime();
         if (newMsg.equals(msg)) {
             ++count;
             if (now - timestamp >= 100) {

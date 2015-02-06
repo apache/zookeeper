@@ -41,6 +41,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
@@ -671,9 +672,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         q1.start();
         // Let the notifications timeout
         Thread.sleep(30000);
-        long start = System.currentTimeMillis();
+        long start = Time.currentElapsedTime();
         q1.shutdown();
-        long end = System.currentTimeMillis();
+        long end = Time.currentElapsedTime();
         if ((end - start) > maxwait) {
             Assert.fail("QuorumPeer took " + (end - start) +
                     " to shutdown, expected " + maxwait);

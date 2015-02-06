@@ -30,6 +30,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.net.Socket;
 
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -203,9 +204,9 @@ public class CnxManagerTest extends ZKTestCase {
             LOG.error("Null listener when initializing cnx manager");
         }
 
-        long begin = System.currentTimeMillis();
+        long begin = Time.currentElapsedTime();
         cnxManager.toSend(2L, createMsg(ServerState.LOOKING.ordinal(), 1, -1, 1));
-        long end = System.currentTimeMillis();
+        long end = Time.currentElapsedTime();
 
         if((end - begin) > 6000) Assert.fail("Waited more than necessary");
         cnxManager.halt();
@@ -348,10 +349,10 @@ public class CnxManagerTest extends ZKTestCase {
 
         Socket sock = new Socket();
         sock.connect(peers.get(1L).electionAddr, 5000);
-        long begin = System.currentTimeMillis();
+        long begin = Time.currentElapsedTime();
         // Read without sending data. Verify timeout.
         cnxManager.receiveConnection(sock);
-        long end = System.currentTimeMillis();
+        long end = Time.currentElapsedTime();
         if((end - begin) > ((peer.getSyncLimit() * peer.getTickTime()) + 500)) Assert.fail("Waited more than necessary");
         cnxManager.halt();
         Assert.assertFalse(cnxManager.listener.isAlive());

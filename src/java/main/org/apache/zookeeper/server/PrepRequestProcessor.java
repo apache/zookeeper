@@ -37,6 +37,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.jute.Record;
 import org.apache.jute.BinaryOutputArchive;
 
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
@@ -361,7 +362,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                                 Record record, boolean deserialize)
         throws KeeperException, IOException, RequestProcessorException
     {
-        request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid, zks.getTime(), type));
+        request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
+                Time.currentWallTime(), type));
 
         switch (type) {
             case OpCode.create: {
@@ -748,8 +750,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
                 } catch(IOException e) {
                     request.setHdr(new TxnHeader(request.sessionId, request.cxid, zks.getNextZxid(),
-                                                 zks.getTime(), OpCode.multi));
-                   throw e;
+                            Time.currentWallTime(), OpCode.multi));
+                    throw e;
                 }
                 List<Txn> txns = new ArrayList<Txn>();
                 //Each op in a multi-op must have the same zxid!
@@ -807,7 +809,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     txns.add(new Txn(type, bb.array()));
                 }
 
-                request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid, zks.getTime(), request.type));
+                request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
+                        Time.currentWallTime(), request.type));
                 request.setTxn(new MultiTxn(txns));
 
                 break;

@@ -24,6 +24,9 @@ BUGFIXES:
   ZOOKEEPER-2111 Not isAlive states should be synchronized in ClientCnxn 
   (Hongchao via rakeshr)
 
+  ZOOKEEPER-1366 Zookeeper should be tolerant of clock adjustments (Hongchao
+  Deng via michim)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
