@@ -56,6 +56,9 @@ BUGFIXES:
 
   ZOOKEEPER-2064 Prevent resource leak in various classes (Ted Yu via fpj)
 
+  ZOOKEEPER-1949 recipes jar not included in the distribution package (Rakesh R
+  via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
