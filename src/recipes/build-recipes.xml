@@ -111,7 +111,7 @@
   <target name="jar" depends="compile" unless="skip.recipes">
     <echo message="recipes: ${name}"/>
     <jar
-      jarfile="${build.dir}/zookeeper-${version}-${name}.jar"
+      jarfile="${build.dir}/zookeeper-${version}-recipes-${name}.jar"
       basedir="${build.classes}"      
     />
   </target>
@@ -126,7 +126,7 @@
     <copy todir="${dist.dir}${package.share}/recipes/${name}" includeEmptyDirs="false"
           flatten="true">
       <fileset dir="${build.dir}">
-        <include name="zookeeper-${version}-${name}.jar" />
+        <include name="zookeeper-${version}-recipes-${name}.jar" />
       </fileset>
     </copy>
   </target>
