@@ -56,9 +56,10 @@
     <property name="revision.properties" value="revision.properties" />
     <property file="${basedir}/src/java/${revision.properties}" />
 
-    <property name="targetJavaVersion" value="1.6"/>
+    <property name="targetJavaVersion" value="1.7"/>
     <property name="javac.target" value="${targetJavaVersion}" />
-    <property name="javac.source" value="1.5" />
+    <property name="sourceJavaVersion" value="1.7"/>
+    <property name="javac.source" value="${sourceJavaVersion}" />
 
     <property name="src.dir" value="${basedir}/src" />
     <property name="java.src.dir" value="${src.dir}/java/main" />
