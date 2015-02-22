@@ -40,6 +40,8 @@ BUGFIXES:
   ZOOKEEPER-2114 jute generated allocate_* functions are not externally visible
   (Tim Crowder via michim)
 
+  ZOOKEEPER-2073 Memory leak on zookeeper_close (Dave Gosselin via michim)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
