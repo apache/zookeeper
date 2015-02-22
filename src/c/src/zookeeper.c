@@ -2821,6 +2821,7 @@ int zookeeper_process(zhandle_t *zh, int events)
             if (zh->close_requested == 1 && cptr == NULL) {
                 LOG_DEBUG(LOGCALLBACK(zh), "Completion queue has been cleared by zookeeper_close()");
                 close_buffer_iarchive(&ia);
+                free_buffer(bptr);
                 return api_epilog(zh,ZINVALIDSTATE);
             }
             assert(cptr);
