@@ -3,6 +3,8 @@ Unreleased
 NEW FEATURES:
   ZOOKEEPER-2069 Netty Support for ClientCnxnSocket (Hongchao via fpj)
 
+  ZOOKEEPER-2119 Netty client docs (Hongchao via rakeshr)
+
 BUGFIXES:
   ZOOKEEPER-2047 testTruncationNullLog fails on windows (flavio via rakeshr)
 
