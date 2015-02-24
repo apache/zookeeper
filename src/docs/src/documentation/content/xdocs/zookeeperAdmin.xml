@@ -1295,8 +1295,7 @@ server.3=zoo3:2888:3888</programlisting>
       <section>
         <title>Communication using the Netty framework</title>
 
-        <para><emphasis role="bold">New in
-            3.4:</emphasis> <ulink url="http://jboss.org/netty">Netty</ulink>
+        <para><ulink url="http://netty.io">Netty</ulink>
             is an NIO based client/server communication framework, it
             simplifies (over NIO being used directly) many of the
             complexities of network level communication for java
@@ -1305,17 +1304,14 @@ server.3=zoo3:2888:3888</programlisting>
             (certificates). These are optional features and can be
             turned on or off individually.
         </para>
-        <para>Prior to version 3.4 ZooKeeper has always used NIO
-            directly, however in versions 3.4 and later Netty is
-            supported as an option to NIO (replaces). NIO continues to
-            be the default, however Netty based communication can be
-            used in place of NIO by setting the environment variable
-            "zookeeper.serverCnxnFactory" to
-            "org.apache.zookeeper.server.NettyServerCnxnFactory". You
-            have the option of setting this on either the client(s) or
-            server(s), typically you would want to set this on both,
-            however that is at your discretion.
+        <para>In versions 3.5+, a ZooKeeper server can use Netty
+            instead of NIO (default option) by setting the environment
+            variable <emphasis role="bold">zookeeper.serverCnxnFactory</emphasis>
+            to <emphasis role="bold">org.apache.zookeeper.server.NettyServerCnxnFactory</emphasis>;
+            for the client, set <emphasis role="bold">zookeeper.clientCnxnSocket</emphasis>
+            to <emphasis role="bold">org.apache.zookeeper.ClientCnxnSocketNetty</emphasis>.
         </para>
+
         <para>
           TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
         </para>
