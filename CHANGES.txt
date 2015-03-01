@@ -44,6 +44,9 @@ BUGFIXES:
 
   ZOOKEEPER-2073 Memory leak on zookeeper_close (Dave Gosselin via michim)
 
+  ZOOKEEPER-1952 Default log directory and file name can be changed 
+  (nijel, Hari Krishna Dara via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 

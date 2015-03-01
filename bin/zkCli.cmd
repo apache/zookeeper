@@ -17,8 +17,10 @@ REM limitations under the License.
 setlocal
 call "%~dp0zkEnv.cmd"
 
+ZOO_LOG_FILE=zookeeper-%USERNAME%-cli-%COMPUTERNAME%.log
+
 set ZOOMAIN=org.apache.zookeeper.ZooKeeperMain
-call %JAVA% "-Dzookeeper.log.dir=%ZOO_LOG_DIR%" "-Dzookeeper.root.logger=%ZOO_LOG4J_PROP%" -cp "%CLASSPATH%" %ZOOMAIN% %*
+call %JAVA% "-Dzookeeper.log.dir=%ZOO_LOG_DIR%" "-Dzookeeper.root.logger=%ZOO_LOG4J_PROP%" "-Dzookeeper.log.file=%ZOO_LOG_FILE%" -cp "%CLASSPATH%" %ZOOMAIN% %*
 
 endlocal
 
