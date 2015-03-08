@@ -33,6 +33,7 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
+import org.apache.zookeeper.server.ZooKeeperServerListener;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,7 +70,12 @@ public class CommitProcessorConcurrencyTest {
                       public void shutdown(){}
           },
           "0",
-          false);
+          false, new ZooKeeperServerListener(){
+
+              @Override
+              public void notifyStopping(String errMsg, int exitCode) {
+
+              }});
         }
 
         public void testStart() {

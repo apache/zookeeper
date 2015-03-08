@@ -232,7 +232,8 @@ public class CommitProcessorTest {
             // processor, so it can do pre/post validating of requests
             ValidateProcessor validateProcessor =
                 new ValidateProcessor(finalProcessor);
-            commitProcessor = new CommitProcessor(validateProcessor, "1", true);
+            commitProcessor = new CommitProcessor(validateProcessor, "1", true,
+                    getZooKeeperServerListener());
             validateProcessor.setCommitProcessor(commitProcessor);
             commitProcessor.start();
             MockProposalRequestProcessor proposalProcessor =

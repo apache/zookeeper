@@ -91,9 +91,9 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
 
     public SessionTrackerImpl(SessionExpirer expirer,
             ConcurrentMap<Long, Integer> sessionsWithTimeout, int tickTime,
-            long serverId)
+            long serverId, ZooKeeperServerListener listener)
     {
-        super("SessionTracker");
+        super("SessionTracker", listener);
         this.expirer = expirer;
         this.sessionExpiryQueue = new ExpiryQueue<SessionImpl>(tickTime);
         this.sessionsWithTimeout = sessionsWithTimeout;
@@ -153,7 +153,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
                 }
             }
         } catch (InterruptedException e) {
-            LOG.error("Unexpected interruption", e);
+            handleException(this.getName(), e);
         }
         LOG.info("SessionTrackerImpl exited loop!");
     }
