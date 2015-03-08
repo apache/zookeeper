@@ -92,7 +92,8 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
         // Currently, they behave almost exactly the same as followers.
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         commitProcessor = new CommitProcessor(finalProcessor,
-                Long.toString(getServerId()), true);
+                Long.toString(getServerId()), true,
+                getZooKeeperServerListener());
         commitProcessor.start();
         firstProcessor = new ObserverRequestProcessor(this, commitProcessor);
         ((ObserverRequestProcessor) firstProcessor).start();
@@ -130,7 +131,11 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     };    
 
     @Override
-    public void shutdown() {
+    public synchronized void shutdown() {
+        if (!isRunning()) {
+            LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
+            return;
+        }
         super.shutdown();
         if (syncRequestProcessorEnabled && syncProcessor != null) {
             syncProcessor.shutdown();

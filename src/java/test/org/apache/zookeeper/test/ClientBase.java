@@ -56,6 +56,7 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerCnxnFactoryAccessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooKeeperServerListener;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.util.OSMXBean;
@@ -662,5 +663,15 @@ public abstract class ClientBase extends ZKTestCase {
             sb.append(part);
         }
         return sb.toString();
+    }
+
+    public ZooKeeperServerListener testZKSListener() {
+        return new ZooKeeperServerListener() {
+
+            @Override
+            public void notifyStopping(String errMsg, int exitCode) {
+
+            }
+        };
     }
 }
