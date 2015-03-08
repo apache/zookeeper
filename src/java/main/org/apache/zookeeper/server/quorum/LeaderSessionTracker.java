@@ -27,6 +27,7 @@ import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
 import org.apache.zookeeper.KeeperException.UnknownSessionException;
 import org.apache.zookeeper.server.SessionTrackerImpl;
+import org.apache.zookeeper.server.ZooKeeperServerListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,14 +47,15 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
 
     public LeaderSessionTracker(SessionExpirer expirer,
             ConcurrentMap<Long, Integer> sessionsWithTimeouts,
-            int tickTime, long id, boolean localSessionsEnabled) {
+            int tickTime, long id, boolean localSessionsEnabled,
+            ZooKeeperServerListener listener) {
 
         this.globalSessionTracker = new SessionTrackerImpl(
-            expirer, sessionsWithTimeouts, tickTime, id);
+            expirer, sessionsWithTimeouts, tickTime, id, listener);
 
         this.localSessionsEnabled = localSessionsEnabled;
         if (this.localSessionsEnabled) {
-            createLocalSessionTracker(expirer, tickTime, id);
+            createLocalSessionTracker(expirer, tickTime, id, listener);
         }
         serverId = id;
     }
