@@ -112,9 +112,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
     ZooKeeperServer zks;
 
-    public PrepRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
-        super("ProcessThread(sid:" + zks.getServerId()
-                + " cport:" + zks.getClientPort() + "):");
+    public PrepRequestProcessor(ZooKeeperServer zks,
+            RequestProcessor nextProcessor) {
+        super("ProcessThread(sid:" + zks.getServerId() + " cport:"
+                + zks.getClientPort() + "):", zks.getZooKeeperServerListener());
         this.nextProcessor = nextProcessor;
         this.zks = zks;
     }
@@ -143,15 +144,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 }
                 pRequest(request);
             }
-        } catch (InterruptedException e) {
-            LOG.error("Unexpected interruption", e);
         } catch (RequestProcessorException e) {
             if (e.getCause() instanceof XidRolloverException) {
                 LOG.info(e.getCause().getMessage());
             }
-            LOG.error("Unexpected exception", e);
+            handleException(this.getName(), e);
         } catch (Exception e) {
-            LOG.error("Unexpected exception", e);
+            handleException(this.getName(), e);
         }
         LOG.info("PrepRequestProcessor exited loop!");
     }

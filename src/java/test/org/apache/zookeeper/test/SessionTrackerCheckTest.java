@@ -24,6 +24,7 @@ import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
+import org.apache.zookeeper.server.ZooKeeperServerListener;
 import org.apache.zookeeper.server.quorum.LeaderSessionTracker;
 import org.apache.zookeeper.server.quorum.LearnerSessionTracker;
 import org.junit.After;
@@ -76,7 +77,8 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         Expirer expirer = new Expirer(1);
         // With local session on
         LearnerSessionTracker tracker = new LearnerSessionTracker(expirer,
-                sessionsWithTimeouts, TICK_TIME, expirer.sid, true);
+                sessionsWithTimeouts, TICK_TIME, expirer.sid, true,
+                testZKSListener());
 
         // Unknown session
         long sessionId = 0xb100ded;
@@ -114,7 +116,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
 
         // With local session off
         tracker = new LearnerSessionTracker(expirer, sessionsWithTimeouts,
-                TICK_TIME, expirer.sid, false);
+                TICK_TIME, expirer.sid, false, testZKSListener());
 
         // Should be noop
         sessionId = 0xdeadbeef;
@@ -131,7 +133,8 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         Expirer expirer = new Expirer(2);
         // With local session on
         LeaderSessionTracker tracker = new LeaderSessionTracker(expirer,
-                sessionsWithTimeouts, TICK_TIME, expirer.sid, true);
+                sessionsWithTimeouts, TICK_TIME, expirer.sid, true,
+                testZKSListener());
 
         // Local session from other server
         long sessionId = ((expirer.sid + 1) << 56) + 1;
@@ -179,7 +182,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
 
         // With local session off
         tracker = new LeaderSessionTracker(expirer, sessionsWithTimeouts,
-                TICK_TIME, expirer.sid, false);
+                TICK_TIME, expirer.sid, false, testZKSListener());
 
         // Global session
         sessionId = 0xdeadbeef;
@@ -215,4 +218,13 @@ public class SessionTrackerCheckTest extends ZKTestCase {
 
     }
 
+    ZooKeeperServerListener testZKSListener() {
+        return new ZooKeeperServerListener() {
+
+            @Override
+            public void notifyStopping(String errMsg, int exitCode) {
+
+            }
+        };
+    }
 }
