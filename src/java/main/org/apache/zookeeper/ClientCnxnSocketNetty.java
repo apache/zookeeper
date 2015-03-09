@@ -317,16 +317,13 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     // *************** <END> CientCnxnSocketNetty </END> ******************
     private static class WakeupPacket {
-        private static Packet instance = null;
+        private static final Packet instance = new Packet(null, null, null, null, null);
 
         protected WakeupPacket() {
             // Exists only to defeat instantiation.
         }
 
         public static Packet getInstance() {
-            if (instance == null) {
-                instance = new Packet(null, null, null, null, null);
-            }
             return instance;
         }
     }
