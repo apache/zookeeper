@@ -138,8 +138,8 @@
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
 
     <available property="clover.present"
-               classname="com.cenqua.clover.CloverInstr"
-               classpath="${clover.home}/lib/clover.jar"/>
+               file="${clover.home}/lib/clover.jar"
+               classpath="${clover.home}/lib"/>
 
     <available file="${c.src.dir}/Makefile" property="Makefile.present"/>
 
