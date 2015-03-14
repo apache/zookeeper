@@ -33,9 +33,6 @@ BUGFIXES:
   ZOOKEEPER-1366 Zookeeper should be tolerant of clock adjustments (Hongchao
   Deng via michim)
 
-  ZOOKEEPER-2074 Incorrect exit codes for "./zkCli.sh cmd arg" (surendra singh
-  lilhore via michim)
-
   ZOOKEEPER-1949 recipes jar not included in the distribution package (Rakesh R
   via michim)
 
