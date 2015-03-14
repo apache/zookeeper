@@ -595,7 +595,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 + ":participant;localhost:"
                 + qu.getPeer(leaderIndex).peer.getClientPort());
 
-        reconfig(zkArr[followerIndex], joiningServers, null, null, -1);
+        reconfig(zkArr[leaderIndex], joiningServers, null, null, -1);
 
         testNormalOperation(zkArr[followerIndex], zkArr[leaderIndex]);
 
