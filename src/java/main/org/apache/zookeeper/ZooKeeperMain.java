@@ -273,10 +273,7 @@ public class ZooKeeperMain {
         throws KeeperException, IOException, InterruptedException
     {
         ZooKeeperMain main = new ZooKeeperMain(args);
-        boolean result = main.run();
-        if (!result) {
-            System.exit(1);
-        }
+        main.run();
     }
 
     public ZooKeeperMain(String args[]) throws IOException, InterruptedException {
@@ -291,7 +288,7 @@ public class ZooKeeperMain {
       this.zk = zk;
     }
 
-    boolean run() throws KeeperException, IOException, InterruptedException {
+    void run() throws KeeperException, IOException, InterruptedException {
         if (cl.getCommand() == null) {
             System.out.println("Welcome to ZooKeeper!");
 
@@ -345,10 +342,9 @@ public class ZooKeeperMain {
                     executeLine(line);
                 }
             }
-            return true;
         } else {
             // Command line args non-null.  Run what was passed.
-            return processCmd(cl);
+            processCmd(cl);
         }
     }
 
