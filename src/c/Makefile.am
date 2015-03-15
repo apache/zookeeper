@@ -1,6 +1,7 @@
 # need this for Doxygen integration
 include $(top_srcdir)/aminclude.am
 
+AUTOMAKE_OPTIONS = serial-tests
 AM_CPPFLAGS = -I${srcdir}/include -I${srcdir}/tests -I${srcdir}/generated
 AM_CFLAGS = -Wall -Werror -Wdeclaration-after-statement
 AM_CXXFLAGS = -Wall $(USEIPV6)
