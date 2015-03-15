@@ -214,10 +214,27 @@ public class Learner {
         }
         return addr;
     }
-    
+   
+    /**
+     * Overridable helper method to return the System.nanoTime().
+     * This method behaves identical to System.nanoTime().
+     */
+    protected long nanoTime() {
+        return System.nanoTime();
+    }
+
+    /**
+     * Overridable helper method to simply call sock.connect(). This can be
+     * overriden in tests to fake connection success/failure for connectToLeader. 
+     */
+    protected void sockConnect(Socket sock, InetSocketAddress addr, int timeout) 
+    throws IOException {
+        sock.connect(addr, timeout);
+    }
+
     /**
      * Establish a connection with the Leader found by findLeader. Retries
-     * 5 times before giving up. 
+     * until either initLimit time has elapsed or 5 tries have happened. 
      * @param addr - the address of the Leader to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * @throws ConnectException
@@ -227,17 +244,39 @@ public class Learner {
     throws IOException, ConnectException, InterruptedException {
         sock = new Socket();        
         sock.setSoTimeout(self.tickTime * self.initLimit);
+
+        int initLimitTime = self.tickTime * self.initLimit;
+        int remainingInitLimitTime = initLimitTime;
+        long startNanoTime = nanoTime();
+
         for (int tries = 0; tries < 5; tries++) {
             try {
-                sock.connect(addr, self.tickTime * self.syncLimit);
+                // recalculate the init limit time because retries sleep for 1000 milliseconds
+                remainingInitLimitTime = initLimitTime - (int)((nanoTime() - startNanoTime) / 1000000);
+                if (remainingInitLimitTime <= 0) {
+                    LOG.error("initLimit exceeded on retries.");
+                    throw new IOException("initLimit exceeded on retries.");
+                }
+
+                sockConnect(sock, addr, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
                 sock.setTcpNoDelay(nodelay);
                 break;
             } catch (IOException e) {
-                if (tries == 4) {
-                    LOG.error("Unexpected exception",e);
+                remainingInitLimitTime = initLimitTime - (int)((nanoTime() - startNanoTime) / 1000000);
+
+                if (remainingInitLimitTime <= 1000) {
+                    LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
+                             ", remaining init limit=" + remainingInitLimitTime +
+                             ", connecting to " + addr,e);
+                    throw e;
+                } else if (tries >= 4) {
+                    LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
+                             ", remaining init limit=" + remainingInitLimitTime +
+                             ", connecting to " + addr,e);
                     throw e;
                 } else {
-                    LOG.warn("Unexpected exception, tries="+tries+
+                    LOG.warn("Unexpected exception, tries=" + tries +
+                            ", remaining init limit=" + remainingInitLimitTime +
                             ", connecting to " + addr,e);
                     sock = new Socket();
                     sock.setSoTimeout(self.tickTime * self.initLimit);
