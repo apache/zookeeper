@@ -72,6 +72,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-1907 Improve Thread handling (Rakesh R via michim)
 
+  ZOOKEEPER-2107 zookeeper client should support custom HostProviders
+  (Robert Kamphuis via rakeshr)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
