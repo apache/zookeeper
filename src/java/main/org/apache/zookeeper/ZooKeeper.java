@@ -45,6 +45,7 @@ import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.client.ConnectStringParser;
+import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
@@ -139,8 +140,8 @@ public class ZooKeeper {
         Environment.logEnv("Client environment:", LOG);
     }
 
-    private final StaticHostProvider hostProvider;
-    
+    private final HostProvider hostProvider;
+
     /**
      * This function allows a client to update the connection string by providing 
      * a new comma separated list of host:port pairs, each corresponding to a 
@@ -673,6 +674,10 @@ public class ZooKeeper {
      * Added in 3.2.0: An optional "chroot" suffix may also be appended to the
      * connection string. This will run the client commands while interpreting
      * all paths relative to this root (similar to the unix chroot command).
+     * <p>
+     * For backward compatibility, there is another version
+     * {@link #ZooKeeper(String, int, Watcher, boolean)} which uses
+     * default {@link StaticHostProvider}
      *
      * @param connectString
      *            comma separated host:port pairs, each corresponding to a zk
@@ -695,7 +700,9 @@ public class ZooKeeper {
      *            servers but there's partitioned server it could reach, it
      *            connects to one in read-only mode, i.e. read requests are
      *            allowed while write requests are not. It continues seeking for
-     *           majority in the background.
+     *            majority in the background.
+     * @param aHostProvider
+     *            use this as HostProvider to enable custom behaviour.
      *
      * @throws IOException
      *             in cases of network failure
@@ -703,9 +710,8 @@ public class ZooKeeper {
      *             if an invalid chroot path is specified
      */
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
-            boolean canBeReadOnly)
-        throws IOException
-    {
+            boolean canBeReadOnly, HostProvider aHostProvider)
+            throws IOException {
         LOG.info("Initiating client connection, connectString=" + connectString
                 + " sessionTimeout=" + sessionTimeout + " watcher=" + watcher);
 
@@ -714,13 +720,70 @@ public class ZooKeeper {
 
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
-        
-        hostProvider = new StaticHostProvider(
-                connectStringParser.getServerAddresses());
+        hostProvider = aHostProvider;
+
         cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager,
                 getClientCnxnSocket(), canBeReadOnly);
         cnxn.start();
+    }
+
+    /**
+     * To create a ZooKeeper client object, the application needs to pass a
+     * connection string containing a comma separated list of host:port pairs,
+     * each corresponding to a ZooKeeper server.
+     * <p>
+     * Session establishment is asynchronous. This constructor will initiate
+     * connection to the server and return immediately - potentially (usually)
+     * before the session is fully established. The watcher argument specifies
+     * the watcher that will be notified of any changes in state. This
+     * notification can come at any point before or after the constructor call
+     * has returned.
+     * <p>
+     * The instantiated ZooKeeper client object will pick an arbitrary server
+     * from the connectString and attempt to connect to it. If establishment of
+     * the connection fails, another server in the connect string will be tried
+     * (the order is non-deterministic, as we random shuffle the list), until a
+     * connection is established. The client will continue attempts until the
+     * session is explicitly closed.
+     * <p>
+     * Added in 3.2.0: An optional "chroot" suffix may also be appended to the
+     * connection string. This will run the client commands while interpreting
+     * all paths relative to this root (similar to the unix chroot command).
+     * <p>
+     *
+     * @param connectString
+     *            comma separated host:port pairs, each corresponding to a zk
+     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002" If
+     *            the optional chroot suffix is used the example would look
+     *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
+     *            where the client would be rooted at "/app/a" and all paths
+     *            would be relative to this root - ie getting/setting/etc...
+     *            "/foo/bar" would result in operations being run on
+     *            "/app/a/foo/bar" (from the server perspective).
+     * @param sessionTimeout
+     *            session timeout in milliseconds
+     * @param watcher
+     *            a watcher object which will be notified of state changes, may
+     *            also be notified for node events
+     * @param canBeReadOnly
+     *            (added in 3.4) whether the created client is allowed to go to
+     *            read-only mode in case of partitioning. Read-only mode
+     *            basically means that if the client can't find any majority
+     *            servers but there's partitioned server it could reach, it
+     *            connects to one in read-only mode, i.e. read requests are
+     *            allowed while write requests are not. It continues seeking for
+     *            majority in the background.
+     *
+     * @throws IOException
+     *             in cases of network failure
+     * @throws IllegalArgumentException
+     *             if an invalid chroot path is specified
+     */
+    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
+            boolean canBeReadOnly) throws IOException {
+        this(connectString, sessionTimeout, watcher, canBeReadOnly,
+                createDefaultHostProvider(connectString));
     }
 
     /**
@@ -810,6 +873,10 @@ public class ZooKeeper {
      * sessionPasswd respectively if reconnecting. Otherwise, if not
      * reconnecting, use the other constructor which does not require these
      * parameters.
+     * <p>
+     * For backward compatibility, there is another version
+     * {@link #ZooKeeper(String, int, Watcher, long, byte[], boolean)} which uses
+     * default {@link StaticHostProvider}
      *
      * @param connectString
      *            comma separated host:port pairs, each corresponding to a zk
@@ -837,14 +904,14 @@ public class ZooKeeper {
      *            connects to one in read-only mode, i.e. read requests are
      *            allowed while write requests are not. It continues seeking for
      *            majority in the background.
-     *
+     * @param aHostProvider
+     *            use this as HostProvider to enable custom behaviour.
      * @throws IOException in cases of network failure
      * @throws IllegalArgumentException if an invalid chroot path is specified
      */
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
-            long sessionId, byte[] sessionPasswd, boolean canBeReadOnly)
-        throws IOException
-    {
+            long sessionId, byte[] sessionPasswd, boolean canBeReadOnly,
+            HostProvider aHostProvider) throws IOException {
         LOG.info("Initiating client connection, connectString=" + connectString
                 + " sessionTimeout=" + sessionTimeout
                 + " watcher=" + watcher
@@ -857,13 +924,87 @@ public class ZooKeeper {
        
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
-        hostProvider = new StaticHostProvider(
-                connectStringParser.getServerAddresses());
+        hostProvider = aHostProvider;
+
         cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager,
                 getClientCnxnSocket(), sessionId, sessionPasswd, canBeReadOnly);
         cnxn.seenRwServerBefore = true; // since user has provided sessionId
         cnxn.start();
+    }
+
+    /**
+     * To create a ZooKeeper client object, the application needs to pass a
+     * connection string containing a comma separated list of host:port pairs,
+     * each corresponding to a ZooKeeper server.
+     * <p>
+     * Session establishment is asynchronous. This constructor will initiate
+     * connection to the server and return immediately - potentially (usually)
+     * before the session is fully established. The watcher argument specifies
+     * the watcher that will be notified of any changes in state. This
+     * notification can come at any point before or after the constructor call
+     * has returned.
+     * <p>
+     * The instantiated ZooKeeper client object will pick an arbitrary server
+     * from the connectString and attempt to connect to it. If establishment of
+     * the connection fails, another server in the connect string will be tried
+     * (the order is non-deterministic, as we random shuffle the list), until a
+     * connection is established. The client will continue attempts until the
+     * session is explicitly closed (or the session is expired by the server).
+     * <p>
+     * Added in 3.2.0: An optional "chroot" suffix may also be appended to the
+     * connection string. This will run the client commands while interpreting
+     * all paths relative to this root (similar to the unix chroot command).
+     * <p>
+     * Use {@link #getSessionId} and {@link #getSessionPasswd} on an established
+     * client connection, these values must be passed as sessionId and
+     * sessionPasswd respectively if reconnecting. Otherwise, if not
+     * reconnecting, use the other constructor which does not require these
+     * parameters.
+     * <p>
+     * This constructor uses a StaticHostProvider; there is another one  
+     * to enable custom behaviour.
+     *
+     * @param connectString
+     *            comma separated host:port pairs, each corresponding to a zk
+     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
+     *            If the optional chroot suffix is used the example would look
+     *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
+     *            where the client would be rooted at "/app/a" and all paths
+     *            would be relative to this root - ie getting/setting/etc...
+     *            "/foo/bar" would result in operations being run on
+     *            "/app/a/foo/bar" (from the server perspective).
+     * @param sessionTimeout
+     *            session timeout in milliseconds
+     * @param watcher
+     *            a watcher object which will be notified of state changes, may
+     *            also be notified for node events
+     * @param sessionId
+     *            specific session id to use if reconnecting
+     * @param sessionPasswd
+     *            password for this session
+     * @param canBeReadOnly
+     *            (added in 3.4) whether the created client is allowed to go to
+     *            read-only mode in case of partitioning. Read-only mode
+     *            basically means that if the client can't find any majority
+     *            servers but there's partitioned server it could reach, it
+     *            connects to one in read-only mode, i.e. read requests are
+     *            allowed while write requests are not. It continues seeking for
+     *            majority in the background.
+     * @throws IOException in cases of network failure
+     * @throws IllegalArgumentException if an invalid chroot path is specified
+     */
+    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
+            long sessionId, byte[] sessionPasswd, boolean canBeReadOnly)
+            throws IOException {
+        this(connectString, sessionTimeout, watcher, sessionId, sessionPasswd,
+                canBeReadOnly, createDefaultHostProvider(connectString));
+    }
+
+    // default hostprovider
+    private static HostProvider createDefaultHostProvider(String connectString) {
+        return new StaticHostProvider(
+                new ConnectStringParser(connectString).getServerAddresses());
     }
 
     // VisibleForTesting
@@ -2353,7 +2494,7 @@ public class ZooKeeper {
      *            server connection
      * @throws InterruptedException
      *             if the server transaction is interrupted.
-     * @throws KeeperException.NoWatcher
+     * @throws KeeperException.NoWatcherException
      *             if no watcher exists that match the specified parameters
      * @throws KeeperException
      *             if the server signals an error with a non-zero error code.
@@ -2404,7 +2545,7 @@ public class ZooKeeper {
      *            server connection
      * @throws InterruptedException
      *             if the server transaction is interrupted.
-     * @throws KeeperException.NoWatcher
+     * @throws KeeperException.NoWatcherException
      *             if no watcher exists that match the specified parameters
      * @throws KeeperException
      *             if the server signals an error with a non-zero error code.
