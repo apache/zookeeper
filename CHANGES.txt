@@ -54,6 +54,8 @@ BUGFIXES:
   ZOOKEEPER-1865 Fix retry logic in Learner.connectToLeader() (Edward Carter
   via michim)
 
+  ZOOKEEPER-2109 Typo in src/c/src/load_gen.c (surendra singh lilhore via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
