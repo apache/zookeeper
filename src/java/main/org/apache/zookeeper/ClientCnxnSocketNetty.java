@@ -20,6 +20,7 @@ package org.apache.zookeeper;
 
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
+import org.apache.zookeeper.common.X509Util;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -36,9 +37,12 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -51,6 +55,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static org.apache.zookeeper.common.X509Exception.SSLContextException;
 
 /**
  * ClientCnxnSocketNetty implements ClientCnxnSocket abstract methods.
@@ -82,7 +88,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * - - cleanup()
      * close()
      * <p/>
-     * Other none lifecycle methods are in jeopardy getting a null channel
+     * Other non-lifecycle methods are in jeopardy getting a null channel
      * when calling in concurrency. We must handle it.
      */
 
@@ -332,12 +338,29 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * connection implementation.
      */
     private class ZKClientPipelineFactory implements ChannelPipelineFactory {
+        private SSLContext sslContext = null;
+        private SSLEngine sslEngine = null;
+
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = Channels.pipeline();
-            // add ssl here
+            if (Boolean.getBoolean(ZooKeeper.SECURE_CLIENT)) {
+                initSSL(pipeline);
+            }
             pipeline.addLast("handler", new ZKClientHandler());
             return pipeline;
+        }
+
+        // The synchronized is to prevent the race on shared variable "sslEngine".
+        // Basically we only need to create it once.
+        private synchronized void initSSL(ChannelPipeline pipeline) throws SSLContextException {
+            if (sslContext == null || sslEngine == null) {
+                sslContext = X509Util.createSSLContext();
+                sslEngine = sslContext.createSSLEngine();
+                sslEngine.setUseClientMode(true);
+            }
+            pipeline.addLast("ssl", new SslHandler(sslEngine));
+            LOG.info("SSL handler added for channel: {}", pipeline.getChannel());
         }
     }
 
