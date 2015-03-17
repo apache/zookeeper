@@ -580,8 +580,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
         testNormalOperation(zkArr[followerIndex], zkArr[leaderIndex]);
         testServerHasConfig(zkArr[followerIndex], joiningServers, null);
-        Assert.assertTrue(qu.getPeer(followerIndex).peer.getName()
-                .endsWith(String.format(":%d", newClientPort)));
+        Assert.assertEquals(newClientPort, qu.getPeer(followerIndex).peer.getClientPort());
 
         joiningServers.clear();
 

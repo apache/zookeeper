@@ -5,6 +5,8 @@ NEW FEATURES:
 
   ZOOKEEPER-2119 Netty client docs (Hongchao via rakeshr)
 
+  ZOOKEEPER-2125 SSL on Netty client-server communication (Hongchao, Ian Dimayuga via rakeshr)
+
 BUGFIXES:
   ZOOKEEPER-1784 wrong check for COMMITANDACTIVATE in observer code, Learner.java (rgs via shralex).
 

@@ -37,6 +37,7 @@ public class ServerConfig {
     //// to update the "conf" 4letter word
     ////
     protected InetSocketAddress clientPortAddress;
+    protected InetSocketAddress secureClientPortAddress;
     protected File dataDir;
     protected File dataLogDir;
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
@@ -89,17 +90,21 @@ public class ServerConfig {
      * @param config
      */
     public void readFrom(QuorumPeerConfig config) {
-      clientPortAddress = config.getClientPortAddress();
-      dataDir = config.getDataDir();
-      dataLogDir = config.getDataLogDir();
-      tickTime = config.getTickTime();
-      maxClientCnxns = config.getMaxClientCnxns();
-      minSessionTimeout = config.getMinSessionTimeout();
-      maxSessionTimeout = config.getMaxSessionTimeout();
+        clientPortAddress = config.getClientPortAddress();
+        secureClientPortAddress = config.getSecureClientPortAddress();
+        dataDir = config.getDataDir();
+        dataLogDir = config.getDataLogDir();
+        tickTime = config.getTickTime();
+        maxClientCnxns = config.getMaxClientCnxns();
+        minSessionTimeout = config.getMinSessionTimeout();
+        maxSessionTimeout = config.getMaxSessionTimeout();
     }
 
     public InetSocketAddress getClientPortAddress() {
         return clientPortAddress;
+    }
+    public InetSocketAddress getSecureClientPortAddress() {
+        return secureClientPortAddress;
     }
     public File getDataDir() { return dataDir; }
     public File getDataLogDir() { return dataLogDir; }

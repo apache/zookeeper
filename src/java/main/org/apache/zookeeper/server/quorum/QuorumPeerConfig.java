@@ -60,6 +60,7 @@ public class QuorumPeerConfig {
     private static boolean standaloneEnabled = true;
 
     protected InetSocketAddress clientPortAddress;
+    protected InetSocketAddress secureClientPortAddress;
     protected File dataDir;
     protected File dataLogDir;
     protected String dynamicConfigFileStr = null;
@@ -214,7 +215,9 @@ public class QuorumPeerConfig {
     public void parseProperties(Properties zkProp)
     throws IOException, ConfigException {
         int clientPort = 0;
+        int secureClientPort = 0;
         String clientPortAddress = null;
+        String secureClientPortAddress = null;
         VerifyingFileFactory vff = new VerifyingFileFactory.Builder(LOG).warnForRelativePath().build();
         for (Entry<Object, Object> entry : zkProp.entrySet()) {
             String key = entry.getKey().toString().trim();
@@ -231,6 +234,10 @@ public class QuorumPeerConfig {
                 localSessionsUpgradingEnabled = Boolean.parseBoolean(value);
             } else if (key.equals("clientPortAddress")) {
                 clientPortAddress = value.trim();
+            } else if (key.equals("secureClientPort")) {
+                secureClientPort = Integer.parseInt(value);
+            } else if (key.equals("secureClientPortAddress")){
+                secureClientPortAddress = value.trim();
             } else if (key.equals("tickTime")) {
                 tickTime = Integer.parseInt(value);
             } else if (key.equals("maxClientCnxns")) {
@@ -294,15 +301,35 @@ public class QuorumPeerConfig {
         if (dataLogDir == null) {
             dataLogDir = dataDir;
         }
-        if (clientPortAddress != null) {
-           if (clientPort == 0) {
-               throw new IllegalArgumentException("clientPortAddress is set but clientPort is not set");
+
+        if (clientPort == 0) {
+            LOG.info("clientPort is not set");
+            if (this.clientPortAddress != null) {
+                throw new IllegalArgumentException("clientPortAddress is set but clientPort is not set");
+            }
+        } else if (clientPortAddress != null) {
+            this.clientPortAddress = new InetSocketAddress(
+                    InetAddress.getByName(clientPortAddress), clientPort);
+            LOG.info("clientPortAddress is {}", this.clientPortAddress.toString());
+        } else {
+            this.clientPortAddress = new InetSocketAddress(clientPort);
+            LOG.info("clientPortAddress is {}", this.clientPortAddress.toString());
         }
-             this.clientPortAddress = new InetSocketAddress(
-                      InetAddress.getByName(clientPortAddress), clientPort);
-        } else if (clientPort!=0){
-             this.clientPortAddress = new InetSocketAddress(clientPort);
-        }    
+
+        if (secureClientPort == 0) {
+            LOG.info("secureClientPort is not set");
+            if (this.secureClientPortAddress != null) {
+                throw new IllegalArgumentException("clientPortAddress is set but clientPort is not set");
+            }
+        } else if (secureClientPortAddress != null) {
+            this.secureClientPortAddress = new InetSocketAddress(
+                    InetAddress.getByName(secureClientPortAddress), secureClientPort);
+            LOG.info("secureClientPortAddress is {}", this.secureClientPortAddress.toString());
+        } else {
+            this.secureClientPortAddress = new InetSocketAddress(secureClientPort);
+            LOG.info("secureClientPortAddress is {}", this.secureClientPortAddress.toString());
+        }
+
         if (tickTime == 0) {
             throw new IllegalArgumentException("tickTime is not set");
         }
@@ -613,6 +640,7 @@ public class QuorumPeerConfig {
     }
 
     public InetSocketAddress getClientPortAddress() { return clientPortAddress; }
+    public InetSocketAddress getSecureClientPortAddress() { return secureClientPortAddress; }
     public File getDataDir() { return dataDir; }
     public File getDataLogDir() { return dataLogDir; }
     public int getTickTime() { return tickTime; }

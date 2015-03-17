@@ -532,7 +532,7 @@ public class Leader {
             }
 
             if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
-                self.cnxnFactory.setZooKeeperServer(zk);
+                self.setZooKeeperServer(zk);
             }
 
             self.adminServer.setZooKeeperServer(zk);
@@ -622,15 +622,14 @@ public class Leader {
         }
 
         // NIO should not accept conenctions
-        self.cnxnFactory.setZooKeeperServer(null);
+        self.setZooKeeperServer(null);
         self.adminServer.setZooKeeperServer(null);
         try {
             ss.close();
         } catch (IOException e) {
             LOG.warn("Ignoring unexpected exception during close",e);
         }
-        // clear all the connections
-        self.cnxnFactory.closeAll();
+        self.closeAllConnections();
         // shutdown the previous zk
         if (zk != null) {
             zk.shutdown();

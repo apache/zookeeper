@@ -22,13 +22,10 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -48,6 +45,8 @@ import org.apache.zookeeper.test.QuorumBase;
 public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     protected static final Logger LOG = LoggerFactory
             .getLogger(QuorumPeerTestBase.class);
+
+    public static final int TIMEOUT = 3000;
 
     public void process(WatchedEvent event) {
         // ignore for this test
@@ -74,6 +73,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         public MainThread(int myid, String quorumCfgSection) throws IOException {
             this(myid, quorumCfgSection, true);
+        }
+
+        public MainThread(int myid, String quorumCfgSection, Integer secureClientPort, boolean writeDynamicConfigFile)
+                throws  IOException {
+            this(myid, UNSET_STATIC_CLIENTPORT, JettyAdminServer.DEFAULT_PORT, secureClientPort,
+                    quorumCfgSection, null, writeDynamicConfigFile, null);
         }
 
         public MainThread(int myid, String quorumCfgSection, boolean writeDynamicConfigFile)
@@ -114,7 +119,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public MainThread(int myid, int clientPort, int adminServerPort, String quorumCfgSection,
-                          String configs, boolean writeDynamicConfigFile, String version)
+                          String configs, boolean writeDynamicConfigFile, String version) throws IOException {
+            this(myid, clientPort, adminServerPort, null, quorumCfgSection, configs, writeDynamicConfigFile, version);
+        }
+
+        public MainThread(int myid, int clientPort, int adminServerPort, Integer secureClientPort,
+                          String quorumCfgSection, String configs, boolean writeDynamicConfigFile, String version)
                 throws IOException {
             tmpDir = ClientBase.createTmpDir();
             LOG.info("id = " + myid + " tmpDir = " + tmpDir + " clientPort = "
@@ -146,6 +156,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             // This could happen both in static file or dynamic file.
             if (clientPort != UNSET_STATIC_CLIENTPORT) {
                 fwriter.write("clientPort=" + clientPort + "\n");
+            }
+
+            if (secureClientPort != null) {
+                fwriter.write("secureClientPort=" + secureClientPort + "\n");
             }
 
             if (writeDynamicConfigFile) {
