@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.common.X509Exception.SSLContextException;
 import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
 
 import java.io.IOException;
@@ -28,7 +29,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
+import org.apache.zookeeper.common.X509Util;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -46,6 +50,7 @@ import org.jboss.netty.channel.WriteCompletionEvent;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +64,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         new HashMap<InetAddress, Set<NettyServerCnxn>>( );
     InetSocketAddress localAddress;
     int maxClientCnxns = 60;
-    
+
     /**
      * This is an inner class since we need to extend SimpleChannelHandler, but
      * NettyServerCnxnFactory already extends ServerCnxnFactory. By making it inner
@@ -241,7 +246,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 LOG.trace("write complete " + e);
             }
         }
-        
+
     }
     
     CnxnChannelHandler channelHandler = new CnxnChannelHandler();
@@ -261,13 +266,26 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             @Override
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline p = Channels.pipeline();
+                if (secure) {
+                    initSSL(p);
+                }
                 p.addLast("servercnxnfactory", channelHandler);
 
                 return p;
             }
         });
     }
-    
+
+    private synchronized void initSSL(ChannelPipeline p) throws SSLContextException {
+        SSLContext sslContext = X509Util.createSSLContext();
+        SSLEngine sslEngine = sslContext.createSSLEngine();
+        sslEngine.setUseClientMode(false);
+        sslEngine.setNeedClientAuth(true);
+
+        p.addLast("ssl", new SslHandler(sslEngine));
+        LOG.info("SSL handler added for channel: {}", p.getChannel());
+    }
+
     @Override
     public void closeAll() {
         if (LOG.isDebugEnabled()) {
@@ -291,7 +309,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public void closeSession(long sessionId) {
+    public boolean closeSession(long sessionId) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("closeSession sessionid:0x" + sessionId);
         }
@@ -302,18 +320,20 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 } catch (Exception e) {
                     LOG.warn("exception during session close", e);
                 }
-                break;
+                return true;
             }
         }
+        return false;
     }
 
     @Override
-    public void configure(InetSocketAddress addr, int maxClientCnxns)
+    public void configure(InetSocketAddress addr, int maxClientCnxns, boolean secure)
             throws IOException
     {
         configureSaslLogin();
         localAddress = addr;
         this.maxClientCnxns = maxClientCnxns;
+        this.secure = secure;
     }
 
     /** {@inheritDoc} */
@@ -380,12 +400,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
     
     @Override
-    public void startup(ZooKeeperServer zks) throws IOException,
-            InterruptedException {
+    public void startup(ZooKeeperServer zks, boolean startServer)
+            throws IOException, InterruptedException {
         start();
         setZooKeeperServer(zks);
-        zks.startdata();
-        zks.startup();
+        if (startServer) {
+            zks.startdata();
+            zks.startup();
+        }
     }
 
     @Override

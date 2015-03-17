@@ -275,8 +275,8 @@ public class Zab1_0Test {
     }
 
     private static final class NullServerCnxnFactory extends ServerCnxnFactory {
-        public void startup(ZooKeeperServer zkServer) throws IOException,
-                InterruptedException {
+        public void startup(ZooKeeperServer zkServer, boolean startServer)
+                throws IOException, InterruptedException {
         }
         public void start() {
         }
@@ -298,10 +298,12 @@ public class Zab1_0Test {
         public Iterable<ServerCnxn> getConnections() {
             return null;
         }
-        public void configure(InetSocketAddress addr, int maxClientCnxns)
+        public void configure(InetSocketAddress addr, int maxcc, boolean secure)
                 throws IOException {
         }
-        public void closeSession(long sessionId) {
+
+        public boolean closeSession(long sessionId) {
+            return false;
         }
         public void closeAll() {
         }

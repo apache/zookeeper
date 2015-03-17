@@ -639,7 +639,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         new HashSet<SelectorThread>();
 
     @Override
-    public void configure(InetSocketAddress addr, int maxcc) throws IOException {
+    public void configure(InetSocketAddress addr, int maxcc, boolean secure) throws IOException {
+        if (secure) {
+            throw new UnsupportedOperationException("SSL isn't supported in NIOServerCnxn");
+        }
         configureSaslLogin();
 
         maxClientCnxns = maxcc;
@@ -742,12 +745,14 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public void startup(ZooKeeperServer zks) throws IOException,
-            InterruptedException {
+    public void startup(ZooKeeperServer zks, boolean startServer)
+            throws IOException, InterruptedException {
         start();
         setZooKeeperServer(zks);
-        zks.startdata();
-        zks.startup();
+        if (startServer) {
+            zks.startdata();
+            zks.startup();
+        }
     }
 
     @Override
@@ -908,11 +913,13 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public void closeSession(long sessionId) {
+    public boolean closeSession(long sessionId) {
         NIOServerCnxn cnxn = sessionMap.remove(sessionId);
         if (cnxn != null) {
             cnxn.close();
+            return true;
         }
+        return false;
     }
 
     @Override

@@ -614,6 +614,22 @@ server.3=zoo3:2888:3888</programlisting>
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>secureClientPort</term>
+
+            <listitem>
+              <para>the port to listen on for secure client connections using SSL.
+
+              <emphasis role="bold">clientPort</emphasis> specifies
+                the port for plaintext connections while <emphasis role="bold">
+                  secureClientPort</emphasis> specifies the port for SSL
+                connections. Specifying both enables mixed-mode while omitting
+                either will disable that mode.</para>
+              <para>Note that SSL feature will be enabled when user plugs-in
+                zookeeper.serverCnxnFactory, zookeeper.clientCnxnSocket as Netty.</para>
+            </listitem>
+          </varlistentry>
+
           <varlistentry id="var_datadir">
             <term>dataDir</term>
 
@@ -1035,10 +1051,10 @@ server.3=zoo3:2888:3888</programlisting>
       </section>
 
       <section id="sc_authOptions">
-        <title>Authentication &amp; Authorization Options</title>
+        <title>Encryption, Authentication, Authorization Options</title>
 
         <para>The options in this section allow control over
-        authentication/authorization performed by the service.</para>
+        encryption/authentication/authorization performed by the service.</para>
 
         <variablelist>
           <varlistentry>
@@ -1072,6 +1088,44 @@ server.3=zoo3:2888:3888</programlisting>
               connection.</para>
             </listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term>zookeeper.client.secure</term>
+            <listitem>
+              <para>If you want to connect to server's secure client port, you need to
+                set this property to <emphasis role="bold">true</emphasis> on client.
+                This will connect to server using SSL with specified credentials. Note that
+                you also need to plug-in Netty client.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.keyStore.location and ssl.keyStore.password</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.keyStore.location</emphasis> and <emphasis
+                      role="bold">zookeeper.ssl.keyStore.password</emphasis>)</para>
+
+              <para>Specifies the file path to a JKS containing the local
+                credentials to be used for SSL connections, and the
+                password to unlock the file.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.trustStore.location and ssl.trustStore.password</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.trustStore.location</emphasis> and <emphasis
+                      role="bold">zookeeper.ssl.trustStore.password</emphasis>)</para>
+
+              <para>Specifies the file path to a JKS containing the remote
+                credentials to be used for SSL connections, and the
+                password to unlock the file.</para>
+            </listitem>
+          </varlistentry>
+
         </variablelist>
       </section>
 
