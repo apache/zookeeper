@@ -77,6 +77,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="test.data.dir" value="${test.java.build.dir}/data" />
     <property name="test.data.invalid.dir" value="${test.data.dir}/invalidsnap" />
     <property name="test.data.buffersize.dir" value="${test.data.dir}/buffersize" />
+    <property name="test.data.ssl.dir" value="${test.data.dir}/ssl" />
     <property name="test.cppunit.dir" value="${test.java.build.dir}/test-cppunit"/>
     <property name="test.tmp.dir" value="${test.java.build.dir}/tmp" />
     <property name="test.output" value="no" />
@@ -1260,6 +1261,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         <delete dir="${test.tmp.dir}" />
         <delete dir="${test.data.invalid.dir}" />
         <delete dir="${test.data.buffersize.dir}" />
+        <delete dir="${test.data.ssl.dir}" />
         <delete dir="${test.data.dir}" />
         <mkdir dir="${test.log.dir}" />
         <mkdir dir="${test.tmp.dir}" />
@@ -1271,6 +1273,10 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         <mkdir dir="${test.data.buffersize.dir}" />
         <copy todir="${test.data.buffersize.dir}">
             <fileset dir="${basedir}/src/java/test/data/buffersize"/>
+        </copy>
+        <mkdir dir="${test.data.ssl.dir}" />
+        <copy todir="${test.data.ssl.dir}">
+            <fileset dir="${basedir}/src/java/test/data/ssl"/>
         </copy>
     </target>
 
@@ -1642,6 +1648,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
           <exclude name="**/missing"/>
           <exclude name="**/wrappers*.opt"/>
           <exclude name="CHANGES.txt"/>
+          <exclude name="**/README.md"/>
           <exclude name="README_packaging.txt"/>
           <exclude name="**/TODO"/>
           <exclude name="**/VERSION"/>

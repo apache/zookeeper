@@ -44,7 +44,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.HostNameUtils;
-import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
@@ -99,7 +98,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     LeaderElectionBean jmxLeaderElectionBean;
     private QuorumCnxManager qcm;
 
-    /* ZKDatabase is a top level member of quorumpeer
+    /**
+     * ZKDatabase is a top level member of quorumpeer
      * which will be used in all the zookeeperservers
      * instantiated later. Also, it is created once on
      * bootup and only thrown away in case of a truncate
@@ -557,6 +557,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     Election electionAlg;
 
     ServerCnxnFactory cnxnFactory;
+    ServerCnxnFactory secureCnxnFactory;
+
     private FileTxnSnapLog logFactory = null;
 
     private final QuorumStats quorumStats;
@@ -615,7 +617,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             throw new RuntimeException("My id " + myid + " not in the peer list");
          }
         loadDataBase();
-        cnxnFactory.start();
+        startServerCnxnFactory();
         try {
             adminServer.start();
         } catch (AdminServerException e) {
@@ -1035,7 +1037,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         if (follower != null) {
             follower.shutdown();
         }
-        cnxnFactory.shutdown();
+        shutdownServerCnxnFactory();
         if(udpSocket != null) {
             udpSocket.close();
         }
@@ -1160,11 +1162,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     /** Maximum number of connections allowed from particular host (ip) */
     public int getMaxClientCnxnsPerHost() {
-        ServerCnxnFactory fac = getCnxnFactory();
-        if (fac == null) {
-            return -1;
+        if (cnxnFactory != null) {
+            return cnxnFactory.getMaxClientCnxnsPerHost();
         }
-        return fac.getMaxClientCnxnsPerHost();
+        if (secureCnxnFactory != null) {
+            return secureCnxnFactory.getMaxClientCnxnsPerHost();
+        }
+        return -1;
     }
 
     /** Whether local sessions are enabled */
@@ -1425,16 +1429,56 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.quorumListenOnAllIPs = quorumListenOnAllIPs;
     }
 
-    public ServerCnxnFactory getCnxnFactory() {
-        return cnxnFactory;
-    }
-
     public void setCnxnFactory(ServerCnxnFactory cnxnFactory) {
         this.cnxnFactory = cnxnFactory;
     }
 
+    public void setSecureCnxnFactory(ServerCnxnFactory secureCnxnFactory) {
+        this.secureCnxnFactory = secureCnxnFactory;
+    }
+
+    private void startServerCnxnFactory() {
+        if (cnxnFactory != null) {
+            cnxnFactory.start();
+        }
+        if (secureCnxnFactory != null) {
+            secureCnxnFactory.start();
+        }
+    }
+
+    private void shutdownServerCnxnFactory() {
+        if (cnxnFactory != null) {
+            cnxnFactory.shutdown();
+        }
+        if (secureCnxnFactory != null) {
+            secureCnxnFactory.shutdown();
+        }
+    }
+
+    // Leader and learner will control the zookeeper server and pass it into QuorumPeer.
+    public void setZooKeeperServer(ZooKeeperServer zks) {
+        if (cnxnFactory != null) {
+            cnxnFactory.setZooKeeperServer(zks);
+        }
+        if (secureCnxnFactory != null) {
+            secureCnxnFactory.setZooKeeperServer(zks);
+        }
+    }
+
+    public void closeAllConnections() {
+        if (cnxnFactory != null) {
+            cnxnFactory.closeAll();
+        }
+        if (secureCnxnFactory != null) {
+            secureCnxnFactory.closeAll();
+        }
+    }
+
     public int getClientPort() {
-        return cnxnFactory.getLocalPort();
+        if (cnxnFactory != null) {
+            return cnxnFactory.getLocalPort();
+        }
+        return -1;
     }
 
     public void setTxnFactory(FileTxnSnapLog factory) {
@@ -1681,7 +1725,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private void updateThreadName() {
-       setName("QuorumPeer" + "[myid=" + getId() + "]" +
-               cnxnFactory.getLocalAddress());
+        String plain = cnxnFactory != null ? cnxnFactory.getLocalAddress().toString() : "disabled";
+        String secure = secureCnxnFactory != null ? secureCnxnFactory.getLocalAddress().toString() : "disabled";
+        setName(String.format("QuorumPeer[myid=%d](plain=%s)(secure=%s)", getId(), plain, secure));
     }
 }

@@ -131,6 +131,8 @@ import org.slf4j.LoggerFactory;
 public class ZooKeeper {
 
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
+    // Setting this to "true" will enable encrypted client-server communication.
+    public static final String SECURE_CLIENT = "zookeeper.client.secure";
 
     protected final ClientCnxn cnxn;
     private static final Logger LOG;
