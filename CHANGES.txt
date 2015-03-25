@@ -80,6 +80,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2107 zookeeper client should support custom HostProviders
   (Robert Kamphuis via rakeshr)
 
+  ZOOKEEPER-2149 Logging of client address when socket connection established
+  (Hongchao Deng via michim)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
