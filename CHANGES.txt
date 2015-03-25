@@ -54,6 +54,9 @@ BUGFIXES:
 
   ZOOKEEPER-2109 Typo in src/c/src/load_gen.c (surendra singh lilhore via rakeshr)
 
+  ZOOKEEPER-2146 BinaryInputArchive readString should check length before
+  allocating memory (Hongchao Deng via michim)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
