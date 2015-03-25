@@ -849,9 +849,9 @@ public class ClientCnxn {
         }
 
         void primeConnection() throws IOException {
-            LOG.info("Socket connection established to "
-                     + clientCnxnSocket.getRemoteSocketAddress()
-                     + ", initiating session");
+            LOG.info("Socket connection established, initiating session, client: {}, server: {}",
+                    clientCnxnSocket.getLocalSocketAddress(),
+                    clientCnxnSocket.getRemoteSocketAddress());
             isFirstConnect = false;
             long sessId = (seenRwServerBefore) ? sessionId : 0;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid,
