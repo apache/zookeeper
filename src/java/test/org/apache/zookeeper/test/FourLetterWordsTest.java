@@ -25,7 +25,10 @@ import java.util.regex.Pattern;
 
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
+
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -99,12 +102,12 @@ public class FourLetterWordsTest extends ClientBase {
         verify("srvr", "Connections");
     }
 
-    private String sendRequest(String cmd) throws IOException {
+    private String sendRequest(String cmd) throws IOException, SSLContextException {
       HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
       return send4LetterWord(hpobj.host, hpobj.port, cmd);
     }
 
-    private void verify(String cmd, String expected) throws IOException {
+    private void verify(String cmd, String expected) throws IOException, SSLContextException {
         String resp = sendRequest(cmd);
         LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
         Assert.assertTrue(resp.contains(expected));
