@@ -79,8 +79,7 @@ public abstract class ServerCnxnFactory {
             throws IOException;
 
     public abstract void reconfigure(InetSocketAddress addr);
-    
-    
+
     protected SaslServerCallbackHandler saslServerCallbackHandler;
     public Login login;
 
@@ -89,6 +88,10 @@ public abstract class ServerCnxnFactory {
 
     /** Maximum number of connections allowed from particular host (ip) */
     public abstract void setMaxClientCnxnsPerHost(int max);
+
+    public boolean isSecure() {
+        return secure;
+    }
 
     public void startup(ZooKeeperServer zkServer) throws IOException, InterruptedException {
         startup(zkServer, true);

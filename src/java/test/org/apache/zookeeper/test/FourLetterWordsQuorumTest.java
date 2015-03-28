@@ -23,7 +23,10 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
+
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -97,7 +100,7 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
     }
 
     private void verify(String hp, String cmd, String expected)
-        throws IOException
+        throws IOException, SSLContextException
     {
         for(HostPort hpobj: parseHostPortList(hp)) {
             String resp = send4LetterWord(hpobj.host, hpobj.port, cmd);
