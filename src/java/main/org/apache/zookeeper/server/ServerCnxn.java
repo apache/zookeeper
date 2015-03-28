@@ -23,6 +23,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -69,7 +70,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public abstract void process(WatchedEvent event);
 
-    abstract long getSessionId();
+    public abstract long getSessionId();
 
     abstract void setSessionId(long sessionId);
 
@@ -407,6 +408,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public abstract InetSocketAddress getRemoteSocketAddress();
     public abstract int getInterestOps();
+    public abstract boolean isSecure();
+    public abstract Certificate[] getClientCertificateChain();
+    public abstract void setClientCertificateChain(Certificate[] chain);
     
     /**
      * Print information about the connection.

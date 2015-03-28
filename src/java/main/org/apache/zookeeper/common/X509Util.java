@@ -47,6 +47,7 @@ public class X509Util {
     public static final String SSL_KEYSTORE_PASSWD = "zookeeper.ssl.keyStore.password";
     public static final String SSL_TRUSTSTORE_LOCATION = "zookeeper.ssl.trustStore.location";
     public static final String SSL_TRUSTSTORE_PASSWD = "zookeeper.ssl.trustStore.password";
+    public static final String SSL_AUTHPROVIDER = "zookeeper.ssl.authProvider";
 
     public static SSLContext createSSLContext() throws SSLContextException {
         KeyManager[] keyManagers = null;
