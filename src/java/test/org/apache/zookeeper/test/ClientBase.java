@@ -43,6 +43,7 @@ import javax.management.ObjectName;
 import junit.framework.TestCase;
 
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -56,7 +57,6 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerCnxnFactoryAccessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.ZooKeeperServerListener;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.util.OSMXBean;
@@ -230,19 +230,25 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     public static boolean waitForServerUp(String hp, long timeout) {
+        return waitForServerUp(hp, timeout, false);
+    }
+
+    public static boolean waitForServerUp(String hp, long timeout, boolean secure) {
         long start = Time.currentElapsedTime();
         while (true) {
             try {
                 // if there are multiple hostports, just take the first one
                 HostPort hpobj = parseHostPortList(hp).get(0);
-                String result = send4LetterWord(hpobj.host, hpobj.port, "stat");
+                String result = send4LetterWord(hpobj.host, hpobj.port, "stat", secure);
                 if (result.startsWith("Zookeeper version:") &&
                         !result.contains("READ-ONLY")) {
                     return true;
                 }
             } catch (IOException e) {
                 // ignore as this is expected
-                LOG.info("server " + hp + " not up " + e);
+                LOG.info("server {} not up", hp, e);
+            } catch (SSLContextException e) {
+                LOG.error("server {} not up", hp, e);
             }
 
             if (Time.currentElapsedTime() > start + timeout) {
@@ -256,13 +262,20 @@ public abstract class ClientBase extends ZKTestCase {
         }
         return false;
     }
+
     public static boolean waitForServerDown(String hp, long timeout) {
+        return waitForServerDown(hp, timeout, false);
+    }
+
+    public static boolean waitForServerDown(String hp, long timeout, boolean secure) {
         long start = Time.currentElapsedTime();
         while (true) {
             try {
                 HostPort hpobj = parseHostPortList(hp).get(0);
-                send4LetterWord(hpobj.host, hpobj.port, "stat");
+                send4LetterWord(hpobj.host, hpobj.port, "stat", secure);
             } catch (IOException e) {
+                return true;
+            } catch (SSLContextException e) {
                 return true;
             }
 
@@ -311,6 +324,7 @@ public abstract class ClientBase extends ZKTestCase {
     public static File createTmpDir() throws IOException {
         return createTmpDir(BASETEST);
     }
+
     static File createTmpDir(File parentDir) throws IOException {
         File tmpFile = File.createTempFile("test", ".junit", parentDir);
         // don't delete tmpFile - this ensures we don't attempt to create
@@ -321,6 +335,7 @@ public abstract class ClientBase extends ZKTestCase {
 
         return tmpDir;
     }
+
     private static int getPort(String hostPort) {
         String[] split = hostPort.split(":");
         String portstr = split[split.length-1];
@@ -342,7 +357,7 @@ public abstract class ClientBase extends ZKTestCase {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         factory.startup(zks);
         Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(
-                "127.0.0.1:" + port, CONNECTION_TIMEOUT));
+                "127.0.0.1:" + port, CONNECTION_TIMEOUT, factory.isSecure()));
     }
 
     /**
@@ -393,7 +408,8 @@ public abstract class ClientBase extends ZKTestCase {
 
             Assert.assertTrue("waiting for server down",
                        ClientBase.waitForServerDown("127.0.0.1:" + PORT,
-                                                    CONNECTION_TIMEOUT));
+                                                    CONNECTION_TIMEOUT,
+                                                    factory.isSecure()));
         }
     }
 
@@ -663,15 +679,5 @@ public abstract class ClientBase extends ZKTestCase {
             sb.append(part);
         }
         return sb.toString();
-    }
-
-    public ZooKeeperServerListener testZKSListener() {
-        return new ZooKeeperServerListener() {
-
-            @Override
-            public void notifyStopping(String errMsg, int exitCode) {
-
-            }
-        };
     }
 }

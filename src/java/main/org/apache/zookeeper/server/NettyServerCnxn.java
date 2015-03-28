@@ -28,7 +28,9 @@ import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.security.cert.Certificate;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,6 +66,7 @@ public class NettyServerCnxn extends ServerCnxn {
     long sessionId;
     int sessionTimeout;
     AtomicLong outstandingCount = new AtomicLong();
+    Certificate[] clientChain;
 
     /** The ZooKeeperServer for this connection. May be null if the server
      * is not currently serving requests (for example if the server is not
@@ -851,6 +854,30 @@ public class NettyServerCnxn extends ServerCnxn {
             return null;
         }
         return zkServer.serverStats();
+    }
+
+    @Override
+    public boolean isSecure() {
+        return factory.secure;
+    }
+
+    @Override
+    public Certificate[] getClientCertificateChain() {
+        if (clientChain == null)
+        {
+            return null;
+        }
+        return Arrays.copyOf(clientChain, clientChain.length);
+    }
+
+    @Override
+    public void setClientCertificateChain(Certificate[] chain) {
+        if (chain == null)
+        {
+            clientChain = null;
+        } else {
+            clientChain = Arrays.copyOf(chain, chain.length);
+        }
     }
 
 }

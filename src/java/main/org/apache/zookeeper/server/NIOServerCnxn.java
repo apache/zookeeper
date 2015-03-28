@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1178,4 +1179,20 @@ public class NIOServerCnxn extends ServerCnxn {
         return zkServer.serverStats();
     }
 
+    @Override
+    public boolean isSecure() {
+        return false;
+    }
+
+    @Override
+    public Certificate[] getClientCertificateChain() {
+        throw new UnsupportedOperationException(
+                "SSL is unsupported in NIOServerCnxn");
+    }
+
+    @Override
+    public void setClientCertificateChain(Certificate[] chain) {
+        throw new UnsupportedOperationException(
+                "SSL is unsupported in NIOServerCnxn");
+    }
 }

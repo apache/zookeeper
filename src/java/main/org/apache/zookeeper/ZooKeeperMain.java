@@ -264,6 +264,10 @@ public class ZooKeeperMain {
         }
         host = newHost;
         boolean readOnly = cl.getOption("readonly") != null;
+        if (cl.getOption("secure") != null) {
+            System.setProperty(ZooKeeper.SECURE_CLIENT, "true");
+            System.out.println("Secure connection is enabled");
+        }
         zk = new ZooKeeper(host,
                  Integer.parseInt(cl.getOption("timeout")),
                  new MyWatcher(), readOnly);

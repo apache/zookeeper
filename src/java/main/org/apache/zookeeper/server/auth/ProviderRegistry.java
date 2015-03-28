@@ -39,8 +39,10 @@ public class ProviderRegistry {
                 return;
             IPAuthenticationProvider ipp = new IPAuthenticationProvider();
             DigestAuthenticationProvider digp = new DigestAuthenticationProvider();
+            X509AuthenticationProvider x509p = new X509AuthenticationProvider();
             authenticationProviders.put(ipp.getScheme(), ipp);
             authenticationProviders.put(digp.getScheme(), digp);
+            authenticationProviders.put(x509p.getScheme(), x509p);
             Enumeration<Object> en = System.getProperties().keys();
             while (en.hasMoreElements()) {
                 String k = (String) en.nextElement();
