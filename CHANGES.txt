@@ -64,6 +64,9 @@ BUGFIXES:
   ZOOKEEPER-2146 BinaryInputArchive readString should check length before
   allocating memory (Hongchao Deng via michim)
 
+  ZOOKEEPER-2056 Zookeeper 3.4.x and 3.5.0-alpha is not OSGi compliant
+  (Deiwin Sarjas via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
