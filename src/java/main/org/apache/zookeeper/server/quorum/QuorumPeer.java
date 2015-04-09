@@ -27,8 +27,10 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -142,8 +144,37 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.electionAddr = null;
             this.clientAddr = null;
         }
-        
-        
+
+        /**
+         * Performs a DNS lookup for server address and election address.
+         *
+         * If the DNS lookup fails, this.addr and electionAddr remain
+         * unmodified.
+         */
+        public void recreateSocketAddresses() {
+            if (this.addr == null) {
+                LOG.warn("Server address has not been initialized");
+                return;
+            }
+            if (this.electionAddr == null) {
+                LOG.warn("Election address has not been initialized");
+                return;
+            }
+            String host = HostNameUtils.getHostString(this.addr);
+            InetAddress address = null;
+            try {
+                address = InetAddress.getByName(host);
+            } catch (UnknownHostException ex) {
+                LOG.warn("Failed to resolve address: {}", host, ex);
+                return;
+            }
+            LOG.debug("Resolved address for {}: {}", host, address);
+            int port = this.addr.getPort();
+            this.addr = new InetSocketAddress(address, port);
+            port = this.electionAddr.getPort();
+            this.electionAddr = new InetSocketAddress(address, port);
+        }
+
         private void setType(String s) throws ConfigException {
             if (s.toLowerCase().equals("observer")) {
                type = LearnerType.OBSERVER;
@@ -527,6 +558,34 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private InetSocketAddress myQuorumAddr;
     private InetSocketAddress myElectionAddr = null;
     private InetSocketAddress myClientAddr = null;
+
+    /**
+     * Resolves hostname for a given server ID.
+     *
+     * This method resolves hostname for a given server ID in both quorumVerifer
+     * and lastSeenQuorumVerifier. If the server ID matches the local server ID,
+     * it also updates myQuorumAddr and myElectionAddr.
+     */
+    public void recreateSocketAddresses(long id) {
+        QuorumVerifier qv = getQuorumVerifier();
+        if (qv != null) {
+            QuorumServer qs = qv.getAllMembers().get(id);
+            if (qs != null) {
+                qs.recreateSocketAddresses();
+                if (id == getId()) {
+                    setQuorumAddress(qs.addr);
+                    setElectionAddress(qs.electionAddr);
+                }
+            }
+        }
+        qv = getLastSeenQuorumVerifier();
+        if (qv != null) {
+            QuorumServer qs = qv.getAllMembers().get(id);
+            if (qs != null) {
+                qs.recreateSocketAddresses();
+            }
+        }
+    }
 
     public synchronized InetSocketAddress getQuorumAddress(){
         return myQuorumAddr;
@@ -1261,7 +1320,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
            Map<Long, QuorumServer> committedView = getQuorumVerifier().getAllMembers();
            for (Entry<Long, QuorumServer> e: getLastSeenQuorumVerifier().getAllMembers().entrySet()){
                if (e.getKey() != getId() && !committedView.containsKey(e.getKey())) 
-                   qcm.connectOne(e.getKey(), e.getValue().electionAddr);
+                   qcm.connectOne(e.getKey());
            }
         }
     }

@@ -70,6 +70,9 @@ BUGFIXES:
   ZOOKEEPER-2157 Upgrade option should be removed from zkServer.sh usage
   (J.Andreina via hdeng)
 
+  ZOOKEEPER-1506 Re-try DNS hostname -> IP resolution if node connection fails
+  (Michi Mutsuzaki via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 

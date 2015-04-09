@@ -354,7 +354,7 @@ public class QuorumCnxManager {
      *  @param sid  server id
      *  @return boolean success indication
      */
-    synchronized boolean connectOne(long sid, InetSocketAddress electionAddr){
+    synchronized private boolean connectOne(long sid, InetSocketAddress electionAddr){
         if (senderWorkerMap.get(sid) != null) {
             LOG.debug("There is a connection already for server " + sid);
             return true;
@@ -402,6 +402,9 @@ public class QuorumCnxManager {
         }
         synchronized(self) {
            boolean knownId = false;
+            // Resolve hostname for the remote server before attempting to
+            // connect in case the underlying ip address has changed.
+            self.recreateSocketAddresses(sid);
             if (self.getView().containsKey(sid)) {
                knownId = true;
                 if (connectOne(sid, self.getView().get(sid).electionAddr))
@@ -545,6 +548,9 @@ public class QuorumCnxManager {
                         int port = self.getElectionAddress().getPort();
                         addr = new InetSocketAddress(port);
                     } else {
+                        // Resolve hostname for this server in case the
+                        // underlying ip address has changed.
+                        self.recreateSocketAddresses(self.getId());
                         addr = self.getElectionAddress();
                     }
                     LOG.info("My election bind port: " + addr.toString());
