@@ -811,7 +811,7 @@ public class DataTree {
                             createTxn.getPath(),
                             createTxn.getData(),
                             createTxn.getAcl(),
-                            createTxn.getEphemeral() ? header.getClientId() : (createTxn.getContainer() ? Request.CONTAINER_OWNER : 0),
+                            createTxn.getEphemeral() ? header.getClientId() : 0, // TODO (createTxn.getContainer() ? Request.CONTAINER_OWNER : 0),
                             createTxn.getParentCVersion(),
                             header.getZxid(), header.getTime(), null);
                     break;
