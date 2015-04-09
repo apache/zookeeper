@@ -495,10 +495,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     parentRecord.childCount--;
                     addChangeRecord(parentRecord);
                     addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null));
-                    if ( parentRecord.stat.getEphemeralOwner() == Request.CONTAINER_OWNER ) {
-                        if ( parentRecord.childCount == 0 ) {
-                            deleteRequest = new DeleteRequest(parentPath, -1);
-                        }
+                    if ((parentRecord.stat.getEphemeralOwner() == Request.CONTAINER_OWNER) && (parentRecord.childCount == 0)) {
+                        deleteRequest = new DeleteRequest(parentPath, -1);
                     } else {
                         done = true;
                     }
