@@ -403,7 +403,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 }
                 int newCversion = parentRecord.stat.getCversion()+1;
                 request.setTxn(new CreateTxn(path, createRequest.getData(), listACL, createMode.isEphemeral(),
-                        newCversion));
+                        createMode.isContainer() ? (-1 * newCversion) : newCversion));
                 StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
@@ -455,7 +455,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 }
                 int newCversion = parentRecord.stat.getCversion()+1;
                 request.setTxn(new CreateTxn(path, createRequest.getData(), listACL, createMode.isEphemeral(),
-                        newCversion));
+                        createMode.isContainer() ? (-1 * newCversion) : newCversion));
                 StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
