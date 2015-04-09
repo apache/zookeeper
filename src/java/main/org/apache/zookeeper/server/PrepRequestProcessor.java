@@ -397,7 +397,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
-                boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != Request.CONTAINER_OWNER);
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
@@ -407,6 +407,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
+                } else if (createMode.isContainer()) {
+                    s.setEphemeralOwner(Request.CONTAINER_OWNER);
                 }
                 parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
                 parentRecord.childCount++;
@@ -447,7 +449,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
-                boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != Request.CONTAINER_OWNER);
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
@@ -457,6 +459,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
+                } else if (createMode.isContainer()) {
+                    s.setEphemeralOwner(Request.CONTAINER_OWNER);
                 }
                 parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
                 parentRecord.childCount++;
@@ -470,33 +474,43 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 DeleteRequest deleteRequest = (DeleteRequest)record;
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, deleteRequest);
-                String path = deleteRequest.getPath();
-                int lastSlash = path.lastIndexOf('/');
-                if (lastSlash == -1 || path.indexOf('\0') != -1
-                        || zks.getZKDatabase().isSpecialPath(path)) {
-                    throw new KeeperException.BadArgumentsException(path);
+                boolean done = false;
+                while ( !done ) {
+                    String path = deleteRequest.getPath();
+                    int lastSlash = path.lastIndexOf('/');
+                    if (lastSlash == -1 || path.indexOf('\0') != -1
+                            || zks.getZKDatabase().isSpecialPath(path)) {
+                        throw new KeeperException.BadArgumentsException(path);
+                    }
+                    String parentPath = path.substring(0, lastSlash);
+                    ChangeRecord parentRecord = getRecordForPath(parentPath);
+                    ChangeRecord nodeRecord = getRecordForPath(path);
+                    checkACL(zks, parentRecord.acl, ZooDefs.Perms.DELETE, request.authInfo);
+                    checkAndIncVersion(nodeRecord.stat.getVersion(), deleteRequest.getVersion(), path);
+                    if (nodeRecord.childCount > 0) {
+                        throw new KeeperException.NotEmptyException(path);
+                    }
+                    request.setTxn(new DeleteTxn(path));
+                    parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
+                    parentRecord.childCount--;
+                    addChangeRecord(parentRecord);
+                    addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null));
+                    if ( parentRecord.stat.getEphemeralOwner() == Request.CONTAINER_OWNER ) {
+                        if ( parentRecord.childCount == 0 ) {
+                            deleteRequest = new DeleteRequest(parentPath, -1);
+                        }
+                    } else {
+                        done = true;
+                    }
                 }
-                String parentPath = path.substring(0, lastSlash);
-                ChangeRecord parentRecord = getRecordForPath(parentPath);
-                ChangeRecord nodeRecord = getRecordForPath(path);
-                checkACL(zks, parentRecord.acl, ZooDefs.Perms.DELETE, request.authInfo);
-                checkAndIncVersion(nodeRecord.stat.getVersion(), deleteRequest.getVersion(), path);
-                if (nodeRecord.childCount > 0) {
-                    throw new KeeperException.NotEmptyException(path);
-                }
-                request.setTxn(new DeleteTxn(path));
-                parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
-                parentRecord.childCount--;
-                addChangeRecord(parentRecord);
-                addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null));
                 break;
             case OpCode.setData:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 SetDataRequest setDataRequest = (SetDataRequest)record;
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, setDataRequest);
-                path = setDataRequest.getPath();
-                nodeRecord = getRecordForPath(path);
+                String path = setDataRequest.getPath();
+                ChangeRecord  nodeRecord = getRecordForPath(path);
                 checkACL(zks, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo);
                 int newVersion = checkAndIncVersion(nodeRecord.stat.getVersion(), setDataRequest.getVersion(), path);
                 request.setTxn(new SetDataTxn(path, setDataRequest.getData(), newVersion));

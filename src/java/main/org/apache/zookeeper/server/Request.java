@@ -37,6 +37,8 @@ import org.apache.zookeeper.txn.TxnHeader;
 public class Request {
     public final static Request requestOfDeath = new Request(null, 0, 0, 0, null, null);
 
+    public final static long CONTAINER_OWNER = Long.MIN_VALUE;
+
     public Request(ServerCnxn cnxn, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
         this.cnxn = cnxn;
         this.sessionId = sessionId;

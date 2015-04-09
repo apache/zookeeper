@@ -573,7 +573,7 @@ public class DataTree {
             parent.removeChild(childName);
             parent.stat.setPzxid(zxid);
             long eowner = node.stat.getEphemeralOwner();
-            if (eowner != 0) {
+            if ((eowner != 0) && (eowner != Request.CONTAINER_OWNER)) {
                 HashSet<String> nodes = ephemerals.get(eowner);
                 if (nodes != null) {
                     synchronized (nodes) {
@@ -1228,7 +1228,7 @@ public class DataTree {
                 }
                 parent.addChild(path.substring(lastSlash + 1));
                 long eowner = node.stat.getEphemeralOwner();
-                if (eowner != 0) {
+                if ((eowner != 0) && (eowner != Request.CONTAINER_OWNER)) {
                     HashSet<String> list = ephemerals.get(eowner);
                     if (list == null) {
                         list = new HashSet<String>();
