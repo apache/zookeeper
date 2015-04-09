@@ -610,6 +610,10 @@ public class DataTree {
         childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
         childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
                 EventType.NodeChildrenChanged);
+
+        if ((parent.stat.getEphemeralOwner() == Request.CONTAINER_OWNER) && (parent.getChildren().size() == 0)) {
+            deleteNode(parentName, parent.stat.getPzxid());
+        }
     }
 
     public Stat setData(String path, byte data[], int version, long zxid,
@@ -807,7 +811,7 @@ public class DataTree {
                             createTxn.getPath(),
                             createTxn.getData(),
                             createTxn.getAcl(),
-                            createTxn.getEphemeral() ? header.getClientId() : 0,
+                            createTxn.getEphemeral() ? header.getClientId() : (createTxn.getContainer() ? Request.CONTAINER_OWNER : 0),
                             createTxn.getParentCVersion(),
                             header.getZxid(), header.getTime(), null);
                     break;
