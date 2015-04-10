@@ -44,7 +44,7 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
-import org.apache.zookeeper.server.ZooKeeperThread;
+import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
@@ -348,11 +348,12 @@ public class Leader {
 
     private final Proposal newLeaderProposal = new Proposal();
 
-    class LearnerCnxAcceptor extends ZooKeeperThread {
+    class LearnerCnxAcceptor extends ZooKeeperCriticalThread {
         private volatile boolean stop = false;
 
         public LearnerCnxAcceptor() {
-            super("LearnerCnxAcceptor-" + ss.getLocalSocketAddress());
+            super("LearnerCnxAcceptor-" + ss.getLocalSocketAddress(), zk
+                    .getZooKeeperServerListener());
         }
 
         @Override
@@ -382,7 +383,8 @@ public class Leader {
                     }
                 }
             } catch (Exception e) {
-                LOG.warn("Exception while accepting follower", e);
+                LOG.warn("Exception while accepting follower", e.getMessage());
+                handleException(this.getName(), e);
             }
         }
 
