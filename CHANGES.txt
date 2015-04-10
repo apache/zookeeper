@@ -73,6 +73,9 @@ BUGFIXES:
   ZOOKEEPER-1506 Re-try DNS hostname -> IP resolution if node connection fails
   (Michi Mutsuzaki via rakeshr)
 
+  ZOOKEEPER-2029 Leader.LearnerCnxAcceptor should handle exceptions in run()
+  (Rakesh R, Asad Saeed via hdeng)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
