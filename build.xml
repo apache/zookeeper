@@ -32,7 +32,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="version-major" value="3" />
     <property name="version-minor" value="5" />
     <property name="version-patch" value="1" />
-    <property name="version" value="${version-major}.${version-minor}.${version-patch}-alpha-SNAPSHOT" />
+    <property name="version" value="${version-major}.${version-minor}.${version-patch}-alpha" />
 
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
