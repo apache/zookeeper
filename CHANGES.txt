@@ -1,4 +1,4 @@
-Unreleased
+Release 3.5.1 - 4/11/2015
 
 NEW FEATURES:
   ZOOKEEPER-2069 Netty Support for ClientCnxnSocket (Hongchao via fpj)
