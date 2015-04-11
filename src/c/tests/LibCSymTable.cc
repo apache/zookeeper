@@ -17,6 +17,7 @@
  */
 
 #include "LibCSymTable.h" 
+#include <unistd.h> // needed for _POSIX_MONOTONIC_CLOCK
 
 #define LOAD_SYM(sym) \
     sym=(sym##_sig)dlsym(handle,#sym); \
@@ -51,6 +52,9 @@ LibCSymTable::LibCSymTable()
     LOAD_SYM(select);
     LOAD_SYM(poll);
     LOAD_SYM(gettimeofday);
+#ifdef _POSIX_MONOTONIC_CLOCK
+    LOAD_SYM(clock_gettime);
+#endif
 #ifdef THREADED
     LOAD_SYM(pthread_create);
     LOAD_SYM(pthread_detach);
