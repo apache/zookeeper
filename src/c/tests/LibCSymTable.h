@@ -26,6 +26,7 @@
 #include <dlfcn.h>
 #include <cassert>
 #include <poll.h>
+#include <unistd.h> // needed for _POSIX_MONOTONIC_CLOCK
 
 #ifdef THREADED
 #include <pthread.h>
@@ -80,6 +81,9 @@ struct LibCSymTable
     DECLARE_SYM(int,select,(int,fd_set*,fd_set*,fd_set*,struct timeval*));
     DECLARE_SYM(int,poll,(struct pollfd*,POLL_NFDS_TYPE,int));
     DECLARE_SYM(int,gettimeofday,(struct timeval*,GETTIMEOFDAY_ARG2_TYPE));
+#ifdef _POSIX_MONOTONIC_CLOCK
+    DECLARE_SYM(int,clock_gettime,(clockid_t clk_id, struct timespec*));
+#endif
 #ifdef THREADED
     DECLARE_SYM(int,pthread_create,(pthread_t *, const pthread_attr_t *,
                 void *(*)(void *), void *));
