@@ -142,6 +142,14 @@ if test x"$ipv6" = xyes; then
   AC_SUBST(USEIPV6)
 fi
 
+# Determine which libraries we need to use clock_gettime
+saved_LIBS="$LIBS"
+LIBS=""
+AC_CHECK_LIB(rt, clock_gettime)
+CLOCK_GETTIME_LIBS=$LIBS
+AC_SUBST(CLOCK_GETTIME_LIBS)
+LIBS="$saved_LIBS"
+
 # Checks for library functions.
 AC_CHECK_FUNCS([getcwd gethostbyname gethostname getlogin getpwuid_r gettimeofday getuid memmove memset poll socket strchr strdup strerror strtol])
 

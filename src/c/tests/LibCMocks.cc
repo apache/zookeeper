@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cstdarg>
 #include <iostream>
+#include <unistd.h> // needed for _POSIX_MONOTONIC_CLOCK
 #include <stdarg.h>
 
 #include "Util.h"
@@ -331,3 +332,16 @@ int gettimeofday(struct timeval *tp, GETTIMEOFDAY_ARG2_TYPE tzp){
 
 Mock_gettimeofday* Mock_gettimeofday::mock_=0;
 
+// *****************************************************************************
+#ifdef _POSIX_MONOTONIC_CLOCK
+// clock_gettime
+int clock_gettime(clockid_t id, struct timespec *tp) {
+    if (!Mock_gettimeofday::mock_)
+        return LIBC_SYMBOLS.clock_gettime(id,tp);
+    struct timeval tv = { 0 };
+    int res = Mock_gettimeofday::mock_->call(&tv, NULL);
+    tp->tv_sec = tv.tv_sec;
+    tp->tv_nsec = tv.tv_usec * 1000;
+    return res;
+}
+#endif
