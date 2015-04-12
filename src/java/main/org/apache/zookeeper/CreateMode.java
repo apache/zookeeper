@@ -19,7 +19,6 @@ package org.apache.zookeeper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.KeeperException;
 
 /***
  *  CreateMode value determines how the znode is created on ZooKeeper.
@@ -29,32 +28,40 @@ public enum CreateMode {
     /**
      * The znode will not be automatically deleted upon client's disconnect.
      */
-    PERSISTENT (0, false, false),
+    PERSISTENT (0, false, false, false),
     /**
     * The znode will not be automatically deleted upon client's disconnect,
     * and its name will be appended with a monotonically increasing number.
     */
-    PERSISTENT_SEQUENTIAL (2, false, true),
+    PERSISTENT_SEQUENTIAL (2, false, true, false),
     /**
      * The znode will be deleted upon the client's disconnect.
      */
-    EPHEMERAL (1, true, false),
+    EPHEMERAL (1, true, false, false),
     /**
      * The znode will be deleted upon the client's disconnect, and its name
      * will be appended with a monotonically increasing number.
      */
-    EPHEMERAL_SEQUENTIAL (3, true, true);
+    EPHEMERAL_SEQUENTIAL (3, true, true, false),
+
+    CONTAINER(4, false, false, true),
+
+    CONTAINER_SEQUENTIAL(5, false, true, true)
+
+    ;
 
     private static final Logger LOG = LoggerFactory.getLogger(CreateMode.class);
 
-    private boolean ephemeral;
-    private boolean sequential;
-    private int flag;
+    private final boolean ephemeral;
+    private final boolean sequential;
+    private final boolean container;
+    private final int flag;
 
-    CreateMode(int flag, boolean ephemeral, boolean sequential) {
+    CreateMode(int flag, boolean ephemeral, boolean sequential, boolean container) {
         this.flag = flag;
         this.ephemeral = ephemeral;
         this.sequential = sequential;
+        this.container = container;
     }
 
     public boolean isEphemeral() { 
@@ -64,6 +71,8 @@ public enum CreateMode {
     public boolean isSequential() { 
         return sequential;
     }
+
+    public boolean isContainer() { return container; }
 
     public int toFlag() {
         return flag;
@@ -81,6 +90,10 @@ public enum CreateMode {
         case 2: return CreateMode.PERSISTENT_SEQUENTIAL;
 
         case 3: return CreateMode.EPHEMERAL_SEQUENTIAL ;
+
+        case 4: return CreateMode.CONTAINER;
+
+        case 5: return CreateMode.CONTAINER_SEQUENTIAL;
 
         default:
             String errMsg = "Received an invalid flag value: " + flag

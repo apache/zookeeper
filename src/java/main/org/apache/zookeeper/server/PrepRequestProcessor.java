@@ -397,16 +397,18 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
-                boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != Request.CONTAINER_OWNER);
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
                 int newCversion = parentRecord.stat.getCversion()+1;
                 request.setTxn(new CreateTxn(path, createRequest.getData(), listACL, createMode.isEphemeral(),
-                        newCversion));
+                        createMode.isContainer() ? (-1 * newCversion) : newCversion));
                 StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
+                } else if (createMode.isContainer()) {
+                    s.setEphemeralOwner(Request.CONTAINER_OWNER);
                 }
                 parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
                 parentRecord.childCount++;
@@ -447,16 +449,18 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
-                boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != Request.CONTAINER_OWNER);
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
                 int newCversion = parentRecord.stat.getCversion()+1;
                 request.setTxn(new CreateTxn(path, createRequest.getData(), listACL, createMode.isEphemeral(),
-                        newCversion));
+                        createMode.isContainer() ? (-1 * newCversion) : newCversion));
                 StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
+                } else if (createMode.isContainer()) {
+                    s.setEphemeralOwner(Request.CONTAINER_OWNER);
                 }
                 parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
                 parentRecord.childCount++;

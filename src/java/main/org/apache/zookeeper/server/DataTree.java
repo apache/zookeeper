@@ -573,7 +573,7 @@ public class DataTree {
             parent.removeChild(childName);
             parent.stat.setPzxid(zxid);
             long eowner = node.stat.getEphemeralOwner();
-            if (eowner != 0) {
+            if ((eowner != 0) && (eowner != Request.CONTAINER_OWNER)) {
                 HashSet<String> nodes = ephemerals.get(eowner);
                 if (nodes != null) {
                     synchronized (nodes) {
@@ -610,6 +610,10 @@ public class DataTree {
         childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
         childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
                 EventType.NodeChildrenChanged);
+
+        if ((parent.stat.getEphemeralOwner() == Request.CONTAINER_OWNER) && (parent.getChildren().size() == 0)) {
+            deleteNode(parentName, parent.stat.getPzxid());
+        }
     }
 
     public Stat setData(String path, byte data[], int version, long zxid,
@@ -803,24 +807,36 @@ public class DataTree {
                 case OpCode.create:
                     CreateTxn createTxn = (CreateTxn) txn;
                     rc.path = createTxn.getPath();
+                    long ephemeralOwner = createTxn.getEphemeral() ? header.getClientId() : 0;
+                    int parentCVersion = createTxn.getParentCVersion();
+                    if ( parentCVersion < 0 ) {
+                        parentCVersion = -1 * parentCVersion;
+                        ephemeralOwner = Request.CONTAINER_OWNER;
+                    }
                     createNode(
                             createTxn.getPath(),
                             createTxn.getData(),
                             createTxn.getAcl(),
-                            createTxn.getEphemeral() ? header.getClientId() : 0,
-                            createTxn.getParentCVersion(),
+                            ephemeralOwner,
+                            parentCVersion,
                             header.getZxid(), header.getTime(), null);
                     break;
                 case OpCode.create2:
                     CreateTxn create2Txn = (CreateTxn) txn;
                     rc.path = create2Txn.getPath();
                     Stat stat = new Stat();
+                    ephemeralOwner = create2Txn.getEphemeral() ? header.getClientId() : 0;
+                    parentCVersion = create2Txn.getParentCVersion();
+                    if ( parentCVersion < 0 ) {
+                        parentCVersion = -1 * parentCVersion;
+                        ephemeralOwner = Request.CONTAINER_OWNER;
+                    }
                     createNode(
                             create2Txn.getPath(),
                             create2Txn.getData(),
                             create2Txn.getAcl(),
-                            create2Txn.getEphemeral() ? header.getClientId() : 0,
-                            create2Txn.getParentCVersion(),
+                            ephemeralOwner,
+                            parentCVersion,
                             header.getZxid(), header.getTime(), stat);
                     rc.stat = stat;
                     break;
@@ -967,7 +983,7 @@ public class DataTree {
             String parentName = rc.path.substring(0, lastSlash);
             CreateTxn cTxn = (CreateTxn)txn;
             try {
-                setCversionPzxid(parentName, cTxn.getParentCVersion(),
+                setCversionPzxid(parentName, Math.abs(cTxn.getParentCVersion()),
                         header.getZxid());
             } catch (KeeperException.NoNodeException e) {
                 LOG.error("Failed to set parent cversion for: " +
@@ -1228,7 +1244,7 @@ public class DataTree {
                 }
                 parent.addChild(path.substring(lastSlash + 1));
                 long eowner = node.stat.getEphemeralOwner();
-                if (eowner != 0) {
+                if ((eowner != 0) && (eowner != Request.CONTAINER_OWNER)) {
                     HashSet<String> list = ephemerals.get(eowner);
                     if (list == null) {
                         list = new HashSet<String>();
