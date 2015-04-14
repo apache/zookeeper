@@ -19,16 +19,11 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.server.DataTreeBean;
-import org.apache.zookeeper.server.FinalRequestProcessor;
-import org.apache.zookeeper.server.PrepRequestProcessor;
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.RequestProcessor;
-import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.ZKDatabase;
+import org.apache.zookeeper.server.*;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
@@ -39,6 +34,8 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * FinalRequestProcessor
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
+    private ContainerManager containerManager;
+
 
     CommitProcessor commitProcessor;
 
@@ -71,6 +68,23 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
         prepRequestProcessor.start();
         firstProcessor = new LeaderRequestProcessor(this, prepRequestProcessor);
+
+        containerManager = new ContainerManager(getZKDatabase(), prepRequestProcessor,
+                Integer.getInteger("container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(5)),
+                Integer.getInteger("container.maxPerInterval", 1000)
+                );
+    }
+
+    @Override
+    public synchronized void startup() {
+        super.startup();
+        containerManager.start();
+    }
+
+    @Override
+    public synchronized void shutdown() {
+        containerManager.stop();
+        super.shutdown();
     }
 
     @Override
