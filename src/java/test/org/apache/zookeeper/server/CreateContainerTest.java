@@ -1,11 +1,11 @@
-package org.apache.zookeeper.test;
+package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -64,7 +64,8 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
-        serverFactory.getZooKeeperServer().checkContainers();
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 1);
+        containerManager.checkContainers();
 
         Thread.sleep(1000);
 
@@ -79,9 +80,11 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar/one", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar/one", -1);  // should cause "/foo/bar" and "/foo" to get deleted when checkContainers() is called
 
-        serverFactory.getZooKeeperServer().checkContainers();
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 1);
+        containerManager.checkContainers();
         Thread.sleep(1000);
-        serverFactory.getZooKeeperServer().checkContainers();
+        containerManager
+                .checkContainers();
         Thread.sleep(1000);
 
         Assert.assertNull("Container should have been deleted", zk.exists("/foo/bar", false));
@@ -91,8 +94,7 @@ public class CreateContainerTest extends ClientBase {
     private void createNoStatVerifyResult(String newName)
             throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
-        String path = zk.createContainer(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE);
-        Assert.assertEquals(path, newName);
+        zk.createContainer(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE);
         Assert.assertNotNull("Node was not created as expected",
                 zk.exists(newName, false));
     }
@@ -100,8 +102,7 @@ public class CreateContainerTest extends ClientBase {
             throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
         Stat stat = new Stat();
-        String path = zk.createContainer(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, stat);
-        Assert.assertEquals(path, newName);
+        zk.createContainer(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, stat);
         validateCreateStat(stat, newName);
 
         Stat referenceStat = zk.exists(newName, false);

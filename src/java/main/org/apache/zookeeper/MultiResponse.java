@@ -73,7 +73,6 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                     		createResult.getStat()).serialize(archive, tag);
                     break;
                 case ZooDefs.OpCode.delete:
-                case ZooDefs.OpCode.deleteContainer:
                 case ZooDefs.OpCode.check:
                     break;
                 case ZooDefs.OpCode.setData:
@@ -112,7 +111,6 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                     break;
 
                 case ZooDefs.OpCode.delete:
-                case ZooDefs.OpCode.deleteContainer:
                     results.add(new OpResult.DeleteResult());
                     break;
 
