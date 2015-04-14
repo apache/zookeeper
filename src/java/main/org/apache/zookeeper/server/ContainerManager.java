@@ -76,22 +76,21 @@ public class ContainerManager {
         for ( String containerPath : zkDb.getDataTree().getContainers() ) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             if ( node != null ) {
-                if ( node.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER ) {
-                    LOG.error("Corrupted internal state! Expected path to be a container: " + containerPath);
-                }
-                if ((node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
-                    ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
-                    Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
-                    try {
-                        LOG.info("Attempting to delete candidate container: " + containerPath);
-                        requestProcessor.processRequest(request);
+                if ( node.stat.getEphemeralOwner() == DataTree.CONTAINER_EPHEMERAL_OWNER ) {    // otherwise, the node changed type on us - ignore it
+                    if ((node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
+                        ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
+                        Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
+                        try {
+                            LOG.info("Attempting to delete candidate container: " + containerPath);
+                            requestProcessor.processRequest(request);
 
-                        if ( count++ >= maxPerInterval ) {
-                            LOG.info("Stopping at " + maxPerInterval);
-                            break;
+                            if (count++ >= maxPerInterval) {
+                                LOG.info("Stopping at " + maxPerInterval);
+                                break;
+                            }
+                        } catch (Exception e) {
+                            LOG.error("Could not delete container: " + containerPath, e);
                         }
-                    } catch (Exception e) {
-                        LOG.error("Could not delete container: " + containerPath, e);
                     }
                 }
             }
