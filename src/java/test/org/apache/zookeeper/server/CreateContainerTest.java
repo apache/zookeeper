@@ -1,9 +1,6 @@
 package org.apache.zookeeper.server;
 
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
@@ -12,6 +9,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class CreateContainerTest extends ClientBase {
     private ZooKeeper zk;
@@ -63,6 +62,30 @@ public class CreateContainerTest extends ClientBase {
     public void testSimpleDeletion()
             throws IOException, KeeperException, InterruptedException {
         zk.createContainer("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
+
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 1);
+        containerManager.checkContainers();
+
+        Thread.sleep(1000);
+
+        Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
+    }
+
+    @Test
+    public void testSimpleDeletionAsync()
+            throws IOException, KeeperException, InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+        AsyncCallback.Create2Callback cb = new AsyncCallback.Create2Callback() {
+            @Override
+            public void processResult(int rc, String path, Object ctx, String name, Stat stat) {
+                Assert.assertEquals(ctx, "context");
+                latch.countDown();
+            }
+        };
+        zk.createContainer("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, cb, "context");
+        Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
