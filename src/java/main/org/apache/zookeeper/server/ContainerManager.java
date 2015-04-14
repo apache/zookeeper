@@ -5,8 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -72,26 +71,33 @@ public class ContainerManager {
      * Manually check the containers. Not normally used directly
      */
     public void checkContainers() {
-        int count = 0;
+        for ( String containerPath : getCandidates() ) {
+            ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
+            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
+            try {
+                LOG.info("Attempting to delete candidate container: " + containerPath);
+                requestProcessor.processRequest(request);
+            } catch (Exception e) {
+                LOG.error("Could not delete container: " + containerPath, e);
+            }
+        }
+    }
+
+    // VisibleForTesting
+    protected Collection<String> getCandidates() {
+        Set<String> candidates = new HashSet<String>();
         for ( String containerPath : zkDb.getDataTree().getContainers() ) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             if ((node != null) && (node.stat.getEphemeralOwner() == DataTree.CONTAINER_EPHEMERAL_OWNER)) { // otherwise, the node changed type on us - ignore it
                 if ((node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
-                    ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
-                    Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
-                    try {
-                        LOG.info("Attempting to delete candidate container: " + containerPath);
-                        requestProcessor.processRequest(request);
-
-                        if (count++ >= maxPerInterval) {
-                            LOG.info("Stopping at " + maxPerInterval);
-                            break;
-                        }
-                    } catch (Exception e) {
-                        LOG.error("Could not delete container: " + containerPath, e);
+                    candidates.add(containerPath);
+                    if ( candidates.size() >= maxPerInterval ) {
+                        LOG.info("Stopping at " + maxPerInterval);
+                        break;
                     }
                 }
             }
         }
+        return candidates;
     }
 }

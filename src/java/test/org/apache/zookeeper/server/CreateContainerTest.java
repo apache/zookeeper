@@ -10,6 +10,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 
 public class CreateContainerTest extends ClientBase {
     private ZooKeeper zk;
@@ -89,6 +91,24 @@ public class CreateContainerTest extends ClientBase {
 
         Assert.assertNull("Container should have been deleted", zk.exists("/foo/bar", false));
         Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
+    }
+
+    @Test
+    public void testFalseEmpty()
+            throws IOException, KeeperException, InterruptedException {
+        zk.createContainer("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 1) {
+            @Override
+            protected Collection<String> getCandidates() {
+                return Collections.singletonList("/foo");
+            }
+        };
+        containerManager.checkContainers();
+        Thread.sleep(1000);
+
+        Assert.assertNotNull("Container should have not been deleted", zk.exists("/foo", false));
     }
 
     private void createNoStatVerifyResult(String newName)
