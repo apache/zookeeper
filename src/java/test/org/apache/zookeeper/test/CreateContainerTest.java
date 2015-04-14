@@ -52,7 +52,7 @@ public class CreateContainerTest extends ClientBase {
         Stat stat = null;
         // If a null Stat object is passed the create should still
         // succeed, but no Stat info will be returned.
-        zk.createContainer(name, name.getBytes(), stat);
+        zk.createContainer(name, name.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, stat);
         Assert.assertNull(stat);
         Assert.assertNotNull(zk.exists(name, false));
     }
@@ -60,7 +60,7 @@ public class CreateContainerTest extends ClientBase {
     @Test
     public void testSimpleDeletion()
             throws IOException, KeeperException, InterruptedException {
-        zk.createContainer("/foo", new byte[0]);
+        zk.createContainer("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
@@ -74,8 +74,8 @@ public class CreateContainerTest extends ClientBase {
     @Test
     public void testCascadingDeletion()
             throws IOException, KeeperException, InterruptedException {
-        zk.createContainer("/foo", new byte[0]);
-        zk.createContainer("/foo/bar", new byte[0]);
+        zk.createContainer("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        zk.createContainer("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE);
         zk.create("/foo/bar/one", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar/one", -1);  // should cause "/foo/bar" and "/foo" to get deleted when checkContainers() is called
 
@@ -91,7 +91,7 @@ public class CreateContainerTest extends ClientBase {
     private void createNoStatVerifyResult(String newName)
             throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
-        String path = zk.createContainer(newName, newName.getBytes());
+        String path = zk.createContainer(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE);
         Assert.assertEquals(path, newName);
         Assert.assertNotNull("Node was not created as expected",
                 zk.exists(newName, false));
@@ -100,7 +100,7 @@ public class CreateContainerTest extends ClientBase {
             throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
         Stat stat = new Stat();
-        String path = zk.createContainer(newName, newName.getBytes(), stat);
+        String path = zk.createContainer(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, stat);
         Assert.assertEquals(path, newName);
         validateCreateStat(stat, newName);
 

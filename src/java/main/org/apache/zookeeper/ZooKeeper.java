@@ -1336,21 +1336,21 @@ public class ZooKeeper {
                 serverPath, ctx, null);
     }
 
-    public String createContainer(final String path, byte data[])
+    public String createContainer(final String path, byte data[], List<ACL> acl)
             throws KeeperException, InterruptedException {
-        return createContainerInernal(path, data, null, null, null);
+        return createContainerInernal(path, data, acl, null, null, null);
     }
 
-    public String createContainer(final String path, byte data[],
+    public String createContainer(final String path, byte data[], List<ACL> acl,
                          Stat stat)
             throws KeeperException, InterruptedException {
-        return createContainerInernal(path, data, stat, null, null);
+        return createContainerInernal(path, data, acl, stat, null, null);
     }
 
-    public void createContainer(final String path, byte data[],
+    public void createContainer(final String path, byte data[], List<ACL> acl,
                        Create2Callback cb, Object ctx)
             throws KeeperException, InterruptedException {
-        createContainerInernal(path, data, null, cb, ctx);
+        createContainerInernal(path, data, acl, null, cb, ctx);
     }
 
     /**
@@ -1510,7 +1510,7 @@ public class ZooKeeper {
         return op;
     }
 
-    private String createContainerInernal(final String path, byte data[],
+    private String createContainerInernal(final String path, byte data[], List<ACL> acl,
                                           Stat stat, Create2Callback cb, Object ctx)
             throws KeeperException, InterruptedException {
         final String clientPath = path;
@@ -1524,7 +1524,7 @@ public class ZooKeeper {
         Create2Response response = new Create2Response();
         request.setData(data);
         request.setPath(serverPath);
-        request.setAcl(ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        request.setAcl(acl);
         if ( cb != null ) {
             ReplyHeader r = new ReplyHeader();
             cnxn.queuePacket(h, r, request, response, cb, clientPath,
