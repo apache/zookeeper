@@ -82,7 +82,9 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                 case OpCode.sync:
                 case OpCode.create:
                 case OpCode.create2:
+                case OpCode.createContainer:
                 case OpCode.delete:
+                case OpCode.deleteContainer:
                 case OpCode.setData:
                 case OpCode.reconfig:
                 case OpCode.setACL:

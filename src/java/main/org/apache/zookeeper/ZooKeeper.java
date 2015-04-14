@@ -52,31 +52,7 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.CheckWatchesRequest;
-import org.apache.zookeeper.proto.Create2Request;
-import org.apache.zookeeper.proto.Create2Response;
-import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.proto.CreateResponse;
-import org.apache.zookeeper.proto.DeleteRequest;
-import org.apache.zookeeper.proto.ExistsRequest;
-import org.apache.zookeeper.proto.GetACLRequest;
-import org.apache.zookeeper.proto.GetACLResponse;
-import org.apache.zookeeper.proto.GetChildren2Request;
-import org.apache.zookeeper.proto.GetChildren2Response;
-import org.apache.zookeeper.proto.GetChildrenRequest;
-import org.apache.zookeeper.proto.GetChildrenResponse;
-import org.apache.zookeeper.proto.GetDataRequest;
-import org.apache.zookeeper.proto.GetDataResponse;
-import org.apache.zookeeper.proto.ReconfigRequest;
-import org.apache.zookeeper.proto.RemoveWatchesRequest;
-import org.apache.zookeeper.proto.ReplyHeader;
-import org.apache.zookeeper.proto.RequestHeader;
-import org.apache.zookeeper.proto.SetACLRequest;
-import org.apache.zookeeper.proto.SetACLResponse;
-import org.apache.zookeeper.proto.SetDataRequest;
-import org.apache.zookeeper.proto.SetDataResponse;
-import org.apache.zookeeper.proto.SyncRequest;
-import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.*;
 import org.apache.zookeeper.server.DataTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1361,6 +1337,102 @@ public class ZooKeeper {
     }
 
     /**
+     * Create a container node with the given path. The
+     * node data will be the given data and node acl will be the given acl. Container
+     * nodes are special purpose nodes useful for recipes such as leader, lock, etc. When
+     * the last child of a container is deleted, the container becomes a candidate to be
+     * deleted by the server at some point in the future. Given this property, you
+     * should be prepared to get {@link org.apache.zookeeper.KeeperException.NoNodeException}
+     * when creating children inside of this container node.
+     * <p>
+     * If a node with the same actual path already exists in the ZooKeeper, a
+     * KeeperException with error code KeeperException.NodeExists will be
+     * thrown.
+     * <p>
+     * If the parent node does not exist in the ZooKeeper, a KeeperException
+     * with error code KeeperException.NoNode will be thrown.
+     * <p>
+     * This operation, if successful, will trigger all the watches left on the
+     * node of the given path by exists and getData API calls, and the watches
+     * left on the parent node by getChildren API calls.
+     * <p>
+     * If a node is created successfully, the ZooKeeper server will trigger the
+     * watches on the path left by exists calls, and the watches on the parent
+     * of the node by getChildren calls.
+     * <p>
+     * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
+     * Arrays larger than this will cause a KeeperExecption to be thrown.
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param acl
+     *                the acl for the node
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public void createContainer(final String path, byte data[], List<ACL> acl)
+            throws KeeperException, InterruptedException {
+        createContainerInernal(path, data, acl, null, null, null);
+    }
+
+    /**
+     * Create a container node with the given path. The
+     * node data will be the given data and node acl will be the given acl. Container
+     * nodes are special purpose nodes useful for recipes such as leader, lock, etc. When
+     * the last child of a container is deleted, the container becomes a candidate to be
+     * deleted by the server at some point in the future. Given this property, you
+     * should be prepared to get {@link org.apache.zookeeper.KeeperException.NoNodeException}
+     * when creating children inside of this container node.
+     * <p>
+     * If a node with the same actual path already exists in the ZooKeeper, a
+     * KeeperException with error code KeeperException.NodeExists will be
+     * thrown.
+     * <p>
+     * If the parent node does not exist in the ZooKeeper, a KeeperException
+     * with error code KeeperException.NoNode will be thrown.
+     * <p>
+     * This operation, if successful, will trigger all the watches left on the
+     * node of the given path by exists and getData API calls, and the watches
+     * left on the parent node by getChildren API calls.
+     * <p>
+     * If a node is created successfully, the ZooKeeper server will trigger the
+     * watches on the path left by exists calls, and the watches on the parent
+     * of the node by getChildren calls.
+     * <p>
+     * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
+     * Arrays larger than this will cause a KeeperExecption to be thrown.
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param acl
+     *                the acl for the node
+     * @param stat
+     *                The output Stat object.
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public void createContainer(final String path, byte data[], List<ACL> acl,
+                         Stat stat)
+            throws KeeperException, InterruptedException {
+        createContainerInernal(path, data, acl, stat, null, null);
+    }
+
+    /**
+     * The asychronous version of createContainer
+     *
+     * @see #createContainer(String, byte[], List)
+     */
+    public void createContainer(final String path, byte data[], List<ACL> acl,
+                       Create2Callback cb, Object ctx)
+            throws KeeperException, InterruptedException {
+        createContainerInernal(path, data, acl, null, cb, ctx);
+    }
+
+    /**
      * Delete the node with the given path. The call will succeed if such a node
      * exists, and the given version matches the node's version (if the given
      * version is -1, it matches any node's versions).
@@ -1515,6 +1587,37 @@ public class ZooKeeper {
             }
         }
         return op;
+    }
+
+    private void createContainerInernal(final String clientPath, byte data[], List<ACL> acl,
+                                          Stat stat, Create2Callback cb, Object ctx)
+            throws KeeperException, InterruptedException {
+        PathUtils.validatePath(clientPath, false);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.createContainer);
+        CreateContainerRequest request = new CreateContainerRequest();
+        Create2Response response = new Create2Response();
+        request.setData(data);
+        request.setPath(serverPath);
+        request.setAcl(acl);
+        if ( cb != null ) {
+            ReplyHeader r = new ReplyHeader();
+            cnxn.queuePacket(h, r, request, response, cb, clientPath,
+                    serverPath, ctx, null);
+
+            return;
+        }
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    clientPath);
+        }
+        if (stat != null) {
+            DataTree.copyStat(response.getStat(), stat);
+        }
     }
 
     protected void multiInternal(MultiTransactionRecord request, MultiCallback cb, Object ctx) {
