@@ -214,10 +214,10 @@ document.write("Last Published: " + document.lastModified);
 <a href="#Ephemeral+Nodes">Ephemeral Nodes</a>
 </li>
 <li>
-<a href="#Container+Nodes">Container Nodes</a>
+<a href="#Sequence+Nodes+--+Unique+Naming">Sequence Nodes -- Unique Naming</a>
 </li>
 <li>
-<a href="#Sequence+Nodes+--+Unique+Naming">Sequence Nodes -- Unique Naming</a>
+<a href="#Container+Nodes">Container Nodes</a>
 </li>
 </ul>
 </li>
@@ -551,20 +551,6 @@ document.write("Last Published: " + document.lastModified);
         exists as long as the session that created the znode is active. When
         the session ends the znode is deleted. Because of this behavior
         ephemeral znodes are not allowed to have children.</p>
-<a name="Container+Nodes"></a>
-<h4>Container Nodes</h4>
-<p>
-<strong>Added in 3.6.0</strong>
-</p>
-<p>ZooKeeper has the notion of container nodes. Container nodes are
-          special purpose nodes useful for recipes such as leader, lock, etc.
-          When the last child of a container is deleted, the container becomes
-          a candidate to be deleted by the server at some point in the future.</p>
-<p>Given this property, you should be prepared to get
-          KeeperException.NoNodeException when creating children inside of this
-          container node. i.e. when creating child nodes inside of container nodes
-          always check for KeeperException.NoNodeException and recreate the container
-          node when it occurs.</p>
 <a name="Sequence+Nodes+--+Unique+Naming"></a>
 <h4>Sequence Nodes -- Unique Naming</h4>
 <p>When creating a znode you can also request that
@@ -579,6 +565,20 @@ document.write("Last Published: " + document.lastModified);
         (4bytes) maintained by the parent node, the counter will
         overflow when incremented beyond 2147483647 (resulting in a
         name "&lt;path&gt;-2147483647").</p>
+<a name="Container+Nodes"></a>
+<h4>Container Nodes</h4>
+<p>
+<strong>Added in 3.6.0</strong>
+</p>
+<p>ZooKeeper has the notion of container nodes. Container nodes are
+          special purpose nodes useful for recipes such as leader, lock, etc.
+          When the last child of a container is deleted, the container becomes
+          a candidate to be deleted by the server at some point in the future.</p>
+<p>Given this property, you should be prepared to get
+          KeeperException.NoNodeException when creating children inside of
+          container nodes. i.e. when creating child nodes inside of container nodes
+          always check for KeeperException.NoNodeException and recreate the container
+          node when it occurs.</p>
 <a name="sc_timeInZk"></a>
 <h3 class="h4">Time in ZooKeeper</h3>
 <p>ZooKeeper tracks time multiple ways:</p>

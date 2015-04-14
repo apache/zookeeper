@@ -1692,6 +1692,30 @@ server.3=zoo3:2888:3888</pre>
               </p>
 </dd>
 
+          
+<dt>
+<term>container.checkIntervalMs</term>
+</dt>
+<dd>
+<p>(Java system property only)</p>
+<p>
+<strong>New in 3.6.0:</strong> The
+                time interval in milliseconds for each check of candidate container
+                nodes. Default is "1000".</p>
+</dd>
+
+          
+<dt>
+<term>container.maxPerInterval</term>
+</dt>
+<dd>
+<p>(Java system property only)</p>
+<p>
+<strong>New in 3.6.0:</strong> The
+                maximum number of container nodes that can be deleted per
+                interval. This prevents herding during container deletion.
+                Default is "1000".</p>
+</dd>
         
 </dl>
 <a name="Communication+using+the+Netty+framework"></a>
