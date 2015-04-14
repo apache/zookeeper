@@ -276,7 +276,7 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_clusterOptions">Cluster Options</a>
 </li>
 <li>
-<a href="#sc_authOptions">Encryption, Authentication, Authorization Options</a>
+<a href="#sc_authOptions">Authentication &amp; Authorization Options</a>
 </li>
 <li>
 <a href="#Experimental+Options%2FFeatures">Experimental Options/Features</a>
@@ -431,7 +431,7 @@ document.write("Last Published: " + document.lastModified);
 </ul>
 <a name="sc_requiredSoftware"></a>
 <h4>Required Software </h4>
-<p>ZooKeeper runs in Java, release 1.7 or greater (JDK 7 or
+<p>ZooKeeper runs in Java, release 1.6 or greater (JDK 6 or
         greater, FreeBSD support requires openjdk7).  It runs as an
         <em>ensemble</em> of ZooKeeper servers. Three
         ZooKeeper servers is the minimum recommended size for an
@@ -825,7 +825,7 @@ server.3=zoo3:2888:3888</pre>
 <a name="Single+Machine+Requirements"></a>
 <h4>Single Machine Requirements</h4>
 <p>If ZooKeeper has to contend with other applications for
-        access to resources like storage media, CPU, network, or
+        access to resourses like storage media, CPU, network, or
         memory, its performance will suffer markedly.  ZooKeeper has
         strong durability guarantees, which means it uses storage
         media to log changes before the operation responsible for the
@@ -1006,22 +1006,6 @@ server.3=zoo3:2888:3888</pre>
 <dd>
 <p>the port to listen for client connections; that is, the
               port that clients attempt to connect to.</p>
-</dd>
-
-          
-<dt>
-<term>secureClientPort</term>
-</dt>
-<dd>
-<p>the port to listen on for secure client connections using SSL.
-
-              <strong>clientPort</strong> specifies
-                the port for plaintext connections while <strong>
-                  secureClientPort</strong> specifies the port for SSL
-                connections. Specifying both enables mixed-mode while omitting
-                either will disable that mode.</p>
-<p>Note that SSL feature will be enabled when user plugs-in
-                zookeeper.serverCnxnFactory, zookeeper.clientCnxnSocket as Netty.</p>
 </dd>
 
           
@@ -1429,9 +1413,9 @@ server.3=zoo3:2888:3888</pre>
 </dl>
 <p></p>
 <a name="sc_authOptions"></a>
-<h4>Encryption, Authentication, Authorization Options</h4>
+<h4>Authentication &amp; Authorization Options</h4>
 <p>The options in this section allow control over
-        encryption/authentication/authorization performed by the service.</p>
+        authentication/authorization performed by the service.</p>
 <dl>
           
 <dt>
@@ -1460,43 +1444,6 @@ server.3=zoo3:2888:3888</pre>
               localhost (not over the network) or over an encrypted
               connection.</p>
 </dd>
-
-          
-<dt>
-<term>zookeeper.client.secure</term>
-</dt>
-<dd>
-<p>If you want to connect to server's secure client port, you need to
-                set this property to <strong>true</strong> on client.
-                This will connect to server using SSL with specified credentials. Note that
-                you also need to plug-in Netty client.
-              </p>
-</dd>
-
-          
-<dt>
-<term>ssl.keyStore.location and ssl.keyStore.password</term>
-</dt>
-<dd>
-<p>(Java system properties: <strong>
-                zookeeper.ssl.keyStore.location</strong> and <strong>zookeeper.ssl.keyStore.password</strong>)</p>
-<p>Specifies the file path to a JKS containing the local
-                credentials to be used for SSL connections, and the
-                password to unlock the file.</p>
-</dd>
-
-          
-<dt>
-<term>ssl.trustStore.location and ssl.trustStore.password</term>
-</dt>
-<dd>
-<p>(Java system properties: <strong>
-                zookeeper.ssl.trustStore.location</strong> and <strong>zookeeper.ssl.trustStore.password</strong>)</p>
-<p>Specifies the file path to a JKS containing the remote
-                credentials to be used for SSL connections, and the
-                password to unlock the file.</p>
-</dd>
-
         
 </dl>
 <a name="Experimental+Options%2FFeatures"></a>
@@ -1692,36 +1639,13 @@ server.3=zoo3:2888:3888</pre>
               </p>
 </dd>
 
-          
-<dt>
-<term>container.checkIntervalMs</term>
-</dt>
-<dd>
-<p>(Java system property only)</p>
-<p>
-<strong>New in 3.6.0:</strong> The
-                time interval in milliseconds for each check of candidate container
-                nodes. Default is "1000".</p>
-</dd>
-
-          
-<dt>
-<term>container.maxPerInterval</term>
-</dt>
-<dd>
-<p>(Java system property only)</p>
-<p>
-<strong>New in 3.6.0:</strong> The
-                maximum number of container nodes that can be deleted per
-                interval. This prevents herding during container deletion.
-                Default is "1000".</p>
-</dd>
         
 </dl>
 <a name="Communication+using+the+Netty+framework"></a>
 <h4>Communication using the Netty framework</h4>
 <p>
-<a href="http://netty.io">Netty</a>
+<strong>New in
+            3.4:</strong> <a href="http://jboss.org/netty">Netty</a>
             is an NIO based client/server communication framework, it
             simplifies (over NIO being used directly) many of the
             complexities of network level communication for java
@@ -1730,12 +1654,16 @@ server.3=zoo3:2888:3888</pre>
             (certificates). These are optional features and can be
             turned on or off individually.
         </p>
-<p>In versions 3.5+, a ZooKeeper server can use Netty
-            instead of NIO (default option) by setting the environment
-            variable <strong>zookeeper.serverCnxnFactory</strong>
-            to <strong>org.apache.zookeeper.server.NettyServerCnxnFactory</strong>;
-            for the client, set <strong>zookeeper.clientCnxnSocket</strong>
-            to <strong>org.apache.zookeeper.ClientCnxnSocketNetty</strong>.
+<p>Prior to version 3.4 ZooKeeper has always used NIO
+            directly, however in versions 3.4 and later Netty is
+            supported as an option to NIO (replaces). NIO continues to
+            be the default, however Netty based communication can be
+            used in place of NIO by setting the environment variable
+            "zookeeper.serverCnxnFactory" to
+            "org.apache.zookeeper.server.NettyServerCnxnFactory". You
+            have the option of setting this on either the client(s) or
+            server(s), typically you would want to set this on both,
+            however that is at your discretion.
         </p>
 <p>
           TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
