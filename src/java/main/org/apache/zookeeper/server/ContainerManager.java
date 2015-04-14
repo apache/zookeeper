@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -24,6 +25,7 @@ public class ContainerManager {
     private final int maxPerInterval;
     private final Timer timer;
     private final AtomicReference<TimerTask> task = new AtomicReference<TimerTask>(null);
+    private final Set<String> currentCandidates = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     /**
      * @param zkDb the ZK database
@@ -71,7 +73,21 @@ public class ContainerManager {
      * Manually check the containers. Not normally used directly
      */
     public void checkContainers() {
-        for ( String containerPath : getCandidates() ) {
+        if ( currentCandidates.size() == 0 ) {
+            currentCandidates.addAll(getCandidates());
+        }
+
+        int count = 0;
+        Iterator<String> iterator = currentCandidates.iterator();
+        while ( iterator.hasNext() ) {
+            if ( count++ >= maxPerInterval ) {
+                LOG.info("Stopping at " + maxPerInterval);
+                break;
+            }
+
+            String containerPath = iterator.next();
+            iterator.remove();
+
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
             try {
@@ -91,10 +107,6 @@ public class ContainerManager {
             if ((node != null) && (node.stat.getEphemeralOwner() == DataTree.CONTAINER_EPHEMERAL_OWNER)) { // otherwise, the node changed type on us - ignore it
                 if ((node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
                     candidates.add(containerPath);
-                    if ( candidates.size() >= maxPerInterval ) {
-                        LOG.info("Stopping at " + maxPerInterval);
-                        break;
-                    }
                 }
             }
         }

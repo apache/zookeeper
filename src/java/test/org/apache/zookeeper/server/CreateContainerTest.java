@@ -7,10 +7,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class CreateContainerTest extends ClientBase {
     private ZooKeeper zk;
@@ -105,7 +105,7 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar/one", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar/one", -1);  // should cause "/foo/bar" and "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 1);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 10);
         containerManager.checkContainers();
         Thread.sleep(1000);
         containerManager
@@ -122,7 +122,7 @@ public class CreateContainerTest extends ClientBase {
         zk.createContainer("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 1) {
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 10) {
             @Override
             protected Collection<String> getCandidates() {
                 return Collections.singletonList("/foo");
@@ -132,6 +132,36 @@ public class CreateContainerTest extends ClientBase {
         Thread.sleep(1000);
 
         Assert.assertNotNull("Container should have not been deleted", zk.exists("/foo", false));
+    }
+
+    @Test
+    public void testMaxPerInterval()
+            throws IOException, KeeperException, InterruptedException {
+        final BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
+        RequestProcessor processor = new RequestProcessor() {
+            @Override
+            public void processRequest(Request request) throws RequestProcessorException {
+                queue.add(new String(request.request.array()));
+            }
+
+            @Override
+            public void shutdown() {
+            }
+        };
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), processor, 1, 2) {
+            @Override
+            protected Collection<String> getCandidates() {
+                return Arrays.asList("/one", "/two", "/three", "/four");
+            }
+        };
+        containerManager.checkContainers();
+        Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/one");
+        Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/two");
+        Assert.assertEquals(queue.size(), 0);
+
+        containerManager.checkContainers();
+        Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/three");
+        Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/four");
     }
 
     private void createNoStatVerifyResult(String newName)
