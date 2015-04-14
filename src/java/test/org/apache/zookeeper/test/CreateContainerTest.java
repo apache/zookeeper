@@ -71,6 +71,23 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
     }
 
+    @Test
+    public void testCascadingDeletion()
+            throws IOException, KeeperException, InterruptedException {
+        zk.createContainer("/foo", new byte[0]);
+        zk.createContainer("/foo/bar", new byte[0]);
+        zk.create("/foo/bar/one", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.delete("/foo/bar/one", -1);  // should cause "/foo/bar" and "/foo" to get deleted when checkContainers() is called
+
+        serverFactory.getZooKeeperServer().checkContainers();
+        Thread.sleep(1000);
+        serverFactory.getZooKeeperServer().checkContainers();
+        Thread.sleep(1000);
+
+        Assert.assertNull("Container should have been deleted", zk.exists("/foo/bar", false));
+        Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
+    }
+
     private void createNoStatVerifyResult(String newName)
             throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
