@@ -304,7 +304,7 @@ This meant that developers had to track watches they were interested in and rere
 In this release the client library tracks watches that a client has registered and reregisters the watches when a connection is made to a new server.
 Applications that still manually reregister interest should continue working properly as long as they are able to handle unsolicited watches.
 For example, an old application may register a watch for /foo and /goo, lose the connection, and reregister only /goo.
-As long as the application is able to recieve a notification for /foo, (probably ignoring it) the applications does not to be changes.
+As long as the application is able to recieve a notification for /foo, (probably ignoring it) it does not need to be changed.
 One caveat to the watch management: it is possible to miss an event for the creation and deletion of a znode if watching for creation and both the create and delete happens while the client is disconnected from ZooKeeper.
 </p>
 <p>

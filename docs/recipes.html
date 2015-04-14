@@ -904,7 +904,7 @@ document.write("Last Published: " + document.lastModified);
     processes watching upon the current smallest znode, and checking if they
     are the new leader when the smallest znode goes away (note that the
     smallest znode will go away if the leader fails because the node is
-    ephemeral). But this causes a herd effect: upon of failure of the current
+    ephemeral). But this causes a herd effect: upon a failure of the current
     leader, all other processes receive a notification, and execute
     getChildren on "/election" to obtain the current list of children of
     "/election". If the number of clients is large, it causes a spike on the

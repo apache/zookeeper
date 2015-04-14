@@ -221,8 +221,6 @@
       <section>
         <title>Ephemeral Nodes</title>
 
-        <para><emphasis role="bold">Added in 3.6.0</emphasis></para>
-
         <para>ZooKeeper also has the notion of ephemeral nodes. These znodes
         exists as long as the session that created the znode is active. When
         the session ends the znode is deleted. Because of this behavior
@@ -232,14 +230,16 @@
       <section>
         <title>Container Nodes</title>
 
+        <para><emphasis role="bold">Added in 3.6.0</emphasis></para>
+
         <para>ZooKeeper has the notion of container nodes. Container nodes are
           special purpose nodes useful for recipes such as leader, lock, etc.
           When the last child of a container is deleted, the container becomes
           a candidate to be deleted by the server at some point in the future.</para>
 
         <para>Given this property, you should be prepared to get
-          KeeperException.NoNodeException when creating children inside of this
-          container node. i.e. when creating child nodes inside of container nodes
+          KeeperException.NoNodeException when creating children inside of
+          container nodes. i.e. when creating child nodes inside of container nodes
           always check for KeeperException.NoNodeException and recreate the container
           node when it occurs.</para>
       </section>
