@@ -200,6 +200,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                             subResult = new CreateResult(subTxnResult.path, subTxnResult.stat);
                             break;
                         case OpCode.delete:
+                        case OpCode.deleteContainer:
                             subResult = new DeleteResult();
                             break;
                         case OpCode.setData:
@@ -235,7 +236,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 err = Code.get(rc.err);
                 break;
             }
-            case OpCode.delete: {
+            case OpCode.delete:
+            case OpCode.deleteContainer: {
                 lastOp = "DELE";
                 err = Code.get(rc.err);
                 break;

@@ -41,6 +41,8 @@ public class TraceFormatter {
             return "createContainer";
         case OpCode.delete:
             return "delete";
+        case OpCode.deleteContainer:
+            return "deleteContainer";
         case OpCode.exists:
             return "exists";
         case OpCode.getData:

@@ -86,6 +86,7 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                 case OpCode.create2:
                 case OpCode.createContainer:
                 case OpCode.delete:
+                case OpCode.deleteContainer:
                 case OpCode.setData:
                 case OpCode.reconfig:
                 case OpCode.setACL:

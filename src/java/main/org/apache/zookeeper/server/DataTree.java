@@ -21,14 +21,8 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.jute.Index;
@@ -124,6 +118,12 @@ public class DataTree {
         new ConcurrentHashMap<Long, HashSet<String>>();
 
     /**
+     * This set contains the paths of all container nodes
+     */
+    private final Set<String> containers =
+            Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+
+    /**
      * this is map from longs to acl's. It saves acl's being stored for each
      * datanode.
      */
@@ -152,6 +152,10 @@ public class DataTree {
             cloned = (HashSet<String>) retv.clone();
         }
         return cloned;
+    }
+
+    public Set<String> getContainers() {
+        return new HashSet<String>(containers);
     }
 
     int getAclSize() {
@@ -501,7 +505,9 @@ public class DataTree {
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
             nodes.put(path, child);
-            if (ephemeralOwner != 0) {
+            if (ephemeralOwner == CONTAINER_EPHEMERAL_OWNER) {
+                containers.add(path);
+            } else if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
                 if (list == null) {
                     list = new HashSet<String>();
@@ -567,7 +573,9 @@ public class DataTree {
             parent.removeChild(childName);
             parent.stat.setPzxid(zxid);
             long eowner = node.stat.getEphemeralOwner();
-            if (eowner != 0) {
+            if (eowner == CONTAINER_EPHEMERAL_OWNER) {
+                containers.remove(path);
+            } else if (eowner != 0) {
                 HashSet<String> nodes = ephemerals.get(eowner);
                 if (nodes != null) {
                     synchronized (nodes) {
@@ -832,6 +840,7 @@ public class DataTree {
                     rc.stat = stat;
                     break;
                 case OpCode.delete:
+                case OpCode.deleteContainer:
                     DeleteTxn deleteTxn = (DeleteTxn) txn;
                     rc.path = deleteTxn.getPath();
                     deleteNode(deleteTxn.getPath(), header.getZxid());
@@ -882,6 +891,7 @@ public class DataTree {
                                 record = new CreateTxn();
                                 break;
                             case OpCode.delete:
+                            case OpCode.deleteContainer:
                                 record = new DeleteTxn();
                                 break;
                             case OpCode.setData:
@@ -1235,7 +1245,9 @@ public class DataTree {
                 }
                 parent.addChild(path.substring(lastSlash + 1));
                 long eowner = node.stat.getEphemeralOwner();
-                if ((eowner != 0) && (eowner != CONTAINER_EPHEMERAL_OWNER)) {
+                if ( eowner == CONTAINER_EPHEMERAL_OWNER ) {
+                    containers.add(path);
+                } else if (eowner != 0) {
                     HashSet<String> list = ephemerals.get(eowner);
                     if (list == null) {
                         list = new HashSet<String>();

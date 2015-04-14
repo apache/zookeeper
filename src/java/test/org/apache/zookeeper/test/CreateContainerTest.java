@@ -52,19 +52,29 @@ public class CreateContainerTest extends ClientBase {
         Stat stat = null;
         // If a null Stat object is passed the create should still
         // succeed, but no Stat info will be returned.
-        zk.createContainer(name, name.getBytes(),
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                stat);
+        zk.createContainer(name, name.getBytes(), stat);
         Assert.assertNull(stat);
         Assert.assertNotNull(zk.exists(name, false));
+    }
 
-        zk.delete("/foo", -1);
+    @Test
+    public void testSimpleDeletion()
+            throws IOException, KeeperException, InterruptedException {
+        zk.createContainer("/foo", new byte[0]);
+        zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
+
+        serverFactory.getZooKeeperServer().checkContainers();
+
+        Thread.sleep(1000);
+
+        Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
     }
 
     private void createNoStatVerifyResult(String newName)
             throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
-        String path = zk.createContainer(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        String path = zk.createContainer(newName, newName.getBytes());
         Assert.assertEquals(path, newName);
         Assert.assertNotNull("Node was not created as expected",
                 zk.exists(newName, false));
@@ -73,8 +83,7 @@ public class CreateContainerTest extends ClientBase {
             throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
         Stat stat = new Stat();
-        String path = zk.createContainer(newName, newName.getBytes(),
-                ZooDefs.Ids.OPEN_ACL_UNSAFE, stat);
+        String path = zk.createContainer(newName, newName.getBytes(), stat);
         Assert.assertEquals(path, newName);
         validateCreateStat(stat, newName);
 

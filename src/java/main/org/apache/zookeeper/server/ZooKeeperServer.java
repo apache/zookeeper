@@ -24,19 +24,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.nio.CharBuffer;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.Set;
 
 import javax.security.sasl.SaslException;
+import javax.xml.crypto.Data;
 
+import com.sun.org.apache.xpath.internal.compiler.OpCodes;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
@@ -44,6 +40,7 @@ import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
@@ -66,6 +63,7 @@ import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -591,9 +589,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             int sessionTimeout) throws IOException {
         boolean rc = sessionTracker.touchSession(sessionId, sessionTimeout);
         if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
-                                     "Session 0x" + Long.toHexString(sessionId) +
-                    " is valid: " + rc);
+            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                    "Session 0x" + Long.toHexString(sessionId) +
+                            " is valid: " + rc);
         }
         finishSessionInit(cnxn, rc);
     }
@@ -863,6 +861,26 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public String getState() {
         return "standalone";
+    }
+
+    public void checkContainers() {
+        for ( String containerPath : zkDb.getDataTree().getContainers() ) {
+            DataNode node = zkDb.getDataTree().getNode(containerPath);
+            if ( node != null ) {
+                if ( node.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER ) {
+                    LOG.error("Corrupted internal state! Expected path to be a container: " + containerPath);
+                }
+                if ((node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
+                    ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
+                    Request request = new Request(null, 0, 0, OpCode.deleteContainer, path, null);
+                    try {
+                        firstProcessor.processRequest(request);
+                    } catch (Exception e) {
+                        LOG.error("Could not delete container: " + containerPath, e);
+                    }
+                }
+            }
+        }
     }
 
     public void dumpEphemerals(PrintWriter pwriter) {

@@ -64,6 +64,7 @@ public class SerializeUtils {
             txn = new CreateContainerTxn();
             break;
         case OpCode.delete:
+        case OpCode.deleteContainer:
             txn = new DeleteTxn();
             break;
         case OpCode.reconfig:

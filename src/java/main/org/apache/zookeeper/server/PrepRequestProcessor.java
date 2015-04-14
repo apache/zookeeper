@@ -491,8 +491,30 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, s, 0, listACL));
                 break;
             }
+            case OpCode.deleteContainer: {
+                String path = new String(request.request.array());
+                int lastSlash = path.lastIndexOf('/');
+                if (lastSlash == -1 || path.indexOf('\0') != -1
+                        || zks.getZKDatabase().isSpecialPath(path)) {
+                    throw new KeeperException.BadArgumentsException(path);
+                }
+                String parentPath = path.substring(0, lastSlash);
+                ChangeRecord parentRecord = getRecordForPath(parentPath);
+                ChangeRecord nodeRecord = getRecordForPath(path);
+                if (nodeRecord.childCount > 0) {
+                    throw new KeeperException.NotEmptyException(path);
+                }
+                request.setTxn(new DeleteTxn(path));
+                parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
+                parentRecord.childCount--;
+                addChangeRecord(parentRecord);
+                addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null));
+                break;
+            }
             case OpCode.delete:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                if ( request.sessionId != 0 ) {
+                    zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                }
                 DeleteRequest deleteRequest = (DeleteRequest)record;
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, deleteRequest);
@@ -752,8 +774,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 CreateContainerRequest createContainerRequest = new CreateContainerRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, createContainerRequest, true);
                 break;
+            case OpCode.deleteContainer:
             case OpCode.delete:
-                DeleteRequest deleteRequest = new DeleteRequest();               
+                DeleteRequest deleteRequest = new DeleteRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, deleteRequest, true);
                 break;
             case OpCode.setData:
