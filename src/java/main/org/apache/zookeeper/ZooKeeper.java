@@ -52,31 +52,7 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.CheckWatchesRequest;
-import org.apache.zookeeper.proto.Create2Request;
-import org.apache.zookeeper.proto.Create2Response;
-import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.proto.CreateResponse;
-import org.apache.zookeeper.proto.DeleteRequest;
-import org.apache.zookeeper.proto.ExistsRequest;
-import org.apache.zookeeper.proto.GetACLRequest;
-import org.apache.zookeeper.proto.GetACLResponse;
-import org.apache.zookeeper.proto.GetChildren2Request;
-import org.apache.zookeeper.proto.GetChildren2Response;
-import org.apache.zookeeper.proto.GetChildrenRequest;
-import org.apache.zookeeper.proto.GetChildrenResponse;
-import org.apache.zookeeper.proto.GetDataRequest;
-import org.apache.zookeeper.proto.GetDataResponse;
-import org.apache.zookeeper.proto.ReconfigRequest;
-import org.apache.zookeeper.proto.RemoveWatchesRequest;
-import org.apache.zookeeper.proto.ReplyHeader;
-import org.apache.zookeeper.proto.RequestHeader;
-import org.apache.zookeeper.proto.SetACLRequest;
-import org.apache.zookeeper.proto.SetACLResponse;
-import org.apache.zookeeper.proto.SetDataRequest;
-import org.apache.zookeeper.proto.SetDataResponse;
-import org.apache.zookeeper.proto.SyncRequest;
-import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.*;
 import org.apache.zookeeper.server.DataTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1360,6 +1336,23 @@ public class ZooKeeper {
                 serverPath, ctx, null);
     }
 
+    public String createContainer(final String path, byte data[], List<ACL> acl)
+            throws KeeperException, InterruptedException {
+        return createContainerInernal(path, data, acl, null, null, null);
+    }
+
+    public String createContainer(final String path, byte data[], List<ACL> acl,
+                         Stat stat)
+            throws KeeperException, InterruptedException {
+        return createContainerInernal(path, data, acl, stat, null, null);
+    }
+
+    public void createContainer(final String path, byte data[], List<ACL> acl,
+                       Create2Callback cb, Object ctx)
+            throws KeeperException, InterruptedException {
+        createContainerInernal(path, data, acl, null, cb, ctx);
+    }
+
     /**
      * Delete the node with the given path. The call will succeed if such a node
      * exists, and the given version matches the node's version (if the given
@@ -1515,6 +1508,43 @@ public class ZooKeeper {
             }
         }
         return op;
+    }
+
+    private String createContainerInernal(final String path, byte data[], List<ACL> acl,
+                                          Stat stat, Create2Callback cb, Object ctx)
+            throws KeeperException, InterruptedException {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath, false);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.createContainer);
+        CreateContainerRequest request = new CreateContainerRequest();
+        Create2Response response = new Create2Response();
+        request.setData(data);
+        request.setPath(serverPath);
+        request.setAcl(acl);
+        if ( cb != null ) {
+            ReplyHeader r = new ReplyHeader();
+            cnxn.queuePacket(h, r, request, response, cb, clientPath,
+                    serverPath, ctx, null);
+
+            return null;
+        }
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    clientPath);
+        }
+        if (stat != null) {
+            DataTree.copyStat(response.getStat(), stat);
+        }
+        if (cnxn.chrootPath == null) {
+            return response.getPath();
+        } else {
+            return response.getPath().substring(cnxn.chrootPath.length());
+        }
     }
 
     protected void multiInternal(MultiTransactionRecord request, MultiCallback cb, Object ctx) {

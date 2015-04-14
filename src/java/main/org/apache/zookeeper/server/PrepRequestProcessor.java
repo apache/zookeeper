@@ -38,6 +38,8 @@ import org.apache.jute.Record;
 import org.apache.jute.BinaryOutputArchive;
 
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.proto.*;
+import org.apache.zookeeper.txn.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
@@ -53,13 +55,6 @@ import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
-import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.proto.Create2Request;
-import org.apache.zookeeper.proto.DeleteRequest;
-import org.apache.zookeeper.proto.ReconfigRequest;
-import org.apache.zookeeper.proto.SetACLRequest;
-import org.apache.zookeeper.proto.SetDataRequest;
-import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
@@ -70,16 +65,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
-import org.apache.zookeeper.txn.CreateSessionTxn;
-import org.apache.zookeeper.txn.CreateTxn;
-import org.apache.zookeeper.txn.DeleteTxn;
-import org.apache.zookeeper.txn.ErrorTxn;
-import org.apache.zookeeper.txn.SetACLTxn;
-import org.apache.zookeeper.txn.SetDataTxn;
-import org.apache.zookeeper.txn.CheckVersionTxn;
-import org.apache.zookeeper.txn.Txn;
-import org.apache.zookeeper.txn.MultiTxn;
-import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This request processor is generally at the start of a RequestProcessor
@@ -397,7 +382,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
-                boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
@@ -447,7 +432,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
-                boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
@@ -458,6 +443,47 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
                 }
+                parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
+                parentRecord.childCount++;
+                parentRecord.stat.setCversion(newCversion);
+                addChangeRecord(parentRecord);
+                addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, s, 0, listACL));
+                break;
+            }
+            case OpCode.createContainer: {
+                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                CreateContainerRequest createContainerRequest = (CreateContainerRequest)record;
+                if (deserialize) {
+                    ByteBufferInputStream.byteBuffer2Record(request.request, createContainerRequest);
+                }
+                String path = createContainerRequest.getPath();
+                String parentPath = validatePathForCreate(path, request.sessionId);
+
+                List<ACL> listACL = fixupACL(path, request.authInfo, createContainerRequest.getAcl());
+                ChangeRecord parentRecord = getRecordForPath(parentPath);
+
+                checkACL(zks, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo);
+                try {
+                    PathUtils.validatePath(path);
+                } catch(IllegalArgumentException ie) {
+                    LOG.info("Invalid path " + path + " with session 0x" +
+                            Long.toHexString(request.sessionId));
+                    throw new KeeperException.BadArgumentsException(path);
+                }
+                try {
+                    if (getRecordForPath(path) != null) {
+                        throw new KeeperException.NodeExistsException(path);
+                    }
+                } catch (KeeperException.NoNodeException e) {
+                    // ignore this one
+                }
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
+                if (ephemeralParent) {
+                    throw new KeeperException.NoChildrenForEphemeralsException(path);
+                }
+                int newCversion = parentRecord.stat.getCversion()+1;
+                request.setTxn(new CreateContainerTxn(path, createContainerRequest.getData(), listACL, newCversion));
+                StatPersisted s = new StatPersisted();
                 parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
                 parentRecord.childCount++;
                 parentRecord.stat.setCversion(newCversion);
@@ -721,6 +747,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.create2:
                 Create2Request create2Request = new Create2Request();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request, true);
+                break;
+            case OpCode.createContainer:
+                CreateContainerRequest createContainerRequest = new CreateContainerRequest();
+                pRequest2Txn(request.type, zks.getNextZxid(), request, createContainerRequest, true);
                 break;
             case OpCode.delete:
                 DeleteRequest deleteRequest = new DeleteRequest();               

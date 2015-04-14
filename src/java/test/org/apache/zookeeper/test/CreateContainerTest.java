@@ -1,5 +1,6 @@
 package org.apache.zookeeper.test;
 
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
@@ -45,17 +46,19 @@ public class CreateContainerTest extends ClientBase {
     @Test
     public void testCreateWithNullStat()
             throws IOException, KeeperException, InterruptedException {
-        String name = "/foo";
+        final String name = "/foo";
         Assert.assertNull(zk.exists(name, false));
 
         Stat stat = null;
         // If a null Stat object is passed the create should still
         // succeed, but no Stat info will be returned.
-        String path = zk.createContainer(name, name.getBytes(),
+        zk.createContainer(name, name.getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 stat);
         Assert.assertNull(stat);
         Assert.assertNotNull(zk.exists(name, false));
+
+        zk.delete("/foo", -1);
     }
 
     private void createNoStatVerifyResult(String newName)
