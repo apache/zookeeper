@@ -1351,7 +1351,7 @@ server.3=zoo3:2888:3888</programlisting>
 
               <para><emphasis role="bold">New in 3.6.0:</emphasis> The
                 time interval in milliseconds for each check of candidate container
-                nodes. Default is "1000".</para>
+                nodes. Default is "60000".</para>
             </listitem>
           </varlistentry>
 
