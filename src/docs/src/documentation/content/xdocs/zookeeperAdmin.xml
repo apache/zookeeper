@@ -1356,14 +1356,14 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>container.maxPerInterval</term>
+            <term>container.maxPerSecond</term>
 
             <listitem>
               <para>(Java system property only)</para>
 
               <para><emphasis role="bold">New in 3.6.0:</emphasis> The
                 maximum number of container nodes that can be deleted per
-                interval. This prevents herding during container deletion.
+                second. This prevents herding during container deletion.
                 Default is "1000".</para>
             </listitem>
           </varlistentry>

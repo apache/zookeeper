@@ -40,23 +40,22 @@ public class ContainerManager {
     private final ZKDatabase zkDb;
     private final RequestProcessor requestProcessor;
     private final int checkIntervalMs;
-    private final int maxPerInterval;
+    private final int maxPerSecond;
     private final Timer timer;
     private final AtomicReference<TimerTask> task = new AtomicReference<TimerTask>(null);
-    private final Set<String> currentCandidates = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     /**
      * @param zkDb the ZK database
      * @param requestProcessor request processer - used to inject delete container requests
      * @param checkIntervalMs how often to check containers in milliseconds
-     * @param maxPerInterval the max containers to delete in one interval - avoids herding of container deletions
+     * @param maxPerSecond the max containers to delete per second - avoids herding of container deletions
      */
     public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor,
-                            int checkIntervalMs, int maxPerInterval) {
+                            int checkIntervalMs, int maxPerSecond) {
         this.zkDb = zkDb;
         this.requestProcessor = requestProcessor;
         this.checkIntervalMs = checkIntervalMs;
-        this.maxPerInterval = maxPerInterval;
+        this.maxPerSecond = maxPerSecond;
         timer = new Timer("ContainerManagerTask", true);
     }
 
@@ -68,7 +67,13 @@ public class ContainerManager {
             TimerTask timerTask = new TimerTask() {
                 @Override
                 public void run() {
-                    checkContainers();
+                    try {
+                        checkContainers();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        LOG.info("interrupted");
+                        cancel();
+                    }
                 }
             };
             if ( task.compareAndSet(null, timerTask) ) {
@@ -90,21 +95,16 @@ public class ContainerManager {
     /**
      * Manually check the containers. Not normally used directly
      */
-    public void checkContainers() {
-        if ( currentCandidates.size() == 0 ) {
-            currentCandidates.addAll(getCandidates());
-        }
-
-        int count = 0;
-        Iterator<String> iterator = currentCandidates.iterator();
-        while ( iterator.hasNext() ) {
-            if ( count++ >= maxPerInterval ) {
-                LOG.info("Stopping at " + maxPerInterval);
-                break;
+    public void checkContainers()
+            throws InterruptedException {
+        long minInterval = getPeriod() / maxPerSecond;
+        long lastMs = System.currentTimeMillis();
+        for ( String containerPath : getCandidates() ) {
+            long elapsed = System.currentTimeMillis() - lastMs;
+            long leftToWait = minInterval - elapsed;
+            if ( leftToWait > 0 ) {
+                Thread.sleep(leftToWait);
             }
-
-            String containerPath = iterator.next();
-            iterator.remove();
 
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
@@ -114,7 +114,14 @@ public class ContainerManager {
             } catch (Exception e) {
                 LOG.error("Could not delete container: " + containerPath, e);
             }
+
+            lastMs = System.currentTimeMillis();
         }
+    }
+
+    // VisibleForTesting
+    protected int getPeriod() {
+        return 1000;
     }
 
     // VisibleForTesting

@@ -153,7 +153,7 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test
-    public void testMaxPerInterval()
+    public void testMaxPerSecond()
             throws IOException, KeeperException, InterruptedException {
         final BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
         RequestProcessor processor = new RequestProcessor() {
@@ -166,18 +166,32 @@ public class CreateContainerTest extends ClientBase {
             public void shutdown() {
             }
         };
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), processor, 1, 2) {
+        final ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), processor, 1, 2) {
+            @Override
+            protected int getPeriod() {
+                return 5000;    // for easier testing, make it maxPer5Seconds
+            }
+
             @Override
             protected Collection<String> getCandidates() {
                 return Arrays.asList("/one", "/two", "/three", "/four");
             }
         };
-        containerManager.checkContainers();
-        Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/one");
-        Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/two");
+        Executors.newSingleThreadExecutor().submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                containerManager.checkContainers();
+                return null;
+            }
+        });
+        Assert.assertEquals(queue.poll(5, TimeUnit.SECONDS), "/one");
+        Assert.assertEquals(queue.poll(5, TimeUnit.SECONDS), "/two");
+        Assert.assertEquals(queue.size(), 0);
+        Thread.sleep(1000);
         Assert.assertEquals(queue.size(), 0);
 
-        containerManager.checkContainers();
+        Thread.sleep(5000);
+
         Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/three");
         Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/four");
     }
