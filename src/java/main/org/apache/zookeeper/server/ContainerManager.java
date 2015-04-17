@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -40,7 +40,7 @@ public class ContainerManager {
     private final ZKDatabase zkDb;
     private final RequestProcessor requestProcessor;
     private final int checkIntervalMs;
-    private final int maxPerSecond;
+    private final int maxPerMinute;
     private final Timer timer;
     private final AtomicReference<TimerTask> task = new AtomicReference<TimerTask>(null);
 
@@ -48,14 +48,14 @@ public class ContainerManager {
      * @param zkDb the ZK database
      * @param requestProcessor request processer - used to inject delete container requests
      * @param checkIntervalMs how often to check containers in milliseconds
-     * @param maxPerSecond the max containers to delete per second - avoids herding of container deletions
+     * @param maxPerMinute the max containers to delete per second - avoids herding of container deletions
      */
     public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor,
-                            int checkIntervalMs, int maxPerSecond) {
+                            int checkIntervalMs, int maxPerMinute) {
         this.zkDb = zkDb;
         this.requestProcessor = requestProcessor;
         this.checkIntervalMs = checkIntervalMs;
-        this.maxPerSecond = maxPerSecond;
+        this.maxPerMinute = maxPerMinute;
         timer = new Timer("ContainerManagerTask", true);
     }
 
@@ -97,14 +97,9 @@ public class ContainerManager {
      */
     public void checkContainers()
             throws InterruptedException {
-        long minInterval = getPeriod() / maxPerSecond;
-        long lastMs = System.currentTimeMillis();
+        long minIntervalMs = getMinIntervalMs();
         for ( String containerPath : getCandidates() ) {
-            long elapsed = System.currentTimeMillis() - lastMs;
-            long leftToWait = minInterval - elapsed;
-            if ( leftToWait > 0 ) {
-                Thread.sleep(leftToWait);
-            }
+            long startMs = System.currentTimeMillis();
 
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
@@ -115,13 +110,17 @@ public class ContainerManager {
                 LOG.error("Could not delete container: " + containerPath, e);
             }
 
-            lastMs = System.currentTimeMillis();
+            long elapsedMs = System.currentTimeMillis() - startMs;
+            long waitMs = minIntervalMs - elapsedMs;
+            if ( waitMs > 0 ) {
+                Thread.sleep(waitMs);
+            }
         }
     }
 
     // VisibleForTesting
-    protected int getPeriod() {
-        return 1000;
+    protected long getMinIntervalMs() {
+        return TimeUnit.MINUTES.toMillis(1) / maxPerMinute;
     }
 
     // VisibleForTesting

@@ -83,7 +83,7 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 1);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
 
         Thread.sleep(1000);
@@ -107,7 +107,7 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 1);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
 
         Thread.sleep(1000);
@@ -123,7 +123,7 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar/one", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar/one", -1);  // should cause "/foo/bar" and "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 10);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
         Thread.sleep(1000);
         containerManager
@@ -140,7 +140,7 @@ public class CreateContainerTest extends ClientBase {
         zk.createContainer("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 10) {
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
             @Override
             protected Collection<String> getCandidates() {
                 return Collections.singletonList("/foo");
@@ -153,7 +153,7 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test
-    public void testMaxPerSecond()
+    public void testMaxPerMinute()
             throws IOException, KeeperException, InterruptedException {
         final BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
         RequestProcessor processor = new RequestProcessor() {
@@ -168,8 +168,8 @@ public class CreateContainerTest extends ClientBase {
         };
         final ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), processor, 1, 2) {
             @Override
-            protected int getPeriod() {
-                return 5000;    // for easier testing, make it maxPer5Seconds
+            protected long getMinIntervalMs() {
+                return 1000;
             }
 
             @Override
@@ -190,10 +190,8 @@ public class CreateContainerTest extends ClientBase {
         Thread.sleep(1000);
         Assert.assertEquals(queue.size(), 0);
 
-        Thread.sleep(5000);
-
-        Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/three");
-        Assert.assertEquals(queue.poll(1, TimeUnit.SECONDS), "/four");
+        Assert.assertEquals(queue.poll(5, TimeUnit.SECONDS), "/three");
+        Assert.assertEquals(queue.poll(5, TimeUnit.SECONDS), "/four");
     }
 
     private void createNoStatVerifyResult(String newName)
