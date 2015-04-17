@@ -140,7 +140,7 @@ public class DataNode implements Record {
         to.setMzxid(stat.getMzxid());
         to.setPzxid(stat.getPzxid());
         to.setVersion(stat.getVersion());
-        to.setEphemeralOwner(stat.getEphemeralOwner());
+        to.setEphemeralOwner(getClientEphemeralOwner(stat));
         to.setDataLength(data == null ? 0 : data.length);
         int numChildren = 0;
         if (this.children != null) {
@@ -151,6 +151,10 @@ public class DataNode implements Record {
         // for every create there is a delete except for the children still present
         to.setCversion(stat.getCversion()*2 - numChildren);
         to.setNumChildren(numChildren);
+    }
+
+    private static long getClientEphemeralOwner(StatPersisted stat) {
+        return (stat.getEphemeralOwner() == DataTree.CONTAINER_EPHEMERAL_OWNER) ? 0 : stat.getEphemeralOwner();
     }
 
     synchronized public void deserialize(InputArchive archive, String tag)

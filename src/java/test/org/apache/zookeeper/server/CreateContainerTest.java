@@ -222,7 +222,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertEquals(0, stat.getCversion());
         Assert.assertEquals(0, stat.getVersion());
         Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(DataTree.CONTAINER_EPHEMERAL_OWNER, stat.getEphemeralOwner());
+        Assert.assertEquals(0, stat.getEphemeralOwner());
         Assert.assertEquals(name.length(), stat.getDataLength());
         Assert.assertEquals(0, stat.getNumChildren());
     }
