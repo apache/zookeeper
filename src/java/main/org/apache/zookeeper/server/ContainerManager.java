@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,7 @@ public class ContainerManager {
      * start/restart the timer the runs the check. Can safely be called multiple times.
      */
     public void start() {
-        if ( task.get() == null ) {
+        if (task.get() == null) {
             TimerTask timerTask = new TimerTask() {
                 @Override
                 public void run() {
@@ -76,7 +76,7 @@ public class ContainerManager {
                     }
                 }
             };
-            if ( task.compareAndSet(null, timerTask) ) {
+            if (task.compareAndSet(null, timerTask)) {
                 timer.scheduleAtFixedRate(timerTask, checkIntervalMs, checkIntervalMs);
             }
         }
@@ -87,7 +87,7 @@ public class ContainerManager {
      */
     public void stop() {
         TimerTask timerTask = task.getAndSet(null);
-        if ( timerTask != null ) {
+        if (timerTask != null) {
             timerTask.cancel();
         }
     }
@@ -98,7 +98,7 @@ public class ContainerManager {
     public void checkContainers()
             throws InterruptedException {
         long minIntervalMs = getMinIntervalMs();
-        for ( String containerPath : getCandidates() ) {
+        for (String containerPath : getCandidates()) {
             long startMs = System.currentTimeMillis();
 
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
@@ -112,7 +112,7 @@ public class ContainerManager {
 
             long elapsedMs = System.currentTimeMillis() - startMs;
             long waitMs = minIntervalMs - elapsedMs;
-            if ( waitMs > 0 ) {
+            if (waitMs > 0) {
                 Thread.sleep(waitMs);
             }
         }
@@ -126,7 +126,7 @@ public class ContainerManager {
     // VisibleForTesting
     protected Collection<String> getCandidates() {
         Set<String> candidates = new HashSet<String>();
-        for ( String containerPath : zkDb.getDataTree().getContainers() ) {
+        for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             if ((node != null) && (node.stat.getEphemeralOwner() == DataTree.CONTAINER_EPHEMERAL_OWNER)) { // otherwise, the node changed type on us - ignore it
                 if ((node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {

@@ -382,7 +382,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
-                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) &&
+                        (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
@@ -432,7 +433,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
-                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) &&
+                        (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
@@ -477,7 +479,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 } catch (KeeperException.NoNodeException e) {
                     // ignore this one
                 }
-                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) && (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
+                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) &&
+                        (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
                 if (ephemeralParent) {
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
@@ -493,12 +496,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             }
             case OpCode.deleteContainer: {
                 String path = new String(request.request.array());
-                int lastSlash = path.lastIndexOf('/');
-                if (lastSlash == -1 || path.indexOf('\0') != -1
-                        || zks.getZKDatabase().isSpecialPath(path)) {
-                    throw new KeeperException.BadArgumentsException(path);
-                }
-                String parentPath = path.substring(0, lastSlash);
+                String parentPath = getParentPathAndValidate(path);
                 ChangeRecord parentRecord = getRecordForPath(parentPath);
                 ChangeRecord nodeRecord = getRecordForPath(path);
                 if (nodeRecord.childCount > 0) {
@@ -519,12 +517,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, deleteRequest);
                 String path = deleteRequest.getPath();
-                int lastSlash = path.lastIndexOf('/');
-                if (lastSlash == -1 || path.indexOf('\0') != -1
-                        || zks.getZKDatabase().isSpecialPath(path)) {
-                    throw new KeeperException.BadArgumentsException(path);
-                }
-                String parentPath = path.substring(0, lastSlash);
+                String parentPath = getParentPathAndValidate(path);
                 ChangeRecord parentRecord = getRecordForPath(parentPath);
                 ChangeRecord nodeRecord = getRecordForPath(path);
                 checkACL(zks, parentRecord.acl, ZooDefs.Perms.DELETE, request.authInfo);
@@ -738,6 +731,16 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 LOG.warn("unknown type " + type);
                 break;
         }
+    }
+
+    private String getParentPathAndValidate(String path)
+            throws BadArgumentsException {
+        int lastSlash = path.lastIndexOf('/');
+        if (lastSlash == -1 || path.indexOf('\0') != -1
+                || zks.getZKDatabase().isSpecialPath(path)) {
+            throw new BadArgumentsException(path);
+        }
+        return path.substring(0, lastSlash);
     }
 
     private static int checkAndIncVersion(int currentVersion, int expectedVersion, String path)

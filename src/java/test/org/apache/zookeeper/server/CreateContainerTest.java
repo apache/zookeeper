@@ -83,7 +83,8 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
 
         Thread.sleep(1000);
@@ -107,7 +108,8 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
 
         Thread.sleep(1000);
@@ -123,7 +125,8 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar/one", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar/one", -1);  // should cause "/foo/bar" and "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
         Thread.sleep(1000);
         containerManager
@@ -140,7 +143,8 @@ public class CreateContainerTest extends ClientBase {
         zk.createContainer("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
             @Override
             protected Collection<String> getCandidates() {
                 return Collections.singletonList("/foo");
