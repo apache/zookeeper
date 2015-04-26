@@ -117,7 +117,7 @@
 #define PACKAGE_NAME "zookeeper C client"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "zookeeper C client 3.5.0 win32"
+#define PACKAGE_STRING "zookeeper C client 3.5.1 win32"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "c-client-src"
@@ -126,7 +126,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.5.0"
+#define PACKAGE_VERSION "3.5.1"
 
 /* poll() second argument type */
 #define POLL_NFDS_TYPE
@@ -138,7 +138,7 @@
 #define TIME_WITH_SYS_TIME
 
 /* Version number of package */
-#define VERSION "3.5.0"
+#define VERSION "3.5.1"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
