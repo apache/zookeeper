@@ -153,7 +153,13 @@ start)
       if /bin/echo -n $! > "$ZOOPIDFILE"
       then
         sleep 1
-        echo STARTED
+        pid=$(cat "${ZOOPIDFILE}")
+        if ps -p "${pid}" > /dev/null 2>&1; then
+          echo STARTED
+        else
+          echo FAILED TO START
+          exit 1
+        fi
       else
         echo FAILED TO WRITE PID
         exit 1
