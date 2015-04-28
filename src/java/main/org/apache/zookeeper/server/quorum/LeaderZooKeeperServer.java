@@ -69,6 +69,10 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         prepRequestProcessor.start();
         firstProcessor = new LeaderRequestProcessor(this, prepRequestProcessor);
 
+        setupContainerManager();
+    }
+
+    private synchronized void setupContainerManager() {
         containerManager = new ContainerManager(getZKDatabase(), prepRequestProcessor,
                 Integer.getInteger("container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
                 Integer.getInteger("container.maxPerMinute", 10000)
