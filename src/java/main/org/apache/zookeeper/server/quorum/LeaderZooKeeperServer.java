@@ -34,7 +34,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * FinalRequestProcessor
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
-    private ContainerManager containerManager;
+    private ContainerManager containerManager;  // guarded by sync
 
 
     CommitProcessor commitProcessor;
@@ -82,12 +82,16 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     @Override
     public synchronized void startup() {
         super.startup();
-        containerManager.start();
+        if ( containerManager != null ) {
+            containerManager.start();
+        }
     }
 
     @Override
     public synchronized void shutdown() {
-        containerManager.stop();
+        if ( containerManager != null ) {
+            containerManager.stop();
+        }
         super.shutdown();
     }
 
