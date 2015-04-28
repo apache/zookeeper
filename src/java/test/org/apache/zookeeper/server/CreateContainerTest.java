@@ -191,7 +191,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertEquals(queue.poll(5, TimeUnit.SECONDS), "/one");
         Assert.assertEquals(queue.poll(5, TimeUnit.SECONDS), "/two");
         Assert.assertEquals(queue.size(), 0);
-        Thread.sleep(1000);
+        Thread.sleep(500);
         Assert.assertEquals(queue.size(), 0);
 
         Assert.assertEquals(queue.poll(5, TimeUnit.SECONDS), "/three");
