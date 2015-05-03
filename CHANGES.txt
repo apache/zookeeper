@@ -80,6 +80,10 @@ BUGFIXES:
   ZOOKEEPER-2173. ZK startup failure should be handled with proper error message
   (J.Andreina via camille)
 
+  ZOOKEEPER-2174 JUnit4ZKTestRunner logs test failure for all exceptions even
+  if the test method is annotated with an expected exception (Chris Nauroth
+  via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
