@@ -70,6 +70,10 @@ BUGFIXES:
   ZOOKEEPER-2056 Zookeeper 3.4.x and 3.5.0-alpha is not OSGi compliant
   (Deiwin Sarjas via rgs)
 
+  ZOOKEEPER-2174 JUnit4ZKTestRunner logs test failure for all exceptions even
+  if the test method is annotated with an expected exception (Chris Nauroth
+  via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
