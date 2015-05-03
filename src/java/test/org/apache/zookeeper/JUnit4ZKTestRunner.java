@@ -20,6 +20,7 @@ package org.apache.zookeeper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.junit.Test;
 import org.junit.internal.runners.statements.InvokeMethod;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
@@ -38,16 +39,18 @@ public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
     }
 
     public static class LoggedInvokeMethod extends InvokeMethod {
-        private String name;
+        private final FrameworkMethod method;
+        private final String name;
 
         public LoggedInvokeMethod(FrameworkMethod method, Object target) {
             super(method, target);
+            this.method = method;
             name = method.getName();
         }
 
         @Override
         public void evaluate() throws Throwable {
-            LOG.info("RUNNING TEST METHOD " + name);
+            LOG.info("RUNNING TEST METHOD {}", name);
             try {
                 super.evaluate();
                 Runtime rt = Runtime.getRuntime();
@@ -59,10 +62,20 @@ public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
                 }
                 LOG.info("Number of threads {}", tg.activeCount());
             } catch (Throwable t) {
-                LOG.info("TEST METHOD FAILED " + name, t);
+                // The test method threw an exception, but it might be an
+                // expected exception as defined in the @Test annotation.
+                // Check the annotation and log an appropriate message.
+                Test annotation = this.method.getAnnotation(Test.class);
+                if (annotation != null && annotation.expected() != null &&
+                        annotation.expected().isAssignableFrom(t.getClass())) {
+                    LOG.info("TEST METHOD {} THREW EXPECTED EXCEPTION {}", name,
+                        annotation.expected());
+                } else {
+                    LOG.info("TEST METHOD FAILED {}", name, t);
+                }
                 throw t;
             }
-            LOG.info("FINISHED TEST METHOD " + name);
+            LOG.info("FINISHED TEST METHOD {}", name);
         }
     }
 
