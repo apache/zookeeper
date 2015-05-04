@@ -86,6 +86,9 @@ BUGFIXES:
   if the test method is annotated with an expected exception (Chris Nauroth
   via rgs)
 
+  ZOOKEEPER-2124 Allow Zookeeper version string to have underscore '_'
+  (Chris Nauroth via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
