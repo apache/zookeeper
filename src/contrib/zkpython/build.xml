@@ -132,7 +132,7 @@
         <filterchain>
           <replacetokens>
             <token key="final.name" value="${name}" />
-            <token key="version" value="${version}" />
+            <token key="version" value="${rpm.version}" />
             <token key="package.release" value="${package.release}" />
             <token key="package.build.dir" value="${package.build.dir}" />
             <token key="package.prefix" value="${package.prefix}" />
