@@ -1391,7 +1391,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     LOG.error("Error closing file: ", e.getMessage());
                 }
             } else {
-                LOG.error("writeToDisk == true but configFilename == null");
+                LOG.info("writeToDisk == true but configFilename == null");
             }
         }
 
