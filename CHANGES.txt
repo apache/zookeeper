@@ -87,6 +87,8 @@ BUGFIXES:
   ZOOKEEPER-2124 Allow Zookeeper version string to have underscore '_'
   (Chris Nauroth via rgs)
 
+  ZOOKEEPER-2062 RemoveWatchesTest takes forever to run (Chris Nauroth via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
