@@ -129,6 +129,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2176 Unclear error message should be info not error
   (rgs via hdeng)
 
+  ZOOKEEPER-2153 X509 Authentication Documentation
+  (Ian Dimayuga via hdeng)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
