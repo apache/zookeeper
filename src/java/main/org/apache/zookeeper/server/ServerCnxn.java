@@ -96,7 +96,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public abstract void process(WatchedEvent event);
 
-    abstract long getSessionId();
+    public abstract long getSessionId();
 
     abstract void setSessionId(long sessionId);
 

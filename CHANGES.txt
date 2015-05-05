@@ -16,6 +16,8 @@ Backward compatible changes:
 
 BUGFIXES:
 
+  ZOOKEEPER-2062 RemoveWatchesTest takes forever to run (Chris Nauroth via rakeshr)
+
   ZOOKEEPER-2141 ACL cache in DataTree never removes entries (Adam Milne-Smith via camille)
 
   ZOOKEEPER-2375: Prevent multiple initialization of login object in each
