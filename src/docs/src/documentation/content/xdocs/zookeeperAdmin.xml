@@ -1058,10 +1058,10 @@ server.3=zoo3:2888:3888</programlisting>
 
         <variablelist>
           <varlistentry>
-            <term>zookeeper.DigestAuthenticationProvider.superDigest</term>
+            <term>DigestAuthenticationProvider.superDigest</term>
 
             <listitem>
-              <para>(Java system property only: <emphasis
+              <para>(Java system property: <emphasis
               role="bold">zookeeper.DigestAuthenticationProvider.superDigest</emphasis>)</para>
 
               <para>By default this feature is <emphasis
@@ -1090,13 +1090,16 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>zookeeper.client.secure</term>
+            <term>X509AuthenticationProvider.superUser</term>
             <listitem>
-              <para>If you want to connect to server's secure client port, you need to
-                set this property to <emphasis role="bold">true</emphasis> on client.
-                This will connect to server using SSL with specified credentials. Note that
-                you also need to plug-in Netty client.
-              </para>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.X509AuthenticationProvider.superUser</emphasis>)</para>
+
+              <para>The SSL-backed way to enable a ZooKeeper ensemble
+              administrator to access the znode hierarchy as a "super" user.
+              When this parameter is set to an X500 principal name, only an
+              authenticated client with that principal will be able to bypass
+              ACL checking and have full privileges to all znodes.</para>
             </listitem>
           </varlistentry>
 
@@ -1123,6 +1126,43 @@ server.3=zoo3:2888:3888</programlisting>
               <para>Specifies the file path to a JKS containing the remote
                 credentials to be used for SSL connections, and the
                 password to unlock the file.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.authProvider</term>
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.ssl.authProvider</emphasis>)</para>
+
+              <para>Specifies a subclass of <emphasis role="bold">
+              org.apache.zookeeper.auth.X509AuthenticationProvider</emphasis>
+              to use for secure client authentication. This is useful in
+              certificate key infrastructures that do not use JKS. It may be
+              necessary to extend <emphasis role="bold">javax.net.ssl.X509KeyManager
+              </emphasis> and <emphasis role="bold">javax.net.ssl.X509TrustManager
+              to get the desired behavior from the SSL stack. To configure the
+              ZooKeeper server to use the custom provider for authentication,
+              choose a scheme name for the custom AuthenticationProvider and
+              set the property <emphasis role="bold">zookeeper.authProvider.[scheme]
+              </emphasis> to the fully-qualified class name of the custom
+              implementation. This will load the provider into the ProviderRegistry.
+              Then set this property <emphasis role="bold">
+              zookeeper.ssl.authProvider=[scheme]</emphasis> and that provider
+              will be used for secure authentication.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>zookeeper.client.secure</term>
+            <listitem>
+              <para>(Java system property only: <emphasis
+              role="bold">zookeeper.client.secure</emphasis>)</para>
+              <para>If you want to connect to server's secure client port, you need to
+                set this property to <emphasis role="bold">true</emphasis> on client.
+                This will connect to server using SSL with specified credentials. Note that
+                you also need to plug-in Netty client.
+              </para>
             </listitem>
           </varlistentry>
 
