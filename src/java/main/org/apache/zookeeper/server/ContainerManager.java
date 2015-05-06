@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,8 @@ public class ContainerManager {
         this.checkIntervalMs = checkIntervalMs;
         this.maxPerMinute = maxPerMinute;
         timer = new Timer("ContainerManagerTask", true);
+
+        LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d", checkIntervalMs, maxPerMinute));
     }
 
     /**
@@ -99,18 +102,18 @@ public class ContainerManager {
             throws InterruptedException {
         long minIntervalMs = getMinIntervalMs();
         for (String containerPath : getCandidates()) {
-            long startMs = System.currentTimeMillis();
+            long startMs = Time.currentElapsedTime();
 
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
             try {
-                LOG.info("Attempting to delete candidate container: " + containerPath);
+                LOG.info(String.format("Attempting to delete candidate container: %s", containerPath));
                 requestProcessor.processRequest(request);
             } catch (Exception e) {
-                LOG.error("Could not delete container: " + containerPath, e);
+                LOG.error(String.format("Could not delete container: %s" , containerPath), e);
             }
 
-            long elapsedMs = System.currentTimeMillis() - startMs;
+            long elapsedMs = Time.currentElapsedTime() - startMs;
             long waitMs = minIntervalMs - elapsedMs;
             if (waitMs > 0) {
                 Thread.sleep(waitMs);
@@ -128,7 +131,8 @@ public class ContainerManager {
         Set<String> candidates = new HashSet<String>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
-            if ((node != null) && (node.stat.getEphemeralOwner() == DataTree.CONTAINER_EPHEMERAL_OWNER)) { // otherwise, the node changed type on us - ignore it
+            if ((node != null) &&   // otherwise, the node changed type on us - ignore it
+                    (node.stat.getEphemeralOwner() == DataTree.CONTAINER_EPHEMERAL_OWNER)) {
                 if ((node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
                     candidates.add(containerPath);
                 }

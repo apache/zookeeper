@@ -326,8 +326,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             throws BadArgumentsException {
         int lastSlash = path.lastIndexOf('/');
         if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
-            LOG.info("Invalid path " + path + " with session 0x" +
-                    Long.toHexString(sessionId));
+            LOG.info(String.format("Invalid path %s with session 0x%s",
+                    path, Long.toHexString(sessionId)));
             throw new KeeperException.BadArgumentsException(path);
         }
         return path.substring(0, lastSlash);
