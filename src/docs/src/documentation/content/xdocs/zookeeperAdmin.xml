@@ -1140,7 +1140,7 @@ server.3=zoo3:2888:3888</programlisting>
               to use for secure client authentication. This is useful in
               certificate key infrastructures that do not use JKS. It may be
               necessary to extend <emphasis role="bold">javax.net.ssl.X509KeyManager
-              </emphasis> and <emphasis role="bold">javax.net.ssl.X509TrustManager
+              </emphasis> and <emphasis role="bold">javax.net.ssl.X509TrustManager</emphasis>
               to get the desired behavior from the SSL stack. To configure the
               ZooKeeper server to use the custom provider for authentication,
               choose a scheme name for the custom AuthenticationProvider and
