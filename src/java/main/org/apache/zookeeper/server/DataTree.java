@@ -885,6 +885,9 @@ public class DataTree {
                             case OpCode.create:
                                 record = new CreateTxn();
                                 break;
+                            case OpCode.createContainer:
+                                record = new CreateContainerTxn();
+                                break;
                             case OpCode.delete:
                             case OpCode.deleteContainer:
                                 record = new DeleteTxn();

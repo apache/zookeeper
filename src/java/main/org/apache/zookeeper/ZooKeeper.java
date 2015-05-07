@@ -1156,17 +1156,29 @@ public class ZooKeeper {
 
         final String serverPath = prependChroot(clientPath);
 
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.create);
-        CreateRequest request = new CreateRequest();
-        CreateResponse response = new CreateResponse();
-        request.setData(data);
-        request.setFlags(createMode.toFlag());
-        request.setPath(serverPath);
         if (acl != null && acl.size() == 0) {
             throw new KeeperException.InvalidACLException();
         }
-        request.setAcl(acl);
+
+        RequestHeader h = new RequestHeader();
+        Record request;
+        if ( createMode.isContainer() ) {
+            h.setType(ZooDefs.OpCode.createContainer);
+            CreateContainerRequest createRequest = new CreateContainerRequest();
+            createRequest.setData(data);
+            createRequest.setPath(serverPath);
+            createRequest.setAcl(acl);
+            request = createRequest;
+        } else {
+            h.setType(ZooDefs.OpCode.create);
+            CreateRequest createRequest = new CreateRequest();
+            createRequest.setData(data);
+            createRequest.setFlags(createMode.toFlag());
+            createRequest.setPath(serverPath);
+            createRequest.setAcl(acl);
+            request = createRequest;
+        }
+        CreateResponse response = new CreateResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
@@ -1244,17 +1256,29 @@ public class ZooKeeper {
 
         final String serverPath = prependChroot(clientPath);
 
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.create2);
-        Create2Request request = new Create2Request();
-        Create2Response response = new Create2Response();
-        request.setData(data);
-        request.setFlags(createMode.toFlag());
-        request.setPath(serverPath);
         if (acl != null && acl.size() == 0) {
             throw new KeeperException.InvalidACLException();
         }
-        request.setAcl(acl);
+
+        RequestHeader h = new RequestHeader();
+        Record request;
+        if ( createMode.isContainer() ) {
+            h.setType(ZooDefs.OpCode.createContainer);
+            CreateContainerRequest createRequest = new CreateContainerRequest();
+            createRequest.setData(data);
+            createRequest.setPath(serverPath);
+            createRequest.setAcl(acl);
+            request = createRequest;
+        } else {
+            h.setType(ZooDefs.OpCode.create2);
+            Create2Request createRequest = new Create2Request();
+            createRequest.setData(data);
+            createRequest.setFlags(createMode.toFlag());
+            createRequest.setPath(serverPath);
+            createRequest.setAcl(acl);
+            request = createRequest;
+        }
+        Create2Response response = new Create2Response();
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
@@ -1284,14 +1308,25 @@ public class ZooKeeper {
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.create);
-        CreateRequest request = new CreateRequest();
+        Record request;
+        if ( createMode.isContainer() ) {
+            h.setType(ZooDefs.OpCode.createContainer);
+            CreateContainerRequest createRequest = new CreateContainerRequest();
+            createRequest.setData(data);
+            createRequest.setPath(serverPath);
+            createRequest.setAcl(acl);
+            request = createRequest;
+        } else {
+            h.setType(ZooDefs.OpCode.create);
+            CreateRequest createRequest = new CreateRequest();
+            createRequest.setData(data);
+            createRequest.setFlags(createMode.toFlag());
+            createRequest.setPath(serverPath);
+            createRequest.setAcl(acl);
+            request = createRequest;
+        }
         CreateResponse response = new CreateResponse();
         ReplyHeader r = new ReplyHeader();
-        request.setData(data);
-        request.setFlags(createMode.toFlag());
-        request.setPath(serverPath);
-        request.setAcl(acl);
         cnxn.queuePacket(h, r, request, response, cb, clientPath,
                 serverPath, ctx, null);
     }
@@ -1310,112 +1345,27 @@ public class ZooKeeper {
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.create2);
-        Create2Request request = new Create2Request();
-        Create2Response response = new Create2Response();
+        Record request;
+        if ( createMode.isContainer() ) {
+            h.setType(ZooDefs.OpCode.createContainer);
+            CreateContainerRequest createRequest = new CreateContainerRequest();
+            createRequest.setData(data);
+            createRequest.setPath(serverPath);
+            createRequest.setAcl(acl);
+            request = createRequest;
+        } else {
+            h.setType(ZooDefs.OpCode.create2);
+            Create2Request createRequest = new Create2Request();
+            createRequest.setData(data);
+            createRequest.setFlags(createMode.toFlag());
+            createRequest.setPath(serverPath);
+            createRequest.setAcl(acl);
+            request = createRequest;
+        }
         ReplyHeader r = new ReplyHeader();
-        request.setData(data);
-        request.setFlags(createMode.toFlag());
-        request.setPath(serverPath);
-        request.setAcl(acl);
+        Create2Response response = new Create2Response();
         cnxn.queuePacket(h, r, request, response, cb, clientPath,
                 serverPath, ctx, null);
-    }
-
-    /**
-     * Create a container node with the given path. The
-     * node data will be the given data and node acl will be the given acl. Container
-     * nodes are special purpose nodes useful for recipes such as leader, lock, etc. When
-     * the last child of a container is deleted, the container becomes a candidate to be
-     * deleted by the server at some point in the future. Given this property, you
-     * should be prepared to get {@link org.apache.zookeeper.KeeperException.NoNodeException}
-     * when creating children inside of this container node.
-     * <p>
-     * If a node with the same actual path already exists in the ZooKeeper, a
-     * KeeperException with error code KeeperException.NodeExists will be
-     * thrown.
-     * <p>
-     * If the parent node does not exist in the ZooKeeper, a KeeperException
-     * with error code KeeperException.NoNode will be thrown.
-     * <p>
-     * This operation, if successful, will trigger all the watches left on the
-     * node of the given path by exists and getData API calls, and the watches
-     * left on the parent node by getChildren API calls.
-     * <p>
-     * If a node is created successfully, the ZooKeeper server will trigger the
-     * watches on the path left by exists calls, and the watches on the parent
-     * of the node by getChildren calls.
-     * <p>
-     * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
-     * Arrays larger than this will cause a KeeperExecption to be thrown.
-     *
-     * @param path
-     *                the path for the node
-     * @param data
-     *                the initial data for the node
-     * @param acl
-     *                the acl for the node
-     * @throws KeeperException
-     * @throws InterruptedException
-     */
-    public void createContainer(final String path, byte data[], List<ACL> acl)
-            throws KeeperException, InterruptedException {
-        createContainerInernal(path, data, acl, null, null, null);
-    }
-
-    /**
-     * Create a container node with the given path. The
-     * node data will be the given data and node acl will be the given acl. Container
-     * nodes are special purpose nodes useful for recipes such as leader, lock, etc. When
-     * the last child of a container is deleted, the container becomes a candidate to be
-     * deleted by the server at some point in the future. Given this property, you
-     * should be prepared to get {@link org.apache.zookeeper.KeeperException.NoNodeException}
-     * when creating children inside of this container node.
-     * <p>
-     * If a node with the same actual path already exists in the ZooKeeper, a
-     * KeeperException with error code KeeperException.NodeExists will be
-     * thrown.
-     * <p>
-     * If the parent node does not exist in the ZooKeeper, a KeeperException
-     * with error code KeeperException.NoNode will be thrown.
-     * <p>
-     * This operation, if successful, will trigger all the watches left on the
-     * node of the given path by exists and getData API calls, and the watches
-     * left on the parent node by getChildren API calls.
-     * <p>
-     * If a node is created successfully, the ZooKeeper server will trigger the
-     * watches on the path left by exists calls, and the watches on the parent
-     * of the node by getChildren calls.
-     * <p>
-     * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
-     * Arrays larger than this will cause a KeeperExecption to be thrown.
-     *
-     * @param path
-     *                the path for the node
-     * @param data
-     *                the initial data for the node
-     * @param acl
-     *                the acl for the node
-     * @param stat
-     *                The output Stat object.
-     * @throws KeeperException
-     * @throws InterruptedException
-     */
-    public void createContainer(final String path, byte data[], List<ACL> acl,
-                         Stat stat)
-            throws KeeperException, InterruptedException {
-        createContainerInernal(path, data, acl, stat, null, null);
-    }
-
-    /**
-     * The asychronous version of createContainer
-     *
-     * @see #createContainer(String, byte[], List)
-     */
-    public void createContainer(final String path, byte data[], List<ACL> acl,
-                       Create2Callback cb, Object ctx)
-            throws KeeperException, InterruptedException {
-        createContainerInernal(path, data, acl, null, cb, ctx);
     }
 
     /**
@@ -1573,37 +1523,6 @@ public class ZooKeeper {
             }
         }
         return op;
-    }
-
-    private void createContainerInernal(final String clientPath, byte data[], List<ACL> acl,
-                                        Stat stat, Create2Callback cb, Object ctx)
-            throws KeeperException, InterruptedException {
-        PathUtils.validatePath(clientPath, false);
-
-        final String serverPath = prependChroot(clientPath);
-
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.createContainer);
-        CreateContainerRequest request = new CreateContainerRequest();
-        Create2Response response = new Create2Response();
-        request.setData(data);
-        request.setPath(serverPath);
-        request.setAcl(acl);
-        if (cb != null) {
-            ReplyHeader r = new ReplyHeader();
-            cnxn.queuePacket(h, r, request, response, cb, clientPath,
-                    serverPath, ctx, null);
-
-            return;
-        }
-        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
-        if (r.getErr() != 0) {
-            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
-                    clientPath);
-        }
-        if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
-        }
     }
 
     protected void multiInternal(MultiTransactionRecord request, MultiCallback cb, Object ctx) {

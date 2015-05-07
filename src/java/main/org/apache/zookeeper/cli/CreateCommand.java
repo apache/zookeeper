@@ -36,10 +36,11 @@ public class CreateCommand extends CliCommand {
     {
         options.addOption(new Option("e", false, "ephemeral"));
         options.addOption(new Option("s", false, "sequential"));
+        options.addOption(new Option("c", false, "container"));
     }
 
     public CreateCommand() {
-        super("create", "[-s] [-e] path [data] [acl]");
+        super("create", "[-s] [-e] [-c] path [data] [acl]");
     }
 
 
@@ -58,12 +59,22 @@ public class CreateCommand extends CliCommand {
     @Override
     public boolean exec() throws KeeperException, InterruptedException {
         CreateMode flags = CreateMode.PERSISTENT;
-        if(cl.hasOption("e") && cl.hasOption("s")) {
+        boolean hasE = cl.hasOption("e");
+        boolean hasS = cl.hasOption("s");
+        boolean hasC = cl.hasOption("c");
+        if ( hasC && (hasE || hasS) ) {
+            err.println("-c cannot be combined with -s or -e. Containers cannot be ephemeral or sequential.");
+            return false;
+        }
+
+        if(hasE && hasS) {
             flags = CreateMode.EPHEMERAL_SEQUENTIAL;
-        } else if (cl.hasOption("e")) {
+        } else if (hasE) {
             flags = CreateMode.EPHEMERAL;
-        } else if (cl.hasOption("s")) {
+        } else if (hasS) {
             flags = CreateMode.PERSISTENT_SEQUENTIAL;
+        } else if (hasC) {
+            flags = CreateMode.CONTAINER;
         }
         String path = args[1];
         byte[] data = null;

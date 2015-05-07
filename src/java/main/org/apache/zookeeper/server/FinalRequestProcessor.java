@@ -197,6 +197,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                             subResult = new CreateResult(subTxnResult.path);
                             break;
                         case OpCode.create2:
+                        case OpCode.createContainer:
                             subResult = new CreateResult(subTxnResult.path, subTxnResult.stat);
                             break;
                         case OpCode.delete:
