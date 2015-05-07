@@ -93,16 +93,27 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test
+    public void testMultiWithContainerSimple()
+            throws IOException, KeeperException, InterruptedException {
+        Op createContainer = Op.create("/foo", new byte[0],
+                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
+        zk.multi(Collections.singletonList(createContainer));
+
+        DataTree dataTree = serverFactory.getZooKeeperServer().getZKDatabase().getDataTree();
+        Assert.assertEquals(dataTree.getContainers().size(), 1);
+    }
+
+    @Test
     public void testMultiWithContainer()
             throws IOException, KeeperException, InterruptedException {
-/*
-TODO
-
         Op createContainer = Op.create("/foo", new byte[0],
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         Op createChild = Op.create("/foo/bar", new byte[0],
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.multi(Arrays.asList(createContainer, createChild));
+
+        DataTree dataTree = serverFactory.getZooKeeperServer().getZKDatabase().getDataTree();
+        Assert.assertEquals(dataTree.getContainers().size(), 1);
 
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
@@ -113,7 +124,19 @@ TODO
         Thread.sleep(1000);
 
         Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
-*/
+
+        createContainer = Op.create("/foo", new byte[0],
+                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
+        createChild = Op.create("/foo/bar", new byte[0],
+                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        Op deleteChild = Op.delete("/foo/bar", -1);
+        zk.multi(Arrays.asList(createContainer, createChild, deleteChild));
+
+        containerManager.checkContainers();
+
+        Thread.sleep(1000);
+
+        Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
     }
 
     @Test

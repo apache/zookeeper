@@ -20,10 +20,7 @@ package org.apache.zookeeper;
 import org.apache.jute.Record;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.proto.CheckVersionRequest;
-import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.proto.DeleteRequest;
-import org.apache.zookeeper.proto.SetDataRequest;
+import org.apache.zookeeper.proto.*;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -183,14 +180,18 @@ public abstract class Op {
         private int flags;
 
         private Create(String path, byte[] data, List<ACL> acl, int flags) {
-            super(ZooDefs.OpCode.create, path);
+            super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT)), path);
             this.data = data;
             this.acl = acl;
             this.flags = flags;
         }
 
+        private static int getOpcode(CreateMode createMode) {
+            return createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create;
+        }
+
         private Create(String path, byte[] data, List<ACL> acl, CreateMode createMode) {
-            super(ZooDefs.OpCode.create, path);
+            super(getOpcode(createMode), path);
             this.data = data;
             this.acl = acl;
             this.flags = createMode.toFlag();
@@ -227,6 +228,9 @@ public abstract class Op {
 
         @Override
         public Record toRequestRecord() {
+            if ( CreateMode.fromFlag(flags, CreateMode.PERSISTENT).isContainer() ) {
+                return new CreateContainerRequest(getPath(), data, acl);
+            }
             return new CreateRequest(getPath(), data, acl, flags);
         }
 
