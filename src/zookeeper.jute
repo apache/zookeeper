@@ -133,11 +133,6 @@ module org.apache.zookeeper.proto {
         vector<org.apache.zookeeper.data.ACL> acl;
         int flags;
     }
-    class CreateContainerRequest {
-        ustring path;
-        buffer data;
-        vector<org.apache.zookeeper.data.ACL> acl;
-    }
     class DeleteRequest {
         ustring path;
         int version;

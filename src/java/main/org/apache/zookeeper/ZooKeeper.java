@@ -18,6 +18,17 @@
 
 package org.apache.zookeeper;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.jute.Record;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
@@ -44,7 +55,6 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Request;
 import org.apache.zookeeper.proto.Create2Response;
-import org.apache.zookeeper.proto.CreateContainerRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.DeleteRequest;
@@ -70,17 +80,6 @@ import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -1195,29 +1194,17 @@ public class ZooKeeper {
 
         final String serverPath = prependChroot(clientPath);
 
+        RequestHeader h = new RequestHeader();
+        h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create);
+        CreateRequest request = new CreateRequest();
+        CreateResponse response = new CreateResponse();
+        request.setData(data);
+        request.setFlags(createMode.toFlag());
+        request.setPath(serverPath);
         if (acl != null && acl.size() == 0) {
             throw new KeeperException.InvalidACLException();
         }
-
-        RequestHeader h = new RequestHeader();
-        Record request;
-        if ( createMode.isContainer() ) {
-            h.setType(ZooDefs.OpCode.createContainer);
-            CreateContainerRequest createRequest = new CreateContainerRequest();
-            createRequest.setData(data);
-            createRequest.setPath(serverPath);
-            createRequest.setAcl(acl);
-            request = createRequest;
-        } else {
-            h.setType(ZooDefs.OpCode.create);
-            CreateRequest createRequest = new CreateRequest();
-            createRequest.setData(data);
-            createRequest.setFlags(createMode.toFlag());
-            createRequest.setPath(serverPath);
-            createRequest.setAcl(acl);
-            request = createRequest;
-        }
-        CreateResponse response = new CreateResponse();
+        request.setAcl(acl);
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
@@ -1295,29 +1282,17 @@ public class ZooKeeper {
 
         final String serverPath = prependChroot(clientPath);
 
+        RequestHeader h = new RequestHeader();
+        h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create2);
+        Create2Request request = new Create2Request();
+        Create2Response response = new Create2Response();
+        request.setData(data);
+        request.setFlags(createMode.toFlag());
+        request.setPath(serverPath);
         if (acl != null && acl.size() == 0) {
             throw new KeeperException.InvalidACLException();
         }
-
-        RequestHeader h = new RequestHeader();
-        Record request;
-        if ( createMode.isContainer() ) {
-            h.setType(ZooDefs.OpCode.createContainer);
-            CreateContainerRequest createRequest = new CreateContainerRequest();
-            createRequest.setData(data);
-            createRequest.setPath(serverPath);
-            createRequest.setAcl(acl);
-            request = createRequest;
-        } else {
-            h.setType(ZooDefs.OpCode.create2);
-            Create2Request createRequest = new Create2Request();
-            createRequest.setData(data);
-            createRequest.setFlags(createMode.toFlag());
-            createRequest.setPath(serverPath);
-            createRequest.setAcl(acl);
-            request = createRequest;
-        }
-        Create2Response response = new Create2Response();
+        request.setAcl(acl);
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
@@ -1347,25 +1322,14 @@ public class ZooKeeper {
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
-        Record request;
-        if ( createMode.isContainer() ) {
-            h.setType(ZooDefs.OpCode.createContainer);
-            CreateContainerRequest createRequest = new CreateContainerRequest();
-            createRequest.setData(data);
-            createRequest.setPath(serverPath);
-            createRequest.setAcl(acl);
-            request = createRequest;
-        } else {
-            h.setType(ZooDefs.OpCode.create);
-            CreateRequest createRequest = new CreateRequest();
-            createRequest.setData(data);
-            createRequest.setFlags(createMode.toFlag());
-            createRequest.setPath(serverPath);
-            createRequest.setAcl(acl);
-            request = createRequest;
-        }
+        h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create);
+        CreateRequest request = new CreateRequest();
         CreateResponse response = new CreateResponse();
         ReplyHeader r = new ReplyHeader();
+        request.setData(data);
+        request.setFlags(createMode.toFlag());
+        request.setPath(serverPath);
+        request.setAcl(acl);
         cnxn.queuePacket(h, r, request, response, cb, clientPath,
                 serverPath, ctx, null);
     }
@@ -1384,25 +1348,14 @@ public class ZooKeeper {
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
-        Record request;
-        if ( createMode.isContainer() ) {
-            h.setType(ZooDefs.OpCode.createContainer);
-            CreateContainerRequest createRequest = new CreateContainerRequest();
-            createRequest.setData(data);
-            createRequest.setPath(serverPath);
-            createRequest.setAcl(acl);
-            request = createRequest;
-        } else {
-            h.setType(ZooDefs.OpCode.create2);
-            Create2Request createRequest = new Create2Request();
-            createRequest.setData(data);
-            createRequest.setFlags(createMode.toFlag());
-            createRequest.setPath(serverPath);
-            createRequest.setAcl(acl);
-            request = createRequest;
-        }
-        ReplyHeader r = new ReplyHeader();
+        h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create2);
+        Create2Request request = new Create2Request();
         Create2Response response = new Create2Response();
+        ReplyHeader r = new ReplyHeader();
+        request.setData(data);
+        request.setFlags(createMode.toFlag());
+        request.setPath(serverPath);
+        request.setAcl(acl);
         cnxn.queuePacket(h, r, request, response, cb, clientPath,
                 serverPath, ctx, null);
     }

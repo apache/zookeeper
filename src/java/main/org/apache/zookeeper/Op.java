@@ -232,9 +232,6 @@ public abstract class Op {
 
         @Override
         public Record toRequestRecord() {
-            if ( CreateMode.fromFlag(flags, CreateMode.PERSISTENT).isContainer() ) {
-                return new CreateContainerRequest(getPath(), data, acl);
-            }
             return new CreateRequest(getPath(), data, acl, flags);
         }
 

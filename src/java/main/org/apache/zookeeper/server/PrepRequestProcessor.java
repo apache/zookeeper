@@ -36,7 +36,6 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.proto.Create2Request;
-import org.apache.zookeeper.proto.CreateContainerRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.ReconfigRequest;
@@ -470,7 +469,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             }
             case OpCode.createContainer: {
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                CreateContainerRequest createContainerRequest = (CreateContainerRequest)record;
+                CreateRequest createContainerRequest = (CreateRequest)record;   // relying on serial equality between CreateRequest and Create2Request
                 if (deserialize) {
                     ByteBufferInputStream.byteBuffer2Record(request.request, createContainerRequest);
                 }
@@ -781,6 +780,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
         try {
             switch (request.type) {
+            case OpCode.createContainer:
             case OpCode.create:
                 CreateRequest createRequest = new CreateRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, createRequest, true);
@@ -788,10 +788,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.create2:
                 Create2Request create2Request = new Create2Request();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request, true);
-                break;
-            case OpCode.createContainer:
-                CreateContainerRequest createContainerRequest = new CreateContainerRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, createContainerRequest, true);
                 break;
             case OpCode.deleteContainer:
             case OpCode.delete:

@@ -100,21 +100,17 @@ public class MultiTransactionRecord implements Record, Iterable<Op> {
 
         while (!h.getDone()) {
             switch (h.getType()) {
-               case ZooDefs.OpCode.create:
+                case ZooDefs.OpCode.create:
+                case ZooDefs.OpCode.createContainer:
                     CreateRequest cr = new CreateRequest();
                     cr.deserialize(archive, tag);
                     add(Op.create(cr.getPath(), cr.getData(), cr.getAcl(), cr.getFlags()));
                     break;
-               case ZooDefs.OpCode.create2:
+                case ZooDefs.OpCode.create2:
                    Create2Request cr2 = new Create2Request();
                    cr2.deserialize(archive, tag);
                    add(Op.create(cr2.getPath(), cr2.getData(), cr2.getAcl(), cr2.getFlags()));
                    break;
-                case ZooDefs.OpCode.createContainer:
-                    CreateContainerRequest ccr = new CreateContainerRequest();
-                    ccr.deserialize(archive, tag);
-                    add(Op.create(ccr.getPath(), ccr.getData(), ccr.getAcl(), CreateMode.CONTAINER.toFlag()));
-                    break;
                 case ZooDefs.OpCode.delete:
                     DeleteRequest dr = new DeleteRequest();
                     dr.deserialize(archive, tag);
