@@ -45,14 +45,14 @@ public class CreateContainerTest extends ClientBase {
         zk.close();
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testCreate()
             throws IOException, KeeperException, InterruptedException {
         createNoStatVerifyResult("/foo");
         createNoStatVerifyResult("/foo/child");
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testCreateWithStat()
             throws IOException, KeeperException, InterruptedException {
         Stat stat = createWithStatVerifyResult("/foo");
@@ -62,7 +62,7 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @SuppressWarnings("ConstantConditions")
-    @Test
+    @Test(timeout = 30000)
     public void testCreateWithNullStat()
             throws IOException, KeeperException, InterruptedException {
         final String name = "/foo";
@@ -76,7 +76,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertNotNull(zk.exists(name, false));
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSimpleDeletion()
             throws IOException, KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
@@ -92,7 +92,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testMultiWithContainerSimple()
             throws IOException, KeeperException, InterruptedException {
         Op createContainer = Op.create("/foo", new byte[0],
@@ -103,7 +103,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertEquals(dataTree.getContainers().size(), 1);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testMultiWithContainer()
             throws IOException, KeeperException, InterruptedException {
         Op createContainer = Op.create("/foo", new byte[0],
@@ -139,7 +139,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSimpleDeletionAsync()
             throws IOException, KeeperException, InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
@@ -164,7 +164,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testCascadingDeletion()
             throws IOException, KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
@@ -184,7 +184,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testFalseEmpty()
             throws IOException, KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
@@ -203,7 +203,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertNotNull("Container should have not been deleted", zk.exists("/foo", false));
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testMaxPerMinute()
             throws IOException, KeeperException, InterruptedException {
         final BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
