@@ -21,7 +21,6 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.proto.CheckVersionRequest;
-import org.apache.zookeeper.proto.CreateContainerRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
