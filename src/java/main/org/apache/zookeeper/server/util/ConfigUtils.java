@@ -53,7 +53,7 @@ public class ConfigUtils {
              }
              if (!first) sb.append(",");
              else first = false;
-             sb.append(qs.clientAddr.getHostName() + ":" + qs.clientAddr.getPort());
+             sb.append(qs.clientAddr.getHostString() + ":" + qs.clientAddr.getPort());
         }
         return version + " " + sb.toString();
     }

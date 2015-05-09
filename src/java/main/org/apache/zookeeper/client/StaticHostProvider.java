@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.zookeeper.common.HostNameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,14 +110,11 @@ public final class StaticHostProvider implements HostProvider {
         for (InetSocketAddress address : serverAddresses) {
             try {
                 InetAddress ia = address.getAddress();
-                String addr = (ia != null) ? ia.getHostAddress() :
-                                             address.getHostName();
+                String addr = (ia != null) ? ia.getHostAddress() : address.getHostString();
                 InetAddress resolvedAddresses[] = InetAddress.getAllByName(addr);
                 for (InetAddress resolvedAddress : resolvedAddresses) {
-                    tmpList.add(new InetSocketAddress(InetAddress.getByAddress(
-                                    HostNameUtils.getHostString(address),
-                                    resolvedAddress.getAddress()),
-                                    address.getPort()));
+                    InetAddress taddr = InetAddress.getByAddress(address.getHostString(), resolvedAddress.getAddress());
+                    tmpList.add(new InetSocketAddress(taddr, address.getPort()));
                 }
             } catch (UnknownHostException ex) {
                 LOG.warn("No IP address found for server: {}", address, ex);
@@ -188,7 +184,7 @@ public final class StaticHostProvider implements HostProvider {
                     && ((addr.getAddress() != null
                             && myServer.getAddress() != null && addr
                             .getAddress().equals(myServer.getAddress())) || addr
-                            .getHostName().equals(myServer.getHostName()))) {
+                            .getHostString().equals(myServer.getHostString()))) {
                 myServerInNewConfig = true;
                 break;
             }

@@ -181,7 +181,7 @@ public class QuorumCnxManager {
             // represents protocol version (in other words - message type)
             dout.writeLong(0xffff0000);              
             dout.writeLong(self.getId());
-            String addr = self.getElectionAddress().getHostName() + ":" + self.getElectionAddress().getPort();
+            String addr = self.getElectionAddress().getHostString() + ":" + self.getElectionAddress().getPort();
             byte[] addr_bytes = addr.getBytes();
             dout.writeInt(addr_bytes.length);
             dout.write(addr_bytes);

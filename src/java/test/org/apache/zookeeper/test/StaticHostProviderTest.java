@@ -497,7 +497,7 @@ public class StaticHostProviderTest extends ZKTestCase {
             assertTrue(!next.isUnresolved());
             assertTrue(!next.toString().startsWith("/"));
             // Do NOT trigger the reverse name service lookup.
-            String hostname = next.getHostName();
+            String hostname = next.getHostString();
             // In this case, the hostname equals literal IP address.
             hostname.equals(next.getAddress().getHostAddress());
         }
