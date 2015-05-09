@@ -89,6 +89,8 @@ BUGFIXES:
 
   ZOOKEEPER-2062 RemoveWatchesTest takes forever to run (Chris Nauroth via rakeshr)
 
+  ZOOKEEPER-2171 avoid reverse lookups in QuorumCnxManager (rgs via michim)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 

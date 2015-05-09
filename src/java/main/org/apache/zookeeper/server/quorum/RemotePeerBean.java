@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.common.HostNameUtils;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
 /**
@@ -44,17 +43,15 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
     }
 
     public String getQuorumAddress() {
-        return peer.addr.getHostName()+":"+peer.addr.getPort();
+        return peer.addr.getHostString()+":"+peer.addr.getPort();
     }
 
     public String getElectionAddress() {
-        return HostNameUtils.getHostString(peer.electionAddr) + ":"
-                + peer.electionAddr.getPort();
+        return peer.electionAddr.getHostString() + ":" + peer.electionAddr.getPort();
     }
 
     public String getClientAddress() {
-        return HostNameUtils.getHostString(peer.clientAddr) + ":"
-                + peer.clientAddr.getPort();
+        return peer.clientAddr.getHostString() + ":" + peer.clientAddr.getPort();
     }
 
     public String getLearnerType() {
