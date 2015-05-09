@@ -244,7 +244,7 @@ public class CnxManagerTest extends ZKTestCase {
         DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
         dout.writeLong(0xffff0000);
         dout.writeLong(new Long(2));
-        String addr = otherAddr.getHostName()+ ":" + otherAddr.getPort();
+        String addr = otherAddr.getHostString()+ ":" + otherAddr.getPort();
         byte[] addr_bytes = addr.getBytes();
         dout.writeInt(addr_bytes.length);
         dout.write(addr_bytes);
