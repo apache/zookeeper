@@ -25,7 +25,7 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ClientRetry extends ClientBase {
+public class ClientRetryTest extends ClientBase {
 
     @Override
     public void setUp() throws Exception {
@@ -58,6 +58,7 @@ public class ClientRetry extends ClientBase {
                 Assert.assertSame(s1,States.CONNECTED);
                 Assert.assertSame(s2,States.CONNECTING);
                 cdw1.reset();
+                zk.close();
                 cdw1.waitForDisconnected(CONNECTION_TIMEOUT);
                 cdw2.waitForConnected(CONNECTION_TIMEOUT);
                 Assert.assertSame(zk2.getState(),States.CONNECTED);
