@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory;
 
 import junit.framework.TestCase;
 
-public class WatchEventWhenAutoReset extends TestCase {
+public class WatchEventWhenAutoResetTest extends TestCase {
     protected static final Logger LOG = LoggerFactory
-            .getLogger(WatchEventWhenAutoReset.class);
+            .getLogger(WatchEventWhenAutoResetTest.class);
 
     // waiting time for expected condition
     private static final int TIMEOUT = 30000;

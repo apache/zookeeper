@@ -37,7 +37,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ReconfigFailureCases extends QuorumPeerTestBase {
+public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
 
     private QuorumUtil qu;
 
