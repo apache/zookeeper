@@ -96,6 +96,9 @@ BUGFIXES:
   ZOOKEEPER-2186 QuorumCnxManager#receiveConnection may crash with random input
   (rgs via michim)
 
+  ZOOKEEPER-2190 In StandaloneDisabledTest, testReconfig() shouldn't take
+  leaving servers as joining servers (Hongchao Deng via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
