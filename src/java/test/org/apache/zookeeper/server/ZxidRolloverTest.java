@@ -55,6 +55,7 @@ public class ZxidRolloverTest extends TestCase {
     @Override
     protected void setUp() throws Exception {
         LOG.info("STARTING " + getName());
+        System.setProperty("zookeeper.admin.enableServer", "false");
 
         // set the snap count to something low so that we force log rollover
         // and verify that is working as part of the epoch rollover.

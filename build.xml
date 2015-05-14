@@ -84,6 +84,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="test.timeout" value="900000" />
     <property name="test.junit.output.format" value="plain" />
     <property name="test.junit.fork.mode" value="perTest" />
+    <property name="test.junit.threads" value="8" />
     <property name="test.junit.printsummary" value="yes" />
     <property name="test.junit.haltonfailure" value="no" />
     <property name="config.dir" value="${src.dir}/java/test/config" />
@@ -1314,6 +1315,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
                haltonfailure="${test.junit.haltonfailure}"
                fork="yes"
                forkmode="${test.junit.fork.mode}"
+               threads="${test.junit.threads}"
                maxmemory="${test.junit.maxmem}"
                dir="${test.java.build.dir}" timeout="${test.timeout}"
                errorProperty="tests.failed" failureProperty="tests.failed">
@@ -1327,6 +1329,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
                with junit fork mode set to "once")-->
           <sysproperty key="zookeeper.DigestAuthenticationProvider.superDigest"
                        value="super:D/InIHSb7yEEbrWz8b9l71RjZJU=" />
+          <sysproperty key="test.junit.threads" value="${test.junit.threads}" />
           <classpath refid="test.java.classpath"/>
           <classpath>
             <pathelement path="${test.java.classes}" />

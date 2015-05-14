@@ -87,6 +87,7 @@ public class CommitProcessorTest {
         System.setProperty(
             CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS,
             Integer.toString(numCommitThreads));
+        System.setProperty("zookeeper.admin.enableServer", "false");
         tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new TestZooKeeperServer(tmpDir, tmpDir, 4000);

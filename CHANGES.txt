@@ -139,6 +139,8 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2171 avoid reverse lookups in QuorumCnxManager (rgs via michim)
 
+  ZOOKEEPER-2183 Concurrent Testing Processes and Port Assignments (Chris Nauroth via hdeng)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
