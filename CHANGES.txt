@@ -93,6 +93,9 @@ BUGFIXES:
 
   ZOOKEEPER-2182 Several test suites are not running during pre-commit, because their names do not end with "Test". (Chris Nauroth via hdeng)
 
+  ZOOKEEPER-2186 QuorumCnxManager#receiveConnection may crash with random input
+  (rgs via michim)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
