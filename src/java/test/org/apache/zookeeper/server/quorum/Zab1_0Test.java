@@ -64,6 +64,7 @@ import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
@@ -76,6 +77,11 @@ public class Zab1_0Test {
 
     private static final File testData = new File(
             System.getProperty("test.data.dir", "build/test/data"));
+
+    @Before
+    public void setUp() {
+        System.setProperty("zookeeper.admin.enableServer", "false");
+    }
 
     private static final class LeadThread extends Thread {
         private final Leader leader;

@@ -125,8 +125,12 @@ IMPROVEMENTS:
   ZOOKEEPER-2153 X509 Authentication Documentation
   (Ian Dimayuga via hdeng)
 
+<<<<<<< HEAD
   ZOOKEEPER-2186 QuorumCnxManager#receiveConnection may crash with random input
   (rgs via michim)
+=======
+  ZOOKEEPER-2183 Concurrent Testing Processes and Port Assignments (Chris Nauroth via hdeng)
+>>>>>>> ZOOKEEPER-2183 Concurrent Testing Processes and Port Assignments (Chris Nauroth via hdeng)
 
 Release 3.5.0 - 8/4/2014
 

@@ -54,7 +54,6 @@ import org.slf4j.LoggerFactory;
 public class TruncateTest extends ZKTestCase {
 	private static final Logger LOG = LoggerFactory.getLogger(TruncateTest.class);
     File dataDir1, dataDir2, dataDir3;
-    final int baseHostPort = PortAssignment.unique();
     
     @Before
     public void setUp() throws IOException {
@@ -155,7 +154,7 @@ public class TruncateTest extends ZKTestCase {
     @Test
     public void testTruncate() throws IOException, InterruptedException, KeeperException {
         // Prime the server that is going to come in late with 50 txns
-        String hostPort = "127.0.0.1:" + baseHostPort;
+        String hostPort = "127.0.0.1:" + PortAssignment.unique();
         int maxCnxns = 100;
         ServerCnxnFactory factory = ClientBase.createNewServerInstance(null,
                 hostPort, maxCnxns);
@@ -191,21 +190,25 @@ public class TruncateTest extends ZKTestCase {
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
-        int port1 = baseHostPort+1;
-        int port2 = baseHostPort+2;
-        int port3 = baseHostPort+3;
+
+        int port1 = PortAssignment.unique();
+        int port2 = PortAssignment.unique();
+        int port3 = PortAssignment.unique();
         
         // Start up two of the quorum and add 10 txns
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
-        peers.put(Long.valueOf(1), new QuorumServer(1, new InetSocketAddress("127.0.0.1", port1 + 1000),
-        		new InetSocketAddress("127.0.0.1", port1 + 2000),
-        		new InetSocketAddress("127.0.0.1", port1 + 3000)));
-        peers.put(Long.valueOf(2), new QuorumServer(2, new InetSocketAddress("127.0.0.1", port2 + 1000),
-        		new InetSocketAddress("127.0.0.1", port2 + 2000),
-        		new InetSocketAddress("127.0.0.1", port2 + 3000)));
-        peers.put(Long.valueOf(3), new QuorumServer(3, new InetSocketAddress("127.0.0.1", port3 + 1000),
-        		new InetSocketAddress("127.0.0.1", port3 + 2000),
-        		new InetSocketAddress("127.0.0.1", port3 + 3000)));
+        peers.put(Long.valueOf(1), new QuorumServer(1,
+                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                       new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+        peers.put(Long.valueOf(2), new QuorumServer(2,
+                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                       new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+        peers.put(Long.valueOf(3), new QuorumServer(3,
+                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                       new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
 
         QuorumPeer s2 = new QuorumPeer(peers, dataDir2, dataDir2, port2, 0, 2, tickTime, initLimit, syncLimit);
         s2.start();
