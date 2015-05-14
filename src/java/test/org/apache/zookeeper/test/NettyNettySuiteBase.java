@@ -38,6 +38,7 @@ public class NettyNettySuiteBase {
                 NettyServerCnxnFactory.class.getName());
         System.setProperty(ZooKeeper.ZOOKEEPER_CLIENT_CNXN_SOCKET,
                 ClientCnxnSocketNetty.class.getName());
+        System.setProperty("zookeeper.admin.enableServer", "false");
     }
 
     @AfterClass
