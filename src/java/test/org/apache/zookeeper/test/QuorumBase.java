@@ -138,28 +138,28 @@ public class QuorumBase extends ClientBase {
         int syncLimit = 3;
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1, 
-                new InetSocketAddress(LOCALADDR, port1 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE1 + 1000),
+                new InetSocketAddress(LOCALADDR, port1),
+                new InetSocketAddress(LOCALADDR, portLE1),
                 new InetSocketAddress(LOCALADDR, portClient1),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(2), new QuorumServer(2, 
-                new InetSocketAddress(LOCALADDR, port2 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE2 + 1000),
+                new InetSocketAddress(LOCALADDR, port2),
+                new InetSocketAddress(LOCALADDR, portLE2),
                 new InetSocketAddress(LOCALADDR, portClient2),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(3), new QuorumServer(3, 
-                new InetSocketAddress(LOCALADDR, port3 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE3 + 1000),
+                new InetSocketAddress(LOCALADDR, port3),
+                new InetSocketAddress(LOCALADDR, portLE3),
                 new InetSocketAddress(LOCALADDR, portClient3),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(4), new QuorumServer(4, 
-                new InetSocketAddress(LOCALADDR, port4 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE4 + 1000),
+                new InetSocketAddress(LOCALADDR, port4),
+                new InetSocketAddress(LOCALADDR, portLE4),
                 new InetSocketAddress(LOCALADDR, portClient4),
                 LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(5), new QuorumServer(5, 
-                new InetSocketAddress(LOCALADDR, port5 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE5 + 1000),
+                new InetSocketAddress(LOCALADDR, port5),
+                new InetSocketAddress(LOCALADDR, portLE5),
                 new InetSocketAddress(LOCALADDR, portClient5),
                 LearnerType.PARTICIPANT));
         
@@ -303,28 +303,28 @@ public class QuorumBase extends ClientBase {
             peers = new HashMap<Long,QuorumServer>();
 
             peers.put(Long.valueOf(1), new QuorumServer(1, 
-                new InetSocketAddress(LOCALADDR, port1 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE1 + 1000),
+                new InetSocketAddress(LOCALADDR, port1),
+                new InetSocketAddress(LOCALADDR, portLE1),
                 new InetSocketAddress(LOCALADDR, portClient1),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(2), new QuorumServer(2, 
-                new InetSocketAddress(LOCALADDR, port2 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE2 + 1000),
+                new InetSocketAddress(LOCALADDR, port2),
+                new InetSocketAddress(LOCALADDR, portLE2),
                 new InetSocketAddress(LOCALADDR, portClient2),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(3), new QuorumServer(3, 
-                new InetSocketAddress(LOCALADDR, port3 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE3 + 1000),
+                new InetSocketAddress(LOCALADDR, port3),
+                new InetSocketAddress(LOCALADDR, portLE3),
                 new InetSocketAddress(LOCALADDR, portClient3),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(4), new QuorumServer(4, 
-                new InetSocketAddress(LOCALADDR, port4 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE4 + 1000),
+                new InetSocketAddress(LOCALADDR, port4),
+                new InetSocketAddress(LOCALADDR, portLE4),
                 new InetSocketAddress(LOCALADDR, portClient4),
                 LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(5), new QuorumServer(5, 
-                new InetSocketAddress(LOCALADDR, port5 + 1000),
-                new InetSocketAddress(LOCALADDR, portLE5 + 1000),
+                new InetSocketAddress(LOCALADDR, port5),
+                new InetSocketAddress(LOCALADDR, portLE5),
                 new InetSocketAddress(LOCALADDR, portClient5),
                 LearnerType.PARTICIPANT));
         }

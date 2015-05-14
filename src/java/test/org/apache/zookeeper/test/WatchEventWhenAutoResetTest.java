@@ -30,6 +30,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +87,11 @@ public class WatchEventWhenAutoResetTest extends TestCase {
 
     private ZooKeeper createClient(QuorumUtil qu, int id) throws IOException {
         return createClient(qu, id, new EventsWatcher());
+    }
+
+    @Before
+    public void setUp() {
+        System.setProperty("zookeeper.admin.enableServer", "false");
     }
 
     @Test
