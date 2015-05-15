@@ -509,7 +509,8 @@ public class ClientCnxn {
               LOG.error("Event thread exiting due to interruption", e);
            }
 
-            LOG.info("EventThread shut down");
+            LOG.info("EventThread shut down for session: 0x{}",
+                     Long.toHexString(getSessionId()));
         }
 
        private void processEvent(Object event) {
@@ -1126,7 +1127,8 @@ public class ClientCnxn {
                         Event.KeeperState.Disconnected, null));
             }
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                                     "SendThread exitedloop.");
+                    "SendThread exited loop for session: 0x"
+                           + Long.toHexString(getSessionId()));
         }
 
         private void pingRwServer() throws RWServerFoundException {
