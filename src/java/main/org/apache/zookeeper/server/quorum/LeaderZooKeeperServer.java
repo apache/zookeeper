@@ -89,14 +89,14 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     @Override
     public synchronized void startup() {
         super.startup();
-        if ( containerManager != null ) {
+        if (containerManager != null) {
             containerManager.start();
         }
     }
 
     @Override
     public synchronized void shutdown() {
-        if ( containerManager != null ) {
+        if (containerManager != null) {
             containerManager.stop();
         }
         super.shutdown();
