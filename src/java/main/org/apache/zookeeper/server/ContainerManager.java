@@ -131,11 +131,8 @@ public class ContainerManager {
         Set<String> candidates = new HashSet<String>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
-            if ((node != null) &&   // otherwise, the node changed type on us - ignore it
-                    (node.stat.getEphemeralOwner() == DataTree.CONTAINER_EPHEMERAL_OWNER)) {
-                if ((node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
-                    candidates.add(containerPath);
-                }
+            if ((node != null) && (node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
+                candidates.add(containerPath);
             }
         }
         return candidates;
