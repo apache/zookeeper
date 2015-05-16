@@ -517,6 +517,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 if (nodeRecord.childCount > 0) {
                     throw new KeeperException.NotEmptyException(path);
                 }
+                if (nodeRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER) {
+                    throw new KeeperException.BadVersionException(path);
+                }
                 request.setTxn(new DeleteTxn(path));
                 parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
                 parentRecord.childCount--;
