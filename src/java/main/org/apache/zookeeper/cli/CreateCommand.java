@@ -62,7 +62,7 @@ public class CreateCommand extends CliCommand {
         boolean hasE = cl.hasOption("e");
         boolean hasS = cl.hasOption("s");
         boolean hasC = cl.hasOption("c");
-        if ( hasC && (hasE || hasS) ) {
+        if (hasC && (hasE || hasS)) {
             err.println("-c cannot be combined with -s or -e. Containers cannot be ephemeral or sequential.");
             return false;
         }
