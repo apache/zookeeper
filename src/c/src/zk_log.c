@@ -155,8 +155,9 @@ void log_message(log_callback_fn callback, ZooLogLevel curLevel,
 
 #ifndef THREADED
 
+    // pid_t is long on Solaris
     ofs = snprintf(buf, FORMAT_LOG_BUF_SIZE,
-                   "%s:%d:%s@%s@%d: ", time, pid,
+                   "%s:%ld:%s@%s@%d: ", time, (long)pid,
                    dbgLevelStr[curLevel], funcName, line);
 #else
 
@@ -167,7 +168,7 @@ void log_message(log_callback_fn callback, ZooLogLevel curLevel,
     #endif
 
     ofs = snprintf(buf, FORMAT_LOG_BUF_SIZE-1,
-                   "%s:%d(0x%lx):%s@%s@%d: ", time, pid, tid,
+                   "%s:%ld(0x%lx):%s@%s@%d: ", time, (long)pid, tid,
                    dbgLevelStr[curLevel], funcName, line);
 #endif
 
