@@ -235,11 +235,16 @@ typedef int sendsize_t;
 #define SEND_FLAGS  0
 #else
 #ifdef __APPLE__
-#define MSG_NOSIGNAL SO_NOSIGPIPE
+#define SEND_FLAGS SO_NOSIGPIPE
+#endif
+#ifdef __linux__
+#define SEND_FLAGS MSG_NOSIGNAL
+#endif
+#ifndef SEND_FLAGS
+#define SEND_FLAGS 0
 #endif
 typedef int socket_t;
 typedef ssize_t sendsize_t;
-#define SEND_FLAGS  MSG_NOSIGNAL
 #endif
 
 static void zookeeper_set_sock_nodelay(zhandle_t *, socket_t);

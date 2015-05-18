@@ -96,6 +96,8 @@ BUGFIXES:
   ZOOKEEPER-2190 In StandaloneDisabledTest, testReconfig() shouldn't take
   leaving servers as joining servers (Hongchao Deng via rgs)
 
+  ZOOKEEPER-1077: C client lib doesn't build on Solaris (Chris Nauroth via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
