@@ -147,7 +147,7 @@ Mock_calloc* Mock_calloc::mock_=0;
 // realloc
 
 #ifndef USING_DUMA
-void* realloc(void* p, size_t s){
+DECLARE_WRAPPER(void*,realloc,(void* p, size_t s)){
     if(!Mock_realloc::mock_)
         return LIBC_SYMBOLS.realloc(p,s);
     return Mock_realloc::mock_->call(p,s);

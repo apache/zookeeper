@@ -146,4 +146,14 @@ fi
 AC_CHECK_FUNCS([getcwd gethostbyname gethostname getlogin getpwuid_r gettimeofday getuid memmove memset poll socket strchr strdup strerror strtol])
 
 AC_CONFIG_FILES([Makefile])
+AC_CANONICAL_HOST
+AM_CONDITIONAL([SOLARIS],[
+  case "$host_os" in
+  *solaris*)
+    true
+    ;;
+  *)
+    false
+    ;;
+  esac ])
 AC_OUTPUT

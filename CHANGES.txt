@@ -74,6 +74,8 @@ BUGFIXES:
   if the test method is annotated with an expected exception (Chris Nauroth
   via rgs)
 
+  ZOOKEEPER-1077: C client lib doesn't build on Solaris (Chris Nauroth via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
