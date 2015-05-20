@@ -75,10 +75,13 @@ then
     ZOO_LOG4J_PROP="INFO,CONSOLE"
 fi
 
-if [ "$JAVA_HOME" != "" ]; then
-  JAVA="$JAVA_HOME/bin/java"
+if [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
+    JAVA="$JAVA_HOME/bin/java"
+elif type -p java; then
+    JAVA=java
 else
-  JAVA=java
+    echo "Error: JAVA_HOME is not set and java could not be found in PATH." 1>&2
+    exit 1
 fi
 
 #add the zoocfg dir to classpath
