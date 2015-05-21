@@ -76,6 +76,8 @@ public class ContainerManager {
                         Thread.currentThread().interrupt();
                         LOG.info("interrupted");
                         cancel();
+                    } catch ( Throwable e ) {
+                        LOG.error("Error checking containers", e);
                     }
                 }
             };
