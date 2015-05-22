@@ -152,6 +152,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2126 Improve exit log messsage of EventThread and SendThread by
   adding SessionId (surendra singh lilhore via rakeshr)
 
+  ZOOKEEPER-2191: Continue supporting prior Ant versions that don't implement the
+  threads attribute for the JUnit task (Chris Nauroth via rakeshr)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
