@@ -97,6 +97,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2126 Improve exit log messsage of EventThread and SendThread by
   adding SessionId (surendra singh lilhore via rakeshr)
 
+  ZOOKEEPER-2124 Allow Zookeeper version string to have underscore '_'
+  (Chris Nauroth via michim)
+
 Release 3.4.6 - 2014-03-10 
 
 Backward compatible changes:
