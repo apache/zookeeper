@@ -78,6 +78,11 @@ public class QuorumCnxManager {
      */
 
     static final int MAX_CONNECTION_ATTEMPTS = 2;
+
+    /*
+     * Max buffer size to be read from the network.
+     */
+    static public final int maxBuffer = 2048;
     
     /*
      * Negative counter for observer server ids.
@@ -228,7 +233,7 @@ public class QuorumCnxManager {
      * possible long value to lose the challenge.
      * 
      */
-    public boolean receiveConnection(Socket sock) {
+    public void receiveConnection(Socket sock) {
         Long sid = null;
         
         try {
@@ -237,9 +242,17 @@ public class QuorumCnxManager {
             sid = din.readLong();
             if (sid < 0) { // this is not a server id but a protocol version (see ZOOKEEPER-1633)
                 sid = din.readLong();
+
                 // next comes the #bytes in the remainder of the message
+                // note that 0 bytes is fine (old servers)
                 int num_remaining_bytes = din.readInt();
+                if (num_remaining_bytes < 0 || num_remaining_bytes > maxBuffer) {
+                    LOG.error("Unreasonable buffer length: {}", num_remaining_bytes);
+                    closeSocket(sock);
+                    return;
+                }
                 byte[] b = new byte[num_remaining_bytes];
+
                 // remove the remainder of the message from din
                 int num_read = din.read(b);
                 if (num_read != num_remaining_bytes) {
@@ -258,7 +271,7 @@ public class QuorumCnxManager {
         } catch (IOException e) {
             closeSocket(sock);
             LOG.warn("Exception reading or writing challenge: " + e.toString());
-            return false;
+            return;
         }
         
         //If wins the challenge, then close the new connection.
@@ -301,9 +314,8 @@ public class QuorumCnxManager {
             sw.start();
             rw.start();
             
-            return true;    
+            return;
         }
-        return false;
     }
 
     /**

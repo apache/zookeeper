@@ -76,6 +76,9 @@ BUGFIXES:
 
   ZOOKEEPER-1077: C client lib doesn't build on Solaris (Chris Nauroth via rgs)
 
+  ZOOKEEPER-2186 QuorumCnxManager#receiveConnection may crash with random input
+  (rgs via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
