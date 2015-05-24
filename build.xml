@@ -981,10 +981,21 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     </target>
 
     <target name="rpm" depends="package-native, tar" description="Make rpm package">
+      <!--The RPM spec file format disallows hyphen in the version.  Replace with
+          underscore to support version tags like -alpha or -SNAPSHOT.-->
+      <loadresource property="rpm.version">
+        <propertyresource name="version" />
+        <filterchain>
+          <tokenfilter>
+            <replacestring from="-" to="_" />
+          </tokenfilter>
+        </filterchain>
+      </loadresource>
       <subant target="rpm">
         <!--Pass down the version in case its needed again and the target
             distribution directory so contribs know where to install to.-->
         <property name="version" value="${version}"/>
+        <property name="rpm.version" value="${rpm.version}"/>
         <property name="dist.dir" value="${dist.dir}"/>
         <fileset file="${contrib.dir}/build.xml"/>
         <fileset file="${recipes.dir}/build.xml"/>
@@ -1010,7 +1021,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         <filterchain>
           <replacetokens>
             <token key="final.name" value="${final.name}" />
-            <token key="version" value="${version}" />
+            <token key="version" value="${rpm.version}" />
             <token key="package.release" value="${package.release}" />
             <token key="package.build.dir" value="${package.build.dir}" />
             <token key="package.prefix" value="${package.prefix}" />
