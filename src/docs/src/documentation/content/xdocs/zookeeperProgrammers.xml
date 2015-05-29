@@ -905,6 +905,12 @@
         significant <emphasis>bits</emphasis> of the client host
         IP.</para></listitem>
 
+        <listitem><para><emphasis role="bold">x509</emphasis> uses the client
+        X500 Principal as an ACL ID identity. The ACL expression is the exact
+        X500 Principal name of a client. When using the secure port, clients
+        are automatically authenticated and their auth info for the x509 scheme
+        is set.</para></listitem>
+
       </itemizedlist>
     </section>
 

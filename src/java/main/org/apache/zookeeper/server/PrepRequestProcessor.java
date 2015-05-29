@@ -35,7 +35,6 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.CheckVersionRequest;
-import org.apache.zookeeper.proto.Create2Request;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.ReconfigRequest;
@@ -365,59 +364,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 Time.currentWallTime(), type));
 
         switch (type) {
-            case OpCode.create: {
-                CreateRequest createRequest = (CreateRequest)record;
-                if (deserialize) {
-                    ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
-                }
-                CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
-                validateCreateRequest(createMode, request);
-                String path = createRequest.getPath();
-                String parentPath = validatePathForCreate(path, request.sessionId);
-
-                List<ACL> listACL = fixupACL(path, request.authInfo, createRequest.getAcl());
-                ChangeRecord parentRecord = getRecordForPath(parentPath);
-
-                checkACL(zks, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo);
-                int parentCVersion = parentRecord.stat.getCversion();
-                if (createMode.isSequential()) {
-                    path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
-                }
-                try {
-                    PathUtils.validatePath(path);
-                } catch(IllegalArgumentException ie) {
-                    LOG.info("Invalid path " + path + " with session 0x" +
-                            Long.toHexString(request.sessionId));
-                    throw new KeeperException.BadArgumentsException(path);
-                }
-                try {
-                    if (getRecordForPath(path) != null) {
-                        throw new KeeperException.NodeExistsException(path);
-                    }
-                } catch (KeeperException.NoNodeException e) {
-                    // ignore this one
-                }
-                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) &&
-                        (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
-                if (ephemeralParent) {
-                    throw new KeeperException.NoChildrenForEphemeralsException(path);
-                }
-                int newCversion = parentRecord.stat.getCversion()+1;
-                request.setTxn(new CreateTxn(path, createRequest.getData(), listACL, createMode.isEphemeral(),
-                        newCversion));
-                StatPersisted s = new StatPersisted();
-                if (createMode.isEphemeral()) {
-                    s.setEphemeralOwner(request.sessionId);
-                }
-                parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
-                parentRecord.childCount++;
-                parentRecord.stat.setCversion(newCversion);
-                addChangeRecord(parentRecord);
-                addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, s, 0, listACL));
-                break;
-            }
+            case OpCode.create:
             case OpCode.create2: {
-                Create2Request createRequest = (Create2Request)record;
+                CreateRequest createRequest = (CreateRequest)record;
                 if (deserialize) {
                     ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
                 }
@@ -785,11 +734,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             switch (request.type) {
             case OpCode.createContainer:
             case OpCode.create:
-                CreateRequest createRequest = new CreateRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, createRequest, true);
-                break;
             case OpCode.create2:
-                Create2Request create2Request = new Create2Request();
+                CreateRequest create2Request = new CreateRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request, true);
                 break;
             case OpCode.deleteContainer:

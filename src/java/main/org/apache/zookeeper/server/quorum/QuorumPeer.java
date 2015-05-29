@@ -45,7 +45,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
-import org.apache.zookeeper.common.HostNameUtils;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
@@ -160,7 +159,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 LOG.warn("Election address has not been initialized");
                 return;
             }
-            String host = HostNameUtils.getHostString(this.addr);
+            String host = this.addr.getHostString();
             InetAddress address = null;
             try {
                 address = InetAddress.getByName(host);
@@ -254,7 +253,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             StringWriter sw = new StringWriter();            
             //addr should never be null, but just to make sure
             if (addr !=null) { 
-                sw.append(HostNameUtils.getHostString(addr));
+                sw.append(addr.getHostString());
                 sw.append(":");
                 sw.append(String.valueOf(addr.getPort()));
             }
@@ -266,7 +265,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             else if (type == LearnerType.PARTICIPANT) sw.append(":participant");            
             if (clientAddr!=null){
                 sw.append(";");
-                sw.append(HostNameUtils.getHostString(clientAddr));
+                sw.append(clientAddr.getHostString());
                 sw.append(":");
                 sw.append(String.valueOf(clientAddr.getPort()));
             }
@@ -1391,7 +1390,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     LOG.error("Error closing file: ", e.getMessage());
                 }
             } else {
-                LOG.error("writeToDisk == true but configFilename == null");
+                LOG.info("writeToDisk == true but configFilename == null");
             }
         }
 

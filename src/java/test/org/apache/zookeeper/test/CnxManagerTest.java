@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -37,6 +40,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
+import org.apache.zookeeper.server.quorum.QuorumCnxManager.InitialMessage;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -242,9 +246,9 @@ public class CnxManagerTest extends ZKTestCase {
 
         InetSocketAddress otherAddr = peers.get(new Long(2)).electionAddr;
         DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
-        dout.writeLong(0xffff0000);
+        dout.writeLong(QuorumCnxManager.PROTOCOL_VERSION);
         dout.writeLong(new Long(2));
-        String addr = otherAddr.getHostName()+ ":" + otherAddr.getPort();
+        String addr = otherAddr.getHostString()+ ":" + otherAddr.getPort();
         byte[] addr_bytes = addr.getBytes();
         dout.writeInt(addr_bytes.length);
         dout.write(addr_bytes);
@@ -432,5 +436,86 @@ public class CnxManagerTest extends ZKTestCase {
             }
         }
         return null;
+    }
+
+    @Test
+    public void testInitialMessage() throws Exception {
+        InitialMessage msg;
+        ByteArrayOutputStream bos;
+        DataInputStream din;
+        DataOutputStream dout;
+        String hostport;
+
+        // message with bad protocol version
+        try {
+
+            // the initial message (without the protocol version)
+            hostport = "10.0.0.2:3888";
+            bos = new ByteArrayOutputStream();
+            dout = new DataOutputStream(bos);
+            dout.writeLong(5L); // sid
+            dout.writeInt(hostport.getBytes().length);
+            dout.writeBytes(hostport);
+
+            // now parse it
+            din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            msg = InitialMessage.parse(-65530L, din);
+            Assert.fail("bad protocol version accepted");
+        } catch (InitialMessage.InitialMessageException ex) {}
+
+        // message too long
+        try {
+
+            hostport = createLongString(1048576);
+            bos = new ByteArrayOutputStream();
+            dout = new DataOutputStream(bos);
+            dout.writeLong(5L); // sid
+            dout.writeInt(hostport.getBytes().length);
+            dout.writeBytes(hostport);
+
+            din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+            Assert.fail("long message accepted");
+        } catch (InitialMessage.InitialMessageException ex) {}
+
+        // bad hostport string
+        try {
+
+            hostport = "what's going on here?";
+            bos = new ByteArrayOutputStream();
+            dout = new DataOutputStream(bos);
+            dout.writeLong(5L); // sid
+            dout.writeInt(hostport.getBytes().length);
+            dout.writeBytes(hostport);
+
+            din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+            Assert.fail("bad hostport accepted");
+        } catch (InitialMessage.InitialMessageException ex) {}
+
+        // good message
+        try {
+
+            hostport = "10.0.0.2:3888";
+            bos = new ByteArrayOutputStream();
+            dout = new DataOutputStream(bos);
+            dout.writeLong(5L); // sid
+            dout.writeInt(hostport.getBytes().length);
+            dout.writeBytes(hostport);
+
+            // now parse it
+            din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+        } catch (InitialMessage.InitialMessageException ex) {
+            Assert.fail(ex.toString());
+        }
+    }
+
+    private String createLongString(int size) {
+        StringBuilder sb = new StringBuilder(size);
+        for (int i=0; i < size; i++) {
+            sb.append('x');
+        }
+        return sb.toString();
     }
 }

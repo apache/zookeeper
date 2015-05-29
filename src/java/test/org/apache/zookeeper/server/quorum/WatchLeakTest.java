@@ -63,6 +63,7 @@ import org.apache.zookeeper.server.MockSelectorThread;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -81,6 +82,11 @@ public class WatchLeakTest {
     final long SESSION_ID = 0xBABEL;
 
     private final boolean sessionTimedout;
+
+    @Before
+    public void setUp() {
+        System.setProperty("zookeeper.admin.enableServer", "false");
+    }
 
     public WatchLeakTest(boolean sessionTimedout) {
         this.sessionTimedout = sessionTimedout;

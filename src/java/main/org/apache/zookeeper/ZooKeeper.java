@@ -1284,7 +1284,7 @@ public class ZooKeeper {
 
         RequestHeader h = new RequestHeader();
         h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create2);
-        Create2Request request = new Create2Request();
+        CreateRequest request = new CreateRequest();
         Create2Response response = new Create2Response();
         request.setData(data);
         request.setFlags(createMode.toFlag());
@@ -1349,7 +1349,7 @@ public class ZooKeeper {
 
         RequestHeader h = new RequestHeader();
         h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create2);
-        Create2Request request = new Create2Request();
+        CreateRequest request = new CreateRequest();
         Create2Response response = new Create2Response();
         ReplyHeader r = new ReplyHeader();
         request.setData(data);

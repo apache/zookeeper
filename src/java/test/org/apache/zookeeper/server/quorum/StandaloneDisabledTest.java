@@ -27,12 +27,8 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
-import org.apache.zookeeper.AsyncCallback.StatCallback;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -231,11 +227,12 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
                 int id2 = Integer.parseInt(server.substring(7, 8)); //server.#
                 ReconfigTest.testNormalOperation(zkHandles[id], zkHandles[id2]);
             }
+            ReconfigTest.testServerHasConfig(zkHandles[id], servers, null);
         } else {
             ReconfigTest.reconfig(zkHandles[id], null, servers, null, -1);
+            ReconfigTest.testServerHasConfig(zkHandles[id], null, servers);
         }
 
-        ReconfigTest.testServerHasConfig(zkHandles[id], servers, null);
     }
 
    /**

@@ -235,11 +235,16 @@ typedef int sendsize_t;
 #define SEND_FLAGS  0
 #else
 #ifdef __APPLE__
-#define MSG_NOSIGNAL SO_NOSIGPIPE
+#define SEND_FLAGS SO_NOSIGPIPE
+#endif
+#ifdef __linux__
+#define SEND_FLAGS MSG_NOSIGNAL
+#endif
+#ifndef SEND_FLAGS
+#define SEND_FLAGS 0
 #endif
 typedef int socket_t;
 typedef ssize_t sendsize_t;
-#define SEND_FLAGS  MSG_NOSIGNAL
 #endif
 
 static void zookeeper_set_sock_nodelay(zhandle_t *, socket_t);
@@ -3510,30 +3515,6 @@ static int CreateRequest_init(zhandle_t *zh, struct CreateRequest *req,
     return ZOK;
 }
 
-static int Create2Request_init(zhandle_t *zh, struct Create2Request *req,
-        const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl_entries, int flags)
-{
-    int rc;
-    assert(req);
-    rc = Request_path_init(zh, flags, &req->path, path);
-    assert(req);
-    if (rc != ZOK) {
-        return rc;
-    }
-    req->flags = flags;
-    req->data.buff = (char*)value;
-    req->data.len = valuelen;
-    if (acl_entries == 0) {
-        req->acl.count = 0;
-        req->acl.data = 0;
-    } else {
-        req->acl = *acl_entries;
-    }
-
-    return ZOK;
-}
-
 int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
         int valuelen, const struct ACL_vector *acl_entries, int flags,
         string_completion_t completion, const void *data)
@@ -3572,15 +3553,15 @@ int zoo_acreate2(zhandle_t *zh, const char *path, const char *value,
 {
     struct oarchive *oa;
     struct RequestHeader h = { get_xid(), ZOO_CREATE2_OP };
-    struct Create2Request req;
+    struct CreateRequest req;
 
-    int rc = Create2Request_init(zh, &req, path, value, valuelen, acl_entries, flags);
+    int rc = CreateRequest_init(zh, &req, path, value, valuelen, acl_entries, flags);
     if (rc != ZOK) {
         return rc;
     }
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
-    rc = rc < 0 ? rc : serialize_Create2Request(oa, "req", &req);
+    rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_string_stat_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),

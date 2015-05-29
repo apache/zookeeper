@@ -108,11 +108,11 @@ public class HierarchicalQuorumTest extends ClientBase {
         "weight.3=1\n" +
         "weight.4=0\n" +
         "weight.5=0\n" +
-        "server.1=127.0.0.1:" + (port1 + 1000) + ":" + (leport1 + 1000) + ";" + clientport1 + "\n" + 
-        "server.2=127.0.0.1:" + (port2 + 1000) + ":" + (leport2 + 1000) + ";" + clientport2 + "\n" + 
-        "server.3=127.0.0.1:" + (port3 + 1000) + ":" + (leport3 + 1000) + ";" + clientport3 + "\n" + 
-        "server.4=127.0.0.1:" + (port4 + 1000) + ":" + (leport4 + 1000) + ";" + clientport4 + "\n" + 
-        "server.5=127.0.0.1:" + (port5 + 1000) + ":" + (leport5 + 1000) + ";" + clientport5 + "\n";
+        "server.1=127.0.0.1:" + port1 + ":" + leport1 + ";" + clientport1 + "\n" +
+        "server.2=127.0.0.1:" + port2 + ":" + leport2 + ";" + clientport2 + "\n" +
+        "server.3=127.0.0.1:" + port3 + ":" + leport3 + ";" + clientport3 + "\n" +
+        "server.4=127.0.0.1:" + port4 + ":" + leport4 + ";" + clientport4 + "\n" +
+        "server.5=127.0.0.1:" + port5 + ":" + leport5 + ";" + clientport5 + "\n";
 
         ByteArrayInputStream is = new ByteArrayInputStream(config.getBytes());
         this.qp = new Properties();
@@ -147,26 +147,26 @@ public class HierarchicalQuorumTest extends ClientBase {
         int syncLimit = 3;
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1, 
-                new InetSocketAddress("127.0.0.1", port1 + 1000),
-                new InetSocketAddress("127.0.0.1", leport1 + 1000),
+                new InetSocketAddress("127.0.0.1", port1),
+                new InetSocketAddress("127.0.0.1", leport1),
                 new InetSocketAddress("127.0.0.1", clientport1)));        
         peers.put(Long.valueOf(2), new QuorumServer(2, 
-                new InetSocketAddress("127.0.0.1", port2 + 1000),
-                new InetSocketAddress("127.0.0.1", leport2 + 1000),
+                new InetSocketAddress("127.0.0.1", port2),
+                new InetSocketAddress("127.0.0.1", leport2),
                 new InetSocketAddress("127.0.0.1", clientport2)));
         peers.put(Long.valueOf(3), new QuorumServer(3, 
-                new InetSocketAddress("127.0.0.1", port3 + 1000),
-                new InetSocketAddress("127.0.0.1", leport3 + 1000),
+                new InetSocketAddress("127.0.0.1", port3),
+                new InetSocketAddress("127.0.0.1", leport3),
                 new InetSocketAddress("127.0.0.1", clientport3)));
         peers.put(Long.valueOf(4), new QuorumServer(4,
-                new InetSocketAddress("127.0.0.1", port4 + 1000),
+                new InetSocketAddress("127.0.0.1", port4),
                 new InetSocketAddress("127.0.0.1", leport4),
                 new InetSocketAddress("127.0.0.1", clientport4),
                 withObservers ? QuorumPeer.LearnerType.OBSERVER
                         : QuorumPeer.LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(5), new QuorumServer(5,
-                new InetSocketAddress("127.0.0.1", port5 + 1000),
-                new InetSocketAddress("127.0.0.1", leport5 + 1000),
+                new InetSocketAddress("127.0.0.1", port5),
+                new InetSocketAddress("127.0.0.1", leport5),
                 new InetSocketAddress("127.0.0.1", clientport5),
                 withObservers ? QuorumPeer.LearnerType.OBSERVER
                         : QuorumPeer.LearnerType.PARTICIPANT));
@@ -174,8 +174,8 @@ public class HierarchicalQuorumTest extends ClientBase {
         LOG.info("creating QuorumPeer 1 port " + clientport1);
         
         if (withObservers) {
-               qp.setProperty("server.4", "127.0.0.1:" + (port4 + 1000) + ":" + (leport4 + 1000) + ":observer" + ";" + clientport4);  
-               qp.setProperty("server.5", "127.0.0.1:" + (port5 + 1000) + ":" + (leport5 + 1000) +  ":observer" + ";" + clientport5);
+               qp.setProperty("server.4", "127.0.0.1:" + port4 + ":" + leport4 + ":observer" + ";" + clientport4);
+               qp.setProperty("server.5", "127.0.0.1:" + port5 + ":" + leport5 +  ":observer" + ";" + clientport5);
         }
         QuorumHierarchical hq1 = new QuorumHierarchical(qp); 
         s1 = new QuorumPeer(peers, s1dir, s1dir, clientport1, 3, 1, tickTime, initLimit, syncLimit, hq1);

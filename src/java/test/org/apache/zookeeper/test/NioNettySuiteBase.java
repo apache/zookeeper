@@ -34,6 +34,7 @@ public class NioNettySuiteBase {
     public static void setUp() {
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
                 NettyServerCnxnFactory.class.getName());
+        System.setProperty("zookeeper.admin.enableServer", "false");
     }
 
     @AfterClass

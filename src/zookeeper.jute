@@ -127,12 +127,6 @@ module org.apache.zookeeper.proto {
         vector<org.apache.zookeeper.data.ACL> acl;
         int flags;
     }
-    class Create2Request {
-        ustring path;
-        buffer data;
-        vector<org.apache.zookeeper.data.ACL> acl;
-        int flags;
-    }
     class DeleteRequest {
         ustring path;
         int version;

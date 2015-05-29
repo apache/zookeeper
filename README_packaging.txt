@@ -3,6 +3,7 @@ README file for Packaging Notes
 Requirement
 -----------
 
+ant (recommended version 1.9.4 or later for concurrent JUnit test execution)
 gcc, cppunit and python-setuptools are required to build 
 C and python bindings.
 

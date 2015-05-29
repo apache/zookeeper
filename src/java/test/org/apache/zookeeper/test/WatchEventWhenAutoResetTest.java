@@ -30,15 +30,16 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import junit.framework.TestCase;
 
-public class WatchEventWhenAutoReset extends TestCase {
+public class WatchEventWhenAutoResetTest extends TestCase {
     protected static final Logger LOG = LoggerFactory
-            .getLogger(WatchEventWhenAutoReset.class);
+            .getLogger(WatchEventWhenAutoResetTest.class);
 
     // waiting time for expected condition
     private static final int TIMEOUT = 30000;
@@ -86,6 +87,11 @@ public class WatchEventWhenAutoReset extends TestCase {
 
     private ZooKeeper createClient(QuorumUtil qu, int id) throws IOException {
         return createClient(qu, id, new EventsWatcher());
+    }
+
+    @Before
+    public void setUp() {
+        System.setProperty("zookeeper.admin.enableServer", "false");
     }
 
     @Test

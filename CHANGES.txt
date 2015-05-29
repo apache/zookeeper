@@ -82,6 +82,28 @@ BUGFIXES:
   ZOOKEEPER-2173. ZK startup failure should be handled with proper error message
   (J.Andreina via camille)
 
+  ZOOKEEPER-2174 JUnit4ZKTestRunner logs test failure for all exceptions even
+  if the test method is annotated with an expected exception (Chris Nauroth
+  via rgs)
+
+  ZOOKEEPER-2124 Allow Zookeeper version string to have underscore '_'
+  (Chris Nauroth via rgs)
+
+  ZOOKEEPER-2062 RemoveWatchesTest takes forever to run (Chris Nauroth via rakeshr)
+
+  ZOOKEEPER-2182 Several test suites are not running during pre-commit, because their names do not end with "Test". (Chris Nauroth via hdeng)
+
+  ZOOKEEPER-2186 QuorumCnxManager#receiveConnection may crash with random input
+  (rgs via michim)
+
+  ZOOKEEPER-2190 In StandaloneDisabledTest, testReconfig() shouldn't take
+  leaving servers as joining servers (Hongchao Deng via rgs)
+
+  ZOOKEEPER-1077: C client lib doesn't build on Solaris (Chris Nauroth via rgs)
+
+  ZOOKEEPER-2156: If JAVA_HOME is not set zk startup and fetching status command execution
+  result misleads user (J.Andreina via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
@@ -116,6 +138,25 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2149 Logging of client address when socket connection established
   (Hongchao Deng via michim)
+
+  ZOOKEEPER-2176 Unclear error message should be info not error
+  (rgs via hdeng)
+
+  ZOOKEEPER-2153 X509 Authentication Documentation
+  (Ian Dimayuga via hdeng)
+
+  ZOOKEEPER-2171 avoid reverse lookups in QuorumCnxManager (rgs via michim)
+
+  ZOOKEEPER-2183 Concurrent Testing Processes and Port Assignments (Chris Nauroth via hdeng)
+
+  ZOOKEEPER-2126 Improve exit log messsage of EventThread and SendThread by
+  adding SessionId (surendra singh lilhore via rakeshr)
+
+  ZOOKEEPER-2191: Continue supporting prior Ant versions that don't implement the
+  threads attribute for the JUnit task (Chris Nauroth via rakeshr)
+
+  ZOOKEEPER-2187: remove duplicated code between CreateRequest{,2}
+  (Raul Gutierrez Segales via hdeng)
 
 Release 3.5.0 - 8/4/2014
 

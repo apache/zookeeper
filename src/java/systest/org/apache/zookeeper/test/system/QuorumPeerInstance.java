@@ -126,8 +126,8 @@ class QuorumPeerInstance implements Instance {
             } catch(IOException e) {
                 e.printStackTrace();
             }
-            String report = clientAddr.getHostName() + ':' + clientAddr.getPort() +
-            ',' + quorumLeaderAddr.getHostName() + ':' + quorumLeaderAddr.getPort() + ':' + quorumLeaderElectionAddr.getPort();
+            String report = clientAddr.getHostString() + ':' + clientAddr.getPort() +
+            ',' + quorumLeaderAddr.getHostString() + ':' + quorumLeaderAddr.getPort() + ':' + quorumLeaderElectionAddr.getPort();
             try {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Reporting " + report);
