@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -250,10 +251,14 @@ public class QuorumCnxManager {
      * connection if it loses challenge. Otherwise, it keeps the connection.
      */
     public boolean initiateConnection(Socket sock, Long sid) {
-        DataOutputStream dout = null;
         try {
+            // Use BufferedOutputStream to reduce the number of IP packets. This is
+            // important for x-DC scenarios.
+            BufferedOutputStream buf = new BufferedOutputStream(sock.getOutputStream());
+            DataOutputStream dout = new DataOutputStream(buf);
+
             // Sending id and challenge
-            dout = new DataOutputStream(sock.getOutputStream());
+
             // represents protocol version (in other words - message type)
             dout.writeLong(PROTOCOL_VERSION);
             dout.writeLong(self.getId());
