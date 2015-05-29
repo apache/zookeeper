@@ -53,7 +53,6 @@ import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
-import org.apache.zookeeper.proto.Create2Request;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateResponse;
@@ -1284,7 +1283,7 @@ public class ZooKeeper {
 
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.create2);
-        Create2Request request = new Create2Request();
+        CreateRequest request = new CreateRequest();
         Create2Response response = new Create2Response();
         request.setData(data);
         request.setFlags(createMode.toFlag());
@@ -1349,7 +1348,7 @@ public class ZooKeeper {
 
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.create2);
-        Create2Request request = new Create2Request();
+        CreateRequest request = new CreateRequest();
         Create2Response response = new Create2Response();
         ReplyHeader r = new ReplyHeader();
         request.setData(data);
