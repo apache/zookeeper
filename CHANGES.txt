@@ -79,6 +79,8 @@ BUGFIXES:
   ZOOKEEPER-2186 QuorumCnxManager#receiveConnection may crash with random input
   (rgs via michim)
 
+  ZOOKEEPER-2179: Typo in Watcher.java (Archana T via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
