@@ -365,7 +365,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
         switch (type) {
             case OpCode.create:
-            case OpCode.create2: {
+            case OpCode.create2:
+            case OpCode.createContainer: {
                 CreateRequest createRequest = (CreateRequest)record;
                 if (deserialize) {
                     ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
@@ -403,54 +404,16 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
                 int newCversion = parentRecord.stat.getCversion()+1;
-                request.setTxn(new CreateTxn(path, createRequest.getData(), listACL, createMode.isEphemeral(),
-                        newCversion));
+                if (type == OpCode.createContainer) {
+                    request.setTxn(new CreateContainerTxn(path, createRequest.getData(), listACL, newCversion));
+                } else {
+                    request.setTxn(new CreateTxn(path, createRequest.getData(), listACL, createMode.isEphemeral(),
+                            newCversion));
+                }
                 StatPersisted s = new StatPersisted();
                 if (createMode.isEphemeral()) {
                     s.setEphemeralOwner(request.sessionId);
                 }
-                parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
-                parentRecord.childCount++;
-                parentRecord.stat.setCversion(newCversion);
-                addChangeRecord(parentRecord);
-                addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, s, 0, listACL));
-                break;
-            }
-            case OpCode.createContainer: {
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                CreateRequest createContainerRequest = (CreateRequest)record;   // relying on serial equality between CreateRequest and Create2Request
-                if (deserialize) {
-                    ByteBufferInputStream.byteBuffer2Record(request.request, createContainerRequest);
-                }
-                String path = createContainerRequest.getPath();
-                String parentPath = validatePathForCreate(path, request.sessionId);
-
-                List<ACL> listACL = fixupACL(path, request.authInfo, createContainerRequest.getAcl());
-                ChangeRecord parentRecord = getRecordForPath(parentPath);
-
-                checkACL(zks, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo);
-                try {
-                    PathUtils.validatePath(path);
-                } catch(IllegalArgumentException ie) {
-                    LOG.info("Invalid path " + path + " with session 0x" +
-                            Long.toHexString(request.sessionId));
-                    throw new KeeperException.BadArgumentsException(path);
-                }
-                try {
-                    if (getRecordForPath(path) != null) {
-                        throw new KeeperException.NodeExistsException(path);
-                    }
-                } catch (KeeperException.NoNodeException e) {
-                    // ignore this one
-                }
-                boolean ephemeralParent = (parentRecord.stat.getEphemeralOwner() != 0) &&
-                        (parentRecord.stat.getEphemeralOwner() != DataTree.CONTAINER_EPHEMERAL_OWNER);
-                if (ephemeralParent) {
-                    throw new KeeperException.NoChildrenForEphemeralsException(path);
-                }
-                int newCversion = parentRecord.stat.getCversion()+1;
-                request.setTxn(new CreateContainerTxn(path, createContainerRequest.getData(), listACL, newCversion));
-                StatPersisted s = new StatPersisted();
                 parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
                 parentRecord.childCount++;
                 parentRecord.stat.setCversion(newCversion);
