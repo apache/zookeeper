@@ -150,7 +150,7 @@ IMPROVEMENTS:
   ZOOKEEPER-2187: remove duplicated code between CreateRequest{,2}
   (Raul Gutierrez Segales via hdeng)
 
-  ZOOKEEPER-2189: QuorumCnxManager: use BufferedOutputStream for initial msg
+  ZOOKEEPER-2098: QuorumCnxManager: use BufferedOutputStream for initial msg
   (Raul Gutierrez Segales via hdeng)
 
 Release 3.5.0 - 8/4/2014
