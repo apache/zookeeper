@@ -109,7 +109,7 @@ public class ContainerManager {
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
             try {
-                LOG.info(String.format("Attempting to delete candidate container: %s", containerPath));
+                LOG.info("Attempting to delete candidate container: %s", containerPath);
                 requestProcessor.processRequest(request);
             } catch (Exception e) {
                 LOG.error(String.format("Could not delete container: %s" , containerPath), e);

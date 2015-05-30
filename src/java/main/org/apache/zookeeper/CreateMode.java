@@ -51,8 +51,7 @@ public enum CreateMode {
      * should be prepared to get {@link org.apache.zookeeper.KeeperException.NoNodeException}
      * when creating children inside of this container node.
      */
-    CONTAINER (4, false, false, true)
-    ;
+    CONTAINER (4, false, false, true);
 
     private static final Logger LOG = LoggerFactory.getLogger(CreateMode.class);
 

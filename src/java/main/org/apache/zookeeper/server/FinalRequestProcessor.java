@@ -243,12 +243,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 err = Code.get(rc.err);
                 break;
             }
-            case OpCode.create2: {
-                lastOp = "CREA";
-                rsp = new Create2Response(rc.path, rc.stat);
-                err = Code.get(rc.err);
-                break;
-            }
+            case OpCode.create2:
             case OpCode.createContainer: {
                 lastOp = "CREA";
                 rsp = new Create2Response(rc.path, rc.stat);

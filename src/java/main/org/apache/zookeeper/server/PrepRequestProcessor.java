@@ -340,8 +340,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             throws BadArgumentsException {
         int lastSlash = path.lastIndexOf('/');
         if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
-            LOG.info(String.format("Invalid path %s with session 0x%s",
-                    path, Long.toHexString(sessionId)));
+            LOG.info("Invalid path %s with session 0x%s",
+                    path, Long.toHexString(sessionId));
             throw new KeeperException.BadArgumentsException(path);
         }
         return path.substring(0, lastSlash);
@@ -440,9 +440,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 break;
             }
             case OpCode.delete:
-                if ( request.sessionId != 0 ) {
-                    zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                }
+                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 DeleteRequest deleteRequest = (DeleteRequest)record;
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, deleteRequest);
