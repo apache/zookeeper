@@ -153,6 +153,8 @@ IMPROVEMENTS:
   ZOOKEEPER-2098: QuorumCnxManager: use BufferedOutputStream for initial msg
   (Raul Gutierrez Segales via hdeng)
 
+  ZOOKEEPER-2198 Set default test.junit.threads to 1 (Chris Nauroth via michim)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
