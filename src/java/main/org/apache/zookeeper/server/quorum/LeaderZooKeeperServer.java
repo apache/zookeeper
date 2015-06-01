@@ -81,8 +81,8 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
 
     private synchronized void setupContainerManager() {
         containerManager = new ContainerManager(getZKDatabase(), prepRequestProcessor,
-                Integer.getInteger("container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-                Integer.getInteger("container.maxPerMinute", 10000)
+                Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+                Integer.getInteger("znode.container.maxPerMinute", 10000)
                 );
     }
 

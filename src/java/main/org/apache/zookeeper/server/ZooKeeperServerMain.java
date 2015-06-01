@@ -141,8 +141,8 @@ public class ZooKeeperServerMain {
             }
 
             containerManager = new ContainerManager(zkServer.getZKDatabase(), zkServer.firstProcessor,
-                    Integer.getInteger("container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-                    Integer.getInteger("container.maxPerMinute", 10000)
+                    Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+                    Integer.getInteger("znode.container.maxPerMinute", 10000)
             );
             containerManager.start();
 

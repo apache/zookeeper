@@ -1384,7 +1384,7 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>container.checkIntervalMs</term>
+            <term>znode.container.checkIntervalMs</term>
 
             <listitem>
               <para>(Java system property only)</para>
@@ -1396,7 +1396,7 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>container.maxPerMinute</term>
+            <term>znode.container.maxPerMinute</term>
 
             <listitem>
               <para>(Java system property only)</para>
