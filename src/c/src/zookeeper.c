@@ -40,7 +40,6 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <limits.h>
-#include <unistd.h> // needed for _POSIX_MONOTONIC_CLOCK
 
 #ifndef _WIN32
 #include <sys/time.h>
@@ -50,7 +49,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <unistd.h>
+#include <unistd.h> // needed for _POSIX_MONOTONIC_CLOCK
 #include "config.h"
 #else
 #include "winstdint.h"
@@ -250,7 +249,7 @@ typedef ssize_t sendsize_t;
 static void zookeeper_set_sock_nodelay(zhandle_t *, socket_t);
 static void zookeeper_set_sock_noblock(zhandle_t *, socket_t);
 static void zookeeper_set_sock_timeout(zhandle_t *, socket_t, int);
-static int zookeeper_connect(zhandle_t *, struct sockaddr_storage *, socket_t);
+static socket_t zookeeper_connect(zhandle_t *, struct sockaddr_storage *, socket_t);
 
 
 static sendsize_t zookeeper_send(socket_t s, const void* buf, size_t len)
@@ -287,6 +286,18 @@ void get_system_time(struct timeval *tv)
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
   tv->tv_sec = ts.tv_sec;
   tv->tv_usec = ts.tv_nsec / 1000;
+#elif _WIN32
+  LARGE_INTEGER counts, countsPerSecond, countsPerMicrosecond;
+  if (QueryPerformanceFrequency(&countsPerSecond) &&
+      QueryPerformanceCounter(&counts)) {
+    countsPerMicrosecond.QuadPart = countsPerSecond.QuadPart / 1000000;
+    tv->tv_sec = (long)(counts.QuadPart / countsPerSecond.QuadPart);
+    tv->tv_usec = (long)((counts.QuadPart % countsPerSecond.QuadPart) /
+        countsPerMicrosecond.QuadPart);
+    ret = 0;
+  } else {
+    ret = gettimeofday(tv, NULL);
+  }
 #else
   ret = gettimeofday(tv, NULL);
 #endif
