@@ -32,9 +32,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * Manages cleanup of container ZNodes. This class is meant to only
  * be run from the leader. There's no harm in running from followers/observers
  * but that will be extra work that's not needed. Once started, it periodically
- * checks container nodes that have a cversion > 0 and have no children. A delete
- * is attempted on the node. The result of the delete is unimportant. If the proposal
- * fails or the container node is not empty there's no harm.
+ * checks container nodes that have a cversion > 0 and have no children. A
+ * delete is attempted on the node. The result of the delete is unimportant.
+ * If the proposal fails or the container node is not empty there's no harm.
  */
 public class ContainerManager {
     private static final Logger LOG = LoggerFactory.getLogger(ContainerManager.class);
@@ -47,9 +47,11 @@ public class ContainerManager {
 
     /**
      * @param zkDb the ZK database
-     * @param requestProcessor request processer - used to inject delete container requests
+     * @param requestProcessor request processer - used to inject delete
+     *                         container requests
      * @param checkIntervalMs how often to check containers in milliseconds
-     * @param maxPerMinute the max containers to delete per second - avoids herding of container deletions
+     * @param maxPerMinute the max containers to delete per second - avoids
+     *                     herding of container deletions
      */
     public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor,
                             int checkIntervalMs, int maxPerMinute) {
@@ -59,11 +61,13 @@ public class ContainerManager {
         this.maxPerMinute = maxPerMinute;
         timer = new Timer("ContainerManagerTask", true);
 
-        LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d", checkIntervalMs, maxPerMinute));
+        LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d",
+                checkIntervalMs, maxPerMinute));
     }
 
     /**
-     * start/restart the timer the runs the check. Can safely be called multiple times.
+     * start/restart the timer the runs the check. Can safely be called
+     * multiple times.
      */
     public void start() {
         if (task.get() == null) {
@@ -82,7 +86,8 @@ public class ContainerManager {
                 }
             };
             if (task.compareAndSet(null, timerTask)) {
-                timer.scheduleAtFixedRate(timerTask, checkIntervalMs, checkIntervalMs);
+                timer.scheduleAtFixedRate(timerTask, checkIntervalMs,
+                        checkIntervalMs);
             }
         }
     }
@@ -107,12 +112,15 @@ public class ContainerManager {
             long startMs = Time.currentElapsedTime();
 
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
-            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
+            Request request = new Request(null, 0, 0,
+                    ZooDefs.OpCode.deleteContainer, path, null);
             try {
-                LOG.info("Attempting to delete candidate container: %s", containerPath);
+                LOG.info("Attempting to delete candidate container: %s",
+                        containerPath);
                 requestProcessor.processRequest(request);
             } catch (Exception e) {
-                LOG.error(String.format("Could not delete container: %s" , containerPath), e);
+                LOG.error(String.format("Could not delete container: %s" ,
+                        containerPath), e);
             }
 
             long elapsedMs = Time.currentElapsedTime() - startMs;
@@ -133,7 +141,8 @@ public class ContainerManager {
         Set<String> candidates = new HashSet<String>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
-            if ((node != null) && (node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
+            if ((node != null) && (node.stat.getCversion() > 0) &&
+                    (node.getChildren().size() == 0)) {
                 candidates.add(containerPath);
             }
         }

@@ -45,10 +45,11 @@ public enum CreateMode {
     EPHEMERAL_SEQUENTIAL (3, true, true, false),
     /**
      * The znode will be a container node. Container
-     * nodes are special purpose nodes useful for recipes such as leader, lock, etc. When
-     * the last child of a container is deleted, the container becomes a candidate to be
-     * deleted by the server at some point in the future. Given this property, you
-     * should be prepared to get {@link org.apache.zookeeper.KeeperException.NoNodeException}
+     * nodes are special purpose nodes useful for recipes such as leader, lock,
+     * etc. When the last child of a container is deleted, the container becomes
+     * a candidate to be deleted by the server at some point in the future.
+     * Given this property, you should be prepared to get
+     * {@link org.apache.zookeeper.KeeperException.NoNodeException}
      * when creating children inside of this container node.
      */
     CONTAINER (4, false, false, true);
@@ -60,7 +61,8 @@ public enum CreateMode {
     private final boolean isContainer;
     private int flag;
 
-    CreateMode(int flag, boolean ephemeral, boolean sequential, boolean isContainer) {
+    CreateMode(int flag, boolean ephemeral, boolean sequential,
+               boolean isContainer) {
         this.flag = flag;
         this.ephemeral = ephemeral;
         this.sequential = sequential;

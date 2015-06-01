@@ -253,7 +253,7 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertNotNull("Node was not created as expected",
                 zk.exists(newName, false));
     }
-    
+
     private Stat createWithStatVerifyResult(String newName)
             throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
