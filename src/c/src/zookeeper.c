@@ -2109,6 +2109,16 @@ static socket_t zookeeper_connect(zhandle_t *zh,
 
 #ifdef _WIN32
     get_errno();
+#if _MSC_VER >= 1600
+    switch(errno) {
+    case WSAEWOULDBLOCK:
+        errno = EWOULDBLOCK;
+        break;
+    case WSAEINPROGRESS:
+        errno = EINPROGRESS;
+        break;
+    }
+#endif
 #endif
 
     return rc;
