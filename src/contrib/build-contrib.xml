@@ -39,7 +39,7 @@
   <property name="javac.deprecation" value="on"/>
   <property name="javac.debug" value="on"/>
 
-  <property name="build.encoding" value="ISO-8859-1"/>
+  <property name="build.encoding" value="utf8"/>
 
   <property name="ivy.version" value="2.2.0"/>
   <property name="ivy.url"
