@@ -1599,6 +1599,16 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
                 rc = connect(zh->fd, (struct sockaddr*) &zh->addrs[zh->connect_index], sizeof(struct sockaddr_in));
 #ifdef WIN32
                 get_errno();
+#if _MSC_VER >= 1600
+                switch (errno) {
+                case WSAEWOULDBLOCK:
+                    errno = EWOULDBLOCK;
+                    break;
+                case WSAEINPROGRESS:
+                    errno = EINPROGRESS;
+                    break;
+                }
+#endif
 #endif
             }
             if (rc == -1) {
