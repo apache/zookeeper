@@ -57,7 +57,7 @@
 		<javac srcdir="${src.test.local}" 
 			destdir="${build.test}" 
 			target="${target.jdk}" 
-			debug="on" >
+			debug="on" encoding="${build.encoding}">
 			<classpath refid="classpath" />
                         <classpath>
                         <pathelement path="${test.main.classes}"/>

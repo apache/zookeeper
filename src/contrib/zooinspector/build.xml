@@ -76,7 +76,7 @@
 		<property name="target.jdk" value="${ant.java.version}" />
 		<property name="src.test.local" location="${basedir}/test" />
 		<mkdir dir="${build.test}" />
-		<javac srcdir="${src.test.local}" destdir="${build.test}" target="${target.jdk}" debug="on">
+		<javac srcdir="${src.test.local}" destdir="${build.test}" target="${target.jdk}" debug="on" encoding="${build.encoding}">
 			<classpath refid="classpath" />
 			<classpath>
 				<pathelement location="${zk.root}/build/test/classes" />

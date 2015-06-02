@@ -36,7 +36,7 @@
   <property name="javac.deprecation" value="on"/>
   <property name="javac.debug" value="on"/>
 
-  <property name="build.encoding" value="ISO-8859-1"/>
+  <property name="build.encoding" value="utf8"/>
 
   <!-- to be overridden by sub-projects -->
   <target name="check-recipes"/>

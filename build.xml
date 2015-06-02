@@ -41,6 +41,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     
     <property name="javac.target" value="1.7" />
     <property name="javac.source" value="1.7" />
+    <property name="build.encoding" value="utf8" />
 
     <property name="src.dir" value="${basedir}/src" />
     <property name="java.src.dir" value="${src.dir}/java/main" />
@@ -284,8 +285,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <target name="jute" depends="generate_jute_parser">
         <javac srcdir="${jute_javacc.dir}" destdir="${build.classes}" includeantruntime="false"
             target="${javac.target}" source="${javac.source}"
-            includes="org/apache/jute/**" debug="on" 
-        >
+            includes="org/apache/jute/**" debug="on" encoding="${build.encoding}">
           <src path="${java.src.dir}" />
           <src path="${jute_javacc.dir}" />
         </javac>
@@ -325,7 +325,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <target name="ver-gen" depends="init">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
             target="${javac.target}" source="${javac.source}"
-            includes="org/apache/zookeeper/version/util/**" debug="on" />
+            includes="org/apache/zookeeper/version/util/**" debug="on" encoding="${build.encoding}" />
     </target>
     
     <target name="svn-revision" unless="lastRevision">
@@ -358,7 +358,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     
     <target name="build-generated" depends="compile_jute,version-info,process-template" >
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" includeantruntime="false"
-            target="${javac.target}" source="${javac.source}" debug="on" />
+            target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}" />
     </target>
     
     <target name="ivy-download" unless="ivy.jar.exists" depends="init">
@@ -431,7 +431,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     </target>
     <target name="compile" depends="ivy-retrieve,clover,build-generated">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
-               target="${javac.target}" source="${javac.source}" debug="on">
+               target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
             <classpath refid="java.classpath"/>
             <compilerarg value="-Xlint:all"/>
             <compilerarg value="-Xlint:-path"/>
@@ -441,11 +441,11 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <target name="compile-test" depends="ivy-retrieve-test,compile">
       <mkdir dir="${test.java.classes}"/>
       <javac srcdir="${test.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
-             target="${javac.target}" source="${javac.source}" debug="on">
+             target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
         <classpath refid="test.java.classpath"/>
       </javac>
       <javac srcdir="${systest.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
-             target="${javac.target}" source="${javac.source}" debug="on">
+             target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
         <classpath refid="test.java.classpath"/>
       </javac>
     </target>
