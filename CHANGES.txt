@@ -84,6 +84,9 @@ BUGFIXES:
   ZOOKEEPER-2096: C client builds with incorrect error codes in VisualStudio 2010+
   (Vitaly Stakhovsky via rgs)
 
+  ZOOKEEPER-2194: Let DataNode.getChildren() return an unmodifiable view of its children set
+  (Hitoshi Mitake via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
