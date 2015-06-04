@@ -119,22 +119,26 @@ public class PurgeTxnLog {
     }
     
     /**
-     * @param args PurgeTxnLog dataLogDir
+     * @param args PurgeTxnLog dataLogDir snapDir num
      *     dataLogDir -- txn log directory
-     *     -n num (number of snapshots to keep)
+     *     snapDir -- snapshot directory (defaults to dataLogDir if
+     *                not supplied)
+     *     num -- number of snapshots to keep
      */
     public static void main(String[] args) throws IOException {
-        if(args.length<3 || args.length>4)
+        if (args.length < 2 || args.length > 3) {
             printUsage();
-        int i = 0;
-        File dataDir=new File(args[0]);
-        File snapDir=dataDir;
-        if(args.length==4){
-            i++;
-            snapDir=new File(args[i]);
         }
-        i++; i++;
-        int num = Integer.parseInt(args[i]);
+        File dataDir = new File(args[0]);
+        File snapDir = null;
+        int num = -1;
+        if (args.length == 2) {
+            snapDir = dataDir;
+            num = Integer.parseInt(args[1]);
+        } else {
+            snapDir = new File(args[1]);
+            num = Integer.parseInt(args[2]);
+        }
         purge(dataDir, snapDir, num);
     }
 }
