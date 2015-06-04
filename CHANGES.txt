@@ -114,6 +114,9 @@ BUGFIXES:
   ZOOKEEPER-2194: Let DataNode.getChildren() return an unmodifiable view of its children set
   (Hitoshi Mitake via rgs)
 
+  ZOOKEEPER-2204: LearnerSnapshotThrottlerTest.testHighContentionWithTimeout fails occasionally
+  (Donny Nadolny via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
