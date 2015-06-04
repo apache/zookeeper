@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Collections;
 
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
@@ -124,7 +125,11 @@ public class DataNode implements Record {
      * @return the children of this datanode
      */
     public synchronized Set<String> getChildren() {
-        return children;
+        if (children == null) {
+            return children;
+        }
+
+        return Collections.unmodifiableSet(children);
     }
 
     public synchronized long getApproximateDataSize() {
