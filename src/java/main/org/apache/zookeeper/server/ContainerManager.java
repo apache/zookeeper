@@ -141,6 +141,12 @@ public class ContainerManager {
         Set<String> candidates = new HashSet<String>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
+            /*
+                cversion > 0: keep newly created containers from being deleted
+                before any children have been added. If you were to create the
+                container just before a container cleaning period the container
+                would be immediately be deleted.
+             */
             if ((node != null) && (node.stat.getCversion() > 0) &&
                     (node.getChildren().size() == 0)) {
                 candidates.add(containerPath);
