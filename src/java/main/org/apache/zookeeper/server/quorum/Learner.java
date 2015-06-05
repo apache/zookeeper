@@ -389,8 +389,8 @@ public class Learner {
 
             }
             else {
-                LOG.error("Got unexpected packet from leader "
-                        + qp.getType() + " exiting ... " );
+                LOG.error("Got unexpected packet from leader: {}, exiting ... ",
+                          LearnerHandler.packetToString(qp));
                 System.exit(13);
 
             }
