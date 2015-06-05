@@ -154,6 +154,9 @@ public class Observer extends Learner{
                throw new Exception("changes proposed in reconfig");
            }            
             break;
+        default:
+            LOG.warn("Unknown packet type: {}", LearnerHandler.packetToString(qp));
+            break;
         }
     }
 
