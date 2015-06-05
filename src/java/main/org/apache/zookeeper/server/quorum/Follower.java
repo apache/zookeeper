@@ -165,7 +165,7 @@ public class Follower extends Learner{
             fzk.sync();
             break;
         default:
-            LOG.warn("unknown type " + qp.getType());
+            LOG.warn("Unknown packet type: {}", LearnerHandler.packetToString(qp));
             break;
         }
     }
