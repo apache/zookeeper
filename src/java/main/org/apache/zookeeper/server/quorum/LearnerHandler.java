@@ -303,6 +303,30 @@ public class LearnerHandler extends ZooKeeperThread {
         case Leader.UPTODATE:
             type = "UPTODATE";
             break;
+        case Leader.DIFF:
+            type = "DIFF";
+            break;
+        case Leader.TRUNC:
+            type = "TRUNC";
+            break;
+        case Leader.SNAP:
+            type = "SNAP";
+            break;
+        case Leader.ACKEPOCH:
+            type = "ACKEPOCH";
+            break;
+        case Leader.SYNC:
+            type = "SYNC";
+            break;
+        case Leader.INFORM:
+            type = "INFORM";
+            break;
+        case Leader.COMMITANDACTIVATE:
+            type = "COMMITANDACTIVATE";
+            break;
+        case Leader.INFORMANDACTIVATE:
+            type = "INFORMANDACTIVATE";
+            break;
         default:
             type = "UNKNOWN" + p.getType();
         }
