@@ -108,6 +108,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2124 Allow Zookeeper version string to have underscore '_'
   (Chris Nauroth via michim)
 
+  ZOOKEEPER-2205: Log type of unexpected quorum packet in learner handler loop
+  (Hitoshi Mitake via rgs)
+
 Release 3.4.6 - 2014-03-10 
 
 Backward compatible changes:
