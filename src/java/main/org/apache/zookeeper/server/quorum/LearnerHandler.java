@@ -481,7 +481,8 @@ public class LearnerHandler extends ZooKeeperThread {
             qp = new QuorumPacket();
             ia.readRecord(qp, "packet");
             if(qp.getType() != Leader.ACK){
-                LOG.error("Next packet was supposed to be an ACK");
+                LOG.error("Next packet was supposed to be an ACK,"
+                    + " but received packet: {}", packetToString(qp));
                 return;
             }
 

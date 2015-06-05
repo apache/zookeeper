@@ -187,6 +187,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2206: Add missing packet types to LearnerHandler.packetToString()
   (Hitoshi Mitake via rgs)
 
+  ZOOKEEPER-2207: Enhance error logs with LearnerHandler.packetToString()
+  (Hitoshi Mitake via rgs)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
