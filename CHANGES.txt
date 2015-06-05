@@ -184,6 +184,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2205: Log type of unexpected quorum packet in learner handler loop
   (Hitoshi Mitake via rgs)
 
+  ZOOKEEPER-2206: Add missing packet types to LearnerHandler.packetToString()
+  (Hitoshi Mitake via rgs)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
