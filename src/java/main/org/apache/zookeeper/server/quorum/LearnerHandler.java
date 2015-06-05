@@ -255,8 +255,6 @@ public class LearnerHandler extends ZooKeeperThread {
     }
 
     static public String packetToString(QuorumPacket p) {
-        if (true)
-            return null;
         String type = null;
         String mess = null;
         Record txn = null;
@@ -573,6 +571,8 @@ public class LearnerHandler extends ZooKeeperThread {
                     leader.zk.submitLearnerRequest(si);
                     break;
                 default:
+                    LOG.warn("unexpected quorum packet, type: {}", packetToString(qp));
+                    break;
                 }
             }
         } catch (IOException e) {
