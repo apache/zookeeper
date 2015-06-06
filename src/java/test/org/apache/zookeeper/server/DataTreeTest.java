@@ -34,14 +34,19 @@ import org.junit.Test;
 import org.apache.zookeeper.server.DataNode;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import org.apache.zookeeper.Quotas;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.Record;
 import org.apache.zookeeper.common.PathTrie;
 import java.lang.reflect.*;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DataTreeTest extends ZKTestCase {
@@ -145,18 +150,18 @@ public class DataTreeTest extends ZKTestCase {
                 newCversion + ", " + newPzxid + ">",
                 (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
     }
-   
+
     @Test(timeout = 60000)
     public void testPathTrieClearOnDeserialize() throws Exception {
 
         //Create a DataTree with quota nodes so PathTrie get updated
         DataTree dserTree = new DataTree();
-        
+
         dserTree.createNode("/bug", new byte[20], null, -1, 1, 1, 1);
         dserTree.createNode(Quotas.quotaZookeeper+"/bug", null, null, -1, 1, 1, 1);
         dserTree.createNode(Quotas.quotaPath("/bug"), new byte[20], null, -1, 1, 1, 1);
         dserTree.createNode(Quotas.statPath("/bug"), new byte[20], null, -1, 1, 1, 1);
-        
+
         //deserialize a DataTree; this should clear the old /bug nodes and pathTrie
         DataTree tree = new DataTree();
 
@@ -175,5 +180,56 @@ public class DataTreeTest extends ZKTestCase {
 
         //Check that the node path is removed from pTrie
         Assert.assertEquals("/bug is still in pTrie", "", pTrie.findMaxPrefix("/bug"));       
+    }
+
+    /*
+     * ZOOKEEPER-2201 - OutputArchive.writeRecord can block for long periods of
+     * time, we must call it outside of the node lock.
+     * We call tree.serialize, which calls our modified writeRecord method that
+     * blocks until it can verify that a separate thread can lock the DataNode
+     * currently being written, i.e. that DataTree.serializeNode does not hold
+     * the DataNode lock while calling OutputArchive.writeRecord.
+     */
+    @Test(timeout = 60000)
+    public void testSerializeDoesntLockDataNodeWhileWriting() throws Exception {
+        DataTree tree = new DataTree();
+        tree.createNode("/marker", new byte[] {42}, null, -1, 1, 1, 1);
+        final DataNode markerNode = tree.getNode("/marker");
+        final AtomicBoolean ranTestCase = new AtomicBoolean();
+        DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
+        BinaryOutputArchive oa = new BinaryOutputArchive(out) {
+            @Override
+            public void writeRecord(Record r, String tag) throws IOException {
+                DataNode node = (DataNode) r;
+                if (node.data.length == 1 && node.data[0] == 42) {
+                    final Semaphore semaphore = new Semaphore(0);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            synchronized (markerNode) {
+                                //When we lock markerNode, allow writeRecord to continue
+                                semaphore.release();
+                            }
+                        }
+                    }).start();
+
+                    try {
+                        boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
+                        //This is the real assertion - could another thread lock
+                        //the DataNode we're currently writing
+                        Assert.assertTrue("Couldn't acquire a lock on the DataNode while we were calling tree.serialize", acquired);
+                    } catch (InterruptedException e1) {
+                        throw new RuntimeException(e1);
+                    }
+                    ranTestCase.set(true);
+                }
+                super.writeRecord(r, tag);
+            }
+        };
+
+        tree.serialize(oa, "test");
+
+        //Let's make sure that we hit the code that ran the real assertion above
+        Assert.assertTrue("Didn't find the expected node", ranTestCase.get());
     }
 }
