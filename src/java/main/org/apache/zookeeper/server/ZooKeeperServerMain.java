@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.JMException;
 
@@ -45,6 +46,7 @@ public class ZooKeeperServerMain {
     // ZooKeeper server supports two kinds of connection: unencrypted and encrypted.
     private ServerCnxnFactory cnxnFactory;
     private ServerCnxnFactory secureCnxnFactory;
+    private ContainerManager containerManager;
 
     private AdminServer adminServer;
 
@@ -138,6 +140,12 @@ public class ZooKeeperServerMain {
                 secureCnxnFactory.startup(zkServer, needStartZKServer);
             }
 
+            containerManager = new ContainerManager(zkServer.getZKDatabase(), zkServer.firstProcessor,
+                    Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+                    Integer.getInteger("znode.container.maxPerMinute", 10000)
+            );
+            containerManager.start();
+
             if (cnxnFactory != null) {
                 cnxnFactory.join();
             }
@@ -162,6 +170,9 @@ public class ZooKeeperServerMain {
      * Shutdown the serving instance
      */
     protected void shutdown() {
+        if (containerManager != null) {
+            containerManager.stop();
+        }
         if (cnxnFactory != null) {
             cnxnFactory.shutdown();
         }

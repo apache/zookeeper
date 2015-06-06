@@ -18,10 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.IOException;
-
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.ContainerManager;
 import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
@@ -31,6 +30,9 @@ import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
 /**
  *
  * Just like the standard ZooKeeperServer. We just replace the request
@@ -39,6 +41,8 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * FinalRequestProcessor
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
+    private ContainerManager containerManager;  // guarded by sync
+
 
     CommitProcessor commitProcessor;
 
@@ -71,6 +75,31 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
         prepRequestProcessor.start();
         firstProcessor = new LeaderRequestProcessor(this, prepRequestProcessor);
+
+        setupContainerManager();
+    }
+
+    private synchronized void setupContainerManager() {
+        containerManager = new ContainerManager(getZKDatabase(), prepRequestProcessor,
+                Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+                Integer.getInteger("znode.container.maxPerMinute", 10000)
+                );
+    }
+
+    @Override
+    public synchronized void startup() {
+        super.startup();
+        if (containerManager != null) {
+            containerManager.start();
+        }
+    }
+
+    @Override
+    public synchronized void shutdown() {
+        if (containerManager != null) {
+            containerManager.stop();
+        }
+        super.shutdown();
     }
 
     @Override

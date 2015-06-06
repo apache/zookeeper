@@ -35,21 +35,31 @@ public class CreateModeTest extends ZKTestCase {
         Assert.assertEquals(cm.toFlag(), 0);
         Assert.assertFalse(cm.isEphemeral());
         Assert.assertFalse(cm.isSequential());
-        
+        Assert.assertFalse(cm.isContainer());
+
         cm = CreateMode.EPHEMERAL;
         Assert.assertEquals(cm.toFlag(), 1);
         Assert.assertTrue(cm.isEphemeral());
         Assert.assertFalse(cm.isSequential());
-        
+        Assert.assertFalse(cm.isContainer());
+
         cm = CreateMode.PERSISTENT_SEQUENTIAL;
         Assert.assertEquals(cm.toFlag(), 2);
         Assert.assertFalse(cm.isEphemeral());
         Assert.assertTrue(cm.isSequential());
-        
+        Assert.assertFalse(cm.isContainer());
+
         cm = CreateMode.EPHEMERAL_SEQUENTIAL;
         Assert.assertEquals(cm.toFlag(), 3);
         Assert.assertTrue(cm.isEphemeral());
         Assert.assertTrue(cm.isSequential());
+        Assert.assertFalse(cm.isContainer());
+
+        cm = CreateMode.CONTAINER;
+        Assert.assertEquals(cm.toFlag(), 4);
+        Assert.assertFalse(cm.isEphemeral());
+        Assert.assertFalse(cm.isSequential());
+        Assert.assertTrue(cm.isContainer());
     }
     
     @Test
