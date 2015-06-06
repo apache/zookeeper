@@ -1109,15 +1109,21 @@ public class DataTree {
             return;
         }
         String children[] = null;
+        DataNode nodeCopy;
         synchronized (node) {
             scount++;
-            oa.writeString(pathString, "path");
-            oa.writeRecord(node, "node");
+            StatPersisted statCopy = new StatPersisted();
+            copyStatPersisted(node.stat, statCopy);
+            //we do not need to make a copy of node.data because the contents
+            //are never changed
+            nodeCopy = new DataNode(node.parent, node.data, node.acl, statCopy);
             Set<String> childs = node.getChildren();
             if (childs != null) {
                 children = childs.toArray(new String[childs.size()]);
             }
         }
+        oa.writeString(pathString, "path");
+        oa.writeRecord(nodeCopy, "node");
         path.append('/');
         int off = path.length();
         if (children != null) {
