@@ -1383,6 +1383,30 @@ server.3=zoo3:2888:3888</programlisting>
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>znode.container.checkIntervalMs</term>
+
+            <listitem>
+              <para>(Java system property only)</para>
+
+              <para><emphasis role="bold">New in 3.6.0:</emphasis> The
+                time interval in milliseconds for each check of candidate container
+                nodes. Default is "60000".</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>znode.container.maxPerMinute</term>
+
+            <listitem>
+              <para>(Java system property only)</para>
+
+              <para><emphasis role="bold">New in 3.6.0:</emphasis> The
+                maximum number of container nodes that can be deleted per
+                minute. This prevents herding during container deletion.
+                Default is "10000".</para>
+            </listitem>
+          </varlistentry>
         </variablelist>
       </section>
 
