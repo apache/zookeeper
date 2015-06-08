@@ -3542,7 +3542,7 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
         string_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), IS_CONTAINER(flags) ? ZOO_CREATE_CONTAINER : ZOO_CREATE_OP};
+    struct RequestHeader h = {get_xid(), IS_CONTAINER(flags) ? ZOO_CREATE_CONTAINER_OP : ZOO_CREATE_OP};
     struct CreateRequest req;
 
     int rc = CreateRequest_init(zh, &req, 
@@ -3574,7 +3574,7 @@ int zoo_acreate2(zhandle_t *zh, const char *path, const char *value,
         string_stat_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { get_xid(), IS_CONTAINER(flags) ? ZOO_CREATE_CONTAINER : ZOO_CREATE2_OP };
+    struct RequestHeader h = { get_xid(), IS_CONTAINER(flags) ? ZOO_CREATE_CONTAINER_OP : ZOO_CREATE2_OP };
     struct CreateRequest req;
 
     int rc = CreateRequest_init(zh, &req, path, value, valuelen, acl_entries, flags);
@@ -3939,7 +3939,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
         rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
 
         switch(op->type) {
-            case ZOO_CREATE_CONTAINER:
+            case ZOO_CREATE_CONTAINER_OP:
             case ZOO_CREATE_OP: {
                 struct CreateRequest req;
 
@@ -4031,7 +4031,7 @@ void zoo_create_op_init(zoo_op_t *op, const char *path, const char *value,
         char *path_buffer, int path_buffer_len)
 {
     assert(op);
-    op->type = IS_CONTAINER(flags) ? ZOO_CREATE_CONTAINER : ZOO_CREATE_OP;
+    op->type = IS_CONTAINER(flags) ? ZOO_CREATE_CONTAINER_OP : ZOO_CREATE_OP;
     op->create_op.path = path;
     op->create_op.data = value;
     op->create_op.datalen = valuelen;
@@ -4046,7 +4046,7 @@ void zoo_create2_op_init(zoo_op_t *op, const char *path, const char *value,
         char *path_buffer, int path_buffer_len)
 {
     assert(op);
-    op->type = IS_CONTAINER(flags) ? ZOO_CREATE_CONTAINER : ZOO_CREATE2_OP;
+    op->type = IS_CONTAINER(flags) ? ZOO_CREATE_CONTAINER_OP : ZOO_CREATE2_OP;
     op->create_op.path = path;
     op->create_op.data = value;
     op->create_op.datalen = valuelen;
