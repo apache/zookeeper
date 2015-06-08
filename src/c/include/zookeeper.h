@@ -188,7 +188,10 @@ extern ZOOAPI const int ZOOKEEPER_READ;
 // @{
 extern ZOOAPI const int ZOO_EPHEMERAL;
 extern ZOOAPI const int ZOO_SEQUENCE;
+extern ZOOAPI const int ZOO_CONTAINER;
 // @}
+
+#define IS_CONTAINER(flags) (((flags) & ZOO_CONTAINER) == ZOO_CONTAINER)
 
 /**
  * @name State Consts
