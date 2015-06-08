@@ -260,6 +260,8 @@ document.write("Last Published: " + document.lastModified);
 </li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2073'>ZOOKEEPER-2073</a>] -         Memory leak on zookeeper_close
 </li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2096'>ZOOKEEPER-2096</a>] -         C client builds with incorrect error codes in VisualStudio 2010+
+</li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2109'>ZOOKEEPER-2109</a>] -         Typo in src/c/src/load_gen.c
 </li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2111'>ZOOKEEPER-2111</a>] -         Not isAlive states should be synchronized in ClientCnxn
@@ -276,11 +278,21 @@ document.write("Last Published: " + document.lastModified);
 </li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2173'>ZOOKEEPER-2173</a>] -         ZK startup failure should be handled with proper error message
 </li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2178'>ZOOKEEPER-2178</a>] -         Native client fails compilation on Windows.
+</li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2182'>ZOOKEEPER-2182</a>] -         Several test suites are not running during pre-commit, because their names do not end with &quot;Test&quot;.
 </li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2186'>ZOOKEEPER-2186</a>] -         QuorumCnxManager#receiveConnection may crash with random input
 </li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2187'>ZOOKEEPER-2187</a>] -         remove duplicated code between CreateRequest{,2}
+</li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2190'>ZOOKEEPER-2190</a>] -         In StandaloneDisabledTest, testReconfig() shouldn&#39;t take leaving servers as joining servers
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2197'>ZOOKEEPER-2197</a>] -         non-ascii character in FinalRequestProcessor.java
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2198'>ZOOKEEPER-2198</a>] -         Set default test.junit.threads to 1.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2199'>ZOOKEEPER-2199</a>] -         Don&#39;t include unistd.h in windows
 </li>
 </ul>
                     
@@ -301,6 +313,8 @@ document.write("Last Published: " + document.lastModified);
 </li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2079'>ZOOKEEPER-2079</a>] -         Stop daemon with &quot;kill&quot; rather than &quot;kill -9&quot;
 </li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2098'>ZOOKEEPER-2098</a>] -         QuorumCnxManager: use BufferedOutputStream for initial msg
+</li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2107'>ZOOKEEPER-2107</a>] -         zookeeper client should support custom HostProviders
 </li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2110'>ZOOKEEPER-2110</a>] -         Typo fixes in the ZK documentation
@@ -313,14 +327,33 @@ document.write("Last Published: " + document.lastModified);
 </li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2183'>ZOOKEEPER-2183</a>] -         Concurrent Testing Processes and Port Assignments
 </li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2194'>ZOOKEEPER-2194</a>] -         Let DataNode.getChildren() return an unmodifiable view of its children set
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2205'>ZOOKEEPER-2205</a>] -         Log type of unexpected quorum packet in learner handler loop
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2206'>ZOOKEEPER-2206</a>] -         Add missing packet types to LearnerHandler.packetToString()
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2207'>ZOOKEEPER-2207</a>] -         Enhance error logs with LearnerHandler.packetToString()
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2208'>ZOOKEEPER-2208</a>] -         Log type of unexpected quorum packet in observer loop
+</li>
 </ul>
-                                                                        
+            
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2163'>ZOOKEEPER-2163</a>] -         Introduce new ZNode type: container
+</li>
+</ul>
+                                                            
 <h2>        Test
 </h2>
 <ul>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2017'>ZOOKEEPER-2017</a>] -         New tests for reconfig failure cases
 </li>
 <li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2032'>ZOOKEEPER-2032</a>] -         ReconfigBackupTest didn&#39;t clean up resources.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2204'>ZOOKEEPER-2204</a>] -         LearnerSnapshotThrottlerTest.testHighContentionWithTimeout fails occasionally
 </li>
 </ul>
 
