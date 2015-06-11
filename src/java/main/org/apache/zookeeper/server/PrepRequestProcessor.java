@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.MultiTransactionRecord;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
@@ -351,13 +352,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if (createMode.isSequential()) {
                     path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
                 }
-                try {
-                    PathUtils.validatePath(path);
-                } catch(IllegalArgumentException ie) {
-                    LOG.info("Invalid path " + path + " with session 0x" +
-                            Long.toHexString(request.sessionId));
-                    throw new KeeperException.BadArgumentsException(path);
-                }
+                validatePath(path, request.sessionId);
                 try {
                     if (getRecordForPath(path) != null) {
                         throw new KeeperException.NodeExistsException(path);
@@ -420,6 +415,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, setDataRequest);
                 path = setDataRequest.getPath();
+                validatePath(path, request.sessionId);
                 nodeRecord = getRecordForPath(path);
                 checkACL(zks, nodeRecord.acl, ZooDefs.Perms.WRITE,
                         request.authInfo);
@@ -440,6 +436,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, setAclRequest);
                 path = setAclRequest.getPath();
+                validatePath(path, request.sessionId);
                 listACL = removeDuplicates(setAclRequest.getAcl());
                 if (!fixupACL(request.authInfo, listACL)) {
                     throw new KeeperException.InvalidACLException(path);
@@ -499,6 +496,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, checkVersionRequest);
                 path = checkVersionRequest.getPath();
+                validatePath(path, request.sessionId);
                 nodeRecord = getRecordForPath(path);
                 checkACL(zks, nodeRecord.acl, ZooDefs.Perms.READ,
                         request.authInfo);
@@ -510,6 +508,16 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 version = currentVersion + 1;
                 request.txn = new CheckVersionTxn(path, version);
                 break;
+        }
+    }
+
+    private void validatePath(String path, long sessionId) throws BadArgumentsException {
+        try {
+            PathUtils.validatePath(path);
+        } catch(IllegalArgumentException ie) {
+            LOG.info("Invalid path " +  path + " with session 0x" + Long.toHexString(sessionId) +
+                    ", reason: " + ie.getMessage());
+            throw new BadArgumentsException(path);
         }
     }
 
