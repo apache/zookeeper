@@ -125,6 +125,9 @@ BUGFIXES:
   ZOOKEEPER-2201: Network issues can cause cluster to hang due to near-deadlock
   (Donny Nadolny via rgs)
 
+  ZOOKEEPER-2213: Empty path in Set crashes server and prevents restart
+  (Hongchao Deng via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
