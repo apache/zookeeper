@@ -29,6 +29,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -50,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class PrepRequestProcessorTest extends ClientBase {
     private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessorTest.class);
@@ -96,34 +98,29 @@ public class PrepRequestProcessorTest extends ClientBase {
 
         Assert.assertEquals("Request should have marshalling error", new ErrorTxn(KeeperException.Code.MARSHALLINGERROR.intValue()),
                 outcome.getTxn());
-        Assert.assertTrue("request hasn't been processed in chain",
-                pLatch.await(5, java.util.concurrent.TimeUnit.SECONDS));
+        Assert.assertTrue("request hasn't been processed in chain", pLatch.await(5, TimeUnit.SECONDS));
     }
 
-    private Request createMultiRequest(List<Op> ops) throws IOException {
-        Record record = new MultiTransactionRecord(ops);
-
+    private Request createRequest(Record record, int opCode) throws IOException {
         // encoding
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         record.serialize(boa, "request");
         baos.close();
-
         // Id
         List<Id> ids = Arrays.asList(Ids.ANYONE_ID_UNSAFE);
-
-        return new Request(null, 1l, 0, OpCode.multi, ByteBuffer.wrap(baos.toByteArray()), ids);
+        return new Request(null, 1l, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), ids);
     }
 
     private void process(List<Op> ops) throws Exception {
         pLatch = new CountDownLatch(1);
         processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
 
-        Request req = createMultiRequest(ops);
+        Record record = new MultiTransactionRecord(ops);
+        Request req = createRequest(record, OpCode.multi);
 
         processor.pRequest(req);
-        Assert.assertTrue("request hasn't been processed in chain",
-                pLatch.await(5, java.util.concurrent.TimeUnit.SECONDS));
+        Assert.assertTrue("request hasn't been processed in chain", pLatch.await(5, TimeUnit.SECONDS));
     }
 
     /**
@@ -171,9 +168,6 @@ public class PrepRequestProcessorTest extends ClientBase {
         zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
         zks.getZKDatabase().dataTree.createNode("/foo/bar", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
 
-        pLatch = new CountDownLatch(1);
-        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
-
         Assert.assertNull(zks.outstandingChangesForPath.get("/foo"));
 
         // multi record:
@@ -185,6 +179,23 @@ public class PrepRequestProcessorTest extends ClientBase {
 
         // aborting multi shouldn't leave any record.
         Assert.assertNull(zks.outstandingChangesForPath.get("/foo"));
+    }
+
+    /**
+     * It tests that PrepRequestProcessor will return BadArgument KeeperException
+     * if the request path (if it exists) is not valid, e.g. empty string.
+     */
+    @Test
+    public void testInvalidPath() throws Exception {
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+
+        SetDataRequest record = new SetDataRequest("", new byte[0], -1);
+        Request req = createRequest(record, OpCode.setData);
+        processor.pRequest(req);
+        pLatch.await();
+        Assert.assertEquals(outcome.getHdr().getType(), OpCode.error);
+        Assert.assertEquals(outcome.getException().code(), KeeperException.Code.BADARGUMENTS);
     }
 
     private class MyRequestProcessor implements RequestProcessor {
