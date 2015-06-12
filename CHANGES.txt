@@ -189,6 +189,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2208: Log type of unexpected quorum packet in observer loop
   (Akihiro Suda via rgs)
 
+  ZOOKEEPER-2214: Findbugs warning: LearnerHandler.packetToString Dead
+  store to local variable (Hongchao Deng via rgs)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
