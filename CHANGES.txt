@@ -101,6 +101,9 @@ BUGFIXES:
 
   ZOOKEEPER-1624. PrepRequestProcessor abort multi-operation incorrectly. (thawan via camille)
 
+  ZOOKEEPER-706: Large numbers of watches can cause session re-establishment to fail
+  (Chris Thunes via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1610. Some classes are using == or != to compare
