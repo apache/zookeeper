@@ -28,6 +28,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -98,6 +99,16 @@ public class ClientCnxn {
 
     private static final String ZK_SASL_CLIENT_USERNAME =
         "zookeeper.sasl.client.username";
+
+    /* ZOOKEEPER-706: If a session has a large number of watches set then
+     * attempting to re-establish those watches after a connection loss may
+     * fail due to the SetWatches request exceeding the server's configured
+     * jute.maxBuffer value. To avoid this we instead split the watch
+     * re-establishement across multiple SetWatches calls. This constant
+     * controls the size of each call. It is set to 128kB to be conservative
+     * with respect to the server's 1MB default for jute.maxBuffer.
+     */
+    private static final int SET_WATCHES_MAX_LENGTH = 128 * 1024;
 
     /** This controls whether automatic watch resetting is enabled.
      * Clients automatically reset watches during session reconnect, this
@@ -983,15 +994,45 @@ public class ClientCnxn {
                 List<String> childWatches = zooKeeper.getChildWatches();
                 if (!dataWatches.isEmpty()
                         || !existWatches.isEmpty() || !childWatches.isEmpty()) {
-                    SetWatches sw = new SetWatches(lastZxid,
-                            prependChroot(dataWatches),
-                            prependChroot(existWatches),
-                            prependChroot(childWatches));
-                    RequestHeader h = new RequestHeader();
-                    h.setType(ZooDefs.OpCode.setWatches);
-                    h.setXid(-8);
-                    Packet packet = new Packet(h, new ReplyHeader(), sw, null, null);
-                    outgoingQueue.addFirst(packet);
+                    Iterator<String> dataWatchesIter = prependChroot(dataWatches).iterator();
+                    Iterator<String> existWatchesIter = prependChroot(existWatches).iterator();
+                    Iterator<String> childWatchesIter = prependChroot(childWatches).iterator();
+                    long setWatchesLastZxid = lastZxid;
+
+                    while (dataWatchesIter.hasNext()
+                           || existWatchesIter.hasNext() || childWatchesIter.hasNext()) {
+                        List<String> dataWatchesBatch = new ArrayList<String>();
+                        List<String> existWatchesBatch = new ArrayList<String>();
+                        List<String> childWatchesBatch = new ArrayList<String>();
+                        int batchLength = 0;
+
+                        // Note, we may exceed our max length by a bit when we add the last
+                        // watch in the batch. This isn't ideal, but it makes the code simpler.
+                        while (batchLength < SET_WATCHES_MAX_LENGTH) {
+                            final String watch;
+                            if (dataWatchesIter.hasNext()) {
+                                watch = dataWatchesIter.next();
+                                dataWatchesBatch.add(watch);
+                            } else if (existWatchesIter.hasNext()) {
+                                watch = existWatchesIter.next();
+                                existWatchesBatch.add(watch);
+                            } else if (childWatchesIter.hasNext()) {
+                                watch = childWatchesIter.next();
+                                childWatchesBatch.add(watch);
+                            } else {
+                                break;
+                            }
+                            batchLength += watch.length();
+                        }
+
+                        SetWatches sw = new SetWatches(setWatchesLastZxid,
+                                                       dataWatchesBatch,
+                                                       existWatchesBatch,
+                                                       childWatchesBatch);
+                        RequestHeader header = new RequestHeader(-8, OpCode.setWatches);
+                        Packet packet = new Packet(header, new ReplyHeader(), sw, null, null);
+                        outgoingQueue.addFirst(packet);
+                    }
                 }
             }
 
