@@ -128,6 +128,9 @@ BUGFIXES:
   ZOOKEEPER-2213: Empty path in Set crashes server and prevents restart
   (Hongchao Deng via rgs)
 
+  ZOOKEEPER-706: Large numbers of watches can cause session re-establishment to fail
+  (Chris Thunes via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
