@@ -294,14 +294,19 @@ public class FastLeaderElection implements Election {
                                         LOG.info("{} Received version: {} my version: {}", self.getId(),
                                                 Long.toHexString(rqv.getVersion()),
                                                 Long.toHexString(self.getQuorumVerifier().getVersion()));
-                                        self.processReconfig(rqv, null, null, false);
-                                        if (!rqv.equals(curQV)) {
-                                            LOG.info("restarting leader election");
-                                            self.shuttingDownLE = true;
-                                            self.getElectionAlg().shutdown();
-                                            
-                                            break;
-                                       }
+                                        if (self.getPeerState() == ServerState.LOOKING) {
+                                            LOG.debug("Invoking processReconfig(), state: {}", self.getServerState());
+                                            self.processReconfig(rqv, null, null, false);
+                                            if (!rqv.equals(curQV)) {
+                                                LOG.info("restarting leader election");
+                                                self.shuttingDownLE = true;
+                                                self.getElectionAlg().shutdown();
+
+                                                break;
+                                            }
+                                        } else {
+                                            LOG.debug("Skip processReconfig(), state: {}", self.getServerState());
+                                        }
                                     }
                                 } catch (IOException e) {
                                     LOG.error("Something went wrong while processing config received from {}", response.sid);
