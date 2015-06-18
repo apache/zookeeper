@@ -39,7 +39,7 @@ import org.apache.zookeeper.KeeperException.SessionExpiredException;
  * period. Sessions are thus expired in batches made up of sessions that expire
  * in a given interval.
  */
-public class SessionTrackerImpl extends Thread implements SessionTracker {
+public class SessionTrackerImpl extends ZooKeeperCriticalThread implements SessionTracker {
     private static final Logger LOG = LoggerFactory.getLogger(SessionTrackerImpl.class);
 
     HashMap<Long, SessionImpl> sessionsById = new HashMap<Long, SessionImpl>();

@@ -41,6 +41,7 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -75,7 +76,7 @@ import org.slf4j.LoggerFactory;
  *
  * The request for the current leader will consist solely of an xid: int xid;
  */
-public class QuorumPeer extends Thread implements QuorumStats.Provider {
+public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeer.class);
 
     QuorumBean jmxQuorumBean;
@@ -293,7 +294,7 @@ public class QuorumPeer extends Thread implements QuorumStats.Provider {
      *
      */
     @Deprecated
-    class ResponderThread extends Thread {
+    class ResponderThread extends ZooKeeperThread {
         ResponderThread() {
             super("ResponderThread");
         }
