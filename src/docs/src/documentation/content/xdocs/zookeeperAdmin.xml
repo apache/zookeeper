@@ -533,6 +533,18 @@ server.3=zoo3:2888:3888</programlisting>
       examples) managing your ZooKeeper server ensures that if the
       process does exit abnormally it will automatically be restarted
       and will quickly rejoin the cluster.</para>
+
+      <para>It is also recommended to configure the ZooKeeper server process to
+      terminate and dump its heap if an
+      <computeroutput>OutOfMemoryError</computeroutput> occurs.  This is achieved
+      by launching the JVM with the following arguments on Linux and Windows
+      respectively.  The <filename>zkServer.sh</filename> and
+      <filename>zkServer.cmd</filename> scripts that ship with ZooKeeper set
+      these options.
+      </para>
+
+      <programlisting>-XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p'</programlisting>
+      <programlisting>"-XX:+HeapDumpOnOutOfMemoryError" "-XX:OnOutOfMemoryError=cmd /c taskkill /pid %%%%p /t /f"</programlisting>
     </section>
 
     <section id="sc_monitoring">
