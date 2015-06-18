@@ -96,6 +96,9 @@ BUGFIXES:
   ZOOKEEPER-706: Large numbers of watches can cause session re-establishment to fail
   (Chris Thunes via rgs)
 
+  ZOOKEEPER-602: log all exceptions not caught by ZK threads
+  (Rakesh R via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for

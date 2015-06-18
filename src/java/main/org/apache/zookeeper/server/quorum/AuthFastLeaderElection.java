@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -716,7 +717,7 @@ public class AuthFastLeaderElection implements Election {
             lastEpoch = 0;
 
             for (int i = 0; i < threads; ++i) {
-                Thread t = new Thread(new WorkerSender(3),
+                Thread t = new ZooKeeperThread(new WorkerSender(3),
                         "WorkerSender Thread: " + (i + 1));
                 t.setDaemon(true);
                 t.start();
@@ -728,8 +729,8 @@ public class AuthFastLeaderElection implements Election {
                 addrChallengeMap.put(saddr, new ConcurrentHashMap<Long, Long>());
             }
 
-            Thread t = new Thread(new WorkerReceiver(s, this),
-                    "WorkerReceiver Thread");
+            Thread t = new ZooKeeperThread(new WorkerReceiver(s, this),
+                    "WorkerReceiver-" + s.getRemoteSocketAddress());
             t.start();
         }
 

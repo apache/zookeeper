@@ -26,6 +26,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * OpCode.getData, OpCode.exists) through to the next processor, but drops
  * state-changing operations (e.g. OpCode.create, OpCode.setData).
  */
-public class ReadOnlyRequestProcessor extends Thread implements RequestProcessor {
+public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReadOnlyRequestProcessor.class);
 
