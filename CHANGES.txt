@@ -198,6 +198,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2214: Findbugs warning: LearnerHandler.packetToString Dead
   store to local variable (Hongchao Deng via rgs)
 
+  ZOOKEEPER-2185: Run server with -XX:+HeapDumpOnOutOfMemoryError and
+  -XX:OnOutOfMemoryError='kill %p' (Chris Nauroth via rgs)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
