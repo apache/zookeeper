@@ -4,6 +4,9 @@ Backward compatible changes:
 
 BUGFIXES:
 
+  ZOOKEEPER-602: log all exceptions not caught by ZK threads
+  (Rakesh R via rgs)
+
   ZOOKEEPER-1388. Client side 'PathValidation' is missing for the
   multi-transaction api. (Rakesh R via marshallm, phunt)
 

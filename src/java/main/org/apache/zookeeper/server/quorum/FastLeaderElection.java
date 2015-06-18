@@ -28,6 +28,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -187,11 +188,12 @@ public class FastLeaderElection implements Election {
          * method run(), and processes such messages.
          */
 
-        class WorkerReceiver implements Runnable {
+        class WorkerReceiver extends ZooKeeperThread {
             volatile boolean stop;
             QuorumCnxManager manager;
 
             WorkerReceiver(QuorumCnxManager manager) {
+                super("WorkerReceiver");
                 this.stop = false;
                 this.manager = manager;
             }
@@ -347,11 +349,12 @@ public class FastLeaderElection implements Election {
          * and queues it on the manager's queue.
          */
 
-        class WorkerSender implements Runnable {
+        class WorkerSender extends ZooKeeperThread {
             volatile boolean stop;
             QuorumCnxManager manager;
 
             WorkerSender(QuorumCnxManager manager){
+                super("WorkerSender");
                 this.stop = false;
                 this.manager = manager;
             }

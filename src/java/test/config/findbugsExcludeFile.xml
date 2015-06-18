@@ -10,8 +10,8 @@
        In particular we want to make sure we exit if this occurs
        Also notice logged as fatal error -->
   <Match>
-    <Class name="org.apache.zookeeper.server.SyncRequestProcessor" />
-    <Method name="run" />
+    <Class name="org.apache.zookeeper.server.ZooKeeperCriticalThread" />
+    <Method name="handleException" />
     <Bug pattern="DM_EXIT" />
   </Match>
 

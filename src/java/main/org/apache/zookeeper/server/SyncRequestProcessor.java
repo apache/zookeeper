@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * the io efficiently. The request is not passed to the next RequestProcessor
  * until its log has been synced to disk.
  */
-public class SyncRequestProcessor extends Thread implements RequestProcessor {
+public class SyncRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
     private final ZooKeeperServer zks;
     private final LinkedBlockingQueue<Request> queuedRequests =
@@ -117,7 +117,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                             if (snapInProcess != null && snapInProcess.isAlive()) {
                                 LOG.warn("Too busy to snap, skipping");
                             } else {
-                                snapInProcess = new Thread("Snapshot Thread") {
+                                snapInProcess = new ZooKeeperThread("Snapshot Thread") {
                                         public void run() {
                                             try {
                                                 zks.takeSnapshot();
@@ -148,7 +148,7 @@ public class SyncRequestProcessor extends Thread implements RequestProcessor {
                 }
             }
         } catch (Throwable t) {
-            LOG.error("Severe unrecoverable error, exiting", t);
+            super.handleException(this.getName(), t);
             running = false;
             System.exit(11);
         }
