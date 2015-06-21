@@ -1401,7 +1401,7 @@ server.3=zoo3:2888:3888</programlisting>
             <listitem>
               <para>(Java system property only)</para>
 
-              <para><emphasis role="bold">New in 3.6.0:</emphasis> The
+              <para><emphasis role="bold">New in 3.5.1:</emphasis> The
                 time interval in milliseconds for each check of candidate container
                 nodes. Default is "60000".</para>
             </listitem>
@@ -1413,7 +1413,7 @@ server.3=zoo3:2888:3888</programlisting>
             <listitem>
               <para>(Java system property only)</para>
 
-              <para><emphasis role="bold">New in 3.6.0:</emphasis> The
+              <para><emphasis role="bold">New in 3.5.1:</emphasis> The
                 maximum number of container nodes that can be deleted per
                 minute. This prevents herding during container deletion.
                 Default is "10000".</para>
