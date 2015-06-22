@@ -63,6 +63,11 @@
 #include <pwd.h>
 #endif
 
+#ifdef __MACH__ // OS X
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
 #define IF_DEBUG(x) if(logLevel==ZOO_LOG_LEVEL_DEBUG) {x;}
 
 const int ZOOKEEPER_WRITE = 1 << 0;
@@ -273,7 +278,23 @@ void get_system_time(struct timeval *tv)
 {
   int ret;
 
-#ifdef CLOCK_MONOTONIC_RAW
+#ifdef __MACH__ // OS X
+  clock_serv_t cclock;
+  mach_timespec_t mts;
+  ret = host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+  if (!ret) {
+    ret += clock_get_time(cclock, &mts);
+    ret += mach_port_deallocate(mach_task_self(), cclock);
+    if (!ret) {
+      tv->tv_sec = mts.tv_sec;
+      tv->tv_usec = mts.tv_nsec / 1000;
+    }
+  }
+  if (ret) {
+    // Default to gettimeofday in case of failure.
+    ret = gettimeofday(tv, NULL);
+  }
+#elif CLOCK_MONOTONIC_RAW
   // On Linux, CLOCK_MONOTONIC is affected by ntp slew but CLOCK_MONOTONIC_RAW
   // is not.  We want the non-slewed (constant rate) CLOCK_MONOTONIC_RAW if it
   // is available.
