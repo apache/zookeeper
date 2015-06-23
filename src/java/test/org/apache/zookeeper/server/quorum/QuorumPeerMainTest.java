@@ -89,25 +89,25 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 "Default value of maximumSessionTimeOut is not considered",
                 tickTime * 20, quorumPeer.getMaxSessionTimeout());
 
-        try{
+        try {
             ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1,
                     ClientBase.CONNECTION_TIMEOUT, this);
             waitForOne(zk, States.CONNECTED);
             zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
             Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
-        }finally{
+        } finally {
             zk.close();
         }
 
-        try{
+        try {
             zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP2,
                     ClientBase.CONNECTION_TIMEOUT, this);
             waitForOne(zk, States.CONNECTED);
             zk.create("/foo_q2", "foobar2".getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
             Assert.assertEquals(new String(zk.getData("/foo_q2", null, null)), "foobar2");
-        }finally{
+        } finally {
             zk.close();
         }
         q1.shutdown();

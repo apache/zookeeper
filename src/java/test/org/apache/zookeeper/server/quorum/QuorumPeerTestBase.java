@@ -137,7 +137,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
             confFile = new File(tmpDir, "zoo.cfg");
 
-            try{
+            try {
             	FileWriter fwriter = new FileWriter(confFile);
                 fwriter.write("tickTime=4000\n");
                 fwriter.write("initLimit=10\n");
@@ -170,15 +170,15 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                     fwriter.write(quorumCfgSection);
                 }
                 fwriter.flush();
-            }finally{
+            } finally {
                 fwriter.close();
             }
             File myidFile = new File(dataDir, "myid");
-            try{
+            try {
                 fwriter = new FileWriter(myidFile);
                 fwriter.write(Integer.toString(myid));
                 fwriter.flush();
-            }finally{
+            } finally {
 
                 fwriter.close();
             }
@@ -194,11 +194,11 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             File dynamicConfigFile = new File(tmpDir, filename);
             String dynamicConfigFilename = PathUtils.normalizeFileSystemPath(dynamicConfigFile.toString());
 
-            try{
+            try {
                 FileWriter fDynamicConfigWriter = new FileWriter(dynamicConfigFile);
                 fDynamicConfigWriter.write(quorumCfgSection);
                 fDynamicConfigWriter.flush();
-            }finally{
+            } finally {
 
                 fDynamicConfigWriter.close();
             }
@@ -226,13 +226,13 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                 throws IOException {
             File nextDynamicConfigFile = new File(tmpDir,
                     "zoo.cfg" + QuorumPeerConfig.nextDynamicConfigFileSuffix);
-            try{
+            try {
                 FileWriter fwriter = new FileWriter(nextDynamicConfigFile);
                 fwriter.write(nextQuorumCfgSection
                         + "\n"
                         + "version=" + version);
                 fwriter.flush();
-            }finally{
+            } finally {
                 fwriter.close();
             }
 

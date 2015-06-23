@@ -113,7 +113,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @Test(timeout = 90000)
     public void testReadOnlyClient() throws Exception {
         CountdownWatcher watcher = new CountdownWatcher();
-        try{
+        try {
             ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
                     watcher, true);
             watcher.waitForConnected(CONNECTION_TIMEOUT); // ensure zk got connected
@@ -125,12 +125,12 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
             watcher.reset();
             qu.shutdown(2);
-        }finally{
+        } finally {
             zk.close();
         }
         // Re-connect the client (in case we were connected to the shut down
         // server and the local session was not persisted).
-        try{
+        try {
             zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
                     watcher, true);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
@@ -150,20 +150,20 @@ public class ReadOnlyModeTest extends ZKTestCase {
             qu.start(2);
             Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(
                     "127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT));
-        }finally{
+        } finally {
             zk.close();
         }
         watcher.reset();
 
         // Re-connect the client (in case we were connected to the shut down
         // server and the local session was not persisted).
-        try{
+        try {
             zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
                     watcher, true);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
             zk.setData(node, "We're in the quorum now".getBytes(), -1);
 
-        }finally{
+        } finally {
             zk.close();
         }
     }
@@ -175,7 +175,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @Test(timeout = 90000)
     public void testConnectionEvents() throws Exception {
         final List<KeeperState> states = new ArrayList<KeeperState>();
-        try{
+        try {
         	ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
                     new Watcher() {
                         public void process(WatchedEvent event) {
@@ -219,7 +219,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
             // SyncConnected, Disconnected, and ConnectedReadOnly states
             Assert.assertTrue("ConnectedReadOnly event wasn't received", states
                     .get(2) == KeeperState.ConnectedReadOnly);
-        }finally{
+        } finally {
             zk.close();
         }       
     }
@@ -234,7 +234,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.shutdown(2);
 
         CountdownWatcher watcher = new CountdownWatcher();
-        try{
+        try {
             ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
                     watcher, true);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
@@ -252,7 +252,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
             Assert.assertFalse("fake session and real session have same id", zk
                     .getSessionId() == fakeId);
 
-        }finally{
+        } finally {
             zk.close();
         }
     }

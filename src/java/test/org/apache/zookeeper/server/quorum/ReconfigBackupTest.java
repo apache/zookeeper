@@ -313,7 +313,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
 
-            try{
+            try {
                 ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[i],
                         ClientBase.CONNECTION_TIMEOUT, this);
 
@@ -339,7 +339,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                     String otherDynamicFileContent = getFileContent(dynamicConfigFile);
                     Assert.assertEquals(dynamicFileContent, otherDynamicFileContent);
                 }
-            }finally{
+            } finally {
             	zk.close();
             }
 

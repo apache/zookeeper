@@ -43,7 +43,7 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
         try {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
-            try{
+            try {
             	 FileWriter fwriter = new FileWriter(saslConfFile);
 
                  fwriter.write("" +
@@ -59,7 +59,7 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
                      "       username=\"myuser\"\n" +
                      "       password=\"mypassword\";\n" +
                      "};\n");
-            }finally{
+            } finally {
                 fwriter.close();
             }          
             System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());

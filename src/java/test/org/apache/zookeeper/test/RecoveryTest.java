@@ -81,7 +81,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                                        CONNECTION_TIMEOUT));
 
             startSignal = new CountDownLatch(1);
-            try{
+            try {
             	ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
                 startSignal.await(CONNECTION_TIMEOUT,
                         TimeUnit.MILLISECONDS);
@@ -181,7 +181,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                         }
                     }
                 }
-            }finally{
+            } finally {
                 zk.close();
             }          
             f.shutdown();

@@ -222,7 +222,7 @@ public class FileSnap implements SnapShot {
     public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)
             throws IOException {
         if (!close) {
-        	try{
+        	try {
         		 OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
                  CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32());
                  //CheckedOutputStream cout = new CheckedOutputStream()
@@ -233,7 +233,7 @@ public class FileSnap implements SnapShot {
                  oa.writeLong(val, "val");
                  oa.writeString("/", "path");
                  sessOS.flush();
-        	}finally{
+        	} finally {
                 crcOut.close();
                 sessOS.close();
         	}

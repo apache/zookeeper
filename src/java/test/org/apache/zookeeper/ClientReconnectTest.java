@@ -67,14 +67,14 @@ public class ClientReconnectTest extends TestCase {
 
         ClientCnxnSocketNIO nioCnxn = new MockCnxn();
         ClientWatchManager watcher = mock(ClientWatchManager.class);
-        try{
+        try {
             ClientCnxn clientCnxn = new ClientCnxn(
                     "tmp", hostProvider, 5000,
                     zk, watcher, nioCnxn, false);
             clientCnxn.start();
             countDownLatch.await(5000, TimeUnit.MILLISECONDS);
             Assert.assertTrue(countDownLatch.getCount() == 0);
-        }finally{
+        } finally {
             clientCnxn.close();
         }
     }

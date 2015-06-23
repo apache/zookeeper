@@ -174,12 +174,12 @@ public class LearnerTest extends ZKTestCase {
             oa.writeString("BenWasHere", "signature");
             TxnHeader hdr = new TxnHeader(0, 0, 0, 0, ZooDefs.OpCode.create);
             CreateTxn txn = new CreateTxn("/foo", new byte[0], new ArrayList<ACL>(), false, sl.zk.getZKDatabase().getNode("/").stat.getCversion());
-            try{
+            try {
                 ByteArrayOutputStream tbaos = new ByteArrayOutputStream();
                 BinaryOutputArchive boa = BinaryOutputArchive.getArchive(tbaos);
                 hdr.serialize(boa, "hdr");
                 txn.serialize(boa, "txn");
-            }finally{
+            } finally {
                 tbaos.close();
             }
            qp = new QuorumPacket(Leader.PROPOSAL, 1, tbaos.toByteArray(), null);

@@ -47,12 +47,12 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         // crank up the epoch numbers
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        try{
+        try {
             ZooKeeper zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
                 public void process(WatchedEvent event) {
                 }});
             zk.create("/0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }finally{
+        } finally {
             zk.close();
         }
         qb.shutdownServers();
@@ -61,12 +61,12 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        try{
+        try {
             zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
                 public void process(WatchedEvent event) {
                 }});
             zk.create("/1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }finally{
+        } finally {
             zk.close();
         }
         qb.shutdownServers();
@@ -75,12 +75,12 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        try{
+        try {
             zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
                 public void process(WatchedEvent event) {
                 }});
             zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }finally{
+        } finally {
             zk.close();
         }
         qb.shutdownServers();
@@ -116,22 +116,28 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         // crank up the epoch numbers
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        ZooKeeper zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }});
-        zk.create("/0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.close();
+        try {
+        	ZooKeeper zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
+                public void process(WatchedEvent event) {
+                }});
+            zk.create("/0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        } finally {
+        	zk.close();
+        }                
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }});
-        zk.create("/1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.close();
+        try {
+        	zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
+                public void process(WatchedEvent event) {
+                }});
+            zk.create("/1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        } finally {
+        	zk.close();
+        }                
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
@@ -143,24 +149,30 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         deleteLogs(qb.s5dir);
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }});
-        zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.close();
+        try {
+        	zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
+                public void process(WatchedEvent event) {
+                }});
+            zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        } finally {
+        	zk.close();
+        }             
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }});
-        boolean saw2 = false;
-        for(String child: zk.getChildren("/", false)) {
-            if (child.equals("2")) {
-                saw2 = true;
+        try {
+            zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
+                public void process(WatchedEvent event) {
+                }});
+            boolean saw2 = false;
+            for(String child: zk.getChildren("/", false)) {
+                if (child.equals("2")) {
+                    saw2 = true;
+                }
             }
+        } finally {
+            zk.close();
         }
-        zk.close();
         Assert.assertTrue("Didn't see /2 (went back in time)", saw2);
     }
 

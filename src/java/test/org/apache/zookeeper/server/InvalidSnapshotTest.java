@@ -65,10 +65,10 @@ public class InvalidSnapshotTest extends ClientBase {
         // now corrupt the snapshot
         File snapFile = factory.zkServer.getTxnLogFactory().findMostRecentSnapshot();
         LOG.info("Corrupting " + snapFile);
-        try{
+        try {
             RandomAccessFile raf = new RandomAccessFile(snapFile, "rws");
             raf.setLength(3);
-        }finally{
+        } finally {
             raf.close();
         }
         // now restart the server

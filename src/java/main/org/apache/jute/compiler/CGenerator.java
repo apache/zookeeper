@@ -61,7 +61,7 @@ class CGenerator {
                         + outputDirectory);
             }
         }
-        try{
+        try {
         	FileWriter c = new FileWriter(new File(outputDirectory, mName+".c"));
             FileWriter h = new FileWriter(new File(outputDirectory, mName+".h"));
 
@@ -124,7 +124,7 @@ class CGenerator {
 
             h.write("\n#ifdef __cplusplus\n}\n#endif\n\n");
             h.write("#endif //"+mName.toUpperCase().replace('.','_')+"__\n");
-        }finally{
+        } finally {
 
             h.close();
             c.close();

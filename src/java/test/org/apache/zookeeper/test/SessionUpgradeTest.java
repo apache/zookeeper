@@ -80,7 +80,7 @@ public class SessionUpgradeTest extends ZKTestCase {
         int testPeerIdx = testLeader ? leaderIdx : followerIdx;
         String hostPorts[] = qb.hostPort.split(",");
         CountdownWatcher watcher = new CountdownWatcher();
-        try{
+        try {
         	DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
                     hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
@@ -143,7 +143,7 @@ public class SessionUpgradeTest extends ZKTestCase {
 
             // If we explicitly close the session, then the session id should no
             // longer be valid.
-        }finally{
+        } finally {
             zk.close();
         }
         try {
@@ -181,7 +181,7 @@ public class SessionUpgradeTest extends ZKTestCase {
         String hostPorts[] = qb.hostPort.split(",");
 
         CountdownWatcher watcher = new CountdownWatcher();
-        try{
+        try {
         	DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
                     hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
@@ -210,7 +210,7 @@ public class SessionUpgradeTest extends ZKTestCase {
                 Assert.assertNotNull(zk.exists(nodePrefix + i, null));
             }
 
-        }finally{
+        } finally {
             
             // When we explicitly close the session, we should not be able to
             // reconnect with the same session id

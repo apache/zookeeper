@@ -49,7 +49,7 @@ public class SessionInvalidationTest extends ClientBase {
     @Test
     public void testCreateAfterCloseShouldFail() throws Exception {
         for (int i = 0; i < 10; i++) {
-        	try{
+        	try {
         		ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
 
@@ -70,7 +70,7 @@ public class SessionInvalidationTest extends ClientBase {
                 CreateRequest createReq = new CreateRequest("/foo" + i, new byte[0],
                         Ids.OPEN_ACL_UNSAFE, 1);
                 createReq.serialize(boa, "request");
-        	}finally{
+        	} finally {
                 baos.close();
         	}           
             System.out.println("Length:" + baos.toByteArray().length);

@@ -59,10 +59,10 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
     }
 
     private void corruptFile(File f) throws IOException {
-    	try{
+    	try {
             RandomAccessFile outFile = new RandomAccessFile(f, "rw");
             outFile.write("fail servers".getBytes());
-    	}finally{
+    	} finally {
             outFile.close();
     	}
 

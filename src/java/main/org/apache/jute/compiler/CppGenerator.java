@@ -61,7 +61,7 @@ class CppGenerator {
                         + outputDirectory);
             }
         }
-        try{
+        try {
         	 FileWriter cc = new FileWriter(new File(outputDirectory, mName+".cc"));
              FileWriter hh = new FileWriter(new File(outputDirectory, mName+".hh"));
 
@@ -120,7 +120,7 @@ class CppGenerator {
 
              hh.write("#endif //"+mName.toUpperCase().replace('.','_')+"__\n");
 
-        }finally{
+        } finally {
             hh.close();
             cc.close();
         }

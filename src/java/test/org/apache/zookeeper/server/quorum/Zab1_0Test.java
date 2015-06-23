@@ -1329,16 +1329,16 @@ public class Zab1_0Test {
         File version2 = new File(tmpDir, "version-2");
         version2.mkdir();
         FileOutputStream fos;
-        try{
+        try {
             fos = new FileOutputStream(new File(version2, "currentEpoch"));
             fos.write("0\n".getBytes());
-        }finally{
+        } finally {
             fos.close();
         }
-        try{
+        try {
             fos = new FileOutputStream(new File(version2, "acceptedEpoch"));
             fos.write("0\n".getBytes());
-        }finally{
+        } finally {
             fos.close();
         }
         return peer;

@@ -313,11 +313,11 @@ public class FileTxnSnapLog {
         close();
 
         // truncate it
-        try{
+        try {
             FileTxnLog truncLog = new FileTxnLog(dataDir);
             boolean truncated = truncLog.truncate(zxid);
 
-        }finally{
+        } finally {
             truncLog.close();
         }
         // re-open the txnLog and snapLog

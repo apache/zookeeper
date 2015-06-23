@@ -53,11 +53,11 @@ public class MultiTransactionRecordTest extends TestCase {
     }
 
     private MultiTransactionRecord codeDecode(MultiTransactionRecord request) throws IOException {
-    	try{
+    	try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
             request.serialize(boa, "request");
-    	}finally{
+    	} finally {
             baos.close();
     	}
         ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());

@@ -57,7 +57,7 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "srvr", "Outstanding");
             verify(hp, "cons", "queued");
 
-            try{
+            try {
             	TestableZooKeeper zk = createClient(hp);
                 String sid = getHexSessionId(zk.getSessionId());
 
@@ -76,7 +76,7 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
                 verify(hp, "wchp", sid);
                 verify(hp, "wchc", sid);
 
-            }finally{
+            } finally {
                 zk.close();
             }       
             verify(hp, "ruok", "imok");

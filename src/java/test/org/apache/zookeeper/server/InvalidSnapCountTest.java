@@ -51,7 +51,7 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
             super("Standalone server with clientPort:" + clientPort);
             File tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
-            try{
+            try {
             	FileWriter fwriter = new FileWriter(confFile);
                 fwriter.write("tickTime=2000\n");
                 fwriter.write("initLimit=10\n");
@@ -69,7 +69,7 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
                 
                 fwriter.write("clientPort=" + clientPort + "\n");
                 fwriter.flush();
-            }finally{
+            } finally {
                 fwriter.close();
             }
             main = new TestMain();

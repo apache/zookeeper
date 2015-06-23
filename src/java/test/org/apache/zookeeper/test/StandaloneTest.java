@@ -132,7 +132,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
                 .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
         CountdownWatcher watcher = new CountdownWatcher();
-        try{
+        try {
         	ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 
@@ -146,7 +146,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
             } catch (KeeperException.UnimplementedException ex) {
                 // expected
             }
-        }finally{
+        } finally {
             zk.close();
         }      
         zks.shutdown();

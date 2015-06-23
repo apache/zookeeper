@@ -352,11 +352,11 @@ public class WatchLeakTest {
      */
     private QuorumPacket createValidateSessionPacket() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try{
+        try {
             DataOutputStream dos = new DataOutputStream(baos);
             dos.writeLong(SESSION_ID);
             dos.writeInt(3000);
-        }finally{
+        } finally {
 
             dos.close();
         }

@@ -297,7 +297,7 @@ public class RandomAccessFileReader extends Reader implements DataInput {
     }
 
     public static void main(String[] args) throws IOException {
-    	try{
+    	try {
     		RandomAccessFileReader f = new RandomAccessFileReader(new File(args[0]));
     		
     		long pos0 = f.getPosition();
@@ -325,7 +325,7 @@ public class RandomAccessFileReader extends Reader implements DataInput {
     		System.out.println(f.readLine());
     		f.seek(pos2);
     		System.out.println(f.readLine());
-    	}finally{
+    	} finally {
     		f.close();
     	}
     }

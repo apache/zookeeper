@@ -108,12 +108,12 @@ public class Learner {
     void validateSession(ServerCnxn cnxn, long clientId, int timeout)
             throws IOException {
         LOG.info("Revalidating client: 0x" + Long.toHexString(clientId));
-        try{
+        try {
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream dos = new DataOutputStream(baos);
             dos.writeLong(clientId);
             dos.writeInt(timeout);
-        }finally{
+        } finally {
         	dos.close();
         }
         QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos
