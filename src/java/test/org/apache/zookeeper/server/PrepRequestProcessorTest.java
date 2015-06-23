@@ -103,10 +103,13 @@ public class PrepRequestProcessorTest extends ClientBase {
 
     private Request createRequest(Record record, int opCode) throws IOException {
         // encoding
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        record.serialize(boa, "request");
-        baos.close();
+    	try{
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+            record.serialize(boa, "request");
+    	}finally{
+            baos.close();
+    	}
         // Id
         List<Id> ids = Arrays.asList(Ids.ANYONE_ID_UNSAFE);
         return new Request(null, 1l, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), ids);

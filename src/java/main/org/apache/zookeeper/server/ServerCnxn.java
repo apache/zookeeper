@@ -398,11 +398,14 @@ public abstract class ServerCnxn implements Stats, Watcher {
      */
     @Override
     public String toString() {
-        StringWriter sw = new StringWriter();
-        PrintWriter pwriter = new PrintWriter(sw);
-        dumpConnectionInfo(pwriter, false);
-        pwriter.flush();
-        pwriter.close();
+    	try{
+    		StringWriter sw = new StringWriter();
+            PrintWriter pwriter = new PrintWriter(sw);
+            dumpConnectionInfo(pwriter, false);
+            pwriter.flush();
+    	}finally{
+    		pwriter.close();
+    	}
         return sw.toString();
     }
 

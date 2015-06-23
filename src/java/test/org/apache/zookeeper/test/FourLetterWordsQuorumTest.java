@@ -57,26 +57,28 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "srvr", "Outstanding");
             verify(hp, "cons", "queued");
 
-            TestableZooKeeper zk = createClient(hp);
-            String sid = getHexSessionId(zk.getSessionId());
+            try{
+            	TestableZooKeeper zk = createClient(hp);
+                String sid = getHexSessionId(zk.getSessionId());
 
-            verify(hp, "stat", "queued");
-            verify(hp, "srvr", "Outstanding");
-            verify(hp, "cons", sid);
-            verify(hp, "dump", sid);
+                verify(hp, "stat", "queued");
+                verify(hp, "srvr", "Outstanding");
+                verify(hp, "cons", sid);
+                verify(hp, "dump", sid);
 
-            zk.getData("/", true, null);
+                zk.getData("/", true, null);
 
-            verify(hp, "stat", "queued");
-            verify(hp, "srvr", "Outstanding");
-            verify(hp, "cons", sid);
-            verify(hp, "dump", sid);
-            verify(hp, "wchs", "watching 1");
-            verify(hp, "wchp", sid);
-            verify(hp, "wchc", sid);
+                verify(hp, "stat", "queued");
+                verify(hp, "srvr", "Outstanding");
+                verify(hp, "cons", sid);
+                verify(hp, "dump", sid);
+                verify(hp, "wchs", "watching 1");
+                verify(hp, "wchp", sid);
+                verify(hp, "wchc", sid);
 
-            zk.close();
-
+            }finally{
+                zk.close();
+            }       
             verify(hp, "ruok", "imok");
             verify(hp, "envi", "java.version");
             verify(hp, "conf", "clientPort");

@@ -64,33 +64,34 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             super("Standalone server with clientPort:" + clientPort);
             tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
-
-            FileWriter fwriter = new FileWriter(confFile);
-            fwriter.write("tickTime=2000\n");
-            fwriter.write("initLimit=10\n");
-            fwriter.write("syncLimit=5\n");
-            if(configs != null){
-                fwriter.write(configs);
-            }
-
-            File dataDir = new File(tmpDir, "data");
-            String dir = dataDir.toString();
-            String dirLog = dataDir.toString() + "_txnlog";
-            if (preCreateDirs) {
-                if (!dataDir.mkdir()) {
-                    throw new IOException("unable to mkdir " + dataDir);
+            try{
+                FileWriter fwriter = new FileWriter(confFile);
+                fwriter.write("tickTime=2000\n");
+                fwriter.write("initLimit=10\n");
+                fwriter.write("syncLimit=5\n");
+                if(configs != null){
+                    fwriter.write(configs);
                 }
-                dirLog = dataDir.toString();
-            }
-            
-            dir = PathUtils.normalizeFileSystemPath(dir);
-            dirLog = PathUtils.normalizeFileSystemPath(dirLog);
-            fwriter.write("dataDir=" + dir + "\n");
-            fwriter.write("dataLogDir=" + dirLog + "\n");
-            fwriter.write("clientPort=" + clientPort + "\n");
-            fwriter.flush();
-            fwriter.close();
 
+                File dataDir = new File(tmpDir, "data");
+                String dir = dataDir.toString();
+                String dirLog = dataDir.toString() + "_txnlog";
+                if (preCreateDirs) {
+                    if (!dataDir.mkdir()) {
+                        throw new IOException("unable to mkdir " + dataDir);
+                    }
+                    dirLog = dataDir.toString();
+                }
+                
+                dir = PathUtils.normalizeFileSystemPath(dir);
+                dirLog = PathUtils.normalizeFileSystemPath(dirLog);
+                fwriter.write("dataDir=" + dir + "\n");
+                fwriter.write("dataLogDir=" + dirLog + "\n");
+                fwriter.write("clientPort=" + clientPort + "\n");
+                fwriter.flush();
+            }finally{
+                fwriter.close();
+            }
             main = new TestZKSMain();
         }
 
@@ -148,15 +149,16 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                         CONNECTION_TIMEOUT));
 
+        try{
+            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                    ClientBase.CONNECTION_TIMEOUT, this);
 
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
-                ClientBase.CONNECTION_TIMEOUT, this);
-
-        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
-        zk.close();
-
+            zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        }finally{
+            zk.close();
+        }
         main.shutdown();
         main.join();
         main.deleteDirs();
@@ -211,15 +213,18 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                         CONNECTION_TIMEOUT));
 
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
-                ClientBase.CONNECTION_TIMEOUT, this);
+        try{
+            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                    ClientBase.CONNECTION_TIMEOUT, this);
 
-        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)),
-                "foobar");
-        zk.close();
+            zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            Assert.assertEquals(new String(zk.getData("/foo", null, null)),
+                    "foobar");
+        }finally{
 
+            zk.close();
+        }
         main.shutdown();
         main.join();
         main.deleteDirs();
@@ -326,12 +331,15 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             int expectedSessionTimeout, String HOSTPORT) throws IOException,
             KeeperException, InterruptedException {
         clientConnected = new CountDownLatch(1);
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, sessionTimeout, this);
-        Assert.assertTrue("Failed to establish zkclient connection!",
-                clientConnected.await(sessionTimeout, TimeUnit.MILLISECONDS));
-        Assert.assertEquals("Not able to configure the sessionTimeout values",
-                expectedSessionTimeout, zk.getSessionTimeout());
-        zk.close();
+        try{
+            ZooKeeper zk = new ZooKeeper(HOSTPORT, sessionTimeout, this);
+            Assert.assertTrue("Failed to establish zkclient connection!",
+                    clientConnected.await(sessionTimeout, TimeUnit.MILLISECONDS));
+            Assert.assertEquals("Not able to configure the sessionTimeout values",
+                    expectedSessionTimeout, zk.getSessionTimeout());
+        }finally{
+            zk.close();
+        }
     }
 
     @Test

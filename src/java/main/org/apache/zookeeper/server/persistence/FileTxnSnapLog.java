@@ -313,10 +313,13 @@ public class FileTxnSnapLog {
         close();
 
         // truncate it
-        FileTxnLog truncLog = new FileTxnLog(dataDir);
-        boolean truncated = truncLog.truncate(zxid);
-        truncLog.close();
+        try{
+            FileTxnLog truncLog = new FileTxnLog(dataDir);
+            boolean truncated = truncLog.truncate(zxid);
 
+        }finally{
+            truncLog.close();
+        }
         // re-open the txnLog and snapLog
         // I'd rather just close/reopen this object itself, however that 
         // would have a big impact outside ZKDatabase as there are other

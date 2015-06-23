@@ -59,9 +59,13 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
     }
 
     private void corruptFile(File f) throws IOException {
-        RandomAccessFile outFile = new RandomAccessFile(f, "rw");
-        outFile.write("fail servers".getBytes());
-        outFile.close();
+    	try{
+            RandomAccessFile outFile = new RandomAccessFile(f, "rw");
+            outFile.write("fail servers".getBytes());
+    	}finally{
+            outFile.close();
+    	}
+
     }
 
     private void corruptAllSnapshots(File snapDir) throws IOException {

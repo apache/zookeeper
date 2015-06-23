@@ -56,12 +56,15 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
      */
     @Test
     public void testWriteNewFile() throws IOException {
-        OutputStream fos = new AtomicFileOutputStream(dstFile);
-        assertFalse(dstFile.exists());
-        fos.write(TEST_STRING.getBytes());
-        fos.flush();
-        assertFalse(dstFile.exists());
-        fos.close();
+    	try{
+            OutputStream fos = new AtomicFileOutputStream(dstFile);
+            assertFalse(dstFile.exists());
+            fos.write(TEST_STRING.getBytes());
+            fos.flush();
+            assertFalse(dstFile.exists());
+    	}finally{
+            fos.close();
+    	}
         assertTrue(dstFile.exists());
 
         String readBackData = ClientBase.readFile(dstFile);
@@ -74,18 +77,18 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     @Test
     public void testOverwriteFile() throws IOException {
         assertTrue("Creating empty dst file", dstFile.createNewFile());
+        try{
+            OutputStream fos = new AtomicFileOutputStream(dstFile);
 
-        OutputStream fos = new AtomicFileOutputStream(dstFile);
+            assertTrue("Empty file still exists", dstFile.exists());
+            fos.write(TEST_STRING.getBytes());
+            fos.flush();
 
-        assertTrue("Empty file still exists", dstFile.exists());
-        fos.write(TEST_STRING.getBytes());
-        fos.flush();
-
-        // Original contents still in place
-        assertEquals("", ClientBase.readFile(dstFile));
-
-        fos.close();
-
+            // Original contents still in place
+            assertEquals("", ClientBase.readFile(dstFile));
+        }finally{
+            fos.close();
+        }
         // New contents replace original file
         String readBackData = ClientBase.readFile(dstFile);
         assertEquals(TEST_STRING, readBackData);
@@ -98,10 +101,12 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     @Test
     public void testFailToFlush() throws IOException {
         // Create a file at destination
-        FileOutputStream fos = new FileOutputStream(dstFile);
-        fos.write(TEST_STRING_2.getBytes());
-        fos.close();
-
+    	try{
+            FileOutputStream fos = new FileOutputStream(dstFile);
+            fos.write(TEST_STRING_2.getBytes());
+    	}finally{
+            fos.close();
+    	}
         OutputStream failingStream = createFailingStream();
         failingStream.write(TEST_STRING.getBytes());
         try {
@@ -164,10 +169,12 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
      */
     @Test
     public void testAbortExistingFile() throws IOException {
-        FileOutputStream fos1 = new FileOutputStream(dstFile);
-        fos1.write(TEST_STRING.getBytes());
-        fos1.close();
-
+    	try{
+            FileOutputStream fos1 = new FileOutputStream(dstFile);
+            fos1.write(TEST_STRING.getBytes());
+    	}finally{
+            fos1.close();
+    	}
         AtomicFileOutputStream fos2 = new AtomicFileOutputStream(dstFile);
 
         fos2.abort();
@@ -183,10 +190,12 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
      */
     @Test
     public void testAbortExistingFileAfterFlush() throws IOException {
-        FileOutputStream fos1 = new FileOutputStream(dstFile);
-        fos1.write(TEST_STRING.getBytes());
-        fos1.close();
-
+    	try{
+            FileOutputStream fos1 = new FileOutputStream(dstFile);
+            fos1.write(TEST_STRING.getBytes());
+    	}finally{
+            fos1.close();
+    	}
         AtomicFileOutputStream fos2 = new AtomicFileOutputStream(dstFile);
         fos2.write(TEST_STRING_2.getBytes());
         fos2.flush();

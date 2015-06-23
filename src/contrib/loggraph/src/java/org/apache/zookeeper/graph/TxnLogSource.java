@@ -76,12 +76,14 @@ public class TxnLogSource implements LogSource {
     public LogSkipList getSkipList() { return skiplist; }
 
     public static boolean isTransactionFile(String file) throws IOException {
-        RandomAccessFileReader reader = new RandomAccessFileReader(new File(file));
-        BinaryInputArchive logStream = new BinaryInputArchive(reader);
-        FileHeader fhdr = new FileHeader();
-        fhdr.deserialize(logStream, "fileheader");
-	reader.close();
-
+    	try{
+    		RandomAccessFileReader reader = new RandomAccessFileReader(new File(file));
+            BinaryInputArchive logStream = new BinaryInputArchive(reader);
+            FileHeader fhdr = new FileHeader();
+            fhdr.deserialize(logStream, "fileheader");
+    	}finally{
+    		reader.close();
+    	}
         return fhdr.getMagic() == FileTxnLog.TXNLOG_MAGIC;
     }
 

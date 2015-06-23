@@ -96,8 +96,8 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
             startSignal.await(CONNECTION_TIMEOUT,
                     TimeUnit.MILLISECONDS);
             Assert.assertTrue("count == 0", startSignal.getCount() == 0);
-            zk.close();
         } finally {
+            zk.close();
             f.shutdown();
             zks.shutdown();
 

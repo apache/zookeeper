@@ -129,12 +129,15 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
 
     @Override
     public String toString() {
-        StringWriter sw = new StringWriter();
-        PrintWriter pwriter = new PrintWriter(sw);
-        dumpSessions(pwriter);
-        pwriter.flush();
-        pwriter.close();
-        return sw.toString();
+    	try{
+            StringWriter sw = new StringWriter();
+            PrintWriter pwriter = new PrintWriter(sw);
+            dumpSessions(pwriter);
+            pwriter.flush();
+    	}finally{
+            pwriter.close();
+    	}
+      return sw.toString();
     }
 
     @Override

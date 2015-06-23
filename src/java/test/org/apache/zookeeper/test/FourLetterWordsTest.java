@@ -59,26 +59,28 @@ public class FourLetterWordsTest extends ClientBase {
         verify("srvr", "Outstanding");
         verify("cons", "queued");
 
-        TestableZooKeeper zk = createClient();
-        String sid = getHexSessionId(zk.getSessionId());
+        try{
+            TestableZooKeeper zk = createClient();
+            String sid = getHexSessionId(zk.getSessionId());
 
-        verify("stat", "queued");
-        verify("srvr", "Outstanding");
-        verify("cons", sid);
-        verify("dump", sid);
+            verify("stat", "queued");
+            verify("srvr", "Outstanding");
+            verify("cons", sid);
+            verify("dump", sid);
 
-        zk.getData("/", true, null);
+            zk.getData("/", true, null);
 
-        verify("stat", "queued");
-        verify("srvr", "Outstanding");
-        verify("cons", sid);
-        verify("dump", sid);
+            verify("stat", "queued");
+            verify("srvr", "Outstanding");
+            verify("cons", sid);
+            verify("dump", sid);
 
-        verify("wchs", "watching 1");
-        verify("wchp", sid);
-        verify("wchc", sid);
-        zk.close();
-
+            verify("wchs", "watching 1");
+            verify("wchp", sid);
+            verify("wchc", sid);
+        }finally{
+            zk.close();
+        }
         verify("ruok", "imok");
         verify("envi", "java.version");
         verify("conf", "clientPort");

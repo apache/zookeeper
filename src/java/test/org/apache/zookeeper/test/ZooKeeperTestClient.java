@@ -110,9 +110,9 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
     } catch (KeeperException ke) {
         Assert.fail("Unexpected exception code for create " + testDirOnZK + ": "
             + ke.getMessage());
+    }finally{
+        zk.close();
     }
-
-    zk.close();
   }
 
   private void enode_test_1() throws IOException,

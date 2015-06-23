@@ -49,28 +49,30 @@ public class SessionInvalidationTest extends ClientBase {
     @Test
     public void testCreateAfterCloseShouldFail() throws Exception {
         for (int i = 0; i < 10; i++) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        	try{
+        		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
 
-            // open a connection
-            boa.writeInt(44, "len");
-            ConnectRequest conReq = new ConnectRequest(0, 0, 30000, 0, new byte[16]);
-            conReq.serialize(boa, "connect");
+                // open a connection
+                boa.writeInt(44, "len");
+                ConnectRequest conReq = new ConnectRequest(0, 0, 30000, 0, new byte[16]);
+                conReq.serialize(boa, "connect");
 
-            // close connection
-            boa.writeInt(8, "len");
-            RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.closeSession);
-            h.serialize(boa, "header");
+                // close connection
+                boa.writeInt(8, "len");
+                RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.closeSession);
+                h.serialize(boa, "header");
 
-            // create ephemeral znode
-            boa.writeInt(52, "len"); // We'll fill this in later
-            RequestHeader header = new RequestHeader(2, OpCode.create);
-            header.serialize(boa, "header");
-            CreateRequest createReq = new CreateRequest("/foo" + i, new byte[0],
-                    Ids.OPEN_ACL_UNSAFE, 1);
-            createReq.serialize(boa, "request");
-            baos.close();
-            
+                // create ephemeral znode
+                boa.writeInt(52, "len"); // We'll fill this in later
+                RequestHeader header = new RequestHeader(2, OpCode.create);
+                header.serialize(boa, "header");
+                CreateRequest createReq = new CreateRequest("/foo" + i, new byte[0],
+                        Ids.OPEN_ACL_UNSAFE, 1);
+                createReq.serialize(boa, "request");
+        	}finally{
+                baos.close();
+        	}           
             System.out.println("Length:" + baos.toByteArray().length);
             
             String hp[] = hostPort.split(":");

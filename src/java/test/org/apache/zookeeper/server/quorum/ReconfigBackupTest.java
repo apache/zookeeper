@@ -313,33 +313,36 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
 
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[i],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+            try{
+                ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[i],
+                        ClientBase.CONNECTION_TIMEOUT, this);
 
-            // we should see that now all servers have the same config of 5 servers
-            // including the lag-off server.
-            String configStr = ReconfigTest.testServerHasConfig(zk, allServers, null);
-            Assert.assertEquals("200000000", getVersionFromConfigStr(configStr));
-            
-            List<String> configLines = Arrays.asList(configStr.split("\n"));
-            Collections.sort(configLines);
-            String sortedConfigStr = StringUtils.joinStrings(configLines, "\n");
-            
-             File dynamicConfigFile = mt[i].getFileByName("zoo.cfg.dynamic.200000000");
-             Assert.assertNotNull(dynamicConfigFile);
+                // we should see that now all servers have the same config of 5 servers
+                // including the lag-off server.
+                String configStr = ReconfigTest.testServerHasConfig(zk, allServers, null);
+                Assert.assertEquals("200000000", getVersionFromConfigStr(configStr));
+                
+                List<String> configLines = Arrays.asList(configStr.split("\n"));
+                Collections.sort(configLines);
+                String sortedConfigStr = StringUtils.joinStrings(configLines, "\n");
+                
+                 File dynamicConfigFile = mt[i].getFileByName("zoo.cfg.dynamic.200000000");
+                 Assert.assertNotNull(dynamicConfigFile);
 
-            // All dynamic files created with the same version should have
-            // same configs, and they should be equal to the config we get from QuorumPeer.
-            if (i == 0) {
-                dynamicFileContent = getFileContent(dynamicConfigFile);                
-                Assert.assertEquals(sortedConfigStr, dynamicFileContent + 
-                        "version=200000000");
-            } else {
-                String otherDynamicFileContent = getFileContent(dynamicConfigFile);
-                Assert.assertEquals(dynamicFileContent, otherDynamicFileContent);
+                // All dynamic files created with the same version should have
+                // same configs, and they should be equal to the config we get from QuorumPeer.
+                if (i == 0) {
+                    dynamicFileContent = getFileContent(dynamicConfigFile);                
+                    Assert.assertEquals(sortedConfigStr, dynamicFileContent + 
+                            "version=200000000");
+                } else {
+                    String otherDynamicFileContent = getFileContent(dynamicConfigFile);
+                    Assert.assertEquals(dynamicFileContent, otherDynamicFileContent);
+                }
+            }finally{
+            	zk.close();
             }
 
-            zk.close();
         }
 
         // finally, we should also check that the lag-off server has updated

@@ -91,16 +91,19 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
                 ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
         // now corrupt the snapshot
         PurgeTxnLog.purge(tmpDir, tmpDir, 3);
-        FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpDir, tmpDir);
-        List<File> listLogs = snaplog.findNRecentSnapshots(4);
-        int numSnaps = 0;
-        for (File ff: listLogs) {
-            if (ff.getName().startsWith("snapshot")) {
-                numSnaps++;
+        try{
+            FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpDir, tmpDir);
+            List<File> listLogs = snaplog.findNRecentSnapshots(4);
+            int numSnaps = 0;
+            for (File ff: listLogs) {
+                if (ff.getName().startsWith("snapshot")) {
+                    numSnaps++;
+                }
             }
+            Assert.assertTrue("exactly 3 snapshots ", (numSnaps == 3));
+        }finally{
+            snaplog.close();
         }
-        Assert.assertTrue("exactly 3 snapshots ", (numSnaps == 3));
-        snaplog.close();
         zks.shutdown();
     }
 
@@ -123,42 +126,45 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-        final ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
-        final CountDownLatch doPurge = new CountDownLatch(1);
-        final CountDownLatch purgeFinished = new CountDownLatch(1);
-        final AtomicBoolean opFailed = new AtomicBoolean(false);
-        new Thread() {
-            public void run() {
+        try{
+        	final ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+            final CountDownLatch doPurge = new CountDownLatch(1);
+            final CountDownLatch purgeFinished = new CountDownLatch(1);
+            final AtomicBoolean opFailed = new AtomicBoolean(false);
+            new Thread() {
+                public void run() {
+                    try {
+                        doPurge.await(OP_TIMEOUT_IN_MILLIS / 2,
+                                TimeUnit.MILLISECONDS);
+                        PurgeTxnLog.purge(tmpDir, tmpDir, 3);
+                    } catch (IOException ioe) {
+                        LOG.error("Exception when purge", ioe);
+                        opFailed.set(true);
+                    } catch (InterruptedException ie) {
+                        LOG.error("Exception when purge", ie);
+                        opFailed.set(true);
+                    } finally {
+                        purgeFinished.countDown();
+                    }
+                };
+            }.start();
+            final int thCount = 3;
+            List<String> znodes = manyClientOps(zk, doPurge, thCount,
+                    "/invalidsnap");
+            Assert.assertTrue("Purging is not finished!", purgeFinished.await(
+                    OP_TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS));
+            Assert.assertFalse("Purging failed!", opFailed.get());
+            for (String znode : znodes) {
                 try {
-                    doPurge.await(OP_TIMEOUT_IN_MILLIS / 2,
-                            TimeUnit.MILLISECONDS);
-                    PurgeTxnLog.purge(tmpDir, tmpDir, 3);
-                } catch (IOException ioe) {
-                    LOG.error("Exception when purge", ioe);
-                    opFailed.set(true);
-                } catch (InterruptedException ie) {
-                    LOG.error("Exception when purge", ie);
-                    opFailed.set(true);
-                } finally {
-                    purgeFinished.countDown();
+                    zk.getData(znode, false, null);
+                } catch (Exception ke) {
+                    LOG.error("Unexpected exception when visiting znode!", ke);
+                    Assert.fail("Unexpected exception when visiting znode!");
                 }
-            };
-        }.start();
-        final int thCount = 3;
-        List<String> znodes = manyClientOps(zk, doPurge, thCount,
-                "/invalidsnap");
-        Assert.assertTrue("Purging is not finished!", purgeFinished.await(
-                OP_TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS));
-        Assert.assertFalse("Purging failed!", opFailed.get());
-        for (String znode : znodes) {
-            try {
-                zk.getData(znode, false, null);
-            } catch (Exception ke) {
-                LOG.error("Unexpected exception when visiting znode!", ke);
-                Assert.fail("Unexpected exception when visiting znode!");
             }
+        }finally{
+            zk.close();
         }
-        zk.close();
         f.shutdown();
         zks.shutdown();
         zks.getTxnLogFactory().close();
@@ -194,9 +200,12 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
             }
         }
 
-        FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
-        List<File> nRecentSnapFiles = txnLog.findNRecentSnapshots(nRecentSnap);
-        txnLog.close();
+        try{
+            FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
+            List<File> nRecentSnapFiles = txnLog.findNRecentSnapshots(nRecentSnap);
+        }finally{
+            txnLog.close();
+        }
         Assert.assertEquals("exactly 4 snapshots ", 4,
                 nRecentSnapFiles.size());
         expectedNRecentSnapFiles.removeAll(nRecentSnapFiles);
@@ -230,10 +239,12 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         createDataDirFiles(offset, nRecentCount, version2, snaps, logs);
         createDataDirFiles(offset, fileAboveRecentCount, version2,
                 snapsAboveRecentFiles, logsAboveRecentFiles);
-
-        FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
-        PurgeTxnLog.retainNRecentSnapshots(txnLog, snaps);
-        txnLog.close();
+        try{
+            FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
+            PurgeTxnLog.retainNRecentSnapshots(txnLog, snaps);
+        }finally{
+            txnLog.close();
+        }
         verifyFilesAfterPurge(snapsToPurge, false);
         verifyFilesAfterPurge(logsToPurge, false);
         verifyFilesAfterPurge(snaps, true);
@@ -257,10 +268,12 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         List<File> snaps = new ArrayList<File>();
         List<File> logs = new ArrayList<File>();
         createDataDirFiles(offset, nRecentCount, version2, snaps, logs);
-
-        FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
-        PurgeTxnLog.retainNRecentSnapshots(txnLog, snaps);
-        txnLog.close();
+        try{
+            FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
+            PurgeTxnLog.retainNRecentSnapshots(txnLog, snaps);
+        }finally{
+            txnLog.close();
+        }
         verifyFilesAfterPurge(snaps, true);
         verifyFilesAfterPurge(logs, true);
     }
@@ -285,10 +298,12 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         createDataDirFiles(offset, fileToPurgeCount, version2, snapsToPurge,
                 logsToPurge);
         createDataDirFiles(offset, nRecentCount, version2, snaps, logs);
-
-        FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
-        PurgeTxnLog.retainNRecentSnapshots(txnLog, snaps);
-        txnLog.close();
+        try{
+            FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
+            PurgeTxnLog.retainNRecentSnapshots(txnLog, snaps);
+        }finally{
+            txnLog.close();
+        }
         verifyFilesAfterPurge(snapsToPurge, false);
         verifyFilesAfterPurge(logsToPurge, false);
         verifyFilesAfterPurge(snaps, true);

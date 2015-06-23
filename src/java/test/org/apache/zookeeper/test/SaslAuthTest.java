@@ -44,19 +44,22 @@ public class SaslAuthTest extends ClientBase {
         try {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
-            FileWriter fwriter = new FileWriter(saslConfFile);
+            try{
+            	FileWriter fwriter = new FileWriter(saslConfFile);
 
-            fwriter.write("" +
-                    "Server {\n" +
-                    "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                    "          user_super=\"test\";\n" +
-                    "};\n" +
-                    "Client {\n" +
-                    "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                    "       username=\"super\"\n" +
-                    "       password=\"test\";\n" +
-                    "};" + "\n");
-            fwriter.close();
+                fwriter.write("" +
+                        "Server {\n" +
+                        "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
+                        "          user_super=\"test\";\n" +
+                        "};\n" +
+                        "Client {\n" +
+                        "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
+                        "       username=\"super\"\n" +
+                        "       password=\"test\";\n" +
+                        "};" + "\n");
+            }finally{
+                fwriter.close();
+            }
             System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
         }
         catch (IOException e) {

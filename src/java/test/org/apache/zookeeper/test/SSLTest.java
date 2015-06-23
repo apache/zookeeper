@@ -100,23 +100,26 @@ public class SSLTest extends QuorumPeerTestBase {
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], TIMEOUT));
 
             final CountDownLatch latch = new CountDownLatch(1);
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + secureClientPorts[i], TIMEOUT,
-                    new Watcher() {
-                        @Override
-                        public void process(WatchedEvent event) {
-                            if (event.getState() != Event.KeeperState.SyncConnected) {
-                                Assert.fail("failed to connect to ZK server secure client port");
+            try{
+            	ZooKeeper zk = new ZooKeeper("127.0.0.1:" + secureClientPorts[i], TIMEOUT,
+                        new Watcher() {
+                            @Override
+                            public void process(WatchedEvent event) {
+                                if (event.getState() != Event.KeeperState.SyncConnected) {
+                                    Assert.fail("failed to connect to ZK server secure client port");
+                                }
+                                latch.countDown();
                             }
-                            latch.countDown();
-                        }
-                    });
-            if (!latch.await(TIMEOUT, TimeUnit.MILLISECONDS)) {
-                Assert.fail("Timeout connecting to ZK server secure port");
-            }
-            // Do a simple operation to make sure the connection is fine.
-            zk.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            zk.delete("/test", -1);
-            zk.close();
+                        });
+                if (!latch.await(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    Assert.fail("Timeout connecting to ZK server secure port");
+                }
+                // Do a simple operation to make sure the connection is fine.
+                zk.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.delete("/test", -1);
+            }finally{
+                zk.close();
+            }         
         }
 
         for (int i = 0; i < mt.length; i++) {

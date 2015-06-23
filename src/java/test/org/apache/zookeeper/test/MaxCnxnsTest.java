@@ -62,11 +62,14 @@ public class MaxCnxnsTest extends ClientBase {
                 // Construct a connection request
                 ConnectRequest conReq = new ConnectRequest(0, 0,
                         10000, 0, "password".getBytes());
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-                boa.writeInt(-1, "len");
-                conReq.serialize(boa, "connect");
-                baos.close();
+                try{
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+                    boa.writeInt(-1, "len");
+                    conReq.serialize(boa, "connect");
+                }finally{
+                    baos.close();
+                }
                 ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
                 bb.putInt(bb.capacity() - 4);
                 bb.rewind();
