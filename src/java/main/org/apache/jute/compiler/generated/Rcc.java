@@ -48,7 +48,7 @@ public class Rcc implements RccConstants {
                 recFiles.add(args[i]);
             }
         }
-        if (!"c++".equals(language) && !"java".equals(language) && !"c".equals(language)) {
+        if (!"c++".equals(language) && !"java".equals(language) && !"c".equals(language) && !"csharp".equals(language)) {
             System.out.println("Cannot recognize language:" + language);
             System.exit(1);
         }

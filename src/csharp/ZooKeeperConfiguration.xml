@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ZooKeeperConfiguration xmlns="urn:zookeeper">
+  <Tracing DefaultTraceLevel="Warning">
+    <TraceLevelOverride LogPrefix="ZooKeeper" TraceLevel="Info"/>
+  </Tracing>
+</ZooKeeperConfiguration>

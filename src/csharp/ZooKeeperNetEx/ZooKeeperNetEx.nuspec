@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>ZooKeeperNetEx</id>
+    <version>3.4.6.1001</version>
+    <title>.Net client for ZK server 3.4.6</title>
+    <authors>Shay Hazor</authors>
+    <owners>Shay Hazor</owners>
+	  <summary>.Net async client for ZooKeeper server 3.4.6</summary>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>https://github.com/shayhatsor/zookeeper/tree/CSharp</projectUrl>
+    <iconUrl>http://zookeeper.apache.org/images/zookeeper_small.gif</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>this client is for latest stable version of ZooKeeper, which is 3.4.6
+the client is Task based async and the code is 100% CoreCLR compliant. 
+As soon as CoreCLR/FX will be out, i'll post a nuget.
+    </description>
+    <releaseNotes>
+Known limitations:
+No support for system properties (currently the defaults are used).
+No SASL support</releaseNotes>
+  <copyright>Shay Hazor - Copyright 2015</copyright>
+	<tags>Apache ZooKeeper .NET C# 3.4.6 client async 4.5 zk</tags>
+  </metadata>
+</package>
