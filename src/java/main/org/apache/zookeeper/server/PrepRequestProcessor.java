@@ -551,6 +551,15 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                                if (qs.clientAddr == null || qs.electionAddr == null || qs.addr == null) {
                                    throw new KeeperException.BadArgumentsException("Wrong format of server string - each server should have 3 ports specified"); 	   
                                }
+
+                               // check duplication of addresses and ports
+                               for (QuorumServer nqs: nextServers.values()) {
+                                   if (qs.id == nqs.id) {
+                                       continue;
+                                   }
+                                   qs.checkAddressDuplicate(nqs);
+                               }
+
                                nextServers.remove(qs.id);
                                nextServers.put(Long.valueOf(qs.id), qs);
                            }  
