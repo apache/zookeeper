@@ -134,6 +134,9 @@ BUGFIXES:
   ZOOKEEPER-2210: clock_gettime is not available in OS X
   (Michi Mutsuzaki via rgs)
 
+  ZOOKEEPER-2193: reconfig command completes even if parameter is wrong obviously
+  (Yasuhito Fukuda via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 
