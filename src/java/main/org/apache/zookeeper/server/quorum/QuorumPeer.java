@@ -43,6 +43,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.Time;
@@ -119,29 +120,20 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         
         public LearnerType type = LearnerType.PARTICIPANT;
         
-        
+        private List<InetSocketAddress> myAddrs;
+
         public QuorumServer(long id, InetSocketAddress addr,
                 InetSocketAddress electionAddr, InetSocketAddress clientAddr) {
-            this.id = id;
-            this.addr = addr;
-            this.electionAddr = electionAddr;
-            this.clientAddr = clientAddr;
+            this(id, addr, electionAddr, clientAddr, LearnerType.PARTICIPANT);
         }
 
-        
         public QuorumServer(long id, InetSocketAddress addr,
                 InetSocketAddress electionAddr) {
-            this.id = id;
-            this.addr = addr;
-            this.electionAddr = electionAddr;
-            this.clientAddr = null;
+            this(id, addr, electionAddr, (InetSocketAddress)null, LearnerType.PARTICIPANT);
         }
 
         public QuorumServer(long id, InetSocketAddress addr) {
-            this.id = id;
-            this.addr = addr;
-            this.electionAddr = null;
-            this.clientAddr = null;
+            this(id, addr, (InetSocketAddress)null, (InetSocketAddress)null, LearnerType.PARTICIPANT);
         }
 
         /**
@@ -228,26 +220,37 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
             }
-            if (serverParts.length == 4) setType(serverParts[3]);
+
+            if (serverParts.length == 4) {
+                setType(serverParts[3]);
+            }
+
+            setMyAddrs();
         }
 
         public QuorumServer(long id, InetSocketAddress addr,
                     InetSocketAddress electionAddr, LearnerType type) {
+            this(id, addr, electionAddr, (InetSocketAddress)null, type);
+        }
+
+        public QuorumServer(long id, InetSocketAddress addr,
+                InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
             this.id = id;
             this.addr = addr;
             this.electionAddr = electionAddr;
             this.type = type;
-            this.clientAddr = null;
+            this.clientAddr = clientAddr;
+
+            setMyAddrs();
         }
 
-    public QuorumServer(long id, InetSocketAddress addr,
-                InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
-        this.id = id;
-        this.addr = addr;
-        this.electionAddr = electionAddr;
-        this.type = type;
-        this.clientAddr = clientAddr;
-    }
+        private void setMyAddrs() {
+            this.myAddrs = new ArrayList<InetSocketAddress>();
+            this.myAddrs.add(this.addr);
+            this.myAddrs.add(this.clientAddr);
+            this.myAddrs.add(this.electionAddr);
+            this.myAddrs = excludedSpecialAddresses(this.myAddrs);
+        }
 
         public String toString(){
             StringWriter sw = new StringWriter();            
@@ -292,6 +295,44 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if (!checkAddressesEqual(electionAddr, qs.electionAddr)) return false;
             if (!checkAddressesEqual(clientAddr, qs.clientAddr)) return false;                    
             return true;
+        }
+
+        public void checkAddressDuplicate(QuorumServer s) throws BadArgumentsException {
+            List<InetSocketAddress> otherAddrs = new ArrayList<InetSocketAddress>();
+            otherAddrs.add(s.addr);
+            otherAddrs.add(s.clientAddr);
+            otherAddrs.add(s.electionAddr);
+            otherAddrs = excludedSpecialAddresses(otherAddrs);
+
+            for (InetSocketAddress my: this.myAddrs) {
+
+                for (InetSocketAddress other: otherAddrs) {
+                    if (my.equals(other)) {
+                        String error = String.format("%s of server.%d conflicts %s of server.%d", my, this.id, other, s.id);
+                        throw new BadArgumentsException(error);
+                    }
+                }
+            }
+        }
+
+        private List<InetSocketAddress> excludedSpecialAddresses(List<InetSocketAddress> addrs) {
+            List<InetSocketAddress> included = new ArrayList<InetSocketAddress>();
+            InetAddress wcAddr = new InetSocketAddress(0).getAddress();
+
+            for (InetSocketAddress addr : addrs) {
+                if (addr == null) {
+                    continue;
+                }
+                InetAddress inetaddr = addr.getAddress();
+
+                if (inetaddr == null ||
+                    inetaddr.equals(wcAddr) || // wildCard address(0.0.0.0)
+                    inetaddr.isLoopbackAddress()) { // loopback address(localhost/127.0.0.1)
+                    continue;
+                }
+                included.add(addr);
+            }
+            return included;
         }
     }
 
