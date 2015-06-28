@@ -33,4 +33,4 @@ The content of the legacy jar and the bin+sources jar are the same.
 As of version 3.3.0 bin/sources/javadoc jars contained in dist-maven directory
 are deployed to the Apache Maven repository after the release has been accepted
 by Apache:
-  http://people.apache.org/repo/m2-ibiblio-rsync-repository/
+  https://repository.apache.org/
