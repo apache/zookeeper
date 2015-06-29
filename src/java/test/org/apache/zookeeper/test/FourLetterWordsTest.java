@@ -58,6 +58,8 @@ public class FourLetterWordsTest extends ClientBase {
         verify("stat", "Outstanding");
         verify("srvr", "Outstanding");
         verify("cons", "queued");
+        verify("gtmk", "306");
+        verify("isro", "rw");
 
         TestableZooKeeper zk = createClient();
         String sid = getHexSessionId(zk.getSessionId());

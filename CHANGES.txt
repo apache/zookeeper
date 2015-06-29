@@ -207,6 +207,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2185: Run server with -XX:+HeapDumpOnOutOfMemoryError and
   -XX:OnOutOfMemoryError='kill %p' (Chris Nauroth via rgs)
 
+  ZOOKEEPER-2140: NettyServerCnxn and NIOServerCnxn code should be improved
+  (Arshad Mohammad via rgs)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
