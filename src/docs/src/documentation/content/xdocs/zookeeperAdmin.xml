@@ -1474,6 +1474,17 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
+            <term>admin.serverAddress</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.admin.serverAddress</emphasis>)</para>
+
+              <para>The address the embedded Jetty server listens on. Defaults to 0.0.0.0.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term>admin.serverPort</term>
 
             <listitem>
