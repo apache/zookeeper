@@ -77,11 +77,13 @@ public class TxnLogSource implements LogSource {
 
     public static boolean isTransactionFile(String file) throws IOException {
         RandomAccessFileReader reader = new RandomAccessFileReader(new File(file));
-        BinaryInputArchive logStream = new BinaryInputArchive(reader);
-        FileHeader fhdr = new FileHeader();
-        fhdr.deserialize(logStream, "fileheader");
-	reader.close();
-
+        try {
+            BinaryInputArchive logStream = new BinaryInputArchive(reader);
+            FileHeader fhdr = new FileHeader();
+            fhdr.deserialize(logStream, "fileheader");
+        } finally {
+        	reader.close();
+        }
         return fhdr.getMagic() == FileTxnLog.TXNLOG_MAGIC;
     }
 

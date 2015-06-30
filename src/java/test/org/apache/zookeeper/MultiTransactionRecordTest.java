@@ -54,9 +54,12 @@ public class MultiTransactionRecordTest extends TestCase {
 
     private MultiTransactionRecord codeDecode(MultiTransactionRecord request) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        request.serialize(boa, "request");
-        baos.close();
+        try {
+            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+            request.serialize(boa, "request");
+        } finally {
+            baos.close();
+        }
         ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
         bb.rewind();
 

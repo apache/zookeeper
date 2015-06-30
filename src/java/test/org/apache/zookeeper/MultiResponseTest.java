@@ -57,9 +57,12 @@ public class MultiResponseTest extends TestCase {
 
     private MultiResponse codeDecode(MultiResponse request) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        request.serialize(boa, "result");
-        baos.close();
+        try {
+            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+            request.serialize(boa, "result");
+        } finally {
+            baos.close();
+        }
         ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
         bb.rewind();
 
