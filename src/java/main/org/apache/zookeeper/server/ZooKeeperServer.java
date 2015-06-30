@@ -635,8 +635,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             if (!cnxn.isOldClient) {
                 bos.writeBool(
                         this instanceof ReadOnlyZooKeeperServer, "readOnly");
+            } finally {
+                baos.close();
             }
-            baos.close();
             ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
             bb.putInt(bb.remaining() - 4).rewind();
             cnxn.sendBuffer(bb);
