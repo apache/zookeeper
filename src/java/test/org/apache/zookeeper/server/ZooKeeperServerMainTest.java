@@ -151,12 +151,13 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT, this);
-
-        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
-        zk.close();
-
+        try {
+            zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        } finally {
+            zk.close();
+        }
         main.shutdown();
         main.join();
         main.deleteDirs();
@@ -213,13 +214,14 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT, this);
-
-        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)),
-                "foobar");
-        zk.close();
-
+        try {
+            zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            Assert.assertEquals(new String(zk.getData("/foo", null, null)),
+                    "foobar");
+        } finally {
+            zk.close();
+        }
         main.shutdown();
         main.join();
         main.deleteDirs();
@@ -329,9 +331,12 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         ZooKeeper zk = new ZooKeeper(HOSTPORT, sessionTimeout, this);
         Assert.assertTrue("Failed to establish zkclient connection!",
                 clientConnected.await(sessionTimeout, TimeUnit.MILLISECONDS));
-        Assert.assertEquals("Not able to configure the sessionTimeout values",
-                expectedSessionTimeout, zk.getSessionTimeout());
-        zk.close();
+        try {
+            Assert.assertEquals("Not able to configure the sessionTimeout values",
+                    expectedSessionTimeout, zk.getSessionTimeout());
+        } finally {
+            zk.close();
+        }
     }
 
     @Test

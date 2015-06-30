@@ -41,8 +41,11 @@ public class RepeatStartupTest extends ZKTestCase {
 
         System.out.println("Comment: the servers are at " + qb.hostPort);
         ZooKeeper zk = qb.createClient();
-        zk.create("/test", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.close();
+        try {
+            zk.create("/test", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        } finally {
+            zk.close();
+        }
         QuorumBase.shutdown(qb.s1);
         QuorumBase.shutdown(qb.s2);
         QuorumBase.shutdown(qb.s3);

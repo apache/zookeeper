@@ -88,12 +88,14 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             public void process(WatchedEvent event) {
             }});
         SyncRequestProcessor.setSnapCount(100);
-        for (int i = 0; i < 2000; i++) {
-            zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                      CreateMode.PERSISTENT, new NoopStringCallback(), null);
+        try {
+            for (int i = 0; i < 2000; i++) {
+                zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                          CreateMode.PERSISTENT, new NoopStringCallback(), null);
+            }
+        } finally {
+            zk.close();
         }
-        zk.close();
-
         long leaderSid = 1;
         QuorumPeer leader = null;
         //find out who is the leader and kill it
@@ -144,12 +146,14 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
 
         zk = qb.createClient();
         SyncRequestProcessor.setSnapCount(100);
-        for (int i = 2000; i < 4000; i++) {
-            zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                      CreateMode.PERSISTENT, new NoopStringCallback(), null);
+        try {
+            for (int i = 2000; i < 4000; i++) {
+                zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                          CreateMode.PERSISTENT, new NoopStringCallback(), null);
+            }
+        } finally {
+            zk.close();
         }
-        zk.close();
-
         if (leaderSid != 1)QuorumBase.shutdown(qb.s1);
         if (leaderSid != 2)QuorumBase.shutdown(qb.s2);
         if (leaderSid != 3)QuorumBase.shutdown(qb.s3);

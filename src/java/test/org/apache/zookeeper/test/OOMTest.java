@@ -109,10 +109,13 @@ public class OOMTest extends ZKTestCase implements Watcher {
     {
         ZooKeeper zk =
             new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
-        for (int i = 0; i < 10000; i++) {
-            zk.exists("/this/path/doesnt_exist!", true);
+        try {
+            for (int i = 0; i < 10000; i++) {
+                zk.exists("/this/path/doesnt_exist!", true);
+            }
+        } finally {
+            zk.close();
         }
-        zk.close();
     }
 
     private void utestPrep(int port)
@@ -120,10 +123,13 @@ public class OOMTest extends ZKTestCase implements Watcher {
     {
         ZooKeeper zk =
             new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
-        for (int i = 0; i < 10000; i++) {
-            zk.create("/" + i, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        try {
+            for (int i = 0; i < 10000; i++) {
+                zk.create("/" + i, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
+        } finally {
+            zk.close();
         }
-        zk.close();
     }
 
     private void utestGet(int port)
@@ -131,11 +137,14 @@ public class OOMTest extends ZKTestCase implements Watcher {
     {
         ZooKeeper zk =
             new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
-        for (int i = 0; i < 10000; i++) {
-            Stat stat = new Stat();
-            zk.getData("/" + i, true, stat);
+        try {
+            for (int i = 0; i < 10000; i++) {
+                Stat stat = new Stat();
+                zk.getData("/" + i, true, stat);
+            }
+        } finally {
+            zk.close();
         }
-        zk.close();
     }
 
     private void utestChildren(int port)
@@ -143,10 +152,13 @@ public class OOMTest extends ZKTestCase implements Watcher {
     {
         ZooKeeper zk =
             new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
-        for (int i = 0; i < 10000; i++) {
-            zk.getChildren("/" + i, true);
+        try {
+            for (int i = 0; i < 10000; i++) {
+                zk.getChildren("/" + i, true);
+            }
+        } finally {
+            zk.close();
         }
-        zk.close();
     }
 
     /*

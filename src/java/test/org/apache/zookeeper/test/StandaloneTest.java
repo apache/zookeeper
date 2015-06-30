@@ -144,9 +144,9 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
                         "UnimplementedException");
         } catch (KeeperException.UnimplementedException ex) {
             // expected
+        } finally {
+            zk.close();
         }
-        zk.close();
-
         zks.shutdown();
         f.shutdown();
         Assert.assertTrue("waiting for server being down ", ClientBase

@@ -123,11 +123,12 @@ public class LocalSessionRequestTest extends ZKTestCase {
         ZooKeeper zk = qb.createClient(watcher, hostPorts[testPeerIdx],
                 CONNECTION_TIMEOUT);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
-
-        long localSessionId2 = zk.getSessionId();
-
-        // Send closeSession request.
-        zk.close();
+        try {
+            long localSessionId2 = zk.getSessionId();
+        } finally {
+            // Send closeSession request.
+            zk.close();
+        }
         watcher.reset();
 
         // This should be enough time for the first session to expire and for

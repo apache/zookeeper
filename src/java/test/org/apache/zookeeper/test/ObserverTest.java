@@ -99,74 +99,75 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
                 ClientBase.CONNECTION_TIMEOUT, this);
         zk.create("/obstest", "test".getBytes(),Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        
-        // Assert that commands are getting forwarded correctly
-        Assert.assertEquals(new String(zk.getData("/obstest", null, null)), "test");
-        
-        // Now check that other commands don't blow everything up
-        zk.sync("/", null, null);
-        zk.setData("/obstest", "test2".getBytes(), -1);
-        zk.getChildren("/", false);
-        
-        Assert.assertEquals(zk.getState(), States.CONNECTED);
-        
-        LOG.info("Shutting down server 2");
-        // Now kill one of the other real servers        
-        q2.shutdown();
-                
-        Assert.assertTrue("Waiting for server 2 to shut down",
-                    ClientBase.waitForServerDown("127.0.0.1:"+CLIENT_PORT_QP2, 
-                                    ClientBase.CONNECTION_TIMEOUT));
-
-        LOG.info("Server 2 down");
-
-        // Now the resulting ensemble shouldn't be quorate         
-        latch.await();        
-        Assert.assertNotSame("Client is still connected to non-quorate cluster", 
-                KeeperState.SyncConnected,lastEvent.getState());
-
-        LOG.info("Latch returned");
-
         try {
-            Assert.assertFalse("Shouldn't get a response when cluster not quorate!",
-                    new String(zk.getData("/obstest", null, null)).equals("test"));
+        	// Assert that commands are getting forwarded correctly
+            Assert.assertEquals(new String(zk.getData("/obstest", null, null)), "test");
+            
+            // Now check that other commands don't blow everything up
+            zk.sync("/", null, null);
+            zk.setData("/obstest", "test2".getBytes(), -1);
+            zk.getChildren("/", false);
+            
+            Assert.assertEquals(zk.getState(), States.CONNECTED);
+            
+            LOG.info("Shutting down server 2");
+            // Now kill one of the other real servers        
+            q2.shutdown();
+                    
+            Assert.assertTrue("Waiting for server 2 to shut down",
+                        ClientBase.waitForServerDown("127.0.0.1:"+CLIENT_PORT_QP2, 
+                                        ClientBase.CONNECTION_TIMEOUT));
+
+            LOG.info("Server 2 down");
+
+            // Now the resulting ensemble shouldn't be quorate         
+            latch.await();        
+            Assert.assertNotSame("Client is still connected to non-quorate cluster", 
+                    KeeperState.SyncConnected,lastEvent.getState());
+
+            LOG.info("Latch returned");
+
+            try {
+                Assert.assertFalse("Shouldn't get a response when cluster not quorate!",
+                        new String(zk.getData("/obstest", null, null)).equals("test"));
+            }
+            catch (ConnectionLossException c) {
+                LOG.info("Connection loss exception caught - ensemble not quorate (this is expected)");
+            }
+            
+            latch = new CountDownLatch(1);
+
+            LOG.info("Restarting server 2");
+
+            // Bring it back
+            q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
+            q2.start();
+            
+            LOG.info("Waiting for server 2 to come up");
+            Assert.assertTrue("waiting for server 2 being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                            CONNECTION_TIMEOUT));
+            
+            LOG.info("Server 2 started, waiting for latch");
+
+            latch.await();
+            // It's possible our session expired - but this is ok, shows we 
+            // were able to talk to the ensemble
+            Assert.assertTrue("Client didn't reconnect to quorate ensemble (state was" +
+                    lastEvent.getState() + ")",
+                    (KeeperState.SyncConnected==lastEvent.getState() ||
+                    KeeperState.Expired==lastEvent.getState())); 
+
+            LOG.info("Shutting down all servers");
+
+            q1.shutdown();
+            q2.shutdown();
+            q3.shutdown();
+            
+            LOG.info("Closing zk client");
+        } finally {
+            zk.close();    
         }
-        catch (ConnectionLossException c) {
-            LOG.info("Connection loss exception caught - ensemble not quorate (this is expected)");
-        }
-        
-        latch = new CountDownLatch(1);
-
-        LOG.info("Restarting server 2");
-
-        // Bring it back
-        q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
-        q2.start();
-        
-        LOG.info("Waiting for server 2 to come up");
-        Assert.assertTrue("waiting for server 2 being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
-                        CONNECTION_TIMEOUT));
-        
-        LOG.info("Server 2 started, waiting for latch");
-
-        latch.await();
-        // It's possible our session expired - but this is ok, shows we 
-        // were able to talk to the ensemble
-        Assert.assertTrue("Client didn't reconnect to quorate ensemble (state was" +
-                lastEvent.getState() + ")",
-                (KeeperState.SyncConnected==lastEvent.getState() ||
-                KeeperState.Expired==lastEvent.getState())); 
-
-        LOG.info("Shutting down all servers");
-
-        q1.shutdown();
-        q2.shutdown();
-        q3.shutdown();
-        
-        LOG.info("Closing zk client");
-
-        zk.close();        
         Assert.assertTrue("Waiting for server 1 to shut down",
                 ClientBase.waitForServerDown("127.0.0.1:"+CLIENT_PORT_QP1, 
                                 ClientBase.CONNECTION_TIMEOUT));
