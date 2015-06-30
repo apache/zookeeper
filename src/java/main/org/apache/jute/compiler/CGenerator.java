@@ -63,7 +63,7 @@ class CGenerator {
         }
         FileWriter c = new FileWriter(new File(outputDirectory, mName+".c"));
         FileWriter h = new FileWriter(new File(outputDirectory, mName+".h"));
-        try {        	
+        try {
             h.write("/**\n");
             h.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
             h.write("* or more contributor license agreements.  See the NOTICE file\n");
