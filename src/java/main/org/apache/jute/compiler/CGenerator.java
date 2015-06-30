@@ -61,9 +61,10 @@ class CGenerator {
                         + outputDirectory);
             }
         }
-        FileWriter c = new FileWriter(new File(outputDirectory, mName+".c"));
-        FileWriter h = new FileWriter(new File(outputDirectory, mName+".h"));
         try {
+        	FileWriter c = new FileWriter(new File(outputDirectory, mName+".c"));
+            FileWriter h = new FileWriter(new File(outputDirectory, mName+".h"));
+
             h.write("/**\n");
             h.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
             h.write("* or more contributor license agreements.  See the NOTICE file\n");
@@ -120,9 +121,11 @@ class CGenerator {
                 JRecord jr = i.next();
                 jr.genCCode(h, c);
             }
+
             h.write("\n#ifdef __cplusplus\n}\n#endif\n\n");
             h.write("#endif //"+mName.toUpperCase().replace('.','_')+"__\n");
         } finally {
+
             h.close();
             c.close();
         }
