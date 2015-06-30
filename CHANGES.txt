@@ -140,6 +140,9 @@ BUGFIXES:
   ZOOKEEPER-2193: reconfig command completes even if parameter is wrong obviously
   (Yasuhito Fukuda via rgs)
 
+  ZOOKEEPER-2221: Zookeeper JettyAdminServer server should start on configured IP
+  (Surendra Singh Lilhore via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
