@@ -120,7 +120,6 @@ class CGenerator {
                 JRecord jr = i.next();
                 jr.genCCode(h, c);
             }
-
             h.write("\n#ifdef __cplusplus\n}\n#endif\n\n");
             h.write("#endif //"+mName.toUpperCase().replace('.','_')+"__\n");
         } finally {
