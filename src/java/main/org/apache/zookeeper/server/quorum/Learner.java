@@ -109,12 +109,16 @@ public class Learner {
             throws IOException {
         LOG.info("Revalidating client: 0x" + Long.toHexString(clientId));
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream dos = new DataOutputStream(baos);
             dos.writeLong(clientId);
             dos.writeInt(timeout);
-        } finally {
+        }finally{
         	dos.close();
         }
 =======

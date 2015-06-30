@@ -44,7 +44,11 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
 <<<<<<< HEAD
+<<<<<<< HEAD
             try {
+=======
+            try{
+>>>>>>> parent of 9854b54... add space
             	 FileWriter fwriter = new FileWriter(saslConfFile);
 
                  fwriter.write("" +
@@ -60,7 +64,7 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
                      "       username=\"myuser\"\n" +
                      "       password=\"mypassword\";\n" +
                      "};\n");
-            } finally {
+            }finally{
                 fwriter.close();
             }          
 =======

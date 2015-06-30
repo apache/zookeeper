@@ -399,12 +399,16 @@ public abstract class ServerCnxn implements Stats, Watcher {
     @Override
     public String toString() {
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
     		StringWriter sw = new StringWriter();
             PrintWriter pwriter = new PrintWriter(sw);
             dumpConnectionInfo(pwriter, false);
             pwriter.flush();
-    	} finally {
+    	}finally{
     		pwriter.close();
     	}
 =======

@@ -52,7 +52,11 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
             File tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
 <<<<<<< HEAD
+<<<<<<< HEAD
             try {
+=======
+            try{
+>>>>>>> parent of 9854b54... add space
             	FileWriter fwriter = new FileWriter(confFile);
                 fwriter.write("tickTime=2000\n");
                 fwriter.write("initLimit=10\n");
@@ -70,7 +74,7 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
                 
                 fwriter.write("clientPort=" + clientPort + "\n");
                 fwriter.flush();
-            } finally {
+            }finally{
                 fwriter.close();
 =======
 

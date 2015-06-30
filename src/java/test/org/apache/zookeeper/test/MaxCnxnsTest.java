@@ -63,12 +63,16 @@ public class MaxCnxnsTest extends ClientBase {
                 ConnectRequest conReq = new ConnectRequest(0, 0,
                         10000, 0, "password".getBytes());
 <<<<<<< HEAD
+<<<<<<< HEAD
                 try {
+=======
+                try{
+>>>>>>> parent of 9854b54... add space
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
                     boa.writeInt(-1, "len");
                     conReq.serialize(boa, "connect");
-                } finally {
+                }finally{
                     baos.close();
                 }
 =======

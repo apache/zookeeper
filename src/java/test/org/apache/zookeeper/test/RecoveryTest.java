@@ -82,7 +82,11 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
 
             startSignal = new CountDownLatch(1);
 <<<<<<< HEAD
+<<<<<<< HEAD
             try {
+=======
+            try{
+>>>>>>> parent of 9854b54... add space
             	ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
                 startSignal.await(CONNECTION_TIMEOUT,
                         TimeUnit.MILLISECONDS);
@@ -198,7 +202,11 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                     }
                 }
 <<<<<<< HEAD
+<<<<<<< HEAD
             } finally {
+=======
+            }finally{
+>>>>>>> parent of 9854b54... add space
                 zk.close();
             }          
 =======

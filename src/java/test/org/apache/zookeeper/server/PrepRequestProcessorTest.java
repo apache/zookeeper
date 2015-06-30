@@ -104,11 +104,15 @@ public class PrepRequestProcessorTest extends ClientBase {
     private Request createRequest(Record record, int opCode) throws IOException {
         // encoding
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
             record.serialize(boa, "request");
-    	} finally {
+    	}finally{
             baos.close();
     	}
 =======

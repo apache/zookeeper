@@ -92,7 +92,11 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         // now corrupt the snapshot
         PurgeTxnLog.purge(tmpDir, tmpDir, 3);
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
             FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpDir, tmpDir);
             List<File> listLogs = snaplog.findNRecentSnapshots(4);
             int numSnaps = 0;
@@ -102,7 +106,7 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
                 }
             }
             Assert.assertTrue("exactly 3 snapshots ", (numSnaps == 3));
-        } finally {
+        }finally{
             snaplog.close();
 =======
         FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpDir, tmpDir);
@@ -139,7 +143,11 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
         	final ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
             final CountDownLatch doPurge = new CountDownLatch(1);
             final CountDownLatch purgeFinished = new CountDownLatch(1);
@@ -205,7 +213,11 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
                 Assert.fail("Unexpected exception when visiting znode!");
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
         } finally {
+=======
+        }finally{
+>>>>>>> parent of 9854b54... add space
             zk.close();
 =======
 >>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
@@ -247,10 +259,14 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
             FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
             List<File> nRecentSnapFiles = txnLog.findNRecentSnapshots(nRecentSnap);
-        } finally {
+        }finally{
             txnLog.close();
         }
 =======
@@ -292,10 +308,14 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         createDataDirFiles(offset, fileAboveRecentCount, version2,
                 snapsAboveRecentFiles, logsAboveRecentFiles);
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
             FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
             PurgeTxnLog.retainNRecentSnapshots(txnLog, snaps);
-        } finally {
+        }finally{
             txnLog.close();
         }
 =======
@@ -328,10 +348,14 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         List<File> logs = new ArrayList<File>();
         createDataDirFiles(offset, nRecentCount, version2, snaps, logs);
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
             FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
             PurgeTxnLog.retainNRecentSnapshots(txnLog, snaps);
-        } finally {
+        }finally{
             txnLog.close();
         }
 =======
@@ -365,10 +389,14 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
                 logsToPurge);
         createDataDirFiles(offset, nRecentCount, version2, snaps, logs);
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
             FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
             PurgeTxnLog.retainNRecentSnapshots(txnLog, snaps);
-        } finally {
+        }finally{
             txnLog.close();
         }
 =======

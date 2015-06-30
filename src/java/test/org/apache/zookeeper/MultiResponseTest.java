@@ -57,11 +57,15 @@ public class MultiResponseTest extends TestCase {
 
     private MultiResponse codeDecode(MultiResponse request) throws IOException {
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
             request.serialize(boa, "result");
-    	} finally {
+    	}finally{
             baos.close();
     	}
 =======

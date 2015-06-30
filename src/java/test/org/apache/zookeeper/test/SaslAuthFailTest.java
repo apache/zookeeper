@@ -41,7 +41,11 @@ public class SaslAuthFailTest extends ClientBase {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
 <<<<<<< HEAD
+<<<<<<< HEAD
             try {
+=======
+            try{
+>>>>>>> parent of 9854b54... add space
                 FileWriter fwriter = new FileWriter(saslConfFile);
 
                 fwriter.write("" +
@@ -54,7 +58,7 @@ public class SaslAuthFailTest extends ClientBase {
                         "       username=\"super\"\n" +
                         "       password=\"test1\";\n" + // NOTE: wrong password ('test' != 'test1') : this is to test SASL authentication failure.
                         "};" + "\n");
-            } finally {
+            }finally{
                 fwriter.close();
             }
 =======

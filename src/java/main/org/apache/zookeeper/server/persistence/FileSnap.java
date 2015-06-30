@@ -223,7 +223,11 @@ public class FileSnap implements SnapShot {
             throws IOException {
         if (!close) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         	try {
+=======
+        	try{
+>>>>>>> parent of 9854b54... add space
         		 OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
                  CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32());
                  //CheckedOutputStream cout = new CheckedOutputStream()
@@ -234,7 +238,7 @@ public class FileSnap implements SnapShot {
                  oa.writeLong(val, "val");
                  oa.writeString("/", "path");
                  sessOS.flush();
-        	} finally {
+        	}finally{
                 crcOut.close();
                 sessOS.close();
         	}

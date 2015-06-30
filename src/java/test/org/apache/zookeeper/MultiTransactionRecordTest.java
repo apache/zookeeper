@@ -54,11 +54,15 @@ public class MultiTransactionRecordTest extends TestCase {
 
     private MultiTransactionRecord codeDecode(MultiTransactionRecord request) throws IOException {
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
             request.serialize(boa, "request");
-    	} finally {
+    	}finally{
             baos.close();
     	}
 =======

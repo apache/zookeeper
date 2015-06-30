@@ -57,13 +57,17 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     @Test
     public void testWriteNewFile() throws IOException {
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
             OutputStream fos = new AtomicFileOutputStream(dstFile);
             assertFalse(dstFile.exists());
             fos.write(TEST_STRING.getBytes());
             fos.flush();
             assertFalse(dstFile.exists());
-    	} finally {
+    	}finally{
             fos.close();
     	}
 =======
@@ -87,7 +91,11 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     public void testOverwriteFile() throws IOException {
         assertTrue("Creating empty dst file", dstFile.createNewFile());
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
             OutputStream fos = new AtomicFileOutputStream(dstFile);
 =======
 >>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
@@ -106,7 +114,7 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
 <<<<<<< HEAD
             // Original contents still in place
             assertEquals("", ClientBase.readFile(dstFile));
-        } finally {
+        }finally{
             fos.close();
         }
 =======
@@ -124,10 +132,14 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     public void testFailToFlush() throws IOException {
         // Create a file at destination
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
             FileOutputStream fos = new FileOutputStream(dstFile);
             fos.write(TEST_STRING_2.getBytes());
-    	} finally {
+    	}finally{
             fos.close();
     	}
 =======
@@ -199,10 +211,14 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     @Test
     public void testAbortExistingFile() throws IOException {
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
             FileOutputStream fos1 = new FileOutputStream(dstFile);
             fos1.write(TEST_STRING.getBytes());
-    	} finally {
+    	}finally{
             fos1.close();
     	}
 =======
@@ -227,10 +243,14 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     @Test
     public void testAbortExistingFileAfterFlush() throws IOException {
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
             FileOutputStream fos1 = new FileOutputStream(dstFile);
             fos1.write(TEST_STRING.getBytes());
-    	} finally {
+    	}finally{
             fos1.close();
     	}
 =======

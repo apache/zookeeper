@@ -61,10 +61,17 @@ class CppGenerator {
                         + outputDirectory);
             }
         }
+<<<<<<< HEAD
         FileWriter cc = new FileWriter(new File(outputDirectory, mName+".cc"));
         FileWriter hh = new FileWriter(new File(outputDirectory, mName+".hh"));
 <<<<<<< HEAD
         try {
+=======
+        try{
+        	 FileWriter cc = new FileWriter(new File(outputDirectory, mName+".cc"));
+             FileWriter hh = new FileWriter(new File(outputDirectory, mName+".hh"));
+
+>>>>>>> parent of 9854b54... add space
              hh.write("/**\n");
              hh.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
              hh.write("* or more contributor license agreements.  See the NOTICE file\n");
@@ -142,7 +149,11 @@ class CppGenerator {
         hh.write("#endif //"+mName.toUpperCase().replace('.','_')+"__\n");
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         } finally {
+=======
+        }finally{
+>>>>>>> parent of 9854b54... add space
             hh.close();
             cc.close();
         }

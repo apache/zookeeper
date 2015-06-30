@@ -95,7 +95,11 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS,
                         CONNECTION_TIMEOUT));        
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
         	zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS,
                     ClientBase.CONNECTION_TIMEOUT, this);
             zk.create("/obstest", "test".getBytes(),Ids.OPEN_ACL_UNSAFE,
@@ -167,7 +171,7 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher{
             
             LOG.info("Closing zk client");
 
-        } finally {
+        }finally{
             zk.close();   
         }      
      

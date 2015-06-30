@@ -58,7 +58,11 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "cons", "queued");
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             try {
+=======
+            try{
+>>>>>>> parent of 9854b54... add space
             	TestableZooKeeper zk = createClient(hp);
                 String sid = getHexSessionId(zk.getSessionId());
 
@@ -77,7 +81,7 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
                 verify(hp, "wchp", sid);
                 verify(hp, "wchc", sid);
 
-            } finally {
+            }finally{
                 zk.close();
             }       
 =======

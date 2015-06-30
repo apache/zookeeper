@@ -314,11 +314,15 @@ public class FileTxnSnapLog {
 
         // truncate it
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
             FileTxnLog truncLog = new FileTxnLog(dataDir);
             boolean truncated = truncLog.truncate(zxid);
 
-        } finally {
+        }finally{
             truncLog.close();
         }
 =======

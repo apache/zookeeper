@@ -77,12 +77,16 @@ public class TxnLogSource implements LogSource {
 
     public static boolean isTransactionFile(String file) throws IOException {
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
     		RandomAccessFileReader reader = new RandomAccessFileReader(new File(file));
             BinaryInputArchive logStream = new BinaryInputArchive(reader);
             FileHeader fhdr = new FileHeader();
             fhdr.deserialize(logStream, "fileheader");
-    	} finally {
+    	}finally{
     		reader.close();
     	}
 =======

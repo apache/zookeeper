@@ -66,10 +66,14 @@ public class InvalidSnapshotTest extends ClientBase {
         File snapFile = factory.zkServer.getTxnLogFactory().findMostRecentSnapshot();
         LOG.info("Corrupting " + snapFile);
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
             RandomAccessFile raf = new RandomAccessFile(snapFile, "rws");
             raf.setLength(3);
-        } finally {
+        }finally{
             raf.close();
         }
 =======

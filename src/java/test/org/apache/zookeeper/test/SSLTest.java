@@ -101,7 +101,11 @@ public class SSLTest extends QuorumPeerTestBase {
 
             final CountDownLatch latch = new CountDownLatch(1);
 <<<<<<< HEAD
+<<<<<<< HEAD
             try {
+=======
+            try{
+>>>>>>> parent of 9854b54... add space
             	ZooKeeper zk = new ZooKeeper("127.0.0.1:" + secureClientPorts[i], TIMEOUT,
                         new Watcher() {
                             @Override
@@ -118,7 +122,7 @@ public class SSLTest extends QuorumPeerTestBase {
                 // Do a simple operation to make sure the connection is fine.
                 zk.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 zk.delete("/test", -1);
-            } finally {
+            }finally{
                 zk.close();
             }         
 =======
@@ -161,25 +165,22 @@ public class SSLTest extends QuorumPeerTestBase {
         mt.start();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        try {
-        	ZooKeeper zk = new ZooKeeper("127.0.0.1:" + secureClientPort, TIMEOUT,
-                    new Watcher() {
-                        @Override
-                        public void process(WatchedEvent event) {
-                            if (event.getState() != Event.KeeperState.SyncConnected) {
-                                Assert.fail("failed to connect to ZK server secure client port");
-                            }
-                            latch.countDown();
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + secureClientPort, TIMEOUT,
+                new Watcher() {
+                    @Override
+                    public void process(WatchedEvent event) {
+                        if (event.getState() != Event.KeeperState.SyncConnected) {
+                            Assert.fail("failed to connect to ZK server secure client port");
                         }
-                    });
-            if (!latch.await(TIMEOUT, TimeUnit.MILLISECONDS)) {
-                Assert.fail("Timeout connecting to ZK server secure port");
-            }
-            zk.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            zk.delete("/test", -1);
-        } finally {
-            zk.close();
+                        latch.countDown();
+                    }
+                });
+        if (!latch.await(TIMEOUT, TimeUnit.MILLISECONDS)) {
+            Assert.fail("Timeout connecting to ZK server secure port");
         }
+        zk.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.delete("/test", -1);
+        zk.close();
         mt.shutdown();
     }
 }

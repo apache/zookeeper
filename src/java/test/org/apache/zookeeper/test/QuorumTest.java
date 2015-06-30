@@ -129,7 +129,11 @@ public class QuorumTest extends ZKTestCase {
     @Test
     public void testLeaderShutdown() throws IOException, InterruptedException, KeeperException {
 <<<<<<< HEAD
+<<<<<<< HEAD
     	try {
+=======
+    	try{
+>>>>>>> parent of 9854b54... add space
     		ZooKeeper zk = new DisconnectableZooKeeper(qb.hostPort, ClientBase.CONNECTION_TIMEOUT, new Watcher() {
                 public void process(WatchedEvent event) {
             }});
@@ -193,7 +197,7 @@ public class QuorumTest extends ZKTestCase {
             Assert.assertTrue(qb.s3.isAlive());
             Assert.assertTrue(qb.s4.isAlive());
             Assert.assertTrue(qb.s5.isAlive());
-    	} finally {
+    	}finally{
             zk.close();
     	}
 =======
@@ -229,7 +233,11 @@ public class QuorumTest extends ZKTestCase {
     public void testSessionMoved() throws Exception {
         String hostPorts[] = qb.hostPort.split(",");
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
         	DisconnectableZooKeeper zk = new DisconnectableZooKeeper(hostPorts[0],
                     ClientBase.CONNECTION_TIMEOUT, new Watcher() {
                 public void process(WatchedEvent event) {
@@ -289,7 +297,11 @@ public class QuorumTest extends ZKTestCase {
                 }
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
         } finally {
+=======
+        }finally{
+>>>>>>> parent of 9854b54... add space
             zk.close();
         }      
 =======
@@ -325,7 +337,11 @@ public class QuorumTest extends ZKTestCase {
         String hps[] = qb.hostPort.split(",");
         DiscoWatcher oldWatcher = new DiscoWatcher();
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
         	DisconnectableZooKeeper zk = new DisconnectableZooKeeper(hps[0],
                     ClientBase.CONNECTION_TIMEOUT, oldWatcher);
             zk.create("/t1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
@@ -391,7 +407,7 @@ public class QuorumTest extends ZKTestCase {
                 toClose.add(zknew);
                 zknew.create("/t-"+i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             }
-        } finally {
+        }finally{
             for (ZooKeeper z: toClose) {
                 z.close();
             }
@@ -433,12 +449,16 @@ public class QuorumTest extends ZKTestCase {
                 "127.0.0.1:" + qu.getPeer((index == 1)?2:1).peer.getClientPort(),
                 ClientBase.CONNECTION_TIMEOUT, watcher);
 
-        try {
+        try{
             watcher.waitForConnected(CONNECTION_TIMEOUT);      
         } catch(TimeoutException e) {
             Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
 <<<<<<< HEAD
+<<<<<<< HEAD
         } finally {
+=======
+        }finally{
+>>>>>>> parent of 9854b54... add space
             zk.close();
 =======
 >>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
@@ -555,23 +575,21 @@ public class QuorumTest extends ZKTestCase {
         int index = 1;
         while(qu.getPeer(index).peer.leader == null)
             index++;
-        try {
-        	ZooKeeper zk = new ZooKeeper(
-                    "127.0.0.1:" + qu.getPeer((index == 1)?2:1).peer.getClientPort(),
-                    ClientBase.CONNECTION_TIMEOUT, watcher);
-            watcher.waitForConnected(CONNECTION_TIMEOUT);
 
-            zk.multi(Arrays.asList(
-                    Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                    Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
-                    ));
-            zk.getData("/multi0", false, null);
-            zk.getData("/multi1", false, null);
-            zk.getData("/multi2", false, null);
+        ZooKeeper zk = new ZooKeeper(
+                "127.0.0.1:" + qu.getPeer((index == 1)?2:1).peer.getClientPort(),
+                ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(CONNECTION_TIMEOUT);
 
-        } finally {
-            zk.close();
-        }       
+        zk.multi(Arrays.asList(
+                Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
+                ));
+        zk.getData("/multi0", false, null);
+        zk.getData("/multi1", false, null);
+        zk.getData("/multi2", false, null);
+
+        zk.close();
     }
 }

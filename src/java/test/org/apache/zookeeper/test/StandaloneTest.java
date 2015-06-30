@@ -133,7 +133,11 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
 
         CountdownWatcher watcher = new CountdownWatcher();
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
         	ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 
@@ -147,7 +151,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
             } catch (KeeperException.UnimplementedException ex) {
                 // expected
             }
-        } finally {
+        }finally{
             zk.close();
         }      
 =======

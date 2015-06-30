@@ -314,7 +314,11 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                             CONNECTION_TIMEOUT));
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             try {
+=======
+            try{
+>>>>>>> parent of 9854b54... add space
                 ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[i],
                         ClientBase.CONNECTION_TIMEOUT, this);
 
@@ -340,7 +344,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                     String otherDynamicFileContent = getFileContent(dynamicConfigFile);
                     Assert.assertEquals(dynamicFileContent, otherDynamicFileContent);
                 }
-            } finally {
+            }finally{
             	zk.close();
 =======
             ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[i],

@@ -60,7 +60,11 @@ public class FourLetterWordsTest extends ClientBase {
         verify("cons", "queued");
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         try {
+=======
+        try{
+>>>>>>> parent of 9854b54... add space
             TestableZooKeeper zk = createClient();
             String sid = getHexSessionId(zk.getSessionId());
 
@@ -79,7 +83,7 @@ public class FourLetterWordsTest extends ClientBase {
             verify("wchs", "watching 1");
             verify("wchp", sid);
             verify("wchc", sid);
-        } finally {
+        }finally{
             zk.close();
         }
 =======
